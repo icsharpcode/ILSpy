@@ -6,7 +6,7 @@ platforms:
 - DotNetCore
 packages:
 - id: ICSharpCode.Decompiler
-  version: 4.0.0.4319-beta2
+  version: 5.0.0.4688-preview1
 ---
 
 Setup: load the references required to work with the decompiler
@@ -29,7 +29,7 @@ You must have compiled **frontends.sln** first (run “dotnet build” in ICShar
 
 ```csharp
 string workbookBasePath = System.IO.Directory.GetCurrentDirectory();
-string fileName = System.IO.Path.Combine(workbookBasePath, "ICSharpCode.Decompiler.PowerShell", "bin", "Debug", "netstandard2.0", "ICSharpCode.Decompiler.dll");
+string fileName = System.IO.Path.Combine(workbookBasePath, "ICSharpCode.Decompiler.PowerShell", "bin", "Release", "netstandard2.0", "ICSharpCode.Decompiler.dll");
 var decompiler = new CSharpDecompiler(fileName, new DecompilerSettings());
 ```
 
@@ -48,13 +48,13 @@ var nameOfGenericType = new FullTypeName("ICSharpCode.Decompiler.Util.Empty`1");
 Console.WriteLine(decompiler.DecompileTypeAsString(nameOfGenericType));
 ```
 
-If you want to decompile one single member (sample: first property)
+If you want to decompile one single member (sample: first method)
 
 ```csharp
-var nameOfUniResolver =  new FullTypeName("ICSharpCode.Decompiler.UniversalAssemblyResolver");
+var nameOfUniResolver =  new FullTypeName("ICSharpCode.Decompiler.Metadata.UniversalAssemblyResolver");
 ITypeDefinition typeInfo = decompiler.TypeSystem.FindType(nameOfUniResolver).GetDefinition();
-var tokenOfFirstProperty = typeInfo.Properties.First().MetadataToken;
-Console.WriteLine(decompiler.DecompileAsString(tokenOfFirstProperty));
+var tokenOfFirstMethod = typeInfo.Methods.First().MetadataToken;
+Console.WriteLine(decompiler.DecompileAsString(tokenOfFirstMethod));
 ```
 
 If you need access to low-level metadata tables

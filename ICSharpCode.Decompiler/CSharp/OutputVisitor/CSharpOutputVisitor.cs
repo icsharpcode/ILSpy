@@ -903,6 +903,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteToken(Roles.Dot);
 			WriteIdentifier(memberReferenceExpression.MemberNameToken);
 			WriteTypeArguments(memberReferenceExpression.TypeArguments);
+			if (!(memberReferenceExpression.Parent is InvocationExpression)) {
+				if (GetCallChainLengthLimited(memberReferenceExpression) >= 3)
+					writer.Unindent();
+			}
 			EndNode(memberReferenceExpression);
 		}
 		
@@ -1048,6 +1052,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteKeyword(StackAllocExpression.StackallocKeywordRole);
 			stackAllocExpression.Type.AcceptVisitor(this);
 			WriteCommaSeparatedListInBrackets(new[] { stackAllocExpression.CountExpression });
+			stackAllocExpression.Initializer.AcceptVisitor(this);
 			EndNode(stackAllocExpression);
 		}
 		
@@ -1119,7 +1124,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			return op == UnaryOperatorType.PostIncrement
 				|| op == UnaryOperatorType.PostDecrement
-				|| op == UnaryOperatorType.NullConditional;
+				|| op == UnaryOperatorType.NullConditional
+				|| op == UnaryOperatorType.SuppressNullableWarning;
 		}
 
 		public virtual void VisitUncheckedExpression(UncheckedExpression uncheckedExpression)
@@ -1140,11 +1146,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitQueryExpression(QueryExpression queryExpression)
 		{
 			StartNode(queryExpression);
-			bool indent = queryExpression.Parent is QueryClause && !(queryExpression.Parent is QueryContinuationClause);
-			if (indent) {
+			if (queryExpression.Role != QueryContinuationClause.PrecedingQueryRole)
 				writer.Indent();
-				NewLine();
-			}
 			bool first = true;
 			foreach (var clause in queryExpression.Clauses) {
 				if (first) {
@@ -1156,9 +1159,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 				clause.AcceptVisitor(this);
 			}
-			if (indent) {
+			if (queryExpression.Role != QueryContinuationClause.PrecedingQueryRole)
 				writer.Unindent();
-			}
 			EndNode(queryExpression);
 		}
 		
@@ -2099,15 +2101,24 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteKeyword(IndexerDeclaration.ThisKeywordRole);
 			Space(policy.SpaceBeforeMethodDeclarationParentheses);
 			WriteCommaSeparatedListInBrackets(indexerDeclaration.Parameters, policy.SpaceWithinMethodDeclarationParentheses);
-			OpenBrace(policy.PropertyBraceStyle);
-			// output get/set in their original order
-			foreach (AstNode node in indexerDeclaration.Children) {
-				if (node.Role == IndexerDeclaration.GetterRole || node.Role == IndexerDeclaration.SetterRole) {
-					node.AcceptVisitor(this);
+
+			if (indexerDeclaration.ExpressionBody.IsNull) {
+				OpenBrace(policy.PropertyBraceStyle);
+				// output get/set in their original order
+				foreach (AstNode node in indexerDeclaration.Children) {
+					if (node.Role == IndexerDeclaration.GetterRole || node.Role == IndexerDeclaration.SetterRole) {
+						node.AcceptVisitor(this);
+					}
 				}
+				CloseBrace(policy.PropertyBraceStyle);
+				NewLine();
+			} else {
+				Space();
+				WriteToken(Roles.Arrow);
+				Space();
+				indexerDeclaration.ExpressionBody.AcceptVisitor(this);
+				Semicolon();
 			}
-			CloseBrace(policy.PropertyBraceStyle);
-			NewLine();
 			EndNode(indexerDeclaration);
 		}
 		
@@ -2314,6 +2325,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(composedType);
 			if (composedType.HasRefSpecifier) {
 				WriteKeyword(ComposedType.RefRole);
+			}
+			if (composedType.HasReadOnlySpecifier) {
+				WriteKeyword(ComposedType.ReadonlyRole);
 			}
 			composedType.BaseType.AcceptVisitor(this);
 			if (composedType.HasNullableSpecifier) {

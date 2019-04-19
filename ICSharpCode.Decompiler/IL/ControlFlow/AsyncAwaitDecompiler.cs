@@ -17,11 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -36,7 +38,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public static bool IsCompilerGeneratedStateMachine(TypeDefinitionHandle type, MetadataReader metadata)
 		{
 			TypeDefinition td;
-			if (type.IsNil || !type.IsCompilerGenerated(metadata) || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
+			if (type.IsNil || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
+				return false;
+			if (!(type.IsCompilerGenerated(metadata) || td.GetDeclaringType().IsCompilerGenerated(metadata)))
 				return false;
 			foreach (var i in td.GetInterfaceImplementations()) {
 				var tr = metadata.GetInterfaceImplementation(i).Interface.GetFullTypeName(metadata);
@@ -92,6 +96,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		// across the yield point.
 		Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)> awaitBlocks = new Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)>();
 
+		int catchHandlerOffset;
+		List<AsyncDebugInfo.Await> awaitDebugInfos = new List<AsyncDebugInfo.Await>();
+
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			if (!context.Settings.AsyncAwait)
@@ -100,6 +107,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			fieldToParameterMap.Clear();
 			cachedFieldToParameterMap.Clear();
 			awaitBlocks.Clear();
+			awaitDebugInfos.Clear();
 			moveNextLeaves.Clear();
 			if (!MatchTaskCreationPattern(function))
 				return;
@@ -133,6 +141,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			AwaitInCatchTransform.Run(function, context);
 			AwaitInFinallyTransform.Run(function, context);
+
+			awaitDebugInfos.SortBy(row => row.YieldOffset);
+			function.AsyncDebugInfo = new AsyncDebugInfo(catchHandlerOffset, awaitDebugInfos.ToImmutableArray());
 		}
 
 		private void CleanUpBodyOfMoveNext(ILFunction function)
@@ -425,6 +436,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!handler.Filter.MatchLdcI4(1))
 				throw new SymbolicAnalysisFailedException();
 			var catchBlock = YieldReturnDecompiler.SingleBlock(handler.Body);
+			catchHandlerOffset = catchBlock.StartILOffset;
 			if (catchBlock?.Instructions.Count != 4)
 				throw new SymbolicAnalysisFailedException();
 			// stloc exception(ldloc E_143)
@@ -486,13 +498,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.Step("Inline body of MoveNext()", function);
 			function.Body = mainTryCatch.TryBlock;
 			function.AsyncReturnType = underlyingReturnType;
+			function.MoveNextMethod = moveNextFunction.Method;
+			function.CodeSize = moveNextFunction.CodeSize;
 			moveNextFunction.Variables.Clear();
 			moveNextFunction.ReleaseRef();
 			foreach (var branch in function.Descendants.OfType<Branch>()) {
 				if (branch.TargetBlock == setResultAndExitBlock) {
-					branch.ReplaceWith(new Leave((BlockContainer)function.Body, resultVar == null ? null : new LdLoc(resultVar)) {
-						ILRange = branch.ILRange
-					});
+					branch.ReplaceWith(new Leave((BlockContainer)function.Body, resultVar == null ? null : new LdLoc(resultVar)).WithILRange(branch));
 				}
 			}
 			foreach (var leave in function.Descendants.OfType<Leave>()) {
@@ -512,9 +524,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var leave in function.Descendants.OfType<Leave>()) {
 				if (moveNextLeaves.Contains(leave)) {
 					leave.ReplaceWith(new InvalidBranch {
-						Message = "leave MoveNext - await not detected correctly",
-						ILRange = leave.ILRange
-					});
+						Message = "leave MoveNext - await not detected correctly"
+					}.WithILRange(leave));
 				}
 			}
 			// Delete dead loads of the state cache variable:
@@ -553,17 +564,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					context.CancellationToken.ThrowIfCancellationRequested();
 					if (block.Instructions.Last() is Leave leave && moveNextLeaves.Contains(leave)) {
 						// This is likely an 'await' block
-						if (AnalyzeAwaitBlock(block, out var awaiterVar, out var awaiterField, out var state)) {
+						if (AnalyzeAwaitBlock(block, out var awaiterVar, out var awaiterField, out int state, out int yieldOffset)) {
 							block.Instructions.Add(new Await(new LdLoca(awaiterVar)));
 							Block targetBlock = stateToBlockMap.GetOrDefault(state);
 							if (targetBlock != null) {
+								awaitDebugInfos.Add(new AsyncDebugInfo.Await(yieldOffset, targetBlock.StartILOffset));
 								block.Instructions.Add(new Branch(targetBlock));
 							} else {
 								block.Instructions.Add(new InvalidBranch("Could not find block for state " + state));
 							}
 							awaitBlocks.Add(block, (awaiterVar, awaiterField));
 							if (awaiterVar.Index < smallestAwaiterVarIndex) {
-								smallestAwaiterVarIndex = awaiterVar.Index;
+								smallestAwaiterVarIndex = awaiterVar.Index.Value;
 							}
 						}
 					}
@@ -581,13 +593,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		bool AnalyzeAwaitBlock(Block block, out ILVariable awaiter, out IField awaiterField, out int state)
+		bool AnalyzeAwaitBlock(Block block, out ILVariable awaiter, out IField awaiterField, out int state, out int yieldOffset)
 		{
 			awaiter = null;
 			awaiterField = null;
 			state = 0;
+			yieldOffset = -1;
 			int pos = block.Instructions.Count - 2;
-			if (doFinallyBodies != null && block.Instructions[pos] is StLoc storeDoFinallyBodies) {
+			if (pos >= 0 && doFinallyBodies != null && block.Instructions[pos] is StLoc storeDoFinallyBodies) {
 				if (!(storeDoFinallyBodies.Variable.Kind == VariableKind.Local
 					  && storeDoFinallyBodies.Variable.Type.IsKnownType(KnownTypeCode.Boolean)
 					  && storeDoFinallyBodies.Variable.Index == doFinallyBodies.Index)) {
@@ -598,9 +611,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				pos--;
 			}
 
-			// call AwaitUnsafeOnCompleted(ldflda <>t__builder(ldloc this), ldloca awaiter, ldloc this)
-			if (!MatchCall(block.Instructions[pos], "AwaitUnsafeOnCompleted", out var callArgs))
+			if (pos >= 0 && MatchCall(block.Instructions[pos], "AwaitUnsafeOnCompleted", out var callArgs)) {
+				// call AwaitUnsafeOnCompleted(ldflda <>t__builder(ldloc this), ldloca awaiter, ldloc this)
+			} else if (pos >= 0 && MatchCall(block.Instructions[pos], "AwaitOnCompleted", out callArgs)) {
+				// call AwaitOnCompleted(ldflda <>t__builder(ldloc this), ldloca awaiter, ldloc this)
+				// The C# compiler emits the non-unsafe call when the awaiter does not implement
+				// ICriticalNotifyCompletion.
+			} else {
 				return false;
+			}
 			if (callArgs.Count != 3)
 				return false;
 			if (!IsBuilderFieldOnThis(callArgs[0]))
@@ -630,6 +649,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!value.MatchLdLoc(awaiter))
 				return false;
 			pos--;
+			// Store IL offset for debug info:
+			yieldOffset = block.Instructions[pos].EndILOffset;
+
 			// stloc S_10(ldloc this)
 			// stloc S_11(ldc.i4 0)
 			// stloc cachedStateVar(ldloc S_11)
@@ -926,7 +948,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			// if there's any remaining loads (there shouldn't be), replace them with the constant 1
 			foreach (LdLoc load in doFinallyBodies.LoadInstructions.ToArray()) {
-				load.ReplaceWith(new LdcI4(1) { ILRange = load.ILRange });
+				load.ReplaceWith(new LdcI4(1).WithILRange(load));
 			}
 			context.StepEndGroup(keepIfEmpty: true);
 		}

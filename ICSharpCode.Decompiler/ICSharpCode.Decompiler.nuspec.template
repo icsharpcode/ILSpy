@@ -6,7 +6,7 @@
     <title>ILSpy Decompiler Engine</title>
     <authors>ILSpy Contributors</authors>
     <owners>Daniel Grunwald, SharpDevelop</owners>
-    <licenseUrl>https://opensource.org/licenses/mit-license.php</licenseUrl>
+    <license type="expression">MIT</license>
     <projectUrl>https://github.com/icsharpcode/ILSpy/</projectUrl>
     <iconUrl>https://ilspy.net/images/icon32.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -16,18 +16,12 @@
     <tags>C# Decompiler ILSpy</tags>
     <dependencies>
       <dependency id="Humanizer.Core" version="2.2.0" />
-      <dependency id="System.Reflection.Metadata" version="1.4.2" />
-      <dependency id="System.Collections.Immutable" version="1.3.1" />
+      <dependency id="System.Collections.Immutable" version="1.5.0" />
+      <dependency id="System.Reflection.Metadata" version="1.6.0" />
       <dependency id="System.ValueTuple" version="4.3.0" />
     </dependencies>
   </metadata>
   <files>
-    <file src="bin\$Configuration$\net46\ICSharpCode.Decompiler.dll" target="lib\net46" />
-    <file src="bin\$Configuration$\net46\ICSharpCode.Decompiler.pdb" target="lib\net46" />
-
-    <file src="bin\$Configuration$\net45\ICSharpCode.Decompiler.dll" target="lib\net45" />
-    <file src="bin\$Configuration$\net45\ICSharpCode.Decompiler.pdb" target="lib\net45" />
-
     <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.dll" target="lib\netstandard2.0" />
     <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.pdb" target="lib\netstandard2.0" />
   </files>

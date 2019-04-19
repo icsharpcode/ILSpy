@@ -9,11 +9,7 @@
     <Icon>ILSpy-Large.ico</Icon>
   </Metadata>
   <Installation>
-    <InstallationTarget Id="Microsoft.VisualStudio.Ultimate" Version="[15.0,16.0)" />
-    <InstallationTarget Id="Microsoft.VisualStudio.Premium" Version="[15.0,16.0)" />
-    <InstallationTarget Id="Microsoft.VisualStudio.Enterprise" Version="[15.0,16.0)" />
-    <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[15.0,16.0)" />
-    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0,16.0)" />
+    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0,17.0)" />
   </Installation>
   <Dependencies>
     <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
@@ -22,7 +18,7 @@
     <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="ILSpy.AddIn" Path="|ILSpy.AddIn|"/>
   </Assets>
   <Prerequisites>
-    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,16.0)" DisplayName="Visual Studio core editor" />
-    <Prerequisite Id="Microsoft.VisualStudio.Component.Roslyn.LanguageServices" Version="[15.0,16.0)" DisplayName="Roslyn Language Services" />
+    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,)" DisplayName="Visual Studio core editor" />
+    <Prerequisite Id="Microsoft.VisualStudio.Component.Roslyn.LanguageServices" Version="[15.0,)" DisplayName="Roslyn Language Services" />
   </Prerequisites>
 </PackageManifest>

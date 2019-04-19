@@ -210,12 +210,19 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		public void WriteReference(Decompiler.Disassembler.OpCodeInfo opCode)
+		public void WriteReference(Decompiler.Disassembler.OpCodeInfo opCode, bool omitSuffix = false)
 		{
 			WriteIndent();
 			int start = this.TextLength;
-			b.Append(opCode.Name);
-			int end = this.TextLength;
+			if (omitSuffix) {
+				int lastDot = opCode.Name.LastIndexOf('.');
+				if (lastDot > 0) {
+					b.Append(opCode.Name.Remove(lastDot + 1));
+				}
+			} else {
+				b.Append(opCode.Name);
+			}
+			int end = this.TextLength - 1;
 			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = opCode });
 		}
 

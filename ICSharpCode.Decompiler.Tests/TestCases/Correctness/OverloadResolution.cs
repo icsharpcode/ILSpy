@@ -32,6 +32,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Generics();
 			ConstructorTest();
 			TestIndexer();
+			Issue1281();
 		}
 
 		#region ConstructorTest
@@ -85,6 +86,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void TestCall(int v, params AccessViolationException[] p2)
 		{
 			Console.WriteLine("TestCall with params: " + (p2 == null ? "null" : p2.Length.ToString()));
+		}
+
+		static void Issue1281()
+		{
+			var arg = new object[0];
+			TestCallIssue1281(arg);
+			TestCallIssue1281((object)arg);
+			TestCallIssue1281(new[] { arg });
+		}
+
+		static void TestCallIssue1281(params object[] args)
+		{
+			Console.Write("TestCallIssue1281: count = " + args.Length + ": ");
+			foreach (var arg in args) {
+				Console.Write(arg);
+				Console.Write(", ");
+			}
+			Console.WriteLine();
 		}
 		#endregion
 

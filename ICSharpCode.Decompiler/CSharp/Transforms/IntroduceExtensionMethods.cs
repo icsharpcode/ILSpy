@@ -148,6 +148,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			} else {
 				memberRefExpr.Target = firstArgument.Detach();
 			}
+			if (invocationExpression.GetResolveResult() is CSharpInvocationResolveResult irr) {
+				// do not forget to update the CSharpInvocationResolveResult => set IsExtensionMethodInvocation == true
+				invocationExpression.RemoveAnnotations<CSharpInvocationResolveResult>();
+				var newResolveResult = new CSharpInvocationResolveResult(
+					irr.TargetResult, irr.Member, irr.Arguments, irr.OverloadResolutionErrors,
+					isExtensionMethodInvocation: true, irr.IsExpandedForm, irr.IsDelegateInvocation,
+					irr.GetArgumentToParameterMap(), irr.InitializerStatements);
+				invocationExpression.AddAnnotation(newResolveResult);
+			}
 		}
 
 		public static bool CanTransformToExtensionMethodCall(CSharpResolver resolver, IMethod method,

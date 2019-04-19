@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 using System;
+using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -36,6 +37,73 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public class DerivedClass : BaseClass
 		{
 		}
+
+		public class MyArray<T>
+		{
+			public class NestedClass<Y>
+			{
+				public T Item1;
+				public Y Item2;
+			}
+
+			public enum NestedEnum
+			{
+				A,
+				B
+			}
+
+			private T[] arr;
+
+			public MyArray(int capacity)
+			{
+				arr = new T[capacity];
+			}
+
+			public void Size(int capacity)
+			{
+				Array.Resize(ref arr, capacity);
+			}
+
+			public void Grow(int capacity)
+			{
+				if (capacity >= arr.Length) {
+					Size(capacity);
+				}
+			}
+		}
+
+		public interface IInterface
+		{
+			void Method1<T>() where T : class;
+			void Method2<T>() where T : class;
+		}
+
+		public abstract class Base : IInterface
+		{
+			// constraints must be repeated on implicit interface implementation
+			public abstract void Method1<T>() where T : class;
+
+			// constraints must not be specified on explicit interface implementation
+			void IInterface.Method2<T>()
+			{
+			}
+		}
+
+		public class Derived : Base
+		{
+			// constraints are inherited automatically and must not be specified
+			public override void Method1<T>()
+			{
+			}
+		}
+
+		private const MyArray<string>.NestedEnum enumVal = MyArray<string>.NestedEnum.A;
+		private static Type type1 = typeof(List<>);
+		private static Type type2 = typeof(MyArray<>);
+		private static Type type3 = typeof(List<>.Enumerator);
+		private static Type type4 = typeof(MyArray<>.NestedClass<>);
+		private static Type type5 = typeof(List<int>[]);
+		private static Type type6 = typeof(MyArray<>.NestedEnum);
 
 		public T CastToTypeParameter<T>(DerivedClass d) where T : BaseClass
 		{
@@ -96,5 +164,110 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return new T[size1, size2];
 		}
+
+		public Type[] TestTypeOf()
+		{
+			return new Type[8] {
+				typeof(int),
+				typeof(int[]),
+				typeof(GenericClass<>),
+				typeof(GenericClass<int>),
+				typeof(GenericClass<int[]>),
+				typeof(Dictionary<, >),
+				typeof(List<int>.Enumerator),
+				typeof(List<>.Enumerator)
+			};
+		}
+
+		public static void MethodWithConstraint<T, S>() where T : class, S where S : ICloneable, new()
+		{
+		}
+
+		public static void MethodWithStructConstraint<T>() where T : struct
+		{
+		}
+
+		private static void MultidimensionalArray<T>(T[,] array)
+		{
+			array[0, 0] = array[0, 1];
+		}
+
+		public static Dictionary<string, string>.KeyCollection.Enumerator GetEnumerator(Dictionary<string, string> d, MyArray<string>.NestedClass<int> nc)
+		{
+			// Tests references to inner classes in generic classes
+			return d.Keys.GetEnumerator();
+		}
+
+		public static bool IsString<T>(T input)
+		{
+			return input is string;
+		}
+
+		public static string AsString<T>(T input)
+		{
+			return input as string;
+		}
+
+		public static string CastToString<T>(T input)
+		{
+			return (string)(object)input;
+		}
+
+		public static T CastFromString<T>(string input)
+		{
+			return (T)(object)input;
+		}
+
+		public static bool IsInt<T>(T input)
+		{
+			return input is int;
+		}
+
+		public static int CastToInt<T>(T input)
+		{
+			return (int)(object)input;
+		}
+
+		public static T CastFromInt<T>(int input)
+		{
+			return (T)(object)input;
+		}
+
+		public static bool IsNullableInt<T>(T input)
+		{
+			return input is int?;
+		}
+
+		public static int? AsNullableInt<T>(T input)
+		{
+			return input as int?;
+		}
+
+		public static int? CastToNullableInt<T>(T input)
+		{
+			return (int?)(object)input;
+		}
+
+		public static T CastFromNullableInt<T>(int? input)
+		{
+			return (T)(object)input;
+		}
+
+#if CS73
+		public static object CallDelegate<T>(T input) where T : Delegate
+		{
+			return input.DynamicInvoke();
+		}
+
+		public static int CountEnumerators<T>() where T : Enum
+		{
+			return typeof(T).GetEnumValues().Length;
+		}
+
+		public unsafe static int UnmanagedConstraint<T>() where T : unmanaged
+		{
+			return sizeof(T);
+		}
+#endif
 	}
 }

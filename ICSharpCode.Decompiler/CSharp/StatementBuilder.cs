@@ -66,6 +66,24 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ExpressionStatement(exprBuilder.Translate(inst));
 		}
 
+		protected internal override Statement VisitIsInst(IsInst inst)
+		{
+			// isinst on top-level (unused result) can be translated in general
+			// (even for value types) by using "is" instead of "as"
+			// This can happen when the result of "expr is T" is unused
+			// and the C# compiler optimizes away the null check portion of the "is" operator.
+			var arg = exprBuilder.Translate(inst.Argument);
+			arg = ExpressionBuilder.UnwrapBoxingConversion(arg);
+			return new ExpressionStatement(
+				new IsExpression(
+					arg,
+					exprBuilder.ConvertType(inst.Type)
+				)
+				.WithRR(new ResolveResult(exprBuilder.compilation.FindType(KnownTypeCode.Boolean)))
+				.WithILInstruction(inst)
+			);
+		}
+
 		protected internal override Statement VisitStLoc(StLoc inst)
 		{
 			var expr = exprBuilder.Translate(inst);
@@ -286,7 +304,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					return new YieldBreakStatement();
 				else if (!inst.Value.MatchNop()) {
 					IType targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentFunction.ReturnType;
-					return new ReturnStatement(exprBuilder.Translate(inst.Value, typeHint: targetType).ConvertTo(targetType, exprBuilder, allowImplicitConversion: true));
+					var expr = exprBuilder.Translate(inst.Value, typeHint: targetType)
+						.ConvertTo(targetType, exprBuilder, allowImplicitConversion: true);
+					return new ReturnStatement(expr);
 				} else
 					return new ReturnStatement();
 			}
@@ -311,8 +331,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override Statement VisitYieldReturn(YieldReturn inst)
 		{
 			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem, true, out var isGeneric);
+			var expr = exprBuilder.Translate(inst.Value, typeHint: elementType)
+				.ConvertTo(elementType, exprBuilder, allowImplicitConversion: true);
 			return new YieldReturnStatement {
-				Expression = exprBuilder.Translate(inst.Value, typeHint: elementType).ConvertTo(elementType, exprBuilder)
+				Expression = expr
 			};
 		}
 
@@ -741,7 +763,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						return false;
 					switch (targetMethod.AccessorOwner) {
 						case IProperty p:
-							return p.Setter == targetMethod;
+							return targetMethod.AccessorKind == System.Reflection.MethodSemanticsAttributes.Setter;
 						default:
 							return true;
 					}
@@ -854,12 +876,18 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (!container.MatchConditionBlock(continueTarget, out condition, out _))
 						throw new NotSupportedException("Invalid condition block in do-while loop.");
 					blockStatement = ConvertBlockContainer(new BlockStatement(), container, container.Blocks.SkipLast(1), true);
-					if (continueTarget.IncomingEdgeCount == continueCount) {
-						// Remove the entrypoint label if all jumps to the label were replaced with 'continue;' statements
+					if (container.EntryPoint.IncomingEdgeCount == 2) {
+						// Remove the entry-point label, if there are only two jumps to the entry-point:
+						// from outside the loop and from the condition-block.
 						blockStatement.Statements.First().Remove();
 					}
 					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt3)
 						continueStmt3.Remove();
+					if (continueTarget.IncomingEdgeCount > continueCount) {
+						// if there are branches to the condition block, that were not converted
+						// to continue statements, we have to introduce an extra label.
+						blockStatement.Add(new LabelStatement { Label = continueTarget.Label });
+					}
 					if (blockStatement.Statements.Count == 0) {
 						return new WhileStatement {
 							Condition = exprBuilder.TranslateCondition(condition),
@@ -910,8 +938,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					blockStatement.Add(new LabelStatement { Label = block.Label });
 				}
 				foreach (var inst in block.Instructions) {
-					if (!isLoop && inst.OpCode == OpCode.Leave && IsFinalLeave((Leave)inst)) {
+					if (!isLoop && inst is Leave leave && IsFinalLeave(leave)) {
 						// skip the final 'leave' instruction and just fall out of the BlockStatement
+						blockStatement.AddAnnotation(new ImplicitReturnAnnotation(leave));
 						continue;
 					}
 					var stmt = Convert(inst);
@@ -961,7 +990,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					exprBuilder.Translate(inst.Size)
 				}
 			});
-			stmt.AddChild(new Comment(" IL initblk instruction"), Roles.Comment);
+			stmt.InsertChildAfter(null, new Comment(" IL initblk instruction"), Roles.Comment);
 			return stmt;
 		}
 
@@ -975,7 +1004,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					exprBuilder.Translate(inst.Size)
 				}
 			});
-			stmt.AddChild(new Comment(" IL cpblk instruction"), Roles.Comment);
+			stmt.InsertChildAfter(null, new Comment(" IL cpblk instruction"), Roles.Comment);
 			return stmt;
 		}
 	}

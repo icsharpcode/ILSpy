@@ -57,6 +57,11 @@
 						<Image Width="16" Height="16" Source="Images/PrivateInternal.png" />
 					</MenuItem.Icon>
 				</MenuItem>
+				<MenuItem Header="Show _all types and members" IsCheckable="True" IsChecked="{Binding FilterSettings.ShowAllApi}">
+					<MenuItem.Icon>
+						<Image Width="16" Height="16" Source="Images/ShowAll.png" />
+					</MenuItem.Icon>
+				</MenuItem>
 			</MenuItem>
 		</Menu>
 		<!-- ToolBar -->
@@ -82,11 +87,14 @@
 			<CheckBox IsChecked="{Binding FilterSettings.ShowInternalApi}" ToolTip="{x:Static properties:Resources.ShowInternalTypesMembers}">
 				<Image Width="16" Height="16" Source="Images/PrivateInternal.png" />
 			</CheckBox>
+			<CheckBox IsChecked="{Binding FilterSettings.ShowAllApi}" ToolTip="Show all types and members">
+				<Image Width="16" Height="16" Source="Images/ShowAll.png" />
+			</CheckBox>
 			<Separator />
 			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100" MaxDropDownHeight="Auto"
 			          ItemsSource="{x:Static local:Languages.AllLanguages}"
 			          SelectedItem="{Binding FilterSettings.Language}"/>
-			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" Width="100" MaxDropDownHeight="Auto"
+			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" Width="120" MaxDropDownHeight="Auto"
 			          Visibility="{Binding SelectedItem.HasLanguageVersions, ElementName=languageComboBox, Converter={StaticResource BooleanToVisibilityConverter}}"
 			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
 			          SelectedItem="{Binding FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>

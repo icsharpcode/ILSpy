@@ -60,6 +60,7 @@ namespace ICSharpCode.ILSpy
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = DecompilerTextView.CleanUpName(assembly.ShortName) + ".pdb";
 			dlg.Filter = "Portable PDB|*.pdb|All files|*.*";
+			dlg.InitialDirectory = Path.GetDirectoryName(assembly.FileName);
 			if (dlg.ShowDialog() != true) return;
 			DecompilationOptions options = new DecompilationOptions();
 			string fileName = dlg.FileName;

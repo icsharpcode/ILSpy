@@ -40,9 +40,18 @@ namespace ICSharpCode.Decompiler
 		/// appropriate for the specified language version.
 		/// </summary>
 		/// <remarks>
-		/// This does not imply that the resulting
+		/// This does not imply that the resulting code strictly uses only language features from that version.
+		/// Language constructs like generics or ref locals cannot be removed from the compiled code.
 		/// </remarks>
 		public DecompilerSettings(CSharp.LanguageVersion languageVersion)
+		{
+			SetLanguageVersion(languageVersion);
+		}
+
+		/// <summary>
+		/// Deactivates all language features from versions newer than <paramref name="languageVersion"/>.
+		/// </summary>
+		public void SetLanguageVersion(CSharp.LanguageVersion languageVersion)
 		{
 			// By default, all decompiler features are enabled.
 			// Disable some of them based on language version:
@@ -54,6 +63,7 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp3) {
 				anonymousTypes = false;
+				useLambdaSyntax = false;
 				objectCollectionInitializers = false;
 				automaticProperties = false;
 				extensionMethods = false;
@@ -89,14 +99,20 @@ namespace ICSharpCode.Decompiler
 				nonTrailingNamedArguments = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_3) {
-				//introduceUnmanagedTypeConstraint = false;
+				introduceUnmanagedConstraint = false;
+				stackAllocInitializers = false;
 				tupleComparisons = false;
+			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp8_0) {
+				nullableReferenceTypes = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (tupleComparisons)
+			if (nullableReferenceTypes)
+				return CSharp.LanguageVersion.CSharp8_0;
+			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers)
 				return CSharp.LanguageVersion.CSharp7_3;
 			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments)
 				return CSharp.LanguageVersion.CSharp7_2;
@@ -122,6 +138,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile anonymous methods/lambdas.
 		/// </summary>
+		[Category("C# 2.0 / VS 2005")]
+		[Description("Decompile anonymous methods/lambdas")]
 		public bool AnonymousMethods {
 			get { return anonymousMethods; }
 			set {
@@ -137,6 +155,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile anonymous types.
 		/// </summary>
+		[Category("C# 3.0 / VS 2008")]
+		[Description("Decompile anonymous types")]
 		public bool AnonymousTypes {
 			get { return anonymousTypes; }
 			set {
@@ -147,11 +167,30 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool useLambdaSyntax = true;
+
+		/// <summary>
+		/// Use C# 3 lambda syntax if possible.
+		/// </summary>
+		[Category("C# 3.0 / VS 2008")]
+		[Description("Use lambda syntax, if possible")]
+		public bool UseLambdaSyntax {
+			get { return useLambdaSyntax; }
+			set {
+				if (useLambdaSyntax != value) {
+					useLambdaSyntax = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool expressionTrees = true;
 
 		/// <summary>
 		/// Decompile expression trees.
 		/// </summary>
+		[Category("C# 3.0 / VS 2008")]
+		[Description("Decompile expression trees")]
 		public bool ExpressionTrees {
 			get { return expressionTrees; }
 			set {
@@ -167,6 +206,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile enumerators.
 		/// </summary>
+		[Category("C# 2.0 / VS 2005")]
+		[Description("Decompile enumerators (yield return)")]
 		public bool YieldReturn {
 			get { return yieldReturn; }
 			set {
@@ -182,6 +223,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile use of the 'dynamic' type.
 		/// </summary>
+		[Category("C# 4.0 / VS 2010")]
+		[Description("Decompile use of the 'dynamic' type")]
 		public bool Dynamic {
 			get { return dynamic; }
 			set {
@@ -197,6 +240,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile async methods.
 		/// </summary>
+		[Category("C# 5.0 / VS 2012")]
+		[Description("Decompile async methods")]
 		public bool AsyncAwait {
 			get { return asyncAwait; }
 			set {
@@ -213,6 +258,8 @@ namespace ICSharpCode.Decompiler
 		/// Decompile await in catch/finally blocks.
 		/// Only has an effect if <see cref="AsyncAwait"/> is enabled.
 		/// </summary>
+		[Category("C# 6.0 / VS 2015")]
+		[Description("Decompile await in catch/finally blocks")]
 		public bool AwaitInCatchFinally {
 			get { return awaitInCatchFinally; }
 			set {
@@ -228,6 +275,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile [DecimalConstant(...)] as simple literal values.
 		/// </summary>
+		[Category("C# 1.0 / VS .NET")]
+		[Description("Decompile [DecimalConstant(...)] as simple literal values")]
 		public bool DecimalConstants {
 			get { return decimalConstants; }
 			set {
@@ -243,6 +292,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile C# 1.0 'public unsafe fixed int arr[10];' members.
 		/// </summary>
+		[Category("C# 1.0 / VS .NET")]
+		[Description("Decompile C# 1.0 'public unsafe fixed int arr[10];' members")]
 		public bool FixedBuffers {
 			get { return fixedBuffers; }
 			set {
@@ -258,6 +309,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Use lifted operators for nullables.
 		/// </summary>
+		[Category("C# 2.0 / VS 2005")]
+		[Description("Use lifted operators for nullables")]
 		public bool LiftNullables {
 			get { return liftNullables; }
 			set {
@@ -273,6 +326,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile C# 6 ?. and ?[] operators.
 		/// </summary>
+		[Category("C# 6.0 / VS 2015")]
+		[Description("Decompile ?. and ?[] operators")]
 		public bool NullPropagation {
 			get { return nullPropagation; }
 			set {
@@ -288,6 +343,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile automatic properties
 		/// </summary>
+		[Category("C# 3.0 / VS 2008")]
+		[Description("Decompile automatic properties")]
 		public bool AutomaticProperties {
 			get { return automaticProperties; }
 			set {
@@ -303,6 +360,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile automatic events
 		/// </summary>
+		[Category("C# 1.0 / VS .NET")]
+		[Description("Decompile automatic events")]
 		public bool AutomaticEvents {
 			get { return automaticEvents; }
 			set {
@@ -318,6 +377,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile using statements.
 		/// </summary>
+		[Category("C# 1.0 / VS .NET")]
+		[Description("Detect using statements")]
 		public bool UsingStatement {
 			get { return usingStatement; }
 			set {
@@ -333,6 +394,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to use braces for single-statement-blocks. 
 		/// </summary>
+		[Category("Other")]
+		[Description("Always use braces")]
 		public bool AlwaysUseBraces {
 			get { return alwaysUseBraces; }
 			set {
@@ -348,6 +411,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile foreach statements.
 		/// </summary>
+		[Category("C# 1.0 / VS .NET")]
+		[Description("Detect foreach statements")]
 		public bool ForEachStatement {
 			get { return forEachStatement; }
 			set {
@@ -363,6 +428,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile lock statements.
 		/// </summary>
+		[Category("C# 1.0 / VS .NET")]
+		[Description("Detect lock statements")]
 		public bool LockStatement {
 			get { return lockStatement; }
 			set {
@@ -375,6 +442,8 @@ namespace ICSharpCode.Decompiler
 
 		bool switchStatementOnString = true;
 
+		[Category("C# 1.0 / VS .NET")]
+		[Description("Detect switch on string")]
 		public bool SwitchStatementOnString {
 			get { return switchStatementOnString; }
 			set {
@@ -387,6 +456,8 @@ namespace ICSharpCode.Decompiler
 
 		bool usingDeclarations = true;
 
+		[Category("C# 1.0 / VS .NET")]
+		[Description("Insert using declarations")]
 		public bool UsingDeclarations {
 			get { return usingDeclarations; }
 			set {
@@ -399,6 +470,8 @@ namespace ICSharpCode.Decompiler
 
 		bool extensionMethods = true;
 
+		[Category("C# 3.0 / VS 2008")]
+		[Description("Use extension method syntax")]
 		public bool ExtensionMethods {
 			get { return extensionMethods; }
 			set {
@@ -411,6 +484,8 @@ namespace ICSharpCode.Decompiler
 
 		bool queryExpressions = true;
 
+		[Category("C# 3.0 / VS 2008")]
+		[Description("Use LINQ expression syntax")]
 		public bool QueryExpressions {
 			get { return queryExpressions; }
 			set {
@@ -428,6 +503,8 @@ namespace ICSharpCode.Decompiler
 		/// true: <c>EventHandler h = this.OnClick;</c>
 		/// false: <c>EventHandler h = new EventHandler(this.OnClick);</c>
 		/// </summary>
+		[Category("C# 2.0 / VS 2005")]
+		[Description("Use implicit method group conversions")]
 		public bool UseImplicitMethodGroupConversion {
 			get { return useImplicitMethodGroupConversion; }
 			set {
@@ -446,6 +523,8 @@ namespace ICSharpCode.Decompiler
 		/// false: <c>pictureBox1.BeginInit();</c>
 		/// default: false
 		/// </summary>
+		[Category("Other")]
+		[Description("Always cast targets of explicit interface implementation calls")]
 		public bool AlwaysCastTargetsOfExplicitInterfaceImplementationCalls {
 			get { return alwaysCastTargetsOfExplicitInterfaceImplementationCalls; }
 			set {
@@ -461,6 +540,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to use variable names from debug symbols, if available.
 		/// </summary>
+		[Category("Other")]
+		[Description("Use variable names from debug symbols, if available")]
 		public bool UseDebugSymbols {
 			get { return useDebugSymbols; }
 			set {
@@ -477,6 +558,8 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to use array initializers.
 		/// If set to false, might produce non-compilable code.
 		/// </summary>
+		[Category("C# 1.0 / VS .NET")]
+		[Description("Array initializer expressions")]
 		public bool ArrayInitializers
 		{
 			get { return arrayInitializers; }
@@ -495,6 +578,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to use C# 3.0 object/collection initializers.
 		/// </summary>
+		[Category("C# 3.0 / VS 2008")]
+		[Description("Object/collection initializer expressions")]
 		public bool ObjectOrCollectionInitializers {
 			get { return objectCollectionInitializers; }
 			set {
@@ -511,6 +596,8 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to use C# 6.0 dictionary initializers.
 		/// Only has an effect if ObjectOrCollectionInitializers is enabled.
 		/// </summary>
+		[Category("C# 6.0 / VS 2015")]
+		[Description("Dictionary initializer expressions")]
 		public bool DictionaryInitializers {
 			get { return dictionaryInitializers; }
 			set {
@@ -527,6 +614,8 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to use C# 6.0 Extension Add methods in collection initializers.
 		/// Only has an effect if ObjectOrCollectionInitializers is enabled.
 		/// </summary>
+		[Category("C# 6.0 / VS 2015")]
+		[Description("Allow extension 'Add' methods in collection initializer expressions")]
 		public bool ExtensionMethodsInCollectionInitializers {
 			get { return extensionMethodsInCollectionInitializers; }
 			set {
@@ -542,6 +631,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to use C# 6.0 string interpolation
 		/// </summary>
+		[Category("C# 6.0 / VS 2015")]
+		[Description("Use string interpolation")]
 		public bool StringInterpolation {
 			get { return stringInterpolation; }
 			set {
@@ -557,6 +648,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to include XML documentation comments in the decompiled code.
 		/// </summary>
+		[Category("Other")]
+		[Description("Include XML documentation comments in the decompiled code")]
 		public bool ShowXmlDocumentation {
 			get { return showXmlDocumentation; }
 			set {
@@ -569,6 +662,7 @@ namespace ICSharpCode.Decompiler
 
 		bool foldBraces = false;
 
+		[Browsable(false)]
 		public bool FoldBraces {
 			get { return foldBraces; }
 			set {
@@ -581,6 +675,7 @@ namespace ICSharpCode.Decompiler
 
 		bool expandMemberDefinitions = false;
 
+		[Browsable(false)]
 		public bool ExpandMemberDefinitions {
 			get { return expandMemberDefinitions; }
 			set {
@@ -591,11 +686,26 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool expandUsingDeclarations = false;
+
+		[Browsable(false)]
+		public bool ExpandUsingDeclarations {
+			get { return expandUsingDeclarations; }
+			set {
+				if (expandUsingDeclarations != value) {
+					expandUsingDeclarations = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool decompileMemberBodies = true;
 
 		/// <summary>
 		/// Gets/Sets whether member bodies should be decompiled.
 		/// </summary>
+		[Category("Other")]
+		[Browsable(false)]
 		public bool DecompileMemberBodies {
 			get { return decompileMemberBodies; }
 			set {
@@ -611,6 +721,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether simple calculated getter-only property declarations should use expression body syntax.
 		/// </summary>
+		[Category("C# 6.0 / VS 2015")]
+		[Description("Use expression-bodied member syntax for get-only properties")]
 		public bool UseExpressionBodyForCalculatedGetterOnlyProperties {
 			get { return useExpressionBodyForCalculatedGetterOnlyProperties; }
 			set {
@@ -626,6 +738,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether out variable declarations should be used when possible.
 		/// </summary>
+		[Category("C# 7.0 / VS 2017")]
+		[Description("Use out variable declarations")]
 		public bool OutVariables {
 			get { return outVariables; }
 			set {
@@ -642,6 +756,8 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether discards should be used when possible.
 		/// Only has an effect if <see cref="OutVariables"/> is enabled.
 		/// </summary>
+		[Category("C# 7.0 / VS 2017")]
+		[Description("Use discards")]
 		public bool Discards {
 			get { return discards; }
 			set {
@@ -657,6 +773,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether IsByRefLikeAttribute should be replaced with 'ref' modifiers on structs.
 		/// </summary>
+		[Category("C# 7.2 / VS 2017.4")]
+		[Description("IsByRefLikeAttribute should be replaced with 'ref' modifiers on structs")]
 		public bool IntroduceRefModifiersOnStructs {
 			get { return introduceRefModifiersOnStructs; }
 			set {
@@ -673,11 +791,48 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether IsReadOnlyAttribute should be replaced with 'readonly' modifiers on structs
 		/// and with the 'in' modifier on parameters.
 		/// </summary>
+		[Category("C# 7.2 / VS 2017.4")]
+		[Description("IsReadOnlyAttribute should be replaced with 'readonly'/'in' modifiers on structs/parameters")]
 		public bool IntroduceReadonlyAndInModifiers {
 			get { return introduceReadonlyAndInModifiers; }
 			set {
 				if (introduceReadonlyAndInModifiers != value) {
 					introduceReadonlyAndInModifiers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool introduceUnmanagedConstraint = true;
+
+		/// <summary>
+		/// If this option is active, [IsUnmanagedAttribute] on type parameters
+		/// is replaced with "T : unmanaged" constraints.
+		/// </summary>
+		[Category("C# 7.3 / VS 2017.7")]
+		[Description("IsUnmanagedAttribute on type parameters should be replaced with 'unmanaged' constraints")]
+		public bool IntroduceUnmanagedConstraint {
+			get { return introduceUnmanagedConstraint; }
+			set {
+				if (introduceUnmanagedConstraint != value) {
+					introduceUnmanagedConstraint = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool stackAllocInitializers = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 7.3 stackalloc initializers should be used.
+		/// </summary>
+		[Category("C# 7.3 / VS 2017.7")]
+		[Description("Use stackalloc initializer syntax")]
+		public bool StackAllocInitializers {
+			get { return stackAllocInitializers; }
+			set {
+				if (stackAllocInitializers != value) {
+					stackAllocInitializers = value;
 					OnPropertyChanged();
 				}
 			}
@@ -689,6 +844,8 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether tuple type syntax <c>(int, string)</c>
 		/// should be used for <c>System.ValueTuple</c>.
 		/// </summary>
+		[Category("C# 7.0 / VS 2017")]
+		[Description("Use tuple type syntax")]
 		public bool TupleTypes {
 			get { return tupleTypes; }
 			set {
@@ -705,6 +862,8 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether implicit conversions between tuples
 		/// should be used in the decompiled output.
 		/// </summary>
+		[Category("C# 7.0 / VS 2017")]
+		[Description("Use implicit conversions between tuple types")]
 		public bool TupleConversions {
 			get { return tupleConversions; }
 			set {
@@ -720,6 +879,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether tuple comparisons should be detected.
 		/// </summary>
+		[Category("C# 7.3 / VS 2017.7")]
+		[Description("Detect tuple comparisons")]
 		public bool TupleComparisons {
 			get { return tupleComparisons; }
 			set {
@@ -729,12 +890,14 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-
+		
 		bool namedArguments = true;
 
 		/// <summary>
 		/// Gets/Sets whether named arguments should be used.
 		/// </summary>
+		[Category("C# 4.0 / VS 2010")]
+		[Description("Use named arguments")]
 		public bool NamedArguments {
 			get { return namedArguments; }
 			set {
@@ -750,6 +913,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether C# 7.2 non-trailing named arguments should be used.
 		/// </summary>
+		[Category("C# 7.2 / VS 2017.4")]
+		[Description("Use non-trailing named arguments")]
 		public bool NonTrailingNamedArguments {
 			get { return nonTrailingNamedArguments; }
 			set {
@@ -765,6 +930,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether optional arguments should be removed, if possible.
 		/// </summary>
+		[Category("C# 4.0 / VS 2010")]
+		[Description("Remove optional arguments, if possible")]
 		public bool OptionalArguments {
 			get { return optionalArguments; }
 			set {
@@ -779,8 +946,11 @@ namespace ICSharpCode.Decompiler
 
 		/// <summary>
 		/// Gets/Sets whether C# 7.0 local functions should be used.
-		/// Note: this language feature is currenly not implemented and this setting is always false.
+		/// Note: this language feature is currently not implemented and this setting is always false.
 		/// </summary>
+		[Category("C# 7.0 / VS 2017")]
+		[Description("Introduce local functions (NOT IMPLEMENTED!)")]
+		[Browsable(false)]
 		public bool LocalFunctions {
 			get { return localFunctions; }
 			set {
@@ -792,12 +962,46 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool nullableReferenceTypes = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 8.0 nullable reference types are enabled.
+		/// </summary>
+		[Category("C# 8.0 / VS 2019")]
+		[Description("Nullable reference types")]
+		public bool NullableReferenceTypes {
+			get { return nullableReferenceTypes; }
+			set {
+				if (nullableReferenceTypes != value) {
+					nullableReferenceTypes = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool showDebugInfo;
+
+		[Category("Other")]
+		[Description("Show info from debug symbols, if available")]
+		[Browsable(false)]
+		public bool ShowDebugInfo {
+			get { return showDebugInfo; }
+			set {
+				if (showDebugInfo != value) {
+					showDebugInfo = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		#region Options to aid VB decompilation
 		bool assumeArrayLengthFitsIntoInt32 = true;
 
 		/// <summary>
 		/// Gets/Sets whether the decompiler can assume that 'ldlen; conv.i4.ovf' does not throw an overflow exception.
 		/// </summary>
+		[Category("VB-specific options")]
+		[Browsable(false)]
 		public bool AssumeArrayLengthFitsIntoInt32 {
 			get { return assumeArrayLengthFitsIntoInt32; }
 			set {
@@ -813,6 +1017,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to use increment and decrement operators
 		/// </summary>
+		[Category("VB-specific options")]
+		[Browsable(false)]
 		public bool IntroduceIncrementAndDecrement {
 			get { return introduceIncrementAndDecrement; }
 			set {
@@ -828,6 +1034,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to use assignment expressions such as in while ((count = Do()) != 0) ;
 		/// </summary>
+		[Category("VB-specific options")]
+		[Browsable(false)]
 		public bool MakeAssignmentExpressions {
 			get { return makeAssignmentExpressions; }
 			set {
@@ -838,38 +1046,13 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool alwaysGenerateExceptionVariableForCatchBlocks = false;
-
-		/// <summary>
-		/// Gets/Sets whether to always generate exception variables in catch blocks
-		/// </summary>
-		public bool AlwaysGenerateExceptionVariableForCatchBlocks {
-			get { return alwaysGenerateExceptionVariableForCatchBlocks; }
-			set {
-				if (alwaysGenerateExceptionVariableForCatchBlocks != value) {
-					alwaysGenerateExceptionVariableForCatchBlocks = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		bool showDebugInfo;
-
-		public bool ShowDebugInfo {
-			get { return showDebugInfo; }
-			set {
-				if (showDebugInfo != value) {
-					showDebugInfo = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
 		#endregion
 
 		#region Options to aid F# decompilation
 		bool removeDeadCode = false;
 
+		[Category("F#-specific options")]
+		[Description("Remove dead and side effect free code (use with caution!)")]
 		public bool RemoveDeadCode {
 			get { return removeDeadCode; }
 			set {
@@ -885,6 +1068,7 @@ namespace ICSharpCode.Decompiler
 
 		bool loadInMemory = false;
 
+		[Browsable(false)]
 		public bool LoadInMemory {
 			get { return loadInMemory; }
 			set {
@@ -897,6 +1081,7 @@ namespace ICSharpCode.Decompiler
 
 		bool throwOnAssemblyResolveErrors = true;
 
+		[Browsable(false)]
 		public bool ThrowOnAssemblyResolveErrors {
 			get { return throwOnAssemblyResolveErrors; }
 			set {
@@ -907,10 +1092,25 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool applyWindowsRuntimeProjections = true;
+
+		[Category("Other")]
+		[Description("Apply Windows Runtime projections on loaded assemblies")]
+		public bool ApplyWindowsRuntimeProjections {
+			get { return applyWindowsRuntimeProjections; }
+			set {
+				if (applyWindowsRuntimeProjections != value) {
+					applyWindowsRuntimeProjections = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		#endregion
 
 		CSharpFormattingOptions csharpFormattingOptions;
 
+		[Browsable(false)]
 		public CSharpFormattingOptions CSharpFormattingOptions {
 			get {
 				if (csharpFormattingOptions == null) {

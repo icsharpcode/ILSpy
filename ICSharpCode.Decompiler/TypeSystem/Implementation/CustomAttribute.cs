@@ -90,6 +90,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					);
 					hasDecodeErrors = true;
 					valueDecoded = true; // in case of errors, never try again.
+				} catch (BadImageFormatException) {
+					value = new CustomAttributeValue<IType>(
+						ImmutableArray<CustomAttributeTypedArgument<IType>>.Empty,
+						ImmutableArray<CustomAttributeNamedArgument<IType>>.Empty
+					);
+					hasDecodeErrors = true;
+					valueDecoded = true; // in case of errors, never try again.
 				}
 			}
 		}

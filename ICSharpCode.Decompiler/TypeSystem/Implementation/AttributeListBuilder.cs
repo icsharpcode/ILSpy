@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		#region Custom Attributes (ReadAttribute)
-		public void Add(CustomAttributeHandleCollection attributes)
+		public void Add(CustomAttributeHandleCollection attributes, SymbolKind target)
 		{
 			var metadata = module.metadata;
 			foreach (var handle in attributes) {
@@ -177,14 +177,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// Attribute types shouldn't be generic (and certainly not open), so we don't need a generic context.
 				var ctor = module.ResolveMethod(attribute.Constructor, new GenericContext());
 				var type = ctor.DeclaringType;
-				if (IgnoreAttribute(type)) {
+				if (IgnoreAttribute(type, target)) {
 					continue;
 				}
 				Add(new CustomAttribute(module, ctor, handle));
 			}
 		}
 
-		bool IgnoreAttribute(IType attributeType)
+		bool IgnoreAttribute(IType attributeType, SymbolKind target)
 		{
 			if (attributeType.DeclaringType != null || attributeType.TypeParameterCount != 0)
 				return false;
@@ -199,16 +199,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "ExtensionAttribute":
 							return (options & TypeSystemOptions.ExtensionMethods) != 0;
 						case "DecimalConstantAttribute":
-							return (options & TypeSystemOptions.DecimalConstants) != 0;
+							return (options & TypeSystemOptions.DecimalConstants) != 0 && (target == SymbolKind.Field || target == SymbolKind.Parameter);
 						case "IsReadOnlyAttribute":
 							return (options & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0;
 						case "IsByRefLikeAttribute":
-							return (options & TypeSystemOptions.RefStructs) != 0;
+							return (options & TypeSystemOptions.RefStructs) != 0 && target == SymbolKind.TypeDefinition;
+						case "IsUnmanagedAttribute":
+							return (options & TypeSystemOptions.UnmanagedConstraints) != 0 && target == SymbolKind.TypeParameter;
+						case "NullableAttribute":
+							return (options & TypeSystemOptions.NullabilityAnnotations) != 0;
 						default:
 							return false;
 					}
 				case "System":
-					return attributeType.Name == "ParamArrayAttribute";
+					return attributeType.Name == "ParamArrayAttribute" && target == SymbolKind.Parameter;
 				default:
 					return false;
 			}
@@ -245,16 +249,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			} else {
 				// for backward compatibility with .NET 1.0: XML-encoded attribute
 				reader.Reset();
-				ReadXmlSecurityAttribute(ref reader, securityAction);
+				Add(ReadXmlSecurityAttribute(ref reader, securityAction));
 			}
 		}
 
-		private void ReadXmlSecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
+		private IAttribute ReadXmlSecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string xml = reader.ReadUTF16(reader.RemainingBytes);
 			var b = new AttributeBuilder(module, KnownAttribute.PermissionSet);
 			b.AddFixedArg(securityAction);
 			b.AddNamedArg("XML", KnownTypeCode.String, xml);
+			return b.Build();
 		}
 
 		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)

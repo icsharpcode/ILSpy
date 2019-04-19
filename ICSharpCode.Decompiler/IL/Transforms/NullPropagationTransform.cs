@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Check if "condition ? trueInst : falseInst" can be simplified using the null-conditional operator.
 		/// Returns the replacement instruction, or null if no replacement is possible.
 		/// </summary>
-		internal ILInstruction Run(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst, Interval ilRange)
+		internal ILInstruction Run(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
 		{
 			Debug.Assert(context.Settings.NullPropagation);
 			Debug.Assert(!condition.MatchLogicNot(out _), "Caller should pass in positive condition");
@@ -80,16 +80,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return null;
 				if (comp.Kind == ComparisonKind.Equality) {
 					// testedVar == null ? trueInst : falseInst
-					return TryNullPropagation(testedVar, falseInst, trueInst, Mode.ReferenceType, ilRange);
+					return TryNullPropagation(testedVar, falseInst, trueInst, Mode.ReferenceType);
 				} else if (comp.Kind == ComparisonKind.Inequality) {
-					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.ReferenceType, ilRange);
+					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.ReferenceType);
 				}
 			} else if (NullableLiftingTransform.MatchHasValueCall(condition, out ILInstruction loadInst)) {
 				// loadInst.HasValue ? trueInst : falseInst
 				if (loadInst.MatchLdLoca(out testedVar)) {
-					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.NullableByValue, ilRange);
+					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.NullableByValue);
 				} else if (loadInst.MatchLdLoc(out testedVar)) {
-					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.NullableByReference, ilRange);
+					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.NullableByReference);
 				}
 			}
 			return null;
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// testedVar != null ? nonNullInst : nullInst
 		/// </summary>
 		ILInstruction TryNullPropagation(ILVariable testedVar, ILInstruction nonNullInst, ILInstruction nullInst,
-			Mode mode, Interval ilRange)
+			Mode mode)
 		{
 			bool removedRewrapOrNullableCtor = false;
 			if (NullableLiftingTransform.MatchNullableCtor(nonNullInst, out _, out var arg)) {
@@ -118,13 +118,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// testedVar != null ? testedVar.AccessChain : null
 				// => testedVar?.AccessChain
 				IntroduceUnwrap(testedVar, varLoad, mode);
-				return new NullableRewrap(nonNullInst) { ILRange = ilRange };
+				return new NullableRewrap(nonNullInst);
 			} else if (nullInst.MatchDefaultValue(out var type) && type.IsKnownType(KnownTypeCode.NullableOfT)) {
 				context.Step($"Null propagation (mode={mode}, output=value type)", nonNullInst);
 				// testedVar != null ? testedVar.AccessChain : default(T?)
 				// => testedVar?.AccessChain
 				IntroduceUnwrap(testedVar, varLoad, mode);
-				return new NullableRewrap(nonNullInst) { ILRange = ilRange };
+				return new NullableRewrap(nonNullInst);
 			} else if (!removedRewrapOrNullableCtor && NullableType.IsNonNullableValueType(returnType)) {
 				context.Step($"Null propagation (mode={mode}, output=null coalescing)", nonNullInst);
 				// testedVar != null ? testedVar.AccessChain : nullInst
@@ -136,8 +136,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					new NullableRewrap(nonNullInst),
 					nullInst
 				) {
-					UnderlyingResultType = nullInst.ResultType,
-					ILRange = ilRange
+					UnderlyingResultType = nullInst.ResultType
 				};
 			}
 			return null;
@@ -180,7 +179,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			IntroduceUnwrap(testedVar, varLoad, mode);
 			ifInst.ReplaceWith(new NullableRewrap(
 				bodyInst
-			) { ILRange = ifInst.ILRange });
+			).WithILRange(ifInst));
 		}
 
 		bool IsValidAccessChain(ILVariable testedVar, Mode mode, ILInstruction inst, out ILInstruction finalLoad)
@@ -211,6 +210,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
 					if (ArgumentsAfterFirstMayUnwrapNull(call.Arguments))
 						return false;
+				} else if (inst is LdLen ldLen) {
+					inst = ldLen.Array;
 				} else if (inst is NullableUnwrap unwrap) {
 					inst = unwrap.Argument;
 				} else if (inst is DynamicGetMemberInstruction dynGetMember) {
@@ -286,15 +287,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					Debug.Assert(NullableLiftingTransform.MatchGetValueOrDefault(varLoad, testedVar));
 					replacement = new NullableUnwrap(
 						varLoad.ResultType,
-						new LdLoc(testedVar) { ILRange = varLoad.Children[0].ILRange }
-					) { ILRange = varLoad.ILRange };
+						new LdLoc(testedVar).WithILRange(varLoad.Children[0])
+					).WithILRange(varLoad);
 					break;
 				case Mode.NullableByReference:
 					replacement = new NullableUnwrap(
 						varLoad.ResultType,
-						new LdLoc(testedVar) { ILRange = varLoad.Children[0].ILRange },
+						new LdLoc(testedVar).WithILRange(varLoad.Children[0]),
 						refInput: true
-					) { ILRange = varLoad.ILRange };
+					).WithILRange(varLoad);
 					break;
 				default:
 					throw new ArgumentOutOfRangeException("mode");

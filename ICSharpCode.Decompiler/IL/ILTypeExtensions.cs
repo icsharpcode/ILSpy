@@ -136,6 +136,11 @@ namespace ICSharpCode.Decompiler.IL
 			switch (inst) {
 				case NewObj newObj:
 					return newObj.Method.DeclaringType;
+				case NewArr newArr:
+					if (compilation != null)
+						return new ArrayType(compilation, newArr.Type, newArr.Indices.Count);
+					else
+						return SpecialType.UnknownType;
 				case Call call:
 					return call.Method.ReturnType;
 				case CallVirt callVirt:

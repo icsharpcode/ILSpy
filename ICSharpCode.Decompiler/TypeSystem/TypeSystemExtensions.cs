@@ -216,7 +216,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		/// <summary>
 		/// Gets whether the type is the specified known type.
-		/// For generic known types, this returns true any parameterization of the type (and also for the definition itself).
+		/// For generic known types, this returns true for any parameterization of the type (and also for the definition itself).
 		/// </summary>
 		public static bool IsKnownType(this IType type, KnownTypeCode knownType)
 		{
@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		/// <summary>
 		/// Gets whether the type is the specified known type.
-		/// For generic known types, this returns true any parameterization of the type (and also for the definition itself).
+		/// For generic known types, this returns true for any parameterization of the type (and also for the definition itself).
 		/// </summary>
 		internal static bool IsKnownType(this IType type, KnownAttribute knownType)
 		{
@@ -524,6 +524,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static bool FullNameIs(this IMethod method, string type, string name)
 		{
 			return method.Name == name && method.DeclaringType?.FullName == type;
+		}
+
+		public static KnownAttribute IsBuiltinAttribute(this ITypeDefinition type)
+		{
+			return KnownAttributes.IsKnownAttributeType(type);
 		}
 	}
 }

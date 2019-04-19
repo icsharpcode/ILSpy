@@ -51,9 +51,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		Parameter,
 		/// <summary>
-		/// Variable created for exception handler
+		/// Variable created for exception handler.
 		/// </summary>
-		Exception,
+		ExceptionStackSlot,
+		/// <summary>
+		/// Local variable used in a catch block.
+		/// </summary>
+		ExceptionLocal,
 		/// <summary>
 		/// Variable created from stack slot.
 		/// </summary>
@@ -62,6 +66,28 @@ namespace ICSharpCode.Decompiler.IL
 		/// Variable in BlockKind.CallWithNamedArgs
 		/// </summary>
 		NamedArgument,
+		/// <summary>
+		/// Local variable that holds the display class used for lambdas within this function.
+		/// </summary>
+		DisplayClassLocal,
+	}
+
+	static class VariableKindExtensions
+	{
+		public static bool IsLocal(this VariableKind kind)
+		{
+			switch (kind) {
+				case VariableKind.Local:
+				case VariableKind.ExceptionLocal:
+				case VariableKind.ForeachLocal:
+				case VariableKind.UsingLocal:
+				case VariableKind.PinnedLocal:
+				case VariableKind.DisplayClassLocal:
+					return true;
+				default:
+					return false;
+			}
+		}
 	}
 
 	[DebuggerDisplay("{Name} : {Type}")]
@@ -76,6 +102,8 @@ namespace ICSharpCode.Decompiler.IL
 			internal set {
 				if (kind == VariableKind.Parameter)
 					throw new InvalidOperationException("Kind=Parameter cannot be changed!");
+				if (Index != null && value.IsLocal())
+					Debug.Assert(kind.IsLocal());
 				kind = value;
 			}
 		}
@@ -96,9 +124,41 @@ namespace ICSharpCode.Decompiler.IL
 		
 		/// <summary>
 		/// The index of the local variable or parameter (depending on Kind)
+		/// 
+		/// For VariableKinds with "Local" in the name:
+		///  * if non-null, the Index refers to the LocalVariableSignature.
+		///  * index may be null for variables that used to be fields (captured by lambda/async)
+		/// For Parameters, the Index refers to the method's list of parameters.
+		///   The special "this" parameter has index -1.
+		/// For ExceptionStackSlot, the index is the IL offset of the exception handler.
+		/// For other kinds, the index has no meaning, and is usually null.
 		/// </summary>
-		public readonly int Index;
+		public readonly int? Index;
 		
+		[Conditional("DEBUG")]
+		internal void CheckInvariant()
+		{
+			switch (kind) {
+				case VariableKind.Local:
+				case VariableKind.ForeachLocal:
+				case VariableKind.PinnedLocal:
+				case VariableKind.UsingLocal:
+				case VariableKind.ExceptionLocal:
+				case VariableKind.DisplayClassLocal:
+					// in range of LocalVariableSignature
+					Debug.Assert(Index == null || Index >= 0);
+					break;
+				case VariableKind.Parameter:
+					// -1 for the "this" parameter
+					Debug.Assert(Index >= -1);
+					Debug.Assert(Function == null || Index < Function.Parameters.Count);
+					break;
+				case VariableKind.ExceptionStackSlot:
+					Debug.Assert(Index >= 0);
+					break;
+			}
+		}
+
 		public string Name { get; set; }
 
 		public bool HasGeneratedName { get; set; }
@@ -267,8 +327,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// Set when the variable is from a 'yield return' or 'async' state machine.
 		/// </summary>
 		public IField StateMachineField;
-		
-		public ILVariable(VariableKind kind, IType type, int index)
+
+		public ILVariable(VariableKind kind, IType type, int? index = null)
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
@@ -278,9 +338,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.Index = index;
 			if (kind == VariableKind.Parameter)
 				this.HasInitialValue = true;
+			CheckInvariant();
 		}
 		
-		public ILVariable(VariableKind kind, IType type, StackType stackType, int index)
+		public ILVariable(VariableKind kind, IType type, StackType stackType, int? index = null)
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
@@ -290,8 +351,9 @@ namespace ICSharpCode.Decompiler.IL
 			this.Index = index;
 			if (kind == VariableKind.Parameter)
 				this.HasInitialValue = true;
+			CheckInvariant();
 		}
-		
+
 		public override string ToString()
 		{
 			return Name;
@@ -309,8 +371,11 @@ namespace ICSharpCode.Decompiler.IL
 				case VariableKind.Parameter:
 					output.Write("param ");
 					break;
-				case VariableKind.Exception:
-					output.Write("exception ");
+				case VariableKind.ExceptionLocal:
+					output.Write("exception local ");
+					break;
+				case VariableKind.ExceptionStackSlot:
+					output.Write("exception stack ");
 					break;
 				case VariableKind.StackSlot:
 					output.Write("stack ");
@@ -326,6 +391,9 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case VariableKind.NamedArgument:
 					output.Write("named_arg ");
+					break;
+				case VariableKind.DisplayClassLocal:
+					output.Write("display_class local ");
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();
@@ -403,7 +471,14 @@ namespace ICSharpCode.Decompiler.IL
 				return false;
 			if (x.Kind == VariableKind.StackSlot || y.Kind == VariableKind.StackSlot)
 				return false;
-			return x.Function == y.Function && x.Kind == y.Kind && x.Index == y.Index;
+			if (!(x.Function == y.Function && x.Kind == y.Kind))
+				return false;
+			if (x.Index != null)
+				return x.Index == y.Index;
+			else if (x.StateMachineField != null)
+				return x.StateMachineField.Equals(y.StateMachineField);
+			else
+				return false;
 		}
 
 		public int GetHashCode(ILVariable obj)

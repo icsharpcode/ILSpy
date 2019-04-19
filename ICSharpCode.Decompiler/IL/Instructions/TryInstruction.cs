@@ -60,14 +60,14 @@ namespace ICSharpCode.Decompiler.IL
 		public override ILInstruction Clone()
 		{
 			var clone = new TryCatch(TryBlock.Clone());
-			clone.ILRange = this.ILRange;
+			clone.AddILRange(this);
 			clone.Handlers.AddRange(this.Handlers.Select(h => (TryCatchHandler)h.Clone()));
 			return clone;
 		}
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(".try ");
 			TryBlock.WriteTo(output, options);
 			foreach (var handler in Handlers) {
@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write("catch ");
 			if (variable != null) {
 				output.WriteLocalReference(variable.Name, variable, isDefinition: true);
@@ -197,14 +197,12 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override ILInstruction Clone()
 		{
-			return new TryFinally(TryBlock.Clone(), finallyBlock.Clone()) {
-				ILRange = this.ILRange
-			};
+			return new TryFinally(TryBlock.Clone(), finallyBlock.Clone()).WithILRange(this);
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(".try ");
 			TryBlock.WriteTo(output, options);
 			output.Write(" finally ");
@@ -293,14 +291,12 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override ILInstruction Clone()
 		{
-			return new TryFault(TryBlock.Clone(), faultBlock.Clone()) {
-				ILRange = this.ILRange
-			};
+			return new TryFault(TryBlock.Clone(), faultBlock.Clone()).WithILRange(this);
 		}
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(".try ");
 			TryBlock.WriteTo(output, options);
 			output.Write(" fault ");

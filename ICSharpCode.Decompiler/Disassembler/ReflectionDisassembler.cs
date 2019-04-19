@@ -56,6 +56,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			set => methodBodyDisassembler.ShowMetadataTokens = value;
 		}
 
+		public bool ShowMetadataTokensInBase10 {
+			get => methodBodyDisassembler.ShowMetadataTokensInBase10;
+			set => methodBodyDisassembler.ShowMetadataTokensInBase10 = value;
+		}
+
 		public IDebugInfoProvider DebugInfo {
 			get => methodBodyDisassembler.DebugInfo;
 			set => methodBodyDisassembler.DebugInfo = value;
@@ -937,6 +942,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		void WriteParameters(MetadataReader metadata, IEnumerable<ParameterHandle> parameters, MethodSignature<Action<ILNameSyntax>> signature)
 		{
 			int i = 0;
+			int offset = signature.Header.IsInstance ? 1 : 0;
 
 			foreach (var h in parameters) {
 				var p = metadata.GetParameter(h);
@@ -950,7 +956,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.WriteLine();
 					}
 					signature.ParameterTypes[i](ILNameSyntax.Signature);
-					output.Write(" ''");
+					output.Write(' ');
+					output.WriteLocalReference("''", "param_" + (i + offset), isDefinition: true);
 					i++;
 				}
 
@@ -973,7 +980,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				if (!md.IsNil) {
 					WriteMarshalInfo(metadata.GetBlobReader(md));
 				}
-				output.WriteLocalReference(DisassemblerHelpers.Escape(metadata.GetString(p.Name)), p, isDefinition: true);
+				output.WriteLocalReference(DisassemblerHelpers.Escape(metadata.GetString(p.Name)), "param_" + (i + offset), isDefinition: true);
 				i++;
 			}
 
@@ -984,7 +991,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.WriteLine();
 				}
 				signature.ParameterTypes[i](ILNameSyntax.Signature);
-				output.Write(" ''");
+				output.Write(' ');
+				output.WriteLocalReference("''", "param_" + (i + offset), isDefinition: true);
 				i++;
 			}
 
@@ -1025,7 +1033,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 					break;
 				default:
 					var blob = metadata.GetBlobReader(constant.Value);
-					var value = blob.ReadConstant(constant.TypeCode);
+					object value;
+					try {
+						value = blob.ReadConstant(constant.TypeCode);
+					} catch (ArgumentOutOfRangeException) {
+						output.Write($"/* Constant with invalid typecode: {constant.TypeCode} */");
+						return;
+					}
 					if (value is string) {
 						DisassemblerHelpers.WriteOperand(output, value);
 					} else {
@@ -1150,9 +1164,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteAttributes(module, propertyDefinition.GetCustomAttributes());
 			WriteNestedMethod(".get", module, accessors.Getter);
 			WriteNestedMethod(".set", module, accessors.Setter);
-			/*foreach (var method in property.OtherMethods) {
-				WriteNestedMethod(".other", method);
-			}*/
+			foreach (var method in accessors.Others) {
+				WriteNestedMethod(".other", module, method);
+			}
 			CloseBlock();
 		}
 
@@ -1213,9 +1227,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteNestedMethod(".addon", module, accessors.Adder);
 			WriteNestedMethod(".removeon", module, accessors.Remover);
 			WriteNestedMethod(".fire", module, accessors.Raiser);
-			/*foreach (var method in ev.OtherMethods) {
-				WriteNestedMethod(".other", method);
-			}*/
+			foreach (var method in accessors.Others) {
+				WriteNestedMethod(".other", module, method);
+			}
 			CloseBlock();
 		}
 		#endregion

@@ -42,6 +42,11 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			return new KeyComparer<TElement, TKey>(keySelector, Comparer<TKey>.Default, equalityComparer);
 		}
+
+		public static void SortBy<TElement, TKey>(this List<TElement> list, Func<TElement, TKey> keySelector)
+		{
+			list.Sort(Create(keySelector));
+		}
 	}
 	
 	public class KeyComparer<TElement, TKey> : IComparer<TElement>, IEqualityComparer<TElement>

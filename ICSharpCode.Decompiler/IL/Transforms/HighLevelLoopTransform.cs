@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ConditionDetection.InvertIf(loopBody, ifInstruction, context);
 			}
 			
-			context.Step("Transform to while (condition) loop", loop);
+			context.Step("Transform to while (condition) loop: " + loop.EntryPoint.Label, loop);
 			loop.Kind = ContainerKind.While;
 			//invert comparison
 			ifInstruction.Condition = Comp.LogicNot(ifInstruction.Condition);
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// not a do-while loop, exit.
 			if (conditions == null || conditions.Count == 0)
 				return false;
-			context.Step("Transform to do-while loop", loop);
+			context.Step("Transform to do-while loop: " + loop.EntryPoint.Label, loop);
 			Block conditionBlock;
 			// first we remove all extracted instructions from the original block.
 			var originalBlock = (Block)exit.Parent;
@@ -186,9 +186,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			// combine all conditions and the exit instruction into one IfInstruction:
 			IfInstruction condition = null;
-			conditionBlock.AddILRange(exit.ILRange);
+			conditionBlock.AddILRange(exit);
 			foreach (var inst in conditions) {
-				conditionBlock.AddILRange(inst.ILRange);
+				conditionBlock.AddILRange(inst);
 				if (condition == null) {
 					condition = inst;
 					if (swap) {
@@ -358,7 +358,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// - increment block
 				if (incrementBlock.Instructions.Count <= 1 || loop.Blocks.Count < 3)
 					return false;
-				context.Step("Transform to for loop", loop);
+				context.Step("Transform to for loop: " + loop.EntryPoint.Label, loop);
 				// move the block to the end of the loop:
 				loop.Blocks.MoveElementToEnd(incrementBlock);
 				loop.Kind = ContainerKind.For;
@@ -398,7 +398,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				if (numberOfConditions == 0)
 					return false;
-				context.Step("Transform to for loop", loop);
+				context.Step("Transform to for loop: " + loop.EntryPoint.Label, loop);
 				// split condition block:
 				whileCondition.ReplaceWith(forCondition);
 				ExpressionTransforms.RunOnSingleStatement(forCondition, context);
@@ -414,7 +414,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// move the increment instruction:
 				newIncremenBlock.Instructions.Add(secondToLast);
 				newIncremenBlock.Instructions.Add(last);
-				newIncremenBlock.AddILRange(secondToLast.ILRange);
+				newIncremenBlock.AddILRange(secondToLast);
 				whileLoopBody.Instructions.RemoveRange(secondToLastIndex, 2);
 				whileLoopBody.Instructions.Add(new Branch(newIncremenBlock));
 				// complete transform.

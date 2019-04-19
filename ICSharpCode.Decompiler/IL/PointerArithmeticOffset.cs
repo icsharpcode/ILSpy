@@ -44,14 +44,14 @@ namespace ICSharpCode.Decompiler.IL
 					return countOffsetInst;
 				}
 			} else if (byteOffsetInst.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerType.ElementType)) {
-				return new LdcI4(1) { ILRange = byteOffsetInst.ILRange };
+				return new LdcI4(1).WithILRange(byteOffsetInst);
 			} else if (byteOffsetInst.MatchLdcI(out long val)) {
 				// If the offset is a constant, it's possible that the compiler
 				// constant-folded the multiplication.
 				if (elementSize > 0 && (val % elementSize == 0) && val > 0) {
 					val /= elementSize.Value;
 					if (val <= int.MaxValue) {
-						return new LdcI4((int)val) { ILRange = byteOffsetInst.ILRange };
+						return new LdcI4((int)val).WithILRange(byteOffsetInst);
 					}
 				}
 			}

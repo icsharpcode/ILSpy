@@ -18,7 +18,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			if (IsChecked) output.Write(".checked");
 			output.Write(' ');

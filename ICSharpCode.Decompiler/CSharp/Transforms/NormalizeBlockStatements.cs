@@ -130,9 +130,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			base.VisitPropertyDeclaration(propertyDeclaration);
 		}
 
+		public override void VisitIndexerDeclaration(IndexerDeclaration indexerDeclaration)
+		{
+			if (context.Settings.UseExpressionBodyForCalculatedGetterOnlyProperties) {
+				SimplifyIndexerDeclaration(indexerDeclaration);
+			}
+			base.VisitIndexerDeclaration(indexerDeclaration);
+		}
+
 		static readonly PropertyDeclaration CalculatedGetterOnlyPropertyPattern = new PropertyDeclaration() {
+			Attributes = { new Repeat(new AnyNode()) },
 			Modifiers = Modifiers.Any,
 			Name = Pattern.AnyString,
+			PrivateImplementationType = new AnyNodeOrNull(),
+			ReturnType = new AnyNode(),
+			Getter = new Accessor() { Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) } }
+		};
+
+		static readonly IndexerDeclaration CalculatedGetterOnlyIndexerPattern = new IndexerDeclaration() {
+			Attributes = { new Repeat(new AnyNode()) },
+			Modifiers = Modifiers.Any,
+			PrivateImplementationType = new AnyNodeOrNull(),
+			Parameters = { new Repeat(new AnyNode()) },
 			ReturnType = new AnyNode(),
 			Getter = new Accessor() { Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) } }
 		};
@@ -144,6 +163,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 			propertyDeclaration.ExpressionBody = m.Get<Expression>("expression").Single().Detach();
 			propertyDeclaration.Getter.Remove();
+		}
+
+		void SimplifyIndexerDeclaration(IndexerDeclaration indexerDeclaration)
+		{
+			var m = CalculatedGetterOnlyIndexerPattern.Match(indexerDeclaration);
+			if (!m.Success)
+				return;
+			indexerDeclaration.ExpressionBody = m.Get<Expression>("expression").Single().Detach();
+			indexerDeclaration.Getter.Remove();
 		}
 	}
 }

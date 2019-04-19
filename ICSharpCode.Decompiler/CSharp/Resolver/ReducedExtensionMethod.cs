@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Resolver
@@ -172,17 +173,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		public bool IsAccessor {
-			get {
-				return baseMethod.IsAccessor;
-			}
-		}
-
-		public IMember AccessorOwner {
-			get {
-				return baseMethod.AccessorOwner;
-			}
-		}
+		public bool IsAccessor => baseMethod.IsAccessor;
+		public IMember AccessorOwner => baseMethod.AccessorOwner;
+		public MethodSemanticsAttributes AccessorKind => baseMethod.AccessorKind;
 
 		public IMethod ReducedFrom {
 			get {
@@ -239,6 +232,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMethod.GetAttributes();
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => baseMethod.GetReturnTypeAttributes();
+		bool IMethod.ReturnTypeIsRefReadOnly => baseMethod.ReturnTypeIsRefReadOnly;
 
 		public bool IsStatic {
 			get {

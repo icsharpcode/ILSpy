@@ -37,11 +37,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets whether this variable is a constant (C#-like const).
 		/// </summary>
 		bool IsConst { get; }
-		
+
 		/// <summary>
 		/// If this field is a constant, retrieves the value.
 		/// For parameters, this is the default value.
 		/// </summary>
-		object ConstantValue { get; }
+		object GetConstantValue(bool throwOnInvalidMetadata = false);
 	}
 }

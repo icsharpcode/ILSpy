@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>net462</TargetFramework>
     <LangVersion>7.3</LangVersion>
 
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -32,16 +32,22 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;NET46;ROSLYN;CS60;CS70</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NET46;ROSLYN;CS60;CS70;CS71;CS72;CS73</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>TRACE;NET46;ROSLYN;CS60;CS70;CS71;CS72;CS73</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="2017.7.26.1241" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.9.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="2.9.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.9.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.0.0-beta4-final" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.0.0-beta4-final" />
+    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
-    <PackageReference Include="NUnit" Version="3.9.0" />
+    <PackageReference Include="NUnit" Version="3.11.0" />
+    <PackageReference Include="System.Memory" Version="4.5.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -50,7 +56,10 @@
 
   <ItemGroup>
     <None Include="TestCases\Correctness\Jmp.il" />
+    <None Include="TestCases\Correctness\StackTests.il" />
     <None Include="TestCases\Correctness\StackTypes.il" />
+    <None Include="TestCases\Correctness\Uninit.vb" />
+    <None Include="TestCases\ILPretty\ConstantBlobs.il" />
     <None Include="TestCases\ILPretty\FSharpLoops.fs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.il" />
     <None Include="TestCases\ILPretty\FSharpLoops_Release.il" />
@@ -63,6 +72,11 @@
 
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
+    <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
+    <Compile Include="TestCases\ILPretty\Issue1389.cs" />
+    <Compile Include="TestCases\ILPretty\Issue1454.cs" />
+    <Compile Include="TestCases\Pretty\Discards.cs" />
+    <Compile Include="TestCases\Pretty\MultidimensionalArray.cs" />
     <Compile Include="Output\CSharpAmbienceTests.cs" />
     <Compile Include="Semantics\ConversionTests.cs" />
     <Compile Include="Semantics\ExplicitConversionTest.cs" />
@@ -71,10 +85,28 @@
     <Compile Include="TestCases\Correctness\LocalFunctions.cs" />
     <Compile Include="TestCases\Correctness\RefLocalsAndReturns.cs" />
     <Compile Include="TestCases\ILPretty\Issue1256.cs" />
+    <Compile Include="TestCases\ILPretty\Issue1323.cs" />
+    <Compile Include="TestCases\Pretty\CustomAttributes2.cs" />
+    <Compile Include="TestCases\Pretty\EnumTests.cs" />
+    <None Include="TestCases\Pretty\NullableRefTypes.cs" />
+    <Compile Include="TestCases\Pretty\TypeMemberTests.cs" />
+    <Compile Include="TestCases\Pretty\ValueTypes.cs" />
+    <None Include="TestCases\ILPretty\Issue1389.il" />
+    <None Include="TestCases\ILPretty\SequenceOfNestedIfs.cs" />
+    <Compile Include="TestCases\Pretty\ConstructorInitializers.cs" />
+    <None Include="TestCases\ILPretty\SequenceOfNestedIfs.il" />
+    <None Include="TestCases\Pretty\AsyncMain.cs" />
+    <None Include="TestCases\ILPretty\Issue1325.cs" />
+    <Compile Include="TestCases\Pretty\ConstantsTests.cs" />
+    <Compile Include="TestCases\Pretty\CS73_StackAllocInitializers.cs" />
     <Compile Include="TestCases\Pretty\OptionalArguments.cs" />
     <Compile Include="TestCases\Pretty\CustomShortCircuitOperators.cs" />
-    <Compile Include="TestCases\Pretty\TypeTests.cs" />
+    <Compile Include="TestCases\Pretty\ReduceNesting.cs" />
+    <Compile Include="TestCases\Pretty\InterfaceTests.cs" />
+    <Compile Include="TestCases\Pretty\YieldReturn.cs" />
     <None Include="TestCases\ILPretty\Issue1256.il" />
+    <None Include="TestCases\ILPretty\Issue1323.il" />
+    <None Include="TestCases\ILPretty\Issue1325.il" />
     <None Include="TestCases\Ugly\NoDecimalConstants.Expected.cs" />
     <Compile Include="TestCases\Ugly\NoDecimalConstants.cs" />
     <None Include="TestCases\Disassembler\Pretty\SecurityDeclarations.il" />
@@ -110,7 +142,7 @@
     <Compile Include="TestCases\Pretty\NullPropagation.cs" />
     <Compile Include="TestCases\Pretty\VariableNaming.cs" />
     <Compile Include="TestCases\Pretty\VariableNamingWithoutSymbols.cs" />
-    <Compile Include="Util\SequencePointTests.cs" />
+    <Compile Include="PdbGenerationTestRunner.cs" />
     <None Include="TestCases\ILPretty\Issue1047.il" />
     <None Include="TestCases\ILPretty\Issue959.cs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.cs" />
@@ -183,7 +215,12 @@
     <Compile Include="TestCases\Pretty\AssemblyCustomAttributes.cs" />
     <Compile Include="TestCases\Pretty\CustomAttributeSamples.cs" />
     <Compile Include="TestCases\Pretty\CustomAttributes.cs" />
-    <Compile Include="CodeSampleFileParser.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TestCases\PdbGen\ForLoopTests.xml" />
+    <Content Include="TestCases\PdbGen\HelloWorld.xml" />
+    <Content Include="TestCases\PdbGen\LambdaCapturing.xml" />
   </ItemGroup>
 
   <ItemGroup>

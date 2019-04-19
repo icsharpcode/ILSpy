@@ -185,11 +185,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (allowImplicitConversion) {
 					switch (ResolveResult) {
 						case ConversionResolveResult conversion: {
-							if (Expression is CastExpression cast
-							&& ((type.IsKnownType(KnownTypeCode.Object) && conversion.Conversion.IsBoxingConversion
-								|| conversion.Conversion.IsAnonymousFunctionConversion
-								|| (conversion.Conversion.IsImplicit && (conversion.Conversion.IsUserDefined || targetType.IsKnownType(KnownTypeCode.Decimal)))
-							) || (conversion.Conversion.IsInterpolatedStringConversion))) {
+							if (Expression is CastExpression cast && CastCanBeMadeImplicit(
+									Resolver.CSharpConversions.Get(expressionBuilder.compilation),
+									conversion.Conversion,
+									conversion.Input.Type,
+									type, targetType
+								)) {
 								return this.UnwrapChild(cast.Expression);
 							} else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
 									&& oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion) {
@@ -223,12 +224,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					newElementRRs.Add(newElementExpr.ResolveResult);
 				}
 				return newTupleExpr.WithILInstruction(this.ILInstructions)
-					.WithRR(new TupleResolveResult(expressionBuilder.compilation, newElementRRs.ToImmutableArray()));
+					.WithRR(new TupleResolveResult(
+						expressionBuilder.compilation, newElementRRs.ToImmutableArray(), 
+						valueTupleAssembly: targetTupleType.GetDefinition()?.ParentModule
+					));
 			}
 			var compilation = expressionBuilder.compilation;
 			var conversions = Resolver.CSharpConversions.Get(compilation);
 			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2 &&
-				IsBoxingOrInterpolatedStringConversion(conversions, conv.Conversion, conv.Input.Type, targetType))
+				CastCanBeMadeImplicit(conversions, conv.Conversion, conv.Input.Type, type, targetType))
 			{
 				var unwrapped = this.UnwrapChild(cast2.Expression);
 				if (allowImplicitConversion)
@@ -347,9 +351,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				return pointerExpr.ConvertTo(targetType, expressionBuilder);
 			}
 			if (targetType.Kind == TypeKind.ByReference) {
+				var elementType = ((ByReferenceType)targetType).ElementType;
+				if (this.Expression is DirectionExpression thisDir && this.ILInstructions.Any(i => i.OpCode == OpCode.AddressOf)
+					&& thisDir.Expression.GetResolveResult()?.Type.GetStackType() == elementType.GetStackType()) {
+					// When converting a reference to a temporary to a different type,
+					// apply the cast to the temporary instead.
+					var convertedTemp = this.UnwrapChild(thisDir.Expression).ConvertTo(elementType, expressionBuilder, checkForOverflow);
+					return new DirectionExpression(FieldDirection.Ref, convertedTemp)
+						.WithILInstruction(this.ILInstructions)
+						.WithRR(new ByReferenceResolveResult(convertedTemp.ResolveResult, false));
+				}
 				// Convert from integer/pointer to reference.
 				// First, convert to the corresponding pointer type:
-				var elementType = ((ByReferenceType)targetType).ElementType;
 				var arg = this.ConvertTo(new PointerType(elementType), expressionBuilder, checkForOverflow);
 				Expression expr;
 				ResolveResult elementRR;
@@ -387,21 +400,32 @@ namespace ICSharpCode.Decompiler.CSharp
 				return this;
 			}
 			var castExpr = new CastExpression(expressionBuilder.ConvertType(targetType), Expression);
-			bool avoidCheckAnnotation = utype.IsKnownType(KnownTypeCode.Single) && targetUType.IsKnownType(KnownTypeCode.Double);
-			if (!avoidCheckAnnotation) {
+			bool needsCheckAnnotation = targetUType.GetStackType().IsIntegerType();
+			if (needsCheckAnnotation) {
 				castExpr.AddAnnotation(checkForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
 			}
 			return castExpr.WithoutILInstruction().WithRR(rr);
 		}
-
-		bool IsBoxingOrInterpolatedStringConversion(Resolver.CSharpConversions conversions, Conversion conversion, IType inputType, IType targetType)
+		
+		/// <summary>
+		/// Gets whether an implicit conversion from 'inputType' to 'newTargetType'
+		/// would have the same semantics as the existing cast from 'inputType' to 'oldTargetType'.
+		/// The existing cast is classified in 'conversion'.
+		/// </summary>
+		bool CastCanBeMadeImplicit(Resolver.CSharpConversions conversions, Conversion conversion, IType inputType, IType oldTargetType, IType newTargetType)
 		{
-			if (conversion.IsBoxingConversion && conversions.IsBoxingConversion(inputType, targetType))
-				return true;
-			if (conversion.IsInterpolatedStringConversion && (targetType.IsKnownType(KnownTypeCode.FormattableString)
-				|| targetType.IsKnownType(KnownTypeCode.IFormattable)))
-				return true;
-			return false;
+			if (!conversion.IsImplicit) {
+				// If the cast was required for the old conversion, avoid making it implicit.
+				return false;
+			}
+			if (conversion.IsBoxingConversion) {
+				return conversions.IsBoxingConversionOrInvolvingTypeParameter(inputType, newTargetType);
+			}
+			if (conversion.IsInterpolatedStringConversion) {
+				return newTargetType.IsKnownType(KnownTypeCode.FormattableString)
+					|| newTargetType.IsKnownType(KnownTypeCode.IFormattable);
+			}
+			return oldTargetType.Equals(newTargetType);
 		}
 		
 		TranslatedExpression LdcI4(ICompilation compilation, int val)
@@ -410,7 +434,27 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithoutILInstruction()
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), val));
 		}
-		
+
+		/// <summary>
+		/// In conditional contexts, remove the bool-cast emitted when converting
+		/// an "implicit operator bool" invocation.
+		/// </summary>
+		public TranslatedExpression UnwrapImplicitBoolConversion(Func<IType, bool> typeFilter = null)
+		{
+			if (!this.Type.IsKnownType(KnownTypeCode.Boolean))
+				return this;
+			if (!(this.ResolveResult is ConversionResolveResult rr))
+				return this;
+			if (!(rr.Conversion.IsUserDefined && rr.Conversion.IsImplicit))
+				return this;
+			if (typeFilter != null && !typeFilter(rr.Input.Type))
+				return this;
+			if (this.Expression is CastExpression cast) {
+				return this.UnwrapChild(cast.Expression);
+			}
+			return this;
+		}
+
 		/// <summary>
 		/// Converts this expression to a boolean expression.
 		/// 

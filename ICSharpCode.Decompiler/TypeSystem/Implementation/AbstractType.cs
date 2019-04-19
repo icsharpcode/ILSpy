@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.Util;
 
@@ -54,6 +55,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public abstract bool? IsReferenceType  { get; }
 
 		public virtual bool IsByRefLike => false;
+
+		public virtual Nullability Nullability => Nullability.Oblivious;
+
+		public virtual IType ChangeNullability(Nullability nullability)
+		{
+			Debug.Assert(nullability == Nullability.Oblivious);
+			return this;
+		}
 
 		public abstract TypeKind Kind { get; }
 		

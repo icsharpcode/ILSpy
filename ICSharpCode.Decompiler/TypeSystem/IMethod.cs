@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -33,6 +34,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Does not include inherited attributes.
 		/// </remarks>
 		IEnumerable<IAttribute> GetReturnTypeAttributes();
+
+		/// <summary>
+		/// Gets whether the return type is 'ref readonly'.
+		/// </summary>
+		bool ReturnTypeIsRefReadOnly { get; }
 
 		/// <summary>
 		/// Gets the type parameters of this method; or an empty list if the method is not generic.
@@ -68,6 +74,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Otherwise, returns null.
 		/// </summary>
 		IMember AccessorOwner { get; }
+
+		/// <summary>
+		/// Gets the kind of accessor this is.
+		/// </summary>
+		MethodSemanticsAttributes AccessorKind { get; }
 
 		/// <summary>
 		/// If this method is reduced from an extension method return the original method, <c>null</c> otherwise.

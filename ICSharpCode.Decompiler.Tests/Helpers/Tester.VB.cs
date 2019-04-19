@@ -12,71 +12,30 @@ using Microsoft.VisualBasic;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
-	[Flags]
-	public enum VBCompilerOptions
-	{
-		None,
-		Optimize = 0x1,
-		UseDebug = 0x2,
-		Force32Bit = 0x4,
-		Library = 0x8,
-		UseRoslyn = 0x10,
-	}
-
 	partial class Tester
 	{
-		internal static string GetSuffix(VBCompilerOptions vbcOptions)
-		{
-			string suffix = "";
-			if ((vbcOptions & VBCompilerOptions.Optimize) != 0)
-				suffix += ".opt";
-			if ((vbcOptions & VBCompilerOptions.Force32Bit) != 0)
-				suffix += ".32";
-			if ((vbcOptions & VBCompilerOptions.UseDebug) != 0)
-				suffix += ".dbg";
-			if ((vbcOptions & VBCompilerOptions.UseRoslyn) != 0)
-				suffix += ".roslyn";
-			return suffix;
-		}
-
-		public static List<KeyValuePair<string, object>> GetPreprocessorSymbols(VBCompilerOptions flags)
-		{
-			var preprocessorSymbols = new List<KeyValuePair<string, object>>();
-			if (flags.HasFlag(VBCompilerOptions.UseDebug)) {
-				preprocessorSymbols.Add(new KeyValuePair<string, object>("DEBUG", 1));
-			}
-			if (flags.HasFlag(VBCompilerOptions.Optimize)) {
-				preprocessorSymbols.Add(new KeyValuePair<string, object>("OPT", 1));
-			}
-			if (flags.HasFlag(VBCompilerOptions.UseRoslyn)) {
-				preprocessorSymbols.Add(new KeyValuePair<string, object>("ROSLYN", 1));
-				preprocessorSymbols.Add(new KeyValuePair<string, object>("VB11", 1));
-				preprocessorSymbols.Add(new KeyValuePair<string, object>("VB14", 1));
-				preprocessorSymbols.Add(new KeyValuePair<string, object>("VB15", 1));
-			} else {
-				preprocessorSymbols.Add(new KeyValuePair<string, object>("LEGACY_VBC", 1));
-			}
-			return preprocessorSymbols;
-		}
-
-		public static CompilerResults CompileVB(string sourceFileName, VBCompilerOptions flags = VBCompilerOptions.UseDebug, string outputFileName = null)
+		public static CompilerResults CompileVB(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };
 			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)""")) {
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
 			}
 
-			var preprocessorSymbols = GetPreprocessorSymbols(flags);
+			var preprocessorSymbols = GetPreprocessorSymbols(flags).Select(symbol => new KeyValuePair<string, object>(symbol, 1)).ToList();
 
-			if (flags.HasFlag(VBCompilerOptions.UseRoslyn)) {
+			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
 				var parseOptions = new VisualBasicParseOptions(preprocessorSymbols: preprocessorSymbols, languageVersion: LanguageVersion.Latest);
 				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
+				var references = defaultReferences.Value;
+				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic)) {
+					references = references.Concat(visualBasic.Value);
+				}
 				var compilation = VisualBasicCompilation.Create(Path.GetFileNameWithoutExtension(sourceFileName),
-					syntaxTrees, defaultReferences.Value,
+					syntaxTrees, references,
 					new VisualBasicCompilationOptions(
-					flags.HasFlag(VBCompilerOptions.Library) ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication,
-					platform: flags.HasFlag(VBCompilerOptions.Force32Bit) ? Platform.X86 : Platform.AnyCpu,
-					optimizationLevel: flags.HasFlag(VBCompilerOptions.Optimize) ? OptimizationLevel.Release : OptimizationLevel.Debug,
+					flags.HasFlag(CompilerOptions.Library) ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication,
+					platform: flags.HasFlag(CompilerOptions.Force32Bit) ? Platform.X86 : Platform.AnyCpu,
+					optimizationLevel: flags.HasFlag(CompilerOptions.Optimize) ? OptimizationLevel.Release : OptimizationLevel.Debug,
 					deterministic: true
 				));
 				CompilerResults results = new CompilerResults(new TempFileCollection());
@@ -90,15 +49,18 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					throw new Exception(b.ToString());
 				}
 				return results;
+			} else if (flags.HasFlag(CompilerOptions.UseMcs)) {
+				throw new NotSupportedException("Cannot use mcs for VB");
 			} else {
-				var provider = new VBCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v10.0" } });
+				var provider = new VBCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 				CompilerParameters options = new CompilerParameters();
-				options.GenerateExecutable = !flags.HasFlag(VBCompilerOptions.Library);
-				options.CompilerOptions = "/o" + (flags.HasFlag(VBCompilerOptions.Optimize) ? "+" : "-");
-				options.CompilerOptions += (flags.HasFlag(VBCompilerOptions.UseDebug) ? " /debug" : "");
-				options.CompilerOptions += (flags.HasFlag(VBCompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
+				options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);
+				options.CompilerOptions = "/o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-");
+				options.CompilerOptions += (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "");
+				options.CompilerOptions += (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
+				options.CompilerOptions += "/optioninfer+ /optionexplicit+";
 				if (preprocessorSymbols.Count > 0) {
-					options.CompilerOptions += " /d:" + string.Join(";", preprocessorSymbols);
+					options.CompilerOptions += " /d:" + string.Join(",", preprocessorSymbols.Select(p => $"{p.Key}={p.Value}"));
 				}
 				if (outputFileName != null) {
 					options.OutputAssembly = outputFileName;
@@ -107,6 +69,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				options.ReferencedAssemblies.Add("System.dll");
 				options.ReferencedAssemblies.Add("System.Core.dll");
 				options.ReferencedAssemblies.Add("System.Xml.dll");
+				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic)) {
+					options.ReferencedAssemblies.Add("Microsoft.VisualBasic.dll");
+				}
 				CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
 				if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
 					StringBuilder b = new StringBuilder("Compiler error:");
@@ -118,6 +83,5 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				return results;
 			}
 		}
-
 	}
 }

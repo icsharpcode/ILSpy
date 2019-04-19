@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Humanizer;
@@ -71,7 +72,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						var lastParameter = f.Method.Parameters.Last();
 						switch (f.Method.AccessorOwner) {
 							case IProperty prop:
-								if (prop.Setter == f.Method) {
+								if (f.Method.AccessorKind == MethodSemanticsAttributes.Setter) {
 									if (prop.Parameters.Any(p => p.Name == "value")) {
 										f.Warnings.Add("Parameter named \"value\" already present in property signature!");
 										break;
@@ -90,7 +91,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								}
 								break;
 							case IEvent ev:
-								if (f.Method != ev.InvokeAccessor) {
+								if (f.Method.AccessorKind != MethodSemanticsAttributes.Raiser) {
 									var variableForLastParameter = f.Variables.FirstOrDefault(v => v.Function == f
 										&& v.Kind == VariableKind.Parameter
 										&& v.Index == f.Method.Parameters.Count - 1);
@@ -124,23 +125,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool IsSetOrEventAccessor(IMethod method)
 		{
-			if (method.AccessorOwner is IProperty p)
-				return p.Setter == method;
-			if (method.AccessorOwner is IEvent e)
-				return e.InvokeAccessor != method;
-			return false;
+			switch (method.AccessorKind) {
+				case MethodSemanticsAttributes.Setter:
+				case MethodSemanticsAttributes.Adder:
+				case MethodSemanticsAttributes.Remover:
+					return true;
+				default:
+					return false;
+			}
 		}
 
 		void PerformAssignment(ILFunction function)
 		{
 			// remove unused variables before assigning names
 			function.Variables.RemoveDead();
+			int numDisplayClassLocals = 0;
 			foreach (var v in function.Variables) {
 				switch (v.Kind) {
 					case VariableKind.Parameter: // ignore
 						break;
 					case VariableKind.InitializerTarget: // keep generated names
 						AddExistingName(reservedVariableNames, v.Name);
+						break;
+					case VariableKind.DisplayClassLocal:
+						v.Name = "CS$<>8__locals" + (numDisplayClassLocals++);
 						break;
 					default:
 						if (v.HasGeneratedName || !IsValidName(v.Name) || ConflictWithLocal(v)) {
@@ -259,6 +267,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 					}
 				}
+			}
+			// The ComponentResourceManager inside InitializeComponent must be named "resources",
+			// otherwise the WinForms designer won't load the Form.
+			if (CSharp.CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(context.Function.Method) && variable.Type.FullName == "System.ComponentModel.ComponentResourceManager") {
+				proposedName = "resources";
 			}
 			if (string.IsNullOrEmpty(proposedName)) {
 				var proposedNameForAddress = variable.AddressInstructions.OfType<LdLoca>()
@@ -477,6 +490,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (function == null)
 				throw new ArgumentNullException(nameof(function));
+			if (existingVariable != null && !existingVariable.HasGeneratedName) {
+				return existingVariable.Name;
+			}
 			var reservedVariableNames = CollectReservedVariableNames(function, existingVariable);
 
 			string baseName = GetNameFromInstruction(valueContext);

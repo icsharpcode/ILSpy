@@ -218,6 +218,8 @@
 			CustomClassName("LdMemberToken"), NoArguments, HasMemberOperand, ResultType("O")),
 		new OpCode("localloc", "Allocates space in the stack frame",
 			CustomClassName("LocAlloc"), Unary, ResultType("I"), MayThrow),
+		new OpCode("localloc.span", "Allocates space in the stack frame and wraps it in a Span",
+			CustomClassName("LocAllocSpan"), Unary, HasTypeOperand, ResultType("O"), MayThrow),
 		new OpCode("cpblk", "memcpy(destAddress, sourceAddress, size);",
 			CustomArguments(("destAddress", new[] { "I", "Ref" }), ("sourceAddress", new[] { "I", "Ref" }), ("size", new[] { "I4" })),
 			MayThrow, MemoryAccess,
@@ -593,7 +595,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public IEnumerable<string> WriteToBody {
 			get {
-				yield return "ILRange.WriteTo(output, options);";
+				yield return "WriteILRange(output, options);";
 				foreach (string line in WriteOpCodePrefix)
 					yield return line;
 				yield return "output.Write(OpCode);";
@@ -706,6 +708,9 @@ namespace ICSharpCode.Decompiler.IL
 	
 	static Action<OpCode> MayThrowIfNotDelayed = HasFlag("(DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow)") + (opCode => {
 		opCode.Members.Add("public bool DelayExceptions; // NullReferenceException/IndexOutOfBoundsException only occurs when the reference is dereferenced");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOpCodePrefix.Add("if (DelayExceptions)" + Environment.NewLine + "\toutput.Write(\"delayex.\");");
+		opCode.PerformMatchConditions.Add("DelayExceptions == o.DelayExceptions");
 	});
 	
 	static Action<OpCode> BaseClass(string name)

@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class WellKnownConstants
@@ -64,5 +66,90 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public const decimal DecimalMaxValue = decimal.MaxValue;
 		public const decimal DecimalMinValue = decimal.MinValue;
+
+		public const float Float_One = 1f;
+		public const double Double_One = 1.0;
+		public const float Float_Two = 2f;
+		public const double Double_Two = 2.0;
+
+		public const float Float_PI = (float)Math.PI;
+		public const float Float_HalfOfPI = (float)Math.PI / 2f;
+		public const float Float_QuarterOfPI = (float)Math.PI / 4f;
+		public const float Float_PITimes2 = (float)Math.PI * 2f;
+		public const float Float_3QuartersOfPI = (float)Math.PI * 3f / 4f;
+		public const float Float_PIDiv360 = (float)Math.PI / 360f;
+		public const float Float_PIDiv16 = (float)Math.PI / 16f;
+		public const float Float_PIDiv32 = (float)Math.PI / 32f;
+		public const float Float_PIInverseFraction = 1f / (float)Math.PI;
+		public const float Float_PIInverseFraction2 = 2f / (float)Math.PI;
+		public const float Float_PIInverseFraction5 = 5f / (float)Math.PI;
+		public const float Float_PITimes90 = (float)Math.PI * 90f;
+		public const float Float_PITimes180 = (float)Math.PI * 180f;
+		public const float Float_LooksLikePI = 3.1415925f;
+		public const float Float_LooksLikePI2 = 3.14159f;
+		public const float Float_LooksLikePI3 = 3.141f;
+		public const float Float_BeforePI = 3.1415925f;
+		public const float Float_AfterPI = 3.141593f;
+		public const float Float_Negated_PI = -(float)Math.PI;
+		public const float Float_Negated_HalfOfPI = -(float)Math.PI / 2f;
+		public const float Float_Negated_QuarterOfPI = -(float)Math.PI / 4f;
+		public const float Float_Negated_PITimes2 = (float)Math.PI * -2f;
+		public const float Float_Negated_3QuartersOfPI = (float)Math.PI * -3f / 4f;
+		public const float Float_Negated_PIDiv360 = -(float)Math.PI / 360f;
+		public const float Float_Negated_PIDiv16 = -(float)Math.PI / 16f;
+		public const float Float_Negated_PIDiv32 = -(float)Math.PI / 32f;
+		public const float Float_Negated_PIInverseFraction = -1f / (float)Math.PI;
+		public const float Float_Negated_PIInverseFraction2 = -2f / (float)Math.PI;
+		public const float Float_Negated_PIInverseFraction5 = -5f / (float)Math.PI;
+		public const float Float_Negated_PITimes90 = (float)Math.PI * -90f;
+		public const float Float_Negated_PITimes180 = (float)Math.PI * -180f;
+		public const float Float_Negated_LooksLikePI = -3.141f;
+		public const float Float_Negated_BeforePI = -3.1415925f;
+		public const float Float_Negated_AfterPI = -3.141593f;
+
+		public const float Float_E = (float)Math.E;
+		public const float Float_Negated_E = -(float)Math.E;
+
+		public const double Double_PI = Math.PI;
+		public const double Double_HalfOfPI = Math.PI / 2.0;
+		public const double Double_QuarterOfPI = Math.PI / 4.0;
+		public const double Double_PITimes2 = Math.PI * 2.0;
+		public const double Double_3QuartersOfPI = Math.PI * 3.0 / 4.0;
+		public const double Double_PIDiv360 = Math.PI / 360.0;
+		public const double Double_PIDiv16 = Math.PI / 16.0;
+		public const double Double_PIDiv32 = Math.PI / 32.0;
+		public const double Double_PIInverseFraction = 1.0 / Math.PI;
+		public const double Double_PIInverseFraction2 = 2.0 / Math.PI;
+		public const double Double_PIInverseFraction5 = 5.0 / Math.PI;
+		public const double Double_PITimes90 = Math.PI * 90.0;
+		public const double Double_PITimes180 = Math.PI * 180.0;
+		public const double Double_LooksLikePI = 3.1415926;
+		public const double Double_LooksLikePI2 = 3.14159;
+		public const double Double_LooksLikePI3 = 3.141;
+		public const double Double_BeforePI = 3.1415926535897927;
+		public const double Double_AfterPI = 3.1415926535897936;
+		public const double Double_Negated_PI = -Math.PI;
+		public const double Double_Negated_HalfOfPI = -Math.PI / 2.0;
+		public const double Double_Negated_QuarterOfPI = -Math.PI / 4.0;
+		public const double Double_Negated_PITimes2 = Math.PI * -2.0;
+		public const double Double_Negated_3QuartersOfPI = Math.PI * -3.0 / 4.0;
+		public const double Double_Negated_PIDiv360 = -Math.PI / 360.0;
+		public const double Double_Negated_PIDiv16 = -Math.PI / 16.0;
+		public const double Double_Negated_PIDiv32 = -Math.PI / 32.0;
+		public const double Double_Negated_PIInverseFraction = -1.0 / Math.PI;
+		public const double Double_Negated_PIInverseFraction2 = -2.0 / Math.PI;
+		public const double Double_Negated_PIInverseFraction5 = -5.0 / Math.PI;
+		public const double Double_Negated_PITimes90 = Math.PI * -90.0;
+		public const double Double_Negated_PITimes180 = Math.PI * -180.0;
+		public const double Double_Negated_LooksLikePI = -3.141;
+		public const double Double_Negated_BeforePI = -3.1415926535897927;
+		public const double Double_Negated_AfterPI = -3.1415926535897936;
+
+		public const double Double_E = Math.E;
+		public const double Double_BeforeE = 2.7182818284590446;
+		public const double Double_AfterE = 2.7182818284590455;
+		public const double Double_Negated_E = -Math.E;
+		public const double Double_Negated_BeforeE = -2.7182818284590446;
+		public const double Double_Negated_AfterE = -2.7182818284590455;
 	}
 }

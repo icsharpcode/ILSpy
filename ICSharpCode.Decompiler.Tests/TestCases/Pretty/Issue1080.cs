@@ -19,19 +19,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080
 		}
 	}
 }
-namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB
-{
-	internal interface Type2 : Type1
-	{
-	}
-}
+
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA
 {
 	internal interface Type2 : ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB.Type2, Type1
 	{
 	}
 }
-namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceC
+
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB
 {
 	internal static class Extensions
 	{
@@ -39,12 +35,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceC
 		{
 		}
 	}
-}
-namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB
-{
 	internal interface Type1
 	{
 	}
+	internal interface Type2 : Type1
+	{
+	}
+}
+
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceC
+{
 	internal static class Extensions
 	{
 		public static void Extension(this Type1 obj)

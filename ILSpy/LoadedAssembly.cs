@@ -153,12 +153,13 @@ namespace ICSharpCode.ILSpy
 			if (stream != null)
 			{
 				// Read the module from a precrafted stream
-				module = new PEFile(fileName, stream);
+				module = new PEFile(fileName, stream, metadataOptions: DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections ? MetadataReaderOptions.ApplyWindowsRuntimeProjections : MetadataReaderOptions.None);
 			}
 			else
 			{
 				// Read the module from disk (by default)
-				module = new PEFile(fileName, new FileStream(fileName, FileMode.Open, FileAccess.Read), PEStreamOptions.PrefetchEntireImage);
+				module = new PEFile(fileName, new FileStream(fileName, FileMode.Open, FileAccess.Read), PEStreamOptions.PrefetchEntireImage,
+					metadataOptions: DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections ? MetadataReaderOptions.ApplyWindowsRuntimeProjections : MetadataReaderOptions.None);
 			}
 
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols) {
@@ -322,7 +323,7 @@ namespace ICSharpCode.ILSpy
 		class MyUniversalResolver : UniversalAssemblyResolver
 		{
 			public MyUniversalResolver(LoadedAssembly assembly)
-				: base(assembly.FileName, false, assembly.GetTargetFrameworkIdAsync().Result, PEStreamOptions.PrefetchEntireImage)
+				: base(assembly.FileName, false, assembly.GetTargetFrameworkIdAsync().Result, PEStreamOptions.PrefetchEntireImage, DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections ? MetadataReaderOptions.ApplyWindowsRuntimeProjections : MetadataReaderOptions.None)
 			{
 			}
 		}

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using ICSharpCode.Decompiler.Util;
 
@@ -94,7 +95,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public IEnumerable<IAttribute> GetReturnTypeAttributes() => methodDefinition.GetReturnTypeAttributes();
-		
+		public bool ReturnTypeIsRefReadOnly => methodDefinition.ReturnTypeIsRefReadOnly;
+
 		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get {
 				return specializedTypeParameters ?? methodDefinition.TypeParameters;
@@ -124,6 +126,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsAccessor {
 			get { return methodDefinition.IsAccessor; }
 		}
+
+		public MethodSemanticsAttributes AccessorKind => methodDefinition.AccessorKind;
 
 		public IMethod ReducedFrom {
 			get { return null; }
@@ -242,18 +246,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return o != null && baseTp.Equals(o.baseTp) && this.Owner.Equals(o.Owner);
 			}
 			
-			public override bool HasValueTypeConstraint {
-				get { return baseTp.HasValueTypeConstraint; }
-			}
-			
-			public override bool HasReferenceTypeConstraint {
-				get { return baseTp.HasReferenceTypeConstraint; }
-			}
-			
-			public override bool HasDefaultConstructorConstraint {
-				get { return baseTp.HasDefaultConstructorConstraint; }
-			}
-			
+			public override bool HasValueTypeConstraint => baseTp.HasValueTypeConstraint;
+			public override bool HasReferenceTypeConstraint => baseTp.HasReferenceTypeConstraint;
+			public override bool HasDefaultConstructorConstraint => baseTp.HasDefaultConstructorConstraint;
+			public override bool HasUnmanagedConstraint => baseTp.HasUnmanagedConstraint;
+
+			public override Nullability NullabilityConstraint => baseTp.NullabilityConstraint;
+
 			public override IEnumerable<IType> DirectBaseTypes {
 				get {
 					return baseTp.DirectBaseTypes.Select(t => t.AcceptVisitor(substitution));

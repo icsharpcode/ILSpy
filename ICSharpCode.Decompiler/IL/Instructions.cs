@@ -141,6 +141,8 @@ namespace ICSharpCode.Decompiler.IL
 		LdMemberToken,
 		/// <summary>Allocates space in the stack frame</summary>
 		LocAlloc,
+		/// <summary>Allocates space in the stack frame and wraps it in a Span</summary>
+		LocAllocSpan,
 		/// <summary>memcpy(destAddress, sourceAddress, size);</summary>
 		Cpblk,
 		/// <summary>memset(address, value, size)</summary>
@@ -344,7 +346,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.argument.WriteTo(output, options);
@@ -437,7 +439,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.left.WriteTo(output, options);
@@ -594,7 +596,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.target.WriteTo(output, options);
@@ -969,7 +971,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
@@ -2280,7 +2282,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
@@ -2355,7 +2357,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
@@ -2488,7 +2490,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
@@ -2583,7 +2585,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.value.WriteTo(output, options);
@@ -2746,7 +2748,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2783,7 +2785,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I4; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2820,7 +2822,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I8; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2857,7 +2859,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.F4; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2894,7 +2896,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.F8; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2931,7 +2933,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2998,7 +3000,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			method.WriteTo(output);
@@ -3046,7 +3048,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			method.WriteTo(output);
@@ -3091,7 +3093,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3130,7 +3132,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			member.WriteTo(output);
@@ -3188,6 +3190,60 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as LocAlloc;
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Allocates space in the stack frame and wraps it in a Span</summary>
+	public sealed partial class LocAllocSpan : UnaryInstruction
+	{
+		public LocAllocSpan(ILInstruction argument, IType type) : base(OpCode.LocAllocSpan, argument)
+		{
+			this.type = type;
+		}
+		IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
+		public override StackType ResultType { get { return StackType.O; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			output.Write(' ');
+			type.WriteTo(output);
+			output.Write('(');
+			Argument.WriteTo(output, options);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLocAllocSpan(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLocAllocSpan(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLocAllocSpan(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LocAllocSpan;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 }
@@ -3299,7 +3355,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			if (IsVolatile)
 				output.Write("volatile.");
 			if (UnalignedPrefix > 0)
@@ -3447,7 +3503,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			if (IsVolatile)
 				output.Write("volatile.");
 			if (UnalignedPrefix > 0)
@@ -3560,7 +3616,9 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
+			if (DelayExceptions)
+				output.Write("delayex.");
 			output.Write(OpCode);
 			output.Write(' ');
 			field.WriteTo(output);
@@ -3583,7 +3641,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdFlda;
-			return o != null && this.target.PerformMatch(o.target, ref match) && field.Equals(o.field);
+			return o != null && this.target.PerformMatch(o.target, ref match) && DelayExceptions == o.DelayExceptions && field.Equals(o.field);
 		}
 	}
 }
@@ -3602,7 +3660,7 @@ namespace ICSharpCode.Decompiler.IL
 		public IField Field { get { return field; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			field.WriteTo(output);
@@ -3653,7 +3711,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3698,7 +3756,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3804,7 +3862,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			if (IsVolatile)
 				output.Write("volatile.");
 			if (UnalignedPrefix > 0)
@@ -3938,7 +3996,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			if (IsVolatile)
 				output.Write("volatile.");
 			if (UnalignedPrefix > 0)
@@ -4004,7 +4062,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -4058,7 +4116,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -4112,7 +4170,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -4226,7 +4284,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -4275,7 +4333,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -4391,7 +4449,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I4; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -4585,7 +4643,9 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
+			if (DelayExceptions)
+				output.Write("delayex.");
 			if (IsReadOnly)
 				output.Write("readonly.");
 			output.Write(OpCode);
@@ -4614,7 +4674,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdElema;
-			return o != null && type.Equals(o.type) && this.array.PerformMatch(o.array, ref match) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match) && IsReadOnly == o.IsReadOnly;
+			return o != null && type.Equals(o.type) && this.array.PerformMatch(o.array, ref match) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match) && DelayExceptions == o.DelayExceptions && IsReadOnly == o.IsReadOnly;
 		}
 	}
 }
@@ -4687,7 +4747,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.array.WriteTo(output, options);
@@ -4924,7 +4984,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			method.WriteTo(output);
@@ -5939,7 +5999,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -6021,7 +6081,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -6116,7 +6176,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.value.WriteTo(output, options);
@@ -6209,7 +6269,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.value.WriteTo(output, options);
@@ -6271,7 +6331,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			output.Write(')');
@@ -6494,6 +6554,10 @@ namespace ICSharpCode.Decompiler.IL
 			Default(inst);
 		}
 		protected internal virtual void VisitLocAlloc(LocAlloc inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLocAllocSpan(LocAllocSpan inst)
 		{
 			Default(inst);
 		}
@@ -6875,6 +6939,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitLocAllocSpan(LocAllocSpan inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitCpblk(Cpblk inst)
 		{
 			return Default(inst);
@@ -7253,6 +7321,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitLocAllocSpan(LocAllocSpan inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitCpblk(Cpblk inst, C context)
 		{
 			return Default(inst, context);
@@ -7470,6 +7542,7 @@ namespace ICSharpCode.Decompiler.IL
 			"ldtypetoken",
 			"ldmembertoken",
 			"localloc",
+			"localloc.span",
 			"cpblk",
 			"initblk",
 			"ldflda",
@@ -7814,6 +7887,18 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			argument = default(ILInstruction);
+			return false;
+		}
+		public bool MatchLocAllocSpan(out ILInstruction argument, out IType type)
+		{
+			var inst = this as LocAllocSpan;
+			if (inst != null) {
+				argument = inst.Argument;
+				type = inst.Type;
+				return true;
+			}
+			argument = default(ILInstruction);
+			type = default(IType);
 			return false;
 		}
 		public bool MatchCpblk(out ILInstruction destAddress, out ILInstruction sourceAddress, out ILInstruction size)

@@ -21,8 +21,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var metadata = module.Metadata;
 			var method = metadata.GetMethodDefinition(methodHandle);
+			var declaringType = method.GetDeclaringType();
 
-			if ((method.Attributes & MethodAttributes.Assembly) == 0 || !method.IsCompilerGenerated(metadata))
+			if ((method.Attributes & MethodAttributes.Assembly) == 0 || !(method.IsCompilerGenerated(metadata) || declaringType.IsCompilerGenerated(metadata)))
 				return false;
 
 			if (!ParseLocalFunctionName(metadata.GetString(method.Name), out _, out _))
@@ -59,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Newer Roslyn versions use the format "&ltcallerName&gtg__functionName|x_y"
 		/// Older versions use "&ltcallerName&gtg__functionNamex_y"
 		/// </summary>
-		static readonly Regex functionNameRegex = new Regex(@"^<(.*)>g__(.*)\|{0,1}\d+_\d+$", RegexOptions.Compiled);
+		static readonly Regex functionNameRegex = new Regex(@"^<(.*)>g__(.*)\|{0,1}\d+(_\d+)?$", RegexOptions.Compiled);
 
 		static bool ParseLocalFunctionName(string name, out string callerName, out string functionName)
 		{

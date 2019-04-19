@@ -352,7 +352,6 @@ namespace ICSharpCode.Decompiler.Documentation
 				typeParameterCount = ReflectionHelper.ReadTypeParameterCount(typeName, ref pos);
 			} else if (pos < typeName.Length && typeName[pos] == '{') {
 				// bound generic type
-				typeArguments = new List<ITypeReference>();
 				do {
 					pos++;
 					typeArguments.Add(ParseTypeName(typeName, ref pos));

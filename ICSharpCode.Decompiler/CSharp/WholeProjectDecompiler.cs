@@ -212,6 +212,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				w.WriteStartElement("PropertyGroup"); // platform-specific
 				w.WriteAttributeString("Condition", " '$(Platform)' == '" + platformName + "' ");
 				w.WriteElementString("PlatformTarget", platformName);
+				if ((module.Reader.PEHeaders.CorHeader.Flags & CorFlags.Prefers32Bit) != 0) {
+					w.WriteElementString("Prefer32Bit", "True");
+				}
 				w.WriteEndElement(); // </PropertyGroup> (platform-specific)
 
 				w.WriteStartElement("PropertyGroup"); // Debug
@@ -474,20 +477,26 @@ namespace ICSharpCode.Decompiler.CSharp
 		public static string GetPlatformName(Metadata.PEFile module)
 		{
 			var headers = module.Reader.PEHeaders;
-			switch (headers.CoffHeader.Machine) {
+			var architecture = headers.CoffHeader.Machine;
+			var characteristics = headers.CoffHeader.Characteristics;
+			var corflags = headers.CorHeader.Flags;
+			switch (architecture) {
 				case Machine.I386:
-					if ((headers.CorHeader.Flags & CorFlags.Prefers32Bit) != 0)
+					if ((corflags & CorFlags.Prefers32Bit) != 0)
 						return "AnyCPU";
-					else if ((headers.CorHeader.Flags & CorFlags.Requires32Bit) != 0)
+					if ((corflags & CorFlags.Requires32Bit) != 0)
 						return "x86";
-					else
-						return "AnyCPU";
+					// According to ECMA-335, II.25.3.3.1 CorFlags.Requires32Bit and Characteristics.Bit32Machine must be in sync
+					// for assemblies containing managed code. However, this is not true for C++/CLI assemblies.
+					if ((corflags & CorFlags.ILOnly) == 0 && (characteristics & Characteristics.Bit32Machine) != 0)
+						return "x86";
+					return "AnyCPU";
 				case Machine.Amd64:
 					return "x64";
 				case Machine.IA64:
 					return "Itanium";
 				default:
-					return headers.CoffHeader.Machine.ToString();
+					return architecture.ToString();
 			}
 		}
 	}

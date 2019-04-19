@@ -53,10 +53,11 @@ namespace CustomAttributeConflicts
 		}
 	}
 }
-// The order of types in namespaces is completely different when compiling with the Roslyn compiler
-#if ROSLYN
 namespace CustomAttributeConflicts.NS1
 {
+	internal class AttributeWithSameNameAsNormalType : Attribute
+	{
+	}
 	internal class OtherAttribute : Attribute
 	{
 	}
@@ -70,12 +71,6 @@ namespace CustomAttributeConflicts.NS2
 	{
 	}
 }
-namespace CustomAttributeConflicts.NS1
-{
-	internal class AttributeWithSameNameAsNormalType : Attribute
-	{
-	}
-}
 namespace CustomAttributeConflicts.NSWithConflictingTypes
 {
 	internal class My : Attribute
@@ -84,22 +79,6 @@ namespace CustomAttributeConflicts.NSWithConflictingTypes
 	internal class MyAttribute : Attribute
 	{
 	}
-}
-namespace CustomAttributeConflicts.NSWithConflictingTypes2
-{
-
-	internal class MyOther : Attribute
-	{
-	}
-	internal class MyOtherAttribute : Attribute
-	{
-	}
-	internal class MyOtherAttributeAttribute : Attribute
-	{
-	}
-}
-namespace CustomAttributeConflicts.NSWithConflictingTypes
-{
 	internal class MyAttributeAttribute : Attribute
 	{
 	}
@@ -113,72 +92,16 @@ namespace CustomAttributeConflicts.NSWithConflictingTypes
 	{
 	}
 }
-#else
-namespace CustomAttributeConflicts.NS1
-{
-	internal class OtherAttribute : Attribute
-	{
-	}
-
-	internal class SimpleAttribute : Attribute
-	{
-	}
-}
-
-namespace CustomAttributeConflicts.NS2
-{
-	internal class SimpleAttribute : Attribute
-	{
-	}
-}
-
-namespace CustomAttributeConflicts.NS1
-{
-	internal class AttributeWithSameNameAsNormalType : Attribute
-	{
-	}
-}
-namespace CustomAttributeConflicts.NSWithConflictingTypes
-{
-	internal class My : Attribute
-	{
-	}
-	internal class MyAttribute : Attribute
-	{
-	}
-}
 namespace CustomAttributeConflicts.NSWithConflictingTypes2
 {
+
 	internal class MyOther : Attribute
 	{
 	}
 	internal class MyOtherAttribute : Attribute
 	{
 	}
-}
-namespace CustomAttributeConflicts.NSWithConflictingTypes
-{
-	internal class MyAttributeAttribute : Attribute
-	{
-	}
-
-	internal class MyOther : Attribute
-	{
-	}
-
-	internal class MyOtherAttribute : Attribute
-	{
-	}
-
 	internal class MyOtherAttributeAttribute : Attribute
 	{
 	}
 }
-
-namespace CustomAttributeConflicts.NSWithConflictingTypes2
-{
-	internal class MyOtherAttributeAttribute : Attribute
-	{
-	}
-}
-#endif

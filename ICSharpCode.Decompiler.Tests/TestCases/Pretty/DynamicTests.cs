@@ -2,14 +2,6 @@
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	internal static class Extension
-	{
-		public static dynamic ToDynamic(this int i, dynamic info)
-		{
-			throw null;
-		}
-	}
-
 	internal class DynamicTests
 	{
 
@@ -434,6 +426,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(GetDynamic(1) || GetBool(2));
 			Console.WriteLine(GetBool(1) || GetDynamic(2));
 			Console.WriteLine(i == 1 || d == null);
+		}
+
+		private static int ImplicitCast(object o)
+		{
+			return (dynamic)o;
+		}
+
+		private static int ExplicitCast(object o)
+		{
+			return (int)(dynamic)o;
+		}
+	}
+
+	internal static class Extension
+	{
+		public static dynamic ToDynamic(this int i, dynamic info)
+		{
+			throw null;
 		}
 	}
 }

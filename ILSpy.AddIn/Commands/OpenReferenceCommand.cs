@@ -17,6 +17,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		public OpenReferenceCommand(ILSpyAddInPackage owner)
 			: base(owner, PkgCmdIDList.cmdidOpenReferenceInILSpy)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
 		}
 
 		protected override void OnBeforeQueryStatus(object sender, EventArgs e)
@@ -87,6 +88,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		internal static void Register(ILSpyAddInPackage owner)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			instance = new OpenReferenceCommand(owner);
 		}
 	}

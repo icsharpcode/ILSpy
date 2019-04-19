@@ -76,6 +76,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		int fieldOnThis;
 
+		public static IEnumerable<char> YieldChars {
+			get {
+				yield return 'a';
+				yield return 'b';
+				yield return 'c';
+			}
+		}
+
 		public static IEnumerable<string> SimpleYieldReturn()
 		{
 			yield return "A";
@@ -188,8 +196,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			yield return "E";
 			yield return "F";
 			// outer try-finally block
-			foreach (string line in input)
+			foreach (string line in input) {
 				yield return line.ToUpper();
+			}
 		}
 
 		public static IEnumerable<Func<string>> YieldReturnWithAnonymousMethods1(IEnumerable<string> input)
@@ -210,17 +219,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static IEnumerable<int> GetEvenNumbers(int n)
 		{
 			for (int i = 0; i < n; i++) {
-				if (i % 2 == 0)
+				if (i % 2 == 0) {
 					yield return i;
-			}
-		}
-
-		public static IEnumerable<char> YieldChars
-		{
-			get {
-				yield return 'a';
-				yield return 'b';
-				yield return 'c';
+				}
 			}
 		}
 
@@ -283,7 +284,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				yield return 0;
 				try {
 					Console.WriteLine("In Try");
-					yield break; // same compiler bug as in YieldBreakInCatchInTryFinally
+					// same compiler bug as in YieldBreakInCatchInTryFinally
+					yield break;
 				} catch {
 					Console.WriteLine("Catch");
 				}
@@ -299,8 +301,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				yield return 0;
 				try {
 					Console.WriteLine("In Try");
-					if (b)
-						yield break; // same compiler bug as in YieldBreakInCatchInTryFinally
+					if (b) {
+						// same compiler bug as in YieldBreakInCatchInTryFinally
+						yield break;
+					}
 				} finally {
 					Console.WriteLine("Inner Finally");
 				}
@@ -406,7 +410,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static IEnumerable<int> TryFinallyWithTwoExitPointsInNestedCatch(bool b)
 		{
-			// The first user IL instruction is already in 2 nested try blocks.
 			try {
 				yield return 1;
 				try {
@@ -434,9 +437,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			try {
 				yield return 2;
 			} finally {
-				T b = a;
-				b.Dispose();
-				b.Dispose();
+				T val = a;
+				val.Dispose();
+				val.Dispose();
 			}
 			yield return 3;
 		}

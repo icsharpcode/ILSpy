@@ -180,6 +180,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// Remove branch/leave after if; it's getting moved into a section.
 					block.Instructions.RemoveAt(block.Instructions.Count - 1);
 				}
+				sw.AddILRange(block.Instructions[block.Instructions.Count - 1]);
 				block.Instructions[block.Instructions.Count - 1] = sw;
 				
 				// mark all inner blocks that were converted to the switch statement for deletion
@@ -316,7 +317,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// The switch has a single break target and there is one more hint
 			// The break target cannot be inlined, and should have the highest IL offset of everything targetted by the switch
-			return breakBlock.ILRange.Start >= analysis.Sections.Select(s => s.Value.MatchBranch(out var b) ? b.ILRange.Start : -1).Max();
+			return breakBlock.StartILOffset >= analysis.Sections.Select(s => s.Value.MatchBranch(out var b) ? b.StartILOffset : -1).Max();
 		}
 
 		/// <summary>
@@ -349,9 +350,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (!s.Value.MatchBranch(out var block)) 
 					continue;
 
-				var node = controlFlowGraph.GetNode(block);
-				if (!loopContext.MatchContinue(node))
-					caseNodes.Add(node);
+				if (block.Parent == currentContainer) {
+					var node = controlFlowGraph.GetNode(block);
+					if (!loopContext.MatchContinue(node))
+						caseNodes.Add(node);
+				}
 			}
 
 			AddNullCase(flowNodes, caseNodes);

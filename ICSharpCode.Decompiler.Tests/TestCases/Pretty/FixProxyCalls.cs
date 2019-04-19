@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
@@ -62,6 +63,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 		}
 	}
 
+	[CompilerGenerated]
+	internal class FalsePositive_Issue1443
+	{
+		private static void WrongMethod()
+		{
+			Console.WriteLine("Wrong!");
+		}
+
+		private void CorrectMethod()
+		{
+			WrongMethod();
+		}
+
+		private void Use()
+		{
+			CorrectMethod();
+		}
+	}
+
 	internal class G
 	{
 		protected internal virtual void Test(string test)
@@ -72,13 +92,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 
 	internal class H : G
 	{
+		private Action<string> action;
+
 		protected internal override void Test(string test)
 		{
-			Action<string> action = delegate(string a) {
+			action = delegate(string a) {
 				base.Test(a);
 			};
 			if (test.Equals(1)) {
-				throw new Exception("roslyn optimize is inlining the assignment which lets the test fail");
+				throw new Exception("roslyn optimizes is inlining the assignment which lets the test fail");
 			}
 			action(test);
 		}

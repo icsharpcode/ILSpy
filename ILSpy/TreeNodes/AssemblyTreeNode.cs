@@ -151,9 +151,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				ns.Children.Clear();
 			}
 			foreach (var type in assembly.TopLevelTypeDefinitions.OrderBy(t => t.ReflectionName, NaturalStringComparer.Instance)) {
+				var escapedNamespace = Language.EscapeName(type.Namespace);
 				if (!namespaces.TryGetValue(type.Namespace, out NamespaceTreeNode ns)) {
-					ns = new NamespaceTreeNode(type.Namespace);
-					namespaces[type.Namespace] = ns;
+					ns = new NamespaceTreeNode(escapedNamespace);
+					namespaces.Add(type.Namespace, ns);
 				}
 				TypeTreeNode node = new TypeTreeNode(type, this);
 				typeDict[(TypeDefinitionHandle)type.MetadataToken] = node;

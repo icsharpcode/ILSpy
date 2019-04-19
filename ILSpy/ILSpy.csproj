@@ -1,13 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="MSBuild.Sdk.Extras">
 
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>net462</TargetFramework>
     <OutputType>WinExe</OutputType>
     <LangVersion>7.2</LangVersion>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
 
     <EnableDefaultItems>false</EnableDefaultItems>
+    <ExtrasEnableWpfProjectSetup>true</ExtrasEnableWpfProjectSetup>
+    <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
+    <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
 
     <RootNamespace>ICSharpCode.ILSpy</RootNamespace>
 
@@ -34,11 +38,6 @@
     <CodeAnalysisRuleSet>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <!-- Workaround for lack of XAML support in the new project system -->
-    <LanguageTargets>$(MSBuildExtensionsPath)\$(VisualStudioVersion)\Bin\Microsoft.CSharp.targets</LanguageTargets>
-  </PropertyGroup>
-
   <ItemGroup>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -50,8 +49,9 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="5.0.4" />
+    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="15.5.23" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.3" />
   </ItemGroup>
 
   <ItemGroup>
@@ -107,7 +107,9 @@
     <Compile Include="Commands\CommandWrapper.cs" />
     <Compile Include="Commands\ILSpyCommands.cs" />
     <Compile Include="Commands\OpenListCommand.cs" />
+    <Compile Include="Commands\Pdb2XmlCommand.cs" />
     <Compile Include="Commands\RemoveAssembliesWithLoadErrors.cs" />
+    <Compile Include="Commands\ShowCFGContextMenuEntry.cs" />
     <Compile Include="Commands\ShowDebugSteps.cs" />
     <Compile Include="Commands\SortAssemblyListCommand.cs" />
     <Compile Include="Controls\BoolToVisibilityConverter.cs" />
@@ -156,6 +158,7 @@
     <Compile Include="Languages\IResourceFileHandler.cs" />
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Languages\Languages.cs" />
+    <Compile Include="Options\DecompilerSettingsPanel.xaml.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -186,10 +189,6 @@
     </Compile>
     <Compile Include="OpenListDialog.xaml.cs">
       <DependentUpon>OpenListDialog.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Options\DecompilerSettingsPanel.xaml.cs">
-      <DependentUpon>DecompilerSettingsPanel.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Options\DisplaySettings.cs" />
     <Compile Include="Options\DisplaySettingsPanel.xaml.cs">
@@ -268,11 +267,13 @@
     <Resource Include="Images\Delete.png" />
     <Resource Include="Images\ILSpy.ico" />
     <Resource Include="Images\FindAssembly.png" />
-    <None Include="app.config" />
     <EmbeddedResource Include="TextView\CSharp-Mode.xshd" />
     <Resource Include="Images\Breakpoint.png" />
     <Resource Include="Images\CurrentLine.png" />
     <Resource Include="Images\DisabledBreakpoint.png" />
+    <None Include="app.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="app.manifest" />
     <None Include="Images\ResourceXsl.png" />
     <None Include="Properties\app.config.template" />
@@ -309,7 +310,7 @@
     <Compile Include="TreeNodes\ThreadingSupport.cs" />
     <Compile Include="TreeNodes\TypeTreeNode.cs" />
     <EmbeddedResource Include="README.txt" />
-	<EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
+    <EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
   </ItemGroup>
 
   <ItemGroup>
@@ -321,7 +322,7 @@
     <Page Include="MainWindow.xaml" />
     <Page Include="OpenFromGacDialog.xaml" />
     <Page Include="OpenListDialog.xaml" />
-	<Page Include="NugetPackageBrowserDialog.xaml" />
+    <Page Include="NugetPackageBrowserDialog.xaml" />
     <Page Include="Options\DecompilerSettingsPanel.xaml" />
     <Page Include="Options\DisplaySettingsPanel.xaml" />
     <Page Include="Options\MiscSettingsPanel.xaml" />
@@ -377,7 +378,8 @@
     <Resource Include="Images\OverlayStatic.png" />
     <Resource Include="Images\VirtualMethod.png" />
     <Resource Include="Images\PInvokeMethod.png" />
-	<Resource Include="Images\Warning.png" />
+    <Resource Include="Images\Warning.png" />
+    <Resource Include="Images\ShowAll.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -394,6 +396,9 @@
 
   <ItemGroup>
     <Page Update="@(Page)" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Update="Options\DecompilerSettingsPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>
@@ -401,45 +406,13 @@
     <None Include="@(Resource)" />
   </ItemGroup>
 
-  <!--
-     Work around to fix Intellisense file generation for XAML projects
-     https://github.com/dotnet/project-system/issues/2488
-  -->
-  <Target Name="WorkaroundForXAMLIntellisenseBuildIssue" AfterTargets="_CheckCompileDesignTimePrerequisite">
-    <PropertyGroup>
-      <BuildingProject>false</BuildingProject>
-    </PropertyGroup>
-  </Target>
-
-  <!--
-  Workaround: nuget packages do not get added to the vsix automatically.
-  Copy them to a local folder and then include them as Content-items in the AddIn.
-  (related to https://github.com/icsharpcode/ILSpy/issues/511)
-  -->
-  <Target Name="CopyNugetPackagesToAddIn" AfterTargets="PostBuildEvent">
-    <ItemGroup>
-      <NuGetPackagesToCopy Include="$(TargetDir)System.ValueTuple.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Collections.Immutable.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.AttributedModel.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Convention.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Hosting.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Runtime.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.TypedParts.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Threading.Tasks.Dataflow.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)ICSharpCode.AvalonEdit.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Humanizer.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Reflection.Metadata.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Composition.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Validation.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.Pdb.dll" />
-    </ItemGroup>
-    <Copy SourceFiles="@(NuGetPackagesToCopy)" DestinationFolder="..\ILSpy.AddIn\packages" />
-  </Target>
-
   <PropertyGroup>
     <VCBasePath>$(MSBuildToolsPath)\..\..\..\VC\</VCBasePath>
-    <VCToolsVersionPropsFile>$(VCBasePath)Auxiliary\Build\Microsoft.VCToolsVersion.default.props</VCToolsVersionPropsFile>
+    <VCToolsVersionPropsFileNameDefault>Microsoft.VCToolsVersion.default.props</VCToolsVersionPropsFileNameDefault>
+    <!-- This is necessary as long as AppVeyor does not offer Visual Studio 2019 RC or later -->
+    <VCToolsVersionPropsFileNameVS2019Preview>Microsoft.VCToolsVersion.v142.default.props</VCToolsVersionPropsFileNameVS2019Preview>
+    <VCToolsVersionPropsFile>$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameDefault)</VCToolsVersionPropsFile> 
+    <VCToolsVersionPropsFile Condition="!Exists('$(VCToolsVersionPropsFile)')">$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameVS2019Preview)</VCToolsVersionPropsFile> 
   </PropertyGroup>
 
   <Import Project="$(VCToolsVersionPropsFile)" Condition="Exists('$(VCToolsVersionPropsFile)')" />

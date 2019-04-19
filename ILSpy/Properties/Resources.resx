@@ -528,4 +528,22 @@
   <data name="ShowAssemblyLoad" xml:space="preserve">
     <value>Show assembly load log</value>
   </data>
+  <data name="OtherResources" xml:space="preserve">
+    <value>Other Resources</value>
+  </data>
+  <data name="UseTabsInsteadOfSpaces" xml:space="preserve">
+    <value>Use tabs instead of spaces</value>
+  </data>
+  <data name="ShowMetadataTokensInBase10" xml:space="preserve">
+    <value>Show metadata tokens in base 10</value>
+  </data>
+  <data name="ExpandUsingDeclarationsAfterDecompilation" xml:space="preserve">
+    <value>Expand using declarations after decompilation</value>
+  </data>
+  <data name="LoadAssembliesThatWereLoadedInTheLastInstance" xml:space="preserve">
+    <value>Load assemblies that were loaded in the last instance.</value>
+  </data>
+  <data name="Indentation" xml:space="preserve">
+    <value>Indentation</value>
+  </data>
 </root>

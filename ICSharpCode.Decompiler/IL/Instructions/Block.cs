@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override ILInstruction Clone()
 		{
 			Block clone = new Block(Kind);
-			clone.ILRange = this.ILRange;
+			clone.AddILRange(this);
 			clone.Instructions.AddRange(this.Instructions.Select(inst => inst.Clone()));
 			clone.FinalInstruction = this.FinalInstruction.Clone();
 			return clone;
@@ -145,12 +145,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public string Label
 		{
-			get { return Disassembler.DisassemblerHelpers.OffsetToString(this.ILRange.Start); }
+			get { return Disassembler.DisassemblerHelpers.OffsetToString(this.StartILOffset); }
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write("Block ");
 			output.WriteLocalReference(Label, this, isDefinition: true);
 			if (Kind != BlockKind.ControlFlow)
@@ -313,6 +313,7 @@ namespace ICSharpCode.Decompiler.IL
 		ArrayInitializer,
 		CollectionInitializer,
 		ObjectInitializer,
+		StackAllocInitializer,
 		/// <summary>
 		/// Block is used for postfix operator on local variable.
 		/// </summary>

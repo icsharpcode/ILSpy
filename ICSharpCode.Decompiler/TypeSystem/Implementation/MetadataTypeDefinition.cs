@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				foreach (FieldDefinitionHandle h in fieldCollection) {
 					var field = metadata.GetFieldDefinition(h);
 					var attr = field.Attributes;
-					if (module.IsVisible(attr) && (attr & FieldAttributes.SpecialName) == 0) {
+					if (module.IsVisible(attr)) {
 						fieldList.Add(module.GetDefinition(h));
 					}
 				}
@@ -263,6 +263,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IReadOnlyList<IType> IType.TypeArguments => TypeParameters;
 
+		Nullability IType.Nullability => Nullability.Oblivious;
+
+		public IType ChangeNullability(Nullability nullability)
+		{
+			if (nullability == Nullability.Oblivious)
+				return this;
+			else
+				return new NullabilityAnnotatedType(this, nullability);
+		}
+
 		public IEnumerable<IType> DirectBaseTypes {
 			get {
 				var baseTypes = LazyInit.VolatileRead(ref this.directBaseTypes);
@@ -362,7 +372,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			#endregion
 
-			b.Add(typeDefinition.GetCustomAttributes());
+			b.Add(typeDefinition.GetCustomAttributes(), SymbolKind.TypeDefinition);
 			b.AddSecurityAttributes(typeDefinition.GetDeclarativeSecurityAttributes());
 
 			return b.Build();

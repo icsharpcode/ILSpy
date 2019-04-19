@@ -97,9 +97,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (s.IsUsedWithin(call.Arguments[1]))
 					return false;
 				context.Step("User-defined short-circuiting logic operator (legacy pattern)", condition);
-				((StLoc)block.Instructions[pos]).Value = new UserDefinedLogicOperator(call.Method, lhsInst, call.Arguments[1]) {
-					ILRange = call.ILRange
-				};
+				((StLoc)block.Instructions[pos]).Value = new UserDefinedLogicOperator(call.Method, lhsInst, call.Arguments[1])
+					.WithILRange(call);
 				block.Instructions.RemoveAt(pos + 1);
 				context.RequestRerun(); // the 'stloc s' may now be eligible for inlining
 				return true;
@@ -148,9 +147,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 
 			var result = new UserDefinedLogicOperator(call.Method, call.Arguments[0], call.Arguments[1]);
-			result.AddILRange(condition.ILRange);
-			result.AddILRange(trueInst.ILRange);
-			result.AddILRange(call.ILRange);
+			result.AddILRange(condition);
+			result.AddILRange(trueInst);
+			result.AddILRange(call);
 			return result;
 		}
 		
@@ -242,9 +241,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			var logicInst = new DynamicLogicOperatorInstruction(binary.BinderFlags, logicOp, binary.CallingContext,
 				binary.LeftArgumentInfo, binary.Left, binary.RightArgumentInfo, binary.Right)
-			{
-				ILRange = binary.ILRange
-			};
+				.WithILRange(binary);
 			if (rhsUnary != null) {
 				rhsUnary.Operand = logicInst;
 				return rhsUnary;

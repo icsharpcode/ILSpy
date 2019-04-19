@@ -235,9 +235,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			#if DEBUG
 			Debug.Assert(initialized, "Initialize() was not called");
 			
-			State previousOutputState;
-			if (debugDict.TryGetValue(inst, out previousOutputState)) {
-				Debug.Assert(previousOutputState.LessThanOrEqual(state));
+			State previousState;
+			if (debugDict.TryGetValue(inst, out previousState)) {
+				Debug.Assert(previousState.LessThanOrEqual(state));
+				previousState.JoinWith(state);
 			} else {
 				// limit the number of tracked instructions to make memory usage in debug builds less horrible
 				if (debugDict.Count < 1000) {
@@ -491,8 +492,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			// that an async exception is thrown immediately in the handler block,
 			// so propagate the state:
 			oldStateOnException.JoinWith(newStateOnException);
-			
-			return newStateOnException;
+
+			// Return a copy, so that the caller mutating the returned state
+			// does not influence the 'stateOnException' dict
+			return newStateOnException.Clone();
 		}
 		
 		protected internal override void VisitTryCatch(TryCatch inst)

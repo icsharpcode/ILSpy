@@ -23,9 +23,7 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler
 {
@@ -39,9 +37,6 @@ namespace ICSharpCode.Decompiler
 		bool inDocumentationComment = false;
 		bool firstUsingDeclaration;
 		bool lastUsingDeclaration;
-		
-		public bool FoldBraces = false;
-		public bool ExpandMemberDefinitions = false;
 		
 		public TextTokenWriter(ITextOutput output, DecompilerSettings settings, IDecompilerTypeSystem typeSystem)
 		{
@@ -63,43 +58,44 @@ namespace ICSharpCode.Decompiler
 			}
 			
 			var definition = GetCurrentDefinition();
+			string name = TextWriterTokenWriter.EscapeIdentifier(identifier.Name);
 			switch (definition) {
 				case IType t:
-					output.WriteReference(t, identifier.Name, true);
+					output.WriteReference(t, name, true);
 					return;
 				case IMember m:
-					output.WriteReference(m, identifier.Name, true);
+					output.WriteReference(m, name, true);
 					return;
 			}
 			
 			var member = GetCurrentMemberReference();
 			switch (member) {
 				case IType t:
-					output.WriteReference(t, identifier.Name, false);
+					output.WriteReference(t, name, false);
 					return;
 				case IMember m:
-					output.WriteReference(m, identifier.Name, false);
+					output.WriteReference(m, name, false);
 					return;
 			}
 
 			var localDefinition = GetCurrentLocalDefinition();
 			if (localDefinition != null) {
-				output.WriteLocalReference(identifier.Name, localDefinition, isDefinition: true);
+				output.WriteLocalReference(name, localDefinition, isDefinition: true);
 				return;
 			}
 
 			var localRef = GetCurrentLocalReference();
 			if (localRef != null) {
-				output.WriteLocalReference(identifier.Name, localRef);
+				output.WriteLocalReference(name, localRef);
 				return;
 			}
 
 			if (firstUsingDeclaration) {
-				output.MarkFoldStart(defaultCollapsed: true);
+				output.MarkFoldStart(defaultCollapsed: !settings.ExpandUsingDeclarations);
 				firstUsingDeclaration = false;
 			}
 
-			output.Write(identifier.Name);
+			output.Write(name);
 		}
 
 		ISymbol GetCurrentMemberReference()
@@ -140,6 +136,10 @@ namespace ICSharpCode.Decompiler
 			if (variable != null)
 				return variable;
 
+			var letClauseVariable = node.Annotation<CSharp.Transforms.LetIdentifierAnnotation>();
+			if (letClauseVariable != null)
+				return letClauseVariable;
+
 			var gotoStatement = node as GotoStatement;
 			if (gotoStatement != null)
 			{
@@ -159,6 +159,12 @@ namespace ICSharpCode.Decompiler
 
 			if (node is ParameterDeclaration || node is VariableInitializer || node is CatchClause || node is ForeachStatement) {
 				var variable = node.Annotation<ILVariableResolveResult>()?.Variable;
+				if (variable != null)
+					return variable;
+			}
+
+			if (node is QueryLetClause) {
+				var variable = node.Annotation<CSharp.Transforms.LetIdentifierAnnotation>();
 				if (variable != null)
 					return variable;
 			}
@@ -209,15 +215,15 @@ namespace ICSharpCode.Decompiler
 					}
 					if (braceLevelWithinType >= 0 || nodeStack.Peek() is TypeDeclaration)
 						braceLevelWithinType++;
-					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || FoldBraces) {
-						output.MarkFoldStart(defaultCollapsed: !ExpandMemberDefinitions && braceLevelWithinType == 1);
+					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || settings.FoldBraces) {
+						output.MarkFoldStart(defaultCollapsed: !settings.ExpandMemberDefinitions && braceLevelWithinType == 1);
 					}
 					output.Write("{");
 					break;
 				case "}":
 					output.Write('}');
 					if (role != Roles.RBrace) break;
-					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || FoldBraces)
+					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || settings.FoldBraces)
 						output.MarkFoldEnd();
 					if (braceLevelWithinType >= 0)
 						braceLevelWithinType--;

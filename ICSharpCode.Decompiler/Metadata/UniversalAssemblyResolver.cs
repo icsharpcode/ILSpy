@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 
@@ -30,7 +31,8 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		DotNetCorePathFinder dotNetCorePathFinder;
 		readonly bool throwOnError;
-		readonly PEStreamOptions options;
+		readonly PEStreamOptions streamOptions;
+		readonly MetadataReaderOptions metadataOptions; 
 		readonly string mainAssemblyFileName;
 		readonly string baseDirectory;
 		readonly List<string> directories = new List<string>();
@@ -80,9 +82,10 @@ namespace ICSharpCode.Decompiler.Metadata
 		Version targetFrameworkVersion;
 
 		public UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, string targetFramework,
-			PEStreamOptions options = PEStreamOptions.Default)
+			PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 		{
-			this.options = options;
+			this.streamOptions = streamOptions;
+			this.metadataOptions = metadataOptions;
 			this.targetFramework = targetFramework ?? string.Empty;
 			(targetFrameworkIdentifier, targetFrameworkVersion) = ParseTargetFramework(this.targetFramework);
 			this.mainAssemblyFileName = mainAssemblyFileName;
@@ -147,7 +150,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					throw new AssemblyResolutionException(name);
 				return null;
 			}
-			return new PEFile(file, new FileStream(file, FileMode.Open, FileAccess.Read), options);
+			return new PEFile(file, new FileStream(file, FileMode.Open, FileAccess.Read), streamOptions, metadataOptions);
 		}
 
 		public PEFile ResolveModule(PEFile mainModule, string moduleName)
@@ -159,7 +162,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					throw new Exception($"Module {moduleName} could not be found!");
 				return null;
 			}
-			return new PEFile(moduleFileName, new FileStream(moduleFileName, FileMode.Open, FileAccess.Read), options);
+			return new PEFile(moduleFileName, new FileStream(moduleFileName, FileMode.Open, FileAccess.Read), streamOptions, metadataOptions);
 		}
 
 		public string FindAssemblyFile(IAssemblyReference name)
@@ -371,7 +374,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (DetectMono()) {
 				path = GetMonoMscorlibBasePath(version);
 			} else {
-				path = GetMscorlibBasePath(version);
+				path = GetMscorlibBasePath(version, reference.PublicKeyToken.ToHexString(8));
 			}
 
 			if (path == null)
@@ -384,26 +387,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		string GetMscorlibBasePath(Version version)
+		string GetMscorlibBasePath(Version version, string publicKeyToken)
 		{
-			string rootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Microsoft.NET");
-			string[] frameworkPaths = new[] {
-				Path.Combine(rootPath, "Framework"),
-				Path.Combine(rootPath, "Framework64")
-			};
-
-			string folder = GetSubFolderForVersion();
-
-			foreach (var path in frameworkPaths) {
-				var basePath = Path.Combine(path, folder);
-				if (Directory.Exists(basePath))
-					return basePath;
-			}
-
-			if (throwOnError)
-				throw new NotSupportedException("Version not supported: " + version);
-			return null;
-
 			string GetSubFolderForVersion()
 			{
 				switch (version.Major) {
@@ -421,6 +406,36 @@ namespace ICSharpCode.Decompiler.Metadata
 						return null;
 				}
 			}
+
+			if (publicKeyToken == "969db8053d3322ac") {
+				string programFiles = Environment.Is64BitOperatingSystem ?
+					Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) :
+					Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+				string cfPath = $@"Microsoft.NET\SDK\CompactFramework\v{version.Major}.{version.Minor}\WindowsCE\";
+				string cfBasePath = Path.Combine(programFiles, cfPath);
+				if (Directory.Exists(cfBasePath))
+					return cfBasePath;
+			} else {
+				string rootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Microsoft.NET");
+				string[] frameworkPaths = new[] {
+					Path.Combine(rootPath, "Framework"),
+					Path.Combine(rootPath, "Framework64")
+				};
+
+				string folder = GetSubFolderForVersion();
+
+				if (folder != null) {
+					foreach (var path in frameworkPaths) {
+						var basePath = Path.Combine(path, folder);
+						if (Directory.Exists(basePath))
+							return basePath;
+					}
+				}
+			}
+
+			if (throwOnError)
+				throw new NotSupportedException("Version not supported: " + version);
+			return null;
 		}
 
 		string GetMonoMscorlibBasePath(Version version)

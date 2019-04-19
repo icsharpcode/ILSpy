@@ -52,22 +52,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public ErrorExpression (TextLocation location)
-		{
-			this.Location = location;
-		}
-
 		public ErrorExpression (string error)
 		{
-			this.Error = error;
+			AddChild(new Comment(error, CommentType.MultiLine), Roles.Comment);
 		}
-
-		public ErrorExpression (string error, TextLocation location)
-		{
-			this.Location = location;
-			this.Error = error;
-		}
-
+		
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitErrorNode(this);

@@ -21,7 +21,7 @@ using System.Runtime.InteropServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	public static class LiftedOperators
+	public static class T00_LiftedOperators
 	{
 		// C# uses 4 different patterns of IL for lifted operators: bool, other primitive types, decimal, other structs.
 		// Different patterns are used depending on whether both of the operands are nullable or only the left/right operand is nullable.
@@ -53,6 +53,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (x() != a) {
 				Console.WriteLine();
 			}
+			if (a ?? x()) {
+				Console.WriteLine();
+			}
 		}
 
 		public static void BoolConst(bool? a)
@@ -72,9 +75,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (a ?? true) {
 				Console.WriteLine();
 			}
+#if !ROSLYN
+			// Roslyn 3 (VS2019) started optimizing this to "a.GetValueOrDefault()"
 			if (a ?? false) {
 				Console.WriteLine();
 			}
+#endif
 		}
 
 		public static void BoolValueBasic(bool? a, bool? b)
@@ -122,7 +128,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(a == false);
 			Console.WriteLine(a != false);
 			Console.WriteLine(a ?? true);
+#if !ROSLYN
+			// Roslyn 3 (VS2019) started optimizing this to "a.GetValueOrDefault()"
 			Console.WriteLine(a ?? false);
+#endif
 		}
 
 		public static void IntBasic(int? a, int? b)
@@ -698,6 +707,179 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 	}
 
+	internal class T01_LiftedImplicitConversions
+	{
+		public int? ExtendI4(byte? b)
+		{
+			return b;
+		}
+
+		public int? ExtendToI4(sbyte? b)
+		{
+			return b;
+		}
+
+		public long? ExtendI8(byte? b)
+		{
+			return b;
+		}
+
+		public long? ExtendToI8(sbyte? b)
+		{
+			return b;
+		}
+
+		public long? ExtendI8(int? b)
+		{
+			return b;
+		}
+
+		public long? ExtendToI8(uint? b)
+		{
+			return b;
+		}
+
+		// TODO: unnecessary cast
+		//public double? ToFloat(int? b)
+		//{
+		//	return b;
+		//}
+
+		//public long? InArithmetic(uint? b)
+		//{
+		//	return 100L + b;
+		//}
+
+		public long? AfterArithmetic(uint? b)
+		{
+			return 100 + b;
+		}
+
+		// TODO: unnecessary cast
+		//public static double? InArithmetic2(float? nf, double? nd, float f)
+		//{
+		//	return nf + nd + f;
+		//}
+
+		public static long? InArithmetic3(int? a, long? b, int? c, long d)
+		{
+			return a + b + c + d;
+		}
+	}
+
+	internal class T02_LiftedExplicitConversions
+	{
+		private static void Print<T>(T? x) where T : struct
+		{
+			Console.WriteLine(x);
+		}
+
+		public static void UncheckedCasts(int? i4, long? i8, float? f)
+		{
+			Print((byte?)i4);
+			Print((short?)i4);
+			Print((uint?)i4);
+			Print((uint?)i8);
+			Print((uint?)f);
+		}
+
+		public static void CheckedCasts(int? i4, long? i8, float? f)
+		{
+			checked {
+				Print((byte?)i4);
+				Print((short?)i4);
+				Print((uint?)i4);
+				Print((uint?)i8);
+				//Print((uint?)f); TODO
+			}
+		}
+	}
+
+	internal class T03_NullCoalescingTests
+	{
+		private static void Print<T>(T x)
+		{
+			Console.WriteLine(x);
+		}
+
+		public static void Objects(object a, object b)
+		{
+			Print(a ?? b);
+		}
+
+		public static void Nullables(int? a, int? b)
+		{
+			Print(a ?? b);
+		}
+
+		public static void NullableWithNonNullableFallback(int? a, int b)
+		{
+			Print(a ?? b);
+		}
+
+		public static void NullableWithImplicitConversion(short? a, int? b)
+		{
+			Print(a ?? b);
+		}
+
+		public static void NullableWithImplicitConversionAndNonNullableFallback(short? a, int b)
+		{
+			// TODO: unnecessary cast
+			//Print(a ?? b);
+		}
+
+		public static void Chain(int? a, int? b, int? c, int d)
+		{
+			Print(a ?? b ?? c ?? d);
+		}
+
+		public static void ChainWithImplicitConversions(int? a, short? b, long? c, byte d)
+		{
+			// TODO: unnecessary casts
+			//Print(a ?? b ?? c ?? d);
+		}
+
+		public static void ChainWithComputation(int? a, short? b, long? c, byte d)
+		{
+			// TODO: unnecessary casts
+			//Print((a + 1) ?? (b + 2) ?? (c + 3) ?? (d + 4));
+		}
+
+		public static object ReturnObjects(object a, object b)
+		{
+			return a ?? b;
+		}
+
+		public static int? ReturnNullables(int? a, int? b)
+		{
+			return a ?? b;
+		}
+
+		public static int ReturnNullableWithNonNullableFallback(int? a, int b)
+		{
+			return a ?? b;
+		}
+
+		public static int ReturnChain(int? a, int? b, int? c, int d)
+		{
+			return a ?? b ?? c ?? d;
+		}
+
+		public static long ReturnChainWithImplicitConversions(int? a, short? b, long? c, byte d)
+		{
+			//TODO: unnecessary casts
+			//return a ?? b ?? c ?? d;
+			return 0L;
+		}
+
+		public static long ReturnChainWithComputation(int? a, short? b, long? c, byte d)
+		{
+			//TODO: unnecessary casts
+			//return (a + 1) ?? (b + 2) ?? (c + 3) ?? (d + 4);
+			return 0L;
+		}
+	}
+
 	// dummy structure for testing custom operators
 	[StructLayout(LayoutKind.Sequential, Size = 1)]
 	public struct TS
@@ -808,179 +990,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public override int GetHashCode()
 		{
 			throw null;
-		}
-	}
-
-	internal class LiftedImplicitConversions
-	{
-		public int? ExtendI4(byte? b)
-		{
-			return b;
-		}
-
-		public int? ExtendToI4(sbyte? b)
-		{
-			return b;
-		}
-
-		public long? ExtendI8(byte? b)
-		{
-			return b;
-		}
-
-		public long? ExtendToI8(sbyte? b)
-		{
-			return b;
-		}
-
-		public long? ExtendI8(int? b)
-		{
-			return b;
-		}
-
-		public long? ExtendToI8(uint? b)
-		{
-			return b;
-		}
-
-		// TODO: unnecessary cast
-		//public double? ToFloat(int? b)
-		//{
-		//	return b;
-		//}
-
-		//public long? InArithmetic(uint? b)
-		//{
-		//	return 100L + b;
-		//}
-
-		public long? AfterArithmetic(uint? b)
-		{
-			return 100 + b;
-		}
-
-		// TODO: unnecessary cast
-		//public static double? InArithmetic2(float? nf, double? nd, float f)
-		//{
-		//	return nf + nd + f;
-		//}
-
-		public static long? InArithmetic3(int? a, long? b, int? c, long d)
-		{
-			return a + b + c + d;
-		}
-	}
-
-	internal class LiftedExplicitConversions
-	{
-		private static void Print<T>(T? x) where T : struct
-		{
-			Console.WriteLine(x);
-		}
-
-		public static void UncheckedCasts(int? i4, long? i8, float? f)
-		{
-			Print((byte?)i4);
-			Print((short?)i4);
-			Print((uint?)i4);
-			Print((uint?)i8);
-			Print((uint?)f);
-		}
-
-		public static void CheckedCasts(int? i4, long? i8, float? f)
-		{
-			checked {
-				Print((byte?)i4);
-				Print((short?)i4);
-				Print((uint?)i4);
-				Print((uint?)i8);
-				//Print((uint?)f); TODO
-			}
-		}
-	}
-
-	internal class NullCoalescingTests
-	{
-		private static void Print<T>(T x)
-		{
-			Console.WriteLine(x);
-		}
-
-		public static void Objects(object a, object b)
-		{
-			Print(a ?? b);
-		}
-
-		public static void Nullables(int? a, int? b)
-		{
-			Print(a ?? b);
-		}
-
-		public static void NullableWithNonNullableFallback(int? a, int b)
-		{
-			Print(a ?? b);
-		}
-
-		public static void NullableWithImplicitConversion(short? a, int? b)
-		{
-			Print(a ?? b);
-		}
-
-		public static void NullableWithImplicitConversionAndNonNullableFallback(short? a, int b)
-		{
-			// TODO: unnecessary cast
-			//Print(a ?? b);
-		}
-
-		public static void Chain(int? a, int? b, int? c, int d)
-		{
-			Print(a ?? b ?? c ?? d);
-		}
-
-		public static void ChainWithImplicitConversions(int? a, short? b, long? c, byte d)
-		{
-			// TODO: unnecessary casts
-			//Print(a ?? b ?? c ?? d);
-		}
-
-		public static void ChainWithComputation(int? a, short? b, long? c, byte d)
-		{
-			// TODO: unnecessary casts
-			//Print((a + 1) ?? (b + 2) ?? (c + 3) ?? (d + 4));
-		}
-
-		public static object ReturnObjects(object a, object b)
-		{
-			return a ?? b;
-		}
-
-		public static int? ReturnNullables(int? a, int? b)
-		{
-			return a ?? b;
-		}
-
-		public static int ReturnNullableWithNonNullableFallback(int? a, int b)
-		{
-			return a ?? b;
-		}
-
-		public static int ReturnChain(int? a, int? b, int? c, int d)
-		{
-			return a ?? b ?? c ?? d;
-		}
-
-		public static long ReturnChainWithImplicitConversions(int? a, short? b, long? c, byte d)
-		{
-			//TODO: unnecessary casts
-			//return a ?? b ?? c ?? d;
-			return 0L;
-		}
-
-		public static long ReturnChainWithComputation(int? a, short? b, long? c, byte d)
-		{
-			//TODO: unnecessary casts
-			//return (a + 1) ?? (b + 2) ?? (c + 3) ?? (d + 4);
-			return 0L;
 		}
 	}
 }

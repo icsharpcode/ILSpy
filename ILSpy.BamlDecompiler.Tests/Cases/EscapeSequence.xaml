@@ -1,16 +1,18 @@
 ﻿<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:system="clr-namespace:System;assembly=mscorlib">
 	<StackPanel>
-		<StackPanel.Resources>
-			<DataTemplate x:Key="key" DataType="{}{http://planetsNS}Planet">
-				<StackPanel Orientation="Horizontal">
-					<TextBlock Width="100" Text="{Binding Path=Element[{http://planetsNS}DiameterKM].Value}" />
-					<TextBlock Width="100" Text="{Binding Path=Attribute[Name].Value}" />
-					<TextBlock Text="{Binding Path=Element[{http://planetsNS}Details].Value}" />
-					<TextBlock Text="{Binding Source={x:Static system:DateTime.Now}, StringFormat=Date: {0:dddd, MMMM dd}}" />
-					<TextBlock Text="{Binding Source={x:Static system:DateTime.Now}, StringFormat=Time: {0:HH:mm}}" />
-				</StackPanel>
-			</DataTemplate>
-		</StackPanel.Resources>
+		<FrameworkElement.Resources>
+			<ResourceDictionary>
+				<DataTemplate x:Key="key" DataType="{}{http://planetsNS}Planet">
+					<StackPanel Orientation="Horizontal">
+						<TextBlock Width="100" Text="{Binding Path=Element[{http://planetsNS}DiameterKM].Value}" />
+						<TextBlock Width="100" Text="{Binding Path=Attribute[Name].Value}" />
+						<TextBlock Text="{Binding Path=Element[{http://planetsNS}Details].Value}" />
+						<TextBlock Text="{Binding Source={x:Static system:DateTime.Now}, StringFormat=Date: {0:dddd, MMMM dd}}" />
+						<TextBlock Text="{Binding Source={x:Static system:DateTime.Now}, StringFormat=Time: {0:HH:mm}}" />
+					</StackPanel>
+				</DataTemplate>
+			</ResourceDictionary>
+		</FrameworkElement.Resources>
 		<TextBlock Text="{Binding Path=ActualWidth, StringFormat=Window width: {0:#,#.0}}" />
 		<TextBlock Text="{Binding Path=ActualHeight, StringFormat=Window height: {0:C}}" />
 		<WrapPanel Margin="10">
