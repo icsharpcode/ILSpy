@@ -179,7 +179,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				// Newer versions of Roslyn use extra variables:
 				if (i >= 2 && switchValue.MatchLdLoc(out var otherSwitchValueVar) && otherSwitchValueVar.IsSingleDefinition && otherSwitchValueVar.LoadCount == 1
-					&& instructions[i - 2].MatchStLoc(otherSwitchValueVar, out switchValue)) {
+					&& instructions[i - 2].MatchStLoc(otherSwitchValueVar, out var newSwitchValue)) {
+					switchValue = newSwitchValue;
 					extraLoad = true;
 				}
 			} else if (instructions[i - 1] is StLoc stloc) {
