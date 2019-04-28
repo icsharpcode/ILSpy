@@ -906,7 +906,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteToken(Roles.Dot);
 			WriteIdentifier(memberReferenceExpression.MemberNameToken);
 			WriteTypeArguments(memberReferenceExpression.TypeArguments);
-			if (insertedNewLine) {
+			if (insertedNewLine && !(memberReferenceExpression.Parent is InvocationExpression)) {
 				writer.Unindent();
 			}
 			EndNode(memberReferenceExpression);
