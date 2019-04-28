@@ -21,6 +21,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		public RequiredNamespaceCollector(HashSet<string> namespaces)
 		{
 			this.namespaces = namespaces;
+			for (int i = 0; i < KnownTypeReference.KnownTypeCodeCount; i++) {
+				var ktr = KnownTypeReference.Get((KnownTypeCode)i);
+				if (ktr == null) continue;
+				namespaces.Add(ktr.Namespace);
+			}
 		}
 
 		public static void CollectNamespaces(MetadataModule module, HashSet<string> namespaces)
