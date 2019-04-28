@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 		}
-		
+
 		public Statement Convert(ILInstruction inst)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return stmt;
 		}
-		
+
 		protected internal override Statement VisitIfInstruction(IfInstruction inst)
 		{
 			var condition = exprBuilder.TranslateCondition(inst.Condition);
@@ -268,14 +268,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 		}
-		
+
 		/// <summary>Target block that a 'continue;' statement would jump to</summary>
 		Block continueTarget;
 		/// <summary>Number of ContinueStatements that were created for the current continueTarget</summary>
 		int continueCount;
 		/// <summary>Maps blocks to cases.</summary>
 		Dictionary<Block, ConstantResolveResult> caseLabelMapping;
-		
+
 		protected internal override Statement VisitBranch(Branch inst)
 		{
 			if (inst.TargetBlock == continueTarget) {
@@ -289,12 +289,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return new GotoStatement(inst.TargetLabel);
 		}
-		
+
 		/// <summary>Target container that a 'break;' statement would break out of</summary>
 		BlockContainer breakTarget;
 		/// <summary>Dictionary from BlockContainer to label name for 'goto of_container';</summary>
 		readonly Dictionary<BlockContainer, string> endContainerLabels = new Dictionary<BlockContainer, string>();
-		
+
 		protected internal override Statement VisitLeave(Leave inst)
 		{
 			if (inst.TargetContainer == breakTarget)
@@ -322,7 +322,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			return new ThrowStatement(exprBuilder.Translate(inst.Argument));
 		}
-		
+
 		protected internal override Statement VisitRethrow(Rethrow inst)
 		{
 			return new ThrowStatement();
@@ -348,7 +348,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			tryCatch.TryBlock = tryBlockConverted as BlockStatement ?? new BlockStatement { tryBlockConverted };
 			return tryCatch;
 		}
-		
+
 		protected internal override Statement VisitTryCatch(TryCatch inst)
 		{
 			var tryCatch = new TryCatchStatement();
@@ -372,14 +372,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return tryCatch;
 		}
-		
+
 		protected internal override Statement VisitTryFinally(TryFinally inst)
 		{
 			var tryCatch = MakeTryCatch(inst.TryBlock);
 			tryCatch.FinallyBlock = ConvertAsBlock(inst.FinallyBlock);
 			return tryCatch;
 		}
-		
+
 		protected internal override Statement VisitTryFault(TryFault inst)
 		{
 			var tryCatch = new TryCatchStatement();
@@ -551,7 +551,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Convert the modified body to C# AST:
 			var whileLoop = (WhileStatement)ConvertAsBlock(container).First();
 			BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
-	
+
 			// Remove the first statement, as it is the foreachVariable = enumerator.Current; statement.
 			Statement firstStatement = foreachBody.Statements.First();
 			if (firstStatement is LabelStatement) {
@@ -828,7 +828,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return blockStmt;
 			}
 		}
-		
+
 		Statement ConvertLoop(BlockContainer container)
 		{
 			ILInstruction condition;
@@ -982,28 +982,36 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override Statement VisitInitblk(Initblk inst)
 		{
-			var stmt = new ExpressionStatement(new InvocationExpression {
-				Target = new IdentifierExpression("memset"),
-				Arguments = {
-					exprBuilder.Translate(inst.Address),
-					exprBuilder.Translate(inst.Value),
-					exprBuilder.Translate(inst.Size)
-				}
-			});
+			var stmt = new ExpressionStatement(
+				exprBuilder.CallUnsafeIntrinsic(
+					inst.UnalignedPrefix != 0 ? "InitBlockUnaligned" : "InitBlock",
+					new Expression[] {
+						exprBuilder.Translate(inst.Address),
+						exprBuilder.Translate(inst.Value),
+						exprBuilder.Translate(inst.Size)
+					},
+					exprBuilder.compilation.FindType(KnownTypeCode.Void),
+					inst
+				)
+			);
 			stmt.InsertChildAfter(null, new Comment(" IL initblk instruction"), Roles.Comment);
 			return stmt;
 		}
 
 		protected internal override Statement VisitCpblk(Cpblk inst)
 		{
-			var stmt = new ExpressionStatement(new InvocationExpression {
-				Target = new IdentifierExpression("memcpy"),
-				Arguments = {
-					exprBuilder.Translate(inst.DestAddress),
-					exprBuilder.Translate(inst.SourceAddress),
-					exprBuilder.Translate(inst.Size)
-				}
-			});
+			var stmt = new ExpressionStatement(
+				exprBuilder.CallUnsafeIntrinsic(
+					inst.UnalignedPrefix != 0 ? "CopyBlockUnaligned" : "CopyBlock",
+					new Expression[] {
+						exprBuilder.Translate(inst.DestAddress),
+						exprBuilder.Translate(inst.SourceAddress),
+						exprBuilder.Translate(inst.Size)
+					},
+					exprBuilder.compilation.FindType(KnownTypeCode.Void),
+					inst
+				)
+			);
 			stmt.InsertChildAfter(null, new Comment(" IL cpblk instruction"), Roles.Comment);
 			return stmt;
 		}

@@ -369,7 +369,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				pointerType = typeHint as PointerType;
 				if (pointerType != null && GetPointerArithmeticOffset(
 						inst.Argument, Translate(inst.Argument),
-						pointerType, checkForOverflow: true,
+						pointerType.ElementType, checkForOverflow: true,
 						unwrapZeroExtension: true
 					) is TranslatedExpression offset)
 				{
@@ -958,7 +958,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				return null;
 			}
-			TranslatedExpression offsetExpr = GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, pointerType, inst.CheckForOverflow)
+			TranslatedExpression offsetExpr = GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, pointerType.ElementType, inst.CheckForOverflow)
 				?? FallBackToBytePointer();
 
 			if (left.Type.Kind == TypeKind.Pointer) {
@@ -985,6 +985,68 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		/// <summary>
+		/// Translates pointer arithmetic with managed pointers:
+		///   ref + int
+		///   int + ref
+		///   ref - int
+		///   ref - ref
+		/// </summary>
+		TranslatedExpression? HandleManagedPointerArithmetic(BinaryNumericInstruction inst, TranslatedExpression left, TranslatedExpression right)
+		{
+			if (!(inst.Operator == BinaryNumericOperator.Add || inst.Operator == BinaryNumericOperator.Sub))
+				return null;
+			if (inst.CheckForOverflow || inst.IsLifted)
+				return null;
+			if (inst.Operator == BinaryNumericOperator.Sub && inst.LeftInputType == StackType.Ref && inst.RightInputType == StackType.Ref) {
+				// ref - ref => i
+				return CallUnsafeIntrinsic("ByteOffset", new[] { left.Expression, right.Expression }, compilation.FindType(KnownTypeCode.IntPtr), inst);
+			}
+			if (inst.LeftInputType == StackType.Ref && inst.RightInputType == StackType.I
+				&& left.Type is ByReferenceType brt) {
+				// ref [+-] int
+				string name = (inst.Operator == BinaryNumericOperator.Sub ? "Subtract" : "Add");
+				ILInstruction offsetInst = PointerArithmeticOffset.Detect(inst.Right, brt.ElementType, inst.CheckForOverflow);
+				if (offsetInst != null) {
+					return CallUnsafeIntrinsic(name, new[] { left.Expression, Translate(offsetInst).Expression }, brt, inst);
+				} else {
+					return CallUnsafeIntrinsic(name + "ByteOffset", new[] { left.Expression, right.Expression }, brt, inst);
+				}
+			}
+			brt = right.Type as ByReferenceType;
+			if (inst.LeftInputType == StackType.I && inst.RightInputType == StackType.Ref && brt != null
+				&& inst.Operator == BinaryNumericOperator.Add) {
+				// int + ref
+				ILInstruction offsetInst = PointerArithmeticOffset.Detect(inst.Left, brt.ElementType, inst.CheckForOverflow);
+				if (offsetInst != null) {
+					return CallUnsafeIntrinsic("Add", new[] {
+						new NamedArgumentExpression("elementOffset", Translate(offsetInst)),
+						new NamedArgumentExpression("source", right)
+					}, brt, inst);
+				} else {
+					return CallUnsafeIntrinsic("AddByteOffset", new[] {
+						new NamedArgumentExpression("byteOffset", left.Expression),
+						new NamedArgumentExpression("source", right)
+					}, brt, inst);
+				}
+			}
+			return null;
+		}
+
+		internal TranslatedExpression CallUnsafeIntrinsic(string name, Expression[] arguments, IType returnType, ILInstruction inst)
+		{
+			var target = new MemberReferenceExpression {
+				Target = new TypeReferenceExpression(astBuilder.ConvertType(compilation.FindType(KnownTypeCode.Unsafe))),
+				MemberName = name
+			};
+			var invocation = new InvocationExpression(target, arguments).WithILInstruction(inst);
+			if (returnType is ByReferenceType brt) {
+				return WrapInRef(invocation.WithRR(new ResolveResult(brt.ElementType)), brt);
+			} else {
+				return invocation.WithRR(new ResolveResult(returnType));
+			}
+		}
+
 		TranslatedExpression EnsureIntegerType(TranslatedExpression expr)
 		{
 			if (!expr.Type.IsCSharpPrimitiveIntegerType()) {
@@ -998,9 +1060,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		TranslatedExpression? GetPointerArithmeticOffset(ILInstruction byteOffsetInst, TranslatedExpression byteOffsetExpr,
-			PointerType pointerType, bool checkForOverflow, bool unwrapZeroExtension = false)
+			IType pointerElementType, bool checkForOverflow, bool unwrapZeroExtension = false)
 		{
-			var countOffsetInst = PointerArithmeticOffset.Detect(byteOffsetInst, pointerType,
+			var countOffsetInst = PointerArithmeticOffset.Detect(byteOffsetInst, pointerElementType,
 				checkForOverflow: checkForOverflow,
 				unwrapZeroExtension: unwrapZeroExtension);
 			if (countOffsetInst == null) {
@@ -1086,6 +1148,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
 
+			if (left.Type.Kind == TypeKind.ByReference || right.Type.Kind == TypeKind.ByReference) {
+				var ptrResult = HandleManagedPointerArithmetic(inst, left, right);
+				if (ptrResult != null)
+					return ptrResult.Value;
+			}
 			if (left.Type.Kind == TypeKind.Pointer || right.Type.Kind == TypeKind.Pointer) {
 				var ptrResult = HandlePointerArithmetic(inst, left, right);
 				if (ptrResult != null)
@@ -1350,7 +1417,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					case AssignmentOperatorType.Add:
 					case AssignmentOperatorType.Subtract:
 						if (target.Type.Kind == TypeKind.Pointer) {
-							var pao = GetPointerArithmeticOffset(inst.Value, value, (PointerType)target.Type, inst.CheckForOverflow);
+							var pao = GetPointerArithmeticOffset(inst.Value, value, ((PointerType)target.Type).ElementType, inst.CheckForOverflow);
 							if (pao != null) {
 								value = pao.Value;
 							} else { 
@@ -2411,7 +2478,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						throw new ArgumentException("given Block is invalid!");
 					var binary = (BinaryNumericInstruction)target;
 					left = left.UnwrapConv(ConversionKind.StopGCTracking);
-					var offsetInst = PointerArithmeticOffset.Detect(right, pointerType, binary.CheckForOverflow);
+					var offsetInst = PointerArithmeticOffset.Detect(right, pointerType.ElementType, binary.CheckForOverflow);
 					if (!left.MatchLdLoc(final.Variable) || offsetInst == null)
 						throw new ArgumentException("given Block is invalid!");
 					if (!offsetInst.MatchLdcI(out offset))

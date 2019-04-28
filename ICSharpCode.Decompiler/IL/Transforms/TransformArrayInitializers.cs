@@ -275,7 +275,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!left.MatchLdLoc(store))
 						break;
-					var offsetInst = PointerArithmeticOffset.Detect(right, new PointerType(elementType), ((BinaryNumericInstruction)target).CheckForOverflow);
+					var offsetInst = PointerArithmeticOffset.Detect(right, elementType, ((BinaryNumericInstruction)target).CheckForOverflow);
 					if (offsetInst == null)
 						return false;
 					if (!offsetInst.MatchLdcI(out long offset) || offset < 0 || offset < minExpectedOffset)
@@ -283,7 +283,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					minExpectedOffset = offset;
 				}
 				if (values == null) {
-					var countInstruction = PointerArithmeticOffset.Detect(lengthInstruction, new PointerType(elementType), checkForOverflow: true);
+					var countInstruction = PointerArithmeticOffset.Detect(lengthInstruction, elementType, checkForOverflow: true);
 					if (countInstruction == null || !countInstruction.MatchLdcI(out long valuesLength) || valuesLength < 1)
 						return false;
 					values = new StObj[(int)valuesLength];
