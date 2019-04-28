@@ -292,16 +292,19 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return callChainLength;
 		}
 
-		protected virtual void InsertNewLineWhenInMethodCallChain(MemberReferenceExpression expr)
+		protected virtual bool InsertNewLineWhenInMethodCallChain(MemberReferenceExpression expr)
 		{
 			int callChainLength = GetCallChainLengthLimited(expr);
-			if (callChainLength < 3) return;
+			if (callChainLength < 3) return false;
+			if (expr.GetParent(n => n is Statement || n is LambdaExpression || n is InterpolatedStringContent) is InterpolatedStringContent)
+				return false;
 			if (callChainLength == 3)
 				writer.Indent();
 			writer.NewLine();
 			
 			isAtStartOfLine = true;
 			isAfterSpace = false;
+			return true;
 		}
 		
 		protected virtual void OpenBrace(BraceStyle style)
@@ -899,13 +902,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(memberReferenceExpression);
 			memberReferenceExpression.Target.AcceptVisitor(this);
-			InsertNewLineWhenInMethodCallChain(memberReferenceExpression);
+			bool insertedNewLine = InsertNewLineWhenInMethodCallChain(memberReferenceExpression);
 			WriteToken(Roles.Dot);
 			WriteIdentifier(memberReferenceExpression.MemberNameToken);
 			WriteTypeArguments(memberReferenceExpression.TypeArguments);
-			if (!(memberReferenceExpression.Parent is InvocationExpression)) {
-				if (GetCallChainLengthLimited(memberReferenceExpression) >= 3)
-					writer.Unindent();
+			if (insertedNewLine) {
+				writer.Unindent();
 			}
 			EndNode(memberReferenceExpression);
 		}
