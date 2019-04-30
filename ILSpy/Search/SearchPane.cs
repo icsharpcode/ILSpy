@@ -293,20 +293,24 @@ namespace ICSharpCode.ILSpy
 			
 			public async Task Run()
 			{
-				await Task.Factory.StartNew(() => {
-					var searcher = GetSearchStrategy();
-					try {
-						foreach (var loadedAssembly in assemblies) {
-							var module = loadedAssembly.GetPEFileOrNull();
-							if (module == null)
-								continue;
-							searcher.Search(module, cts.Token);
+				try {
+					await Task.Factory.StartNew(() => {
+						var searcher = GetSearchStrategy();
+						try {
+							foreach (var loadedAssembly in assemblies) {
+								var module = loadedAssembly.GetPEFileOrNull();
+								if (module == null)
+									continue;
+								searcher.Search(module, cts.Token);
+							}
+						} catch (OperationCanceledException) {
+							// ignore cancellation
 						}
-					} catch (OperationCanceledException) {
-						// ignore cancellation
-					}
 
-				}, cts.Token, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
+					}, cts.Token, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
+				} catch (TaskCanceledException) {
+					// ignore cancellation
+				}
 			}
 
 			AbstractSearchStrategy GetSearchStrategy()
