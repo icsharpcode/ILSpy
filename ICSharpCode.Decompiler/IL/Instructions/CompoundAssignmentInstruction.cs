@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.IL
 						// ensure that the byte offset is a multiple of the pointer size
 						return PointerArithmeticOffset.Detect(
 							binary.Right,
-							(PointerType)type,
+							((PointerType)type).ElementType,
 							checkForOverflow: binary.CheckForOverflow
 						) != null;
 					default:

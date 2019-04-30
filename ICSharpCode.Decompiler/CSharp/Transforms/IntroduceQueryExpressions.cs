@@ -325,12 +325,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>Matches simple lambdas of the form "a => b"</summary>
 		bool MatchSimpleLambda(Expression expr, out ParameterDeclaration parameter, out Expression body)
 		{
-			// HACK : remove workaround after all unnecessary casts are eliminated.
-			LambdaExpression lambda;
-			if (expr is CastExpression cast)
-				lambda = cast.Expression as LambdaExpression;
-			else
-				lambda = expr as LambdaExpression;
+			var lambda = expr as LambdaExpression;
 			if (lambda != null && lambda.Parameters.Count == 1 && lambda.Body is Expression) {
 				ParameterDeclaration p = lambda.Parameters.Single();
 				if (p.ParameterModifier == ParameterModifier.None) {

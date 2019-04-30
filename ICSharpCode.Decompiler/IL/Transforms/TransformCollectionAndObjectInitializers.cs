@@ -66,6 +66,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return false;
 						if (DelegateConstruction.IsDelegateConstruction(newObjInst) || DelegateConstruction.IsPotentialClosure(context, newObjInst))
 							return false;
+						// Cannot build a collection/object initializer attached to an AnonymousTypeCreateExpression:s 
+						// anon = new { A = 5 } { 3,4,5 } is invalid syntax.
+						if (newObjInst.Method.DeclaringType.ContainsAnonymousType())
+							return false;
 						instType = newObjInst.Method.DeclaringType;
 						break;
 					case DefaultValue defaultVal:

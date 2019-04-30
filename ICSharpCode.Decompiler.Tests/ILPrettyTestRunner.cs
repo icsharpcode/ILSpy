@@ -161,6 +161,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Unsafe()
+		{
+			Run();
+		}
+
+		[Test]
 		public void FSharpLoops_Debug()
 		{
 			CopyFSharpCoreDll();

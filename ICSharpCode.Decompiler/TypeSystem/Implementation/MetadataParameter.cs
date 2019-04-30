@@ -81,30 +81,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		const ParameterAttributes inOut = ParameterAttributes.In | ParameterAttributes.Out;
 
-		public bool IsRef {
-			get {
-				if (!(Type.Kind == TypeKind.ByReference && (attributes & inOut) != ParameterAttributes.Out))
-					return false;
-				if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) == 0)
-					return true;
-				var metadata = module.metadata;
-				var parameterDef = metadata.GetParameter(handle);
-				return !parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
-			}
-		}
-
+		public bool IsRef => DetectRefKind() == CSharp.Syntax.ParameterModifier.Ref;
 		public bool IsOut => Type.Kind == TypeKind.ByReference && (attributes & inOut) == ParameterAttributes.Out;
+		public bool IsIn => DetectRefKind() == CSharp.Syntax.ParameterModifier.In;
+
 		public bool IsOptional => (attributes & ParameterAttributes.Optional) != 0;
 
-		public bool IsIn {
-			get {
-				if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) == 0 ||
-					Type.Kind != TypeKind.ByReference || (attributes & inOut) != ParameterAttributes.In)
-					return false;
+		CSharp.Syntax.ParameterModifier DetectRefKind()
+		{
+			if (Type.Kind != TypeKind.ByReference)
+				return CSharp.Syntax.ParameterModifier.None;
+			if ((attributes & inOut) == ParameterAttributes.Out)
+				return CSharp.Syntax.ParameterModifier.Out;
+			if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0) {
 				var metadata = module.metadata;
 				var parameterDef = metadata.GetParameter(handle);
-				return parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
+				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly))
+					return CSharp.Syntax.ParameterModifier.In;
 			}
+			return CSharp.Syntax.ParameterModifier.Ref;
 		}
 
 		public bool IsParams {

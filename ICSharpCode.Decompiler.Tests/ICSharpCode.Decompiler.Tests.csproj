@@ -88,6 +88,7 @@
     <Compile Include="TestCases\ILPretty\Issue1323.cs" />
     <Compile Include="TestCases\Pretty\CustomAttributes2.cs" />
     <Compile Include="TestCases\Pretty\EnumTests.cs" />
+    <None Include="TestCases\ILPretty\Unsafe.il" />
     <None Include="TestCases\Pretty\NullableRefTypes.cs" />
     <Compile Include="TestCases\Pretty\TypeMemberTests.cs" />
     <Compile Include="TestCases\Pretty\ValueTypes.cs" />
