@@ -348,11 +348,6 @@
     <Compile Include="Output\TextTokenWriter.cs" />
     <Compile Include="DebugInfo\IDebugInfoProvider.cs" />
     <Compile Include="DebugInfo\PortablePdbWriter.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="Semantics\InterpolatedStringResolveResult.cs" />
     <Compile Include="SRMExtensions.cs" />
     <Compile Include="SRMHacks.cs" />
@@ -609,14 +604,6 @@
     <Content Include="..\doc\Pattern Matching.html">
       <Link>CSharp\Syntax\PatternMatching\Pattern Matching.html</Link>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Properties\Resources.zh-Hans.resx" />
   </ItemGroup>
 
   <ItemGroup>

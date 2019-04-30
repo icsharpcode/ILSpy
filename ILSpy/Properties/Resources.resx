@@ -567,4 +567,160 @@
   <data name="DecompilerSettingsPanelLongText" xml:space="preserve">
     <value>The settings selected below are applied to the decompiler output in combination with the selection in the language drop-down. Selecting a lower language version in the drop-down will deactivate all selected options of the higher versions. Note that some settings implicitly depend on each other, e.g.: LINQ expressions cannot be introduced without first transforming static calls to extension method calls.</value>
   </data>
+  <data name="DecompilerSettings.DecompileEnumeratorsYieldReturn" xml:space="preserve">
+    <value>Decompile enumerators (yield return)</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAnonymousMethodsLambdas" xml:space="preserve">
+    <value>Decompile anonymous methods/lambdas</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAnonymousTypes" xml:space="preserve">
+    <value>Decompile anonymous types</value>
+  </data>
+  <data name="DecompilerSettings.UseLambdaSyntaxIfPossible" xml:space="preserve">
+    <value>Use lambda syntax, if possible</value>
+  </data>
+  <data name="DecompilerSettings.DecompileExpressionTrees" xml:space="preserve">
+    <value>Decompile expression trees</value>
+  </data>
+  <data name="DecompilerSettings.DecompileUseOfTheDynamicType" xml:space="preserve">
+    <value>Decompile use of the 'dynamic' type</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAsyncMethods" xml:space="preserve">
+    <value>Decompile async methods</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAwaitInCatchFinallyBlocks" xml:space="preserve">
+    <value>Decompile await in catch/finally blocks</value>
+  </data>
+  <data name="DecompilerSettings.DecompileDecimalConstantAsSimpleLiteralValues" xml:space="preserve">
+    <value>Decompile [DecimalConstant(...)] as simple literal values</value>
+  </data>
+  <data name="DecompilerSettings.DecompileC10PublicUnsafeFixedIntArr10Members" xml:space="preserve">
+    <value>Decompile C# 1.0 'public unsafe fixed int arr[10];' members</value>
+  </data>
+  <data name="DecompilerSettings.UseLiftedOperatorsForNullables" xml:space="preserve">
+    <value>Use lifted operators for nullables</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAndOperators" xml:space="preserve">
+    <value>Decompile ?. and ?[] operators</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAutomaticProperties" xml:space="preserve">
+    <value>Decompile automatic properties</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAutomaticEvents" xml:space="preserve">
+    <value>Decompile automatic events</value>
+  </data>
+  <data name="DecompilerSettings.DetectUsingStatements" xml:space="preserve">
+    <value>Detect using statements</value>
+  </data>
+  <data name="DecompilerSettings.Other" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysUseBraces" xml:space="preserve">
+    <value>Always use braces</value>
+  </data>
+  <data name="DecompilerSettings.DetectForeachStatements" xml:space="preserve">
+    <value>Detect foreach statements</value>
+  </data>
+  <data name="DecompilerSettings.DetectLockStatements" xml:space="preserve">
+    <value>Detect lock statements</value>
+  </data>
+  <data name="DecompilerSettings.DetectSwitchOnString" xml:space="preserve">
+    <value>Detect switch on string</value>
+  </data>
+  <data name="DecompilerSettings.InsertUsingDeclarations" xml:space="preserve">
+    <value>Insert using declarations</value>
+  </data>
+  <data name="DecompilerSettings.UseExtensionMethodSyntax" xml:space="preserve">
+    <value>Use extension method syntax</value>
+  </data>
+  <data name="DecompilerSettings.UseLINQExpressionSyntax" xml:space="preserve">
+    <value>Use LINQ expression syntax</value>
+  </data>
+  <data name="DecompilerSettings.UseImplicitMethodGroupConversions" xml:space="preserve">
+    <value>Use implicit method group conversions</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls" xml:space="preserve">
+    <value>Always cast targets of explicit interface implementation calls</value>
+  </data>
+  <data name="DecompilerSettings.UseVariableNamesFromDebugSymbolsIfAvailable" xml:space="preserve">
+    <value>Use variable names from debug symbols, if available</value>
+  </data>
+  <data name="DecompilerSettings.ArrayInitializerExpressions" xml:space="preserve">
+    <value>Array initializer expressions</value>
+  </data>
+  <data name="DecompilerSettings.ObjectCollectionInitializerExpressions" xml:space="preserve">
+    <value>Object/collection initializer expressions</value>
+  </data>
+  <data name="DecompilerSettings.DictionaryInitializerExpressions" xml:space="preserve">
+    <value>Dictionary initializer expressions</value>
+  </data>
+  <data name="DecompilerSettings.AllowExtensionAddMethodsInCollectionInitializerExpressions" xml:space="preserve">
+    <value>Allow extension 'Add' methods in collection initializer expressions</value>
+  </data>
+  <data name="DecompilerSettings.UseStringInterpolation" xml:space="preserve">
+    <value>Use string interpolation</value>
+  </data>
+  <data name="DecompilerSettings.IncludeXMLDocumentationCommentsInTheDecompiledCode" xml:space="preserve">
+    <value>Include XML documentation comments in the decompiled code</value>
+  </data>
+  <data name="DecompilerSettings.UseExpressionBodiedMemberSyntaxForGetOnlyProperties" xml:space="preserve">
+    <value>Use expression-bodied member syntax for get-only properties</value>
+  </data>
+  <data name="DecompilerSettings.UseOutVariableDeclarations" xml:space="preserve">
+    <value>Use out variable declarations</value>
+  </data>
+  <data name="DecompilerSettings.UseDiscards" xml:space="preserve">
+    <value>Use discards</value>
+  </data>
+  <data name="DecompilerSettings.IsByRefLikeAttributeShouldBeReplacedWithRefModifiersOnStructs" xml:space="preserve">
+    <value>IsByRefLikeAttribute should be replaced with 'ref' modifiers on structs</value>
+  </data>
+  <data name="DecompilerSettings.IsReadOnlyAttributeShouldBeReplacedWithReadonlyInModifiersOnStructsParameters" xml:space="preserve">
+    <value>IsReadOnlyAttribute should be replaced with 'readonly'/'in' modifiers on structs/parameters</value>
+  </data>
+  <data name="DecompilerSettings.IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmanagedConstraints" xml:space="preserve">
+    <value>IsUnmanagedAttribute on type parameters should be replaced with 'unmanaged' constraints</value>
+  </data>
+  <data name="DecompilerSettings.UseStackallocInitializerSyntax" xml:space="preserve">
+    <value>Use stackalloc initializer syntax</value>
+  </data>
+  <data name="DecompilerSettings.UseTupleTypeSyntax" xml:space="preserve">
+    <value>Use tuple type syntax</value>
+  </data>
+  <data name="DecompilerSettings.UseImplicitConversionsBetweenTupleTypes" xml:space="preserve">
+    <value>Use implicit conversions between tuple types</value>
+  </data>
+  <data name="DecompilerSettings.DetectTupleComparisons" xml:space="preserve">
+    <value>Detect tuple comparisons</value>
+  </data>
+  <data name="DecompilerSettings.UseNamedArguments" xml:space="preserve">
+    <value>Use named arguments</value>
+  </data>
+  <data name="DecompilerSettings.UseNonTrailingNamedArguments" xml:space="preserve">
+    <value>Use non-trailing named arguments</value>
+  </data>
+  <data name="DecompilerSettings.RemoveOptionalArgumentsIfPossible" xml:space="preserve">
+    <value>Remove optional arguments, if possible</value>
+  </data>
+  <data name="DecompilerSettings.IntroduceLocalFunctionsNOTIMPLEMENTED" xml:space="preserve">
+    <value>Introduce local functions (NOT IMPLEMENTED!)</value>
+  </data>
+  <data name="DecompilerSettings.NullableReferenceTypes" xml:space="preserve">
+    <value>Nullable reference types</value>
+  </data>
+  <data name="DecompilerSettings.ShowInfoFromDebugSymbolsIfAvailable" xml:space="preserve">
+    <value>Show info from debug symbols, if available</value>
+  </data>
+  <data name="DecompilerSettings.VBSpecificOptions" xml:space="preserve">
+    <value>VB-specific options</value>
+  </data>
+  <data name="DecompilerSettings.FSpecificOptions" xml:space="preserve">
+    <value>F#-specific options</value>
+  </data>
+  <data name="DecompilerSettings.RemoveDeadAndSideEffectFreeCodeUseWithCaution" xml:space="preserve">
+    <value>Remove dead and side effect free code (use with caution!)</value>
+  </data>
+  <data name="DecompilerSettings.ApplyWindowsRuntimeProjectionsOnLoadedAssemblies" xml:space="preserve">
+    <value>Apply Windows Runtime projections on loaded assemblies</value>
+  </data>
 </root>

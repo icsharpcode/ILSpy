@@ -567,4 +567,163 @@
   <data name="DecompilerSettingsPanelLongText" xml:space="preserve">
     <value>下面选择的设置将与语言下拉列表中的选择一起应用于反编译程序输出。在下拉列表中选择较低的语言版本将停用较高版本的所有选定选项。请注意, 某些设置隐式依赖于彼此, 例如: 如果不首先将静态调用转换为扩展方法调用, 则无法引入 LINQ 表达式。</value>
   </data>
+  <data name="DecompilerSettings.DecompileEnumeratorsYieldReturn" xml:space="preserve">
+    <value>反编译枚举器 (yield return)</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAnonymousMethodsLambdas" xml:space="preserve">
+    <value>反编译匿名方法或lambdas</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAnonymousTypes" xml:space="preserve">
+    <value>反编译匿名类型</value>
+  </data>
+  <data name="DecompilerSettings.UseLambdaSyntaxIfPossible" xml:space="preserve">
+    <value>如果可能, 请使用 lambda 语法</value>
+  </data>
+  <data name="DecompilerSettings.DecompileExpressionTrees" xml:space="preserve">
+    <value>反编译表达树</value>
+  </data>
+  <data name="DecompilerSettings.DecompileUseOfTheDynamicType" xml:space="preserve">
+    <value>反编译使用"dynamic" 类型</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAsyncMethods" xml:space="preserve">
+    <value>反编译异步方法</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAwaitInCatchFinallyBlocks" xml:space="preserve">
+    <value>反编译catch/finally内的await</value>
+  </data>
+  <data name="DecompilerSettings.DecompileDecimalConstantAsSimpleLiteralValues" xml:space="preserve">
+    <value>反编译 [DecimalConstant(...)] 作为简单的文本值</value>
+  </data>
+  <data name="DecompilerSettings.DecompileC10PublicUnsafeFixedIntArr10Members" xml:space="preserve">
+    <value>反编译 C# 1.0 "public unsafe fixed int arr[10];" 成员</value>
+  </data>
+  <data name="DecompilerSettings.UseLiftedOperatorsForNullables" xml:space="preserve">
+    <value>对空变量使用提升运算符</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAndOperators" xml:space="preserve">
+    <value>反编译 ?. 和  ?[] 运算符</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAutomaticProperties" xml:space="preserve">
+    <value>反编译自动属性</value>
+  </data>
+  <data name="DecompilerSettings.DecompileAutomaticEvents" xml:space="preserve">
+    <value>反编译自动事件</value>
+  </data>
+  <data name="DecompilerSettings.DetectUsingStatements" xml:space="preserve">
+    <value>检测using语句</value>
+  </data>
+  <data name="DecompilerSettings.Other" xml:space="preserve">
+    <value>其他</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysUseBraces" xml:space="preserve">
+    <value>始终使用大括号</value>
+  </data>
+  <data name="DecompilerSettings.DetectForeachStatements" xml:space="preserve">
+    <value>检测 foreach语句</value>
+  </data>
+  <data name="DecompilerSettings.DetectLockStatements" xml:space="preserve">
+    <value>检测 lock语句</value>
+  </data>
+  <data name="DecompilerSettings.DetectSwitchOnString" xml:space="preserve">
+    <value>检测switch 的字符串</value>
+  </data>
+  <data name="DecompilerSettings.InsertUsingDeclarations" xml:space="preserve">
+    <value>插入using声明</value>
+  </data>
+  <data name="DecompilerSettings.UseExtensionMethodSyntax" xml:space="preserve">
+    <value>使用扩展方法语法</value>
+  </data>
+  <data name="DecompilerSettings.UseLINQExpressionSyntax" xml:space="preserve">
+    <value>使用 LINQ 表达式语法</value>
+  </data>
+  <data name="DecompilerSettings.UseImplicitMethodGroupConversions" xml:space="preserve">
+    <value>使用隐式方法组转换</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls" xml:space="preserve">
+    <value>始终强制转换显式接口实现调用的目标</value>
+  </data>
+  <data name="DecompilerSettings.UseVariableNamesFromDebugSymbolsIfAvailable" xml:space="preserve">
+    <value>使用调试符号中的变量名 (如果可用)</value>
+  </data>
+  <data name="DecompilerSettings.ArrayInitializerExpressions" xml:space="preserve">
+    <value>数组初始化器表达式</value>
+  </data>
+  <data name="DecompilerSettings.ObjectCollectionInitializerExpressions" xml:space="preserve">
+    <value>对象或集合初始化器表达式</value>
+  </data>
+  <data name="DecompilerSettings.DictionaryInitializerExpressions" xml:space="preserve">
+    <value>Dictionary初始值设定项表达式</value>
+  </data>
+  <data name="DecompilerSettings.AllowExtensionAddMethodsInCollectionInitializerExpressions" xml:space="preserve">
+    <value>在集合初始化器表达式中允许扩展 "添加" 方法</value>
+  </data>
+  <data name="DecompilerSettings.UseStringInterpolation" xml:space="preserve">
+    <value>使用字符串插值</value>
+  </data>
+  <data name="DecompilerSettings.IncludeXMLDocumentationCommentsInTheDecompiledCode" xml:space="preserve">
+    <value>在反编译代码中包括 XML 文档注释</value>
+  </data>
+  <data name="DecompilerSettings.UseExpressionBodiedMemberSyntaxForGetOnlyProperties" xml:space="preserve">
+    <value>对仅获取属性使用表达式内部成员语法</value>
+  </data>
+  <data name="DecompilerSettings.UseOutVariableDeclarations" xml:space="preserve">
+    <value>使用外部变量声明</value>
+  </data>
+  <data name="DecompilerSettings.UseDiscards" xml:space="preserve">
+    <value>使用丢弃物</value>
+  </data>
+  <data name="DecompilerSettings.IsByRefLikeAttributeShouldBeReplacedWithRefModifiersOnStructs" xml:space="preserve">
+    <value>IsByRefLikeAttribute应替换为结构上的 "ref" 修饰符</value>
+  </data>
+  <data name="DecompilerSettings.IsReadOnlyAttributeShouldBeReplacedWithReadonlyInModifiersOnStructsParameters" xml:space="preserve">
+    <value>IsReadOnlyAttribute 应替为结构参数上的 "readonly"/"中的修饰符</value>
+  </data>
+  <data name="DecompilerSettings.IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmanagedConstraints" xml:space="preserve">
+    <value>类型参数上的IsUnmanagedAttribute 应替换为 "非托管" 约束</value>
+  </data>
+  <data name="DecompilerSettings.UseStackallocInitializerSyntax" xml:space="preserve">
+    <value>使用stackalloc 初始化器语法</value>
+  </data>
+  <data name="DecompilerSettings.UseTupleTypeSyntax" xml:space="preserve">
+    <value>使用元组类型语法</value>
+  </data>
+  <data name="DecompilerSettings.UseImplicitConversionsBetweenTupleTypes" xml:space="preserve">
+    <value>在元组类型之间使用隐式转换</value>
+  </data>
+  <data name="DecompilerSettings.DetectTupleComparisons" xml:space="preserve">
+    <value>检测元组比较</value>
+  </data>
+  <data name="DecompilerSettings.UseNamedArguments" xml:space="preserve">
+    <value>使用命名参数</value>
+  </data>
+  <data name="DecompilerSettings.UseNonTrailingNamedArguments" xml:space="preserve">
+    <value>使用非尾随命名参数</value>
+  </data>
+  <data name="DecompilerSettings.RemoveOptionalArgumentsIfPossible" xml:space="preserve">
+    <value>如果可能, 删除可选参数</value>
+  </data>
+  <data name="DecompilerSettings.IntroduceLocalFunctionsNOTIMPLEMENTED" xml:space="preserve">
+    <value>引入本地功能 (未实现！)</value>
+  </data>
+  <data name="DecompilerSettings.C70LocalFunctionsAreNotImplemented" xml:space="preserve">
+    <value>C# 7.0 本地函数未实现!</value>
+  </data>
+  <data name="DecompilerSettings.NullableReferenceTypes" xml:space="preserve">
+    <value>可空引用类型</value>
+  </data>
+  <data name="DecompilerSettings.ShowInfoFromDebugSymbolsIfAvailable" xml:space="preserve">
+    <value>显示调试符号中的信息 (如果可用)</value>
+  </data>
+  <data name="DecompilerSettings.VBSpecificOptions" xml:space="preserve">
+    <value>Vb 特定选项</value>
+  </data>
+  <data name="DecompilerSettings.FSpecificOptions" xml:space="preserve">
+    <value>F # 特定选项</value>
+  </data>
+  <data name="DecompilerSettings.RemoveDeadAndSideEffectFreeCodeUseWithCaution" xml:space="preserve">
+    <value>删除死的和副作用免费的代码 (请谨慎使用)</value>
+  </data>
+  <data name="DecompilerSettings.ApplyWindowsRuntimeProjectionsOnLoadedAssemblies" xml:space="preserve">
+    <value>在已加载的程序集上应用 Windows 运行时投影</value>
+  </data>
 </root>

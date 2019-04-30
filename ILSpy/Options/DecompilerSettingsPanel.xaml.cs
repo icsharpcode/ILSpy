@@ -162,15 +162,11 @@ namespace ICSharpCode.ILSpy.Options
 	public class CSharpDecompilerSetting : INotifyPropertyChanged
 	{
 		bool isEnabled;
-		internal static string GetResourceString(string key)
-		{
-			var str = !string.IsNullOrEmpty(key) ? ICSharpCode.Decompiler.Properties. Resources.ResourceManager.GetString(key) : null;
-			return string.IsNullOrEmpty(key) || string.IsNullOrEmpty(str) ? key : str;
-		}
+
 		public CSharpDecompilerSetting(PropertyInfo p)
 		{
 			this.Property = p;
-			this.Category =  GetResourceString(  p.GetCustomAttribute<CategoryAttribute>()?.Category ?? Resources.Other);
+			this.Category =  GetResourceString(p.GetCustomAttribute<CategoryAttribute>()?.Category ?? Resources.Other);
 			this.Description =  GetResourceString(p.GetCustomAttribute<DescriptionAttribute>()?.Description ?? p.Name);
 		}
 
@@ -195,6 +191,12 @@ namespace ICSharpCode.ILSpy.Options
 		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
+
+		static string GetResourceString(string key)
+		{
+			var str = !string.IsNullOrEmpty(key) ? Resources.ResourceManager.GetString(key) : null;
+			return string.IsNullOrEmpty(key) || string.IsNullOrEmpty(str) ? key : str;
 		}
 	}
 }
