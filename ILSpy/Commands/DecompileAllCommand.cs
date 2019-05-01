@@ -23,11 +23,12 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_File", Header = "DEBUG -- Decompile All", MenuCategory = "Open", MenuOrder = 2.5)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
 	sealed class DecompileAllCommand : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
@@ -67,7 +68,7 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = "_File", Header = "DEBUG -- Decompile 100x", MenuCategory = "Open", MenuOrder = 2.6)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources.DEBUGDecompile100x),  MenuCategory = nameof(Resources.Open),  MenuOrder = 2.6)]
 	sealed class Decompile100TimesCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)

@@ -19,10 +19,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_File", Header = "_Remove Assemblies with load errors", MenuCategory = "Remove", MenuOrder = 2.6)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources._RemoveAssembliesWithLoadErrors),  MenuCategory = nameof(Resources.Remove),  MenuOrder = 2.6)]
 	class RemoveAssembliesWithLoadErrors : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)

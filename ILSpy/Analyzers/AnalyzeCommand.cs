@@ -20,11 +20,12 @@ using System;
 using System.Linq;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
-	[ExportContextMenuEntry(Header = "Analyze", Icon = "images/Search.png", Category = "Analyze", InputGestureText = "Ctrl+R", Order = 100)]
+	[ExportContextMenuEntry(Header = nameof(Resources.Analyze), Icon = "images/Search.png", Category = nameof(Resources.Analyze), InputGestureText = "Ctrl+R", Order = 100)]
 	internal sealed class AnalyzeCommand : SimpleCommand, IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

@@ -20,10 +20,11 @@ using System.Linq;
 
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Folding;
+using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.TextView
 {
-	[ExportContextMenuEntryAttribute(Header = "Toggle All Folding", Category = "Folding")]
+	[ExportContextMenuEntryAttribute(Header = nameof(Resources.ToggleFolding), Category = nameof(Resources.Folding))]
 	internal sealed class ToggleAllContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -56,7 +57,7 @@ namespace ICSharpCode.ILSpy.TextView
 		}
 	}
 
-	[ExportContextMenuEntryAttribute(Header = "Toggle Folding", Category = "Folding")]
+	[ExportContextMenuEntryAttribute(Header = nameof(Resources._ToggleFolding), Category = nameof(Resources.Folding))]
 	internal sealed class ToggleContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

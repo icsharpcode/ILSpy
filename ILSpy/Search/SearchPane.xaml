@@ -2,6 +2,7 @@
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
 		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	    xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"	
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" x:Name="self" mc:Ignorable="d"
 		d:DesignHeight="300" d:DesignWidth="300">
 	<Grid>
@@ -18,10 +19,10 @@
 				</Grid.ColumnDefinitions>
 				<controls:SearchBox x:Name="searchBox" DockPanel.Dock="Top" Grid.Column="0" Grid.Row="0" Margin="1"
 						PreviewKeyDown="SearchBox_PreviewKeyDown"
-						Text="{Binding SearchTerm, ElementName=self}" ToolTip="Search" UpdateDelay="0:0:0.1"
-						WatermarkColor="Gray" WatermarkText="Search for t:TypeName, m:Member or c:Constant; use exact match (=term), 'should not contain' (-term) or 'must contain' (+term); use /reg(ular)?Ex(pressions)?/ or both - t:/Type(Name)?/..." />
+						Text="{Binding SearchTerm, ElementName=self}" ToolTip="{x:Static properties:Resources.SearchPane_Search}" UpdateDelay="0:0:0.1"
+						WatermarkColor="Gray" WatermarkText="{x:Static properties:Resources.WatermarkText}" />
 				<StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal">
-					<Label Margin="0,-1" Target="searchModeComboBox">_Search for:</Label>
+					<Label Margin="0,-1" Target="searchModeComboBox" Content="{x:Static properties:Resources._SearchFor}"/>
 					<ComboBox Width="100" Name="searchModeComboBox" Margin="1"
 							TextSearch.TextPath="Name"
 							SelectionChanged="SearchModeComboBox_SelectionChanged">
@@ -44,7 +45,7 @@
 				ItemsSource="{Binding Results, ElementName=self}">
 			<ListView.View>
 				<GridView AllowsColumnReorder="False">
-					<controls:SortableGridViewColumn Header="Name" SortBy="Name">
+					<controls:SortableGridViewColumn Header="{x:Static properties:Resources.Name}" SortBy="Name">
 						<controls:SortableGridViewColumn.CellTemplate>
 							<DataTemplate>
 								<StackPanel Orientation="Horizontal">
@@ -54,7 +55,7 @@
 							</DataTemplate>
 						</controls:SortableGridViewColumn.CellTemplate>
 					</controls:SortableGridViewColumn>
-					<controls:SortableGridViewColumn Header="Location" SortBy="Location">
+					<controls:SortableGridViewColumn Header="{x:Static properties:Resources.Location}" SortBy="Location">
 						<controls:SortableGridViewColumn.CellTemplate>
 							<DataTemplate>
 								<StackPanel Orientation="Horizontal">

@@ -293,9 +293,9 @@ namespace ICSharpCode.ILSpy
 			var loadedAssembly = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().FirstOrDefault(la => la.GetPEFileOrNull() == module);
 			if (loadedAssembly == null || !loadedAssembly.LoadedAssemblyReferencesInfo.HasErrors)
 				return;
-			const string line1 = "Warning: Some assembly references could not be resolved automatically. This might lead to incorrect decompilation of some parts,";
-			const string line2 = "for ex. property getter/setter access. To get optimal decompilation results, please manually add the missing references to the list of loaded assemblies.";
-			AddWarningMessage(module, output, line1, line2, "Show assembly load log", Images.ViewCode, delegate {
+			string line1 = Properties.Resources.WarningSomeAssemblyReference;
+			string line2 = Properties.Resources.PropertyManuallyMissingReferencesListLoadedAssemblies;
+			AddWarningMessage(module, output, line1, line2, Properties.Resources.ShowAssemblyLoad, Images.ViewCode, delegate {
 				MainWindow.Instance.SelectNode(MainWindow.Instance.FindTreeNode(module).Children.OfType<ReferenceFolderTreeNode>().First());
 			});
 		}
@@ -305,7 +305,7 @@ namespace ICSharpCode.ILSpy
 			var metadata = module.Metadata;
 			if (!metadata.GetCustomAttributes(Handle.AssemblyDefinition).HasKnownAttribute(metadata, KnownAttribute.ReferenceAssembly))
 				return;
-			const string line1 = "Warning: This assembly is marked as 'reference assembly', which means that it only contains metadata and no executable code.";
+			string line1 = Properties.Resources.WarningAsmMarkedRef;
 			AddWarningMessage(module, output, line1);
 		}
 
