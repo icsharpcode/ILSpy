@@ -723,4 +723,7 @@
   <data name="DecompilerSettings.ApplyWindowsRuntimeProjectionsOnLoadedAssemblies" xml:space="preserve">
     <value>Apply Windows Runtime projections on loaded assemblies</value>
   </data>
+  <data name="SearchMSDN" xml:space="preserve">
+    <value>Search MSDN...</value>
+  </data>
 </root>

@@ -18,13 +18,15 @@
 
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Properties;
+using System.Threading;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	[ExportContextMenuEntry(Header = "Search MSDN...", Icon = "images/SearchMsdn.png", Order = 9999)]
+	[ExportContextMenuEntry(Header = nameof(Resources.SearchMSDN), Icon = "images/SearchMsdn.png", Order = 9999)]
 	internal sealed class SearchMsdnContextMenuEntry : IContextMenuEntry
 	{
-		private static string msdnAddress = "http://msdn.microsoft.com/en-us/library/{0}";
+		private static string msdnAddress = "http://msdn.microsoft.com/{1}/library/{0}";
 
 		public bool IsVisible(TextViewContext context)
 		{
@@ -98,7 +100,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			var namespaceNode = node as NamespaceTreeNode;
 			if (namespaceNode != null)
-				address = string.Format(msdnAddress, namespaceNode.Name);
+				address = string.Format(msdnAddress, namespaceNode.Name,  Thread.CurrentThread.CurrentUICulture.Name);
 
 			if (node is IMemberTreeNode memberNode) {
 				var member = memberNode.Member;
@@ -109,7 +111,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				else
 					memberName = string.Format("{0}.{1}", member.DeclaringType.FullName, member.Name);
 
-				address = string.Format(msdnAddress, memberName);
+				address = string.Format(msdnAddress, memberName, Thread.CurrentThread.CurrentUICulture.Name);
 			}
 
 			address = address.ToLower();

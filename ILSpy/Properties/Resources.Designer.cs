@@ -1476,7 +1476,16 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Search.
+        ///   查找类似 Search MSDN... 的本地化字符串。
+        /// </summary>
+        public static string SearchMSDN {
+            get {
+                return ResourceManager.GetString("SearchMSDN", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to Search.
         /// </summary>
         public static string SearchPane_Search {
             get {

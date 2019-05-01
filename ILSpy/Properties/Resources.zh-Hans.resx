@@ -726,4 +726,7 @@
   <data name="DecompilerSettings.ApplyWindowsRuntimeProjectionsOnLoadedAssemblies" xml:space="preserve">
     <value>在已加载的程序集上应用 Windows 运行时投影</value>
   </data>
+  <data name="SearchMSDN" xml:space="preserve">
+    <value>搜索MSDN...</value>
+  </data>
 </root>
