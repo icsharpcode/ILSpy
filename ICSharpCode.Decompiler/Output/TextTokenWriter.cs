@@ -401,29 +401,9 @@ namespace ICSharpCode.Decompiler
 		{
 			if (nodeStack.Pop() != node)
 				throw new InvalidOperationException();
-			
-//			var startLocation = startLocations.Pop();
-//			
-//			// code mappings
-//			var ranges = node.Annotation<List<ILRange>>();
-//			if (symbolsStack.Count > 0 && ranges != null && ranges.Count > 0) {
-//				// Ignore the newline which was printed at the end of the statement
-//				TextLocation endLocation = (node is Statement) ? (lastEndOfLine ?? output.Location) : output.Location;
-//				symbolsStack.Peek().SequencePoints.Add(
-//					new SequencePoint() {
-//						ILRanges = ILRange.OrderAndJoin(ranges).ToArray(),
-//						StartLocation = startLocation,
-//						EndLocation = endLocation
-//					});
-//			}
-//			
-//			if (node.Annotation<MethodDebugSymbols>() != null) {
-//				symbolsStack.Peek().EndLocation = output.Location;
-//				output.AddDebugSymbols(symbolsStack.Pop());
-//			}
 		}
 		
-		static bool IsDefinition(ref AstNode node)
+		public static bool IsDefinition(ref AstNode node)
 		{
 			if (node is EntityDeclaration)
 				return true;
@@ -431,8 +411,10 @@ namespace ICSharpCode.Decompiler
 				node = node.Parent;
 				return true;
 			}
-			if (node is FixedVariableInitializer)
+			if (node is FixedVariableInitializer && node.Parent is FixedFieldDeclaration) {
+				node = node.Parent;
 				return true;
+			}
 			return false;
 		}
 	}

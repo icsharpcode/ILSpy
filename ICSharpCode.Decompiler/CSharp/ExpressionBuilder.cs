@@ -1008,6 +1008,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				string name = (inst.Operator == BinaryNumericOperator.Sub ? "Subtract" : "Add");
 				ILInstruction offsetInst = PointerArithmeticOffset.Detect(inst.Right, brt.ElementType, inst.CheckForOverflow);
 				if (offsetInst != null) {
+					if (settings.FixedBuffers && inst.Operator == BinaryNumericOperator.Add && inst.Left is LdFlda ldFlda
+						&& ldFlda.Target is LdFlda nestedLdFlda && CSharpDecompiler.IsFixedField(nestedLdFlda.Field, out var elementType, out _)) {
+						Expression fieldAccess = ConvertField(nestedLdFlda.Field, nestedLdFlda.Target);
+						var mrr = (MemberResolveResult)fieldAccess.GetResolveResult();
+						fieldAccess.RemoveAnnotations<ResolveResult>();
+						var result = fieldAccess.WithRR(new MemberResolveResult(mrr.TargetResult, mrr.Member, new PointerType(elementType)))
+							.WithILInstruction(inst);
+						TranslatedExpression expr = new IndexerExpression(result.Expression, Translate(offsetInst).Expression)
+							.WithILInstruction(inst)
+							.WithRR(new ResolveResult(elementType));
+						return new DirectionExpression(FieldDirection.Ref, expr)
+							.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, isOut: false));
+					}
 					return CallUnsafeIntrinsic(name, new[] { left.Expression, Translate(offsetInst).Expression }, brt, inst);
 				} else {
 					return CallUnsafeIntrinsic(name + "ByteOffset", new[] { left.Expression, right.Expression }, brt, inst);
@@ -1969,8 +1982,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				&& CSharpDecompiler.IsFixedField(nestedLdFlda.Field, out var elementType, out _))
 			{
 				Expression fieldAccess = ConvertField(nestedLdFlda.Field, nestedLdFlda.Target);
+				var mrr = (MemberResolveResult)fieldAccess.GetResolveResult();
 				fieldAccess.RemoveAnnotations<ResolveResult>();
-				var result = fieldAccess.WithRR(new ResolveResult(new PointerType(elementType)))
+				var result = fieldAccess.WithRR(new MemberResolveResult(mrr.TargetResult, mrr.Member, new PointerType(elementType)))
 					.WithILInstruction(inst);
 				if (inst.ResultType == StackType.Ref) {
 					// convert pointer back to ref

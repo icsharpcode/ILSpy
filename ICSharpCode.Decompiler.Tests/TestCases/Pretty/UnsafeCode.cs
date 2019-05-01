@@ -439,5 +439,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				return CreateBuffer(array2.Length, ptr2);
 			}
 		}
+
+		private unsafe static void Issue1499(StructWithFixedSizeMembers value, int index)
+		{
+			int num = value.Integers[index];
+			num.ToString();
+		}
 	}
 }
