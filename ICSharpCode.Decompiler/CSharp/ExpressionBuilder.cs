@@ -773,8 +773,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				NullableType.GetUnderlyingType(right.Type).Kind == TypeKind.Enum &&
 				right.Expression is BinaryOperatorExpression binaryExpr &&
 				binaryExpr.Operator == BinaryOperatorType.BitwiseAnd)
+			{
 				return AdjustConstantExpressionToType(left, compilation.FindType(KnownTypeCode.Int32));
-			else
+			} else
 				return AdjustConstantExpressionToType(left, right.Type);
 		}
 
