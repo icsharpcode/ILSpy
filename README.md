@@ -14,6 +14,7 @@ Aside from the WPF UI ILSpy (downloadable via Releases, see also [plugins](https
 * Visual Studio 2017 extension [marketplace](https://marketplace.visualstudio.com/items?itemName=SharpDevelopTeam.ILSpy)
 * Visual Studio Code Extension [repository](https://github.com/icsharpcode/ilspy-vscode) | [marketplace](https://marketplace.visualstudio.com/items?itemName=icsharpcode.ilspy-vscode)
 * [ICSharpCode.Decompiler](https://www.nuget.org/packages/ICSharpCode.Decompiler/) NuGet for your own projects
+* Linux/Mac/Windows ILSpy UI based on [Avalonia](http://www.avaloniaui.net/) - check out https://github.com/icsharpcode/AvaloniaILSpy
 * Linux/Mac/Windows command line client - check out [ICSharpCode.Decompiler.Console](ICSharpCode.Decompiler.Console) in this repository
 * Linux/Mac/Windows [PowerShell cmdlets](ICSharpCode.Decompiler.PowerShell) in this repository
 
@@ -35,12 +36,12 @@ License
 ILSpy is distributed under the MIT License.
 
 Included open-source libraries:
- * Mono.Cecil: MIT License (part of ICSharpCode.Decompiler)
+ * Mono.Cecil: MIT License (part of ILSpy)
  * LightJson: MIT License (part of ICSharpCode.Decompiler)
  * Humanizer: MIT License (part of ICSharpCode.Decompiler)
  * AvalonEdit: MIT License
  * SharpTreeView: LGPL
- * Ricciolo.StylesExplorer: MS-PL (part of ILSpy.BamlDecompiler.Plugin)
+ * ILSpy.BamlDecompiler: MIT license
  * CommandLineUtils: Apache License 2.0 (part of ICSharpCode.Decompiler.Console)
 
 How to build
