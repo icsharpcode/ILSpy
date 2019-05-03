@@ -44,9 +44,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		IEnumerable<IEntity> AnalyzeType(IMethod analyzedEntity, ITypeDefinition type)
 		{
-			if (!analyzedEntity.DeclaringType.GetAllBaseTypeDefinitions()
+			if (!type.GetAllBaseTypeDefinitions()
 				.Any(t => t.MetadataToken == analyzedEntity.DeclaringTypeDefinition.MetadataToken
-				  && t.ParentModule.PEFile == type.ParentModule.PEFile))
+				  && t.ParentModule.PEFile == analyzedEntity.ParentModule.PEFile))
 				yield break;
 
 			foreach (var method in type.Methods) {
