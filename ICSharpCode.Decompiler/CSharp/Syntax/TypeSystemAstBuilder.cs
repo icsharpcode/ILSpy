@@ -176,25 +176,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool UseCustomEvents { get; set; }
 
 		/// <summary>
-		/// Controls if unbound type argument names are inserted in the ast or not.
+		/// Controls whether unbound type argument names are inserted in the ast or not.
 		/// The default value is <c>false</c>.
 		/// </summary>
 		public bool ConvertUnboundTypeArguments { get; set;}
 
 		/// <summary>
-		/// Controls if aliases should be used inside the type name or not.
+		/// Controls whether aliases should be used inside the type name or not.
 		/// The default value is <c>true</c>.
 		/// </summary>
 		public bool UseAliases { get; set; }
 
 		/// <summary>
-		/// Controls if constants like <c>int.MaxValue</c> are converted to a <see cref="MemberReferenceExpression"/> or <see cref="PrimitiveExpression" />.
+		/// Controls whether constants like <c>int.MaxValue</c> are converted to a <see cref="MemberReferenceExpression"/> or <see cref="PrimitiveExpression" />.
 		/// The default value is <c>true</c>.
 		/// </summary>
 		public bool UseSpecialConstants { get; set; }
 
 		/// <summary>
-		/// Controls if integral constants should be printed in hexadecimal format.
+		/// Controls whether integral constants should be printed in hexadecimal format.
 		/// The default value is <c>false</c>.
 		/// </summary>
 		public bool PrintIntegralValuesAsHex { get; set; }

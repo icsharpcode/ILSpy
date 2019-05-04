@@ -1406,6 +1406,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			return false;
 		}
 
+		internal static bool IsFixedField(MetadataReader metadata, FieldDefinitionHandle handle, out IType type, out int elementCount)
+		{
+			type = null;
+			elementCount = 0;
+			var field = metadata.GetFieldDefinition(handle);
+			foreach (var h in field.GetCustomAttributes()) {
+				var customAttribute = metadata.GetCustomAttribute(h);
+				if (customAttribute.IsKnownAttribute(metadata, KnownAttribute.FixedBuffer)) {
+					var value = customAttribute.DecodeValue(MetadataExtensions.minimalCorlibTypeProvider);
+					if (value.FixedArguments.Length == 2) {
+						if (value.FixedArguments[0].Value is IType trr && value.FixedArguments[1].Value is int length) {
+							type = trr;
+							elementCount = length;
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		}
+
 		EntityDeclaration DoDecompile(IProperty property, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == property);
