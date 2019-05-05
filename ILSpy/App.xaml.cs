@@ -234,6 +234,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				ILSpy.MainWindow.Instance.TextView.ShowText(output);
+				e.Handled = true;
 			}
 		}
 	}
