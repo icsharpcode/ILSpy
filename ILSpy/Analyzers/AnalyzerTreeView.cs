@@ -109,6 +109,11 @@ namespace ICSharpCode.ILSpy.Analyzers
 				throw new ArgumentNullException(nameof(entity));
 			}
 
+			if (entity.MetadataToken.IsNil) {
+				MessageBox.Show(Properties.Resources.CannotAnalyzeMissingRef, "ILSpy");
+				return;
+			}
+
 			switch (entity) {
 				case ITypeDefinition td:
 					ShowOrFocus(new AnalyzedTypeTreeNode(td));

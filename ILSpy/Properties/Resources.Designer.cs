@@ -331,6 +331,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Entity could not be resolved. Cannot analyze entities from missing assembly references. Add the missing reference and try again..
+        /// </summary>
+        public static string CannotAnalyzeMissingRef {
+            get {
+                return ResourceManager.GetString("CannotAnalyzeMissingRef", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Check again.
         /// </summary>
         public static string CheckAgain {
@@ -1476,7 +1485,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   查找类似 Search MSDN... 的本地化字符串。
+        ///   Looks up a localized string similar to Search MSDN....
         /// </summary>
         public static string SearchMSDN {
             get {
@@ -1485,7 +1494,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to Search.
+        ///   Looks up a localized string similar to Search.
         /// </summary>
         public static string SearchPane_Search {
             get {
