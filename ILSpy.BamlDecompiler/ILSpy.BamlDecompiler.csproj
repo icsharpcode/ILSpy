@@ -97,6 +97,8 @@
     <Compile Include="Handlers\Records\PropertyWithConverterHandler.cs" />
     <Compile Include="Handlers\Records\PropertyWithExtensionHandler.cs" />
     <Compile Include="Handlers\Records\PropertyWithStaticResourceIdHandler.cs" />
+    <Compile Include="Handlers\Records\StaticResourceStartHandler.cs" />
+    <Compile Include="Handlers\Records\StaticResourceIdHandler.cs" />
     <Compile Include="Handlers\Records\TextHandler.cs" />
     <Compile Include="Handlers\Records\TextWithConverterHandler.cs" />
     <Compile Include="Handlers\Records\TypeInfoHandler.cs" />
