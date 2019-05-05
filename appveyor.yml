@@ -15,7 +15,7 @@ before_build:
 build_script:
 - msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 after_build:
-- 7z a ILSpy_binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*.config
+- 7z a ILSpy_binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*.config %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*\ILSpy.resources.dll
 test:
   assemblies:
     - 'ICSharpCode.Decompiler.Tests\bin\%configuration%\net462\ICSharpCode.Decompiler.Tests.exe'
