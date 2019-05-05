@@ -11,7 +11,7 @@ Included open-source libraries:
  Humanizer: MIT License (part of ICSharpCode.Decompiler)
  AvalonEdit: MIT License
  SharpTreeView: LGPL
- ILSpy.BamlDecompiler: MIT license
+ ILSpy.BamlDecompiler: MIT License
  CommandLineUtils: Apache License 2.0 (part of ICSharpCode.Decompiler.Console)
 
 Current and past contributors: https://github.com/icsharpcode/ILSpy/graphs/contributors
