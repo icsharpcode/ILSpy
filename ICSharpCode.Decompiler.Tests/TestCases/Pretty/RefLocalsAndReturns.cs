@@ -4,6 +4,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class RefLocalsAndReturns
 	{
+		public delegate ref T RefFunc<T>();
+		public delegate ref readonly T ReadOnlyRefFunc<T>();
+
 		public ref struct RefStruct
 		{
 			private int dummy;

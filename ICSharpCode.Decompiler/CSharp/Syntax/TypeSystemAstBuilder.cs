@@ -1440,6 +1440,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.AddAnnotation(new TypeResolveResult(d));
 			}
 			decl.ReturnType = ConvertType(invokeMethod.ReturnType);
+			if (invokeMethod.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType ct && ct.HasRefSpecifier) {
+				ct.HasReadOnlySpecifier = true;
+			}
 			decl.Name = d.Name;
 			
 			int outerTypeParameterCount = (d.DeclaringTypeDefinition == null) ? 0 : d.DeclaringTypeDefinition.TypeParameterCount;
