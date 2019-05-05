@@ -22,7 +22,7 @@ using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-
+using ICSharpCode.ILSpy.Properties;
 using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.threading = new ThreadingSupport();
 		}
 
-		public override object Text => "Derived Types";
+		public override object Text => Resources.DerivedTypes;
 
 		public override object Icon => Images.SubTypes;
 

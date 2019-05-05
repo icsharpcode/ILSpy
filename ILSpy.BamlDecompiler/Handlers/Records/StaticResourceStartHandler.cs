@@ -1,4 +1,4 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2019 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,18 +16,37 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Windows.Input;
-using ICSharpCode.ILSpy.Properties;
+using System.Collections.Generic;
+using System.Linq;
+using System.Xml.Linq;
+using ILSpy.BamlDecompiler.Baml;
+using ILSpy.BamlDecompiler.Xaml;
 
-namespace ICSharpCode.ILSpy
+namespace ILSpy.BamlDecompiler.Handlers
 {
-	[ExportToolbarCommand(ToolTip = nameof(Resources.Open),   ToolbarIcon = "Images/Open.png", ToolbarCategory = nameof(Resources.Open),  ToolbarOrder = 0)]
-	[ExportMainMenuCommand(Menu = nameof(Resources._File),   Header = nameof(Resources._Open),   MenuIcon = "Images/Open.png", MenuCategory = nameof(Resources.Open), MenuOrder = 0)]
-	sealed class OpenCommand : CommandWrapper
+	class StaticResourceStartHandler : IHandler, IDeferHandler
 	{
-		public OpenCommand()
-			: base(ApplicationCommands.Open)
+		public BamlRecordType Type => BamlRecordType.StaticResourceStart;
+
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
 		{
+			var record = (StaticResourceStartRecord)((BamlBlockNode)node).Record;
+			var key = XamlResourceKey.FindKeyInSiblings(node);
+
+			key.StaticResources.Add(node);
+			return null;
+		}
+
+		public BamlElement TranslateDefer(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
+			var record = (StaticResourceStartRecord)((BamlBlockNode)node).Record;
+			var doc = new BamlElement(node);
+			var elemType = ctx.ResolveType(record.TypeId);
+			doc.Xaml = new XElement(elemType.ToXName(ctx));
+			doc.Xaml.Element.AddAnnotation(elemType);
+			parent.Xaml.Element.Add(doc.Xaml.Element);
+			HandlerMap.ProcessChildren(ctx, (BamlBlockNode)node, doc);
+			return doc;
 		}
 	}
 }

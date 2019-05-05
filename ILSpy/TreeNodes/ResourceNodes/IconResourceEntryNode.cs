@@ -22,6 +22,7 @@ using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -73,7 +74,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					AddIcon(output, frame);
 					output.WriteLine();
 				}
-				output.AddButton(Images.Save, "Save", delegate {
+				output.AddButton(Images.Save, Resources.Save, delegate {
 					Save(null);
 				});
 				textView.ShowNode(output, this);

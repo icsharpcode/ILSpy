@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpy
 
 		public static void Show()
 		{
-			MainWindow.Instance.ShowInTopPane("Debug Steps", new DebugSteps());
+			MainWindow.Instance.ShowInTopPane(Properties.Resources.DebugSteps, new DebugSteps());
 		}
 
 		void IPane.Closed()

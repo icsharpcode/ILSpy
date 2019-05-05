@@ -30,6 +30,7 @@ namespace ICSharpCode.ILSpy
 		string ToolbarCategory { get; }
 		object Tag { get; }
 		double ToolbarOrder { get; }
+	 
 	}
 	
 	[MetadataAttribute]
@@ -58,7 +59,6 @@ namespace ICSharpCode.ILSpy
 		string MenuCategory { get; }
 		string InputGestureText { get; }
 		bool IsEnabled { get; }
-		
 		double MenuOrder { get; }
 	}
 	

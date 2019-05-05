@@ -518,5 +518,21 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				Assert.Fail(b.ToString());
 			}
 		}
+
+		internal static void RepeatOnIOError(Action action, int numTries = 5)
+		{
+			for (int i = 0; i < numTries - 1; i++) {
+				try {
+					action();
+					return;
+				} catch (IOException) {
+				} catch (UnauthorizedAccessException) {
+					// potential virus scanner problem
+				}
+				Thread.Sleep(10);
+			}
+			// If the last try still fails, don't catch the exception
+			action();
+		}
 	}
 }

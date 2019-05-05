@@ -4,14 +4,15 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:ICSharpCode.ILSpy"
+			 xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
 	<DockPanel>
 		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-			<CheckBox Margin="3" Content="UseFieldSugar" IsChecked="{Binding UseFieldSugar, Source={x:Static local:DebugSteps.Options}}" />
-			<CheckBox Margin="3" Content="UseLogicOperationSugar"  IsChecked="{Binding UseLogicOperationSugar, Source={x:Static local:DebugSteps.Options}}" />
-			<CheckBox Margin="3" Content="ShowILRanges"  IsChecked="{Binding ShowILRanges, Source={x:Static local:DebugSteps.Options}}" />
-			<CheckBox Margin="3" Content="ShowChildIndexInBlock"  IsChecked="{Binding ShowChildIndexInBlock, Source={x:Static local:DebugSteps.Options}}" />
+			<CheckBox Margin="3" Content="{x:Static properties:Resources.UseFieldSugar}" IsChecked="{Binding UseFieldSugar, Source={x:Static local:DebugSteps.Options}}" />
+			<CheckBox Margin="3" Content="{x:Static properties:Resources.UseLogicOperationSugar}"  IsChecked="{Binding UseLogicOperationSugar, Source={x:Static local:DebugSteps.Options}}" />
+			<CheckBox Margin="3" Content="{x:Static properties:Resources.ShowILRanges}"  IsChecked="{Binding ShowILRanges, Source={x:Static local:DebugSteps.Options}}" />
+			<CheckBox Margin="3" Content="{x:Static properties:Resources.ShowChildIndexInBlock}"  IsChecked="{Binding ShowChildIndexInBlock, Source={x:Static local:DebugSteps.Options}}" />
 		</StackPanel>
 		<TreeView Name="tree" MouseDoubleClick="ShowStateAfter_Click" KeyDown="tree_KeyDown">
 			<TreeView.ItemTemplate>
@@ -21,9 +22,9 @@
 			</TreeView.ItemTemplate>
 			<TreeView.ContextMenu>
 				<ContextMenu>
-					<MenuItem Header="Show state before this step" Click="ShowStateBefore_Click" InputGestureText="Shift+Enter" />
-					<MenuItem Header="Show state after this step" Click="ShowStateAfter_Click" InputGestureText="Enter" />
-					<MenuItem Header="Debug this step" Click="DebugStep_Click" />
+					<MenuItem Header="{x:Static properties:Resources.ShowStateBeforeThisStep}" Click="ShowStateBefore_Click" InputGestureText="Shift+Enter" />
+					<MenuItem Header="{x:Static properties:Resources.ShowStateAfterThisStep}" Click="ShowStateAfter_Click" InputGestureText="Enter" />
+					<MenuItem Header="{x:Static properties:Resources.DebugThisStep}" Click="DebugStep_Click" />
 				</ContextMenu>
 			</TreeView.ContextMenu>
 		</TreeView>

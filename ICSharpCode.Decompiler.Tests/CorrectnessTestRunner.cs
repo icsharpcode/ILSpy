@@ -329,8 +329,8 @@ namespace ICSharpCode.Decompiler.Tests
 				
 				Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile);
 				
-				File.Delete(decompiledCodeFile);
-				File.Delete(decompiledOutputFile.PathToAssembly);
+				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
+				Tester.RepeatOnIOError(() => File.Delete(decompiledOutputFile.PathToAssembly));
 			} finally {
 				if (outputFile != null)
 					outputFile.TempFiles.Delete();
@@ -354,8 +354,8 @@ namespace ICSharpCode.Decompiler.Tests
 
 				Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile);
 
-				File.Delete(decompiledCodeFile);
-				File.Delete(decompiledOutputFile.PathToAssembly);
+				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
+				Tester.RepeatOnIOError(() => File.Delete(decompiledOutputFile.PathToAssembly));
 			} finally {
 				if (outputFile != null)
 					outputFile.TempFiles.Delete();
@@ -375,9 +375,9 @@ namespace ICSharpCode.Decompiler.Tests
 				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
 				
 				Tester.RunAndCompareOutput(testFileName, outputFile, decompiledOutputFile.PathToAssembly, decompiledCodeFile);
-				
-				File.Delete(decompiledCodeFile);
-				File.Delete(decompiledOutputFile.PathToAssembly);
+
+				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
+				Tester.RepeatOnIOError(() => File.Delete(decompiledOutputFile.PathToAssembly));
 			} finally {
 				if (decompiledOutputFile != null)
 					decompiledOutputFile.TempFiles.Delete();

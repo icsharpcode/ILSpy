@@ -114,13 +114,13 @@ namespace ICSharpCode.ILSpy
 			int navigationPos = 0;
 			int openPos = 1;
 			var toolbarCommands = App.ExportProvider.GetExports<ICommand, IToolbarCommandMetadata>("ToolbarCommand");
-			foreach (var commandGroup in toolbarCommands.OrderBy(c => c.Metadata.ToolbarOrder).GroupBy(c => c.Metadata.ToolbarCategory)) {
-				if (commandGroup.Key == "Navigation") {
+			foreach (var commandGroup in toolbarCommands.OrderBy(c => c.Metadata.ToolbarOrder).GroupBy(c => Properties.Resources.ResourceManager.GetString(c.Metadata.ToolbarCategory))) {
+				if (commandGroup.Key == Properties.Resources.ResourceManager.GetString("Navigation")) {
 					foreach (var command in commandGroup) {
 						toolBar.Items.Insert(navigationPos++, MakeToolbarItem(command));
 						openPos++;
 					}
-				} else if (commandGroup.Key == "Open") {
+				} else if (commandGroup.Key == Properties.Resources.ResourceManager.GetString("Open")) {
 					foreach (var command in commandGroup) {
 						toolBar.Items.Insert(openPos++, MakeToolbarItem(command));
 					}
@@ -138,7 +138,7 @@ namespace ICSharpCode.ILSpy
 		{
 			return new Button {
 				Command = CommandWrapper.Unwrap(command.Value),
-				ToolTip = command.Metadata.ToolTip,
+				ToolTip =Properties.Resources.ResourceManager.GetString( command.Metadata.ToolTip),
 				Tag = command.Metadata.Tag,
 				Content = new Image {
 					Width = 16,
@@ -154,12 +154,12 @@ namespace ICSharpCode.ILSpy
 		void InitMainMenu()
 		{
 			var mainMenuCommands = App.ExportProvider.GetExports<ICommand, IMainMenuCommandMetadata>("MainMenuCommand");
-			foreach (var topLevelMenu in mainMenuCommands.OrderBy(c => c.Metadata.MenuOrder).GroupBy(c => c.Metadata.Menu)) {
-				var topLevelMenuItem = mainMenu.Items.OfType<MenuItem>().FirstOrDefault(m => (m.Header as string) == topLevelMenu.Key);
-				foreach (var category in topLevelMenu.GroupBy(c => c.Metadata.MenuCategory)) {
+			foreach (var topLevelMenu in mainMenuCommands.OrderBy(c => c.Metadata.MenuOrder).GroupBy(c => GetResourceString(c.Metadata.Menu))) {
+				var topLevelMenuItem = mainMenu.Items.OfType<MenuItem>().FirstOrDefault(m => (GetResourceString(m.Header as string)) == topLevelMenu.Key);
+				foreach (var category in topLevelMenu.GroupBy(c => GetResourceString(c.Metadata.MenuCategory))) {
 					if (topLevelMenuItem == null) {
 						topLevelMenuItem = new MenuItem();
-						topLevelMenuItem.Header = topLevelMenu.Key;
+						topLevelMenuItem.Header = GetResourceString(topLevelMenu.Key);
 						mainMenu.Items.Add(topLevelMenuItem);
 					} else if (topLevelMenuItem.Items.Count > 0) {
 						topLevelMenuItem.Items.Add(new Separator());
@@ -167,8 +167,8 @@ namespace ICSharpCode.ILSpy
 					foreach (var entry in category) {
 						MenuItem menuItem = new MenuItem();
 						menuItem.Command = CommandWrapper.Unwrap(entry.Value);
-						if (!string.IsNullOrEmpty(entry.Metadata.Header))
-							menuItem.Header = entry.Metadata.Header;
+						if (!string.IsNullOrEmpty(GetResourceString(entry.Metadata.Header)))
+							menuItem.Header = GetResourceString(entry.Metadata.Header);
 						if (!string.IsNullOrEmpty(entry.Metadata.MenuIcon)) {
 							menuItem.Icon = new Image {
 								Width = 16,
@@ -176,7 +176,7 @@ namespace ICSharpCode.ILSpy
 								Source = Images.LoadImage(entry.Value, entry.Metadata.MenuIcon)
 							};
 						}
-						
+
 						menuItem.IsEnabled = entry.Metadata.IsEnabled;
 						menuItem.InputGestureText = entry.Metadata.InputGestureText;
 						topLevelMenuItem.Items.Add(menuItem);
@@ -184,8 +184,14 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 		}
+
+		internal static string GetResourceString(string key)
+		{
+			var str = !string.IsNullOrEmpty(key)? Properties.Resources.ResourceManager.GetString(key):null;
+			return string.IsNullOrEmpty(key)||  string.IsNullOrEmpty(str) ? key :  str;
+		}
 		#endregion
-		
+
 		#region Message Hook
 		protected override void OnSourceInitialized(EventArgs e)
 		{
@@ -503,11 +509,11 @@ namespace ICSharpCode.ILSpy
 			updateAvailableDownloadUrl = task.Result;
 			updatePanel.Visibility = displayMessage ? Visibility.Visible : Visibility.Collapsed;
 			if (task.Result != null) {
-				updatePanelMessage.Text = "A new ILSpy version is available.";
-				downloadOrCheckUpdateButton.Content = "Download";
+				updatePanelMessage.Text = Properties.Resources.ILSpyVersionAvailable;
+				downloadOrCheckUpdateButton.Content = Properties.Resources.Download;
 			} else {
-				updatePanelMessage.Text = "No update for ILSpy found.";
-				downloadOrCheckUpdateButton.Content = "Check again";
+				updatePanelMessage.Text = Properties.Resources.UpdateILSpyFound;
+				downloadOrCheckUpdateButton.Content = Properties.Resources.CheckAgain;
 			}
 		}
 		#endregion

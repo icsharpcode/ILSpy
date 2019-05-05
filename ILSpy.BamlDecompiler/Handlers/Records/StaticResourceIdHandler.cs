@@ -1,4 +1,4 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2019 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,18 +16,38 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Windows.Input;
-using ICSharpCode.ILSpy.Properties;
+using System;
+using ILSpy.BamlDecompiler.Baml;
+using ILSpy.BamlDecompiler.Xaml;
 
-namespace ICSharpCode.ILSpy
+namespace ILSpy.BamlDecompiler.Handlers
 {
-	[ExportToolbarCommand(ToolTip = nameof(Resources.Open),   ToolbarIcon = "Images/Open.png", ToolbarCategory = nameof(Resources.Open),  ToolbarOrder = 0)]
-	[ExportMainMenuCommand(Menu = nameof(Resources._File),   Header = nameof(Resources._Open),   MenuIcon = "Images/Open.png", MenuCategory = nameof(Resources.Open), MenuOrder = 0)]
-	sealed class OpenCommand : CommandWrapper
+	class StaticResourceIdHandler : IHandler
 	{
-		public OpenCommand()
-			: base(ApplicationCommands.Open)
+		public BamlRecordType Type => BamlRecordType.StaticResourceId;
+
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
 		{
+			var record = (StaticResourceIdRecord)((BamlRecordNode)node).Record;
+
+			BamlNode found = node;
+			XamlResourceKey key;
+			do {
+				key = XamlResourceKey.FindKeyInAncestors(found.Parent, out found);
+			} while (key != null && record.StaticResourceId >= key.StaticResources.Count);
+
+			if (key == null)
+				throw new Exception("Cannot find StaticResource @" + node.Record.Position);
+
+			var resNode = key.StaticResources[record.StaticResourceId];
+
+			var handler = (IDeferHandler)HandlerMap.LookupHandler(resNode.Type);
+			var resElem = handler.TranslateDefer(ctx, resNode, parent);
+
+			parent.Children.Add(resElem);
+			resElem.Parent = parent;
+
+			return resElem;
 		}
 	}
 }

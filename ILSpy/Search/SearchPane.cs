@@ -112,7 +112,7 @@ namespace ICSharpCode.ILSpy
 		public void Show()
 		{
 			if (!IsVisible) {
-				MainWindow.Instance.ShowInTopPane("Search", this);
+				MainWindow.Instance.ShowInTopPane(Properties.Resources.SearchPane_Search, this);
 				if (runSearchOnNextShow) {
 					runSearchOnNextShow = false;
 					StartSearch(this.SearchTerm);
@@ -207,7 +207,7 @@ namespace ICSharpCode.ILSpy
 			}
 
 			if (resultsAdded > 0 && Results.Count == MAX_RESULTS) {
-				Results.Add(new SearchResult { Name = "Search aborted, more than 1000 results found." });
+				Results.Add(new SearchResult { Name = Properties.Resources.SearchAbortedMoreThan1000ResultsFound });
 				currentSearch.Cancel();
 			}
 		}
@@ -293,20 +293,24 @@ namespace ICSharpCode.ILSpy
 			
 			public async Task Run()
 			{
-				await Task.Factory.StartNew(() => {
-					var searcher = GetSearchStrategy();
-					try {
-						foreach (var loadedAssembly in assemblies) {
-							var module = loadedAssembly.GetPEFileOrNull();
-							if (module == null)
-								continue;
-							searcher.Search(module, cts.Token);
+				try {
+					await Task.Factory.StartNew(() => {
+						var searcher = GetSearchStrategy();
+						try {
+							foreach (var loadedAssembly in assemblies) {
+								var module = loadedAssembly.GetPEFileOrNull();
+								if (module == null)
+									continue;
+								searcher.Search(module, cts.Token);
+							}
+						} catch (OperationCanceledException) {
+							// ignore cancellation
 						}
-					} catch (OperationCanceledException) {
-						// ignore cancellation
-					}
 
-				}, cts.Token, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
+					}, cts.Token, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
+				} catch (TaskCanceledException) {
+					// ignore cancellation
+				}
 			}
 
 			AbstractSearchStrategy GetSearchStrategy()
@@ -394,8 +398,8 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = "_View", Header = "Search...", MenuIcon = "Images/Find.png", MenuCategory = "View", MenuOrder = 100)]
-	[ExportToolbarCommand(ToolTip = "Search (Ctrl+Shift+F or Ctrl+E)", ToolbarIcon = "Images/Find.png", ToolbarCategory = "View", ToolbarOrder = 100)]
+	[ExportMainMenuCommand(Menu = nameof(Properties.Resources._View), Header =nameof(Properties.Resources.Search), MenuIcon = "Images/Find.png", MenuCategory = nameof(Properties.Resources.View), MenuOrder = 100)]
+	[ExportToolbarCommand(ToolTip = nameof(Properties.Resources.SearchCtrlShiftFOrCtrlE), ToolbarIcon = "Images/Find.png", ToolbarCategory = nameof(Properties.Resources.View), ToolbarOrder = 100)]
 	sealed class ShowSearchCommand : CommandWrapper
 	{
 		public ShowSearchCommand()
