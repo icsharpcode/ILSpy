@@ -385,23 +385,10 @@ namespace ICSharpCode.ILSpy
 			var node = nodeStack.Peek();
 			if (node is Identifier)
 				node = node.Parent;
-			if (IsDefinition(ref node))
+			if (Decompiler.TextTokenWriter.IsDefinition(ref node))
 				return node.GetSymbol();
 
 			return null;
-		}
-
-		static bool IsDefinition(ref AstNode node)
-		{
-			if (node is EntityDeclaration)
-				return true;
-			if (node is VariableInitializer && node.Parent is FieldDeclaration) {
-				node = node.Parent;
-				return true;
-			}
-			if (node is FixedVariableInitializer)
-				return true;
-			return false;
 		}
 
 		ISymbol GetCurrentMemberReference()
