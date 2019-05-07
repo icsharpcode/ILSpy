@@ -381,6 +381,8 @@ namespace ICSharpCode.ILSpy.TextView
 			references = textOutput.References;
 			definitionLookup = textOutput.DefinitionLookup;
 			textEditor.SyntaxHighlighting = highlighting;
+			textEditor.Options.EnableEmailHyperlinks = textOutput.EnableHyperlinks;
+			textEditor.Options.EnableHyperlinks = textOutput.EnableHyperlinks;
 			if (activeRichTextColorizer != null)
 				textEditor.TextArea.TextView.LineTransformers.Remove(activeRichTextColorizer);
 			if (textOutput.HighlightingModel != null) {

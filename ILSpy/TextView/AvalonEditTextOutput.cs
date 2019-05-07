@@ -94,6 +94,8 @@ namespace ICSharpCode.ILSpy.TextView
 		internal readonly List<NewFolding> Foldings = new List<NewFolding>();
 		
 		internal readonly DefinitionLookup DefinitionLookup = new DefinitionLookup();
+
+		internal bool EnableHyperlinks { get; set; }
 		
 		/// <summary>Embedded UIElements, see <see cref="UIElementGenerator"/>.</summary>
 		internal readonly List<KeyValuePair<int, Lazy<UIElement>>> UIElements = new List<KeyValuePair<int, Lazy<UIElement>>>();
