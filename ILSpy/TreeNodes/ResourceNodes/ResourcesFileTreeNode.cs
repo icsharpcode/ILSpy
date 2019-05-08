@@ -75,6 +75,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				}
 			} catch (BadImageFormatException) {
 				// ignore errors
+			} catch (EndOfStreamException) {
+				// ignore errors
 			}
 		}
 
@@ -121,14 +123,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						}
 						break;
 					case 2:
-						using (var writer = new ResXResourceWriter(dlg.OpenFile())) {
-							foreach (var entry in new ResourcesFile(s)) {
-								writer.AddResource(entry.Key, entry.Value);
+						try {
+							using (var writer = new ResXResourceWriter(dlg.OpenFile())) {
+								foreach (var entry in new ResourcesFile(s)) {
+									writer.AddResource(entry.Key, entry.Value);
+								}
 							}
+						} catch (BadImageFormatException) {
+							// ignore errors
+						} catch (EndOfStreamException) {
+							// ignore errors
 						}
 						break;
 				}
 			}
+
 			return true;
 		}
 

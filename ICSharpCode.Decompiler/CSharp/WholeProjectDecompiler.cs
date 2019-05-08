@@ -384,6 +384,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 					} catch (BadImageFormatException) {
 						decodedIntoIndividualFiles = false;
+					} catch (EndOfStreamException) {
+						decodedIntoIndividualFiles = false;
 					}
 					if (decodedIntoIndividualFiles) {
 						foreach (var entry in individualResources) {
