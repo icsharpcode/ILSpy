@@ -24,6 +24,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -452,6 +453,16 @@ namespace ICSharpCode.ILSpy
 		
 		bool FormatExceptions(App.ExceptionData[] exceptions, ITextOutput output)
 		{
+			var stringBuilder = new StringBuilder();
+			var result = FormatExceptions(exceptions, stringBuilder);
+			if (result) {
+				output.Write(stringBuilder.ToString());
+			}
+			return result;
+		}
+
+		internal static bool FormatExceptions(App.ExceptionData[] exceptions, StringBuilder output)
+		{
 			if (exceptions.Length == 0) return false;
 			bool first = true;
 			
@@ -459,16 +470,16 @@ namespace ICSharpCode.ILSpy
 				if (first)
 					first = false;
 				else
-					output.WriteLine("-------------------------------------------------");
-				output.WriteLine("Error(s) loading plugin: " + item.PluginName);
+					output.AppendLine("-------------------------------------------------");
+				output.AppendLine("Error(s) loading plugin: " + item.PluginName);
 				if (item.Exception is System.Reflection.ReflectionTypeLoadException) {
 					var e = (System.Reflection.ReflectionTypeLoadException)item.Exception;
 					foreach (var ex in e.LoaderExceptions) {
-						output.WriteLine(ex.ToString());
-						output.WriteLine();
+						output.AppendLine(ex.ToString());
+						output.AppendLine();
 					}
 				} else
-					output.WriteLine(item.Exception.ToString());
+					output.AppendLine(item.Exception.ToString());
 			}
 			
 			return true;
