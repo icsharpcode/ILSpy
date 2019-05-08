@@ -423,6 +423,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					return new[] { Tuple.Create("EmbeddedResource", resx) };
 				} catch (BadImageFormatException) {
 					// if the .resources can't be decoded, just save them as-is
+				} catch (EndOfStreamException) {
+					// if the .resources can't be decoded, just save them as-is
 				}
 			} 
 			using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write)) {
