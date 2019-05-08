@@ -230,6 +230,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					AddSecurityAttributes(metadata.GetDeclarativeSecurityAttribute(secDecl));
 				} catch (EnumUnderlyingTypeResolveException) {
 					// ignore resolve errors
+				} catch (BadImageFormatException) {
+					// ignore invalid security declarations
 				}
 			}
 		}
