@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (typeRef == null)
 				return SpecialType.UnknownType;
 			var typeName = new TopLevelTypeName(typeRef.Namespace, typeRef.Name, typeRef.TypeParameterCount);
-			foreach (IAssembly asm in compilation.Assemblies) {
+			foreach (IModule asm in compilation.Modules) {
 				var typeDef = asm.GetTypeDefinition(typeName);
 				if (typeDef != null)
 					return typeDef;

@@ -200,6 +200,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					b.Append(" -> ");
 					b.Append(classTypeArguments[i].ReflectionName);
 				}
+				if (classTypeArguments.Count == 0) {
+					if (first) first = false; else b.Append(", ");
+					b.Append("[]");
+				}
 			}
 			if (methodTypeArguments != null) {
 				for (int i = 0; i < methodTypeArguments.Count; i++) {
@@ -208,6 +212,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					b.Append(i);
 					b.Append(" -> ");
 					b.Append(methodTypeArguments[i].ReflectionName);
+				}
+				if (methodTypeArguments.Count == 0) {
+					if (first) first = false; else b.Append(", ");
+					b.Append("[]");
 				}
 			}
 			b.Append(']');

@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using ICSharpCode.Decompiler.Util;
+
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
@@ -23,6 +25,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SpecializedField : SpecializedMember, IField
 	{
+		internal static IField Create(IField fieldDefinition, TypeParameterSubstitution substitution)
+		{
+			if (TypeParameterSubstitution.Identity.Equals(substitution) || fieldDefinition.DeclaringType.TypeParameterCount == 0) {
+				return fieldDefinition;
+			}
+			if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
+				substitution = new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
+			return new SpecializedField(fieldDefinition, substitution);
+		}
+
 		readonly IField fieldDefinition;
 		
 		public SpecializedField(IField fieldDefinition, TypeParameterSubstitution substitution)
@@ -31,7 +43,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.fieldDefinition = fieldDefinition;
 			AddSubstitution(substitution);
 		}
-		
+
 		public bool IsReadOnly {
 			get { return fieldDefinition.IsReadOnly; }
 		}
@@ -48,12 +60,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return fieldDefinition.IsConst; }
 		}
 
-		public bool IsFixed {
-			get { return fieldDefinition.IsFixed; }
-		}
-
-		public object ConstantValue {
-			get { return fieldDefinition.ConstantValue; }
+		public object GetConstantValue(bool throwOnInvalidMetadata) {
+			return fieldDefinition.GetConstantValue(throwOnInvalidMetadata);
 		}
 	}
 }

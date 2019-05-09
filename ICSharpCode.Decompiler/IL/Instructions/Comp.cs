@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ComparisonKind.GreaterThanOrEqual:
 					return ComparisonKind.LessThan;
 				default:
-					throw new NotSupportedException();
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 		
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ComparisonKind.GreaterThanOrEqual:
 					return BinaryOperatorType.GreaterThanOrEqual;
 				default:
-					throw new NotSupportedException();
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 		
@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			if (options.UseLogicOperationSugar && MatchLogicNot(out var arg)) {
 				output.Write("logic.not(");
 				arg.WriteTo(output, options);
@@ -183,6 +183,8 @@ namespace ICSharpCode.Decompiler.IL
 				return;
 			}
 			output.Write(OpCode);
+			output.Write('.');
+			output.Write(InputType.ToString().ToLower());
 			switch (Sign) {
 				case Sign.Signed:
 					output.Write(".signed");
@@ -211,11 +213,6 @@ namespace ICSharpCode.Decompiler.IL
 		public static Comp LogicNot(ILInstruction arg)
 		{
 			return new Comp(ComparisonKind.Equality, Sign.None, arg, new LdcI4(0));
-		}
-
-		public static Comp LogicNot(ILInstruction arg, Interval ilrange)
-		{
-			return new Comp(ComparisonKind.Equality, Sign.None, arg, new LdcI4(0)) { ILRange = ilrange };
 		}
 	}
 }

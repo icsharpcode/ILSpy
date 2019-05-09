@@ -3,7 +3,8 @@ $ErrorActionPreference = "Stop"
 $baseCommit = "d779383cb85003d6dabeb976f0845631e07bf463";
 $baseCommitRev = 1;
 
-$masterBranches = @("master", "3.0.x", "3.1.x");
+# make sure this list matches artifacts-only branches list in appveyor.yml!
+$masterBranches = @("master", "3.2.x");
 
 $globalAssemblyInfoTemplateFile = "ILSpy/Properties/AssemblyInfo.template.cs";
 

@@ -22,6 +22,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Threading;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -42,29 +43,44 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public ILFunction Function { get; }
 		public IDecompilerTypeSystem TypeSystem { get; }
+		public IDebugInfoProvider DebugInfo { get; }
 		public DecompilerSettings Settings { get; }
 		public CancellationToken CancellationToken { get; set; }
 		public Stepper Stepper { get; set; }
+		public Metadata.PEFile PEFile => TypeSystem.MainModule.PEFile;
 
 		internal DecompileRun DecompileRun { get; set; }
-		internal ResolvedUsingScope UsingScope => DecompileRun.UsingScope.Resolve(TypeSystem.Compilation);
+		internal ResolvedUsingScope UsingScope => DecompileRun.UsingScope.Resolve(TypeSystem);
 
-		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, DecompilerSettings settings = null)
+		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, IDebugInfoProvider debugInfo, DecompilerSettings settings = null)
 		{
 			this.Function = function ?? throw new ArgumentNullException(nameof(function));
 			this.TypeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
 			this.Settings = settings ?? new DecompilerSettings();
+			this.DebugInfo = debugInfo;
 			Stepper = new Stepper();
 		}
 
-		public ILTransformContext(ILTransformContext context)
+		public ILTransformContext(ILTransformContext context, ILFunction function = null)
 		{
-			this.Function = context.Function;
+			this.Function = function ?? context.Function;
 			this.TypeSystem = context.TypeSystem;
+			this.DebugInfo = context.DebugInfo;
 			this.Settings = context.Settings;
 			this.DecompileRun = context.DecompileRun;
 			this.CancellationToken = context.CancellationToken;
 			this.Stepper = context.Stepper;
+		}
+
+		/// <summary>
+		/// Creates a new ILReader instance for decompiling another method in the same assembly.
+		/// </summary>
+		internal ILReader CreateILReader()
+		{
+			return new ILReader(TypeSystem.MainModule) {
+				UseDebugSymbols = Settings.UseDebugSymbols,
+				DebugInfo = DebugInfo
+			};
 		}
 
 		/// <summary>

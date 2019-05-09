@@ -17,9 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Reflection;
+using System.Reflection.Metadata;
 using System.Windows.Media;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -30,138 +34,41 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		readonly bool isIndexer;
 
-		public PropertyTreeNode(PropertyDefinition property)
+		public PropertyTreeNode(IProperty property)
 		{
-			if (property == null)
-				throw new ArgumentNullException(nameof(property));
-			this.PropertyDefinition = property;
-			using (LoadedAssembly.DisableAssemblyLoad()) {
-				this.isIndexer = property.IsIndexer();
-			}
+			this.PropertyDefinition = property ?? throw new ArgumentNullException(nameof(property));
+			this.isIndexer = property.IsIndexer;
 
-			if (property.GetMethod != null)
-				this.Children.Add(new MethodTreeNode(property.GetMethod));
-			if (property.SetMethod != null)
-				this.Children.Add(new MethodTreeNode(property.SetMethod));
-			if (property.HasOtherMethods) {
-				foreach (var m in property.OtherMethods)
-					this.Children.Add(new MethodTreeNode(m));
-			}
+			if (property.CanGet)
+				this.Children.Add(new MethodTreeNode(property.Getter));
+			if (property.CanSet)
+				this.Children.Add(new MethodTreeNode(property.Setter));
+			/*foreach (var m in property.OtherMethods)
+				this.Children.Add(new MethodTreeNode(m));*/
 		}
 
-		public PropertyDefinition PropertyDefinition { get; }
+		public IProperty PropertyDefinition { get; }
 
-		public override object Text => GetText(PropertyDefinition, Language, isIndexer) + PropertyDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(PropertyDefinition, Language) + PropertyDefinition.MetadataToken.ToSuffixString();
 
-		public static object GetText(PropertyDefinition property, Language language, bool? isIndexer = null)
+		public static object GetText(IProperty property, Language language)
 		{
-			string name = language.FormatPropertyName(property, isIndexer);
-
-			var b = new System.Text.StringBuilder();
-			if (property.HasParameters)
-			{
-				b.Append('(');
-				for (int i = 0; i < property.Parameters.Count; i++)
-				{
-					if (i > 0)
-						b.Append(", ");
-					b.Append(language.TypeToString(property.Parameters[i].ParameterType, false, property.Parameters[i]));
-				}
-				var method = property.GetMethod ?? property.SetMethod;
-				if (method.CallingConvention == MethodCallingConvention.VarArg)
-				{
-					if (property.HasParameters)
-						b.Append(", ");
-					b.Append("...");
-				}
-				b.Append(") : ");
-			}
-			else
-			{
-				b.Append(" : ");
-			}
-			b.Append(language.TypeToString(property.PropertyType, false, property));
-
-			return HighlightSearchMatch(name, b.ToString());
+			return language.PropertyToString(property, false, false, false);
 		}
 
 		public override object Icon => GetIcon(PropertyDefinition);
 
-		public static ImageSource GetIcon(PropertyDefinition property, bool isIndexer = false)
+		public static ImageSource GetIcon(IProperty property)
 		{
-			MemberIcon icon = isIndexer ? MemberIcon.Indexer : MemberIcon.Property;
-			MethodAttributes attributesOfMostAccessibleMethod = GetAttributesOfMostAccessibleMethod(property);
-			bool isStatic = (attributesOfMostAccessibleMethod & MethodAttributes.Static) != 0;
-			return Images.GetIcon(icon, GetOverlayIcon(attributesOfMostAccessibleMethod), isStatic);
-		}
-
-		private static AccessOverlayIcon GetOverlayIcon(MethodAttributes methodAttributes)
-		{
-			switch (methodAttributes & MethodAttributes.MemberAccessMask) {
-				case MethodAttributes.Public:
-					return AccessOverlayIcon.Public;
-				case MethodAttributes.Assembly:
-					return AccessOverlayIcon.Internal;
-				case MethodAttributes.FamANDAssem:
-					return AccessOverlayIcon.PrivateProtected;
-				case MethodAttributes.Family:
-					return AccessOverlayIcon.Protected;
-				case MethodAttributes.FamORAssem:
-					return AccessOverlayIcon.ProtectedInternal;
-				case MethodAttributes.Private:
-					return AccessOverlayIcon.Private;
-				case MethodAttributes.CompilerControlled:
-					return AccessOverlayIcon.CompilerControlled;
-				default:
-					throw new NotSupportedException();
-			}
-		}
-
-		private static MethodAttributes GetAttributesOfMostAccessibleMethod(PropertyDefinition property)
-		{
-			// There should always be at least one method from which to
-			// obtain the result, but the compiler doesn't know this so
-			// initialize the result with a default value
-			MethodAttributes result = (MethodAttributes)0;
-
-			// Method access is defined from inaccessible (lowest) to public (highest)
-			// in numeric order, so we can do an integer comparison of the masked attribute
-			int accessLevel = 0;
-
-			if (property.GetMethod != null) {
-				int methodAccessLevel = (int)(property.GetMethod.Attributes & MethodAttributes.MemberAccessMask);
-				if (accessLevel < methodAccessLevel) {
-					accessLevel = methodAccessLevel;
-					result = property.GetMethod.Attributes;
-				}
-			}
-
-			if (property.SetMethod != null) {
-				int methodAccessLevel = (int)(property.SetMethod.Attributes & MethodAttributes.MemberAccessMask);
-				if (accessLevel < methodAccessLevel) {
-					accessLevel = methodAccessLevel;
-					result = property.SetMethod.Attributes;
-				}
-			}
-
-			if (property.HasOtherMethods) {
-				foreach (var m in property.OtherMethods) {
-					int methodAccessLevel = (int)(m.Attributes & MethodAttributes.MemberAccessMask);
-					if (accessLevel < methodAccessLevel) {
-						accessLevel = methodAccessLevel;
-						result = m.Attributes;
-					}
-				}
-			}
-
-			return result;
+			return Images.GetIcon(property.IsIndexer ? MemberIcon.Indexer : MemberIcon.Property,
+				MethodTreeNode.GetOverlayIcon(property.Accessibility), property.IsStatic);
 		}
 
 		public override FilterResult Filter(FilterSettings settings)
 		{
-			if (!settings.ShowInternalApi && !IsPublicAPI)
+			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(PropertyDefinition.Name) && settings.Language.ShowMember(PropertyDefinition))
+			if (settings.SearchTermMatches(PropertyDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || settings.Language.ShowMember(PropertyDefinition)))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -171,13 +78,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			language.DecompileProperty(PropertyDefinition, output, options);
 		}
-		
+
 		public override bool IsPublicAPI {
 			get {
-				switch (GetAttributesOfMostAccessibleMethod(PropertyDefinition) & MethodAttributes.MemberAccessMask) {
-					case MethodAttributes.Public:
-					case MethodAttributes.Family:
-					case MethodAttributes.FamORAssem:
+				switch (PropertyDefinition.Accessibility) {
+					case Accessibility.Public:
+					case Accessibility.ProtectedOrInternal:
+					case Accessibility.Protected:
 						return true;
 					default:
 						return false;
@@ -185,6 +92,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		MemberReference IMemberTreeNode.Member => PropertyDefinition;
+		IEntity IMemberTreeNode.Member => PropertyDefinition;
 	}
 }

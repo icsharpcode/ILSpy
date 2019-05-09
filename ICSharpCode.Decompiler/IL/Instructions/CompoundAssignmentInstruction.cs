@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -93,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Operator = binary.Operator;
 			this.IsLifted = binary.IsLifted;
 			this.type = type;
-			this.ILRange = binary.ILRange;
+			this.AddILRange(binary);
 			Debug.Assert(compoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue || (Operator == BinaryNumericOperator.Add || Operator == BinaryNumericOperator.Sub));
 			Debug.Assert(IsValidCompoundAssignmentTarget(Target));
 		}
@@ -128,7 +129,7 @@ namespace ICSharpCode.Decompiler.IL
 						// ensure that the byte offset is a multiple of the pointer size
 						return PointerArithmeticOffset.Detect(
 							binary.Right,
-							(PointerType)type,
+							((PointerType)type).ElementType,
 							checkForOverflow: binary.CheckForOverflow
 						) != null;
 					default:
@@ -147,7 +148,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			// Can't transform if the RHS value would be need to be truncated for the LHS type.
-			if (Transforms.TransformAssignment.IsImplicitTruncation(binary.Right, type, binary.IsLifted))
+			if (Transforms.TransformAssignment.IsImplicitTruncation(binary.Right, type, null, binary.IsLifted))
 				return false;
 			return true;
 		}
@@ -171,7 +172,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write("." + BinaryNumericInstruction.GetOperatorName(Operator));
 			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
@@ -195,23 +196,29 @@ namespace ICSharpCode.Decompiler.IL
 	public partial class UserDefinedCompoundAssign : CompoundAssignmentInstruction
 	{
 		public readonly IMethod Method;
-		public bool IsLifted => false; // TODO: implement ILi
+		public bool IsLifted => false; // TODO: implement lifted user-defined compound assignments
 
 		public UserDefinedCompoundAssign(IMethod method, CompoundAssignmentType compoundAssignmentType, ILInstruction target, ILInstruction value)
 			: base(OpCode.UserDefinedCompoundAssign, compoundAssignmentType, target, value)
 		{
 			this.Method = method;
-			Debug.Assert(Method.IsOperator);
+			Debug.Assert(Method.IsOperator || IsStringConcat(method));
 			Debug.Assert(compoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue || (Method.Name == "op_Increment" || Method.Name == "op_Decrement"));
 			Debug.Assert(IsValidCompoundAssignmentTarget(Target));
+		}
+
+		public static bool IsStringConcat(IMethod method)
+		{
+			return method.Name == "Concat" && method.IsStatic && method.DeclaringType.IsKnownType(KnownTypeCode.String);
 		}
 
 		public override StackType ResultType => Method.ReturnType.GetStackType();
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
+			
 			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
 				output.Write(".new");
 			else
@@ -223,6 +230,71 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(", ");
 			this.Value.WriteTo(output, options);
 			output.Write(')');
+		}
+	}
+
+	public partial class DynamicCompoundAssign : CompoundAssignmentInstruction
+	{
+		public ExpressionType Operation { get; }
+		public CSharpArgumentInfo TargetArgumentInfo { get; }
+		public CSharpArgumentInfo ValueArgumentInfo { get; }
+		public CSharpBinderFlags BinderFlags { get; }
+
+		public DynamicCompoundAssign(ExpressionType op, CSharpBinderFlags binderFlags, ILInstruction target, CSharpArgumentInfo targetArgumentInfo, ILInstruction value, CSharpArgumentInfo valueArgumentInfo)
+			: base(OpCode.DynamicCompoundAssign, CompoundAssignmentTypeFromOperation(op), target, value)
+		{
+			if (!IsExpressionTypeSupported(op))
+				throw new ArgumentOutOfRangeException("op");
+			this.BinderFlags = binderFlags;
+			this.Operation = op;
+			this.TargetArgumentInfo = targetArgumentInfo;
+			this.ValueArgumentInfo = valueArgumentInfo;
+		}
+
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			output.Write("." + Operation.ToString().ToLower());
+			DynamicInstruction.WriteBinderFlags(BinderFlags, output, options);
+			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
+				output.Write(".new");
+			else
+				output.Write(".old");
+			output.Write(' ');
+			DynamicInstruction.WriteArgumentList(output, options, (Target, TargetArgumentInfo), (Value, ValueArgumentInfo));
+		}
+
+		internal static bool IsExpressionTypeSupported(ExpressionType type)
+		{
+			return type == ExpressionType.AddAssign
+				|| type == ExpressionType.AddAssignChecked
+				|| type == ExpressionType.AndAssign
+				|| type == ExpressionType.DivideAssign
+				|| type == ExpressionType.ExclusiveOrAssign
+				|| type == ExpressionType.LeftShiftAssign
+				|| type == ExpressionType.ModuloAssign
+				|| type == ExpressionType.MultiplyAssign
+				|| type == ExpressionType.MultiplyAssignChecked
+				|| type == ExpressionType.OrAssign
+				|| type == ExpressionType.PostDecrementAssign
+				|| type == ExpressionType.PostIncrementAssign
+				|| type == ExpressionType.PreDecrementAssign
+				|| type == ExpressionType.PreIncrementAssign
+				|| type == ExpressionType.RightShiftAssign
+				|| type == ExpressionType.SubtractAssign
+				|| type == ExpressionType.SubtractAssignChecked;
+		}
+
+		static CompoundAssignmentType CompoundAssignmentTypeFromOperation(ExpressionType op)
+		{
+			switch (op) {
+				case ExpressionType.PostIncrementAssign:
+				case ExpressionType.PostDecrementAssign:
+					return CompoundAssignmentType.EvaluatesToOldValue;
+				default:
+					return CompoundAssignmentType.EvaluatesToNewValue;
+			}
 		}
 	}
 }

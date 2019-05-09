@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public readonly bool IsExpandedForm;
 		
-		readonly IList<int> argumentToParameterMap;
+		readonly IReadOnlyList<int> argumentToParameterMap;
 
 		/// <summary>
 		/// If IsExtensionMethodInvocation is true this property holds the reduced method.
@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			bool isExtensionMethodInvocation = false,
 			bool isExpandedForm = false,
 			bool isDelegateInvocation = false,
-			IList<int> argumentToParameterMap = null,
+			IReadOnlyList<int> argumentToParameterMap = null,
 			IList<ResolveResult> initializerStatements = null,
 			IType returnTypeOverride = null
 		)
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// 
 		/// parameterIndex = ArgumentToParameterMap[argumentIndex]
 		/// </summary>
-		public IList<int> GetArgumentToParameterMap()
+		public IReadOnlyList<int> GetArgumentToParameterMap()
 		{
 			return argumentToParameterMap;
 		}
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			for (int i = 0; i < results.Length; i++) {
 				if (results[i] == null) {
 					if (Member.Parameters[i].IsOptional) {
-						results[i] = new ConstantResolveResult(Member.Parameters[i].Type, Member.Parameters[i].ConstantValue);
+						results[i] = new ConstantResolveResult(Member.Parameters[i].Type, Member.Parameters[i].GetConstantValue());
 					} else {
 						results[i] = ErrorResolveResult.UnknownError;
 					}

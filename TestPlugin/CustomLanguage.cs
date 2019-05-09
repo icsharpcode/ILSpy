@@ -2,10 +2,12 @@
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
 using System.ComponentModel.Composition;
+using System.Reflection.Metadata;
 using System.Windows.Controls;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy;
-using Mono.Cecil;
 
 namespace TestPlugin
 {
@@ -27,13 +29,15 @@ namespace TestPlugin
 				return ".txt";
 			}
 		}
-		
+
 		// There are several methods available to override; in this sample, we deal with methods only
-		
-		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
-			if (method.Body != null) {
-				output.WriteLine("Size of method: {0} bytes", method.Body.CodeSize);
+			var module = ((MetadataModule)method.ParentModule).PEFile;
+			var methodDef = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
+			if (methodDef.HasBody()) {
+				var methodBody = module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+				output.WriteLine("Size of method: {0} bytes", methodBody.GetCodeSize());
 				
 				ISmartTextOutput smartOutput = output as ISmartTextOutput;
 				if (smartOutput != null) {

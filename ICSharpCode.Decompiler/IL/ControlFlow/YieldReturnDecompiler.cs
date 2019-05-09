@@ -20,11 +20,11 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -42,24 +42,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		// for a description of this step.
 
 		ILTransformContext context;
+		MetadataReader metadata;
 
 		/// <summary>The type that contains the function being decompiled.</summary>
-		TypeDefinition currentType;
+		TypeDefinitionHandle currentType;
 
 		/// <summary>The compiler-generated enumerator class.</summary>
 		/// <remarks>Set in MatchEnumeratorCreationPattern()</remarks>
-		TypeDefinition enumeratorType;
+		TypeDefinitionHandle enumeratorType;
 
 		/// <summary>The constructor of the compiler-generated enumerator class.</summary>
 		/// <remarks>Set in MatchEnumeratorCreationPattern()</remarks>
-		MethodDefinition enumeratorCtor;
+		MethodDefinitionHandle enumeratorCtor;
 
 		/// <remarks>Set in MatchEnumeratorCreationPattern()</remarks>
 		bool isCompiledWithMono;
 
 		/// <summary>The dispose method of the compiler-generated enumerator class.</summary>
 		/// <remarks>Set in ConstructExceptionTable()</remarks>
-		MethodDefinition disposeMethod;
+		MethodDefinitionHandle disposeMethod;
 
 		/// <summary>The field in the compiler-generated class holding the current state of the state machine</summary>
 		/// <remarks>Set in AnalyzeCtor() for MS, MatchEnumeratorCreationPattern() or AnalyzeMoveNext() for Mono</remarks>
@@ -68,6 +69,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>The backing field of the 'Current' property in the compiler-generated class</summary>
 		/// <remarks>Set in AnalyzeCurrentProperty()</remarks>
 		IField currentField;
+
+		/// <summary>The disposing field of the compiler-generated enumerator class./summary>
+		/// <remarks>Set in ConstructExceptionTable() for assembly compiled with Mono</remarks>
+		IField disposingField;
 
 		/// <summary>Maps the fields of the compiler-generated class to the original parameters.</summary>
 		/// <remarks>Set in MatchEnumeratorCreationPattern() and ResolveIEnumerableIEnumeratorFieldMapping()</remarks>
@@ -105,11 +110,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!context.Settings.YieldReturn)
 				return; // abort if enumerator decompilation is disabled
 			this.context = context;
-			this.currentType = function.CecilMethod.DeclaringType;
-			this.enumeratorType = null;
-			this.enumeratorCtor = null;
+			this.metadata = context.PEFile.Metadata;
+			this.currentType = metadata.GetMethodDefinition((MethodDefinitionHandle)context.Function.Method.MetadataToken).GetDeclaringType();
+			this.enumeratorType = default;
+			this.enumeratorCtor = default;
 			this.stateField = null;
 			this.currentField = null;
+			this.disposingField = null;
 			this.fieldToParameterMap.Clear();
 			this.finallyMethodToStateRange = null;
 			this.decompiledFinallyMethods.Clear();
@@ -131,7 +138,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			context.Step("Replacing body with MoveNext() body", function);
 			function.IsIterator = true;
-			function.StateMachineCompiledWithMono = true;
+			function.StateMachineCompiledWithMono = isCompiledWithMono;
 			function.Body = newBody;
 			// register any locals used in newBody
 			function.Variables.AddRange(newBody.Descendants.OfType<IInstructionWithVariableOperand>().Select(inst => inst.Variable).Distinct());
@@ -145,22 +152,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			context.Step("Delete unreachable blocks", function);
-			// Note: because this only deletes blocks outright, the 'stateChanges' entries remain valid
-			// (though some may point to now-deleted blocks)
-			newBody.SortBlocks(deleteUnreachableBlocks: true);
 
 			if (isCompiledWithMono) {
 				// mono has try-finally inline (like async on MS); we also need to sort nested blocks:
 				foreach (var nestedContainer in newBody.Blocks.SelectMany(c => c.Descendants).OfType<BlockContainer>()) {
 					nestedContainer.SortBlocks(deleteUnreachableBlocks: true);
 				}
-			} else {
+				// We need to clean up nested blocks before the main block, so that edges from unreachable code
+				// in nested containers into the main container are removed before we clean up the main container.
+			}
+			// Note: because this only deletes blocks outright, the 'stateChanges' entries remain valid
+			// (though some may point to now-deleted blocks)
+			newBody.SortBlocks(deleteUnreachableBlocks: true);
+
+			if (!isCompiledWithMono) {
 				DecompileFinallyBlocks();
 				ReconstructTryFinallyBlocks(function);
 			}
 
 			context.Step("Translate fields to local accesses", function);
-			TranslateFieldsToLocalAccess(function, function, fieldToParameterMap);
+			TranslateFieldsToLocalAccess(function, function, fieldToParameterMap, isCompiledWithMono);
 
 			CleanSkipFinallyBodies(function);
 
@@ -303,10 +314,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!(initialState == -2 || initialState == 0))
 				return false;
-			enumeratorCtor = context.TypeSystem.GetCecil(newObj.Method) as MethodDefinition;
-			enumeratorType = enumeratorCtor?.DeclaringType;
-			return enumeratorType?.DeclaringType == currentType
-				&& IsCompilerGeneratorEnumerator(enumeratorType);
+			var handle = newObj.Method.MetadataToken;
+			enumeratorCtor = handle.IsNil || handle.Kind != HandleKind.MethodDefinition ? default : (MethodDefinitionHandle)handle;
+			enumeratorType = enumeratorCtor.IsNil ? default : metadata.GetMethodDefinition(enumeratorCtor).GetDeclaringType();
+			return (enumeratorType.IsNil ? default : metadata.GetTypeDefinition(enumeratorType).GetDeclaringType()) == currentType
+				&& IsCompilerGeneratorEnumerator(enumeratorType, metadata);
 		}
 
 		bool MatchMonoEnumeratorCreationNewObj(ILInstruction inst)
@@ -316,19 +328,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (newObj.Arguments.Count != 0)
 				return false;
-			enumeratorCtor = context.TypeSystem.GetCecil(newObj.Method) as MethodDefinition;
-			enumeratorType = enumeratorCtor?.DeclaringType;
-			return enumeratorType?.DeclaringType == currentType
-				&& IsCompilerGeneratorEnumerator(enumeratorType);
+			var handle = newObj.Method.MetadataToken;
+			enumeratorCtor = handle.IsNil || handle.Kind != HandleKind.MethodDefinition ? default : (MethodDefinitionHandle)handle;
+			enumeratorType = enumeratorCtor.IsNil ? default : metadata.GetMethodDefinition(enumeratorCtor).GetDeclaringType();
+			return (enumeratorType.IsNil ? default : metadata.GetTypeDefinition(enumeratorType).GetDeclaringType()) == currentType
+				&& IsCompilerGeneratorEnumerator(enumeratorType, metadata);
 		}
 
-		public static bool IsCompilerGeneratorEnumerator(TypeDefinition type)
+		public static bool IsCompilerGeneratorEnumerator(TypeDefinitionHandle type, MetadataReader metadata)
 		{
-			if (!(type?.DeclaringType != null && type.IsCompilerGenerated()))
+			TypeDefinition td;
+			if (type.IsNil || !type.IsCompilerGenerated(metadata) || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
 				return false;
-			foreach (var i in type.Interfaces) {
-				var tr = i.InterfaceType;
-				if (tr.Namespace == "System.Collections" && tr.Name == "IEnumerator")
+			foreach (var i in td.GetInterfaceImplementations()) {
+				var tr = metadata.GetInterfaceImplementation(i).Interface.GetFullTypeName(metadata);
+				if (!tr.IsNested && tr.TopLevelTypeName.Namespace == "System.Collections" && tr.TopLevelTypeName.Name == "IEnumerator")
 					return true;
 			}
 			return false;
@@ -359,26 +373,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Creates ILAst for the specified method, optimized up to before the 'YieldReturn' step.
 		/// </summary>
-		internal static ILFunction CreateILAst(MethodDefinition method, ILTransformContext context)
+		internal static ILFunction CreateILAst(MethodDefinitionHandle method, ILTransformContext context)
 		{
-			if (method == null || !method.HasBody)
+			var metadata = context.PEFile.Metadata;
+			if (method.IsNil)
 				throw new SymbolicAnalysisFailedException();
 
-			var typeSystem = context.TypeSystem;
-			var sdtp = typeSystem as SpecializingDecompilerTypeSystem;
-			if (sdtp != null) {
-				typeSystem = new SpecializingDecompilerTypeSystem(
-					sdtp.Context,
-					new TypeParameterSubstitution(
-						(sdtp.Substitution.ClassTypeArguments ?? EmptyList<IType>.Instance)
-						.Concat(sdtp.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance).ToArray(),
-						EmptyList<IType>.Instance
-					)
-				);
-			}
-			var il = new ILReader(typeSystem).ReadIL(method.Body, context.CancellationToken);
+			var methodDef = metadata.GetMethodDefinition(method);
+			if (!methodDef.HasBody())
+				throw new SymbolicAnalysisFailedException();
+
+			GenericContext genericContext = context.Function.GenericContext;
+			genericContext = new GenericContext(
+				classTypeParameters: (genericContext.ClassTypeParameters ?? EmptyList<ITypeParameter>.Instance)
+						.Concat(genericContext.MethodTypeParameters ?? EmptyList<ITypeParameter>.Instance).ToArray(),
+				methodTypeParameters: null);
+			var body = context.TypeSystem.MainModule.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+			var il = context.CreateILReader()
+				.ReadIL(method, body, genericContext, context.CancellationToken);
 			il.RunTransforms(CSharpDecompiler.EarlyILTransforms(true),
-				new ILTransformContext(il, typeSystem, context.Settings) {
+				new ILTransformContext(il, context.TypeSystem, context.DebugInfo, context.Settings) {
 					CancellationToken = context.CancellationToken,
 					DecompileRun = context.DecompileRun
 				});
@@ -392,9 +406,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		void AnalyzeCurrentProperty()
 		{
-			MethodDefinition getCurrentMethod = enumeratorType.Methods.FirstOrDefault(
-				m => m.Name.StartsWith("System.Collections.Generic.IEnumerator", StringComparison.Ordinal)
-				&& m.Name.EndsWith(".get_Current", StringComparison.Ordinal));
+			MethodDefinitionHandle getCurrentMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(
+				m => metadata.GetString(metadata.GetMethodDefinition(m).Name).StartsWith("System.Collections.Generic.IEnumerator", StringComparison.Ordinal)
+				&& metadata.GetString(metadata.GetMethodDefinition(m).Name).EndsWith(".get_Current", StringComparison.Ordinal));
 			Block body = SingleBlock(CreateILAst(getCurrentMethod, context).Body);
 			if (body == null)
 				throw new SymbolicAnalysisFailedException();
@@ -426,10 +440,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		#region Figure out the mapping of IEnumerable fields to IEnumerator fields  (analysis of GetEnumerator())
 		void ResolveIEnumerableIEnumeratorFieldMapping()
 		{
-			MethodDefinition getEnumeratorMethod = enumeratorType.Methods.FirstOrDefault(
-				m => m.Name.StartsWith("System.Collections.Generic.IEnumerable", StringComparison.Ordinal)
-				&& m.Name.EndsWith(".GetEnumerator", StringComparison.Ordinal));
-			if (getEnumeratorMethod == null)
+			MethodDefinitionHandle getEnumeratorMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(
+				m => metadata.GetString(metadata.GetMethodDefinition(m).Name).StartsWith("System.Collections.Generic.IEnumerable", StringComparison.Ordinal)
+				&& metadata.GetString(metadata.GetMethodDefinition(m).Name).EndsWith(".GetEnumerator", StringComparison.Ordinal));
+			if (getEnumeratorMethod.IsNil)
 				return; // no mappings (maybe it's just an IEnumerator implementation?)
 			var function = CreateILAst(getEnumeratorMethod, context);
 			foreach (var block in function.Descendants.OfType<Block>()) {
@@ -454,18 +468,31 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void ConstructExceptionTable()
 		{
 			if (isCompiledWithMono) {
+				disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "Dispose");
+				var function = CreateILAst(disposeMethod, context);
+				BlockContainer body = (BlockContainer)function.Body;
+
+				for (var i = 0; (i < body.EntryPoint.Instructions.Count) && !(body.EntryPoint.Instructions[i] is Branch); i++) {
+					if (body.EntryPoint.Instructions[i] is StObj stobj
+						&& stobj.MatchStFld(out var target, out var field, out var value)
+						&& target.MatchLdThis()
+						&& field.Type.IsKnownType(KnownTypeCode.Boolean)
+						&& value.MatchLdcI4(1)) {
+						disposingField = (IField)field.MemberDefinition;
+						break;
+					}
+				}
+
 				// On mono, we don't need to analyse Dispose() to reconstruct the try-finally structure.
-				disposeMethod = null;
-				finallyMethodToStateRange = null;
-				return;
+				finallyMethodToStateRange = default;
+			} else {
+				// Non-Mono: analyze try-finally structure in Dispose()
+				disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "System.IDisposable.Dispose");
+				var function = CreateILAst(disposeMethod, context);
+				var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorDispose, stateField);
+				rangeAnalysis.AssignStateRanges(function.Body, LongSet.Universe);
+				finallyMethodToStateRange = rangeAnalysis.finallyMethodToStateRange;
 			}
-
-			disposeMethod = enumeratorType.Methods.FirstOrDefault(m => m.Name == "System.IDisposable.Dispose");
-			var function = CreateILAst(disposeMethod, context);
-
-			var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorDispose, stateField);
-			rangeAnalysis.AssignStateRanges(function.Body, LongSet.Universe);
-			finallyMethodToStateRange = rangeAnalysis.finallyMethodToStateRange;
 		}
 		
 		[Conditional("DEBUG")]
@@ -485,7 +512,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		BlockContainer AnalyzeMoveNext()
 		{
 			context.StepStartGroup("AnalyzeMoveNext");
-			MethodDefinition moveNextMethod = enumeratorType.Methods.FirstOrDefault(m => m.Name == "MoveNext");
+			MethodDefinitionHandle moveNextMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "MoveNext");
 			ILFunction moveNextFunction = CreateILAst(moveNextMethod, context);
 
 			// Copy-propagate temporaries holding a copy of 'this'.
@@ -503,7 +530,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var faultBlock = faultBlockContainer.Blocks.Single();
 				if (!(faultBlock.Instructions.Count == 2
 					&& faultBlock.Instructions[0] is Call call
-					&& context.TypeSystem.GetCecil(call.Method) == disposeMethod
+					&& call.Method.MetadataToken == disposeMethod
 					&& call.Arguments.Count == 1
 					&& call.Arguments[0].MatchLdThis()
 					&& faultBlock.Instructions[1].MatchLeave(faultBlockContainer))) {
@@ -622,13 +649,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private BlockContainer ConvertBody(BlockContainer oldBody, StateRangeAnalysis rangeAnalysis)
 		{
 			var blockStateMap = rangeAnalysis.GetBlockStateSetMapping(oldBody);
-			BlockContainer newBody = new BlockContainer();
+			BlockContainer newBody = new BlockContainer().WithILRange(oldBody);
 			// create all new blocks so that they can be referenced by gotos
 			for (int blockIndex = 0; blockIndex < oldBody.Blocks.Count; blockIndex++) {
-				newBody.Blocks.Add(new Block { ILRange = oldBody.Blocks[blockIndex].ILRange });
+				newBody.Blocks.Add(new Block().WithILRange(oldBody.Blocks[blockIndex]));
 			}
 			// convert contents of blocks
-			
+
 			for (int i = 0; i < oldBody.Blocks.Count; i++) {
 				var oldBlock = oldBody.Blocks[i];
 				var newBlock = newBody.Blocks[i];
@@ -643,15 +670,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 								// We keep the state-changing instruction around (as first instruction of the new block)
 								// for reconstructing the try-finallys. 
 							} else {
-								newBlock.Instructions.Add(new InvalidExpression("Assigned non-constant to iterator.state field") {
-									ILRange = oldInst.ILRange
-								});
+								newBlock.Instructions.Add(new InvalidExpression("Assigned non-constant to iterator.state field").WithILRange(oldInst));
 								continue; // don't copy over this instruction, but continue with the basic block
 							}
 						} else if (field.MemberDefinition.Equals(currentField)) {
 							// create yield return
-							newBlock.Instructions.Add(new YieldReturn(value) { ILRange = oldInst.ILRange });
-							ConvertBranchAfterYieldReturn(newBlock, oldBlock, oldInst.ChildIndex);
+							newBlock.Instructions.Add(new YieldReturn(value).WithILRange(oldInst));
+							ConvertBranchAfterYieldReturn(newBlock, oldBlock, oldInst.ChildIndex + 1);
 							break; // we're done with this basic block
 						}
 					} else if (oldInst is Call call && call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()
@@ -669,6 +694,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 					// copy over the instruction to the new block
 					newBlock.Instructions.Add(oldInst);
+					newBlock.AddILRange(oldInst);
 					UpdateBranchTargets(oldInst);
 				}
 			}
@@ -682,16 +708,51 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			});
 			return newBody;
 
-			void ConvertBranchAfterYieldReturn(Block newBlock, Block oldBlock, int i)
+			void ConvertBranchAfterYieldReturn(Block newBlock, Block oldBlock, int pos)
 			{
-				if (!(oldBlock.Instructions[i + 1].MatchStFld(out var target, out var field, out var value)
+				Block targetBlock;
+				if (isCompiledWithMono && disposingField != null) {
+					// Mono skips over the state assignment if 'this.disposing' is set:
+					//      ...
+					//      stfld $current(ldloc this, yield-expr)
+					//  	if (ldfld $disposing(ldloc this)) br IL_007c
+					//  	br targetBlock
+					//  }
+					//  
+					//  Block targetBlock (incoming: 1) {
+					//  	stfld $PC(ldloc this, ldc.i4 1)
+					//  	br setSkipFinallyBodies
+					//  }
+					//  
+					//  Block setSkipFinallyBodies (incoming: 2) {
+					//  	stloc skipFinallyBodies(ldc.i4 1)
+					//  	br returnBlock
+					//  }
+					if (oldBlock.Instructions[pos].MatchIfInstruction(out var condition, out _)
+						&& condition.MatchLdFld(out var condTarget, out var condField)
+						&& condTarget.MatchLdThis() && condField.MemberDefinition.Equals(disposingField)
+						&& oldBlock.Instructions[pos + 1].MatchBranch(out targetBlock)
+						&& targetBlock.Parent == oldBlock.Parent) {
+						// Keep looking at the target block:
+						oldBlock = targetBlock;
+						pos = 0;
+					}
+				}
+
+				if (oldBlock.Instructions[pos].MatchStFld(out var target, out var field, out var value)
 					&& target.MatchLdThis()
 					&& field.MemberDefinition == stateField
-					&& value.MatchLdcI4(out int newState))) {
+					&& value.MatchLdcI4(out int newState)) {
+					pos++;
+				} else {
 					newBlock.Instructions.Add(new InvalidBranch("Unable to find new state assignment for yield return"));
 					return;
 				}
-				int pos = i + 2;
+				// Mono may have 'br setSkipFinallyBodies' here, so follow the branch
+				if (oldBlock.Instructions[pos].MatchBranch(out targetBlock) && targetBlock.Parent == oldBlock.Parent) {
+					oldBlock = targetBlock;
+					pos = 0;
+				}
 				if (oldBlock.Instructions[pos].MatchStLoc(skipFinallyBodies, out value)) {
 					if (!value.MatchLdcI4(1)) {
 						newBlock.Instructions.Add(new InvalidExpression {
@@ -701,9 +762,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 					pos++;
 				}
+
 				if (oldBlock.Instructions[pos].MatchReturn(out var retVal) && retVal.MatchLdcI4(1)) {
 					// OK, found return directly after state assignment
-				} else if (oldBlock.Instructions[pos].MatchBranch(out var targetBlock) 
+				} else if (oldBlock.Instructions[pos].MatchBranch(out targetBlock) 
 					&& targetBlock.Instructions[0].MatchReturn(out retVal) && retVal.MatchLdcI4(1)) {
 					// OK, jump to common return block (e.g. on Mono)
 				} else {
@@ -717,7 +779,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				if (newBlock.Instructions.Count > 0) {
 					var newBlock2 = new Block();
-					newBlock2.ILRange = new Interval(oldInst.ILRange.Start, oldInst.ILRange.Start);
+					newBlock2.AddILRange(new Interval(oldInst.StartILOffset, oldInst.StartILOffset));
 					newBody.Blocks.Add(newBlock2);
 					newBlock.Instructions.Add(new Branch(newBlock2));
 					newBlock = newBlock2;
@@ -748,16 +810,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						break;
 					case Leave leave:
 						if (leave.MatchReturn(out var value)) {
-							if (value.MatchLdLoc(out var v) && v.IsSingleDefinition
-								&& v.StoreInstructions.SingleOrDefault() is StLoc stloc) {
+							if (value.MatchLdLoc(out var v)
+								&& (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot)
+								&& v.StoreInstructions.Count == 1
+								&& v.StoreInstructions[0] is StLoc stloc) {
 								returnStores.Add(stloc);
 								value = stloc.Value;
 							}
 							if (value.MatchLdcI4(0)) {
 								// yield break
-								leave.ReplaceWith(new Leave(newBody) { ILRange = leave.ILRange });
+								leave.ReplaceWith(new Leave(newBody).WithILRange(leave));
 							} else {
-								leave.ReplaceWith(new InvalidBranch("Unexpected return in MoveNext()") { ILRange = leave.ILRange });
+								leave.ReplaceWith(new InvalidBranch("Unexpected return in MoveNext()").WithILRange(leave));
 							}
 						} else {
 							if (leave.TargetContainer == oldBody) {
@@ -777,7 +841,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Translates all field accesses in `function` to local variable accesses.
 		/// </summary>
-		internal static void TranslateFieldsToLocalAccess(ILFunction function, ILInstruction inst, Dictionary<IField, ILVariable> fieldToVariableMap)
+		internal static void TranslateFieldsToLocalAccess(ILFunction function, ILInstruction inst, Dictionary<IField, ILVariable> fieldToVariableMap, bool isCompiledWithMono = false)
 		{
 			if (inst is LdFlda ldflda && ldflda.Target.MatchLdThis()) {
 				var fieldDef = (IField)ldflda.Field.MemberDefinition;
@@ -789,30 +853,31 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							name = fieldDef.Name.Substring(1, pos - 1);
 					}
 					v = function.RegisterVariable(VariableKind.Local, ldflda.Field.ReturnType, name);
+					v.HasInitialValue = true; // the field was default-initialized, so keep those semantics for the variable
 					v.StateMachineField = ldflda.Field;
 					fieldToVariableMap.Add(fieldDef, v);
 				}
 				if (v.StackType == StackType.Ref) {
 					Debug.Assert(v.Kind == VariableKind.Parameter && v.Index < 0); // this pointer
-					inst.ReplaceWith(new LdLoc(v) { ILRange = inst.ILRange });
+					inst.ReplaceWith(new LdLoc(v).WithILRange(inst));
 				} else {
-					inst.ReplaceWith(new LdLoca(v) { ILRange = inst.ILRange });
+					inst.ReplaceWith(new LdLoca(v).WithILRange(inst));
 				}
-			} else if (inst.MatchLdThis()) {
-				inst.ReplaceWith(new InvalidExpression("stateMachine") { ExpectedResultType = inst.ResultType, ILRange = inst.ILRange });
+			} else if (!isCompiledWithMono && inst.MatchLdThis()) {
+				inst.ReplaceWith(new InvalidExpression("stateMachine") { ExpectedResultType = inst.ResultType }.WithILRange(inst));
 			} else {
 				foreach (var child in inst.Children) {
-					TranslateFieldsToLocalAccess(function, child, fieldToVariableMap);
+					TranslateFieldsToLocalAccess(function, child, fieldToVariableMap, isCompiledWithMono);
 				}
 				if (inst is LdObj ldobj && ldobj.Target is LdLoca ldloca && ldloca.Variable.StateMachineField != null) {
 					LdLoc ldloc = new LdLoc(ldloca.Variable);
-					ldloc.AddILRange(ldobj.ILRange);
-					ldloc.AddILRange(ldloca.ILRange);
+					ldloc.AddILRange(ldobj);
+					ldloc.AddILRange(ldloca);
 					inst.ReplaceWith(ldloc);
 				} else if (inst is StObj stobj && stobj.Target is LdLoca ldloca2 && ldloca2.Variable.StateMachineField != null) {
 					StLoc stloc = new StLoc(ldloca2.Variable, stobj.Value);
-					stloc.AddILRange(stobj.ILRange);
-					stloc.AddILRange(ldloca2.ILRange);
+					stloc.AddILRange(stobj);
+					stloc.AddILRange(ldloca2);
 					inst.ReplaceWith(stloc);
 				}
 			}
@@ -823,7 +888,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void DecompileFinallyBlocks()
 		{
 			foreach (var method in finallyMethodToStateRange.Keys) {
-				var function = CreateILAst((MethodDefinition)context.TypeSystem.GetCecil(method), context);
+				var function = CreateILAst((MethodDefinitionHandle)method.MetadataToken, context);
 				var body = (BlockContainer)function.Body;
 				var newState = GetNewState(body.EntryPoint);
 				if (newState != null) {
@@ -921,10 +986,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				finallyMethodToStateRange.Remove(finallyMethod);
 
 				var tryBlock = new Block();
-				tryBlock.ILRange = block.ILRange;
+				tryBlock.AddILRange(block);
 				tryBlock.Instructions.AddRange(block.Instructions);
 				var tryBlockContainer = new BlockContainer();
 				tryBlockContainer.Blocks.Add(tryBlock);
+				tryBlockContainer.AddILRange(tryBlock);
 				stateToContainer.Add(state, tryBlockContainer);
 
 				ILInstruction finallyBlock;
@@ -938,7 +1004,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 
 				block.Instructions.Clear();
-				block.Instructions.Add(new TryFinally(tryBlockContainer, finallyBlock));
+				block.Instructions.Add(new TryFinally(tryBlockContainer, finallyBlock).WithILRange(tryBlockContainer));
 			}
 
 			IMethod FindFinallyMethod(int state)

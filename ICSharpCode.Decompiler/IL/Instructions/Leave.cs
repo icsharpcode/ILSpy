@@ -111,11 +111,11 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			if (targetContainer != null) {
 				output.Write(' ');
-				output.WriteReference(TargetLabel, targetContainer, isLocal: true);
+				output.WriteLocalReference(TargetLabel, targetContainer);
 				output.Write(" (");
 				value.WriteTo(output, options);
 				output.Write(')');

@@ -20,15 +20,14 @@ using System.ComponentModel.Composition;
 using System.Drawing;
 using System.Windows.Forms;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	[Export(typeof(IResourceNodeFactory))]
 	sealed class ImageListResourceEntryNodeFactory : IResourceNodeFactory
 	{
-		#region IResourceNodeFactory Members
-
-		public ILSpyTreeNode CreateNode(Mono.Cecil.Resource resource)
+		public ILSpyTreeNode CreateNode(Resource resource)
 		{
 			return null;
 		}
@@ -39,8 +38,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return new ImageListResourceEntryNode(key, (ImageListStreamer)data);
 			return null;
 		}
-
-		#endregion
 	}
 
 	sealed class ImageListResourceEntryNode : ILSpyTreeNode

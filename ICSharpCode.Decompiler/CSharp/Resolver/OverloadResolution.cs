@@ -843,7 +843,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// 
 		/// parameterIndex = GetArgumentToParameterMap()[argumentIndex]
 		/// </summary>
-		public IList<int> GetArgumentToParameterMap()
+		public IReadOnlyList<int> GetArgumentToParameterMap()
 		{
 			if (bestCandidate != null)
 				return bestCandidate.ArgumentToParameterMap;

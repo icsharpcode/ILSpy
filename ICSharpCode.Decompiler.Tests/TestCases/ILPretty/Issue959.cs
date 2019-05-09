@@ -4,7 +4,7 @@
 	{
 		public void Test(bool arg)
 		{
-			switch (arg) {
+			if (!arg && arg) {
 
 			}
 		}

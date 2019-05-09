@@ -23,6 +23,25 @@ using System.Reflection;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	public struct Maybe<T>
+	{
+		public T Value;
+		public bool HasValue;
+	}
+
+	public static class MaybeExtensions
+	{
+		public static Maybe<TResult> Select<T, TResult>(this Maybe<T> a, Func<T, TResult> fn)
+		{
+			return default(Maybe<TResult>);
+		}
+
+		public static Maybe<T> Where<T>(this Maybe<T> a, Func<T, bool> predicate)
+		{
+			return default(Maybe<T>);
+		}
+	}
+
 	public class QueryExpressions
 	{
 		public class HbmParam
@@ -213,31 +232,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				   select (x);
 		}
 
+		public static IEnumerable<char> Issue1310a(bool test)
+		{
+#if ROSLYN && OPT
+			IEnumerable<char> obj = test ? (from c in Enumerable.Range(0, 255)
+												   where char.IsLetter((char)c)
+												   select (char)c) : (from c in Enumerable.Range(0, 255)
+																	  where char.IsDigit((char)c)
+																	  select (char)c);
+			return obj.Concat(obj);
+#else
+			IEnumerable<char> enumerable = test ? (from c in Enumerable.Range(0, 255)
+												   where char.IsLetter((char)c)
+												   select (char)c) : (from c in Enumerable.Range(0, 255)
+																	  where char.IsDigit((char)c)
+																	  select (char)c);
+			return enumerable.Concat(enumerable);
+#endif
+		}
+
 		public static Maybe<TB> Cast<TA, TB>(Maybe<TA> a) where TB : class
 		{
 			return from m in a
 				   let t = m as TB
 				   where t != null
 				   select t;
-		}
-	}
-
-	public struct Maybe<T>
-	{
-		public T Value;
-		public bool HasValue;
-	}
-
-	public static class MaybeExtensions
-	{
-		public static Maybe<TResult> Select<T, TResult>(this Maybe<T> a, Func<T, TResult> fn)
-		{
-			return default(Maybe<TResult>);
-		}
-
-		public static Maybe<T> Where<T>(this Maybe<T> a, Func<T, bool> predicate)
-		{
-			return default(Maybe<T>);
 		}
 	}
 }

@@ -63,8 +63,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				textWriter.Write('@');
 				column++;
 			}
-			textWriter.Write(identifier.Name);
-			column += identifier.Name.Length;
+			string name = EscapeIdentifier(identifier.Name);
+			textWriter.Write(name);
+			column += name.Length;
 			isAtStartOfLine = false;
 		}
 		
@@ -416,6 +417,63 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				else sb.Append(ch);
 			}
 			return sb.ToString();
+		}
+
+		public static string EscapeIdentifier(string identifier)
+		{
+			if (string.IsNullOrEmpty(identifier))
+				return identifier;
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < identifier.Length; i++) {
+				if (IsPrintableIdentifierChar(identifier, i)) {
+					if (char.IsSurrogatePair(identifier, i)) {
+						sb.Append(identifier.Substring(i, 2));
+						i++;
+					} else {
+						sb.Append(identifier[i]);
+					}
+				} else {
+					if (char.IsSurrogatePair(identifier, i)) {
+						sb.AppendFormat("\\U{0:x8}", char.ConvertToUtf32(identifier, i));
+						i++;
+					} else {
+						sb.AppendFormat("\\u{0:x4}", (int)identifier[i]);
+					}
+				}
+			}
+			return sb.ToString();
+		}
+
+		static bool IsPrintableIdentifierChar(string identifier, int index)
+		{
+			switch (identifier[index]) {
+				case '\\':
+					return false;
+				case ' ':
+				case '_':
+				case '`':
+				case '^':
+					return true;
+			}
+			switch (char.GetUnicodeCategory(identifier, index)) {
+				case UnicodeCategory.ModifierLetter:
+				case UnicodeCategory.NonSpacingMark:
+				case UnicodeCategory.SpacingCombiningMark:
+				case UnicodeCategory.EnclosingMark:
+				case UnicodeCategory.LineSeparator:
+				case UnicodeCategory.ParagraphSeparator:
+				case UnicodeCategory.Control:
+				case UnicodeCategory.Format:
+				case UnicodeCategory.Surrogate:
+				case UnicodeCategory.PrivateUse:
+				case UnicodeCategory.ConnectorPunctuation:
+				case UnicodeCategory.ModifierSymbol:
+				case UnicodeCategory.OtherNotAssigned:
+				case UnicodeCategory.SpaceSeparator:
+					return false;
+				default:
+					return true;
+			}
 		}
 		
 		public override void WritePrimitiveType(string type)

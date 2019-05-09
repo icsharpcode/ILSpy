@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class ILPrettyTestRunner
 	{
-		static readonly string TestCasePath = DecompilerTestBase.TestCasePath + "/ILPretty";
+		static readonly string TestCasePath = Tester.TestCasePath + "/ILPretty";
 
 		[Test]
 		public void AllFilesHaveTests()
@@ -83,6 +83,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Issue1389()
+		{
+			Run();
+		}
+
+		[Test]
 		public void FSharpUsing_Debug()
 		{
 			Run(settings: new DecompilerSettings { RemoveDeadCode = true });
@@ -112,15 +118,65 @@ namespace ICSharpCode.Decompiler.Tests
 			Run();
 		}
 
-		[Test, Ignore("?")]
+		[Test]
+		public void Issue1157()
+		{
+			Run();
+		}
+
+		[Test]
+		public void Issue1256()
+		{
+			Run();
+		}
+
+		[Test]
+		public void Issue1323()
+		{
+			Run();
+		}
+
+		[Test]
+		public void Issue1325()
+		{
+			Run();
+		}
+
+		[Test]
+		public void Issue1454()
+		{
+			Run();
+		}
+
+		[Test]
+		public void ConstantBlobs()
+		{
+			Run();
+		}
+
+		[Test]
+		public void SequenceOfNestedIfs()
+		{
+			Run();
+		}
+
+		[Test]
+		public void Unsafe()
+		{
+			Run();
+		}
+
+		[Test]
 		public void FSharpLoops_Debug()
 		{
+			CopyFSharpCoreDll();
 			Run(settings: new DecompilerSettings { RemoveDeadCode = true });
 		}
 
-		[Test, Ignore("?")]
+		[Test]
 		public void FSharpLoops_Release()
 		{
+			CopyFSharpCoreDll();
 			Run(settings: new DecompilerSettings { RemoveDeadCode = true });
 		}
 
@@ -133,6 +189,20 @@ namespace ICSharpCode.Decompiler.Tests
 			var decompiled = Tester.DecompileCSharp(executable, settings);
 
 			CodeAssert.FilesAreEqual(csFile, decompiled);
+		}
+
+		static readonly object copyLock = new object();
+
+		static void CopyFSharpCoreDll()
+		{
+			lock (copyLock) {
+				if (File.Exists(Path.Combine(TestCasePath, "FSharp.Core.dll")))
+					return;
+				string fsharpCoreDll = Path.Combine(TestCasePath, "..\\..\\..\\ILSpy-tests\\FSharp\\FSharp.Core.dll");
+				if (!File.Exists(fsharpCoreDll))
+					Assert.Ignore("Ignored because of missing ILSpy-tests repo. Must be checked out separately from https://github.com/icsharpcode/ILSpy-tests!");
+				File.Copy(fsharpCoreDll, Path.Combine(TestCasePath, "FSharp.Core.dll"));
+			}
 		}
 	}
 }

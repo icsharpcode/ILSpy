@@ -195,5 +195,91 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				throw new Exception();
 			}
 		}
+
+#if ROSLYN || !OPT
+		// TODO Non-Roslyn compilers create a second while loop inside the try, by inverting the if
+		// This is fixed in the non-optimised version by the enabling the RemoveDeadCode flag
+		//public bool EarlyExitInLoopTry()
+		//{
+		//	while (true) {
+		//		try {
+		//			while (B(0)) {
+		//				Console.WriteLine();
+		//			}
+		//
+		//			return false;
+		//		} catch {
+		//		}
+		//	}
+		//}
+		public bool EarlyExitInLoopTry()
+		{
+			while (true) {
+				try {
+					if (!B(0)) {
+						return false;
+					}
+
+					Console.WriteLine();
+				} catch {
+				}
+			}
+		}
+#endif
+
+		public bool ComplexConditionalReturnInThrow()
+		{
+			try {
+				if (B(0)) {
+					if (B(1)) {
+						Console.WriteLine("0 && 1");
+						return B(2);
+					}
+
+					if (B(3)) {
+						Console.WriteLine("0 && 3");
+						return !B(2);
+					}
+
+					Console.WriteLine("0");
+				}
+			
+				Console.WriteLine("End Try");
+
+			} catch {
+				try {
+					try {
+						if (((B(0) || B(1)) && B(2)) || B(3)) {
+							return B(4) && !B(5);
+						}
+						if (B(6) || B(7)) {
+							return B(8) || B(9);
+						}
+					} catch {
+						Console.WriteLine("Catch2");
+					}
+					return B(10) && B(11);
+				} catch { 
+					Console.WriteLine("Catch");
+				} finally {
+					Console.WriteLine("Finally");
+				}
+			}
+			return false;
+		}
+
+		public void AppropriateLockExit()
+		{
+			int num = 0;
+			lock (this) {
+				if (num <= 256) {
+					Console.WriteLine(0);
+				} else if (num <= 1024) {
+					Console.WriteLine(1);
+				} else if (num <= 16384) {
+					Console.WriteLine(2);
+				}
+			}
+		}
 	}
 }

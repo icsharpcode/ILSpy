@@ -126,6 +126,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 				if (c != Conversion.None) return c;
 			}
+			if (resolveResult is InterpolatedStringResolveResult isrr) {
+				if (toType.IsKnownType(KnownTypeCode.IFormattable) || toType.IsKnownType(KnownTypeCode.FormattableString))
+					return Conversion.ImplicitInterpolatedStringConversion;
+			}
 			if (resolveResult.Type.Kind == TypeKind.Dynamic)
 				return Conversion.ImplicitDynamicConversion;
 			c = AnonymousFunctionConversion(resolveResult, toType);
@@ -649,9 +653,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				|| kind == TypeKind.Delegate || kind == TypeKind.Anonymous;
 		}
 		#endregion
-		
+
 		#region Boxing Conversions
-		public bool IsBoxingConversion(IType fromType, IType toType)
+		bool IsBoxingConversion(IType fromType, IType toType)
 		{
 			// C# 4.0 spec: §6.1.7
 			fromType = NullableType.GetUnderlyingType(fromType);
@@ -660,7 +664,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			else
 				return false;
 		}
-		
+
+		/// <summary>
+		/// Gets whether the conversion from fromType to toType is a boxing conversion,
+		/// or an implicit conversion involving a type parameter that might be
+		/// a boxing conversion when instantiated with a value type.
+		/// </summary>
+		public bool IsBoxingConversionOrInvolvingTypeParameter(IType fromType, IType toType)
+		{
+			return IsBoxingConversion(fromType, toType)
+				|| ImplicitTypeParameterConversion(fromType, toType);
+		}
+
 		bool UnboxingConversion(IType fromType, IType toType)
 		{
 			// C# 4.0 spec: §6.2.5
@@ -930,7 +945,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		List<OperatorInfo> GetApplicableConversionOperators(ResolveResult fromResult, IType fromType, IType toType, bool isExplicit)
 		{
 			// Find the candidate operators:
-			Predicate<IUnresolvedMethod> opFilter;
+			Predicate<IMethod> opFilter;
 			if (isExplicit)
 				opFilter = m => m.IsStatic && m.IsOperator && (m.Name == "op_Explicit" || m.Name == "op_Implicit") && m.Parameters.Count == 1;
 			else

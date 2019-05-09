@@ -18,6 +18,8 @@
 
 using System;
 using System.Linq;
+using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
@@ -30,7 +32,7 @@ namespace ICSharpCode.Decompiler.Documentation
 	/// The type parameter count only applies to the innermost type, all outer types must be non-generic.
 	/// </summary>
 	[Serializable]
-	class GetPotentiallyNestedClassTypeReference : ITypeReference
+	public class GetPotentiallyNestedClassTypeReference : ITypeReference
 	{
 		readonly string typeName;
 		readonly int typeParameterCount;
@@ -44,7 +46,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		public IType Resolve(ITypeResolveContext context)
 		{
 			string[] parts = typeName.Split('.');
-			var assemblies = new [] { context.CurrentAssembly }.Concat(context.Compilation.Assemblies);
+			var assemblies = new [] { context.CurrentModule }.Concat(context.Compilation.Modules);
 			for (int i = parts.Length - 1; i >= 0; i--) {
 				string ns = string.Join(".", parts, 0, i);
 				string name = parts[i];
@@ -66,6 +68,50 @@ namespace ICSharpCode.Decompiler.Documentation
 				return new UnknownType("", typeName, typeParameterCount);
 			// give back a guessed namespace/type name
 			return  new UnknownType(typeName.Substring(0, idx), typeName.Substring(idx + 1), typeParameterCount);
+		}
+
+		/// <summary>
+		/// Resolves the type reference within the context of the given PE file.
+		/// </summary>
+		/// <returns>Either TypeDefinitionHandle, if the type is defined in the module or ExportedTypeHandle,
+		/// if the module contains a type forwarder. Returns a nil handle, if the type was not found.</returns>
+		public EntityHandle ResolveInPEFile(PEFile module)
+		{
+			string[] parts = typeName.Split('.');
+			for (int i = parts.Length - 1; i >= 0; i--) {
+				string ns = string.Join(".", parts, 0, i);
+				string name = parts[i];
+				int topLevelTPC = (i == parts.Length - 1 ? typeParameterCount : 0);
+				var topLevelName = new TopLevelTypeName(ns, name, topLevelTPC);
+				var typeHandle = module.GetTypeDefinition(topLevelName);
+
+				for (int j = i + 1; j < parts.Length && !typeHandle.IsNil; j++) {
+					int tpc = (j == parts.Length - 1 ? typeParameterCount : 0);
+					var typeDef = module.Metadata.GetTypeDefinition(typeHandle);
+					string lookupName = parts[j] + (tpc > 0 ? "`" + tpc : "");
+					typeHandle = typeDef.GetNestedTypes().FirstOrDefault(n => IsEqualShortName(n, module.Metadata, lookupName));
+				}
+
+				if (!typeHandle.IsNil)
+					return typeHandle;
+				FullTypeName typeName = topLevelName;
+				for (int j = i + 1; j < parts.Length; j++) {
+					int tpc = (j == parts.Length - 1 ? typeParameterCount : 0);
+					typeName = typeName.NestedType(parts[j], tpc);
+				}
+
+				var exportedType = module.GetTypeForwarder(typeName);
+				if (!exportedType.IsNil)
+					return exportedType;
+			}
+
+			return default;
+
+			bool IsEqualShortName(TypeDefinitionHandle h, MetadataReader metadata, string name)
+			{
+				var nestedType = metadata.GetTypeDefinition(h);
+				return metadata.StringComparer.Equals(nestedType.Name, name);
+			}
 		}
 	}
 }

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
@@ -40,11 +41,6 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Currently unused; we'll probably use the LdToken ILInstruction as annotation instead when LdToken support gets reimplemented.
 	/// </summary>
 	public class LdTokenAnnotation {}
-	
-	/// <summary>
-	/// Used by <see cref="Transforms.DeclareVariables"/> and <see cref="Transforms.DelegateConstruction"/>.
-	/// </summary>
-	sealed class CapturedVariableAnnotation {}
 	
 	public static class AnnotationExtensions
 	{
@@ -103,19 +99,25 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 		
 		/// <summary>
-		/// Retrieves the symbol associated with this AstNode, or null if no symbol is associated with the node.
+		/// Retrieves the <see cref="ISymbol"/> associated with this AstNode, or null if no symbol is associated with the node.
 		/// </summary>
 		public static ISymbol GetSymbol(this AstNode node)
 		{
 			var rr = node.Annotation<ResolveResult>();
 			return rr != null ? rr.GetSymbol() : null;
 		}
-		
+
+		/// <summary>
+		/// Retrieves the <see cref="ResolveResult"/> associated with this <see cref="AstNode"/>, or <see cref="ErrorResolveResult.UnknownError"/> if no resolve result is associated with the node.
+		/// </summary>
 		public static ResolveResult GetResolveResult(this AstNode node)
 		{
 			return node.Annotation<ResolveResult>() ?? ErrorResolveResult.UnknownError;
 		}
-		
+
+		/// <summary>
+		/// Retrieves the <see cref="ILVariable"/> associated with this <see cref="IdentifierExpression"/>, or <c>null</c> if no variable is associated with this identifier.
+		/// </summary>
 		public static ILVariable GetILVariable(this IdentifierExpression expr)
 		{
 			var rr = expr.Annotation<ResolveResult>() as ILVariableResolveResult;
@@ -124,7 +126,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			else
 				return null;
 		}
-		
+
+		/// <summary>
+		/// Retrieves the <see cref="ILVariable"/> associated with this <see cref="VariableInitializer"/>, or <c>null</c> if no variable is associated with this initializer.
+		/// </summary>
 		public static ILVariable GetILVariable(this VariableInitializer vi)
 		{
 			var rr = vi.Annotation<ResolveResult>() as ILVariableResolveResult;
@@ -134,6 +139,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				return null;
 		}
 
+		/// <summary>
+		/// Retrieves the <see cref="ILVariable"/> associated with this <see cref="ForeachStatement"/>, or <c>null</c> if no variable is associated with this foreach statement.
+		/// </summary>
 		public static ILVariable GetILVariable(this ForeachStatement loop)
 		{
 			var rr = loop.Annotation<ResolveResult>() as ILVariableResolveResult;
@@ -143,19 +151,50 @@ namespace ICSharpCode.Decompiler.CSharp
 				return null;
 		}
 
+		/// <summary>
+		/// Adds an <see cref="ILVariable"/> to this initializer.
+		/// </summary>
 		public static VariableInitializer WithILVariable(this VariableInitializer vi, ILVariable v)
 		{
 			vi.AddAnnotation(new ILVariableResolveResult(v, v.Type));
 			return vi;
 		}
 
+		/// <summary>
+		/// Adds an <see cref="ILVariable"/> to this foreach statement.
+		/// </summary>
 		public static ForeachStatement WithILVariable(this ForeachStatement loop, ILVariable v)
 		{
 			loop.AddAnnotation(new ILVariableResolveResult(v, v.Type));
 			return loop;
 		}
+
+		/// <summary>
+		/// Copies all annotations from <paramref name="other"/> to <paramref name="node"/>.
+		/// </summary>
+		public static T CopyAnnotationsFrom<T>(this T node, AstNode other) where T : AstNode
+		{
+			foreach (object annotation in other.Annotations) {
+				node.AddAnnotation(annotation);
+			}
+			return node;
+		}
+
+		/// <summary>
+		/// Copies all <see cref="ILInstruction"/> annotations from <paramref name="other"/> to <paramref name="node"/>.
+		/// </summary>
+		public static T CopyInstructionsFrom<T>(this T node, AstNode other) where T : AstNode
+		{
+			foreach (object annotation in other.Annotations.OfType<ILInstruction>()) {
+				node.AddAnnotation(annotation);
+			}
+			return node;
+		}
 	}
 	
+	/// <summary>
+	/// Represents a reference to a local variable.
+	/// </summary>
 	public class ILVariableResolveResult : ResolveResult
 	{
 		public readonly ILVariable Variable;
@@ -171,6 +210,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 	}
 
+	/// <summary>
+	/// Annotates a <see cref="ForeachStatement"/> with the instructions for the GetEnumerator, MoveNext and get_Current calls.
+	/// </summary>
 	public class ForeachAnnotation
 	{
 		public readonly ILInstruction GetEnumeratorCall;
@@ -182,6 +224,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			GetEnumeratorCall = getEnumeratorCall;
 			MoveNextCall = moveNextCall;
 			GetCurrentCall = getCurrentCall;
+		}
+	}
+
+	/// <summary>
+	/// Annotates the top-level block statement of a function
+	/// with the implicitly executed return/yield break.
+	/// </summary>
+	public class ImplicitReturnAnnotation
+	{
+		public readonly Leave Leave;
+
+		public ImplicitReturnAnnotation(Leave leave)
+		{
+			this.Leave = leave;
 		}
 	}
 }

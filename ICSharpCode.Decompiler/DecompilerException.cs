@@ -20,12 +20,12 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
 using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler
 {
@@ -34,18 +34,18 @@ namespace ICSharpCode.Decompiler
 	/// </summary>
 	public class DecompilerException : Exception, ISerializable
 	{
-		public AssemblyNameDefinition AssemblyName => DecompiledMethod.Module.Assembly.Name;
+		public string AssemblyName => Module.AssemblyName;
 
-		public string FileName => DecompiledMethod.Module.FileName;
+		public string FileName => Module.PEFile.FileName;
 
-		public FullTypeName DecompiledType => new FullTypeName(DecompiledMethod.DeclaringType.FullName);
+		public IEntity DecompiledEntity { get; }
+		public IModule Module { get; }
 
-		public MethodDefinition DecompiledMethod { get; }
-		
-		public DecompilerException(MethodDefinition decompiledMethod, Exception innerException) 
-			: base("Error decompiling " + decompiledMethod.FullName + Environment.NewLine, innerException)
+		public DecompilerException(MetadataModule module, IEntity decompiledEntity, Exception innerException, string message = null)
+			: base((message ?? "Error decompiling " + decompiledEntity?.FullName) + Environment.NewLine, innerException)
 		{
-			this.DecompiledMethod = decompiledMethod;
+			this.Module = module;
+			this.DecompiledEntity = decompiledEntity;
 		}
 
 		// This constructor is needed for serialization.

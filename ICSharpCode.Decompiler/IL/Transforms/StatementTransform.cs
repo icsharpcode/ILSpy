@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					transform.Run(block, pos, ctx);
 #if DEBUG
 					block.Instructions[pos].CheckInvariant(ILPhase.Normal);
-					for (int i = 0; i < pos; ++i) {
+					for (int i = Math.Max(0, pos - 100); i < pos; ++i) {
 						if (block.Instructions[i].IsDirty) {
 							Debug.Fail($"{transform.GetType().Name} modified an instruction before pos");
 						}

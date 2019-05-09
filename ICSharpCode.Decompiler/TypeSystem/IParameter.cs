@@ -16,56 +16,17 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
-	public interface IUnresolvedParameter
-	{
-		/// <summary>
-		/// Gets the name of the variable.
-		/// </summary>
-		string Name { get; }
-		
-		/// <summary>
-		/// Gets the type of the variable.
-		/// </summary>
-		ITypeReference Type { get; }
-
-		/// <summary>
-		/// Gets the list of attributes.
-		/// </summary>
-		IList<IUnresolvedAttribute> Attributes { get; }
-		
-		/// <summary>
-		/// Gets whether this parameter is a C# 'ref' parameter.
-		/// </summary>
-		bool IsRef { get; }
-		
-		/// <summary>
-		/// Gets whether this parameter is a C# 'out' parameter.
-		/// </summary>
-		bool IsOut { get; }
-		
-		/// <summary>
-		/// Gets whether this parameter is a C# 'params' parameter.
-		/// </summary>
-		bool IsParams { get; }
-		
-		/// <summary>
-		/// Gets whether this parameter is optional.
-		/// </summary>
-		bool IsOptional { get; }
-		
-		IParameter CreateResolvedParameter(ITypeResolveContext context);
-	}
-	
 	public interface IParameter : IVariable
 	{
 		/// <summary>
-		/// Gets the list of attributes.
+		/// Gets the attributes on this parameter.
 		/// </summary>
-		IReadOnlyList<IAttribute> Attributes { get; }
+		IEnumerable<IAttribute> GetAttributes();
 		
 		/// <summary>
 		/// Gets whether this parameter is a C# 'ref' parameter.
@@ -76,7 +37,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets whether this parameter is a C# 'out' parameter.
 		/// </summary>
 		bool IsOut { get; }
-		
+
+		/// <summary>
+		/// Gets whether this parameter is a C# 'in' parameter.
+		/// </summary>
+		bool IsIn { get; }
+
 		/// <summary>
 		/// Gets whether this parameter is a C# 'params' parameter.
 		/// </summary>
@@ -87,6 +53,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The default value is given by the <see cref="IVariable.ConstantValue"/> property.
 		/// </summary>
 		bool IsOptional { get; }
+		
+		/// <summary>
+		/// Gets whether this parameter has a constant value when presented in method signature.
+		/// </summary>
+		/// <remarks>
+		/// This can only be <c>true</c> if the parameter is optional, and it's true for most 
+		/// optional parameters. However it is possible to compile a parameter without a default value,
+		/// and some parameters handle their default values in an special way.
+		/// 
+		/// For example, <see cref="DecimalConstantAttribute"/> does not use normal constants,
+		/// so when <see cref="DecompilerSettings.DecimalConstants" /> is <c>false</c>
+		/// we expose <c>DecimalConstantAttribute</c> directly instead of a constant value.
+		/// 
+		/// On the call sites, though, we can still use the value inferred from the attribute.
+		/// </remarks>
+		bool HasConstantValueInSignature { get; }
 		
 		/// <summary>
 		/// Gets the owner of this parameter.

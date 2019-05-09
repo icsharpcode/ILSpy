@@ -22,9 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
 using ICSharpCode.Decompiler.Semantics;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
@@ -123,7 +121,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			return TransformDestructor(methodDeclaration) ?? base.VisitMethodDeclaration(methodDeclaration);
 		}
-		
+
+		public override AstNode VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration)
+		{
+			return TransformDestructorBody(destructorDeclaration) ?? base.VisitDestructorDeclaration(destructorDeclaration);
+		}
+
 		public override AstNode VisitTryCatchStatement(TryCatchStatement tryCatchStatement)
 		{
 			return TransformTryCatchFinally(tryCatchStatement) ?? base.VisitTryCatchStatement(tryCatchStatement);
@@ -248,6 +251,53 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
+		bool VariableCanBeUsedAsForeachLocal(IL.ILVariable itemVar, Statement loop)
+		{
+			if (itemVar == null || !(itemVar.Kind == IL.VariableKind.Local || itemVar.Kind == IL.VariableKind.StackSlot)) {
+				// only locals/temporaries can be converted into foreach loop variable
+				return false;
+			}
+
+			var blockContainer = loop.Annotation<IL.BlockContainer>();
+
+			if (!itemVar.IsSingleDefinition) {
+				// foreach variable cannot be assigned to.
+				// As a special case, we accept taking the address for a method call,
+				// but only if the call is the only use, so that any mutation by the call
+				// cannot be observed.
+				if (!AddressUsedForSingleCall(itemVar, blockContainer)) {
+					return false;
+				}
+			}
+
+			if (itemVar.CaptureScope != null && itemVar.CaptureScope != blockContainer) {
+				// captured variables cannot be declared in the loop unless the loop is their capture scope
+				return false;
+			}
+
+			AstNode declPoint = declareVariables.GetDeclarationPoint(itemVar);
+			return declPoint.Ancestors.Contains(loop) && !declareVariables.WasMerged(itemVar);
+		}
+
+		static bool AddressUsedForSingleCall(IL.ILVariable v, IL.BlockContainer loop)
+		{
+			if (v.StoreCount == 1 && v.AddressCount == 1 && v.LoadCount == 0 && v.Type.IsReferenceType == false) {
+				if (v.AddressInstructions[0].Parent is IL.Call call
+					&& v.AddressInstructions[0].ChildIndex == 0
+					&& !call.Method.IsStatic) {
+					// used as this pointer for a method call
+					// this is OK iff the call is not within a nested loop
+					for (var node = call.Parent; node != null; node = node.Parent) {
+						if (node == loop)
+							return true;
+						else if (node is IL.BlockContainer)
+							break;
+					}
+				}
+			}
+			return false;
+		}
+
 		Statement TransformForeachOnArray(ForStatement forStatement)
 		{
 			if (!context.Settings.ForEachStatement) return null;
@@ -259,7 +309,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var loopContainer = forStatement.Annotation<IL.BlockContainer>();
 			if (itemVariable == null || indexVariable == null || arrayVariable == null)
 				return null;
-			if (!itemVariable.IsSingleDefinition || (itemVariable.CaptureScope != null && itemVariable.CaptureScope != loopContainer))
+			if (!VariableCanBeUsedAsForeachLocal(itemVariable, forStatement))
 				return null;
 			if (indexVariable.StoreCount != 2 || indexVariable.LoadCount != 3 || indexVariable.AddressCount != 0)
 				return null;
@@ -486,42 +536,39 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		PropertyDeclaration TransformAutomaticProperties(PropertyDeclaration property)
+		PropertyDeclaration TransformAutomaticProperties(PropertyDeclaration propertyDeclaration)
 		{
-			PropertyDefinition cecilProperty = context.TypeSystem.GetCecil(property.GetSymbol() as IProperty) as PropertyDefinition;
-			if (cecilProperty == null || cecilProperty.GetMethod == null)
+			IProperty property = propertyDeclaration.GetSymbol() as IProperty;
+			if (!property.CanGet || (!property.Getter.IsCompilerGenerated() && (property.Setter?.IsCompilerGenerated() == false)))
 				return null;
-			if (!cecilProperty.GetMethod.IsCompilerGenerated() && (cecilProperty.SetMethod?.IsCompilerGenerated() == false))
-				return null;
-			IField fieldInfo = null;
-			Match m = automaticPropertyPattern.Match(property);
+			IField field = null;
+			Match m = automaticPropertyPattern.Match(propertyDeclaration);
 			if (m.Success) {
-				fieldInfo = m.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
+				field = m.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
 			} else {
-				Match m2 = automaticReadonlyPropertyPattern.Match(property);
+				Match m2 = automaticReadonlyPropertyPattern.Match(propertyDeclaration);
 				if (m2.Success) {
-					fieldInfo = m2.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
+					field = m2.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
 				}
 			}
-			if (fieldInfo == null)
+			if (field == null)
 				return null;
-			FieldDefinition field = context.TypeSystem.GetCecil(fieldInfo) as FieldDefinition;
-			if (field.IsCompilerGenerated() && field.DeclaringType == cecilProperty.DeclaringType) {
-				RemoveCompilerGeneratedAttribute(property.Getter.Attributes);
-				RemoveCompilerGeneratedAttribute(property.Setter.Attributes);
-				property.Getter.Body = null;
-				property.Setter.Body = null;
+			if (field.IsCompilerGenerated() && field.DeclaringTypeDefinition == property.DeclaringTypeDefinition) {
+				RemoveCompilerGeneratedAttribute(propertyDeclaration.Getter.Attributes);
+				RemoveCompilerGeneratedAttribute(propertyDeclaration.Setter.Attributes);
+				propertyDeclaration.Getter.Body = null;
+				propertyDeclaration.Setter.Body = null;
 
 				// Add C# 7.3 attributes on backing field:
-				var attributes = fieldInfo.Attributes
-					.Where(a => !attributeTypesToRemoveFromAutoProperties.Any(t => t == a.AttributeType.FullName))
+				var attributes = field.GetAttributes()
+					.Where(a => !attributeTypesToRemoveFromAutoProperties.Contains(a.AttributeType.FullName))
 					.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
 				if (attributes.Length > 0) {
 					var section = new AttributeSection {
 						AttributeTarget = "field"
 					};
 					section.Attributes.AddRange(attributes);
-					property.Attributes.Add(section);
+					propertyDeclaration.Attributes.Add(section);
 				}
 			}
 			// Since the property instance is not changed, we can continue in the visitor as usual, so return null
@@ -565,6 +612,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitIdentifier(identifier);
 		}
 
+		internal static bool IsBackingFieldOfAutomaticProperty(IField field, out IProperty property)
+		{
+			property = null;
+			if (!(field.Name.StartsWith("<") && field.Name.EndsWith(">k__BackingField")))
+				return false;
+			if (!field.IsCompilerGenerated())
+				return false;
+			var propertyName = field.Name.Substring(1, field.Name.Length - 1 - ">k__BackingField".Length);
+			property = field.DeclaringTypeDefinition
+				.GetProperties(p => p.Name == propertyName, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
+			return property != null;
+		}
+
 		Identifier ReplaceBackingFieldUsage(Identifier identifier)
 		{
 			if (identifier.Name.StartsWith("<") && identifier.Name.EndsWith(">k__BackingField")) {
@@ -601,16 +661,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		#region Automatic Events
+		static readonly Expression fieldReferencePattern = new Choice {
+			new IdentifierExpression(Pattern.AnyString),
+			new MemberReferenceExpression {
+				Target = new Choice { new ThisReferenceExpression(), new TypeReferenceExpression { Type = new AnyNode() } },
+				MemberName = Pattern.AnyString
+			}
+		};
+
 		static readonly Accessor automaticEventPatternV2 = new Accessor {
 			Attributes = { new Repeat(new AnyNode()) },
 			Body = new BlockStatement {
 				new AssignmentExpression {
-					Left = new NamedNode(
-						"field",
-						new MemberReferenceExpression {
-							Target = new Choice { new ThisReferenceExpression(), new TypeReferenceExpression { Type = new AnyNode() } },
-							MemberName = Pattern.AnyString
-						}),
+					Left = new NamedNode("field", fieldReferencePattern),
 					Operator = AssignmentOperatorType.Assign,
 					Right = new CastExpression(
 						new AnyNode("type"),
@@ -626,12 +689,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				new AssignmentExpression {
 					Left = new NamedNode("var1", new IdentifierExpression(Pattern.AnyString)),
 					Operator = AssignmentOperatorType.Assign,
-					Right = new NamedNode(
-						"field",
-						new MemberReferenceExpression {
-							Target = new Choice { new ThisReferenceExpression(), new TypeReferenceExpression { Type = new AnyNode() } },
-							MemberName = Pattern.AnyString
-						})
+					Right = new NamedNode("field", fieldReferencePattern)
 				},
 				new DoWhileStatement {
 					EmbeddedStatement = new BlockStatement {
@@ -704,8 +762,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!m.Success)
 				return false;
-			if (m.Get<MemberReferenceExpression>("field").Single().MemberName != ev.Name)
-				return false; // field name must match event name
+			Expression fieldExpression = m.Get<Expression>("field").Single();
+			// field name must match event name
+			switch (fieldExpression) {
+				case IdentifierExpression identifier:
+					if (identifier.Identifier != ev.Name)
+						return false;
+					break;
+				case MemberReferenceExpression memberRef:
+					if (memberRef.MemberName != ev.Name)
+						return false;
+					break;
+				default:
+					return false;
+			}
 			if (!ev.ReturnType.IsMatch(m.Get("type").Single()))
 				return false; // variable types must match event type
 			var combineMethod = m.Get<AstNode>("delegateCombine").Single().Parent.GetSymbol() as IMethod;
@@ -725,37 +795,34 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			"System.Diagnostics.DebuggerBrowsableAttribute"
 		};
 
-		bool CheckAutomaticEventV4(CustomEventDeclaration ev, out Match addMatch, out Match removeMatch)
+		bool CheckAutomaticEventV4(CustomEventDeclaration ev)
 		{
-			addMatch = removeMatch = default(Match);
-			addMatch = automaticEventPatternV4.Match(ev.AddAccessor);
+			Match addMatch = automaticEventPatternV4.Match(ev.AddAccessor);
 			if (!CheckAutomaticEventMatch(addMatch, ev, true))
 				return false;
-			removeMatch = automaticEventPatternV4.Match(ev.RemoveAccessor);
+			Match removeMatch = automaticEventPatternV4.Match(ev.RemoveAccessor);
 			if (!CheckAutomaticEventMatch(removeMatch, ev, false))
 				return false;
 			return true;
 		}
 
-		bool CheckAutomaticEventV2(CustomEventDeclaration ev, out Match addMatch, out Match removeMatch)
+		bool CheckAutomaticEventV2(CustomEventDeclaration ev)
 		{
-			addMatch = removeMatch = default(Match);
-			addMatch = automaticEventPatternV2.Match(ev.AddAccessor);
+			Match addMatch = automaticEventPatternV2.Match(ev.AddAccessor);
 			if (!CheckAutomaticEventMatch(addMatch, ev, true))
 				return false;
-			removeMatch = automaticEventPatternV2.Match(ev.RemoveAccessor);
+			Match removeMatch = automaticEventPatternV2.Match(ev.RemoveAccessor);
 			if (!CheckAutomaticEventMatch(removeMatch, ev, false))
 				return false;
 			return true;
 		}
 
-		bool CheckAutomaticEventV4MCS(CustomEventDeclaration ev, out Match addMatch, out Match removeMatch)
+		bool CheckAutomaticEventV4MCS(CustomEventDeclaration ev)
 		{
-			addMatch = removeMatch = default(Match);
-			addMatch = automaticEventPatternV4MCS.Match(ev.AddAccessor);
+			Match addMatch = automaticEventPatternV4MCS.Match(ev.AddAccessor);
 			if (!CheckAutomaticEventMatch(addMatch, ev, true))
 				return false;
-			removeMatch = automaticEventPatternV4MCS.Match(ev.RemoveAccessor);
+			Match removeMatch = automaticEventPatternV4MCS.Match(ev.RemoveAccessor);
 			if (!CheckAutomaticEventMatch(removeMatch, ev, false))
 				return false;
 			return true;
@@ -763,9 +830,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		EventDeclaration TransformAutomaticEvents(CustomEventDeclaration ev)
 		{
-			Match m1, m2;
-			if (!CheckAutomaticEventV4(ev, out m1, out m2) && !CheckAutomaticEventV2(ev, out m1, out m2) && !CheckAutomaticEventV4MCS(ev, out m1, out m2))
+			if (!ev.PrivateImplementationType.IsNull)
 				return null;
+			if (!ev.Modifiers.HasFlag(Modifiers.Abstract)) {
+				if (!CheckAutomaticEventV4(ev) && !CheckAutomaticEventV2(ev) && !CheckAutomaticEventV4MCS(ev))
+					return null;
+			}
 			RemoveCompilerGeneratedAttribute(ev.AddAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);
 			EventDeclaration ed = new EventDeclaration();
 			ev.Attributes.MoveTo(ed.Attributes);
@@ -783,8 +853,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				IField field = eventDef.DeclaringType.GetFields(f => f.Name == ev.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
 				if (field != null) {
 					ed.AddAnnotation(field);
-					var attributes = field.Attributes
-							.Where(a => !attributeTypesToRemoveFromAutoEvents.Any(t => t == a.AttributeType.FullName))
+					var attributes = field.GetAttributes()
+							.Where(a => !attributeTypesToRemoveFromAutoEvents.Contains(a.AttributeType.FullName))
 							.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
 					if (attributes.Length > 0) {
 						var section = new AttributeSection {
@@ -800,23 +870,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return ed;
 		}
 		#endregion
-		
+
 		#region Destructor
+		static readonly BlockStatement destructorBodyPattern = new BlockStatement {
+			new TryCatchStatement {
+				TryBlock = new AnyNode("body"),
+				FinallyBlock = new BlockStatement {
+					new InvocationExpression(new MemberReferenceExpression(new BaseReferenceExpression(), "Finalize"))
+				}
+			}
+		};
+
 		static readonly MethodDeclaration destructorPattern = new MethodDeclaration {
 			Attributes = { new Repeat(new AnyNode()) },
 			Modifiers = Modifiers.Any,
 			ReturnType = new PrimitiveType("void"),
 			Name = "Finalize",
-			Body = new BlockStatement {
-				new TryCatchStatement {
-					TryBlock = new AnyNode("body"),
-					FinallyBlock = new BlockStatement {
-						new InvocationExpression(new MemberReferenceExpression(new BaseReferenceExpression(), "Finalize"))
-					}
-				}
-			}
+			Body = destructorBodyPattern
 		};
-		
+
 		DestructorDeclaration TransformDestructor(MethodDeclaration methodDef)
 		{
 			Match m = destructorPattern.Match(methodDef);
@@ -832,8 +904,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			return null;
 		}
+
+		DestructorDeclaration TransformDestructorBody(DestructorDeclaration dtorDef)
+		{
+			Match m = destructorBodyPattern.Match(dtorDef.Body);
+			if (m.Success) {
+				dtorDef.Body = m.Get<BlockStatement>("body").Single().Detach();
+				return dtorDef;
+			}
+			return null;
+		}
 		#endregion
-		
+
 		#region Try-Catch-Finally
 		static readonly TryCatchStatement tryCatchFinallyPattern = new TryCatchStatement {
 			TryBlock = new BlockStatement {

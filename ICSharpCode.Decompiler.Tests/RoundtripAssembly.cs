@@ -20,12 +20,13 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 using System.Threading;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
 using Microsoft.Win32;
-using Mono.Cecil;
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
@@ -33,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class RoundtripAssembly
 	{
-		public static readonly string TestDir = Path.GetFullPath(Path.Combine(DecompilerTestBase.TestCasePath, "../../ILSpy-tests"));
+		public static readonly string TestDir = Path.GetFullPath(Path.Combine(Tester.TestCasePath, "../../ILSpy-tests"));
 		static readonly string nunit = Path.Combine(TestDir, "nunit", "nunit3-console.exe");
 		
 		[Test]
@@ -70,7 +71,7 @@ namespace ICSharpCode.Decompiler.Tests
 			try {
 				RunWithTest("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll", "ICSharpCode.Decompiler.Tests.exe");
 			} catch (CompilationFailedException) {
-				Assert.Ignore("C# 7 tuples not yet supported.");
+				Assert.Ignore("C# 7 local functions not yet supported.");
 			}
 		}
 
@@ -142,19 +143,22 @@ namespace ICSharpCode.Decompiler.Tests
 				if (relFile.Equals(fileToRoundtrip, StringComparison.OrdinalIgnoreCase)) {
 					Console.WriteLine($"Decompiling {fileToRoundtrip}...");
 					Stopwatch w = Stopwatch.StartNew();
-					DefaultAssemblyResolver resolver = new DefaultAssemblyResolver();
-					resolver.AddSearchDirectory(inputDir);
-					resolver.RemoveSearchDirectory(".");
-					var module = ModuleDefinition.ReadModule(file, new ReaderParameters {
-						AssemblyResolver = resolver,
-						InMemory  = true
-					});
-					var decompiler = new TestProjectDecompiler(inputDir);
-					// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
-					decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
-					decompiler.DecompileProject(module, decompiledDir);
-					Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
-					projectFile = Path.Combine(decompiledDir, module.Assembly.Name.Name + ".csproj");
+					using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read)) {
+						PEFile module = new PEFile(file, fileStream, PEStreamOptions.PrefetchEntireImage);
+						var resolver = new UniversalAssemblyResolver(file, false, module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
+						resolver.AddSearchDirectory(inputDir);
+						resolver.RemoveSearchDirectory(".");
+						var decompiler = new TestProjectDecompiler(inputDir);
+						decompiler.AssemblyResolver = resolver;
+						// Let's limit the roundtrip tests to C# 7.3 for now; because 8.0 is still in preview
+						// and the generated project doesn't build as-is.
+						decompiler.Settings = new DecompilerSettings(LanguageVersion.CSharp7_3);
+						// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
+						decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
+						decompiler.DecompileProject(module, decompiledDir);
+						Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
+						projectFile = Path.Combine(decompiledDir, module.Name + ".csproj");
+					}
 				} else {
 					File.Copy(file, Path.Combine(outputDir, relFile));
 				}
@@ -263,11 +267,11 @@ namespace ICSharpCode.Decompiler.Tests
 				localAssemblies = new DirectoryInfo(baseDir).EnumerateFiles("*.dll").Select(f => f.FullName).ToArray();
 			}
 
-			protected override bool IsGacAssembly(AssemblyNameReference r, AssemblyDefinition asm)
+			protected override bool IsGacAssembly(IAssemblyReference r, PEFile asm)
 			{
 				if (asm == null)
 					return false;
-				return !localAssemblies.Contains(asm.MainModule.FileName);
+				return !localAssemblies.Contains(asm.FileName);
 			}
 		}
 

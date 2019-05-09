@@ -15,13 +15,26 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ReplaceClassTypeParametersWithDummy = false,
 			ReplaceMethodTypeParametersWithDummy = false,
 			DynamicAndObject = true,
-			TupleToUnderlyingType = true
+			TupleToUnderlyingType = true,
+			RemoveModOpt = true,
+			RemoveModReq = true,
+			RemoveNullability = true,
 		};
 
+		public bool EquivalentTypes(IType a, IType b)
+		{
+			a = a.AcceptVisitor(this);
+			b = b.AcceptVisitor(this);
+			return a.Equals(b);
+		}
+
+		public bool RemoveModOpt = true;
+		public bool RemoveModReq = true;
 		public bool ReplaceClassTypeParametersWithDummy = true;
 		public bool ReplaceMethodTypeParametersWithDummy = true;
 		public bool DynamicAndObject = true;
 		public bool TupleToUnderlyingType = true;
+		public bool RemoveNullability = true;
 
 		public override IType VisitTypeParameter(ITypeParameter type)
 		{
@@ -39,7 +52,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (DynamicAndObject && type.KnownTypeCode == KnownTypeCode.Object) {
 				// Instead of normalizing dynamic->object,
 				// we do this the opposite direction, so that we don't need a compilation to find the object type.
-				return SpecialType.Dynamic;
+				if (RemoveNullability)
+					return SpecialType.Dynamic;
+				else
+					return SpecialType.Dynamic.ChangeNullability(type.Nullability);
 			}
 			return base.VisitTypeDefinition(type);
 		}
@@ -50,6 +66,40 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return type.UnderlyingType.AcceptVisitor(this);
 			} else {
 				return base.VisitTupleType(type);
+			}
+		}
+
+		public override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
+		{
+			if (RemoveNullability)
+				return base.VisitNullabilityAnnotatedType(type).ChangeNullability(Nullability.Oblivious);
+			else
+				return base.VisitNullabilityAnnotatedType(type);
+		}
+
+		public override IType VisitArrayType(ArrayType type)
+		{
+			if (RemoveNullability)
+				return base.VisitArrayType(type).ChangeNullability(Nullability.Oblivious);
+			else
+				return base.VisitArrayType(type);
+		}
+
+		public override IType VisitModOpt(ModifiedType type)
+		{
+			if (RemoveModOpt) {
+				return type.ElementType.AcceptVisitor(this);
+			} else {
+				return base.VisitModOpt(type);
+			}
+		}
+
+		public override IType VisitModReq(ModifiedType type)
+		{
+			if (RemoveModReq) {
+				return type.ElementType.AcceptVisitor(this);
+			} else {
+				return base.VisitModReq(type);
 			}
 		}
 	}

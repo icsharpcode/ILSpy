@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -38,41 +40,40 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var orphanedVariableInits = new List<ILInstruction>();
 			var targetsToReplace = new List<IInstructionWithVariableOperand>();
 			var translatedDisplayClasses = new HashSet<ITypeDefinition>();
-			foreach (var block in function.Descendants.OfType<Block>()) {
-				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-					context.CancellationToken.ThrowIfCancellationRequested();
-					foreach (var call in block.Instructions[i].Descendants.OfType<NewObj>()) {
-						ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
-						if (f != null) {
-							call.ReplaceWith(f);
-							if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
-								targetsToReplace.Add((IInstructionWithVariableOperand)target);
+			var cancellationToken = context.CancellationToken;
+			foreach (var inst in function.Descendants) {
+				cancellationToken.ThrowIfCancellationRequested();
+				if (inst is NewObj call) {
+					context.StepStartGroup($"TransformDelegateConstruction {call.StartILOffset}", call);
+					ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
+					if (f != null && target is IInstructionWithVariableOperand instWithVar) {
+						if (instWithVar.Variable.Kind == VariableKind.Local) {
+							instWithVar.Variable.Kind = VariableKind.DisplayClassLocal;
 						}
+						targetsToReplace.Add(instWithVar);
 					}
-					if (block.Instructions[i].MatchStLoc(out ILVariable targetVariable, out ILInstruction value)) {
-						var newObj = value as NewObj;
-						// TODO : it is probably not a good idea to remove *all* display-classes
-						// is there a way to minimize the false-positives?
-						if (newObj != null && IsInSimpleDisplayClass(newObj.Method)) {
-							targetVariable.CaptureScope = FindBlockContainer(block);
-							targetsToReplace.Add((IInstructionWithVariableOperand)block.Instructions[i]);
-							translatedDisplayClasses.Add(newObj.Method.DeclaringTypeDefinition);
-						}
+					context.StepEndGroup();
+				}
+				if (inst.MatchStLoc(out ILVariable targetVariable, out ILInstruction value)) {
+					var newObj = value as NewObj;
+					// TODO : it is probably not a good idea to remove *all* display-classes
+					// is there a way to minimize the false-positives?
+					if (newObj != null && IsInSimpleDisplayClass(newObj.Method)) {
+						targetVariable.CaptureScope = BlockContainer.FindClosestContainer(inst);
+						targetsToReplace.Add((IInstructionWithVariableOperand)inst);
+						translatedDisplayClasses.Add(newObj.Method.DeclaringTypeDefinition);
 					}
 				}
 			}
-			foreach (var target in targetsToReplace.OrderByDescending(t => ((ILInstruction)t).ILRange.Start)) {
+			foreach (var target in targetsToReplace.OrderByDescending(t => ((ILInstruction)t).StartILOffset)) {
+				context.Step($"TransformDisplayClassUsages {target.Variable}", (ILInstruction)target);
 				function.AcceptVisitor(new TransformDisplayClassUsages(function, target, target.Variable.CaptureScope, orphanedVariableInits, translatedDisplayClasses));
 			}
+			context.Step($"Remove orphanedVariableInits", function);
 			foreach (var store in orphanedVariableInits) {
 				if (store.Parent is Block containingBlock)
 					containingBlock.Instructions.Remove(store);
 			}
-		}
-
-		private BlockContainer FindBlockContainer(Block block)
-		{
-			return BlockContainer.FindClosestContainer(block) ?? throw new NotSupportedException();
 		}
 
 		static bool IsInSimpleDisplayClass(IMethod method)
@@ -109,13 +110,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		static bool IsAnonymousMethod(ITypeDefinition decompiledTypeDefinition, IMethod method)
 		{
-			if (method == null || !(method.HasGeneratedName() || method.Name.Contains("$")))
+			if (method == null || !(method.HasGeneratedName() || method.Name.Contains("$") || ContainsAnonymousType(method)))
 				return false;
 			if (!(method.IsCompilerGeneratedOrIsInCompilerGeneratedClass() || IsPotentialClosure(decompiledTypeDefinition, method.DeclaringTypeDefinition)))
 				return false;
 			return true;
 		}
-		
+
+		static bool ContainsAnonymousType(IMethod method)
+		{
+			if (method.ReturnType.ContainsAnonymousType())
+				return true;
+			foreach (var p in method.Parameters) {
+				if (p.Type.ContainsAnonymousType())
+					return true;
+			}
+			return false;
+		}
+
 		static bool IsPotentialClosure(ITypeDefinition decompiledTypeDefinition, ITypeDefinition potentialDisplayClass)
 		{
 			if (potentialDisplayClass == null || !potentialDisplayClass.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
@@ -128,6 +140,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 		
+		internal static GenericContext? GenericContextFromTypeArguments(TypeParameterSubstitution subst)
+		{
+			var classTypeParameters = new List<ITypeParameter>();
+			var methodTypeParameters = new List<ITypeParameter>();
+			if (subst.ClassTypeArguments != null) {
+				foreach (var t in subst.ClassTypeArguments) {
+					if (t is ITypeParameter tp)
+						classTypeParameters.Add(tp);
+					else
+						return null;
+				}
+			}
+			if (subst.MethodTypeArguments != null) {
+				foreach (var t in subst.MethodTypeArguments) {
+					if (t is ITypeParameter tp)
+						methodTypeParameters.Add(tp);
+					else
+						return null;
+				}
+			}
+			return new GenericContext(classTypeParameters, methodTypeParameters);
+		}
+
 		ILFunction TransformDelegateConstruction(NewObj value, out ILInstruction target)
 		{
 			target = null;
@@ -136,35 +171,50 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var targetMethod = ((IInstructionWithMethodOperand)value.Arguments[1]).Method;
 			if (!IsAnonymousMethod(decompilationContext.CurrentTypeDefinition, targetMethod))
 				return null;
-			target = value.Arguments[0];
-			var methodDefinition = (Mono.Cecil.MethodDefinition)context.TypeSystem.GetCecil(targetMethod);
-			if (methodDefinition == null)
+			if (LocalFunctionDecompiler.IsLocalFunctionMethod(targetMethod.ParentModule.PEFile, (MethodDefinitionHandle)targetMethod.MetadataToken))
 				return null;
-			var localTypeSystem = context.TypeSystem.GetSpecializingTypeSystem(targetMethod.Substitution);
-			var ilReader = new ILReader(localTypeSystem);
-			ilReader.UseDebugSymbols = context.Settings.UseDebugSymbols;
-			var function = ilReader.ReadIL(methodDefinition.Body, context.CancellationToken);
+			target = value.Arguments[0];
+			if (targetMethod.MetadataToken.IsNil)
+				return null;
+			var methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
+			if (!methodDefinition.HasBody())
+				return null;
+			var genericContext = GenericContextFromTypeArguments(targetMethod.Substitution);
+			if (genericContext == null)
+				return null;
+			var ilReader = context.CreateILReader();
+			var body = context.PEFile.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
+			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, context.CancellationToken);
 			function.DelegateType = value.Method.DeclaringType;
 			function.CheckInvariant(ILPhase.Normal);
+			// Embed the lambda into the parent function's ILAst, so that "Show steps" can show
+			// how the lambda body is being transformed.
+			value.ReplaceWith(function);
 
 			var contextPrefix = targetMethod.Name;
 			foreach (ILVariable v in function.Variables.Where(v => v.Kind != VariableKind.Parameter)) {
 				v.Name = contextPrefix + v.Name;
 			}
 
-			var nestedContext = new ILTransformContext(function, localTypeSystem, context.Settings) {
-				CancellationToken = context.CancellationToken,
-				DecompileRun = context.DecompileRun
-			};
-			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)), nestedContext);
+			var nestedContext = new ILTransformContext(context, function);
+			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)).Concat(GetTransforms()), nestedContext);
+			nestedContext.Step("DelegateConstruction (ReplaceDelegateTargetVisitor)", function);
 			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
 			// handle nested lambdas
+			nestedContext.StepStartGroup("DelegateConstruction (nested lambdas)", function);
 			((IILTransform)new DelegateConstruction()).Run(function, nestedContext);
-			function.AddILRange(target.ILRange);
-			function.AddILRange(value.Arguments[1].ILRange);
+			nestedContext.StepEndGroup();
+			function.AddILRange(target);
+			function.AddILRange(value);
+			function.AddILRange(value.Arguments[1]);
 			return function;
 		}
-		
+
+		private IEnumerable<IILTransform> GetTransforms()
+		{
+			yield return new CombineExitsTransform();
+		}
+
 		/// <summary>
 		/// Replaces loads of 'this' with the target expression.
 		/// Async delegates use: ldobj(ldloca this).
@@ -249,6 +299,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			protected internal override void VisitStLoc(StLoc inst)
 			{
 				base.VisitStLoc(inst);
+				if (targetLoad is ILInstruction instruction && instruction.MatchLdThis())
+					return;
 				if (inst.Variable == targetLoad.Variable)
 					orphanedVariableInits.Add(inst);
 				if (MatchesTargetOrCopyLoad(inst.Value)) {
@@ -265,12 +317,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			protected internal override void VisitStObj(StObj inst)
 			{
 				base.VisitStObj(inst);
-				if (!inst.Target.MatchLdFlda(out ILInstruction target, out IField field) || !MatchesTargetOrCopyLoad(target))
+				if (!inst.Target.MatchLdFlda(out ILInstruction target, out IField field) || !MatchesTargetOrCopyLoad(target) || target.MatchLdThis())
 					return;
 				field = (IField)field.MemberDefinition;
 				ILInstruction value;
 				if (initValues.TryGetValue(field, out DisplayClassVariable info)) {
-					inst.ReplaceWith(new StLoc(info.variable, inst.Value));
+					inst.ReplaceWith(new StLoc(info.variable, inst.Value).WithILRange(inst));
 				} else {
 					if (inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter && currentFunction == v.Function) {
 						// special case for parameters: remove copies of parameter values.
@@ -281,7 +333,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return;
 						v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
 						v.CaptureScope = captureScope;
-						inst.ReplaceWith(new StLoc(v, inst.Value));
+						inst.ReplaceWith(new StLoc(v, inst.Value).WithILRange(inst));
 						value = new LdLoc(v);
 					}
 					initValues.Add(field, new DisplayClassVariable { value = value, variable = v });
@@ -295,12 +347,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				if (!initValues.TryGetValue((IField)field.MemberDefinition, out DisplayClassVariable info))
 					return;
-				inst.ReplaceWith(info.value.Clone());
+				var replacement = info.value.Clone();
+				replacement.SetILRange(inst);
+				inst.ReplaceWith(replacement);
 			}
 			
 			protected internal override void VisitLdFlda(LdFlda inst)
 			{
 				base.VisitLdFlda(inst);
+				if (inst.Target.MatchLdThis() && inst.Field.Name == "$this"
+					&& inst.Field.MemberDefinition.ReflectionName.Contains("c__Iterator")) {
+					var variable = currentFunction.Variables.First((f) => f.Index == -1);
+					inst.ReplaceWith(new LdLoca(variable).WithILRange(inst));
+				}
 				if (inst.Parent is LdObj || inst.Parent is StObj)
 					return;
 				if (!MatchesTargetOrCopyLoad(inst.Target))
@@ -311,13 +370,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return;
 					var v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
 					v.CaptureScope = captureScope;
-					inst.ReplaceWith(new LdLoca(v));
+					inst.ReplaceWith(new LdLoca(v).WithILRange(inst));
 					var value = new LdLoc(v);
 					initValues.Add(field, new DisplayClassVariable { value = value, variable = v });
 				} else if (info.value is LdLoc l) {
-					inst.ReplaceWith(new LdLoca(l.Variable));
+					inst.ReplaceWith(new LdLoca(l.Variable).WithILRange(inst));
 				} else {
-					throw new NotImplementedException();
+					Debug.Fail("LdFlda pattern not supported!");
 				}
 			}
 
@@ -325,8 +384,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				base.VisitNumericCompoundAssign(inst);
 				if (inst.Target.MatchLdLoc(out var v)) {
-					inst.ReplaceWith(new StLoc(v, new BinaryNumericInstruction(inst.Operator, inst.Target, inst.Value, inst.CheckForOverflow, inst.Sign)));
-		}
+					inst.ReplaceWith(new StLoc(v, new BinaryNumericInstruction(inst.Operator, inst.Target, inst.Value, inst.CheckForOverflow, inst.Sign).WithILRange(inst)));
+				}
 			}
 		}
 		#endregion

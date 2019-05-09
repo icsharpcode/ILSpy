@@ -5,11 +5,11 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
-using System.Resources;
 using System.Threading;
 using System.Xml.Linq;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Util;
 using NUnit.Framework;
 
 namespace ILSpy.BamlDecompiler.Tests
@@ -101,6 +101,12 @@ namespace ILSpy.BamlDecompiler.Tests
 			RunTest("cases/escapesequence");
 		}
 
+		[Test]
+		public void Issue1435()
+		{
+			RunTest("cases/issue1435");
+		}
+
 		#region RunTest
 		void RunTest(string name)
 		{
@@ -112,16 +118,18 @@ namespace ILSpy.BamlDecompiler.Tests
 
 		void RunTest(string name, string asmPath, string sourcePath)
 		{
-			var resolver = new DefaultAssemblyResolver();
-			resolver.RemoveSearchDirectory(".");
-			resolver.AddSearchDirectory(Path.GetDirectoryName(asmPath));
-			var assembly = AssemblyDefinition.ReadAssembly(asmPath, new ReaderParameters { AssemblyResolver = resolver, InMemory = true });
-			Resource res = assembly.MainModule.Resources.First();
-			Stream bamlStream = LoadBaml(res, name + ".baml");
-			Assert.IsNotNull(bamlStream);
-			XDocument document = BamlResourceEntryNode.LoadIntoDocument(resolver, assembly, bamlStream, CancellationToken.None);
+			using (var fileStream = new FileStream(asmPath, FileMode.Open, FileAccess.Read)) {
+				var module = new PEFile(asmPath, fileStream);
+				var resolver = new UniversalAssemblyResolver(asmPath, false, module.Reader.DetectTargetFrameworkId());
+				resolver.RemoveSearchDirectory(".");
+				resolver.AddSearchDirectory(Path.GetDirectoryName(asmPath));
+				var res = module.Resources.First();
+				Stream bamlStream = LoadBaml(res, name + ".baml");
+				Assert.IsNotNull(bamlStream);
+				XDocument document = BamlResourceEntryNode.LoadIntoDocument(module, resolver, bamlStream, CancellationToken.None);
 
-			XamlIsEqual(File.ReadAllText(sourcePath), document.ToString());
+				XamlIsEqual(File.ReadAllText(sourcePath), document.ToString());
+			}
 		}
 
 		void XamlIsEqual(string input1, string input2)
@@ -139,26 +147,24 @@ namespace ILSpy.BamlDecompiler.Tests
 
 		Stream LoadBaml(Resource res, string name)
 		{
-			EmbeddedResource er = res as EmbeddedResource;
-			if (er != null) {
-				Stream s = er.GetResourceStream();
-				s.Position = 0;
-				ResourceReader reader;
-				try {
-					reader = new ResourceReader(s);
-				} catch (ArgumentException) {
-					return null;
-				}
-				foreach (DictionaryEntry entry in reader.Cast<DictionaryEntry>().OrderBy(e => e.Key.ToString())) {
-					if (entry.Key.ToString() == name) {
-						if (entry.Value is Stream)
-							return (Stream)entry.Value;
-						if (entry.Value is byte[])
-							return new MemoryStream((byte[])entry.Value);
-					}
+			if (res.ResourceType != ResourceType.Embedded) return null;
+			Stream s = res.TryOpenStream();
+			if (s == null) return null;
+			s.Position = 0;
+			ResourcesFile resources;
+			try {
+				resources = new ResourcesFile(s);
+			} catch (ArgumentException) {
+				return null;
+			}
+			foreach (var entry in resources.OrderBy(e => e.Key)) {
+				if (entry.Key == name) {
+					if (entry.Value is Stream)
+						return (Stream)entry.Value;
+					if (entry.Value is byte[])
+						return new MemoryStream((byte[])entry.Value);
 				}
 			}
-
 			return null;
 		}
 		#endregion

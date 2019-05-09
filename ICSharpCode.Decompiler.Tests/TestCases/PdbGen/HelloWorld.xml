@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="ICSharpCode\Decompiler\Tests\TestCases\PdbGen\HelloWorld.cs" language="C#" checksumAlgorithm="SHA256"><![CDATA[using System;
+
+namespace ICSharpCode.Decompiler.Tests.TestCases.PdbGen
+{
+	public class HelloWorld
+	{
+		public static void Main(string[] args)
+		{
+			Console.ReadKey();
+			Console.WriteLine("Hello World!");
+			Console.ReadKey();
+		}
+	}
+}
+]]></file>
+  </files>
+  <methods>
+    <method containingType="ICSharpCode.Decompiler.Tests.TestCases.PdbGen.HelloWorld" name="Main" parameterNames="args" token="0x6000001">
+      <sequencePoints>
+        <entry offset="0x0" startLine="9" startColumn="4" endLine="9" endColumn="22" document="1" />
+        <entry offset="0x6" startLine="10" startColumn="4" endLine="10" endColumn="38" document="1" />
+        <entry offset="0x10" startLine="11" startColumn="4" endLine="11" endColumn="22" document="1" />
+        <entry offset="0x16" startLine="12" startColumn="3" endLine="12" endColumn="4" document="1" />
+      </sequencePoints>
+      <scope startOffset="0x0" endOffset="0x17" />
+    </method>
+  </methods>
+  <method-spans>
+    <method declaringType="ICSharpCode.Decompiler.Tests.TestCases.PdbGen.HelloWorld" methodName="Main" parameterNames="args" token="0x6000001">
+      <document startLine="9" endLine="12" />
+    </method>
+  </method-spans>
+</symbols>

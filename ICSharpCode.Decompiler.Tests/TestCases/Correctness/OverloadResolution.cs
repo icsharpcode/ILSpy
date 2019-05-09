@@ -31,6 +31,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			TestParamsMethod();
 			Generics();
 			ConstructorTest();
+			TestIndexer();
+			Issue1281();
 		}
 
 		#region ConstructorTest
@@ -84,6 +86,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void TestCall(int v, params AccessViolationException[] p2)
 		{
 			Console.WriteLine("TestCall with params: " + (p2 == null ? "null" : p2.Length.ToString()));
+		}
+
+		static void Issue1281()
+		{
+			var arg = new object[0];
+			TestCallIssue1281(arg);
+			TestCallIssue1281((object)arg);
+			TestCallIssue1281(new[] { arg });
+		}
+
+		static void TestCallIssue1281(params object[] args)
+		{
+			Console.Write("TestCallIssue1281: count = " + args.Length + ": ");
+			foreach (var arg in args) {
+				Console.Write(arg);
+				Console.Write(", ");
+			}
+			Console.WriteLine();
 		}
 		#endregion
 
@@ -182,5 +202,39 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("GenericsTest<" + typeof(T).Name + ">(object: " + x + ");");
 		}
 		#endregion
+
+		#region IndexerTests
+		static void TestIndexer()
+		{
+			var obj = new IndexerTests();
+			Console.WriteLine(obj[(object)5]);
+			obj[(object)5] = null;
+			Console.WriteLine(obj[5]);
+			obj[5] = null;
+		}
+		#endregion
+	}
+
+	class IndexerTests
+	{
+		public object this[object key] {
+			get {
+				Console.WriteLine("IndexerTests.get_Item(object key)");
+				return new object();
+			}
+			set {
+				Console.WriteLine("IndexerTests.set_Item(object key, object value)");
+			}
+		}
+
+		public object this[int key] {
+			get {
+				Console.WriteLine("IndexerTests.get_Item(int key)");
+				return new object();
+			}
+			set {
+				Console.WriteLine("IndexerTests.set_Item(int key, object value)");
+			}
+		}
 	}
 }

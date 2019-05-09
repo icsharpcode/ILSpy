@@ -61,20 +61,29 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					case UnaryOperatorType.PostDecrement:
 					case UnaryOperatorType.PostIncrement:
 					case UnaryOperatorType.NullConditional:
+					case UnaryOperatorType.SuppressNullableWarning:
 						return Primary;
 					case UnaryOperatorType.NullConditionalRewrap:
 						return NullableRewrap;
+					case UnaryOperatorType.IsTrue:
+						return Conditional;
 					default:
 						return Unary;
 				}
 			}
 			if (expr is CastExpression)
 				return Unary;
-			if (expr is PrimitiveExpression) {
-				var value = ((PrimitiveExpression)expr).Value;
-				if (value is int && (int)value < 0)
+			if (expr is PrimitiveExpression primitive) {
+				var value = primitive.Value;
+				if (value is int i && i < 0)
 					return Unary;
-				if (value is long && (long)value < 0)
+				if (value is long l && l < 0)
+					return Unary;
+				if (value is float f && f < 0)
+					return Unary;
+				if (value is double d && d < 0)
+					return Unary;
+				if (value is decimal de && de < 0)
 					return Unary;
 			}
 			BinaryOperatorExpression boe = expr as BinaryOperatorExpression;
@@ -116,7 +125,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			if (expr is IsExpression || expr is AsExpression)
 				return RelationalAndTypeTesting;
-			if (expr is ConditionalExpression)
+			if (expr is ConditionalExpression || expr is DirectionExpression)
 				return Conditional;
 			if (expr is AssignmentExpression || expr is LambdaExpression)
 				return Assignment;
@@ -264,12 +273,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				if (InsertParenthesesForReadability && precedence < Equality) {
 					// In readable mode, boost the priority of the left-hand side if the operator
 					// there isn't the same as the operator on this expression.
+					int boostTo = IsBitwise(binaryOperatorExpression.Operator) ? Unary : Equality;
 					if (GetBinaryOperatorType(binaryOperatorExpression.Left) == binaryOperatorExpression.Operator) {
 						ParenthesizeIfRequired(binaryOperatorExpression.Left, precedence);
 					} else {
-						ParenthesizeIfRequired(binaryOperatorExpression.Left, Equality);
+						ParenthesizeIfRequired(binaryOperatorExpression.Left, boostTo);
 					}
-					ParenthesizeIfRequired(binaryOperatorExpression.Right, Equality);
+					ParenthesizeIfRequired(binaryOperatorExpression.Right, boostTo);
 				} else {
 					// all other binary operators are left-associative
 					ParenthesizeIfRequired(binaryOperatorExpression.Left, precedence);
@@ -278,7 +288,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			base.VisitBinaryOperatorExpression(binaryOperatorExpression);
 		}
-		
+
+		static bool IsBitwise(BinaryOperatorType op)
+		{
+			return op == BinaryOperatorType.BitwiseAnd
+				|| op == BinaryOperatorType.BitwiseOr
+				|| op == BinaryOperatorType.ExclusiveOr;
+		}
+
 		BinaryOperatorType? GetBinaryOperatorType(Expression expr)
 		{
 			BinaryOperatorExpression boe = expr as BinaryOperatorExpression;
@@ -313,11 +330,16 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		// Conditional operator
 		public override void VisitConditionalExpression(ConditionalExpression conditionalExpression)
 		{
+			// Inside of string interpolation ?: always needs parentheses.
+			if (conditionalExpression.Parent is Interpolation) {
+				Parenthesize(conditionalExpression);
+			}
+
 			// Associativity here is a bit tricky:
 			// (a ? b : c ? d : e) == (a ? b : (c ? d : e))
 			// (a ? b ? c : d : e) == (a ? (b ? c : d) : e)
 			// Only ((a ? b : c) ? d : e) strictly needs the additional parentheses
-			if (InsertParenthesesForReadability) {
+			if (InsertParenthesesForReadability && !IsConditionalRefExpression(conditionalExpression)) {
 				// Precedence of ?: can be confusing; so always put parentheses in nice-looking mode.
 				ParenthesizeIfRequired(conditionalExpression.Condition, NullableRewrap);
 				ParenthesizeIfRequired(conditionalExpression.TrueExpression, NullableRewrap);
@@ -329,7 +351,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			base.VisitConditionalExpression(conditionalExpression);
 		}
-		
+
+		private bool IsConditionalRefExpression(ConditionalExpression conditionalExpression)
+		{
+			return conditionalExpression.TrueExpression is DirectionExpression
+				|| conditionalExpression.FalseExpression is DirectionExpression;
+		}
+
 		public override void VisitAssignmentExpression(AssignmentExpression assignmentExpression)
 		{
 			// assignment is right-associative

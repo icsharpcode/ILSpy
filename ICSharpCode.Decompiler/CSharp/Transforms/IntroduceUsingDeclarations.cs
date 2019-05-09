@@ -55,17 +55,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					for (int i = 1; i < parts.Length; i++) {
 						nsType = new MemberType { Target = nsType, MemberName = parts[i] };
 					}
-					if (context.Settings.FullyQualifyAmbiguousTypeNames) {
-						var reference = nsType.ToTypeReference(NameLookupMode.TypeInUsingDeclaration) as TypeOrNamespaceReference;
-						if (reference != null)
-							usingScope.Usings.Add(reference);
-					}
+					var reference = nsType.ToTypeReference(NameLookupMode.TypeInUsingDeclaration) as TypeOrNamespaceReference;
+					if (reference != null)
+						usingScope.Usings.Add(reference);
 					rootNode.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType }, SyntaxTree.MemberRole);
 				}
 			}
-
-			if (!context.Settings.FullyQualifyAmbiguousTypeNames)
-				return;
 
 			// verify that the SimpleTypes refer to the correct type (no ambiguities)
 			rootNode.AcceptVisitor(new FullyQualifyAmbiguousTypeNamesVisitor(context, usingScope));
@@ -80,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			
 			public FindRequiredImports(TransformContext context)
 			{
-				this.currentNamespace = context.DecompiledTypeDefinition?.Namespace ?? string.Empty;
+				this.currentNamespace = context.CurrentTypeDefinition?.Namespace ?? string.Empty;
 			}
 			
 			bool IsParentOfCurrentNamespace(string ns)
@@ -114,24 +109,46 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				base.VisitNamespaceDeclaration(namespaceDeclaration);
 				currentNamespace = oldNamespace;
-			}
+			}/*
+
+			public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
+			{
+				string oldNamespace = currentNamespace;
+				if (!(typeDeclaration.Parent is NamespaceDeclaration || typeDeclaration.Parent is TypeDeclaration)) {
+					var symbol = typeDeclaration.GetSymbol() as ITypeDefinition;
+					if (symbol != null) {
+						currentNamespace = symbol.Namespace;
+						DeclaredNamespaces.Add(currentNamespace);
+					}
+				}
+				base.VisitTypeDeclaration(typeDeclaration);
+				currentNamespace = oldNamespace;
+			}*/
 		}
 		
 		sealed class FullyQualifyAmbiguousTypeNamesVisitor : DepthFirstAstVisitor
 		{
 			Stack<CSharpTypeResolveContext> context;
 			TypeSystemAstBuilder astBuilder;
+			bool ignoreUsingScope;
 			
 			public FullyQualifyAmbiguousTypeNamesVisitor(TransformContext context, UsingScope usingScope)
 			{
-				this.context = new Stack<CSharpTypeResolveContext>();
-				if (!string.IsNullOrEmpty(context.DecompiledTypeDefinition?.Namespace)) {
-					foreach (string ns in context.DecompiledTypeDefinition.Namespace.Split('.')) {
-						usingScope = new UsingScope(usingScope, ns);
+				this.ignoreUsingScope = !context.Settings.UsingDeclarations;
+
+				CSharpTypeResolveContext currentContext;
+				if (ignoreUsingScope) {
+					currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule);
+				} else {
+					this.context = new Stack<CSharpTypeResolveContext>();
+					if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace)) {
+						foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.')) {
+							usingScope = new UsingScope(usingScope, ns);
+						}
 					}
+					currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.CurrentTypeDefinition);
+					this.context.Push(currentContext);
 				}
-				var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainAssembly, usingScope.Resolve(context.TypeSystem.Compilation), context.DecompiledTypeDefinition);
-				this.context.Push(currentContext);
 				this.astBuilder = CreateAstBuilder(currentContext);
 			}
 
@@ -145,12 +162,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			
 			public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
 			{
+				if (ignoreUsingScope) {
+					base.VisitNamespaceDeclaration(namespaceDeclaration);
+					return;
+				}
 				var previousContext = context.Peek();
 				var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
 				foreach (string ident in namespaceDeclaration.Identifiers) {
 					usingScope = new UsingScope(usingScope, ident);
 				}
-				var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly, usingScope.Resolve(previousContext.Compilation));
+				var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule, usingScope.Resolve(previousContext.Compilation));
 				context.Push(currentContext);
 				try {
 					astBuilder = CreateAstBuilder(currentContext);
@@ -163,6 +184,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			
 			public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 			{
+				if (ignoreUsingScope) {
+					base.VisitTypeDeclaration(typeDeclaration);
+					return;
+				}
 				var previousContext = context.Peek();
 				var currentContext = previousContext.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
 				context.Push(currentContext);
@@ -174,16 +199,33 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					context.Pop();
 				}
 			}
-			
+
+			public override void VisitMethodDeclaration(MethodDeclaration methodDeclaration)
+			{
+				if (ignoreUsingScope) {
+					base.VisitMethodDeclaration(methodDeclaration);
+					return;
+				}
+				if (methodDeclaration.GetSymbol() is IMethod method && CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(method)) {
+					var previousContext = context.Peek();
+					var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule);
+					context.Push(currentContext);
+					try {
+						astBuilder = CreateAstBuilder(currentContext);
+						base.VisitMethodDeclaration(methodDeclaration);
+					} finally {
+						astBuilder = CreateAstBuilder(previousContext);
+						context.Pop();
+					}
+				} else {
+					base.VisitMethodDeclaration(methodDeclaration);
+				}
+			}
+
 			public override void VisitSimpleType(SimpleType simpleType)
 			{
 				TypeResolveResult rr;
 				if ((rr = simpleType.Annotation<TypeResolveResult>()) == null) {
-					base.VisitSimpleType(simpleType);
-					return;
-				}
-				// HACK : ignore type names in attributes (TypeSystemAstBuilder doesn't handle them correctly)
-				if (simpleType.Parent is Syntax.Attribute) {
 					base.VisitSimpleType(simpleType);
 					return;
 				}
@@ -199,7 +241,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						astBuilder.NameLookupMode = NameLookupMode.Expression;
 					}
 				}
-				simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
+				if (simpleType.Parent is Syntax.Attribute) {
+					simpleType.ReplaceWith(astBuilder.ConvertAttributeType(rr.Type));
+				} else {
+					simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
+				}
 			}
 		}
 	}

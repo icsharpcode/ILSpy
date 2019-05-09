@@ -1,4 +1,4 @@
-Copyright 2011-2018 for the SharpDevelop team
+Copyright 2011-2019 for the SharpDevelop team
 by
 
   AlphaSierraPapa, Christoph Wille

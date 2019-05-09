@@ -125,7 +125,6 @@ namespace ICSharpCode.ILSpy
 				case "foreach":
 				case "lock":
 				case "global":
-				case "dynamic":
 				case "await":
 					color = structureKeywordsColor;
 					break;
@@ -208,14 +207,17 @@ namespace ICSharpCode.ILSpy
 				case "by":
 				case "into":
 				case "from":
-				case "ascending":
-				case "descending":
 				case "orderby":
 				case "let":
 				case "join":
 				case "on":
 				case "equals":
 					if (nodeStack.PeekOrDefault() is QueryClause)
+						color = queryKeywordsColor;
+					break;
+				case "ascending":
+				case "descending":
+					if (nodeStack.PeekOrDefault() is QueryOrdering)
 						color = queryKeywordsColor;
 					break;
 				case "explicit":
@@ -271,6 +273,7 @@ namespace ICSharpCode.ILSpy
 				case "ulong":
 					color = valueTypeKeywordsColor;
 					break;
+				case "class":
 				case "object":
 				case "string":
 				case "void":
@@ -291,6 +294,8 @@ namespace ICSharpCode.ILSpy
 			HighlightingColor color = null;
 			if (identifier.Name == "value" && identifier.Ancestors.OfType<Accessor>().FirstOrDefault() is Accessor accessor && accessor.Role != PropertyDeclaration.GetterRole)
 				color = valueKeywordColor;
+			if ((identifier.Name == "dynamic" || identifier.Name == "var") && identifier.Parent is AstType)
+				color = queryKeywordsColor;
 			switch (GetCurrentDefinition()) {
 				case ITypeDefinition t:
 					switch (t.Kind) {
@@ -380,23 +385,10 @@ namespace ICSharpCode.ILSpy
 			var node = nodeStack.Peek();
 			if (node is Identifier)
 				node = node.Parent;
-			if (IsDefinition(ref node))
+			if (Decompiler.TextTokenWriter.IsDefinition(ref node))
 				return node.GetSymbol();
 
 			return null;
-		}
-
-		static bool IsDefinition(ref AstNode node)
-		{
-			if (node is EntityDeclaration)
-				return true;
-			if (node is VariableInitializer && node.Parent is FieldDeclaration) {
-				node = node.Parent;
-				return true;
-			}
-			if (node is FixedVariableInitializer)
-				return true;
-			return false;
 		}
 
 		ISymbol GetCurrentMemberReference()

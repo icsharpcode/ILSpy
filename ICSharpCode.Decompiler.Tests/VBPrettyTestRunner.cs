@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class VBPrettyTestRunner
 	{
-		static readonly string TestCasePath = DecompilerTestBase.TestCasePath + "/VBPretty";
+		static readonly string TestCasePath = Tester.TestCasePath + "/VBPretty";
 
 		[Test]
 		public void AllFilesHaveTests()
@@ -46,27 +46,27 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 
-		static readonly VBCompilerOptions[] defaultOptions =
+		static readonly CompilerOptions[] defaultOptions =
 {
-			VBCompilerOptions.None,
-			VBCompilerOptions.Optimize,
-			VBCompilerOptions.UseRoslyn,
-			VBCompilerOptions.Optimize | VBCompilerOptions.UseRoslyn,
+			CompilerOptions.None,
+			CompilerOptions.Optimize,
+			CompilerOptions.UseRoslyn,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn,
 		};
 
-		static readonly VBCompilerOptions[] roslynOnlyOptions =
+		static readonly CompilerOptions[] roslynOnlyOptions =
 {
-			VBCompilerOptions.UseRoslyn,
-			VBCompilerOptions.Optimize | VBCompilerOptions.UseRoslyn,
+			CompilerOptions.UseRoslyn,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn,
 		};
 
 		[Test, Ignore("Implement VB async/await")]
-		public void Async([ValueSource("defaultOptions")] VBCompilerOptions options)
+		public void Async([ValueSource("defaultOptions")] CompilerOptions options)
 		{
 			Run(options: options);
 		}
 
-		void Run([CallerMemberName] string testName = null, VBCompilerOptions options = VBCompilerOptions.UseDebug, DecompilerSettings settings = null)
+		void Run([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug, DecompilerSettings settings = null)
 		{
 			var vbFile = Path.Combine(TestCasePath, testName + ".vb");
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");

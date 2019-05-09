@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						continue;
 					}
 					if (CachedDelegateInitializationWithLocal(inst)) {
-						ILInlining.InlineOneIfPossible(block, i, true, context);
+						ILInlining.InlineOneIfPossible(block, i, InliningOptions.Aggressive, context);
 						continue;
 					}
 					if (CachedDelegateInitializationRoslynInStaticWithLocal(inst) || CachedDelegateInitializationRoslynWithLocal(inst)) {
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			context.Step("CachedDelegateInitializationWithLocal", inst);
 			((Block)otherStore.Parent).Instructions.Remove(otherStore);
-			inst.ReplaceWith(new StLoc(v, value));
+			inst.ReplaceWith(storeInst);
 			return true;
 		}
 

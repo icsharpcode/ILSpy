@@ -68,17 +68,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			trueInst = Block.Unwrap(trueInst);
 			if (trueInst.MatchStLoc(stloc.Variable, out var fallbackValue)) {
-				context.Step("NullCoalescingTransform (reference types)", stloc);
+				context.Step("NullCoalescingTransform: simple (reference types)", stloc);
 				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
 				block.Instructions.RemoveAt(pos + 1); // remove if instruction
-				ILInlining.InlineOneIfPossible(block, pos, false, context);
+				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
 				return true;
 			} else if (trueInst is Throw throwInst) {
 				context.Step("NullCoalescingTransform (throw expression)", stloc);
 				throwInst.resultType = StackType.O;
 				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, throwInst);
 				block.Instructions.RemoveAt(pos + 1); // remove if instruction
-				ILInlining.InlineOneIfPossible(block, pos, false, context);
+				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
+				return true;
+			}
+			// sometimes the compiler generates:
+			// stloc s(valueInst)
+			// if (comp(ldloc s == ldnull)) {
+			//		stloc v(fallbackInst)
+			//      stloc s(ldloc v)
+			// }
+			// v must be single-assign and single-use.
+			if (trueInst is Block trueBlock && trueBlock.Instructions.Count == 2
+				&& trueBlock.Instructions[0].MatchStLoc(out var temporary, out fallbackValue)
+				&& temporary.IsSingleDefinition && temporary.LoadCount == 1
+				&& trueBlock.Instructions[1].MatchStLoc(stloc.Variable, out var useOfTemporary)
+				&& useOfTemporary.MatchLdLoc(temporary)) {
+				context.Step("NullCoalescingTransform: with temporary variable (reference types)", stloc);
+				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
+				block.Instructions.RemoveAt(pos + 1); // remove if instruction
+				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
 				return true;
 			}
 			return false;

@@ -29,49 +29,79 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	{
 		public static bool Compare(string input1, string input2, StringWriter diff, Func<string, string> normalizeLine, string[] definedSymbols = null)
 		{
-			var differ = new AlignedDiff<string>(
-				NormalizeAndSplitCode(input1, definedSymbols ?? new string[0]),
-				NormalizeAndSplitCode(input2, definedSymbols ?? new string[0]),
-				new CodeLineEqualityComparer(normalizeLine),
-				new StringSimilarityComparer(),
-				new StringAlignmentFilter());
-
-			bool result = true, ignoreChange;
-
+			var collection1 = NormalizeAndSplitCode(input1, definedSymbols ?? new string[0]);
+			var collection2 = NormalizeAndSplitCode(input2, definedSymbols ?? new string[0]);
+			var diffSections = DiffLib.Diff.CalculateSections(
+				collection1, collection2, new CodeLineEqualityComparer(normalizeLine)
+			);
+			var alignedDiff = Diff.AlignElements(collection1, collection2, diffSections, new StringSimilarityDiffElementAligner());
+			
+			bool result = true;
 			int line1 = 0, line2 = 0;
-
-			foreach (var change in differ.Generate()) {
-				switch (change.Change) {
-					case ChangeType.Same:
-						diff.Write("{0,4} {1,4} ", ++line1, ++line2);
-						diff.Write("  ");
-						diff.WriteLine(change.Element1);
+			const int contextSize = 10;
+			int consecutiveMatches = contextSize;
+			var hiddenMatches = new List<string>();
+			
+			foreach (var change in alignedDiff) {
+				switch (change.Operation) {
+					case DiffOperation.Match:
+						AppendMatch($"{++line1,4} {++line2,4} ", change.ElementFromCollection1.Value);
 						break;
-					case ChangeType.Added:
-						diff.Write("     {1,4} ", line1, ++line2);
-						result &= ignoreChange = ShouldIgnoreChange(change.Element2);
-						diff.Write(ignoreChange ? "    " : " +  ");
-						diff.WriteLine(change.Element2);
+					case DiffOperation.Insert:
+						string pos = $"     {++line2,4} ";
+						if (ShouldIgnoreChange(change.ElementFromCollection2.Value)) {
+							AppendMatch(pos, change.ElementFromCollection2.Value);
+						} else {
+							AppendDelta(pos, " + ", change.ElementFromCollection2.Value);
+							result = false;
+						}
 						break;
-					case ChangeType.Deleted:
-						diff.Write("{0,4}      ", ++line1, line2);
-						result &= ignoreChange = ShouldIgnoreChange(change.Element1);
-						diff.Write(ignoreChange ? "    " : " -  ");
-						diff.WriteLine(change.Element1);
+					case DiffOperation.Delete:
+						pos = $"{++line1,4}      ";
+						if (ShouldIgnoreChange(change.ElementFromCollection1.Value)) {
+							AppendMatch(pos, change.ElementFromCollection1.Value);
+						} else {
+							AppendDelta(pos, " - ", change.ElementFromCollection1.Value);
+							result = false;
+						}
 						break;
-					case ChangeType.Changed:
-						diff.Write("{0,4}      ", ++line1, line2);
+					case DiffOperation.Modify:
+					case DiffOperation.Replace:
+						AppendDelta($"{++line1,4}      ", "(-)", change.ElementFromCollection1.Value);
+						AppendDelta($"     {++line2,4} ", "(+)", change.ElementFromCollection2.Value);
 						result = false;
-						diff.Write("(-) ");
-						diff.WriteLine(change.Element1);
-						diff.Write("     {1,4} ", line1, ++line2);
-						diff.Write("(+) ");
-						diff.WriteLine(change.Element2);
 						break;
 				}
 			}
+			if (hiddenMatches.Count > 0) {
+				diff.WriteLine("  ...");
+			}
 
 			return result;
+
+			void AppendMatch(string pos, string code)
+			{
+				consecutiveMatches++;
+				if (consecutiveMatches > contextSize) {
+					// hide this match
+					hiddenMatches.Add(pos + "    " + code);
+				} else {
+					diff.WriteLine(pos + "    " + code);
+				}
+			}
+
+			void AppendDelta(string pos, string changeType, string code)
+			{
+				consecutiveMatches = 0;
+				if (hiddenMatches.Count > contextSize) {
+					diff.WriteLine("  ...");
+				}
+				for (int i = Math.Max(0, hiddenMatches.Count - contextSize); i < hiddenMatches.Count; i++) {
+					diff.WriteLine(hiddenMatches[i]);
+				}
+				hiddenMatches.Clear();
+				diff.WriteLine(pos + changeType + " " + code);
+			}
 		}
 
 		class CodeLineEqualityComparer : IEqualityComparer<string>
@@ -128,7 +158,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 		}
 
-		private static IEnumerable<string> NormalizeAndSplitCode(string input, IEnumerable<string> definedSymbols)
+		private static IList<string> NormalizeAndSplitCode(string input, IEnumerable<string> definedSymbols)
 		{
 			var syntaxTree = CSharpSyntaxTree.ParseText(input, new CSharpParseOptions(preprocessorSymbols: definedSymbols));
 			var result = new DeleteDisabledTextRewriter().Visit(syntaxTree.GetRoot());

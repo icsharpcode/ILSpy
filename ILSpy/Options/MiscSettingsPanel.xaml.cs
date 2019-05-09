@@ -24,7 +24,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// <summary>
 	/// Interaction logic for MiscSettingsPanel.xaml
 	/// </summary>
-	[ExportOptionPage(Title = "Misc", Order = 2)]
+	[ExportOptionPage(Title =nameof(Properties.Resources.Misc), Order = 30)]
 	public partial class MiscSettingsPanel : UserControl, IOptionPage
 	{
 		public MiscSettingsPanel()
@@ -50,6 +50,8 @@ namespace ICSharpCode.ILSpy.Options
 			XElement e = settings["MiscSettings"];
 			var s = new MiscSettings();
 			s.AllowMultipleInstances = (bool?)e.Attribute("AllowMultipleInstances") ?? false;
+			s.LoadPreviousAssemblies = (bool?)e.Attribute(nameof(s.LoadPreviousAssemblies)) ?? true;
+
 			return s;
 		}
 
@@ -59,6 +61,7 @@ namespace ICSharpCode.ILSpy.Options
 
 			var section = new XElement("MiscSettings");
 			section.SetAttributeValue("AllowMultipleInstances", s.AllowMultipleInstances);
+			section.SetAttributeValue(nameof(s.LoadPreviousAssemblies), s.LoadPreviousAssemblies);
 
 			XElement existingElement = root.Element("MiscSettings");
 			if (existingElement != null)

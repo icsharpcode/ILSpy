@@ -1,4 +1,6 @@
-﻿namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
+﻿using System.Runtime.CompilerServices;
+
+namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 {
 	internal class Issue982
 	{
@@ -15,6 +17,7 @@
 			}
 		}
 
+		[IndexerName("Text2")]
 		public string this[int index] {
 			get {
 				return textStr2;

@@ -1,9 +1,13 @@
-﻿using System.Windows;
-using Mono.Cecil;
+﻿using System;
+using System.Windows;
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	[ExportContextMenuEntry(Header = "Copy FQ Name", Icon = "images/Copy.png", Order = 9999)]
+	[ExportContextMenuEntry(Header = nameof(Resources.CopyName), Icon = "images/Copy.png", Order = 9999)]
 	public class CopyFullyQualifiedNameContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -17,26 +21,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			var member = GetMemberNodeFromContext(context)?.Member;
 			if (member == null) return;
-			Clipboard.SetText(GetFullyQualifiedName(member));
+			Clipboard.SetText(member.ReflectionName);
 		}
 
 		private IMemberTreeNode GetMemberNodeFromContext(TextViewContext context)
 		{
 			return context.SelectedTreeNodes?.Length == 1 ? context.SelectedTreeNodes[0] as IMemberTreeNode : null;
-		}
-
-		/// <summary>
-		/// Resolve full type name using .NET type representation for nested types.
-		/// </summary>
-		private string GetFullyQualifiedName(MemberReference member)
-		{
-			if (member.DeclaringType != null) {
-				if (member is TypeReference)
-					return GetFullyQualifiedName(member.DeclaringType) + "+" + member.Name;
-				else
-					return GetFullyQualifiedName(member.DeclaringType) + "." + member.Name;
-			}
-			return (member is TypeReference t ? t.Namespace + "." : "") + member.Name;
 		}
 	}
 }

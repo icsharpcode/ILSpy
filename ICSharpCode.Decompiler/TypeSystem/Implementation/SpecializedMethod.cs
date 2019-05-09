@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using ICSharpCode.Decompiler.Util;
 
@@ -29,6 +30,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SpecializedMethod : SpecializedParameterizedMember, IMethod
 	{
+		internal static IMethod Create(IMethod methodDefinition, TypeParameterSubstitution substitution)
+		{
+			if (TypeParameterSubstitution.Identity.Equals(substitution))
+				return methodDefinition;
+			if (methodDefinition.DeclaringType is ArrayType)
+				return new SpecializedMethod(methodDefinition, substitution);
+			if (methodDefinition.TypeParameters.Count == 0) {
+				if (methodDefinition.DeclaringType.TypeParameterCount == 0)
+					return methodDefinition;
+				if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
+					substitution = new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
+			}
+			return new SpecializedMethod(methodDefinition, substitution);
+		}
+
 		readonly IMethod methodDefinition;
 		readonly ITypeParameter[] specializedTypeParameters;
 		readonly bool isParameterized;
@@ -77,15 +93,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IReadOnlyList<IType> TypeArguments {
 			get { return this.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance; }
 		}
-		
-		public IReadOnlyList<IUnresolvedMethod> Parts {
-			get { return methodDefinition.Parts; }
-		}
-		
-		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
-			get { return methodDefinition.ReturnTypeAttributes; }
-		}
-		
+
+		public IEnumerable<IAttribute> GetReturnTypeAttributes() => methodDefinition.GetReturnTypeAttributes();
+		public bool ReturnTypeIsRefReadOnly => methodDefinition.ReturnTypeIsRefReadOnly;
+
 		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get {
 				return specializedTypeParameters ?? methodDefinition.TypeParameters;
@@ -108,14 +119,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return methodDefinition.IsOperator; }
 		}
 		
-		public bool IsPartial {
-			get { return methodDefinition.IsPartial; }
-		}
-		
-		public bool IsAsync {
-			get { return methodDefinition.IsAsync; }
-		}
-		
 		public bool HasBody {
 			get { return methodDefinition.HasBody; }
 		}
@@ -123,6 +126,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsAccessor {
 			get { return methodDefinition.IsAccessor; }
 		}
+
+		public MethodSemanticsAttributes AccessorKind => methodDefinition.AccessorKind;
 
 		public IMethod ReducedFrom {
 			get { return null; }
@@ -220,13 +225,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			internal TypeVisitor substitution;
 			
 			public SpecializedTypeParameter(ITypeParameter baseTp, IMethod specializedOwner)
-				: base(specializedOwner, baseTp.Index, baseTp.Name, baseTp.Variance, baseTp.Attributes)
+				: base(specializedOwner, baseTp.Index, baseTp.Name, baseTp.Variance)
 			{
 				// We don't have to consider already-specialized baseTps because
 				// we read the baseTp directly from the unpacked memberDefinition.
 				this.baseTp = baseTp;
 			}
-			
+
+			public override IEnumerable<IAttribute> GetAttributes() => baseTp.GetAttributes();
+
 			public override int GetHashCode()
 			{
 				return baseTp.GetHashCode() ^ this.Owner.GetHashCode();
@@ -239,18 +246,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return o != null && baseTp.Equals(o.baseTp) && this.Owner.Equals(o.Owner);
 			}
 			
-			public override bool HasValueTypeConstraint {
-				get { return baseTp.HasValueTypeConstraint; }
-			}
-			
-			public override bool HasReferenceTypeConstraint {
-				get { return baseTp.HasReferenceTypeConstraint; }
-			}
-			
-			public override bool HasDefaultConstructorConstraint {
-				get { return baseTp.HasDefaultConstructorConstraint; }
-			}
-			
+			public override bool HasValueTypeConstraint => baseTp.HasValueTypeConstraint;
+			public override bool HasReferenceTypeConstraint => baseTp.HasReferenceTypeConstraint;
+			public override bool HasDefaultConstructorConstraint => baseTp.HasDefaultConstructorConstraint;
+			public override bool HasUnmanagedConstraint => baseTp.HasUnmanagedConstraint;
+
+			public override Nullability NullabilityConstraint => baseTp.NullabilityConstraint;
+
 			public override IEnumerable<IType> DirectBaseTypes {
 				get {
 					return baseTp.DirectBaseTypes.Select(t => t.AcceptVisitor(substitution));

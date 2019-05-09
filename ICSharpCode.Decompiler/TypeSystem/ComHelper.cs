@@ -26,11 +26,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public static class ComHelper
 	{
-		static bool IsComAttribute(IAttribute attribute, string name)
-		{
-			return attribute.AttributeType.Name == name && attribute.AttributeType.Namespace == "System.Runtime.InteropServices";
-		}
-		
 		/// <summary>
 		/// Gets whether the specified type is imported from COM.
 		/// </summary>
@@ -38,7 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return typeDefinition != null
 				&& typeDefinition.Kind == TypeKind.Interface
-				&& typeDefinition.Attributes.Any(a => IsComAttribute(a, "ComImportAttribute"));
+				&& typeDefinition.HasAttribute(KnownAttribute.ComImport, inherit: false);
 		}
 		
 		/// <summary>
@@ -50,11 +45,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (typeDefinition == null)
 				return SpecialType.UnknownType;
-			var coClassAttribute = typeDefinition.Attributes.FirstOrDefault(a => IsComAttribute(a, "CoClassAttribute"));
-			if (coClassAttribute != null && coClassAttribute.PositionalArguments.Count == 1) {
-				var rr = coClassAttribute.PositionalArguments[0] as TypeOfResolveResult;
-				if (rr != null)
-					return rr.ReferencedType;
+			var coClassAttribute = typeDefinition.GetAttribute(KnownAttribute.CoClass, inherit: false);
+			if (coClassAttribute != null && coClassAttribute.FixedArguments.Length == 1) {
+				if (coClassAttribute.FixedArguments[0].Value is IType ty)
+					return ty;
 			}
 			return SpecialType.UnknownType;
 		}

@@ -32,6 +32,7 @@ using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Options;
 
 using Microsoft.VisualStudio.Composition;
+using System.Text;
 
 namespace ICSharpCode.ILSpy
 {
@@ -71,7 +72,13 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 			InitializeComponent();
-			
+
+			if (!System.Diagnostics.Debugger.IsAttached) {
+				AppDomain.CurrentDomain.UnhandledException += ShowErrorBox;
+				Dispatcher.CurrentDispatcher.UnhandledException += Dispatcher_UnhandledException;
+			}
+			TaskScheduler.UnobservedTaskException += DotNet40_UnobservedTaskException;
+
 			// Cannot show MessageBox here, because WPF would crash with a XamlParseException
 			// Remember and show exceptions in text output, once MainWindow is properly initialized
 			try {
@@ -107,16 +114,10 @@ namespace ICSharpCode.ILSpy
 				// This throws exceptions for composition failures. Alternatively, the configuration's CompositionErrors property
 				// could be used to log the errors directly. Used at the end so that it does not prevent the export provider setup.
 				config.ThrowOnErrors();
-			}
-			catch (Exception ex) {
+			} catch (Exception ex) {
 				StartupExceptions.Add(new ExceptionData { Exception = ex });
 			}
 			
-			if (!System.Diagnostics.Debugger.IsAttached) {
-				AppDomain.CurrentDomain.UnhandledException += ShowErrorBox;
-				Dispatcher.CurrentDispatcher.UnhandledException += Dispatcher_UnhandledException;
-			}
-			TaskScheduler.UnobservedTaskException += DotNet40_UnobservedTaskException;
 			Languages.Initialize(exportProvider);
 
 			EventManager.RegisterClassHandler(typeof(Window),
@@ -124,7 +125,17 @@ namespace ICSharpCode.ILSpy
 			                                  new RequestNavigateEventHandler(Window_RequestNavigate));
 			ILSpyTraceListener.Install();
 		}
-		
+
+		protected override void OnStartup(StartupEventArgs e)
+		{
+			var output = new StringBuilder();
+			if (ILSpy.MainWindow.FormatExceptions(StartupExceptions.ToArray(), output)) {
+				MessageBox.Show(output.ToString(), "Sorry we crashed!");
+				Environment.Exit(1);
+			}
+			base.OnStartup(e);
+		}
+
 		string FullyQualifyPath(string argument)
 		{
 			// Fully qualify the paths before passing them to another process,
@@ -234,6 +245,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				ILSpy.MainWindow.Instance.TextView.ShowText(output);
+				e.Handled = true;
 			}
 		}
 	}

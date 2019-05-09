@@ -1,4 +1,22 @@
-﻿using System;
+﻿// Copyright (c) 2018 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -13,11 +31,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				get;
 				set;
 			}
-			public MyClass this[int index] {
-				get {
-					return null;
-				}
-			}
+			public MyClass this[int index] => null;
 			public MyClass Method(int arg)
 			{
 				return null;
@@ -34,11 +48,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public MyClass Field;
 			public MyStruct? Property1 => null;
 			public MyStruct Property2 => default(MyStruct);
-			public MyStruct? this[int index] {
-				get {
-					return null;
-				}
-			}
+			public MyStruct? this[int index] => null;
 			public MyStruct? Method1(int arg)
 			{
 				return null;
@@ -109,7 +119,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void CallDoneStruct()
 		{
 			GetMyStruct()?.Done();
-#if STRUCT_SPLITTING_IMPROVED
 			GetMyStruct()?.Field?.Done();
 			GetMyStruct()?.Field.Done();
 			GetMyStruct()?.Property1?.Done();
@@ -117,16 +126,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			GetMyStruct()?.Method1(GetInt())?.Done();
 			GetMyStruct()?.Method2(GetInt()).Done();
 			GetMyStruct()?[GetInt()]?.Done();
-#endif
 		}
 
 		public void RequiredParentheses()
 		{
 			(GetMyClass()?.Field).Done();
 			(GetMyClass()?.Method(GetInt())).Done();
-#if STRUCT_SPLITTING_IMPROVED
 			(GetMyStruct()?.Property2)?.Done();
-#endif
 		}
 
 		public int?[] ChainsOnClass()
@@ -144,7 +150,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			};
 		}
 
-#if STRUCT_SPLITTING_IMPROVED
 		public int?[] ChainsStruct()
 		{
 			return new int?[8] {
@@ -158,7 +163,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				GetMyStruct()?[GetInt()]?.IntVal
 			};
 		}
-#endif
 
 		public int CoalescingReturn()
 		{
@@ -238,6 +242,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private static int? GenericRefStructConstraintInt<T>(ref T? t) where T : struct, ITest
 		{
 			return t?.Int();
+		}
+
+		private static dynamic DynamicNullProp(dynamic a)
+		{
+			return a?.b.c(1)?.d[10];
 		}
 	}
 }

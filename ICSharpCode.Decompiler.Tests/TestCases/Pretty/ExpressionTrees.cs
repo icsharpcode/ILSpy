@@ -20,11 +20,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Threading;
 using System.Xml;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-
 	public class ExpressionTrees
 	{
 		private class GenericClass<X>
@@ -48,7 +49,332 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		internal class GenericClassWithCtor<T>
+		{
+		}
+
+		internal class GenericClassWithMultipleCtors<T>
+		{
+			public GenericClassWithMultipleCtors()
+			{
+			}
+
+			public GenericClassWithMultipleCtors(int x)
+			{
+			}
+		}
+
+		private class AssertTest
+		{
+			private struct DataStruct
+			{
+				private int dummy;
+			}
+
+			private struct WrapperStruct
+			{
+				internal DataStruct Data;
+			}
+
+			private class SomeClass
+			{
+				internal WrapperStruct DataWrapper;
+			}
+
+			private SomeClass someClass;
+
+			public void Test()
+			{
+				GetMember(() => someClass.DataWrapper.Data);
+			}
+
+			public static MemberInfo GetMember<T>(Expression<Func<T>> p)
+			{
+				return null;
+			}
+		}
+
+		public class Administrator
+		{
+			public int ID {
+				get;
+				set;
+			}
+
+			public string TrueName {
+				get;
+				set;
+			}
+
+			public string Phone {
+				get;
+				set;
+			}
+		}
+
+		public class Contract
+		{
+			public int ID {
+				get;
+				set;
+			}
+
+			public string ContractNo {
+				get;
+				set;
+			}
+
+			public string HouseAddress {
+				get;
+				set;
+			}
+
+			public DateTime SigningTime {
+				get;
+				set;
+			}
+
+			public string BuyerName {
+				get;
+				set;
+			}
+
+			public string BuyerTelephone {
+				get;
+				set;
+			}
+
+			public string Customer {
+				get;
+				set;
+			}
+
+			public string CustTelephone {
+				get;
+				set;
+			}
+
+			public int AdminID {
+				get;
+				set;
+			}
+
+			public int StoreID {
+				get;
+				set;
+			}
+		}
+
+		public class Database
+		{
+			public IQueryable<Contract> Contracts {
+				get;
+				set;
+			}
+
+			public IQueryable<Loan> Loan {
+				get;
+				set;
+			}
+
+			public IQueryable<Administrator> Administrator {
+				get;
+				set;
+			}
+
+			public IQueryable<Store> Store {
+				get;
+				set;
+			}
+		}
+
+		public class Loan
+		{
+			public string ContractNo {
+				get;
+				set;
+			}
+
+			public DateTime? ShenDate {
+				get;
+				set;
+			}
+
+			public DateTime? LoanDate {
+				get;
+				set;
+			}
+
+			public string Credit {
+				get;
+				set;
+			}
+
+			public string LoanBank {
+				get;
+				set;
+			}
+
+			public string Remarks {
+				get;
+				set;
+			}
+		}
+
+		public class Store
+		{
+			public int ID {
+				get;
+				set;
+			}
+
+			public string Name {
+				get;
+				set;
+			}
+		}
+
+		internal class MyClass
+		{
+			public static MyClass operator +(MyClass a, MyClass b)
+			{
+				return new MyClass();
+			}
+		}
+
+		internal class SimpleType
+		{
+			public const int ConstField = 1;
+
+			public static readonly int StaticReadonlyField = 2;
+
+			public static int StaticField = 3;
+
+			public readonly int ReadonlyField = 2;
+
+			public int Field = 3;
+
+#if CS60
+			public static int StaticReadonlyProperty => 0;
+#else
+		public static int StaticReadonlyProperty {
+			get {
+				return 0;
+			}
+		}
+#endif
+
+			public static int StaticProperty {
+				get;
+				set;
+			}
+
+#if CS60
+			public int ReadonlyProperty => 0;
+#else
+		public int ReadonlyProperty {
+			get {
+				return 0;
+			}
+		}
+#endif
+
+			public int Property {
+				get;
+				set;
+			}
+		}
+
+		internal class SimpleTypeWithCtor
+		{
+			public SimpleTypeWithCtor(int i)
+			{
+			}
+		}
+
+		internal class SimpleTypeWithMultipleCtors
+		{
+			public SimpleTypeWithMultipleCtors()
+			{
+			}
+
+			public SimpleTypeWithMultipleCtors(int i)
+			{
+			}
+		}
+
 		private int field;
+		private Database db;
+		private dynamic ViewBag;
+
+		public static readonly object[] SupportedMethods = new object[2] {
+			ToCode(null, () => ((IQueryable<object>)null).Aggregate((object o1, object o2) => null)),
+			ToCode(null, () => ((IEnumerable<object>)null).Aggregate((object o1, object o2) => null))
+		};
+
+		public static readonly object[] SupportedMethods2 = new object[4] {
+			ToCode(null, () => ((IQueryable<object>)null).Aggregate(null, (object o1, object o2) => null)),
+			ToCode(null, () => ((IQueryable<object>)null).Aggregate((object)null, (Expression<Func<object, object, object>>)((object o1, object o2) => null), (Expression<Func<object, object>>)((object o) => null))),
+			ToCode(null, () => ((IEnumerable<object>)null).Aggregate(null, (object o1, object o2) => null)),
+			ToCode(null, () => ((IEnumerable<object>)null).Aggregate((object)null, (Func<object, object, object>)((object o1, object o2) => null), (Func<object, object>)((object o) => null)))
+		};
+
+		public static void TestCall(object a)
+		{
+
+		}
+
+		public static void TestCall(ref object a)
+		{
+
+		}
+
+		private void Issue1249(int ID)
+		{
+			if (ID == 0) {
+				ViewBag.data = "''";
+				return;
+			}
+			var model = (from a in db.Contracts
+						 where a.ID == ID
+						 select new {
+							 ID = a.ID,
+							 ContractNo = a.ContractNo,
+							 HouseAddress = a.HouseAddress,
+							 AdminID = (from b in db.Administrator
+										where b.ID == a.AdminID
+										select b.TrueName).FirstOrDefault(),
+							 StoreID = (from b in db.Store
+										where b.ID == a.StoreID
+										select b.Name).FirstOrDefault(),
+							 SigningTime = a.SigningTime,
+							 YeWuPhone = (from b in db.Administrator
+										  where b.ID == a.AdminID
+										  select b.Phone).FirstOrDefault(),
+							 BuyerName = a.BuyerName,
+							 BuyerTelephone = a.BuyerTelephone,
+							 Customer = a.Customer,
+							 CustTelephone = a.CustTelephone,
+							 Credit = (from b in db.Loan
+									   where b.ContractNo == a.ContractNo
+									   select b.Credit).FirstOrDefault(),
+							 LoanBank = (from b in db.Loan
+										 where b.ContractNo == a.ContractNo
+										 select b.LoanBank).FirstOrDefault(),
+							 Remarks = (from b in db.Loan
+										where b.ContractNo == a.ContractNo
+										select b.Remarks).FirstOrDefault()
+						 }).FirstOrDefault();
+			ViewBag.data = model.ToJson();
+			DateTime? dateTime = (from b in db.Loan
+								  where b.ContractNo == model.ContractNo
+								  select b.ShenDate).FirstOrDefault();
+			DateTime? dateTime2 = (from b in db.Loan
+								   where b.ContractNo == model.ContractNo
+								   select b.LoanDate).FirstOrDefault();
+			ViewBag.ShenDate = ((!dateTime.HasValue) ? "" : dateTime.ParseDateTime().ToString("yyyy-MM-dd"));
+			ViewBag.LoanDate = ((!dateTime2.HasValue) ? "" : dateTime2.ParseDateTime().ToString("yyyy-MM-dd"));
+		}
 
 		private static object ToCode<R>(object x, Expression<Action<R>> expr)
 		{
@@ -218,7 +544,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void MembersBuiltin()
 		{
 			ToCode(X(), () => 1.23m.ToString());
-			ToCode(X(), () => AttributeTargets.All.HasFlag((Enum)AttributeTargets.Assembly));
+			ToCode(X(), () => AttributeTargets.All.HasFlag(AttributeTargets.Assembly));
 			ToCode(X(), () => "abc".Length == 3);
 			ToCode(X(), () => 'a'.CompareTo('b') < 0);
 		}
@@ -474,53 +800,55 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ArrayIndexer()
 		{
-			Test((Func<int[], int>)((int[] array) => array[0]), (Expression<Func<int[], int>>)((int[] array) => array[0]));
-			Test((Func<int[], int, int>)((int[] array, int index) => array[index]), (Expression<Func<int[], int, int>>)((int[] array, int index) => array[index]));
-			Test((Func<int[,], int>)((int[,] array) => array[0, 5]), (Expression<Func<int[,], int>>)((int[,] array) => array[0, 5]));
-			Test((Func<int[,], int, int>)((int[,] array, int index) => array[index, 7]), (Expression<Func<int[,], int, int>>)((int[,] array, int index) => array[index, 7]));
-			Test((Func<int[][], int, int>)((int[][] array, int index) => array[index][7]), (Expression<Func<int[][], int, int>>)((int[][] array, int index) => array[index][7]));
+			Test<Func<int[], int>>((int[] array) => array[0], (int[] array) => array[0]);
+			Test<Func<int[], int, int>>((int[] array, int index) => array[index], (int[] array, int index) => array[index]);
+			Test<Func<int[,], int>>((int[,] array) => array[0, 5], (int[,] array) => array[0, 5]);
+			Test<Func<int[,], int, int>>((int[,] array, int index) => array[index, 7], (int[,] array, int index) => array[index, 7]);
+			Test<Func<int[][], int, int>>((int[][] array, int index) => array[index][7], (int[][] array, int index) => array[index][7]);
 		}
 
 		public static void ArrayLength()
 		{
-			Test((Func<int[], int>)((int[] array) => array.Length), (Expression<Func<int[], int>>)((int[] array) => array.Length));
-			Test((Func<int>)(() => ((Array)null).Length), (Expression<Func<int>>)(() => ((Array)null).Length));
+			Test<Func<int[], int>>((int[] array) => array.Length, (int[] array) => array.Length);
+			Test<Func<int>>(() => ((Array)null).Length, () => ((Array)null).Length);
 		}
 
 		public static void NewObj()
 		{
-			Test((Func<object>)(() => new SimpleType()), (Expression<Func<object>>)(() => new SimpleType()));
-			Test((Func<object>)(() => new SimpleTypeWithCtor(5)), (Expression<Func<object>>)(() => new SimpleTypeWithCtor(5)));
-			Test((Func<object>)(() => new SimpleTypeWithMultipleCtors()), (Expression<Func<object>>)(() => new SimpleTypeWithMultipleCtors()));
-			Test((Func<object>)(() => new SimpleTypeWithMultipleCtors(5)), (Expression<Func<object>>)(() => new SimpleTypeWithMultipleCtors(5)));
-			Test((Func<object>)(() => new GenericClass<int>()), (Expression<Func<object>>)(() => new GenericClass<int>()));
-			Test((Func<object>)(() => new GenericClassWithCtor<int>()), (Expression<Func<object>>)(() => new GenericClassWithCtor<int>()));
-			Test((Func<object>)(() => new GenericClassWithMultipleCtors<int>(5)), (Expression<Func<object>>)(() => new GenericClassWithMultipleCtors<int>(5)));
+			Test<Func<object>>(() => new SimpleType(), () => new SimpleType());
+			Test<Func<object>>(() => new SimpleTypeWithCtor(5), () => new SimpleTypeWithCtor(5));
+			Test<Func<object>>(() => new SimpleTypeWithMultipleCtors(), () => new SimpleTypeWithMultipleCtors());
+			Test<Func<object>>(() => new SimpleTypeWithMultipleCtors(5), () => new SimpleTypeWithMultipleCtors(5));
+			Test<Func<object>>(() => new GenericClass<int>(), () => new GenericClass<int>());
+			Test<Func<object>>(() => new GenericClassWithCtor<int>(), () => new GenericClassWithCtor<int>());
+			Test<Func<object>>(() => new GenericClassWithMultipleCtors<int>(5), () => new GenericClassWithMultipleCtors<int>(5));
 		}
 
 		public unsafe static void TypeOfExpr()
 		{
-			Test((Func<Type>)(() => typeof(int)), (Expression<Func<Type>>)(() => typeof(int)));
-			Test((Func<Type>)(() => typeof(object)), (Expression<Func<Type>>)(() => typeof(object)));
-			Test((Func<Type>)(() => typeof(List<>)), (Expression<Func<Type>>)(() => typeof(List<>)));
-			Test((Func<Type>)(() => typeof(List<int>)), (Expression<Func<Type>>)(() => typeof(List<int>)));
-			Test((Func<Type>)(() => typeof(int*)), (Expression<Func<Type>>)(() => typeof(int*)));
+			Test<Func<Type>>(() => typeof(int), () => typeof(int));
+			Test<Func<Type>>(() => typeof(object), () => typeof(object));
+			Test<Func<Type>>(() => typeof(List<>), () => typeof(List<>));
+			Test<Func<Type>>(() => typeof(List<int>), () => typeof(List<int>));
+			Test<Func<Type>>(() => typeof(int*), () => typeof(int*));
 		}
 
 		public static void AsTypeExpr()
 		{
-			Test((Func<object, MyClass>)((object obj) => obj as MyClass), (Expression<Func<object, MyClass>>)((object obj) => obj as MyClass));
-			Test((Func<object, GenericClass<object>>)((object obj) => obj as GenericClass<object>), (Expression<Func<object, GenericClass<object>>>)((object obj) => obj as GenericClass<object>));
+			Test<Func<object, MyClass>>((object obj) => obj as MyClass, (object obj) => obj as MyClass);
+			Test<Func<object, int?>>((object obj) => obj as int?, (object obj) => obj as int?);
+			Test<Func<object, GenericClass<object>>>((object obj) => obj as GenericClass<object>, (object obj) => obj as GenericClass<object>);
 		}
 
 		public static void IsTypeExpr()
 		{
-			Test((Func<object, bool>)((object obj) => obj is MyClass), (Expression<Func<object, bool>>)((object obj) => obj is MyClass));
+			Test<Func<object, bool>>((object obj) => obj is MyClass, (object obj) => obj is MyClass);
+			Test<Func<object, bool>>((object obj) => obj is int?, (object obj) => obj is int?);
 		}
 
 		public static void UnaryLogicalOperators()
 		{
-			Test((Func<bool, bool>)((bool a) => !a), (Expression<Func<bool, bool>>)((bool a) => !a));
+			Test<Func<bool, bool>>((bool a) => !a, (bool a) => !a);
 		}
 
 		public static void ConditionalOperator()
@@ -529,7 +857,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(null, (object a) => a ?? new MyClass());
 		}
 
-		public static void BinaryLogicalOperators()
+		public static void ComparisonOperators()
 		{
 			ToCode(null, (int a, int b) => a == b);
 			ToCode(null, (int a, int b) => a != b);
@@ -550,57 +878,67 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(null, (int a, int b) => a == 1 || b == 2);
 		}
 
+		public static void LiftedComparisonOperators()
+		{
+			ToCode(X(), (int? a, int? b) => a == b);
+			ToCode(X(), (int? a, int? b) => a != b);
+			ToCode(X(), (int? a, int? b) => a < b);
+			ToCode(X(), (int? a, int? b) => a <= b);
+			ToCode(X(), (int? a, int? b) => a > b);
+			ToCode(X(), (int? a, int? b) => a >= b);
+		}
+
 		public static void UnaryArithmeticOperators()
 		{
-			Test((Func<int, int>)((int a) => a), (Expression<Func<int, int>>)((int a) => a));
-			Test((Func<int, int>)((int a) => -a), (Expression<Func<int, int>>)((int a) => -a));
+			Test<Func<int, int>>((int a) => a, (int a) => a);
+			Test<Func<int, int>>((int a) => -a, (int a) => -a);
 		}
 
 		public static void BinaryArithmeticOperators()
 		{
-			Test((Func<int, int, int>)((int a, int b) => a + b), (Expression<Func<int, int, int>>)((int a, int b) => a + b));
-			Test((Func<int, int, int>)((int a, int b) => a - b), (Expression<Func<int, int, int>>)((int a, int b) => a - b));
-			Test((Func<int, int, int>)((int a, int b) => a * b), (Expression<Func<int, int, int>>)((int a, int b) => a * b));
-			Test((Func<int, int, int>)((int a, int b) => a / b), (Expression<Func<int, int, int>>)((int a, int b) => a / b));
-			Test((Func<int, int, int>)((int a, int b) => a % b), (Expression<Func<int, int, int>>)((int a, int b) => a % b));
-			Test((Func<long, int, long>)((long a, int b) => a + b), (Expression<Func<long, int, long>>)((long a, int b) => a + (long)b));
-			Test((Func<long, int, long>)((long a, int b) => a - b), (Expression<Func<long, int, long>>)((long a, int b) => a - (long)b));
-			Test((Func<long, int, long>)((long a, int b) => a * b), (Expression<Func<long, int, long>>)((long a, int b) => a * (long)b));
-			Test((Func<long, int, long>)((long a, int b) => a / b), (Expression<Func<long, int, long>>)((long a, int b) => a / (long)b));
-			Test((Func<long, int, long>)((long a, int b) => a % b), (Expression<Func<long, int, long>>)((long a, int b) => a % (long)b));
-			Test((Func<short, int, int>)((short a, int b) => a + b), (Expression<Func<short, int, int>>)((short a, int b) => a + b));
-			Test((Func<int, short, int>)((int a, short b) => a - b), (Expression<Func<int, short, int>>)((int a, short b) => a - b));
-			Test((Func<short, int, int>)((short a, int b) => a * b), (Expression<Func<short, int, int>>)((short a, int b) => a * b));
-			Test((Func<int, short, int>)((int a, short b) => a / b), (Expression<Func<int, short, int>>)((int a, short b) => a / b));
-			Test((Func<short, int, int>)((short a, int b) => a % b), (Expression<Func<short, int, int>>)((short a, int b) => a % b));
+			Test<Func<int, int, int>>((int a, int b) => a + b, (int a, int b) => a + b);
+			Test<Func<int, int, int>>((int a, int b) => a - b, (int a, int b) => a - b);
+			Test<Func<int, int, int>>((int a, int b) => a * b, (int a, int b) => a * b);
+			Test<Func<int, int, int>>((int a, int b) => a / b, (int a, int b) => a / b);
+			Test<Func<int, int, int>>((int a, int b) => a % b, (int a, int b) => a % b);
+			Test<Func<long, int, long>>((long a, int b) => a + b, (long a, int b) => a + (long)b);
+			Test<Func<long, int, long>>((long a, int b) => a - b, (long a, int b) => a - (long)b);
+			Test<Func<long, int, long>>((long a, int b) => a * b, (long a, int b) => a * (long)b);
+			Test<Func<long, int, long>>((long a, int b) => a / b, (long a, int b) => a / (long)b);
+			Test<Func<long, int, long>>((long a, int b) => a % b, (long a, int b) => a % (long)b);
+			Test<Func<short, int, int>>((short a, int b) => a + b, (short a, int b) => a + b);
+			Test<Func<int, short, int>>((int a, short b) => a - b, (int a, short b) => a - b);
+			Test<Func<short, int, int>>((short a, int b) => a * b, (short a, int b) => a * b);
+			Test<Func<int, short, int>>((int a, short b) => a / b, (int a, short b) => a / b);
+			Test<Func<short, int, int>>((short a, int b) => a % b, (short a, int b) => a % b);
 		}
 
 		public static void BitOperators()
 		{
-			Test((Func<int, int>)((int a) => ~a), (Expression<Func<int, int>>)((int a) => ~a));
-			Test((Func<int, int, int>)((int a, int b) => a & b), (Expression<Func<int, int, int>>)((int a, int b) => a & b));
-			Test((Func<int, int, int>)((int a, int b) => a | b), (Expression<Func<int, int, int>>)((int a, int b) => a | b));
-			Test((Func<int, int, int>)((int a, int b) => a ^ b), (Expression<Func<int, int, int>>)((int a, int b) => a ^ b));
+			Test<Func<int, int>>((int a) => ~a, (int a) => ~a);
+			Test<Func<int, int, int>>((int a, int b) => a & b, (int a, int b) => a & b);
+			Test<Func<int, int, int>>((int a, int b) => a | b, (int a, int b) => a | b);
+			Test<Func<int, int, int>>((int a, int b) => a ^ b, (int a, int b) => a ^ b);
 		}
 
 		public static void ShiftOperators()
 		{
-			Test((Func<int, int>)((int a) => a >> 2), (Expression<Func<int, int>>)((int a) => a >> 2));
-			Test((Func<int, int>)((int a) => a << 2), (Expression<Func<int, int>>)((int a) => a << 2));
-			Test((Func<long, long>)((long a) => a >> 2), (Expression<Func<long, long>>)((long a) => a >> 2));
-			Test((Func<long, long>)((long a) => a << 2), (Expression<Func<long, long>>)((long a) => a << 2));
+			Test<Func<int, int>>((int a) => a >> 2, (int a) => a >> 2);
+			Test<Func<int, int>>((int a) => a << 2, (int a) => a << 2);
+			Test<Func<long, long>>((long a) => a >> 2, (long a) => a >> 2);
+			Test<Func<long, long>>((long a) => a << 2, (long a) => a << 2);
 		}
 
 		public static void SimpleExpressions()
 		{
-			Test((Func<int>)(() => 0), (Expression<Func<int>>)(() => 0));
-			Test((Func<int, int>)((int a) => a), (Expression<Func<int, int>>)((int a) => a));
+			Test<Func<int>>(() => 0, () => 0);
+			Test<Func<int, int>>((int a) => a, (int a) => a);
 		}
 
 		public static void Capturing()
 		{
 			int captured = 5;
-			Test((Func<int>)(() => captured), (Expression<Func<int>>)(() => captured));
+			Test<Func<int>>(() => captured, () => captured);
 		}
 
 		public static void FieldAndPropertyAccess()
@@ -619,55 +957,66 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void Call()
 		{
 			ToCode(null, (string a) => Console.WriteLine(a));
-			Test((Func<string, string>)((string a) => a.ToString()), (Expression<Func<string, string>>)((string a) => a.ToString()));
-			Test((Func<int, string>)((int a) => a.ToString()), (Expression<Func<int, string>>)((int a) => a.ToString()));
-			Test((Func<string, char[]>)((string a) => a.ToArray()), (Expression<Func<string, char[]>>)((string a) => a.ToArray()));
-			Test((Func<bool>)(() => 'a'.CompareTo('b') < 0), (Expression<Func<bool>>)(() => 'a'.CompareTo('b') < 0));
+			Test<Func<string, string>>((string a) => a.ToString(), (string a) => a.ToString());
+			Test<Func<int, string>>((int a) => a.ToString(), (int a) => a.ToString());
+			Test<Func<string, char[]>>((string a) => a.ToArray(), (string a) => a.ToArray());
+			Test<Func<bool>>(() => 'a'.CompareTo('b') < 0, () => 'a'.CompareTo('b') < 0);
+			Test<Action<object, bool>>(delegate(object lockObj, bool lockTaken) {
+				Monitor.Enter(lockObj, ref lockTaken);
+			}, (object lockObj, bool lockTaken) => Monitor.Enter(lockObj, ref lockTaken));
+			Test<Func<string, int, bool>>((string str, int num) => int.TryParse(str, out num), (string str, int num) => int.TryParse(str, out num));
+			Test<Func<string, SimpleType, bool>>((string str, SimpleType t) => int.TryParse(str, out t.Field), (string str, SimpleType t) => int.TryParse(str, out t.Field));
+			Test<Action<object>>(delegate(object o) {
+				TestCall(o);
+			}, (object o) => TestCall(o));
+			Test<Action<object>>(delegate(object o) {
+				TestCall(ref o);
+			}, (object o) => TestCall(ref o));
 		}
 
 		public static void Quote()
 		{
-			Test((Func<bool>)(() => (Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString()) != null), (Expression<Func<bool>>)(() => (Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString()) != null));
+			Test<Func<bool>>(() => (Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString()) != null, () => (Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString()) != null);
 		}
 
 		public static void ArrayInitializer()
 		{
-			Test((Func<int[]>)(() => new int[3] {
+			Test<Func<int[]>>(() => new int[3] {
 				1,
 				2,
 				3
-			}), (Expression<Func<int[]>>)(() => new int[3] {
+			}, () => new int[3] {
 				1,
 				2,
 				3
-			}));
-			Test((Func<int[]>)(() => new int[3]), (Expression<Func<int[]>>)(() => new int[3]));
-			Test((Func<int[,]>)(() => new int[3, 5]), (Expression<Func<int[,]>>)(() => new int[3, 5]));
-			Test((Func<int[][]>)(() => new int[3][]), (Expression<Func<int[][]>>)(() => new int[3][]));
-			Test((Func<int[][]>)(() => new int[1][] {
+			});
+			Test<Func<int[]>>(() => new int[3], () => new int[3]);
+			Test<Func<int[,]>>(() => new int[3, 5], () => new int[3, 5]);
+			Test<Func<int[][]>>(() => new int[3][], () => new int[3][]);
+			Test<Func<int[][]>>(() => new int[1][] {
 				new int[3] {
 					1,
 					2,
 					3
 				}
-			}), (Expression<Func<int[][]>>)(() => new int[1][] {
+			}, () => new int[1][] {
 				new int[3] {
 					1,
 					2,
 					3
 				}
-			}));
+			});
 		}
 
 		public static void AnonymousTypes()
 		{
-			Test((Func<object>)(() => new {
+			Test<Func<object>>(() => new {
 				A = 5,
 				B = "Test"
-			}), (Expression<Func<object>>)(() => new {
+			}, () => new {
 				A = 5,
 				B = "Test"
-			}));
+			});
 		}
 
 		public static void ObjectInit()
@@ -679,91 +1028,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 	}
 
-	internal class MyClass
+	internal static class Extensions
 	{
-		public static MyClass operator +(MyClass a, MyClass b)
+		public static dynamic ToJson(this object o)
 		{
-			return new MyClass();
-		}
-	}
-
-	internal class SimpleType
-	{
-		public const int ConstField = 1;
-
-		public static readonly int StaticReadonlyField = 2;
-
-		public static int StaticField = 3;
-
-		public readonly int ReadonlyField = 2;
-
-		public int Field = 3;
-
-#if CS60
-		public static int StaticReadonlyProperty => 0;
-#else
-		public static int StaticReadonlyProperty {
-			get {
-				return 0;
-			}
-		}
-#endif
-
-		public static int StaticProperty {
-			get;
-			set;
+			return null;
 		}
 
-#if CS60
-		public int ReadonlyProperty => 0;
-#else
-		public int ReadonlyProperty {
-			get {
-				return 0;
-			}
-		}
-#endif
-
-		public int Property {
-			get;
-			set;
-		}
-	}
-
-	internal class SimpleTypeWithCtor
-	{
-		public SimpleTypeWithCtor(int i)
+		public static DateTime ParseDateTime(this object str)
 		{
+			return default(DateTime);
 		}
-	}
-
-	internal class SimpleTypeWithMultipleCtors
-	{
-		public SimpleTypeWithMultipleCtors()
-		{
-		}
-
-		public SimpleTypeWithMultipleCtors(int i)
-		{
-		}
-	}
-
-	internal class GenericClassWithCtor<T>
-	{
-	}
-
-	internal class GenericClassWithMultipleCtors<T>
-	{
-		public GenericClassWithMultipleCtors()
-		{
-		}
-
-		public GenericClassWithMultipleCtors(int x)
-		{
-		}
-	}
-
-	internal class GenericClass<T>
-	{
 	}
 }

@@ -11,10 +11,12 @@ Decompiler Frontends
 
 Aside from the WPF UI ILSpy (downloadable via Releases, see also [plugins](https://github.com/icsharpcode/ILSpy/wiki/Plugins)), the following other frontends are available:
 
-* Linux/Mac/Windows command line client - check out [ICSharpCode.Decompiler.Console](ICSharpCode.Decompiler.Console) in this repository
-* Linux/Mac/Windows [PowerShell cmdlets](ICSharpCode.Decompiler.PowerShell) in this repository
+* Visual Studio 2017 extension [marketplace](https://marketplace.visualstudio.com/items?itemName=SharpDevelopTeam.ILSpy)
 * Visual Studio Code Extension [repository](https://github.com/icsharpcode/ilspy-vscode) | [marketplace](https://marketplace.visualstudio.com/items?itemName=icsharpcode.ilspy-vscode)
 * [ICSharpCode.Decompiler](https://www.nuget.org/packages/ICSharpCode.Decompiler/) NuGet for your own projects
+* Linux/Mac/Windows ILSpy UI based on [Avalonia](http://www.avaloniaui.net/) - check out https://github.com/icsharpcode/AvaloniaILSpy
+* Linux/Mac/Windows command line client - check out [ICSharpCode.Decompiler.Console](ICSharpCode.Decompiler.Console) in this repository
+* Linux/Mac/Windows [PowerShell cmdlets](ICSharpCode.Decompiler.PowerShell) in this repository
 
 Features
 -------
@@ -34,28 +36,41 @@ License
 ILSpy is distributed under the MIT License.
 
 Included open-source libraries:
- * Mono.Cecil: MIT License (part of ICSharpCode.Decompiler)
+ * Mono.Cecil: MIT License (part of ILSpy)
  * LightJson: MIT License (part of ICSharpCode.Decompiler)
  * Humanizer: MIT License (part of ICSharpCode.Decompiler)
  * AvalonEdit: MIT License
  * SharpTreeView: LGPL
- * Ricciolo.StylesExplorer: MS-PL (part of ILSpy.BamlDecompiler.Plugin)
+ * ILSpy.BamlDecompiler: MIT license
  * CommandLineUtils: Apache License 2.0 (part of ICSharpCode.Decompiler.Console)
 
 How to build
 ------------
 
 Windows:
-- Check out the repository using git.
-- Execute `git submodule update --init --recursive` to get all required submodules.
-- Use ILSpy.sln to work.
+- Install Visual Studio (minimum version: 2017.7) with the following components:
+  - Workload ".NET Desktop Development"
+  - .NET Framework 4.6.2 Targeting Pack (if the VS installer does not offer this option, install the [.NET 4.6.2 developer pack](https://www.microsoft.com/en-us/download/details.aspx?id=53321) separately)
+  - Individual Component "VC++ 2017 version 15.9 v14.16 latest v141 tools" (or similar)
+    - The VC++ toolset is optional; if present it is used for `editbin.exe` to modify the stack size used by ILSpy.exe from 1MB to 16MB, because the decompiler makes heavy use of recursion, where small stack sizes lead to problems in very complex methods.
+- Install the [.NET Core SDK 2.2](https://dotnet.microsoft.com/download)
+- Check out the ILSpy repository using git.
+- Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
+- Open ILSpy.sln in Visual Studio.
+  - NuGet package restore will automatically download further dependencies
+  - Run project "ILSpy" for the ILSpy UI
+  - Use the Visual Studio "Test Explorer" to see/run the tests
 
 Unix:
+- Make sure .NET Core 2.2 is installed (you can get it here: https://get.dot.net).
 - Check out the repository using git.
-- Execute `git submodule update --init --recursive` to get all required submodules.
+- Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
+- Use `dotnet build Frontends.sln` to build the non-Windows flavors of ILSpy (cli and powershell core).
+
+(Visual Studio for Mac users only:)
 - Edit `\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj`
   Add `Sdk="Microsoft.NET.Sdk"` to the `Project` element.
-  This is required due to a tooling issue on Unix.
+  This is required due to a tooling issue.
   Please do not commit this when contributing a pull request!
 - Use Frontends.sln to work.
 

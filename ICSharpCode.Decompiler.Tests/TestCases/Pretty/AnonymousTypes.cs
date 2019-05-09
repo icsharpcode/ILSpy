@@ -105,11 +105,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if CS70
 		private void AnonymousTypeOutVar()
 		{
-			InlineVarDecl(out var anon, new {
+			InlineVarDecl(out var v, new {
 				X = 1,
 				Y = 2
 			});
-			Console.WriteLine(anon.X);
+			Console.WriteLine(v.X);
 		}
 #endif
 

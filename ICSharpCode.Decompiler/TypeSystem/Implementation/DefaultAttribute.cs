@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 
@@ -30,30 +32,33 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	public class DefaultAttribute : IAttribute
 	{
 		readonly IType attributeType;
-		readonly IReadOnlyList<ResolveResult> positionalArguments;
-		readonly IReadOnlyList<KeyValuePair<IMember, ResolveResult>> namedArguments;
 		volatile IMethod constructor;
-		
-		public DefaultAttribute(IType attributeType, IReadOnlyList<ResolveResult> positionalArguments = null,
-								IReadOnlyList<KeyValuePair<IMember, ResolveResult>> namedArguments = null)
+
+		public ImmutableArray<CustomAttributeTypedArgument<IType>> FixedArguments { get; }
+		public ImmutableArray<CustomAttributeNamedArgument<IType>> NamedArguments { get; }
+
+		public DefaultAttribute(IType attributeType,
+			ImmutableArray<CustomAttributeTypedArgument<IType>> fixedArguments,
+			ImmutableArray<CustomAttributeNamedArgument<IType>> namedArguments)
 		{
 			if (attributeType == null)
 				throw new ArgumentNullException("attributeType");
 			this.attributeType = attributeType;
-			this.positionalArguments = positionalArguments ?? EmptyList<ResolveResult>.Instance;
-			this.namedArguments = namedArguments ?? EmptyList<KeyValuePair<IMember, ResolveResult>>.Instance;
+			this.FixedArguments = fixedArguments;
+			this.NamedArguments = namedArguments;
 		}
-		
-		public DefaultAttribute(IMethod constructor, IReadOnlyList<ResolveResult> positionalArguments = null,
-								IReadOnlyList<KeyValuePair<IMember, ResolveResult>> namedArguments = null)
+
+		public DefaultAttribute(IMethod constructor,
+			ImmutableArray<CustomAttributeTypedArgument<IType>> fixedArguments,
+			ImmutableArray<CustomAttributeNamedArgument<IType>> namedArguments)
 		{
 			if (constructor == null)
 				throw new ArgumentNullException("constructor");
 			this.constructor = constructor;
 			this.attributeType = constructor.DeclaringType ?? SpecialType.UnknownType;
-			this.positionalArguments = positionalArguments ?? EmptyList<ResolveResult>.Instance;
-			this.namedArguments = namedArguments ?? EmptyList<KeyValuePair<IMember, ResolveResult>>.Instance;
-			if (this.positionalArguments.Count != constructor.Parameters.Count) {
+			this.FixedArguments = fixedArguments;
+			this.NamedArguments = namedArguments;
+			if (fixedArguments.Length != constructor.Parameters.Count) {
 				throw new ArgumentException("Positional argument count must match the constructor's parameter count");
 			}
 		}
@@ -61,13 +66,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IType AttributeType {
 			get { return attributeType; }
 		}
-		
+
+		bool IAttribute.HasDecodeErrors => false;
+
 		public IMethod Constructor {
 			get {
 				IMethod ctor = this.constructor;
 				if (ctor == null) {
-					foreach (IMethod candidate in this.AttributeType.GetConstructors(m => m.Parameters.Count == positionalArguments.Count)) {
-						if (candidate.Parameters.Select(p => p.Type).SequenceEqual(this.PositionalArguments.Select(a => a.Type))) {
+					foreach (IMethod candidate in this.AttributeType.GetConstructors(m => m.Parameters.Count == FixedArguments.Length)) {
+						if (candidate.Parameters.Select(p => p.Type).SequenceEqual(this.FixedArguments.Select(a => a.Type))) {
 							ctor = candidate;
 							break;
 						}
@@ -76,14 +83,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 				return ctor;
 			}
-		}
-		
-		public IReadOnlyList<ResolveResult> PositionalArguments {
-			get { return positionalArguments; }
-		}
-		
-		public IReadOnlyList<KeyValuePair<IMember, ResolveResult>> NamedArguments {
-			get { return namedArguments; }
 		}
 	}
 }

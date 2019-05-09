@@ -83,12 +83,23 @@ namespace ICSharpCode.ILSpy.Options
 
 		bool showMetadataTokens;
 
-		public bool ShowMetadataTokens
-		{
+		public bool ShowMetadataTokens {
 			get { return showMetadataTokens; }
 			set {
 				if (showMetadataTokens != value) {
 					showMetadataTokens = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool showMetadataTokensInBase10;
+
+		public bool ShowMetadataTokensInBase10 {
+			get { return showMetadataTokensInBase10; }
+			set {
+				if (showMetadataTokensInBase10 != value) {
+					showMetadataTokensInBase10 = value;
 					OnPropertyChanged();
 				}
 			}
@@ -120,14 +131,106 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		bool foldBraces = false;
+
+		public bool FoldBraces {
+			get { return foldBraces; }
+			set {
+				if (foldBraces != value) {
+					foldBraces = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool expandMemberDefinitions = false;
+
+		public bool ExpandMemberDefinitions {
+			get { return expandMemberDefinitions; }
+			set {
+				if (expandMemberDefinitions != value) {
+					expandMemberDefinitions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool expandUsingDeclarations = false;
+
+		public bool ExpandUsingDeclarations {
+			get { return expandUsingDeclarations; }
+			set {
+				if (expandUsingDeclarations != value) {
+					expandUsingDeclarations = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool showDebugInfo;
+
+		public bool ShowDebugInfo {
+			get { return showDebugInfo; }
+			set {
+				if (showDebugInfo != value) {
+					showDebugInfo = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool indentationUseTabs = true;
+
+		public bool IndentationUseTabs {
+			get { return indentationUseTabs; }
+			set {
+				if (indentationUseTabs != value) {
+					indentationUseTabs = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		int indentationTabSize = 4;
+
+		public int IndentationTabSize {
+			get { return indentationTabSize; }
+			set {
+				if (indentationTabSize != value) {
+					indentationTabSize = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		int indentationSize = 4;
+
+		public int IndentationSize {
+			get { return indentationSize; }
+			set {
+				if (indentationSize != value) {
+					indentationSize = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public void CopyValues(DisplaySettings s)
 		{
 			this.SelectedFont = s.selectedFont;
 			this.SelectedFontSize = s.selectedFontSize;
 			this.ShowLineNumbers = s.showLineNumbers;
 			this.ShowMetadataTokens = s.showMetadataTokens;
+			this.ShowMetadataTokensInBase10 = s.showMetadataTokensInBase10;
+			this.ShowDebugInfo = s.showDebugInfo;
 			this.EnableWordWrap = s.enableWordWrap;
 			this.SortResults = s.sortResults;
+			this.FoldBraces = s.foldBraces;
+			this.ExpandMemberDefinitions = s.expandMemberDefinitions;
+			this.ExpandUsingDeclarations = s.expandUsingDeclarations;
+			this.IndentationUseTabs = s.indentationUseTabs;
+			this.IndentationTabSize = s.indentationTabSize;
+			this.IndentationSize = s.indentationSize;
 		}
 	}
 }

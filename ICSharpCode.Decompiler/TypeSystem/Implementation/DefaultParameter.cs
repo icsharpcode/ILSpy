@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly IType type;
 		readonly string name;
 		readonly IReadOnlyList<IAttribute> attributes;
-		readonly bool isRef, isOut, isParams, isOptional;
+		readonly bool isRef, isOut, isIn, isParams, isOptional;
 		readonly object defaultValue;
 		readonly IParameterizedMember owner;
 		
@@ -43,10 +43,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				throw new ArgumentNullException("name");
 			this.type = type;
 			this.name = name;
+			this.attributes = EmptyList<IAttribute>.Instance;
 		}
 		
 		public DefaultParameter(IType type, string name, IParameterizedMember owner = null, IReadOnlyList<IAttribute> attributes = null,
-		                        bool isRef = false, bool isOut = false, bool isParams = false, bool isOptional = false, object defaultValue = null)
+		                        bool isRef = false, bool isOut = false, bool isIn = false, bool isParams = false, bool isOptional = false, object defaultValue = null)
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
@@ -55,9 +56,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.type = type;
 			this.name = name;
 			this.owner = owner;
-			this.attributes = attributes;
+			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 			this.isRef = isRef;
 			this.isOut = isOut;
+			this.isIn = isIn;
 			this.isParams = isParams;
 			this.isOptional = isOptional;
 			this.defaultValue = defaultValue;
@@ -71,9 +73,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return owner; }
 		}
 		
-		public IReadOnlyList<IAttribute> Attributes {
-			get { return attributes; }
-		}
+		public IEnumerable<IAttribute> GetAttributes() => attributes;
 		
 		public bool IsRef {
 			get { return isRef; }
@@ -81,6 +81,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public bool IsOut {
 			get { return isOut; }
+		}
+
+		public bool IsIn {
+			get { return isIn; }
 		}
 		
 		public bool IsParams {
@@ -103,8 +107,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return false; }
 		}
 		
-		public object ConstantValue {
-			get { return defaultValue; }
+		public bool HasConstantValueInSignature {
+			get { return IsOptional; }
+		}
+		
+		public object GetConstantValue(bool throwOnInvalidMetadata)
+		{
+			return defaultValue;
 		}
 		
 		public override string ToString()
@@ -124,10 +133,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			b.Append(parameter.Name);
 			b.Append(':');
 			b.Append(parameter.Type.ReflectionName);
-			if (parameter.IsOptional) {
+			if (parameter.IsOptional && parameter.HasConstantValueInSignature) {
 				b.Append(" = ");
-				if (parameter.ConstantValue != null)
-					b.Append(parameter.ConstantValue.ToString());
+				object val = parameter.GetConstantValue(throwOnInvalidMetadata: false);
+				if (val != null)
+					b.Append(val.ToString());
 				else
 					b.Append("null");
 			}

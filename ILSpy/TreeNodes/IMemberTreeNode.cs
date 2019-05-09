@@ -16,17 +16,21 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using Mono.Cecil;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Interface implemented by all tree nodes
 	/// (both in main tree view and in analyzer)
-	/// that represent Cecil members.
+	/// that represent TypeSystem members.
 	/// </summary>
 	public interface IMemberTreeNode
 	{
-		MemberReference Member { get; }
+		/// <summary>
+		/// Returns the entity that is represented by this tree node.
+		/// May return null, if the member cannot be resolved.
+		/// </summary>
+		IEntity Member { get; }
 	}
 }

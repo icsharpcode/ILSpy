@@ -20,7 +20,8 @@ using System;
 using System.Linq;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -29,16 +30,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	sealed class ResourceListTreeNode : ILSpyTreeNode
 	{
-		readonly ModuleDefinition module;
+		readonly PEFile module;
 		
-		public ResourceListTreeNode(ModuleDefinition module)
+		public ResourceListTreeNode(PEFile module)
 		{
 			this.LazyLoading = true;
 			this.module = module;
 		}
 		
 		public override object Text {
-			get { return "Resources"; }
+			get { return Resources._Resources; }
 		}
 		
 		public override object Icon {
@@ -51,7 +52,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		protected override void LoadChildren()
 		{
-			foreach (Resource r in module.Resources.OrderBy(m => m.Name))
+			foreach (Resource r in module.Resources.OrderBy(m => m.Name, NaturalStringComparer.Instance))
 				this.Children.Add(ResourceTreeNode.Create(r));
 		}
 		

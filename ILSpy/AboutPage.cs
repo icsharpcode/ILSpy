@@ -33,11 +33,12 @@ using System.Xml.Linq;
 
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_Help", Header = "_About", MenuOrder = 99999)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._Help), Header = nameof(Resources._About), MenuOrder = 99999)]
 	sealed class AboutPage : SimpleCommand
 	{
 		[Import]
@@ -49,15 +50,15 @@ namespace ICSharpCode.ILSpy
 			Display(decompilerTextView);
 		}
 		
-		static readonly Uri UpdateUrl = new Uri("http://www.ilspy.net/updates.xml");
+		static readonly Uri UpdateUrl = new Uri("https://ilspy.net/updates.xml");
 		const string band = "stable";
 		
 		static AvailableVersionInfo latestAvailableVersion;
 		
 		public static void Display(DecompilerTextView textView)
 		{
-			AvalonEditTextOutput output = new AvalonEditTextOutput();
-			output.WriteLine("ILSpy version " + RevisionClass.FullVersion);
+			AvalonEditTextOutput output = new AvalonEditTextOutput() { EnableHyperlinks = true };
+			output.WriteLine(Resources.ILSpyVersion + RevisionClass.FullVersion);
 			output.AddUIElement(
 				delegate {
 					StackPanel stackPanel = new StackPanel();
@@ -71,7 +72,7 @@ namespace ICSharpCode.ILSpy
 					}
 					CheckBox checkBox = new CheckBox();
 					checkBox.Margin = new Thickness(4);
-					checkBox.Content = "Automatically check for updates every week";
+					checkBox.Content = Resources.AutomaticallyCheckUpdatesEveryWeek;
 					UpdateSettings settings = new UpdateSettings(ILSpySettings.Load());
 					checkBox.SetBinding(CheckBox.IsCheckedProperty, new Binding("AutomaticUpdateCheckEnabled") { Source = settings });
 					return new StackPanel {
@@ -118,12 +119,12 @@ namespace ICSharpCode.ILSpy
 		static void AddUpdateCheckButton(StackPanel stackPanel, DecompilerTextView textView)
 		{
 			Button button = new Button();
-			button.Content = "Check for updates";
+			button.Content = Resources.CheckUpdates;
 			button.Cursor = Cursors.Arrow;
 			stackPanel.Children.Add(button);
 			
 			button.Click += delegate {
-				button.Content = "Checking...";
+				button.Content = Resources.Checking;
 				button.IsEnabled = false;
 				GetLatestVersionAsync().ContinueWith(
 					delegate (Task<AvailableVersionInfo> task) {
@@ -152,19 +153,19 @@ namespace ICSharpCode.ILSpy
 					});
 				stackPanel.Children.Add(
 					new TextBlock {
-						Text = "You are using the latest release.",
+						Text = Resources.UsingLatestRelease,
 						VerticalAlignment = VerticalAlignment.Bottom
 					});
 			} else if (currentVersion < availableVersion.Version) {
 				stackPanel.Children.Add(
 					new TextBlock {
-						Text = "Version " + availableVersion.Version + " is available.",
+						Text = string.Format(Resources.VersionAvailable, availableVersion.Version ),
 						Margin = new Thickness(0,0,8,0),
 						VerticalAlignment = VerticalAlignment.Bottom
 					});
 				if (availableVersion.DownloadUrl != null) {
 					Button button = new Button();
-					button.Content = "Download";
+					button.Content = Resources.Download;
 					button.Cursor = Cursors.Arrow;
 					button.Click += delegate {
 						MainWindow.OpenLink(availableVersion.DownloadUrl);
@@ -172,7 +173,7 @@ namespace ICSharpCode.ILSpy
 					stackPanel.Children.Add(button);
 				}
 			} else {
-				stackPanel.Children.Add(new TextBlock { Text = "You are using a nightly build newer than the latest release." });
+				stackPanel.Children.Add(new TextBlock { Text = Resources.UsingNightlyBuildNewerThanLatestRelease });
 			}
 		}
 		
@@ -236,7 +237,7 @@ namespace ICSharpCode.ILSpy
 					if (automaticUpdateCheckEnabled != value) {
 						automaticUpdateCheckEnabled = value;
 						Save();
-						OnPropertyChanged("AutomaticUpdateCheckEnabled");
+						OnPropertyChanged(nameof(AutomaticUpdateCheckEnabled));
 					}
 				}
 			}
@@ -249,7 +250,7 @@ namespace ICSharpCode.ILSpy
 					if (lastSuccessfulUpdateCheck != value) {
 						lastSuccessfulUpdateCheck = value;
 						Save();
-						OnPropertyChanged("LastSuccessfulUpdateCheck");
+						OnPropertyChanged(nameof(LastSuccessfulUpdateCheck));
 					}
 				}
 			}

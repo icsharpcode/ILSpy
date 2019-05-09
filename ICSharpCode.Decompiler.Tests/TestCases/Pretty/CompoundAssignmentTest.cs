@@ -34,9 +34,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public enum ShortEnum : short
 		{
-			None,
-			One,
-			Two,
+			None = 0,
+			One = 1,
+			Two = 2,
 			Four = 4
 		}
 
@@ -117,6 +117,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				set;
 			}
 			public ulong UlongProp {
+				get;
+				set;
+			}
+			public string StringProp {
 				get;
 				set;
 			}
@@ -407,6 +411,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		public static ShortEnum StaticShortProperty {
+			get;
+			set;
+		}
+
+		public static string StaticStringProperty {
 			get;
 			set;
 		}
@@ -4539,6 +4548,161 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			int num = startIndex;
 			items[num++] = item;
 			items[num++] = item;
+		}
+
+#if !LEGACY_CSC
+		// Legacy csc generates a slightly different pattern for string compound assignment
+		// as for all other compound assignments. We'll ignore that edge case.
+		// Note: it's possible that the pre-CopyPropagation run of TransformAssignments is causing trouble there,
+		// and that the compound assignment transform would be fine if it didn't get disrupted.
+
+		private static void Issue1082(string[] strings, List<char> chars, bool flag, int i)
+		{
+			// The 'chars[i]' result is stored in a temporary, and both branches use the
+			// same temporary. In order to inline the generated value-type temporary, we
+			// need to split it, even though it has the address taken for the ToString() call.
+			if (flag) {
+				strings[1] += chars[i].ToString();
+			} else {
+				strings[0] += chars[i].ToString();
+			}
+		}
+#endif
+
+		private static void StringPropertyCompoundAssign()
+		{
+			StaticStringProperty += "a";
+			StaticStringProperty += 1;
+			new CustomClass().StringProp += "a";
+			new CustomClass().StringProp += 1;
+		}
+
+#if false
+		public uint PreIncrementIndexer(string name)
+		{
+			return ++M()[name];
+		}
+#endif
+		public int PreIncrementByRef(ref int i)
+		{
+			return ++i;
+		}
+
+		public unsafe int PreIncrementByPointer()
+		{
+			return ++(*GetPointer());
+		}
+
+		public int PreIncrement2DArray()
+		{
+			return ++Array()[1, 2];
+		}
+
+		public int CompoundAssignInstanceField()
+		{
+			return M().Field *= 10;
+		}
+
+		public int CompoundAssignInstanceProperty()
+		{
+			return M().Property *= 10;
+		}
+
+		public int CompoundAssignStaticField()
+		{
+			return StaticField ^= 100;
+		}
+
+		public int CompoundAssignStaticProperty()
+		{
+			return StaticProperty &= 10;
+		}
+
+		public int CompoundAssignArrayElement1(int[] array, int pos)
+		{
+			return array[pos] *= 10;
+		}
+
+		public int CompoundAssignArrayElement2(int[] array)
+		{
+			return array[Environment.TickCount] *= 10;
+		}
+#if false
+		public uint CompoundAssignIndexer(string name)
+		{
+			return M()[name] -= 2;
+		}
+#endif
+		public int CompoundAssignIncrement2DArray()
+		{
+			return Array()[1, 2] %= 10;
+		}
+
+		public int CompoundAssignByRef(ref int i)
+		{
+			return i <<= 2;
+		}
+
+		public unsafe double CompoundAssignByPointer(double* ptr)
+		{
+			return *ptr /= 1.5;
+		}
+
+		public void CompoundAssignEnum()
+		{
+			enumField |= MyEnum.Two;
+			enumField &= ~MyEnum.Four;
+		}
+
+		public int PostIncrementInAddition(int i, int j)
+		{
+			return i++ + j;
+		}
+
+		public void PostIncrementInlineLocalVariable(Func<int, int> f)
+		{
+			int num = 0;
+			f(num++);
+		}
+
+		public int PostDecrementArrayElement(int[] array, int pos)
+		{
+			return array[pos]--;
+		}
+#if false
+		public uint PostIncrementIndexer(string name)
+		{
+			return M()[name]++;
+		}
+
+		public unsafe int PostIncrementOfPointer(int* ptr)
+		{
+			return *(ptr++);
+		}
+#endif
+		public int PostDecrementInstanceField()
+		{
+			return M().Field--;
+		}
+
+		public int PostDecrementInstanceProperty()
+		{
+			return M().Property--;
+		}
+
+		public int PostIncrement2DArray()
+		{
+			return Array()[StaticField, StaticProperty]++;
+		}
+
+		public int PostIncrementByRef(ref int i)
+		{
+			return i++;
+		}
+
+		public unsafe int PostIncrementByPointer()
+		{
+			return (*GetPointer())++;
 		}
 	}
 }

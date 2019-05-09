@@ -100,6 +100,8 @@ namespace ICSharpCode.ILSpy.Controls
 		{
 			if (cancelButton == -1 && e.KeyCode == Keys.Escape) {
 				this.Close();
+			} else if (e.KeyCode == Keys.C && e.Control) {
+				Clipboard.SetText(this.Text + Environment.NewLine + label.Text);
 			}
 		}
 

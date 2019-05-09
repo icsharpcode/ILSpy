@@ -206,19 +206,19 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets the ILRange for this instruction alone, ignoring the operands.
 		/// </summary>
-		public Interval ILRange;
+		private Interval ILRange;
 
 		public void AddILRange(Interval newRange)
 		{
-			if (newRange.IsEmpty) {
-				return;
-			}
 			if (this.ILRange.IsEmpty) {
 				this.ILRange = newRange;
 				return;
 			}
-			if (newRange.Start <= this.ILRange.Start) {
-				if (newRange.End < this.ILRange.Start) {
+			if (newRange.IsEmpty) {
+				return;
+			}
+			if (newRange.Start <= this.StartILOffset) {
+				if (newRange.End < this.StartILOffset) {
 					this.ILRange = newRange; // use the earlier range
 				} else {
 					// join overlapping ranges
@@ -226,8 +226,36 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			} else if (newRange.Start <= this.ILRange.End) {
 				// join overlapping ranges
-				this.ILRange = new Interval(this.ILRange.Start, Math.Max(newRange.End, this.ILRange.End));
+				this.ILRange = new Interval(this.StartILOffset, Math.Max(newRange.End, this.ILRange.End));
 			}
+		}
+
+		public void AddILRange(ILInstruction sourceInstruction)
+		{
+			AddILRange(sourceInstruction.ILRange);
+		}
+
+		public void SetILRange(ILInstruction sourceInstruction)
+		{
+			ILRange = sourceInstruction.ILRange;
+		}
+
+		public void SetILRange(Interval range)
+		{
+			ILRange = range;
+		}
+
+		public int StartILOffset => ILRange.Start;
+
+		public int EndILOffset => ILRange.End;
+
+		public bool HasILRange => ILRange.IsEmpty;
+
+		public IEnumerable<Interval> ILRanges => new[] { ILRange };
+
+		public void WriteILRange(ITextOutput output, ILAstWritingOptions options)
+		{
+			ILRange.WriteTo(output, options);
 		}
 
 		/// <summary>
@@ -582,6 +610,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public SlotInfo SlotInfo {
 			get {
+				if (parent == null)
+					return null;
 				Debug.Assert(parent.GetChild(this.ChildIndex) == this);
 				return parent.GetChildSlot(this.ChildIndex);
 			}

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using System;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -38,7 +39,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public bool ContainsILSwitch { get; private set; }
 
 		/// <summary>
-		/// Gets the sections that were detected by the previoous AnalyzeBlock() call.
+		/// Gets the sections that were detected by the previous AnalyzeBlock() call.
 		/// </summary>
 		public readonly List<KeyValuePair<LongSet, ILInstruction>> Sections = new List<KeyValuePair<LongSet, ILInstruction>>();
 
@@ -58,8 +59,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Blocks that can be deleted if the tail of the initial block is replaced with a switch instruction.
 		/// </summary>
 		public readonly List<Block> InnerBlocks = new List<Block>();
-
-		Block rootBlock;
+		
+		public Block RootBlock { get; private set; }
 
 		/// <summary>
 		/// Analyze the last two statements in the block and see if they can be turned into a
@@ -69,7 +70,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public bool AnalyzeBlock(Block block)
 		{
 			switchVar = null;
-			rootBlock = block;
+			RootBlock = block;
 			targetBlockToSectionIndex.Clear();
 			targetContainerToSectionIndex.Clear();
 			Sections.Clear();
@@ -99,12 +100,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			}
 			if (tailOnly) {
-				Debug.Assert(block == rootBlock);
+				Debug.Assert(block == RootBlock);
 			} else {
 				Debug.Assert(switchVar != null); // switchVar should always be determined by the top-level call
-				if (block.IncomingEdgeCount != 1 || block == rootBlock)
+				if (block.IncomingEdgeCount != 1 || block == RootBlock)
 					return false; // for now, let's only consider if-structures that form a tree
-				if (block.Parent != rootBlock.Parent)
+				if (block.Parent != RootBlock.Parent)
 					return false; // all blocks should belong to the same container
 			}
 			LongSet trueValues;
@@ -115,6 +116,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (!(tailOnly || block.Instructions.Count == 2))
 					return false;
 				trueValues = trueValues.IntersectWith(inputValues);
+				if (trueValues.SetEquals(inputValues) || trueValues.IsEmpty)
+					return false;
 				Block trueBlock;
 				if (trueInst.MatchBranch(out trueBlock) && AnalyzeBlock(trueBlock, trueValues)) {
 					// OK, true block was further analyzed.
@@ -230,15 +233,30 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return inst.MatchLdLoc(out switchVar);
 		}
 
+		bool MatchSwitchVar(ILInstruction inst, out long sub)
+		{
+			if (inst is BinaryNumericInstruction bn
+				&& bn.Operator == BinaryNumericOperator.Sub
+				&& !bn.CheckForOverflow && !bn.IsLifted
+				&& bn.Right.MatchLdcI(out sub))
+			{
+				return MatchSwitchVar(bn.Left);
+			}
+
+			sub = 0;
+			return MatchSwitchVar(inst);
+		}
+
 		/// <summary>
 		/// Analyzes the boolean condition, returning the set of values of the interesting
 		/// variable for which the condition evaluates to true.
 		/// </summary>
 		private bool AnalyzeCondition(ILInstruction condition, out LongSet trueValues)
 		{
-			if (condition is Comp comp && MatchSwitchVar(comp.Left) && comp.Right.MatchLdcI(out long val)) {
-				// if (comp(V OP val))
+			if (condition is Comp comp && MatchSwitchVar(comp.Left, out var sub) && comp.Right.MatchLdcI(out long val)) {
+				// if (comp((V - sub) OP val))
 				trueValues = MakeSetWhereComparisonIsTrue(comp.Kind, val, comp.Sign);
+				trueValues = trueValues.AddOffset(sub);
 				return true;
 			} else if (MatchSwitchVar(condition)) {
 				// if (ldloc V) --> branch for all values except 0

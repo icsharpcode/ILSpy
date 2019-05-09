@@ -45,11 +45,12 @@ using ICSharpCode.AvalonEdit.Search;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Documentation;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
 using Microsoft.Win32;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TextView
 {
@@ -194,49 +195,56 @@ namespace ICSharpCode.ILSpy.TextView
 		
 		object GenerateTooltip(ReferenceSegment segment)
 		{
-			if (segment.Reference is Mono.Cecil.Cil.OpCode) {
-				Mono.Cecil.Cil.OpCode code = (Mono.Cecil.Cil.OpCode)segment.Reference;
-				string encodedName = code.Code.ToString();
-				string opCodeHex = code.Size > 1 ? string.Format("0x{0:x2}{1:x2}", code.Op1, code.Op2) : string.Format("0x{0:x2}", code.Op2);
+			if (segment.Reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo code) {
 				XmlDocumentationProvider docProvider = XmlDocLoader.MscorlibDocumentation;
 				if (docProvider != null){
-					string documentation = docProvider.GetDocumentation("F:System.Reflection.Emit.OpCodes." + encodedName);
+					string documentation = docProvider.GetDocumentation("F:System.Reflection.Emit.OpCodes." + code.EncodedName);
 					if (documentation != null) {
 						XmlDocRenderer renderer = new XmlDocRenderer();
-						renderer.AppendText(string.Format("{0} ({1}) - ", code.Name, opCodeHex));
+						renderer.AppendText($"{code.Name} (0x{code.Code:x}) - ");
 						renderer.AddXmlDocumentation(documentation);
 						return renderer.CreateTextBlock();
 					}
 				}
-				return string.Format("{0} ({1})", code.Name, opCodeHex);
-			} else if (segment.Reference is MemberReference) {
-				MemberReference mr = (MemberReference)segment.Reference;
-				// if possible, resolve the reference
-				if (mr is TypeReference) {
-					mr = ((TypeReference)mr).Resolve() ?? mr;
-				} else if (mr is MethodReference) {
-					mr = ((MethodReference)mr).Resolve() ?? mr;
-				}
-				XmlDocRenderer renderer = new XmlDocRenderer();
-				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(mr));
+				return $"{code.Name} (0x{code.Code:x})";
+			} else if (segment.Reference is IEntity entity) {
+				return CreateTextBlockForEntity(entity);
+			} else if (segment.Reference is ValueTuple<PEFile, System.Reflection.Metadata.EntityHandle> unresolvedEntity) {
+				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
 				try {
-					XmlDocumentationProvider docProvider = XmlDocLoader.LoadDocumentation(mr.Module);
-					if (docProvider != null) {
-						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
-						if (documentation != null) {
-							renderer.AppendText(Environment.NewLine);
-							renderer.AddXmlDocumentation(documentation);
-						}
-					}
-				} catch (XmlException) {
-					// ignore
+					IEntity resolved = typeSystem.MainModule.ResolveEntity(unresolvedEntity.Item2);
+					if (resolved == null)
+						return null;
+					return CreateTextBlockForEntity(resolved);
+				} catch (BadImageFormatException) {
+					return null;
 				}
-				return renderer.CreateTextBlock();
 			}
 			return null;
 		}
+
+		static TextBlock CreateTextBlockForEntity(IEntity resolved)
+		{
+			XmlDocRenderer renderer = new XmlDocRenderer();
+			renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(resolved));
+			try {
+				if (resolved.ParentModule == null || resolved.ParentModule.PEFile == null)
+					return null;
+				var docProvider = XmlDocLoader.LoadDocumentation(resolved.ParentModule.PEFile);
+				if (docProvider != null) {
+					string documentation = docProvider.GetDocumentation(resolved.GetIdString());
+					if (documentation != null) {
+						renderer.AppendText(Environment.NewLine);
+						renderer.AddXmlDocumentation(documentation);
+					}
+				}
+			} catch (XmlException) {
+				// ignore
+			}
+			return renderer.CreateTextBlock();
+		}
 		#endregion
-		
+
 		#region RunWithCancellation
 		/// <summary>
 		/// Switches the GUI into "waiting" mode, then calls <paramref name="taskCreation"/> to create
@@ -373,6 +381,8 @@ namespace ICSharpCode.ILSpy.TextView
 			references = textOutput.References;
 			definitionLookup = textOutput.DefinitionLookup;
 			textEditor.SyntaxHighlighting = highlighting;
+			textEditor.Options.EnableEmailHyperlinks = textOutput.EnableHyperlinks;
+			textEditor.Options.EnableHyperlinks = textOutput.EnableHyperlinks;
 			if (activeRichTextColorizer != null)
 				textEditor.TextArea.TextView.LineTransformers.Remove(activeRichTextColorizer);
 			if (textOutput.HighlightingModel != null) {
@@ -551,7 +561,7 @@ namespace ICSharpCode.ILSpy.TextView
 			output.WriteLine();
 			if (wasNormalLimit) {
 				output.AddButton(
-					Images.ViewCode, "Display Code",
+					Images.ViewCode, Properties.Resources.DisplayCode,
 					delegate {
 						DoDecompile(context, ExtendedOutputLengthLimit).HandleExceptions();
 					});
@@ -559,7 +569,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			
 			output.AddButton(
-				Images.Save, "Save Code",
+				Images.Save, Properties.Resources.SaveCode,
 				delegate {
 					SaveToDisk(context.Language, context.TreeNodes, context.Options);
 				});
@@ -661,7 +671,7 @@ namespace ICSharpCode.ILSpy.TextView
 			
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.DefaultExt = language.FileExtension;
-			dlg.Filter = language.Name + "|*" + language.FileExtension + "|All Files|*.*";
+			dlg.Filter = language.Name + "|*" + language.FileExtension + Properties.Resources.AllFiles;
 			dlg.FileName = CleanUpName(treeNodes.First().ToString()) + language.FileExtension;
 			if (dlg.ShowDialog() == true) {
 				SaveToDisk(new DecompilationContext(language, treeNodes.ToArray(), options), dlg.FileName);
@@ -717,18 +727,13 @@ namespace ICSharpCode.ILSpy.TextView
 						AvalonEditTextOutput output = new AvalonEditTextOutput();
 						output.WriteLine("Decompilation complete in " + stopwatch.Elapsed.TotalSeconds.ToString("F1") + " seconds.");
 						output.WriteLine();
-						output.AddButton(null, "Open Explorer", delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
+						output.AddButton(null, Properties.Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
 						output.WriteLine();
 						tcs.SetResult(output);
 					} catch (OperationCanceledException) {
 						tcs.SetCanceled();
-						#if DEBUG
-					} catch (AggregateException ex) {
-						tcs.SetException(ex);
-						#else
 					} catch (Exception ex) {
 						tcs.SetException(ex);
-						#endif
 					}
 				}));
 			thread.Start();

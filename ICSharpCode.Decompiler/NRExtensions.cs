@@ -23,31 +23,10 @@ namespace ICSharpCode.Decompiler
 {
 	public static class NRExtensions
 	{
-		public static IDecompilerTypeSystem GetSpecializingTypeSystem(this IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext)
-		{
-			IReadOnlyList<IType> classTypeParameters = null;
-			IReadOnlyList<IType> methodTypeParameters = null;
-			
-			if (decompilationContext.CurrentTypeDefinition != null && decompilationContext.CurrentTypeDefinition.TypeParameterCount > 0)
-				classTypeParameters = decompilationContext.CurrentTypeDefinition.TypeArguments;
-			IMethod method = decompilationContext.CurrentMember as IMethod;
-			if (method != null && method.TypeParameters.Count > 0)
-				methodTypeParameters = method.TypeArguments;
-			if (typeSystem is SpecializingDecompilerTypeSystem)
-				typeSystem = ((SpecializingDecompilerTypeSystem)typeSystem).Context;
-			if ((classTypeParameters != null && classTypeParameters.Count > 0) || (methodTypeParameters != null && methodTypeParameters.Count > 0))
-				return new SpecializingDecompilerTypeSystem(typeSystem, new TypeParameterSubstitution(classTypeParameters, methodTypeParameters));
-			else
-				return typeSystem;
-		}
-		
 		public static bool IsCompilerGenerated(this IEntity entity)
 		{
 			if (entity != null) {
-				foreach (IAttribute a in entity.Attributes) {
-					if (a.AttributeType.FullName == "System.Runtime.CompilerServices.CompilerGeneratedAttribute")
-						return true;
-				}
+				return entity.HasAttribute(KnownAttribute.CompilerGenerated);
 			}
 			return false;
 		}

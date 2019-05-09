@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -61,6 +62,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public (int a, int b, int c, int d, int e, int f, int g, int h, (int i, int j)) Nested4;
 
 		public Dictionary<(int a, string b), (string c, int d)> TupleDict;
+		public List<(int, string)> List;
+		public bool HasItems => List.Any(((int, string) a) => a.Item1 > 0);
 
 		public int VT1Member => VT1.Item1;
 		public int AccessUnnamed8 => Unnamed8.Item8;
@@ -95,6 +98,47 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(item);
 			Console.WriteLine(item);
 			Console.WriteLine(TupleDict.Values.ToList().First().d);
+		}
+
+		public void Issue1174()
+		{
+			Console.WriteLine((1, 2, 3).GetHashCode());
+		}
+
+		public void LocalVariables((int, int) a)
+		{
+			(int, int) valueTuple = (a.Item1 + a.Item2, a.Item1 * a.Item2);
+			Console.WriteLine(valueTuple.ToString());
+			Console.WriteLine(valueTuple.GetType().FullName);
+		}
+
+		public void Foreach(IEnumerable<(int, string)> input)
+		{
+			foreach (var item in input) {
+				Console.WriteLine($"{item.Item1}: {item.Item2}");
+			}
+		}
+
+		public void ForeachNamedElements(IEnumerable<(int Index, string Data)> input)
+		{
+			foreach (var item in input) {
+				Console.WriteLine($"{item.Index}: {item.Data}");
+			}
+		}
+
+		public void NonGenericForeach(IEnumerable input)
+		{
+			foreach ((string, int) item in input) {
+				Console.WriteLine($"{item.Item1}: {item.Item2}");
+			}
+		}
+
+		public void CallForeach()
+		{
+			Foreach(new List<(int, string)> {
+				(1, "a"),
+				(2, "b")
+			});
 		}
 	}
 }

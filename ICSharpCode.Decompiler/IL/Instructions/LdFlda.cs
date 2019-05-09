@@ -25,7 +25,20 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(field.DeclaringType.IsReferenceType == true ? (target.ResultType == StackType.O) : (target.ResultType == StackType.I || target.ResultType == StackType.Ref));
+			switch (field.DeclaringType.IsReferenceType) {
+				case true:
+					Debug.Assert(target.ResultType == StackType.O,
+						"Class fields can only be accessed with an object on the stack");
+					break;
+				case false:
+					Debug.Assert(target.ResultType == StackType.I || target.ResultType == StackType.Ref,
+						"Struct fields can only be accessed with a pointer on the stack");
+					break;
+				case null:
+					// field of unresolved type
+					Debug.Assert(target.ResultType == StackType.O || target.ResultType == StackType.I || target.ResultType == StackType.Ref);
+					break;
+			}
 		}
 	}
 }

@@ -24,7 +24,6 @@ using System.Text;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -79,7 +78,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						}
 					}
 					break;
+					/*
 				case "System.Reflection.FieldInfo.GetFieldFromHandle":
+					// TODO : This is dead code because LdTokenAnnotation is not added anywhere:
 					if (arguments.Length == 1) {
 						MemberReferenceExpression mre = arguments[0] as MemberReferenceExpression;
 						if (mre != null && mre.MemberName == "FieldHandle" && mre.Target.Annotation<LdTokenAnnotation>() != null) {
@@ -103,68 +104,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						}
 					}
 					break;
+					*/
 				case "System.Activator.CreateInstance":
-					if (method.TypeArguments.Count == 1 && arguments.Length == 0 && method.TypeArguments[0].Kind == TypeKind.TypeParameter) {
+					if (arguments.Length == 0 && method.TypeArguments.Count == 1 && IsInstantiableTypeParameter(method.TypeArguments[0])) {
 						invocationExpression.ReplaceWith(new ObjectCreateExpression(context.TypeSystemAstBuilder.ConvertType(method.TypeArguments.First())));
-					}
-					break;
-				case "System.String.Format":
-					if (context.Settings.StringInterpolation && arguments.Length > 1
-						&& arguments[0] is PrimitiveExpression stringExpression && stringExpression.Value is string
-						&& arguments.Skip(1).All(a => !a.DescendantsAndSelf.OfType<PrimitiveExpression>().Any(p => p.Value is string)))
-					{
-						var tokens = new List<(TokenKind, int, string)>();
-						int i = 0;
-						foreach (var (kind, data) in TokenizeFormatString((string)stringExpression.Value)) {
-							int index;
-							switch (kind) {
-								case TokenKind.Error:
-									return;
-								case TokenKind.String:
-									tokens.Add((kind, -1, data));
-									break;
-								case TokenKind.Argument:
-									if (!int.TryParse(data, out index) || index != i)
-										return;
-									i++;
-									tokens.Add((kind, index, null));
-									break;
-								case TokenKind.ArgumentWithFormat:
-									string[] arg = data.Split(new[] { ':' }, 2);
-									if (arg.Length != 2 || arg[1].Length == 0)
-										return;
-									if (!int.TryParse(arg[0], out index) || index != i)
-										return;
-									i++;
-									tokens.Add((kind, index, arg[1]));
-									break;
-								default:
-									return;
-							}
-						}
-						if (i != arguments.Length - 1)
-							return;
-						List<InterpolatedStringContent> content = new List<InterpolatedStringContent>();
-						if (tokens.Count > 0) {
-							foreach (var (kind, index, text) in tokens) {
-								switch (kind) {
-									case TokenKind.String:
-										content.Add(new InterpolatedStringText(text));
-										break;
-									case TokenKind.Argument:
-										content.Add(new Interpolation(WrapInParens(arguments[index + 1].Detach())));
-										break;
-									case TokenKind.ArgumentWithFormat:
-										content.Add(new Interpolation(WrapInParens(arguments[index + 1].Detach()), text));
-										break;
-								}
-							}
-							var expr = new InterpolatedStringExpression();
-							expr.Content.AddRange(content);
-							expr.CopyAnnotationsFrom(invocationExpression);
-							invocationExpression.ReplaceWith(expr);
-							return;
-						}
 					}
 					break;
 			}
@@ -201,84 +144,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return;
 		}
 
-		Expression WrapInParens(Expression expression)
+		bool IsInstantiableTypeParameter(IType type)
 		{
-			if (expression is ConditionalExpression)
-				return new ParenthesizedExpression(expression);
-			return expression;
-		}
-
-		enum TokenKind
-		{
-			Error,
-			String,
-			Argument,
-			ArgumentWithFormat
-		}
-
-		private IEnumerable<(TokenKind, string)> TokenizeFormatString(string value)
-		{
-			int pos = -1;
-
-			int Peek(int steps = 1)
-			{
-				if (pos + steps < value.Length)
-					return value[pos + steps];
-				return -1;
-			}
-
-			int Next()
-			{
-				int val = Peek();
-				pos++;
-				return val;
-			}
-
-			int next;
-			TokenKind kind = TokenKind.String;
-			StringBuilder sb = new StringBuilder();
-
-			while ((next = Next()) > -1) {
-				switch ((char)next) {
-					case '{':
-						if (Peek() == '{') {
-							kind = TokenKind.String;
-							sb.Append("{{");
-							Next();
-						} else {
-							if (sb.Length > 0) {
-								yield return (kind, sb.ToString());
-							}
-							kind = TokenKind.Argument;
-							sb.Clear();
-						}
-						break;
-					case '}':
-						if (kind != TokenKind.String) {
-							yield return (kind, sb.ToString());
-							sb.Clear();
-							kind = TokenKind.String;
-						} else {
-							sb.Append((char)next);
-						}
-						break;
-					case ':':
-						if (kind == TokenKind.Argument) {
-							kind = TokenKind.ArgumentWithFormat;
-						}
-						sb.Append(':');
-						break;
-					default:
-						sb.Append((char)next);
-						break;
-				}
-			}
-			if (sb.Length > 0) {
-				if (kind == TokenKind.String)
-					yield return (kind, sb.ToString());
-				else
-					yield return (TokenKind.Error, null);
-			}
+			return type is ITypeParameter tp && tp.HasDefaultConstructorConstraint;
 		}
 
 		bool CheckArgumentsForStringConcat(Expression[] arguments)

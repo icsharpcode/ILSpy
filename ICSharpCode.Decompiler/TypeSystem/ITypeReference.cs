@@ -50,10 +50,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public interface ITypeResolveContext : ICompilationProvider
 	{
 		/// <summary>
-		/// Gets the current assembly.
-		/// This property may return null if this context does not specify any assembly.
+		/// Gets the current module.
+		/// This property may return null if this context does not specify any module.
 		/// </summary>
-		IAssembly CurrentAssembly { get; }
+		IModule CurrentModule { get; }
 		
 		/// <summary>
 		/// Gets the current type definition.

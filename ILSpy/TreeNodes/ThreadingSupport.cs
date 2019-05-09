@@ -19,10 +19,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -65,8 +69,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						result.Add(child);
 						App.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action<SharpTreeNode>(
 							delegate (SharpTreeNode newChild) {
-								// don't access "child" here the
-								// background thread might already be running the next loop iteration
+								// don't access "child" here,
+								// the background thread might already be running the next loop iteration
 								if (loadChildrenTask == thisTask) {
 									node.Children.Insert(node.Children.Count - 1, newChild);
 								}
@@ -82,6 +86,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						delegate {
 							if (loadChildrenTask == thisTask) {
 								node.Children.RemoveAt(node.Children.Count - 1); // remove 'Loading...'
+								node.RaisePropertyChanged(nameof(node.Text));
 							}
 							if (continuation.Exception != null) { // observe exception even when task isn't current
 								if (loadChildrenTask == thisTask) {
@@ -115,7 +120,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		sealed class LoadingTreeNode : ILSpyTreeNode
 		{
 			public override object Text {
-				get { return "Loading..."; }
+				get { return Resources.Loading; }
 			}
 			
 			public override FilterResult Filter(FilterSettings settings)
@@ -148,6 +153,33 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			
 			public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 			{
+			}
+		}
+
+		[ExportContextMenuEntry(Header = nameof(Resources.CopyErrorMessage))]
+		sealed class CopyErrorMessageContextMenu : IContextMenuEntry
+		{
+			public bool IsVisible(TextViewContext context)
+			{
+				if (context.SelectedTreeNodes != null && context.SelectedTreeNodes.All(n => n is ErrorTreeNode))
+					return true;
+				return false;
+			}
+
+			public bool IsEnabled(TextViewContext context)
+			{
+				return true;
+			}
+
+			public void Execute(TextViewContext context)
+			{
+				StringBuilder builder = new StringBuilder();
+				if (context.SelectedTreeNodes != null) {
+					foreach (var node in context.SelectedTreeNodes.OfType<ErrorTreeNode>()) {
+						builder.AppendLine(node.Text.ToString());
+					}
+				}
+				Clipboard.SetText(builder.ToString());
 			}
 		}
 	}

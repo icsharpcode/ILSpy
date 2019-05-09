@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		
 		public static readonly Conversion BoxingConversion = new BuiltinConversion(true, 7);
 		public static readonly Conversion UnboxingConversion = new BuiltinConversion(false, 8);
-		
+
 		/// <summary>
 		/// C# 'as' cast.
 		/// </summary>
@@ -80,6 +80,8 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// C# 7 throw expression being converted to an arbitrary type.
 		/// </summary>
 		public static readonly Conversion ThrowExpressionConversion = new BuiltinConversion(true, 10);
+		
+		public static readonly Conversion ImplicitInterpolatedStringConversion = new BuiltinConversion(true, 10);
 
 		public static Conversion UserDefinedConversion(IMethod operatorMethod, bool isImplicit, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted = false, bool isAmbiguous = false)
 		{
@@ -233,8 +235,10 @@ namespace ICSharpCode.Decompiler.Semantics
 				get { return type == 9; }
 			}
 
+			public override bool IsInterpolatedStringConversion => type == 10;
+			
 			public override bool IsThrowExpressionConversion {
-				get { return type == 10; }
+				get { return type == 11; }
 			}
 			
 			public override string ToString()
@@ -267,6 +271,8 @@ namespace ICSharpCode.Decompiler.Semantics
 					case 9:
 						return "try cast";
 					case 10:
+						return "interpolated string";
+					case 11:
 						return "throw-expression conversion";
 				}
 				return (isImplicit ? "implicit " : "explicit ") + name + " conversion";
@@ -597,6 +603,11 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// Gets whether this conversion is a tuple conversion.
 		/// </summary>
 		public virtual bool IsTupleConversion => false;
+
+		/// <summary>
+		/// Gets whether this is an interpolated string conversion to <see cref="IFormattable" /> or <see cref="FormattableString"/>.
+		/// </summary>
+		public virtual bool IsInterpolatedStringConversion => false;
 
 		/// <summary>
 		/// For a tuple conversion, gets the individual tuple element conversions.

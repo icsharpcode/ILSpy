@@ -17,11 +17,16 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Reflection;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class TypeAnalysisTests
 	{
+		private class @_
+		{
+		}
+
 		private byte[] byteArray;
 
 		public byte SubtractFrom256(byte b)
@@ -122,6 +127,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Console.WriteLine(o is Random);
 			Console.WriteLine(!(o is Random));
+			// If we didn't escape the '_' identifier here, this would look like a discard pattern
+			Console.WriteLine(o is @_);
 		}
 
 		public byte[] CreateArrayWithInt(int length)
@@ -228,6 +235,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public bool CompareStringWithNull(string a)
 		{
 			return a == null;
+		}
+
+		public bool CompareType(Type a, Type b)
+		{
+			return a == b;
+		}
+
+		public bool CompareTypeByReference(Type a, Type b)
+		{
+			return (object)a == b;
+		}
+
+		public bool CompareTypeWithNull(Type t)
+		{
+			return t == null;
+		}
+
+		public Attribute CallExtensionMethodViaBaseClass(Type type)
+		{
+			return type.GetCustomAttribute<AttributeUsageAttribute>();
 		}
 
 		public decimal ImplicitConversionToDecimal(byte v)

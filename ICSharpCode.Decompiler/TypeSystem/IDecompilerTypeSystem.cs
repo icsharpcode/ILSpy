@@ -16,28 +16,19 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using Mono.Cecil;
+using System.Collections.Immutable;
+using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
-	/// Allows resolving cecil types into the NRefactory type system.
+	/// Main interface for the decompiler type system.
+	/// 
+	/// The MetadataModule class allows decoding/resolving metadata tokens into type system entities.
 	/// </summary>
-	public interface IDecompilerTypeSystem
+	public interface IDecompilerTypeSystem : ICompilation
 	{
-		ICompilation Compilation { get; }
-		
-		TypeDefinition GetCecil(ITypeDefinition typeDefinition);
-		MemberReference GetCecil(IMember member);
-		
-		IType Resolve(TypeReference typeReference, bool isFromSignature = false);
-		IField Resolve(FieldReference fieldReference);
-		IMethod Resolve(MethodReference methodReference);
-
-		/// <summary>
-		/// Gets a type system instance that automatically specializes the results
-		/// of each Resolve() call with the provided substitution.
-		/// </summary>
-		IDecompilerTypeSystem GetSpecializingTypeSystem(TypeParameterSubstitution substitution);
+		new MetadataModule MainModule { get; }
 	}
 }

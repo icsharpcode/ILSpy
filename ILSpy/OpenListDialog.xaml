@@ -1,6 +1,10 @@
 ﻿<Window
-	x:Class="ICSharpCode.ILSpy.OpenListDialog" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
-	Title="Open List"
+	x:Class="ICSharpCode.ILSpy.OpenListDialog" 
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+	xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
+	xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
+	Title="{x:Static properties:Resources.OpenList}"
 	Style="{DynamicResource DialogWindow}"
 	WindowStartupLocation="CenterOwner"
 	ResizeMode="CanResizeWithGrip"
@@ -16,26 +20,26 @@
 			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
 		<StackPanel>
-			<Label>Select a list:</Label>
+			<Label Content="{x:Static properties:Resources.SelectList}"/>
 		</StackPanel>
 		<ListView Name="listView" Grid.Row="1" Margin="0, 8" controls:SortableGridViewColumn.SortMode="Automatic" SelectionChanged="ListView_SelectionChanged" 
 				  Loaded="listView_Loaded" SelectionMode="Single" MouseDoubleClick="listView_MouseDoubleClick">
 			<ListView.View>
 				<GridView>
-					<controls:SortableGridViewColumn x:Name="nameColumn" Header="Name" DisplayMemberBinding="{Binding .}" />
+					<controls:SortableGridViewColumn x:Name="nameColumn" Header="{x:Static properties:Resources.Name}" DisplayMemberBinding="{Binding .}" />
 				</GridView>
 			</ListView.View>
 		</ListView>
 		<DockPanel Grid.Row="2">
 			<StackPanel DockPanel.Dock="Right"  Orientation="Horizontal" HorizontalAlignment="Right">
-				<Button IsDefault="True" Margin="2,0" IsEnabled="False" Name="okButton" Click="OKButton_Click">_Open</Button>
-				<Button IsCancel="True" Margin="2,0">Cancel</Button>
+				<Button IsDefault="True" Margin="2,0" IsEnabled="False" Name="okButton" Click="OKButton_Click" Content="{x:Static properties:Resources.OpenListDialog__Open}"/>
+				<Button IsCancel="True" Margin="2,0" Content="Cancel"/>
 			</StackPanel>
 
 			<StackPanel DockPanel.Dock="Left" Orientation="Horizontal" HorizontalAlignment="Left">
-				<Button Margin="2,0" Click="CreateButton_Click">_Create</Button>
-				<Button Margin="2,0" IsEnabled="False" Name="deleteButton" Click="DeleteButton_Click">_Delete</Button>
-				<Button Margin="2,0" Click="ResetButton_Click">_Reset</Button>
+				<Button Margin="2,0" Click="CreateButton_Click" Content="{x:Static properties:Resources._Create}"/>
+				<Button Margin="2,0" IsEnabled="False" Name="deleteButton" Click="DeleteButton_Click" Content="{x:Static properties:Resources.OpenListDialog__Delete}"/>
+				<Button Margin="2,0" Click="ResetButton_Click" Content="{x:Static properties:Resources._Reset}"/>
 			</StackPanel>
 		</DockPanel>
 	</Grid>

@@ -22,9 +22,9 @@ using System.IO;
 using System.Threading.Tasks;
 
 using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.Xaml
 {
@@ -35,10 +35,10 @@ namespace ICSharpCode.ILSpy.Xaml
 
 		public ILSpyTreeNode CreateNode(Resource resource)
 		{
-			EmbeddedResource er = resource as EmbeddedResource;
-			if (er != null)
-				return CreateNode(er.Name, er.GetResourceStream());
-			return null;
+			Stream stream = resource.TryOpenStream();
+			if (stream == null)
+				return null;
+			return CreateNode(resource.Name, stream);
 		}
 		
 		public ILSpyTreeNode CreateNode(string key, object data)

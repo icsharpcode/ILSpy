@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(Block block, BlockTransformContext context)
 		{
 			if (running)
-				throw new InvalidOperationException("LoopingBlockTransform already running. Transforms (and the CSharpDecompiler) are neither neither thread-safe nor re-entrant.");
+				throw new InvalidOperationException("LoopingBlockTransform already running. Transforms (and the CSharpDecompiler) are neither thread-safe nor re-entrant.");
 			running = true;
 			try {
 				int count = 1;
