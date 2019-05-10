@@ -167,6 +167,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				bool useTargetFrameworkAttribute = false;
 				LanguageTargets languageTargets = LanguageTargets.None;
 				string targetFramework = module.Reader.DetectTargetFrameworkId();
+				int frameworkVersionNumber = 0;
 				if (!string.IsNullOrEmpty(targetFramework)) {
 					string[] frameworkParts = targetFramework.Split(',');
 					string frameworkIdentifier = frameworkParts.FirstOrDefault(a => !a.StartsWith("Version=", StringComparison.OrdinalIgnoreCase) && !a.StartsWith("Profile=", StringComparison.OrdinalIgnoreCase));
@@ -182,6 +183,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (frameworkVersion != null) {
 						w.WriteElementString("TargetFrameworkVersion", frameworkVersion.Substring("Version=".Length));
 						useTargetFrameworkAttribute = true;
+						frameworkVersionNumber = int.Parse(frameworkVersion.Substring("Version=v".Length).Replace(".", ""));
+						if (frameworkVersionNumber < 100) frameworkVersionNumber *= 10;
 					}
 					string frameworkProfile = frameworkParts.FirstOrDefault(a => a.StartsWith("Profile=", StringComparison.OrdinalIgnoreCase));
 					if (frameworkProfile != null)
@@ -190,16 +193,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (!useTargetFrameworkAttribute) {
 					switch (module.GetRuntime()) {
 						case Metadata.TargetRuntime.Net_1_0:
+							frameworkVersionNumber = 100;
 							w.WriteElementString("TargetFrameworkVersion", "v1.0");
 							break;
 						case Metadata.TargetRuntime.Net_1_1:
+							frameworkVersionNumber = 110;
 							w.WriteElementString("TargetFrameworkVersion", "v1.1");
 							break;
 						case Metadata.TargetRuntime.Net_2_0:
+							frameworkVersionNumber = 200;
 							w.WriteElementString("TargetFrameworkVersion", "v2.0");
 							// TODO: Detect when .NET 3.0/3.5 is required
 							break;
 						default:
+							frameworkVersionNumber = 400;
 							w.WriteElementString("TargetFrameworkVersion", "v4.0");
 							break;
 					}
