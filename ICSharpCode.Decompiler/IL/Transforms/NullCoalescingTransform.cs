@@ -39,22 +39,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		/// <summary>
 		/// Handles NullCoalescingInstruction case 1: reference types.
-		/// 
-		/// stloc s(valueInst)
-		/// if (comp(ldloc s == ldnull)) {
-		///		stloc s(fallbackInst)
-		/// }
-		/// =>
-		/// stloc s(if.notnull(valueInst, fallbackInst))
-		/// 
-		/// -------------------
-		/// 
-		/// stloc obj(valueInst)
-		///	if (comp(ldloc obj == ldnull)) {
-		///		throw(...)
-		///	}
-		///	=>
-		///	stloc obj(if.notnull(valueInst, throw(...)))
 		/// </summary>
 		bool TransformRefTypes(Block block, int pos, StatementTransformContext context)
 		{
@@ -67,16 +51,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(condition.MatchCompEquals(out var left, out var right) && left.MatchLdLoc(stloc.Variable) && right.MatchLdNull()))
 				return false;
 			trueInst = Block.Unwrap(trueInst);
+			// stloc s(valueInst)
+			// if (comp(ldloc s == ldnull)) {
+			//		stloc s(fallbackInst)
+			// }
+			// =>
+			// stloc s(if.notnull(valueInst, fallbackInst))
 			if (trueInst.MatchStLoc(stloc.Variable, out var fallbackValue)) {
 				context.Step("NullCoalescingTransform: simple (reference types)", stloc);
 				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
-				block.Instructions.RemoveAt(pos + 1); // remove if instruction
-				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
-				return true;
-			} else if (trueInst is Throw throwInst) {
-				context.Step("NullCoalescingTransform (throw expression)", stloc);
-				throwInst.resultType = StackType.O;
-				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, throwInst);
 				block.Instructions.RemoveAt(pos + 1); // remove if instruction
 				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
 				return true;
@@ -95,6 +78,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& useOfTemporary.MatchLdLoc(temporary)) {
 				context.Step("NullCoalescingTransform: with temporary variable (reference types)", stloc);
 				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
+				block.Instructions.RemoveAt(pos + 1); // remove if instruction
+				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
+				return true;
+			}
+			// stloc obj(valueInst)
+			// if (comp(ldloc obj == ldnull)) {
+			//		throw(...)
+			// }
+			// =>
+			// stloc obj(if.notnull(valueInst, throw(...)))
+			if (context.Settings.ThrowExpressions && trueInst is Throw throwInst) {
+				context.Step("NullCoalescingTransform (throw expression)", stloc);
+				throwInst.resultType = StackType.O;
+				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, throwInst);
 				block.Instructions.RemoveAt(pos + 1); // remove if instruction
 				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
 				return true;
