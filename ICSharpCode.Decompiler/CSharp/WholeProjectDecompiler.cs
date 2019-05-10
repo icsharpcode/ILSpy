@@ -219,8 +219,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				w.WriteStartElement("PropertyGroup"); // platform-specific
 				w.WriteAttributeString("Condition", " '$(Platform)' == '" + platformName + "' ");
 				w.WriteElementString("PlatformTarget", platformName);
-				if ((module.Reader.PEHeaders.CorHeader.Flags & CorFlags.Prefers32Bit) != 0) {
-					w.WriteElementString("Prefer32Bit", "True");
+				if (frameworkVersionNumber > 400 && platformName == "AnyCPU" && (module.Reader.PEHeaders.CorHeader.Flags & CorFlags.Prefers32Bit) == 0) {
+					w.WriteElementString("Prefer32Bit", "false");
 				}
 				w.WriteEndElement(); // </PropertyGroup> (platform-specific)
 
