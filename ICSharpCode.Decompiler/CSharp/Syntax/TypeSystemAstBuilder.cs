@@ -407,7 +407,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		bool TypeDefMatches(ITypeDefinition typeDef, IType type)
 		{
-			if (type.Name != typeDef.Name || type.Namespace != typeDef.Namespace || type.TypeParameterCount != typeDef.TypeParameterCount)
+			if (type == null || type.Name != typeDef.Name || type.Namespace != typeDef.Namespace || type.TypeParameterCount != typeDef.TypeParameterCount)
 				return false;
 			bool defIsNested = typeDef.DeclaringTypeDefinition != null;
 			bool typeIsNested = type.DeclaringType != null;
