@@ -7,7 +7,7 @@
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 
     <EnableDefaultItems>false</EnableDefaultItems>
-    <ExtrasEnableWpfProjectSetup>true</ExtrasEnableWpfProjectSetup>
+    <UseWpf>true</UseWpf>
     <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
     <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
 
