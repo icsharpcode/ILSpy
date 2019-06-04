@@ -26,6 +26,7 @@ using System.Threading;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
+using Microsoft.Build.Locator;
 using Microsoft.Win32;
 using NUnit.Framework;
 
@@ -188,22 +189,15 @@ namespace ICSharpCode.Decompiler.Tests
 				File.Delete(file);
 			}
 		}
-		
-		static string FindVS2017()
-		{
-			using (var key = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32)) {
-				using (var subkey = key.OpenSubKey(@"SOFTWARE\Microsoft\VisualStudio\SxS\VS7")) {
-					return subkey?.GetValue("15.0") as string;
-				}
-			}
-		}
 
 		static string FindMSBuild()
 		{
-			string vsPath = FindVS2017();
+			string vsPath = MSBuildLocator.QueryVisualStudioInstances(new VisualStudioInstanceQueryOptions { DiscoveryTypes = DiscoveryType.VisualStudioSetup })				
+										  .FirstOrDefault()
+										  ?.MSBuildPath; 
 			if (vsPath == null)
-				throw new InvalidOperationException("Could not find VS2017");
-			return Path.Combine(vsPath, @"MSBuild\15.0\bin\MSBuild.exe");
+				throw new InvalidOperationException("Could not find MSBuild");
+			return Path.Combine(vsPath, "msbuild.exe");
 		}
 
 		static void Compile(string projectFile, string outputDir)
