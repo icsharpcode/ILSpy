@@ -57,7 +57,9 @@ function gitBranch() {
         return "no-branch";
     }
 
-    if ($env:BUILD_SOURCEBRANCHNAME -ne $null) {
+	if ($env:APPVEYOR_REPO_BRANCH -ne $null) {
+        return $env:APPVEYOR_REPO_BRANCH;
+    } elseif ($env:BUILD_SOURCEBRANCHNAME -ne $null) {
         return $env:BUILD_SOURCEBRANCHNAME;
     } else {
         return ((git branch --no-color).Split([System.Environment]::NewLine) | where { $_ -match "^\* " } | select -First 1).Substring(2);
