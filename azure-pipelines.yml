@@ -1,0 +1,86 @@
+trigger:
+- master
+- msix
+- 3.2.x
+
+pr:
+- master
+- 3.2.x
+
+variables:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  BuildPlatform: Any CPU  
+
+jobs:
+- job: Build
+  pool:
+    vmImage: windows-2019
+  strategy:
+    matrix:
+      Config_Release:
+        BuildConfiguration: Release
+      Config_Debug:
+        BuildConfiguration: Debug
+
+  steps:
+  - checkout: self
+    submodules: recursive
+
+  - task: DotNetCoreInstaller@0
+    inputs:
+      version: '3.0.100-preview5-011568'
+
+  - powershell: .\BuildTools\pipelines-install.ps1
+    displayName: Install
+
+  - task: MSBuild@1
+    displayName: Restore ILSpy
+    inputs:
+      solution: ILSpy.sln
+      msbuildArguments: /t:restore
+      configuration: $(BuildConfiguration)
+      platform: $(BuildPlatform) 
+
+  - task: MSBuild@1
+    displayName: Build ILSpy
+    inputs:
+      solution: ILSpy.sln
+      msbuildArguments: /restore
+      configuration: $(BuildConfiguration)
+      platform: $(BuildPlatform)
+      maximumCpuCount: true
+
+  - task: VSTest@2
+    displayName: Test
+    inputs:
+      testSelector: testAssemblies
+      testAssemblyVer2: |
+        ICSharpCode.Decompiler.Tests\bin\$(BuildConfiguration)\net462\ICSharpCode.Decompiler.Tests.exe
+        ILSpy.Tests\bin\$(BuildConfiguration)\net462\ILSpy.Tests.exe
+        ILSpy.BamlDecompiler.Tests\bin\$(BuildConfiguration)\net462\ILSpy.BamlDecompiler.Tests.dll
+
+  - task: ArchiveFiles@1
+    displayName: Create zip
+    inputs:
+      archiveType: zip
+      rootFolder: ILSpy/bin/$(BuildConfiguration)/net462
+      archiveFile: $(Build.ArtifactStagingDirectory)\$(BuildConfiguration)\ILSpy.$(Build.BuildNumber).zip
+      includeRootFolder: false
+
+  - script: python BuildTools\tidy.py
+    displayName: Tab check
+
+  - task: CopyFiles@2
+    displayName: Move VSIX to publish directory
+    inputs:
+      contents: |
+        '**/*.vsix'
+        '**/*.nupkg'
+      targetFolder: $(Build.ArtifactStagingDirectory)\$(BuildConfiguration)
+      flattenFolders: true
+  
+  - task: PublishPipelineArtifact@0
+    displayName: Publish $(BuildConfiguration) 
+    inputs:
+      targetPath: $(Build.ArtifactStagingDirectory)\$(BuildConfiguration)
+      artifactName: Binaries - $(BuildConfiguration)
