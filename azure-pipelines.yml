@@ -74,8 +74,8 @@ jobs:
     displayName: Move VSIX to publish directory
     inputs:
       contents: |
-        '**/*.vsix'
-        '**/*.nupkg'
+        **\*.vsix
+        **\*.nupkg
       targetFolder: $(Build.ArtifactStagingDirectory)\$(BuildConfiguration)
       flattenFolders: true
   
