@@ -9,12 +9,12 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="ICSharpCode.ILSpy"
+    Name="ICSharpCode.ILSpy.Local"
     Publisher="CN=ICSharpCode"
     Version="1.0.0.0" />
 
   <Properties>
-    <DisplayName>ILSpy</DisplayName>
+    <DisplayName>ILSpy (Local)</DisplayName>
     <PublisherDisplayName>ICSharpCode</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
   </Properties>
@@ -32,7 +32,7 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="ILSpy"
+        DisplayName="ILSpy (Local)"
         Description=".NET assembly inspector and decompiler"
         BackgroundColor="transparent"
         Square150x150Logo="Images\Square150x150Logo.png"
@@ -44,7 +44,7 @@
 	  <Extensions>
 		<uap3:Extension Category="windows.appExecutionAlias" Executable="ILSpy\ILSpy.exe" EntryPoint="Windows.FullTrustApplication">
 			<uap3:AppExecutionAlias>
-				<desktop:ExecutionAlias Alias="ilspy.exe" />
+				<desktop:ExecutionAlias Alias="ilspyl.exe" />
 			</uap3:AppExecutionAlias>
 		</uap3:Extension>
 	  </Extensions>
