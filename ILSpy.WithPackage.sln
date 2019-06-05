@@ -38,6 +38,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{58AA7BDB-174C-4566-BD8A-EC461F1D6848}"
 	ProjectSection(SolutionItems) = preProject
 		azure-pipelines.yml = azure-pipelines.yml
+		BuildTools\update-assemblyinfo.ps1 = BuildTools\update-assemblyinfo.ps1
 	EndProjectSection
 EndProject
 Global

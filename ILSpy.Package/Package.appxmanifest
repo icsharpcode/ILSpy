@@ -11,7 +11,7 @@
   <Identity
     Name="ICSharpCode.ILSpy"
     Publisher="CN=ICSharpCode"
-    Version="1.0.0.0" />
+    Version="$INSERTMAJORVERSION$.$INSERTMINORVERSION$.$INSERTREVISION$.0" />
 
   <Properties>
     <DisplayName>ILSpy</DisplayName>
