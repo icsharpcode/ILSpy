@@ -56,13 +56,17 @@
     <DefaultLanguage>en-US</DefaultLanguage>
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
     <EntryPointProjectUniqueName>..\ILSpy\ILSpy.csproj</EntryPointProjectUniqueName>
-    <GenerateAppInstallerFile Condition="'$(ReleaseChannel)' == 'CI'">true</GenerateAppInstallerFile>
-	<AppInstallerUri Condition="'$(ReleaseChannel)' == 'CI'">https://some.location/tbd</AppInstallerUri>
     <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
     <GenerateTestArtifacts>True</GenerateTestArtifacts>
     <AppxBundle>Always</AppxBundle>
     <AppxBundlePlatforms>neutral</AppxBundlePlatforms>
     <UapAppxPackageBuildMode Condition="'$(ReleaseChannel)' == 'Store'">CI</UapAppxPackageBuildMode>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ReleaseChannel)' == 'CI'">
+    <GenerateAppInstallerFile>true</GenerateAppInstallerFile>
+    <AppInstallerUri>https://some.location/tbd</AppInstallerUri>	  
+    <AppInstallerUpdateFrequency>0</AppInstallerUpdateFrequency>
+    <AppInstallerCheckForUpdateFrequency>OnApplicationRun</AppInstallerCheckForUpdateFrequency>
   </PropertyGroup>
   <ItemGroup>
     <AppxManifest Include="Package-Local.appxmanifest" Condition="'$(ReleaseChannel)' == ''">
