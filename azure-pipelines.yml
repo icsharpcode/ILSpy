@@ -20,15 +20,19 @@ jobs:
       Config_Release_Zip:
         BuildConfiguration: Release
         ReleaseChannel: Zip
+        Solution: ILSpy.sln
       Config_Debug_Zip:
         BuildConfiguration: Debug
         ReleaseChannel: Zip
+        Solution: ILSpy.sln
       Config_Release_CI:
         BuildConfiguration: Release
         ReleaseChannel: CI
+        Solution: ILSpy.WithPackage.sln
       Config_Release_Store:
         BuildConfiguration: Release
         ReleaseChannel: Store
+        Solution: ILSpy.WithPackage.sln
 
   steps:
   - checkout: self
@@ -44,7 +48,7 @@ jobs:
   - task: MSBuild@1
     displayName: Restore ILSpy
     inputs:
-      solution: ILSpy.sln
+      solution: $(Solution)
       msbuildArguments: /t:restore
       configuration: $(BuildConfiguration)
       platform: $(BuildPlatform) 
@@ -52,21 +56,11 @@ jobs:
   - task: MSBuild@1
     displayName: Build ILSpy
     inputs:
-      solution: ILSpy.sln
-      msbuildArguments: /restore
-      configuration: $(BuildConfiguration)
-      platform: $(BuildPlatform)
-      maximumCpuCount: true
-
-  - task: MSBuild@1
-    displayName: Build Package
-    inputs:
-      solution: ILSpy.Package/ILSpy.Package.wapproj
+      solution: $(Solution)
       msbuildArguments: /p:AppxPackageDir="$(Build.ArtifactStagingDirectory)\$(ReleaseChannel)\\" 
       configuration: $(BuildConfiguration)
       platform: $(BuildPlatform)
       maximumCpuCount: true
-    condition: and(succeeded(), or(eq(variables['ReleaseChannel'], 'Store'), eq(variables['ReleaseChannel'], 'CI')))
 
   - task: VSTest@2
     displayName: Test
@@ -82,7 +76,7 @@ jobs:
     inputs:
       archiveType: zip
       rootFolder: ILSpy/bin/$(BuildConfiguration)/net462
-      archiveFile: $(Build.ArtifactStagingDirectory)\$(BuildConfiguration)\ILSpy.$(Build.BuildNumber).zip
+      archiveFile: $(Build.ArtifactStagingDirectory)\$(ReleaseChannel)\ILSpy.$(Build.BuildNumber).zip
       includeRootFolder: false
     condition: and(succeeded(), eq(variables['ReleaseChannel'], 'Zip'))
 
@@ -95,20 +89,12 @@ jobs:
       contents: |
         **\*.vsix
         **\*.nupkg
-      targetFolder: $(Build.ArtifactStagingDirectory)\$(BuildConfiguration)
+      targetFolder: $(Build.ArtifactStagingDirectory)\$(ReleaseChannel)
       flattenFolders: true
     condition: and(succeeded(), eq(variables['ReleaseChannel'], 'Zip'))
   
   - task: PublishPipelineArtifact@0
-    displayName: Publish $(BuildConfiguration) Zip
-    inputs:
-      targetPath: $(Build.ArtifactStagingDirectory)\$(BuildConfiguration)
-      artifactName: Binaries - $(BuildConfiguration)
-    condition: and(succeeded(), eq(variables['ReleaseChannel'], 'Zip'))
-
-  - task: PublishPipelineArtifact@0
-    displayName: Publish $(ReleaseChannel) 
+    displayName: Publish $(ReleaseChannel) $(BuildConfiguration)
     inputs:
       targetPath: $(Build.ArtifactStagingDirectory)\$(ReleaseChannel)
-      artifactName: Package - $(ReleaseChannel)
-    condition: and(succeeded(), or(eq(variables['ReleaseChannel'], 'Store'), eq(variables['ReleaseChannel'], 'CI')))
+      artifactName: $(ReleaseChannel) - $(BuildConfiguration)
