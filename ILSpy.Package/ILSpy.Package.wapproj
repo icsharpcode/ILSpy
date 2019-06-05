@@ -56,7 +56,8 @@
     <DefaultLanguage>en-US</DefaultLanguage>
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
     <EntryPointProjectUniqueName>..\ILSpy\ILSpy.csproj</EntryPointProjectUniqueName>
-    <GenerateAppInstallerFile>true</GenerateAppInstallerFile>
+    <GenerateAppInstallerFile Condition="'$(ReleaseChannel)' == 'CI'">true</GenerateAppInstallerFile>
+	<AppInstallerUri Condition="'$(ReleaseChannel)' == 'CI'">https://some.location/tbd</AppInstallerUri>
     <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
     <GenerateTestArtifacts>True</GenerateTestArtifacts>
     <AppxBundle>Always</AppxBundle>
