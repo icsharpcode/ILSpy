@@ -17,10 +17,18 @@ jobs:
     vmImage: windows-2019
   strategy:
     matrix:
-      Config_Release:
+      Config_Release_Zip:
         BuildConfiguration: Release
-      Config_Debug:
+        ReleaseChannel: Zip
+      Config_Debug_Zip:
         BuildConfiguration: Debug
+        ReleaseChannel: Zip
+      Config_Release_CI:
+        BuildConfiguration: Release
+        ReleaseChannel: CI
+      Config_Release_Store:
+        BuildConfiguration: Release
+        ReleaseChannel: Store
 
   steps:
   - checkout: self
@@ -50,6 +58,16 @@ jobs:
       platform: $(BuildPlatform)
       maximumCpuCount: true
 
+  - task: MSBuild@1
+    displayName: Build Package
+    inputs:
+      solution: ILSpy.Package/ILSpy.Package.wapproj
+      msbuildArguments: /p:AppxPackageDir="$(Build.ArtifactStagingDirectory)\$(ReleaseChannel)\\" 
+      configuration: $(BuildConfiguration)
+      platform: $(BuildPlatform)
+      maximumCpuCount: true
+    condition: and(succeeded(), or(eq(variables['ReleaseChannel'], 'Store'), eq(variables['ReleaseChannel'], 'CI')))
+
   - task: VSTest@2
     displayName: Test
     inputs:
@@ -66,6 +84,7 @@ jobs:
       rootFolder: ILSpy/bin/$(BuildConfiguration)/net462
       archiveFile: $(Build.ArtifactStagingDirectory)\$(BuildConfiguration)\ILSpy.$(Build.BuildNumber).zip
       includeRootFolder: false
+    condition: and(succeeded(), eq(variables['ReleaseChannel'], 'Zip'))
 
   - script: python BuildTools\tidy.py
     displayName: Tab check
@@ -78,9 +97,18 @@ jobs:
         **\*.nupkg
       targetFolder: $(Build.ArtifactStagingDirectory)\$(BuildConfiguration)
       flattenFolders: true
+    condition: and(succeeded(), eq(variables['ReleaseChannel'], 'Zip'))
   
   - task: PublishPipelineArtifact@0
-    displayName: Publish $(BuildConfiguration) 
+    displayName: Publish $(BuildConfiguration) Zip
     inputs:
       targetPath: $(Build.ArtifactStagingDirectory)\$(BuildConfiguration)
       artifactName: Binaries - $(BuildConfiguration)
+    condition: and(succeeded(), eq(variables['ReleaseChannel'], 'Zip'))
+
+  - task: PublishPipelineArtifact@0
+    displayName: Publish $(ReleaseChannel) 
+    inputs:
+      targetPath: $(Build.ArtifactStagingDirectory)\$(ReleaseChannel)
+      artifactName: Package - $(ReleaseChannel)
+    condition: and(succeeded(), or(eq(variables['ReleaseChannel'], 'Store'), eq(variables['ReleaseChannel'], 'CI')))
