@@ -1,6 +1,7 @@
 bin/
 obj/
-
+AppPackages/
+BundleArtifacts/
 /ICSharpCode.Decompiler/Properties/AssemblyInfo.cs
 /ILSpy/Properties/AssemblyInfo.cs
 /ILSpy/app.config
