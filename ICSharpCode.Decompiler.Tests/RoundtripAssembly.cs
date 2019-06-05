@@ -193,7 +193,8 @@ namespace ICSharpCode.Decompiler.Tests
 
 		static string FindMSBuild()
 		{
-			string vsPath = MSBuildLocator.QueryVisualStudioInstances(new VisualStudioInstanceQueryOptions { DiscoveryTypes = DiscoveryType.VisualStudioSetup })				
+			string vsPath = MSBuildLocator.QueryVisualStudioInstances(new VisualStudioInstanceQueryOptions { DiscoveryTypes = DiscoveryType.VisualStudioSetup })
+										  .OrderByDescending(i => i.Version)										  
 										  .FirstOrDefault()
 										  ?.MSBuildPath; 
 			if (vsPath == null)
