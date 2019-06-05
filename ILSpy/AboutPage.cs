@@ -35,6 +35,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
+using OSVersionHelper;
 
 namespace ICSharpCode.ILSpy
 {
@@ -59,7 +60,10 @@ namespace ICSharpCode.ILSpy
 		{
 			AvalonEditTextOutput output = new AvalonEditTextOutput() { EnableHyperlinks = true };
 			output.WriteLine(Resources.ILSpyVersion + RevisionClass.FullVersion);
-			output.AddUIElement(
+			if(WindowsVersionHelper.HasPackageIdentity) {
+				output.WriteLine($"Package Name: {WindowsVersionHelper.GetPackageFamilyName()}");
+			} else {// if we're running in an MSIX, updates work differently
+				output.AddUIElement(
 				delegate {
 					StackPanel stackPanel = new StackPanel();
 					stackPanel.HorizontalAlignment = HorizontalAlignment.Center;
@@ -81,7 +85,9 @@ namespace ICSharpCode.ILSpy
 						Children = { stackPanel, checkBox }
 					};
 				});
-			output.WriteLine();
+				output.WriteLine();
+			}
+			
 			foreach (var plugin in App.ExportProvider.GetExportedValues<IAboutPageAddition>())
 				plugin.Write(output);
 			output.WriteLine();
@@ -283,7 +289,8 @@ namespace ICSharpCode.ILSpy
 		{
 			var tcs = new TaskCompletionSource<string>();
 			UpdateSettings s = new UpdateSettings(spySettings);
-			if (s.AutomaticUpdateCheckEnabled) {
+			// If we're in an MSIX package, updates work differently
+			if (s.AutomaticUpdateCheckEnabled && !WindowsVersionHelper.HasPackageIdentity) {
 				// perform update check if we never did one before;
 				// or if the last check wasn't in the past 7 days
 				if (s.LastSuccessfulUpdateCheck == null

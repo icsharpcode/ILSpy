@@ -42,6 +42,7 @@ using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.TreeView;
 using Microsoft.Win32;
+using OSVersionHelper;
 
 namespace ICSharpCode.ILSpy
 {
@@ -490,6 +491,11 @@ namespace ICSharpCode.ILSpy
 		
 		public void ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings, bool forceCheck = false)
 		{
+			// Don't check for updates if we're in an MSIX since they work differently
+			if(WindowsVersionHelper.HasPackageIdentity) {
+				return;
+			}
+
 			Task<string> result;
 			if (forceCheck) {
 				result = AboutPage.CheckForUpdatesAsync(spySettings);
