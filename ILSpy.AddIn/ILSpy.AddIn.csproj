@@ -129,6 +129,8 @@
     <AdditionalDependencies Include="$(ILSpyBuildPath)Mono.Cecil.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)Mono.Cecil.Pdb.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)ILSpy.BamlDecompiler.Plugin.dll" />
+	<AdditionalDependencies Include="$(ILSpyBuildPath)System.*.dll" />
+	<AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.DiaSymReader.*.dll" />
   </ItemGroup>
 
   <ItemGroup>
