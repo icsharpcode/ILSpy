@@ -1072,9 +1072,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return new LdLoca(v);
 						return null;
 					} else {
-						if (ldloc.Variable.Kind != VariableKind.StackSlot)
-							return ldloc;
-						return null;
+						return ldloc;
 					}
 				default:
 					return value.Clone();
