@@ -739,7 +739,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (type == null)
 				throw new ArgumentNullException("type");
 			if (constantValue == null) {
-				if (type.IsReferenceType == true) {
+				if (type.IsReferenceType == true || type.IsKnownType(KnownTypeCode.NullableOfT)) {
 					var expr = new NullReferenceExpression();
 					if (AddResolveResultAnnotations)
 						expr.AddAnnotation(new ConstantResolveResult(SpecialType.NullType, null));
