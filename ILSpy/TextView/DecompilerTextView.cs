@@ -590,7 +590,7 @@ namespace ICSharpCode.ILSpy.TextView
 					foreach (var r in references) {
 						if (reference.Equals(r.Reference)) {
 							var mark = textMarkerService.Create(r.StartOffset, r.Length);
-							mark.BackgroundColor = r.IsLocalTarget ? Colors.LightSeaGreen : Colors.GreenYellow;
+							mark.BackgroundColor = r.IsDefinition ? Colors.LightSeaGreen : Colors.GreenYellow;
 							localReferenceMarks.Add(mark);
 						}
 					}
@@ -633,7 +633,7 @@ namespace ICSharpCode.ILSpy.TextView
 				var referenceSegment = GetReferenceSegmentAtMousePosition();
 				if (referenceSegment == null) {
 					ClearLocalReferenceMarks();
-				} else {
+				} else if (referenceSegment.IsLocal || !referenceSegment.IsDefinition) {
 					JumpToReference(referenceSegment);
 					textEditor.TextArea.ClearSelection();
 				}
@@ -656,7 +656,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// </summary>
 		bool IsLink(ReferenceSegment referenceSegment)
 		{
-			return true;
+			return referenceSegment.IsLocal || !referenceSegment.IsDefinition;
 		}
 		#endregion
 		
