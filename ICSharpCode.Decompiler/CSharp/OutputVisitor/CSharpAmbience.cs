@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					writer.Space();
 					writer.WriteToken(Roles.Colon, ":");
 					writer.Space();
-					if (symbol is IField f && CSharpDecompiler.IsFixedField(f.ParentModule.PEFile.Metadata, (System.Reflection.Metadata.FieldDefinitionHandle)f.MetadataToken, out var type, out int elementCount)) {
+					if (symbol is IField f && CSharpDecompiler.IsFixedField(f, out var type, out int elementCount)) {
 						rt = astBuilder.ConvertType(type);
 						new IndexerExpression(new TypeReferenceExpression(rt), astBuilder.ConvertConstantValue(f.Compilation.FindType(KnownTypeCode.Int32), elementCount))
 							.AcceptVisitor(new CSharpOutputVisitor(writer, formattingPolicy));
