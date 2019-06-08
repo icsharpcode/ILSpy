@@ -238,7 +238,6 @@ namespace ICSharpCode.Decompiler.IL
 			if (defaultTree.Count > 1 && !(parentBlock.Parent is BlockContainer))
 				return false;
 
-			EnsureEndPointUnreachable(parentBlock, exitInst);
 			context.Step("Extract default case of switch", switchContainer);
 
 			// replace all break; statements with the exitInst
@@ -255,8 +254,13 @@ namespace ICSharpCode.Decompiler.IL
 				switchContainer.Blocks.Remove(block);
 
 			// replace the parent block exit with the default case instructions
-			Debug.Assert(parentBlock.Instructions.Last() == exitInst);
-			parentBlock.Instructions.RemoveLast();
+			if (parentBlock.Instructions.Last() == exitInst) {
+				parentBlock.Instructions.RemoveLast();
+			}
+			// Note: even though we don't check that the switchContainer is near the end of the block,
+			// we know this must be the case because we know "exitInst" is a leave/branch and directly
+			// follows the switchContainer.
+			Debug.Assert(parentBlock.Instructions.Last() == switchContainer);
 			parentBlock.Instructions.AddRange(defaultBlock.Instructions);
 
 			// add any additional blocks from the default case to the parent container
