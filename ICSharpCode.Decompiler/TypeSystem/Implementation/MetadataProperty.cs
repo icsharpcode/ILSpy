@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -116,16 +117,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			var propertyDef = module.metadata.GetPropertyDefinition(propertyHandle);
 			var genericContext = new GenericContext(DeclaringType.TypeParameters);
-			var signature = propertyDef.DecodeSignature(module.TypeProvider, genericContext);
-			var accessors = propertyDef.GetAccessors();
-			ParameterHandleCollection? parameterHandles;
-			if (!accessors.Getter.IsNil)
-				parameterHandles = module.metadata.GetMethodDefinition(accessors.Getter).GetParameters();
-			else if (!accessors.Setter.IsNil)
-				parameterHandles = module.metadata.GetMethodDefinition(accessors.Setter).GetParameters();
-			else
-				parameterHandles = null;
-			var (returnType, parameters) = MetadataMethod.DecodeSignature(module, this, signature, parameterHandles);
+			IType returnType;
+			IParameter[] parameters;
+			try {
+				var signature = propertyDef.DecodeSignature(module.TypeProvider, genericContext);
+				var accessors = propertyDef.GetAccessors();
+				ParameterHandleCollection? parameterHandles;
+				if (!accessors.Getter.IsNil)
+					parameterHandles = module.metadata.GetMethodDefinition(accessors.Getter).GetParameters();
+				else if (!accessors.Setter.IsNil)
+					parameterHandles = module.metadata.GetMethodDefinition(accessors.Setter).GetParameters();
+				else
+					parameterHandles = null;
+				(returnType, parameters) = MetadataMethod.DecodeSignature(module, this, signature, parameterHandles);
+			} catch (BadImageFormatException) {
+				returnType = SpecialType.UnknownType;
+				parameters = Empty<IParameter>.Array;
+			}
 			LazyInit.GetOrSet(ref this.returnType, returnType);
 			LazyInit.GetOrSet(ref this.parameters, parameters);
 		}

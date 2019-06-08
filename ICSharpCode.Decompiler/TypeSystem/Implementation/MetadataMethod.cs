@@ -152,8 +152,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			var methodDef = module.metadata.GetMethodDefinition(handle);
 			var genericContext = new GenericContext(DeclaringType.TypeParameters, this.TypeParameters);
-			var signature = methodDef.DecodeSignature(module.TypeProvider, genericContext);
-			var (returnType, parameters) = DecodeSignature(module, this, signature, methodDef.GetParameters());
+			IType returnType;
+			IParameter[] parameters;
+			try {
+				var signature = methodDef.DecodeSignature(module.TypeProvider, genericContext);
+				(returnType, parameters) = DecodeSignature(module, this, signature, methodDef.GetParameters());
+			} catch (BadImageFormatException) {
+				returnType = SpecialType.UnknownType;
+				parameters = Empty<IParameter>.Array;
+			}
 			LazyInit.GetOrSet(ref this.returnType, returnType);
 			LazyInit.GetOrSet(ref this.parameters, parameters);
 		}
@@ -204,10 +211,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				i++;
 			}
 			Debug.Assert(i == parameters.Length);
-			bool isRefReadonly = false;
-			if (signature.ReturnType.Kind == TypeKind.ModReq && signature.ReturnType.SkipModifiers().Kind == TypeKind.ByReference) {
-				isRefReadonly = ((ModifiedType)signature.ReturnType).Modifier.IsKnownType(KnownAttribute.In);
-			}
 			var returnType = ApplyAttributeTypeVisitor.ApplyAttributesToType(signature.ReturnType,
 				module.Compilation, returnTypeAttributes, metadata, module.TypeSystemOptions);
 			return (returnType, parameters);

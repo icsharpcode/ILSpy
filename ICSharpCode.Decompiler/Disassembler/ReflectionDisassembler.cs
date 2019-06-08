@@ -225,19 +225,25 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine();
 			output.Indent();
 			var declaringType = methodDefinition.GetDeclaringType();
-			var signatureProvider = new DisassemblerSignatureProvider(module, output);
-			var signature = methodDefinition.DecodeSignature(signatureProvider, genericContext);
-			if (signature.Header.HasExplicitThis) {
-				output.Write("instance explicit ");
-			} else if (signature.Header.IsInstance) {
-				output.Write("instance ");
+			MethodSignature<Action<ILNameSyntax>>? signature;
+			try {
+				var signatureProvider = new DisassemblerSignatureProvider(module, output);
+				signature = methodDefinition.DecodeSignature(signatureProvider, genericContext);
+				if (signature.Value.Header.HasExplicitThis) {
+					output.Write("instance explicit ");
+				} else if (signature.Value.Header.IsInstance) {
+					output.Write("instance ");
+				}
+
+				//call convention
+				WriteEnum(signature.Value.Header.CallingConvention, callingConvention);
+
+				//return type
+				signature.Value.ReturnType(ILNameSyntax.Signature);
+			} catch (BadImageFormatException) {
+				signature = null;
+				output.Write("<bad signature>");
 			}
-
-			//call convention
-			WriteEnum(signature.Header.CallingConvention, callingConvention);
-
-			//return type
-			signature.ReturnType(ILNameSyntax.Signature);
 			output.Write(' ');
 
 			var parameters = methodDefinition.GetParameters();
@@ -261,10 +267,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			//( params )
 			output.Write(" (");
-			if (signature.ParameterTypes.Length > 0) {
+			if (signature?.ParameterTypes.Length > 0) {
 				output.WriteLine();
 				output.Indent();
-				WriteParameters(metadata, parameters, signature);
+				WriteParameters(metadata, parameters, signature.Value);
 				output.Unindent();
 			}
 			output.Write(") ");
