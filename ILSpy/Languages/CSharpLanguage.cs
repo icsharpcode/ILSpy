@@ -132,10 +132,10 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile assembly = method.ParentModule.PEFile;
+			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
-			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			var methodDefinition = decompiler.TypeSystem.MainModule.ResolveEntity(method.MetadataToken) as IMethod;
 			if (methodDefinition.IsConstructor && methodDefinition.DeclaringType.IsReferenceType != false) {
 				var members = CollectFieldsAndCtors(methodDefinition.DeclaringTypeDefinition, methodDefinition.IsStatic);
@@ -200,9 +200,9 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile assembly = property.ParentModule.PEFile;
+			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
-			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			WriteCommentLine(output, TypeToString(property.DeclaringType, includeNamespace: true));
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(property.MetadataToken), decompiler.TypeSystem);
 		}
@@ -210,10 +210,10 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile assembly = field.ParentModule.PEFile;
+			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, TypeToString(field.DeclaringType, includeNamespace: true));
-			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			if (field.IsConst) {
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(field.MetadataToken), decompiler.TypeSystem);
 			} else {
@@ -271,20 +271,20 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileEvent(IEvent @event, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile assembly = @event.ParentModule.PEFile;
+			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, TypeToString(@event.DeclaringType, includeNamespace: true));
-			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(@event.MetadataToken), decompiler.TypeSystem);
 		}
 
 		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile assembly = type.ParentModule.PEFile;
+			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, TypeToString(type, includeNamespace: true));
-			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type.MetadataToken), decompiler.TypeSystem);
 		}
 
