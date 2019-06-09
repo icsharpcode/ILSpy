@@ -351,10 +351,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				},
 				delegate (IGrouping<string, TypeDefinitionHandle> file) {
 					using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, file.Key))) {
-						CSharpDecompiler decompiler = CreateDecompiler(ts);
-						decompiler.CancellationToken = cancellationToken;
-						var syntaxTree = decompiler.DecompileTypes(file.ToArray());
-						syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
+						try {
+							CSharpDecompiler decompiler = CreateDecompiler(ts);
+							decompiler.CancellationToken = cancellationToken;
+							var syntaxTree = decompiler.DecompileTypes(file.ToArray());
+							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
+						} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
+							throw new DecompilerException(module, $"Error decompiling for '{file.Key}'", innerException);
+						}
 					}
 				});
 			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));

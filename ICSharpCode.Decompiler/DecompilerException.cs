@@ -25,6 +25,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler
@@ -34,18 +35,26 @@ namespace ICSharpCode.Decompiler
 	/// </summary>
 	public class DecompilerException : Exception, ISerializable
 	{
-		public string AssemblyName => Module.AssemblyName;
+		public string AssemblyName => File.Name;
 
-		public string FileName => Module.PEFile.FileName;
+		public string FileName => File.FileName;
 
 		public IEntity DecompiledEntity { get; }
 		public IModule Module { get; }
+		public PEFile File { get; }
 
 		public DecompilerException(MetadataModule module, IEntity decompiledEntity, Exception innerException, string message = null)
-			: base((message ?? "Error decompiling " + decompiledEntity?.FullName) + Environment.NewLine, innerException)
+			: base(message ?? "Error decompiling " + decompiledEntity?.FullName, innerException)
 		{
+			this.File = module.PEFile;
 			this.Module = module;
 			this.DecompiledEntity = decompiledEntity;
+		}
+
+		public DecompilerException(PEFile file, string message, Exception innerException)
+			: base(message, innerException)
+		{
+			this.File = file;
 		}
 
 		// This constructor is needed for serialization.
@@ -71,7 +80,8 @@ namespace ICSharpCode.Decompiler
 					+ stacktrace;
 				exceptionType = GetTypeName(exception);
 			}
-			return this.Message
+			return this.Message + Environment.NewLine
+				+ $"in assembly \"{this.FileName}\"" + Environment.NewLine
 				+ " ---> " + exceptionType + ": " + exception.Message + Environment.NewLine
 				+ stacktrace;
 		}
