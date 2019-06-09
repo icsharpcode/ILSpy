@@ -1086,8 +1086,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				AstType mathAstType = ConvertType(mathType);
 				var fieldRef = new MemberReferenceExpression(new TypeReferenceExpression(mathAstType), memberName);
-				if (AddResolveResultAnnotations)
-					fieldRef.WithRR(new MemberResolveResult(mathAstType.GetResolveResult(), mathType.GetFields(f => f.Name == memberName).Single()));
+				if (AddResolveResultAnnotations) {
+					var field = mathType.GetFields(f => f.Name == memberName).FirstOrDefault();
+					if (field != null) {
+						fieldRef.WithRR(new MemberResolveResult(mathAstType.GetResolveResult(), field));
+					}
+				}
 				if (type.IsKnownType(KnownTypeCode.Double))
 					return fieldRef;
 				if (mathType.Name == "MathF")
