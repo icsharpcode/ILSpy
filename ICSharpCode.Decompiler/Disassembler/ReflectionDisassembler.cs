@@ -1128,17 +1128,33 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.MarkFoldEnd();
 			}
 			if (fieldDefinition.HasFlag(FieldAttributes.HasFieldRVA)) {
-				BlobReader initVal;
-				try {
-					initVal = fieldDefinition.GetInitialValue(module.Reader, null);
-				} catch (BadImageFormatException ex) {
-					initVal = default;
-					output.WriteLine("// .data D_{0:X8} = {1}", fieldDefinition.GetRelativeVirtualAddress(), ex.Message);
-				}
-				if (initVal.Length > 0) {
-					output.Write(".data D_{0:X8} = bytearray ", fieldDefinition.GetRelativeVirtualAddress());
-					WriteBlob(initVal);
-					output.WriteLine();
+				// Field data as specified in II.16.3.1 of ECMA-335 6th edition
+				int rva = fieldDefinition.GetRelativeVirtualAddress();
+				int sectionIndex = module.Reader.PEHeaders.GetContainingSectionIndex(rva);
+				if (sectionIndex < 0) {
+					output.WriteLine($"// RVA {rva:X8} invalid (not in any section)");
+				} else {
+					BlobReader initVal;
+					try {
+						initVal = fieldDefinition.GetInitialValue(module.Reader, null);
+					} catch (BadImageFormatException ex) {
+						initVal = default;
+						output.WriteLine("// .data D_{0:X8} = {1}", fieldDefinition.GetRelativeVirtualAddress(), ex.Message);
+					}
+					if (initVal.Length > 0) {
+						var sectionHeader = module.Reader.PEHeaders.SectionHeaders[sectionIndex];
+						output.Write(".data ");
+						if (sectionHeader.Name == ".text") {
+							output.Write("cil ");
+						} else if (sectionHeader.Name == ".tls") {
+							output.Write("tls ");
+						} else if (sectionHeader.Name != ".data") {
+							output.Write($"/* {sectionHeader.Name} */ ");
+						}
+						output.Write($"D_{rva:X8} = bytearray ");
+						WriteBlob(initVal);
+						output.WriteLine();
+					}
 				}
 			}
 		}

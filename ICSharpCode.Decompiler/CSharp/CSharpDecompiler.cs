@@ -1373,7 +1373,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				var fieldDefinition = metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
 				if (fieldDefinition.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA)) {
-					// Field data as specified in II.16.3.2 of ECMA-335 6th edition:
+					// Field data as specified in II.16.3.1 of ECMA-335 6th edition:
 					// .data I_X = int32(123)
 					// .field public static int32 _x at I_X
 					string message;
