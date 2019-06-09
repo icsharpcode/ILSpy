@@ -387,12 +387,15 @@ namespace ICSharpCode.Decompiler
 		sealed class FieldValueSizeDecoder : ISignatureTypeProvider<int, GenericContext>
 		{
 			readonly MetadataModule module;
-			// This is the same as Cecil does, but probably not a good idea.
-			static readonly int pointerSize = IntPtr.Size;
+			readonly int pointerSize;
 
 			public FieldValueSizeDecoder(ICompilation typeSystem = null)
 			{
 				this.module = (MetadataModule)typeSystem?.MainModule;
+				if (module == null)
+					this.pointerSize = IntPtr.Size;
+				else
+					this.pointerSize = module.PEFile.Reader.PEHeaders.PEHeader.Magic == PEMagic.PE32 ? 4 : 8;
 			}
 
 			public int GetArrayType(int elementType, ArrayShape shape) => GetPrimitiveType(PrimitiveTypeCode.Object);

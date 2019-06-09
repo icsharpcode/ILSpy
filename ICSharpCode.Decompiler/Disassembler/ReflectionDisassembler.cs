@@ -1111,8 +1111,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Write(' ');
 			var fieldName = metadata.GetString(fieldDefinition.Name);
 			output.Write(DisassemblerHelpers.Escape(fieldName));
+			char sectionPrefix = 'D';
 			if (fieldDefinition.HasFlag(FieldAttributes.HasFieldRVA)) {
-				output.Write(" at D_{0:X8}", fieldDefinition.GetRelativeVirtualAddress());
+				int rva = fieldDefinition.GetRelativeVirtualAddress();
+				sectionPrefix = GetRVASectionPrefix(module.Reader.PEHeaders, rva);
+				output.Write(" at {1}_{0:X8}", rva, sectionPrefix);
 			}
 
 			var defaultValue = fieldDefinition.GetDefaultValue();
@@ -1139,7 +1142,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						initVal = fieldDefinition.GetInitialValue(module.Reader, null);
 					} catch (BadImageFormatException ex) {
 						initVal = default;
-						output.WriteLine("// .data D_{0:X8} = {1}", fieldDefinition.GetRelativeVirtualAddress(), ex.Message);
+						output.WriteLine("// .data {2}_{0:X8} = {1}", fieldDefinition.GetRelativeVirtualAddress(), ex.Message, sectionPrefix);
 					}
 					if (initVal.Length > 0) {
 						var sectionHeader = module.Reader.PEHeaders.SectionHeaders[sectionIndex];
@@ -1151,11 +1154,27 @@ namespace ICSharpCode.Decompiler.Disassembler
 						} else if (sectionHeader.Name != ".data") {
 							output.Write($"/* {sectionHeader.Name} */ ");
 						}
-						output.Write($"D_{rva:X8} = bytearray ");
+						output.Write($"{sectionPrefix}_{rva:X8} = bytearray ");
 						WriteBlob(initVal);
 						output.WriteLine();
 					}
 				}
+			}
+		}
+
+		char GetRVASectionPrefix(System.Reflection.PortableExecutable.PEHeaders headers, int rva)
+		{
+			int sectionIndex = headers.GetContainingSectionIndex(rva);
+			if (sectionIndex < 0)
+				return 'D';
+			var sectionHeader = headers.SectionHeaders[sectionIndex];
+			switch (sectionHeader.Name) {
+				case ".tls":
+					return 'T';
+				case ".text":
+					return 'I';
+				default:
+					return 'D';
 			}
 		}
 		#endregion
