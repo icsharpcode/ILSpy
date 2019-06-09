@@ -7,7 +7,7 @@
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 
     <EnableDefaultItems>false</EnableDefaultItems>
-    <ExtrasEnableWpfProjectSetup>true</ExtrasEnableWpfProjectSetup>
+    <UseWpf>true</UseWpf>
     <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
     <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
   </PropertyGroup>
@@ -45,24 +45,19 @@
     <Compile Include="BamlTestRunner.cs" />
     <Compile Include="Cases\AttachedEvent.xaml.cs">
       <DependentUpon>AttachedEvent.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Cases\CustomControl.cs" />
     <Compile Include="Cases\MyControl.xaml.cs">
       <DependentUpon>MyControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Cases\Resources.xaml.cs">
       <DependentUpon>Resources.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Cases\Simple.xaml.cs">
       <DependentUpon>Simple.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Cases\SimpleNames.xaml.cs">
       <DependentUpon>SimpleNames.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Mocks\AvalonDock.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

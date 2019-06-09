@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="MSBuild.Sdk.Extras">
 
   <PropertyGroup>
@@ -7,7 +7,7 @@
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 
     <EnableDefaultItems>false</EnableDefaultItems>
-    <ExtrasEnableWpfProjectSetup>true</ExtrasEnableWpfProjectSetup>
+    <UseWpf>true</UseWpf>
     <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
     <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
 
@@ -48,9 +48,7 @@
     <Compile Include="GeneralAdorner.cs" />
     <Compile Include="InsertMarker.cs" />
     <Compile Include="LinesRenderer.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\GlobalAssemblyInfo.cs" />
     <Compile Include="FlatListTreeNode.cs" />
     <Compile Include="SharpGridView.cs" />
