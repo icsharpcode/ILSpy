@@ -116,6 +116,14 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
+		public IReadOnlyList<UnresolvedAssemblyNameReference> Entries {
+			get {
+				lock (loadedAssemblyReferences) {
+					return loadedAssemblyReferences.Values.ToList();
+				}
+			}
+		}
+
 		public bool HasErrors {
 			get {
 				lock (loadedAssemblyReferences) {
