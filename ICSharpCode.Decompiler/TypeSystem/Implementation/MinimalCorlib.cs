@@ -300,6 +300,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return this;
 			}
+
+			public override string ToString()
+			{
+				return $"[MinimalCorlibType {typeCode}]";
+			}
 		}
 	}
 }
