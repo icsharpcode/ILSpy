@@ -284,23 +284,24 @@ namespace ICSharpCode.ILSpy
 				LoadAssemblies(nugetPackagesToLoad, commandLineLoadedAssemblies, focusNode: false);
 				nugetPackagesToLoad.Clear();
 			}
-			NavigateOnLaunch(args.NavigateTo, sessionSettings.ActiveTreeViewPath, spySettings);
+			var relevantAssemblies = commandLineLoadedAssemblies.ToList();
+			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
+			NavigateOnLaunch(args.NavigateTo, sessionSettings.ActiveTreeViewPath, spySettings, relevantAssemblies);
 			if (args.Search != null)
 			{
 				SearchPane.Instance.SearchTerm = args.Search;
 				SearchPane.Instance.Show();
 			}
-			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
 		}
 
-		async void NavigateOnLaunch(string navigateTo, string[] activeTreeViewPath, ILSpySettings spySettings)
+		async void NavigateOnLaunch(string navigateTo, string[] activeTreeViewPath, ILSpySettings spySettings, List<LoadedAssembly> relevantAssemblies)
 		{
 			var initialSelection = treeView.SelectedItem;
 			if (navigateTo != null) {
 				bool found = false;
 				if (navigateTo.StartsWith("N:", StringComparison.Ordinal)) {
 					string namespaceName = navigateTo.Substring(2);
-					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
+					foreach (LoadedAssembly asm in relevantAssemblies) {
 						AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(asm);
 						if (asmNode != null) {
 							// FindNamespaceNode() blocks the UI if the assembly is not yet loaded,
@@ -317,7 +318,7 @@ namespace ICSharpCode.ILSpy
 						}
 					}
 				} else {
-					IEntity mr = await Task.Run(() => FindEntityInCommandLineLoadedAssemblies(navigateTo));
+					IEntity mr = await Task.Run(() => FindEntityInRelevantAssemblies(navigateTo, relevantAssemblies));
 					if (mr != null && mr.ParentModule.PEFile != null) {
 						found = true;
 						if (treeView.SelectedItem == initialSelection) {
@@ -362,7 +363,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private IEntity FindEntityInCommandLineLoadedAssemblies(string navigateTo)
+		private IEntity FindEntityInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
 		{
 			ITypeReference typeRef = null;
 			IMemberReference memberRef = null;
@@ -372,7 +373,7 @@ namespace ICSharpCode.ILSpy
 				memberRef = IdStringProvider.ParseMemberIdString(navigateTo);
 				typeRef = memberRef.DeclaringTypeReference;
 			}
-			foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
+			foreach (LoadedAssembly asm in relevantAssemblies.ToList()) {
 				var module = asm.GetPEFileOrNull();
 				if (CanResolveTypeInPEFile(module, typeRef, out var typeHandle)) {
 					ICompilation compilation = typeHandle.Kind == HandleKind.ExportedType

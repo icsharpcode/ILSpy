@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
@@ -41,6 +42,7 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Represents an assembly loaded into ILSpy.
 	/// </summary>
+	[DebuggerDisplay("LoadedAssembly({shortName})")]
 	public sealed class LoadedAssembly
 	{
 		internal static readonly ConditionalWeakTable<PEFile, LoadedAssembly> loadedAssemblies = new ConditionalWeakTable<PEFile, LoadedAssembly>();
