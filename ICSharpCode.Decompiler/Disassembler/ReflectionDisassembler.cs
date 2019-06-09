@@ -1112,7 +1112,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			var fieldName = metadata.GetString(fieldDefinition.Name);
 			output.Write(DisassemblerHelpers.Escape(fieldName));
 			if (fieldDefinition.HasFlag(FieldAttributes.HasFieldRVA)) {
-				output.Write(" at I_{0:x8}", fieldDefinition.GetRelativeVirtualAddress());
+				output.Write(" at D_{0:X8}", fieldDefinition.GetRelativeVirtualAddress());
 			}
 
 			var defaultValue = fieldDefinition.GetDefaultValue();
@@ -1126,6 +1126,20 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.MarkFoldStart();
 				WriteAttributes(module, fieldDefinition.GetCustomAttributes());
 				output.MarkFoldEnd();
+			}
+			if (fieldDefinition.HasFlag(FieldAttributes.HasFieldRVA)) {
+				BlobReader initVal;
+				try {
+					initVal = fieldDefinition.GetInitialValue(module.Reader, null);
+				} catch (BadImageFormatException ex) {
+					initVal = default;
+					output.WriteLine("// .data D_{0:X8} = {1}", fieldDefinition.GetRelativeVirtualAddress(), ex.Message);
+				}
+				if (initVal.Length > 0) {
+					output.Write(".data D_{0:X8} = bytearray ", fieldDefinition.GetRelativeVirtualAddress());
+					WriteBlob(initVal);
+					output.WriteLine();
+				}
 			}
 		}
 		#endregion
