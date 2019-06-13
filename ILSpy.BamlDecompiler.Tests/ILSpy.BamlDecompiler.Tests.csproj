@@ -74,6 +74,9 @@
     <Page Include="Cases\Issue1435.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Cases\Issue1546.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Cases\Issue775.xaml">
       <SubType>Designer</SubType>
     </Page>

@@ -59,7 +59,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 		{
 			var result = new List<(LongSet, EventRegistration[])>();
 
-			var xClass = document.Root.Elements().First().Attribute(ctx.GetXamlNsName("Class"));
+			var xClass = document.Root.Elements().First().Attribute(ctx.GetKnownNamespace("Class", XamlContext.KnownNamespace_Xaml));
 			if (xClass == null)
 				return result;
 

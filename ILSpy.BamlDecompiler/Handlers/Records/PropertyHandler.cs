@@ -45,7 +45,7 @@ namespace ILSpy.BamlDecompiler.Handlers {
 					return new XAttribute(xamlProp.ToXName(ctx, parent.Xaml, true), value);
 
 				if (xamlProp.PropertyName == "Name" && elemType.ResolvedType.GetDefinition()?.ParentModule.IsMainModule == true)
-					return new XAttribute(ctx.GetXamlNsName("Name"), value);
+					return new XAttribute(ctx.GetKnownNamespace("Name", XamlContext.KnownNamespace_Xaml), value);
 
 				return new XAttribute(xamlProp.ToXName(ctx, parent.Xaml, false), value);
 			}
