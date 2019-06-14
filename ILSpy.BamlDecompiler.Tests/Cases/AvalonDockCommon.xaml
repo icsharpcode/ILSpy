@@ -35,8 +35,8 @@
 					</Border>
 					<ControlTemplate.Triggers>
 						<Trigger Property="UIElement.IsMouseOver" Value="True">
-							<Setter TargetName="PaneHeaderCommandIntBorder" Property="BorderBrush" Value="{DynamicResource {ComponentResourceKey {x:Type ad:DockingManager}, {x:Static ad:AvalonDockBrushes.PaneHeaderCommandBorderBrush}}}" />
-							<Setter TargetName="PaneHeaderCommandIntBorder" Property="Background" Value="{DynamicResource {ComponentResourceKey {x:Type ad:DockingManager}, {x:Static ad:AvalonDockBrushes.PaneHeaderCommandBackground}}}" />
+							<Setter TargetName="PaneHeaderCommandIntBorder" Property="Border.BorderBrush" Value="{DynamicResource {ComponentResourceKey {x:Type ad:DockingManager}, {x:Static ad:AvalonDockBrushes.PaneHeaderCommandBorderBrush}}}" />
+							<Setter TargetName="PaneHeaderCommandIntBorder" Property="Border.Background" Value="{DynamicResource {ComponentResourceKey {x:Type ad:DockingManager}, {x:Static ad:AvalonDockBrushes.PaneHeaderCommandBackground}}}" />
 							<Setter TargetName="PaneHeaderCommandIntBorder" Property="UIElement.Opacity" Value="1" />
 						</Trigger>
 					</ControlTemplate.Triggers>

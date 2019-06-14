@@ -23,6 +23,7 @@
 using System.Xml.Linq;
 using ILSpy.BamlDecompiler.Baml;
 using ILSpy.BamlDecompiler.Xaml;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ILSpy.BamlDecompiler.Handlers {
 	internal class PropertyTypeReferenceHandler : IHandler {
@@ -39,6 +40,10 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			var elemAttr = ctx.ResolveProperty(record.AttributeId);
 			elem.Xaml = new XElement(elemAttr.ToXName(ctx, null));
 
+			if (attr.ResolvedMember.FullNameIs("System.Windows.Style", "TargetType")) {
+				parent.Xaml.Element.AddAnnotation(new TargetTypeAnnotation(type));
+			}
+
 			elem.Xaml.Element.AddAnnotation(elemAttr);
 			parent.Xaml.Element.Add(elem.Xaml.Element);
 
@@ -51,6 +56,16 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			elem.Xaml.Element.Name = elemAttr.ToXName(ctx, null);
 
 			return elem;
+		}
+	}
+
+	internal class TargetTypeAnnotation
+	{
+		public XamlType Type { get; }
+
+		public TargetTypeAnnotation(XamlType type)
+		{
+			this.Type = type;
 		}
 	}
 }

@@ -1,0 +1,24 @@
+﻿<Window x:Class="ILSpy.BamlDecompiler.Tests.Cases.Issue1547" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:local="clr-namespace:ILSpy.BamlDecompiler.Tests.Cases" Title="Issue1547" Height="450" Width="800">
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition />
+			<RowDefinition />
+		</Grid.RowDefinitions>
+		<Button>
+			<FrameworkElement.Style>
+				<Style TargetType="{x:Type Button}">
+					<Setter Property="Grid.Row" Value="1" />
+					<Setter Property="Content" Value="World!" />
+				</Style>
+			</FrameworkElement.Style>
+		</Button>
+		<Button>
+			<FrameworkElement.Style>
+				<Style TargetType="{x:Type Button}">
+					<Setter Property="Grid.Row" Value="0" />
+					<Setter Property="Content" Value="Hello" />
+				</Style>
+			</FrameworkElement.Style>
+		</Button>
+	</Grid>
+</Window>

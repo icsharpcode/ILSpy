@@ -47,6 +47,7 @@
       <DependentUpon>AttachedEvent.xaml</DependentUpon>
     </Compile>
     <Compile Include="Cases\CustomControl.cs" />
+    <Compile Include="Cases\Issue1547.xaml.cs" />
     <Compile Include="Cases\MyControl.xaml.cs">
       <DependentUpon>MyControl.xaml</DependentUpon>
     </Compile>
@@ -75,6 +76,9 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Cases\Issue1546.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Cases\Issue1547.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Cases\Issue775.xaml">

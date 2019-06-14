@@ -521,9 +521,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return SpecialType.UnknownType;
 		}
 
-		public static bool FullNameIs(this IMethod method, string type, string name)
+		public static bool FullNameIs(this IMember member, string type, string name)
 		{
-			return method.Name == name && method.DeclaringType?.FullName == type;
+			return member.Name == name && member.DeclaringType?.FullName == type;
 		}
 
 		public static KnownAttribute IsBuiltinAttribute(this ITypeDefinition type)
