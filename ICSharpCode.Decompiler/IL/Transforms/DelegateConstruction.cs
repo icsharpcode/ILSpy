@@ -110,9 +110,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		static bool IsAnonymousMethod(ITypeDefinition decompiledTypeDefinition, IMethod method)
 		{
-			if (method == null || !(method.HasGeneratedName() || method.Name.Contains("$") || method.IsCompilerGeneratedOrIsInCompilerGeneratedClass() || ContainsAnonymousType(method)))
+			if (method == null)
 				return false;
-			if (!IsPotentialClosure(decompiledTypeDefinition, method.DeclaringTypeDefinition))
+			if (!(method.HasGeneratedName()
+				|| method.Name.Contains("$")
+				|| method.IsCompilerGeneratedOrIsInCompilerGeneratedClass()
+				|| IsPotentialClosure(decompiledTypeDefinition, method.DeclaringTypeDefinition)
+				|| ContainsAnonymousType(method)))
 				return false;
 			return true;
 		}
