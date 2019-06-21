@@ -64,13 +64,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Recurse;
 		}
 		
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(EnsureLazyChildren));
 			foreach (ILSpyTreeNode child in this.Children) {
 				child.Decompile(language, output, options);
 				output.WriteLine();
 			}
+
+			return true;
 		}
 	}
 }

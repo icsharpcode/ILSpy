@@ -27,6 +27,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using Microsoft.Win32;
@@ -130,6 +131,8 @@ namespace ICSharpCode.ILSpy
 		{
 			var solutionDirectory = Path.GetDirectoryName(solutionFilePath);
 			var statusOutput = new ConcurrentBag<string>();
+			var projects = new ConcurrentBag<ProjectItem>();
+
 			var result = new AvalonEditTextOutput();
 
 			var duplicates = new HashSet<string>();
@@ -140,18 +143,43 @@ namespace ICSharpCode.ILSpy
 
 			Stopwatch stopwatch = Stopwatch.StartNew();
 
-			await Task.Run(() => Parallel.ForEach(assemblyNodes, n => WriteProject(n, solutionDirectory, statusOutput, ct)))
-				.ConfigureAwait(false);
+			try {
+				await Task.Run(() => Parallel.ForEach(assemblyNodes, n => WriteProject(n, solutionDirectory, statusOutput, projects, ct)))
+					.ConfigureAwait(false);
 
+				await Task.Run(() => SolutionCreator.WriteSolutionFile(solutionFilePath, projects))
+					.ConfigureAwait(false);
+			} catch (AggregateException ae) {
+				if (ae.Flatten().InnerExceptions.All(e => e is OperationCanceledException)) {
+					result.WriteLine();
+					result.WriteLine("Generation was cancelled.");
+					return result;
+				}
+
+				result.WriteLine();
+				result.WriteLine("Failed to generate the Visual Studio Solution. Errors:");
+				ae.Handle(e => {
+					result.WriteLine(e.Message);
+					return true;
+				});
+				
+				return result;
+			}
 
 			foreach (var item in statusOutput) {
 				result.WriteLine(item);
 			}
 
 			if (statusOutput.Count == 0) {
-				result.WriteLine("Successfully decompiled the following assemblies to a Visual Studio Solution:");
+				result.WriteLine("Successfully decompiled the following assemblies into Visual Studio projects:");
 				foreach (var item in assemblyNodes.Select(n => n.Text.ToString())) {
 					result.WriteLine(item);
+				}
+
+				result.WriteLine();
+
+				if (assemblyNodes.Count() == projects.Count) {
+					result.WriteLine("Created the Visual Studio Solution file.");
 				}
 
 				result.WriteLine();
@@ -163,7 +191,12 @@ namespace ICSharpCode.ILSpy
 			return result;
 		}
 
-		private static void WriteProject(AssemblyTreeNode assemblyNode, string targetDirectory, ConcurrentBag<string> statusOutput, CancellationToken ct)
+		private static void WriteProject(
+			AssemblyTreeNode assemblyNode,
+			string targetDirectory,
+			ConcurrentBag<string> statusOutput,
+			ConcurrentBag<ProjectItem> targetContainer,
+			CancellationToken ct)
 		{
 			var loadedAssembly = assemblyNode.LoadedAssembly;
 
@@ -186,12 +219,17 @@ namespace ICSharpCode.ILSpy
 					FullDecompilation = true,
 					CancellationToken = ct,
 					SaveAsProjectDirectory = targetDirectory };
-				
-					assemblyNode.Decompile(assemblyNode.Language, projectFileOutput, options);
+
+					if (assemblyNode.Decompile(assemblyNode.Language, projectFileOutput, options) is ProjectId projectInfo) {
+						targetContainer.Add(new ProjectItem(projectFileName, projectInfo.PlatformName, projectInfo.Guid));
+					}
 				}
-			} catch (Exception e) {
+			} 
+			catch (OperationCanceledException) {
+				throw;
+			}
+			catch (Exception e) {
 				statusOutput.Add($"Failed to decompile the assembly '{loadedAssembly.FileName}':{Environment.NewLine}{e}");
-				return;
 			}
 		}
 	}

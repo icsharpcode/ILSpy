@@ -240,7 +240,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Recurse;
 		}
 
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			void HandleException(Exception ex, string message)
 			{
@@ -259,21 +259,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				switch (ex.InnerException) {
 					case BadImageFormatException badImage:
 						HandleException(badImage, "This file does not contain a managed assembly.");
-						return;
+						return null;
 					case FileNotFoundException fileNotFound:
 						HandleException(fileNotFound, "The file was not found.");
-						return;
+						return null;
 					case DirectoryNotFoundException dirNotFound:
 						HandleException(dirNotFound, "The directory was not found.");
-						return;
+						return null;
 					case PEFileNotSupportedException notSupported:
 						HandleException(notSupported, notSupported.Message);
-						return;
+						return null;
 					default:
 						throw;
 				}
 			}
-			language.DecompileAssembly(LoadedAssembly, output, options);
+			return language.DecompileAssembly(LoadedAssembly, output, options);
 		}
 
 		public override bool Save(DecompilerTextView textView)

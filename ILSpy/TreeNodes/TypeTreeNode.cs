@@ -103,9 +103,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool CanExpandRecursively => true;
 
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.DecompileType(TypeDefinition, output, options);
+			return true;
 		}
 
 		public override object Icon => GetIcon(TypeDefinition);

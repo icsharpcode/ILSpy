@@ -131,11 +131,11 @@ namespace ICSharpCode.ILSpy
 			WriteCommentLine(output, nameSpace);
 		}
 
-		public virtual void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public virtual object DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, assembly.FileName);
 			var asm = assembly.GetPEFileOrNull();
-			if (asm == null) return;
+			if (asm == null) return false;
 			var metadata = asm.Metadata;
 			if (metadata.IsAssembly) {
 				var name = metadata.GetAssemblyDefinition();
@@ -147,6 +147,8 @@ namespace ICSharpCode.ILSpy
 			} else {
 				WriteCommentLine(output, metadata.GetString(metadata.GetModuleDefinition().Name));
 			}
+
+			return true;
 		}
 
 		public virtual void WriteCommentLine(ITextOutput output, string comment)

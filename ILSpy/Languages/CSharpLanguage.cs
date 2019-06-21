@@ -343,12 +343,12 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public override object DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			var module = assembly.GetPEFileOrNull();
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
 				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options);
-				decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
+				return decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
 			} else {
 				AddReferenceAssemblyWarningMessage(module, output);
 				AddReferenceWarningMessage(module, output);
@@ -415,6 +415,8 @@ namespace ICSharpCode.ILSpy
 					}
 					WriteCode(output, options.DecompilerSettings, st, decompiler.TypeSystem);
 				}
+
+				return true;
 			}
 		}
 

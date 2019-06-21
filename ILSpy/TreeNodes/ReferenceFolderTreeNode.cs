@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				this.Children.Add(new ModuleReferenceTreeNode(parentAssembly, r, metadata));
 		}
 		
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, $"Detected Target-Framework-Id: {parentAssembly.LoadedAssembly.GetTargetFrameworkIdAsync().Result}");
 			App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(EnsureLazyChildren));
@@ -86,7 +86,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				output.Unindent();
 				output.WriteLine();
 			}
-			
+			return true;
 		}
 	}
 }

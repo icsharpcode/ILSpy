@@ -150,7 +150,7 @@ namespace ICSharpCode.ILSpy
 			dis.DisassembleNamespace(nameSpace, module, types.Select(t => (TypeDefinitionHandle)t.MetadataToken));
 		}
 		
-		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public override object DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			output.WriteLine("// " + assembly.FileName);
 			output.WriteLine();
@@ -174,6 +174,8 @@ namespace ICSharpCode.ILSpy
 					dis.WriteModuleContents(module);
 				}
 			}
+
+			return true;
 		}
 	}
 }

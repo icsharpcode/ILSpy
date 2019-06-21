@@ -90,9 +90,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			e.Handled = BaseTypesEntryNode.ActivateItem(this, type);
 		}
 
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, language.TypeToString(type, includeNamespace: true));
+			return true;
 		}
 
 		IEntity IMemberTreeNode.Member => type;
