@@ -907,19 +907,34 @@ namespace ICSharpCode.ILSpy
 				e.CanExecute = true;
 				return;
 			}
-			var selectedNodes = SelectedNodes.ToArray();
-			e.CanExecute = selectedNodes.Length == 1 || Array.TrueForAll(selectedNodes, n => n is AssemblyTreeNode);
+			var selectedNodes = SelectedNodes.ToList();
+			e.CanExecute = selectedNodes.Count == 1 || selectedNodes.TrueForAll(n => n is AssemblyTreeNode);
 		}
 
 		void SaveCommandExecuted(object sender, ExecutedRoutedEventArgs e)
 		{
-			if (this.SelectedNodes.Count() == 1) {
-				if (this.SelectedNodes.Single().Save(this.TextView))
+			var selectedNodes = SelectedNodes.ToList();
+			if (selectedNodes.Count > 1) {
+				var assemblyNodes = selectedNodes
+					.OfType<AssemblyTreeNode>()
+					.Where(n => n.Language is CSharpLanguage)
+					.ToList();
+
+				if (assemblyNodes.Count == selectedNodes.Count) {
+					var initialPath = Path.GetDirectoryName(assemblyNodes[0].LoadedAssembly.FileName);
+					var selectedPath = SolutionWriter.SelectSolutionFile(initialPath);
+
+					if (!string.IsNullOrEmpty(selectedPath)) {
+						SolutionWriter.CreateSolution(TextView, selectedPath, assemblyNodes);
+					}
 					return;
+				}
 			}
-			this.TextView.SaveToDisk(this.CurrentLanguage,
-				this.SelectedNodes,
-				new DecompilationOptions() { FullDecompilation = true });
+
+			if (selectedNodes.Count != 1 || !selectedNodes[0].Save(TextView)) {
+				var options = new DecompilationOptions() { FullDecompilation = true };
+				TextView.SaveToDisk(CurrentLanguage, selectedNodes, options);
+			}
 		}
 		
 		public void RefreshDecompiledView()

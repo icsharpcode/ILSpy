@@ -79,6 +79,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return false;
 		}
 
+		/// <summary>
+		/// Saves the content this node represents to the specified <paramref name="fileName"/>.
+		/// The file will be silently overwritten.
+		/// </summary>
+		/// <param name="textView">A reference to a <see cref="TextView.DecompilerTextView"/> instance.</param>
+		/// <param name="fileName">The target full path to save the content to.</param>
+		/// <returns><c>true</c> on success; otherwise, <c>false</c>.</returns>
+		public virtual bool Save(TextView.DecompilerTextView textView, string fileName) => Save(textView);
+
 		protected override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
 			if (e.NewItems != null) {
