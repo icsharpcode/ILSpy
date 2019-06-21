@@ -38,6 +38,7 @@ using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.ILSpy.Controls;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.TreeView;
@@ -897,7 +898,19 @@ namespace ICSharpCode.ILSpy
 			}
 			decompilationTask = decompilerTextView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions() { TextViewState = state });
 		}
-		
+
+		private void SaveCommandExecutedCanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.Handled = true;
+			var focusedElement = FocusManager.GetFocusedElement(this) as DependencyObject;
+			if (focusedElement.IsInVisualTreeOf(TextView)) {
+				e.CanExecute = true;
+				return;
+			}
+			var selectedNodes = SelectedNodes.ToArray();
+			e.CanExecute = selectedNodes.Length == 1 || Array.TrueForAll(selectedNodes, n => n is AssemblyTreeNode);
+		}
+
 		void SaveCommandExecuted(object sender, ExecutedRoutedEventArgs e)
 		{
 			if (this.SelectedNodes.Count() == 1) {
