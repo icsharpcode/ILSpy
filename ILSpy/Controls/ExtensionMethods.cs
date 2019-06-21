@@ -19,6 +19,7 @@
 using System;
 using System.Windows;
 using System.Windows.Markup;
+using System.Windows.Media;
 
 namespace ICSharpCode.ILSpy.Controls
 {
@@ -27,6 +28,39 @@ namespace ICSharpCode.ILSpy.Controls
 	/// </summary>
 	public static class ExtensionMethods
 	{
+		/// <summary>
+		/// Checks if the current <see cref="DependencyObject"/> is contained in the visual tree of the
+		/// <paramref name="dependencyObject"/> object.
+		/// </summary>
+		/// <param name="thisObject">The object to check, may be null.</param>
+		/// <param name="dependencyObject">The object whose visual tree will be inspected.</param>
+		/// 
+		/// <returns><c>true</c> if this object is contained in the visual tree of the <paramref name="dependencyObject"/>;
+		/// otherwise, <c>false</c>.</returns>
+		/// 
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="dependencyObject"/> is null.</exception>
+		public static bool IsInVisualTreeOf(this DependencyObject thisObject, DependencyObject dependencyObject)
+		{
+			if (dependencyObject == null) {
+				throw new ArgumentNullException(nameof(dependencyObject));
+			}
+
+			if (thisObject is null) {
+				return false;
+			}
+
+			var parent = VisualTreeHelper.GetParent(thisObject);
+			while (parent != null) {
+				if (parent == dependencyObject) {
+					return true;
+				}
+
+				parent = VisualTreeHelper.GetParent(parent);
+			}
+
+			return false;
+		}
+
 		/// <summary>
 		/// Sets the value of a dependency property on <paramref name="targetObject"/> using a markup extension.
 		/// </summary>
