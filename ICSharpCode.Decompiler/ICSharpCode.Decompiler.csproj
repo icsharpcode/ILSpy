@@ -161,6 +161,7 @@
     <Compile Include="CSharp\Syntax\Statements\GotoStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\IfElseStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\LabelStatement.cs" />
+    <Compile Include="CSharp\Syntax\Statements\LocalFunctionDeclarationStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\LockStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\ReturnStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\Statement.cs" />

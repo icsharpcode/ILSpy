@@ -99,13 +99,22 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IType DelegateType;
 
-		public bool IsExpressionTree => DelegateType != null && DelegateType.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1;
+		ILFunctionKind kind;
+
+		public ILFunctionKind Kind {
+			get => kind;
+			set {
+				if (kind == ILFunctionKind.TopLevelFunction || kind == ILFunctionKind.LocalFunction)
+					throw new InvalidOperationException("ILFunction.Kind of a top-level or local function may not be changed.");
+				kind = value;
+			}
+		}
 
 		public readonly IType ReturnType;
 
 		public readonly IReadOnlyList<IParameter> Parameters;
 
-		public ILFunction(IMethod method, int codeSize, GenericContext genericContext, ILInstruction body) : base(OpCode.ILFunction)
+		public ILFunction(IMethod method, int codeSize, GenericContext genericContext, ILInstruction body, ILFunctionKind kind = ILFunctionKind.TopLevelFunction) : base(OpCode.ILFunction)
 		{
 			this.Method = method;
 			this.CodeSize = codeSize;
@@ -114,6 +123,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.ReturnType = Method?.ReturnType;
 			this.Parameters = Method?.Parameters;
 			this.Variables = new ILVariableCollection(this);
+			this.kind = kind;
 		}
 
 		public ILFunction(IType returnType, IReadOnlyList<IParameter> parameters, GenericContext genericContext, ILInstruction body) : base(OpCode.ILFunction)
@@ -123,10 +133,31 @@ namespace ICSharpCode.Decompiler.IL
 			this.ReturnType = returnType;
 			this.Parameters = parameters;
 			this.Variables = new ILVariableCollection(this);
+			this.kind = ILFunctionKind.ExpressionTree;
 		}
 
 		internal override void CheckInvariant(ILPhase phase)
 		{
+			switch (kind) {
+				case ILFunctionKind.TopLevelFunction:
+					Debug.Assert(Parent == null);
+					Debug.Assert(DelegateType == null);
+					break;
+				case ILFunctionKind.Delegate:
+					Debug.Assert(Parent != null && !(Parent is Block));
+					Debug.Assert(DelegateType != null);
+					Debug.Assert(!(DelegateType?.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1));
+					break;
+				case ILFunctionKind.ExpressionTree:
+					Debug.Assert(Parent != null && !(Parent is Block));
+					Debug.Assert(DelegateType != null);
+					Debug.Assert(DelegateType?.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1);
+					break;
+				case ILFunctionKind.LocalFunction:
+					Debug.Assert(Parent is Block);
+					Debug.Assert(DelegateType == null);
+					break;
+			}
 			for (int i = 0; i < Variables.Count; i++) {
 				Debug.Assert(Variables[i].Function == this);
 				Debug.Assert(Variables[i].IndexInFunction == i);
@@ -148,8 +179,13 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(' ');
 				Method.WriteTo(output);
 			}
-			if (IsExpressionTree) {
-				output.Write(".ET");
+			switch (kind) {
+				case ILFunctionKind.ExpressionTree:
+					output.Write(".ET");
+					break;
+				case ILFunctionKind.LocalFunction:
+					output.Write(".local");
+					break;
 			}
 			if (DelegateType != null) {
 				output.Write("[");
@@ -289,5 +325,25 @@ namespace ICSharpCode.Decompiler.IL
 			bool ok = Variables.Remove(variable2);
 			Debug.Assert(ok);
 		}
+	}
+
+	public enum ILFunctionKind
+	{
+		/// <summary>
+		/// ILFunction is a "top-level" function, i.e., method, accessor, constructor, destructor or operator.
+		/// </summary>
+		TopLevelFunction,
+		/// <summary>
+		/// ILFunction is a delegate or lambda expression.
+		/// </summary>
+		Delegate,
+		/// <summary>
+		/// ILFunction is an expression tree lambda.
+		/// </summary>
+		ExpressionTree,
+		/// <summary>
+		/// ILFunction is a C# 7.0 local function.
+		/// </summary>
+		LocalFunction
 	}
 }

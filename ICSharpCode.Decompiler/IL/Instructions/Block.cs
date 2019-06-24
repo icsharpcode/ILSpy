@@ -280,6 +280,21 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
+		/// <summary>
+		/// Gets the closest parent Block.
+		/// Returns null, if the instruction is not a descendant of a Block.
+		/// </summary>
+		public static Block FindClosestBlock(ILInstruction inst)
+		{
+			var curr = inst;
+			while (curr != null) {
+				if (curr is Block)
+					return (Block)curr;
+				curr = curr.Parent;
+			}
+			return null;
+		}
+
 		public bool MatchInlineAssignBlock(out CallInstruction call, out ILInstruction value)
 		{
 			call = null;

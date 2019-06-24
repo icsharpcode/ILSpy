@@ -197,6 +197,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void SetExpressionTreeFlag(ILFunction lambda, CallInstruction call)
 		{
+			lambda.Kind = IsExpressionTree(call.Method.ReturnType) ? ILFunctionKind.ExpressionTree : ILFunctionKind.Delegate;
 			lambda.DelegateType = call.Method.ReturnType;
 		}
 
@@ -341,7 +342,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 						return (null, SpecialType.UnknownType);
 					case ILFunction function:
-						if (function.IsExpressionTree) {
+						if (function.Kind == ILFunctionKind.ExpressionTree) {
 							function.DelegateType = UnwrapExpressionTree(function.DelegateType);
 						}
 						return (function, function.DelegateType);
@@ -371,6 +372,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 		}
+
+		bool IsExpressionTree(IType delegateType) => delegateType is ParameterizedType pt
+			&& pt.FullName == "System.Linq.Expressions.Expression"
+			&& pt.TypeArguments.Count == 1;
 
 		IType UnwrapExpressionTree(IType delegateType)
 		{

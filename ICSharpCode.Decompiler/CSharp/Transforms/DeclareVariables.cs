@@ -260,7 +260,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						} else {
 							newPoint = new InsertionPoint { level = nodeLevel, nextNode = identExpr };
 							if (variable.HasInitialValue) {
-								// Uninitialized variables are logically initialized at the beginning of the functin
+								// Uninitialized variables are logically initialized at the beginning of the function
 								// Because it's possible that the variable has a loop-carried dependency,
 								// declare it outside of any loops.
 								while (startIndex >= 0) {

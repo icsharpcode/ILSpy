@@ -175,11 +175,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var targetMethod = ((IInstructionWithMethodOperand)value.Arguments[1]).Method;
 			if (!IsAnonymousMethod(decompilationContext.CurrentTypeDefinition, targetMethod))
 				return null;
-			if (LocalFunctionDecompiler.IsLocalFunctionMethod(targetMethod.ParentModule.PEFile, (MethodDefinitionHandle)targetMethod.MetadataToken))
-				return null;
-			target = value.Arguments[0];
 			if (targetMethod.MetadataToken.IsNil)
 				return null;
+			if (LocalFunctionDecompiler.IsLocalFunctionMethod(targetMethod))
+				return null;
+			target = value.Arguments[0];
 			var methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
 			if (!methodDefinition.HasBody())
 				return null;
@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			var ilReader = context.CreateILReader();
 			var body = context.PEFile.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
-			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, context.CancellationToken);
+			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, ILFunctionKind.Delegate, context.CancellationToken);
 			function.DelegateType = value.Method.DeclaringType;
 			function.CheckInvariant(ILPhase.Normal);
 			// Embed the lambda into the parent function's ILAst, so that "Show steps" can show

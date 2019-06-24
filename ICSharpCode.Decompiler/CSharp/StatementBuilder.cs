@@ -1015,5 +1015,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			stmt.InsertChildAfter(null, new Comment(" IL cpblk instruction"), Roles.Comment);
 			return stmt;
 		}
+
+		protected internal override Statement VisitILFunction(ILFunction function)
+		{
+			var stmt = new LocalFunctionDeclarationStatement();
+			var tsab = CSharpDecompiler.CreateAstBuilder(null);
+			stmt.Name = function.Method.Name;
+			stmt.Parameters.AddRange(function.Method.Parameters.Select(tsab.ConvertParameter));
+			stmt.ReturnType = tsab.ConvertType(function.Method.ReturnType);
+			stmt.Body = ConvertAsBlock(function.Body);
+			return stmt;
+		}
 	}
 }

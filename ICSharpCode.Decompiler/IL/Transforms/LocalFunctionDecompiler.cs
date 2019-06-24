@@ -1,20 +1,121 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Text.RegularExpressions;
+using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	class LocalFunctionDecompiler : IILTransform
 	{
+		ILTransformContext context;
+		ITypeResolveContext decompilationContext;
+
 		public void Run(ILFunction function, ILTransformContext context)
 		{
-			throw new NotImplementedException();
+			if (!context.Settings.LocalFunctions)
+				return;
+			this.context = context;
+			this.decompilationContext = new SimpleTypeResolveContext(function.Method);
+			var localFunctions = new Dictionary<IMethod, List<Call>>();
+			var cancellationToken = context.CancellationToken;
+			// Find use-sites
+			foreach (var inst in function.Descendants) {
+				cancellationToken.ThrowIfCancellationRequested();
+				if (inst is Call call && IsLocalFunctionMethod(call.Method)) {
+					context.StepStartGroup($"LocalFunctionDecompiler {call.StartILOffset}", call);
+					if (!localFunctions.TryGetValue(call.Method, out var info)) {
+						info = new List<Call>() { call };
+						localFunctions.Add(call.Method, info);
+					} else {
+						info.Add(call);
+					}
+					context.StepEndGroup();
+				}
+			}
+
+			foreach (var (method, useSites) in localFunctions) {
+				var insertionPoint = FindInsertionPoint(useSites);
+				if (TransformLocalFunction(method, (Block)insertionPoint.Parent, insertionPoint.ChildIndex + 1) == null)
+					continue;
+			}
+		}
+
+		static ILInstruction FindInsertionPoint(List<Call> useSites)
+		{
+			ILInstruction insertionPoint = null;
+			foreach (var call in useSites) {
+				if (insertionPoint == null) {
+					insertionPoint = GetStatement(call);
+					continue;
+				}
+
+				var ancestor = FindCommonAncestorInstruction(insertionPoint, GetStatement(call));
+
+				if (ancestor == null)
+					return null;
+
+				insertionPoint = ancestor;
+			}
+
+			switch (insertionPoint) {
+				case BlockContainer bc:
+					return insertionPoint;
+				case Block b:
+					return insertionPoint;
+				default:
+					return insertionPoint;
+			}
+		}
+
+		static ILInstruction FindCommonAncestorInstruction(ILInstruction a, ILInstruction b)
+		{
+			var ancestorsOfB = new HashSet<ILInstruction>(b.Ancestors);
+			return a.Ancestors.FirstOrDefault(ancestorsOfB.Contains);
+		}
+
+		static ILInstruction GetStatement(ILInstruction inst)
+		{
+			while (inst.Parent != null) {
+				if (inst.Parent is Block)
+					return inst;
+				inst = inst.Parent;
+			}
+			return inst;
+		}
+
+		private ILFunction TransformLocalFunction(IMethod targetMethod, Block parent, int insertionPoint)
+		{
+			var methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
+			if (!methodDefinition.HasBody())
+				return null;
+			var genericContext = DelegateConstruction.GenericContextFromTypeArguments(targetMethod.Substitution);
+			if (genericContext == null)
+				return null;
+			var ilReader = context.CreateILReader();
+			var body = context.PEFile.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
+			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, ILFunctionKind.LocalFunction, context.CancellationToken);
+			// Embed the local function into the parent function's ILAst, so that "Show steps" can show
+			// how the local function body is being transformed.
+			parent.Instructions.Insert(insertionPoint, function);
+			function.CheckInvariant(ILPhase.Normal);
+
+			var nestedContext = new ILTransformContext(context, function);
+			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is LocalFunctionDecompiler)), nestedContext);
+
+			return function;
+		}
+
+		public static bool IsLocalFunctionMethod(IMethod method)
+		{
+			return IsLocalFunctionMethod(method.ParentModule.PEFile, (MethodDefinitionHandle)method.MetadataToken);
 		}
 
 		public static bool IsLocalFunctionMethod(PEFile module, MethodDefinitionHandle methodHandle)

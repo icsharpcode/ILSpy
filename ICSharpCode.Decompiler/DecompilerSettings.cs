@@ -942,7 +942,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool localFunctions = false;
+		bool localFunctions = true;
 
 		/// <summary>
 		/// Gets/Sets whether C# 7.0 local functions should be used.
