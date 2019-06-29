@@ -62,9 +62,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 						// Do not try to transform display class usages or delegate construction.
 						// DelegateConstruction transform cannot deal with this.
-						if (DelegateConstruction.IsSimpleDisplayClass(newObjInst.Method.DeclaringType))
+						if (TransformDisplayClassUsage.IsSimpleDisplayClass(newObjInst.Method.DeclaringType))
 							return false;
-						if (DelegateConstruction.IsDelegateConstruction(newObjInst) || DelegateConstruction.IsPotentialClosure(context, newObjInst))
+						if (DelegateConstruction.IsDelegateConstruction(newObjInst) || TransformDisplayClassUsage.IsPotentialClosure(context, newObjInst))
 							return false;
 						// Cannot build a collection/object initializer attached to an AnonymousTypeCreateExpression:s 
 						// anon = new { A = 5 } { 3,4,5 } is invalid syntax.

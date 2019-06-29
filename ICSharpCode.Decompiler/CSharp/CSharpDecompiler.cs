@@ -156,6 +156,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				},
 				new ProxyCallReplacer(),
 				new DelegateConstruction(),
+				new TransformDisplayClassUsage(),
 				new HighLevelLoopTransform(),
 				new ReduceNestingTransform(),
 				new IntroduceDynamicTypeOnLocals(),
