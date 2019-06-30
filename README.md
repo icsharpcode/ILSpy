@@ -54,6 +54,7 @@ Windows:
   - Individual Component "VC++ 2017 version 15.9 v14.16 latest v141 tools" (or similar)
     - The VC++ toolset is optional; if present it is used for `editbin.exe` to modify the stack size used by ILSpy.exe from 1MB to 16MB, because the decompiler makes heavy use of recursion, where small stack sizes lead to problems in very complex methods.
 - Install the [.NET Core SDK 2.2](https://dotnet.microsoft.com/download)
+- Install the [.NET Core SDK 3](https://dotnet.microsoft.com/download/dotnet-core)
 - Check out the ILSpy repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Open ILSpy.sln in Visual Studio.
@@ -63,6 +64,7 @@ Windows:
 
 Unix:
 - Make sure .NET Core 2.2 is installed (you can get it here: https://get.dot.net).
+- Make sure [.NET Core SDK 3](https://dotnet.microsoft.com/download/dotnet-core) is installed.
 - Check out the repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Use `dotnet build Frontends.sln` to build the non-Windows flavors of ILSpy (cli and powershell core).
