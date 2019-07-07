@@ -74,6 +74,11 @@ namespace ICSharpCode.Decompiler.IL
 
 	static class VariableKindExtensions
 	{
+		public static bool IsThis(this ILVariable v)
+		{
+			return v.Kind == VariableKind.Parameter && v.Index < 0;
+		}
+
 		public static bool IsLocal(this VariableKind kind)
 		{
 			switch (kind) {
