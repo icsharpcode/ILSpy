@@ -420,7 +420,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void YieldReturn([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		public void YieldReturn([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
