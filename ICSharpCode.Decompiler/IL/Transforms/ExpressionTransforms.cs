@@ -283,7 +283,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					stmt = stmt.Parent;
 				}
 				// Special case to eliminate extra store
-				if (stmt.GetNextSibling() is StLoc)
+				if (stmt.GetNextSibling() is StLoc storeStmt && storeStmt.Value is LdLoc)
 					ILInlining.InlineIfPossible(block, stmt.ChildIndex, context);
 				return;
 			}
