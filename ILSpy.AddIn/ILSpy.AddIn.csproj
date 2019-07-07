@@ -131,6 +131,7 @@
     <AdditionalDependencies Include="$(ILSpyBuildPath)ILSpy.BamlDecompiler.Plugin.dll" />
 	<AdditionalDependencies Include="$(ILSpyBuildPath)System.*.dll" />
 	<AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.DiaSymReader.*.dll" />
+  	<AdditionalDependencies Include="$(ILSpyBuildPath)OSVersionHelper.dll" />
   </ItemGroup>
 
   <ItemGroup>
