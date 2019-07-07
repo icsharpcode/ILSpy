@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal static bool IsPotentialClosure(ILTransformContext context, NewObj inst)
 		{
-			var decompilationContext = new SimpleTypeResolveContext(context.Function.Method);
+			var decompilationContext = new SimpleTypeResolveContext(context.Function.Ancestors.OfType<ILFunction>().Last().Method);
 			return IsPotentialClosure(decompilationContext.CurrentTypeDefinition, inst.Method.DeclaringTypeDefinition);
 		}
 
