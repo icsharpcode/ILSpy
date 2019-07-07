@@ -16,9 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.CSharp;
@@ -37,8 +35,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			this.context = context;
 			this.decompilationContext = new SimpleTypeResolveContext(function.Method);
-			var targetsToReplace = new List<IInstructionWithVariableOperand>();
-			var translatedDisplayClasses = new HashSet<ITypeDefinition>();
 			var cancellationToken = context.CancellationToken;
 			foreach (var inst in function.Descendants) {
 				cancellationToken.ThrowIfCancellationRequested();
@@ -55,16 +51,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								instWithVar.Variable.CaptureScope = BlockContainer.FindClosestContainer(store);
 							}
 						}
-						if (displayClassTypeDef != null)
-							translatedDisplayClasses.Add(displayClassTypeDef);
-						targetsToReplace.Add(instWithVar);
 					}
 					context.StepEndGroup();
 				}
 			}
 		}
 
-		#region TransformDelegateConstruction
 		internal static bool IsDelegateConstruction(NewObj inst, bool allowTransformed = false)
 		{
 			if (inst == null || inst.Arguments.Count != 2 || inst.Method.DeclaringType.Kind != TypeKind.Delegate)
@@ -213,6 +205,5 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				base.VisitLdObj(inst);
 			}
 		}
-		#endregion
 	}
 }
