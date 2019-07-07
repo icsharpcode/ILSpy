@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void DelegateConstruction([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		public void DelegateConstruction([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}

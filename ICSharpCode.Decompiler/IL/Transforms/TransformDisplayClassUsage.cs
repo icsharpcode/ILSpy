@@ -15,6 +15,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		class DisplayClass
 		{
+			public bool IsMono;
 			public ILInstruction Initializer;
 			public ILVariable Variable;
 			public ITypeDefinition Definition;
@@ -31,7 +32,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		ILTransformContext context;
 		ILFunction currentFunction;
 		readonly Dictionary<ILVariable, DisplayClass> displayClasses = new Dictionary<ILVariable, DisplayClass>();
-		readonly List<ILInstruction> orphanedVariableInits = new List<ILInstruction>();
+		readonly List<ILInstruction> instructionsToRemove = new List<ILInstruction>();
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -39,21 +40,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (this.context != null || this.currentFunction != null)
 					throw new InvalidOperationException("Reentrancy in " + nameof(TransformDisplayClassUsage));
 				this.context = context;
+				var decompilationContext = new SimpleTypeResolveContext(context.Function.Method);
 				// Traverse nested functions in post-order:
 				// Inner functions are transformed before outer functions
 				foreach (var f in function.Descendants.OfType<ILFunction>()) {
-					foreach (var v in f.Variables) {
+					foreach (var v in f.Variables.ToArray()) {
+						if (HandleMonoStateMachine(function, v, decompilationContext, f))
+							continue;
 						if (!(v.IsSingleDefinition && v.StoreInstructions.SingleOrDefault() is StLoc inst))
 							continue;
-						if (IsClosureInit(inst, out var closureType)) {
+						if (IsClosureInit(inst, out ITypeDefinition closureType)) {
+							// TODO : figure out whether it is a mono compiled closure, without relying on the type name
+							bool isMono = f.StateMachineCompiledWithMono || closureType.Name.Contains("AnonStorey");
 							displayClasses.Add(inst.Variable, new DisplayClass {
+								IsMono = isMono,
 								Initializer = inst,
 								Variable = v,
 								Definition = closureType,
 								Variables = new Dictionary<IField, DisplayClassVariable>(),
-								CaptureScope = inst.Variable.CaptureScope
+								CaptureScope = isMono && IsMonoNestedCaptureScope(closureType) ? null : inst.Variable.CaptureScope
 							});
-							orphanedVariableInits.Add(inst);
+							instructionsToRemove.Add(inst);
 						}
 					}
 					foreach (var displayClass in displayClasses.Values.OrderByDescending(d => d.Initializer.StartILOffset).ToArray()) {
@@ -62,16 +69,80 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						VisitILFunction(f);
 					}
 				}
-				context.Step($"Remove orphanedVariableInits", function);
-				foreach (var store in orphanedVariableInits) {
+				context.Step($"Remove instructions", function);
+				foreach (var store in instructionsToRemove) {
 					if (store.Parent is Block containingBlock)
 						containingBlock.Instructions.Remove(store);
 				}
 			} finally {
-				orphanedVariableInits.Clear();
+				instructionsToRemove.Clear();
 				displayClasses.Clear();
 				this.context = null;
 				this.currentFunction = null;
+			}
+		}
+
+		bool IsOuterClosureReference(IField field)
+		{
+			return displayClasses.Values.Any(disp => disp.Definition == field.DeclaringTypeDefinition);
+		}
+
+		bool IsMonoNestedCaptureScope(ITypeDefinition closureType)
+		{
+			var decompilationContext = new SimpleTypeResolveContext(context.Function.Method);
+			return closureType.Fields.Any(f => IsPotentialClosure(decompilationContext.CurrentTypeDefinition, f.ReturnType.GetDefinition()));
+		}
+
+		/// <summary>
+		/// mcs likes to optimize closures in yield state machines away by moving the captured variables' fields into the state machine type,
+		/// We construct a <see cref="DisplayClass"/> that spans the whole method body.
+		/// </summary>
+		bool HandleMonoStateMachine(ILFunction currentFunction, ILVariable thisVariable, SimpleTypeResolveContext decompilationContext, ILFunction nestedFunction)
+		{
+			if (!(nestedFunction.StateMachineCompiledWithMono && thisVariable.IsThis()))
+				return false;
+			// Special case for Mono-compiled yield state machines
+			ITypeDefinition closureType = thisVariable.Type.GetDefinition();
+			if (!(closureType != decompilationContext.CurrentTypeDefinition
+				&& IsPotentialClosure(decompilationContext.CurrentTypeDefinition, closureType)))
+				return false;
+
+			var displayClass = new DisplayClass {
+				IsMono = true,
+				Initializer = nestedFunction.Body,
+				Variable = thisVariable,
+				Definition = thisVariable.Type.GetDefinition(),
+				Variables = new Dictionary<IField, DisplayClassVariable>(),
+				CaptureScope = (BlockContainer)nestedFunction.Body
+			};
+			displayClasses.Add(thisVariable, displayClass);
+			foreach (var stateMachineVariable in nestedFunction.Variables) {
+				if (stateMachineVariable.StateMachineField == null)
+					continue;
+				displayClass.Variables.Add(stateMachineVariable.StateMachineField, new DisplayClassVariable {
+					Variable = stateMachineVariable,
+					Value = new LdLoc(stateMachineVariable)
+				});
+			}
+			if (!currentFunction.Method.IsStatic && FindThisField(out var thisField)) {
+				var thisVar = currentFunction.Variables
+					.FirstOrDefault(t => t.IsThis() && t.Type.GetDefinition() == decompilationContext.CurrentTypeDefinition);
+				if (thisVar == null) {
+					thisVar = new ILVariable(VariableKind.Parameter, decompilationContext.CurrentTypeDefinition, -1) { Name = "this" };
+					currentFunction.Variables.Add(thisVar);
+				}
+				displayClass.Variables.Add(thisField, new DisplayClassVariable { Variable = thisVar, Value = new LdLoc(thisVar) });
+			}
+			return true;
+
+			bool FindThisField(out IField foundField)
+			{
+				foundField = null;
+				foreach (var field in closureType.GetFields(f2 => !f2.IsStatic && !displayClass.Variables.ContainsKey(f2) && f2.Type.GetDefinition() == decompilationContext.CurrentTypeDefinition)) {
+					thisField = field;
+					return true;
+				}
+				return false;
 			}
 		}
 
@@ -117,7 +188,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// displayClasses dictionary.
 			if (inst.Value.MatchLdLoc(out var closureVariable) && displayClasses.TryGetValue(closureVariable, out var displayClass)) {
 				displayClasses[inst.Variable] = displayClass;
-				orphanedVariableInits.Add(inst);
+				instructionsToRemove.Add(inst);
 			}
 		}
 
@@ -134,13 +205,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			base.VisitStObj(inst);
 			// This instruction has been marked deletable, do not transform it further
-			if (orphanedVariableInits.Contains(inst))
+			if (instructionsToRemove.Contains(inst))
 				return;
 			// The target of the store instruction must be a field reference
 			if (!inst.Target.MatchLdFlda(out ILInstruction target, out IField field))
-				return;
-			// Skip assignments that reference fields of the outer class, this is not a closure assignment.
-			if (target.MatchLdThis())
 				return;
 			// Get display class info
 			if (!(target is LdLoc displayClassLoad && displayClasses.TryGetValue(displayClassLoad.Variable, out var displayClass)))
@@ -154,12 +222,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInstruction value;
 				if (inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter && currentFunction == v.Function) {
 					// Special case for parameters: remove copies of parameter values.
-					orphanedVariableInits.Add(inst);
+					instructionsToRemove.Add(inst);
 					value = inst.Value;
 				} else {
 					Debug.Assert(displayClass.Definition == field.DeclaringTypeDefinition);
 					// Introduce a fresh variable for the display class field.
 					v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
+					if (displayClass.IsMono && displayClass.CaptureScope == null && !IsOuterClosureReference(field)) {
+						displayClass.CaptureScope = BlockContainer.FindClosestContainer(inst);
+					}
 					v.CaptureScope = displayClass.CaptureScope;
 					inst.ReplaceWith(new StLoc(v, inst.Value).WithILRange(inst));
 					value = new LdLoc(v);
@@ -192,6 +263,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// TODO : Figure out why this was added in https://github.com/icsharpcode/ILSpy/pull/1303
 			if (inst.Target.MatchLdThis() && inst.Field.Name == "$this"
 				&& inst.Field.MemberDefinition.ReflectionName.Contains("c__Iterator")) {
+				//Debug.Assert(false, "This should not be executed!");
 				var variable = currentFunction.Variables.First((f) => f.Index == -1);
 				inst.ReplaceWith(new LdLoca(variable).WithILRange(inst));
 			}
