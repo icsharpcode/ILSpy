@@ -409,11 +409,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!switchValueVar.Type.IsKnownType(KnownTypeCode.String))
 				return false;
 			// either br nullCase or leave container
-			var leaveContainer = BlockContainer.FindClosestContainer(instructions[i]);
-			if (leaveContainer.Parent is TryInstruction) {
-				leaveContainer = BlockContainer.FindClosestContainer(leaveContainer.Parent);
-			}
-			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock) && !exitBlockJump.MatchLeave(leaveContainer))
+			BlockContainer leaveContainer = null;
+			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock) && !exitBlockJump.MatchLeave(out leaveContainer))
 				return false;
 			var nextBlockJump = instructions.ElementAtOrDefault(i + 1) as Branch;
 			if (nextBlockJump == null || nextBlockJump.TargetBlock.IncomingEdgeCount != 1)
