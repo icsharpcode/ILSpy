@@ -69,12 +69,17 @@ namespace ICSharpCode.Decompiler
 				return false;
 			if (!baseType.IsKnownType(reader, KnownTypeCode.Enum))
 				return false;
-			var field = reader.GetFieldDefinition(typeDefinition.GetFields().First());
-			var blob = reader.GetBlobReader(field.Signature);
-			if (blob.ReadSignatureHeader().Kind != SignatureKind.Field)
-				return false;
-			underlyingType = (PrimitiveTypeCode)blob.ReadByte();
-			return true;
+			foreach (var handle in typeDefinition.GetFields()) {
+				var field = reader.GetFieldDefinition(handle);
+				if ((field.Attributes & FieldAttributes.Static) != 0)
+					continue;
+				var blob = reader.GetBlobReader(field.Signature);
+				if (blob.ReadSignatureHeader().Kind != SignatureKind.Field)
+					return false;
+				underlyingType = (PrimitiveTypeCode)blob.ReadByte();
+				return true;
+			}
+			return false;
 		}
 
 		public static bool IsDelegate(this TypeDefinitionHandle handle, MetadataReader reader)
