@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		/// <summary>
 		/// If this method is reduced from an extension method return the original method, <c>null</c> otherwise.
-		/// A reduced method doesn't contain the extension method parameter. That means that has one parameter less than it's definition.
+		/// A reduced method doesn't contain the extension method parameter. That means that it has one parameter less than its definition.
 		/// </summary>
 		IMethod ReducedFrom { get; }
 		

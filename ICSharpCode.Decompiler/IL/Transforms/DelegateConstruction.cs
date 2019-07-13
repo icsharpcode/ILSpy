@@ -136,10 +136,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var body = context.PEFile.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
 			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, ILFunctionKind.Delegate, context.CancellationToken);
 			function.DelegateType = value.Method.DeclaringType;
-			function.CheckInvariant(ILPhase.Normal);
 			// Embed the lambda into the parent function's ILAst, so that "Show steps" can show
 			// how the lambda body is being transformed.
 			value.ReplaceWith(function);
+			function.CheckInvariant(ILPhase.Normal);
 
 			var contextPrefix = targetMethod.Name;
 			foreach (ILVariable v in function.Variables.Where(v => v.Kind != VariableKind.Parameter)) {

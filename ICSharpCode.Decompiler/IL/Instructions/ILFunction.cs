@@ -110,6 +110,8 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		public Dictionary<IMethod, (string Name, ILFunction Declaration)> LocalFunctions { get; } = new Dictionary<IMethod, (string Name, ILFunction Declaration)>();
+
 		public readonly IType ReturnType;
 
 		public readonly IReadOnlyList<IParameter> Parameters;

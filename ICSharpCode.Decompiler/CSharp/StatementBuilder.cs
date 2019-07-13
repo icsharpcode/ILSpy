@@ -28,6 +28,7 @@ using System;
 using System.Threading;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.CSharp.Resolver;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -1020,10 +1021,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var stmt = new LocalFunctionDeclarationStatement();
 			var tsab = CSharpDecompiler.CreateAstBuilder(null);
-			stmt.Name = function.Method.Name;
-			stmt.Parameters.AddRange(function.Method.Parameters.Select(tsab.ConvertParameter));
+			var nestedBuilder = new StatementBuilder(typeSystem, exprBuilder.decompilationContext, function, settings, cancellationToken);
+			var localFunction = exprBuilder.ResolveLocalFunction(function.Method);
+			Debug.Assert(localFunction.Definition == function);
+			stmt.Name = localFunction.Name;
+			stmt.Parameters.AddRange(exprBuilder.MakeParameters(function.Parameters, function));
 			stmt.ReturnType = tsab.ConvertType(function.Method.ReturnType);
-			stmt.Body = ConvertAsBlock(function.Body);
+			stmt.Body = nestedBuilder.ConvertAsBlock(function.Body);
+			stmt.AddAnnotation(new LocalFunctionReferenceResolveResult(function));
 			return stmt;
 		}
 	}

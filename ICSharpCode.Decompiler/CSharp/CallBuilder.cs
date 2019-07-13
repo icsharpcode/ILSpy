@@ -38,6 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			public OpCode CallOpCode;
 			public bool NeedsBoxingConversion;
+			public bool IsLocalFunction;
 		}
 
 		struct ArgumentList
@@ -52,13 +53,23 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			public bool AddNamesToPrimitiveValues;
 			public bool IsExpandedForm;
+			public int LocalFunctionParameterCount;
 			public int Length => Arguments.Length;
+
+			private int GetActualArgumentCount()
+			{
+				if (LocalFunctionParameterCount < 0 && FirstOptionalArgumentIndex < 0)
+					return Arguments.Length;
+				if (LocalFunctionParameterCount < 0)
+					return FirstOptionalArgumentIndex;
+				if (FirstOptionalArgumentIndex < 0)
+					return LocalFunctionParameterCount;
+				return Math.Min(FirstOptionalArgumentIndex, LocalFunctionParameterCount);
+			}
 
 			public IEnumerable<ResolveResult> GetArgumentResolveResults(int skipCount = 0)
 			{
-				return FirstOptionalArgumentIndex < 0
-					? Arguments.Skip(skipCount).Select(a => a.ResolveResult)
-					: Arguments.Skip(skipCount).Take(FirstOptionalArgumentIndex).Select(a => a.ResolveResult);
+				return Arguments.Skip(skipCount).Take(GetActualArgumentCount()).Select(a => a.ResolveResult);
 			}
 
 			public IEnumerable<Expression> GetArgumentExpressions(int skipCount = 0)
@@ -77,22 +88,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 					}
 				}
+				int argumentCount = GetActualArgumentCount();
 				if (ArgumentNames == null) {
-					if (FirstOptionalArgumentIndex < 0)
-						return Arguments.Skip(skipCount).Select(arg => arg.Expression);
-					return Arguments.Skip(skipCount).Take(FirstOptionalArgumentIndex).Select(arg => arg.Expression);
+					return Arguments.Skip(skipCount).Take(argumentCount).Select(arg => arg.Expression);
 				} else {
 					Debug.Assert(skipCount == 0);
-					if (FirstOptionalArgumentIndex < 0) {
-						return Arguments.Zip(ArgumentNames,
-							(arg, name) => {
-								if (name == null)
-									return arg.Expression;
-								else
-									return new NamedArgumentExpression(name, arg);
-							});
-					}
-					return Arguments.Take(FirstOptionalArgumentIndex).Zip(ArgumentNames.Take(FirstOptionalArgumentIndex),
+					return Arguments.Take(argumentCount).Zip(ArgumentNames.Take(argumentCount),
 						(arg, name) => {
 							if (name == null)
 								return arg.Expression;
@@ -179,11 +180,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			// Used for Call, CallVirt and NewObj
 			var expectedTargetDetails = new ExpectedTargetDetails {
-				CallOpCode = callOpCode
+				CallOpCode = callOpCode,
+				IsLocalFunction = expressionBuilder.IsLocalFunction(method)
 			};
 			TranslatedExpression target;
 			if (callOpCode == OpCode.NewObj) {
 				target = default(TranslatedExpression); // no target
+			} else if (expectedTargetDetails.IsLocalFunction) {
+				var localFunction = expressionBuilder.ResolveLocalFunction(method);
+				target = new IdentifierExpression(localFunction.Name)
+					.WithoutILInstruction()
+					.WithRR(new LocalFunctionReferenceResolveResult(localFunction.Definition));
 			} else {
 				target = expressionBuilder.TranslateTarget(
 					callArguments.FirstOrDefault(),
@@ -210,6 +217,22 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var argumentList = BuildArgumentList(expectedTargetDetails, target.ResolveResult, method,
 				firstParamIndex, callArguments, argumentToParameterMap);
+
+			if (expectedTargetDetails.IsLocalFunction) {
+				int parameterCount = 0;
+				foreach (var param in method.Parameters) {
+					if (param.IsRef && param.Type is ByReferenceType byRef) {
+						var type = byRef.ElementType.GetDefinition();
+						if (type != null && type.IsCompilerGenerated())
+							break;
+					}
+					parameterCount++;
+				}
+				argumentList.LocalFunctionParameterCount = parameterCount;
+				return new InvocationExpression(target, argumentList.GetArgumentExpressions())
+					.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, method,
+						argumentList.GetArgumentResolveResults().ToList(), isExpandedForm: argumentList.IsExpandedForm, isLocalFunctionInvocation: true));
+			}
 			
 			if (method is VarArgInstanceMethod) {
 				argumentList.FirstOptionalArgumentIndex = -1;
@@ -566,10 +589,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 
-		private ArgumentList BuildArgumentList(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method, int firstParamIndex,
-			IReadOnlyList<ILInstruction> callArguments, IReadOnlyList<int> argumentToParameterMap)
+		private ArgumentList BuildArgumentList(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method,
+			int firstParamIndex, IReadOnlyList<ILInstruction> callArguments, IReadOnlyList<int> argumentToParameterMap)
 		{
 			ArgumentList list = new ArgumentList();
+			list.LocalFunctionParameterCount = -1;
 
 			// Translate arguments to the expected parameter types
 			var arguments = new List<TranslatedExpression>(method.Parameters.Count);
@@ -748,7 +772,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (expressionBuilder.HidesVariableWithName(method.Name)) {
 					requireTarget = true;
 				} else {
-					if (method.IsStatic)
+					if (expectedTargetDetails.IsLocalFunction)
+						requireTarget = false;
+					else if (method.IsStatic)
 						requireTarget = !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) || method.Name == ".cctor";
 					else if (method.Name == ".ctor")
 						requireTarget = true; // always use target for base/this-ctor-call, the constructor initializer pattern depends on this

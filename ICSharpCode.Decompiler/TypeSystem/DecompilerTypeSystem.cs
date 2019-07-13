@@ -104,6 +104,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		NullabilityAnnotations = 0x400,
 		/// <summary>
+		/// If this option is active, 
+		/// </summary>
+		LocalFunctions = 0x800,
+		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# languages features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters

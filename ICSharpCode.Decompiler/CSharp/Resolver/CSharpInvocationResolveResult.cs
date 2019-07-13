@@ -46,7 +46,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// Gets whether a params-Array is being used in its expanded form.
 		/// </summary>
 		public readonly bool IsExpandedForm;
-		
+
+		/// <summary>
+		/// Gets whether this invocation is calling a local function.
+		/// </summary>
+		public readonly bool IsLocalFunctionInvocation;
+
 		readonly IReadOnlyList<int> argumentToParameterMap;
 
 		/// <summary>
@@ -70,6 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			bool isExtensionMethodInvocation = false,
 			bool isExpandedForm = false,
 			bool isDelegateInvocation = false,
+			bool isLocalFunctionInvocation = false,
 			IReadOnlyList<int> argumentToParameterMap = null,
 			IList<ResolveResult> initializerStatements = null,
 			IType returnTypeOverride = null
@@ -80,6 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			this.IsExtensionMethodInvocation = isExtensionMethodInvocation;
 			this.IsExpandedForm = isExpandedForm;
 			this.IsDelegateInvocation = isDelegateInvocation;
+			this.IsLocalFunctionInvocation = isLocalFunctionInvocation;
 			this.argumentToParameterMap = argumentToParameterMap;
 		}
 		

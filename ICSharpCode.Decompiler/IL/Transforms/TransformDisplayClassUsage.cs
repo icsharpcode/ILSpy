@@ -65,20 +65,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					foreach (var v in f.Variables.ToArray()) {
 						if (HandleMonoStateMachine(function, v, decompilationContext, f))
 							continue;
-						if (!(v.IsSingleDefinition && v.StoreInstructions.SingleOrDefault() is StLoc inst))
-							continue;
-						if (IsClosureInit(inst, out ITypeDefinition closureType)) {
-							// TODO : figure out whether it is a mono compiled closure, without relying on the type name
-							bool isMono = f.StateMachineCompiledWithMono || closureType.Name.Contains("AnonStorey");
-							displayClasses.Add(inst.Variable, new DisplayClass {
-								IsMono = isMono,
-								Initializer = inst,
-								Variable = v,
-								Definition = closureType,
-								Variables = new Dictionary<IField, DisplayClassVariable>(),
-								CaptureScope = isMono && IsMonoNestedCaptureScope(closureType) ? null : inst.Variable.CaptureScope
-							});
-							instructionsToRemove.Add(inst);
+						if (IsClosure(v, out ITypeDefinition closureType, out var inst)) {
+							AddOrUpdateDisplayClass(f, v, closureType, inst);
+						}
+						if (v.Kind == VariableKind.Parameter && v.Index > -1 && f.Method.Parameters[v.Index ?? -1] is IParameter p && LocalFunctionDecompiler.IsClosureParameter(p)) {
+							AddOrUpdateDisplayClass(f, v, ((ByReferenceType)p.Type).ElementType.GetDefinition(), f.Body);
 						}
 					}
 					foreach (var displayClass in displayClasses.Values.OrderByDescending(d => d.Initializer.StartILOffset).ToArray()) {
@@ -98,6 +89,56 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				this.context = null;
 				this.currentFunction = null;
 			}
+		}
+
+		private void AddOrUpdateDisplayClass(ILFunction f, ILVariable v, ITypeDefinition closureType, ILInstruction inst)
+		{
+			var displayClass = displayClasses.Values.FirstOrDefault(c => c.Definition == closureType);
+			if (displayClass == null) {
+				// TODO : figure out whether it is a mono compiled closure, without relying on the type name
+				bool isMono = f.StateMachineCompiledWithMono || closureType.Name.Contains("AnonStorey");
+				displayClasses.Add(v, new DisplayClass {
+					IsMono = isMono,
+					Initializer = inst,
+					Variable = v,
+					Definition = closureType,
+					Variables = new Dictionary<IField, DisplayClassVariable>(),
+					CaptureScope = isMono && IsMonoNestedCaptureScope(closureType) ? null : v.CaptureScope
+				});
+			} else {
+				displayClass.Variable = v;
+				displayClass.Initializer = inst;
+				displayClasses.Add(v, displayClass);
+			}
+		}
+
+		bool IsClosure(ILVariable variable, out ITypeDefinition closureType, out ILInstruction initializer)
+		{
+			closureType = null;
+			initializer = null;
+			if (variable.IsSingleDefinition && variable.StoreInstructions.SingleOrDefault() is StLoc inst) {
+				initializer = inst;
+				if (IsClosureInit(inst, out closureType)) {
+					instructionsToRemove.Add(inst);
+					return true;
+				}
+			}
+			closureType = variable.Type.GetDefinition();
+			if (closureType?.Kind == TypeKind.Struct && variable.HasInitialValue) {
+				initializer = LocalFunctionDecompiler.GetStatement(variable.AddressInstructions.OrderBy(i => i.StartILOffset).First());
+				return IsPotentialClosure(this.context, closureType);
+			}
+			return false;
+		}
+
+		bool IsClosureInit(StLoc inst, out ITypeDefinition closureType)
+		{
+			if (inst.Value is NewObj newObj) {
+				closureType = newObj.Method.DeclaringTypeDefinition;
+				return closureType != null && IsPotentialClosure(this.context, newObj);
+			}
+			closureType = null;
+			return false;
 		}
 
 		bool IsOuterClosureReference(IField field)
@@ -179,6 +220,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return IsPotentialClosure(decompilationContext.CurrentTypeDefinition, inst.Method.DeclaringTypeDefinition);
 		}
 
+		internal static bool IsPotentialClosure(ILTransformContext context, ITypeDefinition potentialDisplayClass)
+		{
+			var decompilationContext = new SimpleTypeResolveContext(context.Function.Ancestors.OfType<ILFunction>().Last().Method);
+			return IsPotentialClosure(decompilationContext.CurrentTypeDefinition, potentialDisplayClass);
+		}
+
 		internal static bool IsPotentialClosure(ITypeDefinition decompiledTypeDefinition, ITypeDefinition potentialDisplayClass)
 		{
 			if (potentialDisplayClass == null || !potentialDisplayClass.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
@@ -189,6 +236,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 			}
 			return true;
+		}
+
+		bool IsDisplayClassLoad(ILInstruction target, out ILVariable variable)
+		{
+			if (target.MatchLdLoc(out variable) || target.MatchLdLoca(out variable))
+				return true;
+			if (target.MatchAddressOf(out var load) && load.MatchLdLoc(out variable))
+				return true;
+			return false;
 		}
 
 		protected override void Default(ILInstruction inst)
@@ -210,13 +266,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool IsClosureInit(StLoc inst, out ITypeDefinition closureType)
+		protected internal override void VisitLdLoc(LdLoc inst)
 		{
-			closureType = null;
-			if (!(inst.Value is NewObj newObj))
-				return false;
-			closureType = newObj.Method.DeclaringTypeDefinition;
-			return closureType != null && IsPotentialClosure(this.context, newObj);
+			base.VisitLdLoc(inst);
 		}
 
 		protected internal override void VisitStObj(StObj inst)
@@ -229,7 +281,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!inst.Target.MatchLdFlda(out ILInstruction target, out IField field))
 				return;
 			// Get display class info
-			if (!(target is LdLoc displayClassLoad && displayClasses.TryGetValue(displayClassLoad.Variable, out var displayClass)))
+			if (!IsDisplayClassLoad(target, out var displayClassLoad) || !displayClasses.TryGetValue(displayClassLoad, out var displayClass))
 				return;
 			field = (IField)field.MemberDefinition;
 			if (displayClass.Variables.TryGetValue(field, out DisplayClassVariable info)) {
@@ -264,7 +316,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!inst.Target.MatchLdFlda(out var target, out IField field))
 				return;
 			// Get display class info
-			if (!(target is LdLoc displayClassLoad && displayClasses.TryGetValue(displayClassLoad.Variable, out var displayClass)))
+			if (!IsDisplayClassLoad(target, out var displayClassLoad) || !displayClasses.TryGetValue(displayClassLoad, out var displayClass))
 				return;
 			// Get display class variable info
 			if (!displayClass.Variables.TryGetValue((IField)field.MemberDefinition, out DisplayClassVariable info))

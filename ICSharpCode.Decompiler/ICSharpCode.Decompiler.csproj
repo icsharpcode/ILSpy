@@ -60,6 +60,7 @@
     <Compile Include="CSharp\CallBuilder.cs" />
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
     <Compile Include="CSharp\RequiredNamespaceCollector.cs" />
+    <Compile Include="CSharp\Resolver\LocalFunctionReferenceResolveResult.cs" />
     <Compile Include="CSharp\SequencePointBuilder.cs" />
     <Compile Include="CSharp\Syntax\AstNode.cs" />
     <Compile Include="CSharp\Syntax\AstNodeCollection.cs" />

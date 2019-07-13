@@ -1,4 +1,22 @@
-﻿using System;
+﻿// Copyright (c) 2019 Siegfried Pammer
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -43,8 +61,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			foreach (var (method, useSites) in localFunctions) {
 				var insertionPoint = FindInsertionPoint(useSites);
-				if (TransformLocalFunction(method, (Block)insertionPoint.Parent, insertionPoint.ChildIndex + 1) == null)
+				ILFunction localFunction = TransformLocalFunction(method, (Block)insertionPoint.Parent, insertionPoint.ChildIndex + 1);
+				if (localFunction == null)
 					continue;
+				function.LocalFunctions.Add(localFunction.Method, (localFunction.Method.Name, localFunction));
 			}
 		}
 
@@ -81,7 +101,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return a.Ancestors.FirstOrDefault(ancestorsOfB.Contains);
 		}
 
-		static ILInstruction GetStatement(ILInstruction inst)
+		internal static bool IsClosureParameter(IParameter parameter)
+		{
+			return parameter.IsRef
+				&& ((ByReferenceType)parameter.Type).ElementType.GetDefinition()?.IsCompilerGenerated() == true;
+		}
+
+		internal static ILInstruction GetStatement(ILInstruction inst)
 		{
 			while (inst.Parent != null) {
 				if (inst.Parent is Block)
@@ -161,9 +187,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Newer Roslyn versions use the format "&ltcallerName&gtg__functionName|x_y"
 		/// Older versions use "&ltcallerName&gtg__functionNamex_y"
 		/// </summary>
-		static readonly Regex functionNameRegex = new Regex(@"^<(.*)>g__(.*)\|{0,1}\d+(_\d+)?$", RegexOptions.Compiled);
+		static readonly Regex functionNameRegex = new Regex(@"^<(.*)>g__([^\|]*)\|{0,1}\d+(_\d+)?$", RegexOptions.Compiled);
 
-		static bool ParseLocalFunctionName(string name, out string callerName, out string functionName)
+		internal static bool ParseLocalFunctionName(string name, out string callerName, out string functionName)
 		{
 			callerName = null;
 			functionName = null;

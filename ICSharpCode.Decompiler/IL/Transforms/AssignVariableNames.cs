@@ -162,6 +162,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						break;
 				}
 			}
+			foreach (var method in function.LocalFunctions.Keys.ToArray()) {
+				var info = function.LocalFunctions[method];
+				if (!LocalFunctionDecompiler.ParseLocalFunctionName(method.Name, out _, out var newName) || !IsValidName(newName))
+					newName = null;
+				function.LocalFunctions[method] = (newName, info.Declaration);
+			}
 			// Now generate names:
 			var mapping = new Dictionary<ILVariable, string>(ILVariableEqualityComparer.Instance);
 			foreach (var inst in function.Descendants.OfType<IInstructionWithVariableOperand>()) {
@@ -173,6 +179,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				} else {
 					v.Name = name;
 				}
+			}
+			foreach (var method in function.LocalFunctions.Keys.ToArray()) {
+				var info = function.LocalFunctions[method];
+				var newName = info.Name;
+				if (newName == null) {
+					newName = GetAlternativeName("f");
+				}
+				function.LocalFunctions[method] = (newName, info.Declaration);
 			}
 		}
 
