@@ -979,11 +979,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else if (method.IsOperator) {
 				IEnumerable<IParameterizedMember> operatorCandidates;
 				if (arguments.Count == 1) {
-					operatorCandidates = resolver.GetUserDefinedOperatorCandidates(arguments[0].Type, method.Name);
+					IType argType = NullableType.GetUnderlyingType(arguments[0].Type);
+					operatorCandidates = resolver.GetUserDefinedOperatorCandidates(argType, method.Name);
 				} else if (arguments.Count == 2) {
+					IType lhsType = NullableType.GetUnderlyingType(arguments[0].Type);
+					IType rhsType = NullableType.GetUnderlyingType(arguments[1].Type);
 					var hashSet = new HashSet<IParameterizedMember>();
-					hashSet.UnionWith(resolver.GetUserDefinedOperatorCandidates(arguments[0].Type, method.Name));
-					hashSet.UnionWith(resolver.GetUserDefinedOperatorCandidates(arguments[1].Type, method.Name));
+					hashSet.UnionWith(resolver.GetUserDefinedOperatorCandidates(lhsType, method.Name));
+					hashSet.UnionWith(resolver.GetUserDefinedOperatorCandidates(rhsType, method.Name));
 					operatorCandidates = hashSet;
 				} else {
 					operatorCandidates = EmptyList<IParameterizedMember>.Instance;
