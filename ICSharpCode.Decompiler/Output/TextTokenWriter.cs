@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler
 				return;
 			}
 
-			if (firstUsingDeclaration) {
+			if (firstUsingDeclaration && !lastUsingDeclaration) {
 				output.MarkFoldStart(defaultCollapsed: !settings.ExpandUsingDeclarations);
 				firstUsingDeclaration = false;
 			}
@@ -264,11 +264,10 @@ namespace ICSharpCode.Decompiler
 		
 		public override void NewLine()
 		{
-			if (lastUsingDeclaration) {
+			if (!firstUsingDeclaration && lastUsingDeclaration) {
 				output.MarkFoldEnd();
 				lastUsingDeclaration = false;
 			}
-//			lastEndOfLine = output.Location;
 			output.WriteLine();
 		}
 		
@@ -366,9 +365,6 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 		
-//		Stack<TextLocation> startLocations = new Stack<TextLocation>();
-//		Stack<MethodDebugSymbols> symbolsStack = new Stack<MethodDebugSymbols>();
-		
 		public override void StartNode(AstNode node)
 		{
 			if (nodeStack.Count == 0) {
@@ -381,15 +377,6 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 			nodeStack.Push(node);
-//			startLocations.Push(output.Location);
-			
-//			if (node is EntityDeclaration && node.GetSymbol() != null && node.GetChildByRole(Roles.Identifier).IsNull)
-//				output.WriteDefinition("", node.GetSymbol(), false);
-
-//			if (node.Annotation<MethodDebugSymbols>() != null) {
-//				symbolsStack.Push(node.Annotation<MethodDebugSymbols>());
-//				symbolsStack.Peek().StartLocation = startLocations.Peek();
-//			}
 		}
 		
 		private bool IsUsingDeclaration(AstNode node)

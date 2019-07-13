@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text
 		{
-			get { return type.FullName + type.MetadataToken.ToSuffixString(); }
+			get { return Language.TypeToString(type, includeNamespace: true) + type.MetadataToken.ToSuffixString(); }
 		}
 
 		public override object Icon => TypeTreeNode.GetIcon(type);

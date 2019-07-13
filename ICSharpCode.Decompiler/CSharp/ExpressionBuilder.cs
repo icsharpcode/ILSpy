@@ -1829,6 +1829,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			int i = 0;
 			foreach (var parameter in parameters) {
 				var pd = astBuilder.ConvertParameter(parameter);
+				if (string.IsNullOrEmpty(pd.Name) && !pd.Type.IsArgList()) {
+					// needs to be consistent with logic in ILReader.CreateILVarable(ParameterDefinition)
+					pd.Name = "P_" + i;
+				}
 				if (settings.AnonymousTypes && parameter.Type.ContainsAnonymousType())
 					pd.Type = null;
 				ILVariable v;

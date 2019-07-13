@@ -53,6 +53,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					var v = variableQueue.Dequeue();
 					if (v.Kind != VariableKind.Local && v.Kind != VariableKind.StackSlot)
 						continue;
+					// Skip variables that are captured in a mcs yield state-machine
+					// loads of these will only be visible after DelegateConstruction step.
+					if (function.StateMachineCompiledWithMono && v.StateMachineField != null)
+						continue;
 					if (v.LoadCount != 0 || v.AddressCount != 0)
 						continue;
 					foreach (var stloc in v.StoreInstructions.OfType<StLoc>().ToArray()) {
