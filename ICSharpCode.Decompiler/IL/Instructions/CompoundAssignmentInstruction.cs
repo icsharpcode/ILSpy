@@ -97,6 +97,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.AddILRange(binary);
 			Debug.Assert(compoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue || (Operator == BinaryNumericOperator.Add || Operator == BinaryNumericOperator.Sub));
 			Debug.Assert(IsValidCompoundAssignmentTarget(Target));
+			Debug.Assert(this.ResultType == (IsLifted ? StackType.O : UnderlyingResultType));
 		}
 		
 		/// <summary>
