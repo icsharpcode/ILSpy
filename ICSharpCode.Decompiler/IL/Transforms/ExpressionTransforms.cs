@@ -389,6 +389,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			base.VisitLdObj(inst);
 			EarlyExpressionTransforms.LdObjToLdLoc(inst, context);
+			// ldobj(...(addressof(ldloc V)) where ... can be zero or more ldflda instructions
+			// =>
+			// ldobj(...(ldloca V))
+			var temp = inst.Target;
+			var range = temp.ILRanges;
+			while (temp.MatchLdFlda(out var ldfldaTarget, out _)) {
+				temp = ldfldaTarget;
+				range = range.Concat(temp.ILRanges);
+			}
+			if (temp.MatchAddressOf(out var addressOfTarget) && addressOfTarget.MatchLdLoc(out var v)) {
+				var replacement = new LdLoca(v).WithILRange(addressOfTarget);
+				foreach (var r in range) {
+					replacement = replacement.WithILRange(r);
+				}
+				temp.ReplaceWith(replacement);
+			}
 		}
 
 		protected internal override void VisitStObj(StObj inst)
