@@ -319,13 +319,21 @@ namespace ICSharpCode.Decompiler.IL
 					var standaloneSig = metadata.GetStandaloneSignature((StandaloneSignatureHandle)entity);
 					switch (standaloneSig.GetKind()) {
 						case StandaloneSignatureKind.Method:
-							var methodSig = standaloneSig.DecodeMethodSignature(new DisassemblerSignatureProvider(module, output), genericContext);
-							methodSig.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
+							methodSignature = standaloneSig.DecodeMethodSignature(new DisassemblerSignatureProvider(module, output), genericContext);
+							if (methodSignature.Header.HasExplicitThis) {
+								output.Write("instance explicit ");
+							} else if (methodSignature.Header.IsInstance) {
+								output.Write("instance ");
+							}
+							if (methodSignature.Header.CallingConvention == SignatureCallingConvention.VarArgs) {
+								output.Write("vararg ");
+							}
+							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							output.Write('(');
-							for (int i = 0; i < methodSig.ParameterTypes.Length; i++) {
+							for (int i = 0; i < methodSignature.ParameterTypes.Length; i++) {
 								if (i > 0)
 									output.Write(", ");
-								methodSig.ParameterTypes[i](ILNameSyntax.SignatureNoNamedTypeParameters);
+								methodSignature.ParameterTypes[i](ILNameSyntax.SignatureNoNamedTypeParameters);
 							}
 							output.Write(')');
 							break;
