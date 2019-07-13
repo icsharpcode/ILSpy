@@ -32,7 +32,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			get;
 			set;
 		}
+
 		public static int StaticProperty {
+			get;
+			set;
+		}
+
+		public bool BoolProperty {
 			get;
 			set;
 		}
@@ -135,6 +141,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int InstancePropertyTest()
 		{
 			return InstanceProperty = GetIndex();
+		}
+
+		public bool BoolPropertyTest(object x)
+		{
+			return BoolProperty = (x != null);
 		}
 	}
 }

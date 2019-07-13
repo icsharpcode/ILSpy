@@ -64,8 +64,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		protected internal override void VisitBlock(Block block)
 		{
-			// Don't visit child blocks; since this is a block transform
-			// we know those were already handled previously.
+			if (block.Kind == BlockKind.ControlFlow) {
+				// Don't visit child control flow blocks;
+				// since this is a block transform
+				// we know those were already handled previously.
+				return;
+			}
+			base.VisitBlock(block);
 		}
 
 		protected internal override void VisitComp(Comp inst)
