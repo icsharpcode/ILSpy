@@ -216,6 +216,8 @@ namespace ICSharpCode.Decompiler.IL
 			var defaultSection = switchInst.Sections.MaxBy(s => s.Labels.Count());
 			if (!defaultSection.Body.MatchBranch(out var defaultBlock) || defaultBlock.IncomingEdgeCount != 1)
 				return false;
+			if (defaultBlock.Parent != switchContainer)
+				return false;
 			
 			// tally stats for heuristic from each case block
 			int maxStatements = 0, maxDepth = 0;
