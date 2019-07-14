@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -42,18 +43,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			this.context = context;
 			this.decompilationContext = new SimpleTypeResolveContext(function.Method);
-			var localFunctions = new Dictionary<IMethod, List<Call>>();
+			var localFunctions = new Dictionary<IMethod, List<CallInstruction>>();
 			var cancellationToken = context.CancellationToken;
 			// Find use-sites
 			foreach (var inst in function.Descendants) {
 				cancellationToken.ThrowIfCancellationRequested();
-				if (inst is Call call && IsLocalFunctionMethod(call.Method)) {
-					context.StepStartGroup($"LocalFunctionDecompiler {call.StartILOffset}", call);
+				if (inst is CallInstruction call && IsLocalFunctionMethod(call.Method)) {
+					if (function.Ancestors.OfType<ILFunction>().Any(f => f.LocalFunctions.ContainsKey(call.Method)))
+						continue;
 					if (!localFunctions.TryGetValue(call.Method, out var info)) {
-						info = new List<Call>() { call };
+						info = new List<CallInstruction>() { call };
 						localFunctions.Add(call.Method, info);
 					} else {
 						info.Add(call);
+					}
+				} else if (inst is LdFtn ldftn && ldftn.Parent is NewObj newObj && IsLocalFunctionMethod(ldftn.Method) && DelegateConstruction.IsDelegateConstruction(newObj)) {
+					if (function.Ancestors.OfType<ILFunction>().Any(f => f.LocalFunctions.ContainsKey(ldftn.Method)))
+						continue;
+					context.StepStartGroup($"LocalFunctionDecompiler {ldftn.StartILOffset}", ldftn);
+					if (!localFunctions.TryGetValue(ldftn.Method, out var info)) {
+						info = new List<CallInstruction>() { newObj };
+						localFunctions.Add(ldftn.Method, info);
+					} else {
+						info.Add(newObj);
 					}
 					context.StepEndGroup();
 				}
@@ -61,14 +73,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			foreach (var (method, useSites) in localFunctions) {
 				var insertionPoint = FindInsertionPoint(useSites);
-				ILFunction localFunction = TransformLocalFunction(method, (Block)insertionPoint.Parent, insertionPoint.ChildIndex + 1);
-				if (localFunction == null)
-					continue;
-				function.LocalFunctions.Add(localFunction.Method, (localFunction.Method.Name, localFunction));
+				context.StepStartGroup($"LocalFunctionDecompiler {insertionPoint.StartILOffset}", insertionPoint);
+				try {
+					TransformLocalFunction(function, method, useSites, (Block)insertionPoint.Parent, insertionPoint.ChildIndex + 1);
+				} finally {
+					context.StepEndGroup();
+				}
 			}
 		}
 
-		static ILInstruction FindInsertionPoint(List<Call> useSites)
+		static ILInstruction FindInsertionPoint(List<CallInstruction> useSites)
 		{
 			ILInstruction insertionPoint = null;
 			foreach (var call in useSites) {
@@ -85,14 +99,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				insertionPoint = ancestor;
 			}
 
-			switch (insertionPoint) {
-				case BlockContainer bc:
-					return insertionPoint;
-				case Block b:
-					return insertionPoint;
-				default:
-					return insertionPoint;
-			}
+			return insertionPoint;
 		}
 
 		static ILInstruction FindCommonAncestorInstruction(ILInstruction a, ILInstruction b)
@@ -117,7 +124,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return inst;
 		}
 
-		private ILFunction TransformLocalFunction(IMethod targetMethod, Block parent, int insertionPoint)
+		private ILFunction TransformLocalFunction(ILFunction parentFunction, IMethod targetMethod, List<CallInstruction> useSites, Block parent, int insertionPoint)
 		{
 			var methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
 			if (!methodDefinition.HasBody())
@@ -132,11 +139,53 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// how the local function body is being transformed.
 			parent.Instructions.Insert(insertionPoint, function);
 			function.CheckInvariant(ILPhase.Normal);
-
 			var nestedContext = new ILTransformContext(context, function);
 			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is LocalFunctionDecompiler)), nestedContext);
+			if (IsNonLocalTarget(targetMethod, useSites, out var target)) {
+				Debug.Assert(target != null);
+				nestedContext.Step("LocalFunctionDecompiler (ReplaceDelegateTargetVisitor)", function);
+				var thisVar = function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter);
+				function.AcceptVisitor(new DelegateConstruction.ReplaceDelegateTargetVisitor(target, thisVar));
+			}
+			parentFunction.LocalFunctions.Add(function.Method, (function.Method.Name, function));
+			// handle nested functions
+			nestedContext.StepStartGroup("LocalFunctionDecompiler (nested functions)", function);
+			new LocalFunctionDecompiler().Run(function, nestedContext);
+			nestedContext.StepEndGroup();
 
 			return function;
+		}
+
+		bool IsNonLocalTarget(IMethod targetMethod, List<CallInstruction> useSites, out ILInstruction target)
+		{
+			target = null;
+			if (targetMethod.IsStatic)
+				return false;
+			ValidateUseSites(useSites);
+			target = useSites.Select(call => call.Arguments.First()).First();
+			return !target.MatchLdThis();
+		}
+
+		[Conditional("DEBUG")]
+		static void ValidateUseSites(List<CallInstruction> useSites)
+		{
+			ILInstruction targetInstruction = null;
+			foreach (var site in useSites) {
+				if (targetInstruction == null)
+					targetInstruction = site.Arguments.First();
+				else
+					Debug.Assert(targetInstruction.Match(site.Arguments[0]).Success);
+			}
+		}
+
+		internal static bool IsLocalFunctionReference(NewObj inst)
+		{
+			if (inst == null || inst.Arguments.Count != 2 || inst.Method.DeclaringType.Kind != TypeKind.Delegate)
+				return false;
+			var opCode = inst.Arguments[1].OpCode;
+
+			return (opCode == OpCode.LdFtn || opCode == OpCode.LdVirtFtn)
+				&& IsLocalFunctionMethod(((IInstructionWithMethodOperand)inst.Arguments[1]).Method);
 		}
 
 		public static bool IsLocalFunctionMethod(IMethod method)

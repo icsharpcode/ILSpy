@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Replaces loads of 'this' with the target expression.
 		/// Async delegates use: ldobj(ldloca this).
 		/// </summary>
-		class ReplaceDelegateTargetVisitor : ILVisitor
+		internal class ReplaceDelegateTargetVisitor : ILVisitor
 		{
 			readonly ILVariable thisVariable;
 			readonly ILInstruction target;

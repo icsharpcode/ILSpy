@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Transforms closure fields to local variables.
 	/// 
-	/// This is a post-processing step of <see cref="DelegateConstruction"/> and <see cref="TransformExpressionTrees"/>.
+	/// This is a post-processing step of <see cref="DelegateConstruction"/>, <see cref="LocalFunctionDecompiler"/> and <see cref="TransformExpressionTrees"/>.
 	/// </summary>
 	class TransformDisplayClassUsage : ILVisitor, IILTransform
 	{
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (IsClosure(v, out ITypeDefinition closureType, out var inst)) {
 							AddOrUpdateDisplayClass(f, v, closureType, inst);
 						}
-						if (v.Kind == VariableKind.Parameter && v.Index > -1 && f.Method.Parameters[v.Index ?? -1] is IParameter p && LocalFunctionDecompiler.IsClosureParameter(p)) {
+						if (f.Kind == ILFunctionKind.LocalFunction && v.Kind == VariableKind.Parameter && v.Index > -1 && f.Method.Parameters[v.Index.Value] is IParameter p && LocalFunctionDecompiler.IsClosureParameter(p)) {
 							AddOrUpdateDisplayClass(f, v, ((ByReferenceType)p.Type).ElementType.GetDefinition(), f.Body);
 						}
 					}
@@ -124,9 +124,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			closureType = variable.Type.GetDefinition();
-			if (closureType?.Kind == TypeKind.Struct && variable.HasInitialValue) {
+			if (closureType?.Kind == TypeKind.Struct && variable.HasInitialValue && IsPotentialClosure(this.context, closureType)) {
 				initializer = LocalFunctionDecompiler.GetStatement(variable.AddressInstructions.OrderBy(i => i.StartILOffset).First());
-				return IsPotentialClosure(this.context, closureType);
+				return true;
 			}
 			return false;
 		}
