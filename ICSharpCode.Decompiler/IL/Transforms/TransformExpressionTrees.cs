@@ -156,6 +156,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var returnType = functionType.GetDelegateInvokeMethod()?.ReturnType;
 			var function = new ILFunction(returnType, parameterList, context.Function.GenericContext, container);
 			function.DelegateType = functionType;
+			function.Kind = IsExpressionTree(functionType) ? ILFunctionKind.ExpressionTree : ILFunctionKind.Delegate;
 			function.Variables.AddRange(parameterVariablesList);
 			function.AddILRange(instruction);
 			lambdaStack.Push(function);
@@ -343,6 +344,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case ILFunction function:
 						if (function.Kind == ILFunctionKind.ExpressionTree) {
 							function.DelegateType = UnwrapExpressionTree(function.DelegateType);
+							function.Kind = ILFunctionKind.Delegate;
 						}
 						return (function, function.DelegateType);
 					case LdLoc ldloc:

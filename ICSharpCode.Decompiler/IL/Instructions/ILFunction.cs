@@ -144,6 +144,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILFunctionKind.TopLevelFunction:
 					Debug.Assert(Parent == null);
 					Debug.Assert(DelegateType == null);
+					Debug.Assert(Method != null);
 					break;
 				case ILFunctionKind.Delegate:
 					Debug.Assert(Parent != null && !(Parent is Block));
@@ -158,6 +159,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILFunctionKind.LocalFunction:
 					Debug.Assert(Parent is Block);
 					Debug.Assert(DelegateType == null);
+					Debug.Assert(Method != null);
 					break;
 			}
 			for (int i = 0; i < Variables.Count; i++) {
