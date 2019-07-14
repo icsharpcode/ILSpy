@@ -32,7 +32,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public readonly InstructionCollection<ILInstruction> Arguments;
 		ILInstruction functionPointer;
-
+		public bool IsInstance { get; }
+		public bool HasExplicitThis { get; }
 		public System.Reflection.Metadata.SignatureCallingConvention CallingConvention { get; }
 		public IType ReturnType { get; }
 		public ImmutableArray<IType> ParameterTypes { get; }
@@ -61,9 +62,11 @@ namespace ICSharpCode.Decompiler.IL
 				functionPointer.ChildIndex = Arguments.Count;
 		}
 
-		public CallIndirect(System.Reflection.Metadata.SignatureCallingConvention callingConvention, IType returnType, ImmutableArray<IType> parameterTypes,
+		public CallIndirect(bool isInstance, bool hasExplicitThis, System.Reflection.Metadata.SignatureCallingConvention callingConvention, IType returnType, ImmutableArray<IType> parameterTypes,
 			IEnumerable<ILInstruction> arguments, ILInstruction functionPointer) : base(OpCode.CallIndirect)
 		{
+			this.IsInstance = isInstance;
+			this.HasExplicitThis = hasExplicitThis;
 			this.CallingConvention = callingConvention;
 			this.ReturnType = returnType ?? throw new ArgumentNullException("returnType");
 			this.ParameterTypes = parameterTypes.ToImmutableArray();
@@ -74,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override ILInstruction Clone()
 		{
-			return new CallIndirect(CallingConvention, ReturnType, ParameterTypes,
+			return new CallIndirect(IsInstance, HasExplicitThis, CallingConvention, ReturnType, ParameterTypes,
 				this.Arguments.Select(inst => inst.Clone()), functionPointer.Clone()
 			).WithILRange(this);
 		}
@@ -84,7 +87,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(Arguments.Count == ParameterTypes.Length);
+			Debug.Assert(Arguments.Count == ParameterTypes.Length + (IsInstance ? 1 : 0));
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
@@ -94,7 +97,12 @@ namespace ICSharpCode.Decompiler.IL
 			ReturnType.WriteTo(output);
 			output.Write('(');
 			bool first = true;
-			foreach (var (inst, type) in Arguments.Zip(ParameterTypes, (a,b) => (a,b))) {
+			int firstArgument = IsInstance ? 1 : 0;
+			if (firstArgument == 1) {
+				Arguments[0].WriteTo(output, options);
+				first = false;
+			}
+			foreach (var (inst, type) in Arguments.Skip(firstArgument).Zip(ParameterTypes, (a,b) => (a,b))) {
 				if (first)
 					first = false;
 				else
@@ -155,6 +163,10 @@ namespace ICSharpCode.Decompiler.IL
 
 		bool EqualSignature(CallIndirect other)
 		{
+			if (IsInstance != other.IsInstance)
+				return false;
+			if (HasExplicitThis != other.HasExplicitThis)
+				return false;
 			if (CallingConvention != other.CallingConvention)
 				return false;
 			if (ParameterTypes.Length != other.ParameterTypes.Length)
