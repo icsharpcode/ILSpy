@@ -26,6 +26,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			InterestingConstants();
 			TruncatedComp();
+			StringConcat();
 		}
 
 		static void Print<T>(T val)
@@ -91,6 +92,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Print((int)val1 < val2);
 			Print(val1 <= val2);
 			Print((int)val1 <= val2);
+		}
+
+		static void StringConcat()
+		{
+			// Some string.Concat()-cases that cannot be replaced using operator+
+			Print(string.Concat("String concat:"));
+			Print(string.Concat(1, 2));
+			Print(string.Concat(1, 2, "str"));
 		}
 	}
 }
