@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.IL
 		public ILFunction(IMethod method, int codeSize, GenericContext genericContext, ILInstruction body, ILFunctionKind kind = ILFunctionKind.TopLevelFunction) : base(OpCode.ILFunction)
 		{
 			this.Method = method;
-			this.Name = method.Name;
+			this.Name = Method?.Name;
 			this.CodeSize = codeSize;
 			this.GenericContext = genericContext;
 			this.Body = body;
