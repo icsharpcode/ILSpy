@@ -18,11 +18,12 @@
 
 using System;
 using System.Collections.Generic;
-using ICSharpCode.Decompiler.IL.Transforms;
+using System.Diagnostics;
 using System.Linq;
+
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -30,12 +31,20 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public readonly IMethod Method;
 		public readonly GenericContext GenericContext;
+		public string Name;
+
 		/// <summary>
 		/// Size of the IL code in this function.
 		/// Note: after async/await transform, this is the code size of the MoveNext function.
 		/// </summary>
 		public int CodeSize;
 		public readonly ILVariableCollection Variables;
+
+		/// <summary>
+		/// Gets the scope in which the local function is declared.
+		/// Returns null, if this is not a local function.
+		/// </summary>
+		public BlockContainer DeclarationScope { get; internal set; }
 
 		/// <summary>
 		/// List of warnings of ILReader.
@@ -110,8 +119,6 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public Dictionary<IMethod, (string Name, ILFunction Declaration)> LocalFunctions { get; } = new Dictionary<IMethod, (string Name, ILFunction Declaration)>();
-
 		public readonly IType ReturnType;
 
 		public readonly IReadOnlyList<IParameter> Parameters;
@@ -119,12 +126,14 @@ namespace ICSharpCode.Decompiler.IL
 		public ILFunction(IMethod method, int codeSize, GenericContext genericContext, ILInstruction body, ILFunctionKind kind = ILFunctionKind.TopLevelFunction) : base(OpCode.ILFunction)
 		{
 			this.Method = method;
+			this.Name = method.Name;
 			this.CodeSize = codeSize;
 			this.GenericContext = genericContext;
 			this.Body = body;
 			this.ReturnType = Method?.ReturnType;
 			this.Parameters = Method?.Parameters;
 			this.Variables = new ILVariableCollection(this);
+			this.LocalFunctions = new InstructionCollection<ILFunction>(this, 1);
 			this.kind = kind;
 		}
 
@@ -135,6 +144,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.ReturnType = returnType;
 			this.Parameters = parameters;
 			this.Variables = new ILVariableCollection(this);
+			this.LocalFunctions = new InstructionCollection<ILFunction>(this, 1);
 			this.kind = ILFunctionKind.ExpressionTree;
 		}
 
@@ -144,20 +154,24 @@ namespace ICSharpCode.Decompiler.IL
 				case ILFunctionKind.TopLevelFunction:
 					Debug.Assert(Parent == null);
 					Debug.Assert(DelegateType == null);
+					Debug.Assert(DeclarationScope == null);
 					Debug.Assert(Method != null);
 					break;
 				case ILFunctionKind.Delegate:
 					Debug.Assert(Parent != null && !(Parent is Block));
 					Debug.Assert(DelegateType != null);
+					Debug.Assert(DeclarationScope == null);
 					Debug.Assert(!(DelegateType?.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1));
 					break;
 				case ILFunctionKind.ExpressionTree:
 					Debug.Assert(Parent != null && !(Parent is Block));
 					Debug.Assert(DelegateType != null);
+					Debug.Assert(DeclarationScope == null);
 					Debug.Assert(DelegateType?.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1);
 					break;
 				case ILFunctionKind.LocalFunction:
-					Debug.Assert(Parent is Block);
+					Debug.Assert(Parent is ILFunction);
+					Debug.Assert(DeclarationScope != null);
 					Debug.Assert(DelegateType == null);
 					Debug.Assert(Method != null);
 					break;
@@ -205,6 +219,11 @@ namespace ICSharpCode.Decompiler.IL
 			if (IsIterator) {
 				output.WriteLine(".iterator");
 			}
+			if (DeclarationScope != null) {
+				output.Write("declared as " + Name + " in ");
+				output.WriteLocalReference(DeclarationScope.EntryPoint.Label, DeclarationScope);
+				output.WriteLine();
+			}
 
 			output.MarkFoldStart(Variables.Count + " variable(s)", true);
 			foreach (var variable in Variables) {
@@ -220,6 +239,11 @@ namespace ICSharpCode.Decompiler.IL
 
 			body.WriteTo(output, options);
 			output.WriteLine();
+
+			foreach (var localFunction in LocalFunctions) {
+				output.WriteLine();
+				localFunction.WriteTo(output, options);
+			}
 
 			if (options.ShowILRanges) {
 				var unusedILRanges = FindUnusedILRanges();

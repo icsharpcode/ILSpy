@@ -198,8 +198,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return true;
 				}
 
-				foreach (var (key, (functionName, definition)) in function.LocalFunctions) {
-					if (functionName == name)
+				foreach (var f in function.LocalFunctions.OfType<ILFunction>()) {
+					if (f.Name == name)
 						return true;
 				}
 
@@ -212,15 +212,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			return settings.LocalFunctions && IL.Transforms.LocalFunctionDecompiler.IsLocalFunctionMethod(method);
 		}
 
-		internal (string Name, ILFunction Definition) ResolveLocalFunction(IMethod method)
+		internal ILFunction ResolveLocalFunction(IMethod method)
 		{
 			Debug.Assert(IsLocalFunction(method));
 			foreach (var parent in currentFunction.Ancestors.OfType<ILFunction>()) {
-				if (parent.LocalFunctions.TryGetValue(method, out var info)) {
-					return info;
+				var definition = parent.LocalFunctions.FirstOrDefault(f => f.Method == method);
+				if (definition != null) {
+					return definition;
 				}
 			}
-			return (null, null);
+			return null;
 		}
 
 		bool RequiresQualifier(IMember member, TranslatedExpression target)

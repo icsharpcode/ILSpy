@@ -687,6 +687,28 @@ namespace ICSharpCode.Decompiler.CSharp
 								connectedMethods.Enqueue((MethodDefinitionHandle)token);
 						}
 						break;
+					case ILOpCode.Call:
+					case ILOpCode.Callvirt:
+						// deal with call/callvirt instructions, i.e., local function invocations
+						token = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
+						if (token.IsNil)
+							continue;
+						switch (token.Kind) {
+							case HandleKind.MethodDefinition:
+								break;
+							case HandleKind.MethodSpecification:
+								var methodSpec = module.Metadata.GetMethodSpecification((MethodSpecificationHandle)token);
+								if (methodSpec.Method.IsNil || methodSpec.Method.Kind != HandleKind.MethodDefinition)
+									continue;
+								token = methodSpec.Method;
+								break;
+							default:
+								continue;
+						}
+						if (LocalFunctionDecompiler.IsLocalFunctionMethod(module, (MethodDefinitionHandle)token)) {
+							connectedMethods.Enqueue((MethodDefinitionHandle)token);
+						}
+						break;
 					default:
 						blob.SkipOperand(code);
 						break;

@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var inst in function.Descendants) {
 				cancellationToken.ThrowIfCancellationRequested();
 				if (inst is CallInstruction call && IsLocalFunctionMethod(call.Method)) {
-					if (function.Ancestors.OfType<ILFunction>().Any(f => f.LocalFunctions.ContainsKey(call.Method)))
+					if (function.Ancestors.OfType<ILFunction>().SelectMany(f => f.LocalFunctions).Any(f => f.Method == call.Method))
 						continue;
 					if (!localFunctions.TryGetValue(call.Method, out var info)) {
 						info = new List<CallInstruction>() { call };
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						info.Add(call);
 					}
 				} else if (inst is LdFtn ldftn && ldftn.Parent is NewObj newObj && IsLocalFunctionMethod(ldftn.Method) && DelegateConstruction.IsDelegateConstruction(newObj)) {
-					if (function.Ancestors.OfType<ILFunction>().Any(f => f.LocalFunctions.ContainsKey(ldftn.Method)))
+					if (function.Ancestors.OfType<ILFunction>().SelectMany(f => f.LocalFunctions).Any(f => f.Method == ldftn.Method))
 						continue;
 					context.StepStartGroup($"LocalFunctionDecompiler {ldftn.StartILOffset}", ldftn);
 					if (!localFunctions.TryGetValue(ldftn.Method, out var info)) {
@@ -72,40 +72,40 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			foreach (var (method, useSites) in localFunctions) {
-				var insertionPoint = FindInsertionPoint(useSites);
-				context.StepStartGroup($"LocalFunctionDecompiler {insertionPoint.StartILOffset}", insertionPoint);
+				context.StepStartGroup($"LocalFunctionDecompiler {useSites[0].StartILOffset}", useSites[0]);
 				try {
-					TransformLocalFunction(function, method, useSites, (Block)insertionPoint.Parent, insertionPoint.ChildIndex + 1);
+					TransformLocalFunction(function, method, useSites);
 				} finally {
 					context.StepEndGroup();
 				}
 			}
-		}
 
-		static ILInstruction FindInsertionPoint(List<CallInstruction> useSites)
-		{
-			ILInstruction insertionPoint = null;
-			foreach (var call in useSites) {
-				if (insertionPoint == null) {
-					insertionPoint = GetStatement(call);
-					continue;
-				}
-
-				var ancestor = FindCommonAncestorInstruction(insertionPoint, GetStatement(call));
-
-				if (ancestor == null)
-					return null;
-
-				insertionPoint = ancestor;
+			foreach (var f in function.LocalFunctions) {
+				// handle nested functions
+				var nestedContext = new ILTransformContext(context, f);
+				nestedContext.StepStartGroup("LocalFunctionDecompiler (nested functions)", f);
+				new LocalFunctionDecompiler().Run(f, nestedContext);
+				nestedContext.StepEndGroup();
 			}
 
-			return insertionPoint;
+			if (function.Kind == ILFunctionKind.TopLevelFunction) {
+				var movableFunctions = TreeTraversal.PostOrder(function, f => f.LocalFunctions)
+					.Where(f => f.Kind == ILFunctionKind.LocalFunction && f.DeclarationScope == null)
+					.ToArray();
+				foreach (var f in movableFunctions) {
+					var parent = (ILFunction)f.Parent;
+					f.DeclarationScope = (BlockContainer)function.Body;
+					parent.LocalFunctions.Remove(f);
+					function.LocalFunctions.Add(f);
+				}
+			}
 		}
 
-		static ILInstruction FindCommonAncestorInstruction(ILInstruction a, ILInstruction b)
+		static T FindCommonAncestorInstruction<T>(ILInstruction a, ILInstruction b)
+			where T : ILInstruction
 		{
-			var ancestorsOfB = new HashSet<ILInstruction>(b.Ancestors);
-			return a.Ancestors.FirstOrDefault(ancestorsOfB.Contains);
+			var ancestorsOfB = new HashSet<T>(b.Ancestors.OfType<T>());
+			return a.Ancestors.OfType<T>().FirstOrDefault(ancestorsOfB.Contains);
 		}
 
 		internal static bool IsClosureParameter(IParameter parameter)
@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return inst;
 		}
 
-		private ILFunction TransformLocalFunction(ILFunction parentFunction, IMethod targetMethod, List<CallInstruction> useSites, Block parent, int insertionPoint)
+		private ILFunction TransformLocalFunction(ILFunction parentFunction, IMethod targetMethod, List<CallInstruction> useSites)
 		{
 			var methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
 			if (!methodDefinition.HasBody())
@@ -137,7 +137,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, ILFunctionKind.LocalFunction, context.CancellationToken);
 			// Embed the local function into the parent function's ILAst, so that "Show steps" can show
 			// how the local function body is being transformed.
-			parent.Instructions.Insert(insertionPoint, function);
+			parentFunction.LocalFunctions.Add(function);
+			function.DeclarationScope = (BlockContainer)parentFunction.Body;
 			function.CheckInvariant(ILPhase.Normal);
 			var nestedContext = new ILTransformContext(context, function);
 			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is LocalFunctionDecompiler)), nestedContext);
@@ -147,11 +148,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var thisVar = function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter);
 				function.AcceptVisitor(new DelegateConstruction.ReplaceDelegateTargetVisitor(target, thisVar));
 			}
-			parentFunction.LocalFunctions.Add(function.Method, (function.Method.Name, function));
-			// handle nested functions
-			nestedContext.StepStartGroup("LocalFunctionDecompiler (nested functions)", function);
-			new LocalFunctionDecompiler().Run(function, nestedContext);
-			nestedContext.StepEndGroup();
+			function.DeclarationScope = null;
+			foreach (var useSite in useSites) {
+				for (int i = useSite.Arguments.Count - 1; i >= 0; i--) {
+					if (!useSite.Arguments[i].MatchLdLocRef(out var closureVar))
+						break;
+					if (!TransformDisplayClassUsage.IsPotentialClosure(context, closureVar.Type.GetDefinition()))
+						break;
+					var instructions = closureVar.StoreInstructions.OfType<ILInstruction>()
+						.Concat(closureVar.AddressInstructions).OrderBy(inst => inst.StartILOffset);
+					var additionalScope = BlockContainer.FindClosestContainer(instructions.First());
+					if (closureVar.CaptureScope == null)
+						closureVar.CaptureScope = additionalScope;
+					else
+						closureVar.CaptureScope = FindCommonAncestorInstruction<BlockContainer>(closureVar.CaptureScope, additionalScope);
+					if (function.DeclarationScope == null)
+						function.DeclarationScope = closureVar.CaptureScope;
+					else
+						function.DeclarationScope = FindCommonAncestorInstruction<BlockContainer>(function.DeclarationScope, closureVar.CaptureScope);
+				}
+			}
 
 			return function;
 		}
@@ -190,6 +206,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public static bool IsLocalFunctionMethod(IMethod method)
 		{
+			if (method.MetadataToken.IsNil)
+				return false;
 			return IsLocalFunctionMethod(method.ParentModule.PEFile, (MethodDefinitionHandle)method.MetadataToken);
 		}
 

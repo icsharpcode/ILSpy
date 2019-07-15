@@ -183,8 +183,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				CallOpCode = callOpCode,
 				IsLocalFunction = expressionBuilder.IsLocalFunction(method)
 			};
-			(string Name, ILFunction Definition) localFunction = default;
-			if (expectedTargetDetails.IsLocalFunction && (localFunction = expressionBuilder.ResolveLocalFunction(method)).Definition == null) {
+			ILFunction localFunction = null;
+			if (expectedTargetDetails.IsLocalFunction && (localFunction = expressionBuilder.ResolveLocalFunction(method)) == null) {
 				expectedTargetDetails.IsLocalFunction = false;
 			}
 			TranslatedExpression target;
@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else if (expectedTargetDetails.IsLocalFunction) {
 				target = new IdentifierExpression(localFunction.Name)
 					.WithoutILInstruction()
-					.WithRR(new LocalFunctionReferenceResolveResult(localFunction.Definition));
+					.WithRR(new LocalFunctionReferenceResolveResult(localFunction));
 			} else {
 				target = expressionBuilder.TranslateTarget(
 					callArguments.FirstOrDefault(),
@@ -1248,7 +1248,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (expectedTargetDetails.IsLocalFunction) {
 				requireTarget = false;
 				var localFunction = expressionBuilder.ResolveLocalFunction(method);
-				result = new LocalFunctionReferenceResolveResult(localFunction.Definition);
+				result = new LocalFunctionReferenceResolveResult(localFunction);
 				target = default;
 				methodName = localFunction.Name;
 			} else {

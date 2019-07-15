@@ -733,11 +733,24 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(usingContainer)))
 				return false;
-			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(usingContainer) || !ILInlining.IsUsedAsThisPointerInCall(la) || IsTargetOfSetterCall(la, la.Variable.Type)))
+			if (storeInst.Variable.AddressInstructions.Any(inst => !AddressUseAllowed(inst)))
 				return false;
 			if (storeInst.Variable.StoreInstructions.OfType<ILInstruction>().Any(st => st != storeInst))
 				return false;
 			return true;
+
+			bool AddressUseAllowed(LdLoca la)
+			{
+				if (!la.IsDescendantOf(usingContainer))
+					return false;
+				if (ILInlining.IsUsedAsThisPointerInCall(la) && !IsTargetOfSetterCall(la, la.Variable.Type))
+					return true;
+				var current = la.Parent;
+				while (current is LdFlda next) {
+					current = next.Parent;
+				}
+				return current is LdObj;
+			}
 		}
 
 		/// <summary>
@@ -850,6 +863,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt)
 						continueStmt.Remove();
+					DeclareLocalFunctions(currentFunction, container, blockStatement);
 					return new WhileStatement(new PrimitiveExpression(true), blockStatement);
 				case ContainerKind.While:
 					continueTarget = container.EntryPoint;
@@ -871,6 +885,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt2)
 						continueStmt2.Remove();
+					DeclareLocalFunctions(currentFunction, container, blockStatement);
 					return new WhileStatement(exprBuilder.TranslateCondition(condition), blockStatement);
 				case ContainerKind.DoWhile:
 					continueTarget = container.Blocks.Last();
@@ -889,6 +904,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						// to continue statements, we have to introduce an extra label.
 						blockStatement.Add(new LabelStatement { Label = continueTarget.Label });
 					}
+					DeclareLocalFunctions(currentFunction, container, blockStatement);
 					if (blockStatement.Statements.Count == 0) {
 						return new WhileStatement {
 							Condition = exprBuilder.TranslateCondition(condition),
@@ -920,6 +936,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					if (continueTarget.IncomingEdgeCount > continueCount)
 						blockStatement.Add(new LabelStatement { Label = continueTarget.Label });
+					DeclareLocalFunctions(currentFunction, container, blockStatement);
 					return forStmt;
 				default:
 					throw new ArgumentOutOfRangeException();
@@ -928,7 +945,31 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		BlockStatement ConvertBlockContainer(BlockContainer container, bool isLoop)
 		{
-			return ConvertBlockContainer(new BlockStatement(), container, container.Blocks, isLoop);
+			var blockStatement = ConvertBlockContainer(new BlockStatement(), container, container.Blocks, isLoop);
+			DeclareLocalFunctions(currentFunction, container, blockStatement);
+			return blockStatement;
+		}
+
+		void DeclareLocalFunctions(ILFunction currentFunction, BlockContainer container, BlockStatement blockStatement)
+		{
+			foreach (var localFunction in currentFunction.LocalFunctions) {
+				if (localFunction.DeclarationScope != container)
+					continue;
+				blockStatement.Add(TranslateFunction(localFunction));
+			}
+
+			LocalFunctionDeclarationStatement TranslateFunction(ILFunction function)
+			{
+				var stmt = new LocalFunctionDeclarationStatement();
+				var tsab = CSharpDecompiler.CreateAstBuilder(null);
+				var nestedBuilder = new StatementBuilder(typeSystem, exprBuilder.decompilationContext, function, settings, cancellationToken);
+				stmt.Name = function.Name;
+				stmt.Parameters.AddRange(exprBuilder.MakeParameters(function.Parameters, function));
+				stmt.ReturnType = tsab.ConvertType(function.Method.ReturnType);
+				stmt.Body = nestedBuilder.ConvertAsBlock(function.Body);
+				stmt.AddAnnotation(new LocalFunctionReferenceResolveResult(function));
+				return stmt;
+			}
 		}
 
 		BlockStatement ConvertBlockContainer(BlockStatement blockStatement, BlockContainer container, IEnumerable<Block> blocks, bool isLoop)
@@ -1014,21 +1055,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				)
 			);
 			stmt.InsertChildAfter(null, new Comment(" IL cpblk instruction"), Roles.Comment);
-			return stmt;
-		}
-
-		protected internal override Statement VisitILFunction(ILFunction function)
-		{
-			var stmt = new LocalFunctionDeclarationStatement();
-			var tsab = CSharpDecompiler.CreateAstBuilder(null);
-			var nestedBuilder = new StatementBuilder(typeSystem, exprBuilder.decompilationContext, function, settings, cancellationToken);
-			var localFunction = exprBuilder.ResolveLocalFunction(function.Method);
-			Debug.Assert(localFunction.Definition == function);
-			stmt.Name = localFunction.Name;
-			stmt.Parameters.AddRange(exprBuilder.MakeParameters(function.Parameters, function));
-			stmt.ReturnType = tsab.ConvertType(function.Method.ReturnType);
-			stmt.Body = nestedBuilder.ConvertAsBlock(function.Body);
-			stmt.AddAnnotation(new LocalFunctionReferenceResolveResult(function));
 			return stmt;
 		}
 	}

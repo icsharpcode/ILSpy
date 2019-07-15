@@ -66,10 +66,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (HandleMonoStateMachine(function, v, decompilationContext, f))
 							continue;
 						if (IsClosure(v, out ITypeDefinition closureType, out var inst)) {
-							AddOrUpdateDisplayClass(f, v, closureType, inst);
+							AddOrUpdateDisplayClass(f, v, closureType, inst, localFunctionClosureParameter: false);
 						}
-						if (f.Kind == ILFunctionKind.LocalFunction && v.Kind == VariableKind.Parameter && v.Index > -1 && f.Method.Parameters[v.Index.Value] is IParameter p && LocalFunctionDecompiler.IsClosureParameter(p)) {
-							AddOrUpdateDisplayClass(f, v, ((ByReferenceType)p.Type).ElementType.GetDefinition(), f.Body);
+						if (context.Settings.LocalFunctions && f.Kind == ILFunctionKind.LocalFunction && v.Kind == VariableKind.Parameter && v.Index > -1 && f.Method.Parameters[v.Index.Value] is IParameter p && LocalFunctionDecompiler.IsClosureParameter(p)) {
+							AddOrUpdateDisplayClass(f, v, ((ByReferenceType)p.Type).ElementType.GetDefinition(), f.Body, localFunctionClosureParameter: true);
 						}
 					}
 					foreach (var displayClass in displayClasses.Values.OrderByDescending(d => d.Initializer.StartILOffset).ToArray()) {
@@ -91,21 +91,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private void AddOrUpdateDisplayClass(ILFunction f, ILVariable v, ITypeDefinition closureType, ILInstruction inst)
+		private void AddOrUpdateDisplayClass(ILFunction f, ILVariable v, ITypeDefinition closureType, ILInstruction inst, bool localFunctionClosureParameter)
 		{
 			var displayClass = displayClasses.Values.FirstOrDefault(c => c.Definition == closureType);
+			// TODO : figure out whether it is a mono compiled closure, without relying on the type name
+			bool isMono = f.StateMachineCompiledWithMono || closureType.Name.Contains("AnonStorey");
 			if (displayClass == null) {
-				// TODO : figure out whether it is a mono compiled closure, without relying on the type name
-				bool isMono = f.StateMachineCompiledWithMono || closureType.Name.Contains("AnonStorey");
 				displayClasses.Add(v, new DisplayClass {
 					IsMono = isMono,
 					Initializer = inst,
 					Variable = v,
 					Definition = closureType,
 					Variables = new Dictionary<IField, DisplayClassVariable>(),
-					CaptureScope = isMono && IsMonoNestedCaptureScope(closureType) ? null : v.CaptureScope
+					CaptureScope = (isMono && IsMonoNestedCaptureScope(closureType)) || localFunctionClosureParameter ? null : v.CaptureScope
 				});
 			} else {
+				if (displayClass.CaptureScope == null && !localFunctionClosureParameter)
+					displayClass.CaptureScope = isMono && IsMonoNestedCaptureScope(closureType) ? null : v.CaptureScope;
 				displayClass.Variable = v;
 				displayClass.Initializer = inst;
 				displayClasses.Add(v, displayClass);
@@ -124,7 +126,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			closureType = variable.Type.GetDefinition();
-			if (closureType?.Kind == TypeKind.Struct && variable.HasInitialValue && IsPotentialClosure(this.context, closureType)) {
+			if (context.Settings.LocalFunctions && closureType?.Kind == TypeKind.Struct && variable.HasInitialValue && IsPotentialClosure(this.context, closureType)) {
 				initializer = LocalFunctionDecompiler.GetStatement(variable.AddressInstructions.OrderBy(i => i.StartILOffset).First());
 				return true;
 			}
@@ -241,8 +243,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool IsDisplayClassLoad(ILInstruction target, out ILVariable variable)
 		{
 			if (target.MatchLdLoc(out variable) || target.MatchLdLoca(out variable))
-				return true;
-			if (target.MatchAddressOf(out var load) && load.MatchLdLoc(out variable))
 				return true;
 			return false;
 		}
