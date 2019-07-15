@@ -222,5 +222,17 @@ namespace LocalFunctions
 				}
 			}
 		}
+
+		public static int LocalFunctionInLambda(IEnumerable<int> xs)
+		{
+			return xs.First(delegate(int x) {
+				return Do();
+
+				bool Do()
+				{
+					return x == 3;
+				}
+			});
+		}
 	}
 }

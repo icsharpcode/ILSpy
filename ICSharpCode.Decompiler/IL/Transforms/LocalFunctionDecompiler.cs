@@ -169,6 +169,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
+			if (function.DeclarationScope != null && function.DeclarationScope.Parent is ILFunction betterParentFunction) {
+				parentFunction.LocalFunctions.Remove(function);
+				betterParentFunction.LocalFunctions.Add(function);
+			}
+
 			return function;
 		}
 
