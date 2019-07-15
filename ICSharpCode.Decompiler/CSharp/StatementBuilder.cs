@@ -952,7 +952,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void DeclareLocalFunctions(ILFunction currentFunction, BlockContainer container, BlockStatement blockStatement)
 		{
-			foreach (var localFunction in currentFunction.LocalFunctions) {
+			foreach (var localFunction in currentFunction.LocalFunctions.OrderBy(f => f.Name)) {
 				if (localFunction.DeclarationScope != container)
 					continue;
 				blockStatement.Add(TranslateFunction(localFunction));

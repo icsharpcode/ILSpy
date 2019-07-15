@@ -263,12 +263,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (inst.Value.MatchLdLoc(out var closureVariable) && displayClasses.TryGetValue(closureVariable, out var displayClass)) {
 				displayClasses[inst.Variable] = displayClass;
 				instructionsToRemove.Add(inst);
+			} else if (inst.Variable.Kind == VariableKind.Local && inst.Variable.IsSingleDefinition && inst.Variable.LoadCount == 0 && inst.Value is StLoc) {
+				inst.ReplaceWith(inst.Value);
 			}
-		}
-
-		protected internal override void VisitLdLoc(LdLoc inst)
-		{
-			base.VisitLdLoc(inst);
 		}
 
 		protected internal override void VisitStObj(StObj inst)
