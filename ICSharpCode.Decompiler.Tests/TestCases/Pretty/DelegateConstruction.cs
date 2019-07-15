@@ -159,6 +159,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 
+		public static Predicate<T> And<T>(this Predicate<T> filter1, Predicate<T> filter2)
+		{
+			if (filter1 == null) {
+				return filter2;
+			}
+			if (filter2 == null) {
+				return filter1;
+			}
+			return (T m) => filter1(m) && filter2(m);
+		}
+
 		public static Action<string> ExtensionMethodUnbound()
 		{
 			return Test;
@@ -172,6 +183,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static Action ExtensionMethodBoundOnNull()
 		{
 			return ((string)null).Test;
+		}
+
+		public static Predicate<int> NoExtensionMethodOnLambda()
+		{
+			return And((int x) => x >= 0, (int x) => x <= 100);
 		}
 
 		public static object StaticMethod()

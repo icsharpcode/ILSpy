@@ -191,7 +191,11 @@ namespace ICSharpCode.Decompiler.CSharp
 									conversion.Input.Type,
 									type, targetType
 								)) {
-								return this.UnwrapChild(cast.Expression);
+								var result = this.UnwrapChild(cast.Expression);
+								if (conversion.Conversion.IsUserDefined) {
+									result.Expression.AddAnnotation(new ImplicitConversionAnnotation(conversion));
+								}
+								return result;
 							} else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
 									&& oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion) {
 								return this.UnwrapChild(oce.Arguments.Single());
@@ -210,6 +214,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (targetType.Kind == TypeKind.Unknown || targetType.Kind == TypeKind.Void || targetType.Kind == TypeKind.None) {
 				return this; // don't attempt to insert cast to '?' or 'void' as these are not valid.
+			}
+			var convAnnotation = this.Expression.Annotation<ImplicitConversionAnnotation>();
+			if (convAnnotation != null) {
+				// If an implicit user-defined conversion was stripped from this expression;
+				// it needs to be re-introduced before we can apply other casts to this expression.
+				// This happens when the CallBuilder discovers that the conversion is necessary in
+				// order to choose the correct overload.
+				this.Expression.RemoveAnnotations<ImplicitConversionAnnotation>();
+				return new CastExpression(expressionBuilder.ConvertType(convAnnotation.TargetType), Expression)
+					.WithoutILInstruction()
+					.WithRR(convAnnotation.ConversionResolveResult)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 			}
 			if (Expression is TupleExpression tupleExpr && targetType is TupleType targetTupleType
 				&& tupleExpr.Elements.Count == targetTupleType.ElementTypes.Length)
@@ -231,8 +247,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var compilation = expressionBuilder.compilation;
 			var conversions = Resolver.CSharpConversions.Get(compilation);
-			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2 &&
-				CastCanBeMadeImplicit(conversions, conv.Conversion, conv.Input.Type, type, targetType))
+			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2
+				&& !conv.Conversion.IsUserDefined
+				&& CastCanBeMadeImplicit(conversions, conv.Conversion, conv.Input.Type, type, targetType))
 			{
 				var unwrapped = this.UnwrapChild(cast2.Expression);
 				if (allowImplicitConversion)

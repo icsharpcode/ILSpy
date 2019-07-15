@@ -162,6 +162,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public static bool CanTransformToExtensionMethodCall(CSharpResolver resolver, IMethod method,
 			IReadOnlyList<IType> typeArguments, ResolveResult target, ResolveResult[] arguments, string[] argumentNames)
 		{
+			if (target is LambdaResolveResult)
+				return false;
 			var rr = resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
 			if (rr == null)
 				return false;

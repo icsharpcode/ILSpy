@@ -154,16 +154,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (arguments.Length < 2)
 				return false;
 
-			bool valid = false;
-
-			foreach (var argument in arguments) {
-				if (argument is NamedArgumentExpression)
-					return false;
-				if (argument.GetResolveResult().Type.IsKnownType(KnownTypeCode.String))
-					valid = true;
-			}
-
-			return valid;
+			return !arguments.Any(arg => arg is NamedArgumentExpression) &&
+				(arguments[0].GetResolveResult().Type.IsKnownType(KnownTypeCode.String) ||
+				arguments[1].GetResolveResult().Type.IsKnownType(KnownTypeCode.String));
 		}
 
 		static BinaryOperatorType? GetBinaryOperatorTypeFromMetadataName(string name)

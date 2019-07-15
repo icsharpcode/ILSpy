@@ -141,8 +141,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (name == null) {
 				return null;
 			}
-			return ReflectionHelper.ParseReflectionName(name)
-				.Resolve(module != null ? new SimpleTypeResolveContext(module) : new SimpleTypeResolveContext(compilation));
+			try {
+				return ReflectionHelper.ParseReflectionName(name)
+					.Resolve(module != null ? new SimpleTypeResolveContext(module) : new SimpleTypeResolveContext(compilation));
+			} catch (ReflectionNameParseException ex) {
+				throw new BadImageFormatException($"Invalid type name: \"{name}\": {ex.Message}");
+			}
 		}
 		
 		public IType GetTypeFromSpecification(SRM.MetadataReader reader, GenericContext genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)

@@ -478,9 +478,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// Try to determine the real type of the object we're modifying:
 				storeType = stobj.Target.InferType(compilation);
 				if (storeType is ByReferenceType refType) {
-					storeType = refType.ElementType;
+					if (TypeUtils.IsCompatibleTypeForMemoryAccess(refType.ElementType, stobj.Type)) {
+						storeType = refType.ElementType;
+					} else {
+						storeType = stobj.Type;
+					}
 				} else if (storeType is PointerType pointerType) {
-					storeType = pointerType.ElementType;
+					if (TypeUtils.IsCompatibleTypeForMemoryAccess(pointerType.ElementType, stobj.Type)) {
+						storeType = pointerType.ElementType;
+					} else {
+						storeType = stobj.Type;
+					}
 				} else {
 					storeType = stobj.Type;
 				}

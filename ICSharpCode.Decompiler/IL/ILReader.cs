@@ -1401,12 +1401,17 @@ namespace ICSharpCode.Decompiler.IL
 			var signatureHandle = (StandaloneSignatureHandle)ReadAndDecodeMetadataToken();
 			var signature = module.DecodeMethodSignature(signatureHandle, genericContext);
 			var functionPointer = Pop(StackType.I);
-			Debug.Assert(!signature.Header.IsInstance);
-			var arguments = new ILInstruction[signature.ParameterTypes.Length];
+			int firstArgument = signature.Header.IsInstance ? 1 : 0;
+			var arguments = new ILInstruction[firstArgument + signature.ParameterTypes.Length];
 			for (int i = signature.ParameterTypes.Length - 1; i >= 0; i--) {
-				arguments[i] = Pop(signature.ParameterTypes[i].GetStackType());
+				arguments[firstArgument + i] = Pop(signature.ParameterTypes[i].GetStackType());
+			}
+			if (firstArgument == 1) {
+				arguments[0] = Pop();
 			}
 			var call = new CallIndirect(
+				signature.Header.IsInstance,
+				signature.Header.HasExplicitThis,
 				signature.Header.CallingConvention,
 				signature.ReturnType,
 				signature.ParameterTypes,
