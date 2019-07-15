@@ -234,5 +234,16 @@ namespace LocalFunctions
 				}
 			});
 		}
+		//public static void LocalFunctionInUsing()
+		//{
+		//	using (MemoryStream memoryStream = new MemoryStream()) {
+		//		Do();
+
+		//		void Do()
+		//		{
+		//			memoryStream.WriteByte(42);
+		//		}
+		//	}
+		//}
 	}
 }
