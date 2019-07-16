@@ -44,8 +44,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (context.Settings.IntroduceIncrementAndDecrement) {
 				if (TransformPostIncDecOperatorWithInlineStore(block, pos)
-					|| TransformPostIncDecOperator(block, pos)
-					|| TransformPostIncDecOperatorLocal(block, pos)) {
+					|| TransformPostIncDecOperator(block, pos)) {
 					// again, new top-level stloc might need inlining:
 					context.RequestRerun();
 					return;
@@ -428,44 +427,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		/// <code>
-		/// stloc s(ldloc l)
-		/// stloc l(binary.op(ldloc s, ldc.i4 1))
-		/// -->
-		/// stloc s(block {
-		/// 	stloc s2(ldloc l)
-		/// 	stloc l(binary.op(ldloc s2, ldc.i4 1))
-		/// 	final: ldloc s2
-		/// })
-		/// </code>
-		bool TransformPostIncDecOperatorLocal(Block block, int pos)
-		{
-			var inst = block.Instructions[pos] as StLoc;
-			var nextInst = block.Instructions.ElementAtOrDefault(pos + 1) as StLoc;
-			if (inst == null || nextInst == null || !inst.Value.MatchLdLoc(out var loadVar) || !ILVariableEqualityComparer.Instance.Equals(loadVar, nextInst.Variable))
-				return false;
-			var binary = nextInst.Value as BinaryNumericInstruction;
-			if (inst.Variable.Kind != VariableKind.StackSlot || nextInst.Variable.Kind == VariableKind.StackSlot || binary == null)
-				return false;
-			if (binary.IsLifted)
-				return false;
-			if ((binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub) || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
-				return false;
-			context.Step($"TransformPostIncDecOperatorLocal", inst);
-			if (loadVar != nextInst.Variable) {
-				// load and store are two different variables, that were split from the same variable
-				context.Function.RecombineVariables(loadVar, nextInst.Variable);
-			}
-			var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, inst.Variable.Type);
-			var assignment = new Block(BlockKind.PostfixOperator);
-			assignment.Instructions.Add(new StLoc(tempStore, new LdLoc(loadVar)));
-			assignment.Instructions.Add(new StLoc(loadVar, new BinaryNumericInstruction(binary.Operator, new LdLoc(tempStore), new LdcI4(1), binary.CheckForOverflow, binary.Sign)));
-			assignment.FinalInstruction = new LdLoc(tempStore);
-			inst.Value = assignment;
-			block.Instructions.RemoveAt(pos + 1); // remove nextInst
-			return true;
-		}
-
 		/// <summary>
 		/// Gets whether 'inst' is a possible store for use as a compound store.
 		/// </summary>
@@ -514,6 +475,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				storeType = call.Method.Parameters.Last().Type;
 				value = call.Arguments.Last();
 				return IsSameMember(call.Method, (call.Method.AccessorOwner as IProperty)?.Setter);
+			} else if (inst is StLoc stloc && (stloc.Variable.Kind == VariableKind.Local || stloc.Variable.Kind == VariableKind.Parameter)) {
+				storeType = stloc.Variable.Type;
+				value = stloc.Value;
+				return true;
 			} else {
 				return false;
 			}
@@ -521,6 +486,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool IsMatchingCompoundLoad(ILInstruction load, ILInstruction store,
 			out ILInstruction target, out CompoundTargetKind targetKind,
+			ILFunction contextFunction = null,
 			ILVariable forbiddenVariable = null)
 		{
 			target = null;
@@ -539,6 +505,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				target = load;
 				targetKind = CompoundTargetKind.Property;
+				return true;
+			} else if (load is LdLoc ldloc && store is StLoc stloc && ILVariableEqualityComparer.Instance.Equals(ldloc.Variable, stloc.Variable)) {
+				if (ILVariableEqualityComparer.Instance.Equals(ldloc.Variable, forbiddenVariable))
+					return false;
+				if (contextFunction == null)
+					return false; // locals only supported for the callers that specify the context
+				target = new LdLoca(ldloc.Variable).WithILRange(ldloc);
+				targetKind = CompoundTargetKind.Address;
+				contextFunction.RecombineVariables(ldloc.Variable, stloc.Variable);
 				return true;
 			} else {
 				return false;
@@ -567,8 +542,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool TransformPostIncDecOperatorWithInlineStore(Block block, int pos)
 		{
 			var store = block.Instructions[pos];
-			if (!IsCompoundStore(store, out var targetType, out var value, context.TypeSystem))
+			if (!IsCompoundStore(store, out var targetType, out var value, context.TypeSystem)) {
 				return false;
+			}
 			StLoc stloc;
 			var binary = UnwrapSmallIntegerConv(value, out var conv) as BinaryNumericInstruction;
 			if (binary != null && binary.Right.MatchLdcI(1)) {
@@ -607,11 +583,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <code>
-		/// stloc l(ldobj(target))
-		/// stobj(target, binary.op(ldloc l, ldc.i4 1))
-		///   target is pure and does not use 'l', 'stloc does not truncate'
+		/// stloc tmp(ldobj(target))
+		/// stobj(target, binary.op(ldloc tmp, ldc.i4 1))
+		///   target is pure and does not use 'tmp', 'stloc does not truncate'
 		/// -->
-		/// stloc l(compound.op.old(ldobj(target), ldc.i4 1))
+		/// stloc tmp(compound.op.old(ldobj(target), ldc.i4 1))
+		/// </code>
+		/// This is usually followed by inlining or eliminating 'tmp'.
+		/// 
+		/// Local variables use a similar pattern, also detected by this function:
+		/// <code>
+		/// stloc tmp(ldloc target)
+		/// stloc target(binary.op(ldloc tmp, ldc.i4 1))
+		/// -->
+		/// stloc tmp(compound.op.old(ldloca target, ldc.i4 1))
 		/// </code>
 		/// <remarks>
 		/// This pattern occurs with legacy csc for static fields, and with Roslyn for most post-increments.
@@ -622,16 +607,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var store = block.Instructions.ElementAtOrDefault(i + 1);
 			if (inst == null || store == null)
 				return false;
+			var tmpVar = inst.Variable;
 			if (!IsCompoundStore(store, out var targetType, out var value, context.TypeSystem))
 				return false;
 			if (IsImplicitTruncation(inst.Value, targetType, context.TypeSystem)) {
-				// 'stloc l' is implicitly truncating the value
+				// 'stloc tmp' is implicitly truncating the value
 				return false;
 			}
-			if (!IsMatchingCompoundLoad(inst.Value, store, out var target, out var targetKind, forbiddenVariable: inst.Variable))
+			if (!IsMatchingCompoundLoad(inst.Value, store, out var target, out var targetKind, context.Function, forbiddenVariable: inst.Variable))
 				return false;
 			if (UnwrapSmallIntegerConv(value, out var conv) is BinaryNumericInstruction binary) {
-				if (!binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI(1))
+				if (!binary.Left.MatchLdLoc(tmpVar) || !binary.Right.MatchLdcI(1))
 					return false;
 				if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
 					return false;
@@ -641,7 +627,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				inst.Value = new NumericCompoundAssign(binary, target, targetKind, binary.Right,
 					targetType, CompoundEvalMode.EvaluatesToOldValue);
 			} else if (value is Call operatorCall && operatorCall.Method.IsOperator && operatorCall.Arguments.Count == 1) {
-				if (!operatorCall.Arguments[0].MatchLdLoc(inst.Variable))
+				if (!operatorCall.Arguments[0].MatchLdLoc(tmpVar))
 					return false;
 				if (!(operatorCall.Method.Name == "op_Increment" || operatorCall.Method.Name == "op_Decrement"))
 					return false;

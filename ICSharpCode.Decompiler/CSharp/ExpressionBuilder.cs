@@ -2210,8 +2210,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				case BlockKind.CollectionInitializer:
 				case BlockKind.ObjectInitializer:
 					return TranslateObjectAndCollectionInitializer(block);
-				case BlockKind.PostfixOperator:
-					return TranslatePostfixOperator(block);
 				case BlockKind.CallInlineAssign:
 					return TranslateSetterCallAssignment(block);
 				case BlockKind.CallWithNamedArgs:
@@ -2544,19 +2542,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return stackAllocExpression.WithILInstruction(block)
 				.WithRR(new ResolveResult(stloc.Variable.Type));
-		}
-
-		TranslatedExpression TranslatePostfixOperator(Block block)
-		{
-			var targetInst = (block.Instructions.ElementAtOrDefault(0) as StLoc)?.Value;
-			var inst = (block.Instructions.ElementAtOrDefault(1) as StLoc)?.Value as BinaryNumericInstruction;
-			if (targetInst == null || inst == null || (inst.Operator != BinaryNumericOperator.Add && inst.Operator != BinaryNumericOperator.Sub))
-				throw new ArgumentException("given Block is invalid!");
-			var op = inst.Operator == BinaryNumericOperator.Add ? UnaryOperatorType.PostIncrement : UnaryOperatorType.PostDecrement;
-			var target = Translate(targetInst);
-			return new UnaryOperatorExpression(op, target)
-				.WithILInstruction(block)
-				.WithRR(resolver.WithCheckForOverflow(inst.CheckForOverflow).ResolveUnaryOperator(op, target.ResolveResult));
 		}
 
 		/// <summary>

@@ -276,6 +276,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		internal void RecombineVariables(ILVariable variable1, ILVariable variable2)
 		{
+			if (variable1 == variable2)
+				return;
 			Debug.Assert(ILVariableEqualityComparer.Instance.Equals(variable1, variable2));
 			foreach (var ldloc in variable2.LoadInstructions.ToArray()) {
 				ldloc.Variable = variable1;
