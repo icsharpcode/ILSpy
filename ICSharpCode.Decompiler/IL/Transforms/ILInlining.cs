@@ -424,10 +424,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true; // inline into (left slot of) user-defined && or || operator
 				case OpCode.DynamicGetMemberInstruction:
 				case OpCode.DynamicGetIndexInstruction:
-				case OpCode.LdObj:
 					if (parent.Parent.OpCode == OpCode.DynamicCompoundAssign)
 						return true; // inline into dynamic compound assignments
 					break;
+				case OpCode.DynamicCompoundAssign:
+					return true;
 				case OpCode.ArrayToPointer:
 				case OpCode.LocAllocSpan:
 					return true; // inline size-expressions into localloc.span

@@ -354,15 +354,5 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				Debug.Fail("LdFlda pattern not supported!");
 			}
 		}
-
-		protected internal override void VisitNumericCompoundAssign(NumericCompoundAssign inst)
-		{
-			base.VisitNumericCompoundAssign(inst);
-			// NumericCompoundAssign is only valid when used with fields: -> replace it with a BinaryNumericInstruction.
-			if (inst.Target.MatchLdLoc(out var v)) {
-				inst.ReplaceWith(new StLoc(v, new BinaryNumericInstruction(inst.Operator, inst.Target, inst.Value, inst.CheckForOverflow, inst.Sign).WithILRange(inst)));
-			}
-		}
-
 	}
 }

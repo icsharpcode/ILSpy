@@ -24,5 +24,6 @@
   <files>
     <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.dll" target="lib\netstandard2.0" />
     <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.pdb" target="lib\netstandard2.0" />
+    <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.xml" target="lib\netstandard2.0" />
   </files>
 </package>

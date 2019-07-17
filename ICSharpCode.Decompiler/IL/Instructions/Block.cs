@@ -329,13 +329,6 @@ namespace ICSharpCode.Decompiler.IL
 		ObjectInitializer,
 		StackAllocInitializer,
 		/// <summary>
-		/// Block is used for postfix operator on local variable.
-		/// </summary>
-		/// <remarks>
-		/// Postfix operators on non-locals use CompoundAssignmentInstruction with CompoundAssignmentType.EvaluatesToOldValue.
-		/// </remarks>
-		PostfixOperator,
-		/// <summary>
 		/// Block is used for using the result of a property setter inline.
 		/// Example: <code>Use(this.Property = value);</code>
 		/// This is only for inline assignments to property or indexers; other inline assignments work

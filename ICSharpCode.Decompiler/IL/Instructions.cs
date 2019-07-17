@@ -1097,7 +1097,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as UserDefinedCompoundAssign;
-			return o != null && this.Method.Equals(o.Method) && this.CompoundAssignmentType == o.CompoundAssignmentType && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+			return o != null && this.Method.Equals(o.Method) && this.EvalMode == o.EvalMode && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
 		}
 	}
 }
@@ -1131,7 +1131,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as DynamicCompoundAssign;
-			return o != null && this.CompoundAssignmentType == o.CompoundAssignmentType && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+			return o != null && this.EvalMode == o.EvalMode && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
 		}
 	}
 }
