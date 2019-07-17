@@ -69,11 +69,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void ICSharpCode_Decompiler()
 		{
-			try {
-				RunWithTest("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll", "ICSharpCode.Decompiler.Tests.exe");
-			} catch (TestRunFailedException) {
-				Assert.Ignore("CorrectnessTestRunner.UndocumentedExpressions fails on recompilation.");
-			}
+			RunWithTest("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll", "ICSharpCode.Decompiler.Tests.exe");
 		}
 
 		[Test]

@@ -338,7 +338,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (inst.Parent is LdObj || inst.Parent is StObj)
 				return;
 			// Get display class info
-			if (!(inst.Target is LdLoc displayClassLoad && displayClasses.TryGetValue(displayClassLoad.Variable, out var displayClass)))
+			if (!IsDisplayClassLoad(inst.Target, out var displayClassLoad) || !displayClasses.TryGetValue(displayClassLoad, out var displayClass))
 				return;
 			var field = (IField)inst.Field.MemberDefinition;
 			if (!displayClass.Variables.TryGetValue(field, out DisplayClassVariable info)) {
