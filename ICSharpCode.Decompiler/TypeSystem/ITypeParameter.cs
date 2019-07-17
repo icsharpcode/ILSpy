@@ -30,10 +30,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		/// <returns>SymbolKind.TypeDefinition or SymbolKind.Method</returns>
 		SymbolKind OwnerType { get; }
-		
+
 		/// <summary>
 		/// Gets the owning method/class.
-		/// This property may return null (for example for the dummy type parameters used by <see cref="ParameterListComparer.NormalizeMethodTypeParameters"/>).
+		/// This property may return null (for example for the dummy type parameters used by <see cref="NormalizeTypeVisitor.ReplaceMethodTypeParametersWithDummy"/>).
 		/// </summary>
 		/// <remarks>
 		/// For "class Outer&lt;T&gt; { class Inner {} }",

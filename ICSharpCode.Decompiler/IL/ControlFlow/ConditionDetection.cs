@@ -403,7 +403,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		///   if (cond) { if (nestedCond) { nestedThen... } }
 		/// ->
-		///   if (cond && nestedCond) { nestedThen... }
+		///   if (cond &amp;&amp; nestedCond) { nestedThen... }
 		/// </summary>
 		private void IntroduceShortCircuit(IfInstruction ifInst)
 		{

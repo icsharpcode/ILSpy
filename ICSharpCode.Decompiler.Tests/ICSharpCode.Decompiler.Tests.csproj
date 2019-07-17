@@ -7,7 +7,7 @@
 
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
-    <NoWarn>1701;1702;1705,67,169,1058,728,1720,649,168,251</NoWarn>
+    <NoWarn>1701;1702;1705,67,169,1058,728,1720,649,168,251,660,661,675</NoWarn>
 
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 

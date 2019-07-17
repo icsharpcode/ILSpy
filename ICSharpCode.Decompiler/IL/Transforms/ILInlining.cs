@@ -373,7 +373,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Determines whether a variable should be inlined in non-aggressive mode, even though it is not a generated variable.
 		/// </summary>
 		/// <param name="next">The next top-level expression</param>
-		/// <param name="loadInst">The load within 'next'</param>
+		/// <param name="v">The variable being eliminated by inlining.</param>
 		/// <param name="inlinedExpression">The expression being inlined</param>
 		static bool NonAggressiveInlineInto(ILInstruction next, FindResult findResult, ILInstruction inlinedExpression, ILVariable v)
 		{

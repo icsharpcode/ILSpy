@@ -940,6 +940,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <param name="initializerStatements">
 		/// Statements for Objects/Collections initializer.
 		/// <see cref="InvocationResolveResult.InitializerStatements"/>
+		/// </param>
 		/// <param name="returnTypeOverride">
 		/// If not null, use this instead of the ReturnType of the member as the type of the created resolve result.
 		/// </param>

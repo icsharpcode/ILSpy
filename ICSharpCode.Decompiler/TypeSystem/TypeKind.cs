@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Enum,
 		
 		/// <summary>The <c>System.Void</c> type.</summary>
-		/// <see cref="KnownTypeReference.Void"/>
+		/// <see cref="KnownTypeCode.Void"/>
 		Void,
 
 		/// <summary>Type used for invalid expressions and for types whose definition could not be found.</summary>
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Dynamic,
 		/// <summary>Represents missing type arguments in partially parameterized types.</summary>
 		/// <see cref="SpecialType.UnboundTypeArgument"/>
-		/// <see cref="IType.GetNestedTypes(Predicate{ITypeDefinition}, GetMemberOptions)"/>
+		/// <see cref="IType">IType.GetNestedTypes(Predicate{ITypeDefinition}, GetMemberOptions)</see>
 		UnboundTypeArgument,
 		
 		/// <summary>The type is a type parameter.</summary>
@@ -74,9 +74,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>A managed reference type</summary>
 		/// <see cref="ByReferenceType"/>
 		ByReference,
-		/// <summary>An anonymous type</summary>
-		/// <see cref="AnonymousType"/>
-		Anonymous,
 		
 		/// <summary>Intersection of several types</summary>
 		/// <see cref="IntersectionType"/>

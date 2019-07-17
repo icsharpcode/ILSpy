@@ -48,6 +48,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;1591;1573</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Humanizer.Core" Version="2.2.0" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
@@ -223,7 +227,6 @@
     <Compile Include="CSharp\Resolver\OverloadResolution.cs" />
     <Compile Include="CSharp\Resolver\OverloadResolutionErrors.cs" />
     <Compile Include="CSharp\Resolver\ReducedExtensionMethod.cs" />
-    <Compile Include="CSharp\Resolver\RenameCallbackArguments.cs" />
     <Compile Include="CSharp\Resolver\TypeInference.cs" />
     <Compile Include="CSharp\Transforms\CombineQueryExpressions.cs" />
     <Compile Include="CSharp\Transforms\FlattenSwitchBlocks.cs" />
