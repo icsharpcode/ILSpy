@@ -702,8 +702,8 @@
   <data name="DecompilerSettings.RemoveOptionalArgumentsIfPossible" xml:space="preserve">
     <value>Remove optional arguments, if possible</value>
   </data>
-  <data name="DecompilerSettings.IntroduceLocalFunctionsNOTIMPLEMENTED" xml:space="preserve">
-    <value>Introduce local functions (NOT IMPLEMENTED!)</value>
+  <data name="DecompilerSettings.IntroduceLocalFunctions" xml:space="preserve">
+    <value>Introduce local functions</value>
   </data>
   <data name="DecompilerSettings.NullableReferenceTypes" xml:space="preserve">
     <value>Nullable reference types</value>
