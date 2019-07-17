@@ -1326,7 +1326,13 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitUserDefinedCompoundAssign(UserDefinedCompoundAssign inst, TranslationContext context)
 		{
-			var target = Translate(inst.Target);
+			IType loadType = inst.Method.Parameters[0].Type;
+			ExpressionWithResolveResult target;
+			if (inst.TargetKind == CompoundTargetKind.Address) {
+				target = LdObj(inst.Target, loadType);
+			} else {
+				target = Translate(inst.Target, loadType);
+			}
 			if (UserDefinedCompoundAssign.IsStringConcat(inst.Method)) {
 				Debug.Assert(inst.Method.Parameters.Count == 2);
 				var value = Translate(inst.Value).ConvertTo(inst.Method.Parameters[1].Type, this, allowImplicitConversion: true);
@@ -1342,7 +1348,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(inst)
 					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, AssignmentExpression.GetLinqNodeType(op.Value, false), inst.Method, inst.IsLifted, new[] { target.ResolveResult, value.ResolveResult }));
 			} else {
-				UnaryOperatorType? op = GetUnaryOperatorTypeFromMetadataName(inst.Method.Name, inst.CompoundAssignmentType == CompoundAssignmentType.EvaluatesToOldValue);
+				UnaryOperatorType? op = GetUnaryOperatorTypeFromMetadataName(inst.Method.Name, inst.EvalMode == CompoundEvalMode.EvaluatesToOldValue);
 				Debug.Assert(op != null);
 
 				return new UnaryOperatorExpression(op.Value, target)
@@ -1421,10 +1427,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		TranslatedExpression HandleCompoundAssignment(NumericCompoundAssign inst, AssignmentOperatorType op)
 		{
-			var target = Translate(inst.Target);
+			ExpressionWithResolveResult target;
+			if (inst.TargetKind == CompoundTargetKind.Address) {
+				target = LdObj(inst.Target, inst.Type);
+			} else {
+				target = Translate(inst.Target, inst.Type);
+			}
 
 			TranslatedExpression resultExpr;
-			if (inst.CompoundAssignmentType == CompoundAssignmentType.EvaluatesToOldValue) {
+			if (inst.EvalMode == CompoundEvalMode.EvaluatesToOldValue) {
 				Debug.Assert(op == AssignmentOperatorType.Add || op == AssignmentOperatorType.Subtract);
 				Debug.Assert(inst.Value.MatchLdcI(1));
 				UnaryOperatorType unary;
@@ -1485,8 +1496,13 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		TranslatedExpression HandleCompoundShift(NumericCompoundAssign inst, AssignmentOperatorType op)
 		{
-			Debug.Assert(inst.CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue);
-			var target = Translate(inst.Target);
+			Debug.Assert(inst.EvalMode == CompoundEvalMode.EvaluatesToNewValue);
+			ExpressionWithResolveResult target;
+			if (inst.TargetKind == CompoundTargetKind.Address) {
+				target = LdObj(inst.Target, inst.Type);
+			} else {
+				target = Translate(inst.Target, inst.Type);
+			}
 			var value = Translate(inst.Value);
 
 			// Shift operators in C# always expect type 'int' on the right-hand-side
@@ -1901,46 +1917,46 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitLdObj(LdObj inst, TranslationContext context)
 		{
-			var target = Translate(inst.Target);
-			if (TypeUtils.IsCompatiblePointerTypeForMemoryAccess(target.Type, inst.Type)) {
-				TranslatedExpression result;
+			var result = LdObj(inst.Target, inst.Type);
+			//if (target.Type.IsSmallIntegerType() && loadType.IsSmallIntegerType() && target.Type.GetSign() != loadType.GetSign())
+			//	return result.ConvertTo(loadType, this);
+			return result.WithILInstruction(inst);
+		}
+
+		ExpressionWithResolveResult LdObj(ILInstruction address, IType loadType)
+		{
+			var target = Translate(address);
+			if (TypeUtils.IsCompatiblePointerTypeForMemoryAccess(target.Type, loadType)) {
+				ExpressionWithResolveResult result;
 				if (target.Expression is DirectionExpression dirExpr) {
 					// we can dereference the managed reference by stripping away the 'ref'
 					result = target.UnwrapChild(dirExpr.Expression);
-					result.Expression.AddAnnotation(inst); // add LdObj in addition to the existing ILInstruction annotation
 				} else if (target.Type is PointerType pointerType) {
 					if (target.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.AddressOf) {
 						// We can dereference the pointer by stripping away the '&'
 						result = target.UnwrapChild(uoe.Expression);
-						result.Expression.AddAnnotation(inst); // add LdObj in addition to the existing ILInstruction annotation
 					} else {
 						// Dereference the existing pointer
 						result = new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
-							.WithILInstruction(inst)
 							.WithRR(new ResolveResult(pointerType.ElementType));
 					}
 				} else {
 					// reference type behind non-DirectionExpression?
 					// this case should be impossible, but we can use a pointer cast
 					// just to make sure
-					target = target.ConvertTo(new PointerType(inst.Type), this);
+					target = target.ConvertTo(new PointerType(loadType), this);
 					return new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
-						.WithILInstruction(inst)
-						.WithRR(new ResolveResult(inst.Type));
+						.WithRR(new ResolveResult(loadType));
 				}
 				// we don't convert result to inst.Type, because the LdObj type
 				// might be inaccurate (it's often System.Object for all reference types),
 				// and our parent node should already insert casts where necessary
-
-				if (target.Type.IsSmallIntegerType() && inst.Type.IsSmallIntegerType() && target.Type.GetSign() != inst.Type.GetSign())
-					return result.ConvertTo(inst.Type, this);
 				return result;
 			} else {
 				// We need to cast the pointer type:
-				target = target.ConvertTo(new PointerType(inst.Type), this);
+				target = target.ConvertTo(new PointerType(loadType), this);
 				return new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
-					.WithILInstruction(inst)
-					.WithRR(new ResolveResult(inst.Type));
+					.WithRR(new ResolveResult(loadType));
 			}
 		}
 
@@ -2194,8 +2210,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				case BlockKind.CollectionInitializer:
 				case BlockKind.ObjectInitializer:
 					return TranslateObjectAndCollectionInitializer(block);
-				case BlockKind.PostfixOperator:
-					return TranslatePostfixOperator(block);
 				case BlockKind.CallInlineAssign:
 					return TranslateSetterCallAssignment(block);
 				case BlockKind.CallWithNamedArgs:
@@ -2528,19 +2542,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return stackAllocExpression.WithILInstruction(block)
 				.WithRR(new ResolveResult(stloc.Variable.Type));
-		}
-
-		TranslatedExpression TranslatePostfixOperator(Block block)
-		{
-			var targetInst = (block.Instructions.ElementAtOrDefault(0) as StLoc)?.Value;
-			var inst = (block.Instructions.ElementAtOrDefault(1) as StLoc)?.Value as BinaryNumericInstruction;
-			if (targetInst == null || inst == null || (inst.Operator != BinaryNumericOperator.Add && inst.Operator != BinaryNumericOperator.Sub))
-				throw new ArgumentException("given Block is invalid!");
-			var op = inst.Operator == BinaryNumericOperator.Add ? UnaryOperatorType.PostIncrement : UnaryOperatorType.PostDecrement;
-			var target = Translate(targetInst);
-			return new UnaryOperatorExpression(op, target)
-				.WithILInstruction(block)
-				.WithRR(resolver.WithCheckForOverflow(inst.CheckForOverflow).ResolveUnaryOperator(op, target.ResolveResult));
 		}
 
 		/// <summary>
@@ -3039,7 +3040,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitDynamicCompoundAssign(DynamicCompoundAssign inst, TranslationContext context)
 		{
-			var target = TranslateDynamicArgument(inst.Target, inst.TargetArgumentInfo);
+			ExpressionWithResolveResult target;
+			if (inst.TargetKind == CompoundTargetKind.Address) {
+				target = LdObj(inst.Target, SpecialType.Dynamic);
+			} else {
+				target = TranslateDynamicArgument(inst.Target, inst.TargetArgumentInfo);
+			}
 			var value = TranslateDynamicArgument(inst.Value, inst.ValueArgumentInfo);
 
 			var ae = new AssignmentExpression(target, AssignmentExpression.GetAssignmentOperatorTypeFromExpressionType(inst.Operation).Value, value);
