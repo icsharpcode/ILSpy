@@ -56,7 +56,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			bool isExtensionMethodInvocation = false,
 			bool isExpandedForm = false,
 			bool isDelegateInvocation = false,
-			bool isLocalFunctionInvocation = false,
 			IReadOnlyList<int> argumentToParameterMap = null,
 			IList<ResolveResult> initializerStatements = null,
 			IType returnTypeOverride = null
@@ -67,7 +66,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			this.IsExtensionMethodInvocation = isExtensionMethodInvocation;
 			this.IsExpandedForm = isExpandedForm;
 			this.IsDelegateInvocation = isDelegateInvocation;
-			this.IsLocalFunctionInvocation = isLocalFunctionInvocation;
 			this.argumentToParameterMap = argumentToParameterMap;
 		}
 		
