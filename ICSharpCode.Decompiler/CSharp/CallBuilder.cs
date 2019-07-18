@@ -1299,9 +1299,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(result);
 				targetExpression = ide;
 			}
-			if (target.ResolveResult != null) {
-				result = new MemberResolveResult(target.ResolveResult, method);
-			}
 			var oce = new ObjectCreateExpression(expressionBuilder.ConvertType(inst.Method.DeclaringType), targetExpression)
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(

@@ -962,11 +962,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			LocalFunctionDeclarationStatement TranslateFunction(ILFunction function)
 			{
 				var stmt = new LocalFunctionDeclarationStatement();
-				var tsab = CSharpDecompiler.CreateAstBuilder(null);
 				var nestedBuilder = new StatementBuilder(typeSystem, exprBuilder.decompilationContext, function, settings, cancellationToken);
 				stmt.Name = function.Name;
 				stmt.Parameters.AddRange(exprBuilder.MakeParameters(function.Parameters, function));
-				stmt.ReturnType = tsab.ConvertType(function.Method.ReturnType);
+				stmt.ReturnType = exprBuilder.ConvertType(function.Method.ReturnType);
 				stmt.Body = nestedBuilder.ConvertAsBlock(function.Body);
 				stmt.AddAnnotation(new MemberResolveResult(null, function.ReducedMethod));
 				return stmt;

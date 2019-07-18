@@ -397,7 +397,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new DecompilerTypeSystem(file, resolver);
 		}
 
-		internal static TypeSystemAstBuilder CreateAstBuilder(ITypeResolveContext decompilationContext)
+		static TypeSystemAstBuilder CreateAstBuilder(ITypeResolveContext decompilationContext)
 		{
 			var typeSystemAstBuilder = new TypeSystemAstBuilder();
 			typeSystemAstBuilder.ShowAttributes = true;
