@@ -174,10 +174,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// because the ExpressionTransforms don't look into inline blocks, manually trigger HandleCallCompoundAssign
 				if (HandleCompoundAssign(call, context)) {
 					// if we did construct a compound assignment, it should have made our inline block redundant:
-					if (inlineBlock.Instructions.Single().MatchStLoc(newVar, out var compoundAssign)) {
-						Debug.Assert(newVar.IsSingleDefinition && newVar.LoadCount == 1);
-						inlineBlock.ReplaceWith(compoundAssign);
-					}
+					Debug.Assert(!inlineBlock.IsConnected);
 				}
 				return true;
 			} else {
@@ -205,8 +202,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		static bool MatchingGetterAndSetterCalls(CallInstruction getterCall, CallInstruction setterCall)
+		static bool MatchingGetterAndSetterCalls(CallInstruction getterCall, CallInstruction setterCall, out Action<ILTransformContext> finalizeMatch)
 		{
+			finalizeMatch = null;
 			if (getterCall == null || setterCall == null || !IsSameMember(getterCall.Method.AccessorOwner, setterCall.Method.AccessorOwner))
 				return false;
 			if (setterCall.OpCode != getterCall.OpCode)
@@ -218,12 +216,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			// Ensure that same arguments are passed to getterCall and setterCall:
 			for (int j = 0; j < getterCall.Arguments.Count; j++) {
+				if (setterCall.Arguments[j].MatchStLoc(out var v) && v.IsSingleDefinition && v.LoadCount == 1) {
+					if (getterCall.Arguments[j].MatchLdLoc(v)) {
+						// OK, setter call argument is saved in temporary that is re-used for getter call
+						if (finalizeMatch == null) {
+							finalizeMatch = AdjustArguments;
+						}
+						continue;
+					}
+				}
 				if (!SemanticHelper.IsPure(getterCall.Arguments[j].Flags))
 					return false;
 				if (!getterCall.Arguments[j].Match(setterCall.Arguments[j]).Success)
 					return false;
 			}
 			return true;
+
+			void AdjustArguments(ILTransformContext context)
+			{
+				Debug.Assert(setterCall.Arguments.Count == getterCall.Arguments.Count + 1);
+				for (int j = 0; j < getterCall.Arguments.Count; j++) {
+					if (setterCall.Arguments[j].MatchStLoc(out var v, out var value)) {
+						Debug.Assert(v.IsSingleDefinition && v.LoadCount == 1);
+						Debug.Assert(getterCall.Arguments[j].MatchLdLoc(v));
+						getterCall.Arguments[j] = value;
+					}
+				}
+			}
 		}
 
 		/// <summary>
@@ -275,18 +294,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			ILInstruction newInst;
 			if (UnwrapSmallIntegerConv(setterValue, out var smallIntConv) is BinaryNumericInstruction binary) {
-				if (!IsMatchingCompoundLoad(binary.Left, compoundStore, out var target, out var targetKind, forbiddenVariable: storeInSetter?.Variable))
+				if (!IsMatchingCompoundLoad(binary.Left, compoundStore, out var target, out var targetKind, out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
 					return false;
 				if (!ValidateCompoundAssign(binary, smallIntConv, targetType))
 					return false;
 				context.Step($"Compound assignment (binary.numeric)", compoundStore);
+				finalizeMatch?.Invoke(context);
 				newInst = new NumericCompoundAssign(
 					binary, target, targetKind, binary.Right,
 					targetType, CompoundEvalMode.EvaluatesToNewValue);
 			} else if (setterValue is Call operatorCall && operatorCall.Method.IsOperator) {
 				if (operatorCall.Arguments.Count == 0)
 					return false;
-				if (!IsMatchingCompoundLoad(operatorCall.Arguments[0], compoundStore, out var target, out var targetKind, forbiddenVariable: storeInSetter?.Variable))
+				if (!IsMatchingCompoundLoad(operatorCall.Arguments[0], compoundStore, out var target, out var targetKind, out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
 					return false;
 				ILInstruction rhs;
 				if (operatorCall.Arguments.Count == 2) {
@@ -304,12 +324,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (operatorCall.IsLifted)
 					return false; // TODO: add tests and think about whether nullables need special considerations
 				context.Step($"Compound assignment (user-defined binary)", compoundStore);
+				finalizeMatch?.Invoke(context);
 				newInst = new UserDefinedCompoundAssign(operatorCall.Method, CompoundEvalMode.EvaluatesToNewValue,
 					target, targetKind, rhs);
 			} else if (setterValue is DynamicBinaryOperatorInstruction dynamicBinaryOp) {
-				if (!IsMatchingCompoundLoad(dynamicBinaryOp.Left, compoundStore, out var target, out var targetKind, forbiddenVariable: storeInSetter?.Variable))
+				if (!IsMatchingCompoundLoad(dynamicBinaryOp.Left, compoundStore, out var target, out var targetKind, out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
 					return false;
 				context.Step($"Compound assignment (dynamic binary)", compoundStore);
+				finalizeMatch?.Invoke(context);
 				newInst = new DynamicCompoundAssign(dynamicBinaryOp.Operation, dynamicBinaryOp.BinderFlags, target, dynamicBinaryOp.LeftArgumentInfo, dynamicBinaryOp.Right, dynamicBinaryOp.RightArgumentInfo, targetKind);
 			} else if (setterValue is Call concatCall && UserDefinedCompoundAssign.IsStringConcat(concatCall.Method)) {
 				// setterValue is a string.Concat() invocation
@@ -317,9 +339,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false; // for now we only support binary compound assignments
 				if (!targetType.IsKnownType(KnownTypeCode.String))
 					return false;
-				if (!IsMatchingCompoundLoad(concatCall.Arguments[0], compoundStore, out var target, out var targetKind, forbiddenVariable: storeInSetter?.Variable))
+				if (!IsMatchingCompoundLoad(concatCall.Arguments[0], compoundStore, out var target, out var targetKind, out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
 					return false;
 				context.Step($"Compound assignment (string concatenation)", compoundStore);
+				finalizeMatch?.Invoke(context);
 				newInst = new UserDefinedCompoundAssign(concatCall.Method, CompoundEvalMode.EvaluatesToNewValue,
 					target, targetKind, concatCall.Arguments[1]);
 			} else {
@@ -332,6 +355,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.RequestRerun(); // moving stloc to top-level might trigger inlining
 			}
 			compoundStore.ReplaceWith(newInst);
+			if (newInst.Parent is Block inlineAssignBlock && inlineAssignBlock.Kind == BlockKind.CallInlineAssign) {
+				// It's possible that we first replaced the instruction in an inline-assign helper block.
+				// In such a situation, we know from the block invariant that we're have a storeInSetter.
+				Debug.Assert(storeInSetter != null);
+				Debug.Assert(storeInSetter.Variable.IsSingleDefinition && storeInSetter.Variable.LoadCount == 1);
+				Debug.Assert(inlineAssignBlock.Instructions.Single() == storeInSetter);
+				Debug.Assert(inlineAssignBlock.FinalInstruction.MatchLdLoc(storeInSetter.Variable));
+				// Block CallInlineAssign { stloc I_0(compound.op(...)); final: ldloc I_0 }
+				// --> compound.op(...)
+				inlineAssignBlock.ReplaceWith(storeInSetter.Value);
+			}
 			return true;
 		}
 		
@@ -468,6 +502,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				}
 				foreach (var arg in call.Arguments.SkipLast(1)) {
+					if (arg.MatchStLoc(out var v) && v.IsSingleDefinition && v.LoadCount == 1) {
+						continue; // OK, IsMatchingCompoundLoad can perform an adjustment in this special case
+					}
 					if (!SemanticHelper.IsPure(arg.Flags)) {
 						return false;
 					}
@@ -484,13 +521,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		/// <summary>
+		/// Checks whether 'load' and 'store' both access the same store, and can be combined to a compound assignment.
+		/// </summary>
+		/// <param name="load">The load instruction to test.</param>
+		/// <param name="store">The compound store to test against. Must have previously been tested via IsCompoundStore()</param>
+		/// <param name="target">The target to use for the compound assignment instruction.</param>
+		/// <param name="targetKind">The target kind to use for the compound assignment instruction.</param>
+		/// <param name="finalizeMatch">If set to a non-null value, call this delegate to fix up minor mismatches between getter and setter.</param>
+		/// <param name="forbiddenVariable">
+		/// If given a non-null value, this function returns false if the forbiddenVariable is used in the load/store instructions.
+		/// Some transforms effectively move a store around,
+		/// which is only valid if the variable stored to does not occur in the compound load/store.
+		/// </param>
 		static bool IsMatchingCompoundLoad(ILInstruction load, ILInstruction store,
 			out ILInstruction target, out CompoundTargetKind targetKind,
-			ILFunction contextFunction = null,
+			out Action<ILTransformContext> finalizeMatch,
 			ILVariable forbiddenVariable = null)
 		{
 			target = null;
 			targetKind = 0;
+			finalizeMatch = null;
 			if (load is LdObj ldobj && store is StObj stobj) {
 				Debug.Assert(SemanticHelper.IsPure(stobj.Target.Flags));
 				if (!SemanticHelper.IsPure(ldobj.Target.Flags))
@@ -500,7 +551,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				target = ldobj.Target;
 				targetKind = CompoundTargetKind.Address;
 				return ldobj.Target.Match(stobj.Target).Success;
-			} else if (MatchingGetterAndSetterCalls(load as CallInstruction, store as CallInstruction)) {
+			} else if (MatchingGetterAndSetterCalls(load as CallInstruction, store as CallInstruction, out finalizeMatch)) {
 				if (forbiddenVariable != null && forbiddenVariable.IsUsedWithin(load))
 					return false;
 				target = load;
@@ -509,11 +560,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else if (load is LdLoc ldloc && store is StLoc stloc && ILVariableEqualityComparer.Instance.Equals(ldloc.Variable, stloc.Variable)) {
 				if (ILVariableEqualityComparer.Instance.Equals(ldloc.Variable, forbiddenVariable))
 					return false;
-				if (contextFunction == null)
-					return false; // locals only supported for the callers that specify the context
 				target = new LdLoca(ldloc.Variable).WithILRange(ldloc);
 				targetKind = CompoundTargetKind.Address;
-				contextFunction.RecombineVariables(ldloc.Variable, stloc.Variable);
+				finalizeMatch = context => context.Function.RecombineVariables(ldloc.Variable, stloc.Variable);
 				return true;
 			} else {
 				return false;
@@ -566,11 +615,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(stloc.Variable.Kind == VariableKind.Local || stloc.Variable.Kind == VariableKind.StackSlot))
 				return false;
-			if (!IsMatchingCompoundLoad(stloc.Value, store, out var target, out var targetKind, forbiddenVariable: stloc.Variable))
+			if (!IsMatchingCompoundLoad(stloc.Value, store, out var target, out var targetKind, out var finalizeMatch, forbiddenVariable: stloc.Variable))
 				return false;
 			if (IsImplicitTruncation(stloc.Value, stloc.Variable.Type, context.TypeSystem))
 				return false;
 			context.Step("TransformPostIncDecOperatorWithInlineStore", store);
+			finalizeMatch?.Invoke(context);
 			if (binary != null) {
 				block.Instructions[pos] = new StLoc(stloc.Variable, new NumericCompoundAssign(
 					binary, target, targetKind, binary.Right, targetType, CompoundEvalMode.EvaluatesToOldValue));
@@ -614,7 +664,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// 'stloc tmp' is implicitly truncating the value
 				return false;
 			}
-			if (!IsMatchingCompoundLoad(inst.Value, store, out var target, out var targetKind, context.Function, forbiddenVariable: inst.Variable))
+			if (!IsMatchingCompoundLoad(inst.Value, store, out var target, out var targetKind, out var finalizeMatch, forbiddenVariable: inst.Variable))
 				return false;
 			if (UnwrapSmallIntegerConv(value, out var conv) is BinaryNumericInstruction binary) {
 				if (!binary.Left.MatchLdLoc(tmpVar) || !binary.Right.MatchLdcI(1))
@@ -624,6 +674,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!ValidateCompoundAssign(binary, conv, targetType))
 					return false;
 				context.Step("TransformPostIncDecOperator (builtin)", inst);
+				finalizeMatch?.Invoke(context);
 				inst.Value = new NumericCompoundAssign(binary, target, targetKind, binary.Right,
 					targetType, CompoundEvalMode.EvaluatesToOldValue);
 			} else if (value is Call operatorCall && operatorCall.Method.IsOperator && operatorCall.Arguments.Count == 1) {
@@ -634,6 +685,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (operatorCall.IsLifted)
 					return false; // TODO: add tests and think about whether nullables need special considerations
 				context.Step("TransformPostIncDecOperator (user-defined)", inst);
+				finalizeMatch?.Invoke(context);
 				inst.Value = new UserDefinedCompoundAssign(operatorCall.Method,
 					CompoundEvalMode.EvaluatesToOldValue, target, targetKind, new LdcI4(1));
 			} else {

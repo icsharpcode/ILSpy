@@ -87,10 +87,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						VisitILFunction(f);
 					}
 				}
-				context.Step($"Remove instructions", function);
-				foreach (var store in instructionsToRemove) {
-					if (store.Parent is Block containingBlock)
-						containingBlock.Instructions.Remove(store);
+				if (instructionsToRemove.Count > 0) {
+					context.Step($"Remove instructions", function);
+					foreach (var store in instructionsToRemove) {
+						if (store.Parent is Block containingBlock)
+							containingBlock.Instructions.Remove(store);
+					}
 				}
 			} finally {
 				instructionsToRemove.Clear();

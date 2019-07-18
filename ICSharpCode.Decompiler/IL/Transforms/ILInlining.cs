@@ -432,6 +432,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case OpCode.ArrayToPointer:
 				case OpCode.LocAllocSpan:
 					return true; // inline size-expressions into localloc.span
+				case OpCode.Call:
+				case OpCode.CallVirt:
+					// Aggressive inline into property/indexer getter calls for compound assignment calls
+					// (The compiler generates locals for these because it doesn't want to evalute the args twice for getter+setter)
+					if (parent.SlotInfo == CompoundAssignmentInstruction.TargetSlot) {
+						return true;
+					}
+					break;
 			}
 			// decide based on the top-level target instruction into which we are inlining:
 			switch (next.OpCode) {
