@@ -45,9 +45,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 
 		/// <para>
 		/// local functions can either be used in method calls, i.e., call and callvirt instructions,
-		/// or can be used as part of the "delegate construction" pattern, i.e., <c>newobj Delegate(&lt;target-expression&gt;, ldftn &lt;method&gt;)</c>. Note that this pattern would also be possible with <c>ldvirtftn</c>, but I haven't yet disovered a case where a compiler generates such code.
+		/// or can be used as part of the "delegate construction" pattern, i.e., <c>newobj Delegate(&lt;target-expression&gt;, ldftn &lt;method&gt;)</c>.
 		/// </para>
-		/// As local functions can be declared practically anywhere, we have to take a look at all use-sites and infer the declaration location from that.
+		/// As local functions can be declared practically anywhere, we have to take a look at all use-sites and infer the declaration location from that. Use-sites can be call, callvirt and ldftn instructions.
+		/// After all use-sites are collected we construct the ILAst of the local function and add it to the parent function.
+		/// Then all use-sites of the local-function are transformed to a call to the <c>LocalFunctionMethod</c> or a ldftn of the <c>LocalFunctionMethod</c>.
+		/// In a next step we handle all nested local functions.
+		/// After all local functions are transformed, we move all local functions that do not capture any variables to the top-level function.
 		/// </summary>
 		public void Run(ILFunction function, ILTransformContext context)
 		{
