@@ -148,6 +148,23 @@ namespace LocalFunctions
 			}
 		}
 
+		private void Name()
+		{
+
+		}
+
+		private void LocalFunctionHidingMethod()
+		{
+			Action action = this.Name;
+			Name();
+			action();
+
+			void Name()
+			{
+
+			}
+		}
+
 		public void NamedArgument()
 		{
 			Use(Get(1), Get(2), Get(3));

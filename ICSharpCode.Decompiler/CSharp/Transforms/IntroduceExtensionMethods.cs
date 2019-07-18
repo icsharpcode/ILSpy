@@ -154,7 +154,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var newResolveResult = new CSharpInvocationResolveResult(
 					irr.TargetResult, irr.Member, irr.Arguments, irr.OverloadResolutionErrors,
 					isExtensionMethodInvocation: true, irr.IsExpandedForm, irr.IsDelegateInvocation,
-					irr.IsLocalFunctionInvocation, irr.GetArgumentToParameterMap(), irr.InitializerStatements);
+					irr.GetArgumentToParameterMap(), irr.InitializerStatements);
 				invocationExpression.AddAnnotation(newResolveResult);
 			}
 		}

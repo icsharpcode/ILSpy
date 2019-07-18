@@ -1227,68 +1227,66 @@ namespace ICSharpCode.Decompiler.CSharp
 				CallOpCode = inst.OpCode
 			};
 			ResolveResult result = null;
-			string methodName;
+			string methodName = method.Name;
 			if (method.IsLocalFunction) {
 				requireTarget = false;
 				var localFunction = expressionBuilder.ResolveLocalFunction(method);
 				result = ToMethodGroup(method, localFunction);
 				target = default;
+				targetType = default;
 				methodName = localFunction.Name;
+			} else if (method.IsExtensionMethod && invokeMethod != null && method.Parameters.Count - 1 == invokeMethod.Parameters.Count) {
+				targetType = method.Parameters[0].Type;
+				if (targetType.Kind == TypeKind.ByReference && thisArg is Box thisArgBox) {
+					targetType = ((ByReferenceType)targetType).ElementType;
+					thisArg = thisArgBox.Argument;
+				}
+				target = expressionBuilder.Translate(thisArg, targetType);
+				requireTarget = true;
 			} else {
-				methodName = method.Name;
-				if (method.IsExtensionMethod && invokeMethod != null && method.Parameters.Count - 1 == invokeMethod.Parameters.Count) {
-					targetType = method.Parameters[0].Type;
-					if (targetType.Kind == TypeKind.ByReference && thisArg is Box thisArgBox) {
-						targetType = ((ByReferenceType)targetType).ElementType;
-						thisArg = thisArgBox.Argument;
-					}
-					target = expressionBuilder.Translate(thisArg, targetType);
-					requireTarget = true;
-				} else {
-					targetType = method.DeclaringType;
-					if (targetType.IsReferenceType == false && thisArg is Box thisArgBox) {
-						// Normal struct instance method calls (which TranslateTarget is meant for) expect a 'ref T',
-						// but delegate construction uses a 'box T'.
-						if (thisArgBox.Argument is LdObj ldobj) {
-							thisArg = ldobj.Target;
-						} else {
-							thisArg = new AddressOf(thisArgBox.Argument);
-						}
-					}
-					target = expressionBuilder.TranslateTarget(thisArg,
-						nonVirtualInvocation: func.OpCode == OpCode.LdFtn,
-						memberStatic: method.IsStatic,
-						memberDeclaringType: method.DeclaringType);
-					requireTarget = expressionBuilder.HidesVariableWithName(method.Name)
-						|| (method.IsStatic ? !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression));
-				}
-				var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectReadOnlyArray(p => new TypeResolveResult(p.Type)));
-				if (!requireTarget) {
-					result = resolver.ResolveSimpleName(method.Name, method.TypeArguments, isInvocationTarget: false);
-					if (result is MethodGroupResolveResult mgrr) {
-						or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
-						requireTarget = (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(expectedTargetDetails, method, or.BestCandidate));
+				targetType = method.DeclaringType;
+				if (targetType.IsReferenceType == false && thisArg is Box thisArgBox) {
+					// Normal struct instance method calls (which TranslateTarget is meant for) expect a 'ref T',
+					// but delegate construction uses a 'box T'.
+					if (thisArgBox.Argument is LdObj ldobj) {
+						thisArg = ldobj.Target;
 					} else {
-						requireTarget = true;
+						thisArg = new AddressOf(thisArgBox.Argument);
 					}
 				}
-				MemberLookup lookup = null;
-				bool needsCast = false;
-				if (requireTarget) {
-					lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
-					var rr = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false);
-					needsCast = true;
-					result = rr;
-					if (rr is MethodGroupResolveResult mgrr) {
-						or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
-						needsCast = (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(expectedTargetDetails, method, or.BestCandidate));
-					}
+				target = expressionBuilder.TranslateTarget(thisArg,
+					nonVirtualInvocation: func.OpCode == OpCode.LdFtn,
+					memberStatic: method.IsStatic,
+					memberDeclaringType: method.DeclaringType);
+				requireTarget = expressionBuilder.HidesVariableWithName(method.Name)
+					|| (method.IsStatic ? !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression));
+			}
+			var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectReadOnlyArray(p => new TypeResolveResult(p.Type)));
+			if (!method.IsLocalFunction && !requireTarget) {
+				result = resolver.ResolveSimpleName(method.Name, method.TypeArguments, isInvocationTarget: false);
+				if (result is MethodGroupResolveResult mgrr) {
+					or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
+					requireTarget = (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(expectedTargetDetails, method, or.BestCandidate));
+				} else {
+					requireTarget = true;
 				}
-				if (needsCast) {
-					Debug.Assert(requireTarget);
-					target = target.ConvertTo(targetType, expressionBuilder);
-					result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false);
+			}
+			MemberLookup lookup = null;
+			bool needsCast = false;
+			if (requireTarget) {
+				lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
+				var rr = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false);
+				needsCast = true;
+				result = rr;
+				if (rr is MethodGroupResolveResult mgrr) {
+					or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
+					needsCast = (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(expectedTargetDetails, method, or.BestCandidate));
 				}
+			}
+			if (needsCast) {
+				Debug.Assert(requireTarget);
+				target = target.ConvertTo(targetType, expressionBuilder);
+				result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false);
 			}
 			Expression targetExpression;
 			if (requireTarget) {

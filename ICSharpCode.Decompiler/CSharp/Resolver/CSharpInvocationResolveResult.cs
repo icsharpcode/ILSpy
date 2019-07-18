@@ -47,11 +47,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public readonly bool IsExpandedForm;
 
-		/// <summary>
-		/// Gets whether this invocation is calling a local function.
-		/// </summary>
-		public readonly bool IsLocalFunctionInvocation;
-
 		readonly IReadOnlyList<int> argumentToParameterMap;
 		
 		public CSharpInvocationResolveResult(
