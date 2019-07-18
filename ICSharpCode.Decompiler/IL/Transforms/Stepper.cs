@@ -25,7 +25,7 @@ using ICSharpCode.Decompiler.Util;
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
-	/// Exception thrown when an IL transform runs into the <see cref="Stepper.MaxStepCount"/> limit.
+	/// Exception thrown when an IL transform runs into the <see cref="Stepper.StepLimit"/>.
 	/// </summary>
 	public class StepLimitReachedException : Exception
 	{

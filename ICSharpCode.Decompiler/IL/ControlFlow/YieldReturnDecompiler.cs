@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <remarks>Set in AnalyzeCurrentProperty()</remarks>
 		IField currentField;
 
-		/// <summary>The disposing field of the compiler-generated enumerator class./summary>
+		/// <summary>The disposing field of the compiler-generated enumerator class.</summary>
 		/// <remarks>Set in ConstructExceptionTable() for assembly compiled with Mono</remarks>
 		IField disposingField;
 

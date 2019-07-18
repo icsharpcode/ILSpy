@@ -16,7 +16,7 @@
 
     <EnableDefaultItems>false</EnableDefaultItems>
     <LangVersion>7.2</LangVersion>
-    <DocumentationFile>$(TargetDir)ICSharpCode.Decompiler.xml</DocumentationFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
@@ -46,6 +46,10 @@
   <PropertyGroup>
     <CodeAnalysisRuleSet>ICSharpCode.Decompiler.ruleset</CodeAnalysisRuleSet>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;1591;1573</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -224,7 +228,6 @@
     <Compile Include="CSharp\Resolver\OverloadResolution.cs" />
     <Compile Include="CSharp\Resolver\OverloadResolutionErrors.cs" />
     <Compile Include="TypeSystem\Implementation\LocalFunctionMethod.cs" />
-    <Compile Include="CSharp\Resolver\RenameCallbackArguments.cs" />
     <Compile Include="CSharp\Resolver\TypeInference.cs" />
     <Compile Include="CSharp\Transforms\CombineQueryExpressions.cs" />
     <Compile Include="CSharp\Transforms\FlattenSwitchBlocks.cs" />

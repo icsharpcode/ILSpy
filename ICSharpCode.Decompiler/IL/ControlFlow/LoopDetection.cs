@@ -458,7 +458,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// or that leave the block Container.
 		/// </summary>
 		/// <param name="loopHead">Entry point of the loop.</param>
-		/// <param name="isSwitch">Whether to ignore branches that map to C# 'continue' statements.</param>
 		/// <param name="exitNodeArity">out: The number of different CFG nodes.
 		/// Possible values:
 		///  0 = no CFG nodes used as exit nodes (although edges leaving the block container might still be exits);

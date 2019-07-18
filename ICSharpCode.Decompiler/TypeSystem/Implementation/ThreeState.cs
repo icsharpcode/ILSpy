@@ -19,7 +19,7 @@
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
-	/// Constants used instead of <see cref="bool?"/> 
+	/// Constants used instead of <c>bool?</c>
 	/// in multithreaded code, as <c>bool?</c> might produce torn reads.
 	/// </summary>
 	static class ThreeState

@@ -647,7 +647,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			TypeKind kind = type.Kind;
 			return kind == TypeKind.Class && type.GetDefinition().IsSealed
-				|| kind == TypeKind.Delegate || kind == TypeKind.Anonymous;
+				|| kind == TypeKind.Delegate;
 		}
 		#endregion
 

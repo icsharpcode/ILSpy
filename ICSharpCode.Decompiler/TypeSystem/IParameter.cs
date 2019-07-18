@@ -47,10 +47,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets whether this parameter is a C# 'params' parameter.
 		/// </summary>
 		bool IsParams { get; }
-		
+
 		/// <summary>
 		/// Gets whether this parameter is optional.
-		/// The default value is given by the <see cref="IVariable.ConstantValue"/> property.
+		/// The default value is given by the <see cref="IVariable.GetConstantValue"/> function.
 		/// </summary>
 		bool IsOptional { get; }
 		

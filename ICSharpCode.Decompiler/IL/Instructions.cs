@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// In case 3 (managed reference), the dereferenced value is the input being tested, and the nullable.unwrap instruction returns the managed reference unmodified (if the value is non-null).</summary>
 		NullableUnwrap,
 		/// <summary>Serves as jump target for the nullable.unwrap instruction.
-		/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable<T> if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
+		/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable&lt;T&gt; if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
 		NullableRewrap,
 		/// <summary>Loads a constant string.</summary>
 		LdStr,
@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.IL
 		StringToInt,
 		/// <summary>ILAst representation of Expression.Convert.</summary>
 		ExpressionTreeCast,
-		/// <summary>Use of user-defined && or || operator.</summary>
+		/// <summary>Use of user-defined &amp;&amp; or || operator.</summary>
 		UserDefinedLogicOperator,
 		/// <summary>ILAst representation of a short-circuiting binary operator inside a dynamic expression.</summary>
 		DynamicLogicOperatorInstruction,
@@ -1063,7 +1063,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as NumericCompoundAssign;
-			return o != null && type.Equals(o.type) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+			return o != null && type.Equals(o.type) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && this.EvalMode == o.EvalMode && this.TargetKind == o.TargetKind && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
 		}
 	}
 }
@@ -1097,7 +1097,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as UserDefinedCompoundAssign;
-			return o != null && this.Method.Equals(o.Method) && this.EvalMode == o.EvalMode && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+			return o != null && this.Method.Equals(o.Method) && this.EvalMode == o.EvalMode && this.TargetKind == o.TargetKind && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
 		}
 	}
 }
@@ -1131,7 +1131,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as DynamicCompoundAssign;
-			return o != null && this.EvalMode == o.EvalMode && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+			return o != null && this.EvalMode == o.EvalMode && this.TargetKind == o.TargetKind && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
 		}
 	}
 }
@@ -2714,7 +2714,7 @@ namespace ICSharpCode.Decompiler.IL
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Serves as jump target for the nullable.unwrap instruction.
-	/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable<T> if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
+	/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable&lt;T&gt; if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
 	public sealed partial class NullableRewrap : UnaryInstruction
 	{
 		public NullableRewrap(ILInstruction argument) : base(OpCode.NullableRewrap, argument)
@@ -4910,7 +4910,7 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>Use of user-defined && or || operator.</summary>
+	/// <summary>Use of user-defined &amp;&amp; or || operator.</summary>
 	public sealed partial class UserDefinedLogicOperator : ILInstruction, IInstructionWithMethodOperand
 	{
 		public UserDefinedLogicOperator(IMethod method, ILInstruction left, ILInstruction right) : base(OpCode.UserDefinedLogicOperator)
