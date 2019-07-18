@@ -16,7 +16,7 @@
 
     <EnableDefaultItems>false</EnableDefaultItems>
     <LangVersion>7.2</LangVersion>
-    <DocumentationFile>$(TargetDir)ICSharpCode.Decompiler.xml</DocumentationFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
