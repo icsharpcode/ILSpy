@@ -968,7 +968,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				stmt.Parameters.AddRange(exprBuilder.MakeParameters(function.Parameters, function));
 				stmt.ReturnType = tsab.ConvertType(function.Method.ReturnType);
 				stmt.Body = nestedBuilder.ConvertAsBlock(function.Body);
-				stmt.AddAnnotation(new LocalFunctionReferenceResolveResult(function));
+				stmt.AddAnnotation(new MemberResolveResult(null, function.ReducedMethod));
 				return stmt;
 			}
 		}

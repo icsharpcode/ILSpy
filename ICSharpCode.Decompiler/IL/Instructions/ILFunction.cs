@@ -29,8 +29,30 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class ILFunction
 	{
+		/// <summary>
+		/// Gets the method definition from metadata.
+		/// May be null for functions that were not constructed from metadata,
+		/// e.g., expression trees.
+		/// </summary>
 		public readonly IMethod Method;
+
+		/// <summary>
+		/// Gets the generic context of this function.
+		/// </summary>
 		public readonly GenericContext GenericContext;
+
+		/// <summary>
+		/// Gets the name of this function, usually this returns the name from metadata.
+		/// <para>
+		/// For local functions:
+		/// This is the name that is used to declare and use the function.
+		/// It may not conflict with the names of local variables of ancestor functions
+		/// and may be overwritten by the AssignVariableNames step.
+		/// 
+		/// For top-level functions, delegates and expressions trees modifying this usually
+		/// has no effect, as the name should not be used in the final AST construction.
+		/// </para>
+		/// </summary>
 		public string Name;
 
 		/// <summary>
@@ -38,6 +60,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// Note: after async/await transform, this is the code size of the MoveNext function.
 		/// </summary>
 		public int CodeSize;
+
+		/// <summary>
+		/// List of ILVariables used in this function.
+		/// </summary>
 		public readonly ILVariableCollection Variables;
 
 		/// <summary>
@@ -60,6 +86,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool IsIterator;
 
+		/// <summary>
+		/// Gets whether the YieldReturnDecompiler determined that the Mono C# compiler was used to compile this function.
+		/// </summary>
 		public bool StateMachineCompiledWithMono;
 
 		/// <summary>
@@ -78,6 +107,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// If this function is an iterator/async, this field stores the compiler-generated MoveNext() method.
 		/// </summary>
 		public IMethod MoveNextMethod;
+
+		/// <summary>
+		/// If this function is a local function, this field stores the reduced version of the function.
+		/// </summary>
+		internal TypeSystem.Implementation.LocalFunctionMethod ReducedMethod;
 
 		internal DebugInfo.AsyncDebugInfo AsyncDebugInfo;
 
@@ -105,24 +139,43 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// If this is an expression tree or delegate, returns the expression tree type Expression{T} or T.
 		/// T is the delegate type that matches the signature of this method.
+		/// Otherwise this must be null.
 		/// </summary>
 		public IType DelegateType;
 
 		ILFunctionKind kind;
 
+		/// <summary>
+		/// Gets which kind of function this is.
+		/// </summary>
 		public ILFunctionKind Kind {
 			get => kind;
-			set {
+			internal set {
 				if (kind == ILFunctionKind.TopLevelFunction || kind == ILFunctionKind.LocalFunction)
 					throw new InvalidOperationException("ILFunction.Kind of a top-level or local function may not be changed.");
 				kind = value;
 			}
 		}
 
+		/// <summary>
+		/// Return type of this function.
+		/// Might be null, if this function was not created from metadata.
+		/// </summary>
 		public readonly IType ReturnType;
 
+		/// <summary>
+		/// List of parameters of this function.
+		/// Might be null, if this function was not created from metadata.
+		/// </summary>
 		public readonly IReadOnlyList<IParameter> Parameters;
 
+		/// <summary>
+		/// Constructs a new ILFunction from the given metadata and with the given ILAst body.
+		/// </summary>
+		/// <remarks>
+		/// Use <see cref="ILReader"/> to create ILAst.
+		/// <paramref name="method"/> may be null.
+		/// </remarks>
 		public ILFunction(IMethod method, int codeSize, GenericContext genericContext, ILInstruction body, ILFunctionKind kind = ILFunctionKind.TopLevelFunction) : base(OpCode.ILFunction)
 		{
 			this.Method = method;
@@ -137,7 +190,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.kind = kind;
 		}
 
-		public ILFunction(IType returnType, IReadOnlyList<IParameter> parameters, GenericContext genericContext, ILInstruction body) : base(OpCode.ILFunction)
+		/// <summary>
+		/// This constructor is only to be used by the TransformExpressionTrees step.
+		/// </summary>
+		internal ILFunction(IType returnType, IReadOnlyList<IParameter> parameters, GenericContext genericContext, ILInstruction body) : base(OpCode.ILFunction)
 		{
 			this.GenericContext = genericContext;
 			this.Body = body;
@@ -366,14 +422,23 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// ILFunction is a delegate or lambda expression.
 		/// </summary>
+		/// <remarks>
+		/// This kind is introduced by the DelegateConstruction and TransformExpressionTrees steps in the decompiler pipeline.
+		/// </remarks>
 		Delegate,
 		/// <summary>
 		/// ILFunction is an expression tree lambda.
 		/// </summary>
+		/// <remarks>
+		/// This kind is introduced by the TransformExpressionTrees step in the decompiler pipeline.
+		/// </remarks>
 		ExpressionTree,
 		/// <summary>
 		/// ILFunction is a C# 7.0 local function.
 		/// </summary>
+		/// <remarks>
+		/// This kind is introduced by the LocalFunctionDecompiler step in the decompiler pipeline.
+		/// </remarks>
 		LocalFunction
 	}
 }

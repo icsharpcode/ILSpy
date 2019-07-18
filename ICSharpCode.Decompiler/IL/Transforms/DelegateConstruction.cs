@@ -24,7 +24,10 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	public class DelegateConstruction : IILTransform
+	/// <summary>
+	/// 
+	/// </summary>
+	class DelegateConstruction : IILTransform
 	{
 		ILTransformContext context;
 		ITypeResolveContext decompilationContext;

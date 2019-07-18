@@ -129,6 +129,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.IsExtensionMethod; }
 		}
 
+		bool IMethod.IsLocalFunction => false;
+
 		public bool IsConstructor {
 			get { return baseMethod.IsConstructor; }
 		}

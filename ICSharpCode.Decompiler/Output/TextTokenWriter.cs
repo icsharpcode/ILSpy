@@ -24,6 +24,7 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler
@@ -177,9 +178,9 @@ namespace ICSharpCode.Decompiler
 			}
 
 			if (node is LocalFunctionDeclarationStatement) {
-				var localFunction = node.GetResolveResult() as LocalFunctionReferenceResolveResult;
+				var localFunction = node.GetResolveResult() as MemberResolveResult;
 				if (localFunction != null)
-					return localFunction.Function.Method;
+					return localFunction.Member;
 			}
 
 			return null;

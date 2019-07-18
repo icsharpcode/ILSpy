@@ -167,27 +167,21 @@ namespace LocalFunctions
 		public static Func<int> LambdaInLocalFunction()
 		{
 			int x = (int)Math.Pow(2.0, 10.0);
-			Enumerable.Range(1, 100).Select((Func<int, int>)Transform);
 			return Create();
 
 			Func<int> Create()
 			{
 				return () => x;
 			}
-
-			int Transform(int y)
-			{
-				return 2 * y;
-			}
 		}
 
 		public static Func<int> MethodRef()
 		{
 			int x = (int)Math.Pow(2.0, 10.0);
-			Enumerable.Range(1, 100).Select((Func<int, int>)F);
+			Enumerable.Range(1, 100).Select(LocalFunction);
 			return null;
 
-			int F(int y)
+			int LocalFunction(int y)
 			{
 				return x * y;
 			}

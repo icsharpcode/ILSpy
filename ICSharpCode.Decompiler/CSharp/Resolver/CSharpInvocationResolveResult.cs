@@ -53,20 +53,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public readonly bool IsLocalFunctionInvocation;
 
 		readonly IReadOnlyList<int> argumentToParameterMap;
-
-		/// <summary>
-		/// If IsExtensionMethodInvocation is true this property holds the reduced method.
-		/// </summary>
-		IMethod reducedMethod;
-		public IMethod ReducedMethod {
-			get {
-				if (!IsExtensionMethodInvocation)
-					return null;
-				if (reducedMethod == null && Member is IMethod)
-					reducedMethod = new ReducedExtensionMethod ((IMethod)Member);
-				return reducedMethod;
-			}
-		}
 		
 		public CSharpInvocationResolveResult(
 			ResolveResult targetResult, IParameterizedMember member,

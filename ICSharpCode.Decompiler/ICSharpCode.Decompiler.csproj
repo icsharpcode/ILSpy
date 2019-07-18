@@ -60,7 +60,6 @@
     <Compile Include="CSharp\CallBuilder.cs" />
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
     <Compile Include="CSharp\RequiredNamespaceCollector.cs" />
-    <Compile Include="CSharp\Resolver\LocalFunctionReferenceResolveResult.cs" />
     <Compile Include="CSharp\SequencePointBuilder.cs" />
     <Compile Include="CSharp\Syntax\AstNode.cs" />
     <Compile Include="CSharp\Syntax\AstNodeCollection.cs" />
@@ -224,7 +223,7 @@
     <Compile Include="CSharp\Resolver\NameLookupMode.cs" />
     <Compile Include="CSharp\Resolver\OverloadResolution.cs" />
     <Compile Include="CSharp\Resolver\OverloadResolutionErrors.cs" />
-    <Compile Include="CSharp\Resolver\ReducedExtensionMethod.cs" />
+    <Compile Include="TypeSystem\Implementation\LocalFunctionMethod.cs" />
     <Compile Include="CSharp\Resolver\RenameCallbackArguments.cs" />
     <Compile Include="CSharp\Resolver\TypeInference.cs" />
     <Compile Include="CSharp\Transforms\CombineQueryExpressions.cs" />
