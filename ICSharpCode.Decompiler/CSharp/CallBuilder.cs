@@ -179,11 +179,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			ILFunction localFunction = null;
 			if (method.IsLocalFunction) {
 				localFunction = expressionBuilder.ResolveLocalFunction(method);
+				Debug.Assert(localFunction != null);
 			}
 			TranslatedExpression target;
 			if (callOpCode == OpCode.NewObj) {
 				target = default(TranslatedExpression); // no target
-			} else if (method.IsLocalFunction) {
+			} else if (method.IsLocalFunction && localFunction != null) {
 				target = new IdentifierExpression(localFunction.Name)
 					.WithoutILInstruction()
 					.WithRR(ToMethodGroup(method, localFunction));
