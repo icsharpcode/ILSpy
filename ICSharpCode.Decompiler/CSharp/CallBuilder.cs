@@ -218,7 +218,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (method.IsLocalFunction) {
 				return new InvocationExpression(target, argumentList.GetArgumentExpressions())
 					.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, method,
-						argumentList.GetArgumentResolveResults().ToList(), isExpandedForm: argumentList.IsExpandedForm, isLocalFunctionInvocation: true));
+						argumentList.GetArgumentResolveResults().ToList(), isExpandedForm: argumentList.IsExpandedForm));
 			}
 			
 			if (method is VarArgInstanceMethod) {
