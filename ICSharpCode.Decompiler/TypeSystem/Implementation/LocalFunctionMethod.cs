@@ -41,21 +41,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (!(obj is LocalFunctionMethod other))
 				return false;
-			return baseMethod.Equals(other.baseMethod, typeNormalization);
+			return baseMethod.Equals(other.baseMethod, typeNormalization)
+				&& NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters;
 		}
 
 		public override bool Equals(object obj)
 		{
-			var other = obj as LocalFunctionMethod;
-			if (other == null)
+			if (!(obj is LocalFunctionMethod other))
 				return false;
-			return baseMethod.Equals(other.baseMethod);
+			return baseMethod.Equals(other.baseMethod)
+				&& NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters;
 		}
 		
 		public override int GetHashCode()
 		{
 			unchecked {
-				return baseMethod.GetHashCode() + 1;
+				return baseMethod.GetHashCode() + NumberOfCompilerGeneratedParameters + 1;
 			}
 		}
 
@@ -66,13 +67,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		internal int NumberOfCompilerGeneratedParameters { get; }
 
-		public IMember MemberDefinition {
-			get {
-				if (baseMethod.MemberDefinition == baseMethod)
-					return this;
-				return new LocalFunctionMethod((IMethod)baseMethod.MemberDefinition, NumberOfCompilerGeneratedParameters);
-			}
-		}
+		public IMember MemberDefinition => this;
 
 		public IType ReturnType => baseMethod.ReturnType;
 		IEnumerable<IMember> IMember.ExplicitlyImplementedInterfaceMembers => baseMethod.ExplicitlyImplementedInterfaceMembers;
@@ -122,6 +117,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMethod.GetAttributes();
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => baseMethod.GetReturnTypeAttributes();
 		bool IMethod.ReturnTypeIsRefReadOnly => baseMethod.ReturnTypeIsRefReadOnly;
+		/// <summary>
+		/// We consider local functions as always static, because they do not have a "this parameter".
+		/// Even local functions in instance methods capture this.
+		/// </summary>
 		public bool IsStatic => true;
 		public bool IsAbstract => baseMethod.IsAbstract;
 		public bool IsSealed => baseMethod.IsSealed;
