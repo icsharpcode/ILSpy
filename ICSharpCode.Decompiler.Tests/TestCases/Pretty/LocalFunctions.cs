@@ -217,6 +217,34 @@ namespace LocalFunctions
 				return FibHelper(n - 1) + FibHelper(n - 2);
 			}
 		}
+		public int MutuallyRecursiveLocalFunctions()
+		{
+			return B(4) + C(3);
+
+			int A(int i)
+			{
+				if (i > 0) {
+					return A(i - 1) + 2 * B(i - 1) + 3 * C(i - 1);
+				}
+				return 1;
+			}
+
+			int B(int i)
+			{
+				if (i > 0) {
+					return 3 * A(i - 1) + B(i - 1);
+				}
+				return 1;
+			}
+
+			int C(int i)
+			{
+				if (i > 0) {
+					return 2 * A(i - 1) + C(i - 1);
+				}
+				return 1;
+			}
+		}
 
 		public static int NestedLocalFunctions(int i)
 		{

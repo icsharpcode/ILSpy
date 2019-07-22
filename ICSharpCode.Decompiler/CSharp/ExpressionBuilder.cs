@@ -207,11 +207,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		internal bool IsLocalFunction(IMethod method)
-		{
-			return settings.LocalFunctions && IL.Transforms.LocalFunctionDecompiler.IsLocalFunctionMethod(method);
-		}
-
 		internal ILFunction ResolveLocalFunction(IMethod method)
 		{
 			Debug.Assert(method.IsLocalFunction);

@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (targetMethod.MetadataToken.IsNil)
 				return null;
-			if (LocalFunctionDecompiler.IsLocalFunctionMethod(targetMethod))
+			if (LocalFunctionDecompiler.IsLocalFunctionMethod(targetMethod, context))
 				return null;
 			target = value.Arguments[0];
 			var methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);

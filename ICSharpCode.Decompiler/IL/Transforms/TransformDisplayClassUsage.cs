@@ -39,6 +39,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public ITypeDefinition Definition;
 			public Dictionary<IField, DisplayClassVariable> Variables;
 			public BlockContainer CaptureScope;
+			public ILFunction DeclaringFunction;
 		}
 
 		struct DisplayClassVariable
@@ -105,7 +106,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					Variable = v,
 					Definition = closureType,
 					Variables = new Dictionary<IField, DisplayClassVariable>(),
-					CaptureScope = (isMono && IsMonoNestedCaptureScope(closureType)) || localFunctionClosureParameter ? null : v.CaptureScope
+					CaptureScope = (isMono && IsMonoNestedCaptureScope(closureType)) || localFunctionClosureParameter ? null : v.CaptureScope,
+					DeclaringFunction = localFunctionClosureParameter ? f.DeclarationScope.Ancestors.OfType<ILFunction>().First() : f
 				});
 			} else {
 				if (displayClass.CaptureScope == null && !localFunctionClosureParameter)
@@ -296,10 +298,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				} else {
 					Debug.Assert(displayClass.Definition == field.DeclaringTypeDefinition);
 					// Introduce a fresh variable for the display class field.
-					v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
 					if (displayClass.IsMono && displayClass.CaptureScope == null && !IsOuterClosureReference(field)) {
 						displayClass.CaptureScope = BlockContainer.FindClosestContainer(inst);
 					}
+					v = displayClass.DeclaringFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
 					v.CaptureScope = displayClass.CaptureScope;
 					inst.ReplaceWith(new StLoc(v, inst.Value).WithILRange(inst));
 					value = new LdLoc(v);
@@ -346,7 +348,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!displayClass.Variables.TryGetValue(field, out DisplayClassVariable info)) {
 				// Introduce a fresh variable for the display class field.
 				Debug.Assert(displayClass.Definition == field.DeclaringTypeDefinition);
-				var v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
+				var v = displayClass.DeclaringFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
 				v.CaptureScope = displayClass.CaptureScope;
 				inst.ReplaceWith(new LdLoca(v).WithILRange(inst));
 				displayClass.Variables.Add(field, new DisplayClassVariable { Value = new LdLoc(v), Variable = v });
