@@ -69,11 +69,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void ICSharpCode_Decompiler()
 		{
-			try {
-				RunWithTest("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll", "ICSharpCode.Decompiler.Tests.exe");
-			} catch (CompilationFailedException) {
-				Assert.Ignore("C# 7 local functions not yet supported.");
-			}
+			RunWithTest("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll", "ICSharpCode.Decompiler.Tests.exe");
 		}
 
 		[Test]

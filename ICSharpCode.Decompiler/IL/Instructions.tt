@@ -49,7 +49,8 @@
 			VoidResult, NoArguments, CustomWriteTo),
 		new OpCode("ILFunction", "A container of IL blocks.",
 			CustomChildren(new [] {
-				new ChildInfo("body")
+				new ChildInfo("body"),
+				new ChildInfo("localFunctions") { IsCollection = true, Type = "ILFunction" }
 			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("O")
 		),
 		new OpCode("BlockContainer", "A container of IL blocks.",
@@ -773,6 +774,7 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly string SlotName;
 		
 		public bool IsCollection;
+		public string Type = "ILInstruction";
 		public bool CanInlineInto;
 		public string[] ExpectedTypes;
 		
@@ -818,7 +820,7 @@ namespace ICSharpCode.Decompiler.IL
 					childCount = children.Length - 1;
 					opCode.Flags.Add(argProp + ".Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags)");
 					opCode.ConstructorParameters.Add("params ILInstruction[] " + arg);
-					opCode.ConstructorBody.Add("this." + argProp + " = new InstructionCollection<ILInstruction>(this, " + i + ");");
+					opCode.ConstructorBody.Add("this." + argProp + " = new InstructionCollection<" + children[i].Type + ">(this, " + i + ");");
 					opCode.ConstructorBody.Add("this." + argProp + ".AddRange(" + arg + ");");
 					opCode.PerformMatchConditions.Add("Patterns.ListMatch.DoMatch(this." + argProp + ", o." + argProp + ", ref match)");
 					if (i == 0)
@@ -831,7 +833,7 @@ namespace ICSharpCode.Decompiler.IL
 					opCode.WriteArguments.Add("\t" + arg + ".WriteTo(output, options);");
 					opCode.WriteArguments.Add("}");
 					opCode.Members.Add("public static readonly SlotInfo " + children[i].SlotName + " = " + children[i].GetSlotInit() + ";");
-					opCode.Members.Add("public InstructionCollection<ILInstruction> " + argProp + " { get; private set; }");
+					opCode.Members.Add("public InstructionCollection<" + children[i].Type + "> " + argProp + " { get; private set; }");
 				} else {
 					opCode.Flags.Add(arg + ".Flags");
 					opCode.ConstructorParameters.Add("ILInstruction " + arg);
@@ -910,7 +912,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (collection == null)
 				b.AppendLine("\t\t\tthrow new IndexOutOfRangeException();");
 			else {
-				b.AppendLine("\t\t\tthis." + collection.PropertyName + "[index - " + childCount + "] = value;");
+				b.AppendLine("\t\t\tthis." + collection.PropertyName + "[index - " + childCount + "] = (" + collection.Type + ")value;");
 				b.AppendLine("\t\t\tbreak;");
 			}
 			b.AppendLine("\t}");
@@ -940,8 +942,8 @@ namespace ICSharpCode.Decompiler.IL
 			b.AppendLine("\tvar clone = (" + opCode.Name + ")ShallowClone();");
 			for (int i = 0; i < children.Length; i++) {
 				if (children[i].IsCollection) {
-					b.AppendLine("\tclone." + children[i].PropertyName + " = new InstructionCollection<ILInstruction>(clone, " + i + ");");
-					b.AppendLine("\tclone." + children[i].PropertyName + ".AddRange(this." + children[i].PropertyName + ".Select(arg => arg.Clone()));");
+					b.AppendLine("\tclone." + children[i].PropertyName + " = new InstructionCollection<" + children[i].Type + ">(clone, " + i + ");");
+					b.AppendLine("\tclone." + children[i].PropertyName + ".AddRange(this." + children[i].PropertyName + ".Select(arg => (" + children[i].Type + ")arg.Clone()));");
 				} else {
 					b.AppendLine("\tclone." + children[i].PropertyName + " = this." + children[i].Name + ".Clone();");
 				}

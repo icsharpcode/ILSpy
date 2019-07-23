@@ -21,8 +21,10 @@ using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler
@@ -169,11 +171,16 @@ namespace ICSharpCode.Decompiler
 					return variable;
 			}
 
-			var label = node as LabelStatement;
-			if (label != null) {
+			if (node is LabelStatement label) {
 				var method = nodeStack.Select(nd => nd.GetSymbol() as IMethod).FirstOrDefault(mr => mr != null);
 				if (method != null)
 					return method + label.Label;
+			}
+
+			if (node is LocalFunctionDeclarationStatement) {
+				var localFunction = node.GetResolveResult() as MemberResolveResult;
+				if (localFunction != null)
+					return localFunction.Member;
 			}
 
 			return null;

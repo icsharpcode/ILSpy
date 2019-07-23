@@ -110,6 +110,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		void VisitUnsafeStatement(UnsafeStatement unsafeStatement);
 		void VisitUsingStatement(UsingStatement usingStatement);
 		void VisitVariableDeclarationStatement(VariableDeclarationStatement variableDeclarationStatement);
+		void VisitLocalFunctionDeclarationStatement(LocalFunctionDeclarationStatement localFunctionDeclarationStatement);
 		void VisitWhileStatement(WhileStatement whileStatement);
 		void VisitYieldBreakStatement(YieldBreakStatement yieldBreakStatement);
 		void VisitYieldReturnStatement(YieldReturnStatement yieldReturnStatement);
@@ -251,6 +252,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitUnsafeStatement(UnsafeStatement unsafeStatement);
 		S VisitUsingStatement(UsingStatement usingStatement);
 		S VisitVariableDeclarationStatement(VariableDeclarationStatement variableDeclarationStatement);
+		S VisitLocalFunctionDeclarationStatement(LocalFunctionDeclarationStatement localFunctionDeclarationStatement);
 		S VisitWhileStatement(WhileStatement whileStatement);
 		S VisitYieldBreakStatement(YieldBreakStatement yieldBreakStatement);
 		S VisitYieldReturnStatement(YieldReturnStatement yieldReturnStatement);
@@ -392,6 +394,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitUnsafeStatement(UnsafeStatement unsafeStatement, T data);
 		S VisitUsingStatement(UsingStatement usingStatement, T data);
 		S VisitVariableDeclarationStatement(VariableDeclarationStatement variableDeclarationStatement, T data);
+		S VisitLocalFunctionDeclarationStatement(LocalFunctionDeclarationStatement localFunctionDeclarationStatement, T data);
 		S VisitWhileStatement(WhileStatement whileStatement, T data);
 		S VisitYieldBreakStatement(YieldBreakStatement yieldBreakStatement, T data);
 		S VisitYieldReturnStatement(YieldReturnStatement yieldReturnStatement, T data);

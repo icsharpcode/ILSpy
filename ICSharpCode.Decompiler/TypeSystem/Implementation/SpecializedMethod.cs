@@ -102,11 +102,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return specializedTypeParameters ?? methodDefinition.TypeParameters;
 			}
 		}
-		
+
 		public bool IsExtensionMethod {
 			get { return methodDefinition.IsExtensionMethod; }
 		}
-		
+
+		public bool IsLocalFunction {
+			get { return methodDefinition.IsLocalFunction; }
+		}
+
 		public bool IsConstructor {
 			get { return methodDefinition.IsConstructor; }
 		}

@@ -415,7 +415,8 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(" init");
 			}
 			if (CaptureScope != null) {
-				output.Write(" captured in " + CaptureScope.EntryPoint.Label);
+				output.Write(" captured in ");
+				output.WriteLocalReference(CaptureScope.EntryPoint.Label, CaptureScope);
 			}
 			if (StateMachineField != null) {
 				output.Write(" from state-machine");

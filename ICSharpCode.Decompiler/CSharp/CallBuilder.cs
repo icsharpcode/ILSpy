@@ -54,11 +54,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			public bool IsExpandedForm;
 			public int Length => Arguments.Length;
 
+			private int GetActualArgumentCount()
+			{
+				if (FirstOptionalArgumentIndex < 0)
+					return Arguments.Length;
+				return FirstOptionalArgumentIndex;
+			}
+
 			public IEnumerable<ResolveResult> GetArgumentResolveResults(int skipCount = 0)
 			{
-				return FirstOptionalArgumentIndex < 0
-					? Arguments.Skip(skipCount).Select(a => a.ResolveResult)
-					: Arguments.Skip(skipCount).Take(FirstOptionalArgumentIndex).Select(a => a.ResolveResult);
+				return Arguments.Skip(skipCount).Take(GetActualArgumentCount()).Select(a => a.ResolveResult);
 			}
 
 			public IEnumerable<Expression> GetArgumentExpressions(int skipCount = 0)
@@ -77,22 +82,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 					}
 				}
+				int argumentCount = GetActualArgumentCount();
 				if (ArgumentNames == null) {
-					if (FirstOptionalArgumentIndex < 0)
-						return Arguments.Skip(skipCount).Select(arg => arg.Expression);
-					return Arguments.Skip(skipCount).Take(FirstOptionalArgumentIndex).Select(arg => arg.Expression);
+					return Arguments.Skip(skipCount).Take(argumentCount).Select(arg => arg.Expression);
 				} else {
 					Debug.Assert(skipCount == 0);
-					if (FirstOptionalArgumentIndex < 0) {
-						return Arguments.Zip(ArgumentNames,
-							(arg, name) => {
-								if (name == null)
-									return arg.Expression;
-								else
-									return new NamedArgumentExpression(name, arg);
-							});
-					}
-					return Arguments.Take(FirstOptionalArgumentIndex).Zip(ArgumentNames.Take(FirstOptionalArgumentIndex),
+					return Arguments.Take(argumentCount).Zip(ArgumentNames.Take(argumentCount),
 						(arg, name) => {
 							if (name == null)
 								return arg.Expression;
@@ -181,9 +176,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			var expectedTargetDetails = new ExpectedTargetDetails {
 				CallOpCode = callOpCode
 			};
+			ILFunction localFunction = null;
+			if (method.IsLocalFunction) {
+				localFunction = expressionBuilder.ResolveLocalFunction(method);
+				Debug.Assert(localFunction != null);
+			}
 			TranslatedExpression target;
 			if (callOpCode == OpCode.NewObj) {
 				target = default(TranslatedExpression); // no target
+			} else if (method.IsLocalFunction && localFunction != null) {
+				target = new IdentifierExpression(localFunction.Name)
+					.WithoutILInstruction()
+					.WithRR(ToMethodGroup(method, localFunction));
 			} else {
 				target = expressionBuilder.TranslateTarget(
 					callArguments.FirstOrDefault(),
@@ -210,6 +214,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var argumentList = BuildArgumentList(expectedTargetDetails, target.ResolveResult, method,
 				firstParamIndex, callArguments, argumentToParameterMap);
+
+			if (method.IsLocalFunction) {
+				return new InvocationExpression(target, argumentList.GetArgumentExpressions())
+					.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, method,
+						argumentList.GetArgumentResolveResults().ToList(), isExpandedForm: argumentList.IsExpandedForm));
+			}
 			
 			if (method is VarArgInstanceMethod) {
 				argumentList.FirstOptionalArgumentIndex = -1;
@@ -386,7 +396,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			argumentList.ArgumentNames = null;
 			argumentList.AddNamesToPrimitiveValues = false;
 			var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref unused,
-				ref argumentList, CallTransformation.None, out IParameterizedMember foundMethod);
+				ref argumentList, CallTransformation.None, out _);
 			Debug.Assert(transform == CallTransformation.None || transform == CallTransformation.NoOptionalArgumentAllowed);
 
 			// Calls with only one argument do not need an array initializer expression to wrap them.
@@ -565,9 +575,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-
-		private ArgumentList BuildArgumentList(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method, int firstParamIndex,
-			IReadOnlyList<ILInstruction> callArguments, IReadOnlyList<int> argumentToParameterMap)
+		private ArgumentList BuildArgumentList(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method,
+			int firstParamIndex, IReadOnlyList<ILInstruction> callArguments, IReadOnlyList<int> argumentToParameterMap)
 		{
 			ArgumentList list = new ArgumentList();
 
@@ -748,7 +757,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (expressionBuilder.HidesVariableWithName(method.Name)) {
 					requireTarget = true;
 				} else {
-					if (method.IsStatic)
+					if (method.IsLocalFunction)
+						requireTarget = false;
+					else if (method.IsStatic)
 						requireTarget = !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) || method.Name == ".cctor";
 					else if (method.Name == ".ctor")
 						requireTarget = true; // always use target for base/this-ctor-call, the constructor initializer pattern depends on this
@@ -1110,8 +1121,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 
 				var op = AssignmentOperatorType.Assign;
-				var parentEvent = method.AccessorOwner as IEvent;
-				if (parentEvent != null) {
+				if (method.AccessorOwner is IEvent parentEvent) {
 					if (method.Equals(parentEvent.AddAccessor)) {
 						op = AssignmentOperatorType.Add;
 					}
@@ -1213,7 +1223,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			TranslatedExpression target;
 			IType targetType;
 			bool requireTarget;
-			if (method.IsExtensionMethod && invokeMethod != null && method.Parameters.Count - 1 == invokeMethod.Parameters.Count) {
+			var expectedTargetDetails = new ExpectedTargetDetails {
+				CallOpCode = inst.OpCode
+			};
+			ResolveResult result = null;
+			string methodName = method.Name;
+			if (method.IsLocalFunction) {
+				requireTarget = false;
+				var localFunction = expressionBuilder.ResolveLocalFunction(method);
+				result = ToMethodGroup(method, localFunction);
+				target = default;
+				targetType = default;
+				methodName = localFunction.Name;
+			} else if (method.IsExtensionMethod && invokeMethod != null && method.Parameters.Count - 1 == invokeMethod.Parameters.Count) {
 				targetType = method.Parameters[0].Type;
 				if (targetType.Kind == TypeKind.ByReference && thisArg is Box thisArgBox) {
 					targetType = ((ByReferenceType)targetType).ElementType;
@@ -1239,13 +1261,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				requireTarget = expressionBuilder.HidesVariableWithName(method.Name)
 					|| (method.IsStatic ? !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression));
 			}
-			var expectedTargetDetails = new ExpectedTargetDetails {
-				CallOpCode = inst.OpCode
-			};
-			bool needsCast = false;
-			ResolveResult result = null;
 			var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectReadOnlyArray(p => new TypeResolveResult(p.Type)));
-			if (!requireTarget) {
+			if (!method.IsLocalFunction && !requireTarget) {
 				result = resolver.ResolveSimpleName(method.Name, method.TypeArguments, isInvocationTarget: false);
 				if (result is MethodGroupResolveResult mgrr) {
 					or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
@@ -1255,9 +1272,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 			MemberLookup lookup = null;
+			bool needsCast = false;
 			if (requireTarget) {
 				lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
-				var rr = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false) ;
+				var rr = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false);
 				needsCast = true;
 				result = rr;
 				if (rr is MethodGroupResolveResult mgrr) {
@@ -1272,12 +1290,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			Expression targetExpression;
 			if (requireTarget) {
-				var mre = new MemberReferenceExpression(target, method.Name);
+				var mre = new MemberReferenceExpression(target, methodName);
 				mre.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 				mre.WithRR(result);
 				targetExpression = mre;
 			} else {
-				var ide = new IdentifierExpression(method.Name)
+				var ide = new IdentifierExpression(methodName)
 					.WithRR(result);
 				targetExpression = ide;
 			}
@@ -1285,9 +1303,23 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(
 					inst.Method.DeclaringType,
-					new MemberResolveResult(target.ResolveResult, method),
+					result,
 					Conversion.MethodGroupConversion(method, func.OpCode == OpCode.LdVirtFtn, false)));
 			return oce;
+		}
+
+		static MethodGroupResolveResult ToMethodGroup(IMethod method, ILFunction localFunction)
+		{
+			return new MethodGroupResolveResult(
+				null,
+				localFunction.Name,
+				new[] {
+					new MethodListWithDeclaringType(
+						method.DeclaringType,
+						new IParameterizedMember[] { method }
+					)
+				}, EmptyList<IType>.Instance
+			);
 		}
 
 		internal TranslatedExpression CallWithNamedArgs(Block block)
