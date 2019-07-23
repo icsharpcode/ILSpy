@@ -899,7 +899,7 @@ namespace ICSharpCode.ILSpy
 			decompilationTask = decompilerTextView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions() { TextViewState = state });
 		}
 
-		private void SaveCommandExecutedCanExecute(object sender, CanExecuteRoutedEventArgs e)
+		void SaveCommandCanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
 			e.Handled = true;
 			var focusedElement = FocusManager.GetFocusedElement(this) as DependencyObject;
@@ -908,7 +908,7 @@ namespace ICSharpCode.ILSpy
 				return;
 			}
 			var selectedNodes = SelectedNodes.ToList();
-			e.CanExecute = selectedNodes.Count == 1 || selectedNodes.TrueForAll(n => n is AssemblyTreeNode);
+			e.CanExecute = selectedNodes.Count == 1 || (selectedNodes.Count > 1 && selectedNodes.All(n => n is AssemblyTreeNode));
 		}
 
 		void SaveCommandExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -919,7 +919,7 @@ namespace ICSharpCode.ILSpy
 				// we will invoke the custom Save logic
 				if (selectedNodes[0].Save(TextView))
 					return;
-			} else if (selectedNodes.All(n => n is AssemblyTreeNode)) {
+			} else if (selectedNodes.Count > 1 && selectedNodes.All(n => n is AssemblyTreeNode)) {
 				var initialPath = Path.GetDirectoryName(((AssemblyTreeNode)selectedNodes[0]).LoadedAssembly.FileName);
 				var selectedPath = SelectSolutionFile(initialPath);
 
