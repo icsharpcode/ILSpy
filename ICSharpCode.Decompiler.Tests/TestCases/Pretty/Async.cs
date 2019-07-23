@@ -137,6 +137,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			return num;
 		}
+
+		public static Func<Task<int>> AsyncLambda()
+		{
+			return async () => await GetIntegerSumAsync(new int[3] {
+				1,
+				2,
+				3
+			});
+		}
+
+		public static Func<Task<int>> AsyncDelegate()
+		{
+			return async delegate {
+				await Task.Delay(10);
+				return 2;
+			};
+		}
+
+#if CS70
+		public static async Task<int> AsyncLocalFunctions()
+		{
+			return await Nested(1) + await Nested(2);
+
+			async Task<int> Nested(int i)
+			{
+				await Task.Delay(i);
+				return i;
+			}
+		}
+#endif
 	}
 
 	public struct HopToThreadPoolAwaitable : INotifyCompletion

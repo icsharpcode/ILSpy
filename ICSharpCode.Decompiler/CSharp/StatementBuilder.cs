@@ -968,6 +968,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				stmt.Parameters.AddRange(exprBuilder.MakeParameters(function.Parameters, function));
 				stmt.ReturnType = exprBuilder.ConvertType(function.Method.ReturnType);
 				stmt.Body = nestedBuilder.ConvertAsBlock(function.Body);
+				if (function.IsAsync) {
+					stmt.Modifiers |= Modifiers.Async;
+				}
 				stmt.AddAnnotation(new MemberResolveResult(null, function.ReducedMethod));
 				return stmt;
 			}

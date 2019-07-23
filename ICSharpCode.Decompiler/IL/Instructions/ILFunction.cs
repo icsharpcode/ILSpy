@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.IL
 					Debug.Assert(DelegateType?.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1);
 					break;
 				case ILFunctionKind.LocalFunction:
-					Debug.Assert(Parent is ILFunction);
+					Debug.Assert(Parent is ILFunction && SlotInfo == ILFunction.LocalFunctionsSlot);
 					Debug.Assert(DeclarationScope != null);
 					Debug.Assert(DelegateType == null);
 					Debug.Assert(Method != null);

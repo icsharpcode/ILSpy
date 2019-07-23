@@ -390,7 +390,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				methodTypeParameters: null);
 			var body = context.TypeSystem.MainModule.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
 			var il = context.CreateILReader()
-				.ReadIL(method, body, genericContext, context.Function.Kind, context.CancellationToken);
+				.ReadIL(method, body, genericContext, ILFunctionKind.TopLevelFunction, context.CancellationToken);
 			il.RunTransforms(CSharpDecompiler.EarlyILTransforms(true),
 				new ILTransformContext(il, context.TypeSystem, context.DebugInfo, context.Settings) {
 					CancellationToken = context.CancellationToken,
