@@ -709,13 +709,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			while (inst.Parent is UnboxAny || inst.Parent is CastClass)
 				inst = inst.Parent;
 			// One variable was found.
-			if (inst.Parent is StLoc stloc) {
+			if (inst.Parent is StLoc stloc && (stloc.Variable.Kind == VariableKind.Local || stloc.Variable.Kind == VariableKind.StackSlot)) {
 				// Must be a plain assignment expression and variable must only be used in 'body' + only assigned once.
 				if (stloc.Parent == loopBody && VariableIsOnlyUsedInBlock(stloc, usingContainer)) {
 					foreachVariable = stloc.Variable;
-					if (foreachVariable.Kind == VariableKind.Local) {
-						return RequiredGetCurrentTransformation.UseExistingVariable;
-					}
+					return RequiredGetCurrentTransformation.UseExistingVariable;
 				}
 			}
 			// In optimized Roslyn code it can happen that the foreach variable is referenced via addressof
