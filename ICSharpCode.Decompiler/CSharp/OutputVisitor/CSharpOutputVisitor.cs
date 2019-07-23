@@ -2173,6 +2173,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(parameterDeclaration);
 			WriteAttributes(parameterDeclaration.Attributes);
+			if (parameterDeclaration.HasThisModifier) {
+				WriteKeyword(ParameterDeclaration.ThisModifierRole);
+			}
 			switch (parameterDeclaration.ParameterModifier) {
 				case ParameterModifier.Ref:
 					WriteKeyword(ParameterDeclaration.RefModifierRole);
@@ -2182,9 +2185,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					break;
 				case ParameterModifier.Params:
 					WriteKeyword(ParameterDeclaration.ParamsModifierRole);
-					break;
-				case ParameterModifier.This:
-					WriteKeyword(ParameterDeclaration.ThisModifierRole);
 					break;
 				case ParameterModifier.In:
 					WriteKeyword(ParameterDeclaration.InModifierRole);
