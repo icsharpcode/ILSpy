@@ -712,7 +712,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Must be a plain assignment expression and variable must only be used in 'body' + only assigned once.
 				if (stloc.Parent == loopBody && VariableIsOnlyUsedInBlock(stloc, usingContainer)) {
 					foreachVariable = stloc.Variable;
-					return RequiredGetCurrentTransformation.UseExistingVariable;
+					if (foreachVariable.Kind == VariableKind.Local) {
+						return RequiredGetCurrentTransformation.UseExistingVariable;
+					}
 				}
 			}
 			// In optimized Roslyn code it can happen that the foreach variable is referenced via addressof
