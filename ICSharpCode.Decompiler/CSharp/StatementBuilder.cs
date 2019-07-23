@@ -32,7 +32,7 @@ using ICSharpCode.Decompiler.CSharp.Resolver;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
-	class StatementBuilder : ILVisitor<Statement>
+	sealed class StatementBuilder : ILVisitor<Statement>
 	{
 		internal readonly ExpressionBuilder exprBuilder;
 		readonly ILFunction currentFunction;
@@ -412,6 +412,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			AstNode usingInit = resource;
 			var var = inst.Variable;
 			if (!inst.ResourceExpression.MatchLdNull() && !NullableType.GetUnderlyingType(var.Type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable))) {
+				Debug.Assert(var.Kind == VariableKind.UsingLocal);
 				var.Kind = VariableKind.Local;
 				var disposeType = exprBuilder.compilation.FindType(KnownTypeCode.IDisposable);
 				var disposeVariable = currentFunction.RegisterVariable(

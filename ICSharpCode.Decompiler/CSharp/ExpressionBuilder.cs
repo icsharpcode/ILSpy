@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	///      * Otherwise, the C# type of the resulting expression shall match the IL stack type,
 	///        and the evaluated values shall be the same.
 	/// </remarks>
-	class ExpressionBuilder : ILVisitor<TranslationContext, TranslatedExpression>
+	sealed class ExpressionBuilder : ILVisitor<TranslationContext, TranslatedExpression>
 	{
 		readonly IDecompilerTypeSystem typeSystem;
 		internal readonly ITypeResolveContext decompilationContext;

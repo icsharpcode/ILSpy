@@ -18,6 +18,7 @@
 
 #pragma warning disable 1998
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -126,6 +127,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 #endif
+
+		public static async Task<int> GetIntegerSumAsync(IEnumerable<int> items)
+		{
+			await Task.Delay(100);
+			int num = 0;
+			foreach (int item in items) {
+				num += item;
+			}
+			return num;
+		}
 	}
 
 	public struct HopToThreadPoolAwaitable : INotifyCompletion
