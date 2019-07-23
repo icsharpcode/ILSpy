@@ -39,6 +39,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	class LocalFunctionDecompiler : IILTransform
 	{
 		ILTransformContext context;
+		ITypeResolveContext resolveContext;
 
 		struct LocalFunctionInfo
 		{
@@ -64,6 +65,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!context.Settings.LocalFunctions)
 				return;
 			this.context = context;
+			this.resolveContext = new SimpleTypeResolveContext(function.Method);
 			var localFunctions = new Dictionary<MethodDefinitionHandle, LocalFunctionInfo>();
 			var cancellationToken = context.CancellationToken;
 			// Find all local functions declared inside this method, including nested local functions or local functions declared in lambdas.
@@ -161,11 +163,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return a.Ancestors.OfType<T>().FirstOrDefault(ancestorsOfB.Contains);
 		}
 
-		internal static bool IsClosureParameter(IParameter parameter)
+		internal static bool IsClosureParameter(IParameter parameter, ITypeResolveContext context)
 		{
-			return parameter.IsRef
-				&& ((ByReferenceType)parameter.Type).ElementType
-					.GetDefinition()?.IsCompilerGenerated() == true;
+			if (!parameter.IsRef)
+				return false;
+			var type = ((ByReferenceType)parameter.Type).ElementType.GetDefinition();
+			return type != null
+				&& type.Kind == TypeKind.Struct
+				&& TransformDisplayClassUsage.IsPotentialClosure(context.CurrentTypeDefinition, type);
 		}
 
 		static IType UnwrapByRef(IType type)
@@ -190,7 +195,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			int parametersToRemove = 0;
 			for (int i = method.Parameters.Count - 1; i >= 0; i--) {
-				if (!IsClosureParameter(method.Parameters[i]))
+				if (!IsClosureParameter(method.Parameters[i], resolveContext))
 					break;
 				parametersToRemove++;
 			}
@@ -213,23 +218,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int argumentCount = useSite.Arguments.Count;
 			int reducedArgumentCount = argumentCount - (reducedMethod.NumberOfCompilerGeneratedParameters + firstArgumentIndex);
 			replacement.Arguments.AddRange(useSite.Arguments.Skip(firstArgumentIndex).Take(reducedArgumentCount));
-			// copy flags:
+			// copy flags
 			replacement.ConstrainedTo = useSite.ConstrainedTo;
 			replacement.ILStackWasEmpty = useSite.ILStackWasEmpty;
 			replacement.IsTail = useSite.IsTail;
 			// copy IL ranges
-			replacement = replacement.WithILRange(useSite);
+			replacement.AddILRange(useSite);
 			if (wasInstanceCall) {
-				replacement = replacement.WithILRange(useSite.Arguments[0]);
+				replacement.AddILRange(useSite.Arguments[0]);
 			}
 			for (int i = 0; i < reducedMethod.NumberOfCompilerGeneratedParameters; i++) {
-				replacement = replacement.WithILRange(useSite.Arguments[argumentCount - i - 1]);
+				replacement.AddILRange(useSite.Arguments[argumentCount - i - 1]);
 			}
 			useSite.ReplaceWith(replacement);
 		}
 
 		void DetermineCaptureAndDeclarationScope(ILFunction function, CallInstruction useSite)
 		{
+			int firstArgumentIndex = function.Method.IsStatic ? 0 : 1;
 			for (int i = useSite.Arguments.Count - 1; i >= 0; i--) {
 				var arg = useSite.Arguments[i];
 				ILVariable closureVar;
@@ -239,6 +245,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				if (!TransformDisplayClassUsage.IsPotentialClosure(context, UnwrapByRef(closureVar.Type).GetDefinition()))
 					break;
+				if (i - firstArgumentIndex >= 0) {
+					Debug.Assert(i - firstArgumentIndex < function.Method.Parameters.Count && IsClosureParameter(function.Method.Parameters[i - firstArgumentIndex], resolveContext));
+				}
 				if (closureVar.AddressCount == 0 && closureVar.StoreInstructions.Count == 0)
 					continue;
 				// determine the capture scope of closureVar and the declaration scope of the function 
@@ -262,7 +271,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			var opCode = inst.Arguments[1].OpCode;
 
-			return (opCode == OpCode.LdFtn || opCode == OpCode.LdVirtFtn)
+			return opCode == OpCode.LdFtn
 				&& IsLocalFunctionMethod(((IInstructionWithMethodOperand)inst.Arguments[1]).Method, context);
 		}
 

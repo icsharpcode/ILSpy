@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (IsClosure(v, out ITypeDefinition closureType, out var inst)) {
 							AddOrUpdateDisplayClass(f, v, closureType, inst, localFunctionClosureParameter: false);
 						}
-						if (context.Settings.LocalFunctions && f.Kind == ILFunctionKind.LocalFunction && v.Kind == VariableKind.Parameter && v.Index > -1 && f.Method.Parameters[v.Index.Value] is IParameter p && LocalFunctionDecompiler.IsClosureParameter(p)) {
+						if (context.Settings.LocalFunctions && f.Kind == ILFunctionKind.LocalFunction && v.Kind == VariableKind.Parameter && v.Index > -1 && f.Method.Parameters[v.Index.Value] is IParameter p && LocalFunctionDecompiler.IsClosureParameter(p, decompilationContext)) {
 							AddOrUpdateDisplayClass(f, v, ((ByReferenceType)p.Type).ElementType.GetDefinition(), f.Body, localFunctionClosureParameter: true);
 						}
 					}

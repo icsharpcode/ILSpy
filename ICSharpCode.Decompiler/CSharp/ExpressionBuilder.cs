@@ -1877,7 +1877,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// needs to be consistent with logic in ILReader.CreateILVarable(ParameterDefinition)
 					pd.Name = "P_" + i;
 					// if this is a local function, we have to skip the parameters for closure references
-					if (settings.LocalFunctions && function.Kind == ILFunctionKind.LocalFunction && IL.Transforms.LocalFunctionDecompiler.IsClosureParameter(parameter))
+					if (settings.LocalFunctions && function.Kind == ILFunctionKind.LocalFunction && IL.Transforms.LocalFunctionDecompiler.IsClosureParameter(parameter, decompilationContext))
 						break;
 				}
 				if (settings.AnonymousTypes && parameter.Type.ContainsAnonymousType())
