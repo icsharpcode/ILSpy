@@ -128,9 +128,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Match;
 			}
 			
-			public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
+			public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 			{
-				return false;
 			}
 		}
 		
@@ -152,9 +151,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Match;
 			}
 			
-			public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
+			public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 			{
-				return false;
 			}
 		}
 

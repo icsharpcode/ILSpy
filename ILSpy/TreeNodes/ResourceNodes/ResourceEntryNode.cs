@@ -73,10 +73,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return result;
 		}
 
-		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, string.Format("{0} = {1}", key, data));
-			return true;
 		}
 
 		public override bool Save(DecompilerTextView textView)

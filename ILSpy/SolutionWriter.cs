@@ -22,15 +22,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.Solution;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
-using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy
 {
@@ -38,73 +35,23 @@ namespace ICSharpCode.ILSpy
 	/// An utility class that creates a Visual Studio solution containing projects for the
 	/// decompiled assemblies.
 	/// </summary>
-	internal static class SolutionWriter
+	internal class SolutionWriter
 	{
-		private const string SolutionExtension = ".sln";
-		private const string DefaultSolutionName = "Solution";
-
-		/// <summary>
-		/// Shows a File Selection dialog where the user can select the target file for the solution.
-		/// </summary>
-		/// <param name="path">The initial path to show in the dialog. If not specified, the 'Documents' directory
-		/// will be used.</param>
-		/// 
-		/// <returns>The full path of the selected target file, or <c>null</c> if the user canceled.</returns>
-		public static string SelectSolutionFile(string path)
-		{
-			if (string.IsNullOrWhiteSpace(path)) {
-				path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-			}
-
-			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.InitialDirectory = path;
-			dlg.FileName = Path.Combine(path, DefaultSolutionName + SolutionExtension);
-			dlg.Filter = "Visual Studio Solution file|*" + SolutionExtension;
-
-			bool targetInvalid;
-			do {
-				if (dlg.ShowDialog() != true) {
-					return null;
-				}
-
-				string selectedPath = Path.GetDirectoryName(dlg.FileName);
-				try {
-					targetInvalid = Directory.EnumerateFileSystemEntries(selectedPath).Any();
-				} catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is SecurityException) {
-					MessageBox.Show(
-						"The directory cannot be accessed. Please ensure it exists and you have sufficient rights to access it.",
-						"Solution directory not accessible",
-						MessageBoxButton.OK, MessageBoxImage.Error);
-					targetInvalid = true;
-					continue;
-				}
-				
-				if (targetInvalid) {
-					MessageBox.Show(
-						"The directory is not empty. Please select an empty directory.",
-						"Solution directory not empty",
-						MessageBoxButton.OK, MessageBoxImage.Warning);
-				}
-			} while (targetInvalid);
-
-			return dlg.FileName;
-		}
-
 		/// <summary>
 		/// Creates a Visual Studio solution that contains projects with decompiled code
-		/// of the specified <paramref name="assemblyNodes"/>. The solution file will be saved
+		/// of the specified <paramref name="assemblies"/>. The solution file will be saved
 		/// to the <paramref name="solutionFilePath"/>. The directory of this file must either
 		/// be empty or not exist.
 		/// </summary>
 		/// <param name="textView">A reference to the <see cref="DecompilerTextView"/> instance.</param>
 		/// <param name="solutionFilePath">The target file path of the solution file.</param>
-		/// <param name="assemblyNodes">The assembly nodes to decompile.</param>
+		/// <param name="assemblies">The assembly nodes to decompile.</param>
 		/// 
 		/// <exception cref="ArgumentException">Thrown when <paramref name="solutionFilePath"/> is null,
 		/// an empty or a whitespace string.</exception>
 		/// <exception cref="ArgumentNullException">Thrown when <paramref name="textView"/>> or
-		/// <paramref name="assemblyNodes"/> is null.</exception>
-		public static void CreateSolution(DecompilerTextView textView, string solutionFilePath, IEnumerable<AssemblyTreeNode> assemblyNodes)
+		/// <paramref name="assemblies"/> is null.</exception>
+		public static void CreateSolution(DecompilerTextView textView, string solutionFilePath, Language language, IEnumerable<LoadedAssembly> assemblies)
 		{
 			if (textView == null) {
 				throw new ArgumentNullException(nameof(textView));
@@ -114,29 +61,37 @@ namespace ICSharpCode.ILSpy
 				throw new ArgumentException("The solution file path cannot be null or empty.", nameof(solutionFilePath));
 			}
 
-			if (assemblyNodes == null) {
-				throw new ArgumentNullException(nameof(assemblyNodes));
+			if (assemblies == null) {
+				throw new ArgumentNullException(nameof(assemblies));
 			}
 
+			var writer = new SolutionWriter(solutionFilePath);
+
 			textView
-				.RunWithCancellation(ct => CreateSolution(solutionFilePath, assemblyNodes, ct))
+				.RunWithCancellation(ct => writer.CreateSolution(assemblies, language, ct))
 				.Then(output => textView.ShowText(output))
 				.HandleExceptions();
 		}
 
-		private static async Task<AvalonEditTextOutput> CreateSolution(
-			string solutionFilePath,
-			IEnumerable<AssemblyTreeNode> assemblyNodes,
-			CancellationToken ct)
-		{
-			var solutionDirectory = Path.GetDirectoryName(solutionFilePath);
-			var statusOutput = new ConcurrentBag<string>();
-			var projects = new ConcurrentBag<ProjectItem>();
+		readonly string solutionFilePath;
+		readonly string solutionDirectory;
+		readonly ConcurrentBag<ProjectItem> projects;
+		readonly ConcurrentBag<string> statusOutput;
 
+		SolutionWriter(string solutionFilePath)
+		{
+			this.solutionFilePath = solutionFilePath;
+			solutionDirectory = Path.GetDirectoryName(solutionFilePath);
+			statusOutput = new ConcurrentBag<string>();
+			projects = new ConcurrentBag<ProjectItem>();
+		}
+
+		async Task<AvalonEditTextOutput> CreateSolution(IEnumerable<LoadedAssembly> assemblies, Language language, CancellationToken ct)
+		{
 			var result = new AvalonEditTextOutput();
 
 			var duplicates = new HashSet<string>();
-			if (assemblyNodes.Any(n => !duplicates.Add(n.LoadedAssembly.ShortName))) {
+			if (assemblies.Any(asm => !duplicates.Add(asm.ShortName))) {
 				result.WriteLine("Duplicate assembly names selected, cannot generate a solution.");
 				return result;
 			}
@@ -144,7 +99,7 @@ namespace ICSharpCode.ILSpy
 			Stopwatch stopwatch = Stopwatch.StartNew();
 
 			try {
-				await Task.Run(() => Parallel.ForEach(assemblyNodes, n => WriteProject(n, solutionDirectory, statusOutput, projects, ct)))
+				await Task.Run(() => Parallel.ForEach(assemblies, n => WriteProject(n, language, solutionDirectory, ct)))
 					.ConfigureAwait(false);
 
 				await Task.Run(() => SolutionCreator.WriteSolutionFile(solutionFilePath, projects))
@@ -162,7 +117,7 @@ namespace ICSharpCode.ILSpy
 					result.WriteLine(e.Message);
 					return true;
 				});
-				
+
 				return result;
 			}
 
@@ -172,13 +127,13 @@ namespace ICSharpCode.ILSpy
 
 			if (statusOutput.Count == 0) {
 				result.WriteLine("Successfully decompiled the following assemblies into Visual Studio projects:");
-				foreach (var item in assemblyNodes.Select(n => n.Text.ToString())) {
+				foreach (var item in assemblies.Select(n => n.Text.ToString())) {
 					result.WriteLine(item);
 				}
 
 				result.WriteLine();
 
-				if (assemblyNodes.Count() == projects.Count) {
+				if (assemblies.Count() == projects.Count) {
 					result.WriteLine("Created the Visual Studio Solution file.");
 				}
 
@@ -191,17 +146,10 @@ namespace ICSharpCode.ILSpy
 			return result;
 		}
 
-		private static void WriteProject(
-			AssemblyTreeNode assemblyNode,
-			string targetDirectory,
-			ConcurrentBag<string> statusOutput,
-			ConcurrentBag<ProjectItem> targetContainer,
-			CancellationToken ct)
+		void WriteProject(LoadedAssembly loadedAssembly, Language language, string targetDirectory, CancellationToken ct)
 		{
-			var loadedAssembly = assemblyNode.LoadedAssembly;
-
 			targetDirectory = Path.Combine(targetDirectory, loadedAssembly.ShortName);
-			string projectFileName = Path.Combine(targetDirectory, loadedAssembly.ShortName + assemblyNode.Language.ProjectFileExtension);
+			string projectFileName = Path.Combine(targetDirectory, loadedAssembly.ShortName + language.ProjectFileExtension);
 
 			if (!Directory.Exists(targetDirectory)) {
 				try {
@@ -214,21 +162,19 @@ namespace ICSharpCode.ILSpy
 
 			try {
 				using (var projectFileWriter = new StreamWriter(projectFileName)) {
-				var projectFileOutput = new PlainTextOutput(projectFileWriter);
-				var options = new DecompilationOptions() {
-					FullDecompilation = true,
-					CancellationToken = ct,
-					SaveAsProjectDirectory = targetDirectory };
+					var projectFileOutput = new PlainTextOutput(projectFileWriter);
+					var options = new DecompilationOptions() {
+						FullDecompilation = true,
+						CancellationToken = ct,
+						SaveAsProjectDirectory = targetDirectory
+					};
 
-					if (assemblyNode.Decompile(assemblyNode.Language, projectFileOutput, options) is ProjectId projectInfo) {
-						targetContainer.Add(new ProjectItem(projectFileName, projectInfo.PlatformName, projectInfo.Guid));
+					var projectInfo = language.DecompileAssembly(loadedAssembly, projectFileOutput, options);
+					if (projectInfo != null) {
+						projects.Add(new ProjectItem(projectFileName, projectInfo.PlatformName, projectInfo.Guid));
 					}
 				}
-			} 
-			catch (OperationCanceledException) {
-				throw;
-			}
-			catch (Exception e) {
+			} catch (Exception e) when (!(e is OperationCanceledException)) {
 				statusOutput.Add($"Failed to decompile the assembly '{loadedAssembly.FileName}':{Environment.NewLine}{e}");
 			}
 		}

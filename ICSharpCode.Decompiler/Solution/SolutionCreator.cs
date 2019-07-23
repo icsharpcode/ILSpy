@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2016 Daniel Grunwald
+﻿// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -22,74 +22,8 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace ICSharpCode.Decompiler.CSharp
+namespace ICSharpCode.Decompiler.Solution
 {
-	/// <summary>
-	/// A container class that holds information about a Visual Studio project.
-	/// </summary>
-	public sealed class ProjectItem : ProjectId
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ProjectItem"/> class.
-		/// </summary>
-		/// <param name="projectFile">The full path of the project file.</param>
-		/// <param name="projectPlatform">The project platform.</param>
-		/// <param name="projectGuid">The project GUID.</param>
-		/// 
-		/// <exception cref="ArgumentException">Thrown when <paramref name="projectFile"/> 
-		/// or <paramref name="projectPlatform"/> is null or empty.</exception>
-		public ProjectItem(string projectFile, string projectPlatform, Guid projectGuid)
-			: base(projectPlatform, projectGuid)
-		{
-			ProjectName = Path.GetFileNameWithoutExtension(projectFile);
-			FilePath = projectFile;
-		}
-
-		/// <summary>
-		/// Gets the name of the project.
-		/// </summary>
-		public string ProjectName { get; }
-
-		/// <summary>
-		/// Gets the full path to the project file.
-		/// </summary>
-		public string FilePath { get; }
-	}
-
-	/// <summary>
-	/// A container class that holds platform and GUID information about a Visual Studio project.
-	/// </summary>
-	public class ProjectId
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ProjectId"/> class.
-		/// </summary>
-		/// <param name="projectPlatform">The project platform.</param>
-		/// <param name="projectGuid">The project GUID.</param>
-		/// 
-		/// <exception cref="ArgumentException">Thrown when <paramref name="projectFile"/> 
-		/// or <paramref name="projectPlatform"/> is null or empty.</exception>
-		public ProjectId(string projectPlatform, Guid projectGuid)
-		{
-			if (string.IsNullOrWhiteSpace(projectPlatform)) {
-				throw new ArgumentException("The platform cannot be null or empty.", nameof(projectPlatform));
-			}
-
-			Guid = projectGuid;
-			PlatformName = projectPlatform;
-		}
-
-		/// <summary>
-		/// Gets the GUID of this project.
-		/// </summary>
-		public Guid Guid { get; }
-
-		/// <summary>
-		/// Gets the platform name of this project. Only single platform per project is supported.
-		/// </summary>
-		public string PlatformName { get; }
-	}
-
 	/// <summary>
 	/// A helper class that can write a Visual Studio Solution file for the provided projects.
 	/// </summary>

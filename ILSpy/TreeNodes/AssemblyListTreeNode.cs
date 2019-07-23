@@ -141,7 +141,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public Action<SharpTreeNode> Select = delegate { };
 
-		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, "List: " + assemblyList.ListName);
 			output.WriteLine();
@@ -150,8 +150,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				output.WriteLine();
 				asm.Decompile(language, output, options);
 			}
-
-			return true;
 		}
 
 		#region Find*Node

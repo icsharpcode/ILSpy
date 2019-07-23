@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Hidden;
 		}
 
-		public abstract object Decompile(Language language, ITextOutput output, DecompilationOptions options);
+		public abstract void Decompile(Language language, ITextOutput output, DecompilationOptions options);
 
 		/// <summary>
 		/// Used to implement special view logic for some items.

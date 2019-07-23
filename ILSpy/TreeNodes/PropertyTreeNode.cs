@@ -74,10 +74,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Hidden;
 		}
 
-		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.DecompileProperty(PropertyDefinition, output, options);
-			return true;
 		}
 
 		public override bool IsPublicAPI {

@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 		
-		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			var loaded = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo.TryGetInfo(r.FullName, out var info);
 			if (r.IsWindowsRuntime) {
@@ -98,8 +98,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				output.Unindent();
 				output.WriteLine();
 			}
-
-			return true;
 		}
 	}
 }

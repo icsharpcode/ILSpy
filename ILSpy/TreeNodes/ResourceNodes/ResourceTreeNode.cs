@@ -67,7 +67,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Hidden;
 		}
 		
-		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, string.Format("{0} ({1}, {2})", r.Name, r.ResourceType, r.Attributes));
 			
@@ -76,8 +76,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				smartOutput.AddButton(Images.Save, Resources.Save, delegate { Save(MainWindow.Instance.TextView); });
 				output.WriteLine();
 			}
-
-			return true;
 		}
 		
 		public override bool View(DecompilerTextView textView)

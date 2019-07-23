@@ -83,10 +83,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.DecompileMethod(MethodDefinition, output, options);
-			return true;
 		}
 
 		public override FilterResult Filter(FilterSettings settings)

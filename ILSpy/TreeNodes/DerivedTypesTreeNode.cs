@@ -92,10 +92,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return typeRef.GetFullTypeName(referenceMetadata) == typeDef.GetFullTypeName(definitionMetadata);
 		}
 
-		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			threading.Decompile(language, output, options, EnsureLazyChildren);
-			return true;
 		}
 	}
 }

@@ -56,10 +56,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Recurse;
 		}
 		
-		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.DecompileNamespace(name, this.Children.OfType<TypeTreeNode>().Select(t => t.TypeDefinition), output, options);
-			return true;
 		}
 	}
 }

@@ -35,6 +35,7 @@ using System.Reflection.Metadata;
 using static ICSharpCode.Decompiler.Metadata.DotNetCorePathFinderExtensions;
 using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Solution;
 
 namespace ICSharpCode.Decompiler.CSharp
 {

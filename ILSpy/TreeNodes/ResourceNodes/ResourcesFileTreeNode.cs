@@ -141,7 +141,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return true;
 		}
 
-		public override object Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			EnsureLazyChildren();
 			base.Decompile(language, output, options);
@@ -168,8 +168,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				}
 				output.WriteLine();
 			}
-
-			return true;
 		}
 
 		internal class SerializedObjectRepresentation
