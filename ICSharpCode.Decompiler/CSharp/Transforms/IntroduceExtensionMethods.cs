@@ -137,7 +137,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			if (!CanTransformToExtensionMethodCall(resolver, method, typeArguments, target, args, argNames))
 				return;
-			if (firstArgument is NullReferenceExpression) {
+			if (firstArgument is DirectionExpression dirExpr) {
+				if (dirExpr.FieldDirection != FieldDirection.Ref)
+					return;
+				if (!context.Settings.RefExtensionMethods)
+					return;
+				firstArgument = dirExpr.Expression;
+				target = firstArgument.GetResolveResult();
+				dirExpr.Detach();
+			} else if (firstArgument is NullReferenceExpression) {
 				Debug.Assert(context.RequiredNamespacesSuperset.Contains(method.Parameters[0].Type.Namespace));
 				firstArgument = firstArgument.ReplaceWith(expr => new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type), expr.Detach()));
 			}

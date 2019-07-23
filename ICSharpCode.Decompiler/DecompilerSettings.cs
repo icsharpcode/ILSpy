@@ -97,6 +97,7 @@ namespace ICSharpCode.Decompiler
 				introduceReadonlyAndInModifiers = false;
 				introduceRefModifiersOnStructs = false;
 				nonTrailingNamedArguments = false;
+				refExtensionMethods = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_3) {
 				introduceUnmanagedConstraint = false;
@@ -114,7 +115,7 @@ namespace ICSharpCode.Decompiler
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers)
 				return CSharp.LanguageVersion.CSharp7_3;
-			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments)
+			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments || refExtensionMethods)
 				return CSharp.LanguageVersion.CSharp7_2;
 			// C# 7.1 missing
 			if (outVariables || tupleTypes || tupleConversions || discards || localFunctions)
@@ -621,6 +622,23 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (extensionMethodsInCollectionInitializers != value) {
 					extensionMethodsInCollectionInitializers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool refExtensionMethods = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 7.2 'ref' extension methods.
+		/// </summary>
+		[Category("C# 7.2 / VS 2017.4")]
+		[Description("DecompilerSettings.AllowExtensionMethodSyntaxOnRef")]
+		public bool RefExtensionMethods {
+			get { return refExtensionMethods; }
+			set {
+				if (refExtensionMethods != value) {
+					refExtensionMethods = value;
 					OnPropertyChanged();
 				}
 			}
