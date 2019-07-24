@@ -902,11 +902,6 @@ namespace ICSharpCode.ILSpy
 		void SaveCommandCanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
 			e.Handled = true;
-			var focusedElement = FocusManager.GetFocusedElement(this) as DependencyObject;
-			if (focusedElement.IsInVisualTreeOf(TextView)) {
-				e.CanExecute = true;
-				return;
-			}
 			var selectedNodes = SelectedNodes.ToList();
 			e.CanExecute = selectedNodes.Count == 1 || (selectedNodes.Count > 1 && selectedNodes.All(n => n is AssemblyTreeNode));
 		}
@@ -926,7 +921,7 @@ namespace ICSharpCode.ILSpy
 				if (!string.IsNullOrEmpty(selectedPath)) {
 					var assemblies = selectedNodes.OfType<AssemblyTreeNode>()
 						.Select(n => n.LoadedAssembly)
-						.Where(a => a != null).ToArray();
+						.Where(a => !a.HasLoadError).ToArray();
 					SolutionWriter.CreateSolution(TextView, selectedPath, CurrentLanguage, assemblies);
 				}
 				return;

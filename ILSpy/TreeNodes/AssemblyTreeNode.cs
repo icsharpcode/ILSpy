@@ -279,44 +279,30 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool Save(DecompilerTextView textView)
 		{
 			Language language = this.Language;
-			if (string.IsNullOrEmpty(language.ProjectFileExtension)) {
+			if (string.IsNullOrEmpty(language.ProjectFileExtension))
 				return false;
-			}
-
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = DecompilerTextView.CleanUpName(LoadedAssembly.ShortName) + language.ProjectFileExtension;
-			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension;
-			if (dlg.ShowDialog() != true) {
-				return true;
-			}
-
-			var targetDirectory = Path.GetDirectoryName(dlg.FileName);
-			var existingFiles = Directory.GetFileSystemEntries(targetDirectory);
-
-			if (existingFiles.Any(e => !string.Equals(e, dlg.FileName, StringComparison.OrdinalIgnoreCase))) {
-				var result = MessageBox.Show(
-						"The directory is not empty. File will be overwritten." + Environment.NewLine +
-						"Are you sure you want to continue?",
-						"Project Directory not empty",
-						MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
-				if (result == MessageBoxResult.No) {
-					return true; // don't save, but mark the Save operation as handled
+			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
+			if (dlg.ShowDialog() == true) {
+				DecompilationOptions options = new DecompilationOptions();
+				options.FullDecompilation = true;
+				if (dlg.FilterIndex == 1) {
+					options.SaveAsProjectDirectory = Path.GetDirectoryName(dlg.FileName);
+					foreach (string entry in Directory.GetFileSystemEntries(options.SaveAsProjectDirectory)) {
+						if (!string.Equals(entry, dlg.FileName, StringComparison.OrdinalIgnoreCase)) {
+							var result = MessageBox.Show(
+								Resources.AssemblySaveCodeDirectoryNotEmpty,
+								Resources.AssemblySaveCodeDirectoryNotEmptyTitle,
+								MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
+							if (result == MessageBoxResult.No)
+								return true; // don't save, but mark the Save operation as handled
+							break;
+						}
+					}
 				}
+				textView.SaveToDisk(language, new[] { this }, options, dlg.FileName);
 			}
-
-			Save(textView, dlg.FileName);
-			return true;
-		}
-
-		public override bool Save(DecompilerTextView textView, string fileName)
-		{
-			var targetDirectory = Path.GetDirectoryName(fileName);
-			DecompilationOptions options = new DecompilationOptions {
-				FullDecompilation = true,
-				SaveAsProjectDirectory = targetDirectory
-			};
-
-			textView.SaveToDisk(Language, new[] { this }, options, fileName);
 			return true;
 		}
 
