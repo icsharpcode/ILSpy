@@ -16,25 +16,118 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Windows;
 using System.Windows.Input;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.TreeView;
+using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy.TextView
 {
 	[ExportContextMenuEntry(Header = nameof(Resources._SaveCode), Category = nameof(Resources.Save), Icon = "Images/SaveFile.png")]
 	sealed class SaveCodeContextMenuEntry : IContextMenuEntry
 	{
-		private readonly ICommand saveCommand;
-
-		public SaveCodeContextMenuEntry()
+		public void Execute(TextViewContext context)
 		{
-			saveCommand = ApplicationCommands.Save;
+			Execute(context.SelectedTreeNodes);
 		}
-
-		public void Execute(TextViewContext context) => saveCommand.Execute(parameter: null);
 
 		public bool IsEnabled(TextViewContext context) => true;
 
-		public bool IsVisible(TextViewContext context) => context.TreeView != null && saveCommand.CanExecute(parameter: null);
+		public bool IsVisible(TextViewContext context)
+		{
+			return CanExecute(context.SelectedTreeNodes);
+		}
+
+		public static bool CanExecute(IReadOnlyList<SharpTreeNode> selectedNodes)
+		{
+			if (selectedNodes == null || selectedNodes.Any(n => !(n is ILSpyTreeNode)))
+				return false;
+			return selectedNodes.Count == 1
+				|| (selectedNodes.Count > 1 && (selectedNodes.All(n => n is AssemblyTreeNode) || selectedNodes.All(n => n is IMemberTreeNode)));
+		}
+
+		public static void Execute(IReadOnlyList<SharpTreeNode> selectedNodes)
+		{
+			var currentLanguage = MainWindow.Instance.CurrentLanguage;
+			var textView = MainWindow.Instance.TextView;
+			if (selectedNodes.Count == 1 && selectedNodes[0] is ILSpyTreeNode singleSelection) {
+				// if there's only one treenode selected
+				// we will invoke the custom Save logic
+				if (singleSelection.Save(textView))
+					return;
+			} else if (selectedNodes.Count > 1 && selectedNodes.All(n => n is AssemblyTreeNode)) {
+				var initialPath = Path.GetDirectoryName(((AssemblyTreeNode)selectedNodes[0]).LoadedAssembly.FileName);
+				var selectedPath = SelectSolutionFile(initialPath);
+
+				if (!string.IsNullOrEmpty(selectedPath)) {
+					var assemblies = selectedNodes.OfType<AssemblyTreeNode>()
+						.Select(n => n.LoadedAssembly)
+						.Where(a => !a.HasLoadError).ToArray();
+					SolutionWriter.CreateSolution(textView, selectedPath, currentLanguage, assemblies);
+				}
+				return;
+			}
+
+			// Fallback: if nobody was able to handle the request, use default behavior.
+			// try to save all nodes to disk.
+			var options = new DecompilationOptions() { FullDecompilation = true };
+			textView.SaveToDisk(currentLanguage, selectedNodes.OfType<ILSpyTreeNode>(), options);
+		}
+
+		/// <summary>
+		/// Shows a File Selection dialog where the user can select the target file for the solution.
+		/// </summary>
+		/// <param name="path">The initial path to show in the dialog. If not specified, the 'Documents' directory
+		/// will be used.</param>
+		/// 
+		/// <returns>The full path of the selected target file, or <c>null</c> if the user canceled.</returns>
+		static string SelectSolutionFile(string path)
+		{
+			const string SolutionExtension = ".sln";
+			const string DefaultSolutionName = "Solution";
+
+			if (string.IsNullOrWhiteSpace(path)) {
+				path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+			}
+
+			SaveFileDialog dlg = new SaveFileDialog();
+			dlg.InitialDirectory = path;
+			dlg.FileName = Path.Combine(path, DefaultSolutionName + SolutionExtension);
+			dlg.Filter = "Visual Studio Solution file|*" + SolutionExtension;
+
+			bool targetInvalid;
+			do {
+				if (dlg.ShowDialog() != true) {
+					return null;
+				}
+
+				string selectedPath = Path.GetDirectoryName(dlg.FileName);
+				try {
+					targetInvalid = Directory.EnumerateFileSystemEntries(selectedPath).Any();
+				} catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException) {
+					MessageBox.Show(
+						"The directory cannot be accessed. Please ensure it exists and you have sufficient rights to access it.",
+						"Solution directory not accessible",
+						MessageBoxButton.OK, MessageBoxImage.Error);
+					targetInvalid = true;
+					continue;
+				}
+
+				if (targetInvalid) {
+					MessageBox.Show(
+						"The directory is not empty. Please select an empty directory.",
+						"Solution directory not empty",
+						MessageBoxButton.OK, MessageBoxImage.Warning);
+				}
+			} while (targetInvalid);
+
+			return dlg.FileName;
+		}
 	}
 }

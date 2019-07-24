@@ -902,85 +902,12 @@ namespace ICSharpCode.ILSpy
 		void SaveCommandCanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
 			e.Handled = true;
-			var selectedNodes = SelectedNodes.ToList();
-			e.CanExecute = selectedNodes.Count == 1 || (selectedNodes.Count > 1 && selectedNodes.All(n => n is AssemblyTreeNode));
+			e.CanExecute = SaveCodeContextMenuEntry.CanExecute(SelectedNodes.ToList());
 		}
 
 		void SaveCommandExecuted(object sender, ExecutedRoutedEventArgs e)
 		{
-			var selectedNodes = SelectedNodes.ToList();
-			if (selectedNodes.Count == 1) {
-				// if there's only one treenode selected
-				// we will invoke the custom Save logic
-				if (selectedNodes[0].Save(TextView))
-					return;
-			} else if (selectedNodes.Count > 1 && selectedNodes.All(n => n is AssemblyTreeNode)) {
-				var initialPath = Path.GetDirectoryName(((AssemblyTreeNode)selectedNodes[0]).LoadedAssembly.FileName);
-				var selectedPath = SelectSolutionFile(initialPath);
-
-				if (!string.IsNullOrEmpty(selectedPath)) {
-					var assemblies = selectedNodes.OfType<AssemblyTreeNode>()
-						.Select(n => n.LoadedAssembly)
-						.Where(a => !a.HasLoadError).ToArray();
-					SolutionWriter.CreateSolution(TextView, selectedPath, CurrentLanguage, assemblies);
-				}
-				return;
-			}
-
-			// Fallback: if nobody was able to handle the request, use default behavior.
-			// try to save all nodes to disk.
-			var options = new DecompilationOptions() { FullDecompilation = true };
-			TextView.SaveToDisk(CurrentLanguage, selectedNodes, options);
-		}
-
-		/// <summary>
-		/// Shows a File Selection dialog where the user can select the target file for the solution.
-		/// </summary>
-		/// <param name="path">The initial path to show in the dialog. If not specified, the 'Documents' directory
-		/// will be used.</param>
-		/// 
-		/// <returns>The full path of the selected target file, or <c>null</c> if the user canceled.</returns>
-		string SelectSolutionFile(string path)
-		{
-			const string SolutionExtension = ".sln";
-			const string DefaultSolutionName = "Solution";
-
-			if (string.IsNullOrWhiteSpace(path)) {
-				path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-			}
-
-			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.InitialDirectory = path;
-			dlg.FileName = Path.Combine(path, DefaultSolutionName + SolutionExtension);
-			dlg.Filter = "Visual Studio Solution file|*" + SolutionExtension;
-
-			bool targetInvalid;
-			do {
-				if (dlg.ShowDialog() != true) {
-					return null;
-				}
-
-				string selectedPath = Path.GetDirectoryName(dlg.FileName);
-				try {
-					targetInvalid = Directory.EnumerateFileSystemEntries(selectedPath).Any();
-				} catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException) {
-					MessageBox.Show(
-						"The directory cannot be accessed. Please ensure it exists and you have sufficient rights to access it.",
-						"Solution directory not accessible",
-						MessageBoxButton.OK, MessageBoxImage.Error);
-					targetInvalid = true;
-					continue;
-				}
-
-				if (targetInvalid) {
-					MessageBox.Show(
-						"The directory is not empty. Please select an empty directory.",
-						"Solution directory not empty",
-						MessageBoxButton.OK, MessageBoxImage.Warning);
-				}
-			} while (targetInvalid);
-
-			return dlg.FileName;
+			SaveCodeContextMenuEntry.Execute(SelectedNodes.ToList());
 		}
 
 		public void RefreshDecompiledView()
