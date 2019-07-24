@@ -1,15 +1,20 @@
 ﻿#nullable enable
+using System;
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	public class NullableRefTypes
+	public class T01_NullableRefTypes
 	{
 		private string field_string;
 		private string? field_nullable_string;
 		private dynamic? field_nullable_dynamic;
 
 		private Dictionary<string?, string> field_generic;
+		private Dictionary<int, string?[]> field_generic2;
+		private Dictionary<int?, string?[]> field_generic3;
+		private KeyValuePair<string?, string> field_generic_value_type;
+		private KeyValuePair<string?, string>? field_generic_nullable_value_type;
 		private (string, string?, string) field_tuple;
 		private string[]?[] field_array;
 		private Dictionary<(string, string?), (int, string[]?, string?[])> field_complex;
@@ -28,5 +33,50 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return field_nullable_string?.Length + arr?.Length;
 		}
+
+		public void GenericNullable<T1, T2>((T1?, T1, T2, T2?, T1, T1?) x) where T1 : class where T2 : struct
+		{
+		}
+
+		public T ByRef<T>(ref T t)
+		{
+			return t;
+		}
+
+		public void CallByRef(ref string a, ref string? b)
+		{
+			ByRef(ref a).ToString();
+			ByRef(ref b)!.ToString();
+		}
+	}
+
+	public class T02_EverythingIsNullableInHere
+	{
+		private string? field1;
+		private object? field2;
+		// value types are irrelevant for the nullability attributes:
+		private int field3;
+		private int? field4;
+
+		public string? Property {
+			get;
+			set;
+		}
+		public event EventHandler? Event;
+	}
+
+	public class T03_EverythingIsNotNullableInHere
+	{
+		private string field1;
+		private object field2;
+		// value types are irrelevant for the nullability attributes:
+		private int field3;
+		private int? field4;
+
+		public string Property {
+			get;
+			set;
+		}
+		public event EventHandler Event;
 	}
 }

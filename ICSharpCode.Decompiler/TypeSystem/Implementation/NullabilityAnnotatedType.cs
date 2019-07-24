@@ -19,6 +19,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// the NullabilityAnnotatedType wrapper only in some limited places.
 			Debug.Assert(type is ITypeDefinition
 				|| type.Kind == TypeKind.Dynamic
+				|| type.Kind == TypeKind.Unknown
 				|| (type is ITypeParameter && this is ITypeParameter));
 			this.nullability = nullability;
 		}
@@ -50,10 +51,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override IType VisitChildren(TypeVisitor visitor)
 		{
 			IType newBase = baseType.AcceptVisitor(visitor);
-			if (newBase != baseType)
+			if (newBase != baseType) {
+				if (newBase.Nullability == Nullability.Nullable) {
+					// T?! -> T?
+					// This happens during type substitution for generic methods.
+					return newBase;
+				}
 				return newBase.ChangeNullability(nullability);
-			else
+			} else {
 				return this;
+			}
 		}
 
 		public override string ToString()
@@ -79,6 +86,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			this.baseType = type;
 		}
+
+		public ITypeParameter OriginalTypeParameter => baseType;
 
 		SymbolKind ITypeParameter.OwnerType => baseType.OwnerType;
 		IEntity ITypeParameter.Owner => baseType.Owner;

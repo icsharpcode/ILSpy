@@ -777,8 +777,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				default:
 					return false;
 			}
-			if (!ev.ReturnType.IsMatch(m.Get("type").Single()))
-				return false; // variable types must match event type
+			if (!ev.ReturnType.IsMatch(m.Get("type").Single())) {
+				// Variable types must match event type,
+				// except that the event type may have an additional nullability annotation
+				if (ev.ReturnType is ComposedType ct && ct.HasOnlyNullableSpecifier) {
+					if (!ct.BaseType.IsMatch(m.Get("type").Single()))
+						return false;
+				} else {
+					return false;
+				}
+			}
 			var combineMethod = m.Get<AstNode>("delegateCombine").Single().Parent.GetSymbol() as IMethod;
 			if (combineMethod == null || combineMethod.Name != (isAddAccessor ? "Combine" : "Remove"))
 				return false;

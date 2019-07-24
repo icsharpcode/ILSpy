@@ -413,8 +413,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ConstantResolveResult(targetType, null));
 			}
-			if (allowImplicitConversion && conversions.ImplicitConversion(ResolveResult, targetType).IsValid) {
-				return this;
+			if (allowImplicitConversion) {
+				if (conversions.ImplicitConversion(ResolveResult, targetType).IsValid) {
+					return this;
+				}
+			} else {
+				if (NormalizeTypeVisitor.RemoveModifiersAndNullability.EquivalentTypes(type, targetType)) {
+					// avoid an explicit cast when types differ only in nullability of reference types
+					return this;
+				}
 			}
 			var castExpr = new CastExpression(expressionBuilder.ConvertType(targetType), Expression);
 			bool needsCheckAnnotation = targetUType.GetStackType().IsIntegerType();

@@ -208,6 +208,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 							return (options & TypeSystemOptions.UnmanagedConstraints) != 0 && target == SymbolKind.TypeParameter;
 						case "NullableAttribute":
 							return (options & TypeSystemOptions.NullabilityAnnotations) != 0;
+						case "NullableContextAttribute":
+							return (options & TypeSystemOptions.NullabilityAnnotations) != 0 && (target == SymbolKind.TypeDefinition || target == SymbolKind.Method);
 						default:
 							return false;
 					}

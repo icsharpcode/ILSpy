@@ -79,8 +79,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					return returnType;
 				var metadata = module.metadata;
 				var ev = metadata.GetEventDefinition(handle);
-				var context = new GenericContext(DeclaringTypeDefinition?.TypeParameters);
-				returnType = module.ResolveType(ev.Type, context, ev.GetCustomAttributes());
+				var declaringTypeDef = DeclaringTypeDefinition;
+				var context = new GenericContext(declaringTypeDef?.TypeParameters);
+				var nullableContext = declaringTypeDef?.NullableContext ?? Nullability.Oblivious;
+				returnType = module.ResolveType(ev.Type, context, ev.GetCustomAttributes(), nullableContext);
 				return LazyInit.GetOrSet(ref this.returnType, returnType);
 			}
 		}

@@ -123,13 +123,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var signature = propertyDef.DecodeSignature(module.TypeProvider, genericContext);
 				var accessors = propertyDef.GetAccessors();
 				ParameterHandleCollection? parameterHandles;
-				if (!accessors.Getter.IsNil)
-					parameterHandles = module.metadata.GetMethodDefinition(accessors.Getter).GetParameters();
-				else if (!accessors.Setter.IsNil)
-					parameterHandles = module.metadata.GetMethodDefinition(accessors.Setter).GetParameters();
-				else
+				Nullability nullableContext;
+				if (!accessors.Getter.IsNil) {
+					var getter = module.metadata.GetMethodDefinition(accessors.Getter);
+					parameterHandles = getter.GetParameters();
+					nullableContext = getter.GetCustomAttributes().GetNullableContext(module.metadata)
+						?? DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious;
+				} else if (!accessors.Setter.IsNil) {
+					var setter = module.metadata.GetMethodDefinition(accessors.Setter);
+					parameterHandles = setter.GetParameters();
+					nullableContext = setter.GetCustomAttributes().GetNullableContext(module.metadata)
+						?? DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious;
+				} else {
 					parameterHandles = null;
-				(returnType, parameters) = MetadataMethod.DecodeSignature(module, this, signature, parameterHandles);
+					nullableContext = DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious;
+				}
+				(returnType, parameters) = MetadataMethod.DecodeSignature(module, this, signature, parameterHandles, nullableContext);
 			} catch (BadImageFormatException) {
 				returnType = SpecialType.UnknownType;
 				parameters = Empty<IParameter>.Array;

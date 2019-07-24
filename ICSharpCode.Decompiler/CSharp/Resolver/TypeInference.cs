@@ -570,7 +570,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		void MakeExactInference(IType U, IType V)
 		{
 			Log.WriteLine("MakeExactInference from " + U + " to " + V);
-			
+
+			if (V is NullabilityAnnotatedTypeParameter nullableTP) {
+				V = nullableTP.OriginalTypeParameter;
+			}
+
 			// If V is one of the unfixed Xi then U is added to the set of bounds for Xi.
 			TP tp = GetTPForType(V);
 			if (tp != null && tp.IsFixed == false) {
