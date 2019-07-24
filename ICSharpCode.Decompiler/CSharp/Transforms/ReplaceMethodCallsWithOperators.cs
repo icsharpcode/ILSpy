@@ -122,6 +122,22 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			UnaryOperatorType? uop = GetUnaryOperatorTypeFromMetadataName(method.Name);
 			if (uop != null && arguments.Length == 1) {
+				if (uop == UnaryOperatorType.Increment || uop == UnaryOperatorType.Decrement) {
+					// `op_Increment(a)` is not equivalent to `++a`,
+					// because it doesn't assign the incremented value to a.
+					if (method.DeclaringType.IsKnownType(KnownTypeCode.Decimal)) {
+						// Legacy csc optimizes "d + 1m" to "op_Increment(d)",
+						// so reverse that optimization here:
+						invocationExpression.ReplaceWith(
+							new BinaryOperatorExpression(
+								arguments[0].Detach(),
+								(uop == UnaryOperatorType.Increment ? BinaryOperatorType.Add : BinaryOperatorType.Subtract),
+								new PrimitiveExpression(1m)
+							).CopyAnnotationsFrom(invocationExpression)
+						);
+					}
+					return;
+				}
 				arguments[0].Remove(); // detach argument
 				invocationExpression.ReplaceWith(
 					new UnaryOperatorExpression(uop.Value, arguments[0]).CopyAnnotationsFrom(invocationExpression)

@@ -4720,5 +4720,50 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (*GetPointer())++;
 		}
+
+		public void Issue1552Pre(CustomStruct a, CustomStruct b)
+		{
+			CustomStruct customStruct = a + b;
+			Console.WriteLine(++customStruct);
+		}
+
+		public void Issue1552Stmt(CustomStruct a, CustomStruct b)
+		{
+			CustomStruct customStruct = a + b;
+			++customStruct;
+		}
+
+		public void Issue1552StmtUseLater(CustomStruct a, CustomStruct b)
+		{
+			CustomStruct lhs = a + b;
+			++lhs;
+			Console.WriteLine();
+			Console.WriteLine(lhs * b);
+		}
+
+		public void Issue1552Decimal(decimal a)
+		{
+			// Legacy csc compiles this using op_Increment,
+			// ensure we don't misdetect this as an invalid pre-increment "++(a * 10m)"
+			Console.WriteLine(a * 10m + 1m);
+		}
+
+#if !(ROSLYN && OPT)
+		// Roslyn opt no longer has a detectable post-increment pattern
+		// due to optimizing out some of the stores.
+		// Our emitted code is valid but has some additional temporaries.
+		public void Issue1552Post(CustomStruct a, CustomStruct b)
+		{
+			CustomStruct customStruct = a + b;
+			Console.WriteLine(customStruct++);
+		}
+
+		public void Issue1552StmtTwice(CustomStruct a, CustomStruct b)
+		{
+			CustomStruct customStruct = a + b;
+			++customStruct;
+			++customStruct;
+		}
+#endif
 	}
 }

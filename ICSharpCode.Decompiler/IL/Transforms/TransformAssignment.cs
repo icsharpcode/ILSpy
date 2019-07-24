@@ -28,6 +28,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Constructs compound assignments and inline assignments.
 	/// </summary>
+	/// <remarks>
+	/// This is a statement transform;
+	/// but some portions are executed as an expression transform instead
+	/// (with HandleCompoundAssign() as entry point)
+	/// </remarks>
 	public class TransformAssignment : IStatementTransform
 	{
 		StatementTransformContext context;
@@ -294,6 +299,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			ILInstruction newInst;
 			if (UnwrapSmallIntegerConv(setterValue, out var smallIntConv) is BinaryNumericInstruction binary) {
+				if (compoundStore is StLoc) {
+					// transform local variables only for user-defined operators
+					return false;
+				}
 				if (!IsMatchingCompoundLoad(binary.Left, compoundStore, out var target, out var targetKind, out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
 					return false;
 				if (!ValidateCompoundAssign(binary, smallIntConv, targetType))
@@ -335,6 +344,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				newInst = new DynamicCompoundAssign(dynamicBinaryOp.Operation, dynamicBinaryOp.BinderFlags, target, dynamicBinaryOp.LeftArgumentInfo, dynamicBinaryOp.Right, dynamicBinaryOp.RightArgumentInfo, targetKind);
 			} else if (setterValue is Call concatCall && UserDefinedCompoundAssign.IsStringConcat(concatCall.Method)) {
 				// setterValue is a string.Concat() invocation
+				if (compoundStore is StLoc) {
+					// transform local variables only for user-defined operators
+					return false;
+				}
 				if (concatCall.Arguments.Count != 2)
 					return false; // for now we only support binary compound assignments
 				if (!targetType.IsKnownType(KnownTypeCode.String))

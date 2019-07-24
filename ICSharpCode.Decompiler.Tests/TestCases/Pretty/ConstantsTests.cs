@@ -35,5 +35,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private void Test(bool expr)
 		{
 		}
+
+		private void Test(decimal expr)
+		{
+		}
+
+		public void Decimal()
+		{
+			// Roslyn and legacy csc both normalize the decimal constant references,
+			// but to a different representation (ctor call vs. field use)
+			Test(0m);
+			Test(1m);
+			Test(-1m);
+			Test(decimal.MinValue);
+			Test(decimal.MaxValue);
+		}
 	}
 }

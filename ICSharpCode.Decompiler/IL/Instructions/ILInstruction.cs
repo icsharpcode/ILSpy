@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using ICSharpCode.Decompiler.IL.Patterns;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -757,6 +758,41 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			return false;
+		}
+
+		/// <summary>
+		/// Extracts the this instruction.
+		///   The instruction is replaced with a load of a new temporary variable;
+		///   and the instruction is moved to a store to said variable at block-level.
+		///   Returns the new variable.
+		/// 
+		/// If extraction is not possible, the ILAst is left unmodified and the function returns null.
+		/// May return null if extraction is not possible.
+		/// </summary>
+		public ILVariable Extract()
+		{
+			return Transforms.ExtractionContext.Extract(this);
+		}
+
+		/// <summary>
+		/// Prepares "extracting" a descendant instruction out of this instruction.
+		/// This is the opposite of ILInlining. It may involve re-compiling high-level constructs into lower-level constructs.
+		/// </summary>
+		/// <returns>True if extraction is possible; false otherwise.</returns>
+		internal virtual bool PrepareExtract(int childIndex, Transforms.ExtractionContext ctx)
+		{
+			if (!GetChildSlot(childIndex).CanInlineInto) {
+				return false;
+			}
+			// Check whether re-ordering with predecessors is valid:
+			for (int i = childIndex - 1; i >= 0; --i) {
+				ILInstruction predecessor = GetChild(i);
+				if (!GetChildSlot(i).CanInlineInto) {
+					return false;
+				}
+				ctx.RegisterMoveIfNecessary(predecessor);
+			}
+			return true;
 		}
 	}
 	
