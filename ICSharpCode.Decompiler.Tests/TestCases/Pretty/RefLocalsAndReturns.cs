@@ -189,6 +189,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			CallOnInParam(in s, in r);
 		}
 
+		public void RefReassignment(ref NormalStruct s)
+		{
+			ref NormalStruct @ref = ref GetRef<NormalStruct>();
+			RefReassignment(ref @ref);
+			@ref = ref GetRef<NormalStruct>();
+			RefReassignment(ref @ref.GetHashCode() == 4 ? ref @ref : ref s);
+		}
+
 		public static void Main(string[] args)
 		{
 			DoubleNumber(ref args.Length == 1 ? ref numbers[0] : ref DefaultInt);

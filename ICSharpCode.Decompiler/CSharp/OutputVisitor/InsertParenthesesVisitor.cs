@@ -362,7 +362,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			// assignment is right-associative
 			ParenthesizeIfRequired(assignmentExpression.Left, Assignment + 1);
-			if (InsertParenthesesForReadability) {
+			if (InsertParenthesesForReadability && !(assignmentExpression.Right is DirectionExpression)) {
 				ParenthesizeIfRequired(assignmentExpression.Right, RelationalAndTypeTesting + 1);
 			} else {
 				ParenthesizeIfRequired(assignmentExpression.Right, Assignment);
