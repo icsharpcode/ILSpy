@@ -640,7 +640,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				MakeLowerBoundInference(NullableType.GetUnderlyingType(U), NullableType.GetUnderlyingType(V));
 				return;
 			}
-			
+			// Handle by reference types:
+			ByReferenceType brU = U as ByReferenceType;
+			ByReferenceType brV = V as ByReferenceType;
+			if (brU != null && brV != null) {
+				MakeExactInference(brU.ElementType, brV.ElementType);
+				return;
+			}
 			// Handle array types:
 			ArrayType arrU = U as ArrayType;
 			ArrayType arrV = V as ArrayType;
