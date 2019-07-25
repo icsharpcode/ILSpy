@@ -88,7 +88,6 @@
     <Compile Include="Semantics\OverloadResolutionTests.cs" />
     <Compile Include="DataFlowTest.cs" />
     <Compile Include="TestCases\Pretty\LocalFunctions.cs" />
-    <Compile Include="TestCases\Correctness\RefLocalsAndReturns.cs" />
     <Compile Include="TestCases\ILPretty\Issue1256.cs" />
     <Compile Include="TestCases\ILPretty\Issue1323.cs" />
     <Compile Include="TestCases\Pretty\CustomAttributes2.cs" />
