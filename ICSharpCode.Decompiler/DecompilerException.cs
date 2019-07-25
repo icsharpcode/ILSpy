@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security;
@@ -44,7 +45,7 @@ namespace ICSharpCode.Decompiler
 		public PEFile File { get; }
 
 		public DecompilerException(MetadataModule module, IEntity decompiledEntity, Exception innerException, string message = null)
-			: base(message ?? "Error decompiling " + decompiledEntity?.FullName, innerException)
+			: base(message ?? GetDefaultMessage(decompiledEntity), innerException)
 		{
 			this.File = module.PEFile;
 			this.Module = module;
@@ -55,6 +56,13 @@ namespace ICSharpCode.Decompiler
 			: base(message, innerException)
 		{
 			this.File = file;
+		}
+
+		static string GetDefaultMessage(IEntity entity)
+		{
+			if (entity == null)
+				return "Error decompiling";
+			return $"Error decompiling @{MetadataTokens.GetToken(entity.MetadataToken):X8} {entity.FullName}";
 		}
 
 		// This constructor is needed for serialization.

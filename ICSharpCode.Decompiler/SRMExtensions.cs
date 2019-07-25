@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using SRM = System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 using System.Reflection.Metadata.Ecma335;
 
@@ -370,6 +367,28 @@ namespace ICSharpCode.Decompiler
 		internal static bool IsKnownAttribute(this SRM.CustomAttribute attr, MetadataReader metadata, KnownAttribute attrType)
 		{
 			return attr.GetAttributeType(metadata).IsKnownType(metadata, attrType);
+		}
+
+		public static Nullability? GetNullableContext(this CustomAttributeHandleCollection customAttributes, MetadataReader metadata)
+		{
+			foreach (var handle in customAttributes) {
+				var customAttribute = metadata.GetCustomAttribute(handle);
+				if (customAttribute.IsKnownAttribute(metadata, KnownAttribute.NullableContext)) {
+					// Decode 
+					CustomAttributeValue<IType> value;
+					try {
+						value = customAttribute.DecodeValue(Metadata.MetadataExtensions.MinimalAttributeTypeProvider);
+					} catch (BadImageFormatException) {
+						continue;
+					} catch (Metadata.EnumUnderlyingTypeResolveException) {
+						continue;
+					}
+					if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is byte b && b <= 2) {
+						return (Nullability)b;
+					}
+				}
+			}
+			return null;
 		}
 		#endregion
 

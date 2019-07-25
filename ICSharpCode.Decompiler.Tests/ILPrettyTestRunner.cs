@@ -59,6 +59,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Issue684()
+		{
+			Run();
+		}
+
+		[Test]
 		public void Issue959()
 		{
 			Run();
@@ -98,6 +104,12 @@ namespace ICSharpCode.Decompiler.Tests
 		public void FSharpUsing_Release()
 		{
 			Run(settings: new DecompilerSettings { RemoveDeadCode = true });
+		}
+
+		[Test]
+		public void DirectCallToExplicitInterfaceImpl()
+		{
+			Run();
 		}
 
 		[Test]

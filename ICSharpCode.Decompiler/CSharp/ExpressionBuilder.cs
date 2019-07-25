@@ -65,10 +65,10 @@ namespace ICSharpCode.Decompiler.CSharp
 	///      * Otherwise, the C# type of the resulting expression shall match the IL stack type,
 	///        and the evaluated values shall be the same.
 	/// </remarks>
-	class ExpressionBuilder : ILVisitor<TranslationContext, TranslatedExpression>
+	sealed class ExpressionBuilder : ILVisitor<TranslationContext, TranslatedExpression>
 	{
 		readonly IDecompilerTypeSystem typeSystem;
-		readonly ITypeResolveContext decompilationContext;
+		internal readonly ITypeResolveContext decompilationContext;
 		internal readonly ILFunction currentFunction;
 		internal readonly ICompilation compilation;
 		internal readonly CSharpResolver resolver;
@@ -189,7 +189,35 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal bool HidesVariableWithName(string name)
 		{
-			return currentFunction.Ancestors.OfType<ILFunction>().SelectMany(f => f.Variables).Any(v => v.Name == name);
+			return currentFunction.Ancestors.OfType<ILFunction>().Any(HidesVariableOrNestedFunction);
+
+			bool HidesVariableOrNestedFunction(ILFunction function)
+			{
+				foreach (var v in function.Variables) {
+					if (v.Name == name)
+						return true;
+				}
+
+				foreach (var f in function.LocalFunctions.OfType<ILFunction>()) {
+					if (f.Name == name)
+						return true;
+				}
+
+				return false;
+			}
+		}
+
+		internal ILFunction ResolveLocalFunction(IMethod method)
+		{
+			Debug.Assert(method.IsLocalFunction);
+			method = method.ReducedFrom;
+			foreach (var parent in currentFunction.Ancestors.OfType<ILFunction>()) {
+				var definition = parent.LocalFunctions.FirstOrDefault(f => f.Method == method);
+				if (definition != null) {
+					return definition;
+				}
+			}
+			return null;
 		}
 
 		bool RequiresQualifier(IMember member, TranslatedExpression target)
@@ -585,7 +613,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (inst.Variable.Kind == VariableKind.StackSlot && !loadedVariablesSet.Contains(inst.Variable)) {
 				// Stack slots in the ILAst have inaccurate types (e.g. System.Object for StackType.O)
 				// so we should replace them with more accurate types where possible:
-				if ((inst.Variable.IsSingleDefinition || IsOtherValueType(translatedValue.Type) || inst.Variable.StackType == StackType.Ref)
+				if (CanUseTypeForStackSlot(inst.Variable, translatedValue.Type)
 						&& inst.Variable.StackType == translatedValue.Type.GetStackType()
 						&& translatedValue.Type.Kind != TypeKind.Null) {
 					inst.Variable.Type = translatedValue.Type;
@@ -605,9 +633,30 @@ namespace ICSharpCode.Decompiler.CSharp
 				return Assignment(lhs, translatedValue).WithILInstruction(inst);
 			}
 
+			bool CanUseTypeForStackSlot(ILVariable v, IType type)
+			{
+				return v.IsSingleDefinition
+					|| IsOtherValueType(type)
+					|| v.StackType == StackType.Ref
+					|| AllStoresUseConsistentType(v.StoreInstructions, type);
+			}
+
 			bool IsOtherValueType(IType type)
 			{
 				return type.IsReferenceType == false && type.GetStackType() == StackType.O;
+			}
+
+			bool AllStoresUseConsistentType(IReadOnlyList<IStoreInstruction> storeInstructions, IType expectedType)
+			{
+				expectedType = expectedType.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
+				foreach (var store in storeInstructions) {
+					if (!(store is StLoc stloc))
+						return false;
+					IType type = stloc.Value.InferType(compilation).AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
+					if (!type.Equals(expectedType))
+						return false;
+				}
+				return true;
 			}
 		}
 		
@@ -1839,7 +1888,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return SpecialType.UnknownType;
 		}
 
-		IEnumerable<ParameterDeclaration> MakeParameters(IReadOnlyList<IParameter> parameters, ILFunction function)
+		internal IEnumerable<ParameterDeclaration> MakeParameters(IReadOnlyList<IParameter> parameters, ILFunction function)
 		{
 			var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
 			int i = 0;
@@ -1848,17 +1897,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (string.IsNullOrEmpty(pd.Name) && !pd.Type.IsArgList()) {
 					// needs to be consistent with logic in ILReader.CreateILVarable(ParameterDefinition)
 					pd.Name = "P_" + i;
+					// if this is a local function, we have to skip the parameters for closure references
+					if (settings.LocalFunctions && function.Kind == ILFunctionKind.LocalFunction && IL.Transforms.LocalFunctionDecompiler.IsClosureParameter(parameter, decompilationContext))
+						break;
 				}
 				if (settings.AnonymousTypes && parameter.Type.ContainsAnonymousType())
 					pd.Type = null;
-				ILVariable v;
-				if (variables.TryGetValue(i, out v))
+				if (variables.TryGetValue(i, out var v))
 					pd.AddAnnotation(new ILVariableResolveResult(v, parameters[i].Type));
 				yield return pd;
 				i++;
 			}
 		}
-		
+
 		internal TranslatedExpression TranslateTarget(ILInstruction target, bool nonVirtualInvocation,
 			bool memberStatic, IType memberDeclaringType)
 		{

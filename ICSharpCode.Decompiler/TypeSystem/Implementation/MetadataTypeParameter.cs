@@ -177,13 +177,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			var metadata = module.metadata;
 			var gp = metadata.GetGenericParameter(handle);
+			Nullability nullableContext;
+			if (Owner is ITypeDefinition typeDef) {
+				nullableContext = typeDef.NullableContext;
+			} else if (Owner is MetadataMethod method) {
+				nullableContext = method.NullableContext;
+			} else {
+				nullableContext = Nullability.Oblivious;
+			}
 
 			var constraintHandleCollection = gp.GetConstraints();
 			List<IType> result = new List<IType>(constraintHandleCollection.Count + 1);
 			bool hasNonInterfaceConstraint = false;
 			foreach (var constraintHandle in constraintHandleCollection) {
 				var constraint = metadata.GetGenericParameterConstraint(constraintHandle);
-				var ty = module.ResolveType(constraint.Type, new GenericContext(Owner), constraint.GetCustomAttributes());
+				var ty = module.ResolveType(constraint.Type, new GenericContext(Owner), constraint.GetCustomAttributes(), nullableContext);
 				result.Add(ty);
 				hasNonInterfaceConstraint |= (ty.Kind != TypeKind.Interface);
 			}

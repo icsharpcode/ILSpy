@@ -216,14 +216,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case AccessPathKind.Setter:
 					if (isCollection || !pathStack.Peek().Add(lastElement))
 						return false;
-					if (values.Count == 1) {
-						blockKind = BlockKind.ObjectInitializer;
-						return true;
-					}
-					return false;
+					if (values.Count != 1 || !IsValidObjectInitializerTarget(currentPath))
+						return false;
+					blockKind = BlockKind.ObjectInitializer;
+					return true;
 				default:
 					return false;
 			}
+		}
+
+		bool IsValidObjectInitializerTarget(List<AccessPathElement> path)
+		{
+			if (path.Count == 0)
+				return true;
+			var element = path.Last();
+			var previous = path.SkipLast(1).LastOrDefault();
+			if (!(element.Member is IProperty p))
+				return true;
+			return !p.IsIndexer || (previous.Member?.ReturnType.Equals(element.Member.DeclaringType) == true);
 		}
 	}
 

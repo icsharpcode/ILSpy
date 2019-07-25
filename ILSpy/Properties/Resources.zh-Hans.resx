@@ -676,7 +676,7 @@
     <value>IsByRefLikeAttribute应替换为结构上的 "ref" 修饰符</value>
   </data>
   <data name="DecompilerSettings.IsReadOnlyAttributeShouldBeReplacedWithReadonlyInModifiersOnStructsParameters" xml:space="preserve">
-    <value>IsReadOnlyAttribute 应替为结构参数上的 "readonly"/"中的修饰符</value>
+    <value>IsReadOnlyAttribute 应替为结构参数上的 "readonly"/"in"中的修饰符</value>
   </data>
   <data name="DecompilerSettings.IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmanagedConstraints" xml:space="preserve">
     <value>类型参数上的IsUnmanagedAttribute 应替换为 "非托管" 约束</value>
@@ -702,8 +702,8 @@
   <data name="DecompilerSettings.RemoveOptionalArgumentsIfPossible" xml:space="preserve">
     <value>如果可能, 删除可选参数</value>
   </data>
-  <data name="DecompilerSettings.IntroduceLocalFunctionsNOTIMPLEMENTED" xml:space="preserve">
-    <value>引入本地功能 (未实现！)</value>
+  <data name="DecompilerSettings.IntroduceLocalFunctions" xml:space="preserve">
+    <value>引入本地功能 </value>
   </data>
   <data name="DecompilerSettings.C70LocalFunctionsAreNotImplemented" xml:space="preserve">
     <value>C# 7.0 本地函数未实现!</value>

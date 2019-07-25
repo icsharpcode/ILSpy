@@ -40,6 +40,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			"System.Runtime.CompilerServices.IsByRefLikeAttribute",
 			"System.Runtime.CompilerServices.IsUnmanagedAttribute",
 			"System.Runtime.CompilerServices.NullableAttribute",
+			"System.Runtime.CompilerServices.NullableContextAttribute",
 			"Microsoft.CodeAnalysis.EmbeddedAttribute",
 		};
 

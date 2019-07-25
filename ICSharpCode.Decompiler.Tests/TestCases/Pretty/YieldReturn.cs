@@ -335,5 +335,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				yield return val;
 			}
 		}
+
+		public static IEnumerable<int> MultipleYieldBreakInTryFinally(int i)
+		{
+			try {
+				if (i == 2) {
+					yield break;
+				}
+
+				while (i < 40) {
+					if (i % 2 == 0) {
+						yield break;
+					}
+					i++;
+
+					yield return i;
+				}
+			} finally {
+				Console.WriteLine("finally");
+			}
+			Console.WriteLine("normal exit");
+		}
 	}
 }

@@ -467,6 +467,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			statementsToDelete.Add(stmt.GetNextStatement());
 			var itemVariable = foreachVariable.GetILVariable();
 			if (itemVariable == null || !itemVariable.IsSingleDefinition
+				|| (itemVariable.Kind != IL.VariableKind.Local && itemVariable.Kind != IL.VariableKind.StackSlot)
 				|| !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1)
 				|| !lowerBounds.All(lb => lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
 				return null;
@@ -776,8 +777,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				default:
 					return false;
 			}
-			if (!ev.ReturnType.IsMatch(m.Get("type").Single()))
-				return false; // variable types must match event type
+			if (!ev.ReturnType.IsMatch(m.Get("type").Single())) {
+				// Variable types must match event type,
+				// except that the event type may have an additional nullability annotation
+				if (ev.ReturnType is ComposedType ct && ct.HasOnlyNullableSpecifier) {
+					if (!ct.BaseType.IsMatch(m.Get("type").Single()))
+						return false;
+				} else {
+					return false;
+				}
+			}
 			var combineMethod = m.Get<AstNode>("delegateCombine").Single().Parent.GetSymbol() as IMethod;
 			if (combineMethod == null || combineMethod.Name != (isAddAccessor ? "Combine" : "Remove"))
 				return false;

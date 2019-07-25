@@ -83,6 +83,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		public bool HasOnlyNullableSpecifier {
+			get {
+				return HasNullableSpecifier && !HasRefSpecifier && !HasReadOnlySpecifier && PointerRank == 0 && ArraySpecifiers.Count == 0;
+			}
+		}
+
 		public CSharpTokenNode NullableSpecifierToken {
 			get {
 				return GetChildByRole(NullableRole);

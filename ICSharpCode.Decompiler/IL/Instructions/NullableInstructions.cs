@@ -18,6 +18,7 @@
 
 using System.Diagnostics;
 using System.Linq;
+using ICSharpCode.Decompiler.IL.Transforms;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -124,6 +125,12 @@ namespace ICSharpCode.Decompiler.IL
 				else
 					return StackType.O;
 			}
+		}
+
+		internal override bool PrepareExtract(int childIndex, ExtractionContext ctx)
+		{
+			return base.PrepareExtract(childIndex, ctx)
+				&& (ctx.FlagsBeingMoved & InstructionFlags.MayUnwrapNull) == 0;
 		}
 	}
 }

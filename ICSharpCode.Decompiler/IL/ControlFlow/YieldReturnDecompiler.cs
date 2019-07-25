@@ -390,7 +390,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				methodTypeParameters: null);
 			var body = context.TypeSystem.MainModule.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
 			var il = context.CreateILReader()
-				.ReadIL(method, body, genericContext, context.CancellationToken);
+				.ReadIL(method, body, genericContext, ILFunctionKind.TopLevelFunction, context.CancellationToken);
 			il.RunTransforms(CSharpDecompiler.EarlyILTransforms(true),
 				new ILTransformContext(il, context.TypeSystem, context.DebugInfo, context.Settings) {
 					CancellationToken = context.CancellationToken,
@@ -810,14 +810,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						break;
 					case Leave leave:
 						if (leave.MatchReturn(out var value)) {
+							bool validYieldBreak = value.MatchLdcI4(0);
 							if (value.MatchLdLoc(out var v)
 								&& (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot)
-								&& v.StoreInstructions.Count == 1
-								&& v.StoreInstructions[0] is StLoc stloc) {
-								returnStores.Add(stloc);
-								value = stloc.Value;
+								&& v.StoreInstructions.All(store => store is StLoc stloc && stloc.Value.MatchLdcI4(0)))
+							{
+								validYieldBreak = true;
+								returnStores.AddRange(v.StoreInstructions.Cast<StLoc>());
 							}
-							if (value.MatchLdcI4(0)) {
+							if (validYieldBreak) {
 								// yield break
 								leave.ReplaceWith(new Leave(newBody).WithILRange(leave));
 							} else {

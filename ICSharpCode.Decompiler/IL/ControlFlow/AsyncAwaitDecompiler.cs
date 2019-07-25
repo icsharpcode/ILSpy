@@ -128,7 +128,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			CleanDoFinallyBodies(function);
 
 			context.Step("Translate fields to local accesses", function);
-			MarkGeneratedVariables(function);
 			YieldReturnDecompiler.TranslateFieldsToLocalAccess(function, function, fieldToParameterMap);
 			TranslateCachedFieldsToLocals();
 
@@ -901,17 +900,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return true;
 		}
 		#endregion
-
-		void MarkGeneratedVariables(ILFunction function)
-		{
-			// Variables after the awaiters are usually compiler-generated;
-			// so mark them as stack slots.
-			foreach (var v in function.Variables) {
-				if (v.Kind == VariableKind.Local && v.Index >= smallestAwaiterVarIndex) {
-					v.Kind = VariableKind.StackSlot;
-				}
-			}
-		}
 
 		/// <summary>
 		/// Eliminates usage of doFinallyBodies

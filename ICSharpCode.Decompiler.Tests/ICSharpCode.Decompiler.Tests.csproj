@@ -42,8 +42,8 @@
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="2017.7.26.1241" />
     <PackageReference Include="Microsoft.Build.Locator" Version="1.2.2" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.2.0-beta3-final" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.2.0-beta3-final" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.2.0-beta4-final" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.2.0-beta4-final" />
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
@@ -61,11 +61,14 @@
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
     <None Include="TestCases\ILPretty\ConstantBlobs.il" />
+    <None Include="TestCases\ILPretty\Issue684.cs" />
+    <None Include="TestCases\ILPretty\Issue684.il" />
     <None Include="TestCases\ILPretty\FSharpLoops.fs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.il" />
     <None Include="TestCases\ILPretty\FSharpLoops_Release.il" />
     <None Include="TestCases\ILPretty\FSharpUsing.fs" />
     <None Include="TestCases\ILPretty\FSharpUsing_Debug.il" />
+    <None Include="TestCases\ILPretty\DirectCallToExplicitInterfaceImpl.il" />
     <None Include="TestCases\ILPretty\FSharpUsing_Release.il" />
     <None Include="TestCases\Correctness\BitNot.il" />
     <None Include="TestCases\Correctness\Readme.txt" />
@@ -74,6 +77,7 @@
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
+    <None Include="TestCases\ILPretty\DirectCallToExplicitInterfaceImpl.cs" />
     <Compile Include="TestCases\ILPretty\Issue1389.cs" />
     <Compile Include="TestCases\ILPretty\Issue1454.cs" />
     <Compile Include="TestCases\Pretty\Discards.cs" />
@@ -83,7 +87,7 @@
     <Compile Include="Semantics\ExplicitConversionTest.cs" />
     <Compile Include="Semantics\OverloadResolutionTests.cs" />
     <Compile Include="DataFlowTest.cs" />
-    <Compile Include="TestCases\Correctness\LocalFunctions.cs" />
+    <Compile Include="TestCases\Pretty\LocalFunctions.cs" />
     <Compile Include="TestCases\Correctness\RefLocalsAndReturns.cs" />
     <Compile Include="TestCases\ILPretty\Issue1256.cs" />
     <Compile Include="TestCases\ILPretty\Issue1323.cs" />

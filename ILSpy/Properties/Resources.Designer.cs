@@ -709,11 +709,11 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Introduce local functions (NOT IMPLEMENTED!).
+        ///   Looks up a localized string similar to Introduce local functions.
         /// </summary>
-        public static string DecompilerSettings_IntroduceLocalFunctionsNOTIMPLEMENTED {
+        public static string DecompilerSettings_IntroduceLocalFunctions {
             get {
-                return ResourceManager.GetString("DecompilerSettings.IntroduceLocalFunctionsNOTIMPLEMENTED", resourceCulture);
+                return ResourceManager.GetString("DecompilerSettings.IntroduceLocalFunctions", resourceCulture);
             }
         }
         

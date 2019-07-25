@@ -28,10 +28,11 @@ using System;
 using System.Threading;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.CSharp.Resolver;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
-	class StatementBuilder : ILVisitor<Statement>
+	sealed class StatementBuilder : ILVisitor<Statement>
 	{
 		internal readonly ExpressionBuilder exprBuilder;
 		readonly ILFunction currentFunction;
@@ -411,6 +412,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			AstNode usingInit = resource;
 			var var = inst.Variable;
 			if (!inst.ResourceExpression.MatchLdNull() && !NullableType.GetUnderlyingType(var.Type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable))) {
+				Debug.Assert(var.Kind == VariableKind.UsingLocal);
 				var.Kind = VariableKind.Local;
 				var disposeType = exprBuilder.compilation.FindType(KnownTypeCode.IDisposable);
 				var disposeVariable = currentFunction.RegisterVariable(
@@ -707,7 +709,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			while (inst.Parent is UnboxAny || inst.Parent is CastClass)
 				inst = inst.Parent;
 			// One variable was found.
-			if (inst.Parent is StLoc stloc) {
+			if (inst.Parent is StLoc stloc && (stloc.Variable.Kind == VariableKind.Local || stloc.Variable.Kind == VariableKind.StackSlot)) {
 				// Must be a plain assignment expression and variable must only be used in 'body' + only assigned once.
 				if (stloc.Parent == loopBody && VariableIsOnlyUsedInBlock(stloc, usingContainer)) {
 					foreachVariable = stloc.Variable;
@@ -725,18 +727,32 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		/// <summary>
 		/// Determines whether storeInst.Variable is only assigned once and used only inside <paramref name="usingContainer"/>.
-		/// Loads by reference (ldloca) are only allowed in the context of this pointer in call instructions.
+		/// Loads by reference (ldloca) are only allowed in the context of this pointer in call instructions,
+		/// or as target of ldobj.
 		/// (This only applies to value types.)
 		/// </summary>
 		bool VariableIsOnlyUsedInBlock(StLoc storeInst, BlockContainer usingContainer)
 		{
 			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(usingContainer)))
 				return false;
-			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(usingContainer) || !ILInlining.IsUsedAsThisPointerInCall(la) || IsTargetOfSetterCall(la, la.Variable.Type)))
+			if (storeInst.Variable.AddressInstructions.Any(inst => !AddressUseAllowed(inst)))
 				return false;
 			if (storeInst.Variable.StoreInstructions.OfType<ILInstruction>().Any(st => st != storeInst))
 				return false;
 			return true;
+
+			bool AddressUseAllowed(LdLoca la)
+			{
+				if (!la.IsDescendantOf(usingContainer))
+					return false;
+				if (ILInlining.IsUsedAsThisPointerInCall(la) && !IsTargetOfSetterCall(la, la.Variable.Type))
+					return true;
+				var current = la.Parent;
+				while (current is LdFlda next) {
+					current = next.Parent;
+				}
+				return current is LdObj;
+			}
 		}
 
 		/// <summary>
@@ -849,6 +865,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt)
 						continueStmt.Remove();
+					DeclareLocalFunctions(currentFunction, container, blockStatement);
 					return new WhileStatement(new PrimitiveExpression(true), blockStatement);
 				case ContainerKind.While:
 					continueTarget = container.EntryPoint;
@@ -870,6 +887,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt2)
 						continueStmt2.Remove();
+					DeclareLocalFunctions(currentFunction, container, blockStatement);
 					return new WhileStatement(exprBuilder.TranslateCondition(condition), blockStatement);
 				case ContainerKind.DoWhile:
 					continueTarget = container.Blocks.Last();
@@ -888,6 +906,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						// to continue statements, we have to introduce an extra label.
 						blockStatement.Add(new LabelStatement { Label = continueTarget.Label });
 					}
+					DeclareLocalFunctions(currentFunction, container, blockStatement);
 					if (blockStatement.Statements.Count == 0) {
 						return new WhileStatement {
 							Condition = exprBuilder.TranslateCondition(condition),
@@ -919,6 +938,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					if (continueTarget.IncomingEdgeCount > continueCount)
 						blockStatement.Add(new LabelStatement { Label = continueTarget.Label });
+					DeclareLocalFunctions(currentFunction, container, blockStatement);
 					return forStmt;
 				default:
 					throw new ArgumentOutOfRangeException();
@@ -927,7 +947,33 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		BlockStatement ConvertBlockContainer(BlockContainer container, bool isLoop)
 		{
-			return ConvertBlockContainer(new BlockStatement(), container, container.Blocks, isLoop);
+			var blockStatement = ConvertBlockContainer(new BlockStatement(), container, container.Blocks, isLoop);
+			DeclareLocalFunctions(currentFunction, container, blockStatement);
+			return blockStatement;
+		}
+
+		void DeclareLocalFunctions(ILFunction currentFunction, BlockContainer container, BlockStatement blockStatement)
+		{
+			foreach (var localFunction in currentFunction.LocalFunctions.OrderBy(f => f.Name)) {
+				if (localFunction.DeclarationScope != container)
+					continue;
+				blockStatement.Add(TranslateFunction(localFunction));
+			}
+
+			LocalFunctionDeclarationStatement TranslateFunction(ILFunction function)
+			{
+				var stmt = new LocalFunctionDeclarationStatement();
+				var nestedBuilder = new StatementBuilder(typeSystem, exprBuilder.decompilationContext, function, settings, cancellationToken);
+				stmt.Name = function.Name;
+				stmt.Parameters.AddRange(exprBuilder.MakeParameters(function.Parameters, function));
+				stmt.ReturnType = exprBuilder.ConvertType(function.Method.ReturnType);
+				stmt.Body = nestedBuilder.ConvertAsBlock(function.Body);
+				if (function.IsAsync) {
+					stmt.Modifiers |= Modifiers.Async;
+				}
+				stmt.AddAnnotation(new MemberResolveResult(null, function.ReducedMethod));
+				return stmt;
+			}
 		}
 
 		BlockStatement ConvertBlockContainer(BlockStatement blockStatement, BlockContainer container, IEnumerable<Block> blocks, bool isLoop)

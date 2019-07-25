@@ -390,10 +390,37 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
+		bool TransformDecimalFieldToConstant(LdObj inst, out LdcDecimal result)
+		{
+			if (inst.MatchLdsFld(out var field) && field.DeclaringType.IsKnownType(KnownTypeCode.Decimal)) {
+				decimal? value = null;
+				if (field.Name == "One") {
+					value = decimal.One;
+				} else if (field.Name == "MinusOne") {
+					value = decimal.MinusOne;
+				} else if (field.Name == "Zero") {
+					value = decimal.Zero;
+				}
+				if (value != null) {
+					result = new LdcDecimal(value.Value).WithILRange(inst).WithILRange(inst.Target);
+					return true;
+				}
+			}
+			result = null;
+			return false;
+		}
+
 		protected internal override void VisitLdObj(LdObj inst)
 		{
 			base.VisitLdObj(inst);
-			EarlyExpressionTransforms.LdObjToLdLoc(inst, context);
+			EarlyExpressionTransforms.AddressOfLdLocToLdLoca(inst, context);
+			if (EarlyExpressionTransforms.LdObjToLdLoc(inst, context))
+				return;
+			if (TransformDecimalFieldToConstant(inst, out LdcDecimal decimalConstant)) {
+				context.Step("TransformDecimalFieldToConstant", inst);
+				inst.ReplaceWith(decimalConstant);
+				return;
+			}
 		}
 
 		protected internal override void VisitStObj(StObj inst)
@@ -403,6 +430,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.RequestRerun();
 				return;
 			}
+			TransformAssignment.HandleCompoundAssign(inst, context);
+		}
+
+		protected internal override void VisitStLoc(StLoc inst)
+		{
+			base.VisitStLoc(inst);
 			TransformAssignment.HandleCompoundAssign(inst, context);
 		}
 

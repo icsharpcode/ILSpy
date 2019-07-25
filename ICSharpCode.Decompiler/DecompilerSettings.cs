@@ -960,22 +960,19 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool localFunctions = false;
+		bool localFunctions = true;
 
 		/// <summary>
-		/// Gets/Sets whether C# 7.0 local functions should be used.
-		/// Note: this language feature is currently not implemented and this setting is always false.
+		/// Gets/Sets whether C# 7.0 local functions should be transformed.
 		/// </summary>
 		[Category("C# 7.0 / VS 2017")]
-		[Description("DecompilerSettings.IntroduceLocalFunctionsNOTIMPLEMENTED")]
-		[Browsable(false)]
+		[Description("DecompilerSettings.IntroduceLocalFunctions")]
 		public bool LocalFunctions {
 			get { return localFunctions; }
 			set {
 				if (localFunctions != value) {
-					throw new NotImplementedException("C# 7.0 local functions are not implemented!");
-					//localFunctions = value;
-					//OnPropertyChanged();
+					localFunctions = value;
+					OnPropertyChanged();
 				}
 			}
 		}
