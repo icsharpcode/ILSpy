@@ -61,6 +61,8 @@
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
     <None Include="TestCases\ILPretty\ConstantBlobs.il" />
+    <None Include="TestCases\ILPretty\Issue684.cs" />
+    <None Include="TestCases\ILPretty\Issue684.il" />
     <None Include="TestCases\ILPretty\FSharpLoops.fs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.il" />
     <None Include="TestCases\ILPretty\FSharpLoops_Release.il" />

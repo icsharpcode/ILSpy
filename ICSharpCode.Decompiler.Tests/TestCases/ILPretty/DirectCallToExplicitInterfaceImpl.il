@@ -33,4 +33,4 @@
     ret
   }
 
-} // end of class DirectCallToExplicitInterfaceImpl
+} // end of class TestClass

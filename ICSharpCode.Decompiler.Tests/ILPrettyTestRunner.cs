@@ -59,6 +59,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Issue684()
+		{
+			Run();
+		}
+
+		[Test]
 		public void Issue959()
 		{
 			Run();

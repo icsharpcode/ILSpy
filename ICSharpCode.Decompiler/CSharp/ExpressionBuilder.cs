@@ -613,7 +613,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (inst.Variable.Kind == VariableKind.StackSlot && !loadedVariablesSet.Contains(inst.Variable)) {
 				// Stack slots in the ILAst have inaccurate types (e.g. System.Object for StackType.O)
 				// so we should replace them with more accurate types where possible:
-				if ((inst.Variable.IsSingleDefinition || IsOtherValueType(translatedValue.Type) || inst.Variable.StackType == StackType.Ref)
+				if (CanUseTypeForStackSlot(inst.Variable, translatedValue.Type)
 						&& inst.Variable.StackType == translatedValue.Type.GetStackType()
 						&& translatedValue.Type.Kind != TypeKind.Null) {
 					inst.Variable.Type = translatedValue.Type;
@@ -633,9 +633,30 @@ namespace ICSharpCode.Decompiler.CSharp
 				return Assignment(lhs, translatedValue).WithILInstruction(inst);
 			}
 
+			bool CanUseTypeForStackSlot(ILVariable v, IType type)
+			{
+				return v.IsSingleDefinition
+					|| IsOtherValueType(type)
+					|| v.StackType == StackType.Ref
+					|| AllStoresUseConsistentType(v.StoreInstructions, type);
+			}
+
 			bool IsOtherValueType(IType type)
 			{
 				return type.IsReferenceType == false && type.GetStackType() == StackType.O;
+			}
+
+			bool AllStoresUseConsistentType(IReadOnlyList<IStoreInstruction> storeInstructions, IType expectedType)
+			{
+				expectedType = expectedType.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
+				foreach (var store in storeInstructions) {
+					if (!(store is StLoc stloc))
+						return false;
+					IType type = stloc.Value.InferType(compilation).AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
+					if (!type.Equals(expectedType))
+						return false;
+				}
+				return true;
 			}
 		}
 		
