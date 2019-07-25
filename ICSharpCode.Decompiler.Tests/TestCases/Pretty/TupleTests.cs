@@ -38,6 +38,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public struct GenericStruct<T>
+		{
+			public T Field;
+			public T Property {
+				get;
+				set;
+			}
+		}
+
 		public ValueTuple VT0;
 		public ValueTuple<int> VT1;
 		public ValueTuple<int, int, int, int, int, int, int, ValueTuple> VT7EmptyRest;
@@ -139,6 +148,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				(1, "a"),
 				(2, "b")
 			});
+		}
+
+		public void DynamicTuple((dynamic A, dynamic B) a)
+		{
+			a.A.DynamicCall();
+			a.B.Dynamic = 42;
+		}
+
+		public void GenericStructWithElementNames(GenericStruct<(int A, int B)> s)
+		{
+			Console.WriteLine(s.Field.A + s.Property.B);
 		}
 	}
 }

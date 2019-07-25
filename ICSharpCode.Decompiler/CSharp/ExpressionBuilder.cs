@@ -248,19 +248,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool targetCasted = false;
 			var targetResolveResult = requireTarget ? target.ResolveResult : null;
 
-			bool IsUnambiguousAccess()
+			bool IsUnambiguousAccess(out MemberResolveResult result)
 			{
 				if (targetResolveResult == null) {
-					var result = resolver.ResolveSimpleName(field.Name, EmptyList<IType>.Instance, isInvocationTarget: false) as MemberResolveResult;
+					result = resolver.ResolveSimpleName(field.Name, EmptyList<IType>.Instance, isInvocationTarget: false) as MemberResolveResult;
 					return !(result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure));
 				} else {
 					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
-					var result = lookup.Lookup(target.ResolveResult, field.Name, EmptyList<IType>.Instance, false) as MemberResolveResult;
+					result = lookup.Lookup(target.ResolveResult, field.Name, EmptyList<IType>.Instance, false) as MemberResolveResult;
 					return !(result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure));
 				}
 			}
 
-			while (!IsUnambiguousAccess()) {
+			MemberResolveResult mrr;
+			while (!IsUnambiguousAccess(out mrr)) {
 				if (!requireTarget) {
 					requireTarget = true;
 					targetResolveResult = target.ResolveResult;
@@ -272,13 +273,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					break;
 				}
 			}
+			if (mrr == null) {
+				mrr = new MemberResolveResult(target.ResolveResult, field);
+			}
 
 			if (requireTarget) {
 				return new MemberReferenceExpression(target, field.Name)
-					.WithRR(new MemberResolveResult(target.ResolveResult, field));
+					.WithRR(mrr);
 			} else {
 				return new IdentifierExpression(field.Name)
-					.WithRR(new MemberResolveResult(target.ResolveResult, field));
+					.WithRR(mrr);
 			}
 		}
 		
@@ -2086,14 +2090,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					nonVirtualInvocation: true,
 					memberStatic: false,
 					memberDeclaringType: underlyingTupleType);
-				if (translatedTarget.Type is TupleType tupleType && tupleType.UnderlyingType.Equals(underlyingTupleType) && position <= tupleType.ElementNames.Length) {
+				if (translatedTarget.Type is TupleType tupleType && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(tupleType, underlyingTupleType) && position <= tupleType.ElementNames.Length) {
 					string elementName = tupleType.ElementNames[position - 1];
 					if (elementName == null) {
 						elementName = "Item" + position;
 					}
+					// tupleType.ElementTypes are more accurate w.r.t. nullability/dynamic than inst.Field.Type
+					var rr = new MemberResolveResult(translatedTarget.ResolveResult, inst.Field,
+						returnTypeOverride: tupleType.ElementTypes[position - 1]);
 					expr = new MemberReferenceExpression(translatedTarget, elementName)
-						.WithRR(new MemberResolveResult(translatedTarget.ResolveResult, inst.Field))
-						.WithILInstruction(inst);
+						.WithRR(rr).WithILInstruction(inst);
 				} else {
 					expr = ConvertField(inst.Field, inst.Target).WithILInstruction(inst);
 				}
