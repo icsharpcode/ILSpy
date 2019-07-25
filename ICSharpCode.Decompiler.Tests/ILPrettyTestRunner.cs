@@ -101,6 +101,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void DirectCallToExplicitInterfaceImpl()
+		{
+			Run();
+		}
+
+		[Test]
 		public void CS1xSwitch_Debug()
 		{
 			Run();

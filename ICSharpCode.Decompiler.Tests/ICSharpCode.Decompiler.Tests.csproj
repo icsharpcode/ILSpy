@@ -66,6 +66,7 @@
     <None Include="TestCases\ILPretty\FSharpLoops_Release.il" />
     <None Include="TestCases\ILPretty\FSharpUsing.fs" />
     <None Include="TestCases\ILPretty\FSharpUsing_Debug.il" />
+    <None Include="TestCases\ILPretty\DirectCallToExplicitInterfaceImpl.il" />
     <None Include="TestCases\ILPretty\FSharpUsing_Release.il" />
     <None Include="TestCases\Correctness\BitNot.il" />
     <None Include="TestCases\Correctness\Readme.txt" />
@@ -74,6 +75,7 @@
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
+    <None Include="TestCases\ILPretty\DirectCallToExplicitInterfaceImpl.cs" />
     <Compile Include="TestCases\ILPretty\Issue1389.cs" />
     <Compile Include="TestCases\ILPretty\Issue1454.cs" />
     <Compile Include="TestCases\Pretty\Discards.cs" />

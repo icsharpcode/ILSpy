@@ -172,6 +172,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			IReadOnlyList<int> argumentToParameterMap = null,
 			IType constrainedTo = null)
 		{
+			if (method.IsExplicitInterfaceImplementation && callOpCode == OpCode.Call) {
+				// Direct non-virtual call to explicit interface implementation.
+				// This can't really be represented in C#, but at least in the case where
+				// the class is sealed, we can equivalently call the interface member instead:
+				var interfaceMembers = method.ExplicitlyImplementedInterfaceMembers.ToList();
+				if (method.DeclaringTypeDefinition?.Kind == TypeKind.Class && method.DeclaringTypeDefinition.IsSealed && interfaceMembers.Count == 1) {
+					method = (IMethod)interfaceMembers.Single();
+					callOpCode = OpCode.CallVirt;
+				}
+			}
 			// Used for Call, CallVirt and NewObj
 			var expectedTargetDetails = new ExpectedTargetDetails {
 				CallOpCode = callOpCode
