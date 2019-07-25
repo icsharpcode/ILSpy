@@ -589,10 +589,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				
 				ByReferenceResolveResult brrr = arguments[i] as ByReferenceResolveResult;
 				if (brrr != null) {
-					if ((brrr.IsOut && !candidate.Parameters[parameterIndex].IsOut) || (brrr.IsRef && !candidate.Parameters[parameterIndex].IsRef))
+					if (brrr.ReferenceKind != candidate.Parameters[parameterIndex].ReferenceKind)
 						candidate.AddError(OverloadResolutionErrors.ParameterPassingModeMismatch);
 				} else {
-					if (candidate.Parameters[parameterIndex].IsOut || candidate.Parameters[parameterIndex].IsRef)
+					if (candidate.Parameters[parameterIndex].ReferenceKind != ReferenceKind.None)
 						candidate.AddError(OverloadResolutionErrors.ParameterPassingModeMismatch);
 				}
 				IType parameterType = candidate.ParameterTypes[parameterIndex];

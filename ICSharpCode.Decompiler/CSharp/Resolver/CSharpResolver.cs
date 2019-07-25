@@ -2084,7 +2084,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// create the parameter:
 				ByReferenceResolveResult brrr = arguments[i] as ByReferenceResolveResult;
 				if (brrr != null) {
-					list.Add(new DefaultParameter(arguments[i].Type, argumentNames[i], isRef: brrr.IsRef, isOut: brrr.IsOut));
+					list.Add(new DefaultParameter(arguments[i].Type, argumentNames[i], referenceKind: brrr.ReferenceKind));
 				} else {
 					// argument might be a lambda or delegate type, so we have to try to guess the delegate type
 					IType type = arguments[i].Type;

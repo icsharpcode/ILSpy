@@ -138,9 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!CanTransformToExtensionMethodCall(resolver, method, typeArguments, target, args, argNames))
 				return;
 			if (firstArgument is DirectionExpression dirExpr) {
-				if (dirExpr.FieldDirection != FieldDirection.Ref)
-					return;
-				if (!context.Settings.RefExtensionMethods)
+				if (!context.Settings.RefExtensionMethods || dirExpr.FieldDirection == FieldDirection.Out)
 					return;
 				firstArgument = dirExpr.Expression;
 				target = firstArgument.GetResolveResult();

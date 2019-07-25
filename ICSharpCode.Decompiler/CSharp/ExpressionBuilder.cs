@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				expr.WithRR(new ILVariableResolveResult(variable, elementType));
 				
 				expr = new DirectionExpression(FieldDirection.Ref, expr);
-				return expr.WithRR(new ByReferenceResolveResult(elementType, isOut: false));
+				return expr.WithRR(new ByReferenceResolveResult(elementType, ReferenceKind.Ref));
 			} else {
 				return expr.WithRR(new ILVariableResolveResult(variable, variable.Type));
 			}
@@ -604,7 +604,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// because the DirectionExpression might get removed by dereferencing instructions such as LdObj
 			return new DirectionExpression(FieldDirection.Ref, expr.Expression)
 				.WithoutILInstruction()
-				.WithRR(new ByReferenceResolveResult(expr.ResolveResult, isOut: false));
+				.WithRR(new ByReferenceResolveResult(expr.ResolveResult, ReferenceKind.Ref));
 		}
 		
 		protected internal override TranslatedExpression VisitStLoc(StLoc inst, TranslationContext context)
@@ -1084,7 +1084,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							.WithILInstruction(inst)
 							.WithRR(new ResolveResult(elementType));
 						return new DirectionExpression(FieldDirection.Ref, expr)
-							.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, isOut: false));
+							.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, ReferenceKind.Ref));
 					}
 					return CallUnsafeIntrinsic(name, new[] { left.Expression, Translate(offsetInst).Expression }, brt, inst);
 				} else {
@@ -1756,7 +1756,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (type.Kind == TypeKind.ByReference) {
 				return new DirectionExpression(FieldDirection.Ref, expr.Expression)
 					.WithoutILInstruction()
-					.WithRR(new ByReferenceResolveResult(expr.ResolveResult, isOut: false));
+					.WithRR(new ByReferenceResolveResult(expr.ResolveResult, ReferenceKind.Ref));
 			}
 			return expr;
 		}
@@ -2107,7 +2107,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				// ldflda producing managed pointer
 				return new DirectionExpression(FieldDirection.Ref, expr)
-					.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.ResolveResult, isOut: false));
+					.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.ResolveResult, ReferenceKind.Ref));
 			}
 		}
 		
@@ -2115,7 +2115,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var expr = ConvertField(inst.Field).WithILInstruction(inst);
 			return new DirectionExpression(FieldDirection.Ref, expr)
-				.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, isOut: false));
+				.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, ReferenceKind.Ref));
 		}
 		
 		protected internal override TranslatedExpression VisitLdElema(LdElema inst, TranslationContext context)
@@ -2130,7 +2130,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				arrayExpr, inst.Indices.Select(i => TranslateArrayIndex(i).Expression)
 			).WithILInstruction(inst).WithRR(new ResolveResult(arrayType.ElementType));
 			return new DirectionExpression(FieldDirection.Ref, expr)
-				.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, isOut: false));
+				.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, ReferenceKind.Ref));
 		}
 		
 		TranslatedExpression TranslateArrayIndex(ILInstruction i)
@@ -2188,7 +2188,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.UnboxingConversion));
 			return new DirectionExpression(FieldDirection.Ref, castExpression)
 				.WithILInstruction(inst)
-				.WithRR(new ByReferenceResolveResult(castExpression.ResolveResult, isOut: false));
+				.WithRR(new ByReferenceResolveResult(castExpression.ResolveResult, ReferenceKind.Ref));
 		}
 
 		protected internal override TranslatedExpression VisitBox(Box inst, TranslationContext context)
@@ -2248,7 +2248,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				Arguments = { Translate(inst.Argument).Expression, new TypeReferenceExpression(ConvertType(inst.Type)) }
 			}.WithRR(new ResolveResult(inst.Type));
 			return new DirectionExpression(FieldDirection.Ref, expr.WithILInstruction(inst)).WithoutILInstruction()
-				.WithRR(new ByReferenceResolveResult(inst.Type, false));
+				.WithRR(new ByReferenceResolveResult(inst.Type, ReferenceKind.Ref));
 		}
 		
 		protected internal override TranslatedExpression VisitBlock(Block block, TranslationContext context)
@@ -2732,7 +2732,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					new ConditionalExpression(condition.Expression, trueBranch.Expression, falseBranch.Expression)
 						.WithILInstruction(inst)
 						.WithRR(conditionalResolveResult)
-				).WithoutILInstruction().WithRR(new ByReferenceResolveResult(conditionalResolveResult, isOut: false));
+				).WithoutILInstruction().WithRR(new ByReferenceResolveResult(conditionalResolveResult, ReferenceKind.Ref));
 			} else {
 				return new ConditionalExpression(condition.Expression, trueBranch.Expression, falseBranch.Expression)
 					.WithILInstruction(inst)
@@ -2752,7 +2752,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var value = Translate(inst.Value, targetTypeHint);
 			return new DirectionExpression(FieldDirection.Ref, value)
 				.WithILInstruction(inst)
-				.WithRR(new ByReferenceResolveResult(value.ResolveResult, false));
+				.WithRR(new ByReferenceResolveResult(value.ResolveResult, ReferenceKind.Ref));
 		}
 
 		protected internal override TranslatedExpression VisitAwait(Await inst, TranslationContext context)
@@ -2907,7 +2907,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				translatedExpression = translatedExpression.ConvertTo(typeHint, this);
 			}
 			if (info.HasFlag(CSharpArgumentInfoFlags.IsOut)) {
-				translatedExpression = ChangeDirectionExpressionToOut(translatedExpression);
+				translatedExpression = ChangeDirectionExpressionTo(translatedExpression, ReferenceKind.Out);
 			}
 			if (info.HasFlag(CSharpArgumentInfoFlags.NamedArgument) && !string.IsNullOrWhiteSpace(info.Name)) {
 				translatedExpression = new TranslatedExpression(new NamedArgumentExpression(info.Name, translatedExpression.Expression));
@@ -2916,16 +2916,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			return translatedExpression;
 		}
 
-		internal static TranslatedExpression ChangeDirectionExpressionToOut(TranslatedExpression input)
+		internal static TranslatedExpression ChangeDirectionExpressionTo(TranslatedExpression input, ReferenceKind kind)
 		{
 			if (!(input.Expression is DirectionExpression dirExpr && input.ResolveResult is ByReferenceResolveResult brrr))
 				return input;
-			dirExpr.FieldDirection = FieldDirection.Out;
+			dirExpr.FieldDirection = (FieldDirection)kind;
 			dirExpr.RemoveAnnotations<ByReferenceResolveResult>();
 			if (brrr.ElementResult == null)
-				brrr = new ByReferenceResolveResult(brrr.ElementType, isOut: true);
+				brrr = new ByReferenceResolveResult(brrr.ElementType, kind);
 			else
-				brrr = new ByReferenceResolveResult(brrr.ElementResult, isOut: true);
+				brrr = new ByReferenceResolveResult(brrr.ElementResult, kind);
 			dirExpr.AddAnnotation(brrr);
 			return new TranslatedExpression(dirExpr);
 		}

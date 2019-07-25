@@ -652,8 +652,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				arg = arg.ConvertTo(parameterType, expressionBuilder, allowImplicitConversion: arg.Type.Kind != TypeKind.Dynamic);
 
-				if (parameter.IsOut) {
-					arg = ExpressionBuilder.ChangeDirectionExpressionToOut(arg);
+				if (parameter.ReferenceKind != ReferenceKind.None) {
+					arg = ExpressionBuilder.ChangeDirectionExpressionTo(arg, parameter.ReferenceKind);
 				}
 
 				arguments.Add(arg);
