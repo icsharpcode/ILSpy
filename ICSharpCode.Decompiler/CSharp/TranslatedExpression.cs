@@ -418,7 +418,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return this;
 				}
 			} else {
-				if (NormalizeTypeVisitor.RemoveModifiersAndNullability.EquivalentTypes(type, targetType)) {
+				if (targetType.Kind != TypeKind.Dynamic && type.Kind != TypeKind.Dynamic && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(type, targetType)) {
 					// avoid an explicit cast when types differ only in nullability of reference types
 					return this;
 				}
