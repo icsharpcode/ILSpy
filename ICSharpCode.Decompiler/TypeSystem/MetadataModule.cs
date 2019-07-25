@@ -477,7 +477,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					typeParameters.Add(new DefaultTypeParameter(m, i));
 				}
 				m.TypeParameters = typeParameters;
-				substitution = new TypeParameterSubstitution(null, typeParameters);
+				substitution = new TypeParameterSubstitution(declaringType.TypeArguments, typeParameters);
+			} else if (declaringType.TypeArguments.Count > 0) {
+				substitution = declaringType.GetSubstitution();
 			}
 			var parameters = new List<IParameter>();
 			for (int i = 0; i < signature.RequiredParameterCount; i++) {
@@ -553,6 +555,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var field = declaringType.GetFields(f => f.Name == name && CompareTypes(f.ReturnType, signature),
 				GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
 			if (field == null) {
+				// If it's a field in a generic type, we need to substitute the type arguments:
+				if (declaringType.TypeArguments.Count > 0) {
+					signature = signature.AcceptVisitor(declaringType.GetSubstitution());
+				}
 				field = new FakeField(Compilation) {
 					ReturnType = signature,
 					Name = name,

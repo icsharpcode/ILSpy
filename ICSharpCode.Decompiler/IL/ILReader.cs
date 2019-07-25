@@ -1187,14 +1187,14 @@ namespace ICSharpCode.Decompiler.IL
 					return Pop(StackType.O);
 				case false:
 					// field of value type: ldfld can handle temporaries
-					if (PeekStackType() == StackType.O)
+					if (PeekStackType() == StackType.O || PeekStackType() == StackType.Unknown)
 						return new AddressOf(Pop());
 					else
 						return PopPointer();
 				default:
 					// field in unresolved type
-					if (PeekStackType() == StackType.O)
-						return Pop(StackType.O);
+					if (PeekStackType() == StackType.O || PeekStackType() == StackType.Unknown)
+						return Pop();
 					else
 						return PopPointer();
 			}
