@@ -55,16 +55,16 @@ namespace ICSharpCode.Decompiler.Solution
 			}
 
 			using (var writer = new StreamWriter(targetFile)) {
-				WriteSolutionFile(writer, projects, Path.GetDirectoryName(targetFile));
+				WriteSolutionFile(writer, projects, targetFile);
 			}
 
 			FixProjectReferences(projects);
 		}
 
-		private static void WriteSolutionFile(TextWriter writer, IEnumerable<ProjectItem> projects, string solutionPath)
+		private static void WriteSolutionFile(TextWriter writer, IEnumerable<ProjectItem> projects, string solutionFilePath)
 		{
 			WriteHeader(writer);
-			WriteProjects(writer, projects, solutionPath);
+			WriteProjects(writer, projects, solutionFilePath);
 
 			writer.WriteLine("Global");
 
@@ -86,12 +86,12 @@ namespace ICSharpCode.Decompiler.Solution
 			writer.WriteLine("MinimumVisualStudioVersion = 10.0.40219.1");
 		}
 
-		private static void WriteProjects(TextWriter writer, IEnumerable<ProjectItem> projects, string solutionPath)
+		private static void WriteProjects(TextWriter writer, IEnumerable<ProjectItem> projects, string solutionFilePath)
 		{
 			var solutionGuid = Guid.NewGuid().ToString("B").ToUpperInvariant();
 
 			foreach (var project in projects) {
-				var projectRelativePath = GetRelativePath(solutionPath, project.FilePath);
+				var projectRelativePath = GetRelativePath(solutionFilePath, project.FilePath);
 				var projectGuid = project.Guid.ToString("B").ToUpperInvariant();
 
 				writer.WriteLine($"Project(\"{solutionGuid}\") = \"{project.ProjectName}\", \"{projectRelativePath}\", \"{projectGuid}\"");
@@ -148,7 +148,6 @@ namespace ICSharpCode.Decompiler.Solution
 			var projectsMap = projects.ToDictionary(p => p.ProjectName, p => p);
 
 			foreach (var project in projects) {
-				var projectDirectory = Path.GetDirectoryName(project.FilePath);
 				XDocument projectDoc = XDocument.Load(project.FilePath);
 
 				var referencesItemGroups = projectDoc.Root
@@ -156,14 +155,14 @@ namespace ICSharpCode.Decompiler.Solution
 					.Where(e => e.Elements(ProjectFileNamespace + "Reference").Any());
 
 				foreach (var itemGroup in referencesItemGroups) {
-					FixProjectReferences(projectDirectory, itemGroup, projectsMap);
+					FixProjectReferences(project.FilePath, itemGroup, projectsMap);
 				}
 
 				projectDoc.Save(project.FilePath);
 			}
 		}
 
-		private static void FixProjectReferences(string projectDirectory, XElement itemGroup, IDictionary<string, ProjectItem> projects)
+		private static void FixProjectReferences(string projectFilePath, XElement itemGroup, IDictionary<string, ProjectItem> projects)
 		{
 			foreach (var item in itemGroup.Elements(ProjectFileNamespace + "Reference").ToList()) {
 				var assemblyName = item.Attribute("Include")?.Value;
@@ -173,20 +172,20 @@ namespace ICSharpCode.Decompiler.Solution
 					var projectReference = new XElement(ProjectFileNamespace + "ProjectReference",
 						new XElement(ProjectFileNamespace + "Project", referencedProject.Guid.ToString("B").ToUpperInvariant()),
 						new XElement(ProjectFileNamespace + "Name", referencedProject.ProjectName));
-					projectReference.SetAttributeValue("Include", GetRelativePath(projectDirectory, referencedProject.FilePath));
+					projectReference.SetAttributeValue("Include", GetRelativePath(projectFilePath, referencedProject.FilePath));
 
 					itemGroup.Add(projectReference);
 				}
 			}
 		}
 
-		private static string GetRelativePath(string fromPath, string toPath)
+		private static string GetRelativePath(string fromFilePath, string toFilePath)
 		{
-			Uri fromUri = new Uri(AppendDirectorySeparatorChar(fromPath));
-			Uri toUri = new Uri(AppendDirectorySeparatorChar(toPath));
+			Uri fromUri = new Uri(fromFilePath);
+			Uri toUri = new Uri(toFilePath);
 
 			if (fromUri.Scheme != toUri.Scheme) {
-				return toPath;
+				return toFilePath;
 			}
 
 			Uri relativeUri = fromUri.MakeRelativeUri(toUri);
@@ -197,13 +196,6 @@ namespace ICSharpCode.Decompiler.Solution
 			}
 
 			return relativePath;
-		}
-
-		private static string AppendDirectorySeparatorChar(string path)
-		{
-			return Path.HasExtension(path) || path.EndsWith(Path.DirectorySeparatorChar.ToString())
-				? path
-				: path + Path.DirectorySeparatorChar;
 		}
 	}
 }
