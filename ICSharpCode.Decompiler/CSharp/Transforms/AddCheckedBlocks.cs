@@ -296,9 +296,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				costUncheckedContextCheckedBlockOpen += stmtResult.CostInCheckedContext;
 				nodesUncheckedContextCheckedBlockOpen += stmtResult.NodesToInsertInCheckedContext;
 				
-				if (statement is LabelStatement) {
+				if (statement is LabelStatement || statement is LocalFunctionDeclarationStatement) {
 					// We can't move labels into blocks because that might cause goto-statements
-					// to be unable to just to the labels.
+					// to be unable to jump to the labels.
+					// Also, we can't move local functions into blocks, because that might cause
+					// them to become out of scope from the call-sites.
 					costCheckedContextUncheckedBlockOpen = Cost.Infinite;
 					costUncheckedContextCheckedBlockOpen = Cost.Infinite;
 				}
