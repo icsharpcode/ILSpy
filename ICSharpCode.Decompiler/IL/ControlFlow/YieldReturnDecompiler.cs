@@ -142,7 +142,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			function.Body = newBody;
 			// register any locals used in newBody
 			function.Variables.AddRange(newBody.Descendants.OfType<IInstructionWithVariableOperand>().Select(inst => inst.Variable).Distinct());
-			function.CheckInvariant(ILPhase.Normal);
 
 			PrintFinallyMethodStateRanges(newBody);
 
@@ -164,6 +163,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Note: because this only deletes blocks outright, the 'stateChanges' entries remain valid
 			// (though some may point to now-deleted blocks)
 			newBody.SortBlocks(deleteUnreachableBlocks: true);
+			function.CheckInvariant(ILPhase.Normal);
 
 			if (!isCompiledWithMono) {
 				DecompileFinallyBlocks();
@@ -338,7 +338,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public static bool IsCompilerGeneratorEnumerator(TypeDefinitionHandle type, MetadataReader metadata)
 		{
 			TypeDefinition td;
-			if (type.IsNil || !type.IsCompilerGenerated(metadata) || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
+			if (type.IsNil || !type.IsCompilerGeneratedOrIsInCompilerGeneratedClass(metadata) || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
 				return false;
 			foreach (var i in td.GetInterfaceImplementations()) {
 				var tr = metadata.GetInterfaceImplementation(i).Interface.GetFullTypeName(metadata);

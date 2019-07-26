@@ -309,6 +309,17 @@ namespace ICSharpCode.Decompiler
 			return false;
 		}
 
+		public static bool IsCompilerGeneratedOrIsInCompilerGeneratedClass(this TypeDefinitionHandle handle, MetadataReader metadata)
+		{
+			TypeDefinition type = metadata.GetTypeDefinition(handle);
+			if (type.IsCompilerGenerated(metadata))
+				return true;
+			TypeDefinitionHandle declaringTypeHandle = type.GetDeclaringType();
+			if (!declaringTypeHandle.IsNil && declaringTypeHandle.IsCompilerGenerated(metadata))
+				return true;
+			return false;
+		}
+
 		public static bool IsCompilerGenerated(this MethodDefinition method, MetadataReader metadata)
 		{
 			return method.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.CompilerGenerated);

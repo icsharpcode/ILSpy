@@ -40,7 +40,7 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			var elemAttr = ctx.ResolveProperty(record.AttributeId);
 			elem.Xaml = new XElement(elemAttr.ToXName(ctx, null));
 
-			if (attr.ResolvedMember.FullNameIs("System.Windows.Style", "TargetType")) {
+			if (attr.ResolvedMember?.FullNameIs("System.Windows.Style", "TargetType") == true) {
 				parent.Xaml.Element.AddAnnotation(new TargetTypeAnnotation(type));
 			}
 

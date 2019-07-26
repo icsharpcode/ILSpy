@@ -34,6 +34,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Output;
+using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -343,12 +344,12 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			var module = assembly.GetPEFileOrNull();
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
 				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options);
-				decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
+				return decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
 			} else {
 				AddReferenceAssemblyWarningMessage(module, output);
 				AddReferenceWarningMessage(module, output);
@@ -389,7 +390,7 @@ namespace ICSharpCode.ILSpy
 					}
 					if (metadata.IsAssembly) {
 						var asm = metadata.GetAssemblyDefinition();
-						if (asm.HashAlgorithm != System.Reflection.AssemblyHashAlgorithm.None)
+						if (asm.HashAlgorithm != AssemblyHashAlgorithm.None)
 							output.WriteLine("// Hash algorithm: " + asm.HashAlgorithm.ToString().ToUpper());
 						if (!asm.PublicKey.IsNil) {
 							output.Write("// Public key: ");
@@ -415,6 +416,7 @@ namespace ICSharpCode.ILSpy
 					}
 					WriteCode(output, options.DecompilerSettings, st, decompiler.TypeSystem);
 				}
+				return null;
 			}
 		}
 

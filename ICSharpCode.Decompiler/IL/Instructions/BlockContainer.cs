@@ -184,6 +184,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(EntryPoint == null || Parent is ILFunction || !HasILRange);
 			Debug.Assert(Blocks.All(b => b.HasFlag(InstructionFlags.EndPointUnreachable)));
 			Debug.Assert(Blocks.All(b => b.Kind == BlockKind.ControlFlow)); // this also implies that the blocks don't use FinalInstruction
+			Debug.Assert(TopologicalSort(deleteUnreachableBlocks: true).Count == Blocks.Count, "Container should not have any unreachable blocks");
 			Block bodyStartBlock;
 			switch (Kind) {
 				case ContainerKind.Normal:
@@ -237,36 +238,18 @@ namespace ICSharpCode.Decompiler.IL
 				return InstructionFlags.ControlFlow;
 			}
 		}
-		
-		/// <summary>
-		/// Sort the blocks in reverse post-order over the control flow graph between the blocks.
-		/// </summary>
-		public void SortBlocks(bool deleteUnreachableBlocks = false)
-		{
-			if (Blocks.Count < 2)
-				return;
 
+		/// <summary>
+		/// Topologically sort the blocks.
+		/// The new order is returned without modifying the BlockContainer.
+		/// </summary>
+		/// <param name="deleteUnreachableBlocks">If true, unreachable blocks are not included in the new order.</param>
+		public List<Block> TopologicalSort(bool deleteUnreachableBlocks = false)
+		{
 			// Visit blocks in post-order
 			BitSet visited = new BitSet(Blocks.Count);
 			List<Block> postOrder = new List<Block>();
-			
-			Action<Block> visit = null;
-			visit = delegate(Block block) {
-				Debug.Assert(block.Parent == this);
-				if (!visited[block.ChildIndex]) {
-					visited[block.ChildIndex] = true;
-
-					foreach (var branch in block.Descendants.OfType<Branch>()) {
-						if (branch.TargetBlock.Parent == this) {
-							visit(branch.TargetBlock);
-						}
-					}
-
-					postOrder.Add(block);
-				}
-			};
-			visit(EntryPoint);
-			
+			Visit(EntryPoint);
 			postOrder.Reverse();
 			if (!deleteUnreachableBlocks) {
 				for (int i = 0; i < Blocks.Count; i++) {
@@ -274,8 +257,37 @@ namespace ICSharpCode.Decompiler.IL
 						postOrder.Add(Blocks[i]);
 				}
 			}
-			Debug.Assert(postOrder[0] == Blocks[0]);
-			Blocks.ReplaceList(postOrder);
+			return postOrder;
+
+			void Visit(Block block)
+			{
+				Debug.Assert(block.Parent == this);
+				if (!visited[block.ChildIndex]) {
+					visited[block.ChildIndex] = true;
+
+					foreach (var branch in block.Descendants.OfType<Branch>()) {
+						if (branch.TargetBlock.Parent == this) {
+							Visit(branch.TargetBlock);
+						}
+					}
+
+					postOrder.Add(block);
+				}
+			};
+		}
+
+		/// <summary>
+		/// Topologically sort the blocks.
+		/// </summary>
+		/// <param name="deleteUnreachableBlocks">If true, delete unreachable blocks.</param>
+		public void SortBlocks(bool deleteUnreachableBlocks = false)
+		{
+			if (Blocks.Count < 2)
+				return;
+
+			var newOrder = TopologicalSort(deleteUnreachableBlocks);
+			Debug.Assert(newOrder[0] == Blocks[0]);
+			Blocks.ReplaceList(newOrder);
 		}
 
 		public static BlockContainer FindClosestContainer(ILInstruction inst)
