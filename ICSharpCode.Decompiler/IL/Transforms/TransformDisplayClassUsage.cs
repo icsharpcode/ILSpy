@@ -302,6 +302,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						displayClass.CaptureScope = BlockContainer.FindClosestContainer(inst);
 					}
 					v = displayClass.DeclaringFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
+					v.HasInitialValue = true;
 					v.CaptureScope = displayClass.CaptureScope;
 					inst.ReplaceWith(new StLoc(v, inst.Value).WithILRange(inst));
 					value = new LdLoc(v);
@@ -349,6 +350,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// Introduce a fresh variable for the display class field.
 				Debug.Assert(displayClass.Definition == field.DeclaringTypeDefinition);
 				var v = displayClass.DeclaringFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
+				v.HasInitialValue = true;
 				v.CaptureScope = displayClass.CaptureScope;
 				inst.ReplaceWith(new LdLoca(v).WithILRange(inst));
 				displayClass.Variables.Add(field, new DisplayClassVariable { Value = new LdLoc(v), Variable = v });
