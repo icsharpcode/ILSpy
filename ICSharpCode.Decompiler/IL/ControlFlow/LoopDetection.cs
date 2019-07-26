@@ -257,6 +257,22 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						loop.Add(node);
 					}
 				}
+				// The loop/switch can only be entered through the entry point.
+				if (isSwitch) {
+					// In the case of a switch, false positives in the "continue;" detection logic
+					// can lead to falsely excludes some blocks from the body.
+					// Fix that by including all predecessors of included blocks.
+					Debug.Assert(loop[0] == loopHead);
+					for (int i = 1; i < loop.Count; i++) {
+						foreach (var p in loop[i].Predecessors) {
+							if (!p.Visited) {
+								p.Visited = true;
+								loop.Add(p);
+							}
+						}
+					}
+				}
+				Debug.Assert(loop.All(n => n == loopHead || n.Predecessors.All(p => p.Visited)));
 			} else {
 				// We are in case 2, but could not find a suitable exit point.
 				// Heuristically try to minimize the number of exit points
