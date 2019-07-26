@@ -176,7 +176,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var or = rr.PerformOverloadResolution(resolver.CurrentTypeResolveContext.Compilation, arguments, argumentNames, allowExtensionMethods: true);
 			if (or == null || or.IsAmbiguous)
 				return false;
-			return method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments());
+			return method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments())
+				&& CSharpResolver.IsEligibleExtensionMethod(target.Type, method, useTypeInference: false, out _);
 		}
 
 		public static bool CanTransformToExtensionMethodCall(IMethod method, CSharpTypeResolveContext resolveContext, bool ignoreTypeArguments = false, bool ignoreArgumentNames = true)
