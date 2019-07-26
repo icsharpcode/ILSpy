@@ -273,6 +273,19 @@ namespace LocalFunctions
 				}
 			});
 		}
+
+		public static IEnumerable<int> YieldReturn(int n)
+		{
+			return GetNumbers();
+
+			IEnumerable<int> GetNumbers()
+			{
+				for (int i = 0; i < n; i++) {
+					yield return i;
+				}
+			}
+		}
+
 		//public static void LocalFunctionInUsing()
 		//{
 		//	using (MemoryStream memoryStream = new MemoryStream()) {

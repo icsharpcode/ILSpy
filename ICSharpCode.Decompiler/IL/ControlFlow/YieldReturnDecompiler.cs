@@ -338,7 +338,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public static bool IsCompilerGeneratorEnumerator(TypeDefinitionHandle type, MetadataReader metadata)
 		{
 			TypeDefinition td;
-			if (type.IsNil || !type.IsCompilerGenerated(metadata) || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
+			if (type.IsNil || !type.IsCompilerGeneratedOrIsInCompilerGeneratedClass(metadata) || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
 				return false;
 			foreach (var i in td.GetInterfaceImplementations()) {
 				var tr = metadata.GetInterfaceImplementation(i).Interface.GetFullTypeName(metadata);
