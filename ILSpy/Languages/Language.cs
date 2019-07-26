@@ -23,6 +23,7 @@ using System.Reflection.PortableExecutable;
 using System.Text;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
@@ -131,11 +132,11 @@ namespace ICSharpCode.ILSpy
 			WriteCommentLine(output, nameSpace);
 		}
 
-		public virtual void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public virtual ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, assembly.FileName);
 			var asm = assembly.GetPEFileOrNull();
-			if (asm == null) return;
+			if (asm == null) return null;
 			var metadata = asm.Metadata;
 			if (metadata.IsAssembly) {
 				var name = metadata.GetAssemblyDefinition();
@@ -147,6 +148,7 @@ namespace ICSharpCode.ILSpy
 			} else {
 				WriteCommentLine(output, metadata.GetString(metadata.GetModuleDefinition().Name));
 			}
+			return null;
 		}
 
 		public virtual void WriteCommentLine(ITextOutput output, string comment)

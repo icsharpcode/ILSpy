@@ -304,6 +304,24 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The directory is not empty. File will be overwritten.\r\nAre you sure you want to continue?.
+        /// </summary>
+        public static string AssemblySaveCodeDirectoryNotEmpty {
+            get {
+                return ResourceManager.GetString("AssemblySaveCodeDirectoryNotEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Project Directory not empty.
+        /// </summary>
+        public static string AssemblySaveCodeDirectoryNotEmptyTitle {
+            get {
+                return ResourceManager.GetString("AssemblySaveCodeDirectoryNotEmptyTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Automatically check for updates every week.
         /// </summary>
         public static string AutomaticallyCheckUpdatesEveryWeek {
