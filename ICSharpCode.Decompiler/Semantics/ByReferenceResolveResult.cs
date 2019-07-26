@@ -24,25 +24,27 @@ using ICSharpCode.Decompiler.TypeSystem;
 namespace ICSharpCode.Decompiler.Semantics
 {
 	/// <summary>
-	/// Represents the resolve result of an 'ref x' or 'out x' expression.
+	/// Represents the resolve result of an 'ref x', 'in x' or 'out x' expression.
 	/// </summary>
 	public class ByReferenceResolveResult : ResolveResult
 	{
-		public bool IsOut { get; private set; }
-		public bool IsRef { get { return !IsOut;} }
-		
+		public ReferenceKind ReferenceKind { get; }
+		public bool IsOut => ReferenceKind == ReferenceKind.Out;
+		public bool IsRef => ReferenceKind == ReferenceKind.Ref;
+		public bool IsIn => ReferenceKind == ReferenceKind.In;
+
 		public readonly ResolveResult ElementResult;
 		
-		public ByReferenceResolveResult(ResolveResult elementResult, bool isOut)
-			: this(elementResult.Type, isOut)
+		public ByReferenceResolveResult(ResolveResult elementResult, ReferenceKind kind)
+			: this(elementResult.Type, kind)
 		{
 			this.ElementResult = elementResult;
 		}
 		
-		public ByReferenceResolveResult(IType elementType, bool isOut)
+		public ByReferenceResolveResult(IType elementType, ReferenceKind kind)
 			: base(new ByReferenceType(elementType))
 		{
-			this.IsOut = isOut;
+			this.ReferenceKind = kind;
 		}
 		
 		public IType ElementType {
@@ -59,7 +61,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		
 		public override string ToString()
 		{
-			return string.Format(CultureInfo.InvariantCulture, "[{0} {1} {2}]", GetType().Name, IsOut ? "out" : "ref", ElementType);
+			return string.Format(CultureInfo.InvariantCulture, "[{0} {1} {2}]", GetType().Name, ReferenceKind.ToString().ToLowerInvariant(), ElementType);
 		}
 	}
 }

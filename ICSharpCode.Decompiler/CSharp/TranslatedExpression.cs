@@ -376,7 +376,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					var convertedTemp = this.UnwrapChild(thisDir.Expression).ConvertTo(elementType, expressionBuilder, checkForOverflow);
 					return new DirectionExpression(FieldDirection.Ref, convertedTemp)
 						.WithILInstruction(this.ILInstructions)
-						.WithRR(new ByReferenceResolveResult(convertedTemp.ResolveResult, false));
+						.WithRR(new ByReferenceResolveResult(convertedTemp.ResolveResult, ReferenceKind.Ref));
 				}
 				// Convert from integer/pointer to reference.
 				// First, convert to the corresponding pointer type:
@@ -396,7 +396,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// And then take a reference:
 				return new DirectionExpression(FieldDirection.Ref, expr)
 					.WithoutILInstruction()
-					.WithRR(new ByReferenceResolveResult(elementRR, false));
+					.WithRR(new ByReferenceResolveResult(elementRR, ReferenceKind.Ref));
 			}
 			var rr = expressionBuilder.resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult);
 			if (rr.IsCompileTimeConstant && !rr.IsError) {
@@ -418,7 +418,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return this;
 				}
 			} else {
-				if (NormalizeTypeVisitor.RemoveModifiersAndNullability.EquivalentTypes(type, targetType)) {
+				if (targetType.Kind != TypeKind.Dynamic && type.Kind != TypeKind.Dynamic && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(type, targetType)) {
 					// avoid an explicit cast when types differ only in nullability of reference types
 					return this;
 				}

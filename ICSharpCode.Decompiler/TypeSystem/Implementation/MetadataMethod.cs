@@ -197,7 +197,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 							parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
 								signature.ParameterTypes[i], module.Compilation, null, metadata, module.TypeSystemOptions, nullableContext);
 							parameters[i] = new DefaultParameter(parameterType, name: string.Empty, owner,
-								isRef: parameterType.Kind == TypeKind.ByReference);
+								referenceKind: parameterType.Kind == TypeKind.ByReference ? ReferenceKind.Ref : ReferenceKind.None);
 							i++;
 						}
 						parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
 					signature.ParameterTypes[i], module.Compilation, null, metadata, module.TypeSystemOptions, nullableContext);
 				parameters[i] = new DefaultParameter(parameterType, name: string.Empty, owner,
-					isRef: parameterType.Kind == TypeKind.ByReference);
+					referenceKind: parameterType.Kind == TypeKind.ByReference ? ReferenceKind.Ref : ReferenceKind.None);
 				i++;
 			}
 			if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs) {

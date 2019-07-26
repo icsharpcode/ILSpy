@@ -729,6 +729,9 @@
   <data name="CannotAnalyzeMissingRef" xml:space="preserve">
     <value>Entity could not be resolved. Cannot analyze entities from missing assembly references. Add the missing reference and try again.</value>
   </data>
+  <data name="DecompilerSettings.AllowExtensionMethodSyntaxOnRef" xml:space="preserve">
+    <value>Use 'ref' extension methods</value>
+  </data>
   <data name="AssemblySaveCodeDirectoryNotEmpty" xml:space="preserve">
     <value>The directory is not empty. File will be overwritten.\r\nAre you sure you want to continue?</value>
   </data>

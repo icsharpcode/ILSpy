@@ -493,6 +493,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use &apos;ref&apos; extension methods.
+        /// </summary>
+        public static string DecompilerSettings_AllowExtensionMethodSyntaxOnRef {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.AllowExtensionMethodSyntaxOnRef", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Always cast targets of explicit interface implementation calls.
         /// </summary>
         public static string DecompilerSettings_AlwaysCastTargetsOfExplicitInterfaceImplementationCalls {
