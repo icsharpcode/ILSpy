@@ -158,9 +158,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				// Remove return blocks that are no longer reachable:
 				container.Blocks.RemoveAll(b => b.IncomingEdgeCount == 0 && b.Instructions.Count == 0);
-				if (context.Settings.RemoveDeadCode) {
-					container.SortBlocks(deleteUnreachableBlocks: true);
-				}
 			}
 		}
 

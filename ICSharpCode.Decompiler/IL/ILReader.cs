@@ -493,8 +493,18 @@ namespace ICSharpCode.Decompiler.IL
 			CollectionExtensions.AddRange(function.Variables, stackVariables);
 			CollectionExtensions.AddRange(function.Variables, variableByExceptionHandler.Values);
 			function.AddRef(); // mark the root node
+			var removedBlocks = new List<Block>();
 			foreach (var c in function.Descendants.OfType<BlockContainer>()) {
-				c.SortBlocks();
+				var newOrder = c.TopologicalSort(deleteUnreachableBlocks: true);
+				if (newOrder.Count < c.Blocks.Count) {
+					removedBlocks.AddRange(c.Blocks.Except(newOrder));
+				}
+				c.Blocks.ReplaceList(newOrder);
+			}
+			if (removedBlocks.Count > 0) {
+				removedBlocks.SortBy(b => b.StartILOffset);
+				function.Warnings.Add("Discarded unreachable code: "
+							+ string.Join(", ", removedBlocks.Select(b => $"IL_{b.StartILOffset:x4}")));
 			}
 			function.Warnings.AddRange(Warnings);
 			return function;

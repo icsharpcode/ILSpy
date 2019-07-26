@@ -85,7 +85,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					context.CancellationToken.ThrowIfCancellationRequested();
 					blockContext.ControlFlowGraph = new ControlFlowGraph(container, context.CancellationToken);
 					VisitBlock(blockContext.ControlFlowGraph.GetNode(container.EntryPoint), blockContext);
-					// TODO: handle unreachable code?
 				}
 			} finally {
 				running = false;
