@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Linq;
+
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	public class DynamicIsEventAssignmentTransform : IStatementTransform
@@ -24,6 +26,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// if (logic.not(ldloc V_1)) Block IL_004a {
 		/// 	stloc V_2(dynamic.getmember B(target))
 		/// }
+		/// [stloc copyOfValue(value)]
 		/// if (logic.not(ldloc V_1)) Block IL_0149 {
 		/// 	dynamic.setmember.compound B(target, dynamic.binary.operator AddAssign(ldloc V_2,  value))
 		/// } else Block IL_0151 {
@@ -41,11 +44,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			if (!(flagVar.IsSingleDefinition && flagVar.LoadCount == 2))
 				return;
-			if (!(MatchLhsCacheIfInstruction(block.Instructions[pos + 1], flagVar, out var dynamicGetMemberStore)))
+			if (!MatchLhsCacheIfInstruction(block.Instructions[pos + 1], flagVar, out var dynamicGetMemberStore))
 				return;
 			if (!(dynamicGetMemberStore.MatchStLoc(out var getMemberVar, out inst) && inst is DynamicGetMemberInstruction getMemberInst))
 				return;
-			foreach (var descendant in block.Instructions[pos + 2].Descendants) {
+			int offset = 2;
+			if (block.Instructions[pos + offset].MatchStLoc(out var valueVariable)
+				&& pos + 4 < block.Instructions.Count && valueVariable.IsSingleDefinition && valueVariable.LoadCount == 2
+				&& valueVariable.LoadInstructions.All(ld => ld.Parent is DynamicInstruction)) {
+				offset++;
+			}
+			foreach (var descendant in block.Instructions[pos + offset].Descendants) {
 				if (!MatchIsEventAssignmentIfInstruction(descendant, isEvent, flagVar, getMemberVar, out var setMemberInst, out var getMemberVarUse, out var isEventConditionUse))
 					continue;
 				context.Step("DynamicIsEventAssignmentTransform", block.Instructions[pos]);
@@ -86,12 +95,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				isEventConditionUse = condition;
 			} else
 				return false;
-			setMemberInst = Block.Unwrap(trueInst) as DynamicSetMemberInstruction;
-			if (!(setMemberInst != null))
+			setMemberInst = UnwrapBlockAndUnusedStore(trueInst) as DynamicSetMemberInstruction;
+			if (setMemberInst == null)
 				return false;
 			if (!isEvent.Argument.Match(setMemberInst.Target).Success)
 				return false;
-			if (!(Block.Unwrap(falseInst) is DynamicInvokeMemberInstruction invokeMemberInst && invokeMemberInst.Arguments.Count == 2))
+			if (!(UnwrapBlockAndUnusedStore(falseInst) is DynamicInvokeMemberInstruction invokeMemberInst && invokeMemberInst.Arguments.Count == 2))
 				return false;
 			if (!isEvent.Argument.Match(invokeMemberInst.Arguments[0]).Success)
 				return false;
@@ -99,6 +108,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			getMemberVarUse = binOp.Left;
 			return true;
+		}
+
+		/// <summary>
+		/// If <paramref name="inst"/> is a Block unwraps the block, otherwise returns inst,
+		/// if the block contains a stloc to a stack slot that is unused, returns the value,
+		/// otherwise returns inst
+		/// </summary>
+		internal static ILInstruction UnwrapBlockAndUnusedStore(ILInstruction inst)
+		{
+			var unwrapped = Block.Unwrap(inst);
+			if (unwrapped is StLoc stloc
+				&& stloc.Variable.IsSingleDefinition
+				&& stloc.Variable.LoadCount == 0)
+			{
+				return stloc.Value;
+			}
+
+			return unwrapped;
 		}
 
 		/// <summary>
