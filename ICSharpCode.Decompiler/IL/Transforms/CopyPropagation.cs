@@ -66,7 +66,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (SemanticHelper.IsPure(copiedExpr.Flags)) {
 							// no-op -> delete
 							context.Step("remove dead store to stack: no-op -> delete", block.Instructions[i]);
-							block.Instructions.RemoveAt(i--);
+							block.Instructions.RemoveAt(i);
+							// This can open up new inlining opportunities:
+							int c = ILInlining.InlineInto(block, i, InliningOptions.None, context: context);
+							i -= c + 1;
 						} else {
 							// evaluate the value for its side-effects
 							context.Step("remove dead store to stack: evaluate the value for its side-effects", block.Instructions[i]);
