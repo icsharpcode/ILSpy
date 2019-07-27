@@ -131,7 +131,6 @@ namespace ICSharpCode.Decompiler.CSharp
 						// copy-propated (turned into two separate assignments of the constant).
 						// After is necessary because the assigned value might involve null coalescing/etc.
 						new StatementTransform(new ILInlining(), new TransformAssignment()),
-						new CopyPropagation(),
 						new StatementTransform(
 							// per-block transforms that depend on each other, and thus need to
 							// run interleaved (statement by statement).
@@ -156,6 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				},
 				new ProxyCallReplacer(),
 				new FixRemainingIncrements(),
+				new CopyPropagation(),
 				new DelegateConstruction(),
 				new LocalFunctionDecompiler(),
 				new TransformDisplayClassUsage(),

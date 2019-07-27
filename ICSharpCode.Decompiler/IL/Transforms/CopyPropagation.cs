@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	///    then we can replace the variable with the argument.
 	/// 2) assignments of address-loading instructions to local variables
 	/// </summary>
-	public class CopyPropagation : IBlockTransform
+	public class CopyPropagation : IBlockTransform, IILTransform
 	{
 		public static void Propagate(StLoc store, ILTransformContext context)
 		{
@@ -42,6 +42,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		public void Run(Block block, BlockTransformContext context)
+		{
+			RunOnBlock(block, context);
+		}
+
+		public void Run(ILFunction function, ILTransformContext context)
+		{
+			foreach (var block in function.Descendants.OfType<Block>()) {
+				if (block.Kind != BlockKind.ControlFlow)
+					continue;
+				RunOnBlock(block, context);
+			}
+		}
+
+		static void RunOnBlock(Block block, ILTransformContext context)
 		{
 			for (int i = 0; i < block.Instructions.Count; i++) {
 				ILVariable v;
