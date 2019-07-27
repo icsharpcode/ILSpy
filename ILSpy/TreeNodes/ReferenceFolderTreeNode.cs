@@ -71,6 +71,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			// Show metadata order of references
 			foreach (var node in this.Children.OfType<ILSpyTreeNode>())
 				node.Decompile(language, output, options);
+
+			output.WriteLine();
+			output.WriteLine();
+			// Show full assembly load log:
+			language.WriteCommentLine(output, "Assembly load log including transitive references:");
+			var info = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo;
+			foreach (var asm in info.Entries) {
+				language.WriteCommentLine(output, asm.FullName);
+				output.Indent();
+				foreach (var item in asm.Messages) {
+					language.WriteCommentLine(output, $"{item.Item1}: {item.Item2}");
+				}
+				output.Unindent();
+				output.WriteLine();
+			}
 		}
 	}
 }

@@ -197,12 +197,6 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void RefLocalsAndReturns([ValueSource("roslynOnlyOptions")] CompilerOptions options)
-		{
-			RunCS(options: options);
-		}
-
-		[Test]
 		public void BitNot([Values(false, true)] bool force32Bit)
 		{
 			CompilerOptions compiler = CompilerOptions.UseDebug;
@@ -292,12 +286,6 @@ namespace ICSharpCode.Decompiler.Tests
 			if (options.HasFlag(CompilerOptions.UseMcs)) {
 				Assert.Ignore("Decompiler bug with mono!");
 			}
-			RunCS(options: options);
-		}
-
-		[Test]
-		public void LocalFunctions([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions options)
-		{
 			RunCS(options: options);
 		}
 

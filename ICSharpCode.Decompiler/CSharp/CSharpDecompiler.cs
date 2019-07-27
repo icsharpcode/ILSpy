@@ -131,7 +131,6 @@ namespace ICSharpCode.Decompiler.CSharp
 						// copy-propated (turned into two separate assignments of the constant).
 						// After is necessary because the assigned value might involve null coalescing/etc.
 						new StatementTransform(new ILInlining(), new TransformAssignment()),
-						new CopyPropagation(),
 						new StatementTransform(
 							// per-block transforms that depend on each other, and thus need to
 							// run interleaved (statement by statement).
@@ -155,7 +154,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				},
 				new ProxyCallReplacer(),
+				new FixRemainingIncrements(),
+				new CopyPropagation(),
 				new DelegateConstruction(),
+				new LocalFunctionDecompiler(),
+				new TransformDisplayClassUsage(),
 				new HighLevelLoopTransform(),
 				new ReduceNestingTransform(),
 				new IntroduceDynamicTypeOnLocals(),
@@ -395,7 +398,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new DecompilerTypeSystem(file, resolver);
 		}
 
-		TypeSystemAstBuilder CreateAstBuilder(ITypeResolveContext decompilationContext)
+		static TypeSystemAstBuilder CreateAstBuilder(ITypeResolveContext decompilationContext)
 		{
 			var typeSystemAstBuilder = new TypeSystemAstBuilder();
 			typeSystemAstBuilder.ShowAttributes = true;
@@ -620,39 +623,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								var memberRef = module.Metadata.GetMemberReference((MemberReferenceHandle)token);
 								if (memberRef.GetKind() != MemberReferenceKind.Field)
 									continue;
-								switch (memberRef.Parent.Kind) {
-									case HandleKind.TypeReference:
-										// This should never happen in normal code, because we are looking at nested types
-										// If it's not a nested type, it can't be a reference to the state machine anyway, and
-										// those should be either TypeDef or TypeSpec.
-										continue;
-									case HandleKind.TypeDefinition:
-										fsmTypeDef = (TypeDefinitionHandle)memberRef.Parent;
-										break;
-									case HandleKind.TypeSpecification:
-										var ts = module.Metadata.GetTypeSpecification((TypeSpecificationHandle)memberRef.Parent);
-										if (ts.Signature.IsNil)
-											continue;
-										// Do a quick scan using BlobReader
-										var signature = module.Metadata.GetBlobReader(ts.Signature);
-										// When dealing with FSM implementations, we can safely assume that if it's a type spec,
-										// it must be a generic type instance.
-										if (signature.ReadByte() != (byte)SignatureTypeCode.GenericTypeInstance)
-											continue;
-										// Skip over the rawTypeKind: value type or class
-										var rawTypeKind = signature.ReadCompressedInteger();
-										if (rawTypeKind < 17 || rawTypeKind > 18)
-											continue;
-										// Only read the generic type, ignore the type arguments
-										var genericType = signature.ReadTypeHandle();
-										// Again, we assume this is a type def, because we are only looking at nested types
-										if (genericType.Kind != HandleKind.TypeDefinition)
-											continue;
-										fsmTypeDef = (TypeDefinitionHandle)genericType;
-										break;
-									default:
-										continue;
-								}
+								fsmTypeDef = ExtractDeclaringType(memberRef);
 								break;
 							default:
 								continue;
@@ -662,10 +633,10 @@ namespace ICSharpCode.Decompiler.CSharp
 							// Must be a nested type of the containing type.
 							if (fsmType.GetDeclaringType() != declaringType)
 								break;
-							if (!processedNestedTypes.Add(fsmTypeDef))
-								break;
 							if (YieldReturnDecompiler.IsCompilerGeneratorEnumerator(fsmTypeDef, module.Metadata)
 								|| AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(fsmTypeDef, module.Metadata)) {
+								if (!processedNestedTypes.Add(fsmTypeDef))
+									break;
 								foreach (var h in fsmType.GetMethods()) {
 									if (module.MethodSemanticsLookup.GetSemantics(h).Item2 != 0)
 										continue;
@@ -680,9 +651,57 @@ namespace ICSharpCode.Decompiler.CSharp
 					case ILOpCode.Ldftn:
 						// deal with ldftn instructions, i.e., lambdas
 						token = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
-						if (!token.IsNil && token.Kind == HandleKind.MethodDefinition) {
-							if (((MethodDefinitionHandle)token).IsCompilerGeneratedOrIsInCompilerGeneratedClass(module.Metadata))
-								connectedMethods.Enqueue((MethodDefinitionHandle)token);
+						if (token.IsNil)
+							continue;
+						TypeDefinitionHandle closureTypeHandle;
+						switch (token.Kind) {
+							case HandleKind.MethodDefinition:
+								if (((MethodDefinitionHandle)token).IsCompilerGeneratedOrIsInCompilerGeneratedClass(module.Metadata)) {
+									connectedMethods.Enqueue((MethodDefinitionHandle)token);
+								}
+								continue;
+							case HandleKind.MemberReference:
+								var memberRef = module.Metadata.GetMemberReference((MemberReferenceHandle)token);
+								if (memberRef.GetKind() != MemberReferenceKind.Method)
+									continue;
+								closureTypeHandle = ExtractDeclaringType(memberRef);
+								if (!closureTypeHandle.IsNil) {
+									var closureType = module.Metadata.GetTypeDefinition(closureTypeHandle);
+									// Must be a nested type of the containing type.
+									if (closureType.GetDeclaringType() != declaringType)
+										break;
+									if (!processedNestedTypes.Add(closureTypeHandle))
+										break;
+									foreach (var m in closureType.GetMethods()) {
+										connectedMethods.Enqueue(m);
+									}
+									break;
+								}
+								break;
+							default:
+								continue;
+						}
+						break;
+					case ILOpCode.Call:
+					case ILOpCode.Callvirt:
+						// deal with call/callvirt instructions, i.e., local function invocations
+						token = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
+						if (token.IsNil)
+							continue;
+						switch (token.Kind) {
+							case HandleKind.MethodDefinition:
+								break;
+							case HandleKind.MethodSpecification:
+								var methodSpec = module.Metadata.GetMethodSpecification((MethodSpecificationHandle)token);
+								if (methodSpec.Method.IsNil || methodSpec.Method.Kind != HandleKind.MethodDefinition)
+									continue;
+								token = methodSpec.Method;
+								break;
+							default:
+								continue;
+						}
+						if (LocalFunctionDecompiler.IsLocalFunctionMethod(module, (MethodDefinitionHandle)token)) {
+							connectedMethods.Enqueue((MethodDefinitionHandle)token);
 						}
 						break;
 					default:
@@ -692,6 +711,40 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			info.AddMapping(parent, part);
+
+			TypeDefinitionHandle ExtractDeclaringType(MemberReference memberRef)
+			{
+				switch (memberRef.Parent.Kind) {
+					case HandleKind.TypeReference:
+						// This should never happen in normal code, because we are looking at nested types
+						// If it's not a nested type, it can't be a reference to the state machine or lambda anyway, and
+						// those should be either TypeDef or TypeSpec.
+						return default;
+					case HandleKind.TypeDefinition:
+						return (TypeDefinitionHandle)memberRef.Parent;
+					case HandleKind.TypeSpecification:
+						var ts = module.Metadata.GetTypeSpecification((TypeSpecificationHandle)memberRef.Parent);
+						if (ts.Signature.IsNil)
+							return default;
+						// Do a quick scan using BlobReader
+						var signature = module.Metadata.GetBlobReader(ts.Signature);
+						// When dealing with FSM implementations, we can safely assume that if it's a type spec,
+						// it must be a generic type instance.
+						if (signature.ReadByte() != (byte)SignatureTypeCode.GenericTypeInstance)
+							return default;
+						// Skip over the rawTypeKind: value type or class
+						var rawTypeKind = signature.ReadCompressedInteger();
+						if (rawTypeKind < 17 || rawTypeKind > 18)
+							return default;
+						// Only read the generic type, ignore the type arguments
+						var genericType = signature.ReadTypeHandle();
+						// Again, we assume this is a type def, because we are only looking at nested types
+						if (genericType.Kind != HandleKind.TypeDefinition)
+							return default;
+						return (TypeDefinitionHandle)genericType;
+				}
+				return default;
+			}
 		}
 
 		/// <summary>
@@ -1373,7 +1426,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				var fieldDefinition = metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
 				if (fieldDefinition.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA)) {
-					// Field data as specified in II.16.3.2 of ECMA-335 6th edition:
+					// Field data as specified in II.16.3.1 of ECMA-335 6th edition:
 					// .data I_X = int32(123)
 					// .field public static int32 _x at I_X
 					string message;
@@ -1401,27 +1454,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					type = trr;
 					elementCount = length;
 					return true;
-				}
-			}
-			return false;
-		}
-
-		internal static bool IsFixedField(MetadataReader metadata, FieldDefinitionHandle handle, out IType type, out int elementCount)
-		{
-			type = null;
-			elementCount = 0;
-			var field = metadata.GetFieldDefinition(handle);
-			foreach (var h in field.GetCustomAttributes()) {
-				var customAttribute = metadata.GetCustomAttribute(h);
-				if (customAttribute.IsKnownAttribute(metadata, KnownAttribute.FixedBuffer)) {
-					var value = customAttribute.DecodeValue(MetadataExtensions.minimalCorlibTypeProvider);
-					if (value.FixedArguments.Length == 2) {
-						if (value.FixedArguments[0].Value is IType trr && value.FixedArguments[1].Value is int length) {
-							type = trr;
-							elementCount = length;
-							return true;
-						}
-					}
 				}
 			}
 			return false;

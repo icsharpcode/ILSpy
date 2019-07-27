@@ -1883,6 +1883,25 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Semicolon();
 			EndNode(variableDeclarationStatement);
 		}
+
+		public virtual void VisitLocalFunctionDeclarationStatement(LocalFunctionDeclarationStatement localFunctionDeclarationStatement)
+		{
+			StartNode(localFunctionDeclarationStatement);
+
+			WriteModifiers(localFunctionDeclarationStatement.ModifierTokens);
+			localFunctionDeclarationStatement.ReturnType.AcceptVisitor(this);
+			Space();
+			WriteIdentifier(localFunctionDeclarationStatement.NameToken);
+			WriteTypeParameters(localFunctionDeclarationStatement.TypeParameters);
+			Space(policy.SpaceBeforeMethodDeclarationParentheses);
+			WriteCommaSeparatedListInParenthesis(localFunctionDeclarationStatement.Parameters, policy.SpaceWithinMethodDeclarationParentheses);
+			foreach (Constraint constraint in localFunctionDeclarationStatement.Constraints) {
+				constraint.AcceptVisitor(this);
+			}
+			WriteMethodBody(localFunctionDeclarationStatement.Body, policy.MethodBraceStyle);
+
+			EndNode(localFunctionDeclarationStatement);
+		}
 		
 		public virtual void VisitWhileStatement(WhileStatement whileStatement)
 		{
@@ -2173,21 +2192,26 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(parameterDeclaration);
 			WriteAttributes(parameterDeclaration.Attributes);
+			if (parameterDeclaration.HasThisModifier) {
+				WriteKeyword(ParameterDeclaration.ThisModifierRole);
+				Space();
+			}
 			switch (parameterDeclaration.ParameterModifier) {
 				case ParameterModifier.Ref:
 					WriteKeyword(ParameterDeclaration.RefModifierRole);
+					Space();
 					break;
 				case ParameterModifier.Out:
 					WriteKeyword(ParameterDeclaration.OutModifierRole);
+					Space();
 					break;
 				case ParameterModifier.Params:
 					WriteKeyword(ParameterDeclaration.ParamsModifierRole);
-					break;
-				case ParameterModifier.This:
-					WriteKeyword(ParameterDeclaration.ThisModifierRole);
+					Space();
 					break;
 				case ParameterModifier.In:
 					WriteKeyword(ParameterDeclaration.InModifierRole);
+					Space();
 					break;
 			}
 			parameterDeclaration.Type.AcceptVisitor(this);

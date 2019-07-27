@@ -707,8 +707,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void InOutParametersOnRefMethod()
 		{
 			IParameter p = GetTypeDefinition(typeof(NonCustomAttributes)).Methods.Single(m => m.Name == "DllMethod").Parameters.Single();
-			Assert.IsTrue(p.IsRef);
-			Assert.IsFalse(p.IsOut);
+			Assert.AreEqual(ReferenceKind.Ref, p.ReferenceKind);
 			var attr = p.GetAttributes().ToList();
 			Assert.AreEqual(2, attr.Count);
 			Assert.AreEqual("System.Runtime.InteropServices.InAttribute", attr[0].AttributeType.FullName);
@@ -728,9 +727,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithOutParameter").Parameters.Single();
 			Assert.IsFalse(p.IsOptional);
-			Assert.IsFalse(p.IsRef);
-			Assert.IsTrue(p.IsOut);
-			Assert.IsFalse(p.IsIn);
+			Assert.AreEqual(ReferenceKind.Out, p.ReferenceKind);
 			Assert.AreEqual(0, p.GetAttributes().Count());
 			Assert.IsTrue(p.Type.Kind == TypeKind.ByReference);
 		}
@@ -740,9 +737,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithRefParameter").Parameters.Single();
 			Assert.IsFalse(p.IsOptional);
-			Assert.IsTrue(p.IsRef);
-			Assert.IsFalse(p.IsOut);
-			Assert.IsFalse(p.IsIn);
+			Assert.AreEqual(ReferenceKind.Ref, p.ReferenceKind);
 			Assert.AreEqual(0, p.GetAttributes().Count());
 			Assert.IsTrue(p.Type.Kind == TypeKind.ByReference);
 		}
@@ -752,9 +747,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithInParameter").Parameters.Single();
 			Assert.IsFalse(p.IsOptional);
-			Assert.IsFalse(p.IsRef);
-			Assert.IsFalse(p.IsOut);
-			Assert.IsTrue(p.IsIn);
+			Assert.AreEqual(ReferenceKind.In, p.ReferenceKind);
 			Assert.AreEqual(0, p.GetAttributes().Count());
 			Assert.IsTrue(p.Type.Kind == TypeKind.ByReference);
 		}
@@ -764,8 +757,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithParamsArray").Parameters.Single();
 			Assert.IsFalse(p.IsOptional);
-			Assert.IsFalse(p.IsRef);
-			Assert.IsFalse(p.IsOut);
+			Assert.AreEqual(ReferenceKind.None, p.ReferenceKind);
 			Assert.IsTrue(p.IsParams);
 			Assert.AreEqual(0, p.GetAttributes().Count());
 			Assert.IsTrue(p.Type.Kind == TypeKind.Array);
@@ -776,8 +768,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithOptionalParameter").Parameters.Single();
 			Assert.IsTrue(p.IsOptional);
-			Assert.IsFalse(p.IsRef);
-			Assert.IsFalse(p.IsOut);
+			Assert.AreEqual(ReferenceKind.None, p.ReferenceKind);
 			Assert.IsFalse(p.IsParams);
 			Assert.IsTrue(p.HasConstantValueInSignature);
 			Assert.AreEqual(0, p.GetAttributes().Count());
@@ -789,8 +780,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithExplicitOptionalParameter").Parameters.Single();
 			Assert.IsTrue(p.IsOptional);
-			Assert.IsFalse(p.IsRef);
-			Assert.IsFalse(p.IsOut);
+			Assert.AreEqual(ReferenceKind.None, p.ReferenceKind);
 			Assert.IsFalse(p.IsParams);
 			Assert.IsFalse(p.HasConstantValueInSignature);
 			// explicit optional parameter appears in type system if it's read from C#, but not when read from IL
@@ -802,8 +792,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithEnumOptionalParameter").Parameters.Single();
 			Assert.IsTrue(p.IsOptional);
-			Assert.IsFalse(p.IsRef);
-			Assert.IsFalse(p.IsOut);
+			Assert.AreEqual(ReferenceKind.None, p.ReferenceKind);
 			Assert.IsFalse(p.IsParams);
 			Assert.IsTrue(p.HasConstantValueInSignature);
 			Assert.AreEqual(0, p.GetAttributes().Count());
@@ -815,8 +804,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithOptionalNullableParameter").Parameters.Single();
 			Assert.IsTrue(p.IsOptional);
-			Assert.IsFalse(p.IsRef);
-			Assert.IsFalse(p.IsOut);
+			Assert.AreEqual(ReferenceKind.None, p.ReferenceKind);
 			Assert.IsFalse(p.IsParams);
 			Assert.IsTrue(p.HasConstantValueInSignature);
 			Assert.AreEqual(0, p.GetAttributes().Count());
@@ -828,8 +816,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithOptionalLongParameter").Parameters.Single();
 			Assert.IsTrue(p.IsOptional);
-			Assert.IsFalse(p.IsRef);
-			Assert.IsFalse(p.IsOut);
+			Assert.AreEqual(ReferenceKind.None, p.ReferenceKind);
 			Assert.IsFalse(p.IsParams);
 			Assert.IsTrue(p.HasConstantValueInSignature);
 			Assert.AreEqual(1L, p.GetConstantValue());
@@ -841,8 +828,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithOptionalNullableLongParameter").Parameters.Single();
 			Assert.IsTrue(p.IsOptional);
-			Assert.IsFalse(p.IsRef);
-			Assert.IsFalse(p.IsOut);
+			Assert.AreEqual(ReferenceKind.None, p.ReferenceKind);
 			Assert.IsFalse(p.IsParams);
 			Assert.IsTrue(p.HasConstantValueInSignature);
 			Assert.AreEqual(1L, p.GetConstantValue());
@@ -854,8 +840,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithOptionalDecimalParameter").Parameters.Single();
 			Assert.IsTrue(p.IsOptional);
-			Assert.IsFalse(p.IsRef);
-			Assert.IsFalse(p.IsOut);
+			Assert.AreEqual(ReferenceKind.None, p.ReferenceKind);
 			Assert.IsFalse(p.IsParams);
 			Assert.IsTrue(p.HasConstantValueInSignature);
 			Assert.AreEqual(1M, p.GetConstantValue());
@@ -867,8 +852,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "VarArgsMethod").Parameters.Single();
 			Assert.IsFalse(p.IsOptional);
-			Assert.IsFalse(p.IsRef);
-			Assert.IsFalse(p.IsOut);
+			Assert.AreEqual(ReferenceKind.None, p.ReferenceKind);
 			Assert.IsFalse(p.IsParams);
 			Assert.AreEqual(TypeKind.ArgList, p.Type.Kind);
 			Assert.AreEqual("", p.Name);
@@ -879,8 +863,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IParameter p = GetTypeDefinition(typeof(VarArgsCtor)).Methods.Single(m => m.IsConstructor).Parameters.Single();
 			Assert.IsFalse(p.IsOptional);
-			Assert.IsFalse(p.IsRef);
-			Assert.IsFalse(p.IsOut);
+			Assert.AreEqual(ReferenceKind.None, p.ReferenceKind);
 			Assert.IsFalse(p.IsParams);
 			Assert.AreEqual(TypeKind.ArgList, p.Type.Kind);
 			Assert.AreEqual("", p.Name);

@@ -27,7 +27,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			foreach (var catchBlock in function.Descendants.OfType<TryCatchHandler>()) {
-				if (catchBlock.Filter is BlockContainer container && MatchCatchWhenEntryPoint(catchBlock.Variable, container, container.EntryPoint, out var exceptionType, out var exceptionSlot, out var whenConditionBlock)) {
+				if (catchBlock.Filter is BlockContainer container
+					&& MatchCatchWhenEntryPoint(catchBlock.Variable, container, container.EntryPoint,
+						out var exceptionType, out var exceptionSlot, out var whenConditionBlock)
+					&& exceptionType.GetStackType() == catchBlock.Variable.StackType)
+				{
 					// set exceptionType
 					catchBlock.Variable.Type = exceptionType;
 					// Block entryPoint (incoming: 1)  {

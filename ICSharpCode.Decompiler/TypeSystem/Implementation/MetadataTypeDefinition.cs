@@ -51,6 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public KnownTypeCode KnownTypeCode { get; }
 		public IType EnumUnderlyingType { get; }
 		public bool HasExtensionMethods { get; }
+		public Nullability NullableContext { get; }
 
 		// lazy-loaded:
 		IMember[] members;
@@ -77,9 +78,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				
 				// Create type parameters:
 				this.TypeParameters = MetadataTypeParameter.Create(module, this.DeclaringTypeDefinition, this, td.GetGenericParameters());
+
+				this.NullableContext = td.GetCustomAttributes().GetNullableContext(metadata) ?? this.DeclaringTypeDefinition.NullableContext;
 			} else {
 				// Create type parameters:
 				this.TypeParameters = MetadataTypeParameter.Create(module, this, td.GetGenericParameters());
+
+				this.NullableContext = td.GetCustomAttributes().GetNullableContext(metadata) ?? module.NullableContext;
 
 				var topLevelTypeName = fullTypeName.TopLevelTypeName;
 				for (int i = 0; i < KnownTypeReference.KnownTypeCodeCount; i++) {
@@ -301,7 +306,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 				foreach (var h in interfaceImplCollection) {
 					var iface = metadata.GetInterfaceImplementation(h);
-					baseTypes.Add(module.ResolveType(iface.Interface, context, iface.GetCustomAttributes()));
+					baseTypes.Add(module.ResolveType(iface.Interface, context, iface.GetCustomAttributes(), Nullability.Oblivious));
 				}
 				return LazyInit.GetOrSet(ref this.directBaseTypes, baseTypes);
 			}

@@ -1,28 +1,39 @@
 platform: Any CPU
+
 configuration:
 - Debug
 - Release
-image: Visual Studio 2019 Preview
+
+image: Visual Studio 2019
+
 install:
+- cmd: choco install dotnetcore-sdk --pre
 - git submodule update --init --recursive
 - ps: .\BuildTools\appveyor-install.ps1
+
 nuget:
   account_feed: false
   project_feed: true
   disable_publish_on_pr: true
+
 before_build:
 - nuget restore ILSpy.sln
+
 build_script:
 - msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+
 after_build:
 - 7z a ILSpy_binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*.config %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*\ILSpy.resources.dll
+
 test:
   assemblies:
     - 'ICSharpCode.Decompiler.Tests\bin\%configuration%\net462\ICSharpCode.Decompiler.Tests.exe'
     - 'ILSpy.Tests\bin\%configuration%\net462\ILSpy.Tests.exe'
     - 'ILSpy.BamlDecompiler.Tests\bin\%configuration%\net462\ILSpy.BamlDecompiler.Tests.dll'
+
 after_test:
 - python BuildTools\tidy.py
+
 for:
 - branches:
     except:

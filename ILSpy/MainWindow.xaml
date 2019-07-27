@@ -28,6 +28,7 @@
 			Executed="RefreshCommandExecuted" />
 		<CommandBinding
 			Command="Save"
+			CanExecute="SaveCommandCanExecute"
 			Executed="SaveCommandExecuted" />
 		<CommandBinding
 			Command="BrowseBack"

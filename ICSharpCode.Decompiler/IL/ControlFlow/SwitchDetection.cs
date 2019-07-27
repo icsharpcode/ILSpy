@@ -441,7 +441,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		///   s   c
 		/// 
 		///  where:
-		///   p|n: if (a && b) goto c; goto s;
+		///   p|n: if (a &amp;&amp; b) goto c; goto s;
 		/// 
 		///  Note that if n has only 1 successor, but is still a flow node, then a short circuit expression 
 		///  has a target (c) with no corresponding block (leave)

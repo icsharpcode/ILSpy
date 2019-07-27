@@ -102,11 +102,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return specializedTypeParameters ?? methodDefinition.TypeParameters;
 			}
 		}
-		
+
 		public bool IsExtensionMethod {
 			get { return methodDefinition.IsExtensionMethod; }
 		}
-		
+
+		public bool IsLocalFunction {
+			get { return methodDefinition.IsLocalFunction; }
+		}
+
 		public bool IsConstructor {
 			get { return methodDefinition.IsConstructor; }
 		}
@@ -199,7 +203,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				b.Append('[');
 				for (int i = 0; i < this.TypeArguments.Count; i++) {
 					if (i > 0) b.Append(", ");
-					b.Append(this.TypeArguments[i].ReflectionName);
+					b.Append(this.TypeArguments[i].ToString());
 				}
 				b.Append(']');
 			} else if (this.TypeParameters.Count > 0) {
@@ -212,7 +216,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				b.Append(this.Parameters[i].ToString());
 			}
 			b.Append("):");
-			b.Append(this.ReturnType.ReflectionName);
+			b.Append(this.ReturnType.ToString());
 			b.Append(']');
 			return b.ToString();
 		}

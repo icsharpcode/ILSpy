@@ -65,8 +65,13 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 
-			foreach (var block in container.Blocks)
+			for (int i = 0; i < container.Blocks.Count; i++) {
+				var block = container.Blocks[i];
+				// Note: it's possible for additional blocks to be appended to the container
+				// by the Visit() call; but there should be no other changes to the Blocks collection.
 				Visit(block, continueTarget);
+				Debug.Assert(container.Blocks[i] == block);
+			}
 		}
 
 		/// <summary>
@@ -94,10 +99,10 @@ namespace ICSharpCode.Decompiler.IL
 
 						// reduce nesting in switch blocks
 						if (container.Kind == ContainerKind.Switch &&
-							    CanDuplicateExit(NextInsn(), continueTarget) &&
-							    ReduceNesting(block, container, NextInsn()))
+								CanDuplicateExit(NextInsn(), continueTarget) &&
+								ReduceSwitchNesting(block, container, NextInsn())) {
 							RemoveRedundantExit(block, nextInstruction);
-
+						}
 						break;
 					case IfInstruction ifInst:
 						ImproveILOrdering(block, ifInst);
@@ -189,6 +194,18 @@ namespace ICSharpCode.Decompiler.IL
 				// if (cond) { ...; exit; }
 				// ...; exit;
 				EnsureEndPointUnreachable(ifInst.TrueInst, exitInst);
+				if (ifInst.FalseInst.HasFlag(InstructionFlags.EndPointUnreachable)) {
+					Debug.Assert(ifInst.HasFlag(InstructionFlags.EndPointUnreachable));
+					Debug.Assert(ifInst.Parent == block);
+					int removeAfter = ifInst.ChildIndex + 1;
+					if (removeAfter < block.Instructions.Count) {
+						// Remove all instructions that ended up dead
+						// (this should just be exitInst itself)
+						Debug.Assert(block.Instructions.SecondToLastOrDefault() == ifInst);
+						Debug.Assert(block.Instructions.Last() == exitInst);
+						block.Instructions.RemoveRange(removeAfter, block.Instructions.Count - removeAfter);
+					}
+				}
 				ExtractElseBlock(ifInst);
 				ifInst = elseIfInst;
 			} while (ifInst != null);
@@ -200,7 +217,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Reduce Nesting in switch statements by replacing break; in cases with the block exit, and extracting the default case
 		/// Does not affect IL order
 		/// </summary>
-		private bool ReduceNesting(Block parentBlock, BlockContainer switchContainer, ILInstruction exitInst)
+		private bool ReduceSwitchNesting(Block parentBlock, BlockContainer switchContainer, ILInstruction exitInst)
 		{
 			// break; from outer container cannot be brought inside the switch as the meaning would change
 			if (exitInst is Leave leave && !leave.IsLeavingFunction)
@@ -210,6 +227,8 @@ namespace ICSharpCode.Decompiler.IL
 			var switchInst = (SwitchInstruction)switchContainer.EntryPoint.Instructions.Single();
 			var defaultSection = switchInst.Sections.MaxBy(s => s.Labels.Count());
 			if (!defaultSection.Body.MatchBranch(out var defaultBlock) || defaultBlock.IncomingEdgeCount != 1)
+				return false;
+			if (defaultBlock.Parent != switchContainer)
 				return false;
 			
 			// tally stats for heuristic from each case block
@@ -229,8 +248,10 @@ namespace ICSharpCode.Decompiler.IL
 			var defaultTree = TreeTraversal.PreOrder(defaultNode, n => n.DominatorTreeChildren).ToList();
 			if (defaultTree.SelectMany(n => n.Successors).Any(n => !defaultNode.Dominates(n)))
 				return false;
-			
-			EnsureEndPointUnreachable(parentBlock, exitInst);
+
+			if (defaultTree.Count > 1 && !(parentBlock.Parent is BlockContainer))
+				return false;
+
 			context.Step("Extract default case of switch", switchContainer);
 
 			// replace all break; statements with the exitInst
@@ -247,14 +268,23 @@ namespace ICSharpCode.Decompiler.IL
 				switchContainer.Blocks.Remove(block);
 
 			// replace the parent block exit with the default case instructions
-			parentBlock.Instructions.RemoveLast();
+			if (parentBlock.Instructions.Last() == exitInst) {
+				parentBlock.Instructions.RemoveLast();
+			}
+			// Note: even though we don't check that the switchContainer is near the end of the block,
+			// we know this must be the case because we know "exitInst" is a leave/branch and directly
+			// follows the switchContainer.
+			Debug.Assert(parentBlock.Instructions.Last() == switchContainer);
 			parentBlock.Instructions.AddRange(defaultBlock.Instructions);
 
 			// add any additional blocks from the default case to the parent container
-			var parentContainer = (BlockContainer)parentBlock.Ancestors.First(p => p is BlockContainer);
-			int insertAt = parentContainer.Blocks.IndexOf(parentBlock) + 1;
-			foreach (var block in defaultBlocks.Skip(1))
-				parentContainer.Blocks.Insert(insertAt++, block);
+			Debug.Assert(defaultBlocks[0] == defaultBlock);
+			if (defaultBlocks.Count > 1) {
+				var parentContainer = (BlockContainer)parentBlock.Parent;
+				int insertAt = parentContainer.Blocks.IndexOf(parentBlock) + 1;
+				foreach (var block in defaultBlocks.Skip(1))
+					parentContainer.Blocks.Insert(insertAt++, block);
+			}
 
 			return true;
 		}

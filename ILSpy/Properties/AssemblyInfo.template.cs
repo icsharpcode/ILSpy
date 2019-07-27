@@ -33,16 +33,13 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Microsoft.Usage", "CA2243:AttributeStringLiteralsShouldParseCorrectly",
 	Justification = "AssemblyInformationalVersion does not need to be a parsable version")]
 
-[assembly: SuppressMessage("Redundancies in Symbol Declarations", "RECS0122:Initializing field with default value is redundant",
-	Justification = "Explicit default initialization is necessary to avoid compiler warning with MEF")]
-
 internal static class RevisionClass
 {
 	public const string Major = "5";
 	public const string Minor = "0";
 	public const string Build = "0";
 	public const string Revision = "$INSERTREVISION$";
-	public const string VersionName = "preview1";
+	public const string VersionName = "preview3";
 	
 	public const string FullVersion = Major + "." + Minor + "." + Build + ".$INSERTREVISION$$INSERTBRANCHPOSTFIX$$INSERTVERSIONNAMEPOSTFIX$";
 }

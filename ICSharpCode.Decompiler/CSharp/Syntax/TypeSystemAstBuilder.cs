@@ -407,7 +407,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		bool TypeDefMatches(ITypeDefinition typeDef, IType type)
 		{
-			if (type.Name != typeDef.Name || type.Namespace != typeDef.Namespace || type.TypeParameterCount != typeDef.TypeParameterCount)
+			if (type == null || type.Name != typeDef.Name || type.Namespace != typeDef.Namespace || type.TypeParameterCount != typeDef.TypeParameterCount)
 				return false;
 			bool defIsNested = typeDef.DeclaringTypeDefinition != null;
 			bool typeIsNested = type.DeclaringType != null;
@@ -739,7 +739,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (type == null)
 				throw new ArgumentNullException("type");
 			if (constantValue == null) {
-				if (type.IsReferenceType == true) {
+				if (type.IsReferenceType == true || type.IsKnownType(KnownTypeCode.NullableOfT)) {
 					var expr = new NullReferenceExpression();
 					if (AddResolveResultAnnotations)
 						expr.AddAnnotation(new ConstantResolveResult(SpecialType.NullType, null));
@@ -1086,8 +1086,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				AstType mathAstType = ConvertType(mathType);
 				var fieldRef = new MemberReferenceExpression(new TypeReferenceExpression(mathAstType), memberName);
-				if (AddResolveResultAnnotations)
-					fieldRef.WithRR(new MemberResolveResult(mathAstType.GetResolveResult(), mathType.GetFields(f => f.Name == memberName).Single()));
+				if (AddResolveResultAnnotations) {
+					var field = mathType.GetFields(f => f.Name == memberName).FirstOrDefault();
+					if (field != null) {
+						fieldRef.WithRR(new MemberResolveResult(mathAstType.GetResolveResult(), field));
+					}
+				}
 				if (type.IsKnownType(KnownTypeCode.Double))
 					return fieldRef;
 				if (mathType.Name == "MathF")
@@ -1629,8 +1633,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			foreach (IParameter p in method.Parameters) {
 				decl.Parameters.Add(ConvertParameter(p));
 			}
-			if (method.IsExtensionMethod && method.ReducedFrom == null && decl.Parameters.Any() && decl.Parameters.First().ParameterModifier == ParameterModifier.None)
-				decl.Parameters.First().ParameterModifier = ParameterModifier.This;
+			if (method.IsExtensionMethod && method.ReducedFrom == null && decl.Parameters.Any())
+				decl.Parameters.First().HasThisModifier = true;
 			
 			if (this.ShowTypeParameters && this.ShowTypeParameterConstraints && !method.IsOverride && !method.IsExplicitInterfaceImplementation) {
 				foreach (ITypeParameter tp in method.TypeParameters) {

@@ -513,9 +513,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					for (int i = 0; i < args.Length; i++) {
 						IParameter param = m.Parameters[i];
 						IType parameterType = param.Type.AcceptVisitor(substitution);
-						if ((param.IsRef || param.IsOut) && parameterType.Kind == TypeKind.ByReference) {
+						if ((param.ReferenceKind != ReferenceKind.None) && parameterType.Kind == TypeKind.ByReference) {
 							parameterType = ((ByReferenceType)parameterType).ElementType;
-							args[i] = new ByReferenceResolveResult(parameterType, param.IsOut);
+							args[i] = new ByReferenceResolveResult(parameterType, param.ReferenceKind);
 						} else {
 							args[i] = new ResolveResult(parameterType);
 						}
@@ -570,7 +570,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		void MakeExactInference(IType U, IType V)
 		{
 			Log.WriteLine("MakeExactInference from " + U + " to " + V);
-			
+
+			if (V is NullabilityAnnotatedTypeParameter nullableTP) {
+				V = nullableTP.OriginalTypeParameter;
+			}
+
 			// If V is one of the unfixed Xi then U is added to the set of bounds for Xi.
 			TP tp = GetTPForType(V);
 			if (tp != null && tp.IsFixed == false) {
@@ -640,7 +644,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				MakeLowerBoundInference(NullableType.GetUnderlyingType(U), NullableType.GetUnderlyingType(V));
 				return;
 			}
-			
+			// Handle by reference types:
+			ByReferenceType brU = U as ByReferenceType;
+			ByReferenceType brV = V as ByReferenceType;
+			if (brU != null && brV != null) {
+				MakeExactInference(brU.ElementType, brV.ElementType);
+				return;
+			}
 			// Handle array types:
 			ArrayType arrU = U as ArrayType;
 			ArrayType arrV = V as ArrayType;

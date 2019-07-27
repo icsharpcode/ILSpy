@@ -36,7 +36,9 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case null:
 					// field of unresolved type
-					Debug.Assert(target.ResultType == StackType.O || target.ResultType == StackType.I || target.ResultType == StackType.Ref);
+					Debug.Assert(target.ResultType == StackType.O || target.ResultType == StackType.I
+						|| target.ResultType == StackType.Ref || target.ResultType == StackType.Unknown,
+						"Field of unresolved type with invalid target");
 					break;
 			}
 		}

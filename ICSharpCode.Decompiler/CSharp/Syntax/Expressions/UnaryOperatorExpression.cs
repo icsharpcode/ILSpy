@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		PostDecrement,
 		/// <summary>Dereferencing (*a)</summary>
 		Dereference,
-		/// <summary>Get address (&a)</summary>
+		/// <summary>Get address (&amp;a)</summary>
 		AddressOf,
 		/// <summary>C# 5.0 await</summary>
 		Await,

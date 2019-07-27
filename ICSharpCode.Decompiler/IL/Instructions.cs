@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// In case 3 (managed reference), the dereferenced value is the input being tested, and the nullable.unwrap instruction returns the managed reference unmodified (if the value is non-null).</summary>
 		NullableUnwrap,
 		/// <summary>Serves as jump target for the nullable.unwrap instruction.
-		/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable<T> if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
+		/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable&lt;T&gt; if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
 		NullableRewrap,
 		/// <summary>Loads a constant string.</summary>
 		LdStr,
@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.IL
 		StringToInt,
 		/// <summary>ILAst representation of Expression.Convert.</summary>
 		ExpressionTreeCast,
-		/// <summary>Use of user-defined && or || operator.</summary>
+		/// <summary>Use of user-defined &amp;&amp; or || operator.</summary>
 		UserDefinedLogicOperator,
 		/// <summary>ILAst representation of a short-circuiting binary operator inside a dynamic expression.</summary>
 		DynamicLogicOperatorInstruction,
@@ -476,7 +476,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index) {
 				default:
-					this.Arguments[index - 0] = value;
+					this.Arguments[index - 0] = (ILInstruction)value;
 					break;
 			}
 		}
@@ -491,7 +491,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = (CallInstruction)ShallowClone();
 			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
-			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
+			clone.Arguments.AddRange(this.Arguments.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
 		protected override InstructionFlags ComputeFlags()
@@ -742,9 +742,11 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.body, value, 0);
 			}
 		}
+		public static readonly SlotInfo LocalFunctionsSlot = new SlotInfo("LocalFunctions");
+		public InstructionCollection<ILFunction> LocalFunctions { get; private set; }
 		protected sealed override int GetChildCount()
 		{
-			return 1;
+			return 1 + LocalFunctions.Count;
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
@@ -752,7 +754,7 @@ namespace ICSharpCode.Decompiler.IL
 				case 0:
 					return this.body;
 				default:
-					throw new IndexOutOfRangeException();
+					return this.LocalFunctions[index - 1];
 			}
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
@@ -762,7 +764,8 @@ namespace ICSharpCode.Decompiler.IL
 					this.Body = value;
 					break;
 				default:
-					throw new IndexOutOfRangeException();
+					this.LocalFunctions[index - 1] = (ILFunction)value;
+					break;
 			}
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
@@ -771,13 +774,15 @@ namespace ICSharpCode.Decompiler.IL
 				case 0:
 					return BodySlot;
 				default:
-					throw new IndexOutOfRangeException();
+					return LocalFunctionsSlot;
 			}
 		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (ILFunction)ShallowClone();
 			clone.Body = this.body.Clone();
+			clone.LocalFunctions = new InstructionCollection<ILFunction>(clone, 1);
+			clone.LocalFunctions.AddRange(this.LocalFunctions.Select(arg => (ILFunction)arg.Clone()));
 			clone.CloneVariables();
 			return clone;
 		}
@@ -797,7 +802,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as ILFunction;
-			return o != null && this.body.PerformMatch(o.body, ref match);
+			return o != null && this.body.PerformMatch(o.body, ref match) && Patterns.ListMatch.DoMatch(this.LocalFunctions, o.LocalFunctions, ref match);
 		}
 	}
 }
@@ -1058,7 +1063,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as NumericCompoundAssign;
-			return o != null && type.Equals(o.type) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+			return o != null && type.Equals(o.type) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && this.EvalMode == o.EvalMode && this.TargetKind == o.TargetKind && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
 		}
 	}
 }
@@ -1092,7 +1097,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as UserDefinedCompoundAssign;
-			return o != null && this.Method.Equals(o.Method) && this.CompoundAssignmentType == o.CompoundAssignmentType && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+			return o != null && this.Method.Equals(o.Method) && this.EvalMode == o.EvalMode && this.TargetKind == o.TargetKind && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
 		}
 	}
 }
@@ -1126,7 +1131,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as DynamicCompoundAssign;
-			return o != null && this.CompoundAssignmentType == o.CompoundAssignmentType && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+			return o != null && this.EvalMode == o.EvalMode && this.TargetKind == o.TargetKind && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
 		}
 	}
 }
@@ -2709,7 +2714,7 @@ namespace ICSharpCode.Decompiler.IL
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Serves as jump target for the nullable.unwrap instruction.
-	/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable<T> if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
+	/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable&lt;T&gt; if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
 	public sealed partial class NullableRewrap : UnaryInstruction
 	{
 		public NullableRewrap(ILInstruction argument) : base(OpCode.NullableRewrap, argument)
@@ -4254,7 +4259,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index) {
 				default:
-					this.Indices[index - 0] = value;
+					this.Indices[index - 0] = (ILInstruction)value;
 					break;
 			}
 		}
@@ -4269,7 +4274,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = (NewArr)ShallowClone();
 			clone.Indices = new InstructionCollection<ILInstruction>(clone, 0);
-			clone.Indices.AddRange(this.Indices.Select(arg => arg.Clone()));
+			clone.Indices.AddRange(this.Indices.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
 		public override StackType ResultType { get { return StackType.O; } }
@@ -4607,7 +4612,7 @@ namespace ICSharpCode.Decompiler.IL
 					this.Array = value;
 					break;
 				default:
-					this.Indices[index - 1] = value;
+					this.Indices[index - 1] = (ILInstruction)value;
 					break;
 			}
 		}
@@ -4625,7 +4630,7 @@ namespace ICSharpCode.Decompiler.IL
 			var clone = (LdElema)ShallowClone();
 			clone.Array = this.array.Clone();
 			clone.Indices = new InstructionCollection<ILInstruction>(clone, 1);
-			clone.Indices.AddRange(this.Indices.Select(arg => arg.Clone()));
+			clone.Indices.AddRange(this.Indices.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
 		public bool DelayExceptions; // NullReferenceException/IndexOutOfBoundsException only occurs when the reference is dereferenced
@@ -4905,7 +4910,7 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>Use of user-defined && or || operator.</summary>
+	/// <summary>Use of user-defined &amp;&amp; or || operator.</summary>
 	public sealed partial class UserDefinedLogicOperator : ILInstruction, IInstructionWithMethodOperand
 	{
 		public UserDefinedLogicOperator(IMethod method, ILInstruction left, ILInstruction right) : base(OpCode.UserDefinedLogicOperator)
@@ -5578,7 +5583,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index) {
 				default:
-					this.Arguments[index - 0] = value;
+					this.Arguments[index - 0] = (ILInstruction)value;
 					break;
 			}
 		}
@@ -5593,7 +5598,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = (DynamicGetIndexInstruction)ShallowClone();
 			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
-			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
+			clone.Arguments.AddRange(this.Arguments.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
 		protected override InstructionFlags ComputeFlags()
@@ -5646,7 +5651,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index) {
 				default:
-					this.Arguments[index - 0] = value;
+					this.Arguments[index - 0] = (ILInstruction)value;
 					break;
 			}
 		}
@@ -5661,7 +5666,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = (DynamicSetIndexInstruction)ShallowClone();
 			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
-			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
+			clone.Arguments.AddRange(this.Arguments.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
 		protected override InstructionFlags ComputeFlags()
@@ -5714,7 +5719,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index) {
 				default:
-					this.Arguments[index - 0] = value;
+					this.Arguments[index - 0] = (ILInstruction)value;
 					break;
 			}
 		}
@@ -5729,7 +5734,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = (DynamicInvokeMemberInstruction)ShallowClone();
 			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
-			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
+			clone.Arguments.AddRange(this.Arguments.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
 		protected override InstructionFlags ComputeFlags()
@@ -5782,7 +5787,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index) {
 				default:
-					this.Arguments[index - 0] = value;
+					this.Arguments[index - 0] = (ILInstruction)value;
 					break;
 			}
 		}
@@ -5797,7 +5802,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = (DynamicInvokeConstructorInstruction)ShallowClone();
 			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
-			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
+			clone.Arguments.AddRange(this.Arguments.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
 		protected override InstructionFlags ComputeFlags()
@@ -5850,7 +5855,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index) {
 				default:
-					this.Arguments[index - 0] = value;
+					this.Arguments[index - 0] = (ILInstruction)value;
 					break;
 			}
 		}
@@ -5865,7 +5870,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = (DynamicInvokeInstruction)ShallowClone();
 			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
-			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
+			clone.Arguments.AddRange(this.Arguments.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
 		protected override InstructionFlags ComputeFlags()

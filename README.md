@@ -1,4 +1,4 @@
-# ILSpy [![Join the chat at https://gitter.im/icsharpcode/ILSpy](https://badges.gitter.im/icsharpcode/ILSpy.svg)](https://gitter.im/icsharpcode/ILSpy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![NuGet](https://img.shields.io/nuget/v/ICSharpCode.Decompiler.svg)](https://nuget.org/packages/ICSharpCode.Decompiler) [![Build status](https://ci.appveyor.com/api/projects/status/imgec05g0wwv25ij/branch/master?svg=true)](https://ci.appveyor.com/project/icsharpcode/ilspy/branch/master) [![Twitter Follow](https://img.shields.io/twitter/follow/ILSpy.svg?label=Follow%20@ILSpy)](https://twitter.com/ilspy) [![ilspy.net](https://img.shields.io/badge/@-ilspy.net-blue.svg)](http://www.ilspy.net)  [![ILSpy VS extension](https://img.shields.io/badge/VS%20Extension-ILSpy-blue.svg)](https://visualstudiogallery.msdn.microsoft.com/8ef1d688-f80c-4380-8004-2ec7f814e7de)
+# ILSpy [![Join the chat at https://gitter.im/icsharpcode/ILSpy](https://badges.gitter.im/icsharpcode/ILSpy.svg)](https://gitter.im/icsharpcode/ILSpy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![NuGet](https://img.shields.io/nuget/v/ICSharpCode.Decompiler.svg)](https://nuget.org/packages/ICSharpCode.Decompiler) [![Build status](https://ci.appveyor.com/api/projects/status/imgec05g0wwv25ij/branch/master?svg=true)](https://ci.appveyor.com/project/icsharpcode/ilspy/branch/master) [![Twitter Follow](https://img.shields.io/twitter/follow/ILSpy.svg?label=Follow%20@ILSpy)](https://twitter.com/ilspy) [![ILSpy VS extension](https://img.shields.io/badge/VS%20Extension-ILSpy-blue.svg)](https://visualstudiogallery.msdn.microsoft.com/8ef1d688-f80c-4380-8004-2ec7f814e7de) [![Build Status](https://icsharpcode.visualstudio.com/icsharpcode-pipelines/_apis/build/status/icsharpcode.ILSpy?branchName=master)](https://icsharpcode.visualstudio.com/icsharpcode-pipelines/_build/latest?definitionId=1&branchName=master)
 
 ILSpy is the open-source .NET assembly browser and decompiler.
 
@@ -54,6 +54,7 @@ Windows:
   - Individual Component "VC++ 2017 version 15.9 v14.16 latest v141 tools" (or similar)
     - The VC++ toolset is optional; if present it is used for `editbin.exe` to modify the stack size used by ILSpy.exe from 1MB to 16MB, because the decompiler makes heavy use of recursion, where small stack sizes lead to problems in very complex methods.
 - Install the [.NET Core SDK 2.2](https://dotnet.microsoft.com/download)
+- Install the [.NET Core SDK 3](https://dotnet.microsoft.com/download/dotnet-core)
 - Check out the ILSpy repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Open ILSpy.sln in Visual Studio.
@@ -63,6 +64,7 @@ Windows:
 
 Unix:
 - Make sure .NET Core 2.2 is installed (you can get it here: https://get.dot.net).
+- Make sure [.NET Core SDK 3](https://dotnet.microsoft.com/download/dotnet-core) is installed.
 - Check out the repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Use `dotnet build Frontends.sln` to build the non-Windows flavors of ILSpy (cli and powershell core).

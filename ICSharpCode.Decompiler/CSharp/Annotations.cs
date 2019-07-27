@@ -240,4 +240,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.Leave = leave;
 		}
 	}
+
+	/// <summary>
+	/// Annotates an expression when an implicit user-defined conversion was omitted.
+	/// </summary>
+	public class ImplicitConversionAnnotation
+	{
+		public readonly ConversionResolveResult ConversionResolveResult;
+		public IType TargetType => ConversionResolveResult.Type;
+
+		public ImplicitConversionAnnotation(ConversionResolveResult conversionResolveResult)
+		{
+			this.ConversionResolveResult = conversionResolveResult;
+		}
+	}
 }

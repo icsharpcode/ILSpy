@@ -304,6 +304,24 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The directory is not empty. File will be overwritten.\r\nAre you sure you want to continue?.
+        /// </summary>
+        public static string AssemblySaveCodeDirectoryNotEmpty {
+            get {
+                return ResourceManager.GetString("AssemblySaveCodeDirectoryNotEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Project Directory not empty.
+        /// </summary>
+        public static string AssemblySaveCodeDirectoryNotEmptyTitle {
+            get {
+                return ResourceManager.GetString("AssemblySaveCodeDirectoryNotEmptyTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Automatically check for updates every week.
         /// </summary>
         public static string AutomaticallyCheckUpdatesEveryWeek {
@@ -471,6 +489,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilerSettings_AllowExtensionAddMethodsInCollectionInitializerExpressions {
             get {
                 return ResourceManager.GetString("DecompilerSettings.AllowExtensionAddMethodsInCollectionInitializerExpressions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use &apos;ref&apos; extension methods.
+        /// </summary>
+        public static string DecompilerSettings_AllowExtensionMethodSyntaxOnRef {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.AllowExtensionMethodSyntaxOnRef", resourceCulture);
             }
         }
         
@@ -700,11 +727,11 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Introduce local functions (NOT IMPLEMENTED!).
+        ///   Looks up a localized string similar to Introduce local functions.
         /// </summary>
-        public static string DecompilerSettings_IntroduceLocalFunctionsNOTIMPLEMENTED {
+        public static string DecompilerSettings_IntroduceLocalFunctions {
             get {
-                return ResourceManager.GetString("DecompilerSettings.IntroduceLocalFunctionsNOTIMPLEMENTED", resourceCulture);
+                return ResourceManager.GetString("DecompilerSettings.IntroduceLocalFunctions", resourceCulture);
             }
         }
         

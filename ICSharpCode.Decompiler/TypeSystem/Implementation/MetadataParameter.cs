@@ -81,25 +81,26 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		const ParameterAttributes inOut = ParameterAttributes.In | ParameterAttributes.Out;
 
-		public bool IsRef => DetectRefKind() == CSharp.Syntax.ParameterModifier.Ref;
+		public ReferenceKind ReferenceKind => DetectRefKind();
+		public bool IsRef => DetectRefKind() == ReferenceKind.Ref;
 		public bool IsOut => Type.Kind == TypeKind.ByReference && (attributes & inOut) == ParameterAttributes.Out;
-		public bool IsIn => DetectRefKind() == CSharp.Syntax.ParameterModifier.In;
+		public bool IsIn => DetectRefKind() == ReferenceKind.In;
 
 		public bool IsOptional => (attributes & ParameterAttributes.Optional) != 0;
 
-		CSharp.Syntax.ParameterModifier DetectRefKind()
+		ReferenceKind DetectRefKind()
 		{
 			if (Type.Kind != TypeKind.ByReference)
-				return CSharp.Syntax.ParameterModifier.None;
+				return ReferenceKind.None;
 			if ((attributes & inOut) == ParameterAttributes.Out)
-				return CSharp.Syntax.ParameterModifier.Out;
+				return ReferenceKind.Out;
 			if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0) {
 				var metadata = module.metadata;
 				var parameterDef = metadata.GetParameter(handle);
 				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly))
-					return CSharp.Syntax.ParameterModifier.In;
+					return ReferenceKind.In;
 			}
-			return CSharp.Syntax.ParameterModifier.Ref;
+			return ReferenceKind.Ref;
 		}
 
 		public bool IsParams {

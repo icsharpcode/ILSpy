@@ -221,12 +221,21 @@ namespace ICSharpCode.Decompiler.Tests.Pretty
 		{
 
 		}
+#if CS72
+		public static void Do(this ref DateTime test)
+		{
 
-		public static void Do2(this int test)
+		}
+#endif
+
+		public static void Do2(this int test, DateTime date)
 		{
 			test.Do();
 			((IEnumerable<int>)null).Any();
 			((object)null).Do();
+#if CS72
+			date.Do();
+#endif
 		}
 	}
 }

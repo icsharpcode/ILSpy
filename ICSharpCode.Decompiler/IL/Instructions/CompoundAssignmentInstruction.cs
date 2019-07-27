@@ -23,36 +23,101 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	public enum CompoundAssignmentType : byte
+	public enum CompoundEvalMode : byte
 	{
+		/// <summary>
+		/// The compound.assign instruction will evaluate to the old value.
+		/// This mode is used only for post-increment/decrement.
+		/// </summary>
 		EvaluatesToOldValue,
+		/// <summary>
+		/// The compound.assign instruction will evaluate to the new value.
+		/// This mode is used for compound assignments and pre-increment/decrement.
+		/// </summary>
 		EvaluatesToNewValue
+	}
+
+	public enum CompoundTargetKind : byte
+	{
+		/// <summary>
+		/// The target is an instruction computing an address,
+		/// and the compound.assign will implicitly load/store from/to that address.
+		/// </summary>
+		Address,
+		/// <summary>
+		/// The Target must be a call to a property getter,
+		/// and the compound.assign will implicitly call the corresponding property setter.
+		/// </summary>
+		Property,
+		/// <summary>
+		/// The target is a dynamic call.
+		/// </summary>
+		Dynamic
 	}
 
 	public abstract partial class CompoundAssignmentInstruction : ILInstruction
 	{
-		public readonly CompoundAssignmentType CompoundAssignmentType;
+		public readonly CompoundEvalMode EvalMode;
 
-		public CompoundAssignmentInstruction(OpCode opCode, CompoundAssignmentType compoundAssignmentType, ILInstruction target, ILInstruction value)
+		/// <summary>
+		/// If TargetIsProperty is true, the Target must be a call to a property getter,
+		/// and the compound.assign will implicitly call the corresponding property setter.
+		/// Otherwise, the Target can be any instruction that evaluates to an address,
+		/// and the compound.assign will implicit load and store from/to that address.
+		/// </summary>
+		public readonly CompoundTargetKind TargetKind;
+
+		public CompoundAssignmentInstruction(OpCode opCode, CompoundEvalMode evalMode, ILInstruction target, CompoundTargetKind targetKind, ILInstruction value)
 			: base(opCode)
 		{
-			this.CompoundAssignmentType = compoundAssignmentType;
+			this.EvalMode = evalMode;
 			this.Target = target;
+			this.TargetKind = targetKind;
 			this.Value = value;
+			CheckValidTarget();
 		}
 
-		internal static bool IsValidCompoundAssignmentTarget(ILInstruction inst)
+		internal override void CheckInvariant(ILPhase phase)
 		{
-			switch (inst.OpCode) {
-				// case OpCode.LdLoc: -- not valid -- does not mark the variable as written to
-				case OpCode.LdObj:
-					return true;
-				case OpCode.Call:
-				case OpCode.CallVirt:
-					var owner = ((CallInstruction)inst).Method.AccessorOwner as IProperty;
-					return owner != null && owner.CanSet;
-				default:
-					return false;
+			base.CheckInvariant(phase);
+			CheckValidTarget();
+		}
+
+		[Conditional("DEBUG")]
+		void CheckValidTarget()
+		{ 
+			switch (TargetKind) {
+				case CompoundTargetKind.Address:
+					Debug.Assert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
+					break;
+				case CompoundTargetKind.Property:
+					Debug.Assert(target.OpCode == OpCode.Call || target.OpCode == OpCode.CallVirt);
+					var owner = ((CallInstruction)target).Method.AccessorOwner as IProperty;
+					Debug.Assert(owner != null && owner.CanSet);
+					break;
+				case CompoundTargetKind.Dynamic:
+					Debug.Assert(target.OpCode == OpCode.DynamicGetMemberInstruction || target.OpCode == OpCode.DynamicGetIndexInstruction);
+					break;
+			}
+		}
+
+		protected void WriteSuffix(ITextOutput output)
+		{
+			switch (TargetKind) {
+				case CompoundTargetKind.Address:
+					output.Write(".address");
+					break;
+				case CompoundTargetKind.Property:
+					output.Write(".property");
+					break;
+			}
+			switch (EvalMode) {
+				case CompoundEvalMode.EvaluatesToNewValue:
+					output.Write(".new");
+					break;
+				case CompoundEvalMode.EvaluatesToOldValue:
+					output.Write(".old");
+					break;
 			}
 		}
 	}
@@ -82,8 +147,9 @@ namespace ICSharpCode.Decompiler.IL
 
 		public bool IsLifted { get; }
 
-		public NumericCompoundAssign(BinaryNumericInstruction binary, ILInstruction target, ILInstruction value, IType type, CompoundAssignmentType compoundAssignmentType)
-			: base(OpCode.NumericCompoundAssign, compoundAssignmentType, target, value)
+		public NumericCompoundAssign(BinaryNumericInstruction binary, ILInstruction target,
+			CompoundTargetKind targetKind, ILInstruction value, IType type, CompoundEvalMode evalMode)
+			: base(OpCode.NumericCompoundAssign, evalMode, target, targetKind, value)
 		{
 			Debug.Assert(IsBinaryCompatibleWithType(binary, type));
 			this.CheckForOverflow = binary.CheckForOverflow;
@@ -95,8 +161,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.IsLifted = binary.IsLifted;
 			this.type = type;
 			this.AddILRange(binary);
-			Debug.Assert(compoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue || (Operator == BinaryNumericOperator.Add || Operator == BinaryNumericOperator.Sub));
-			Debug.Assert(IsValidCompoundAssignmentTarget(Target));
+			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || (Operator == BinaryNumericOperator.Add || Operator == BinaryNumericOperator.Sub));
+			Debug.Assert(this.ResultType == (IsLifted ? StackType.O : UnderlyingResultType));
 		}
 		
 		/// <summary>
@@ -175,16 +241,20 @@ namespace ICSharpCode.Decompiler.IL
 			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write("." + BinaryNumericInstruction.GetOperatorName(Operator));
-			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
-				output.Write(".new");
-			else
-				output.Write(".old");
-			if (CheckForOverflow)
+			if (CheckForOverflow) {
 				output.Write(".ovf");
-			if (Sign == Sign.Unsigned)
+			}
+			if (Sign == Sign.Unsigned) {
 				output.Write(".unsigned");
-			else if (Sign == Sign.Signed)
+			} else if (Sign == Sign.Signed) {
 				output.Write(".signed");
+			}
+			output.Write('.');
+			output.Write(UnderlyingResultType.ToString().ToLowerInvariant());
+			if (IsLifted) {
+				output.Write(".lifted");
+			}
+			base.WriteSuffix(output);
 			output.Write('(');
 			Target.WriteTo(output, options);
 			output.Write(", ");
@@ -198,13 +268,13 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly IMethod Method;
 		public bool IsLifted => false; // TODO: implement lifted user-defined compound assignments
 
-		public UserDefinedCompoundAssign(IMethod method, CompoundAssignmentType compoundAssignmentType, ILInstruction target, ILInstruction value)
-			: base(OpCode.UserDefinedCompoundAssign, compoundAssignmentType, target, value)
+		public UserDefinedCompoundAssign(IMethod method, CompoundEvalMode evalMode, 
+			ILInstruction target, CompoundTargetKind targetKind, ILInstruction value)
+			: base(OpCode.UserDefinedCompoundAssign, evalMode, target, targetKind, value)
 		{
 			this.Method = method;
 			Debug.Assert(Method.IsOperator || IsStringConcat(method));
-			Debug.Assert(compoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue || (Method.Name == "op_Increment" || Method.Name == "op_Decrement"));
-			Debug.Assert(IsValidCompoundAssignmentTarget(Target));
+			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || (Method.Name == "op_Increment" || Method.Name == "op_Decrement"));
 		}
 
 		public static bool IsStringConcat(IMethod method)
@@ -218,11 +288,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			
-			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
-				output.Write(".new");
-			else
-				output.Write(".old");
+			base.WriteSuffix(output);
 			output.Write(' ');
 			Method.WriteTo(output);
 			output.Write('(');
@@ -240,8 +306,11 @@ namespace ICSharpCode.Decompiler.IL
 		public CSharpArgumentInfo ValueArgumentInfo { get; }
 		public CSharpBinderFlags BinderFlags { get; }
 
-		public DynamicCompoundAssign(ExpressionType op, CSharpBinderFlags binderFlags, ILInstruction target, CSharpArgumentInfo targetArgumentInfo, ILInstruction value, CSharpArgumentInfo valueArgumentInfo)
-			: base(OpCode.DynamicCompoundAssign, CompoundAssignmentTypeFromOperation(op), target, value)
+		public DynamicCompoundAssign(ExpressionType op, CSharpBinderFlags binderFlags,
+			ILInstruction target, CSharpArgumentInfo targetArgumentInfo, 
+			ILInstruction value, CSharpArgumentInfo valueArgumentInfo,
+			CompoundTargetKind targetKind = CompoundTargetKind.Dynamic)
+			: base(OpCode.DynamicCompoundAssign, CompoundEvalModeFromOperation(op), target, targetKind, value)
 		{
 			if (!IsExpressionTypeSupported(op))
 				throw new ArgumentOutOfRangeException("op");
@@ -257,10 +326,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			output.Write("." + Operation.ToString().ToLower());
 			DynamicInstruction.WriteBinderFlags(BinderFlags, output, options);
-			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
-				output.Write(".new");
-			else
-				output.Write(".old");
+			base.WriteSuffix(output);
 			output.Write(' ');
 			DynamicInstruction.WriteArgumentList(output, options, (Target, TargetArgumentInfo), (Value, ValueArgumentInfo));
 		}
@@ -286,14 +352,14 @@ namespace ICSharpCode.Decompiler.IL
 				|| type == ExpressionType.SubtractAssignChecked;
 		}
 
-		static CompoundAssignmentType CompoundAssignmentTypeFromOperation(ExpressionType op)
+		static CompoundEvalMode CompoundEvalModeFromOperation(ExpressionType op)
 		{
 			switch (op) {
 				case ExpressionType.PostIncrementAssign:
 				case ExpressionType.PostDecrementAssign:
-					return CompoundAssignmentType.EvaluatesToOldValue;
+					return CompoundEvalMode.EvaluatesToOldValue;
 				default:
-					return CompoundAssignmentType.EvaluatesToNewValue;
+					return CompoundEvalMode.EvaluatesToNewValue;
 			}
 		}
 	}

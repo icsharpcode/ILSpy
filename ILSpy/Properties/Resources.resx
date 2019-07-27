@@ -702,8 +702,8 @@
   <data name="DecompilerSettings.RemoveOptionalArgumentsIfPossible" xml:space="preserve">
     <value>Remove optional arguments, if possible</value>
   </data>
-  <data name="DecompilerSettings.IntroduceLocalFunctionsNOTIMPLEMENTED" xml:space="preserve">
-    <value>Introduce local functions (NOT IMPLEMENTED!)</value>
+  <data name="DecompilerSettings.IntroduceLocalFunctions" xml:space="preserve">
+    <value>Introduce local functions</value>
   </data>
   <data name="DecompilerSettings.NullableReferenceTypes" xml:space="preserve">
     <value>Nullable reference types</value>
@@ -731,5 +731,14 @@
   </data>
   <data name="DecompilerSettings.UseThrowExpressions" xml:space="preserve">
     <value>Use throw expressions</value>
+  </data>
+  <data name="DecompilerSettings.AllowExtensionMethodSyntaxOnRef" xml:space="preserve">
+    <value>Use 'ref' extension methods</value>
+  </data>
+  <data name="AssemblySaveCodeDirectoryNotEmpty" xml:space="preserve">
+    <value>The directory is not empty. File will be overwritten.\r\nAre you sure you want to continue?</value>
+  </data>
+  <data name="AssemblySaveCodeDirectoryNotEmptyTitle" xml:space="preserve">
+    <value>Project Directory not empty</value>
   </data>
 </root>

@@ -9,7 +9,7 @@
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
 
     <EnableDefaultItems>false</EnableDefaultItems>
-    <ExtrasEnableWpfProjectSetup>true</ExtrasEnableWpfProjectSetup>
+    <UseWpf>true</UseWpf>
     <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
     <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
 
@@ -52,6 +52,7 @@
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="15.5.23" />
     <PackageReference Include="Mono.Cecil" Version="0.10.3" />
+    <PackageReference Include="OSVersionHelper" Version="1.0.11" />
   </ItemGroup>
 
   <ItemGroup>
@@ -81,9 +82,7 @@
     <Compile Include="Analyzers\Builtin\TypeInstantiatedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\TypeUsedByAnalyzer.cs" />
     <Compile Include="Analyzers\IAnalyzer.cs" />
-    <Compile Include="Analyzers\AnalyzerTreeView.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="Analyzers\AnalyzerTreeView.cs" />
     <Compile Include="Analyzers\TreeNodes\AnalyzedAccessorTreeNode.cs" />
     <Compile Include="Analyzers\TreeNodes\AnalyzedEventTreeNode.cs" />
     <Compile Include="Analyzers\TreeNodes\AnalyzedMethodTreeNode.cs" />
@@ -91,7 +90,6 @@
     <Compile Include="Analyzers\TreeNodes\AnalyzedModuleTreeNode.cs" />
     <Compile Include="Analyzers\TreeNodes\AnalyzedTypeTreeNode.cs" />
     <Compile Include="App.xaml.cs">
-      <SubType>Code</SubType>
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="AssemblyList.cs" />
@@ -176,16 +174,13 @@
     <Compile Include="Commands\OpenCommand.cs" />
     <Compile Include="Commands\OpenFromGacCommand.cs" />
     <Compile Include="NugetPackageBrowserDialog.xaml.cs">
-      <SubType>Code</SubType>
       <DependentUpon>NugetPackageBrowserDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="OpenFromGacDialog.xaml.cs">
       <DependentUpon>OpenFromGacDialog.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Controls\ResourceStringTable.xaml.cs">
       <DependentUpon>ResourceStringTable.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="OpenListDialog.xaml.cs">
       <DependentUpon>OpenListDialog.xaml</DependentUpon>
@@ -193,7 +188,6 @@
     <Compile Include="Options\DisplaySettings.cs" />
     <Compile Include="Options\DisplaySettingsPanel.xaml.cs">
       <DependentUpon>DisplaySettingsPanel.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Options\MiscSettings.cs" />
     <Compile Include="Options\MiscSettingsPanel.xaml.cs">
@@ -201,20 +195,20 @@
     </Compile>
     <Compile Include="Options\OptionsDialog.xaml.cs">
       <DependentUpon>OptionsDialog.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\RefreshCommand.cs" />
     <Compile Include="Commands\SaveCommand.cs" />
     <Compile Include="Search\SearchPane.cs">
       <DependentUpon>SearchPane.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Commands\SimpleCommand.cs" />
     <Compile Include="Search\AbstractSearchStrategy.cs" />
+    <Compile Include="SolutionWriter.cs" />
     <Compile Include="TaskHelper.cs" />
     <Compile Include="TextView\EditorCommands.cs" />
     <Compile Include="TextView\FoldingCommands.cs" />
+    <Compile Include="Commands\SaveCodeContextMenuEntry.cs" />
     <Compile Include="TextView\XmlDocRenderer.cs" />
     <Compile Include="Analyzers\AnalyzeCommand.cs" />
     <Compile Include="Analyzers\Builtin\FieldAccessAnalyzer.cs" />
@@ -281,7 +275,6 @@
     <None Include="Properties\launchSettings.json" />
     <Compile Include="Properties\WPFAssemblyInfo.cs" />
     <Compile Include="MainWindow.xaml.cs">
-      <SubType>Code</SubType>
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="SessionSettings.cs" />

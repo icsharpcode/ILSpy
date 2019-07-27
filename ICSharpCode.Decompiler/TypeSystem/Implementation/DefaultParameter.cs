@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly IType type;
 		readonly string name;
 		readonly IReadOnlyList<IAttribute> attributes;
-		readonly bool isRef, isOut, isIn, isParams, isOptional;
+		readonly ReferenceKind referenceKind;
+		readonly bool isParams, isOptional;
 		readonly object defaultValue;
 		readonly IParameterizedMember owner;
 		
@@ -47,7 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public DefaultParameter(IType type, string name, IParameterizedMember owner = null, IReadOnlyList<IAttribute> attributes = null,
-		                        bool isRef = false, bool isOut = false, bool isIn = false, bool isParams = false, bool isOptional = false, object defaultValue = null)
+		                        ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false, object defaultValue = null)
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
@@ -57,9 +58,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.name = name;
 			this.owner = owner;
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
-			this.isRef = isRef;
-			this.isOut = isOut;
-			this.isIn = isIn;
+			this.referenceKind = referenceKind;
 			this.isParams = isParams;
 			this.isOptional = isOptional;
 			this.defaultValue = defaultValue;
@@ -74,27 +73,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public IEnumerable<IAttribute> GetAttributes() => attributes;
-		
-		public bool IsRef {
-			get { return isRef; }
-		}
-		
-		public bool IsOut {
-			get { return isOut; }
-		}
 
-		public bool IsIn {
-			get { return isIn; }
-		}
-		
-		public bool IsParams {
-			get { return isParams; }
-		}
-		
-		public bool IsOptional {
-			get { return isOptional; }
-		}
-		
+		public ReferenceKind ReferenceKind => referenceKind;
+		public bool IsRef => referenceKind == ReferenceKind.Ref;
+		public bool IsOut => referenceKind == ReferenceKind.Out;
+		public bool IsIn => referenceKind == ReferenceKind.In;
+
+		public bool IsParams => isParams;
+
+		public bool IsOptional => isOptional;
+
 		public string Name {
 			get { return name; }
 		}
@@ -128,6 +116,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				b.Append("ref ");
 			if (parameter.IsOut)
 				b.Append("out ");
+			if (parameter.IsIn)
+				b.Append("in ");
 			if (parameter.IsParams)
 				b.Append("params ");
 			b.Append(parameter.Name);

@@ -41,6 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly EntityHandle accessorOwner;
 		public MethodSemanticsAttributes AccessorKind { get; }
 		public bool IsExtensionMethod { get; }
+		bool IMethod.IsLocalFunction => false;
 
 		// lazy-loaded fields:
 		ITypeDefinition declaringType;
@@ -148,17 +149,32 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
+		internal Nullability NullableContext {
+			get {
+				var methodDef = module.metadata.GetMethodDefinition(handle);
+				return methodDef.GetCustomAttributes().GetNullableContext(module.metadata) ?? DeclaringTypeDefinition.NullableContext;
+			}
+		}
+
 		private void DecodeSignature()
 		{
 			var methodDef = module.metadata.GetMethodDefinition(handle);
 			var genericContext = new GenericContext(DeclaringType.TypeParameters, this.TypeParameters);
-			var signature = methodDef.DecodeSignature(module.TypeProvider, genericContext);
-			var (returnType, parameters) = DecodeSignature(module, this, signature, methodDef.GetParameters());
+			IType returnType;
+			IParameter[] parameters;
+			try {
+				var nullableContext = methodDef.GetCustomAttributes().GetNullableContext(module.metadata) ?? DeclaringTypeDefinition.NullableContext;
+				var signature = methodDef.DecodeSignature(module.TypeProvider, genericContext);
+				(returnType, parameters) = DecodeSignature(module, this, signature, methodDef.GetParameters(), nullableContext);
+			} catch (BadImageFormatException) {
+				returnType = SpecialType.UnknownType;
+				parameters = Empty<IParameter>.Array;
+			}
 			LazyInit.GetOrSet(ref this.returnType, returnType);
 			LazyInit.GetOrSet(ref this.parameters, parameters);
 		}
 
-		internal static (IType, IParameter[]) DecodeSignature(MetadataModule module, IParameterizedMember owner, MethodSignature<IType> signature, ParameterHandleCollection? parameterHandles)
+		internal static (IType, IParameter[]) DecodeSignature(MetadataModule module, IParameterizedMember owner, MethodSignature<IType> signature, ParameterHandleCollection? parameterHandles, Nullability nullableContext)
 		{
 			var metadata = module.metadata;
 			int i = 0;
@@ -179,14 +195,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						// Fill gaps in the sequence with non-metadata parameters:
 						while (i < par.SequenceNumber - 1) {
 							parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
-								signature.ParameterTypes[i], module.Compilation, null, metadata, module.TypeSystemOptions);
+								signature.ParameterTypes[i], module.Compilation, null, metadata, module.TypeSystemOptions, nullableContext);
 							parameters[i] = new DefaultParameter(parameterType, name: string.Empty, owner,
-								isRef: parameterType.Kind == TypeKind.ByReference);
+								referenceKind: parameterType.Kind == TypeKind.ByReference ? ReferenceKind.Ref : ReferenceKind.None);
 							i++;
 						}
 						parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
 							signature.ParameterTypes[i], module.Compilation,
-							par.GetCustomAttributes(), metadata, module.TypeSystemOptions);
+							par.GetCustomAttributes(), metadata, module.TypeSystemOptions, nullableContext);
 						parameters[i] = new MetadataParameter(module, owner, parameterType, parameterHandle);
 						i++;
 					}
@@ -194,9 +210,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			while (i < signature.RequiredParameterCount) {
 				parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
-					signature.ParameterTypes[i], module.Compilation, null, metadata, module.TypeSystemOptions);
+					signature.ParameterTypes[i], module.Compilation, null, metadata, module.TypeSystemOptions, nullableContext);
 				parameters[i] = new DefaultParameter(parameterType, name: string.Empty, owner,
-					isRef: parameterType.Kind == TypeKind.ByReference);
+					referenceKind: parameterType.Kind == TypeKind.ByReference ? ReferenceKind.Ref : ReferenceKind.None);
 				i++;
 			}
 			if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs) {
@@ -204,12 +220,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				i++;
 			}
 			Debug.Assert(i == parameters.Length);
-			bool isRefReadonly = false;
-			if (signature.ReturnType.Kind == TypeKind.ModReq && signature.ReturnType.SkipModifiers().Kind == TypeKind.ByReference) {
-				isRefReadonly = ((ModifiedType)signature.ReturnType).Modifier.IsKnownType(KnownAttribute.In);
-			}
 			var returnType = ApplyAttributeTypeVisitor.ApplyAttributesToType(signature.ReturnType,
-				module.Compilation, returnTypeAttributes, metadata, module.TypeSystemOptions);
+				module.Compilation, returnTypeAttributes, metadata, module.TypeSystemOptions, nullableContext);
 			return (returnType, parameters);
 		}
 		#endregion

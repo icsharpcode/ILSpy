@@ -74,6 +74,11 @@ namespace ICSharpCode.Decompiler.IL
 
 	static class VariableKindExtensions
 	{
+		public static bool IsThis(this ILVariable v)
+		{
+			return v.Kind == VariableKind.Parameter && v.Index < 0;
+		}
+
 		public static bool IsLocal(this VariableKind kind)
 		{
 			switch (kind) {
@@ -102,8 +107,12 @@ namespace ICSharpCode.Decompiler.IL
 			internal set {
 				if (kind == VariableKind.Parameter)
 					throw new InvalidOperationException("Kind=Parameter cannot be changed!");
-				if (Index != null && value.IsLocal())
-					Debug.Assert(kind.IsLocal());
+				if (Index != null && value.IsLocal() && !kind.IsLocal()) {
+					// For variables, Index has different meaning than for stack slots,
+					// so we need to reset it to null.
+					// StackSlot -> ForeachLocal can happen sometimes (e.g. PST.TransformForeachOnArray)
+					Index = null;
+				}
 				kind = value;
 			}
 		}
@@ -133,7 +142,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// For ExceptionStackSlot, the index is the IL offset of the exception handler.
 		/// For other kinds, the index has no meaning, and is usually null.
 		/// </summary>
-		public readonly int? Index;
+		public int? Index { get; private set; }
 		
 		[Conditional("DEBUG")]
 		internal void CheckInvariant()
@@ -410,7 +419,8 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(" init");
 			}
 			if (CaptureScope != null) {
-				output.Write(" captured in " + CaptureScope.EntryPoint.Label);
+				output.Write(" captured in ");
+				output.WriteLocalReference(CaptureScope.EntryPoint.Label, CaptureScope);
 			}
 			if (StateMachineField != null) {
 				output.Write(" from state-machine");

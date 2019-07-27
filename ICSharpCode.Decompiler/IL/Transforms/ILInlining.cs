@@ -283,6 +283,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return !method.IsStatic;
 				case OpCode.Await:
 					return true;
+				case OpCode.NullableUnwrap:
+					return ((NullableUnwrap)ldloca.Parent).RefInput;
 				default:
 					return false;
 			}
@@ -373,7 +375,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Determines whether a variable should be inlined in non-aggressive mode, even though it is not a generated variable.
 		/// </summary>
 		/// <param name="next">The next top-level expression</param>
-		/// <param name="loadInst">The load within 'next'</param>
+		/// <param name="v">The variable being eliminated by inlining.</param>
 		/// <param name="inlinedExpression">The expression being inlined</param>
 		static bool NonAggressiveInlineInto(ILInstruction next, FindResult findResult, ILInstruction inlinedExpression, ILVariable v)
 		{
@@ -424,13 +426,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true; // inline into (left slot of) user-defined && or || operator
 				case OpCode.DynamicGetMemberInstruction:
 				case OpCode.DynamicGetIndexInstruction:
-				case OpCode.LdObj:
 					if (parent.Parent.OpCode == OpCode.DynamicCompoundAssign)
 						return true; // inline into dynamic compound assignments
 					break;
+				case OpCode.DynamicCompoundAssign:
+					return true;
 				case OpCode.ArrayToPointer:
 				case OpCode.LocAllocSpan:
 					return true; // inline size-expressions into localloc.span
+				case OpCode.Call:
+				case OpCode.CallVirt:
+					// Aggressive inline into property/indexer getter calls for compound assignment calls
+					// (The compiler generates locals for these because it doesn't want to evalute the args twice for getter+setter)
+					if (parent.SlotInfo == CompoundAssignmentInstruction.TargetSlot) {
+						return true;
+					}
+					break;
 			}
 			// decide based on the top-level target instruction into which we are inlining:
 			switch (next.OpCode) {

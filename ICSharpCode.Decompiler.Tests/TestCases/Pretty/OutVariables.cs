@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2010-2014 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,26 +17,29 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using ICSharpCode.Decompiler.CSharp.Syntax;
+using System.Collections.Generic;
 
-namespace ICSharpCode.Decompiler.CSharp.Resolver
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	/// <summary>
-	/// Arguments for the callback of <see cref="FindReferences.RenameReferencesInFile"/>.
-	/// </summary>
-	public class RenameCallbackArguments
+	public class PatternMatching
 	{
-		public AstNode NodeToReplace { get; private set; }
-		public AstNode NewNode { get; private set; }
-		
-		public RenameCallbackArguments(AstNode nodeToReplace, AstNode newNode)
+		public static void OutVarInShortCircuit(Dictionary<int, string> d)
 		{
-			if (nodeToReplace == null)
-				throw new ArgumentNullException("nodeToReplace");
-			if (newNode == null)
-				throw new ArgumentNullException("newNode");
-			this.NodeToReplace = nodeToReplace;
-			this.NewNode = newNode;
+			if (d.Count > 2 && d.TryGetValue(42, out string value)) {
+				Console.WriteLine(value);
+			}
+		}
+
+		public static Action CapturedOutVarInShortCircuit(Dictionary<int, string> d)
+		{
+			// Note: needs reasoning about "definitely assigned if true"
+			// to ensure that the value is initialized when the delegate is declared.
+			if (d.Count > 2 && d.TryGetValue(42, out string value)) {
+				return delegate {
+					Console.WriteLine(value);
+				};
+			}
+			return null;
 		}
 	}
 }

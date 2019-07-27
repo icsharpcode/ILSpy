@@ -16,7 +16,7 @@
 
     <EnableDefaultItems>false</EnableDefaultItems>
     <LangVersion>7.2</LangVersion>
-
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
@@ -48,6 +48,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;1591;1573</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Humanizer.Core" Version="2.2.0" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
@@ -61,6 +65,9 @@
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
     <Compile Include="CSharp\RequiredNamespaceCollector.cs" />
     <Compile Include="CSharp\SequencePointBuilder.cs" />
+    <Compile Include="Solution\ProjectId.cs" />
+    <Compile Include="Solution\ProjectItem.cs" />
+    <Compile Include="Solution\SolutionCreator.cs" />
     <Compile Include="CSharp\Syntax\AstNode.cs" />
     <Compile Include="CSharp\Syntax\AstNodeCollection.cs" />
     <Compile Include="CSharp\Syntax\AstType.cs" />
@@ -161,6 +168,7 @@
     <Compile Include="CSharp\Syntax\Statements\GotoStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\IfElseStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\LabelStatement.cs" />
+    <Compile Include="CSharp\Syntax\Statements\LocalFunctionDeclarationStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\LockStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\ReturnStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\Statement.cs" />
@@ -222,8 +230,9 @@
     <Compile Include="CSharp\Resolver\NameLookupMode.cs" />
     <Compile Include="CSharp\Resolver\OverloadResolution.cs" />
     <Compile Include="CSharp\Resolver\OverloadResolutionErrors.cs" />
-    <Compile Include="CSharp\Resolver\ReducedExtensionMethod.cs" />
-    <Compile Include="CSharp\Resolver\RenameCallbackArguments.cs" />
+    <Compile Include="IL\Transforms\FixRemainingIncrements.cs" />
+    <Compile Include="IL\Transforms\ILExtraction.cs" />
+    <Compile Include="TypeSystem\Implementation\LocalFunctionMethod.cs" />
     <Compile Include="CSharp\Resolver\TypeInference.cs" />
     <Compile Include="CSharp\Transforms\CombineQueryExpressions.cs" />
     <Compile Include="CSharp\Transforms\FlattenSwitchBlocks.cs" />
@@ -272,6 +281,7 @@
     <Compile Include="IL\Transforms\DynamicIsEventAssignmentTransform.cs" />
     <Compile Include="IL\Transforms\ReduceNestingTransform.cs" />
     <Compile Include="IL\Transforms\LocalFunctionDecompiler.cs" />
+    <Compile Include="IL\Transforms\TransformDisplayClassUsage.cs" />
     <Compile Include="IL\Transforms\UserDefinedLogicTransform.cs" />
     <Compile Include="Metadata\AssemblyReferences.cs" />
     <Compile Include="Metadata\CodeMappingInfo.cs" />
