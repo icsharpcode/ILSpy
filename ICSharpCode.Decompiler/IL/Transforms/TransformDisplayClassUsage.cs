@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			};
 			displayClasses.Add(thisVariable, displayClass);
 			foreach (var stateMachineVariable in nestedFunction.Variables) {
-				if (stateMachineVariable.StateMachineField == null)
+				if (stateMachineVariable.StateMachineField == null || displayClass.Variables.ContainsKey(stateMachineVariable.StateMachineField))
 					continue;
 				displayClass.Variables.Add(stateMachineVariable.StateMachineField, new DisplayClassVariable {
 					Variable = stateMachineVariable,
