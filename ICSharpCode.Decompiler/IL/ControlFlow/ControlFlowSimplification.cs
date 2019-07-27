@@ -15,6 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -45,6 +46,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				context.CancellationToken.ThrowIfCancellationRequested();
 
 				RemoveNopInstructions(block);
+				RemoveDeadStackStores(block);
 
 				InlineVariableInReturnBlock(block, context);
 				// 1st pass SimplifySwitchInstruction before SimplifyBranchChains()
@@ -66,6 +68,22 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// Remove 'nop' instructions
 			block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.Nop);
+		}
+
+		private void RemoveDeadStackStores(Block block)
+		{
+			// Previously copy propagation did this;
+			// ideally the ILReader would already do this,
+			// for now do this here (even though it's not control-flow related).
+			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+				if (block.Instructions[i] is StLoc stloc && stloc.Variable.IsSingleDefinition && stloc.Variable.LoadCount == 0 && stloc.Variable.Kind == VariableKind.StackSlot) {
+					if (SemanticHelper.IsPure(stloc.Value.Flags)) {
+						block.Instructions.RemoveAt(i++);
+					} else {
+						stloc.ReplaceWith(stloc.Value);
+					}
+				}
+			}
 		}
 
 		void InlineVariableInReturnBlock(Block block, ILTransformContext context)

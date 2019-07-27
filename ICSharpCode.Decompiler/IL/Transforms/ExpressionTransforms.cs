@@ -497,8 +497,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(condition is DynamicIsEventInstruction isEvent))
 				return false;
-			trueInst = DynamicIsEventAssignmentTransform.UnwrapBlockAndUnusedStore(trueInst);
-			falseInst = DynamicIsEventAssignmentTransform.UnwrapBlockAndUnusedStore(falseInst);
+			trueInst = Block.Unwrap(trueInst);
+			falseInst = Block.Unwrap(falseInst);
 			if (!(falseInst is DynamicCompoundAssign dynamicCompoundAssign))
 				return false;
 			if (!(dynamicCompoundAssign.Target is DynamicGetMemberInstruction getMember))

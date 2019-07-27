@@ -17,22 +17,15 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
 	/// Transform that converts code patterns like "v != null ? v.M() : null" to "v?.M()"
 	/// </summary>
-	struct NullPropagationTransform
+	readonly struct NullPropagationTransform
 	{
 		internal static bool IsProtectedIfInst(IfInstruction ifInst)
 		{
@@ -214,6 +207,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst = ldLen.Array;
 				} else if (inst is NullableUnwrap unwrap) {
 					inst = unwrap.Argument;
+					if (unwrap.RefInput && inst is AddressOf addressOf) {
+						inst = addressOf.Value;
+					}
 				} else if (inst is DynamicGetMemberInstruction dynGetMember) {
 					inst = dynGetMember.Target;
 				} else if (inst is DynamicInvokeMemberInstruction dynInvokeMember) {

@@ -95,12 +95,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				isEventConditionUse = condition;
 			} else
 				return false;
-			setMemberInst = UnwrapBlockAndUnusedStore(trueInst) as DynamicSetMemberInstruction;
+			setMemberInst = Block.Unwrap(trueInst) as DynamicSetMemberInstruction;
 			if (setMemberInst == null)
 				return false;
 			if (!isEvent.Argument.Match(setMemberInst.Target).Success)
 				return false;
-			if (!(UnwrapBlockAndUnusedStore(falseInst) is DynamicInvokeMemberInstruction invokeMemberInst && invokeMemberInst.Arguments.Count == 2))
+			if (!(Block.Unwrap(falseInst) is DynamicInvokeMemberInstruction invokeMemberInst && invokeMemberInst.Arguments.Count == 2))
 				return false;
 			if (!isEvent.Argument.Match(invokeMemberInst.Arguments[0]).Success)
 				return false;
@@ -108,24 +108,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			getMemberVarUse = binOp.Left;
 			return true;
-		}
-
-		/// <summary>
-		/// If <paramref name="inst"/> is a Block unwraps the block, otherwise returns inst,
-		/// if the block contains a stloc to a stack slot that is unused, returns the value,
-		/// otherwise returns inst
-		/// </summary>
-		internal static ILInstruction UnwrapBlockAndUnusedStore(ILInstruction inst)
-		{
-			var unwrapped = Block.Unwrap(inst);
-			if (unwrapped is StLoc stloc
-				&& stloc.Variable.IsSingleDefinition
-				&& stloc.Variable.LoadCount == 0)
-			{
-				return stloc.Value;
-			}
-
-			return unwrapped;
 		}
 
 		/// <summary>

@@ -569,28 +569,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				targetKind = CompoundTargetKind.Address;
 				if (ldobj.Target.Match(stobj.Target).Success) {
 					return true;
-				} else if (IsDuplicatedAddressComputation()) {
+				} else if (IsDuplicatedAddressComputation(stobj.Target, ldobj.Target)) {
 					// Use S_0 as target, so that S_0 can later be eliminated by inlining.
 					// (we can't eliminate previousInstruction right now, because it's before the transform's starting instruction)
 					target = stobj.Target;
 					return true;
 				} else {
 					return false;
-				}
-
-				bool IsDuplicatedAddressComputation()
-				{
-					// Sometimes roslyn duplicates the address calculation:
-					// stloc S_0(ldloc refParam)
-					// stloc V_0(ldobj System.Int32(ldloc refParam))
-					// stobj System.Int32(ldloc S_0, binary.add.i4(ldloc V_0, ldc.i4 1))
-					if (!stobj.Target.MatchLdLoc(out var s))
-						return false;
-					if (!(s.Kind == VariableKind.StackSlot && s.IsSingleDefinition && s != forbiddenVariable))
-						return false;
-					if (s.StoreInstructions.SingleOrDefault() != previousInstruction)
-						return false;
-					return previousInstruction is StLoc addressStore && addressStore.Value.Match(ldobj.Target).Success;
 				}
 			} else if (MatchingGetterAndSetterCalls(load as CallInstruction, store as CallInstruction, out finalizeMatch)) {
 				if (forbiddenVariable != null && forbiddenVariable.IsUsedWithin(load))
@@ -607,6 +592,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return true;
 			} else {
 				return false;
+			}
+
+			bool IsDuplicatedAddressComputation(ILInstruction storeTarget, ILInstruction loadTarget)
+			{
+				// Sometimes roslyn duplicates the address calculation:
+				// stloc S_0(ldloc refParam)
+				// stloc V_0(ldobj System.Int32(ldloc refParam))
+				// stobj System.Int32(ldloc S_0, binary.add.i4(ldloc V_0, ldc.i4 1))
+				while (storeTarget is LdFlda storeLdFlda && loadTarget is LdFlda loadLdFlda) {
+					if (!storeLdFlda.Field.Equals(loadLdFlda.Field))
+						return false;
+					storeTarget = storeLdFlda.Target;
+					loadTarget = loadLdFlda.Target;
+				}
+				if (!storeTarget.MatchLdLoc(out var s))
+					return false;
+				if (!(s.Kind == VariableKind.StackSlot && s.IsSingleDefinition && s != forbiddenVariable))
+					return false;
+				if (s.StoreInstructions.SingleOrDefault() != previousInstruction)
+					return false;
+				return previousInstruction is StLoc addressStore && addressStore.Value.Match(loadTarget).Success;
 			}
 		}
 

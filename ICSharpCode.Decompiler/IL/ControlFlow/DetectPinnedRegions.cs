@@ -504,24 +504,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// stloc nativeVar(conv o->i (ldloc pinnedVar))
 			// if (comp(ldloc nativeVar == conv i4->i <sign extend>(ldc.i4 0))) br targetBlock
 			// br adjustOffsetToStringData
-			if (!body.EntryPoint.Instructions[0].MatchStLoc(out ILVariable nativeVar, out ILInstruction initInst))
-				return;
 			ILVariable newVar;
-			if (body.EntryPoint.Instructions.Count != 3) {
+			if (!body.EntryPoint.Instructions[0].MatchStLoc(out ILVariable nativeVar, out ILInstruction initInst)) {
 				// potentially a special case with legacy csc and an unused pinned variable:
-				if (nativeVar.IsSingleDefinition && nativeVar.LoadCount == 0 && initInst.MatchLdLoc(pinnedRegion.Variable)
-					 && pinnedRegion.Variable.LoadCount == 1)
-				{
-					// initInst is dead store
-					body.EntryPoint.Instructions.RemoveAt(0);
+				if (pinnedRegion.Variable.AddressCount == 0 && pinnedRegion.Variable.LoadCount == 0) {
 					var charPtr = new PointerType(context.TypeSystem.FindType(KnownTypeCode.Char));
 					newVar = new ILVariable(VariableKind.PinnedLocal, charPtr, pinnedRegion.Variable.Index);
 					newVar.Name = pinnedRegion.Variable.Name;
 					newVar.HasGeneratedName = pinnedRegion.Variable.HasGeneratedName;
-					nativeVar.Function.Variables.Add(newVar);
+					pinnedRegion.Variable.Function.Variables.Add(newVar);
 					pinnedRegion.Variable = newVar;
 					pinnedRegion.Init = new ArrayToPointer(pinnedRegion.Init);
 				}
+				return;
+			}
+			if (body.EntryPoint.Instructions.Count != 3) {
 				return;
 			}
 
