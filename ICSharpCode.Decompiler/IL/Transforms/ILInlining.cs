@@ -283,6 +283,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return !method.IsStatic;
 				case OpCode.Await:
 					return true;
+				case OpCode.NullableUnwrap:
+					return ((NullableUnwrap)ldloca.Parent).RefInput;
 				default:
 					return false;
 			}

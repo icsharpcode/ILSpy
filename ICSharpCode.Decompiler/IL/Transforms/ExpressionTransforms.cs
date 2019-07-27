@@ -582,7 +582,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			for (int j = 0; j < dynamicGetIndex.Arguments.Count; j++) {
 				if (!SemanticHelper.IsPure(dynamicGetIndex.Arguments[j].Flags))
 					return;
-				if (!dynamicGetIndex.Arguments[j].Match(dynamicGetIndex.Arguments[j]).Success)
+				if (!dynamicGetIndex.Arguments[j].Match(inst.Arguments[j]).Success)
 					return;
 			}
 			if (!DynamicCompoundAssign.IsExpressionTypeSupported(binaryOp.Operation))
