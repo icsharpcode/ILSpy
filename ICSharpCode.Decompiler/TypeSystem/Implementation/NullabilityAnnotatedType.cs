@@ -53,11 +53,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			IType newBase = baseType.AcceptVisitor(visitor);
 			if (newBase != baseType) {
 				if (newBase.Nullability == Nullability.Nullable) {
-					// T?! -> T?
+					// `T!` with substitution T=`U?` becomes `U?`
 					// This happens during type substitution for generic methods.
 					return newBase;
 				}
-				return newBase.ChangeNullability(nullability);
+				if (newBase.Kind == TypeKind.TypeParameter || newBase.IsReferenceType == true) {
+					return newBase.ChangeNullability(nullability);
+				} else {
+					// `T!` with substitution T=`int` becomes `int`, not `int!`
+					return newBase;
+				}
 			} else {
 				return this;
 			}
