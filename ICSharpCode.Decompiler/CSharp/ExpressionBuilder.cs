@@ -543,7 +543,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitLdTypeToken(LdTypeToken inst, TranslationContext context)
 		{
-			return new MemberReferenceExpression(new TypeOfExpression(ConvertType(inst.Type)), "TypeHandle")
+			var typeofExpr = new TypeOfExpression(ConvertType(inst.Type))
+				.WithRR(new TypeOfResolveResult(compilation.FindType(KnownTypeCode.Type), inst.Type));
+			return new MemberReferenceExpression(typeofExpr, "TypeHandle")
 				.WithILInstruction(inst)
 				.WithRR(new TypeOfResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle")), inst.Type));
 		}
