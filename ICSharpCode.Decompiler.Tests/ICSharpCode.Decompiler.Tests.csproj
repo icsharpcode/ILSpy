@@ -77,6 +77,7 @@
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
+    <Compile Include="TestCases\Pretty\OutVariables.cs" />
     <None Include="TestCases\ILPretty\DirectCallToExplicitInterfaceImpl.cs" />
     <Compile Include="TestCases\ILPretty\Issue1389.cs" />
     <Compile Include="TestCases\ILPretty\Issue1454.cs" />

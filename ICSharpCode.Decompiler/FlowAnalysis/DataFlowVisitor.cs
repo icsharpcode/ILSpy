@@ -603,14 +603,58 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		protected internal override void VisitIfInstruction(IfInstruction inst)
 		{
 			DebugStartPoint(inst);
-			inst.Condition.AcceptVisitor(this);
-			State branchState = state.Clone();
+			var (beforeThen, beforeElse) = EvaluateCondition(inst.Condition);
+			state = beforeThen;
 			inst.TrueInst.AcceptVisitor(this);
 			State afterTrueState = state;
-			state = branchState;
+			state = beforeElse;
 			inst.FalseInst.AcceptVisitor(this);
 			state.JoinWith(afterTrueState);
 			DebugEndPoint(inst);
+		}
+
+		/// <summary>
+		/// Evaluates the condition of an if.
+		/// </summary>
+		/// <returns>
+		/// A pair of:
+		///  * The state after the condition evaluates to true
+		///  * The state after the condition evaluates to false
+		/// </returns>
+		/// <remarks>
+		/// <c>this.state</c> is invalid after this function was called, and must be overwritten
+		/// with one of the return values.
+		/// </remarks>
+		(State OnTrue, State OnFalse) EvaluateCondition(ILInstruction inst)
+		{
+			if (inst is IfInstruction ifInst) {
+				// 'if (a?b:c)' or similar.
+				// This also includes conditions that are logic.not, logic.and, logic.or.
+				DebugStartPoint(ifInst);
+				var (beforeThen, beforeElse) = EvaluateCondition(ifInst.Condition);
+				state = beforeThen;
+				var (afterThenTrue, afterThenFalse) = EvaluateCondition(ifInst.TrueInst);
+				state = beforeElse;
+				var (afterElseTrue, afterElseFalse) = EvaluateCondition(ifInst.FalseInst);
+
+				var onTrue = afterThenTrue;
+				onTrue.JoinWith(afterElseTrue);
+				var onFalse = afterThenFalse;
+				onFalse.JoinWith(afterElseFalse);
+
+				DebugEndPoint(ifInst);
+				return (onTrue, onFalse);
+			} else if (inst is LdcI4 constant) {
+				if (constant.Value == 0) {
+					return (bottomState.Clone(), state);
+				} else {
+					return (state, bottomState.Clone());
+				}
+			} else {
+				// other kind of condition
+				inst.AcceptVisitor(this);
+				return (state, state.Clone());
+			}
 		}
 
 		protected internal override void VisitNullCoalescingInstruction(NullCoalescingInstruction inst)
