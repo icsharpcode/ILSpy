@@ -86,6 +86,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							containingBlock.Instructions.Remove(store);
 					}
 				}
+				RemoveDeadVariableInit.ResetHasInitialValueFlag(function, context);
 			} finally {
 				instructionsToRemove.Clear();
 				displayClasses.Clear();

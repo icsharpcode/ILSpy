@@ -20,6 +20,9 @@ using System.Diagnostics;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Util;
 using System.Threading;
+using System;
+using System.Collections.Generic;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.FlowAnalysis
 {
@@ -117,6 +120,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		readonly CancellationToken cancellationToken;
 		readonly ILFunction scope;
 		readonly BitSet variablesWithUninitializedUsage;
+		readonly Dictionary<IMethod, State> stateOfLocalFunctionUse = new Dictionary<IMethod, State>();
+		readonly HashSet<IMethod> localFunctionsNeedingAnalysis = new HashSet<IMethod>();
 		
 		public DefiniteAssignmentVisitor(ILFunction scope, CancellationToken cancellationToken)
 		{
@@ -203,8 +208,34 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			HandleCall(inst);
 		}
 
+		protected internal override void VisitILFunction(ILFunction inst)
+		{
+			DebugStartPoint(inst);
+			State stateBeforeFunction = state.Clone();
+			State stateOnExceptionBeforeFunction = currentStateOnException.Clone();
+			inst.Body.AcceptVisitor(this);
+			bool changed;
+			do {
+				changed = false;
+				foreach (var nestedFunction in inst.LocalFunctions) {
+					if (!localFunctionsNeedingAnalysis.Contains(nestedFunction.ReducedMethod))
+						continue;
+					localFunctionsNeedingAnalysis.Remove(nestedFunction.ReducedMethod);
+					State stateOnEntry = stateOfLocalFunctionUse[nestedFunction.ReducedMethod];
+					this.state.ReplaceWith(stateOnEntry);
+					this.currentStateOnException.ReplaceWithBottom();
+					nestedFunction.Body.AcceptVisitor(this);
+					changed = true;
+				}
+			} while (changed);
+			currentStateOnException = stateOnExceptionBeforeFunction;
+			state = stateBeforeFunction;
+			DebugEndPoint(inst);
+		}
+
 		void HandleCall(CallInstruction call)
 		{
+			DebugStartPoint(call);
 			bool hasOutArgs = false;
 			foreach (var arg in call.Arguments) {
 				if (arg.MatchLdLoca(out var v) && call.GetParameter(arg.ChildIndex)?.IsOut == true) {
@@ -223,6 +254,30 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					}
 				}
 			}
+			HandleLocalFunctionUse(call.Method);
+			DebugEndPoint(call);
+		}
+
+		void HandleLocalFunctionUse(IMethod method)
+		{
+			if (method.IsLocalFunction) {
+				if (stateOfLocalFunctionUse.TryGetValue(method, out var stateOnEntry)) {
+					if (!state.LessThanOrEqual(stateOnEntry)) {
+						stateOnEntry.JoinWith(state);
+						localFunctionsNeedingAnalysis.Add(method);
+					}
+				} else {
+					stateOfLocalFunctionUse.Add(method, state.Clone());
+					localFunctionsNeedingAnalysis.Add(method);
+				}
+			}
+		}
+
+		protected internal override void VisitLdFtn(LdFtn inst)
+		{
+			DebugStartPoint(inst);
+			HandleLocalFunctionUse(inst.Method);
+			DebugEndPoint(inst);
 		}
 	}
 }

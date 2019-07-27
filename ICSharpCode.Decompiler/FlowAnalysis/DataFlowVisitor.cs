@@ -222,6 +222,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			this.bottomState = initialState.Clone();
 			this.bottomState.ReplaceWithBottom();
 			Debug.Assert(bottomState.IsBottom);
+			this.stateOnNullableRewrap = bottomState.Clone();
 			this.currentStateOnException = state.Clone();
 		}
 		
@@ -254,7 +255,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		#endif
 		
 		[Conditional("DEBUG")]
-		void DebugStartPoint(ILInstruction inst)
+		protected void DebugStartPoint(ILInstruction inst)
 		{
 			#if DEBUG
 			DebugPoint(debugInputState, inst);
@@ -262,7 +263,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		}
 		
 		[Conditional("DEBUG")]
-		void DebugEndPoint(ILInstruction inst)
+		protected void DebugEndPoint(ILInstruction inst)
 		{
 			#if DEBUG
 			DebugPoint(debugOutputState, inst);
@@ -286,7 +287,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			foreach (var child in inst.Children) {
 				child.AcceptVisitor(this);
 				Debug.Assert(state.IsBottom || !child.HasFlag(InstructionFlags.EndPointUnreachable),
-				             "Unreachable code must be in the bottom state.");
+							 "Unreachable code must be in the bottom state.");
 			}
 			
 			DebugEndPoint(inst);
@@ -611,7 +612,53 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			state.JoinWith(afterTrueState);
 			DebugEndPoint(inst);
 		}
-		
+
+		protected internal override void VisitNullCoalescingInstruction(NullCoalescingInstruction inst)
+		{
+			HandleBinaryWithOptionalEvaluation(inst, inst.ValueInst, inst.FallbackInst);
+		}
+
+		protected internal override void VisitDynamicLogicOperatorInstruction(DynamicLogicOperatorInstruction inst)
+		{
+			HandleBinaryWithOptionalEvaluation(inst, inst.Left, inst.Right);
+		}
+
+		protected internal override void VisitUserDefinedLogicOperator(UserDefinedLogicOperator inst)
+		{
+			HandleBinaryWithOptionalEvaluation(inst, inst.Left, inst.Right);
+		}
+
+		void HandleBinaryWithOptionalEvaluation(ILInstruction parent, ILInstruction left, ILInstruction right)
+		{
+			DebugStartPoint(parent);
+			left.AcceptVisitor(this);
+			State branchState = state.Clone();
+			right.AcceptVisitor(this);
+			state.JoinWith(branchState);
+			DebugEndPoint(parent);
+		}
+
+		State stateOnNullableRewrap;
+
+		protected internal override void VisitNullableRewrap(NullableRewrap inst)
+		{
+			DebugStartPoint(inst);
+			var oldState = stateOnNullableRewrap.Clone();
+			stateOnNullableRewrap.ReplaceWithBottom();
+			inst.Argument.AcceptVisitor(this);
+			state.JoinWith(stateOnNullableRewrap);
+			stateOnNullableRewrap = oldState;
+			DebugEndPoint(inst);
+		}
+
+		protected internal override void VisitNullableUnwrap(NullableUnwrap inst)
+		{
+			DebugStartPoint(inst);
+			inst.Argument.AcceptVisitor(this);
+			stateOnNullableRewrap.JoinWith(state);
+			DebugEndPoint(inst);
+		}
+
 		protected internal override void VisitSwitchInstruction(SwitchInstruction inst)
 		{
 			DebugStartPoint(inst);
@@ -632,6 +679,22 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			DebugStartPoint(inst);
 			inst.Value.AcceptVisitor(this);
+			DebugEndPoint(inst);
+		}
+
+		protected internal override void VisitUsingInstruction(UsingInstruction inst)
+		{
+			DebugStartPoint(inst);
+			inst.ResourceExpression.AcceptVisitor(this);
+			inst.Body.AcceptVisitor(this);
+			DebugEndPoint(inst);
+		}
+
+		protected internal override void VisitLockInstruction(LockInstruction inst)
+		{
+			DebugStartPoint(inst);
+			inst.OnExpression.AcceptVisitor(this);
+			inst.Body.AcceptVisitor(this);
 			DebugEndPoint(inst);
 		}
 
