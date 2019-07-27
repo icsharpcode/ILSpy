@@ -61,6 +61,9 @@
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
     <None Include="TestCases\ILPretty\ConstantBlobs.il" />
+    <None Include="TestCases\ILPretty\CS1xSwitch_Debug.il" />
+    <None Include="TestCases\ILPretty\CS1xSwitch_Release.il" />
+    <None Include="TestCases\ILPretty\Issue1157.il" />
     <None Include="TestCases\ILPretty\Issue684.cs" />
     <None Include="TestCases\ILPretty\Issue684.il" />
     <None Include="TestCases\ILPretty\FSharpLoops.fs" />
@@ -77,6 +80,11 @@
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
+    <None Include="TestCases\ILPretty\Issue1145.cs" />
+    <Compile Include="TestCases\ILPretty\Issue1157.cs" />
+    <None Include="TestCases\ILPretty\Unsafe.cs" />
+    <None Include="TestCases\ILPretty\CS1xSwitch_Debug.cs" />
+    <None Include="TestCases\ILPretty\CS1xSwitch_Release.cs" />
     <None Include="TestCases\ILPretty\DirectCallToExplicitInterfaceImpl.cs" />
     <Compile Include="TestCases\ILPretty\Issue1389.cs" />
     <Compile Include="TestCases\ILPretty\Issue1454.cs" />
