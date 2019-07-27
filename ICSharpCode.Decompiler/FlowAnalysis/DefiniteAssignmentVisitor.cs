@@ -120,6 +120,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		readonly CancellationToken cancellationToken;
 		readonly ILFunction scope;
 		readonly BitSet variablesWithUninitializedUsage;
+
 		readonly Dictionary<IMethod, State> stateOfLocalFunctionUse = new Dictionary<IMethod, State>();
 		readonly HashSet<IMethod> localFunctionsNeedingAnalysis = new HashSet<IMethod>();
 		
@@ -213,7 +214,19 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			DebugStartPoint(inst);
 			State stateBeforeFunction = state.Clone();
 			State stateOnExceptionBeforeFunction = currentStateOnException.Clone();
+			// Note: lambdas are handled at their point of declaration.
+			// We immediately visit their body, because captured variables need to be definitely initialized at this point.
+			// We ignore the state after the lambda body (by resetting to the state before), because we don't know
+			// when the lambda will be invoked.
+			// This also makes this logic unsuitable for reaching definitions, as we wouldn't see the effect of stores in lambdas.
+			// Only the simpler case of definite assignment can support lambdas.
 			inst.Body.AcceptVisitor(this);
+
+			// For local functions, the situation is similar to lambdas.
+			// However, we don't use the state of the declaration site when visiting local functions,
+			// but instead the state(s) of their point of use.
+			// Because we might discover additional points of use within the local functions,
+			// we use a fixed-point iteration.
 			bool changed;
 			do {
 				changed = false;
@@ -223,8 +236,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					localFunctionsNeedingAnalysis.Remove(nestedFunction.ReducedMethod);
 					State stateOnEntry = stateOfLocalFunctionUse[nestedFunction.ReducedMethod];
 					this.state.ReplaceWith(stateOnEntry);
-					this.currentStateOnException.ReplaceWithBottom();
-					nestedFunction.Body.AcceptVisitor(this);
+					this.currentStateOnException.ReplaceWith(stateOnEntry);
+					nestedFunction.AcceptVisitor(this);
 					changed = true;
 				}
 			} while (changed);
@@ -258,6 +271,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			DebugEndPoint(call);
 		}
 
+		/// <summary>
+		/// For a use of a local function, remember the current state to use as stateOnEntry when
+		/// later processing the local function body.
+		/// </summary>
 		void HandleLocalFunctionUse(IMethod method)
 		{
 			if (method.IsLocalFunction) {

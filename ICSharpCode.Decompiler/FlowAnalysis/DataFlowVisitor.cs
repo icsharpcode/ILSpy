@@ -645,8 +645,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			DebugStartPoint(inst);
 			var oldState = stateOnNullableRewrap.Clone();
 			stateOnNullableRewrap.ReplaceWithBottom();
+
 			inst.Argument.AcceptVisitor(this);
+			// Join incoming control flow from the NullableUnwraps.
 			state.JoinWith(stateOnNullableRewrap);
+
 			stateOnNullableRewrap = oldState;
 			DebugEndPoint(inst);
 		}
@@ -655,6 +658,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			DebugStartPoint(inst);
 			inst.Argument.AcceptVisitor(this);
+			// Conditional control flow edge to the surrounding NullableRewrap.
 			stateOnNullableRewrap.JoinWith(state);
 			DebugEndPoint(inst);
 		}
