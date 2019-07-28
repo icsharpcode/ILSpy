@@ -272,10 +272,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (ldloca.Variable.Type.IsReferenceType ?? false)
 				return false;
-			switch (ldloca.Parent.OpCode) {
+			ILInstruction inst = ldloca;
+			while (inst.Parent is LdFlda ldflda) {
+				inst = ldflda;
+			}
+			switch (inst.Parent.OpCode) {
 				case OpCode.Call:
 				case OpCode.CallVirt:
-					var method = ((CallInstruction)ldloca.Parent).Method;
+					var method = ((CallInstruction)inst.Parent).Method;
 					if (method.IsAccessor && method.AccessorKind != MethodSemanticsAttributes.Getter) {
 						// C# doesn't allow calling setters on temporary structs
 						return false;
@@ -284,7 +288,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case OpCode.Await:
 					return true;
 				case OpCode.NullableUnwrap:
-					return ((NullableUnwrap)ldloca.Parent).RefInput;
+					return ((NullableUnwrap)inst.Parent).RefInput;
 				default:
 					return false;
 			}
@@ -346,13 +350,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			switch (addr) {
 				case LdFlda ldflda:
-					return ldflda.Field.IsReadOnly;
+					return ldflda.Field.IsReadOnly
+						|| (ldflda.Field.DeclaringType.Kind == TypeKind.Struct && IsReadonlyReference(ldflda.Target));
 				case LdsFlda ldsflda:
 					return ldsflda.Field.IsReadOnly;
 				case LdLoc ldloc:
 					return IsReadonlyRefLocal(ldloc.Variable);
 				case Call call:
 					return call.Method.ReturnTypeIsRefReadOnly;
+				case AddressOf _:
+					// C# doesn't allow mutation of value-type temporaries
+					return true;
 				default:
 					return false;
 			}
