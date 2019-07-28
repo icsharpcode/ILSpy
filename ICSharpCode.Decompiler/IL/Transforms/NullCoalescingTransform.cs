@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -34,7 +35,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			TransformRefTypes(block, pos, context);
+			if (!TransformRefTypes(block, pos, context)) {
+				TransformThrowExpressionValueTypes(block, pos, context);
+			}
 		}
 
 		/// <summary>
@@ -89,7 +92,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// =>
 			// stloc obj(if.notnull(valueInst, throw(...)))
 			if (context.Settings.ThrowExpressions && trueInst is Throw throwInst) {
-				context.Step("NullCoalescingTransform (throw expression)", stloc);
+				context.Step("NullCoalescingTransform (reference types + throw expression)", stloc);
 				throwInst.resultType = StackType.O;
 				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, throwInst);
 				block.Instructions.RemoveAt(pos + 1); // remove if instruction
@@ -97,6 +100,56 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return true;
 			}
 			return false;
+		}
+
+		/// <summary>
+		/// stloc v(value)
+		/// if (logic.not(call get_HasValue(ldloca v))) {
+		///		throw(...)
+		///	}
+		/// ... Call(arg1, arg2, call GetValueOrDefault(ldloca v), arg4) ...
+		/// =>
+		/// ... Call(arg1, arg2, if.notnull(value, throw(...)), arg4) ...
+		/// </summary>
+		bool TransformThrowExpressionValueTypes(Block block, int pos, StatementTransformContext context)
+		{
+			if (pos + 2 >= block.Instructions.Count)
+				return false;
+			if (!(block.Instructions[pos] is StLoc stloc))
+				return false;
+			if (!block.Instructions[pos + 1].MatchIfInstruction(out var condition, out var trueInst))
+				return false;
+			if (!(Block.Unwrap(trueInst) is Throw throwInst))
+				return false;
+			ILVariable v = stloc.Variable;
+			if (!(v.StoreCount == 1 && v.LoadCount == 0 && v.AddressCount == 2))
+				return false;
+			if (!NullableLiftingTransform.MatchNegatedHasValueCall(condition, v))
+				return false;
+			var throwInstParent = throwInst.Parent;
+			var throwInstChildIndex = throwInst.ChildIndex;
+			var nullcoalescingWithThrow = new NullCoalescingInstruction(
+				NullCoalescingKind.NullableWithValueFallback,
+				stloc.Value,
+				throwInst);
+			var resultType = NullableType.GetUnderlyingType(v.Type).GetStackType();
+			nullcoalescingWithThrow.UnderlyingResultType = resultType;
+			var result = ILInlining.FindLoadInNext(block.Instructions[pos + 2], v, nullcoalescingWithThrow, InliningOptions.None);
+			if (result.Type == ILInlining.FindResultType.Found
+				&& NullableLiftingTransform.MatchGetValueOrDefault(result.LoadInst.Parent, v))
+			{
+				context.Step("NullCoalescingTransform (value types + throw expression)", stloc);
+				throwInst.resultType = resultType;
+				result.LoadInst.Parent.ReplaceWith(nullcoalescingWithThrow);
+				block.Instructions.RemoveRange(pos, 2); // remove store and if instruction
+				return true;
+			} else {
+				// reset the primary position (see remarks on ILInstruction.Parent)
+				stloc.Value = stloc.Value;
+				var children = throwInstParent.Children;
+				children[throwInstChildIndex] = throwInst;
+				return false;
+			}
 		}
 	}
 }

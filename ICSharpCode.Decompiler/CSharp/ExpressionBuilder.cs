@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			var cexpr = inst.AcceptVisitor(this, context);
 			#if DEBUG
-			if (inst.ResultType != StackType.Void && cexpr.Type.Kind != TypeKind.Unknown && inst.ResultType != StackType.Unknown) {
+			if (inst.ResultType != StackType.Void && cexpr.Type.Kind != TypeKind.Unknown && inst.ResultType != StackType.Unknown && cexpr.Type.Kind != TypeKind.None) {
 				// Validate the Translate post-condition (documented at beginning of this file):
 				if (inst.ResultType.IsIntegerType()) {
 					Debug.Assert(cexpr.Type.GetStackType().IsIntegerType(), "IL instructions of integer type must convert into C# expressions of integer type");

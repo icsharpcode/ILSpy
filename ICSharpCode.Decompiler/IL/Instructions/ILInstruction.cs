@@ -308,7 +308,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected abstract SlotInfo GetChildSlot(int index);
 		
 		#region ChildrenCollection + ChildrenEnumerator
-		public struct ChildrenCollection : IReadOnlyList<ILInstruction>
+		public readonly struct ChildrenCollection : IReadOnlyList<ILInstruction>
 		{
 			readonly ILInstruction inst;
 			
