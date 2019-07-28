@@ -186,6 +186,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return chainLength >= 1;
 				} else if (inst.MatchLdFld(out var target, out _)) {
 					inst = target;
+				} else if (inst.MatchLdFlda(out target, out var f)) {
+					if (target is AddressOf addressOf && f.DeclaringType.Kind == TypeKind.Struct) {
+						inst = addressOf.Value;
+					} else {
+						inst = target;
+					}
 				} else if (inst is CallInstruction call && call.OpCode != OpCode.NewObj) {
 					if (call.Arguments.Count == 0) {
 						return false;

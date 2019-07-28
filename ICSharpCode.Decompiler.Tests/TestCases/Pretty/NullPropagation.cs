@@ -25,6 +25,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private class MyClass
 		{
 			public int IntVal;
+			public readonly int ReadonlyIntVal;
+			public MyStruct StructField;
+			public readonly MyStruct ReadonlyStructField;
 			public string Text;
 			public MyClass Field;
 			public MyClass Property {
@@ -45,6 +48,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private struct MyStruct
 		{
 			public int IntVal;
+			public readonly int ReadonlyIntVal;
 			public MyClass Field;
 			public MyStruct? Property1 => null;
 			public MyStruct Property2 => default(MyStruct);
@@ -177,6 +181,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void CoalescingString()
 		{
 			Use(GetMyClass()?.Text ?? "Hello");
+		}
+		
+		public void CallOnValueTypeField()
+		{
+			Use(GetMyClass()?.IntVal.ToString());
+			Use(GetMyStruct()?.IntVal.ToString());
+			Use(GetMyClass()?.ReadonlyIntVal.ToString());
+			Use(GetMyStruct()?.ReadonlyIntVal.ToString());
+			GetMyClass()?.StructField.Done();
+			GetMyClass()?.ReadonlyStructField.Done();
 		}
 
 		public void InvokeDelegate(EventHandler eh)
