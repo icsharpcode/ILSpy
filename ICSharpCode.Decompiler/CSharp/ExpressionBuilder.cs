@@ -441,7 +441,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(inst);
 			} finally {
 				astBuilder.PrintIntegralValuesAsHex = false;
-		}
+			}
 		}
 
 		protected internal override TranslatedExpression VisitLdcI8(LdcI8 inst, TranslationContext context)
@@ -465,7 +465,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(inst);
 			} finally {
 				astBuilder.PrintIntegralValuesAsHex = false;
-		}
+			}
 		}
 
 		private bool ShouldDisplayAsHex(long value, ILInstruction parent)
@@ -556,7 +556,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var argUType = NullableType.GetUnderlyingType(argument.Type);
 
 			if (argUType.GetStackType().GetSize() < inst.UnderlyingResultType.GetSize()
-			    || argUType.Kind == TypeKind.Enum && argUType.IsSmallIntegerType()
+				|| argUType.Kind == TypeKind.Enum && argUType.IsSmallIntegerType()
 				|| argUType.GetStackType() == StackType.I
 				|| argUType.IsKnownType(KnownTypeCode.Boolean)
 				|| argUType.IsKnownType(KnownTypeCode.Char))
@@ -1522,7 +1522,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							var pao = GetPointerArithmeticOffset(inst.Value, value, ((PointerType)target.Type).ElementType, inst.CheckForOverflow);
 							if (pao != null) {
 								value = pao.Value;
-							} else { 
+							} else {
 								value.Expression.AddChild(new Comment("ILSpy Error: GetPointerArithmeticOffset() failed", CommentType.MultiLine), Roles.Comment);
 							}
 						} else {
@@ -1939,13 +1939,13 @@ namespace ICSharpCode.Decompiler.CSharp
 						// When accessing members on value types, ensure we use a reference of the correct type,
 						// and not a pointer or a reference to a different type (issue #1333)
 						if (!(translatedTarget.Type is ByReferenceType brt && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(brt.ElementType, memberDeclaringType))) {
-						translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(memberDeclaringType), this);
-					}
+							translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(memberDeclaringType), this);
+						}
 					}
 					if (translatedTarget.Expression is DirectionExpression) {
 						// (ref x).member => x.member
 						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
-					} else if (translatedTarget.Expression is UnaryOperatorExpression uoe 
+					} else if (translatedTarget.Expression is UnaryOperatorExpression uoe
 						&& uoe.Operator == UnaryOperatorType.NullConditional
 						&& uoe.Expression is DirectionExpression) {
 						// (ref x)?.member => x?.member
@@ -2040,7 +2040,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						pointer = pointer.ConvertTo(new PointerType(value.Type), this);
 					} else {
 						pointer = pointer.ConvertTo(new PointerType(inst.Type), this);
-				}
+					}
 				}
 				if (pointer.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.AddressOf) {
 					// *&ptr -> ptr
@@ -2053,7 +2053,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (value.Expression == null) {
 				value = Translate(inst.Value, typeHint: target.Type);
-		}
+			}
 			return Assignment(target, value).WithILInstruction(inst);
 		}
 
@@ -2138,7 +2138,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			TranslatedExpression arrayExpr = Translate(inst.Array);
 			var arrayType = arrayExpr.Type as ArrayType;
 			if (arrayType == null || !TypeUtils.IsCompatibleTypeForMemoryAccess(arrayType.ElementType, inst.Type)) {
-				arrayType  = new ArrayType(compilation, inst.Type, inst.Indices.Count);
+				arrayType = new ArrayType(compilation, inst.Type, inst.Indices.Count);
 				arrayExpr = arrayExpr.ConvertTo(arrayType, this);
 			}
 			TranslatedExpression expr = new IndexerExpression(
@@ -2185,8 +2185,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// try via its effective base class.
 					arg = arg.ConvertTo(((ITypeParameter)targetType).EffectiveBaseClass, this);
 				}
-			}
-			else {
+			} else {
 				// Before unboxing arg must be a object
 				arg = arg.ConvertTo(compilation.FindType(KnownTypeCode.Object), this);
 			}
@@ -2425,7 +2424,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		TranslatedExpression MakeInitializerAssignment(InitializedObjectResolveResult rr, IL.Transforms.AccessPathElement memberPath,
-			IL.Transforms.AccessPathElement valuePath, List<TranslatedExpression> values, 
+			IL.Transforms.AccessPathElement valuePath, List<TranslatedExpression> values,
 			Dictionary<ILVariable, ILInstruction> indexVariables)
 		{
 			TranslatedExpression value;
@@ -2445,9 +2444,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (memberPath.Member is IProperty property) {
 					index = new CallBuilder(this, typeSystem, settings)
 						.BuildDictionaryInitializerExpression(valuePath.OpCode, property.Setter, rr, GetIndices(valuePath.Indices, indexVariables).ToList());
-			} else {
+				} else {
 					index = new IndexerExpression(null, GetIndices(valuePath.Indices, indexVariables).Select(i => Translate(i).Expression));
-			}
+				}
 				return new AssignmentExpression(index, value)
 					.WithRR(new MemberResolveResult(rr, memberPath.Member))
 					.WithoutILInstruction();
@@ -2455,7 +2454,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return new NamedExpression(valuePath.Member.Name, value)
 					.WithRR(new MemberResolveResult(rr, valuePath.Member))
 					.WithoutILInstruction();
-		}
+			}
 		}
 
 		class ArrayInitializer
@@ -2469,7 +2468,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			public ArrayInitializerExpression Expression;
 			// HACK: avoid using Expression.Elements.Count: https://github.com/icsharpcode/ILSpy/issues/1202
 			public int CurrentElementCount;
-			}
+		}
 
 		TranslatedExpression TranslateArrayInitializer(Block block)
 		{
