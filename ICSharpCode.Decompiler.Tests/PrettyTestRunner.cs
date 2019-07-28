@@ -330,6 +330,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void ThrowExpressions([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void WellKnownConstants([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
