@@ -14,8 +14,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public ArgumentCheckingCtor(object simpleObj, int? nullableInt)
 			{
-				this.simpleObj = simpleObj ?? throw new ArgumentNullException("simpleObj");
-				this.nullableInt = nullableInt ?? throw new ArgumentNullException("nullableInt");
+				this.simpleObj = (simpleObj ?? throw new ArgumentNullException("simpleObj"));
+				this.nullableInt = (nullableInt ?? throw new ArgumentNullException("nullableInt"));
 			}
 
 			public ArgumentCheckingCtor(string input)
@@ -32,8 +32,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			private static int? GetIntOrNull(string v)
 			{
-				if (int.TryParse(v, out int result))
+				if (int.TryParse(v, out int result)) {
 					return result;
+				}
+
 				return null;
 			}
 
@@ -64,10 +66,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public int? NullableIntField;
 			public Data DataField;
 			public Data? NullableDataField;
-			public int IntProperty { get; set; }
-			public int? NullableIntProperty { get; set; }
-			public Data DataProperty { get; }
-			public Data? NullableDataProperty { get; }
+			public int IntProperty {
+				get;
+				set;
+			}
+			public int? NullableIntProperty {
+				get;
+				set;
+			}
+			public Data DataProperty {
+				get;
+			}
+			public Data? NullableDataProperty {
+				get;
+			}
 		}
 
 		public struct Data
@@ -76,18 +88,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public int? NullableIntField;
 			public MoreData DataField;
 			public MoreData? NullableDataField;
-			public int IntProperty { get; set; }
-			public int? NullableIntProperty { get; set; }
-			public MoreData DataProperty { get; }
-			public MoreData? NullableDataProperty { get; }
+			public int IntProperty {
+				get;
+				set;
+			}
+			public int? NullableIntProperty {
+				get;
+				set;
+			}
+			public MoreData DataProperty {
+				get;
+			}
+			public MoreData? NullableDataProperty {
+				get;
+			}
 		}
 
 		public struct MoreData
 		{
 			public int IntField;
 			public int? NullableIntField;
-			public int IntProperty { get; set; }
-			public int? NullableIntProperty { get; set; }
+			public int IntProperty {
+				get;
+				set;
+			}
+			public int? NullableIntProperty {
+				get;
+				set;
+			}
 		}
 
 		public static int IntField;
@@ -100,15 +128,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public Data? NullableDataField;
 		public DataObject DataObjectField;
 
-		public static int IntProperty { get; }
-		public static int? NullableIntProperty { get; }
-		public static object ObjProperty { get; }
-		public int InstIntProperty { get; }
-		public int? InstNullableIntProperty { get; }
-		public object InstObjProperty { get; }
-		public Data DataProperty { get; }
-		public Data? NullableDataProperty { get; }
-		public DataObject DataObjectProperty { get; }
+		public static int IntProperty {
+			get;
+		}
+		public static int? NullableIntProperty {
+			get;
+		}
+		public static object ObjProperty {
+			get;
+		}
+		public int InstIntProperty {
+			get;
+		}
+		public int? InstNullableIntProperty {
+			get;
+		}
+		public object InstObjProperty {
+			get;
+		}
+		public Data DataProperty {
+			get;
+		}
+		public Data? NullableDataProperty {
+			get;
+		}
+		public DataObject DataObjectProperty {
+			get;
+		}
 
 		public static int ReturnIntField()
 		{
@@ -146,17 +192,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void UseComplexNullableStruct(ThrowExpressions inst)
 		{
 			Use(inst.InstNullableIntField ?? throw new Exception());
-			Use(inst.NullableDataField?.IntField ?? throw new Exception());
+			Use((inst.NullableDataField ?? throw new Exception()).IntField);
 			Use(inst.NullableDataField?.NullableIntField ?? throw new Exception());
-			Use(inst.NullableDataProperty?.IntField ?? throw new Exception());
+			Use((inst.NullableDataProperty ?? throw new Exception()).IntField);
 			Use(inst.NullableDataProperty?.NullableIntField ?? throw new Exception());
-			Use(inst.NullableDataField?.DataField.IntField ?? throw new Exception());
+			Use((inst.NullableDataField ?? throw new Exception()).DataField.IntField);
 			Use(inst.NullableDataField?.DataField.NullableIntField ?? throw new Exception());
-			Use(inst.NullableDataProperty?.DataField.IntField ?? throw new Exception());
+			Use((inst.NullableDataProperty ?? throw new Exception()).DataField.IntField);
 			Use(inst.NullableDataProperty?.DataField.NullableIntField ?? throw new Exception());
-			Use(inst.NullableDataField?.DataProperty.IntField ?? throw new Exception());
+			Use((inst.NullableDataField ?? throw new Exception()).DataProperty.IntField);
 			Use(inst.NullableDataField?.DataProperty.NullableIntField ?? throw new Exception());
-			Use(inst.NullableDataProperty?.DataProperty.IntField ?? throw new Exception());
+			Use((inst.NullableDataProperty ?? throw new Exception()).DataProperty.IntField);
 			Use(inst.NullableDataProperty?.DataProperty.NullableIntField ?? throw new Exception());
 			Use(inst.NullableDataField?.NullableDataField?.IntField ?? throw new Exception());
 			Use(inst.NullableDataField?.NullableDataField?.NullableIntField ?? throw new Exception());
