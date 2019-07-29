@@ -1281,8 +1281,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			var resultExpr = new BinaryOperatorExpression(left.Expression, op, right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(rr);
-			if (BinaryOperatorMightCheckForOverflow(op))
+			if (BinaryOperatorMightCheckForOverflow(op) && !inst.UnderlyingResultType.IsFloatType()) {
 				resultExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+			}
 			return resultExpr;
 		}
 
@@ -1544,8 +1545,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(inst)
 					.WithRR(new OperatorResolveResult(target.Type, AssignmentExpression.GetLinqNodeType(op, inst.CheckForOverflow), target.ResolveResult, value.ResolveResult));
 			}
-			if (AssignmentOperatorMightCheckForOverflow(op))
+			if (AssignmentOperatorMightCheckForOverflow(op) && !inst.UnderlyingResultType.IsFloatType()) {
 				resultExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+			}
 			return resultExpr;
 		}
 		
