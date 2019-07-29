@@ -109,7 +109,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// Address stored in local variable: also check all uses of that variable.
 					if (!(stloc.Variable.Kind == VariableKind.StackSlot || stloc.Variable.Kind == VariableKind.Local))
 						return AddressUse.Unknown;
-					if (stloc.Value.OpCode != OpCode.LdLoca) {
+					var value = stloc.Value;
+					while (value is LdFlda ldFlda) {
+						value = ldFlda.Target;
+					}
+					if (value.OpCode != OpCode.LdLoca) {
 						// GroupStores.HandleLoad() only detects ref-locals when they are directly initialized with ldloca
 						return AddressUse.Unknown;
 					}
@@ -162,7 +166,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null; // only single-definition variables can be supported ref locals
 			var store = ldloc.Variable.StoreInstructions.SingleOrDefault();
 			if (store is StLoc stloc) {
-				return stloc.Value as LdLoca;
+				var value = stloc.Value;
+				while (value is LdFlda ldFlda) {
+					value = ldFlda.Target;
+				}
+				return value as LdLoca;
 			}
 			return null;
 		}
