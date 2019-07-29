@@ -81,6 +81,7 @@
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
     <Compile Include="TestCases\Pretty\OutVariables.cs" />
+    <None Include="TestCases\VBPretty\VBCompoundAssign.cs" />
     <None Include="TestCases\ILPretty\Issue1145.cs" />
     <Compile Include="TestCases\ILPretty\Issue1157.cs" />
     <None Include="TestCases\ILPretty\Unsafe.cs" />
@@ -243,6 +244,7 @@
     <None Include="TestCases\ILPretty\Issue379.il" />
     <None Include="TestCases\ILPretty\Issue982.il" />
     <None Include="TestCases\Pretty\Readme.txt" />
+    <None Include="TestCases\VBPretty\VBCompoundAssign.vb" />
     <None Include="TestCases\VBPretty\Async.vb" />
   </ItemGroup>
 

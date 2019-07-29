@@ -193,7 +193,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			ref NormalStruct @ref = ref GetRef<NormalStruct>();
 			RefReassignment(ref @ref);
-			@ref = ref GetRef<NormalStruct>();
+			if (s.GetHashCode() == 0) {
+				@ref = ref GetRef<NormalStruct>();
+			}
 			RefReassignment(ref @ref.GetHashCode() == 4 ? ref @ref : ref s);
 		}
 

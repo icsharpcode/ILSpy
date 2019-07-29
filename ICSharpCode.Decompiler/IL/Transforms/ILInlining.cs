@@ -404,7 +404,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					break;
 			}
-			
+			if (inlinedExpression.ResultType == StackType.Ref) {
+				// VB likes to use ref locals for compound assignment
+				// (the C# compiler uses ref stack slots instead).
+				// We want to avoid unnecessary ref locals, so we'll always inline them if possible.
+				return true;
+			}
+
 			var parent = loadInst.Parent;
 			if (NullableLiftingTransform.MatchNullableCtor(parent, out _, out _)) {
 				// inline into nullable ctor call in lifted operator
