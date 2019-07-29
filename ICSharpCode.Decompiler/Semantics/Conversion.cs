@@ -77,11 +77,14 @@ namespace ICSharpCode.Decompiler.Semantics
 		public static readonly Conversion TryCast = new BuiltinConversion(false, 9);
 
 		/// <summary>
+		/// C# 6 string interpolation expression implicitly being converted to <see cref="System.IFormattable"/> or <see cref="System.FormattableString"/>.
+		/// </summary>
+		public static readonly Conversion ImplicitInterpolatedStringConversion = new BuiltinConversion(true, 10);
+
+		/// <summary>
 		/// C# 7 throw expression being converted to an arbitrary type.
 		/// </summary>
-		public static readonly Conversion ThrowExpressionConversion = new BuiltinConversion(true, 10);
-		
-		public static readonly Conversion ImplicitInterpolatedStringConversion = new BuiltinConversion(true, 10);
+		public static readonly Conversion ThrowExpressionConversion = new BuiltinConversion(true, 11);
 
 		public static Conversion UserDefinedConversion(IMethod operatorMethod, bool isImplicit, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted = false, bool isAmbiguous = false)
 		{
