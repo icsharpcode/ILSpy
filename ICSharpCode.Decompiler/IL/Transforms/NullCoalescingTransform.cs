@@ -102,8 +102,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		delegate bool PatternMatcher(ILInstruction input, out ILInstruction output);
-
 		/// <summary>
 		/// stloc v(value)
 		/// if (logic.not(call get_HasValue(ldloca v))) throw(...)
@@ -117,26 +115,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(block.Instructions[pos] is StLoc stloc))
 				return false;
+			ILVariable v = stloc.Variable;
+			if (!(v.StoreCount == 1 && v.LoadCount == 0 && v.AddressCount == 2))
+				return false;
 			if (!block.Instructions[pos + 1].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
 			if (!(Block.Unwrap(trueInst) is Throw throwInst))
 				return false;
 			if (!condition.MatchLogicNot(out var arg))
 				return false;
-			if (!(arg is CallInstruction call && NullableLiftingTransform.MatchHasValueCall(call, out ILInstruction target)))
+			if (!(arg is CallInstruction call && NullableLiftingTransform.MatchHasValueCall(call, v)))
 				return false;
-			ILVariable v = stloc.Variable;
-			if (v.StackType == StackType.Ref) {
-				if (!(v.StoreCount == 1 && v.LoadCount == 2 && v.AddressCount == 0))
-					return false;
-				if (!target.MatchLdLoc(v))
-					return false;
-			} else {
-				if (!(v.StoreCount == 1 && v.LoadCount == 0 && v.AddressCount == 2))
-					return false;
-				if (!target.MatchLdLoca(v))
-					return false;
-			}
 			var throwInstParent = throwInst.Parent;
 			var throwInstChildIndex = throwInst.ChildIndex;
 			var nullCoalescingWithThrow = new NullCoalescingInstruction(
@@ -147,7 +136,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			nullCoalescingWithThrow.UnderlyingResultType = resultType;
 			var result = ILInlining.FindLoadInNext(block.Instructions[pos + 2], v, nullCoalescingWithThrow, InliningOptions.None);
 			if (result.Type == ILInlining.FindResultType.Found
-				&& MatchNullableCall(result.LoadInst.Parent, NullableLiftingTransform.MatchGetValueOrDefault))
+				&& NullableLiftingTransform.MatchGetValueOrDefault(result.LoadInst.Parent, v))
 			{
 				context.Step("NullCoalescingTransform (value types + throw expression)", stloc);
 				throwInst.resultType = resultType;
@@ -160,20 +149,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var children = throwInstParent.Children;
 				children[throwInstChildIndex] = throwInst;
 				return false;
-			}
-
-			bool MatchNullableCall(ILInstruction input, PatternMatcher matcher)
-			{
-				if (!matcher(input, out var loadInst))
-					return false;
-				if (v.StackType == StackType.Ref) {
-					if (!loadInst.MatchLdLoc(v))
-						return false;
-				} else {
-					if (!loadInst.MatchLdLoca(v))
-						return false;
-				}
-				return true;
 			}
 		}
 	}
