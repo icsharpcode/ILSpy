@@ -36,9 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
 			if (!TransformRefTypes(block, pos, context)) {
-				if (!TransformThrowExpressionValueTypes(block, pos, context)) {
-					TransformThrowExpressionOnAddress(block, pos, context);
-				}
+				TransformThrowExpressionValueTypes(block, pos, context);
 			}
 		}
 
@@ -112,15 +110,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// ... Call(arg1, arg2, call GetValueOrDefault(ldloca v), arg4) ...
 		/// =>
 		/// ... Call(arg1, arg2, if.notnull(value, throw(...)), arg4) ...
-		/// 
-		/// -or-
-		/// 
-		/// stloc v(value)
-		/// stloc s(ldloca v)
-		/// if (logic.not(call get_HasValue(ldloc s))) throw(...)
-		/// ... Call(arg1, arg2, call GetValueOrDefault(ldloc s), arg4) ...
-		/// =>
-		/// ... Call(arg1, arg2, if.notnull(value, throw(...)), arg4) ...
 		/// </summary>
 		bool TransformThrowExpressionValueTypes(Block block, int pos, StatementTransformContext context)
 		{
@@ -128,115 +117,42 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(block.Instructions[pos] is StLoc stloc))
 				return false;
-			int offset = 1;
-			ILVariable v = stloc.Variable;
-			// alternative pattern using stack slot containing address of v
-			if (block.Instructions[pos + offset] is StLoc addrCopyStore
-				&& addrCopyStore.Variable.Kind == VariableKind.StackSlot
-				&& addrCopyStore.Value.MatchLdLoca(v)
-				&& pos + 3 < block.Instructions.Count)
-			{
-				offset++;
-				// v turns into s in the pattern above.
-				v = addrCopyStore.Variable;
-				if (!(v.StoreCount == 1 && v.LoadCount == 2 && v.AddressCount == 0))
-					return false;
-			} else {
-				if (!(v.StoreCount == 1 && v.LoadCount == 0 && v.AddressCount == 2))
-					return false;
-			}
-			if (!block.Instructions[pos + offset].MatchIfInstruction(out var condition, out var trueInst))
-				return false;
-			if (!(Block.Unwrap(trueInst) is Throw throwInst))
-				return false;
-			if (!condition.MatchLogicNot(out var arg))
-				return false;
-			if (!MatchNullableCall(arg, NullableLiftingTransform.MatchHasValueCall))
-				return false;
-			var throwInstParent = throwInst.Parent;
-			var throwInstChildIndex = throwInst.ChildIndex;
-			var nullCoalescingWithThrow = new NullCoalescingInstruction(
-				NullCoalescingKind.NullableWithValueFallback,
-				stloc.Value,
-				throwInst);
-			var resultType = NullableType.GetUnderlyingType(v.Type).GetStackType();
-			nullCoalescingWithThrow.UnderlyingResultType = resultType;
-			var result = ILInlining.FindLoadInNext(block.Instructions[pos + offset + 1], v, nullCoalescingWithThrow, InliningOptions.None);
-			if (result.Type == ILInlining.FindResultType.Found
-				&& MatchNullableCall(result.LoadInst.Parent, NullableLiftingTransform.MatchGetValueOrDefault))
-			{
-				context.Step("NullCoalescingTransform (value types + throw expression)", stloc);
-				throwInst.resultType = resultType;
-				result.LoadInst.Parent.ReplaceWith(nullCoalescingWithThrow);
-				block.Instructions.RemoveRange(pos, offset + 1); // remove store(s) and if instruction
-				return true;
-			} else {
-				// reset the primary position (see remarks on ILInstruction.Parent)
-				stloc.Value = stloc.Value;
-				var children = throwInstParent.Children;
-				children[throwInstChildIndex] = throwInst;
-				return false;
-			}
-
-			bool MatchNullableCall(ILInstruction input, PatternMatcher matcher)
-			{
-				if (!matcher(input, out var loadInst))
-					return false;
-				if (offset == 1) { // Pattern 1
-					if (!loadInst.MatchLdLoca(v))
-						return false;
-				} else {
-					if (!loadInst.MatchLdLoc(v))
-						return false;
-				}
-				return true;
-			}
-		}
-
-		/// <summary>
-		/// stloc s(addressOfValue)
-		/// if (logic.not(call get_HasValue(ldloc s))) throw(...)
-		/// ... Call(arg1, arg2, call GetValueOrDefault(ldloc s), arg4) ...
-		/// =>
-		/// ... Call(arg1, arg2, if.notnull(value, throw(...)), arg4) ...
-		/// </summary>
-		bool TransformThrowExpressionOnAddress(Block block, int pos, StatementTransformContext context)
-		{
-			if (pos + 2 >= block.Instructions.Count)
-				return false;
-			if (!(block.Instructions[pos] is StLoc stloc))
-				return false;
-			var s = stloc.Variable;
-			if (s.Kind != VariableKind.StackSlot)
-				return false;
-			if (!(s.StoreCount == 1 && s.LoadCount == 2 && s.AddressCount == 0))
-				return false;
-			if (!(s.Type is ByReferenceType byRef && byRef.ElementType.IsReferenceType == false))
-				return false;
 			if (!block.Instructions[pos + 1].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
 			if (!(Block.Unwrap(trueInst) is Throw throwInst))
 				return false;
 			if (!condition.MatchLogicNot(out var arg))
 				return false;
-			if (!MatchNullableCall(arg, NullableLiftingTransform.MatchHasValueCall))
+			if (!(arg is CallInstruction call && NullableLiftingTransform.MatchHasValueCall(call, out ILInstruction target)))
 				return false;
+			ILVariable v = stloc.Variable;
+			if (v.Type is ByReferenceType byRefType && byRefType.ElementType.IsReferenceType == false) {
+				if (!(v.StoreCount == 1 && v.LoadCount == 2 && v.AddressCount == 0))
+					return false;
+				if (!target.MatchLdLoc(v))
+					return false;
+			} else {
+				if (!(v.StoreCount == 1 && v.LoadCount == 0 && v.AddressCount == 2))
+					return false;
+				if (!target.MatchLdLoca(v))
+					return false;
+			}
 			var throwInstParent = throwInst.Parent;
 			var throwInstChildIndex = throwInst.ChildIndex;
-			var ldobj = new LdObj(stloc.Value, byRef.ElementType);
 			var nullCoalescingWithThrow = new NullCoalescingInstruction(
 				NullCoalescingKind.NullableWithValueFallback,
-				ldobj,
+				stloc.Value,
 				throwInst);
-			var resultType = NullableType.GetUnderlyingType(byRef.ElementType).GetStackType();
+			var resultType = NullableType.GetUnderlyingType(call.Method.DeclaringType).GetStackType();
 			nullCoalescingWithThrow.UnderlyingResultType = resultType;
-			var result = ILInlining.FindLoadInNext(block.Instructions[pos + 2], s, nullCoalescingWithThrow, InliningOptions.None);
+			var result = ILInlining.FindLoadInNext(block.Instructions[pos + 2], v, nullCoalescingWithThrow, InliningOptions.None);
 			if (result.Type == ILInlining.FindResultType.Found
-				&& MatchNullableCall(result.LoadInst.Parent, NullableLiftingTransform.MatchGetValueOrDefault)) {
-				context.Step("NullCoalescingTransform (address + throw expression)", stloc);
+				&& MatchNullableCall(result.LoadInst.Parent, NullableLiftingTransform.MatchGetValueOrDefault))
+			{
+				context.Step("NullCoalescingTransform (value types + throw expression)", stloc);
 				throwInst.resultType = resultType;
 				result.LoadInst.Parent.ReplaceWith(nullCoalescingWithThrow);
-				block.Instructions.RemoveRange(pos, 2); // remove store and if instruction
+				block.Instructions.RemoveRange(pos, 2); // remove store(s) and if instruction
 				return true;
 			} else {
 				// reset the primary position (see remarks on ILInstruction.Parent)
@@ -250,8 +166,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!matcher(input, out var loadInst))
 					return false;
-				if (!loadInst.MatchLdLoc(s))
-					return false;
+				if (v.Type is ByReferenceType) {
+					if (!loadInst.MatchLdLoc(v))
+						return false;
+				} else {
+					if (!loadInst.MatchLdLoca(v))
+						return false;
+				}
 				return true;
 			}
 		}
