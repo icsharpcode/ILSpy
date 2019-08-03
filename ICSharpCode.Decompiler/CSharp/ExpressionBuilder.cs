@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(method.IsLocalFunction);
 			method = method.ReducedFrom;
 			foreach (var parent in currentFunction.Ancestors.OfType<ILFunction>()) {
-				var definition = parent.LocalFunctions.FirstOrDefault(f => f.Method == method);
+				var definition = parent.LocalFunctions.FirstOrDefault(f => f.Method.Equals(method));
 				if (definition != null) {
 					return definition;
 				}
