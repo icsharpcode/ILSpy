@@ -1232,7 +1232,17 @@ namespace ICSharpCode.Decompiler.CSharp
 				default:
 					throw new ArgumentException($"Unknown instruction type: {func.OpCode}");
 			}
-			var invokeMethod = inst.Method.DeclaringType.GetDelegateInvokeMethod();
+			return HandleDelegateConstruction(inst.Method.DeclaringType, method, expectedTargetDetails, thisArg, inst);
+		}
+
+		internal TranslatedExpression Build(LdVirtDelegate inst)
+		{
+			return HandleDelegateConstruction(inst.Type, inst.Method, new ExpectedTargetDetails { CallOpCode = OpCode.CallVirt }, inst.Argument, inst);
+		}
+
+		TranslatedExpression HandleDelegateConstruction(IType delegateType, IMethod method, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg, ILInstruction inst)
+		{
+			var invokeMethod = delegateType.GetDelegateInvokeMethod();
 			TranslatedExpression target;
 			IType targetType;
 			bool requireTarget;
@@ -1285,7 +1295,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 				target = expressionBuilder.TranslateTarget(thisArg,
-					nonVirtualInvocation: func.OpCode == OpCode.LdFtn,
+					nonVirtualInvocation: expectedTargetDetails.CallOpCode == OpCode.Call,
 					memberStatic: method.IsStatic,
 					memberDeclaringType: method.DeclaringType);
 				requireTarget = expressionBuilder.HidesVariableWithName(method.Name)
@@ -1334,12 +1344,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				ide.WithRR(result);
 				targetExpression = ide;
 			}
-			var oce = new ObjectCreateExpression(expressionBuilder.ConvertType(inst.Method.DeclaringType), targetExpression)
+			var oce = new ObjectCreateExpression(expressionBuilder.ConvertType(delegateType), targetExpression)
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(
-					inst.Method.DeclaringType,
+					delegateType,
 					result,
-					Conversion.MethodGroupConversion(method, func.OpCode == OpCode.LdVirtFtn, false)));
+					Conversion.MethodGroupConversion(method, expectedTargetDetails.CallOpCode == OpCode.CallVirt, false)));
 			return oce;
 		}
 

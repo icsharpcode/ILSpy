@@ -297,7 +297,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				inst.ReplaceWith(block);
 				return;
 			}
+			if (TransformDelegateCtorLdVirtFtnToLdVirtDelegate(inst, out LdVirtDelegate ldVirtDelegate)) {
+				context.Step("new Delegate(target, ldvirtftn Method) -> ldvirtdelegate Delegate Method(target)", inst);
+				inst.ReplaceWith(ldVirtDelegate);
+				return;
+			}
 			base.VisitNewObj(inst);
+		}
+
+		/// <summary>
+		/// newobj Delegate..ctor(target, ldvirtftn TargetMethod(target))
+		/// =>
+		/// ldvirtdelegate System.Delegate TargetMethod(target)
+		/// </summary>
+		bool TransformDelegateCtorLdVirtFtnToLdVirtDelegate(NewObj inst, out LdVirtDelegate ldVirtDelegate)
+		{
+			ldVirtDelegate = null;
+			if (inst.Method.DeclaringType.Kind != TypeKind.Delegate)
+				return false;
+			if (inst.Arguments.Count != 2)
+				return false;
+			if (!(inst.Arguments[1] is LdVirtFtn ldVirtFtn))
+				return false;
+			if (!inst.Arguments[0].Match(ldVirtFtn.Argument).Success)
+				return false;
+			ldVirtDelegate = new LdVirtDelegate(inst.Arguments[0], inst.Method.DeclaringType, ldVirtFtn.Method)
+				.WithILRange(inst).WithILRange(ldVirtFtn).WithILRange(ldVirtFtn.Argument);
+			return true;
 		}
 
 		/// <summary>
