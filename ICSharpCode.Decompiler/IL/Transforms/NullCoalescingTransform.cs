@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(arg is CallInstruction call && NullableLiftingTransform.MatchHasValueCall(call, out ILInstruction target)))
 				return false;
 			ILVariable v = stloc.Variable;
-			if (v.Type is ByReferenceType byRefType && byRefType.ElementType.IsReferenceType == false) {
+			if (v.StackType == StackType.Ref) {
 				if (!(v.StoreCount == 1 && v.LoadCount == 2 && v.AddressCount == 0))
 					return false;
 				if (!target.MatchLdLoc(v))
@@ -166,7 +166,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!matcher(input, out var loadInst))
 					return false;
-				if (v.Type is ByReferenceType) {
+				if (v.StackType == StackType.Ref) {
 					if (!loadInst.MatchLdLoc(v))
 						return false;
 				} else {
