@@ -354,6 +354,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				throw new SymbolicAnalysisFailedException();
 			if (blockContainer.EntryPoint.IncomingEdgeCount != 1)
 				throw new SymbolicAnalysisFailedException();
+			cachedStateVar = null;
 			int pos = 0;
 			while (blockContainer.EntryPoint.Instructions[pos] is StLoc stloc) {
 				// stloc V_1(ldfld <>4__this(ldloc this))
@@ -361,7 +362,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					throw new SymbolicAnalysisFailedException();
 				if (!target.MatchLdThis())
 					throw new SymbolicAnalysisFailedException();
-				if (field.MemberDefinition == stateField) {
+				if (field.MemberDefinition == stateField && cachedStateVar == null) {
 					// stloc(cachedState, ldfld(valuetype StateMachineStruct::<>1__state, ldloc(this)))
 					cachedStateVar = stloc.Variable;
 				} else if (fieldToParameterMap.TryGetValue((IField)field.MemberDefinition, out var param)) {
