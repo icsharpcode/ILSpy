@@ -62,11 +62,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal static bool IsDelegateConstruction(NewObj inst, bool allowTransformed = false)
 		{
-			if (inst == null || inst.Arguments.Count != 2 || inst.Method.DeclaringType.Kind != TypeKind.Delegate)
+			if (inst == null || inst.Arguments.Count != 2)
 				return false;
 			var opCode = inst.Arguments[1].OpCode;
-			
-			return opCode == OpCode.LdFtn || opCode == OpCode.LdVirtFtn || (allowTransformed && opCode == OpCode.ILFunction);
+			if (!(opCode == OpCode.LdFtn || opCode == OpCode.LdVirtFtn || (allowTransformed && opCode == OpCode.ILFunction)))
+				return false;
+			var typeKind = inst.Method.DeclaringType.Kind;
+			return typeKind == TypeKind.Delegate || typeKind == TypeKind.Unknown;
 		}
 		
 		static bool IsAnonymousMethod(ITypeDefinition decompiledTypeDefinition, IMethod method)

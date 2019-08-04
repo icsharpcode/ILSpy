@@ -786,7 +786,7 @@ namespace ICSharpCode.Decompiler.IL
 			clone.CloneVariables();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType { get { return DelegateType?.GetStackType() ?? StackType.O; } }
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitILFunction(this);

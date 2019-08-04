@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!storeInst.MatchStsFld(out IField field2, out ILInstruction value) || !field.Equals(field2) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return false;
-			if (!DelegateConstruction.IsDelegateConstruction(value as NewObj, true))
+			if (!DelegateConstruction.IsDelegateConstruction(value.UnwrapConv(ConversionKind.Invalid) as NewObj, true))
 				return false;
 			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
 			if (nextInstruction == null)

@@ -51,7 +51,7 @@
 			CustomChildren(new [] {
 				new ChildInfo("body"),
 				new ChildInfo("localFunctions") { IsCollection = true, Type = "ILFunction" }
-			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("O")
+			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("DelegateType?.GetStackType() ?? StackType.O")
 		),
 		new OpCode("BlockContainer", "A container of IL blocks.",
 			ResultType("this.ExpectedResultType"), CustomConstructor, CustomVariableName("container"),
