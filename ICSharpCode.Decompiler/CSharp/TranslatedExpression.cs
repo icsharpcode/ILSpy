@@ -163,7 +163,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			throw new ArgumentException("descendant must be a descendant of the current node");
 		}
-		
+
 		/// <summary>
 		/// Adds casts (if necessary) to convert this expression to the specified target type.
 		/// </summary>
@@ -176,6 +176,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// 
 		/// From the caller's perspective, IntPtr/UIntPtr behave like normal C# integers except that they have native int size.
 		/// All the special cases necessary to make IntPtr/UIntPtr behave sanely are handled internally in ConvertTo().
+		/// 
+		/// Post-condition:
+		///    The "expected evaluation result" is the value computed by <c>this.Expression</c>,
+		///    converted to targetType via an IL conv instruction.
+		/// 
+		///    ConvertTo(targetType, allowImplicitConversion=false).Type must be equal to targetType (modulo identity conversions).
+		///      The value computed by the converted expression must match the "expected evaluation result".
+		/// 
+		///    ConvertTo(targetType, allowImplicitConversion=true) must produce an expression that,
+		///      when evaluated in a context where it will be implicitly converted to targetType,
+		///      evaluates to the "expected evaluation result".
 		/// </remarks>
 		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder, bool checkForOverflow = false, bool allowImplicitConversion = false)
 		{
@@ -226,6 +237,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithoutILInstruction()
 					.WithRR(convAnnotation.ConversionResolveResult)
 					.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
+			}
+			if (Expression is ThrowExpression && allowImplicitConversion) {
+				return this; // Throw expressions have no type and are implicitly convertible to any type
 			}
 			if (Expression is TupleExpression tupleExpr && targetType is TupleType targetTupleType
 				&& tupleExpr.Elements.Count == targetTupleType.ElementTypes.Length)

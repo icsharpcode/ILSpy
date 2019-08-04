@@ -362,4 +362,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 	}
+
+	public partial class Throw
+	{
+		internal StackType resultType = StackType.Void;
+	}
 }

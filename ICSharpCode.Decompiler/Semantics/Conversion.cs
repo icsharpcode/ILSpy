@@ -76,7 +76,15 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// </summary>
 		public static readonly Conversion TryCast = new BuiltinConversion(false, 9);
 
+		/// <summary>
+		/// C# 6 string interpolation expression implicitly being converted to <see cref="System.IFormattable"/> or <see cref="System.FormattableString"/>.
+		/// </summary>
 		public static readonly Conversion ImplicitInterpolatedStringConversion = new BuiltinConversion(true, 10);
+
+		/// <summary>
+		/// C# 7 throw expression being converted to an arbitrary type.
+		/// </summary>
+		public static readonly Conversion ThrowExpressionConversion = new BuiltinConversion(true, 11);
 
 		public static Conversion UserDefinedConversion(IMethod operatorMethod, bool isImplicit, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted = false, bool isAmbiguous = false)
 		{
@@ -231,7 +239,11 @@ namespace ICSharpCode.Decompiler.Semantics
 			}
 
 			public override bool IsInterpolatedStringConversion => type == 10;
-
+			
+			public override bool IsThrowExpressionConversion {
+				get { return type == 11; }
+			}
+			
 			public override string ToString()
 			{
 				string name = null;
@@ -263,6 +275,8 @@ namespace ICSharpCode.Decompiler.Semantics
 						return "try cast";
 					case 10:
 						return "interpolated string";
+					case 11:
+						return "throw-expression conversion";
 				}
 				return (isImplicit ? "implicit " : "explicit ") + name + " conversion";
 			}
@@ -449,7 +463,11 @@ namespace ICSharpCode.Decompiler.Semantics
 		public virtual bool IsTryCast {
 			get { return false; }
 		}
-		
+
+		public virtual bool IsThrowExpressionConversion {
+			get { return false; }
+		}
+
 		public virtual bool IsIdentityConversion {
 			get { return false; }
 		}

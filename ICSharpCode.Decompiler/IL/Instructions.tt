@@ -265,7 +265,7 @@
 		new OpCode("default.value", "Returns the default value for a type.",
 			NoArguments, HasTypeOperand, ResultType("type.GetStackType()")),
 		new OpCode("throw", "Throws an exception.",
-			Unary, MayThrow, UnconditionalBranch),
+			Unary, MayThrow, HasFlag("InstructionFlags.EndPointUnreachable"), ResultType("this.resultType")),
 		new OpCode("rethrow", "Rethrows the current exception.",
 			NoArguments, MayThrow, UnconditionalBranch),
 		new OpCode("sizeof", "Gets the size of a type in bytes.",

@@ -115,6 +115,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					if (c != Conversion.None)
 						return c;
 				}
+				if (resolveResult is ThrowResolveResult) {
+					return Conversion.ThrowExpressionConversion;
+				}
 				if (allowUserDefined && allowTuple) {
 					// if allowUserDefined and allowTuple are true, we might as well use the cache
 					c = ImplicitConversion(resolveResult.Type, toType);

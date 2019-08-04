@@ -729,6 +729,9 @@
   <data name="CannotAnalyzeMissingRef" xml:space="preserve">
     <value>Entity could not be resolved. Cannot analyze entities from missing assembly references. Add the missing reference and try again.</value>
   </data>
+  <data name="DecompilerSettings.UseThrowExpressions" xml:space="preserve">
+    <value>Use throw expressions</value>
+  </data>
   <data name="DecompilerSettings.AllowExtensionMethodSyntaxOnRef" xml:space="preserve">
     <value>Use 'ref' extension methods</value>
   </data>

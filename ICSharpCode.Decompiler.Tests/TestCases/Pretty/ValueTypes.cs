@@ -66,6 +66,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				S s = this;
 				s.SetField();
 			}
+
+			public void UseField(int val)
+			{
+				UseField(Get<S>().Field);
+			}
 		}
 
 #if CS72
@@ -262,6 +267,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			R r = Get<R>();
 			r.Property = 2;
 #endif
+		}
+
+		public static void CallOnFieldOfTemporary()
+		{
+			Get<S>().Field.ToString();
 		}
 	}
 }
