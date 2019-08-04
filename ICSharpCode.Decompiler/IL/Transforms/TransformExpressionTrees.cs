@@ -352,7 +352,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							// Replace an already mapped parameter with the actual ILVariable,
 							// we generated earlier.
 							if (parameterMapping.TryGetValue(ldloc.Variable, out var v)) {
-								if (typeHint.SkipModifiers() is ByReferenceType brt && !v.Type.IsByRefLike)
+								if (typeHint.SkipModifiers() is ByReferenceType && !v.Type.IsByRefLike)
 									return (new LdLoca(v), typeHint);
 								return (new LdLoc(v), v.Type);
 							}
@@ -364,7 +364,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							// with references to mapped parameters.
 							if (ldloc.Variable.IsSingleDefinition && ldloc.Variable.StoreInstructions[0] is ILInstruction inst) {
 								if (MatchParameterVariableAssignment(inst, out _, out var type, out _))
-									return (ldloc, type);
+									return (new ExpressionTreeCast(type, ldloc, false), type);
 							}
 						}
 						return (null, SpecialType.UnknownType);
