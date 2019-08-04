@@ -77,14 +77,16 @@ namespace ILSpy.BamlDecompiler.Rewrite {
 			var attrName = elem.Name;
 			if (attrName != key)
 				attrName = property.ToXName(ctx, parent, property.IsAttachedTo(type));
-			var attr = new XAttribute(attrName, extValue);
-			var list = new List<XAttribute>(parent.Attributes());
-			if (attrName == key)
-				list.Insert(0, attr);
-			else
-				list.Add(attr);
-			parent.RemoveAttributes();
-			parent.ReplaceAttributes(list);
+			if (!parent.Attributes(attrName).Any()) {
+				var attr = new XAttribute(attrName, extValue);
+				var list = new List<XAttribute>(parent.Attributes());
+				if (attrName == key)
+					list.Insert(0, attr);
+				else
+					list.Add(attr);
+				parent.RemoveAttributes();
+				parent.ReplaceAttributes(list);
+			}
 			elem.Remove();
 
 			return true;
