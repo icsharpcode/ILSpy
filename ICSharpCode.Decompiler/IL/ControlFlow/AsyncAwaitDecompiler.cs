@@ -355,27 +355,22 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (blockContainer.EntryPoint.IncomingEdgeCount != 1)
 				throw new SymbolicAnalysisFailedException();
 			int pos = 0;
-			if (blockContainer.EntryPoint.Instructions[0].MatchStLoc(out cachedStateVar, out var cachedStateInit)) {
-				// stloc(cachedState, ldfld(valuetype StateMachineStruct::<>1__state, ldloc(this)))
-				if (!cachedStateInit.MatchLdFld(out var target, out var loadedField))
-					throw new SymbolicAnalysisFailedException();
-				if (!target.MatchLdThis())
-					throw new SymbolicAnalysisFailedException();
-				if (loadedField.MemberDefinition != stateField)
-					throw new SymbolicAnalysisFailedException();
-				++pos;
-			}
 			while (blockContainer.EntryPoint.Instructions[pos] is StLoc stloc) {
 				// stloc V_1(ldfld <>4__this(ldloc this))
-				if (!stloc.Variable.IsSingleDefinition)
-					throw new SymbolicAnalysisFailedException();
 				if (!stloc.Value.MatchLdFld(out var target, out var field))
 					throw new SymbolicAnalysisFailedException();
 				if (!target.MatchLdThis())
 					throw new SymbolicAnalysisFailedException();
-				if (!fieldToParameterMap.TryGetValue((IField)field.MemberDefinition, out var param))
+				if (field.MemberDefinition == stateField) {
+					// stloc(cachedState, ldfld(valuetype StateMachineStruct::<>1__state, ldloc(this)))
+					cachedStateVar = stloc.Variable;
+				} else if (fieldToParameterMap.TryGetValue((IField)field.MemberDefinition, out var param)) {
+					if (!stloc.Variable.IsSingleDefinition)
+						throw new SymbolicAnalysisFailedException();
+					cachedFieldToParameterMap[stloc.Variable] = param;
+				} else {
 					throw new SymbolicAnalysisFailedException();
-				cachedFieldToParameterMap[stloc.Variable] = param;
+				}
 				pos++;
 			}
 			mainTryCatch = blockContainer.EntryPoint.Instructions[pos] as TryCatch;

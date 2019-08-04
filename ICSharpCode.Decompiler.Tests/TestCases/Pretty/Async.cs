@@ -26,6 +26,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class Async
 	{
+		private int memberField;
+
 		public async void SimpleVoidMethod()
 		{
 			Console.WriteLine("Before");
@@ -70,6 +72,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public async Task TaskMethodWithoutAwait()
 		{
 			Console.WriteLine("No Await");
+		}
+
+		public async Task CapturingThis()
+		{
+			await Task.Delay(memberField);
+		}
+
+		public async Task CapturingThisWithoutAwait()
+		{
+			Console.WriteLine(memberField);
 		}
 
 		public async Task<bool> SimpleBoolTaskMethod()
