@@ -105,13 +105,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							// Parameters can be copied only if they aren't assigned to (directly or indirectly via ldarga)
 							// note: the initialization by the caller is the first store -> StoreCount must be 1
 							return v.IsSingleDefinition;
-						case VariableKind.StackSlot:
-						case VariableKind.ExceptionStackSlot:
-							// Variables are be copied only if both they and the target copy variable are generated,
-							// and if the variable has only a single assignment
-							return v.IsSingleDefinition && target.Kind == VariableKind.StackSlot;
 						default:
-							return false;
+							// Variables can be copied if both are single-definition.
+							// To avoid removing too many variables, we do this only if the target
+							// is either a stackslot or a ref local.
+							Debug.Assert(target.IsSingleDefinition);
+							return v.IsSingleDefinition && (target.Kind == VariableKind.StackSlot || target.StackType == StackType.Ref);
 					}
 				default:
 					// All instructions without special behavior that target a stack-variable can be copied.
