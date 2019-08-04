@@ -936,6 +936,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use throw expressions.
+        /// </summary>
+        public static string DecompilerSettings_UseThrowExpressions {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UseThrowExpressions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use tuple type syntax.
         /// </summary>
         public static string DecompilerSettings_UseTupleTypeSyntax {

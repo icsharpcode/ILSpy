@@ -384,6 +384,7 @@
     <Compile Include="TypeSystem\ModifiedType.cs" />
     <Compile Include="TypeSystem\Implementation\PinnedType.cs" />
     <Compile Include="Metadata\MetadataExtensions.cs" />
+    <Compile Include="Semantics\ThrowResolveResult.cs" />
     <Compile Include="Semantics\TupleResolveResult.cs" />
     <Compile Include="TypeSystem\NormalizeTypeVisitor.cs" />
     <Compile Include="TypeSystem\Nullability.cs" />

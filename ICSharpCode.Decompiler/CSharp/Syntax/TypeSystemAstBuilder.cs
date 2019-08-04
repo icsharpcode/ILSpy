@@ -527,12 +527,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			Attribute attr = new Attribute();
 			attr.Type = ConvertAttributeType(attribute.AttributeType);
-			SimpleType st = attr.Type as SimpleType;
-			MemberType mt = attr.Type as MemberType;
-			if (st != null && st.Identifier.EndsWith("Attribute", StringComparison.Ordinal)) {
-				st.Identifier = st.Identifier.Substring(0, st.Identifier.Length - 9);
-			} else if (mt != null && mt.MemberName.EndsWith("Attribute", StringComparison.Ordinal)) {
-				mt.MemberName = mt.MemberName.Substring(0, mt.MemberName.Length - 9);
+			switch (attr.Type) {
+				case SimpleType st:
+					if (st.Identifier.EndsWith("Attribute", StringComparison.Ordinal))
+						st.Identifier = st.Identifier.Substring(0, st.Identifier.Length - 9);
+					break;
+				case MemberType mt:
+					if (mt.MemberName.EndsWith("Attribute", StringComparison.Ordinal))
+						mt.MemberName = mt.MemberName.Substring(0, mt.MemberName.Length - 9);
+					break;
+			}
+			if (AddResolveResultAnnotations && attribute.Constructor != null) {
+				attr.AddAnnotation(new MemberResolveResult(null, attribute.Constructor));
 			}
 			var parameters = attribute.Constructor?.Parameters ?? EmptyList<IParameter>.Instance;
 			for (int i = 0; i < attribute.FixedArguments.Length; i++) {

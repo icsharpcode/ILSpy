@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
@@ -104,7 +105,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		public static ISymbol GetSymbol(this AstNode node)
 		{
 			var rr = node.Annotation<ResolveResult>();
-			return rr != null ? rr.GetSymbol() : null;
+			if (rr is MethodGroupResolveResult) {
+				// delegate construction?
+				var newObj = node.Annotation<NewObj>();
+				var funcptr = newObj?.Arguments.ElementAtOrDefault(1);
+				if (funcptr is LdFtn ldftn) {
+					return ldftn.Method;
+				} else if (funcptr is LdVirtFtn ldVirtFtn) {
+					return ldVirtFtn.Method;
+				}
+			}
+			return rr?.GetSymbol();
 		}
 
 		/// <summary>

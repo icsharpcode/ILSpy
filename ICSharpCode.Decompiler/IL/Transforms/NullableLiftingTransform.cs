@@ -833,7 +833,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'logic.not(call get_HasValue(ldloca v))'
 		/// </summary>
-		static bool MatchNegatedHasValueCall(ILInstruction inst, ILVariable v)
+		internal static bool MatchNegatedHasValueCall(ILInstruction inst, ILVariable v)
 		{
 			return inst.MatchLogicNot(out var arg) && MatchHasValueCall(arg, v);
 		}

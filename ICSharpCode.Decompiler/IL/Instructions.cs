@@ -4432,7 +4432,7 @@ namespace ICSharpCode.Decompiler.IL
 		public Throw(ILInstruction argument) : base(OpCode.Throw, argument)
 		{
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType { get { return this.resultType; } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;

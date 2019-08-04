@@ -88,6 +88,7 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7) {
 				outVariables = false;
+				throwExpressions = false;
 				tupleTypes = false;
 				tupleConversions = false;
 				discards = false;
@@ -118,7 +119,7 @@ namespace ICSharpCode.Decompiler
 			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments || refExtensionMethods)
 				return CSharp.LanguageVersion.CSharp7_2;
 			// C# 7.1 missing
-			if (outVariables || tupleTypes || tupleConversions || discards || localFunctions)
+			if (outVariables || throwExpressions || tupleTypes || tupleConversions || discards || localFunctions)
 				return CSharp.LanguageVersion.CSharp7;
 			if (awaitInCatchFinally || useExpressionBodyForCalculatedGetterOnlyProperties || nullPropagation
 				|| stringInterpolation || dictionaryInitializers || extensionMethodsInCollectionInitializers)
@@ -869,6 +870,23 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (tupleTypes != value) {
 					tupleTypes = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool throwExpressions = true;
+
+		/// <summary>
+		/// Gets/Sets whether throw expressions should be used.
+		/// </summary>
+		[Category("C# 7.0 / VS 2017")]
+		[Description("DecompilerSettings.UseThrowExpressions")]
+		public bool ThrowExpressions {
+			get { return throwExpressions; }
+			set {
+				if (throwExpressions != value) {
+					throwExpressions = value;
 					OnPropertyChanged();
 				}
 			}
