@@ -549,6 +549,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return target;
 					}
 				default:
+					if (expectedType.Kind == TypeKind.Unknown && target.ResultType != StackType.Unknown) {
+						return new Conv(target, PrimitiveType.Unknown, false, Sign.None);
+					}
 					return target;
 			}
 		}
