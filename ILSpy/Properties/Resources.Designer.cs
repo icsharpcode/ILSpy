@@ -304,7 +304,8 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The directory is not empty. File will be overwritten.\r\nAre you sure you want to continue?.
+        ///   Looks up a localized string similar to The directory is not empty. File will be overwritten.
+        ///Are you sure you want to continue?.
         /// </summary>
         public static string AssemblySaveCodeDirectoryNotEmpty {
             get {

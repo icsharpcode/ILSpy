@@ -736,7 +736,8 @@
     <value>Use 'ref' extension methods</value>
   </data>
   <data name="AssemblySaveCodeDirectoryNotEmpty" xml:space="preserve">
-    <value>The directory is not empty. File will be overwritten.\r\nAre you sure you want to continue?</value>
+    <value>The directory is not empty. File will be overwritten.
+Are you sure you want to continue?</value>
   </data>
   <data name="AssemblySaveCodeDirectoryNotEmptyTitle" xml:space="preserve">
     <value>Project Directory not empty</value>
