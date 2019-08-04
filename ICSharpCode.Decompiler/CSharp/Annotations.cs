@@ -108,11 +108,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (rr is MethodGroupResolveResult) {
 				// delegate construction?
 				var newObj = node.Annotation<NewObj>();
-				var funcptr = newObj?.Arguments.ElementAtOrDefault(1);
-				if (funcptr is LdFtn ldftn) {
-					return ldftn.Method;
-				} else if (funcptr is LdVirtFtn ldVirtFtn) {
-					return ldVirtFtn.Method;
+				if (newObj != null) {
+					var funcptr = newObj.Arguments.ElementAtOrDefault(1);
+					if (funcptr is LdFtn ldftn) {
+						return ldftn.Method;
+					} else if (funcptr is LdVirtFtn ldVirtFtn) {
+						return ldVirtFtn.Method;
+					}
+				}
+				var ldVirtDelegate = node.Annotation<LdVirtDelegate>();
+				if (ldVirtDelegate != null) {
+					return ldVirtDelegate.Method;
 				}
 			}
 			return rr?.GetSymbol();
