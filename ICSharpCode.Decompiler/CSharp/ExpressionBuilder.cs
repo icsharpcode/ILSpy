@@ -1721,6 +1721,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						} else if (inst.TargetType == IL.PrimitiveType.Ref) {
 							// converting to unknown ref-type
 							targetType = new ByReferenceType(compilation.FindType(KnownTypeCode.Byte));
+						} else if (inst.TargetType == IL.PrimitiveType.None) {
+							// convert to some object type
+							// (e.g. invalid I4->O conversion)
+							targetType = compilation.FindType(KnownTypeCode.Object);
 						} else {
 							targetType = GetType(inst.TargetType.ToKnownTypeCode());
 						}
@@ -2061,7 +2065,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitLdLen(LdLen inst, TranslationContext context)
 		{
-			TranslatedExpression arrayExpr = Translate(inst.Array);
+			TranslatedExpression arrayExpr = Translate(inst.Array, typeHint: compilation.FindType(KnownTypeCode.Array));
 			if (arrayExpr.Type.Kind != TypeKind.Array) {
 				arrayExpr = arrayExpr.ConvertTo(compilation.FindType(KnownTypeCode.Array), this);
 			}
