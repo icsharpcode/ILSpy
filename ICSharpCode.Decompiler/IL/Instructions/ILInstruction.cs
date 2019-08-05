@@ -125,31 +125,34 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(a == b);
 			return a;
 		}
-		
+
+#if DEBUG
 		/// <summary>
 		/// Gets whether this node (or any subnode) was modified since the last <c>ResetDirty()</c> call.
 		/// </summary>
 		/// <remarks>
-		/// IsDirty is used by the LoopingTransform, and must not be used by individual transforms within the loop.
+		/// IsDirty is used by the StatementTransform, and must not be used by individual transforms within the loop.
 		/// </remarks>
-		public bool IsDirty { get; private set; }
-		
-		protected void MakeDirty()
-		{
-			for (ILInstruction inst = this; inst != null && !inst.IsDirty; inst = inst.parent)
-				inst.IsDirty = true;
-		}
-		
+		internal bool IsDirty { get; private set; }
+
 		/// <summary>
 		/// Marks this node (and all subnodes) as <c>IsDirty=false</c>.
 		/// </summary>
-		/// <remarks>
-		/// IsDirty is used by the LoopingTransform, and must not be used by individual transforms within the loop.
-		/// </remarks>
-		public void ResetDirty()
+		internal void ResetDirty()
 		{
 			foreach (ILInstruction inst in Descendants)
 				inst.IsDirty = false;
+		}
+#endif
+
+		[Conditional("DEBUG")]
+		protected private void MakeDirty()
+		{
+#if DEBUG
+			for (ILInstruction inst = this; inst != null && !inst.IsDirty; inst = inst.parent) {
+				inst.IsDirty = true;
+			}
+#endif
 		}
 		
 		const InstructionFlags invalidFlags = (InstructionFlags)(-1);
