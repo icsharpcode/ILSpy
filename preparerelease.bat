@@ -1,12 +1,12 @@
 @setlocal enabledelayedexpansion
 @set MSBUILD=
-@for /D %%M in ("%ProgramFiles(x86)%\Microsoft Visual Studio\2017"\*) do (
-    @if exist "%%M\MSBuild\15.0\Bin\MSBuild.exe" (
-        @set "MSBUILD=%%M\MSBuild\15.0\Bin\MSBuild.exe"
+@for /D %%M in ("%ProgramFiles(x86)%\Microsoft Visual Studio\2019"\*) do (
+    @if exist "%%M\MSBuild\Current\Bin\MSBuild.exe" (
+        @set "MSBUILD=%%M\MSBuild\Current\Bin\MSBuild.exe"
     )
 )
 @if "%MSBUILD%" == "" (
-    @echo Could not find VS2017 MSBuild
+    @echo Could not find VS2019 MSBuild
     @exit /b 1
 )
 @del ICSharpCode.Decompiler\bin\Release\*.nupkg
