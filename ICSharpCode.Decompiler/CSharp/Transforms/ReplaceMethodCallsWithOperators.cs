@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
 				Expression expr = arguments[0];
 				for (int i = 1; i < arguments.Length; i++) {
-					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Add, arguments[i]);
+					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Add, arguments[i].UnwrapInDirectionExpression());
 				}
 				expr.CopyAnnotationsFrom(invocationExpression);
 				invocationExpression.ReplaceWith(expr);
@@ -116,7 +116,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (bop != null && arguments.Length == 2) {
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
 				invocationExpression.ReplaceWith(
-					new BinaryOperatorExpression(arguments[0], bop.Value, arguments[1]).CopyAnnotationsFrom(invocationExpression)
+					new BinaryOperatorExpression(
+						arguments[0].UnwrapInDirectionExpression(),
+						bop.Value,
+						arguments[1].UnwrapInDirectionExpression()
+					).CopyAnnotationsFrom(invocationExpression)
 				);
 				return;
 			}
@@ -130,7 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						// so reverse that optimization here:
 						invocationExpression.ReplaceWith(
 							new BinaryOperatorExpression(
-								arguments[0].Detach(),
+								arguments[0].UnwrapInDirectionExpression().Detach(),
 								(uop == UnaryOperatorType.Increment ? BinaryOperatorType.Add : BinaryOperatorType.Subtract),
 								new PrimitiveExpression(1m)
 							).CopyAnnotationsFrom(invocationExpression)
@@ -140,20 +144,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				arguments[0].Remove(); // detach argument
 				invocationExpression.ReplaceWith(
-					new UnaryOperatorExpression(uop.Value, arguments[0]).CopyAnnotationsFrom(invocationExpression)
+					new UnaryOperatorExpression(uop.Value, arguments[0].UnwrapInDirectionExpression()).CopyAnnotationsFrom(invocationExpression)
 				);
 				return;
 			}
 			if (method.Name == "op_Explicit" && arguments.Length == 1) {
 				arguments[0].Remove(); // detach argument
 				invocationExpression.ReplaceWith(
-					new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.ReturnType), arguments[0])
+					new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.ReturnType), arguments[0].UnwrapInDirectionExpression())
 						.CopyAnnotationsFrom(invocationExpression)
 				);
 				return;
 			}
 			if (method.Name == "op_True" && arguments.Length == 1 && invocationExpression.Role == Roles.Condition) {
-				invocationExpression.ReplaceWith(arguments[0]);
+				invocationExpression.ReplaceWith(arguments[0].UnwrapInDirectionExpression());
 				return;
 			}
 
