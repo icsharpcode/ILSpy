@@ -69,8 +69,10 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static void WriteTo(this EntityHandle entity, PEFile module, ITextOutput output, Metadata.GenericContext genericContext, ILNameSyntax syntax = ILNameSyntax.Signature)
 		{
-			if (entity.IsNil)
-				throw new ArgumentNullException(nameof(entity));
+			if (entity.IsNil) {
+				output.Write("<nil>");
+				return;
+			}
 			if (module == null)
 				throw new ArgumentNullException(nameof(module));
 			var metadata = module.Metadata;

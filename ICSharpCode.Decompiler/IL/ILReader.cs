@@ -124,9 +124,10 @@ namespace ICSharpCode.Decompiler.IL
 		EntityHandle ReadAndDecodeMetadataToken()
 		{
 			int token = reader.ReadInt32();
-			if (token < 0) {
+			if (token <= 0) {
 				// SRM uses negative tokens as "virtual tokens" and can get confused
 				// if we manually create them.
+				// Row-IDs < 1 are always invalid.
 				throw new BadImageFormatException("Invalid metadata token");
 			}
 			return MetadataTokens.EntityHandle(token);
