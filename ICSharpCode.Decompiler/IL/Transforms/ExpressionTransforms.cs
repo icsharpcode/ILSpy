@@ -319,9 +319,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(inst.Arguments[1] is LdVirtFtn ldVirtFtn))
 				return false;
-			if (!inst.Arguments[0].Match(ldVirtFtn.Argument).Success)
-				return false;
 			if (!SemanticHelper.IsPure(inst.Arguments[0].Flags))
+				return false;
+			if (!inst.Arguments[0].Match(ldVirtFtn.Argument).Success)
 				return false;
 			ldVirtDelegate = new LdVirtDelegate(inst.Arguments[0], inst.Method.DeclaringType, ldVirtFtn.Method)
 				.WithILRange(inst).WithILRange(ldVirtFtn).WithILRange(ldVirtFtn.Argument);
@@ -531,9 +531,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(dynamicCompoundAssign.Target is DynamicGetMemberInstruction getMember))
 				return false;
-			if (!isEvent.Argument.Match(getMember.Target).Success)
-				return false;
 			if (!SemanticHelper.IsPure(isEvent.Argument.Flags))
+				return false;
+			if (!isEvent.Argument.Match(getMember.Target).Success)
 				return false;
 			if (!(trueInst is DynamicInvokeMemberInstruction invokeMember))
 				return false;
