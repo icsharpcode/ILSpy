@@ -25,6 +25,30 @@ namespace LocalFunctions
 	{
 		private int field;
 
+		private Lazy<object> nonCapturinglocalFunctionInLambda = new Lazy<object>(delegate {
+			return CreateValue();
+
+			object CreateValue()
+			{
+				return null;
+			}
+		});
+
+		private Lazy<object> capturinglocalFunctionInLambda = new Lazy<object>(delegate {
+			int x = 42;
+			return Do();
+
+			object Do()
+			{
+				return CreateValue();
+
+				int CreateValue()
+				{
+					return x;
+				}
+			}
+		});
+
 		private static void Test(int x)
 		{
 		}

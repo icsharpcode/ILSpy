@@ -113,6 +113,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				if (displayClass.CaptureScope == null && !localFunctionClosureParameter)
 					displayClass.CaptureScope = isMono && IsMonoNestedCaptureScope(closureType) ? null : v.CaptureScope;
+				if (displayClass.CaptureScope != null && !localFunctionClosureParameter) {
+					displayClass.DeclaringFunction = displayClass.CaptureScope.Ancestors.OfType<ILFunction>().First();
+				}
 				displayClass.Variable = v;
 				displayClass.Initializer = inst;
 				displayClasses.Add(v, displayClass);
@@ -297,6 +300,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					instructionsToRemove.Add(inst);
 					value = inst.Value;
 				} else {
+					context.Step($"Introduce captured variable for {field.FullName}", inst);
 					Debug.Assert(displayClass.Definition == field.DeclaringTypeDefinition);
 					// Introduce a fresh variable for the display class field.
 					if (displayClass.IsMono && displayClass.CaptureScope == null && !IsOuterClosureReference(field)) {
@@ -348,6 +352,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			var field = (IField)inst.Field.MemberDefinition;
 			if (!displayClass.Variables.TryGetValue(field, out DisplayClassVariable info)) {
+				context.Step($"Introduce captured variable for {field.FullName}", inst);
 				// Introduce a fresh variable for the display class field.
 				Debug.Assert(displayClass.Definition == field.DeclaringTypeDefinition);
 				var v = displayClass.DeclaringFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);

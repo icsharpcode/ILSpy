@@ -91,6 +91,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							DetermineCaptureAndDeclarationScope(localFunction, useSite);
 							TransformToLocalFunctionInvocation(localFunction.ReducedMethod, useSite);
 						}
+
+						if (function.Method.IsConstructor && localFunction.DeclarationScope == null) {
+							localFunction.DeclarationScope = BlockContainer.FindClosestContainer(useSite);
+						}
 					}
 
 					if (localFunction.DeclarationScope == null) {
@@ -236,20 +240,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		void DetermineCaptureAndDeclarationScope(ILFunction function, CallInstruction useSite)
 		{
 			int firstArgumentIndex = function.Method.IsStatic ? 0 : 1;
-			for (int i = useSite.Arguments.Count - 1; i >= 0; i--) {
-				var arg = useSite.Arguments[i];
+			if (firstArgumentIndex > 0) {
+				HandleArgument(0, useSite.Arguments[0]);
+			}
+			for (int i = useSite.Arguments.Count - 1; i >= firstArgumentIndex; i--) {
+				if (!HandleArgument(i, useSite.Arguments[i]))
+					break;
+			}
+
+			bool HandleArgument(int i, ILInstruction arg)
+			{
 				ILVariable closureVar;
 				if (!(arg.MatchLdLoc(out closureVar) || arg.MatchLdLoca(out closureVar)))
-					break;
+					return false;
 				if (closureVar.Kind == VariableKind.NamedArgument)
-					break;
+					return false;
 				if (!TransformDisplayClassUsage.IsPotentialClosure(context, UnwrapByRef(closureVar.Type).GetDefinition()))
-					break;
+					return false;
 				if (i - firstArgumentIndex >= 0) {
 					Debug.Assert(i - firstArgumentIndex < function.Method.Parameters.Count && IsClosureParameter(function.Method.Parameters[i - firstArgumentIndex], resolveContext));
 				}
 				if (closureVar.AddressCount == 0 && closureVar.StoreInstructions.Count == 0)
-					continue;
+					return true;
 				// determine the capture scope of closureVar and the declaration scope of the function 
 				var instructions = closureVar.StoreInstructions.OfType<ILInstruction>()
 					.Concat(closureVar.AddressInstructions).OrderBy(inst => inst.StartILOffset);
@@ -262,6 +274,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					function.DeclarationScope = closureVar.CaptureScope;
 				else
 					function.DeclarationScope = FindCommonAncestorInstruction<BlockContainer>(function.DeclarationScope, closureVar.CaptureScope);
+				return true;
 			}
 		}
 
