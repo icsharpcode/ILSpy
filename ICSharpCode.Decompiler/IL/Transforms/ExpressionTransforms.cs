@@ -321,6 +321,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!inst.Arguments[0].Match(ldVirtFtn.Argument).Success)
 				return false;
+			if (!SemanticHelper.IsPure(inst.Arguments[0].Flags))
+				return false;
 			ldVirtDelegate = new LdVirtDelegate(inst.Arguments[0], inst.Method.DeclaringType, ldVirtFtn.Method)
 				.WithILRange(inst).WithILRange(ldVirtFtn).WithILRange(ldVirtFtn.Argument);
 			return true;
