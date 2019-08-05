@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return list[index]; }
 			set {
 				T oldValue = list[index];
-				if (oldValue != value) {
+				if (!(oldValue == value && value.Parent == parentInstruction && value.ChildIndex == index)) {
 					list[index] = value;
 					value.ChildIndex = index + firstChildIndex;
 					parentInstruction.InstructionCollectionAdded(value);
