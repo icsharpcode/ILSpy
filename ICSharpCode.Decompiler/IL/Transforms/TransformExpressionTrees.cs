@@ -238,6 +238,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (result.Item1 != null) {
 				Debug.Assert(result.Item2 != null, "IType must be non-null!");
 				Debug.Assert(result.Item1.ResultType == result.Item2.GetStackType(), "StackTypes must match!");
+				if (typeHint != null) {
+					var inst = result.Item1;
+					if (inst.ResultType != typeHint.GetStackType()) {
+						return (new Conv(inst, typeHint.GetStackType().ToPrimitiveType(), false, typeHint.GetSign()), typeHint);
+					}
+				}
 			}
 			return result;
 
