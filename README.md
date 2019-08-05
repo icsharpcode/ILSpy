@@ -48,10 +48,10 @@ How to build
 ------------
 
 Windows:
-- Install Visual Studio (minimum version: 2017.7) with the following components:
+- Install Visual Studio (minimum version: 2019.2) with the following components:
   - Workload ".NET Desktop Development"
   - .NET Framework 4.6.2 Targeting Pack (if the VS installer does not offer this option, install the [.NET 4.6.2 developer pack](https://www.microsoft.com/en-us/download/details.aspx?id=53321) separately)
-  - Individual Component "VC++ 2017 version 15.9 v14.16 latest v141 tools" (or similar)
+  - Individual Component "MSVC v142 - VS 2019 C++ x64/x86 build tools (v14.22)" (or similar)
     - The VC++ toolset is optional; if present it is used for `editbin.exe` to modify the stack size used by ILSpy.exe from 1MB to 16MB, because the decompiler makes heavy use of recursion, where small stack sizes lead to problems in very complex methods.
 - Install the [.NET Core SDK 2.2](https://dotnet.microsoft.com/download)
 - Install the [.NET Core SDK 3](https://dotnet.microsoft.com/download/dotnet-core)
