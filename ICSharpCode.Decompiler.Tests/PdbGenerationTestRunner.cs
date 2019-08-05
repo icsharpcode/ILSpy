@@ -18,7 +18,7 @@ using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
 {
-	[TestFixture]
+	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class PdbGenerationTestRunner
 	{
 		static readonly string TestCasePath = Tester.TestCasePath + "/PdbGen";
