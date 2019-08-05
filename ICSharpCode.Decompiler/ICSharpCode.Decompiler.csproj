@@ -441,7 +441,6 @@
     <Compile Include="IL\Transforms\IILTransform.cs" />
     <Compile Include="IL\Transforms\ILInlining.cs" />
     <Compile Include="IL\Transforms\ExpressionTransforms.cs" />
-    <Compile Include="IL\Transforms\LoopingTransform.cs" />
     <Compile Include="IL\Transforms\DelegateConstruction.cs" />
     <Compile Include="IL\Transforms\RemoveDeadVariableInit.cs" />
     <Compile Include="IL\Transforms\SplitVariables.cs" />
