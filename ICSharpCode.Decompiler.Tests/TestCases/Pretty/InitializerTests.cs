@@ -1468,9 +1468,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 					DateTimeFormat = new DateTimeFormatInfo {
 						ShortDatePattern = "ddmmyy"
 					},
-					NumberFormat = (from format in source
-									where format.CurrencySymbol == "$"
-									select format).First()
+					NumberFormat = source.Where((NumberFormatInfo format) => format.CurrencySymbol == "$").First()
 				}
 			});
 		}
