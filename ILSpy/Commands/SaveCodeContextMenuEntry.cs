@@ -62,8 +62,7 @@ namespace ICSharpCode.ILSpy.TextView
 				if (singleSelection.Save(textView))
 					return;
 			} else if (selectedNodes.Count > 1 && selectedNodes.All(n => n is AssemblyTreeNode)) {
-				var initialPath = Path.GetDirectoryName(((AssemblyTreeNode)selectedNodes[0]).LoadedAssembly.FileName);
-				var selectedPath = SelectSolutionFile(initialPath);
+				var selectedPath = SelectSolutionFile();
 
 				if (!string.IsNullOrEmpty(selectedPath)) {
 					var assemblies = selectedNodes.OfType<AssemblyTreeNode>()
@@ -87,45 +86,36 @@ namespace ICSharpCode.ILSpy.TextView
 		/// will be used.</param>
 		/// 
 		/// <returns>The full path of the selected target file, or <c>null</c> if the user canceled.</returns>
-		static string SelectSolutionFile(string path)
+		static string SelectSolutionFile()
 		{
-			const string SolutionExtension = ".sln";
-			const string DefaultSolutionName = "Solution";
+			SaveFileDialog dlg = new SaveFileDialog();
+			dlg.FileName = "Solution.sln";
+			dlg.Filter = "Visual Studio Solution file|*.sln|All files|*.*";
 
-			if (string.IsNullOrWhiteSpace(path)) {
-				path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+			if (dlg.ShowDialog() != true) {
+				return null;
 			}
 
-			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.InitialDirectory = path;
-			dlg.FileName = Path.Combine(path, DefaultSolutionName + SolutionExtension);
-			dlg.Filter = "Visual Studio Solution file|*" + SolutionExtension;
+			string selectedPath = Path.GetDirectoryName(dlg.FileName);
+			bool directoryNotEmpty;
+			try {
+				directoryNotEmpty = Directory.EnumerateFileSystemEntries(selectedPath).Any();
+			} catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException) {
+				MessageBox.Show(
+					"The directory cannot be accessed. Please ensure it exists and you have sufficient rights to access it.",
+					"Solution directory not accessible",
+					MessageBoxButton.OK, MessageBoxImage.Error);
+				return null;
+			}
 
-			bool targetInvalid;
-			do {
-				if (dlg.ShowDialog() != true) {
-					return null;
-				}
-
-				string selectedPath = Path.GetDirectoryName(dlg.FileName);
-				try {
-					targetInvalid = Directory.EnumerateFileSystemEntries(selectedPath).Any();
-				} catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException) {
-					MessageBox.Show(
-						"The directory cannot be accessed. Please ensure it exists and you have sufficient rights to access it.",
-						"Solution directory not accessible",
-						MessageBoxButton.OK, MessageBoxImage.Error);
-					targetInvalid = true;
-					continue;
-				}
-
-				if (targetInvalid) {
-					MessageBox.Show(
-						"The directory is not empty. Please select an empty directory.",
-						"Solution directory not empty",
-						MessageBoxButton.OK, MessageBoxImage.Warning);
-				}
-			} while (targetInvalid);
+			if (directoryNotEmpty) {
+				var result = MessageBox.Show(
+					Resources.AssemblySaveCodeDirectoryNotEmpty,
+					Resources.AssemblySaveCodeDirectoryNotEmptyTitle,
+					MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
+				if (result == MessageBoxResult.No)
+					return null; // -> abort
+			}
 
 			return dlg.FileName;
 		}
