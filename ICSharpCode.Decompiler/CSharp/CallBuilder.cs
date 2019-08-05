@@ -447,6 +447,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			var assignment = HandleAccessorCall(expectedTargetDetails, method, unused,
 				argumentList.Arguments.ToList(), argumentList.ArgumentNames);
 
+			if (((AssignmentExpression)assignment).Left is IndexerExpression indexer) 
+				indexer.Target.ReplaceWith(n => null);
+
 			if (value != null)
 				return assignment;
 
