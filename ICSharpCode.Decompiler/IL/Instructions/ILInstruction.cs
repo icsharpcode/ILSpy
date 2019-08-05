@@ -628,7 +628,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			ILInstruction oldValue = childPointer;
 			Debug.Assert(oldValue == GetChild(index));
-			if (oldValue == newValue)
+			if (oldValue == newValue && newValue?.parent == this && newValue.ChildIndex == index)
 				return;
 			childPointer = newValue;
 			if (newValue != null) {
