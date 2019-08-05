@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public TranslatedExpression Build(CallInstruction inst)
 		{
-			if (inst is NewObj newobj && IL.Transforms.DelegateConstruction.IsDelegateConstruction(newobj, true)) {
+			if (inst is NewObj newobj && IL.Transforms.DelegateConstruction.IsDelegateConstruction(newobj)) {
 				return HandleDelegateConstruction(newobj);
 			}
 			if (settings.TupleTypes && TupleTransform.MatchTupleConstruction(inst as NewObj, out var tupleElements) && tupleElements.Length >= 2) {
