@@ -135,6 +135,8 @@ namespace ICSharpCode.Decompiler.IL
 		LdFtn,
 		/// <summary>Load method pointer</summary>
 		LdVirtFtn,
+		/// <summary>Virtual delegate construction</summary>
+		LdVirtDelegate,
 		/// <summary>Loads runtime representation of metadata token</summary>
 		LdTypeToken,
 		/// <summary>Loads runtime representation of metadata token</summary>
@@ -3077,6 +3079,66 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as LdVirtFtn;
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && method.Equals(o.method);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Virtual delegate construction</summary>
+	public sealed partial class LdVirtDelegate : UnaryInstruction, IInstructionWithMethodOperand
+	{
+		public LdVirtDelegate(ILInstruction argument, IType type, IMethod method) : base(OpCode.LdVirtDelegate, argument)
+		{
+			this.type = type;
+			this.method = method;
+		}
+		IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
+		readonly IMethod method;
+		/// <summary>Returns the method operand.</summary>
+		public IMethod Method { get { return method; } }
+		public override StackType ResultType { get { return StackType.O; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			output.Write(' ');
+			type.WriteTo(output);
+			output.Write(' ');
+			method.WriteTo(output);
+			output.Write('(');
+			Argument.WriteTo(output, options);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdVirtDelegate(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLdVirtDelegate(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdVirtDelegate(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdVirtDelegate;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type) && method.Equals(o.method);
 		}
 	}
 }
@@ -6550,6 +6612,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitLdVirtDelegate(LdVirtDelegate inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitLdTypeToken(LdTypeToken inst)
 		{
 			Default(inst);
@@ -6929,6 +6995,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitLdVirtFtn(LdVirtFtn inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitLdVirtDelegate(LdVirtDelegate inst)
 		{
 			return Default(inst);
 		}
@@ -7314,6 +7384,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitLdVirtDelegate(LdVirtDelegate inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitLdTypeToken(LdTypeToken inst, C context)
 		{
 			return Default(inst, context);
@@ -7544,6 +7618,7 @@ namespace ICSharpCode.Decompiler.IL
 			"ldnull",
 			"ldftn",
 			"ldvirtftn",
+			"ldvirtdelegate",
 			"ldtypetoken",
 			"ldmembertoken",
 			"localloc",
@@ -7861,6 +7936,20 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			argument = default(ILInstruction);
+			method = default(IMethod);
+			return false;
+		}
+		public bool MatchLdVirtDelegate(out ILInstruction argument, out IType type, out IMethod method)
+		{
+			var inst = this as LdVirtDelegate;
+			if (inst != null) {
+				argument = inst.Argument;
+				type = inst.Type;
+				method = inst.Method;
+				return true;
+			}
+			argument = default(ILInstruction);
+			type = default(IType);
 			method = default(IMethod);
 			return false;
 		}

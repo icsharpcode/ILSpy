@@ -193,6 +193,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Noop("M3", M3);
 #endif
 			}
+			public void Test2()
+			{
+				Noop("M3.new", new BaseClass().M3);
+				Noop("M3.new", new SubClass().M3);
+			}
 
 			private void Noop(string name, Action _)
 			{
