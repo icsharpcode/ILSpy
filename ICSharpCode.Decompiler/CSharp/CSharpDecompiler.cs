@@ -667,13 +667,22 @@ namespace ICSharpCode.Decompiler.CSharp
 								closureTypeHandle = ExtractDeclaringType(memberRef);
 								if (!closureTypeHandle.IsNil) {
 									var closureType = module.Metadata.GetTypeDefinition(closureTypeHandle);
-									// Must be a nested type of the containing type.
-									if (closureType.GetDeclaringType() != declaringType)
-										break;
-									if (!processedNestedTypes.Add(closureTypeHandle))
-										break;
-									foreach (var m in closureType.GetMethods()) {
-										connectedMethods.Enqueue(m);
+									if (closureTypeHandle != declaringType) {
+										// Must be a nested type of the containing type.
+										if (closureType.GetDeclaringType() != declaringType)
+											break;
+										if (!processedNestedTypes.Add(closureTypeHandle))
+											break;
+										foreach (var m in closureType.GetMethods()) {
+											connectedMethods.Enqueue(m);
+										}
+									} else {
+										// Delegate body is declared in the same type
+										foreach (var m in closureType.GetMethods()) {
+											var methodDef = module.Metadata.GetMethodDefinition(m);
+											if (methodDef.Name == memberRef.Name)
+												connectedMethods.Enqueue(m);
+										}
 									}
 									break;
 								}
