@@ -79,6 +79,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public Guid? ProjectGuid { get; set; }
 
+		/// <summary>
+		/// Path to the snk file to use for signing.
+		/// <c>null</c> to not sign.
+		/// </summary>
+		public string StrongNameKeyFile { get; set; }
+
 		public int MaxDegreeOfParallelism { get; set; } = Environment.ProcessorCount;
 		#endregion
 
@@ -111,6 +117,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			directories.Clear();
 			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
 			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
+			if (StrongNameKeyFile != null) {
+				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)));
+			}
 			return WriteProjectFile(projectFileWriter, files, moduleDefinition);
 		}
 
@@ -215,6 +224,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				w.WriteElementString("WarningLevel", "4");
 				w.WriteElementString("AllowUnsafeBlocks", "True");
+				
+				if (StrongNameKeyFile != null) {
+					w.WriteElementString("SignAssembly", "True");
+					w.WriteElementString("AssemblyOriginatorKeyFile", Path.GetFileName(StrongNameKeyFile));
+				}
 
 				w.WriteEndElement(); // </PropertyGroup>
 
