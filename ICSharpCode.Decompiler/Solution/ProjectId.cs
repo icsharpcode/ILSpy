@@ -31,8 +31,7 @@ namespace ICSharpCode.Decompiler.Solution
 		/// <param name="projectPlatform">The project platform.</param>
 		/// <param name="projectGuid">The project GUID.</param>
 		/// 
-		/// <exception cref="ArgumentException">Thrown when <paramref name="projectFile"/> 
-		/// or <paramref name="projectPlatform"/> is null or empty.</exception>
+		/// <exception cref="ArgumentException">Thrown when <paramref name="projectPlatform"/> is null or empty.</exception>
 		public ProjectId(string projectPlatform, Guid projectGuid)
 		{
 			if (string.IsNullOrWhiteSpace(projectPlatform)) {
