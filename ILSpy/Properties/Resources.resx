@@ -742,4 +742,7 @@ Are you sure you want to continue?</value>
   <data name="AssemblySaveCodeDirectoryNotEmptyTitle" xml:space="preserve">
     <value>Project Directory not empty</value>
   </data>
+  <data name="HighlightMatchingBraces" xml:space="preserve">
+    <value>Highlight matching braces</value>
+  </data>
 </root>

@@ -102,6 +102,12 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
+		public virtual TextView.IBracketSearcher BracketSearcher {
+			get {
+				return TextView.DefaultBracketSearcher.DefaultInstance;
+			}
+		}
+
 		public virtual void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(method.DeclaringTypeDefinition, includeNamespace: true) + "." + method.Name);

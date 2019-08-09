@@ -37,6 +37,7 @@ using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy
@@ -634,5 +635,9 @@ namespace ICSharpCode.ILSpy
 		{
 			return CSharpDecompiler.GetCodeMappingInfo(module, member);
 		}
+
+		CSharpBracketSearcher bracketSearcher = new CSharpBracketSearcher();
+
+		public override IBracketSearcher BracketSearcher => bracketSearcher;
 	}
 }

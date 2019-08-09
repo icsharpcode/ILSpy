@@ -65,6 +65,7 @@ namespace ICSharpCode.ILSpy.TextView
 		readonly UIElementGenerator uiElementGenerator;
 		List<VisualLineElementGenerator> activeCustomElementGenerators = new List<VisualLineElementGenerator>();
 		RichTextColorizer activeRichTextColorizer;
+		BracketHighlightRenderer bracketHighlightRenderer;
 		FoldingManager foldingManager;
 		ILSpyTreeNode[] decompiledNodes;
 		
@@ -103,12 +104,14 @@ namespace ICSharpCode.ILSpy.TextView
 			this.referenceElementGenerator = new ReferenceElementGenerator(this.JumpToReference, this.IsLink);
 			textEditor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
 			this.uiElementGenerator = new UIElementGenerator();
+			this.bracketHighlightRenderer = new BracketHighlightRenderer(textEditor.TextArea.TextView);
 			textEditor.TextArea.TextView.ElementGenerators.Add(uiElementGenerator);
 			textEditor.Options.RequireControlModifierForHyperlinkClick = false;
 			textEditor.TextArea.TextView.MouseHover += TextViewMouseHover;
 			textEditor.TextArea.TextView.MouseHoverStopped += TextViewMouseHoverStopped;
 			textEditor.TextArea.PreviewMouseDown += TextAreaMouseDown;
 			textEditor.TextArea.PreviewMouseUp += TextAreaMouseUp;
+			textEditor.TextArea.Caret.PositionChanged += HighlightBrackets;
 			textEditor.SetBinding(Control.FontFamilyProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("SelectedFont") });
 			textEditor.SetBinding(Control.FontSizeProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("SelectedFontSize") });
 			textEditor.SetBinding(TextEditor.WordWrapProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("EnableWordWrap") });
@@ -242,6 +245,18 @@ namespace ICSharpCode.ILSpy.TextView
 				// ignore
 			}
 			return renderer.CreateTextBlock();
+		}
+		#endregion
+
+		#region Highlight brackets
+		void HighlightBrackets(object sender, EventArgs e)
+		{
+			if (DisplaySettingsPanel.CurrentDisplaySettings.HighlightMatchingBraces) {
+				var result = MainWindow.Instance.CurrentLanguage.BracketSearcher.SearchBracket(textEditor.Document, textEditor.CaretOffset);
+				bracketHighlightRenderer.SetHighlight(result);
+			} else {
+				bracketHighlightRenderer.SetHighlight(null);
+			}
 		}
 		#endregion
 

@@ -1153,6 +1153,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Highlight matching braces.
+        /// </summary>
+        public static string HighlightMatchingBraces {
+            get {
+                return ResourceManager.GetString("HighlightMatchingBraces", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ILSpy version .
         /// </summary>
         public static string ILSpyVersion {
