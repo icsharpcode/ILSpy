@@ -250,10 +250,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 			}
 			if (firstArgumentIndex > 0) {
-				HandleArgument(0, useSite.Arguments[0], skipForDeclarationScope: true);
+				HandleArgument(0, useSite.Arguments[0]);
 			}
 
-			bool HandleArgument(int i, ILInstruction arg, bool skipForDeclarationScope = false)
+			bool HandleArgument(int i, ILInstruction arg)
 			{
 				ILVariable closureVar;
 				if (!(arg.MatchLdLoc(out closureVar) || arg.MatchLdLoca(out closureVar)))
