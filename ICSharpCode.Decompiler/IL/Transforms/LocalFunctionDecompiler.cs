@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 
 					foreach (var useSite in info.UseSites) {
-						context.Step("Transform use site at " + useSite.StartILOffset, useSite);
+						context.Step($"Transform use site at IL_{useSite.StartILOffset:x4}", useSite);
 						if (useSite.OpCode == OpCode.NewObj) {
 							TransformToLocalFunctionReference(localFunction, useSite);
 						} else {
@@ -245,22 +245,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		void DetermineCaptureAndDeclarationScope(ILFunction function, CallInstruction useSite)
 		{
 			int firstArgumentIndex = function.Method.IsStatic ? 0 : 1;
-			if (firstArgumentIndex > 0) {
-				HandleArgument(0, useSite.Arguments[0]);
-			}
 			for (int i = useSite.Arguments.Count - 1; i >= firstArgumentIndex; i--) {
 				if (!HandleArgument(i, useSite.Arguments[i]))
 					break;
 			}
+			if (firstArgumentIndex > 0) {
+				HandleArgument(0, useSite.Arguments[0], skipForDeclarationScope: true);
+			}
 
-			bool HandleArgument(int i, ILInstruction arg)
+			bool HandleArgument(int i, ILInstruction arg, bool skipForDeclarationScope = false)
 			{
 				ILVariable closureVar;
 				if (!(arg.MatchLdLoc(out closureVar) || arg.MatchLdLoca(out closureVar)))
 					return false;
 				if (closureVar.Kind == VariableKind.NamedArgument)
 					return false;
-				if (!TransformDisplayClassUsage.IsPotentialClosure(context, UnwrapByRef(closureVar.Type).GetDefinition()))
+				ITypeDefinition potentialDisplayClass = UnwrapByRef(closureVar.Type).GetDefinition();
+				if (!TransformDisplayClassUsage.IsPotentialClosure(context, potentialDisplayClass))
 					return false;
 				if (i - firstArgumentIndex >= 0) {
 					Debug.Assert(i - firstArgumentIndex < function.Method.Parameters.Count && IsClosureParameter(function.Method.Parameters[i - firstArgumentIndex], resolveContext));
@@ -269,7 +270,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				// determine the capture scope of closureVar and the declaration scope of the function 
 				var instructions = closureVar.StoreInstructions.OfType<ILInstruction>()
-					.Concat(closureVar.AddressInstructions).OrderBy(inst => inst.StartILOffset);
+					.Concat(closureVar.AddressInstructions).OrderBy(inst => inst.StartILOffset).ToList();
 				var additionalScope = BlockContainer.FindClosestContainer(instructions.First());
 				if (closureVar.CaptureScope == null)
 					closureVar.CaptureScope = additionalScope;
@@ -277,10 +278,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					closureVar.CaptureScope = FindCommonAncestorInstruction<BlockContainer>(closureVar.CaptureScope, additionalScope);
 				if (function.DeclarationScope == null)
 					function.DeclarationScope = closureVar.CaptureScope;
-				else
+				else if (!IsInNestedLocalFunction(function.DeclarationScope, closureVar.CaptureScope.Ancestors.OfType<ILFunction>().First()))
 					function.DeclarationScope = FindCommonAncestorInstruction<BlockContainer>(function.DeclarationScope, closureVar.CaptureScope);
 				return true;
 			}
+		}
+
+		bool IsInNestedLocalFunction(BlockContainer declarationScope, ILFunction function)
+		{
+			return TreeTraversal.PreOrder(function, f => f.LocalFunctions).Any(f => declarationScope.IsDescendantOf(f.Body));
 		}
 
 		internal static bool IsLocalFunctionReference(NewObj inst, ILTransformContext context)
