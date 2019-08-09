@@ -230,6 +230,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			replacement.AddILRange(useSite);
 			if (wasInstanceCall) {
 				replacement.AddILRange(useSite.Arguments[0]);
+				if (useSite.Arguments[0].MatchLdLocRef(out var variable) && variable.Kind == VariableKind.NamedArgument) {
+					// remove the store instruction of the simple load, if it is a named argument.
+					var storeInst = (ILInstruction)variable.StoreInstructions[0];
+					((Block)storeInst.Parent).Instructions.RemoveAt(storeInst.ChildIndex);
+				}
 			}
 			for (int i = 0; i < reducedMethod.NumberOfCompilerGeneratedParameters; i++) {
 				replacement.AddILRange(useSite.Arguments[argumentCount - i - 1]);
