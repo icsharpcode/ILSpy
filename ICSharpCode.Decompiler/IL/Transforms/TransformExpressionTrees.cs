@@ -510,14 +510,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (arguments == null)
 				return (null, SpecialType.UnknownType);
 			IMethod method = (IMethod)member;
-			Debug.Assert(arguments.Count == method.Parameters.Count);
-			for (int i = 0; i < arguments.Count; i++) {
-				var expectedType = method.Parameters[i].Type;
-				var (argument, argumentType) = ConvertInstruction(arguments[i], expectedType);
-				if (argument == null)
-					return (null, SpecialType.UnknownType);
-				arguments[i] = argument;
-			}
+			if (!ConvertCallArguments(arguments, method))
+				return (null, SpecialType.UnknownType);
 			if (method.FullName == "System.Reflection.MethodInfo.CreateDelegate" && method.Parameters.Count == 2) {
 				if (!MatchGetMethodFromHandle(target, out var targetMethod))
 					return (null, SpecialType.UnknownType);
@@ -560,6 +554,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					return target;
 			}
+		}
+
+		bool ConvertCallArguments(IList<ILInstruction> arguments, IMethod method)
+		{
+			Debug.Assert(arguments.Count == method.Parameters.Count);
+			for (int i = 0; i < arguments.Count; i++) {
+				var expectedType = method.Parameters[i].Type;
+				var argument = ConvertInstruction(arguments[i], expectedType).Item1;
+				if (argument == null)
+					return false;
+				arguments[i] = argument;
+			}
+			return true;
 		}
 
 		(ILInstruction, IType) ConvertCast(CallInstruction invocation, bool isChecked)
@@ -737,12 +744,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				return (null, SpecialType.UnknownType);
-			for (int i = 0; i < arguments.Count; i++) {
-				var arg = ConvertInstruction(arguments[i]).Item1;
-				if (arg == null)
-					return (null, SpecialType.UnknownType);
-				arguments[i] = arg;
-			}
+			if (!ConvertCallArguments(arguments, invokeMethod))
+				return (null, SpecialType.UnknownType);
 			var call = new CallVirt(invokeMethod);
 			call.Arguments.Add(target);
 			call.Arguments.AddRange(arguments);
@@ -925,22 +928,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return (null, SpecialType.UnknownType);
 					if (!MatchArgumentList(invocation.Arguments[1], out arguments))
 						return (null, SpecialType.UnknownType);
-					var args = arguments.SelectArray(arg => ConvertInstruction(arg).Item1);
-					if (args.Any(a => a == null))
+					IMethod method = (IMethod)member;
+					if (!ConvertCallArguments(arguments, method))
 						return (null, SpecialType.UnknownType);
-					newObj = new NewObj((IMethod)member);
-					newObj.Arguments.AddRange(args);
+					newObj = new NewObj(method);
+					newObj.Arguments.AddRange(arguments);
 					return (newObj, member.DeclaringType);
 				case 3:
 					if (!MatchGetConstructorFromHandle(invocation.Arguments[0], out member))
 						return (null, SpecialType.UnknownType);
 					if (!MatchArgumentList(invocation.Arguments[1], out arguments))
 						return (null, SpecialType.UnknownType);
-					var args2 = arguments.SelectArray(arg => ConvertInstruction(arg).Item1);
-					if (args2.Any(a => a == null))
+					method = (IMethod)member;
+					if (!ConvertCallArguments(arguments, method))
 						return (null, SpecialType.UnknownType);
-					newObj = new NewObj((IMethod)member);
-					newObj.Arguments.AddRange(args2);
+					newObj = new NewObj(method);
+					newObj.Arguments.AddRange(arguments);
 					return (newObj, member.DeclaringType);
 			}
 			return (null, SpecialType.UnknownType);
@@ -984,11 +987,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (invocation.Arguments.Count != 3 || !MatchArgumentList(invocation.Arguments[2], out arguments)) {
 				arguments = new List<ILInstruction>();
 			} else {
-				for (int i = 0; i < arguments.Count; i++) {
-					arguments[i] = ConvertInstruction(arguments[i]).Item1;
-					if (arguments[i] == null)
-						return (null, SpecialType.UnknownType);
-				}
+				if (!ConvertCallArguments(arguments, (IMethod)member))
+					return (null, SpecialType.UnknownType);
 			}
 			CallInstruction call;
 			if (member.IsAbstract || member.IsVirtual || member.IsOverride) {
