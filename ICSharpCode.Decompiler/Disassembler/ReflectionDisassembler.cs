@@ -310,7 +310,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 
 			foreach (var p in methodDefinition.GetGenericParameters()) {
-				WriteGenericParameterAttributes(module, p);
+				WriteGenericParameterAttributes(module, genericContext, p);
 			}
 			foreach (var p in methodDefinition.GetParameters()) {
 				WriteParameterAttributes(module, p);
@@ -1005,15 +1005,28 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine();
 		}
 
-		void WriteGenericParameterAttributes(PEFile module, GenericParameterHandle handle)
+		void WriteGenericParameterAttributes(PEFile module, GenericContext context, GenericParameterHandle handle)
 		{
 			var metadata = module.Metadata;
 			var p = metadata.GetGenericParameter(handle);
-			if (p.GetCustomAttributes().Count == 0)
-				return;
-			output.Write(".param type {0}", metadata.GetString(p.Name));
-			output.WriteLine();
-			WriteAttributes(module, p.GetCustomAttributes());
+			if (p.GetCustomAttributes().Count > 0) {
+				output.Write(".param type {0}", metadata.GetString(p.Name));
+				output.WriteLine();
+				output.Indent();
+				WriteAttributes(module, p.GetCustomAttributes());
+				output.Unindent();
+			}
+			foreach (var constraintHandle in p.GetConstraints()) {
+				var constraint = metadata.GetGenericParameterConstraint(constraintHandle);
+				if (constraint.GetCustomAttributes().Count > 0) {
+					output.Write(".param constraint {0}, ", metadata.GetString(p.Name));
+					constraint.Type.WriteTo(module, output, context, ILNameSyntax.TypeName);
+					output.WriteLine();
+					output.Indent();
+					WriteAttributes(module, constraint.GetCustomAttributes());
+					output.Unindent();
+				}
+			}
 		}
 
 		void WriteParameterAttributes(PEFile module, ParameterHandle handle)
@@ -1028,7 +1041,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 				WriteConstant(metadata, metadata.GetConstant(p.GetDefaultValue()));
 			}
 			output.WriteLine();
+			output.Indent();
 			WriteAttributes(module, p.GetCustomAttributes());
+			output.Unindent();
 		}
 
 		void WriteConstant(MetadataReader metadata, Constant constant)
@@ -1378,6 +1393,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			isInType = true;
 			WriteAttributes(module, typeDefinition.GetCustomAttributes());
 			WriteSecurityDeclarations(module, typeDefinition.GetDeclarativeSecurityAttributes());
+			foreach (var tp in typeDefinition.GetGenericParameters()) {
+				WriteGenericParameterAttributes(module, genericContext, tp);
+			}
 			var layout = typeDefinition.GetLayout();
 			if (!layout.IsDefault) {
 				output.WriteLine(".pack {0}", layout.PackingSize);
