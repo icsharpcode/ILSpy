@@ -26,6 +26,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 	internal class RefLocalsAndReturns
 	{
+		public struct Issue1630
+		{
+			private object data;
+
+			private int next;
+
+			public static void Test()
+			{
+				Issue1630[] array = new Issue1630[1];
+				int num = 0;
+				while (num >= 0) {
+					ref Issue1630 reference = ref array[num];
+					Console.WriteLine(reference.data);
+					num = reference.next;
+				}
+			}
+		}
+
+
 		public delegate ref T RefFunc<T>();
 		public delegate ref readonly T ReadOnlyRefFunc<T>();
 		public delegate ref TReturn RefFunc<T1, TReturn>(T1 param1);

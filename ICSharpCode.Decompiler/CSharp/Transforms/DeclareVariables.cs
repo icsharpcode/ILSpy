@@ -291,7 +291,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool VariableNeedsDeclaration(VariableKind kind)
+		internal static bool VariableNeedsDeclaration(VariableKind kind)
 		{
 			switch (kind) {
 				case VariableKind.PinnedLocal:

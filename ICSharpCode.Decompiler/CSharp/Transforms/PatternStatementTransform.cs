@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				Statements = {
 					new Repeat(new AnyNode("statement")),
 					new NamedNode(
-						"increment",
+						"iterator",
 						new ExpressionStatement(
 							new AssignmentExpression {
 								Left = new Backreference("ident"),
@@ -180,6 +180,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (variable != m3.Get<IdentifierExpression>("ident").Single().GetILVariable())
 				return null;
 			WhileStatement loop = (WhileStatement)next;
+			// Cannot convert to for loop, if any variable that is used in the "iterator" part of the pattern,
+			// will be declared in the body of the while-loop.
+			var iteratorStatement = m3.Get<Statement>("iterator").Single();
+			if (IteratorVariablesDeclaredInsideLoopBody(iteratorStatement))
+				return null;
 			// Cannot convert to for loop, because that would change the semantics of the program.
 			// continue in while jumps to the condition block.
 			// Whereas continue in for jumps to the increment block.
@@ -193,7 +198,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			forStatement.CopyAnnotationsFrom(loop);
 			forStatement.Initializers.Add(node);
 			forStatement.Condition = loop.Condition.Detach();
-			forStatement.Iterators.Add(m3.Get<Statement>("increment").Single().Detach());
+			forStatement.Iterators.Add(iteratorStatement.Detach());
 			forStatement.EmbeddedStatement = newBody;
 			loop.ReplaceWith(forStatement);
 			return forStatement;
@@ -214,6 +219,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return true;
 			if (statement.Iterators.Any(i => i.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable)))
 				return true;
+			return false;
+		}
+
+		bool IteratorVariablesDeclaredInsideLoopBody(Statement iteratorStatement)
+		{
+			foreach (var id in iteratorStatement.DescendantsAndSelf.OfType<IdentifierExpression>()) {
+				var v = id.GetILVariable();
+				if (v == null || !DeclareVariables.VariableNeedsDeclaration(v.Kind))
+					continue;
+				if (declareVariables.GetDeclarationPoint(v).Parent == iteratorStatement.Parent)
+					return true;
+			}
 			return false;
 		}
 		#endregion
