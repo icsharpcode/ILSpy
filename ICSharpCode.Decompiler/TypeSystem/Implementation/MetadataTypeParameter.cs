@@ -161,7 +161,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					}
 				}
 			}
-			return Nullability.Oblivious;
+			if (Owner is MetadataMethod method) {
+				return method.NullableContext;
+			} else if (Owner is ITypeDefinition td) {
+				return td.NullableContext;
+			} else {
+				return Nullability.Oblivious;
+			}
 		}
 
 		public override IEnumerable<IType> DirectBaseTypes {

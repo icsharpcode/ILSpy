@@ -1785,7 +1785,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		Constraint ConvertTypeParameterConstraint(ITypeParameter tp)
 		{
-			if (!tp.HasDefaultConstructorConstraint && !tp.HasReferenceTypeConstraint && !tp.HasValueTypeConstraint && tp.DirectBaseTypes.All(IsObjectOrValueType)) {
+			if (!tp.HasDefaultConstructorConstraint && !tp.HasReferenceTypeConstraint && !tp.HasValueTypeConstraint && tp.NullabilityConstraint != Nullability.NotNullable && tp.DirectBaseTypes.All(IsObjectOrValueType)) {
 				return null;
 			}
 			Constraint c = new Constraint();
@@ -1802,6 +1802,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				} else {
 					c.BaseTypes.Add(new PrimitiveType("struct"));
 				}
+			} else if (tp.NullabilityConstraint == Nullability.NotNullable) {
+				c.BaseTypes.Add(new PrimitiveType("notnull"));
 			}
 			foreach (IType t in tp.DirectBaseTypes) {
 				if (!IsObjectOrValueType(t))

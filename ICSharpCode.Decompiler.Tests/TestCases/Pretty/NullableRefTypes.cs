@@ -48,6 +48,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ByRef(ref a).ToString();
 			ByRef(ref b)!.ToString();
 		}
+
+		public void Constraints<UC, C, CN, NN, S, SN, D, DN, NND>() where C : class where CN : class? where NN : notnull where S : struct where D : IDisposable where DN : IDisposable? where NND : notnull, IDisposable
+		{
+		}
 	}
 
 	public class T02_EverythingIsNullableInHere
