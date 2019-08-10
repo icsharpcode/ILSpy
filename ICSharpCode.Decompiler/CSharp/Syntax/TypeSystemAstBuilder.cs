@@ -1805,9 +1805,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			} else if (tp.NullabilityConstraint == Nullability.NotNullable) {
 				c.BaseTypes.Add(new PrimitiveType("notnull"));
 			}
-			foreach (IType t in tp.DirectBaseTypes) {
-				if (!IsObjectOrValueType(t))
-					c.BaseTypes.Add(ConvertType(t));
+			foreach (TypeConstraint t in tp.TypeConstraints) {
+				if (!IsObjectOrValueType(t.Type) || t.Attributes.Count > 0) {
+					AstType astType = ConvertType(t.Type);
+					if (t.Attributes.Count > 0) {
+						var attrSection = new AttributeSection();
+						attrSection.Attributes.AddRange(t.Attributes.Select(ConvertAttribute));
+						astType = new ComposedType {
+							Attributes = { attrSection },
+							BaseType = astType
+						};
+					}
+					c.BaseTypes.Add(astType);
+				}
 			}
 			if (tp.HasDefaultConstructorConstraint && !tp.HasValueTypeConstraint) {
 				c.BaseTypes.Add(new PrimitiveType("new"));

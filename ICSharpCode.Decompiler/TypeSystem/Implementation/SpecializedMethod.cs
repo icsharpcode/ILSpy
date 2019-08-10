@@ -257,9 +257,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			public override Nullability NullabilityConstraint => baseTp.NullabilityConstraint;
 
-			public override IEnumerable<IType> DirectBaseTypes {
+			IReadOnlyList<TypeConstraint> typeConstraints;
+
+			public override IReadOnlyList<TypeConstraint> TypeConstraints {
 				get {
-					return baseTp.DirectBaseTypes.Select(t => t.AcceptVisitor(substitution));
+					var typeConstraints = LazyInit.VolatileRead(ref this.typeConstraints);
+					if (typeConstraints == null) {
+						typeConstraints = baseTp.TypeConstraints.SelectReadOnlyArray(c => new TypeConstraint(c.Type.AcceptVisitor(substitution), c.Attributes));
+						typeConstraints = LazyInit.GetOrSet(ref this.typeConstraints, typeConstraints);
+					}
+					return typeConstraints;
 				}
 			}
 		}

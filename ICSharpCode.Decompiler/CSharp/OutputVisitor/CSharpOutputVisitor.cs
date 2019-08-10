@@ -1313,10 +1313,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			WriteCommaSeparatedList(attributeSection.Attributes);
 			WriteToken(Roles.RBracket);
-			if (attributeSection.Parent is ParameterDeclaration || attributeSection.Parent is TypeParameterDeclaration) {
-				Space();
-			} else {
-				NewLine();
+			switch (attributeSection.Parent) {
+				case ParameterDeclaration _:
+				case TypeParameterDeclaration _:
+				case ComposedType _:
+					Space();
+					break;
+				default:
+					NewLine();
+					break;
 			}
 			EndNode(attributeSection);
 		}
@@ -2349,6 +2354,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitComposedType(ComposedType composedType)
 		{
 			StartNode(composedType);
+			if (composedType.Attributes.Any()) {
+				foreach (var attr in composedType.Attributes) {
+					attr.AcceptVisitor(this);
+				}
+			}
 			if (composedType.HasRefSpecifier) {
 				WriteKeyword(ComposedType.RefRole);
 			}

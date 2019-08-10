@@ -220,7 +220,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return EmptyList<IType>.Instance; }
 		}
 
-		public abstract IEnumerable<IType> DirectBaseTypes { get; }
+		public IEnumerable<IType> DirectBaseTypes {
+			get { return TypeConstraints.Select(t => t.Type); }
+		}
+
+		public abstract IReadOnlyList<TypeConstraint> TypeConstraints { get; }
 		
 		public string Name {
 			get { return name; }
