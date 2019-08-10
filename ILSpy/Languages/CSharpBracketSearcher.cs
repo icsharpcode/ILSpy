@@ -55,16 +55,6 @@ namespace ICSharpCode.ILSpy
 			return null;
 		}
 
-		bool IsBracketOnly(IDocument document, IDocumentLine documentLine)
-		{
-			string lineText = document.GetText(documentLine).Trim();
-			return lineText == "{" || string.IsNullOrEmpty(lineText)
-				|| lineText.StartsWith("//", StringComparison.Ordinal)
-				|| lineText.StartsWith("/*", StringComparison.Ordinal)
-				|| lineText.StartsWith("*", StringComparison.Ordinal)
-				|| lineText.StartsWith("'", StringComparison.Ordinal);
-		}
-
 		#region SearchBracket helper functions
 		static int ScanLineStart(IDocument document, int offset)
 		{
