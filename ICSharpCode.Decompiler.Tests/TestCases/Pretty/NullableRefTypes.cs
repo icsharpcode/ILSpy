@@ -83,4 +83,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public event EventHandler Event;
 	}
+
+	public class T04_Dictionary<TKey, TValue> where TKey : notnull
+	{
+		private struct Entry
+		{
+			public TKey key;
+			public TValue value;
+		}
+
+		private int[]? _buckets;
+		private Entry[]? _entries;
+		private IEqualityComparer<TKey>? _comparer;
+	}
 }
