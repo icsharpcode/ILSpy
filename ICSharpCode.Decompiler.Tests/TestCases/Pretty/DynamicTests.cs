@@ -410,6 +410,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		private static bool ConstantTarget(dynamic a)
+		{
+			return true.Equals(a);
+		}
+
 		private static dynamic GetDynamic(int i)
 		{
 			return null;

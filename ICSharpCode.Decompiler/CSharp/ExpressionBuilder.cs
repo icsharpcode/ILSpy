@@ -2891,7 +2891,6 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(!argumentInfo.HasFlag(CSharpArgumentInfoFlags.NamedArgument));
 			Debug.Assert(!argumentInfo.HasFlag(CSharpArgumentInfoFlags.IsOut));
-			Debug.Assert(!argumentInfo.HasFlag(CSharpArgumentInfoFlags.Constant));
 
 			if (argumentInfo.HasFlag(CSharpArgumentInfoFlags.IsStaticType) && IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst, out var callTargetType)) {
 				return new TypeReferenceExpression(ConvertType(callTargetType))
