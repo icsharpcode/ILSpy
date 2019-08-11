@@ -1085,7 +1085,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// ref - ref => i
 				return CallUnsafeIntrinsic("ByteOffset", new[] { left.Expression, right.Expression }, compilation.FindType(KnownTypeCode.IntPtr), inst);
 			}
-			if (inst.LeftInputType == StackType.Ref && inst.RightInputType == StackType.I
+			if (inst.LeftInputType == StackType.Ref && inst.RightInputType.IsIntegerType()
 				&& left.Type is ByReferenceType brt) {
 				// ref [+-] int
 				string name = (inst.Operator == BinaryNumericOperator.Sub ? "Subtract" : "Add");
