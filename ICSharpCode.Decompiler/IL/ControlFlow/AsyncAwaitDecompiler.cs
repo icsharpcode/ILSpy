@@ -730,14 +730,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// if (call get_IsCompleted(ldloca awaiterVar)) br completedBlock
 			if (!block.Instructions[block.Instructions.Count - 2].MatchIfInstruction(out var condition, out var trueInst))
 				return;
-			if (!MatchCall(condition, "get_IsCompleted", out var isCompletedArgs) || isCompletedArgs.Count != 1)
-				return;
-			if (!isCompletedArgs[0].MatchLdLocRef(awaiterVar))
-				return;
 			if (!trueInst.MatchBranch(out var completedBlock))
 				return;
 			// br awaitBlock
 			if (!block.Instructions.Last().MatchBranch(out var awaitBlock))
+				return;
+			// condition might be inverted, swap branches:
+			if (condition.MatchLogicNot(out var negatedCondition)) {
+				condition = negatedCondition;
+				ExtensionMethods.Swap(ref completedBlock, ref awaitBlock);
+			}
+			// continue matching call get_IsCompleted(ldloca awaiterVar)
+			if (!MatchCall(condition, "get_IsCompleted", out var isCompletedArgs) || isCompletedArgs.Count != 1)
+				return;
+			if (!isCompletedArgs[0].MatchLdLocRef(awaiterVar))
 				return;
 			// Check awaitBlock and resumeBlock:
 			if (!awaitBlocks.TryGetValue(awaitBlock, out var awaitBlockData))
