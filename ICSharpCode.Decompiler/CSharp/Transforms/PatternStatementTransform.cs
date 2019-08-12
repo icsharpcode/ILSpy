@@ -1002,24 +1002,26 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Use associativity of logic operators to avoid parentheses.
 		/// </summary>
-		public override AstNode VisitBinaryOperatorExpression(BinaryOperatorExpression boe1)
+		public override AstNode VisitBinaryOperatorExpression(BinaryOperatorExpression expr)
 		{
-			switch (boe1.Operator) {
+			switch (expr.Operator) {
 				case BinaryOperatorType.ConditionalAnd:
 				case BinaryOperatorType.ConditionalOr:
 					// a && (b && c) ==> (a && b) && c
-					var boe2 = boe1.Right as BinaryOperatorExpression;
-					if (boe2 != null && boe2.Operator == boe1.Operator) {
-						// make boe2 the parent and boe1 the child
-						var b = boe2.Left.Detach();
-						boe1.ReplaceWith(boe2.Detach());
-						boe2.Left = boe1;
-						boe1.Right = b;
-						return base.VisitBinaryOperatorExpression(boe2);
+					var bAndC = expr.Right as BinaryOperatorExpression;
+					if (bAndC != null && bAndC.Operator == expr.Operator) {
+						// make bAndC the parent and expr the child
+						var b = bAndC.Left.Detach();
+						var c = bAndC.Right.Detach();
+						expr.ReplaceWith(bAndC.Detach());
+						bAndC.Left = expr;
+						bAndC.Right = c;
+						expr.Right = b;
+						return base.VisitBinaryOperatorExpression(bAndC);
 					}
 					break;
 			}
-			return base.VisitBinaryOperatorExpression(boe1);
+			return base.VisitBinaryOperatorExpression(expr);
 		}
 		#endregion
 	}
