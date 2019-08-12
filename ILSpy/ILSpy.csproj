@@ -267,9 +267,7 @@
     <Resource Include="Images\Breakpoint.png" />
     <Resource Include="Images\CurrentLine.png" />
     <Resource Include="Images\DisabledBreakpoint.png" />
-    <None Include="app.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <None Include="app.config" />
     <None Include="app.manifest" />
     <None Include="Images\ResourceXsl.png" />
     <None Include="Properties\app.config.template" />
