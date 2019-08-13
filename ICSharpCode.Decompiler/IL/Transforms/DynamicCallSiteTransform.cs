@@ -500,7 +500,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			int i = 0;
 			callSiteInfo.ArgumentInfos = new CSharpArgumentInfo[numberOfArguments];
-			var compileTimeTypes = callSiteInfo.DelegateType.GetDelegateInvokeMethod().Parameters.SelectReadOnlyArray(p => p.Type);
+			IMethod invokeMethod = callSiteInfo.DelegateType.GetDelegateInvokeMethod();
+			if (invokeMethod == null)
+				return false;
+			var compileTimeTypes = invokeMethod.Parameters.SelectReadOnlyArray(p => p.Type);
 			foreach (var (_, arg) in arguments) {
 				if (!(arg is Call createCall))
 					return false;
