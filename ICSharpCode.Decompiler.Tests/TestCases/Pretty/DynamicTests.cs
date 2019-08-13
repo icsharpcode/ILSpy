@@ -415,6 +415,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return true.Equals(a);
 		}
 
+		private static IntPtr NewIntPtr(dynamic a)
+		{
+			return new IntPtr(a);
+		}
+
 		private static dynamic GetDynamic(int i)
 		{
 			return null;
