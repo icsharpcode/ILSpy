@@ -172,7 +172,7 @@
     <value>Generate portable PDB</value>
   </data>
   <data name="RefreshCommand_ReloadAssemblies" xml:space="preserve">
-    <value>ReloadAssemblies</value>
+    <value>Reload all assemblies</value>
   </data>
   <data name="_Reload" xml:space="preserve">
     <value>_Reload</value>

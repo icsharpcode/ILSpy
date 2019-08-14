@@ -1432,7 +1432,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to ReloadAssemblies.
+        ///   Looks up a localized string similar to Reload all assemblies.
         /// </summary>
         public static string RefreshCommand_ReloadAssemblies {
             get {
