@@ -433,6 +433,10 @@
     <None Include="@(Resource)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Images\PublicOnly.png" />
+  </ItemGroup>
+
   <PropertyGroup>
     <VCBasePath>$(MSBuildToolsPath)\..\..\..\VC\</VCBasePath>
     <VCToolsVersionPropsFileNameDefault>Microsoft.VCToolsVersion.default.props</VCToolsVersionPropsFileNameDefault>

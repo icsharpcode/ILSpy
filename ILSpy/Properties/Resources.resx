@@ -370,10 +370,10 @@
     <value>You are using a nightly build newer than the latest release.</value>
   </data>
   <data name="Show_internalTypesMembers" xml:space="preserve">
-    <value>Show _internal types and members</value>
+    <value>Show public, private and internal</value>
   </data>
   <data name="ShowInternalTypesMembers" xml:space="preserve">
-    <value>Show internal types and members</value>
+    <value>Show public, private and internal</value>
   </data>
   <data name="StandBy" xml:space="preserve">
     <value>Stand by...</value>
@@ -753,5 +753,11 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DecompilerSettings.RemoveDeadStores" xml:space="preserve">
     <value>Remove dead stores (use with caution!)</value>
+  </data>
+  <data name="ShowPublicOnlyTypesMembers" xml:space="preserve">
+    <value>Show only public types and members</value>
+  </data>
+  <data name="Show_publiconlyTypesMembers" xml:space="preserve">
+    <value>Show only _public types and members</value>
   </data>
 </root>
