@@ -93,9 +93,9 @@
 			</CheckBox>
 			<Separator />
 			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100" MaxDropDownHeight="Auto"
-			          ItemsSource="{x:Static local:Languages.AllLanguages}"
+			          ItemsSource="{x:Static local:Languages.AllLanguages}" ToolTip="{x:Static properties:Resources.SelectLanguageDropdownTooltip}"
 			          SelectedItem="{Binding FilterSettings.Language}"/>
-			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" Width="120" MaxDropDownHeight="Auto"
+			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" Width="120" MaxDropDownHeight="Auto" ToolTip="{x:Static properties:Resources.SelectVersionDropdownTooltip}"
 			          Visibility="{Binding SelectedItem.HasLanguageVersions, ElementName=languageComboBox, Converter={StaticResource BooleanToVisibilityConverter}}"
 			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
 			          SelectedItem="{Binding FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>

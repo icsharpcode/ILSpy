@@ -745,4 +745,10 @@ Are you sure you want to continue?</value>
   <data name="HighlightMatchingBraces" xml:space="preserve">
     <value>Highlight matching braces</value>
   </data>
+  <data name="SelectLanguageDropdownTooltip" xml:space="preserve">
+    <value>Select language to decompile to</value>
+  </data>
+  <data name="SelectVersionDropdownTooltip" xml:space="preserve">
+    <value>Select version of language to output</value>
+  </data>
 </root>

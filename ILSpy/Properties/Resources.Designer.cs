@@ -1567,11 +1567,29 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select language to decompile to.
+        /// </summary>
+        public static string SelectLanguageDropdownTooltip {
+            get {
+                return ResourceManager.GetString("SelectLanguageDropdownTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Select a list:.
         /// </summary>
         public static string SelectList {
             get {
                 return ResourceManager.GetString("SelectList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select version of language to output.
+        /// </summary>
+        public static string SelectVersionDropdownTooltip {
+            get {
+                return ResourceManager.GetString("SelectVersionDropdownTooltip", resourceCulture);
             }
         }
         
