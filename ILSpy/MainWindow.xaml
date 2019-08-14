@@ -81,6 +81,13 @@
 			<Separator />
 			<!-- 'Open' toolbar category is inserted here -->
 			<Separator />
+			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100" MaxDropDownHeight="Auto"
+			          ItemsSource="{x:Static local:Languages.AllLanguages}" ToolTip="{x:Static properties:Resources.SelectLanguageDropdownTooltip}"
+			          SelectedItem="{Binding FilterSettings.Language}"/>
+			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" Width="120" MaxDropDownHeight="Auto" ToolTip="{x:Static properties:Resources.SelectVersionDropdownTooltip}"
+			          Visibility="{Binding SelectedItem.HasLanguageVersions, ElementName=languageComboBox, Converter={StaticResource BooleanToVisibilityConverter}}"
+			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
+			          SelectedItem="{Binding FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
 			<CheckBox IsChecked="{Binding FilterSettings.ApiVisPublicOnly}" ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
 				<Image Width="16" Height="16" Source="Images/PublicOnly.png" />
 			</CheckBox>
@@ -90,14 +97,7 @@
 			<CheckBox IsChecked="{Binding FilterSettings.ApiVisAll}" ToolTip="{x:Static properties:Resources.ShowAllTypesAndMembers}">
 				<Image Width="16" Height="16" Source="Images/ShowAll.png" />
 			</CheckBox>
-			<Separator />
-			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100" MaxDropDownHeight="Auto"
-			          ItemsSource="{x:Static local:Languages.AllLanguages}" ToolTip="{x:Static properties:Resources.SelectLanguageDropdownTooltip}"
-			          SelectedItem="{Binding FilterSettings.Language}"/>
-			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" Width="120" MaxDropDownHeight="Auto" ToolTip="{x:Static properties:Resources.SelectVersionDropdownTooltip}"
-			          Visibility="{Binding SelectedItem.HasLanguageVersions, ElementName=languageComboBox, Converter={StaticResource BooleanToVisibilityConverter}}"
-			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
-			          SelectedItem="{Binding FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
+			<!-- 'View' toolbar category is inserted here -->
 		</ToolBar>
 		<!-- Status bar -->
 		<StatusBar x:Name="statusBar" DockPanel.Dock="Bottom" Height="26" Visibility="Collapsed">

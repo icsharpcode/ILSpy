@@ -24,7 +24,7 @@ using ICSharpCode.TreeView;
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(Menu = nameof(Resources._View),  Header = nameof(Resources.SortAssembly_listName),  MenuIcon = "Images/Sort.png", MenuCategory = nameof(Resources.View))]
-	[ExportToolbarCommand(ToolTip = nameof(Resources.SortAssemblyListName),  ToolbarIcon = "Images/Sort.png",  ToolbarCategory = nameof(Resources.View))]
+	[ExportToolbarCommand(ToolTip = nameof(Resources.SortAssemblyListName),  ToolbarIcon = "Images/Sort.png",  ToolbarCategory = nameof(Resources.Open), ToolbarOrder = 3)]
 	sealed class SortAssemblyListCommand : SimpleCommand, IComparer<LoadedAssembly>
 	{
 		public override void Execute(object parameter)
@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy
 	}
 
 	[ExportMainMenuCommand(Menu = nameof(Resources._View),  Header = nameof(Resources._CollapseTreeNodes),  MenuIcon = "Images/CollapseAll.png", MenuCategory = nameof(Resources.View))]
-	[ExportToolbarCommand(ToolTip = nameof(Resources.CollapseTreeNodes),  ToolbarIcon = "Images/CollapseAll.png", ToolbarCategory = nameof(Resources.View))]
+	[ExportToolbarCommand(ToolTip = nameof(Resources.CollapseTreeNodes),  ToolbarIcon = "Images/CollapseAll.png", ToolbarCategory = nameof(Resources.Open), ToolbarOrder = 4)]
 	sealed class CollapseAllCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)
