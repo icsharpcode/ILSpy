@@ -683,7 +683,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <summary>
-		/// Transform local exception variable.
+		/// catch ex : TException when (...) BlockContainer {
+		/// 	Block entryPoint (incoming: 1) {
+		/// 		stloc v(ldloc ex)
+		/// 		...
+		/// 	}
+		/// }
+		/// =>
+		/// catch v : TException when (...) BlockContainer {
+		/// 	Block entryPoint (incoming: 1) {
+		/// 		...
+		/// 	}
+		/// }
 		/// </summary>
 		void TransformCatchVariable(TryCatchHandler handler, Block entryPoint)
 		{
@@ -693,6 +704,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			if (!exceptionSlotLoad.MatchLdLoc(handler.Variable) || !handler.Variable.IsSingleDefinition || handler.Variable.LoadCount != 1)
 				return;
+			context.Step("TransformCatchVariable", entryPoint.Instructions[0]);
 			handler.Variable = exceptionVar;
 			exceptionVar.Kind = VariableKind.ExceptionLocal;
 			entryPoint.Instructions.RemoveAt(0);
@@ -705,6 +717,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			TransformCatchVariable(handler, entryPoint);
 			if (entryPoint.Instructions.Count == 1 && entryPoint.Instructions[0].MatchLeave(out _, out var condition)) {
+				context.Step("TransformCatchWhen", entryPoint.Instructions[0]);
 				handler.Filter = condition;
 			}
 		}
