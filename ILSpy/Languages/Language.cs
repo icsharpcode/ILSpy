@@ -448,42 +448,42 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// This should produce a string representation of the entity for search to match search strings against.
 		/// </summary>
-		public virtual string GetEntityName(PEFile module, EntityHandle handle, bool fullName)
+		public virtual string GetEntityName(PEFile module, EntityHandle handle, bool fullName, bool omitGenerics)
 		{
 			MetadataReader metadata = module.Metadata;
 			switch (handle.Kind) {
 				case HandleKind.TypeDefinition:
 					if (fullName)
-						return EscapeName(((TypeDefinitionHandle)handle).GetFullTypeName(metadata).ToILNameString());
+						return EscapeName(((TypeDefinitionHandle)handle).GetFullTypeName(metadata).ToILNameString(omitGenerics));
 					var td = metadata.GetTypeDefinition((TypeDefinitionHandle)handle);
 					return EscapeName(metadata.GetString(td.Name));
 				case HandleKind.FieldDefinition:
 					var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)handle);
-					var declaringType = fd.GetDeclaringType();
 					if (fullName)
-						return EscapeName(fd.GetDeclaringType().GetFullTypeName(metadata).ToILNameString() + "." + metadata.GetString(fd.Name));
+						return EscapeName(fd.GetDeclaringType().GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(fd.Name));
 					return EscapeName(metadata.GetString(fd.Name));
 				case HandleKind.MethodDefinition:
 					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
-					declaringType = md.GetDeclaringType();
 					string methodName = metadata.GetString(md.Name);
-					int genericParamCount = md.GetGenericParameters().Count;
-					if (genericParamCount > 0)
-						methodName += "``" + genericParamCount;
+					if (!omitGenerics) {
+						int genericParamCount = md.GetGenericParameters().Count;
+						if (genericParamCount > 0)
+							methodName += "``" + genericParamCount; 
+					}
 					if (fullName)
-						return EscapeName(md.GetDeclaringType().GetFullTypeName(metadata).ToILNameString() + "." + methodName);
+						return EscapeName(md.GetDeclaringType().GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + methodName);
 					return EscapeName(methodName);
 				case HandleKind.EventDefinition:
 					var ed = metadata.GetEventDefinition((EventDefinitionHandle)handle);
-					declaringType = metadata.GetMethodDefinition(ed.GetAccessors().GetAny()).GetDeclaringType();
+					var declaringType = metadata.GetMethodDefinition(ed.GetAccessors().GetAny()).GetDeclaringType();
 					if (fullName)
-						return EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString() + "." + metadata.GetString(ed.Name));
+						return EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(ed.Name));
 					return EscapeName(metadata.GetString(ed.Name));
 				case HandleKind.PropertyDefinition:
 					var pd = metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle);
 					declaringType = metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
 					if (fullName)
-						return EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString() + "." + metadata.GetString(pd.Name));
+						return EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + metadata.GetString(pd.Name));
 					return EscapeName(metadata.GetString(pd.Name));
 				default:
 					return null;

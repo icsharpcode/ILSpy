@@ -101,24 +101,26 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static string ToILNameString(this FullTypeName typeName)
+		public static string ToILNameString(this FullTypeName typeName, bool omitGenerics = false)
 		{
 			string name;
 			if (typeName.IsNested) {
 				name = typeName.Name;
-				int localTypeParameterCount = typeName.GetNestedTypeAdditionalTypeParameterCount(typeName.NestingLevel - 1);
-				if (localTypeParameterCount > 0)
-					name += "`" + localTypeParameterCount;
+				if (!omitGenerics) {
+					int localTypeParameterCount = typeName.GetNestedTypeAdditionalTypeParameterCount(typeName.NestingLevel - 1);
+					if (localTypeParameterCount > 0)
+						name += "`" + localTypeParameterCount;
+				}
 				name = Disassembler.DisassemblerHelpers.Escape(name);
-				return $"{typeName.GetDeclaringType().ToILNameString()}/{name}";
+				return $"{typeName.GetDeclaringType().ToILNameString(omitGenerics)}/{name}";
 			}
 			if (!string.IsNullOrEmpty(typeName.TopLevelTypeName.Namespace)) {
 				name = $"{typeName.TopLevelTypeName.Namespace}.{typeName.Name}";
-				if (typeName.TypeParameterCount > 0)
+				if (!omitGenerics && typeName.TypeParameterCount > 0)
 					name += "`" + typeName.TypeParameterCount;
 			} else {
 				name = typeName.Name;
-				if (typeName.TypeParameterCount > 0)
+				if (!omitGenerics && typeName.TypeParameterCount > 0)
 					name += "`" + typeName.TypeParameterCount;
 			}
 			return Disassembler.DisassemblerHelpers.Escape(name);
