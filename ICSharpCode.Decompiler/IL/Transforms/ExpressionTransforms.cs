@@ -68,9 +68,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// Special case for switch: Only visit the switch condition block.
 				var switchInst =  (SwitchInstruction)container.EntryPoint.Instructions[0];
 				switchInst.Value.AcceptVisitor(this);
-				return;
 			}
-			base.VisitBlockContainer(container);
+			// No need to call base.VisitBlockContainer, see comment in VisitBlock.
 		}
 
 		protected internal override void VisitBlock(Block block)
