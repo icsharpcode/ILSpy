@@ -158,13 +158,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void ProcessBlock(Block block, ref bool blockContainerNeedsCleanup)
 		{
 			bool analysisSuccess = analysis.AnalyzeBlock(block);
-			KeyValuePair<LongSet, ILInstruction> defaultSection;
-			if (analysisSuccess && UseCSharpSwitch(out defaultSection)) {
+			if (analysisSuccess && UseCSharpSwitch(out _)) {
 				// complex multi-block switch that can be combined into a single SwitchInstruction
 				ILInstruction switchValue = new LdLoc(analysis.SwitchVariable);
-				if (switchValue.ResultType == StackType.Unknown) {
+				Debug.Assert(switchValue.ResultType.IsIntegerType() || switchValue.ResultType == StackType.Unknown);
+				if (!(switchValue.ResultType == StackType.I4 || switchValue.ResultType == StackType.I8)) {
 					// switchValue must have a result type of either I4 or I8
-					switchValue = new Conv(switchValue, PrimitiveType.I8, false, TypeSystem.Sign.Signed);
+					switchValue = new Conv(switchValue, PrimitiveType.I8, false, Sign.Signed);
 				}
 				var sw = new SwitchInstruction(switchValue);
 				foreach (var section in analysis.Sections) {

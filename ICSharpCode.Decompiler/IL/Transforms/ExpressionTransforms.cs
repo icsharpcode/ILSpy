@@ -62,6 +62,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		protected internal override void VisitBlockContainer(BlockContainer container)
+		{
+			if (container.Kind == ContainerKind.Switch) {
+				// Special case for switch: Only visit the switch condition block.
+				var switchInst =  (SwitchInstruction)container.EntryPoint.Instructions[0];
+				switchInst.Value.AcceptVisitor(this);
+				return;
+			}
+			base.VisitBlockContainer(container);
+		}
+
 		protected internal override void VisitBlock(Block block)
 		{
 			if (block.Kind == BlockKind.ControlFlow) {
