@@ -132,6 +132,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			this.context = context;
 
+			analysis.AllowUnreachableCases = context.Settings.RemoveDeadCode;
+
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
 				currentContainer = container;
 				controlFlowGraph = null;

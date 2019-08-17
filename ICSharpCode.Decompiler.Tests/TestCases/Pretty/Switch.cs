@@ -1145,5 +1145,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine();
 		}
+
+		public static string Issue1621(int x)
+		{
+			if (x == 5) {
+				return "5";
+			}
+			switch (x) {
+				case 1:
+					return "1";
+				case 2:
+				case 6:
+				case 7:
+					return "2-6-7";
+				case 3:
+					return "3";
+				case 4:
+					return "4";
+				case 5:
+					return "unreachable";
+				default:
+					throw new Exception();
+			}
+		}
 	}
 }
