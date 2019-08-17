@@ -173,7 +173,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Special case for Mono-compiled yield state machines
 			ITypeDefinition closureType = thisVariable.Type.GetDefinition();
 			if (!(closureType != decompilationContext.CurrentTypeDefinition
-				&& IsPotentialClosure(decompilationContext.CurrentTypeDefinition, closureType)))
+				&& IsPotentialClosure(decompilationContext.CurrentTypeDefinition, closureType, allowTypeImplementingInterfaces: true)))
 				return false;
 
 			var displayClass = new DisplayClass {
@@ -236,10 +236,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return IsPotentialClosure(decompilationContext.CurrentTypeDefinition, potentialDisplayClass);
 		}
 
-		internal static bool IsPotentialClosure(ITypeDefinition decompiledTypeDefinition, ITypeDefinition potentialDisplayClass)
+		internal static bool IsPotentialClosure(ITypeDefinition decompiledTypeDefinition, ITypeDefinition potentialDisplayClass, bool allowTypeImplementingInterfaces = false)
 		{
 			if (potentialDisplayClass == null || !potentialDisplayClass.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return false;
+			switch (potentialDisplayClass.Kind) {
+				case TypeKind.Struct:
+					break;
+				case TypeKind.Class:
+					if (!potentialDisplayClass.IsSealed)
+						return false;
+					if (!allowTypeImplementingInterfaces) {
+						if (!potentialDisplayClass.DirectBaseTypes.All(t => t.IsKnownType(KnownTypeCode.Object)))
+							return false;
+					}
+					break;
+				default:
+					return false;
+			}
+			
 			while (potentialDisplayClass != decompiledTypeDefinition) {
 				potentialDisplayClass = potentialDisplayClass.DeclaringTypeDefinition;
 				if (potentialDisplayClass == null)
