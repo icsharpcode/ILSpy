@@ -1095,6 +1095,20 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
+
+		bool removeDeadStores = false;
+
+		[Category("DecompilerSettings.FSpecificOptions")]
+		[Description("DecompilerSettings.RemoveDeadStores")]
+		public bool RemoveDeadStores {
+			get { return removeDeadStores; }
+			set {
+				if (removeDeadStores != value) {
+					removeDeadStores = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 		#endregion
 
 		#region Assembly Load and Resolve options

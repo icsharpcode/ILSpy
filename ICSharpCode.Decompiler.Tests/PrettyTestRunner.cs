@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.Tests
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				NullPropagation = false,
 				// legacy csc generates a dead store in debug builds
-				RemoveDeadCode = (cscOptions == CompilerOptions.None)
+				RemoveDeadStores = (cscOptions == CompilerOptions.None)
 			});
 		}
 
@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				// legacy csc generates a dead store in debug builds
-				RemoveDeadCode = (cscOptions == CompilerOptions.None)
+				RemoveDeadStores = (cscOptions == CompilerOptions.None)
 			});
 		}
 
@@ -180,7 +180,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				// legacy csc generates a dead store in debug builds
-				RemoveDeadCode = (cscOptions == CompilerOptions.None)
+				RemoveDeadStores = (cscOptions == CompilerOptions.None)
 			});
 		}
 

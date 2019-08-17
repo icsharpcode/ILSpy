@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				context.CancellationToken.ThrowIfCancellationRequested();
 
 				RemoveNopInstructions(block);
-				RemoveDeadStackStores(block, aggressive: context.Settings.RemoveDeadCode);
+				RemoveDeadStackStores(block, aggressive: context.Settings.RemoveDeadStores);
 
 				InlineVariableInReturnBlock(block, context);
 				// 1st pass SimplifySwitchInstruction before SimplifyBranchChains()

@@ -802,6 +802,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Remove dead stores (use with caution!).
+        /// </summary>
+        public static string DecompilerSettings_RemoveDeadStores {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.RemoveDeadStores", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Remove optional arguments, if possible.
         /// </summary>
         public static string DecompilerSettings_RemoveOptionalArgumentsIfPossible {
