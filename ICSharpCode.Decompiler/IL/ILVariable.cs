@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using ICSharpCode.Decompiler.TypeSystem;
 using System.Diagnostics;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -216,7 +217,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// This list is automatically updated when adding/removing ldloc instructions from the ILAst.
 		/// </remarks>
 		public IReadOnlyList<LdLoc> LoadInstructions => loadInstructions;
-		
+
 		/// <summary>
 		/// Number of store instructions referencing this variable,
 		/// plus 1 if HasInitialValue.

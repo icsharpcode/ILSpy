@@ -17,13 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -708,15 +705,41 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		void TransformCatchVariable(TryCatchHandler handler, Block entryPoint)
 		{
-			if (!entryPoint.Instructions[0].MatchStLoc(out var exceptionVar, out var exceptionSlotLoad))
+			if (!handler.Variable.IsSingleDefinition || handler.Variable.LoadCount != 1)
+				return; // handle.Variable already has non-trivial uses
+			if (!entryPoint.Instructions[0].MatchStLoc(out var exceptionVar, out var exceptionSlotLoad)) {
+				// Not the pattern with a second exceptionVar.
+				// However, it is still possible that we need to remove a pointless UnboxAny:
+				if (handler.Variable.LoadInstructions.Single().Parent is UnboxAny inlinedUnboxAny) {
+					if (inlinedUnboxAny.Type.Equals(handler.Variable.Type)) {
+						context.Step("TransformCatchVariable - remove inlined UnboxAny", inlinedUnboxAny);
+						inlinedUnboxAny.ReplaceWith(inlinedUnboxAny.Argument);
+					}
+				}
 				return;
-			if (!exceptionVar.IsSingleDefinition || exceptionVar.Kind != VariableKind.Local)
+			}
+			if (exceptionVar.Kind != VariableKind.Local && exceptionVar.Kind != VariableKind.StackSlot)
 				return;
-			if (!exceptionSlotLoad.MatchLdLoc(handler.Variable) || !handler.Variable.IsSingleDefinition || handler.Variable.LoadCount != 1)
+			if (exceptionSlotLoad is UnboxAny unboxAny) {
+				// When catching a type parameter, csc emits an unbox.any instruction
+				if (!unboxAny.Type.Equals(handler.Variable.Type))
+					return;
+				exceptionSlotLoad = unboxAny.Argument;
+			}
+			if (!exceptionSlotLoad.MatchLdLoc(handler.Variable))
 				return;
+			// Check that exceptionVar is only used within the catch block:
+			var allUses = exceptionVar.LoadInstructions
+				.Concat(exceptionVar.StoreInstructions.Cast<ILInstruction>())
+				.Concat(exceptionVar.AddressInstructions);
+			foreach (var inst in allUses) {
+				if (!inst.IsDescendantOf(handler))
+					return;
+			}
 			context.Step("TransformCatchVariable", entryPoint.Instructions[0]);
-			handler.Variable = exceptionVar;
 			exceptionVar.Kind = VariableKind.ExceptionLocal;
+			exceptionVar.Type = handler.Variable.Type;
+			handler.Variable = exceptionVar;
 			entryPoint.Instructions.RemoveAt(0);
 		}
 
