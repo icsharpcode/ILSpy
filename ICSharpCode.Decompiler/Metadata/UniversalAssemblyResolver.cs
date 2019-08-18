@@ -54,6 +54,14 @@ namespace ICSharpCode.Decompiler.Metadata
 			return false;
 		}
 
+		/// <summary>
+		/// Detect if we are a netcore app
+		/// </summary>
+		static bool DetectCoreApp()
+		{
+			return typeof(object).Assembly.GetName().Name == "System.Private.CoreLib";
+		}
+
 		public void AddSearchDirectory(string directory)
 		{
 			directories.Add(directory);
@@ -367,11 +375,13 @@ namespace ICSharpCode.Decompiler.Metadata
 			var version = reference.Version;
 			var corlib = typeof(object).Assembly.GetName();
 
-			if (corlib.Version == version || IsSpecialVersionOrRetargetable(reference))
-				return typeof(object).Module.FullyQualifiedName;
+			if (!DetectCoreApp()) {
+				if (corlib.Version == version || IsSpecialVersionOrRetargetable(reference))
+					return typeof(object).Module.FullyQualifiedName;
+			}
 
 			string path;
-			if (DetectMono()) {
+			if (!DetectCoreApp() && DetectMono()) {
 				path = GetMonoMscorlibBasePath(version);
 			} else {
 				path = GetMscorlibBasePath(version, reference.PublicKeyToken.ToHexString(8));
