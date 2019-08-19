@@ -35,10 +35,10 @@ namespace ICSharpCode.Decompiler.Metadata
 			// ever need this...
 			if (Type.GetType("Mono.Runtime") != null)
 				decompilerRuntime = DecompilerRuntime.Mono;
-			else if (Environment.OSVersion.Platform == PlatformID.Unix)
-				decompilerRuntime = DecompilerRuntime.Mono;
 			else if (typeof(object).Assembly.GetName().Name == "System.Private.CoreLib")
 				decompilerRuntime = DecompilerRuntime.NETCoreApp;
+			else if (Environment.OSVersion.Platform == PlatformID.Unix)
+				decompilerRuntime = DecompilerRuntime.Mono;
 		}
 
 		DotNetCorePathFinder dotNetCorePathFinder;
