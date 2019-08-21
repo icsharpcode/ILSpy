@@ -39,6 +39,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System.IO.Compression" />
@@ -207,6 +208,7 @@
     <Compile Include="TaskHelper.cs" />
     <Compile Include="TextView\EditorCommands.cs" />
     <Compile Include="TextView\FoldingCommands.cs" />
+    <Compile Include="TextView\ReadOnlyDocument.cs" />
     <Compile Include="TextView\XmlDocRenderer.cs" />
     <Compile Include="Analyzers\AnalyzeCommand.cs" />
     <Compile Include="Analyzers\Builtin\FieldAccessAnalyzer.cs" />

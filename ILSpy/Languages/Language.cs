@@ -341,6 +341,11 @@ namespace ICSharpCode.ILSpy
 			return GetDisplayName(entity, true, true, true);
 		}
 
+		public virtual object GetFancyTooltip(IEntity entity)
+		{
+			return GetTooltip(entity);
+		}
+
 		public virtual string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (field == null)

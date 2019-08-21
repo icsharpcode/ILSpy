@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2014 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -18,43 +18,37 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Xml;
-using ICSharpCode.AvalonEdit.Document;
+using System.Xml.Linq;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Utils;
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Xml;
 using ICSharpCode.ILSpy.Options;
 
 namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
-	/// Renders XML documentation into a WPF <see cref="FlowDocument"/>.
+	/// Builds a FlowDocument for XML documentation.
 	/// </summary>
 	public class DocumentationUIBuilder
 	{
-		readonly IAmbience ambience;
-		readonly IHighlightingDefinition highlightingDefinition;
-		readonly FlowDocument document;
+		FlowDocument flowDocument;
 		BlockCollection blockCollection;
 		InlineCollection inlineCollection;
+		IAmbience ambience;
 
-		public DocumentationUIBuilder(IAmbience ambience, IHighlightingDefinition highlightingDefinition)
+		public DocumentationUIBuilder(IAmbience ambience)
 		{
 			this.ambience = ambience;
-			this.highlightingDefinition = highlightingDefinition;
-			this.document = new FlowDocument();
-			this.blockCollection = document.Blocks;
+			this.flowDocument = new FlowDocument();
+			this.blockCollection = flowDocument.Blocks;
 
 			this.ShowSummary = true;
 			this.ShowAllParameters = true;
@@ -71,10 +65,11 @@ namespace ICSharpCode.ILSpy.TextView
 			this.ShowRemarks = true;
 		}
 
-		public FlowDocument CreateDocument()
+		public FlowDocument CreateFlowDocument()
 		{
 			FlushAddedText(true);
-			return document;
+			flowDocument.FontSize = DisplaySettingsPanel.CurrentDisplaySettings.SelectedFontSize;
+			return flowDocument;
 		}
 
 		public bool ShowExceptions { get; set; }
@@ -90,68 +85,33 @@ namespace ICSharpCode.ILSpy.TextView
 		public bool ShowValue { get; set; }
 		public bool ShowAllParameters { get; set; }
 
-		public void AddCodeBlock(string textContent, bool keepLargeMargin = false)
-		{
-			var document = new TextDocument(textContent);
-			var highlighter = new DocumentHighlighter(document, highlightingDefinition);
-			var richText = DocumentPrinter.ConvertTextDocumentToRichText(document, highlighter).ToRichTextModel();
-
-			var block = new Paragraph();
-			block.Inlines.AddRange(richText.CreateRuns(document));
-			block.FontFamily = GetCodeFont();
-			if (!keepLargeMargin)
-				block.Margin = new Thickness(0, 6, 0, 6);
-			AddBlock(block);
-		}
-
-		public void AddSignatureBlock(string signature)
-		{
-			var document = new TextDocument(signature);
-			var highlighter = new DocumentHighlighter(document, highlightingDefinition);
-			var richText = DocumentPrinter.ConvertTextDocumentToRichText(document, highlighter).ToRichTextModel();
-			var block = new Paragraph();
-			block.Inlines.AddRange(richText.CreateRuns(document));
-			block.FontFamily = GetCodeFont();
-			block.TextAlignment = TextAlignment.Left;
-			AddBlock(block);
-		}
-		
-		public void AddXmlDocumentation(string xmlDocumentation)
-		{
-			if (xmlDocumentation == null)
-				return;
-			Debug.WriteLine(xmlDocumentation);
-			AXmlParser parser = new AXmlParser();
-			var doc = parser.Parse(new Decompiler.Xml.StringTextSource(xmlDocumentation));
-			AddDocumentationElement(new XmlDocumentationElement(doc, null, null));
-		}
-		
-
 		/// <summary>
 		/// Gets/Sets the name of the parameter that should be shown.
 		/// </summary>
 		public string ParameterName { get; set; }
 
-		public void AddDocumentationElement(XmlDocumentationElement element)
+		public void AddDocumentationElement(XNode node)
 		{
-			if (element == null)
-				throw new ArgumentNullException("element");
-			if (element.IsTextNode) {
-				AddText(element.TextContent);
+			if (node == null)
+				throw new ArgumentNullException(nameof(node));
+			if (node is XText text) {
+				AddText(text.Value);
 				return;
 			}
-			switch (element.Name) {
+			if (!(node is XElement element))
+				throw new NotImplementedException();
+			switch (element.Name.ToString()) {
 				case "b":
-					AddSpan(new Bold(), element.Children);
+					AddSpan(new Bold(), element.Elements());
 					break;
 				case "i":
-					AddSpan(new Italic(), element.Children);
+					AddSpan(new Italic(), element.ele);
 					break;
 				case "c":
 					AddSpan(new Span { FontFamily = GetCodeFont() }, element.Children);
 					break;
 				case "code":
-					AddCodeBlock(element.TextContent);
+					AddCodeBlock(element.Value);
 					break;
 				case "example":
 					if (ShowExample)
@@ -235,7 +195,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		void AddList(string type, IEnumerable<XmlDocumentationElement> items)
+		void AddList(string type, IEnumerable<XNode> items)
 		{
 			List list = new List();
 			AddBlock(list);
@@ -263,6 +223,32 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
+		public void AddCodeBlock(string textContent, bool keepLargeMargin = false)
+		{
+			var document = new ReadOnlyDocument(textContent);
+			var highlightingDefinition = HighlightingManager.Instance.GetDefinition("C#");
+
+			var block = DocumentPrinter.ConvertTextDocumentToBlock(document, highlightingDefinition);
+			block.FontFamily = GetCodeFont();
+			if (!keepLargeMargin)
+				block.Margin = new Thickness(0, 6, 0, 6);
+			AddBlock(block);
+		}
+
+		public void AddSignatureBlock(string signature, int currentParameterOffset, int currentParameterLength, string currentParameterName)
+		{
+			ParameterName = currentParameterName;
+			var document = new ReadOnlyDocument(signature);
+			var highlightingDefinition = HighlightingManager.Instance.GetDefinition("C#");
+
+			var richText = DocumentPrinter.ConvertTextDocumentToRichText(document, highlightingDefinition).ToRichTextModel();
+			richText.SetFontWeight(currentParameterOffset, currentParameterLength, FontWeights.Bold);
+			var block = new Paragraph();
+			block.Inlines.AddRange(richText.CreateRuns(document));
+			block.FontFamily = GetCodeFont();
+			block.TextAlignment = TextAlignment.Left;
+			AddBlock(block);
+		}
 
 		bool? ParseBool(string input)
 		{
@@ -273,7 +259,7 @@ namespace ICSharpCode.ILSpy.TextView
 				return null;
 		}
 
-		void AddThreadSafety(bool? staticThreadSafe, bool? instanceThreadSafe, IEnumerable<XmlDocumentationElement> children)
+		void AddThreadSafety(bool? staticThreadSafe, bool? instanceThreadSafe, IEnumerable<XNode> children)
 		{
 			AddSection(
 				new Run("Thread-safety: "),
@@ -293,7 +279,12 @@ namespace ICSharpCode.ILSpy.TextView
 				});
 		}
 
-		void AddException(IEntity referencedEntity, IList<XmlDocumentationElement> children)
+		FontFamily GetCodeFont()
+		{
+			return new FontFamily(SD.EditorControlService.GlobalOptions.FontFamily);
+		}
+
+		void AddException(IEntity referencedEntity, IList<XNode> children)
 		{
 			Span span = new Span();
 			if (referencedEntity != null)
@@ -305,7 +296,7 @@ namespace ICSharpCode.ILSpy.TextView
 		}
 
 
-		void AddPermission(IEntity referencedEntity, IList<XmlDocumentationElement> children)
+		void AddPermission(IEntity referencedEntity, IList<XNode> children)
 		{
 			Span span = new Span();
 			span.Inlines.Add("Permission");
@@ -320,11 +311,11 @@ namespace ICSharpCode.ILSpy.TextView
 		Inline ConvertReference(IEntity referencedEntity)
 		{
 			var h = new Hyperlink(new Run(ambience.ConvertSymbol(referencedEntity)));
-			//h.Click += CreateNavigateOnClickHandler(referencedEntity);
+			h.Click += CreateNavigateOnClickHandler(referencedEntity);
 			return h;
 		}
 
-		void AddParam(string name, IEnumerable<XmlDocumentationElement> children)
+		void AddParam(string name, IEnumerable<XNode> children)
 		{
 			Span span = new Span();
 			span.Inlines.Add(new Run(name ?? string.Empty) { FontStyle = FontStyles.Italic });
@@ -339,7 +330,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		void AddPreliminary(IEnumerable<XmlDocumentationElement> children)
+		void AddPreliminary(IEnumerable<XNode> children)
 		{
 			if (children.Any()) {
 				foreach (var child in children)
@@ -349,14 +340,13 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		void AddSee(XmlDocumentationElement element)
+		void AddSee(XNode element)
 		{
 			IEntity referencedEntity = element.ReferencedEntity;
 			if (referencedEntity != null) {
 				if (element.Children.Any()) {
 					Hyperlink link = new Hyperlink();
-					// TODO
-					//link.Click += CreateNavigateOnClickHandler(referencedEntity);
+					link.Click += CreateNavigateOnClickHandler(referencedEntity);
 					AddSpan(link, element.Children);
 				} else {
 					AddInline(ConvertReference(referencedEntity));
@@ -378,44 +368,30 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		static string GetCref(string cref)
+		RoutedEventHandler CreateNavigateOnClickHandler(IEntity referencedEntity)
 		{
-			if (cref == null || cref.Trim().Length==0) {
-				return "";
-			}
-			if (cref.Length < 2) {
-				return cref;
-			}
-			if (cref.Substring(1, 1) == ":") {
-				return cref.Substring(2, cref.Length - 2);
-			}
-			return cref;
+			// Don't let the anonymous method capture the referenced entity
+			// (we don't want to keep the whole compilation in memory)
+			// Use the IEntityModel instead.
+			var model = referencedEntity.GetModel();
+			return delegate (object sender, RoutedEventArgs e) {
+				IEntity resolvedEntity = model != null ? model.Resolve() : null;
+				if (resolvedEntity != null) {
+					bool shouldDisplayHelp = CodeCompletionOptions.TooltipLinkTarget == TooltipLinkTarget.Documentation
+						&& resolvedEntity.ParentAssembly.IsPartOfDotnetFramework();
+					if (!shouldDisplayHelp || !HelpProvider.ShowHelp(resolvedEntity))
+						NavigationService.NavigateTo(resolvedEntity);
+				}
+				e.Handled = true;
+			};
 		}
 
-		FontFamily GetCodeFont()
-		{
-			return DisplaySettingsPanel.CurrentDisplaySettings.SelectedFont;
-		}
-
-		public void AddInline(Inline inline)
-		{
-			FlushAddedText(false);
-			if (inlineCollection == null) {
-				var para = new Paragraph();
-				para.Margin = new Thickness(0, 0, 0, 5);
-				inlineCollection = para.Inlines;
-				AddBlock(para);
-			}
-			inlineCollection.Add(inline);
-			ignoreWhitespace = false;
-		}
-
-		void AddSection(string title, IEnumerable<XmlDocumentationElement> children)
+		void AddSection(string title, IEnumerable<XNode> children)
 		{
 			AddSection(new Run(title), children);
 		}
 
-		void AddSection(Inline title, IEnumerable<XmlDocumentationElement> children)
+		void AddSection(Inline title, IEnumerable<XNode> children)
 		{
 			AddSection(
 				title, delegate {
@@ -444,7 +420,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		void AddParagraph(Paragraph para, IEnumerable<XmlDocumentationElement> children)
+		void AddParagraph(Paragraph para, IEnumerable<XNode> children)
 		{
 			AddBlock(para);
 			try {
@@ -458,7 +434,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		void AddSpan(Span span, IEnumerable<XmlDocumentationElement> children)
+		void AddSpan(Span span, IEnumerable<XNode> children)
 		{
 			AddInline(span);
 			var oldInlineCollection = inlineCollection;
@@ -470,6 +446,19 @@ namespace ICSharpCode.ILSpy.TextView
 			} finally {
 				inlineCollection = oldInlineCollection;
 			}
+		}
+
+		public void AddInline(Inline inline)
+		{
+			FlushAddedText(false);
+			if (inlineCollection == null) {
+				var para = new Paragraph();
+				para.Margin = new Thickness(0, 0, 0, 5);
+				inlineCollection = para.Inlines;
+				AddBlock(para);
+			}
+			inlineCollection.Add(inline);
+			ignoreWhitespace = false;
 		}
 
 		public void AddBlock(Block block)
