@@ -94,7 +94,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override bool? IsReferenceType {
 			get { return isReferenceType; }
 		}
-		
+
+		public override IType ChangeNullability(Nullability nullability)
+		{
+			if (nullability == Nullability.Oblivious)
+				return this;
+			else
+				return new NullabilityAnnotatedType(this, nullability);
+		}
+
 		public override int GetHashCode()
 		{
 			return (namespaceKnown ? 812571 : 12651) ^ fullTypeName.GetHashCode();

@@ -23,6 +23,7 @@
 using System.Xml.Linq;
 using ILSpy.BamlDecompiler.Baml;
 using ILSpy.BamlDecompiler.Xaml;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ILSpy.BamlDecompiler.Handlers {
 	internal class PropertyTypeReferenceHandler : IHandler {
@@ -39,10 +40,14 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			var elemAttr = ctx.ResolveProperty(record.AttributeId);
 			elem.Xaml = new XElement(elemAttr.ToXName(ctx, null));
 
+			if (attr.ResolvedMember?.FullNameIs("System.Windows.Style", "TargetType") == true) {
+				parent.Xaml.Element.AddAnnotation(new TargetTypeAnnotation(type));
+			}
+
 			elem.Xaml.Element.AddAnnotation(elemAttr);
 			parent.Xaml.Element.Add(elem.Xaml.Element);
 
-			var typeElem = new XElement(ctx.GetXamlNsName("TypeExtension", parent.Xaml));
+			var typeElem = new XElement(ctx.GetKnownNamespace("TypeExtension", XamlContext.KnownNamespace_Xaml, parent.Xaml));
 			typeElem.AddAnnotation(ctx.ResolveType(0xfd4d)); // Known type - TypeExtension
 			typeElem.Add(new XElement(ctx.GetPseudoName("Ctor"), typeName));
 			elem.Xaml.Element.Add(typeElem);
@@ -51,6 +56,16 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			elem.Xaml.Element.Name = elemAttr.ToXName(ctx, null);
 
 			return elem;
+		}
+	}
+
+	internal class TargetTypeAnnotation
+	{
+		public XamlType Type { get; }
+
+		public TargetTypeAnnotation(XamlType type)
+		{
+			this.Type = type;
 		}
 	}
 }

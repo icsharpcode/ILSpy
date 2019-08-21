@@ -14,6 +14,7 @@ namespace ICSharpCode.ILSpy.Search
 		protected readonly string[] searchTerm;
 		protected readonly Regex regex;
 		protected readonly bool fullNameSearch;
+		protected readonly bool omitGenerics;
 		protected readonly Language language;
 		protected readonly ApiVisibility apiVisibility;
 		private readonly IProducerConsumerCollection<SearchResult> resultQueue;
@@ -29,11 +30,13 @@ namespace ICSharpCode.ILSpy.Search
 				if (search.StartsWith("/", StringComparison.Ordinal) && search.Length > 4) {
 					var regexString = search.Substring(1, search.Length - 1);
 					fullNameSearch = search.Contains("\\.");
+					omitGenerics = !search.Contains("<");
 					if (regexString.EndsWith("/", StringComparison.Ordinal))
 						regexString = regexString.Substring(0, regexString.Length - 1);
 					regex = SafeNewRegex(regexString);
 				} else {
 					fullNameSearch = search.Contains(".");
+					omitGenerics = !search.Contains("<");
 				}
 			}
 			searchTerm = terms;

@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using ICSharpCode.Decompiler.Util;
 
@@ -43,10 +44,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.hasReferenceTypeConstraint = hasReferenceTypeConstraint;
 			this.hasDefaultConstructorConstraint = hasDefaultConstructorConstraint;
 			this.nullabilityConstraint = nullabilityConstraint;
-			this.constraints = constraints ?? EmptyList<IType>.Instance;
+			this.TypeConstraints = MakeConstraints(constraints);
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 		}
-		
+
 		public DefaultTypeParameter(
 			ICompilation compilation, SymbolKind ownerType,
 			int index, string name = null,
@@ -60,7 +61,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.hasReferenceTypeConstraint = hasReferenceTypeConstraint;
 			this.hasDefaultConstructorConstraint = hasDefaultConstructorConstraint;
 			this.nullabilityConstraint = nullabilityConstraint;
-			this.constraints = constraints ?? EmptyList<IType>.Instance;
+			this.TypeConstraints = MakeConstraints(constraints);
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 		}
 
@@ -72,19 +73,24 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override bool HasUnmanagedConstraint => false;
 		public override Nullability NullabilityConstraint => nullabilityConstraint;
 
-		public override IEnumerable<IType> DirectBaseTypes {
-			get {
-				bool hasNonInterfaceConstraint = false;
+		public override IReadOnlyList<TypeConstraint> TypeConstraints { get; }
+
+		IReadOnlyList<TypeConstraint> MakeConstraints(IReadOnlyList<IType> constraints)
+		{
+			var result = new List<TypeConstraint>();
+			bool hasNonInterfaceConstraint = false;
+			if (constraints != null) {
 				foreach (IType c in constraints) {
-					yield return c;
+					result.Add(new TypeConstraint(c));
 					if (c.Kind != TypeKind.Interface)
 						hasNonInterfaceConstraint = true;
 				}
-				// Do not add the 'System.Object' constraint if there is another constraint with a base class.
-				if (this.HasValueTypeConstraint || !hasNonInterfaceConstraint) {
-					yield return this.Compilation.FindType(this.HasValueTypeConstraint ? KnownTypeCode.ValueType : KnownTypeCode.Object);
-				}
 			}
+			// Do not add the 'System.Object' constraint if there is another constraint with a base class.
+			if (this.HasValueTypeConstraint || !hasNonInterfaceConstraint) {
+				result.Add(new TypeConstraint(this.Compilation.FindType(this.HasValueTypeConstraint ? KnownTypeCode.ValueType : KnownTypeCode.Object)));
+			}
+			return result;
 		}
 	}
 }

@@ -62,9 +62,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 						// Do not try to transform display class usages or delegate construction.
 						// DelegateConstruction transform cannot deal with this.
-						if (DelegateConstruction.IsSimpleDisplayClass(newObjInst.Method.DeclaringType))
+						if (TransformDisplayClassUsage.IsSimpleDisplayClass(newObjInst.Method.DeclaringType))
 							return false;
-						if (DelegateConstruction.IsDelegateConstruction(newObjInst) || DelegateConstruction.IsPotentialClosure(context, newObjInst))
+						if (DelegateConstruction.IsDelegateConstruction(newObjInst) || TransformDisplayClassUsage.IsPotentialClosure(context, newObjInst))
 							return false;
 						// Cannot build a collection/object initializer attached to an AnonymousTypeCreateExpression:s 
 						// anon = new { A = 5 } { 3,4,5 } is invalid syntax.
@@ -216,14 +216,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case AccessPathKind.Setter:
 					if (isCollection || !pathStack.Peek().Add(lastElement))
 						return false;
-					if (values.Count == 1) {
-						blockKind = BlockKind.ObjectInitializer;
-						return true;
-					}
-					return false;
+					if (values.Count != 1 || !IsValidObjectInitializerTarget(currentPath))
+						return false;
+					blockKind = BlockKind.ObjectInitializer;
+					return true;
 				default:
 					return false;
 			}
+		}
+
+		bool IsValidObjectInitializerTarget(List<AccessPathElement> path)
+		{
+			if (path.Count == 0)
+				return true;
+			var element = path.Last();
+			var previous = path.SkipLast(1).LastOrDefault();
+			if (!(element.Member is IProperty p))
+				return true;
+			return !p.IsIndexer || (previous.Member?.ReturnType.Equals(element.Member.DeclaringType) == true);
 		}
 	}
 

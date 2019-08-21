@@ -25,7 +25,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public abstract class EntityDeclaration : AstNode
 	{
 		public static readonly Role<AttributeSection> AttributeRole = new Role<AttributeSection>("Attribute");
-		public static readonly Role<AttributeSection> UnattachedAttributeRole = new Role<AttributeSection>("UnattachedAttribute");
 		public static readonly Role<CSharpModifierToken> ModifierRole = new Role<CSharpModifierToken>("Modifier");
 		public static readonly Role<AstType> PrivateImplementationTypeRole = new Role<AstType>("PrivateImplementationType", AstType.Null);
 		

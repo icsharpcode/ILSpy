@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				Statements = {
 					new Repeat(new AnyNode("statement")),
 					new NamedNode(
-						"increment",
+						"iterator",
 						new ExpressionStatement(
 							new AssignmentExpression {
 								Left = new Backreference("ident"),
@@ -180,6 +180,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (variable != m3.Get<IdentifierExpression>("ident").Single().GetILVariable())
 				return null;
 			WhileStatement loop = (WhileStatement)next;
+			// Cannot convert to for loop, if any variable that is used in the "iterator" part of the pattern,
+			// will be declared in the body of the while-loop.
+			var iteratorStatement = m3.Get<Statement>("iterator").Single();
+			if (IteratorVariablesDeclaredInsideLoopBody(iteratorStatement))
+				return null;
 			// Cannot convert to for loop, because that would change the semantics of the program.
 			// continue in while jumps to the condition block.
 			// Whereas continue in for jumps to the increment block.
@@ -193,7 +198,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			forStatement.CopyAnnotationsFrom(loop);
 			forStatement.Initializers.Add(node);
 			forStatement.Condition = loop.Condition.Detach();
-			forStatement.Iterators.Add(m3.Get<Statement>("increment").Single().Detach());
+			forStatement.Iterators.Add(iteratorStatement.Detach());
 			forStatement.EmbeddedStatement = newBody;
 			loop.ReplaceWith(forStatement);
 			return forStatement;
@@ -214,6 +219,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return true;
 			if (statement.Iterators.Any(i => i.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable)))
 				return true;
+			return false;
+		}
+
+		bool IteratorVariablesDeclaredInsideLoopBody(Statement iteratorStatement)
+		{
+			foreach (var id in iteratorStatement.DescendantsAndSelf.OfType<IdentifierExpression>()) {
+				var v = id.GetILVariable();
+				if (v == null || !DeclareVariables.VariableNeedsDeclaration(v.Kind))
+					continue;
+				if (declareVariables.GetDeclarationPoint(v).Parent == iteratorStatement.Parent)
+					return true;
+			}
 			return false;
 		}
 		#endregion
@@ -467,6 +484,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			statementsToDelete.Add(stmt.GetNextStatement());
 			var itemVariable = foreachVariable.GetILVariable();
 			if (itemVariable == null || !itemVariable.IsSingleDefinition
+				|| (itemVariable.Kind != IL.VariableKind.Local && itemVariable.Kind != IL.VariableKind.StackSlot)
 				|| !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1)
 				|| !lowerBounds.All(lb => lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
 				return null;
@@ -776,8 +794,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				default:
 					return false;
 			}
-			if (!ev.ReturnType.IsMatch(m.Get("type").Single()))
-				return false; // variable types must match event type
+			if (!ev.ReturnType.IsMatch(m.Get("type").Single())) {
+				// Variable types must match event type,
+				// except that the event type may have an additional nullability annotation
+				if (ev.ReturnType is ComposedType ct && ct.HasOnlyNullableSpecifier) {
+					if (!ct.BaseType.IsMatch(m.Get("type").Single()))
+						return false;
+				} else {
+					return false;
+				}
+			}
 			var combineMethod = m.Get<AstNode>("delegateCombine").Single().Parent.GetSymbol() as IMethod;
 			if (combineMethod == null || combineMethod.Name != (isAddAccessor ? "Combine" : "Remove"))
 				return false;
@@ -976,24 +1002,26 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Use associativity of logic operators to avoid parentheses.
 		/// </summary>
-		public override AstNode VisitBinaryOperatorExpression(BinaryOperatorExpression boe1)
+		public override AstNode VisitBinaryOperatorExpression(BinaryOperatorExpression expr)
 		{
-			switch (boe1.Operator) {
+			switch (expr.Operator) {
 				case BinaryOperatorType.ConditionalAnd:
 				case BinaryOperatorType.ConditionalOr:
 					// a && (b && c) ==> (a && b) && c
-					var boe2 = boe1.Right as BinaryOperatorExpression;
-					if (boe2 != null && boe2.Operator == boe1.Operator) {
-						// make boe2 the parent and boe1 the child
-						var b = boe2.Left.Detach();
-						boe1.ReplaceWith(boe2.Detach());
-						boe2.Left = boe1;
-						boe1.Right = b;
-						return base.VisitBinaryOperatorExpression(boe2);
+					var bAndC = expr.Right as BinaryOperatorExpression;
+					if (bAndC != null && bAndC.Operator == expr.Operator) {
+						// make bAndC the parent and expr the child
+						var b = bAndC.Left.Detach();
+						var c = bAndC.Right.Detach();
+						expr.ReplaceWith(bAndC.Detach());
+						bAndC.Left = expr;
+						bAndC.Right = c;
+						expr.Right = b;
+						return base.VisitBinaryOperatorExpression(bAndC);
 					}
 					break;
 			}
-			return base.VisitBinaryOperatorExpression(boe1);
+			return base.VisitBinaryOperatorExpression(expr);
 		}
 		#endregion
 	}

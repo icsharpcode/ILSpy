@@ -384,9 +384,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// (if the given <paramref name="entity"/> in an <c>override</c>)
 		/// should be returned.
 		/// </param>
-		public static bool HasAttribute(this IEntity entity, KnownAttribute attrType, bool inherit=false)
+		public static bool HasAttribute(this IEntity entity, KnownAttribute attributeType, bool inherit=false)
 		{
-			return GetAttribute(entity, attrType, inherit) != null;
+			return GetAttribute(entity, attributeType, inherit) != null;
 		}
 
 		/// <summary>
@@ -445,9 +445,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		/// <param name="parameter">The parameter on which the attributes are declared.</param>
 		/// <param name="attributeType">The attribute type to look for.</param>
-		public static bool HasAttribute(this IParameter parameter, KnownAttribute attrType)
+		public static bool HasAttribute(this IParameter parameter, KnownAttribute attributeType)
 		{
-			return GetAttribute(parameter, attrType) != null;
+			return GetAttribute(parameter, attributeType) != null;
 		}
 
 		/// <summary>
@@ -521,9 +521,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return SpecialType.UnknownType;
 		}
 
-		public static bool FullNameIs(this IMethod method, string type, string name)
+		public static bool FullNameIs(this IMember member, string type, string name)
 		{
-			return method.Name == name && method.DeclaringType?.FullName == type;
+			return member.Name == name && member.DeclaringType?.FullName == type;
 		}
 
 		public static KnownAttribute IsBuiltinAttribute(this ITypeDefinition type)

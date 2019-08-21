@@ -59,7 +59,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 		{
 			var result = new List<(LongSet, EventRegistration[])>();
 
-			var xClass = document.Root.Elements().First().Attribute(ctx.GetXamlNsName("Class"));
+			var xClass = document.Root.Elements().First().Attribute(ctx.GetKnownNamespace("Class", XamlContext.KnownNamespace_Xaml));
 			if (xClass == null)
 				return result;
 
@@ -94,7 +94,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 
 			// decompile method and optimize the switch
 			var ilReader = new ILReader(ctx.TypeSystem.MainModule);
-			var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, body, genericContext, ctx.CancellationToken);
+			var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, body, genericContext, ILFunctionKind.TopLevelFunction, ctx.CancellationToken);
 
 			var context = new ILTransformContext(function, ctx.TypeSystem, null) {
 				CancellationToken = ctx.CancellationToken

@@ -34,8 +34,10 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Output;
+using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy
@@ -343,12 +345,12 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			var module = assembly.GetPEFileOrNull();
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
 				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options);
-				decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
+				return decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
 			} else {
 				AddReferenceAssemblyWarningMessage(module, output);
 				AddReferenceWarningMessage(module, output);
@@ -389,7 +391,7 @@ namespace ICSharpCode.ILSpy
 					}
 					if (metadata.IsAssembly) {
 						var asm = metadata.GetAssemblyDefinition();
-						if (asm.HashAlgorithm != System.Reflection.AssemblyHashAlgorithm.None)
+						if (asm.HashAlgorithm != AssemblyHashAlgorithm.None)
 							output.WriteLine("// Hash algorithm: " + asm.HashAlgorithm.ToString().ToUpper());
 						if (!asm.PublicKey.IsNil) {
 							output.Write("// Public key: ");
@@ -415,6 +417,7 @@ namespace ICSharpCode.ILSpy
 					}
 					WriteCode(output, options.DecompilerSettings, st, decompiler.TypeSystem);
 				}
+				return null;
 			}
 		}
 
@@ -516,7 +519,7 @@ namespace ICSharpCode.ILSpy
 			return EntityToString(@event, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
-		string ToCSharpString(MetadataReader metadata, TypeDefinitionHandle handle, bool fullName)
+		string ToCSharpString(MetadataReader metadata, TypeDefinitionHandle handle, bool fullName, bool omitGenerics)
 		{
 			StringBuilder builder = new StringBuilder();
 			var currentTypeDefHandle = handle;
@@ -528,7 +531,7 @@ namespace ICSharpCode.ILSpy
 				typeDef = metadata.GetTypeDefinition(currentTypeDefHandle);
 				var part = ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(typeDef.Name), out int typeParamCount);
 				var genericParams = typeDef.GetGenericParameters();
-				if (genericParams.Count > 0) {
+				if (!omitGenerics && genericParams.Count > 0) {
 					builder.Insert(0, '>');
 					int firstIndex = genericParams.Count - typeParamCount;
 					for (int i = genericParams.Count - 1; i >= genericParams.Count - typeParamCount; i--) {
@@ -549,17 +552,17 @@ namespace ICSharpCode.ILSpy
 			return builder.ToString();
 		}
 
-		public override string GetEntityName(PEFile module, EntityHandle handle, bool fullName)
+		public override string GetEntityName(PEFile module, EntityHandle handle, bool fullName, bool omitGenerics)
 		{
 			MetadataReader metadata = module.Metadata;
 			switch (handle.Kind) {
 				case HandleKind.TypeDefinition:
-					return ToCSharpString(metadata, (TypeDefinitionHandle)handle, fullName);
+					return ToCSharpString(metadata, (TypeDefinitionHandle)handle, fullName, omitGenerics);
 				case HandleKind.FieldDefinition:
 					var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)handle);
 					var declaringType = fd.GetDeclaringType();
 					if (fullName)
-						return ToCSharpString(metadata, declaringType, fullName) + "." + metadata.GetString(fd.Name);
+						return ToCSharpString(metadata, declaringType, fullName, omitGenerics) + "." + metadata.GetString(fd.Name);
 					return metadata.GetString(fd.Name);
 				case HandleKind.MethodDefinition:
 					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
@@ -583,7 +586,7 @@ namespace ICSharpCode.ILSpy
 							break;
 						default:
 							var genericParams = md.GetGenericParameters();
-							if (genericParams.Count > 0) {
+							if (!omitGenerics && genericParams.Count > 0) {
 								methodName += "<";
 								int i = 0;
 								foreach (var h in genericParams) {
@@ -597,19 +600,19 @@ namespace ICSharpCode.ILSpy
 							break;
 					}
 					if (fullName)
-						return ToCSharpString(metadata, declaringType, fullName) + "." + methodName;
+						return ToCSharpString(metadata, declaringType, fullName, omitGenerics) + "." + methodName;
 					return methodName;
 				case HandleKind.EventDefinition:
 					var ed = metadata.GetEventDefinition((EventDefinitionHandle)handle);
 					declaringType = metadata.GetMethodDefinition(ed.GetAccessors().GetAny()).GetDeclaringType();
 					if (fullName)
-						return ToCSharpString(metadata, declaringType, fullName) + "." + metadata.GetString(ed.Name);
+						return ToCSharpString(metadata, declaringType, fullName, omitGenerics) + "." + metadata.GetString(ed.Name);
 					return metadata.GetString(ed.Name);
 				case HandleKind.PropertyDefinition:
 					var pd = metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle);
 					declaringType = metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
 					if (fullName)
-						return ToCSharpString(metadata, declaringType, fullName) + "." + metadata.GetString(pd.Name);
+						return ToCSharpString(metadata, declaringType, fullName, omitGenerics) + "." + metadata.GetString(pd.Name);
 					return metadata.GetString(pd.Name);
 				default:
 					return null;
@@ -632,5 +635,9 @@ namespace ICSharpCode.ILSpy
 		{
 			return CSharpDecompiler.GetCodeMappingInfo(module, member);
 		}
+
+		CSharpBracketSearcher bracketSearcher = new CSharpBracketSearcher();
+
+		public override IBracketSearcher BracketSearcher => bracketSearcher;
 	}
 }

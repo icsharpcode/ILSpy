@@ -42,6 +42,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return DummyTypeParameter.GetMethodTypeParameter(type.Index);
 			} else if (type.OwnerType == SymbolKind.TypeDefinition && ReplaceClassTypeParametersWithDummy) {
 				return DummyTypeParameter.GetClassTypeParameter(type.Index);
+			} else if (RemoveNullability && type is NullabilityAnnotatedTypeParameter natp) {
+				return natp.TypeWithoutAnnotation.AcceptVisitor(this);
 			} else {
 				return base.VisitTypeParameter(type);
 			}
@@ -72,7 +74,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
 		{
 			if (RemoveNullability)
-				return base.VisitNullabilityAnnotatedType(type).ChangeNullability(Nullability.Oblivious);
+				return type.TypeWithoutAnnotation.AcceptVisitor(this);
 			else
 				return base.VisitNullabilityAnnotatedType(type);
 		}

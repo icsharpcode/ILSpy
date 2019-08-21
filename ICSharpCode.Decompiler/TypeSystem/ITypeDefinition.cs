@@ -67,5 +67,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		/// <remarks>This property is used to speed up the search for extension methods.</remarks>
 		bool HasExtensionMethods { get; }
+
+		/// <summary>
+		/// The nullability specified in the [NullableContext] attribute on the type.
+		/// This serves as default nullability for members of the type that do not have a [Nullable] attribute.
+		/// </summary>
+		Nullability NullableContext { get; }
 	}
 }

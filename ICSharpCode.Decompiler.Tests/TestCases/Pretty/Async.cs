@@ -18,6 +18,7 @@
 
 #pragma warning disable 1998
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -25,6 +26,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class Async
 	{
+		private int memberField;
+
 		public async void SimpleVoidMethod()
 		{
 			Console.WriteLine("Before");
@@ -69,6 +72,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public async Task TaskMethodWithoutAwait()
 		{
 			Console.WriteLine("No Await");
+		}
+
+		public async Task CapturingThis()
+		{
+			await Task.Delay(memberField);
+		}
+
+		public async Task CapturingThisWithoutAwait()
+		{
+			Console.WriteLine(memberField);
 		}
 
 		public async Task<bool> SimpleBoolTaskMethod()
@@ -123,6 +136,46 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				} else {
 					Console.WriteLine("No await");
 				}
+			}
+		}
+#endif
+
+		public static async Task<int> GetIntegerSumAsync(IEnumerable<int> items)
+		{
+			await Task.Delay(100);
+			int num = 0;
+			foreach (int item in items) {
+				num += item;
+			}
+			return num;
+		}
+
+		public static Func<Task<int>> AsyncLambda()
+		{
+			return async () => await GetIntegerSumAsync(new int[3] {
+				1,
+				2,
+				3
+			});
+		}
+
+		public static Func<Task<int>> AsyncDelegate()
+		{
+			return async delegate {
+				await Task.Delay(10);
+				return 2;
+			};
+		}
+
+#if CS70
+		public static async Task<int> AsyncLocalFunctions()
+		{
+			return await Nested(1) + await Nested(2);
+
+			async Task<int> Nested(int i)
+			{
+				await Task.Delay(i);
+				return i;
 			}
 		}
 #endif

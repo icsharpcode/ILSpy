@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2016 Siegfried Pammer
+﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -19,43 +19,27 @@
 using System;
 using System.Collections.Generic;
 
-namespace ICSharpCode.Decompiler.IL.Transforms
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	/// <summary>
-	/// Repeats the child transforms until the ILAst no longer changes (fixpoint iteration).
-	/// </summary>
-	public class LoopingBlockTransform : IBlockTransform
+	public class PatternMatching
 	{
-		readonly IBlockTransform[] children;
-		bool running;
-
-		public LoopingBlockTransform(params IBlockTransform[] children)
+		public static void OutVarInShortCircuit(Dictionary<int, string> d)
 		{
-			this.children = children;
-		}
-		
-		public void Run(Block block, BlockTransformContext context)
-		{
-			if (running)
-				throw new InvalidOperationException("LoopingBlockTransform already running. Transforms (and the CSharpDecompiler) are neither thread-safe nor re-entrant.");
-			running = true;
-			try {
-				int count = 1;
-				do {
-					block.ResetDirty();
-					block.RunTransforms(children, context);
-					if (block.IsDirty)
-						context.Step($"Block is dirty; running loop iteration #{++count}.", block);
-				} while (block.IsDirty);
-			} finally {
-				running = false;
+			if (d.Count > 2 && d.TryGetValue(42, out string value)) {
+				Console.WriteLine(value);
 			}
 		}
 
-		public IReadOnlyCollection<IBlockTransform> Transforms {
-			get { return children; }
+		public static Action CapturedOutVarInShortCircuit(Dictionary<int, string> d)
+		{
+			// Note: needs reasoning about "definitely assigned if true"
+			// to ensure that the value is initialized when the delegate is declared.
+			if (d.Count > 2 && d.TryGetValue(42, out string value)) {
+				return delegate {
+					Console.WriteLine(value);
+				};
+			}
+			return null;
 		}
 	}
 }
-
-

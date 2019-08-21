@@ -534,5 +534,27 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			// If the last try still fails, don't catch the exception
 			action();
 		}
+
+		public static void SignAssembly(string assemblyPath, string keyFilePath)
+		{
+			string snPath = SdkUtility.GetSdkPath("sn.exe");
+
+			ProcessStartInfo info = new ProcessStartInfo(snPath);
+			info.Arguments = $"-R \"{assemblyPath}\" \"{keyFilePath}\"";
+			info.RedirectStandardError = true;
+			info.RedirectStandardOutput = true;
+			info.UseShellExecute = false;
+
+			Process process = Process.Start(info);
+
+			var outputTask = process.StandardOutput.ReadToEndAsync();
+			var errorTask = process.StandardError.ReadToEndAsync();
+
+			Task.WaitAll(outputTask, errorTask);
+			process.WaitForExit();
+
+			Console.WriteLine("output: " + outputTask.Result);
+			Console.WriteLine("errors: " + errorTask.Result);
+		}
 	}
 }

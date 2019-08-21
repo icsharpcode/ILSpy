@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -34,7 +35,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly GenericParameterAttributes attr;
 
 		// lazy-loaded:
-		IReadOnlyList<IType> constraints;
+		IReadOnlyList<TypeConstraint> constraints;
 		byte unmanagedConstraint = ThreeState.Unknown;
 		const byte nullabilityNotYetLoaded = 255;
 		byte nullabilityConstraint = nullabilityNotYetLoaded;
@@ -161,36 +162,58 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					}
 				}
 			}
-			return Nullability.Oblivious;
-		}
-
-		public override IEnumerable<IType> DirectBaseTypes {
-			get {
-				var constraints = LazyInit.VolatileRead(ref this.constraints);
-				if (constraints != null)
-					return constraints;
-				return LazyInit.GetOrSet(ref this.constraints, DecodeConstraints());
+			if (Owner is MetadataMethod method) {
+				return method.NullableContext;
+			} else if (Owner is ITypeDefinition td) {
+				return td.NullableContext;
+			} else {
+				return Nullability.Oblivious;
 			}
 		}
 
-		private IReadOnlyList<IType> DecodeConstraints()
+		public override IReadOnlyList<TypeConstraint> TypeConstraints {
+			get {
+				var constraints = LazyInit.VolatileRead(ref this.constraints);
+				if (constraints == null) {
+					constraints = LazyInit.GetOrSet(ref this.constraints, DecodeConstraints());
+				}
+				return constraints;
+			}
+		}
+
+		private IReadOnlyList<TypeConstraint> DecodeConstraints()
 		{
 			var metadata = module.metadata;
 			var gp = metadata.GetGenericParameter(handle);
+			Nullability nullableContext;
+			if (Owner is ITypeDefinition typeDef) {
+				nullableContext = typeDef.NullableContext;
+			} else if (Owner is MetadataMethod method) {
+				nullableContext = method.NullableContext;
+			} else {
+				nullableContext = Nullability.Oblivious;
+			}
 
 			var constraintHandleCollection = gp.GetConstraints();
-			List<IType> result = new List<IType>(constraintHandleCollection.Count + 1);
+			var result = new List<TypeConstraint>(constraintHandleCollection.Count + 1);
 			bool hasNonInterfaceConstraint = false;
 			foreach (var constraintHandle in constraintHandleCollection) {
 				var constraint = metadata.GetGenericParameterConstraint(constraintHandle);
-				var ty = module.ResolveType(constraint.Type, new GenericContext(Owner), constraint.GetCustomAttributes());
-				result.Add(ty);
+				var attrs = constraint.GetCustomAttributes();
+				var ty = module.ResolveType(constraint.Type, new GenericContext(Owner), attrs, nullableContext);
+				if (attrs.Count == 0) {
+					result.Add(new TypeConstraint(ty));
+				} else {
+					AttributeListBuilder b = new AttributeListBuilder(module);
+					b.Add(attrs, SymbolKind.Constraint);
+					result.Add(new TypeConstraint(ty, b.Build()));
+				}
 				hasNonInterfaceConstraint |= (ty.Kind != TypeKind.Interface);
 			}
 			if (this.HasValueTypeConstraint) {
-				result.Add(Compilation.FindType(KnownTypeCode.ValueType));
+				result.Add(new TypeConstraint(Compilation.FindType(KnownTypeCode.ValueType)));
 			} else if (!hasNonInterfaceConstraint) {
-				result.Add(Compilation.FindType(KnownTypeCode.Object));
+				result.Add(new TypeConstraint(Compilation.FindType(KnownTypeCode.Object)));
 			}
 			return result;
 		}

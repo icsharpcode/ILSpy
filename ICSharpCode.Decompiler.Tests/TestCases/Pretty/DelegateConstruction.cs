@@ -146,6 +146,64 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+
+		public interface IM3
+		{
+			void M3();
+		}
+		public class BaseClass : IM3
+		{
+			protected virtual void M1()
+			{
+			}
+			protected virtual void M2()
+			{
+			}
+			public virtual void M3()
+			{
+			}
+		}
+		public class SubClass : BaseClass
+		{
+			protected override void M2()
+			{
+			}
+			public new void M3()
+			{
+			}
+
+			public void Test()
+			{
+				Noop("M1.base", base.M1);
+				Noop("M1", M1);
+				Noop("M2.base", base.M2);
+				Noop("M2", M2);
+				Noop("M3.base", base.M3);
+				Noop("M3.base_virt", ((BaseClass)this).M3);
+				Noop("M3.base_interface", ((IM3)this).M3);
+#if CS70
+				Noop("M3", this.M3);
+				Noop("M3", M3);
+
+				void M3()
+				{
+
+				}
+#else
+				Noop("M3", M3);
+#endif
+			}
+			public void Test2()
+			{
+				Noop("M3.new", new BaseClass().M3);
+				Noop("M3.new", new SubClass().M3);
+			}
+
+			private void Noop(string name, Action _)
+			{
+			}
+		}
+
 		public static Func<string, string, bool> test0 = (string a, string b) => string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b);
 		public static Func<string, string, bool> test1 = (string a, string b) => string.IsNullOrEmpty(a) || !string.IsNullOrEmpty(b);
 		public static Func<string, string, bool> test2 = (string a, string b) => !string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b);
@@ -157,6 +215,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void Test(this string a)
 		{
+		}
+
+		public static Predicate<T> And<T>(this Predicate<T> filter1, Predicate<T> filter2)
+		{
+			if (filter1 == null) {
+				return filter2;
+			}
+			if (filter2 == null) {
+				return filter1;
+			}
+			return (T m) => filter1(m) && filter2(m);
 		}
 
 		public static Action<string> ExtensionMethodUnbound()
@@ -172,6 +241,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static Action ExtensionMethodBoundOnNull()
 		{
 			return ((string)null).Test;
+		}
+
+		public static Predicate<int> NoExtensionMethodOnLambda()
+		{
+			return And((int x) => x >= 0, (int x) => x <= 100);
 		}
 
 		public static object StaticMethod()

@@ -31,7 +31,7 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			var record = (DefAttributeRecord)((BamlRecordNode)node).Record;
 
 			var attrName = ctx.ResolveString(record.NameId);
-			parent.Xaml.Element.Add(new XAttribute(ctx.GetXamlNsName(attrName), record.Value));
+			parent.Xaml.Element.Add(new XAttribute(ctx.GetKnownNamespace(attrName, XamlContext.KnownNamespace_Xaml), record.Value));
 
 			return null;
 		}

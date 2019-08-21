@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2010-2014 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2018 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,27 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.Decompiler.CSharp.Resolver
+namespace ICSharpCode.Decompiler.Semantics
 {
-	/// <summary>
-	/// Arguments for the callback of <see cref="FindReferences.RenameReferencesInFile"/>.
-	/// </summary>
-	public class RenameCallbackArguments
+	class ThrowResolveResult : ResolveResult
 	{
-		public AstNode NodeToReplace { get; private set; }
-		public AstNode NewNode { get; private set; }
-		
-		public RenameCallbackArguments(AstNode nodeToReplace, AstNode newNode)
+		public ThrowResolveResult() : base(SpecialType.NoType)
 		{
-			if (nodeToReplace == null)
-				throw new ArgumentNullException("nodeToReplace");
-			if (newNode == null)
-				throw new ArgumentNullException("newNode");
-			this.NodeToReplace = nodeToReplace;
-			this.NewNode = newNode;
 		}
 	}
 }

@@ -250,13 +250,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Divide,
 		/// <summary>left %= right</summary>
 		Modulus,
-		
-		/// <summary>left <<= right</summary>
+
+		/// <summary>left &lt;&lt;= right</summary>
 		ShiftLeft,
 		/// <summary>left >>= right</summary>
 		ShiftRight,
 		
-		/// <summary>left &= right</summary>
+		/// <summary>left &amp;= right</summary>
 		BitwiseAnd,
 		/// <summary>left |= right</summary>
 		BitwiseOr,

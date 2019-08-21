@@ -585,7 +585,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			2004,
 			2008,
 			2012
-		}).Any<int>));
+		}).Any));
 		}
 
 		public void MethodGroupConstant()
@@ -625,16 +625,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//no params
 			ToCode(X(), () => call(() => 42));
 			//one param
-			ToCode(X(), () => from x in new int[2] {
+			ToCode(X(), () => new int[2] {
 				37,
 				42
-			}
-			select x * 2);
+			}.Select((int x) => x * 2));
 			//two params
 			ToCode(X(), () => new int[2] {
-			37,
-			42
-		}.Select((int x, int i) => x * 2));
+				37,
+				42
+			}.Select((int x, int i) => x * 2));
 		}
 
 		public void CurriedLambda()
@@ -731,13 +730,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void QuotedWithAnonymous()
 		{
-			ToCode(X(), () => (from o in new[] {
+			ToCode(X(), () => new[] {
 				new {
 					X = "a",
 					Y = "b"
 				}
-			}
-			select o.X + o.Y).Single());
+			}.Select(o => o.X + o.Y).Single());
 		}
 
 		public void StaticCall()

@@ -38,7 +38,7 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			var key = (XamlResourceKey)node.Annotation;
 
 			var bamlElem = new BamlElement(node);
-			bamlElem.Xaml = new XElement(ctx.GetXamlNsName("Key", parent.Xaml));
+			bamlElem.Xaml = new XElement(ctx.GetKnownNamespace("Key", XamlContext.KnownNamespace_Xaml, parent.Xaml));
 			parent.Xaml.Element.Add(bamlElem.Xaml.Element);
 			bamlElem.Xaml.Element.Value = ctx.ResolveString(record.ValueId);
 			key.KeyElement = bamlElem;

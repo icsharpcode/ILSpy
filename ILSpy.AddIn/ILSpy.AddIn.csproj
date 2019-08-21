@@ -51,6 +51,7 @@
     <PackageReference Include="Microsoft.VisualStudio.ComponentModelHost" Version="15.6.27413" />
     <PackageReference Include="Microsoft.VisualStudio.Editor" Version="15.6.27740" />
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="2.4.0" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="16.0.29" />
     <PackageReference Include="Microsoft.VisualStudio.Shell.15.0" Version="15.6.27413" />
     <PackageReference Include="Microsoft.VisualStudio.Shell.Interop.14.0.DesignTime" Version="14.3.26929" />
     <PackageReference Include="Microsoft.VisualStudio.Text.UI" Version="15.6.27740" />
@@ -131,6 +132,7 @@
     <AdditionalDependencies Include="$(ILSpyBuildPath)ILSpy.BamlDecompiler.Plugin.dll" />
 	<AdditionalDependencies Include="$(ILSpyBuildPath)System.*.dll" />
 	<AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.DiaSymReader.*.dll" />
+  	<AdditionalDependencies Include="$(ILSpyBuildPath)OSVersionHelper.dll" />
   </ItemGroup>
 
   <ItemGroup>

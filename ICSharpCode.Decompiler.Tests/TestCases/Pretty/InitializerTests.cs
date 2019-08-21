@@ -1468,9 +1468,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 					DateTimeFormat = new DateTimeFormatInfo {
 						ShortDatePattern = "ddmmyy"
 					},
-					NumberFormat = (from format in source
-									where format.CurrencySymbol == "$"
-									select format).First()
+					NumberFormat = source.Where((NumberFormatInfo format) => format.CurrencySymbol == "$").First()
 				}
 			});
 		}
@@ -1678,13 +1676,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			});
 		}
 
-		private void NestedListWithIndexInitializer(MyEnum myEnum)
+		private List<List<int>> NestedListWithIndexInitializer(MyEnum myEnum)
 		{
-#if !OPT
-			List<List<int>> list = new List<List<int>> {
-#else
-			List<List<int>> obj = new List<List<int>> {
-#endif
+			return new List<List<int>> {
 				[0] = {
 					1,
 					2,
@@ -1717,13 +1711,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			});
 		}
 
-		public static void Issue1390(IEnumerable<string> tokens, bool alwaysAllowAdministrators, char wireDelimiter)
+		public static List<KeyValuePair<string, string>> Issue1390(IEnumerable<string> tokens, bool alwaysAllowAdministrators, char wireDelimiter)
 		{
-#if OPT
-			List<KeyValuePair<string, string>> obj = new List<KeyValuePair<string, string>> {
-#else
-			List<KeyValuePair<string, string>> list = new List<KeyValuePair<string, string>> {
-#endif
+			return new List<KeyValuePair<string, string>> {
 			{
 				"tokens",
 					string.Join(wireDelimiter.ToString(), tokens),

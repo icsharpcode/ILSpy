@@ -18,5 +18,14 @@ namespace ICSharpCode.Decompiler.IL
 			target.AddILRange(range);
 			return target;
 		}
+
+		public static ILInstruction GetNextSibling(this ILInstruction instruction)
+		{
+			if (instruction?.Parent == null)
+				return null;
+			if (instruction.ChildIndex + 1 >= instruction.Parent.Children.Count)
+				return null;
+			return instruction.Parent.Children[instruction.ChildIndex + 1];
+		}
 	}
 }

@@ -90,9 +90,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (mre == null || IsNullConditional(mre.Target))
 				return null;
 			switch (mre.MemberName) {
-				case "Select":
-					{
+				case "Select": {
 						if (invocation.Arguments.Count != 1)
+							return null;
+						if (!IsComplexQuery(mre))
 							return null;
 						ParameterDeclaration parameter;
 						Expression body;
@@ -158,6 +159,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						if (invocation.Arguments.Count != 1)
 							return null;
+						if (!IsComplexQuery(mre))
+							return null;
 						ParameterDeclaration parameter;
 						Expression body;
 						if (MatchSimpleLambda(invocation.Arguments.Single(), out parameter, out body)) {
@@ -174,6 +177,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case "ThenByDescending":
 					{
 						if (invocation.Arguments.Count != 1)
+							return null;
+						if (!IsComplexQuery(mre))
 							return null;
 						ParameterDeclaration parameter;
 						Expression orderExpression;
@@ -248,6 +253,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				default:
 					return null;
 			}
+		}
+
+		static bool IsComplexQuery(MemberReferenceExpression mre)
+		{
+			return ((mre.Target is InvocationExpression && mre.Parent is InvocationExpression) || mre.Parent?.Parent is QueryClause);
 		}
 
 		QueryFromClause MakeFromClause(ParameterDeclaration parameter, Expression body)

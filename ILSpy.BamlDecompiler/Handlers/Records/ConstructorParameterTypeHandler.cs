@@ -31,7 +31,7 @@ namespace ILSpy.BamlDecompiler.Handlers {
 		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
 			var record = (ConstructorParameterTypeRecord)((BamlRecordNode)node).Record;
 
-			var elem = new XElement(ctx.GetXamlNsName("TypeExtension", parent.Xaml));
+			var elem = new XElement(ctx.GetKnownNamespace("TypeExtension", XamlContext.KnownNamespace_Xaml, parent.Xaml));
 			elem.AddAnnotation(ctx.ResolveType(0xfd4d)); // Known type - TypeExtension
 
 			var bamlElem = new BamlElement(node);

@@ -66,10 +66,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		/// <summary>
 		/// VS2017.8 / Roslyn 2.9 started optimizing some cases of
-		///   "a.GetValueOrDefault() == b.GetValueOrDefault() && (a.HasValue & b.HasValue)"
+		///   "a.GetValueOrDefault() == b.GetValueOrDefault() &amp;&amp; (a.HasValue &amp; b.HasValue)"
 		/// to
-		///   "(a.GetValueOrDefault() == b.GetValueOrDefault()) & (a.HasValue & b.HasValue)"
-		/// so this secondary entry point analyses logic.and as-if it was a short-circuting &&.
+		///   "(a.GetValueOrDefault() == b.GetValueOrDefault()) &amp; (a.HasValue &amp; b.HasValue)"
+		/// so this secondary entry point analyses logic.and as-if it was a short-circuting &amp;&amp;.
 		/// </summary>
 		public bool Run(BinaryNumericInstruction bni)
 		{
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public bool RunStatements(Block block, int pos)
 		{
-			/// e.g.:
+			// e.g.:
 			//  if (!condition) Block {
 			//    leave IL_0000 (default.value System.Nullable`1[[System.Int64]])
 			//  }
@@ -541,7 +541,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Performs nullable lifting.
 		/// 
 		/// Produces a lifted instruction with semantics equivalent to:
-		///   (v1 != null && ... && vn != null) ? trueInst : falseInst,
+		///   (v1 != null &amp;&amp; ... &amp;&amp; vn != null) ? trueInst : falseInst,
 		/// where the v1,...,vn are the <c>this.nullableVars</c>.
 		/// If lifting fails, returns <c>null</c>.
 		/// </summary>
@@ -710,7 +710,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return (newInst, bits);
 				}
 			} else if (inst is Comp comp && !comp.IsLifted && comp.Kind == ComparisonKind.Equality
-				&& MatchGetValueOrDefault(comp.Left, out ILVariable v)
+				&& MatchGetValueOrDefault(comp.Left, out ILVariable v) && nullableVars.Contains(v)
 				&& NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean)
 				&& comp.Right.MatchLdcI4(0)
 			) {
@@ -833,7 +833,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'logic.not(call get_HasValue(ldloca v))'
 		/// </summary>
-		static bool MatchNegatedHasValueCall(ILInstruction inst, ILVariable v)
+		internal static bool MatchNegatedHasValueCall(ILInstruction inst, ILVariable v)
 		{
 			return inst.MatchLogicNot(out var arg) && MatchHasValueCall(arg, v);
 		}

@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// partially copied from CSharpDecompiler
 			var ilReader = context.CreateILReader();
 			var body = context.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-			var proxyFunction = ilReader.ReadIL(handle, body, genericContext.Value, context.CancellationToken);
+			var proxyFunction = ilReader.ReadIL(handle, body, genericContext.Value, ILFunctionKind.TopLevelFunction, context.CancellationToken);
 			var transformContext = new ILTransformContext(context, proxyFunction);
 			proxyFunction.RunTransforms(CSharp.CSharpDecompiler.EarlyILTransforms(), transformContext);
 			if (!(proxyFunction.Body is BlockContainer blockContainer))

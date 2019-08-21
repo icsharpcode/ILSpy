@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NUnit" Version="3.11.0" />
+    <PackageReference Include="NUnit" Version="3.12.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,6 +47,7 @@
       <DependentUpon>AttachedEvent.xaml</DependentUpon>
     </Compile>
     <Compile Include="Cases\CustomControl.cs" />
+    <Compile Include="Cases\Issue1547.xaml.cs" />
     <Compile Include="Cases\MyControl.xaml.cs">
       <DependentUpon>MyControl.xaml</DependentUpon>
     </Compile>
@@ -72,6 +73,12 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Cases\Issue1435.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Cases\Issue1546.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Cases\Issue1547.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Cases\Issue775.xaml">

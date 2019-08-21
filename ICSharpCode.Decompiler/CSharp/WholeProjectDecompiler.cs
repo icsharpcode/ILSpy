@@ -35,6 +35,7 @@ using System.Reflection.Metadata;
 using static ICSharpCode.Decompiler.Metadata.DotNetCorePathFinderExtensions;
 using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Solution;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -78,6 +79,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public Guid? ProjectGuid { get; set; }
 
+		/// <summary>
+		/// Path to the snk file to use for signing.
+		/// <c>null</c> to not sign.
+		/// </summary>
+		public string StrongNameKeyFile { get; set; }
+
 		public int MaxDegreeOfParallelism { get; set; } = Environment.ProcessorCount;
 		#endregion
 
@@ -101,7 +108,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
+		public ProjectId DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (string.IsNullOrEmpty(targetDirectory)) {
 				throw new InvalidOperationException("Must set TargetDirectory");
@@ -110,7 +117,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			directories.Clear();
 			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
 			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
-			WriteProjectFile(projectFileWriter, files, moduleDefinition);
+			if (StrongNameKeyFile != null) {
+				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)));
+			}
+			return WriteProjectFile(projectFileWriter, files, moduleDefinition);
 		}
 
 		enum LanguageTargets
@@ -120,11 +130,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		#region WriteProjectFile
-		void WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, Metadata.PEFile module)
+		ProjectId WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, Metadata.PEFile module)
 		{
 			const string ns = "http://schemas.microsoft.com/developer/msbuild/2003";
 			string platformName = GetPlatformName(module);
 			Guid guid = this.ProjectGuid ?? Guid.NewGuid();
+
 			using (XmlTextWriter w = new XmlTextWriter(writer)) {
 				w.Formatting = Formatting.Indented;
 				w.WriteStartDocument();
@@ -213,6 +224,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				w.WriteElementString("WarningLevel", "4");
 				w.WriteElementString("AllowUnsafeBlocks", "True");
+				
+				if (StrongNameKeyFile != null) {
+					w.WriteElementString("SignAssembly", "True");
+					w.WriteElementString("AssemblyOriginatorKeyFile", Path.GetFileName(StrongNameKeyFile));
+				}
 
 				w.WriteEndElement(); // </PropertyGroup>
 
@@ -281,6 +297,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				w.WriteEndDocument();
 			}
+
+			return new ProjectId(platformName, guid);
 		}
 
 		protected virtual bool IsGacAssembly(Metadata.IAssemblyReference r, Metadata.PEFile asm)

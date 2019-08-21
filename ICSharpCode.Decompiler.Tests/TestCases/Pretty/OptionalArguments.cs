@@ -97,6 +97,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			};
 		}
 
+		private static string GetStr(int unused)
+		{
+			return " ";
+		}
+
+		public static string Issue1567(string str1, string str2)
+		{
+			return string.Concat(str1.Replace('"', '\''), str2: str2.Replace('"', '\''), str1: GetStr(42));
+		}
+
 		private void CallerMemberName([CallerMemberName] string memberName = null)
 		{
 

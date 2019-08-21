@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	///    then we can replace the variable with the argument.
 	/// 2) assignments of address-loading instructions to local variables
 	/// </summary>
-	public class CopyPropagation : IBlockTransform
+	public class CopyPropagation : IBlockTransform, IILTransform
 	{
 		public static void Propagate(StLoc store, ILTransformContext context)
 		{
@@ -43,6 +43,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public void Run(Block block, BlockTransformContext context)
 		{
+			RunOnBlock(block, context);
+		}
+
+		public void Run(ILFunction function, ILTransformContext context)
+		{
+			foreach (var block in function.Descendants.OfType<Block>()) {
+				if (block.Kind != BlockKind.ControlFlow)
+					continue;
+				RunOnBlock(block, context);
+			}
+		}
+
+		static void RunOnBlock(Block block, ILTransformContext context)
+		{
 			for (int i = 0; i < block.Instructions.Count; i++) {
 				ILVariable v;
 				ILInstruction copiedExpr;
@@ -52,7 +66,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (SemanticHelper.IsPure(copiedExpr.Flags)) {
 							// no-op -> delete
 							context.Step("remove dead store to stack: no-op -> delete", block.Instructions[i]);
-							block.Instructions.RemoveAt(i--);
+							block.Instructions.RemoveAt(i);
+							// This can open up new inlining opportunities:
+							int c = ILInlining.InlineInto(block, i, InliningOptions.None, context: context);
+							i -= c + 1;
 						} else {
 							// evaluate the value for its side-effects
 							context.Step("remove dead store to stack: evaluate the value for its side-effects", block.Instructions[i]);
@@ -88,13 +105,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							// Parameters can be copied only if they aren't assigned to (directly or indirectly via ldarga)
 							// note: the initialization by the caller is the first store -> StoreCount must be 1
 							return v.IsSingleDefinition;
-						case VariableKind.StackSlot:
-						case VariableKind.ExceptionStackSlot:
-							// Variables are be copied only if both they and the target copy variable are generated,
-							// and if the variable has only a single assignment
-							return v.IsSingleDefinition && target.Kind == VariableKind.StackSlot;
 						default:
-							return false;
+							// Variables can be copied if both are single-definition.
+							// To avoid removing too many variables, we do this only if the target
+							// is either a stackslot or a ref local.
+							Debug.Assert(target.IsSingleDefinition);
+							return v.IsSingleDefinition && (target.Kind == VariableKind.StackSlot || target.StackType == StackType.Ref);
 					}
 				default:
 					// All instructions without special behavior that target a stack-variable can be copied.

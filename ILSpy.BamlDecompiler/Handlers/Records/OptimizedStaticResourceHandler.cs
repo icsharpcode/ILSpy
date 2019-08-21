@@ -43,7 +43,7 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			if (record.IsType) {
 				var value = ctx.ResolveType(record.ValueId);
 
-				var typeElem = new XElement(ctx.GetXamlNsName("TypeExtension", parent.Xaml));
+				var typeElem = new XElement(ctx.GetKnownNamespace("TypeExtension", XamlContext.KnownNamespace_Xaml, parent.Xaml));
 				typeElem.AddAnnotation(ctx.ResolveType(0xfd4d)); // Known type - TypeExtension
 				typeElem.Add(new XElement(ctx.GetPseudoName("Ctor"), ctx.ToString(parent.Xaml, value)));
 				key = typeElem;
@@ -82,7 +82,7 @@ namespace ILSpy.BamlDecompiler.Handlers {
 					attrName = ctx.ToString(parent.Xaml, xName);
 				}
 
-				var staticElem = new XElement(ctx.GetXamlNsName("StaticExtension", parent.Xaml));
+				var staticElem = new XElement(ctx.GetKnownNamespace("StaticExtension", XamlContext.KnownNamespace_Xaml, parent.Xaml));
 				staticElem.AddAnnotation(ctx.ResolveType(0xfda6)); // Known type - StaticExtension
 				staticElem.Add(new XElement(ctx.GetPseudoName("Ctor"), attrName));
 				key = staticElem;

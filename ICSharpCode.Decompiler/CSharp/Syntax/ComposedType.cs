@@ -35,11 +35,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class ComposedType : AstType
 	{
+		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
 		public static readonly TokenRole RefRole = new TokenRole("ref");
 		public static readonly TokenRole ReadonlyRole = new TokenRole("readonly");
 		public static readonly TokenRole NullableRole = new TokenRole("?");
 		public static readonly TokenRole PointerRole = new TokenRole("*");
 		public static readonly Role<ArraySpecifier> ArraySpecifierRole = new Role<ArraySpecifier>("ArraySpecifier");
+		public AstNodeCollection<AttributeSection> Attributes {
+			get { return base.GetChildrenByRole(AttributeRole); }
+		}
 
 		/// <summary>
 		/// Gets/sets whether this type has a 'ref' specifier.
@@ -80,6 +84,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			set {
 				SetChildByRole(NullableRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
+			}
+		}
+
+		public bool HasOnlyNullableSpecifier {
+			get {
+				return HasNullableSpecifier && !HasRefSpecifier && !HasReadOnlySpecifier && PointerRank == 0 && ArraySpecifiers.Count == 0;
 			}
 		}
 

@@ -54,7 +54,9 @@ namespace ICSharpCode.ILSpy.Options
 			var properties = typeof(Decompiler.DecompilerSettings).GetProperties()
 				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false);
 			foreach (var p in properties) {
-				p.SetValue(newSettings, (bool?)e.Attribute(p.Name) ?? true);
+				var value = (bool?)e.Attribute(p.Name);
+				if (value.HasValue)
+					p.SetValue(newSettings, value.Value);
 			}
 			return newSettings;
 		}

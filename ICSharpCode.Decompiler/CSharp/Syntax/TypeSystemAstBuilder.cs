@@ -527,12 +527,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			Attribute attr = new Attribute();
 			attr.Type = ConvertAttributeType(attribute.AttributeType);
-			SimpleType st = attr.Type as SimpleType;
-			MemberType mt = attr.Type as MemberType;
-			if (st != null && st.Identifier.EndsWith("Attribute", StringComparison.Ordinal)) {
-				st.Identifier = st.Identifier.Substring(0, st.Identifier.Length - 9);
-			} else if (mt != null && mt.MemberName.EndsWith("Attribute", StringComparison.Ordinal)) {
-				mt.MemberName = mt.MemberName.Substring(0, mt.MemberName.Length - 9);
+			switch (attr.Type) {
+				case SimpleType st:
+					if (st.Identifier.EndsWith("Attribute", StringComparison.Ordinal))
+						st.Identifier = st.Identifier.Substring(0, st.Identifier.Length - 9);
+					break;
+				case MemberType mt:
+					if (mt.MemberName.EndsWith("Attribute", StringComparison.Ordinal))
+						mt.MemberName = mt.MemberName.Substring(0, mt.MemberName.Length - 9);
+					break;
+			}
+			if (AddResolveResultAnnotations && attribute.Constructor != null) {
+				attr.AddAnnotation(new MemberResolveResult(null, attribute.Constructor));
 			}
 			var parameters = attribute.Constructor?.Parameters ?? EmptyList<IParameter>.Instance;
 			for (int i = 0; i < attribute.FixedArguments.Length; i++) {
@@ -1633,8 +1639,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			foreach (IParameter p in method.Parameters) {
 				decl.Parameters.Add(ConvertParameter(p));
 			}
-			if (method.IsExtensionMethod && method.ReducedFrom == null && decl.Parameters.Any() && decl.Parameters.First().ParameterModifier == ParameterModifier.None)
-				decl.Parameters.First().ParameterModifier = ParameterModifier.This;
+			if (method.IsExtensionMethod && method.ReducedFrom == null && decl.Parameters.Any())
+				decl.Parameters.First().HasThisModifier = true;
 			
 			if (this.ShowTypeParameters && this.ShowTypeParameterConstraints && !method.IsOverride && !method.IsExplicitInterfaceImplementation) {
 				foreach (ITypeParameter tp in method.TypeParameters) {
@@ -1779,7 +1785,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		Constraint ConvertTypeParameterConstraint(ITypeParameter tp)
 		{
-			if (!tp.HasDefaultConstructorConstraint && !tp.HasReferenceTypeConstraint && !tp.HasValueTypeConstraint && tp.DirectBaseTypes.All(IsObjectOrValueType)) {
+			if (!tp.HasDefaultConstructorConstraint && !tp.HasReferenceTypeConstraint && !tp.HasValueTypeConstraint && tp.NullabilityConstraint != Nullability.NotNullable && tp.DirectBaseTypes.All(IsObjectOrValueType)) {
 				return null;
 			}
 			Constraint c = new Constraint();
@@ -1796,10 +1802,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				} else {
 					c.BaseTypes.Add(new PrimitiveType("struct"));
 				}
+			} else if (tp.NullabilityConstraint == Nullability.NotNullable) {
+				c.BaseTypes.Add(new PrimitiveType("notnull"));
 			}
-			foreach (IType t in tp.DirectBaseTypes) {
-				if (!IsObjectOrValueType(t))
-					c.BaseTypes.Add(ConvertType(t));
+			foreach (TypeConstraint t in tp.TypeConstraints) {
+				if (!IsObjectOrValueType(t.Type) || t.Attributes.Count > 0) {
+					AstType astType = ConvertType(t.Type);
+					if (t.Attributes.Count > 0) {
+						var attrSection = new AttributeSection();
+						attrSection.Attributes.AddRange(t.Attributes.Select(ConvertAttribute));
+						astType = new ComposedType {
+							Attributes = { attrSection },
+							BaseType = astType
+						};
+					}
+					c.BaseTypes.Add(astType);
+				}
 			}
 			if (tp.HasDefaultConstructorConstraint && !tp.HasValueTypeConstraint) {
 				c.BaseTypes.Add(new PrimitiveType("new"));

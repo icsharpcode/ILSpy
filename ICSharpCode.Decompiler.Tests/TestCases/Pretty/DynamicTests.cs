@@ -64,6 +64,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 
+		private static void CallWithOut(out dynamic d)
+		{
+			d = null;
+		}
+
+#if CS70
+		private static void CallWithIn(in dynamic d)
+		{
+		}
+#endif
+
+		private static void CallWithRef(ref dynamic d)
+		{
+		}
+
+		private static void RefCallSiteTests()
+		{
+#if CS70
+			CallWithOut(out dynamic d);
+			CallWithIn(in d);
+#else
+			dynamic d;
+			CallWithOut(out d);
+#endif
+			CallWithRef(ref d);
+			d.SomeCall();
+		}
+
 		private static void InvokeConstructor()
 		{
 			DynamicTests dynamicTests = new DynamicTests();
@@ -380,6 +408,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			} else {
 				Console.WriteLine("else");
 			}
+		}
+
+		private static bool ConstantTarget(dynamic a)
+		{
+			return true.Equals(a);
+		}
+
+		private static IntPtr NewIntPtr(dynamic a)
+		{
+			return new IntPtr(a);
 		}
 
 		private static dynamic GetDynamic(int i)

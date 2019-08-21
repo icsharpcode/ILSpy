@@ -163,7 +163,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			throw new ArgumentException("descendant must be a descendant of the current node");
 		}
-		
+
 		/// <summary>
 		/// Adds casts (if necessary) to convert this expression to the specified target type.
 		/// </summary>
@@ -176,6 +176,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// 
 		/// From the caller's perspective, IntPtr/UIntPtr behave like normal C# integers except that they have native int size.
 		/// All the special cases necessary to make IntPtr/UIntPtr behave sanely are handled internally in ConvertTo().
+		/// 
+		/// Post-condition:
+		///    The "expected evaluation result" is the value computed by <c>this.Expression</c>,
+		///    converted to targetType via an IL conv instruction.
+		/// 
+		///    ConvertTo(targetType, allowImplicitConversion=false).Type must be equal to targetType (modulo identity conversions).
+		///      The value computed by the converted expression must match the "expected evaluation result".
+		/// 
+		///    ConvertTo(targetType, allowImplicitConversion=true) must produce an expression that,
+		///      when evaluated in a context where it will be implicitly converted to targetType,
+		///      evaluates to the "expected evaluation result".
 		/// </remarks>
 		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder, bool checkForOverflow = false, bool allowImplicitConversion = false)
 		{
@@ -191,7 +202,11 @@ namespace ICSharpCode.Decompiler.CSharp
 									conversion.Input.Type,
 									type, targetType
 								)) {
-								return this.UnwrapChild(cast.Expression);
+								var result = this.UnwrapChild(cast.Expression);
+								if (conversion.Conversion.IsUserDefined) {
+									result.Expression.AddAnnotation(new ImplicitConversionAnnotation(conversion));
+								}
+								return result;
 							} else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
 									&& oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion) {
 								return this.UnwrapChild(oce.Arguments.Single());
@@ -210,6 +225,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (targetType.Kind == TypeKind.Unknown || targetType.Kind == TypeKind.Void || targetType.Kind == TypeKind.None) {
 				return this; // don't attempt to insert cast to '?' or 'void' as these are not valid.
+			}
+			var convAnnotation = this.Expression.Annotation<ImplicitConversionAnnotation>();
+			if (convAnnotation != null) {
+				// If an implicit user-defined conversion was stripped from this expression;
+				// it needs to be re-introduced before we can apply other casts to this expression.
+				// This happens when the CallBuilder discovers that the conversion is necessary in
+				// order to choose the correct overload.
+				this.Expression.RemoveAnnotations<ImplicitConversionAnnotation>();
+				return new CastExpression(expressionBuilder.ConvertType(convAnnotation.TargetType), Expression)
+					.WithoutILInstruction()
+					.WithRR(convAnnotation.ConversionResolveResult)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
+			}
+			if (Expression is ThrowExpression && allowImplicitConversion) {
+				return this; // Throw expressions have no type and are implicitly convertible to any type
 			}
 			if (Expression is TupleExpression tupleExpr && targetType is TupleType targetTupleType
 				&& tupleExpr.Elements.Count == targetTupleType.ElementTypes.Length)
@@ -231,8 +261,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var compilation = expressionBuilder.compilation;
 			var conversions = Resolver.CSharpConversions.Get(compilation);
-			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2 &&
-				CastCanBeMadeImplicit(conversions, conv.Conversion, conv.Input.Type, type, targetType))
+			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2
+				&& !conv.Conversion.IsUserDefined
+				&& CastCanBeMadeImplicit(conversions, conv.Conversion, conv.Input.Type, type, targetType))
 			{
 				var unwrapped = this.UnwrapChild(cast2.Expression);
 				if (allowImplicitConversion)
@@ -359,7 +390,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					var convertedTemp = this.UnwrapChild(thisDir.Expression).ConvertTo(elementType, expressionBuilder, checkForOverflow);
 					return new DirectionExpression(FieldDirection.Ref, convertedTemp)
 						.WithILInstruction(this.ILInstructions)
-						.WithRR(new ByReferenceResolveResult(convertedTemp.ResolveResult, false));
+						.WithRR(new ByReferenceResolveResult(convertedTemp.ResolveResult, ReferenceKind.Ref));
 				}
 				// Convert from integer/pointer to reference.
 				// First, convert to the corresponding pointer type:
@@ -379,7 +410,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// And then take a reference:
 				return new DirectionExpression(FieldDirection.Ref, expr)
 					.WithoutILInstruction()
-					.WithRR(new ByReferenceResolveResult(elementRR, false));
+					.WithRR(new ByReferenceResolveResult(elementRR, ReferenceKind.Ref));
 			}
 			var rr = expressionBuilder.resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult);
 			if (rr.IsCompileTimeConstant && !rr.IsError) {
@@ -396,8 +427,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ConstantResolveResult(targetType, null));
 			}
-			if (allowImplicitConversion && conversions.ImplicitConversion(ResolveResult, targetType).IsValid) {
-				return this;
+			if (allowImplicitConversion) {
+				if (conversions.ImplicitConversion(ResolveResult, targetType).IsValid) {
+					return this;
+				}
+			} else {
+				if (targetType.Kind != TypeKind.Dynamic && type.Kind != TypeKind.Dynamic && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(type, targetType)) {
+					// avoid an explicit cast when types differ only in nullability of reference types
+					return this;
+				}
 			}
 			var castExpr = new CastExpression(expressionBuilder.ConvertType(targetType), Expression);
 			bool needsCheckAnnotation = targetUType.GetStackType().IsIntegerType();

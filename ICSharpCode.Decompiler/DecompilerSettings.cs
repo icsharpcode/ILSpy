@@ -88,6 +88,7 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7) {
 				outVariables = false;
+				throwExpressions = false;
 				tupleTypes = false;
 				tupleConversions = false;
 				discards = false;
@@ -97,6 +98,7 @@ namespace ICSharpCode.Decompiler
 				introduceReadonlyAndInModifiers = false;
 				introduceRefModifiersOnStructs = false;
 				nonTrailingNamedArguments = false;
+				refExtensionMethods = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_3) {
 				introduceUnmanagedConstraint = false;
@@ -114,10 +116,10 @@ namespace ICSharpCode.Decompiler
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers)
 				return CSharp.LanguageVersion.CSharp7_3;
-			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments)
+			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments || refExtensionMethods)
 				return CSharp.LanguageVersion.CSharp7_2;
 			// C# 7.1 missing
-			if (outVariables || tupleTypes || tupleConversions || discards || localFunctions)
+			if (outVariables || throwExpressions || tupleTypes || tupleConversions || discards || localFunctions)
 				return CSharp.LanguageVersion.CSharp7;
 			if (awaitInCatchFinally || useExpressionBodyForCalculatedGetterOnlyProperties || nullPropagation
 				|| stringInterpolation || dictionaryInitializers || extensionMethodsInCollectionInitializers)
@@ -626,6 +628,23 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool refExtensionMethods = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 7.2 'ref' extension methods.
+		/// </summary>
+		[Category("C# 7.2 / VS 2017.4")]
+		[Description("DecompilerSettings.AllowExtensionMethodSyntaxOnRef")]
+		public bool RefExtensionMethods {
+			get { return refExtensionMethods; }
+			set {
+				if (refExtensionMethods != value) {
+					refExtensionMethods = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool stringInterpolation = true;
 
 		/// <summary>
@@ -856,6 +875,23 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool throwExpressions = true;
+
+		/// <summary>
+		/// Gets/Sets whether throw expressions should be used.
+		/// </summary>
+		[Category("C# 7.0 / VS 2017")]
+		[Description("DecompilerSettings.UseThrowExpressions")]
+		public bool ThrowExpressions {
+			get { return throwExpressions; }
+			set {
+				if (throwExpressions != value) {
+					throwExpressions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool tupleConversions = true;
 
 		/// <summary>
@@ -942,22 +978,19 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool localFunctions = false;
+		bool localFunctions = true;
 
 		/// <summary>
-		/// Gets/Sets whether C# 7.0 local functions should be used.
-		/// Note: this language feature is currently not implemented and this setting is always false.
+		/// Gets/Sets whether C# 7.0 local functions should be transformed.
 		/// </summary>
 		[Category("C# 7.0 / VS 2017")]
-		[Description("DecompilerSettings.IntroduceLocalFunctionsNOTIMPLEMENTED")]
-		[Browsable(false)]
+		[Description("DecompilerSettings.IntroduceLocalFunctions")]
 		public bool LocalFunctions {
 			get { return localFunctions; }
 			set {
 				if (localFunctions != value) {
-					throw new NotImplementedException("C# 7.0 local functions are not implemented!");
-					//localFunctions = value;
-					//OnPropertyChanged();
+					localFunctions = value;
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -1058,6 +1091,20 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (removeDeadCode != value) {
 					removeDeadCode = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool removeDeadStores = false;
+
+		[Category("DecompilerSettings.FSpecificOptions")]
+		[Description("DecompilerSettings.RemoveDeadStores")]
+		public bool RemoveDeadStores {
+			get { return removeDeadStores; }
+			set {
+				if (removeDeadStores != value) {
+					removeDeadStores = value;
 					OnPropertyChanged();
 				}
 			}

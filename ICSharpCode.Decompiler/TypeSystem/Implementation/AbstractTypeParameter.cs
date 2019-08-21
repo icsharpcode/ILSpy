@@ -194,11 +194,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		bool IType.IsByRefLike => false;
-		Nullability IType.Nullability => NullabilityConstraint;
+		Nullability IType.Nullability => Nullability.Oblivious;
 
 		public IType ChangeNullability(Nullability nullability)
 		{
-			if (nullability == NullabilityConstraint)
+			if (nullability == Nullability.Oblivious)
 				return this;
 			else
 				return new NullabilityAnnotatedTypeParameter(this, nullability);
@@ -220,7 +220,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return EmptyList<IType>.Instance; }
 		}
 
-		public abstract IEnumerable<IType> DirectBaseTypes { get; }
+		public IEnumerable<IType> DirectBaseTypes {
+			get { return TypeConstraints.Select(t => t.Type); }
+		}
+
+		public abstract IReadOnlyList<TypeConstraint> TypeConstraints { get; }
 		
 		public string Name {
 			get { return name; }

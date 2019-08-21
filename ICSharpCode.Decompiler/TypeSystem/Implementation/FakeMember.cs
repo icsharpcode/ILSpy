@@ -139,6 +139,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IReadOnlyList<IType> IMethod.TypeArguments => TypeParameters;
 
 		bool IMethod.IsExtensionMethod => false;
+		bool IMethod.IsLocalFunction => false;
 		bool IMethod.IsConstructor => symbolKind == SymbolKind.Constructor;
 		bool IMethod.IsDestructor => symbolKind == SymbolKind.Destructor;
 		bool IMethod.IsOperator => symbolKind == SymbolKind.Operator;

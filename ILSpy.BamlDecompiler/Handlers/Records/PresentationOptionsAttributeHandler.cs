@@ -31,7 +31,7 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			var record = (PresentationOptionsAttributeRecord)((BamlRecordNode)node).Record;
 
 			var attrName = ctx.ResolveString(record.NameId);
-			var attr = new XAttribute(ctx.GetXamlNsName(attrName, parent.Xaml), record.Value);
+			var attr = new XAttribute(ctx.GetKnownNamespace(attrName, XamlContext.KnownNamespace_PresentationOptions, parent.Xaml), record.Value);
 			parent.Xaml.Element.Add(attr);
 
 			return null;

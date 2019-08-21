@@ -40,10 +40,10 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			var key = (XamlResourceKey)node.Annotation;
 
 			var bamlElem = new BamlElement(node);
-			bamlElem.Xaml = new XElement(ctx.GetXamlNsName("Key", parent.Xaml));
+			bamlElem.Xaml = new XElement(ctx.GetKnownNamespace("Key", XamlContext.KnownNamespace_Xaml, parent.Xaml));
 			parent.Xaml.Element.Add(bamlElem.Xaml.Element);
 
-			var typeElem = new XElement(ctx.GetXamlNsName("TypeExtension", parent.Xaml));
+			var typeElem = new XElement(ctx.GetKnownNamespace("TypeExtension", XamlContext.KnownNamespace_Xaml, parent.Xaml));
 			typeElem.AddAnnotation(ctx.ResolveType(0xfd4d)); // Known type - TypeExtension
 			typeElem.Add(new XElement(ctx.GetPseudoName("Ctor"), typeName));
 			bamlElem.Xaml.Element.Add(typeElem);

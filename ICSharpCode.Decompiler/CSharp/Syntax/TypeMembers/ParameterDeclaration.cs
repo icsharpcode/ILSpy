@@ -27,15 +27,15 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public enum ParameterModifier {
+	public enum ParameterModifier
+	{
 		None,
 		Ref,
 		Out,
 		Params,
-		This,
 		In
 	}
-	
+
 	public class ParameterDeclaration : AstNode
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
@@ -96,11 +96,30 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return NodeType.Unknown;
 			}
 		}
-		
+
 		public AstNodeCollection<AttributeSection> Attributes {
-			get { return GetChildrenByRole (AttributeRole); }
+			get { return GetChildrenByRole(AttributeRole); }
 		}
-		
+
+		bool hasThisModifier;
+
+		public CSharpTokenNode ThisKeyword {
+			get {
+				if (hasThisModifier) {
+					return GetChildByRole(ThisModifierRole);
+				}
+				return CSharpTokenNode.Null;
+			}
+		}
+
+		public bool HasThisModifier {
+			get { return hasThisModifier; }
+			set {
+				ThrowIfFrozen();
+				hasThisModifier = value;
+			}
+		}
+
 		ParameterModifier parameterModifier;
 		
 		public ParameterModifier ParameterModifier {

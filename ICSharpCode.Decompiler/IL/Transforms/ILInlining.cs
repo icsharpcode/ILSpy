@@ -272,10 +272,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (ldloca.Variable.Type.IsReferenceType ?? false)
 				return false;
-			switch (ldloca.Parent.OpCode) {
+			ILInstruction inst = ldloca;
+			while (inst.Parent is LdFlda ldflda) {
+				inst = ldflda;
+			}
+			switch (inst.Parent.OpCode) {
 				case OpCode.Call:
 				case OpCode.CallVirt:
-					var method = ((CallInstruction)ldloca.Parent).Method;
+					var method = ((CallInstruction)inst.Parent).Method;
 					if (method.IsAccessor && method.AccessorKind != MethodSemanticsAttributes.Getter) {
 						// C# doesn't allow calling setters on temporary structs
 						return false;
@@ -283,6 +287,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return !method.IsStatic;
 				case OpCode.Await:
 					return true;
+				case OpCode.NullableUnwrap:
+					return ((NullableUnwrap)inst.Parent).RefInput;
 				default:
 					return false;
 			}
@@ -344,13 +350,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			switch (addr) {
 				case LdFlda ldflda:
-					return ldflda.Field.IsReadOnly;
+					return ldflda.Field.IsReadOnly
+						|| (ldflda.Field.DeclaringType.Kind == TypeKind.Struct && IsReadonlyReference(ldflda.Target));
 				case LdsFlda ldsflda:
 					return ldsflda.Field.IsReadOnly;
 				case LdLoc ldloc:
 					return IsReadonlyRefLocal(ldloc.Variable);
 				case Call call:
 					return call.Method.ReturnTypeIsRefReadOnly;
+				case AddressOf _:
+					// C# doesn't allow mutation of value-type temporaries
+					return true;
 				default:
 					return false;
 			}
@@ -373,7 +383,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Determines whether a variable should be inlined in non-aggressive mode, even though it is not a generated variable.
 		/// </summary>
 		/// <param name="next">The next top-level expression</param>
-		/// <param name="loadInst">The load within 'next'</param>
+		/// <param name="v">The variable being eliminated by inlining.</param>
 		/// <param name="inlinedExpression">The expression being inlined</param>
 		static bool NonAggressiveInlineInto(ILInstruction next, FindResult findResult, ILInstruction inlinedExpression, ILVariable v)
 		{
@@ -402,7 +412,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					break;
 			}
-			
+			if (inlinedExpression.ResultType == StackType.Ref) {
+				// VB likes to use ref locals for compound assignment
+				// (the C# compiler uses ref stack slots instead).
+				// We want to avoid unnecessary ref locals, so we'll always inline them if possible.
+				return true;
+			}
+
 			var parent = loadInst.Parent;
 			if (NullableLiftingTransform.MatchNullableCtor(parent, out _, out _)) {
 				// inline into nullable ctor call in lifted operator
@@ -424,13 +440,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true; // inline into (left slot of) user-defined && or || operator
 				case OpCode.DynamicGetMemberInstruction:
 				case OpCode.DynamicGetIndexInstruction:
-				case OpCode.LdObj:
 					if (parent.Parent.OpCode == OpCode.DynamicCompoundAssign)
 						return true; // inline into dynamic compound assignments
 					break;
+				case OpCode.DynamicCompoundAssign:
+					return true;
 				case OpCode.ArrayToPointer:
 				case OpCode.LocAllocSpan:
 					return true; // inline size-expressions into localloc.span
+				case OpCode.Call:
+				case OpCode.CallVirt:
+					// Aggressive inline into property/indexer getter calls for compound assignment calls
+					// (The compiler generates locals for these because it doesn't want to evalute the args twice for getter+setter)
+					if (parent.SlotInfo == CompoundAssignmentInstruction.TargetSlot) {
+						return true;
+					}
+					break;
 			}
 			// decide based on the top-level target instruction into which we are inlining:
 			switch (next.OpCode) {

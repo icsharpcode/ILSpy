@@ -140,10 +140,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return b.ToString();
 			}
 		}
-		
+
 		public override string ToString()
 		{
-			return ReflectionName;
+			StringBuilder b = new StringBuilder(genericType.ToString());
+			b.Append('[');
+			for (int i = 0; i < typeArguments.Length; i++) {
+				if (i > 0)
+					b.Append(',');
+				b.Append('[');
+				b.Append(typeArguments[i].ToString());
+				b.Append(']');
+			}
+			b.Append(']');
+			return b.ToString();
 		}
 
 		public IReadOnlyList<IType> TypeArguments => typeArguments;

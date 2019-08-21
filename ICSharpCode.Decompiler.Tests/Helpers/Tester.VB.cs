@@ -56,10 +56,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				var provider = new VBCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 				CompilerParameters options = new CompilerParameters();
 				options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);
-				options.CompilerOptions = "/o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-");
+				options.CompilerOptions = "/optimize" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-");
 				options.CompilerOptions += (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "");
 				options.CompilerOptions += (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
-				options.CompilerOptions += "/optioninfer+ /optionexplicit+";
+				options.CompilerOptions += " /optioninfer+ /optionexplicit+";
 				if (preprocessorSymbols.Count > 0) {
 					options.CompilerOptions += " /d:" + string.Join(",", preprocessorSymbols.Select(p => $"{p.Key}={p.Value}"));
 				}

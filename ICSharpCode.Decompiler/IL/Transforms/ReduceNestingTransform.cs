@@ -194,6 +194,18 @@ namespace ICSharpCode.Decompiler.IL
 				// if (cond) { ...; exit; }
 				// ...; exit;
 				EnsureEndPointUnreachable(ifInst.TrueInst, exitInst);
+				if (ifInst.FalseInst.HasFlag(InstructionFlags.EndPointUnreachable)) {
+					Debug.Assert(ifInst.HasFlag(InstructionFlags.EndPointUnreachable));
+					Debug.Assert(ifInst.Parent == block);
+					int removeAfter = ifInst.ChildIndex + 1;
+					if (removeAfter < block.Instructions.Count) {
+						// Remove all instructions that ended up dead
+						// (this should just be exitInst itself)
+						Debug.Assert(block.Instructions.SecondToLastOrDefault() == ifInst);
+						Debug.Assert(block.Instructions.Last() == exitInst);
+						block.Instructions.RemoveRange(removeAfter, block.Instructions.Count - removeAfter);
+					}
+				}
 				ExtractElseBlock(ifInst);
 				ifInst = elseIfInst;
 			} while (ifInst != null);
@@ -215,6 +227,8 @@ namespace ICSharpCode.Decompiler.IL
 			var switchInst = (SwitchInstruction)switchContainer.EntryPoint.Instructions.Single();
 			var defaultSection = switchInst.Sections.MaxBy(s => s.Labels.Count());
 			if (!defaultSection.Body.MatchBranch(out var defaultBlock) || defaultBlock.IncomingEdgeCount != 1)
+				return false;
+			if (defaultBlock.Parent != switchContainer)
 				return false;
 			
 			// tally stats for heuristic from each case block

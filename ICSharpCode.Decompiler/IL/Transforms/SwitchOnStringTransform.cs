@@ -409,11 +409,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!switchValueVar.Type.IsKnownType(KnownTypeCode.String))
 				return false;
 			// either br nullCase or leave container
-			var leaveContainer = BlockContainer.FindClosestContainer(instructions[i]);
-			if (leaveContainer.Parent is TryInstruction) {
-				leaveContainer = BlockContainer.FindClosestContainer(leaveContainer.Parent);
-			}
-			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock) && !exitBlockJump.MatchLeave(leaveContainer))
+			BlockContainer leaveContainer = null;
+			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock) && !exitBlockJump.MatchLeave(out leaveContainer))
 				return false;
 			var nextBlockJump = instructions.ElementAtOrDefault(i + 1) as Branch;
 			if (nextBlockJump == null || nextBlockJump.TargetBlock.IncomingEdgeCount != 1)
@@ -823,8 +820,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// extract target block
 				if (!section.Body.MatchBranch(out Block target))
 					return false;
-				if (!MatchRoslynCaseBlockHead(target, switchValueLoad.Variable, out ILInstruction targetOrLeave, out Block currentExitBlock, out string stringValue))
+				string stringValue;
+				if (MatchRoslynEmptyStringCaseBlockHead(target, switchValueLoad.Variable, out ILInstruction targetOrLeave, out Block currentExitBlock)) {
+					stringValue = "";
+				} else if (!MatchRoslynCaseBlockHead(target, switchValueLoad.Variable, out targetOrLeave, out currentExitBlock, out stringValue)) {
 					return false;
+				}
+
 				if (exitOrDefaultBlock != null && exitOrDefaultBlock != currentExitBlock)
 					return false;
 				exitOrDefaultBlock = currentExitBlock;
@@ -905,7 +907,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		/// <summary>
 		/// Matches (and the negated version):
-		/// if (call op_Equality(ldloc V_0, ldstr "Fifth case")) br body
+		/// if (call op_Equality(ldloc switchValueVar, stringValue)) br body
 		/// br exit
 		/// </summary>
 		bool MatchRoslynCaseBlockHead(Block target, ILVariable switchValueVar, out ILInstruction bodyOrLeave, out Block defaultOrExitBlock, out string stringValue)
@@ -939,6 +941,72 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return true;
 			}
 			return false;
+		}
+
+		/// <summary>
+		/// Block target(incoming: 1) {
+		/// 	if (comp.o(ldloc switchValueVar == ldnull)) br exit
+		/// 	br lengthCheckBlock
+		/// }
+		/// 
+		/// Block lengthCheckBlock(incoming: 1) {
+		/// 	if (logic.not(call get_Length(ldloc switchValueVar))) br body
+		/// 	br exit
+		/// }
+		/// </summary>
+		bool MatchRoslynEmptyStringCaseBlockHead(Block target, ILVariable switchValueVar, out ILInstruction bodyOrLeave, out Block defaultOrExitBlock)
+		{
+			bodyOrLeave = null;
+			defaultOrExitBlock = null;
+			if (target.Instructions.Count != 2 || target.IncomingEdgeCount != 1)
+				return false;
+			if (!target.Instructions[0].MatchIfInstruction(out var nullComparisonCondition, out var exitBranch))
+				return false;
+			if (!nullComparisonCondition.MatchCompEqualsNull(out var arg) || !arg.MatchLdLoc(switchValueVar))
+				return false;
+			if (!target.Instructions[1].MatchBranch(out Block lengthCheckBlock))
+				return false;
+			if (lengthCheckBlock.Instructions.Count != 2 || lengthCheckBlock.IncomingEdgeCount != 1)
+				return false;
+			if (!lengthCheckBlock.Instructions[0].MatchIfInstruction(out var lengthCheckCondition, out var exitBranch2))
+				return false;
+			ILInstruction bodyBranch;
+			if (lengthCheckCondition.MatchLogicNot(out arg)) {
+				bodyBranch = exitBranch2;
+				exitBranch2 = lengthCheckBlock.Instructions[1];
+				lengthCheckCondition = arg;
+			} else {
+				bodyBranch = lengthCheckBlock.Instructions[1];
+			}
+			if (!(exitBranch2.MatchBranch(out defaultOrExitBlock) || exitBranch2.MatchLeave(out _)))
+				return false;
+			if (!MatchStringLengthCall(lengthCheckCondition, switchValueVar))
+				return false;
+			if (!(exitBranch.MatchBranch(out defaultOrExitBlock) && exitBranch2.MatchBranch(defaultOrExitBlock)))
+				return false;
+			if (bodyBranch.MatchLeave(out _)) {
+				bodyOrLeave = bodyBranch;
+				return true;
+			}
+			if (bodyBranch.MatchBranch(out var bodyBlock)) {
+				bodyOrLeave = bodyBlock;
+				return true;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// call get_Length(ldloc switchValueVar)
+		/// </summary>
+		bool MatchStringLengthCall(ILInstruction inst, ILVariable switchValueVar)
+		{
+			return inst is Call call
+				&& call.Method.DeclaringType.IsKnownType(KnownTypeCode.String)
+				&& call.Method.IsAccessor
+				&& call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter
+				&& call.Method.AccessorOwner.Name == "Length"
+				&& call.Arguments.Count == 1
+				&& call.Arguments[0].MatchLdLoc(switchValueVar);
 		}
 
 		/// <summary>

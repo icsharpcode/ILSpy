@@ -45,11 +45,15 @@ namespace ILSpy.BamlDecompiler.Baml {
 			strings = new Dictionary<int, string>();
 			resources = new Dictionary<int, (string, string, string)>();
 
-			InitAssemblies();
-			InitTypes();
-			InitMembers();
-			InitStrings();
-			InitResources();
+			try {
+				InitAssemblies();
+				InitTypes();
+				InitMembers();
+				InitStrings();
+				InitResources();
+			} catch (Exception ex) {
+				throw new ICSharpCode.Decompiler.DecompilerException(typeSystem.MainModule.PEFile, ex.Message, ex);
+			}
 		}
 
 		public Func<KnownTypes, ITypeDefinition> Types => id => types[id];
@@ -57,7 +61,14 @@ namespace ILSpy.BamlDecompiler.Baml {
 		public Func<short, string> Strings => id => strings[id];
 		public Func<short, (string, string, string)> Resources => id => resources[id];
 		public IModule FrameworkAssembly => assemblies[0];
-		IModule ResolveAssembly(string name) => typeSystem.Modules.First(m => m.FullAssemblyName == name);
+		IModule ResolveAssembly(string name)
+		{
+			IModule module = typeSystem.Modules.FirstOrDefault(m => m.FullAssemblyName == name);
+			if (module == null)
+				throw new Exception("Could not resolve known assembly '" + name + "'!");
+			return module;
+		}
+
 		ITypeDefinition InitType(IModule assembly, string ns, string name) => assembly.GetTypeDefinition(new TopLevelTypeName(ns, name));
 		KnownMember InitMember(KnownTypes parent, string name, ITypeDefinition type) => new KnownMember(parent, types[parent], name, type);
 	}
