@@ -114,6 +114,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 		}
 	}
 
+	public class Issue1660 : Issue1660Base
+	{
+		public Action<object> M(object state)
+		{
+			return delegate(object x) {
+				base.BaseCall(x, state, (Func<object>)(() => null));
+			};
+		}
+	}
+
+	public class Issue1660Base
+	{
+		protected virtual void BaseCall<T>(object x, object state, Func<T> action)
+		{
+		}
+	}
+
 	internal class J : I
 	{
 		protected internal override void Test(int a)
