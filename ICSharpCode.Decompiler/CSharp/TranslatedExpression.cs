@@ -416,6 +416,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (rr.IsCompileTimeConstant && !rr.IsError) {
 				return expressionBuilder.ConvertConstantValue(rr, allowImplicitConversion)
 					.WithILInstruction(this.ILInstructions);
+			} else if (rr.IsError && targetType.IsReferenceType == true && type.IsReferenceType == true) {
+				// Conversion between two reference types, but no direct cast allowed? cast via object
+				// Just make sure we avoid infinite recursion even if the resolver falsely claims we can't cast directly:
+				if (!(targetType.IsKnownType(KnownTypeCode.Object) || type.IsKnownType(KnownTypeCode.Object))) {
+					return this.ConvertTo(compilation.FindType(KnownTypeCode.Object), expressionBuilder)
+						.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
+				}
 			}
 			if (targetType.Kind == TypeKind.Pointer && (0.Equals(ResolveResult.ConstantValue) || 0u.Equals(ResolveResult.ConstantValue))) {
 				if (allowImplicitConversion) {
