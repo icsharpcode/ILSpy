@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				temp = ldfldaTarget;
 				range = range.Concat(temp.ILRanges);
 			}
-			if (temp.MatchAddressOf(out var addressOfTarget) && addressOfTarget.MatchLdLoc(out var v)) {
+			if (temp.MatchAddressOf(out var addressOfTarget, out _) && addressOfTarget.MatchLdLoc(out var v)) {
 				context.Step($"ldobj(...(addressof(ldloca {v.Name}))) => ldobj(...(ldloca {v.Name}))", inst);
 				var replacement = new LdLoca(v).WithILRange(addressOfTarget);
 				foreach (var r in range) {
