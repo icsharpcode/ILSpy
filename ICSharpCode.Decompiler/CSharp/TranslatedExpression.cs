@@ -223,8 +223,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return this;
 			}
-			if (targetType.Kind == TypeKind.Unknown || targetType.Kind == TypeKind.Void || targetType.Kind == TypeKind.None) {
+			if (targetType.Kind == TypeKind.Void || targetType.Kind == TypeKind.None) {
 				return this; // don't attempt to insert cast to '?' or 'void' as these are not valid.
+			} else if (targetType.Kind == TypeKind.Unknown) {
+				// don't attempt cast to '?', or casts between an unknown type and a known type with same name
+				if (targetType.Name == "?" || targetType.ReflectionName == type.ReflectionName) {
+					return this;
+				}
+				// However we still want explicit casts to types that are merely unresolved
 			}
 			var convAnnotation = this.Expression.Annotation<ImplicitConversionAnnotation>();
 			if (convAnnotation != null) {
