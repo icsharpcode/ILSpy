@@ -84,10 +84,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Call newInst = new Call(call.Method.Specialize(inst.Method.Substitution));
 			// copy flags
 			newInst.ConstrainedTo = call.ConstrainedTo;
-			newInst.ILStackWasEmpty = call.ILStackWasEmpty;
-			newInst.IsTail = call.IsTail;
+			newInst.ILStackWasEmpty = inst.ILStackWasEmpty;
+			newInst.IsTail = call.IsTail & inst.IsTail;
 			// copy IL ranges
-			newInst.AddILRange(call);
+			newInst.AddILRange(inst);
 			newInst.Arguments.ReplaceList(inst.Arguments);
 			inst.ReplaceWith(newInst);
 		}
