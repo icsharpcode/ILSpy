@@ -319,7 +319,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return true;
 		}
 
-		CSharpDecompiler CreateDecompiler(DecompilerTypeSystem ts)
+		protected virtual CSharpDecompiler CreateDecompiler(DecompilerTypeSystem ts)
 		{
 			var decompiler = new CSharpDecompiler(ts, settings);
 			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
@@ -372,6 +372,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						try {
 							CSharpDecompiler decompiler = CreateDecompiler(ts);
 							decompiler.CancellationToken = cancellationToken;
+							decompiler.DebugInfoProvider = module.LoadSymbols();
 							var syntaxTree = decompiler.DecompileTypes(file.ToArray());
 							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
 						} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {

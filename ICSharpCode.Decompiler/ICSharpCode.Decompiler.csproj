@@ -51,6 +51,7 @@
 
   <ItemGroup>
     <PackageReference Include="Humanizer.Core" Version="2.2.0" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.0" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
     <PackageReference Include="System.Reflection.Metadata" Version="1.6.0" />
     <PackageReference Include="System.ValueTuple" Version="4.3.0" />
@@ -249,6 +250,8 @@
     <Compile Include="DebugInfo\AsyncDebugInfo.cs" />
     <Compile Include="DebugInfo\ImportScopeInfo.cs" />
     <Compile Include="DebugInfo\DebugInfoGenerator.cs" />
+    <Compile Include="DebugInfo\MonoCecilDebugInfoProvider.cs" />
+    <Compile Include="DebugInfo\PortableDebugInfoProvider.cs" />
     <Compile Include="DecompilerException.cs" />
     <Compile Include="DecompilerSettings.cs" />
     <Compile Include="CSharp\Transforms\ContextTrackingVisitor.cs" />

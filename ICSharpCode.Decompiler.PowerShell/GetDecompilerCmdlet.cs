@@ -8,7 +8,6 @@ using System.Text;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.PdbProvider.Cecil;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.PowerShell
@@ -65,21 +64,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 				var decompiler = new CSharpDecompiler(typeSystem, settings);
 				MetadataReaderProvider provider;
 				string pdbFileName;
-				if (TryOpenPortablePdb(module, out provider, out pdbFileName))
-				{
-					decompiler.DebugInfoProvider = new PortableDebugInfoProvider(pdbFileName, provider);
-				}
-				else
-				{
-					// search for pdb in same directory as dll
-					string pdbDirectory = Path.GetDirectoryName(module.FileName);
-					pdbFileName = Path.Combine(pdbDirectory, Path.GetFileNameWithoutExtension(module.FileName) + ".pdb");
-					if (File.Exists(pdbFileName))
-					{
-						decompiler.DebugInfoProvider = new MonoCecilDebugInfoProvider(module, pdbFileName);
-					}
-				}
-
+				decompiler.DebugInfoProvider = module.LoadSymbols();
 				return decompiler;
 			}
 		}
