@@ -276,5 +276,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return AttributeTargets.All.HasFlag(AttributeTargets.Assembly);
 		}
+
+		public static string ImpossibleCast1(int i)
+		{
+			return (string)(object)i;
+		}
+
+		public static string ImpossibleCast2(Action a)
+		{
+			return (string)(object)a;
+		}
 	}
 }

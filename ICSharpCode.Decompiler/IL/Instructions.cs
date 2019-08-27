@@ -2529,9 +2529,10 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Stores the value into an anonymous temporary variable, and returns the address of that variable.</summary>
 	public sealed partial class AddressOf : ILInstruction
 	{
-		public AddressOf(ILInstruction value) : base(OpCode.AddressOf)
+		public AddressOf(ILInstruction value, IType type) : base(OpCode.AddressOf)
 		{
 			this.Value = value;
+			this.type = type;
 		}
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value;
@@ -2581,6 +2582,12 @@ namespace ICSharpCode.Decompiler.IL
 			return clone;
 		}
 		public override StackType ResultType { get { return StackType.Ref; } }
+		IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		protected override InstructionFlags ComputeFlags()
 		{
 			return value.Flags;
@@ -2594,6 +2601,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
+			output.Write(' ');
+			type.WriteTo(output);
 			output.Write('(');
 			this.value.WriteTo(output, options);
 			output.Write(')');
@@ -2613,7 +2622,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as AddressOf;
-			return o != null && this.value.PerformMatch(o.value, ref match);
+			return o != null && this.value.PerformMatch(o.value, ref match) && type.Equals(o.type);
 		}
 	}
 }
@@ -7805,14 +7814,16 @@ namespace ICSharpCode.Decompiler.IL
 			value = default(ILInstruction);
 			return false;
 		}
-		public bool MatchAddressOf(out ILInstruction value)
+		public bool MatchAddressOf(out ILInstruction value, out IType type)
 		{
 			var inst = this as AddressOf;
 			if (inst != null) {
 				value = inst.Value;
+				type = inst.Type;
 				return true;
 			}
 			value = default(ILInstruction);
+			type = default(IType);
 			return false;
 		}
 		public bool MatchThreeValuedBoolAnd(out ILInstruction left, out ILInstruction right)

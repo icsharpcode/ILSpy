@@ -273,5 +273,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Get<S>().Field.ToString();
 		}
+
+		public static string CallOnIntegerConstant()
+		{
+			return ulong.MaxValue.ToString();
+		}
 	}
 }

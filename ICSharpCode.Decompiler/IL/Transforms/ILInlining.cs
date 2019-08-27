@@ -226,7 +226,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (loadInst.OpCode == OpCode.LdLoca) {
 					// it was an ldloca instruction, so we need to use the pseudo-opcode 'addressof'
 					// to preserve the semantics of the compiler-generated temporary
-					loadInst.ReplaceWith(new AddressOf(inlinedExpression));
+					Debug.Assert(((LdLoca)loadInst).Variable == v);
+					loadInst.ReplaceWith(new AddressOf(inlinedExpression, v.Type));
 				} else {
 					loadInst.ReplaceWith(inlinedExpression);
 				}

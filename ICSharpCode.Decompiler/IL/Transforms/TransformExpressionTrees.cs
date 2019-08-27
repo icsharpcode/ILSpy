@@ -541,7 +541,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (target.ResultType == StackType.Ref)
 						return target;
 					else
-						return new AddressOf(target);
+						return new AddressOf(target, expectedType);
 				case StackType.O:
 					if (targetType.IsReferenceType == false) {
 						return new Box(target, targetType);
@@ -721,7 +721,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (member.DeclaringType.IsReferenceType == true) {
 					inst = new LdFlda(target, (IField)member);
 				} else {
-					inst = new LdFlda(new AddressOf(target), (IField)member);
+					inst = new LdFlda(new AddressOf(target, member.DeclaringType), (IField)member);
 				}
 			}
 			if (typeHint.SkipModifiers() is ByReferenceType brt && !member.ReturnType.IsByRefLike) {

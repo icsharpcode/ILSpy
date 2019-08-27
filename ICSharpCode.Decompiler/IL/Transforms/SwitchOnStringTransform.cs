@@ -203,6 +203,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					switchValue = new LdLoc(switchValueVar);
 				}
 			} else {
+				// Instruction before the start of the switch is not related to the switch.
+				keepAssignmentBefore = true;
 				switchValue = new LdLoc(switchValueVar);
 			}
 			// if instruction must be followed by a branch to the next case

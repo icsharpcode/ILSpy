@@ -63,6 +63,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IsByRefLike,
 		IteratorStateMachine,
 		AsyncStateMachine,
+		AsyncMethodBuilder,
 
 		// Field attributes:
 		FieldOffset,
@@ -129,6 +130,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.CompilerServices", "IsByRefLikeAttribute"),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(IteratorStateMachineAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(AsyncStateMachineAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", "AsyncMethodBuilderAttribute"),
 			// Field attributes:
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(FieldOffsetAttribute)),
 			new TopLevelTypeName("System", nameof(NonSerializedAttribute)),
