@@ -63,6 +63,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		List<IILTransform> ilTransforms = GetILTransforms();
 
+		public DecompilerSettings Settings {
+			get {
+				return this.settings;
+			}
+		}
+
 		/// <summary>
 		/// Pre-yield/await transforms.
 		/// </summary>

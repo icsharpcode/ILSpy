@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
+using System.Xml.Linq;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
@@ -21,19 +25,16 @@ namespace ICSharpCode.Decompiler.PowerShell
 		[ValidateNotNullOrEmpty]
 		public string LiteralPath { get; set; }
 
+		[Parameter(Mandatory = false, HelpMessage = "file with decompiler settings")]
+		public string SettingsPath { get; set; }
+
 		protected override void ProcessRecord()
 		{
 			string path = GetUnresolvedProviderPathFromPSPath(LiteralPath);
 
 			try
 			{
-				var decompiler = GetCSharpDecompiler(path, new DecompilerSettings()
-				{
-					ThrowOnAssemblyResolveErrors = false,
-					UseDebugSymbols = true,
-					ShowDebugInfo = true,
-					RemoveDeadCode = true
-				});
+				var decompiler = GetCSharpDecompiler(path, GetDecompilerSettings());
 				WriteObject(decompiler);
 
 			}
@@ -43,6 +44,63 @@ namespace ICSharpCode.Decompiler.PowerShell
 				WriteError(new ErrorRecord(e, ErrorIds.AssemblyLoadFailed, ErrorCategory.OperationStopped, null));
 			}
 		}
+
+		public DecompilerSettings GetDecompilerSettings()
+		{
+			string configFile = GetConfigFile();
+			if (!File.Exists(configFile))
+			{
+				return new DecompilerSettings()
+				{
+					ThrowOnAssemblyResolveErrors = false,
+					UseDebugSymbols = true,
+					ShowDebugInfo = true,
+					RemoveDeadCode = true
+				};
+			}
+			var settings = XDocument
+				.Load(configFile, LoadOptions.None)
+				.Root
+				.Element("DecompilerSettings");
+			return LoadDecompilerSettings(settings);
+		}
+
+		public Decompiler.DecompilerSettings LoadDecompilerSettings(XElement e)
+		{
+			var newSettings = new Decompiler.DecompilerSettings();
+			var properties = typeof(Decompiler.DecompilerSettings).GetProperties()
+				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false);
+			foreach (var p in properties)
+			{
+				var value = (bool?)e.Attribute(p.Name);
+				if (value.HasValue)
+					p.SetValue(newSettings, value.Value);
+			}
+			return newSettings;
+		}
+
+
+		public string GetConfigFile()
+		{
+			string configFilePath = null;
+			string localPath = Path.Combine(Path.GetDirectoryName(this.GetType().Assembly.Location), "ILSpy.xml");
+			string userPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ICSharpCode\\ILSpy.xml");
+			if (!String.IsNullOrEmpty(SettingsPath) && File.Exists(SettingsPath))
+			{
+				configFilePath = SettingsPath;
+			}
+			else if (File.Exists(localPath))
+			{
+				configFilePath = localPath;
+			}
+			else if (File.Exists(userPath))
+			{
+				configFilePath = userPath;
+			}
+			WriteVerbose($"using decomilersettings from file {configFilePath}");
+			return configFilePath;
+		}
+
 
 		/// <summary>
 		/// Instianciates a CSharpDecompiler from a given assemblyfilename and applies decompilersettings
@@ -68,140 +126,5 @@ namespace ICSharpCode.Decompiler.PowerShell
 				return decompiler;
 			}
 		}
-
-		bool TryOpenPortablePdb(PEFile module, out MetadataReaderProvider provider, out string pdbFileName)
-		{
-			const string LegacyPDBPrefix = "Microsoft C/C++ MSF 7.00";
-			byte[] buffer = new byte[LegacyPDBPrefix.Length];
-
-			provider = null;
-			pdbFileName = null;
-			var reader = module.Reader;
-			foreach (var entry in reader.ReadDebugDirectory())
-			{
-				if (entry.IsPortableCodeView)
-				{
-					return reader.TryOpenAssociatedPortablePdb(module.FileName, OpenStream, out provider, out pdbFileName);
-				}
-				if (entry.Type == DebugDirectoryEntryType.CodeView)
-				{
-					string pdbDirectory = Path.GetDirectoryName(module.FileName);
-					pdbFileName = Path.Combine(pdbDirectory, Path.GetFileNameWithoutExtension(module.FileName) + ".pdb");
-					if (File.Exists(pdbFileName))
-					{
-						Stream stream = OpenStream(pdbFileName);
-						if (stream.Read(buffer, 0, buffer.Length) == LegacyPDBPrefix.Length
-							&& System.Text.Encoding.ASCII.GetString(buffer) == LegacyPDBPrefix)
-						{
-							return false;
-						}
-						stream.Position = 0;
-						provider = MetadataReaderProvider.FromPortablePdbStream(stream);
-						return true;
-					}
-				}
-			}
-			return false;
-		}
-
-		Stream OpenStream(string fileName)
-		{
-			if (!File.Exists(fileName))
-				return null;
-			var memory = new MemoryStream();
-			using (var stream = File.OpenRead(fileName))
-				stream.CopyTo(memory);
-			memory.Position = 0;
-			return memory;
-		}
-
 	}
-
-	class PortableDebugInfoProvider : IDebugInfoProvider
-	{
-		string pdbFileName;
-		MetadataReaderProvider provider;
-
-		public PortableDebugInfoProvider(string pdbFileName, MetadataReaderProvider provider)
-		{
-			this.pdbFileName = pdbFileName;
-			this.provider = provider;
-		}
-
-		public string Description => pdbFileName == null ? "Embedded in this assembly" : $"Loaded from portable PDB: {pdbFileName}";
-
-		public IList<Decompiler.DebugInfo.SequencePoint> GetSequencePoints(MethodDefinitionHandle method)
-		{
-			var metadata = provider.GetMetadataReader();
-			var debugInfo = metadata.GetMethodDebugInformation(method);
-			var sequencePoints = new List<Decompiler.DebugInfo.SequencePoint>();
-
-			foreach (var point in debugInfo.GetSequencePoints())
-			{
-				string documentFileName;
-
-				if (!point.Document.IsNil)
-				{
-					var document = metadata.GetDocument(point.Document);
-					documentFileName = metadata.GetString(document.Name);
-				}
-				else
-				{
-					documentFileName = "";
-				}
-
-				sequencePoints.Add(new Decompiler.DebugInfo.SequencePoint()
-				{
-					Offset = point.Offset,
-					StartLine = point.StartLine,
-					StartColumn = point.StartColumn,
-					EndLine = point.EndLine,
-					EndColumn = point.EndColumn,
-					DocumentUrl = documentFileName
-				});
-			}
-
-			return sequencePoints;
-		}
-
-		public IList<Variable> GetVariables(MethodDefinitionHandle method)
-		{
-			var metadata = provider.GetMetadataReader();
-			var variables = new List<Variable>();
-
-			foreach (var h in metadata.GetLocalScopes(method))
-			{
-				var scope = metadata.GetLocalScope(h);
-				foreach (var v in scope.GetLocalVariables())
-				{
-					var var = metadata.GetLocalVariable(v);
-					variables.Add(new Variable(var.Index, metadata.GetString(var.Name)));
-				}
-			}
-
-			return variables;
-		}
-
-		public bool TryGetName(MethodDefinitionHandle method, int index, out string name)
-		{
-			var metadata = provider.GetMetadataReader();
-			name = null;
-
-			foreach (var h in metadata.GetLocalScopes(method))
-			{
-				var scope = metadata.GetLocalScope(h);
-				foreach (var v in scope.GetLocalVariables())
-				{
-					var var = metadata.GetLocalVariable(v);
-					if (var.Index == index)
-					{
-						name = metadata.GetString(var.Name);
-						return true;
-					}
-				}
-			}
-			return false;
-		}
-	}
-
 }
