@@ -256,6 +256,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public CSharpDecompiler(DecompilerTypeSystem typeSystem, DecompilerSettings settings)
 		{
+			settings.SetLanguageVersion(LanguageVersion.CSharp7_3);
 			this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
 			this.settings = settings;
 			this.module = typeSystem.MainModule;
