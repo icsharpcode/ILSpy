@@ -39,6 +39,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		BuildTools\update-assemblyinfo.ps1 = BuildTools\update-assemblyinfo.ps1
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ICSharpCode.Decompiler.PdbProviders", "ICSharpCode.Decompiler.PdbProviders\ICSharpCode.Decompiler.PdbProviders.csproj", "{391D2614-301E-4C22-87B9-CDE601A2C1E5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -263,6 +265,26 @@ Global
 		{BAB51A23-9C15-42CC-8465-EB732BF9A932}.Release|x86.ActiveCfg = Release|x86
 		{BAB51A23-9C15-42CC-8465-EB732BF9A932}.Release|x86.Build.0 = Release|x86
 		{BAB51A23-9C15-42CC-8465-EB732BF9A932}.Release|x86.Deploy.0 = Release|x86
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Debug|ARM.Build.0 = Debug|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Debug|x64.Build.0 = Debug|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Debug|x86.Build.0 = Debug|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Release|ARM.ActiveCfg = Release|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Release|ARM.Build.0 = Release|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Release|ARM64.Build.0 = Release|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Release|x64.ActiveCfg = Release|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Release|x64.Build.0 = Release|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Release|x86.ActiveCfg = Release|Any CPU
+		{391D2614-301E-4C22-87B9-CDE601A2C1E5}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
