@@ -13,5 +13,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+    <ProjectReference Include="..\ICSharpCode.Decompiler.PdbProviders\ICSharpCode.Decompiler.PdbProviders.csproj" />
   </ItemGroup>
 </Project>

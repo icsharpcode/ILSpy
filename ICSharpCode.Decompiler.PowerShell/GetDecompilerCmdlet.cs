@@ -10,7 +10,7 @@ using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Xml.Linq;
 using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.DebugInfo;
+using ICSharpCode.Decompiler.PdbProviders;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -120,9 +120,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 				resolver.AddSearchDirectory(Path.GetDirectoryName(module.FullName));
 				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
 				var decompiler = new CSharpDecompiler(typeSystem, settings);
-				MetadataReaderProvider provider;
-				string pdbFileName;
-				decompiler.DebugInfoProvider = module.LoadSymbols();
+				decompiler.DebugInfoProvider = DebugInfoLoader.LoadSymbols(module);
 				return decompiler;
 			}
 		}

@@ -33,6 +33,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 				decompiler.Settings = this.Decompiler.Settings;
 				PEFile module = Decompiler.TypeSystem.MainModule.PEFile;
 				decompiler.AssemblyResolver = new UniversalAssemblyResolver(module.FileName, false, module.Reader.DetectTargetFrameworkId());
+				decompiler.DebugInfoProvider = this.Decompiler.DebugInfoProvider;
 				decompiler.DecompileProject(module, path);
 
 				WriteObject("Decompilation finished");

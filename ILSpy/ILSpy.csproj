@@ -57,6 +57,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+    <ProjectReference Include="..\ICSharpCode.Decompiler.PdbProviders\ICSharpCode.Decompiler.PdbProviders.csproj" />
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj" />
   </ItemGroup>
 

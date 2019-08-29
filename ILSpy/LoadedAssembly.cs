@@ -23,10 +23,12 @@ using System.IO;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.PdbProviders;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.Options;
@@ -160,7 +162,7 @@ namespace ICSharpCode.ILSpy
 
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols) {
 				try {
-					debugInfoProvider = module.LoadSymbols();
+					this.debugInfoProvider = DebugInfoLoader.LoadSymbols(module);
 				} catch (IOException) {
 				} catch (UnauthorizedAccessException) {
 				} catch (InvalidOperationException) {
@@ -173,7 +175,6 @@ namespace ICSharpCode.ILSpy
 			return module;
 		}
 		
-
 
 		[ThreadStatic]
 		static int assemblyLoadDisableCount;
