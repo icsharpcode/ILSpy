@@ -440,7 +440,6 @@ namespace ICSharpCode.ILSpy
 				foreach (var handler in App.ExportProvider.GetExportedValues<IResourceFileHandler>()) {
 					if (handler.CanHandle(fileName, options)) {
 						entryStream.Position = 0;
-						fileName = Path.Combine(targetDirectory, fileName);
 						fileName = handler.WriteResourceToFile(assembly, fileName, entryStream, options);
 						return new[] { Tuple.Create(handler.EntryType, fileName) };
 					}
