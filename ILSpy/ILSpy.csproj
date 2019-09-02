@@ -2,7 +2,7 @@
 <Project Sdk="MSBuild.Sdk.Extras">
 
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <OutputType>WinExe</OutputType>
     <LangVersion>7.2</LangVersion>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>

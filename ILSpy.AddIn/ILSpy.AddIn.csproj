@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <RootNamespace>ICSharpCode.ILSpy.AddIn</RootNamespace>
 
     <Company>IC#Code</Company>
@@ -114,7 +114,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AdditionalDependencies Include="$(ILSpyBuildPath)System.ValueTuple.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)System.Collections.Immutable.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)System.Composition.AttributedModel.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)System.Composition.Convention.dll" />
@@ -130,8 +129,7 @@
     <AdditionalDependencies Include="$(ILSpyBuildPath)Mono.Cecil.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)Mono.Cecil.Pdb.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)ILSpy.BamlDecompiler.Plugin.dll" />
-	<AdditionalDependencies Include="$(ILSpyBuildPath)System.*.dll" />
-	<AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.DiaSymReader.*.dll" />
+	<AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.DiaSymReader*.dll" />
   	<AdditionalDependencies Include="$(ILSpyBuildPath)OSVersionHelper.dll" />
   </ItemGroup>
 
