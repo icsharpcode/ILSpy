@@ -189,6 +189,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		static readonly Lazy<IEnumerable<MetadataReference>> defaultReferences = new Lazy<IEnumerable<MetadataReference>>(delegate {
 			return new[]
 			{
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Facades\\netstandard.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "mscorlib.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Core.dll")),
