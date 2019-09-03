@@ -3,6 +3,7 @@
 	public enum PanePosition
 	{
 		Top,
-		Bottom
+		Bottom,
+		Document
 	}
 }
