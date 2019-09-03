@@ -168,7 +168,7 @@ namespace ILSpy.BamlDecompiler {
 		public const string KnownNamespace_Presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
 		public const string KnownNamespace_PresentationOptions = "http://schemas.microsoft.com/winfx/2006/xaml/presentation/options";
 
-		public string TryGetXmlNamespace(IModule assembly, string typeNamespace) {
+		public string TryGetXmlNamespace(IModule assembly, string typeNamespace, string defaultNamespace = null) {
 			if (assembly == null)
 				return null;
 
@@ -186,6 +186,9 @@ namespace ILSpy.BamlDecompiler {
 
 				if (typeNamespace == typeNs)
 					possibleXmlNs.Add(xmlNs);
+
+				if (xmlNs == defaultNamespace)
+					return xmlNs;
 			}
 
 			if (possibleXmlNs.Contains(KnownNamespace_Presentation))
