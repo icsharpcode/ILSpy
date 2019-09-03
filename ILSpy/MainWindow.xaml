@@ -115,7 +115,7 @@
 			<avalondock:LayoutRoot x:Name="LayoutRoot" >
 				<avalondock:LayoutPanel Orientation="Vertical">
 					<avalondock:LayoutPanel Orientation="Horizontal">
-						<avalondock:LayoutAnchorablePaneGroup DockWidth="100" Orientation="Vertical">
+						<avalondock:LayoutAnchorablePaneGroup DockWidth="200" Orientation="Vertical">
 							<avalondock:LayoutAnchorablePane DockHeight="*">
 								<avalondock:LayoutAnchorable x:Name="Tree" Title="Project Explorer">
 									<!-- Left pane: Tree View of assemblies and classes -->
@@ -131,20 +131,18 @@
 							</avalondock:LayoutAnchorablePane>
 						</avalondock:LayoutAnchorablePaneGroup>
 
-						<avalondock:LayoutDocumentPaneGroup>
+						<avalondock:LayoutDocumentPaneGroup DockWidth="*">
 							<avalondock:LayoutDocumentPane x:Name="adDocumentPane">
-								<avalondock:LayoutDocument>
+								<avalondock:LayoutDocument Title="Decompilation">
 									<Grid>
 										<Grid.ColumnDefinitions>
 											<ColumnDefinition Width="*" />
 										</Grid.ColumnDefinitions>
 										<Grid.RowDefinitions>
 											<RowDefinition Height="Auto" />
-											<RowDefinition Height="0" Name="topPaneRow" />
 											<RowDefinition Height="0" />
 											<RowDefinition Height="0.7*" MinHeight="100" Name="textViewRow" />
 											<RowDefinition Height="0" />
-											<RowDefinition Height="0" Name="bottomPaneRow" />
 										</Grid.RowDefinitions>
 										<Border BorderBrush="Black" BorderThickness="1" Name="updatePanel" Visibility="Collapsed">
 											<DockPanel KeyboardNavigation.TabNavigation="Contained">
@@ -156,39 +154,8 @@
 											</DockPanel>
 										</Border>
 
-										<controls:DockedPane x:Name="topPane" Grid.Row="1" Title="Top" Visibility="Collapsed"
-												AutomationProperties.Name="Close top pane"
-												CloseButtonClicked="TopPane_CloseButtonClicked" Margin="0,0,0,3"
-												BorderThickness="1,1,0,1" />
-
-										<GridSplitter
-											Grid.ZIndex="1"
-											Grid.Row="2"
-											Margin="0,-2,0,-5"
-											BorderThickness="0,2,0,5"
-											BorderBrush="Transparent"
-											HorizontalAlignment="Stretch"
-											VerticalAlignment="Center"
-											Focusable="False"
-											Visibility="{Binding Visibility, ElementName=topPane}" />
-
 										<!-- decompilerTextView is into the mainPane by code -->
-										<ContentPresenter Name="mainPane" Grid.Row="3"/>
-
-										<GridSplitter
-											Grid.ZIndex="1"
-											Grid.Row="4"
-											Margin="0,-2,0,-5"
-											BorderThickness="0,2,0,5"
-											BorderBrush="Transparent"
-											HorizontalAlignment="Stretch"
-											VerticalAlignment="Center"
-											Focusable="False"
-											Visibility="{Binding Visibility, ElementName=bottomPane}" />
-
-										<controls:DockedPane x:Name="bottomPane" Grid.Row="5" Title="Bottom" Visibility="Collapsed"
-											AutomationProperties.Name="Close"
-											CloseButtonClicked="BottomPane_CloseButtonClicked" Margin="0,3,0,0" BorderThickness="1,1,0,1"/>
+										<ContentPresenter Name="mainPane" Grid.Row="2"/>
 									</Grid>
 								</avalondock:LayoutDocument>
 							</avalondock:LayoutDocumentPane>
