@@ -28,11 +28,15 @@ namespace ICSharpCode.ILSpy.Analyzers
 	{
 		public bool IsVisible(TextViewContext context)
 		{
+			if (context.SelectedTreeNodes == null)
+				return false;
 			return true;			
 		}
 
 		public bool IsEnabled(TextViewContext context)
 		{
+			if (context.SelectedTreeNodes == null)
+				return false;
 			return true;			
 		}
 
