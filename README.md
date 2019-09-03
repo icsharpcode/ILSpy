@@ -83,3 +83,9 @@ How to contribute
 - If you want to contribute a pull request, please add https://gist.github.com/siegfriedpammer/75700ea61609eb22714d21885e4eb084 to your `.git/hooks` to prevent checking in code with wrong indentation. We use tabs and not spaces. The build server runs the same script, so any pull requests using wrong indentation will fail.
 
 Current and past [contributors](https://github.com/icsharpcode/ILSpy/graphs/contributors).
+
+Privacy Policy for ILSpy
+------------------------
+
+ILSpy does not collect any personally identifiable information, nor does it send user files to 3rd party services. 
+ILSpy does not use any APM (Application Performance Management) service to collect telemetry or metrics.
