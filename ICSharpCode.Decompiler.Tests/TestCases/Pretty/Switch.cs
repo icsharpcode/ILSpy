@@ -1168,5 +1168,46 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					throw new Exception();
 			}
 		}
+
+		public static int Issue1602(string x)
+		{
+			switch (x) {
+				case null:
+					return 0;
+				case "":
+					return -1;
+				case "A":
+					return 65;
+				case "B":
+					return 66;
+				case "C":
+					return 67;
+				case "D":
+					return 68;
+				case "E":
+					return 69;
+				case "F":
+					return 70;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+		}
+
+		public static bool DoNotRemoveAssignmentBeforeSwitch(string x, out ConsoleKey key)
+		{
+			key = (ConsoleKey)0;
+			switch (x) {
+				case "A":
+					key = ConsoleKey.A;
+					break;
+				case "B":
+					key = ConsoleKey.B;
+					break;
+				case "C":
+					key = ConsoleKey.C;
+					break;
+			}
+			return key != (ConsoleKey)0;
+		}
 	}
 }

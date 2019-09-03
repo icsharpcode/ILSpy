@@ -1199,7 +1199,7 @@ namespace ICSharpCode.Decompiler.IL
 				case false:
 					// field of value type: ldfld can handle temporaries
 					if (PeekStackType() == StackType.O || PeekStackType() == StackType.Unknown)
-						return new AddressOf(Pop());
+						return new AddressOf(Pop(), field.DeclaringType);
 					else
 						return PopPointer();
 				default:

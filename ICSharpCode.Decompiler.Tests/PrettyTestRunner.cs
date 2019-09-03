@@ -300,6 +300,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void CustomTaskType([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void NullableRefTypes([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);

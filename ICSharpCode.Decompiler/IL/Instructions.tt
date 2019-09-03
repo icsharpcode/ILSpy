@@ -179,7 +179,7 @@
 			CustomClassName("StLoc"), HasVariableOperand("Store", generateCheckInvariant: false), CustomArguments(("value", null)),
 			ResultType("variable.StackType")),
 		new OpCode("addressof", "Stores the value into an anonymous temporary variable, and returns the address of that variable.",
-			CustomClassName("AddressOf"), CustomArguments(("value", null)), ResultType("Ref")),
+			CustomClassName("AddressOf"), CustomArguments(("value", null)), ResultType("Ref"), HasTypeOperand),
 		new OpCode("3vl.bool.and", "Three valued logic and. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.and(), does not have short-circuiting behavior.",
 			CustomClassName("ThreeValuedBoolAnd"), Binary, ResultType("O")),
 		new OpCode("3vl.bool.or", "Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.",
