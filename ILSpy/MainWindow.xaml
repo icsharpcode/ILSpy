@@ -97,6 +97,15 @@
 			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
 			          SelectedItem="{Binding FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
 		</ToolBar>
+		<Border DockPanel.Dock="Top" BorderBrush="Black" BorderThickness="1" Name="updatePanel" Visibility="Collapsed">
+			<DockPanel KeyboardNavigation.TabNavigation="Contained">
+				<Button DockPanel.Dock="Right" Click="updatePanelCloseButtonClick" MinWidth="0">X</Button>
+				<StackPanel Orientation="Horizontal">
+					<TextBlock Name="updatePanelMessage" Margin="4,0" VerticalAlignment="Center"  Text="{x:Static properties:Resources.ILSpyVersionAvailable}" />
+					<Button Name="downloadOrCheckUpdateButton" Click="downloadOrCheckUpdateButtonClick" Content="{x:Static properties:Resources.Download}"/>
+				</StackPanel>
+			</DockPanel>
+		</Border>
 		<!-- Status bar -->
 		<StatusBar x:Name="statusBar" DockPanel.Dock="Bottom" Height="26" Visibility="Collapsed">
 			<StatusBarItem DockPanel.Dock="Right">
@@ -117,7 +126,7 @@
 					<avalondock:LayoutPanel Orientation="Horizontal">
 						<avalondock:LayoutAnchorablePaneGroup DockWidth="200" Orientation="Vertical">
 							<avalondock:LayoutAnchorablePane DockHeight="*">
-								<avalondock:LayoutAnchorable x:Name="Tree" Title="Project Explorer">
+								<avalondock:LayoutAnchorable x:Name="Tree" Title="Project Explorer" CanClose="False">
 									<!-- Left pane: Tree View of assemblies and classes -->
 									<tv:SharpTreeView
 										Name="treeView"
@@ -134,29 +143,8 @@
 						<avalondock:LayoutDocumentPaneGroup DockWidth="*">
 							<avalondock:LayoutDocumentPane x:Name="adDocumentPane">
 								<avalondock:LayoutDocument Title="Decompilation">
-									<Grid>
-										<Grid.ColumnDefinitions>
-											<ColumnDefinition Width="*" />
-										</Grid.ColumnDefinitions>
-										<Grid.RowDefinitions>
-											<RowDefinition Height="Auto" />
-											<RowDefinition Height="0" />
-											<RowDefinition Height="0.7*" MinHeight="100" Name="textViewRow" />
-											<RowDefinition Height="0" />
-										</Grid.RowDefinitions>
-										<Border BorderBrush="Black" BorderThickness="1" Name="updatePanel" Visibility="Collapsed">
-											<DockPanel KeyboardNavigation.TabNavigation="Contained">
-												<Button DockPanel.Dock="Right" Click="updatePanelCloseButtonClick" MinWidth="0">X</Button>
-												<StackPanel Orientation="Horizontal">
-													<TextBlock Name="updatePanelMessage" Margin="4,0" VerticalAlignment="Center"  Text="{x:Static properties:Resources.ILSpyVersionAvailable}" />
-													<Button Name="downloadOrCheckUpdateButton" Click="downloadOrCheckUpdateButtonClick" Content="{x:Static properties:Resources.Download}"/>
-												</StackPanel>
-											</DockPanel>
-										</Border>
-
-										<!-- decompilerTextView is into the mainPane by code -->
-										<ContentPresenter Name="mainPane" Grid.Row="2"/>
-									</Grid>
+									<!-- decompilerTextView is into the mainPane by code -->
+									<ContentPresenter Name="mainPane" />
 								</avalondock:LayoutDocument>
 							</avalondock:LayoutDocumentPane>
 						</avalondock:LayoutDocumentPaneGroup>

@@ -1051,49 +1051,19 @@ namespace ICSharpCode.ILSpy
 
 		#region Top/Bottom Pane management
 
-		/// <summary>
-		///   When grid is resized using splitter, row height value could become greater than 1.
-		///   As result, when a new pane is shown, both textView and pane could become very small.
-		///   This method normalizes two rows and ensures that height is less then 1.
-		/// </summary>
-		void NormalizePaneRowHeightValues(RowDefinition pane1Row, RowDefinition pane2Row)
+		public void ShowInNewPane(string title, object content, PanePosition panePosition, string toolTip = null)
 		{
-			var pane1Height = pane1Row.Height;
-			var pane2Height = pane2Row.Height;
-
-			//only star height values are normalized.
-			if (!pane1Height.IsStar || !pane2Height.IsStar) {
-				return;
-			}
-
-			var totalHeight = pane1Height.Value + pane2Height.Value;
-			if (totalHeight == 0) {
-				return;
-			}
-
-			pane1Row.Height = new GridLength(pane1Height.Value / totalHeight, GridUnitType.Star);
-			pane2Row.Height = new GridLength(pane2Height.Value / totalHeight, GridUnitType.Star);
-		}				
-
-		public void ShowInNewPane(string title, object content, PanePosition panePosition)
-		{
-			var layoutAnchorable = new LayoutAnchorable() { Title = title, Content = content };
+			if (panePosition == PanePosition.Document) {
+				var layoutDocument = new LayoutDocument() { Title = title, Content = content, ToolTip = toolTip };
 			var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
+				documentPane.Children.Add(layoutDocument);
+			} else {
+				var layoutAnchorable = new LayoutAnchorable() { Title = title, Content = content, ToolTip = toolTip };
+				var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
 			Docking.DockingHelper.DockHorizontal(layoutAnchorable, documentPane, new GridLength(100), panePosition == PanePosition.Top);
 		}
+		}
 
-		//void BottomPane_CloseButtonClicked(object sender, EventArgs e)
-		//{
-		//	sessionSettings.BottomPaneSplitterPosition = bottomPaneRow.Height.Value / (bottomPaneRow.Height.Value + textViewRow.Height.Value);
-		//	bottomPaneRow.MinHeight = 0;
-		//	bottomPaneRow.Height = new GridLength(0);
-		//	bottomPane.Visibility = Visibility.Collapsed;
-
-		//	IPane pane = bottomPane.Content as IPane;
-		//	bottomPane.Content = null;
-		//	if (pane != null)
-		//		pane.Closed();
-		//}
 		#endregion
 
 		public void UnselectAll()
