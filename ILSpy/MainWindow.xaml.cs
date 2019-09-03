@@ -90,10 +90,11 @@ namespace ICSharpCode.ILSpy
 			decompilerTextView = App.ExportProvider.GetExportedValue<DecompilerTextView>();
 			mainPane.Content = decompilerTextView;
 
-			if (sessionSettings.SplitterPosition > 0 && sessionSettings.SplitterPosition < 1) {
-				leftColumn.Width = new GridLength(sessionSettings.SplitterPosition, GridUnitType.Star);
-				rightColumn.Width = new GridLength(1 - sessionSettings.SplitterPosition, GridUnitType.Star);
-			}
+			//todo
+			//if (sessionSettings.SplitterPosition > 0 && sessionSettings.SplitterPosition < 1) {
+			//	leftColumn.Width = new GridLength(sessionSettings.SplitterPosition, GridUnitType.Star);
+			//	rightColumn.Width = new GridLength(1 - sessionSettings.SplitterPosition, GridUnitType.Star);
+			//}
 			sessionSettings.FilterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
 			InitMainMenu();
@@ -1022,7 +1023,8 @@ namespace ICSharpCode.ILSpy
 			sessionSettings.ActiveTreeViewPath = GetPathForNode(treeView.SelectedItem as SharpTreeNode);
 			sessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(treeView.SelectedItem as SharpTreeNode);
 			sessionSettings.WindowBounds = this.RestoreBounds;
-			sessionSettings.SplitterPosition = leftColumn.Width.Value / (leftColumn.Width.Value + rightColumn.Width.Value);
+			//todo
+			//sessionSettings.SplitterPosition = leftColumn.Width.Value / (leftColumn.Width.Value + rightColumn.Width.Value);
 			if (topPane.Visibility == Visibility.Visible)
 				sessionSettings.TopPaneSplitterPosition = topPaneRow.Height.Value / (topPaneRow.Height.Value + textViewRow.Height.Value);
 			if (bottomPane.Visibility == Visibility.Visible)
