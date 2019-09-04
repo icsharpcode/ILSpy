@@ -126,7 +126,7 @@
 					<avalondock:LayoutPanel Orientation="Horizontal">
 						<avalondock:LayoutAnchorablePaneGroup DockWidth="200" Orientation="Vertical">
 							<avalondock:LayoutAnchorablePane DockHeight="*">
-								<avalondock:LayoutAnchorable x:Name="Tree" Title="Project Explorer" CanClose="False">
+								<avalondock:LayoutAnchorable x:Name="Tree" Title="Project Explorer" CanHide="False" CanClose="False">
 									<!-- Left pane: Tree View of assemblies and classes -->
 									<tv:SharpTreeView
 										Name="treeView"
@@ -142,7 +142,7 @@
 
 						<avalondock:LayoutDocumentPaneGroup DockWidth="*">
 							<avalondock:LayoutDocumentPane x:Name="adDocumentPane">
-								<avalondock:LayoutDocument Title="Decompilation">
+								<avalondock:LayoutDocument Title="MAIN" CanClose="False">
 									<!-- decompilerTextView is into the mainPane by code -->
 									<ContentPresenter Name="mainPane" />
 								</avalondock:LayoutDocument>
