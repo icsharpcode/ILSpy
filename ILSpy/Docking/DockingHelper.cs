@@ -18,9 +18,14 @@ namespace ICSharpCode.ILSpy.Docking
 				}
 				parentDocumentGroup.Orientation = System.Windows.Controls.Orientation.Vertical;
 				int indexOfParentPane = parentDocumentGroup.IndexOfChild(parentDocumentPane);
-				parentDocumentGroup.InsertChildAt(dockBefore ? indexOfParentPane : indexOfParentPane + 1, new LayoutDocumentPane(layoutContent) { DockHeight = dockHeight });
+				var layoutDocumentPane = new LayoutDocumentPane(layoutContent) { DockHeight = dockHeight };
+				parentDocumentGroup.InsertChildAt(dockBefore ? indexOfParentPane : indexOfParentPane + 1, layoutDocumentPane);
 				layoutContent.IsActive = true;
 				layoutContent.Root.CollectGarbage();
+				Application.Current.MainWindow.Dispatcher.Invoke(() => {
+
+					layoutDocumentPane.DockHeight = dockHeight;
+				}, System.Windows.Threading.DispatcherPriority.Loaded);
 			}
 		}
 	}
