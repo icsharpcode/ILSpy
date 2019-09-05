@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AvalonEdit" Version="6.0.0-preview1" />
+    <PackageReference Include="AvalonEdit" Version="6.0.0-rc1" />
   </ItemGroup>
 
   <ItemGroup>
