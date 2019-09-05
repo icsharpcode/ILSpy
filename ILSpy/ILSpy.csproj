@@ -48,7 +48,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AvalonEdit" Version="6.0.0-preview1" />
+    <PackageReference Include="AvalonEdit" Version="6.0.0-rc1" />
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="15.5.23" />
     <PackageReference Include="Mono.Cecil" Version="0.10.3" />
