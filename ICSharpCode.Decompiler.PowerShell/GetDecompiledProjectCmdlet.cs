@@ -23,24 +23,28 @@ namespace ICSharpCode.Decompiler.PowerShell
 		protected override void ProcessRecord()
 		{
 			string path = GetUnresolvedProviderPathFromPSPath(LiteralPath);
-			if (!Directory.Exists(path)) {
+			if (!Directory.Exists(path))
+			{
 				WriteObject("Destination directory must exist prior to decompilation");
 				return;
 			}
 
-			try {
-				WholeProjectDecompiler decompiler = new WholeProjectDecompiler();
+			WholeProjectDecompiler decompiler = new WholeProjectDecompiler();
+			try
+			{
 				decompiler.Settings = this.Decompiler.Settings;
 				PEFile module = Decompiler.TypeSystem.MainModule.PEFile;
 				decompiler.AssemblyResolver = new UniversalAssemblyResolver(module.FileName, false, module.Reader.DetectTargetFrameworkId());
 				decompiler.DebugInfoProvider = this.Decompiler.DebugInfoProvider;
 				decompiler.DecompileProject(module, path);
 
-				WriteObject("Decompilation finished");
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				WriteVerbose(e.ToString());
 				WriteError(new ErrorRecord(e, ErrorIds.DecompilationFailed, ErrorCategory.OperationStopped, null));
 			}
+			WriteObject(decompiler);
 		}
 	}
 }
