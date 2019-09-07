@@ -754,4 +754,7 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.RemoveDeadStores" xml:space="preserve">
     <value>Remove dead stores (use with caution!)</value>
   </data>
+  <data name="Assembly" xml:space="preserve">
+    <value>Assembly</value>
+  </data>
 </root>

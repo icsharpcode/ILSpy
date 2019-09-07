@@ -41,7 +41,7 @@
 		<ProgressBar x:Name="searchProgressBar" Grid.Row="1" BorderThickness="0" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
 		<ListView Grid.Row="2" BorderThickness="0,1,0,0" HorizontalContentAlignment="Stretch" KeyDown="ListBox_KeyDown"
 				MouseDoubleClick="ListBox_MouseDoubleClick" Name="listBox" SelectionMode="Single" controls:SortableGridViewColumn.SortMode="Automatic" 
-				controls:GridViewColumnAutoSize.AutoWidth="50%;50%" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+				controls:GridViewColumnAutoSize.AutoWidth="40%;40%;20%" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
 				ItemsSource="{Binding Results, ElementName=self}">
 			<ListView.View>
 				<GridView AllowsColumnReorder="False">
@@ -61,6 +61,16 @@
 								<StackPanel Orientation="Horizontal">
 									<Image Height="16" Margin="4,0,4,0" Width="16" Source="{Binding LocationImage}" />
 									<TextBlock Text="{Binding Location}" TextTrimming="CharacterEllipsis" />
+								</StackPanel>
+							</DataTemplate>
+						</controls:SortableGridViewColumn.CellTemplate>
+					</controls:SortableGridViewColumn>
+					<controls:SortableGridViewColumn Header="{x:Static properties:Resources.Assembly}" SortBy="Assembly">
+						<controls:SortableGridViewColumn.CellTemplate>
+							<DataTemplate>
+								<StackPanel Orientation="Horizontal">
+									<Image Height="16" Margin="4,0,4,0" Width="16" Source="{Binding AssemblyImage}" />
+									<TextBlock Text="{Binding Assembly}" TextTrimming="CharacterEllipsis" />
 								</StackPanel>
 							</DataTemplate>
 						</controls:SortableGridViewColumn.CellTemplate>

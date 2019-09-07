@@ -378,11 +378,13 @@ namespace ICSharpCode.ILSpy
 		public IEntity Member { get; set; }
 		public float Fitness { get; set; }
 		
+		public string Assembly { get; set; }
 		public string Location { get; set; }
 		public string Name { get; set; }
 		public object ToolTip { get; set; }
 		public ImageSource Image { get; set; }
 		public ImageSource LocationImage { get; set; }
+		public ImageSource AssemblyImage { get; set; }
 		
 		public override string ToString()
 		{
