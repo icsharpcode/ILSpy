@@ -60,7 +60,7 @@
 							<DataTemplate>
 								<StackPanel Orientation="Horizontal">
 									<Image Height="16" Margin="4,0,4,0" Width="16" Source="{Binding LocationImage}" />
-									<TextBlock Text="{Binding Location}" TextTrimming="CharacterEllipsis" />
+									<TextBlock Text="{Binding Location}" ToolTip="{Binding Location}" TextTrimming="CharacterEllipsis" />
 								</StackPanel>
 							</DataTemplate>
 						</controls:SortableGridViewColumn.CellTemplate>
@@ -70,7 +70,7 @@
 							<DataTemplate>
 								<StackPanel Orientation="Horizontal">
 									<Image Height="16" Margin="4,0,4,0" Width="16" Source="{Binding AssemblyImage}" />
-									<TextBlock Text="{Binding Assembly}" TextTrimming="CharacterEllipsis" />
+									<TextBlock Text="{Binding Assembly}" ToolTip="{Binding Assembly}" TextTrimming="CharacterEllipsis" />
 								</StackPanel>
 							</DataTemplate>
 						</controls:SortableGridViewColumn.CellTemplate>
