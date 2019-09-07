@@ -167,6 +167,10 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Search\AbstractEntitySearchStrategy.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
     <Compile Include="Search\LiteralSearchStrategy.cs" />
     <Compile Include="LoadedAssembly.cs" />
     <Compile Include="LoadedAssemblyExtensions.cs" />
@@ -204,6 +208,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\RefreshCommand.cs" />
     <Compile Include="Commands\SaveCommand.cs" />
+    <Compile Include="Search\ResourceSearchStrategy.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
     <Compile Include="Search\SearchPane.cs">
       <DependentUpon>SearchPane.xaml</DependentUpon>
     </Compile>
