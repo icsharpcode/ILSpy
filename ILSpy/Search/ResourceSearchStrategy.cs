@@ -76,11 +76,12 @@ namespace ICSharpCode.ILSpy.Search
 
 		void OnFoundResult(PEFile module, object reference, SharpTreeNode node, SharpTreeNode parent)
 		{
+			var name = (string)node.Text;
 			var result = new SearchResult {
 				Reference = reference,
-				Fitness = 1f,
+				Fitness = 1.0f / name.Length,
 				Image = (ImageSource)node.Icon,
-				Name = (string)node.Text,
+				Name = name,
 				LocationImage = (ImageSource)parent.Icon,
 				Location = (string)parent.Text,
 				AssemblyImage = Images.Assembly,
