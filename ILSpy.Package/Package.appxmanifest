@@ -15,7 +15,7 @@
 
   <Properties>
     <DisplayName>ILSpy</DisplayName>
-    <PublisherDisplayName>ICSharpCode</PublisherDisplayName>
+    <PublisherDisplayName>CN=ICSharpCode Team</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
   </Properties>
 
