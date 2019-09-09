@@ -14,7 +14,11 @@ namespace ICSharpCode.ILSpy.Search
 
 		public override void Search(PEFile module, CancellationToken cancellationToken)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
+
 			foreach (var resource in module.Resources) {
+				cancellationToken.ThrowIfCancellationRequested();
+
 				if (IsMatch(resource.Name)) {
 					OnFoundResult(resource);
 				}
