@@ -381,8 +381,8 @@ namespace ICSharpCode.ILSpy
 		public string Location { get; set; }
 		public string Name { get; set; }
 		public object ToolTip { get; set; }
-		public ImageSource Image { get; set; }
-		public ImageSource LocationImage { get; set; }
+		public object Image { get; set; }
+		public object LocationImage { get; set; }
 		
 		public override string ToString()
 		{

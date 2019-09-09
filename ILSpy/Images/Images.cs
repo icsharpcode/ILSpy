@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Windows.Controls;
 using System.Windows.Markup;
 using System.IO;
+using System.Windows.Shapes;
 
 namespace ICSharpCode.ILSpy
 {
@@ -35,7 +36,19 @@ namespace ICSharpCode.ILSpy
 			image.Freeze();
 			return image;
 		}
-		
+
+		static object Load(string icon)
+		{
+			icon = "Images/" + icon;
+			if (icon.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+				return LoadImage(null, icon);
+			Uri uri = GetUri(null, icon + ".xaml");
+			if (ResourceExists(uri)) {
+				return LoadDrawingGroup(null, icon);
+			}
+			return LoadImage(null, icon + ".png");
+		}
+
 		public static readonly BitmapImage Breakpoint = LoadBitmap("Breakpoint");
 		public static readonly BitmapImage CurrentLine = LoadBitmap("CurrentLine");
 
@@ -46,9 +59,9 @@ namespace ICSharpCode.ILSpy
 		public static readonly BitmapImage Delete = LoadBitmap("Delete");
 		public static readonly BitmapImage Search = LoadBitmap("Search");
 
-		public static readonly BitmapImage Assembly = LoadBitmap("Assembly");
-		public static readonly BitmapImage AssemblyWarning = LoadBitmap("AssemblyWarning");
-		public static readonly BitmapImage AssemblyLoading = LoadBitmap("FindAssembly");
+		public static readonly object Assembly = Load("Assembly");
+		public static readonly object AssemblyWarning = Load("AssemblyWarning");
+		public static readonly object AssemblyLoading = Load("FindAssembly");
 
 		public static readonly BitmapImage Library = LoadBitmap("Library");
 		public static readonly BitmapImage Namespace = LoadBitmap("NameSpace");
@@ -69,7 +82,7 @@ namespace ICSharpCode.ILSpy
 		public static readonly BitmapImage ResourceXsd = LoadBitmap("ResourceXsd");
 		public static readonly BitmapImage ResourceXslt = LoadBitmap("ResourceXslt");
 
-		public static readonly BitmapImage Class = LoadBitmap("Class");
+		public static readonly object Class = Load("Class");
 		public static readonly BitmapImage Struct = LoadBitmap("Struct");
 		public static readonly BitmapImage Interface = LoadBitmap("Interface");
 		public static readonly BitmapImage Delegate = LoadBitmap("Delegate");
@@ -97,11 +110,22 @@ namespace ICSharpCode.ILSpy
 		private static readonly BitmapImage OverlayProtected = LoadBitmap("OverlayProtected");
 		private static readonly BitmapImage OverlayInternal = LoadBitmap("OverlayInternal");
 		private static readonly BitmapImage OverlayProtectedInternal = LoadBitmap("OverlayProtectedInternal");
-		private static readonly BitmapImage OverlayPrivate = LoadBitmap("OverlayPrivate");
+		private static readonly object OverlayPrivate = Load("OverlayPrivate");
 		private static readonly BitmapImage OverlayPrivateProtected = LoadBitmap("OverlayPrivateProtected");
 		private static readonly BitmapImage OverlayCompilerControlled = LoadBitmap("OverlayCompilerControlled");
 
-		private static readonly BitmapImage OverlayStatic = LoadBitmap("OverlayStatic");
+		private static readonly object OverlayStatic = Load("OverlayStatic");
+
+		public static object GetIcon(object imageOrVector)
+		{
+			if (imageOrVector is BitmapImage img)
+				return img;
+			return new Rectangle {
+				Width = 16,
+				Height = 16,
+				Fill = new DrawingBrush((DrawingGroup)imageOrVector)
+			};
+		}
 
 		public static object Load(object part, string icon)
 		{
@@ -127,10 +151,15 @@ namespace ICSharpCode.ILSpy
 			return (Viewbox)Application.LoadComponent(GetUri(part, icon + ".xaml", absolute: false));
 		}
 
+		public static DrawingGroup LoadDrawingGroup(object part, string icon)
+		{
+			return (DrawingGroup)Application.LoadComponent(GetUri(part, icon + ".xaml", absolute: false));
+		}
+
 		private static Uri GetUri(object part, string icon, bool absolute = true)
 		{
 			Uri uri;
-			var assembly = part.GetType().Assembly;
+			var assembly = part?.GetType().Assembly;
 			string prefix;
 			UriKind kind;
 			if (absolute) {
@@ -140,7 +169,7 @@ namespace ICSharpCode.ILSpy
 				prefix = "/";
 				kind = UriKind.Relative;
 			}
-			if (assembly == typeof(Images).Assembly) {
+			if (part == null || assembly == typeof(Images).Assembly) {
 				uri = new Uri(prefix + icon, kind);
 			} else {
 				var name = assembly.GetName();
@@ -163,13 +192,13 @@ namespace ICSharpCode.ILSpy
 		private static readonly TypeIconCache typeIconCache = new TypeIconCache();
 		private static readonly MemberIconCache memberIconCache = new MemberIconCache();
 
-		public static ImageSource GetIcon(TypeIcon icon, AccessOverlayIcon overlay, bool isStatic = false)
+		public static object GetIcon(TypeIcon icon, AccessOverlayIcon overlay, bool isStatic = false)
 		{
 			lock (typeIconCache)
 				return typeIconCache.GetIcon(icon, overlay, isStatic);
 		}
 
-		public static ImageSource GetIcon(MemberIcon icon, AccessOverlayIcon overlay, bool isStatic)
+		public static object GetIcon(MemberIcon icon, AccessOverlayIcon overlay, bool isStatic)
 		{
 			lock (memberIconCache)
 				return memberIconCache.GetIcon(icon, overlay, isStatic);
@@ -189,9 +218,9 @@ namespace ICSharpCode.ILSpy
 				PreloadPublicIconToCache(TypeIcon.StaticClass, Images.StaticClass);
 			}
 
-			protected override ImageSource GetBaseImage(TypeIcon icon)
+			protected override object GetBaseImage(TypeIcon icon)
 			{
-				ImageSource baseImage;
+				object baseImage;
 				switch (icon) {
 					case TypeIcon.Class:
 						baseImage = Images.Class;
@@ -238,9 +267,9 @@ namespace ICSharpCode.ILSpy
 				PreloadPublicIconToCache(MemberIcon.Event, Images.Event);
 			}
 
-			protected override ImageSource GetBaseImage(MemberIcon icon)
+			protected override object GetBaseImage(MemberIcon icon)
 			{
-				ImageSource baseImage;
+				object baseImage;
 				switch (icon) {
 					case MemberIcon.Field:
 						baseImage = Images.Field;
@@ -291,39 +320,39 @@ namespace ICSharpCode.ILSpy
 
 		private abstract class IconCache<T>
 		{
-			private readonly Dictionary<Tuple<T, AccessOverlayIcon, bool>, ImageSource> cache = new Dictionary<Tuple<T, AccessOverlayIcon, bool>, ImageSource>();
+			private readonly Dictionary<(T, AccessOverlayIcon, bool), object> cache = new Dictionary<(T, AccessOverlayIcon, bool), object>();
 
-			protected void PreloadPublicIconToCache(T icon, ImageSource image)
+			protected void PreloadPublicIconToCache(T icon, object image)
 			{
-				var iconKey = new Tuple<T, AccessOverlayIcon, bool>(icon, AccessOverlayIcon.Public, false);
+				var iconKey = (icon, AccessOverlayIcon.Public, false);
 				cache.Add(iconKey, image);
 			}
 
-			public ImageSource GetIcon(T icon, AccessOverlayIcon overlay, bool isStatic)
+			public object GetIcon(T icon, AccessOverlayIcon overlay, bool isStatic)
 			{
-				var iconKey = new Tuple<T, AccessOverlayIcon, bool>(icon, overlay, isStatic);
+				var iconKey = (icon, overlay, isStatic);
 				if (cache.ContainsKey(iconKey)) {
 					return cache[iconKey];
 				} else {
-					ImageSource result = BuildMemberIcon(icon, overlay, isStatic);
+					object result = BuildMemberIcon(icon, overlay, isStatic);
 					cache.Add(iconKey, result);
 					return result;
 				}
 			}
 
-			private ImageSource BuildMemberIcon(T icon, AccessOverlayIcon overlay, bool isStatic)
+			private object BuildMemberIcon(T icon, AccessOverlayIcon overlay, bool isStatic)
 			{
-				ImageSource baseImage = GetBaseImage(icon);
-				ImageSource overlayImage = GetOverlayImage(overlay);
+				object baseImage = GetBaseImage(icon);
+				object overlayImage = GetOverlayImage(overlay);
 
 				return CreateOverlayImage(baseImage, overlayImage, isStatic);
 			}
 
-			protected abstract ImageSource GetBaseImage(T icon);
+			protected abstract object GetBaseImage(T icon);
 
-			private static ImageSource GetOverlayImage(AccessOverlayIcon overlay)
+			private static object GetOverlayImage(AccessOverlayIcon overlay)
 			{
-				ImageSource overlayImage;
+				object overlayImage;
 				switch (overlay) {
 					case AccessOverlayIcon.Public:
 						overlayImage = null;
@@ -354,18 +383,27 @@ namespace ICSharpCode.ILSpy
 
 			private static readonly Rect iconRect = new Rect(0, 0, 16, 16);
 
-			private static ImageSource CreateOverlayImage(ImageSource baseImage, ImageSource overlay, bool isStatic)
+			private static ImageSource CreateOverlayImage(object baseImage, object overlay, bool isStatic)
 			{
 				var group = new DrawingGroup();
 
-				group.Children.Add(new ImageDrawing(baseImage, iconRect));
+				if (baseImage is ImageSource img)
+					group.Children.Add(new ImageDrawing(img, iconRect));
+				else
+					group.Children.Add((DrawingGroup)baseImage);
 
 				if (overlay != null) {
-					group.Children.Add(new ImageDrawing(overlay, iconRect));
+					if (overlay is ImageSource overlayImage)
+						group.Children.Add(new ImageDrawing(overlayImage, iconRect));
+					else
+						group.Children.Add((DrawingGroup)overlay);
 				}
 
 				if (isStatic) {
-					group.Children.Add(new ImageDrawing(Images.OverlayStatic, iconRect));
+					if (Images.OverlayStatic is ImageSource staticImg)
+						group.Children.Add(new ImageDrawing(staticImg, iconRect));
+					else
+						group.Children.Add((DrawingGroup)Images.OverlayStatic);
 				}
 
 				var image = new DrawingImage(group);

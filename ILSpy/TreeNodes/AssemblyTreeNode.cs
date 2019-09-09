@@ -70,9 +70,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override object Icon {
 			get {
 				if (LoadedAssembly.IsLoaded) {
-					return LoadedAssembly.HasLoadError ? Images.AssemblyWarning : Images.Assembly;
+					return LoadedAssembly.HasLoadError ? Images.GetIcon(Images.AssemblyWarning) : Images.GetIcon(Images.Assembly);
 				} else {
-					return Images.AssemblyLoading;
+					return Images.GetIcon(Images.AssemblyLoading);
 				}
 			}
 		}

@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			this.LazyLoading = true;
 		}
 
-		public override object Icon => Images.Assembly;
+		public override object Icon => Images.GetIcon(Images.Assembly);
 
 		public override object Text => analyzedModule.AssemblyName;
 

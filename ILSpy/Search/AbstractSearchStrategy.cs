@@ -204,7 +204,7 @@ namespace ICSharpCode.ILSpy.Search
 			}
 		}
 
-		ImageSource GetIcon(IEntity member)
+		object GetIcon(IEntity member)
 		{
 			switch (member) {
 				case ITypeDefinition t:

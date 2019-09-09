@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Icon => GetIcon(TypeDefinition);
 
-		public static ImageSource GetIcon(ITypeDefinition type)
+		public static object GetIcon(ITypeDefinition type)
 		{
 			return Images.GetIcon(GetTypeIcon(type), GetOverlayIcon(type));
 		}
