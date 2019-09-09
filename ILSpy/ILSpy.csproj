@@ -312,6 +312,13 @@
     <Page Include="Controls\SearchBoxStyle.xaml" />
     <Page Include="CreateListDialog.xaml" />
     <Page Include="DebugSteps.xaml" />
+    <Page Include="Images\Back.xaml" />
+    <Page Include="Images\CollapseAll.xaml" />
+    <Page Include="Images\Forward.xaml" />
+    <Page Include="Images\Open.xaml" />
+    <Page Include="Images\Refresh.xaml" />
+    <Page Include="Images\Search.xaml" />
+    <Page Include="Images\Sort.xaml" />
     <Page Include="MainWindow.xaml" />
     <Page Include="OpenFromGacDialog.xaml" />
     <Page Include="OpenListDialog.xaml" />
@@ -345,7 +352,6 @@
     <Resource Include="Images\Indexer.png" />
     <Resource Include="Images\Operator.png" />
     <Resource Include="Images\Property.png" />
-    <Resource Include="Images\Find.png" />
     <Resource Include="Images\Library.png" />
     <Resource Include="Images\SubTypes.png" />
     <Resource Include="Images\SuperTypes.png" />
@@ -389,6 +395,34 @@
 
   <ItemGroup>
     <Page Update="@(Page)" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Update="Images\Back.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\CollapseAll.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Forward.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Open.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Refresh.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Search.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Sort.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Options\DecompilerSettingsPanel.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -21,6 +21,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media;
 using System.Windows;
 using System.Collections.Generic;
+using System.Windows.Controls;
+using System.Windows.Markup;
+using System.IO;
 
 namespace ICSharpCode.ILSpy
 {
@@ -100,21 +103,62 @@ namespace ICSharpCode.ILSpy
 
 		private static readonly BitmapImage OverlayStatic = LoadBitmap("OverlayStatic");
 
+		public static object Load(object part, string icon)
+		{
+			if (icon.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+				return LoadImage(part, icon);
+			Uri uri = GetUri(part, icon + ".xaml");
+			if (ResourceExists(uri)) {
+				return LoadVector(part, icon);
+			}
+			return LoadImage(part, icon + ".png");
+		}
+
 		public static BitmapImage LoadImage(object part, string icon)
 		{
-			Uri uri;
-			var assembly = part.GetType().Assembly;
-			if (assembly == typeof(Images).Assembly) {
-				uri = new Uri("pack://application:,,,/" + icon);
-			} else {
-				var name = assembly.GetName();
-				uri = new Uri("pack://application:,,,/" + name.Name + ";v" + name.Version + ";component/" + icon);
-			}
+			Uri uri = GetUri(part, icon);
 			BitmapImage image = new BitmapImage(uri);
 			image.Freeze();
 			return image;
 		}
 
+		public static Viewbox LoadVector(object part, string icon)
+		{
+			return (Viewbox)Application.LoadComponent(GetUri(part, icon + ".xaml", absolute: false));
+		}
+
+		private static Uri GetUri(object part, string icon, bool absolute = true)
+		{
+			Uri uri;
+			var assembly = part.GetType().Assembly;
+			string prefix;
+			UriKind kind;
+			if (absolute) {
+				prefix = "pack://application:,,,/";
+				kind = UriKind.Absolute;
+			} else {
+				prefix = "/";
+				kind = UriKind.Relative;
+			}
+			if (assembly == typeof(Images).Assembly) {
+				uri = new Uri(prefix + icon, kind);
+			} else {
+				var name = assembly.GetName();
+				uri = new Uri(prefix + name.Name + ";v" + name.Version + ";component/" + icon, kind);
+			}
+
+			return uri;
+		}
+
+		private static bool ResourceExists(Uri uri)
+		{
+			try {
+				Application.GetResourceStream(uri);
+				return true;
+			} catch (IOException) {
+				return false;
+			}
+		}
 
 		private static readonly TypeIconCache typeIconCache = new TypeIconCache();
 		private static readonly MemberIconCache memberIconCache = new MemberIconCache();
