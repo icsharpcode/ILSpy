@@ -250,19 +250,30 @@
                             <StackPanel Orientation="Horizontal"
                                         Background="Transparent"
                                         ToolTip="{Binding ToolTip}">
-                                <ContentPresenter Name="icon"
+								<ContentPresenter Name="icon"
                                                   Content="{Binding Icon}"
                                                   Width="16"
                                                   Height="16"
                                                   Margin="0 0 5 1"
                                                   VerticalAlignment="Center"
                                                   Focusable="False">
-                            		<ContentPresenter.ContentTemplate>
-                                		<DataTemplate>
-                            				<Image Source="{Binding}"/>
-                            			</DataTemplate>
-                                	</ContentPresenter.ContentTemplate>
-                            	</ContentPresenter>
+									<ContentPresenter.ContentTemplateSelector>
+										<Default:IconDataTemplateSelector>
+											<Default:IconDataTemplateSelector.ImageDataTemplate>
+												<DataTemplate>
+													<Image Source="{Binding}"/>
+												</DataTemplate>
+											</Default:IconDataTemplateSelector.ImageDataTemplate>
+											<Default:IconDataTemplateSelector.VectorDataTemplate>
+												<DataTemplate>
+													<Viewbox Width="16" Height="16">
+														<Rectangle Width="16" Height="16" Fill="{Binding}" />
+													</Viewbox>
+												</DataTemplate>
+											</Default:IconDataTemplateSelector.VectorDataTemplate>
+										</Default:IconDataTemplateSelector>
+									</ContentPresenter.ContentTemplateSelector>
+								</ContentPresenter>
                                 <Border Name="textContainer"
                                         Background="{TemplateBinding TextBackground}">
                                     <ContentPresenter Content="{Binding Text}"
