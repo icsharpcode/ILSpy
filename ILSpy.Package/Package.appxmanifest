@@ -9,13 +9,13 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="ICSharpCode.ILSpy"
-    Publisher="CN=ICSharpCode"
+    Name="17310ICSharpCodeTeam.ILSpy"
+    Publisher="CN=2A240D0E-77E6-4732-9B57-AD934336A43E"
     Version="$INSERTMAJORVERSION$.$INSERTMINORVERSION$.$INSERTREVISION$.0" />
 
   <Properties>
     <DisplayName>ILSpy</DisplayName>
-    <PublisherDisplayName>CN=ICSharpCode Team</PublisherDisplayName>
+    <PublisherDisplayName>ICSharpCode Team</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
   </Properties>
 
