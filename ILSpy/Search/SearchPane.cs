@@ -30,6 +30,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -76,6 +77,7 @@ namespace ICSharpCode.ILSpy
 			searchModeComboBox.Items.Add(new { Image = Images.Event, Name = "Event" });
 			searchModeComboBox.Items.Add(new { Image = Images.Literal, Name = "Constant" });
 			searchModeComboBox.Items.Add(new { Image = Images.Library, Name = "Metadata Token" });
+			searchModeComboBox.Items.Add(new { Image = Images.Resource, Name = "Resource" });
 
 			ContextMenuProvider.Add(listBox);
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
@@ -262,8 +264,13 @@ namespace ICSharpCode.ILSpy
 
 		void JumpToSelectedItem()
 		{
-			if (listBox.SelectedItem is SearchResult result) {
-				MainWindow.Instance.JumpToReference(result.Member);
+			switch(listBox.SelectedItem) {
+				case MemberSearchResult memberSearchResult:
+					MainWindow.Instance.JumpToReference(memberSearchResult.Member);
+					break;
+				case ResourceSearchResult resourceSearchResult:
+					MainWindow.Instance.JumpToReference(resourceSearchResult.Resource);
+					break;
 			}
 		}
 		
@@ -342,6 +349,9 @@ namespace ICSharpCode.ILSpy
 
 					if (searchTerm[0].StartsWith("@", StringComparison.Ordinal))
 						return new MetadataTokenSearchStrategy(language, apiVisibility, resultQueue, searchTerm[0].Substring(1));
+
+					if (searchTerm[0].StartsWith("r:", StringComparison.Ordinal))
+						return new ResourceSearchStrategy(language, apiVisibility, resultQueue, searchTerm[0].Substring(2));
 				}
 
 				switch (searchMode)
@@ -364,6 +374,8 @@ namespace ICSharpCode.ILSpy
 						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Event);
 					case SearchMode.Token:
 						return new MetadataTokenSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
+					case SearchMode.Resource:
+						return new ResourceSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
 				}
 
 				return null;
@@ -371,24 +383,33 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	public sealed class SearchResult : IMemberTreeNode
+	public sealed class MemberSearchResult : SearchResult, IMemberTreeNode
+	{
+		public IEntity Member { get; set; }
+	}
+
+	public sealed class ResourceSearchResult : SearchResult
+	{
+		public Resource Resource { get; set; }
+	}
+
+	public class SearchResult
 	{
 		public static readonly System.Collections.Generic.IComparer<SearchResult> Comparer = new SearchResultComparer();
-		
-		public IEntity Member { get; set; }
+
 		public float Fitness { get; set; }
-		
+	
 		public string Location { get; set; }
 		public string Name { get; set; }
 		public object ToolTip { get; set; }
 		public ImageSource Image { get; set; }
 		public ImageSource LocationImage { get; set; }
-		
+
 		public override string ToString()
 		{
 			return Name;
 		}
-		
+
 		class SearchResultComparer : System.Collections.Generic.IComparer<SearchResult>
 		{
 			public int Compare(SearchResult x, SearchResult y)
@@ -421,6 +442,7 @@ namespace ICSharpCode.ILSpy
 		Property,
 		Event,
 		Literal,
-		Token
+		Token,
+		Resource
 	}
 }

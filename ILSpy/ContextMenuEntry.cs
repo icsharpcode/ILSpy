@@ -77,7 +77,7 @@ namespace ICSharpCode.ILSpy
 			ReferenceSegment reference;
 			if (textView != null)
 				reference = textView.GetReferenceSegmentAtMousePosition();
-			else if (listBox?.SelectedItem is SearchResult result)
+			else if (listBox?.SelectedItem is MemberSearchResult result)
 				reference = new ReferenceSegment { Reference = result.Member };
 			else
 				reference = null;

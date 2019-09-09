@@ -171,6 +171,7 @@
     <Compile Include="LoadedAssemblyExtensions.cs" />
     <Compile Include="LoadedNugetPackage.cs" />
     <Compile Include="Search\MemberSearchStrategy.cs" />
+    <Compile Include="Search\ResourceSearchStrategy.cs" />
     <Compile Include="Search\MetadataTokenSearchStrategy.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="NavigationHistory.cs" />

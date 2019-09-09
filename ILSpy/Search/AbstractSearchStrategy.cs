@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Media;
@@ -142,6 +143,12 @@ namespace ICSharpCode.ILSpy.Search
 			resultQueue.TryAdd(result);
 		}
 
+		protected void OnFoundResult(Resource resource)
+		{
+			var result = ResultFromResource(resource);
+			resultQueue.TryAdd(result);
+		}
+
 		Regex SafeNewRegex(string unsafePattern)
 		{
 			try {
@@ -154,7 +161,7 @@ namespace ICSharpCode.ILSpy.Search
 		SearchResult ResultFromEntity(IEntity item)
 		{
 			var declaringType = item.DeclaringTypeDefinition;
-			return new SearchResult {
+			return new MemberSearchResult {
 				Member = item,
 				Fitness = CalculateFitness(item),
 				Image = GetIcon(item),
@@ -162,6 +169,18 @@ namespace ICSharpCode.ILSpy.Search
 				LocationImage = declaringType != null ? TypeTreeNode.GetIcon(declaringType) : Images.Namespace,
 				Location = declaringType != null ? language.TypeToString(declaringType, includeNamespace: true) : item.Namespace,
 				ToolTip = item.ParentModule.PEFile?.FileName
+			};
+		}
+
+		SearchResult ResultFromResource(Resource resource)
+		{
+			return new ResourceSearchResult {
+				Resource = resource,
+				Image = Images.Resource,
+				Name = resource.Name,
+				LocationImage = Images.Assembly,
+				Location = resource.Module.Name,
+				ToolTip = $"{resource.Name} ({resource.ResourceType}, {resource.Attributes & ManifestResourceAttributes.VisibilityMask})"
 			};
 		}
 
