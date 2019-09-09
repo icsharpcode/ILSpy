@@ -9,7 +9,7 @@ pr:
 
 variables:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
-  BuildPlatform: x86
+  BuildPlatform: Any CPU
 
 jobs:
 - job: Build
