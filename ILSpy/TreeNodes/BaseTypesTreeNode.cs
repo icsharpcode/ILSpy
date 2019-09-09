@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text => "Base Types";
 
-		public override object Icon => Images.SuperTypes;
+		public override object Icon => Images.GetIcon(Images.SuperTypes);
 
 		protected override void LoadChildren()
 		{

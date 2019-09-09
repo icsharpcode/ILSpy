@@ -63,8 +63,8 @@ namespace ICSharpCode.ILSpy
 		public static readonly object AssemblyWarning = Load("AssemblyWarning");
 		public static readonly object AssemblyLoading = Load("FindAssembly");
 
-		public static readonly BitmapImage Library = LoadBitmap("Library");
-		public static readonly BitmapImage Namespace = LoadBitmap("NameSpace");
+		public static readonly object Library = Load("Library");
+		public static readonly object Namespace = Load("Namespace");
 
 		public static readonly BitmapImage ReferenceFolderOpen = LoadBitmap("ReferenceFolder.Open");
 		public static readonly BitmapImage ReferenceFolderClosed = LoadBitmap("ReferenceFolder.Closed");
@@ -72,40 +72,40 @@ namespace ICSharpCode.ILSpy
 		public static readonly BitmapImage SubTypes = LoadBitmap("SubTypes");
 		public static readonly BitmapImage SuperTypes = LoadBitmap("SuperTypes");
 
-		public static readonly BitmapImage FolderOpen = LoadBitmap("Folder.Open");
-		public static readonly BitmapImage FolderClosed = LoadBitmap("Folder.Closed");
+		public static readonly object FolderOpen = Load("Folder.Open");
+		public static readonly object FolderClosed = Load("Folder.Closed");
 
-		public static readonly BitmapImage Resource = LoadBitmap("Resource");
-		public static readonly BitmapImage ResourceImage = LoadBitmap("ResourceImage");
+		public static readonly object Resource = Load("Resource");
+		public static readonly object ResourceImage = Load("ResourceImage");
 		public static readonly BitmapImage ResourceResourcesFile = LoadBitmap("ResourceResourcesFile");
-		public static readonly BitmapImage ResourceXml = LoadBitmap("ResourceXml");
-		public static readonly BitmapImage ResourceXsd = LoadBitmap("ResourceXsd");
-		public static readonly BitmapImage ResourceXslt = LoadBitmap("ResourceXslt");
+		public static readonly object ResourceXml = Load("ResourceXml");
+		public static readonly object ResourceXsd = Load("ResourceXslt");
+		public static readonly object ResourceXslt = Load("ResourceXslt");
 
 		public static readonly object Class = Load("Class");
 		public static readonly object Struct = Load("Struct");
 		public static readonly object Interface = Load("Interface");
 		public static readonly object Delegate = Load("Delegate");
 		public static readonly object Enum = Load("Enum");
-		public static readonly BitmapImage StaticClass = LoadBitmap("StaticClass");
+		public static readonly object StaticClass = Load("StaticClass");
 
 
-		public static readonly BitmapImage Field = LoadBitmap("Field");
-		public static readonly BitmapImage FieldReadOnly = LoadBitmap("FieldReadOnly");
-		public static readonly BitmapImage Literal = LoadBitmap("Literal");
-		public static readonly BitmapImage EnumValue = LoadBitmap("EnumValue");
+		public static readonly object Field = Load("Field");
+		public static readonly object FieldReadOnly = Load("Field");
+		public static readonly object Literal = Load("Literal");
+		public static readonly object EnumValue = Load("EnumValue");
 
-		public static readonly BitmapImage Method = LoadBitmap("Method");
-		public static readonly BitmapImage Constructor = LoadBitmap("Constructor");
-		public static readonly BitmapImage VirtualMethod = LoadBitmap("VirtualMethod");
-		public static readonly BitmapImage Operator = LoadBitmap("Operator");
-		public static readonly BitmapImage ExtensionMethod = LoadBitmap("ExtensionMethod");
-		public static readonly BitmapImage PInvokeMethod = LoadBitmap("PInvokeMethod");
+		public static readonly object Method = Load("Method");
+		public static readonly object Constructor = Load("Method");
+		public static readonly object VirtualMethod = Load("Method");
+		public static readonly object Operator = Load("Operator");
+		public static readonly object ExtensionMethod = Load("ExtensionMethod");
+		public static readonly object PInvokeMethod = Load("Method");
 
-		public static readonly BitmapImage Property = LoadBitmap("Property");
-		public static readonly BitmapImage Indexer = LoadBitmap("Indexer");
+		public static readonly object Property = Load("Property");
+		public static readonly object Indexer = Load("Indexer");
 
-		public static readonly BitmapImage Event = LoadBitmap("Event");
+		public static readonly object Event = Load("Event");
 
 		private static readonly object OverlayProtected = Load("OverlayProtected");
 		private static readonly object OverlayInternal = Load("OverlayInternal");

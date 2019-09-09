@@ -69,7 +69,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text => this.Language.TypeToString(type, includeNamespace: true) + handle.ToSuffixString();
 
-		public override object Icon => isInterface ? Images.Interface : Images.Class;
+		public override object Icon => 
+			isInterface ? Images.GetIcon(Images.Interface) : Images.GetIcon(Images.Class);
 
 		protected override void LoadChildren()
 		{

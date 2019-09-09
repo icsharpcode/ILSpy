@@ -312,19 +312,41 @@
     <Page Include="Controls\SearchBoxStyle.xaml" />
     <Page Include="CreateListDialog.xaml" />
     <Page Include="DebugSteps.xaml" />
+    <Page Include="Images\Assembly.xaml" />
+    <Page Include="Images\AssemblyList.xaml" />
+    <Page Include="Images\AssemblyListGAC.xaml" />
+    <Page Include="Images\AssemblyWarning.xaml" />
     <Page Include="Images\Back.xaml" />
     <Page Include="Images\Class.xaml" />
     <Page Include="Images\CollapseAll.xaml" />
     <Page Include="Images\Delegate.xaml" />
     <Page Include="Images\Enum.xaml" />
+    <Page Include="Images\EnumValue.xaml" />
+    <Page Include="Images\Event.xaml" />
+    <Page Include="Images\ExtensionMethod.xaml" />
+    <Page Include="Images\Field.xaml" />
+    <Page Include="Images\Folder.Closed.xaml" />
+    <Page Include="Images\Folder.Open.xaml" />
     <Page Include="Images\Forward.xaml" />
+    <Page Include="Images\Indexer.xaml" />
     <Page Include="Images\Interface.xaml" />
+    <Page Include="Images\Library.xaml" />
+    <Page Include="Images\Literal.xaml" />
+    <Page Include="Images\Method.xaml" />
+    <Page Include="Images\Namespace.xaml" />
     <Page Include="Images\Open.xaml" />
+    <Page Include="Images\Operator.xaml" />
     <Page Include="Images\OverlayInternal.xaml" />
     <Page Include="Images\OverlayPrivate.xaml" />
     <Page Include="Images\OverlayProtected.xaml" />
     <Page Include="Images\OverlayStatic.xaml" />
+    <Page Include="Images\Property.xaml" />
     <Page Include="Images\Refresh.xaml" />
+    <Page Include="Images\Resource.xaml" />
+    <Page Include="Images\ResourceImage.xaml" />
+    <Page Include="Images\ResourceXml.xaml" />
+    <Page Include="Images\ResourceXslt.xaml" />
+    <Page Include="Images\Save.xaml" />
     <Page Include="Images\Search.xaml" />
     <Page Include="Images\Sort.xaml" />
     <Page Include="Images\Struct.xaml" />
@@ -412,6 +434,12 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\AssemblyList.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\AssemblyListGAC.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Back.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -432,16 +460,49 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\EnumValue.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Event.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\ExtensionMethod.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Field.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Folder.Closed.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Folder.Open.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Forward.xaml">
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Indexer.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\Interface.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\Library.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Literal.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Method.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Open.xaml">
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Operator.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\OverlayInternal.xaml">
@@ -460,8 +521,26 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\Property.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Refresh.xaml">
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Resource.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\ResourceImage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\ResourceXml.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\ResourceXslt.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Save.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\Search.xaml">

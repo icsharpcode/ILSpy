@@ -20,7 +20,7 @@ using System;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Windows.Controls;
-
+using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.TreeView;
@@ -222,11 +222,15 @@ namespace ICSharpCode.ILSpy
 						menuItem.Header = MainWindow.GetResourceString( entryPair.Metadata.Header);
 						menuItem.InputGestureText = entryPair.Metadata.InputGestureText;
 						if (!string.IsNullOrEmpty(entryPair.Metadata.Icon)) {
-							menuItem.Icon = new Image {
-								Width = 16,
-								Height = 16,
-								Source = Images.LoadImage(entry, entryPair.Metadata.Icon)
-							};
+							object image = Images.Load(entryPair.Value, entryPair.Metadata.Icon);
+							if (!(image is Viewbox)) {
+								image = new Image {
+									Width = 16,
+									Height = 16,
+									Source = (ImageSource)image
+								};
+							}
+							menuItem.Icon = image;
 						}
 						if (entryPair.Value.IsEnabled(context)) {
 							menuItem.Click += delegate { entry.Execute(context); };
