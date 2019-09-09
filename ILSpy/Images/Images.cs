@@ -325,7 +325,10 @@ namespace ICSharpCode.ILSpy
 			protected void PreloadPublicIconToCache(T icon, object image)
 			{
 				var iconKey = (icon, AccessOverlayIcon.Public, false);
-				cache.Add(iconKey, image);
+				if (image is ImageSource img)
+					cache.Add(iconKey, img);
+				else
+					cache.Add(iconKey, new DrawingImage((DrawingGroup)image));
 			}
 
 			public object GetIcon(T icon, AccessOverlayIcon overlay, bool isStatic)
