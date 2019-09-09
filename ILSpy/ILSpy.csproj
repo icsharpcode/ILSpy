@@ -313,9 +313,12 @@
     <Page Include="CreateListDialog.xaml" />
     <Page Include="DebugSteps.xaml" />
     <Page Include="Images\Back.xaml" />
+    <Page Include="Images\Class.xaml" />
     <Page Include="Images\CollapseAll.xaml" />
     <Page Include="Images\Forward.xaml" />
     <Page Include="Images\Open.xaml" />
+    <Page Include="Images\OverlayInternal.xaml" />
+    <Page Include="Images\OverlayPrivate.xaml" />
     <Page Include="Images\Refresh.xaml" />
     <Page Include="Images\Search.xaml" />
     <Page Include="Images\Sort.xaml" />
@@ -395,7 +398,19 @@
 
   <ItemGroup>
     <Page Update="@(Page)" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Update="Images\Assembly.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\AssemblyWarning.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Back.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Class.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -408,6 +423,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\Open.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\OverlayInternal.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\OverlayPrivate.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -1,0 +1,7 @@
+<DrawingGroup xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+  <DrawingGroup.Children>
+    <GeometryDrawing Brush="#00000000" Geometry="M16 16h-16v-16h16v16z" />
+    <GeometryDrawing Brush="#FFF6F6F6" Geometry="m 6.9993696 12.5 -1.393 1.045 0.737 2.455 h -1.677 l -1.167 -0.875 -1.167 0.875 H 0.65536964 L 1.3913696 13.545 -6.3040099e-4 12.5 V 11 H 2.1543516 L 2.7540006 8.9998111 4.2433696 9 l 0.6 2 h 2.156 z" />
+    <GeometryDrawing Brush="#FF424242" Geometry="m 4.9993696 15 -1.5 -1.125 -1.5 1.125 0.551 -1.837 L 0.99936964 12 H 2.8993696 l 0.6 -2 0.6 2 h 1.9 l -1.551 1.163 z" />
+  </DrawingGroup.Children>
+</DrawingGroup>
