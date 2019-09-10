@@ -11,7 +11,7 @@ Decompiler Frontends
 
 Aside from the WPF UI ILSpy (downloadable via Releases, see also [plugins](https://github.com/icsharpcode/ILSpy/wiki/Plugins)), the following other frontends are available:
 
-* Visual Studio 2017 extension [marketplace](https://marketplace.visualstudio.com/items?itemName=SharpDevelopTeam.ILSpy)
+* Visual Studio 2017/2019 extension [marketplace](https://marketplace.visualstudio.com/items?itemName=SharpDevelopTeam.ILSpy)
 * Visual Studio Code Extension [repository](https://github.com/icsharpcode/ilspy-vscode) | [marketplace](https://marketplace.visualstudio.com/items?itemName=icsharpcode.ilspy-vscode)
 * [ICSharpCode.Decompiler](https://www.nuget.org/packages/ICSharpCode.Decompiler/) NuGet for your own projects
 * Linux/Mac/Windows ILSpy UI based on [Avalonia](http://www.avaloniaui.net/) - check out https://github.com/icsharpcode/AvaloniaILSpy
