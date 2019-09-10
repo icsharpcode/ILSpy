@@ -322,6 +322,8 @@
     <Page Include="Images\Open.xaml" />
     <Page Include="Images\OverlayInternal.xaml" />
     <Page Include="Images\OverlayPrivate.xaml" />
+    <Page Include="Images\OverlayProtected.xaml" />
+    <Page Include="Images\OverlayStatic.xaml" />
     <Page Include="Images\Refresh.xaml" />
     <Page Include="Images\Search.xaml" />
     <Page Include="Images\Sort.xaml" />
@@ -447,6 +449,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\OverlayPrivate.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\OverlayProtected.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\OverlayStatic.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

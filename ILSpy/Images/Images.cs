@@ -215,7 +215,6 @@ namespace ICSharpCode.ILSpy
 				PreloadPublicIconToCache(TypeIcon.Struct, Images.Struct);
 				PreloadPublicIconToCache(TypeIcon.Interface, Images.Interface);
 				PreloadPublicIconToCache(TypeIcon.Delegate, Images.Delegate);
-				PreloadPublicIconToCache(TypeIcon.StaticClass, Images.StaticClass);
 			}
 
 			protected override object GetBaseImage(TypeIcon icon)
@@ -236,9 +235,6 @@ namespace ICSharpCode.ILSpy
 						break;
 					case TypeIcon.Delegate:
 						baseImage = Images.Delegate;
-						break;
-					case TypeIcon.StaticClass:
-						baseImage = Images.StaticClass;
 						break;
 					default:
 						throw new ArgumentOutOfRangeException(nameof(icon), $"TypeIcon.{icon} is not supported!");
