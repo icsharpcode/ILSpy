@@ -315,13 +315,17 @@
     <Page Include="Images\Back.xaml" />
     <Page Include="Images\Class.xaml" />
     <Page Include="Images\CollapseAll.xaml" />
+    <Page Include="Images\Delegate.xaml" />
+    <Page Include="Images\Enum.xaml" />
     <Page Include="Images\Forward.xaml" />
+    <Page Include="Images\Interface.xaml" />
     <Page Include="Images\Open.xaml" />
     <Page Include="Images\OverlayInternal.xaml" />
     <Page Include="Images\OverlayPrivate.xaml" />
     <Page Include="Images\Refresh.xaml" />
     <Page Include="Images\Search.xaml" />
     <Page Include="Images\Sort.xaml" />
+    <Page Include="Images\Struct.xaml" />
     <Page Include="MainWindow.xaml" />
     <Page Include="OpenFromGacDialog.xaml" />
     <Page Include="OpenListDialog.xaml" />
@@ -418,7 +422,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\Delegate.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Enum.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Forward.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Interface.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -443,6 +459,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\Sort.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Struct.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

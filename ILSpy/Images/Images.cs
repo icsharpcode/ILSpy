@@ -83,10 +83,10 @@ namespace ICSharpCode.ILSpy
 		public static readonly BitmapImage ResourceXslt = LoadBitmap("ResourceXslt");
 
 		public static readonly object Class = Load("Class");
-		public static readonly BitmapImage Struct = LoadBitmap("Struct");
-		public static readonly BitmapImage Interface = LoadBitmap("Interface");
-		public static readonly BitmapImage Delegate = LoadBitmap("Delegate");
-		public static readonly BitmapImage Enum = LoadBitmap("Enum");
+		public static readonly object Struct = Load("Struct");
+		public static readonly object Interface = Load("Interface");
+		public static readonly object Delegate = Load("Delegate");
+		public static readonly object Enum = Load("Enum");
 		public static readonly BitmapImage StaticClass = LoadBitmap("StaticClass");
 
 
