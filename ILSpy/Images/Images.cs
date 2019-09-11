@@ -66,8 +66,7 @@ namespace ICSharpCode.ILSpy
 		public static readonly object Library = Load("Library");
 		public static readonly object Namespace = Load("Namespace");
 
-		public static readonly BitmapImage ReferenceFolderOpen = LoadBitmap("ReferenceFolder.Open");
-		public static readonly BitmapImage ReferenceFolderClosed = LoadBitmap("ReferenceFolder.Closed");
+		public static readonly object ReferenceFolder = Load("ReferenceFolder");
 
 		public static readonly BitmapImage SubTypes = LoadBitmap("SubTypes");
 		public static readonly BitmapImage SuperTypes = LoadBitmap("SuperTypes");
@@ -386,16 +385,24 @@ namespace ICSharpCode.ILSpy
 			{
 				var group = new DrawingGroup();
 
-				if (baseImage is ImageSource img)
-					group.Children.Add(new ImageDrawing(img, iconRect));
-				else
-					group.Children.Add((DrawingGroup)baseImage);
+				Drawing baseDrawing;
+				if (baseImage is ImageSource img) {
+					baseDrawing = new ImageDrawing(img, iconRect);
+				} else {
+					baseDrawing = (DrawingGroup)baseImage;
+				}
 
 				if (overlay != null) {
+					var nestedGroup = new DrawingGroup { Transform = new ScaleTransform(0.8, 0.8) };
+					nestedGroup.Children.Add(baseDrawing);
+					group.Children.Add(nestedGroup);
+
 					if (overlay is ImageSource overlayImage)
 						group.Children.Add(new ImageDrawing(overlayImage, iconRect));
 					else
 						group.Children.Add((DrawingGroup)overlay);
+				} else {
+					group.Children.Add(baseDrawing);
 				}
 
 				if (isStatic) {

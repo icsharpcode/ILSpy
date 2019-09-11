@@ -341,6 +341,7 @@
     <Page Include="Images\OverlayProtected.xaml" />
     <Page Include="Images\OverlayStatic.xaml" />
     <Page Include="Images\Property.xaml" />
+    <Page Include="Images\ReferenceFolder.xaml" />
     <Page Include="Images\Refresh.xaml" />
     <Page Include="Images\Resource.xaml" />
     <Page Include="Images\ResourceImage.xaml" />
@@ -376,8 +377,7 @@
     <Resource Include="Images\Open.png" />
     <Resource Include="Images\Assembly.png" />
     <Resource Include="Images\Struct.png" />
-    <Resource Include="Images\ReferenceFolder.Closed.png" />
-    <Resource Include="Images\ReferenceFolder.Open.png" />
+    <Resource Include="Images\ReferenceFolder.png" />
     <Resource Include="Images\Event.png" />
     <Resource Include="Images\ExtensionMethod.png" />
     <Resource Include="Images\Indexer.png" />
@@ -522,6 +522,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\Property.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\ReferenceFolder.xaml">
+      <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\Refresh.xaml">

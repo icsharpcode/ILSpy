@@ -1,5 +1,5 @@
 <DrawingGroup xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
-  <DrawingGroup.Children>
+	<DrawingGroup.Children>
     <GeometryDrawing Brush="#00FFFFFF" Geometry="F1M16,16L0,16 0,0 16,0z" />
     <GeometryDrawing Brush="#FFF6F6F6" Geometry="F1M7,16L16,16 16,7 7,7z" />
     <GeometryDrawing Brush="#FF414141" Geometry="F1M14,9L9,9 9,14 14,14z M15,15L8,15 8,8 15,8z" />

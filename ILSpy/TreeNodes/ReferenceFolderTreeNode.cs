@@ -46,11 +46,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 		
 		public override object Icon {
-			get { return Images.ReferenceFolderClosed; }
-		}
-		
-		public override object ExpandedIcon {
-			get { return Images.ReferenceFolderOpen; }
+			get { return Images.GetIcon(Images.ReferenceFolder); }
 		}
 		
 		protected override void LoadChildren()
