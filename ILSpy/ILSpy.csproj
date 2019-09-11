@@ -338,7 +338,9 @@
     <Page Include="Images\Operator.xaml" />
     <Page Include="Images\OverlayInternal.xaml" />
     <Page Include="Images\OverlayPrivate.xaml" />
+    <Page Include="Images\OverlayPrivateProtected.xaml" />
     <Page Include="Images\OverlayProtected.xaml" />
+    <Page Include="Images\OverlayProtectedInternal.xaml" />
     <Page Include="Images\OverlayStatic.xaml" />
     <Page Include="Images\Property.xaml" />
     <Page Include="Images\ReferenceFolder.xaml" />
@@ -513,7 +515,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\OverlayPrivateProtected.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\OverlayProtected.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\OverlayProtectedInternal.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

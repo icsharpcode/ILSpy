@@ -392,17 +392,19 @@ namespace ICSharpCode.ILSpy
 					baseDrawing = (DrawingGroup)baseImage;
 				}
 
-				if (overlay != null) {
+				if (overlay != null || isStatic) {
 					var nestedGroup = new DrawingGroup { Transform = new ScaleTransform(0.8, 0.8) };
 					nestedGroup.Children.Add(baseDrawing);
 					group.Children.Add(nestedGroup);
+				} else {
+					group.Children.Add(baseDrawing);
+				}
 
+				if (overlay != null) {
 					if (overlay is ImageSource overlayImage)
 						group.Children.Add(new ImageDrawing(overlayImage, iconRect));
 					else
 						group.Children.Add((DrawingGroup)overlay);
-				} else {
-					group.Children.Add(baseDrawing);
 				}
 
 				if (isStatic) {
