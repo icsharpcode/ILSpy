@@ -371,7 +371,6 @@
 
   <ItemGroup>
     <Resource Include="Images\Class.png" />
-    <Resource Include="Images\StaticClass.png" />
     <Resource Include="Images\Delegate.png" />
     <Resource Include="Images\Enum.png" />
     <Resource Include="Images\Field.png" />

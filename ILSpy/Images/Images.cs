@@ -86,8 +86,6 @@ namespace ICSharpCode.ILSpy
 		public static readonly object Interface = Load("Interface");
 		public static readonly object Delegate = Load("Delegate");
 		public static readonly object Enum = Load("Enum");
-		public static readonly object StaticClass = Load("StaticClass");
-
 
 		public static readonly object Field = Load("Field");
 		public static readonly object FieldReadOnly = Load("Field");
