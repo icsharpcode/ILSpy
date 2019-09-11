@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text => Resources.DerivedTypes;
 
-		public override object Icon => Images.SubTypes;
+		public override object Icon => Images.GetIcon(Images.SubTypes);
 
 		protected override void LoadChildren()
 		{

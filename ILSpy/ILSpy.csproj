@@ -347,12 +347,15 @@
     <Page Include="Images\Refresh.xaml" />
     <Page Include="Images\Resource.xaml" />
     <Page Include="Images\ResourceImage.xaml" />
+    <Page Include="Images\ResourceResourcesFile.xaml" />
     <Page Include="Images\ResourceXml.xaml" />
     <Page Include="Images\ResourceXslt.xaml" />
     <Page Include="Images\Save.xaml" />
     <Page Include="Images\Search.xaml" />
     <Page Include="Images\Sort.xaml" />
     <Page Include="Images\Struct.xaml" />
+    <Page Include="Images\SubTypes.xaml" />
+    <Page Include="Images\SuperTypes.xaml" />
     <Page Include="MainWindow.xaml" />
     <Page Include="OpenFromGacDialog.xaml" />
     <Page Include="OpenListDialog.xaml" />
@@ -548,6 +551,9 @@
     <Page Update="Images\ResourceImage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\ResourceResourcesFile.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\ResourceXml.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -567,6 +573,12 @@
     </Page>
     <Page Update="Images\Struct.xaml">
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\SubTypes.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\SuperTypes.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Options\DecompilerSettingsPanel.xaml">
