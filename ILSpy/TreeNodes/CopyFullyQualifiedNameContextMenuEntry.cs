@@ -7,7 +7,7 @@ using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	[ExportContextMenuEntry(Header = nameof(Resources.CopyName), Icon = "images/Copy.png", Order = 9999)]
+	[ExportContextMenuEntry(Header = nameof(Resources.CopyName), Icon = "images/Copy", Order = 9999)]
 	public class CopyFullyQualifiedNameContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

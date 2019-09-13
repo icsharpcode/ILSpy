@@ -319,7 +319,9 @@
     <Page Include="Images\Back.xaml" />
     <Page Include="Images\Class.xaml" />
     <Page Include="Images\CollapseAll.xaml" />
+    <Page Include="Images\Copy.xaml" />
     <Page Include="Images\Delegate.xaml" />
+    <Page Include="Images\Delete.xaml" />
     <Page Include="Images\Enum.xaml" />
     <Page Include="Images\EnumValue.xaml" />
     <Page Include="Images\Event.xaml" />
@@ -456,8 +458,14 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\Copy.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Delegate.xaml">
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Delete.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\Enum.xaml">
