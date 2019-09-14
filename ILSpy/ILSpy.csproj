@@ -327,6 +327,7 @@
     <Page Include="Images\Event.xaml" />
     <Page Include="Images\ExtensionMethod.xaml" />
     <Page Include="Images\Field.xaml" />
+    <Page Include="Images\FindAssembly.xaml" />
     <Page Include="Images\Folder.Closed.xaml" />
     <Page Include="Images\Folder.Open.xaml" />
     <Page Include="Images\Forward.xaml" />
@@ -354,10 +355,12 @@
     <Page Include="Images\ResourceXslt.xaml" />
     <Page Include="Images\Save.xaml" />
     <Page Include="Images\Search.xaml" />
+    <Page Include="Images\SearchMsdn.xaml" />
     <Page Include="Images\Sort.xaml" />
     <Page Include="Images\Struct.xaml" />
     <Page Include="Images\SubTypes.xaml" />
     <Page Include="Images\SuperTypes.xaml" />
+    <Page Include="Images\Warning.xaml" />
     <Page Include="MainWindow.xaml" />
     <Page Include="OpenFromGacDialog.xaml" />
     <Page Include="OpenListDialog.xaml" />
@@ -484,6 +487,10 @@
     <Page Update="Images\Field.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\FindAssembly.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Folder.Closed.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -574,6 +581,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\SearchMsdn.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Sort.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -586,6 +597,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\SuperTypes.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Warning.xaml">
+      <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Options\DecompilerSettingsPanel.xaml">
