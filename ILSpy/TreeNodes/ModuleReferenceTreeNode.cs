@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return moduleName + ((EntityHandle)handle).ToSuffixString(); }
 		}
 
-		public override object Icon => Images.GetIcon(Images.Library);
+		public override object Icon => Images.Library;
 
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{

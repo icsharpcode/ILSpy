@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return r.Name + ((System.Reflection.Metadata.EntityHandle)r.Handle).ToSuffixString(); }
 		}
 
-		public override object Icon => Images.GetIcon(Images.Assembly);
+		public override object Icon => Images.Assembly;
 
 		public override bool ShowExpander {
 			get {

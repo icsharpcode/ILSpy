@@ -46,7 +46,6 @@
     <Compile Include="EditTextBox.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="GeneralAdorner.cs" />
-    <Compile Include="IconDataTemplateSelector.cs" />
     <Compile Include="InsertMarker.cs" />
     <Compile Include="LinesRenderer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

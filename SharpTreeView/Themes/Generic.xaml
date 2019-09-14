@@ -257,24 +257,13 @@
                                                   Margin="0 0 5 1"
                                                   VerticalAlignment="Center"
                                                   Focusable="False">
-									<ContentPresenter.ContentTemplateSelector>
-										<Default:IconDataTemplateSelector>
-											<Default:IconDataTemplateSelector.ImageDataTemplate>
-												<DataTemplate>
-													<Image Source="{Binding}"/>
-												</DataTemplate>
-											</Default:IconDataTemplateSelector.ImageDataTemplate>
-											<Default:IconDataTemplateSelector.VectorDataTemplate>
-												<DataTemplate>
-													<Viewbox Width="16" Height="16">
-														<Rectangle Width="16" Height="16" Fill="{Binding}" />
-													</Viewbox>
-												</DataTemplate>
-											</Default:IconDataTemplateSelector.VectorDataTemplate>
-										</Default:IconDataTemplateSelector>
-									</ContentPresenter.ContentTemplateSelector>
+									<ContentPresenter.ContentTemplate>
+										<DataTemplate>
+											<Image Source="{Binding}"/>
+										</DataTemplate>
+									</ContentPresenter.ContentTemplate>
 								</ContentPresenter>
-                                <Border Name="textContainer"
+								<Border Name="textContainer"
                                         Background="{TemplateBinding TextBackground}">
                                     <ContentPresenter Content="{Binding Text}"
                                                       Margin="2 0 6 0"

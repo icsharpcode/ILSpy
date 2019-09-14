@@ -18,7 +18,6 @@
 
 using System;
 using System.Linq;
-using SRM = System.Reflection.Metadata;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
@@ -40,15 +39,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.parentAssembly = parentAssembly;
 			this.LazyLoading = true;
 		}
-		
-		public override object Text {
-			get { return Resources.References; }
-		}
-		
-		public override object Icon {
-			get { return Images.GetIcon(Images.ReferenceFolder); }
-		}
-		
+
+		public override object Text => Resources.References;
+
+		public override object Icon => Images.ReferenceFolder;
+
 		protected override void LoadChildren()
 		{
 			var metadata = module.Metadata;

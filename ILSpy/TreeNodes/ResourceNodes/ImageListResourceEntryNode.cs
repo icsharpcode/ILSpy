@@ -58,10 +58,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return key; }
 		}
 
-		public override object Icon
-		{
-			get { return Images.GetIcon(Images.ResourceImage); }
-		}
+		public override object Icon => Images.ResourceImage;
 
 		protected override void LoadChildren()
 		{

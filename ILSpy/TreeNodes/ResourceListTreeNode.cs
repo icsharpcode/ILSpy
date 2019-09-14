@@ -37,19 +37,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.LazyLoading = true;
 			this.module = module;
 		}
-		
-		public override object Text {
-			get { return Resources._Resources; }
-		}
-		
-		public override object Icon {
-			get { return Images.GetIcon(Images.FolderClosed); }
-		}
 
-		public override object ExpandedIcon {
-			get { return Images.GetIcon(Images.FolderOpen); }
-		}
-		
+		public override object Text => Resources._Resources;
+
+		public override object Icon => Images.FolderClosed;
+
+		public override object ExpandedIcon => Images.FolderOpen;
+
 		protected override void LoadChildren()
 		{
 			foreach (Resource r in module.Resources.OrderBy(m => m.Name, NaturalStringComparer.Instance))

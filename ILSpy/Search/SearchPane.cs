@@ -373,22 +373,41 @@ namespace ICSharpCode.ILSpy
 
 	public sealed class SearchResult : IMemberTreeNode
 	{
-		public static readonly System.Collections.Generic.IComparer<SearchResult> Comparer = new SearchResultComparer();
-		
+		object image;
+		object locationImage;
+
+		public static readonly IComparer<SearchResult> Comparer = new SearchResultComparer();
+
 		public IEntity Member { get; set; }
 		public float Fitness { get; set; }
-		
+
 		public string Location { get; set; }
 		public string Name { get; set; }
 		public object ToolTip { get; set; }
-		public object Image { get; set; }
-		public object LocationImage { get; set; }
-		
+
+		public object Image {
+			get {
+				if (image == null) {
+					image = AbstractSearchStrategy.GetIcon(Member);
+				}
+				return image;
+			}
+		}
+
+		public object LocationImage {
+			get {
+				if (locationImage == null) {
+					locationImage = Member.DeclaringTypeDefinition != null ? TypeTreeNode.GetIcon(Member.DeclaringTypeDefinition) : Images.Namespace;
+				}
+				return locationImage;
+			}
+		}
+
 		public override string ToString()
 		{
 			return Name;
 		}
-		
+
 		class SearchResultComparer : System.Collections.Generic.IComparer<SearchResult>
 		{
 			public int Compare(SearchResult x, SearchResult y)
