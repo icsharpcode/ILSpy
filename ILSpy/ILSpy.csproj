@@ -319,6 +319,7 @@
     <Page Include="Images\Back.xaml" />
     <Page Include="Images\Class.xaml" />
     <Page Include="Images\CollapseAll.xaml" />
+    <Page Include="Images\Constructor.xaml" />
     <Page Include="Images\Copy.xaml" />
     <Page Include="Images\Delegate.xaml" />
     <Page Include="Images\Delete.xaml" />
@@ -458,6 +459,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\CollapseAll.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Constructor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

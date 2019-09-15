@@ -93,7 +93,7 @@ namespace ICSharpCode.ILSpy
 		public static readonly ImageSource EnumValue = Load("EnumValue");
 
 		public static readonly ImageSource Method = Load("Method");
-		public static readonly ImageSource Constructor = Load("Method");
+		public static readonly ImageSource Constructor = Load("Constructor");
 		public static readonly ImageSource VirtualMethod = Load("Method");
 		public static readonly ImageSource Operator = Load("Operator");
 		public static readonly ImageSource ExtensionMethod = Load("ExtensionMethod");
