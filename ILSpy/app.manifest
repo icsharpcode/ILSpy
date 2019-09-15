@@ -51,7 +51,9 @@
        also set the 'EnableWindowsFormsHighDpiAutoResizing' setting to 'true' in their app.config. -->
   <application xmlns="urn:schemas-microsoft-com:asm.v3">
     <windowsSettings>
-      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true</dpiAware>
+		<!-- Enable per-monitor DPI awareness: https://github.com/Microsoft/WPF-Samples/tree/master/PerMonitorDPI -->
+		<dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2, PerMonitor</dpiAwareness>
+		<dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">True</dpiAware>
 		
 	  <!-- Enable long path support: https://blogs.msdn.microsoft.com/jeremykuhne/2016/07/30/net-4-6-2-and-long-paths-on-windows-10/ -->
       <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
