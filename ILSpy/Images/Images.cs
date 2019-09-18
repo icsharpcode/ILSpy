@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy
 		public static readonly ImageSource CurrentLine = LoadBitmap("CurrentLine");
 
 		public static readonly ImageSource ViewCode = LoadBitmap("ViewCode");
-		public static readonly ImageSource Save = LoadBitmap("SaveFile");
+		public static readonly ImageSource Save = Load("Save");
 		public static readonly ImageSource OK = LoadBitmap("OK");
 
 		public static readonly ImageSource Delete = LoadBitmap("Delete");

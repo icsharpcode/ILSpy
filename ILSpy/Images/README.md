@@ -38,14 +38,15 @@ Icons used in ILSpy:
 | OK                        |  x  |  x   |     | VS 2017 Icon Pack (StatusOK)                                                    |         |
 | Open                      |  x  |  x   |  x  | VS 2017 Icon Pack (Open)                                                        |         |
 | Operator                  |  x  |  x   |     | VS 2017 Icon Pack (Operator)                                                    |         |
-| OverlayCompilerControlled |     |      |  x  | TODO                                                                            |         |
+| OverlayCompilerControlled |     |      |  x  |                                                                                 | TODO    |
 | OverlayInternal           |  x  |  x   |     | based on VS 2017 Icon Pack (Friend)                                             |         |
 | OverlayPrivate            |  x  |  x   |     | extracted from VS 2017 Icon Pack (ActionPrivate)                                |         |
 | OverlayPrivateProtected   |  x  |  x   |     | combined OverlayPrivate and OverlayProtected                                    |         |
 | OverlayProtected          |  x  |  x   |     | extracted from VS 2017 Icon Pack (ActionProtected)                              |         |
 | OverlayProtectedInternal  |  x  |  x   |     | combined OverlayProtected and OverlayInternal                                   |         |
 | OverlayStatic             |  x  |  x   |     | custom                                                                          |         |
-| PrivateInternal           |  x  |  x   |     | combined OverlayPrivate and OverlayInternal                                     | TODO    |
+| PInvokeMethod             |     |      |  x  | old                                                                             | TODO    |
+| PrivateInternal           |  x  |  x   |     | combined OverlayPrivate and OverlayInternal                                     |         |
 | Property                  |  x  |  x   |     | VS 2017 Icon Pack (Property)                                                    |         |
 | PublicOnly                |  x  |  x   |     |                                                                                 |         |
 | ReferenceFolder           |  x  |  x   |     | combined VS 2017 Icon Pack (Reference) two times                                |         |
@@ -57,17 +58,17 @@ Icons used in ILSpy:
 | ResourceXsd               |     |      |  x  |                                                                                 | TODO    |
 | ResourceXsl               |     |      |  x  |                                                                                 | TODO    |
 | ResourceXslt              |  x  |  x   |     | VS 2017 Icon Pack (XSLTTemplate)                                                |         |
-| Save                      |     |      |     | VS 2017 Icon Pack (Save)                                                        |         |
-| Search                    |     |      |     | VS 2017 Icon Pack (Search)                                                      |         |
-| SearchMsdn                |     |      |     | based on VS 2017 Icon Pack (Search) + Microsoft Logo                            |         |
-| ShowAll                   |     |      |  x  | accessibility icon mash-up                                                      | TODO    |
-| Sort                      |     |  x   |  x  | VS 2017 Icon Pack (SortAscending)                                               |         |
-| Struct                    | x   |  x   |  x  | VS 2017 Icon Pack (Structure)                                                   |         |
-| SubTypes                  | x   |  x   |     |                                                                                 |         |
-| SuperTypes                | x   |  x   |     |                                                                                 |         |
-| ViewCode                  | x   |  x   |     |                                                                                 |         |
-| VirtualMethod             |     |  x   |  x  | old                                                                             | TODO    |
-| Warning                   |     |  x   |     | VS 2017 Icon Pack (Warning)                                                     |         |
+| Save                      |  x  |  x   |     | VS 2017 Icon Pack (Save)                                                        |         |
+| Search                    |  x  |  x   |     | VS 2017 Icon Pack (Search)                                                      |         |
+| SearchMsdn                |  x  |  x   |     | based on VS 2017 Icon Pack (Search) + Microsoft Logo                            |         |
+| ShowAll                   |  x  |  x   |     | combined PublicOnly, OverlayPrivate, OverlayProtected, OverlayInternal          |         |
+| Sort                      |  x  |  x   |  x  | VS 2017 Icon Pack (SortAscending)                                               |         |
+| Struct                    |  x  |  x   |  x  | VS 2017 Icon Pack (Structure)                                                   |         |
+| SubTypes                  |  x  |  x   |     |                                                                                 |         |
+| SuperTypes                |  x  |  x   |     |                                                                                 |         |
+| ViewCode                  |  x  |  x   |     |                                                                                 |         |
+| VirtualMethod             |     |      |  x  | old                                                                             | TODO    |
+| Warning                   |  x  |  x   |     | VS 2017 Icon Pack (StatusWarning)                                               |         |
 
 Note: All XAML icons from VS 2017 Icon Pack are modified to not include a `Viewbox` XAML root element. We always use a `Drawing`-derived root element.
 Note: When changing an icon, start with SVG and use https://github.com/BerndK/SvgToXaml to generate the XAML. The result is much better XAML than what Inkscape produces.

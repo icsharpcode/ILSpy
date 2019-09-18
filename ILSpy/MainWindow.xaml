@@ -82,13 +82,13 @@
 			<!-- 'Open' toolbar category is inserted here -->
 			<Separator />
 			<CheckBox IsChecked="{Binding FilterSettings.ApiVisPublicOnly}" ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
-				<Image Width="16" Height="16" Source="Images/PublicOnly.png" />
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/PublicOnly}" />
 			</CheckBox>
 			<CheckBox IsChecked="{Binding FilterSettings.ApiVisPublicAndInternal}" ToolTip="{x:Static properties:Resources.ShowInternalTypesMembers}">
-				<Image Width="16" Height="16" Source="Images/PrivateInternal.png" />
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/PrivateInternal}" />
 			</CheckBox>
 			<CheckBox IsChecked="{Binding FilterSettings.ApiVisAll}" ToolTip="{x:Static properties:Resources.ShowAllTypesAndMembers}">
-				<Image Width="16" Height="16" Source="Images/ShowAll.png" />
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowAll}" />
 			</CheckBox>
 			<Separator />
 			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100" MaxDropDownHeight="Auto"

@@ -125,6 +125,7 @@
     <Compile Include="Controls\ExtensionMethods.cs" />
     <Compile Include="Controls\SearchBox.cs" />
     <Compile Include="Controls\SortableGridViewColumn.cs" />
+    <Compile Include="Controls\XamlResourceExtension.cs" />
     <Compile Include="CreateListDialog.xaml.cs">
       <DependentUpon>CreateListDialog.xaml</DependentUpon>
     </Compile>
@@ -256,7 +257,6 @@
     <Resource Include="Images\AssemblyListGAC.png" />
     <Resource Include="Images\AssemblyWarning.png" />
     <Resource Include="Images\ViewCode.png" />
-    <Resource Include="Images\SaveFile.png" />
     <Resource Include="Images\OK.png" />
     <Resource Include="Images\ClearSearch.png" />
     <Resource Include="Images\Search.png" />
@@ -346,7 +346,9 @@
     <Page Include="Images\OverlayProtected.xaml" />
     <Page Include="Images\OverlayProtectedInternal.xaml" />
     <Page Include="Images\OverlayStatic.xaml" />
+    <Page Include="Images\PrivateInternal.xaml" />
     <Page Include="Images\Property.xaml" />
+    <Page Include="Images\PublicOnly.xaml" />
     <Page Include="Images\ReferenceFolder.xaml" />
     <Page Include="Images\Refresh.xaml" />
     <Page Include="Images\Resource.xaml" />
@@ -357,6 +359,7 @@
     <Page Include="Images\Save.xaml" />
     <Page Include="Images\Search.xaml" />
     <Page Include="Images\SearchMsdn.xaml" />
+    <Page Include="Images\ShowAll.xaml" />
     <Page Include="Images\Sort.xaml" />
     <Page Include="Images\Struct.xaml" />
     <Page Include="Images\SubTypes.xaml" />
@@ -420,6 +423,7 @@
     <Resource Include="Images\PInvokeMethod.png" />
     <Resource Include="Images\Warning.png" />
     <Resource Include="Images\ShowAll.png" />
+    <Resource Include="Images\PublicOnly.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -553,7 +557,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\PrivateInternal.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Property.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\PublicOnly.xaml">
+      <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\ReferenceFolder.xaml">
@@ -590,6 +602,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\ShowAll.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Sort.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -616,10 +632,6 @@
   <ItemGroup>
     <None Include="Search\SearchPane.xaml" />
     <None Include="@(Resource)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Images\PublicOnly.png" />
   </ItemGroup>
 
   <PropertyGroup>
