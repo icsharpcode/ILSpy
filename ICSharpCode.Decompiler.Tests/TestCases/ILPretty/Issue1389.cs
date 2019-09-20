@@ -12,7 +12,7 @@ namespace Issue1389
 
 		private static void UnusedResultOfIsinst()
 		{
-			bool flag = GetObject() is TypeCode;
+			_ = (GetObject() is TypeCode);
 		}
 
 		private static bool BoolResultOfIsinst()

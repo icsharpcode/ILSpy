@@ -59,12 +59,14 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 					OpenAssembliesInILSpy(parameters);
 				else
 					owner.ShowMessage("Could not find reference '{0}', please ensure the project and all references were built correctly!", reference.Name);
+				return;
 			}
 
 			// Handle NuGet references
 			var nugetRefItem = NuGetReferenceForILSpy.Detect(itemObject);
 			if (nugetRefItem != null) {
 				OpenAssembliesInILSpy(nugetRefItem.GetILSpyParameters());
+				return;
 			}
 
 			// Handle project references

@@ -493,7 +493,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						AddExistingName(reservedVariableNames, v.Name);
 				}
 			}
-			foreach (var f in rootFunction.Method.DeclaringTypeDefinition.Fields.Select(f => f.Name))
+			foreach (var f in rootFunction.Method.DeclaringTypeDefinition.GetFields().Select(f => f.Name))
 				AddExistingName(reservedVariableNames, f);
 			return reservedVariableNames;
 		}

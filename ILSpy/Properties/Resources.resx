@@ -754,6 +754,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.RemoveDeadStores" xml:space="preserve">
     <value>Remove dead stores (use with caution!)</value>
   </data>
+  <data name="DecompilerSettings.AlwaysShowEnumMemberValues" xml:space="preserve">
+    <value>Always show enum member values</value>
+  </data>
   <data name="ShowPublicOnlyTypesMembers" xml:space="preserve">
     <value>Show only public types and members</value>
   </data>

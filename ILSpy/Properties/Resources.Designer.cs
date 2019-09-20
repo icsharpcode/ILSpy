@@ -512,6 +512,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Always show enum member values.
+        /// </summary>
+        public static string DecompilerSettings_AlwaysShowEnumMemberValues {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.AlwaysShowEnumMemberValues", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Always use braces.
         /// </summary>
         public static string DecompilerSettings_AlwaysUseBraces {
