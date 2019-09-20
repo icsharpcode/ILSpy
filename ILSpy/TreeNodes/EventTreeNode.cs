@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Icon => GetIcon(EventDefinition);
 
-		public static object GetIcon(IEvent @event)
+		public static ImageSource GetIcon(IEvent @event)
 		{
 			return Images.GetIcon(MemberIcon.Event, MethodTreeNode.GetOverlayIcon(@event.Accessibility), @event.IsStatic);
 		}

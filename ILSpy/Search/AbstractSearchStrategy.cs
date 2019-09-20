@@ -202,7 +202,7 @@ namespace ICSharpCode.ILSpy.Search
 			}
 		}
 
-		internal static object GetIcon(IEntity member)
+		internal static ImageSource GetIcon(IEntity member)
 		{
 			switch (member) {
 				case ITypeDefinition t:

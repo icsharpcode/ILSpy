@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Icon => GetIcon(MethodDefinition);
 
-		public static object GetIcon(IMethod method)
+		public static ImageSource GetIcon(IMethod method)
 		{
 			if (method.IsOperator)
 				return Images.GetIcon(MemberIcon.Operator, GetOverlayIcon(method.Accessibility), false);

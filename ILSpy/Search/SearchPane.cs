@@ -373,8 +373,8 @@ namespace ICSharpCode.ILSpy
 
 	public sealed class SearchResult : IMemberTreeNode
 	{
-		object image;
-		object locationImage;
+		ImageSource image;
+		ImageSource locationImage;
 
 		public static readonly IComparer<SearchResult> Comparer = new SearchResultComparer();
 
@@ -385,7 +385,7 @@ namespace ICSharpCode.ILSpy
 		public string Name { get; set; }
 		public object ToolTip { get; set; }
 
-		public object Image {
+		public ImageSource Image {
 			get {
 				if (image == null) {
 					image = AbstractSearchStrategy.GetIcon(Member);
@@ -394,7 +394,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public object LocationImage {
+		public ImageSource LocationImage {
 			get {
 				if (locationImage == null) {
 					locationImage = Member.DeclaringTypeDefinition != null ? TypeTreeNode.GetIcon(Member.DeclaringTypeDefinition) : Images.Namespace;
