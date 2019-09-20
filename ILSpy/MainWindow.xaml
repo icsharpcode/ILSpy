@@ -53,12 +53,9 @@
 		<Menu DockPanel.Dock="Top" Name="mainMenu" Height="23" KeyboardNavigation.TabNavigation="None">
 			<MenuItem Header="{x:Static properties:Resources._File}" /> <!-- contents of file menu are added using MEF -->
 			<MenuItem Header="{x:Static properties:Resources._View}">
-				<MenuItem Header="{x:Static properties:Resources.Show_publiconlyTypesMembers}" IsCheckable="True" IsChecked="{Binding FilterSettings.ApiVisPublicOnly}">
-				</MenuItem>
-				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True" IsChecked="{Binding FilterSettings.ApiVisPublicAndInternal}">
-				</MenuItem>
-				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding FilterSettings.ApiVisAll}">
-				</MenuItem>
+				<MenuItem Header="{x:Static properties:Resources.Show_publiconlyTypesMembers}" IsCheckable="True" IsChecked="{Binding FilterSettings.ApiVisPublicOnly}" />
+				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True" IsChecked="{Binding FilterSettings.ApiVisPublicAndInternal}" />
+				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding FilterSettings.ApiVisAll}" />
 			</MenuItem>
 		</Menu>
 		<!-- ToolBar -->
@@ -82,10 +79,10 @@
 			<!-- 'Open' toolbar category is inserted here -->
 			<Separator />
 			<CheckBox IsChecked="{Binding FilterSettings.ApiVisPublicOnly}" ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
-				<Image Width="16" Height="16" Source="{controls:XamlResource Images/PublicOnly}" />
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPublicOnly}" />
 			</CheckBox>
 			<CheckBox IsChecked="{Binding FilterSettings.ApiVisPublicAndInternal}" ToolTip="{x:Static properties:Resources.ShowInternalTypesMembers}">
-				<Image Width="16" Height="16" Source="{controls:XamlResource Images/PrivateInternal}" />
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPrivateInternal}" />
 			</CheckBox>
 			<CheckBox IsChecked="{Binding FilterSettings.ApiVisAll}" ToolTip="{x:Static properties:Resources.ShowAllTypesAndMembers}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowAll}" />

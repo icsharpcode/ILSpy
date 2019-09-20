@@ -30,38 +30,21 @@ namespace ICSharpCode.ILSpy
 {
 	static class Images
 	{
-		static BitmapImage LoadBitmap(string name)
-		{
-			BitmapImage image = new BitmapImage(new Uri("pack://application:,,,/Images/" + name + ".png"));
-			image.Freeze();
-			return image;
-		}
-
 		static ImageSource Load(string icon)
 		{
-			icon = "Images/" + icon;
-			if (icon.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-				return LoadImage(null, icon);
-			Uri uri = GetUri(null, icon + ".xaml");
-			if (ResourceExists(uri)) {
-				return new DrawingImage(LoadDrawingGroup(null, icon));
-			}
-			return LoadImage(null, icon + ".png");
+			return new DrawingImage(LoadDrawingGroup(null, "Images/" + icon));
 		}
 
-		public static readonly ImageSource Breakpoint = LoadBitmap("Breakpoint");
-		public static readonly ImageSource CurrentLine = LoadBitmap("CurrentLine");
-
-		public static readonly ImageSource ViewCode = LoadBitmap("ViewCode");
+		public static readonly ImageSource ViewCode = Load("ViewCode");
 		public static readonly ImageSource Save = Load("Save");
-		public static readonly ImageSource OK = LoadBitmap("OK");
+		public static readonly ImageSource OK = Load("OK");
 
-		public static readonly ImageSource Delete = LoadBitmap("Delete");
-		public static readonly ImageSource Search = LoadBitmap("Search");
+		public static readonly ImageSource Delete = Load("Delete");
+		public static readonly ImageSource Search = Load("Search");
 
 		public static readonly ImageSource Assembly = Load("Assembly");
 		public static readonly ImageSource AssemblyWarning = Load("AssemblyWarning");
-		public static readonly ImageSource AssemblyLoading = Load("FindAssembly");
+		public static readonly ImageSource FindAssembly = Load("FindAssembly");
 
 		public static readonly ImageSource Library = Load("Library");
 		public static readonly ImageSource Namespace = Load("Namespace");
@@ -88,16 +71,16 @@ namespace ICSharpCode.ILSpy
 		public static readonly ImageSource Enum = Load("Enum");
 
 		public static readonly ImageSource Field = Load("Field");
-		public static readonly ImageSource FieldReadOnly = Load("Field");
+		public static readonly ImageSource FieldReadOnly = Load("FieldReadOnly");
 		public static readonly ImageSource Literal = Load("Literal");
 		public static readonly ImageSource EnumValue = Load("EnumValue");
 
 		public static readonly ImageSource Method = Load("Method");
 		public static readonly ImageSource Constructor = Load("Constructor");
-		public static readonly ImageSource VirtualMethod = Load("Method");
+		public static readonly ImageSource VirtualMethod = Load("VirtualMethod");
 		public static readonly ImageSource Operator = Load("Operator");
 		public static readonly ImageSource ExtensionMethod = Load("ExtensionMethod");
-		public static readonly ImageSource PInvokeMethod = Load("Method");
+		public static readonly ImageSource PInvokeMethod = Load("PInvokeMethod");
 
 		public static readonly ImageSource Property = Load("Property");
 		public static readonly ImageSource Indexer = Load("Indexer");
@@ -124,7 +107,7 @@ namespace ICSharpCode.ILSpy
 			return LoadImage(part, icon + ".png");
 		}
 
-		public static BitmapImage LoadImage(object part, string icon)
+		static BitmapImage LoadImage(object part, string icon)
 		{
 			Uri uri = GetUri(part, icon);
 			BitmapImage image = new BitmapImage(uri);

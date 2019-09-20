@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (LoadedAssembly.IsLoaded) {
 					return LoadedAssembly.HasLoadError ? Images.AssemblyWarning : Images.Assembly;
 				} else {
-					return Images.AssemblyLoading;
+					return Images.FindAssembly;
 				}
 			}
 		}

@@ -253,23 +253,10 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.zh-Hans.resx" />
-    <Resource Include="Images\AssemblyList.png" />
-    <Resource Include="Images\AssemblyListGAC.png" />
-    <Resource Include="Images\AssemblyWarning.png" />
-    <Resource Include="Images\ViewCode.png" />
-    <Resource Include="Images\OK.png" />
-    <Resource Include="Images\ClearSearch.png" />
-    <Resource Include="Images\Search.png" />
-    <Resource Include="Images\Delete.png" />
     <Resource Include="Images\ILSpy.ico" />
-    <Resource Include="Images\FindAssembly.png" />
     <EmbeddedResource Include="TextView\CSharp-Mode.xshd" />
-    <Resource Include="Images\Breakpoint.png" />
-    <Resource Include="Images\CurrentLine.png" />
-    <Resource Include="Images\DisabledBreakpoint.png" />
     <None Include="app.config" />
     <None Include="app.manifest" />
-    <None Include="Images\ResourceXsl.png" />
     <None Include="Properties\app.config.template" />
     <None Include="Properties\AssemblyInfo.template.cs" />
     <None Include="Properties\launchSettings.json" />
@@ -318,6 +305,7 @@
     <Page Include="Images\AssemblyWarning.xaml" />
     <Page Include="Images\Back.xaml" />
     <Page Include="Images\Class.xaml" />
+    <Page Include="Images\Close.xaml" />
     <Page Include="Images\CollapseAll.xaml" />
     <Page Include="Images\Constructor.xaml" />
     <Page Include="Images\Copy.xaml" />
@@ -328,6 +316,7 @@
     <Page Include="Images\Event.xaml" />
     <Page Include="Images\ExtensionMethod.xaml" />
     <Page Include="Images\Field.xaml" />
+    <Page Include="Images\FieldReadOnly.xaml" />
     <Page Include="Images\FindAssembly.xaml" />
     <Page Include="Images\Folder.Closed.xaml" />
     <Page Include="Images\Folder.Open.xaml" />
@@ -338,32 +327,39 @@
     <Page Include="Images\Literal.xaml" />
     <Page Include="Images\Method.xaml" />
     <Page Include="Images\Namespace.xaml" />
+    <Page Include="Images\OK.xaml" />
     <Page Include="Images\Open.xaml" />
     <Page Include="Images\Operator.xaml" />
+    <Page Include="Images\OverlayCompilerControlled.xaml" />
     <Page Include="Images\OverlayInternal.xaml" />
     <Page Include="Images\OverlayPrivate.xaml" />
     <Page Include="Images\OverlayPrivateProtected.xaml" />
     <Page Include="Images\OverlayProtected.xaml" />
     <Page Include="Images\OverlayProtectedInternal.xaml" />
     <Page Include="Images\OverlayStatic.xaml" />
-    <Page Include="Images\PrivateInternal.xaml" />
+    <Page Include="Images\PInvokeMethod.xaml" />
     <Page Include="Images\Property.xaml" />
-    <Page Include="Images\PublicOnly.xaml" />
     <Page Include="Images\ReferenceFolder.xaml" />
     <Page Include="Images\Refresh.xaml" />
     <Page Include="Images\Resource.xaml" />
     <Page Include="Images\ResourceImage.xaml" />
     <Page Include="Images\ResourceResourcesFile.xaml" />
     <Page Include="Images\ResourceXml.xaml" />
+    <Page Include="Images\ResourceXsd.xaml" />
+    <Page Include="Images\ResourceXsl.xaml" />
     <Page Include="Images\ResourceXslt.xaml" />
     <Page Include="Images\Save.xaml" />
     <Page Include="Images\Search.xaml" />
     <Page Include="Images\SearchMsdn.xaml" />
     <Page Include="Images\ShowAll.xaml" />
+    <Page Include="Images\ShowPrivateInternal.xaml" />
+    <Page Include="Images\ShowPublicOnly.xaml" />
     <Page Include="Images\Sort.xaml" />
     <Page Include="Images\Struct.xaml" />
     <Page Include="Images\SubTypes.xaml" />
     <Page Include="Images\SuperTypes.xaml" />
+    <Page Include="Images\ViewCode.xaml" />
+    <Page Include="Images\VirtualMethod.xaml" />
     <Page Include="Images\Warning.xaml" />
     <Page Include="MainWindow.xaml" />
     <Page Include="OpenFromGacDialog.xaml" />
@@ -376,66 +372,6 @@
     <Page Include="Search\SearchPane.xaml" />
     <Page Include="TextView\DecompilerTextView.xaml" />
     <Page Include="themes\generic.xaml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Images\Class.png" />
-    <Resource Include="Images\Delegate.png" />
-    <Resource Include="Images\Enum.png" />
-    <Resource Include="Images\Field.png" />
-    <Resource Include="Images\Interface.png" />
-    <Resource Include="Images\Literal.png" />
-    <Resource Include="Images\Method.png" />
-    <Resource Include="Images\NameSpace.png" />
-    <Resource Include="Images\Open.png" />
-    <Resource Include="Images\Assembly.png" />
-    <Resource Include="Images\Struct.png" />
-    <Resource Include="Images\ReferenceFolder.png" />
-    <Resource Include="Images\Event.png" />
-    <Resource Include="Images\ExtensionMethod.png" />
-    <Resource Include="Images\Indexer.png" />
-    <Resource Include="Images\Operator.png" />
-    <Resource Include="Images\Property.png" />
-    <Resource Include="Images\Library.png" />
-    <Resource Include="Images\SubTypes.png" />
-    <Resource Include="Images\SuperTypes.png" />
-    <Resource Include="Images\Resource.png" />
-    <Resource Include="Images\Folder.Closed.png" />
-    <Resource Include="Images\Folder.Open.png" />
-    <Resource Include="Images\ResourceImage.png" />
-    <Resource Include="Images\ResourceResourcesFile.png" />
-    <Resource Include="Images\Back.png" />
-    <Resource Include="Images\Forward.png" />
-    <Resource Include="Images\PrivateInternal.png" />
-    <Resource Include="Images\Refresh.png" />
-    <Resource Include="Images\Constructor.png" />
-    <Resource Include="Images\CollapseAll.png" />
-    <Resource Include="Images\EnumValue.png" />
-    <Resource Include="Images\FieldReadOnly.png" />
-    <Resource Include="Images\OverlayInternal.png" />
-    <Resource Include="Images\OverlayPrivate.png" />
-    <Resource Include="Images\OverlayPrivateProtected.png" />
-    <Resource Include="Images\OverlayProtected.png" />
-    <Resource Include="Images\OverlayProtectedInternal.png" />
-    <Resource Include="Images\OverlayCompilerControlled.png" />
-    <Resource Include="Images\OverlayStatic.png" />
-    <Resource Include="Images\VirtualMethod.png" />
-    <Resource Include="Images\PInvokeMethod.png" />
-    <Resource Include="Images\Warning.png" />
-    <Resource Include="Images\ShowAll.png" />
-    <Resource Include="Images\PublicOnly.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Images\ResourceXml.png" />
-    <Resource Include="Images\ResourceXsd.png" />
-    <Resource Include="Images\ResourceXslt.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Images\Sort.png" />
-    <Resource Include="Images\SearchMsdn.png" />
-    <Resource Include="Images\Copy.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -459,6 +395,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\Class.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\Close.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -496,6 +436,10 @@
     <Page Update="Images\Field.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\FieldReadOnly.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\FindAssembly.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -526,11 +470,19 @@
     <Page Update="Images\Method.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\OK.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Open.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\Operator.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\OverlayCompilerControlled.xaml">
+      <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\OverlayInternal.xaml">
@@ -557,15 +509,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Update="Images\PrivateInternal.xaml">
+    <Page Update="Images\PInvokeMethod.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\Property.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Update="Images\PublicOnly.xaml">
-      <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\ReferenceFolder.xaml">
@@ -588,6 +536,14 @@
     <Page Update="Images\ResourceXml.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\ResourceXsd.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\ResourceXsl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\ResourceXslt.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -606,6 +562,14 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Images\ShowPrivateInternal.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\ShowPublicOnly.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Sort.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -618,6 +582,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\SuperTypes.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\ViewCode.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Images\VirtualMethod.xaml">
+      <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Images\Warning.xaml">
