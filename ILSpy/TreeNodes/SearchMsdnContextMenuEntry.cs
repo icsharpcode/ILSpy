@@ -23,7 +23,7 @@ using System.Threading;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	[ExportContextMenuEntry(Header = nameof(Resources.SearchMSDN), Icon = "images/SearchMsdn.png", Order = 9999)]
+	[ExportContextMenuEntry(Header = nameof(Resources.SearchMSDN), Icon = "images/SearchMsdn", Order = 9999)]
 	internal sealed class SearchMsdnContextMenuEntry : IContextMenuEntry
 	{
 		private static string msdnAddress = "http://msdn.microsoft.com/{1}/library/{0}";

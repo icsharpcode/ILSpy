@@ -183,14 +183,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 
 		static readonly string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-				@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.2");
+				@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
 		static readonly string thisAsmPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
 
 		static readonly Lazy<IEnumerable<MetadataReference>> defaultReferences = new Lazy<IEnumerable<MetadataReference>>(delegate {
 			return new[]
 			{
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Facades\\netstandard.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "mscorlib.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(thisAsmPath, "netstandard.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Core.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, @"Facades\System.Runtime.dll")),

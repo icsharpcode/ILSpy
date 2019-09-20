@@ -25,7 +25,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
-	[ExportContextMenuEntry(Header = nameof(Resources.Analyze), Icon = "images/Search.png", Category = nameof(Resources.Analyze), InputGestureText = "Ctrl+R", Order = 100)]
+	[ExportContextMenuEntry(Header = nameof(Resources.Analyze), Icon = "Images/Search", Category = nameof(Resources.Analyze), InputGestureText = "Ctrl+R", Order = 100)]
 	internal sealed class AnalyzeCommand : SimpleCommand, IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

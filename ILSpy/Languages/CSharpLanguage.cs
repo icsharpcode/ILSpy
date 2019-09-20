@@ -325,7 +325,7 @@ namespace ICSharpCode.ILSpy
 						new Image {
 							Width = 32,
 							Height = 32,
-							Source = Images.LoadImage(this, "Images/Warning.png")
+							Source = Images.Load(this, "Images/Warning")
 						},
 						new TextBlock {
 							Margin = new Thickness(5, 0, 0, 0),

@@ -21,7 +21,7 @@ using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportToolbarCommand(ToolTip = nameof(Resources.Back), ToolbarIcon = "Images/Back.png", ToolbarCategory = nameof(Resources.Navigation), ToolbarOrder = 0)]
+	[ExportToolbarCommand(ToolTip = nameof(Resources.Back), ToolbarIcon = "Images/Back", ToolbarCategory = nameof(Resources.Navigation), ToolbarOrder = 0)]
 	sealed class BrowseBackCommand : CommandWrapper
 	{
 		public BrowseBackCommand()

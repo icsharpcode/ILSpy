@@ -189,6 +189,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal bool HidesVariableWithName(string name)
 		{
+			return HidesVariableWithName(currentFunction, name);
+		}
+
+		internal static bool HidesVariableWithName(ILFunction currentFunction, string name)
+		{
 			return currentFunction.Ancestors.OfType<ILFunction>().Any(HidesVariableOrNestedFunction);
 
 			bool HidesVariableOrNestedFunction(ILFunction function)
