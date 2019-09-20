@@ -349,16 +349,13 @@ namespace ICSharpCode.ILSpy
 
 				Drawing baseDrawing = new ImageDrawing(baseImage, iconRect);
 
-				if (overlay != null || isStatic) {
+				if (overlay != null) {
 					var nestedGroup = new DrawingGroup { Transform = new ScaleTransform(0.8, 0.8) };
 					nestedGroup.Children.Add(baseDrawing);
 					group.Children.Add(nestedGroup);
+					group.Children.Add(new ImageDrawing(overlay, iconRect));
 				} else {
 					group.Children.Add(baseDrawing);
-				}
-
-				if (overlay != null) {
-					group.Children.Add(new ImageDrawing(overlay, iconRect));
 				}
 
 				if (isStatic) {
