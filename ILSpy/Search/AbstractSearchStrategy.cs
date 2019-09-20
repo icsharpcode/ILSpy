@@ -159,6 +159,7 @@ namespace ICSharpCode.ILSpy.Search
 				Fitness = CalculateFitness(item),
 				Name = GetLanguageSpecificName(item),
 				Location = declaringType != null ? language.TypeToString(declaringType, includeNamespace: true) : item.Namespace,
+				Assembly = item.ParentModule.FullAssemblyName,
 				ToolTip = item.ParentModule.PEFile?.FileName
 			};
 		}

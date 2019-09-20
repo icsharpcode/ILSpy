@@ -381,6 +381,7 @@ namespace ICSharpCode.ILSpy
 		public IEntity Member { get; set; }
 		public float Fitness { get; set; }
 
+		public string Assembly { get; set; }
 		public string Location { get; set; }
 		public string Name { get; set; }
 		public object ToolTip { get; set; }
@@ -400,6 +401,12 @@ namespace ICSharpCode.ILSpy
 					locationImage = Member.DeclaringTypeDefinition != null ? TypeTreeNode.GetIcon(Member.DeclaringTypeDefinition) : Images.Namespace;
 				}
 				return locationImage;
+			}
+		}
+
+		public ImageSource AssemblyImage {
+			get {
+				return Images.Assembly;
 			}
 		}
 

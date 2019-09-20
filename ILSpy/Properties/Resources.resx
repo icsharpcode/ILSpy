@@ -763,4 +763,7 @@ Are you sure you want to continue?</value>
   <data name="Show_publiconlyTypesMembers" xml:space="preserve">
     <value>Show only _public types and members</value>
   </data>
+  <data name="Assembly" xml:space="preserve">
+    <value>Assembly</value>
+  </data>
 </root>
