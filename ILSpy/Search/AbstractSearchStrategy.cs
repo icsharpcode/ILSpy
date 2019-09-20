@@ -164,10 +164,9 @@ namespace ICSharpCode.ILSpy.Search
 			return new MemberSearchResult {
 				Member = item,
 				Fitness = CalculateFitness(item),
-				Image = GetIcon(item),
 				Name = GetLanguageSpecificName(item),
-				LocationImage = declaringType != null ? TypeTreeNode.GetIcon(declaringType) : Images.Namespace,
 				Location = declaringType != null ? language.TypeToString(declaringType, includeNamespace: true) : item.Namespace,
+				Assembly = item.ParentModule.FullAssemblyName,
 				ToolTip = item.ParentModule.PEFile?.FileName
 			};
 		}
@@ -176,9 +175,7 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			return new ResourceSearchResult {
 				Resource = resource,
-				Image = Images.Resource,
 				Name = resource.Name,
-				LocationImage = Images.Assembly,
 				Location = resource.Module.Name,
 				ToolTip = $"{resource.Name} ({resource.ResourceType}, {resource.Attributes & ManifestResourceAttributes.VisibilityMask})"
 			};
@@ -223,7 +220,7 @@ namespace ICSharpCode.ILSpy.Search
 			}
 		}
 
-		ImageSource GetIcon(IEntity member)
+		internal static ImageSource GetIcon(IEntity member)
 		{
 			switch (member) {
 				case ITypeDefinition t:

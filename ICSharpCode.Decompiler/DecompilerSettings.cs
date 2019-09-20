@@ -537,6 +537,26 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool alwaysShowEnumMemberValues = false;
+
+		/// <summary>
+		/// Gets/Sets whether to always show enum member values.
+		/// true: <c>enum Kind { A = 0, B = 1, C = 5 }</c>
+		/// false: <c>enum Kind { A, B, C = 5 }</c>
+		/// default: false
+		/// </summary>
+		[Category("Other")]
+		[Description("DecompilerSettings.AlwaysShowEnumMemberValues")]
+		public bool AlwaysShowEnumMemberValues {
+			get { return alwaysShowEnumMemberValues; }
+			set {
+				if (alwaysShowEnumMemberValues != value) {
+					alwaysShowEnumMemberValues = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool useDebugSymbols = true;
 
 		/// <summary>

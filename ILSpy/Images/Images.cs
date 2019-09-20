@@ -21,100 +21,137 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media;
 using System.Windows;
 using System.Collections.Generic;
+using System.Windows.Controls;
+using System.Windows.Markup;
+using System.IO;
+using System.Windows.Shapes;
 
 namespace ICSharpCode.ILSpy
 {
 	static class Images
 	{
-		static BitmapImage LoadBitmap(string name)
+		static ImageSource Load(string icon)
 		{
-			BitmapImage image = new BitmapImage(new Uri("pack://application:,,,/Images/" + name + ".png"));
-			image.Freeze();
-			return image;
+			return new DrawingImage(LoadDrawingGroup(null, "Images/" + icon));
 		}
-		
-		public static readonly BitmapImage Breakpoint = LoadBitmap("Breakpoint");
-		public static readonly BitmapImage CurrentLine = LoadBitmap("CurrentLine");
 
-		public static readonly BitmapImage ViewCode = LoadBitmap("ViewCode");
-		public static readonly BitmapImage Save = LoadBitmap("SaveFile");
-		public static readonly BitmapImage OK = LoadBitmap("OK");
+		public static readonly ImageSource ViewCode = Load("ViewCode");
+		public static readonly ImageSource Save = Load("Save");
+		public static readonly ImageSource OK = Load("OK");
 
-		public static readonly BitmapImage Delete = LoadBitmap("Delete");
-		public static readonly BitmapImage Search = LoadBitmap("Search");
+		public static readonly ImageSource Delete = Load("Delete");
+		public static readonly ImageSource Search = Load("Search");
 
-		public static readonly BitmapImage Assembly = LoadBitmap("Assembly");
-		public static readonly BitmapImage AssemblyWarning = LoadBitmap("AssemblyWarning");
-		public static readonly BitmapImage AssemblyLoading = LoadBitmap("FindAssembly");
+		public static readonly ImageSource Assembly = Load("Assembly");
+		public static readonly ImageSource AssemblyWarning = Load("AssemblyWarning");
+		public static readonly ImageSource FindAssembly = Load("FindAssembly");
 
-		public static readonly BitmapImage Library = LoadBitmap("Library");
-		public static readonly BitmapImage Namespace = LoadBitmap("NameSpace");
+		public static readonly ImageSource Library = Load("Library");
+		public static readonly ImageSource Namespace = Load("Namespace");
 
-		public static readonly BitmapImage ReferenceFolderOpen = LoadBitmap("ReferenceFolder.Open");
-		public static readonly BitmapImage ReferenceFolderClosed = LoadBitmap("ReferenceFolder.Closed");
+		public static readonly ImageSource ReferenceFolder = Load("ReferenceFolder");
 
-		public static readonly BitmapImage SubTypes = LoadBitmap("SubTypes");
-		public static readonly BitmapImage SuperTypes = LoadBitmap("SuperTypes");
+		public static readonly ImageSource SubTypes = Load("SubTypes");
+		public static readonly ImageSource SuperTypes = Load("SuperTypes");
 
-		public static readonly BitmapImage FolderOpen = LoadBitmap("Folder.Open");
-		public static readonly BitmapImage FolderClosed = LoadBitmap("Folder.Closed");
+		public static readonly ImageSource FolderOpen = Load("Folder.Open");
+		public static readonly ImageSource FolderClosed = Load("Folder.Closed");
 
-		public static readonly BitmapImage Resource = LoadBitmap("Resource");
-		public static readonly BitmapImage ResourceImage = LoadBitmap("ResourceImage");
-		public static readonly BitmapImage ResourceResourcesFile = LoadBitmap("ResourceResourcesFile");
-		public static readonly BitmapImage ResourceXml = LoadBitmap("ResourceXml");
-		public static readonly BitmapImage ResourceXsd = LoadBitmap("ResourceXsd");
-		public static readonly BitmapImage ResourceXslt = LoadBitmap("ResourceXslt");
+		public static readonly ImageSource Resource = Load("Resource");
+		public static readonly ImageSource ResourceImage = Load("ResourceImage");
+		public static readonly ImageSource ResourceResourcesFile = Load("ResourceResourcesFile");
+		public static readonly ImageSource ResourceXml = Load("ResourceXml");
+		public static readonly ImageSource ResourceXsd = Load("ResourceXslt");
+		public static readonly ImageSource ResourceXslt = Load("ResourceXslt");
 
-		public static readonly BitmapImage Class = LoadBitmap("Class");
-		public static readonly BitmapImage Struct = LoadBitmap("Struct");
-		public static readonly BitmapImage Interface = LoadBitmap("Interface");
-		public static readonly BitmapImage Delegate = LoadBitmap("Delegate");
-		public static readonly BitmapImage Enum = LoadBitmap("Enum");
-		public static readonly BitmapImage StaticClass = LoadBitmap("StaticClass");
+		public static readonly ImageSource Class = Load("Class");
+		public static readonly ImageSource Struct = Load("Struct");
+		public static readonly ImageSource Interface = Load("Interface");
+		public static readonly ImageSource Delegate = Load("Delegate");
+		public static readonly ImageSource Enum = Load("Enum");
 
+		public static readonly ImageSource Field = Load("Field");
+		public static readonly ImageSource FieldReadOnly = Load("FieldReadOnly");
+		public static readonly ImageSource Literal = Load("Literal");
+		public static readonly ImageSource EnumValue = Load("EnumValue");
 
-		public static readonly BitmapImage Field = LoadBitmap("Field");
-		public static readonly BitmapImage FieldReadOnly = LoadBitmap("FieldReadOnly");
-		public static readonly BitmapImage Literal = LoadBitmap("Literal");
-		public static readonly BitmapImage EnumValue = LoadBitmap("EnumValue");
+		public static readonly ImageSource Method = Load("Method");
+		public static readonly ImageSource Constructor = Load("Constructor");
+		public static readonly ImageSource VirtualMethod = Load("VirtualMethod");
+		public static readonly ImageSource Operator = Load("Operator");
+		public static readonly ImageSource ExtensionMethod = Load("ExtensionMethod");
+		public static readonly ImageSource PInvokeMethod = Load("PInvokeMethod");
 
-		public static readonly BitmapImage Method = LoadBitmap("Method");
-		public static readonly BitmapImage Constructor = LoadBitmap("Constructor");
-		public static readonly BitmapImage VirtualMethod = LoadBitmap("VirtualMethod");
-		public static readonly BitmapImage Operator = LoadBitmap("Operator");
-		public static readonly BitmapImage ExtensionMethod = LoadBitmap("ExtensionMethod");
-		public static readonly BitmapImage PInvokeMethod = LoadBitmap("PInvokeMethod");
+		public static readonly ImageSource Property = Load("Property");
+		public static readonly ImageSource Indexer = Load("Indexer");
 
-		public static readonly BitmapImage Property = LoadBitmap("Property");
-		public static readonly BitmapImage Indexer = LoadBitmap("Indexer");
+		public static readonly ImageSource Event = Load("Event");
 
-		public static readonly BitmapImage Event = LoadBitmap("Event");
+		private static readonly ImageSource OverlayProtected = Load("OverlayProtected");
+		private static readonly ImageSource OverlayInternal = Load("OverlayInternal");
+		private static readonly ImageSource OverlayProtectedInternal = Load("OverlayProtectedInternal");
+		private static readonly ImageSource OverlayPrivate = Load("OverlayPrivate");
+		private static readonly ImageSource OverlayPrivateProtected = Load("OverlayPrivateProtected");
+		private static readonly ImageSource OverlayCompilerControlled = Load("OverlayCompilerControlled");
 
-		private static readonly BitmapImage OverlayProtected = LoadBitmap("OverlayProtected");
-		private static readonly BitmapImage OverlayInternal = LoadBitmap("OverlayInternal");
-		private static readonly BitmapImage OverlayProtectedInternal = LoadBitmap("OverlayProtectedInternal");
-		private static readonly BitmapImage OverlayPrivate = LoadBitmap("OverlayPrivate");
-		private static readonly BitmapImage OverlayPrivateProtected = LoadBitmap("OverlayPrivateProtected");
-		private static readonly BitmapImage OverlayCompilerControlled = LoadBitmap("OverlayCompilerControlled");
+		private static readonly ImageSource OverlayStatic = Load("OverlayStatic");
 
-		private static readonly BitmapImage OverlayStatic = LoadBitmap("OverlayStatic");
-
-		public static BitmapImage LoadImage(object part, string icon)
+		public static ImageSource Load(object part, string icon)
 		{
-			Uri uri;
-			var assembly = part.GetType().Assembly;
-			if (assembly == typeof(Images).Assembly) {
-				uri = new Uri("pack://application:,,,/" + icon);
-			} else {
-				var name = assembly.GetName();
-				uri = new Uri("pack://application:,,,/" + name.Name + ";v" + name.Version + ";component/" + icon);
+			if (icon.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+				return LoadImage(part, icon);
+			Uri uri = GetUri(part, icon + ".xaml");
+			if (ResourceExists(uri)) {
+				return new DrawingImage(LoadDrawingGroup(part, icon));
 			}
+			return LoadImage(part, icon + ".png");
+		}
+
+		static BitmapImage LoadImage(object part, string icon)
+		{
+			Uri uri = GetUri(part, icon);
 			BitmapImage image = new BitmapImage(uri);
 			image.Freeze();
 			return image;
 		}
 
+		public static Drawing LoadDrawingGroup(object part, string icon)
+		{
+			return (Drawing)Application.LoadComponent(GetUri(part, icon + ".xaml", absolute: false));
+		}
+
+		private static Uri GetUri(object part, string icon, bool absolute = true)
+		{
+			Uri uri;
+			var assembly = part?.GetType().Assembly;
+			string prefix;
+			UriKind kind;
+			if (absolute) {
+				prefix = "pack://application:,,,/";
+				kind = UriKind.Absolute;
+			} else {
+				prefix = "/";
+				kind = UriKind.Relative;
+			}
+			if (part == null || assembly == typeof(Images).Assembly) {
+				uri = new Uri(prefix + icon, kind);
+			} else {
+				var name = assembly.GetName();
+				uri = new Uri(prefix + name.Name + ";v" + name.Version + ";component/" + icon, kind);
+			}
+
+			return uri;
+		}
+
+		private static bool ResourceExists(Uri uri)
+		{
+			try {
+				Application.GetResourceStream(uri);
+				return true;
+			} catch (IOException) {
+				return false;
+			}
+		}
 
 		private static readonly TypeIconCache typeIconCache = new TypeIconCache();
 		private static readonly MemberIconCache memberIconCache = new MemberIconCache();
@@ -142,7 +179,6 @@ namespace ICSharpCode.ILSpy
 				PreloadPublicIconToCache(TypeIcon.Struct, Images.Struct);
 				PreloadPublicIconToCache(TypeIcon.Interface, Images.Interface);
 				PreloadPublicIconToCache(TypeIcon.Delegate, Images.Delegate);
-				PreloadPublicIconToCache(TypeIcon.StaticClass, Images.StaticClass);
 			}
 
 			protected override ImageSource GetBaseImage(TypeIcon icon)
@@ -163,9 +199,6 @@ namespace ICSharpCode.ILSpy
 						break;
 					case TypeIcon.Delegate:
 						baseImage = Images.Delegate;
-						break;
-					case TypeIcon.StaticClass:
-						baseImage = Images.StaticClass;
 						break;
 					default:
 						throw new ArgumentOutOfRangeException(nameof(icon), $"TypeIcon.{icon} is not supported!");
@@ -247,17 +280,17 @@ namespace ICSharpCode.ILSpy
 
 		private abstract class IconCache<T>
 		{
-			private readonly Dictionary<Tuple<T, AccessOverlayIcon, bool>, ImageSource> cache = new Dictionary<Tuple<T, AccessOverlayIcon, bool>, ImageSource>();
+			private readonly Dictionary<(T, AccessOverlayIcon, bool), ImageSource> cache = new Dictionary<(T, AccessOverlayIcon, bool), ImageSource>();
 
 			protected void PreloadPublicIconToCache(T icon, ImageSource image)
 			{
-				var iconKey = new Tuple<T, AccessOverlayIcon, bool>(icon, AccessOverlayIcon.Public, false);
+				var iconKey = (icon, AccessOverlayIcon.Public, false);
 				cache.Add(iconKey, image);
 			}
 
 			public ImageSource GetIcon(T icon, AccessOverlayIcon overlay, bool isStatic)
 			{
-				var iconKey = new Tuple<T, AccessOverlayIcon, bool>(icon, overlay, isStatic);
+				var iconKey = (icon, overlay, isStatic);
 				if (cache.ContainsKey(iconKey)) {
 					return cache[iconKey];
 				} else {
@@ -314,7 +347,15 @@ namespace ICSharpCode.ILSpy
 			{
 				var group = new DrawingGroup();
 
-				group.Children.Add(new ImageDrawing(baseImage, iconRect));
+				Drawing baseDrawing = new ImageDrawing(baseImage, iconRect);
+
+				if (overlay != null || isStatic) {
+					var nestedGroup = new DrawingGroup { Transform = new ScaleTransform(0.8, 0.8) };
+					nestedGroup.Children.Add(baseDrawing);
+					group.Children.Add(nestedGroup);
+				} else {
+					group.Children.Add(baseDrawing);
+				}
 
 				if (overlay != null) {
 					group.Children.Add(new ImageDrawing(overlay, iconRect));

@@ -21,8 +21,8 @@ using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportToolbarCommand(ToolTip = nameof(Resources.RefreshCommand_ReloadAssemblies),  ToolbarIcon = "Images/Refresh.png", ToolbarCategory = nameof(Resources.Open),  ToolbarOrder = 2)]
-	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources._Reload),  MenuIcon = "Images/Refresh.png", MenuCategory = nameof(Resources.Open),  MenuOrder = 2)]
+	[ExportToolbarCommand(ToolTip = nameof(Resources.RefreshCommand_ReloadAssemblies),  ToolbarIcon = "Images/Refresh", ToolbarCategory = nameof(Resources.Open),  ToolbarOrder = 2)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources._Reload),  MenuIcon = "Images/Refresh", MenuCategory = nameof(Resources.Open),  MenuOrder = 2)]
 	sealed class RefreshCommand : CommandWrapper
 	{
 		public RefreshCommand()

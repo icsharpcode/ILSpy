@@ -304,6 +304,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Assembly.
+        /// </summary>
+        public static string Assembly {
+            get {
+                return ResourceManager.GetString("Assembly", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The directory is not empty. File will be overwritten.
         ///Are you sure you want to continue?.
         /// </summary>
@@ -508,6 +517,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilerSettings_AlwaysCastTargetsOfExplicitInterfaceImplementationCalls {
             get {
                 return ResourceManager.GetString("DecompilerSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Always show enum member values.
+        /// </summary>
+        public static string DecompilerSettings_AlwaysShowEnumMemberValues {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.AlwaysShowEnumMemberValues", resourceCulture);
             }
         }
         
@@ -1621,11 +1639,20 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Show _internal types and members.
+        ///   Looks up a localized string similar to Show public, private and internal.
         /// </summary>
         public static string Show_internalTypesMembers {
             get {
                 return ResourceManager.GetString("Show_internalTypesMembers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show only _public types and members.
+        /// </summary>
+        public static string Show_publiconlyTypesMembers {
+            get {
+                return ResourceManager.GetString("Show_publiconlyTypesMembers", resourceCulture);
             }
         }
         
@@ -1684,7 +1711,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Show internal types and members.
+        ///   Looks up a localized string similar to Show public, private and internal.
         /// </summary>
         public static string ShowInternalTypesMembers {
             get {
@@ -1716,6 +1743,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string ShowMetadataTokensInBase10 {
             get {
                 return ResourceManager.GetString("ShowMetadataTokensInBase10", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show only public types and members.
+        /// </summary>
+        public static string ShowPublicOnlyTypesMembers {
+            get {
+                return ResourceManager.GetString("ShowPublicOnlyTypesMembers", resourceCulture);
             }
         }
         

@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy
 		bool runSearchOnNextShow;
 
 		public static readonly DependencyProperty ResultsProperty =
-			DependencyProperty.Register("Results", typeof(ObservableCollection<SearchResult>), typeof(SearchPane), 
+			DependencyProperty.Register("Results", typeof(ObservableCollection<SearchResult>), typeof(SearchPane),
 				new PropertyMetadata(new ObservableCollection<SearchResult>()));
 		public ObservableCollection<SearchResult> Results {
 			get { return (ObservableCollection<SearchResult>)GetValue(ResultsProperty); }
@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpy
 				return instance;
 			}
 		}
-		
+
 		private SearchPane()
 		{
 			InitializeComponent();
@@ -153,19 +153,19 @@ namespace ICSharpCode.ILSpy
 		{
 			this.SearchTerm = string.Empty;
 		}
-		
+
 		void ListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
 			JumpToSelectedItem();
 			e.Handled = true;
 		}
-		
+
 		void ListBox_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.Key == Key.Return) {
 				e.Handled = true;
 				JumpToSelectedItem();
-			} else if(e.Key == Key.Up && listBox.SelectedIndex == 0) {
+			} else if (e.Key == Key.Up && listBox.SelectedIndex == 0) {
 				e.Handled = true;
 				listBox.SelectedIndex = -1;
 				searchBox.Focus();
@@ -229,7 +229,7 @@ namespace ICSharpCode.ILSpy
 
 				searchProgressBar.IsIndeterminate = true;
 				startedSearch = new RunningSearch(mainWindow.CurrentAssemblyList.GetAssemblies(), searchTerm,
-					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage, 
+					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage,
 					mainWindow.SessionSettings.FilterSettings.ShowApiLevel);
 				currentSearch = startedSearch;
 
@@ -264,7 +264,7 @@ namespace ICSharpCode.ILSpy
 
 		void JumpToSelectedItem()
 		{
-			switch(listBox.SelectedItem) {
+			switch (listBox.SelectedItem) {
 				case MemberSearchResult memberSearchResult:
 					MainWindow.Instance.JumpToReference(memberSearchResult.Member);
 					break;
@@ -273,7 +273,7 @@ namespace ICSharpCode.ILSpy
 					break;
 			}
 		}
-		
+
 		sealed class RunningSearch
 		{
 			readonly CancellationTokenSource cts = new CancellationTokenSource();
@@ -282,7 +282,7 @@ namespace ICSharpCode.ILSpy
 			readonly SearchMode searchMode;
 			readonly Language language;
 			readonly ApiVisibility apiVisibility;
-			public readonly IProducerConsumerCollection<SearchResult> resultQueue = new ConcurrentQueue<SearchResult>(); 
+			public readonly IProducerConsumerCollection<SearchResult> resultQueue = new ConcurrentQueue<SearchResult>();
 
 			public RunningSearch(LoadedAssembly[] assemblies, string searchTerm, SearchMode searchMode, Language language, ApiVisibility apiVisibility)
 			{
@@ -292,12 +292,12 @@ namespace ICSharpCode.ILSpy
 				this.searchMode = searchMode;
 				this.apiVisibility = apiVisibility;
 			}
-			
+
 			public void Cancel()
 			{
 				cts.Cancel();
 			}
-			
+
 			public async Task Run()
 			{
 				try {
@@ -354,8 +354,7 @@ namespace ICSharpCode.ILSpy
 						return new ResourceSearchStrategy(language, apiVisibility, resultQueue, searchTerm[0].Substring(2));
 				}
 
-				switch (searchMode)
-				{
+				switch (searchMode) {
 					case SearchMode.TypeAndMember:
 						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
 					case SearchMode.Type:
@@ -383,27 +382,22 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	public sealed class MemberSearchResult : SearchResult, IMemberTreeNode
-	{
-		public IEntity Member { get; set; }
-	}
-
-	public sealed class ResourceSearchResult : SearchResult
-	{
-		public Resource Resource { get; set; }
-	}
-
 	public class SearchResult
 	{
-		public static readonly System.Collections.Generic.IComparer<SearchResult> Comparer = new SearchResultComparer();
+		public static readonly IComparer<SearchResult> Comparer = new SearchResultComparer();
 
 		public float Fitness { get; set; }
-	
+
+		public string Assembly { get; set; }
 		public string Location { get; set; }
 		public string Name { get; set; }
 		public object ToolTip { get; set; }
-		public ImageSource Image { get; set; }
-		public ImageSource LocationImage { get; set; }
+
+		public virtual ImageSource Image => null;
+
+		public virtual ImageSource LocationImage => null;
+
+		public ImageSource AssemblyImage => Images.Assembly;
 
 		public override string ToString()
 		{
@@ -419,8 +413,43 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = nameof(Properties.Resources._View), Header =nameof(Properties.Resources.Search), MenuIcon = "Images/Find.png", MenuCategory = nameof(Properties.Resources.View), MenuOrder = 100)]
-	[ExportToolbarCommand(ToolTip = nameof(Properties.Resources.SearchCtrlShiftFOrCtrlE), ToolbarIcon = "Images/Find.png", ToolbarCategory = nameof(Properties.Resources.View), ToolbarOrder = 100)]
+	public sealed class MemberSearchResult : SearchResult, IMemberTreeNode
+	{
+		ImageSource image;
+		ImageSource locationImage;
+
+		public IEntity Member { get; set; }
+
+		public override ImageSource Image {
+			get {
+				if (image == null) {
+					image = AbstractSearchStrategy.GetIcon(Member);
+				}
+				return image;
+			}
+		}
+
+		public override ImageSource LocationImage {
+			get {
+				if (locationImage == null) {
+					locationImage = Member.DeclaringTypeDefinition != null ? TypeTreeNode.GetIcon(Member.DeclaringTypeDefinition) : Images.Namespace;
+				}
+				return locationImage;
+			}
+		}
+	}
+
+	public sealed class ResourceSearchResult : SearchResult
+	{
+		public Resource Resource { get; set; }
+
+		public override ImageSource Image => Images.Resource;
+
+		public override ImageSource LocationImage => Images.Assembly;
+	}
+
+	[ExportMainMenuCommand(Menu = nameof(Properties.Resources._View), Header = nameof(Properties.Resources.Search), MenuIcon = "Images/Search", MenuCategory = nameof(Properties.Resources.View), MenuOrder = 100)]
+	[ExportToolbarCommand(ToolTip = nameof(Properties.Resources.SearchCtrlShiftFOrCtrlE), ToolbarIcon = "Images/Search", ToolbarCategory = nameof(Properties.Resources.View), ToolbarOrder = 100)]
 	sealed class ShowSearchCommand : CommandWrapper
 	{
 		public ShowSearchCommand()
