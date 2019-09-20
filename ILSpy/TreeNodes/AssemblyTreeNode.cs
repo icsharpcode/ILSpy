@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (LoadedAssembly.IsLoaded) {
 					return LoadedAssembly.HasLoadError ? Images.AssemblyWarning : Images.Assembly;
 				} else {
-					return Images.AssemblyLoading;
+					return Images.FindAssembly;
 				}
 			}
 		}
@@ -314,7 +314,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	[ExportContextMenuEntry(Header = nameof(Resources._Remove), Icon = "images/Delete.png")]
+	[ExportContextMenuEntry(Header = nameof(Resources._Remove), Icon = "images/Delete")]
 	sealed class RemoveAssembly : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -339,7 +339,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	[ExportContextMenuEntry(Header = nameof(Resources._Reload), Icon = "images/Refresh.png")]
+	[ExportContextMenuEntry(Header = nameof(Resources._Reload), Icon = "images/Refresh")]
 	sealed class ReloadAssembly : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

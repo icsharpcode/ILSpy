@@ -110,13 +110,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Icon => GetIcon(TypeDefinition);
 
-		public static ImageSource GetIcon(ITypeDefinition type)
+		public static object GetIcon(ITypeDefinition type)
 		{
-			return Images.GetIcon(GetTypeIcon(type), GetOverlayIcon(type));
+			return Images.GetIcon(GetTypeIcon(type, out bool isStatic), GetOverlayIcon(type), isStatic);
 		}
 
-		internal static TypeIcon GetTypeIcon(IType type)
+		internal static TypeIcon GetTypeIcon(IType type, out bool isStatic)
 		{
+			isStatic = false;
 			switch (type.Kind) {
 				case TypeKind.Interface:
 					return TypeIcon.Interface;
@@ -127,8 +128,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				case TypeKind.Enum:
 					return TypeIcon.Enum;
 				default:
-					if (type.GetDefinition()?.IsStatic == true)
-						return TypeIcon.StaticClass;
+					isStatic = type.GetDefinition()?.IsStatic == true;
 					return TypeIcon.Class;
 			}
 		}

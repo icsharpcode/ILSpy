@@ -140,15 +140,19 @@ namespace ICSharpCode.ILSpy
 
 		Button MakeToolbarItem(Lazy<ICommand, IToolbarCommandMetadata> command)
 		{
+			object image = Images.Load(command.Value, command.Metadata.ToolbarIcon);
+			if (!(image is Viewbox)) {
+				image = new Image {
+					Width = 16,
+					Height = 16,
+					Source = (ImageSource)image
+				};
+			}
 			return new Button {
 				Command = CommandWrapper.Unwrap(command.Value),
 				ToolTip = Properties.Resources.ResourceManager.GetString(command.Metadata.ToolTip),
 				Tag = command.Metadata.Tag,
-				Content = new Image {
-					Width = 16,
-					Height = 16,
-					Source = Images.LoadImage(command.Value, command.Metadata.ToolbarIcon)
-				}
+				Content = image
 			};
 		}
 		#endregion
@@ -174,11 +178,15 @@ namespace ICSharpCode.ILSpy
 						if (!string.IsNullOrEmpty(GetResourceString(entry.Metadata.Header)))
 							menuItem.Header = GetResourceString(entry.Metadata.Header);
 						if (!string.IsNullOrEmpty(entry.Metadata.MenuIcon)) {
-							menuItem.Icon = new Image {
-								Width = 16,
-								Height = 16,
-								Source = Images.LoadImage(entry.Value, entry.Metadata.MenuIcon)
-							};
+							object image = Images.Load(entry.Value, entry.Metadata.MenuIcon);
+							if (!(image is Viewbox)) {
+								image = new Image {
+									Width = 16,
+									Height = 16,
+									Source = (ImageSource)image
+								};
+							}
+							menuItem.Icon = image;
 						}
 
 						menuItem.IsEnabled = entry.Metadata.IsEnabled;

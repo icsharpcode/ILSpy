@@ -36,48 +36,40 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public class ResourceTreeNode : ILSpyTreeNode
 	{
-		readonly Resource r;
-		
 		public ResourceTreeNode(Resource r)
 		{
 			if (r.IsNil)
 				throw new ArgumentNullException(nameof(r));
-			this.r = r;
+			this.Resource = r;
 		}
-		
-		public Resource Resource {
-			get { return r; }
-		}
-		
-		public override object Text {
-			get { return r.Name; }
-		}
-		
-		public override object Icon {
-			get { return Images.Resource; }
-		}
-		
+
+		public Resource Resource { get; }
+
+		public override object Text => Resource.Name;
+
+		public override object Icon => Images.Resource;
+
 		public override FilterResult Filter(FilterSettings settings)
 		{
-			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && (r.Attributes & ManifestResourceAttributes.VisibilityMask) == ManifestResourceAttributes.Private)
+			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && (Resource.Attributes & ManifestResourceAttributes.VisibilityMask) == ManifestResourceAttributes.Private)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(r.Name))
+			if (settings.SearchTermMatches(Resource.Name))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
 		}
-		
+
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, string.Format("{0} ({1}, {2})", r.Name, r.ResourceType, r.Attributes));
-			
+			language.WriteCommentLine(output, string.Format("{0} ({1}, {2})", Resource.Name, Resource.ResourceType, Resource.Attributes));
+
 			ISmartTextOutput smartOutput = output as ISmartTextOutput;
 			if (smartOutput != null) {
 				smartOutput.AddButton(Images.Save, Resources.Save, delegate { Save(MainWindow.Instance.TextView); });
 				output.WriteLine();
 			}
 		}
-		
+
 		public override bool View(DecompilerTextView textView)
 		{
 			Stream s = Resource.TryOpenStream();
@@ -99,7 +91,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			return false;
 		}
-		
+
 		public override bool Save(DecompilerTextView textView)
 		{
 			Stream s = Resource.TryOpenStream();
@@ -115,7 +107,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			return true;
 		}
-		
+
 		public static ILSpyTreeNode Create(Resource resource)
 		{
 			ILSpyTreeNode result = null;
