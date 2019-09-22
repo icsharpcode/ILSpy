@@ -15,7 +15,7 @@ using System.Collections.Concurrent;
 
 namespace ICSharpCode.ILSpy.Search
 {
-	class LiteralSearchStrategy : AbstractSearchStrategy
+	class LiteralSearchStrategy : AbstractEntitySearchStrategy
 	{
 		readonly TypeCode searchTermLiteralType;
 		readonly object searchTermLiteralValue;

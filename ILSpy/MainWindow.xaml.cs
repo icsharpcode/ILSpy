@@ -713,6 +713,8 @@ namespace ICSharpCode.ILSpy
 					return assemblyListTreeNode.FindAssemblyNode(asm);
 				case Resource res:
 					return assemblyListTreeNode.FindResourceNode(res);
+				case ValueTuple<Resource, string> resName:
+					return assemblyListTreeNode.FindResourceNode(resName.Item1, resName.Item2);
 				case ITypeDefinition type:
 					return assemblyListTreeNode.FindTypeNode(type);
 				case IField fd:
