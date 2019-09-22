@@ -36,6 +36,7 @@ using static ICSharpCode.Decompiler.Metadata.DotNetCorePathFinderExtensions;
 using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
+using ICSharpCode.Decompiler.DebugInfo;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -72,6 +73,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		public IAssemblyResolver AssemblyResolver { get; set; }
+
+		public IDebugInfoProvider DebugInfoProvider { get; set; }
 
 		/// <summary>
 		/// The MSBuild ProjectGuid to use for the new project.
@@ -322,6 +325,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		CSharpDecompiler CreateDecompiler(DecompilerTypeSystem ts)
 		{
 			var decompiler = new CSharpDecompiler(ts, settings);
+			decompiler.DebugInfoProvider = DebugInfoProvider;
 			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			decompiler.AstTransforms.Add(new RemoveCLSCompliantAttribute());
 			return decompiler;

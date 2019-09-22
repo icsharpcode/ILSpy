@@ -28,7 +28,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly bool hasReferenceTypeConstraint;
 		readonly bool hasDefaultConstructorConstraint;
 		readonly Nullability nullabilityConstraint;
-		readonly IReadOnlyList<IType> constraints;
 		readonly IReadOnlyList<IAttribute> attributes;
 
 		public DefaultTypeParameter(

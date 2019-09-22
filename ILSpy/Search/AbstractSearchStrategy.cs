@@ -157,10 +157,9 @@ namespace ICSharpCode.ILSpy.Search
 			return new SearchResult {
 				Member = item,
 				Fitness = CalculateFitness(item),
-				Image = GetIcon(item),
 				Name = GetLanguageSpecificName(item),
-				LocationImage = declaringType != null ? TypeTreeNode.GetIcon(declaringType) : Images.Namespace,
 				Location = declaringType != null ? language.TypeToString(declaringType, includeNamespace: true) : item.Namespace,
+				Assembly = item.ParentModule.FullAssemblyName,
 				ToolTip = item.ParentModule.PEFile?.FileName
 			};
 		}
@@ -204,7 +203,7 @@ namespace ICSharpCode.ILSpy.Search
 			}
 		}
 
-		ImageSource GetIcon(IEntity member)
+		internal static ImageSource GetIcon(IEntity member)
 		{
 			switch (member) {
 				case ITypeDefinition t:

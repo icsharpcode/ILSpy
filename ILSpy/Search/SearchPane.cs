@@ -373,22 +373,48 @@ namespace ICSharpCode.ILSpy
 
 	public sealed class SearchResult : IMemberTreeNode
 	{
-		public static readonly System.Collections.Generic.IComparer<SearchResult> Comparer = new SearchResultComparer();
-		
+		ImageSource image;
+		ImageSource locationImage;
+
+		public static readonly IComparer<SearchResult> Comparer = new SearchResultComparer();
+
 		public IEntity Member { get; set; }
 		public float Fitness { get; set; }
-		
+
+		public string Assembly { get; set; }
 		public string Location { get; set; }
 		public string Name { get; set; }
 		public object ToolTip { get; set; }
-		public ImageSource Image { get; set; }
-		public ImageSource LocationImage { get; set; }
-		
+
+		public ImageSource Image {
+			get {
+				if (image == null) {
+					image = AbstractSearchStrategy.GetIcon(Member);
+				}
+				return image;
+			}
+		}
+
+		public ImageSource LocationImage {
+			get {
+				if (locationImage == null) {
+					locationImage = Member.DeclaringTypeDefinition != null ? TypeTreeNode.GetIcon(Member.DeclaringTypeDefinition) : Images.Namespace;
+				}
+				return locationImage;
+			}
+		}
+
+		public ImageSource AssemblyImage {
+			get {
+				return Images.Assembly;
+			}
+		}
+
 		public override string ToString()
 		{
 			return Name;
 		}
-		
+
 		class SearchResultComparer : System.Collections.Generic.IComparer<SearchResult>
 		{
 			public int Compare(SearchResult x, SearchResult y)
@@ -398,8 +424,8 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = nameof(Properties.Resources._View), Header =nameof(Properties.Resources.Search), MenuIcon = "Images/Find.png", MenuCategory = nameof(Properties.Resources.View), MenuOrder = 100)]
-	[ExportToolbarCommand(ToolTip = nameof(Properties.Resources.SearchCtrlShiftFOrCtrlE), ToolbarIcon = "Images/Find.png", ToolbarCategory = nameof(Properties.Resources.View), ToolbarOrder = 100)]
+	[ExportMainMenuCommand(Menu = nameof(Properties.Resources._View), Header =nameof(Properties.Resources.Search), MenuIcon = "Images/Search", MenuCategory = nameof(Properties.Resources.View), MenuOrder = 100)]
+	[ExportToolbarCommand(ToolTip = nameof(Properties.Resources.SearchCtrlShiftFOrCtrlE), ToolbarIcon = "Images/Search", ToolbarCategory = nameof(Properties.Resources.View), ToolbarOrder = 100)]
 	sealed class ShowSearchCommand : CommandWrapper
 	{
 		public ShowSearchCommand()

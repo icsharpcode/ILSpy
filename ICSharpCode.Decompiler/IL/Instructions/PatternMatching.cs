@@ -418,7 +418,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (this is LdObj ldobj && ldobj.Target is LdFlda ldflda && ldobj.UnalignedPrefix == 0 && !ldobj.IsVolatile) {
 				field = ldflda.Field;
-				if (field.DeclaringType.IsReferenceType == true || !ldflda.Target.MatchAddressOf(out target)) {
+				if (field.DeclaringType.IsReferenceType == true || !ldflda.Target.MatchAddressOf(out target, out _)) {
 					target = ldflda.Target;
 				}
 				return true;

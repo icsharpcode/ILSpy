@@ -214,13 +214,11 @@ namespace ICSharpCode.Decompiler.IL
 					Debug.Assert(Method != null);
 					break;
 				case ILFunctionKind.Delegate:
-					Debug.Assert(Parent != null && !(Parent is Block));
 					Debug.Assert(DelegateType != null);
 					Debug.Assert(DeclarationScope == null);
 					Debug.Assert(!(DelegateType?.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1));
 					break;
 				case ILFunctionKind.ExpressionTree:
-					Debug.Assert(Parent != null && !(Parent is Block));
 					Debug.Assert(DelegateType != null);
 					Debug.Assert(DeclarationScope == null);
 					Debug.Assert(DelegateType?.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1);

@@ -180,16 +180,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (!IsValidInStatementExpression(stmt.Expression)) {
 					// fetch ILFunction
 					var function = stmt.Ancestors.SelectMany(a => a.Annotations.OfType<ILFunction>()).First(f => f.Parent == null);
-					// assign result to dummy variable
-					var type = stmt.Expression.GetResolveResult().Type;
-					var v = function.RegisterVariable(
-						VariableKind.StackSlot,
-						type,
-						AssignVariableNames.GenerateVariableName(function, type, stmt.Expression.Annotations.OfType<ILInstruction>().Where(AssignVariableNames.IsSupportedInstruction).FirstOrDefault())
-					);
-					stmt.Expression = new AssignmentExpression(
-						new IdentifierExpression(v.Name).WithRR(new ILVariableResolveResult(v, v.Type)),
-						stmt.Expression.Detach());
+					// if possible use C# 7.0 discard-assignment
+					if (context.Settings.Discards && !ExpressionBuilder.HidesVariableWithName(function, "_")) {
+						stmt.Expression = new AssignmentExpression(
+							new IdentifierExpression("_"), // no ResolveResult
+							stmt.Expression.Detach());
+					} else {
+						// assign result to dummy variable
+						var type = stmt.Expression.GetResolveResult().Type;
+						var v = function.RegisterVariable(
+							VariableKind.StackSlot,
+							type,
+							AssignVariableNames.GenerateVariableName(function, type, stmt.Expression.Annotations.OfType<ILInstruction>().Where(AssignVariableNames.IsSupportedInstruction).FirstOrDefault())
+						);
+						stmt.Expression = new AssignmentExpression(
+							new IdentifierExpression(v.Name).WithRR(new ILVariableResolveResult(v, v.Type)),
+							stmt.Expression.Detach());
+					}
 				}
 			}
 		}

@@ -26,7 +26,7 @@ using System.Text;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	// This inspired by Mono.Cecil's BaseAssemblyResolver/DefaultAssemblyResolver.
+	// This is inspired by Mono.Cecil's BaseAssemblyResolver/DefaultAssemblyResolver.
 	public class UniversalAssemblyResolver : IAssemblyResolver
 	{
 		static UniversalAssemblyResolver()

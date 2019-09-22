@@ -203,7 +203,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false; // setter/adder/remover cannot be called with ?. syntax
 					}
 					inst = call.Arguments[0];
-					if ((call.ConstrainedTo ?? call.Method.DeclaringType).IsReferenceType == false && inst.MatchAddressOf(out var arg)) {
+					if ((call.ConstrainedTo ?? call.Method.DeclaringType).IsReferenceType == false && inst.MatchAddressOf(out var arg, out _)) {
 						inst = arg;
 					}
 					// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain

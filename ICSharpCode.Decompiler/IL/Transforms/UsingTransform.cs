@@ -224,7 +224,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				var firstArg = callVirt.Arguments.FirstOrDefault();
 				if (!(firstArg.MatchUnboxAny(out var innerArg1, out var unboxType) && unboxType.IsKnownType(KnownTypeCode.IDisposable))) {
-					if (!firstArg.MatchAddressOf(out var innerArg2))
+					if (!firstArg.MatchAddressOf(out var innerArg2, out _))
 						return false;
 					return NullableLiftingTransform.MatchGetValueOrDefault(innerArg2, objVar)
 						|| (innerArg2 is NullableUnwrap unwrap

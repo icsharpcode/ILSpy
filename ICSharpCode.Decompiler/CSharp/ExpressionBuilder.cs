@@ -189,6 +189,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal bool HidesVariableWithName(string name)
 		{
+			return HidesVariableWithName(currentFunction, name);
+		}
+
+		internal static bool HidesVariableWithName(ILFunction currentFunction, string name)
+		{
 			return currentFunction.Ancestors.OfType<ILFunction>().Any(HidesVariableOrNestedFunction);
 
 			bool HidesVariableOrNestedFunction(ILFunction function)
@@ -2769,14 +2774,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitAddressOf(AddressOf inst, TranslationContext context)
 		{
-			IType targetTypeHint = null;
-			if (context.TypeHint is ByReferenceType brt) {
-				targetTypeHint = brt.ElementType;
-			} else if (context.TypeHint is PointerType pt) {
-				targetTypeHint = pt.ElementType;
-			}
 			// HACK: this is only correct if the argument is an R-value; otherwise we're missing the copy to the temporary
-			var value = Translate(inst.Value, targetTypeHint);
+			var value = Translate(inst.Value, inst.Type);
+			value = value.ConvertTo(inst.Type, this);
 			return new DirectionExpression(FieldDirection.Ref, value)
 				.WithILInstruction(inst)
 				.WithRR(new ByReferenceResolveResult(value.ResolveResult, ReferenceKind.Ref));

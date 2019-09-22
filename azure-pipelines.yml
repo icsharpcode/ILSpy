@@ -9,7 +9,7 @@ pr:
 
 variables:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
-  BuildPlatform: Any CPU  
+  BuildPlatform: Any CPU
 
 jobs:
 - job: Build
@@ -40,7 +40,7 @@ jobs:
 
   - task: DotNetCoreInstaller@0
     inputs:
-      version: '3.0.100-preview5-011568'
+      version: '3.0.100-preview9-014004'
 
   - powershell: .\BuildTools\pipelines-install.ps1
     displayName: Install
@@ -67,15 +67,15 @@ jobs:
     inputs:
       testSelector: testAssemblies
       testAssemblyVer2: |
-        ICSharpCode.Decompiler.Tests\bin\$(BuildConfiguration)\net462\ICSharpCode.Decompiler.Tests.exe
-        ILSpy.Tests\bin\$(BuildConfiguration)\net462\ILSpy.Tests.exe
-        ILSpy.BamlDecompiler.Tests\bin\$(BuildConfiguration)\net462\ILSpy.BamlDecompiler.Tests.dll
+        ICSharpCode.Decompiler.Tests\bin\$(BuildConfiguration)\net472\ICSharpCode.Decompiler.Tests.exe
+        ILSpy.Tests\bin\$(BuildConfiguration)\net472\ILSpy.Tests.exe
+        ILSpy.BamlDecompiler.Tests\bin\$(BuildConfiguration)\net472\ILSpy.BamlDecompiler.Tests.dll
 
   - task: ArchiveFiles@1
     displayName: Create zip
     inputs:
       archiveType: zip
-      rootFolder: ILSpy/bin/$(BuildConfiguration)/net462
+      rootFolder: ILSpy/bin/$(BuildConfiguration)/net472
       archiveFile: $(Build.ArtifactStagingDirectory)\$(ReleaseChannel)\ILSpy.$(Build.BuildNumber).zip
       includeRootFolder: false
     condition: and(succeeded(), eq(variables['ReleaseChannel'], 'Zip'))

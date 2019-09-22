@@ -199,24 +199,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			taskType = function.Method.ReturnType;
 			builderType = startCall.Method.DeclaringTypeDefinition;
-			const string ns = "System.Runtime.CompilerServices";
 			if (taskType.IsKnownType(KnownTypeCode.Void)) {
 				methodType = AsyncMethodType.Void;
 				underlyingReturnType = taskType;
-				if (builderType?.FullTypeName != new TopLevelTypeName(ns, "AsyncVoidMethodBuilder"))
+				if (builderType?.FullTypeName != new TopLevelTypeName("System.Runtime.CompilerServices", "AsyncVoidMethodBuilder"))
 					return false;
-			} else if (taskType.IsKnownType(KnownTypeCode.Task)) {
+			} else if (TaskType.IsNonGenericTaskType(taskType, out var builderTypeName)) {
 				methodType = AsyncMethodType.Task;
 				underlyingReturnType = context.TypeSystem.FindType(KnownTypeCode.Void);
-				if (builderType?.FullTypeName != new TopLevelTypeName(ns, "AsyncTaskMethodBuilder", 0))
+				if (builderType?.FullTypeName != builderTypeName)
 					return false;
-			} else if (taskType.IsKnownType(KnownTypeCode.TaskOfT)) {
+			} else if (TaskType.IsGenericTaskType(taskType, out builderTypeName)) {
 				methodType = AsyncMethodType.TaskOfT;
-				underlyingReturnType = TaskType.UnpackTask(context.TypeSystem, taskType);
-				if (builderType?.FullTypeName != new TopLevelTypeName(ns, "AsyncTaskMethodBuilder", 1))
+				if (taskType.IsKnownType(KnownTypeCode.TaskOfT))
+					underlyingReturnType = TaskType.UnpackTask(context.TypeSystem, taskType);
+				else
+					underlyingReturnType = startCall.Method.DeclaringType.TypeArguments[0];
+				if (builderType?.FullTypeName != builderTypeName)
 					return false;
 			} else {
-				return false; // TODO: generalized async return type
+				return false;
 			}
 			if (startCall.Arguments.Count != 2)
 				return false;

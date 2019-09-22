@@ -58,18 +58,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override void VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
 		{
-			ExpressionStatement stmt = constructorDeclaration.Body.Statements.FirstOrDefault() as ExpressionStatement;
+			var stmt = constructorDeclaration.Body.Statements.FirstOrDefault() as ExpressionStatement;
 			if (stmt == null)
 				return;
-			InvocationExpression invocation = stmt.Expression as InvocationExpression;
-			if (invocation == null)
+			if (!(stmt.Expression is InvocationExpression invocation))
 				return;
-			MemberReferenceExpression mre = invocation.Target as MemberReferenceExpression;
-			if (mre != null && mre.MemberName == ".ctor") {
+			if (invocation.Target is MemberReferenceExpression mre && mre.MemberName == ".ctor") {
 				ConstructorInitializer ci = new ConstructorInitializer();
-				if (mre.Target is ThisReferenceExpression)
+				var target = mre.Target;
+				// Ignore casts, those might be added if references are missing.
+				if (target is CastExpression cast)
+					target = cast.Expression;
+				if (target is ThisReferenceExpression)
 					ci.ConstructorInitializerType = ConstructorInitializerType.This;
-				else if (mre.Target is BaseReferenceExpression)
+				else if (target is BaseReferenceExpression)
 					ci.ConstructorInitializerType = ConstructorInitializerType.Base;
 				else
 					return;

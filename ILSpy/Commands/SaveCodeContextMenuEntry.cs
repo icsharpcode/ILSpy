@@ -29,7 +29,7 @@ using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy.TextView
 {
-	[ExportContextMenuEntry(Header = nameof(Resources._SaveCode), Category = nameof(Resources.Save), Icon = "Images/SaveFile.png")]
+	[ExportContextMenuEntry(Header = nameof(Resources._SaveCode), Category = nameof(Resources.Save), Icon = "Images/Save")]
 	sealed class SaveCodeContextMenuEntry : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)

@@ -1294,7 +1294,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (thisArgBox.Argument is LdObj ldobj) {
 						thisArg = ldobj.Target;
 					} else {
-						thisArg = new AddressOf(thisArgBox.Argument);
+						thisArg = new AddressOf(thisArgBox.Argument, thisArgBox.Type);
 					}
 				}
 				target = expressionBuilder.TranslateTarget(thisArg,

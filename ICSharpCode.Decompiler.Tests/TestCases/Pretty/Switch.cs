@@ -1192,5 +1192,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					throw new ArgumentOutOfRangeException();
 			}
 		}
+
+		public static bool DoNotRemoveAssignmentBeforeSwitch(string x, out ConsoleKey key)
+		{
+			key = (ConsoleKey)0;
+			switch (x) {
+				case "A":
+					key = ConsoleKey.A;
+					break;
+				case "B":
+					key = ConsoleKey.B;
+					break;
+				case "C":
+					key = ConsoleKey.C;
+					break;
+			}
+			return key != (ConsoleKey)0;
+		}
 	}
 }

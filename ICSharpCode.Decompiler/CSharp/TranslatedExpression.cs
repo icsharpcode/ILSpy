@@ -223,8 +223,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return this;
 			}
-			if (targetType.Kind == TypeKind.Unknown || targetType.Kind == TypeKind.Void || targetType.Kind == TypeKind.None) {
+			if (targetType.Kind == TypeKind.Void || targetType.Kind == TypeKind.None) {
 				return this; // don't attempt to insert cast to '?' or 'void' as these are not valid.
+			} else if (targetType.Kind == TypeKind.Unknown) {
+				// don't attempt cast to '?', or casts between an unknown type and a known type with same name
+				if (targetType.Name == "?" || targetType.ReflectionName == type.ReflectionName) {
+					return this;
+				}
+				// However we still want explicit casts to types that are merely unresolved
 			}
 			var convAnnotation = this.Expression.Annotation<ImplicitConversionAnnotation>();
 			if (convAnnotation != null) {
@@ -416,6 +422,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (rr.IsCompileTimeConstant && !rr.IsError) {
 				return expressionBuilder.ConvertConstantValue(rr, allowImplicitConversion)
 					.WithILInstruction(this.ILInstructions);
+			} else if (rr.IsError && targetType.IsReferenceType == true && type.IsReferenceType == true) {
+				// Conversion between two reference types, but no direct cast allowed? cast via object
+				// Just make sure we avoid infinite recursion even if the resolver falsely claims we can't cast directly:
+				if (!(targetType.IsKnownType(KnownTypeCode.Object) || type.IsKnownType(KnownTypeCode.Object))) {
+					return this.ConvertTo(compilation.FindType(KnownTypeCode.Object), expressionBuilder)
+						.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
+				}
 			}
 			if (targetType.Kind == TypeKind.Pointer && (0.Equals(ResolveResult.ConstantValue) || 0u.Equals(ResolveResult.ConstantValue))) {
 				if (allowImplicitConversion) {

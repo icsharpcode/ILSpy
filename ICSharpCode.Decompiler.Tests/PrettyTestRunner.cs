@@ -284,7 +284,9 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void VariableNamingWithoutSymbols([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings { UseDebugSymbols = false });
+			var settings = Tester.GetSettings(cscOptions);
+			settings.UseDebugSymbols = false;
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: settings);
 		}
 
 		[Test]
@@ -297,6 +299,12 @@ namespace ICSharpCode.Decompiler.Tests
 		public void AsyncMain([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void CustomTaskType([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
