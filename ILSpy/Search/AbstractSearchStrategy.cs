@@ -40,17 +40,17 @@ namespace ICSharpCode.ILSpy.Search
 
 		public abstract void Search(PEFile module, CancellationToken cancellationToken);
 
-		protected virtual bool IsMatch(string entityName)
+		protected virtual bool IsMatch(string name)
 		{
 			if (regex != null) {
-				return regex.IsMatch(entityName);
+				return regex.IsMatch(name);
 			}
 
 			for (int i = 0; i < searchTerm.Length; ++i) {
 				// How to handle overlapping matches?
 				var term = searchTerm[i];
 				if (string.IsNullOrEmpty(term)) continue;
-				string text = entityName;
+				string text = name;
 				switch (term[0]) {
 					case '+': // must contain
 						term = term.Substring(1);

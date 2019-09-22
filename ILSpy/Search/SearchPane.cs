@@ -32,7 +32,6 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Search;
-using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy
 {
@@ -76,7 +75,7 @@ namespace ICSharpCode.ILSpy
 			searchModeComboBox.Items.Add(new { Image = Images.Event, Name = "Event" });
 			searchModeComboBox.Items.Add(new { Image = Images.Literal, Name = "Constant" });
 			searchModeComboBox.Items.Add(new { Image = Images.Library, Name = "Metadata Token" });
-			searchModeComboBox.Items.Add(new { Image = Images.ResourceResourcesFile, Name = "Resource" });
+			searchModeComboBox.Items.Add(new { Image = Images.Resource, Name = "Resource" });
 
 			ContextMenuProvider.Add(listBox);
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
@@ -373,61 +372,6 @@ namespace ICSharpCode.ILSpy
 				}
 
 				return null;
-			}
-		}
-	}
-
-	public sealed class SearchResult // : IMemberTreeNode
-	{
-		public static readonly System.Collections.Generic.IComparer<SearchResult> Comparer = new SearchResultComparer();
-		
-		ImageSource image;
-		ImageSource locationImage;
-
-		public static readonly IComparer<SearchResult> Comparer = new SearchResultComparer();
-
-		public object Reference { get; set; }
-		public float Fitness { get; set; }
-
-		public string Assembly { get; set; }
-		public string Location { get; set; }
-		public string Name { get; set; }
-		public object ToolTip { get; set; }
-
-		public ImageSource Image {
-			get {
-				if (image == null) {
-					image = AbstractSearchStrategy.GetIcon(Member);
-				}
-				return image;
-			}
-		}
-
-		public ImageSource LocationImage {
-			get {
-				if (locationImage == null) {
-					locationImage = Member.DeclaringTypeDefinition != null ? TypeTreeNode.GetIcon(Member.DeclaringTypeDefinition) : Images.Namespace;
-				}
-				return locationImage;
-			}
-		}
-
-		public ImageSource AssemblyImage {
-			get {
-				return Images.Assembly;
-			}
-		}
-
-		public override string ToString()
-		{
-			return Name;
-		}
-
-		class SearchResultComparer : System.Collections.Generic.IComparer<SearchResult>
-		{
-			public int Compare(SearchResult x, SearchResult y)
-			{
-				return StringComparer.Ordinal.Compare(x?.Name ?? "", y?.Name ?? "");
 			}
 		}
 	}

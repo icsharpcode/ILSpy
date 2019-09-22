@@ -46,46 +46,43 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			var resourcesNode = new ResourceListTreeNode(module);
-				
-			resourcesNode.EnsureLazyChildren();
-			foreach (var node in resourcesNode.Children)
-				Search(module, null, resourcesNode, node, cancellationToken);
-			return;
+
+			foreach (Resource resource in module.Resources)
+				Search(module, resource, resourcesNode, ResourceTreeNode.Create(resource), cancellationToken);
 		}
 
-		void Search(PEFile module, object reference, SharpTreeNode parent, SharpTreeNode node, CancellationToken cancellationToken)
+		void Search(PEFile module, Resource resource, SharpTreeNode parent, SharpTreeNode node, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
 			if (node is ResourceTreeNode treeNode) {
 				if (!CheckVisibility(treeNode.Resource))
 					return;
-				reference = treeNode.Resource;
+				resource = treeNode.Resource;
 			}
 
 			if (node.Text != null && IsMatch((string)node.Text))
-				OnFoundResult(module, reference, node, parent);
+				OnFoundResult(module, resource, node, parent);
 
 			if (!searchInside)
 				return;
 
 			node.EnsureLazyChildren();
 			foreach (var child in node.Children)
-				Search(module, reference, node, child, cancellationToken);
+				Search(module, resource, node, child, cancellationToken);
 		}
 
-		void OnFoundResult(PEFile module, object reference, SharpTreeNode node, SharpTreeNode parent)
+		void OnFoundResult(PEFile module, Resource resource, SharpTreeNode node, SharpTreeNode parent)
 		{
 			var name = (string)node.Text;
-			var result = new SearchResult {
-				Reference = reference,
+			var result = new ResourceSearchResult {
+				Resource = resource,
 				Fitness = 1.0f / name.Length,
 				Image = (ImageSource)node.Icon,
 				Name = name,
 				LocationImage = (ImageSource)parent.Icon,
 				Location = (string)parent.Text,
-				AssemblyImage = Images.Assembly,
-				Assembly = module.Name,
+				Assembly = module.FullName,
 				ToolTip = module.FileName,
 			};
 			OnFoundResult(result);

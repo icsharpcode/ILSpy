@@ -155,7 +155,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		#region Find*Node
 		public ILSpyTreeNode FindResourceNode(Resource resource)
 		{
-			if (resource == null)
+			if (resource == null || resource.IsNil)
 				return null;
 			foreach (AssemblyTreeNode node in this.Children)
 			{
@@ -175,6 +175,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				}
 			}
 			return null;
+		}
+
+		public ILSpyTreeNode FindResourceNode(Resource resource, string name)
+		{
+			var resourceNode = FindResourceNode(resource);
+			if (resourceNode == null || name == null || name.Equals(resourceNode.Text))
+				return resourceNode;
+
+			resourceNode.EnsureLazyChildren();
+			return resourceNode.Children.OfType<ILSpyTreeNode>().Where(x => name.Equals(x.Text)).FirstOrDefault() ?? resourceNode;
 		}
 
 		public AssemblyTreeNode FindAssemblyNode(IModule module)
