@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Threading;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -16,21 +17,60 @@ namespace ICSharpCode.ILSpy.Search
 {
 	class AssemblySearchStrategy : AbstractSearchStrategy
 	{
-		public AssemblySearchStrategy(IProducerConsumerCollection<SearchResult> resultQueue, string term)
-			: this(resultQueue, new[] { term })
+		readonly AssemblySearchKind searchKind;
+
+		public AssemblySearchStrategy(string term, IProducerConsumerCollection<SearchResult> resultQueue, AssemblySearchKind searchKind)
+			: this(resultQueue, new[] { term }, searchKind)
 		{
 		}
 
-		public AssemblySearchStrategy(IProducerConsumerCollection<SearchResult> resultQueue, string[] terms)
+		public AssemblySearchStrategy(IProducerConsumerCollection<SearchResult> resultQueue, string[] terms, AssemblySearchKind searchKind)
 			: base(resultQueue, terms)
 		{
+			this.searchKind = searchKind;
 		}
 
 		public override void Search(PEFile module, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			if (IsMatch(module.FullName))
+			string name = GetNameToMatch(module);
+			if (IsMatch(name))
 				OnFoundResult(module);
+		}
+
+		string GetNameToMatch(PEFile module)
+		{
+			switch (searchKind) {
+				case AssemblySearchKind.FullName:
+					return module.FullName;
+				case AssemblySearchKind.Name:
+					return module.Name;
+				case AssemblySearchKind.FileName:
+					return module.FileName;
+			}
+
+			if (!module.IsAssembly)
+				return null;
+
+			var metadata = module.Metadata;
+			var definition = module.Metadata.GetAssemblyDefinition();
+
+			switch (searchKind) {
+				case AssemblySearchKind.Culture:
+					if (definition.Culture.IsNil)
+						return "neutral";
+					return metadata.GetString(definition.Culture);
+				case AssemblySearchKind.Version:
+					return definition.Version.ToString();
+				case AssemblySearchKind.PublicKey:
+					return module.Metadata.GetPublicKeyToken();
+				case AssemblySearchKind.HashAlgorithm:
+					return definition.HashAlgorithm.ToString();
+				case AssemblySearchKind.Flags:
+					return definition.Flags.ToString();
+			}
+
+			return null;
 		}
 
 		void OnFoundResult(PEFile module)
@@ -45,5 +85,17 @@ namespace ICSharpCode.ILSpy.Search
 			};
 			OnFoundResult(result);
 		}
+	}
+
+	enum AssemblySearchKind
+	{
+		Name,
+		FullName,
+		FileName,
+		Culture,
+		Version,
+		PublicKey,
+		HashAlgorithm,
+		Flags
 	}
 }
