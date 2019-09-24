@@ -7,7 +7,6 @@ configuration:
 image: Visual Studio 2019
 
 install:
-- cmd: choco install dotnetcore-sdk --pre
 - git submodule update --init --recursive
 - ps: .\BuildTools\appveyor-install.ps1
 
