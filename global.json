@@ -3,6 +3,6 @@
 		"MSBuild.Sdk.Extras": "2.0.24"
 	},
 	"sdk": {
-		"version": "3.0.100-rc1"
+		"version": "3.0.100"
 	}
 }
