@@ -1,11 +1,9 @@
 trigger:
 - master
 - msix
-- 3.2.x
 
 pr:
 - master
-- 3.2.x
 
 variables:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
