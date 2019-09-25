@@ -77,10 +77,10 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 					string assemblyName = assemblyDef.Name.Name;
 					if (AssemblyFileFinder.IsReferenceAssembly(assemblyDef, reference.Display)) {
 						string resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
-						dict.Add(assemblyName, 
+						dict.Add(assemblyName,
 							new DetectedReference(assemblyName, resolvedAssemblyFile, false));
 					} else {
-						dict.Add(assemblyName, 
+						dict.Add(assemblyName,
 							new DetectedReference(assemblyName, reference.Display, false));
 					}
 				}
@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				var roslynProject = owner.Workspace.CurrentSolution.GetProject(projectReference.ProjectId);
 				var project = FindProject(owner.DTE.Solution.Projects.OfType<EnvDTE.Project>(), roslynProject.FilePath);
 				if (roslynProject != null && project != null)
-					dict.Add(roslynProject.AssemblyName, 
+					dict.Add(roslynProject.AssemblyName,
 						new DetectedReference(roslynProject.AssemblyName, Utils.GetProjectOutputAssembly(project, roslynProject), true));
 			}
 			return dict;
@@ -98,16 +98,25 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		protected EnvDTE.Project FindProject(IEnumerable<EnvDTE.Project> projects, string projectFile)
 		{
 			foreach (var project in projects) {
-				if (project.Kind == DTEConstants.vsProjectKindSolutionItems) {
-					// This is a solution folder -> search in sub-projects
-					var subProject = FindProject(
-						project.ProjectItems.OfType<EnvDTE.ProjectItem>().Select(pi => pi.SubProject).OfType<EnvDTE.Project>(), 
-						projectFile);
-					if (subProject != null)
-						return subProject;
-				} else {
-					if (project.FileName == projectFile)
-						return project;
+				switch (project.Kind) {
+					case DTEConstants.vsProjectKindSolutionItems:
+						// This is a solution folder -> search in sub-projects
+						var subProject = FindProject(
+							project.ProjectItems.OfType<EnvDTE.ProjectItem>().Select(pi => pi.SubProject).OfType<EnvDTE.Project>(),
+							projectFile);
+						if (subProject != null)
+							return subProject;
+						break;
+
+					case DTEConstants.vsProjectKindUnmodeled:
+						// Skip unloaded projects completely
+						break;
+
+					default:
+						// Match by project's file name
+						if (project.FileName == projectFile)
+							return project;
+						break;
 				}
 			}
 
