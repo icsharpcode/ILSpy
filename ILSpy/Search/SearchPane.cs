@@ -348,28 +348,13 @@ namespace ICSharpCode.ILSpy
 						return new ResourceSearchStrategy(apiVisibility, resultQueue, searchTerm[0].Substring(2));
 
 					if (searchTerm[0].StartsWith("a:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(2), resultQueue, AssemblySearchKind.Name);
-
-					if (searchTerm[0].StartsWith("afn:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(4), resultQueue, AssemblySearchKind.FullName);
+						return new AssemblySearchStrategy(searchTerm[0].Substring(2), resultQueue, AssemblySearchKind.NameOrFileName);
 
 					if (searchTerm[0].StartsWith("af:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.FileName);
+						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.FilePath);
 
-					if (searchTerm[0].StartsWith("ac:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.Culture);
-
-					if (searchTerm[0].StartsWith("av:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.Version);
-
-					if (searchTerm[0].StartsWith("apk:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(4), resultQueue, AssemblySearchKind.PublicKey);
-
-					if (searchTerm[0].StartsWith("aha:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(4), resultQueue, AssemblySearchKind.HashAlgorithm);
-
-					if (searchTerm[0].StartsWith("afl:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(4), resultQueue, AssemblySearchKind.Flags);
+					if (searchTerm[0].StartsWith("an:", StringComparison.Ordinal))
+						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.FullName);
 				}
 
 				switch (searchMode)
@@ -395,7 +380,7 @@ namespace ICSharpCode.ILSpy
 					case SearchMode.Resource:
 						return new ResourceSearchStrategy(apiVisibility, resultQueue, searchTerm);
 					case SearchMode.Assembly:
-						return new AssemblySearchStrategy(resultQueue, searchTerm, AssemblySearchKind.Name);
+						return new AssemblySearchStrategy(resultQueue, searchTerm, AssemblySearchKind.NameOrFileName);
 				}
 
 				return null;

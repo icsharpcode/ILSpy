@@ -33,19 +33,28 @@ namespace ICSharpCode.ILSpy.Search
 		public override void Search(PEFile module, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			string name = GetNameToMatch(module);
+
+			if (searchKind == AssemblySearchKind.NameOrFileName) {
+				string localName = GetNameToMatch(module, AssemblySearchKind.Name);
+				string fileName = Path.GetFileName(GetNameToMatch(module, AssemblySearchKind.FilePath));
+				if (IsMatch(localName) || IsMatch(fileName))
+					OnFoundResult(module);
+				return;
+			}
+
+			string name = GetNameToMatch(module, searchKind);
 			if (IsMatch(name))
 				OnFoundResult(module);
 		}
 
-		string GetNameToMatch(PEFile module)
+		string GetNameToMatch(PEFile module, AssemblySearchKind kind)
 		{
-			switch (searchKind) {
+			switch (kind) {
 				case AssemblySearchKind.FullName:
 					return module.FullName;
 				case AssemblySearchKind.Name:
 					return module.Name;
-				case AssemblySearchKind.FileName:
+				case AssemblySearchKind.FilePath:
 					return module.FileName;
 			}
 
@@ -55,7 +64,7 @@ namespace ICSharpCode.ILSpy.Search
 			var metadata = module.Metadata;
 			var definition = module.Metadata.GetAssemblyDefinition();
 
-			switch (searchKind) {
+			switch (kind) {
 				case AssemblySearchKind.Culture:
 					if (definition.Culture.IsNil)
 						return "neutral";
@@ -89,9 +98,10 @@ namespace ICSharpCode.ILSpy.Search
 
 	enum AssemblySearchKind
 	{
+		NameOrFileName,
 		Name,
 		FullName,
-		FileName,
+		FilePath,
 		Culture,
 		Version,
 		PublicKey,
