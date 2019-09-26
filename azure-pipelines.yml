@@ -1,6 +1,5 @@
 trigger:
 - master
-- msix
 
 pr:
 - master
