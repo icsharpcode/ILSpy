@@ -163,6 +163,10 @@
     <Compile Include="Languages\IResourceFileHandler.cs" />
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Languages\Languages.cs" />
+    <Compile Include="Metadata\CorTables\MethodImplTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
     <Compile Include="Options\DecompilerSettingsPanel.xaml.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>

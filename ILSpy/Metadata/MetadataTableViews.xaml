@@ -636,4 +636,25 @@
 			</controls:FilterableGridViewColumn.CellTemplateSelector>
 		</controls:FilterableGridViewColumn>
 	</GridView>
+
+	<GridView x:Key="MethodImplView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Type" SortBy="TypeHandle" FilterBy="TypeHandle">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="TypeHandle" TooltipPropertyName="Type" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="MethodBody" SortBy="MethodBodyHandle" FilterBy="MethodBodyHandle">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="MethodBodyHandle" TooltipPropertyName="MethodBody" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="MethodDeclaration" SortBy="MethodDeclarationHandle" FilterBy="MethodDeclarationHandle">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="MethodDeclarationHandle" TooltipPropertyName="MethodDeclaration" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+	</GridView>
 </ResourceDictionary>

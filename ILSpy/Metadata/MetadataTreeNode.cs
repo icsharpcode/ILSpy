@@ -73,6 +73,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.Children.Add(new EventTableTreeNode(module));
 			this.Children.Add(new PropertyTableTreeNode(module));
 			this.Children.Add(new MethodSemanticsTableTreeNode(module));
+			this.Children.Add(new MethodImplTableTreeNode(module));
 			this.Children.Add(new ModuleRefTableTreeNode(module));
 			this.Children.Add(new TypeSpecTableTreeNode(module));
 			this.Children.Add(new AssemblyTableTreeNode(module));
