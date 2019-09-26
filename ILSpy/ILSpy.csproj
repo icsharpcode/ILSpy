@@ -160,18 +160,112 @@
     <Compile Include="Languages\IResourceFileHandler.cs" />
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Languages\Languages.cs" />
+    <Compile Include="Metadata\CorTables\AssemblyRefTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\AssemblyTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ConstantTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\CustomAttributeTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\DeclSecurityTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\EventTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ExportedTypeTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\FieldLayoutTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\FieldTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\FileTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\GenericParamConstraintTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\GenericParamTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ManifestResourceTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\MemberRefTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\MethodSemanticsTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\MethodSpecTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\MethodTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ModuleRefTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ModuleTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ParamTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\PropertyTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\StandAloneSigTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\TypeDefTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\TypeRefTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\TypeSpecTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
     <Compile Include="Metadata\DataDirectoriesTreeNode.cs" />
     <Compile Include="Metadata\DosHeaderTreeNode.cs" />
     <Compile Include="Metadata\CoffHeaderTreeNode.cs" />
     <Compile Include="Metadata\EntityHandleTemplate.cs" />
-    <Compile Include="Metadata\MethodTableTreeNode.cs" />
-    <Compile Include="Metadata\FieldTableTreeNode.cs" />
     <Compile Include="Metadata\Helpers.cs" />
     <Compile Include="Metadata\StringHandleTemplate.cs" />
-    <Compile Include="Metadata\TypeDefTableTreeNode.cs" />
-    <Compile Include="Metadata\TypeRefTableTreeNode.cs" />
-    <Compile Include="Metadata\ModuleTableTreeNode.cs" />
-    <Compile Include="Metadata\ExportedTypeTableTreeNode.cs" />
     <Compile Include="Metadata\MetadataTableViews.xaml.cs" />
     <Compile Include="Metadata\MetadataTreeNode.cs" />
     <Compile Include="Metadata\OptionalHeaderTreeNode.cs" />

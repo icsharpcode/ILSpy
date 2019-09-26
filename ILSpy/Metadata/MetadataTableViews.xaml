@@ -1,9 +1,9 @@
 ﻿<ResourceDictionary x:Class="ICSharpCode.ILSpy.Metadata.MetadataTableViews"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
-             xmlns:local="clr-namespace:ICSharpCode.ILSpy.Metadata">
+			 xmlns:local="clr-namespace:ICSharpCode.ILSpy.Metadata">
 
 	<Style x:Key="ItemContainerStyle" TargetType="ListViewItem">
 		<Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -50,7 +50,8 @@
 	<local:StringHandleTemplate x:Key="NameStringHandleDataTemplate" ValuePropertyName="Name" HandlePropertyName="NameStringHandle" />
 	<local:StringHandleTemplate x:Key="NamespaceStringHandleDataTemplate" ValuePropertyName="Namespace" HandlePropertyName="NamespaceStringHandle" />
 
-	<local:HandleTemplate x:Key="SignatureBlobHandleDataTemplate" TooltipPropertyName="SignatureTooltip" ValuePropertyName="Signature" />
+	<local:HandleTemplate x:Key="SignatureBlobHandleDataTemplate" TooltipPropertyName="SignatureTooltip" ValuePropertyName="Signature" ValueStringFormat="X" />
+	<local:HandleTemplate x:Key="ValueBlobHandleDataTemplate" TooltipPropertyName="ValueTooltip" ValuePropertyName="Value" ValueStringFormat="X" />
 
 	<GridView x:Key="EntryView" AllowsColumnReorder="False">
 		<controls:FilterableGridViewColumn Header="Member" SortBy="Member" FilterBy="Member">
@@ -135,17 +136,11 @@
 			</controls:FilterableGridViewColumn.CellTemplate>
 		</controls:FilterableGridViewColumn>
 	</GridView>
-	
+
 	<GridView x:Key="ModulesView" AllowsColumnReorder="False">
 		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
 		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
-		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8">
-			<controls:FilterableGridViewColumn.CellTemplate>
-				<DataTemplate>
-					<TextBlock Text="{Binding Offset, StringFormat=X8}" />
-				</DataTemplate>
-			</controls:FilterableGridViewColumn.CellTemplate>
-		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
 		<controls:FilterableGridViewColumn Header="Generation" SortBy="Generation" FilterBy="Generation">
 			<controls:FilterableGridViewColumn.CellTemplate>
 				<DataTemplate>
@@ -177,16 +172,17 @@
 		</controls:FilterableGridViewColumn>
 	</GridView>
 
+	<GridView x:Key="ModuleRefsView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Name" SortBy="Name" FilterBy="Name" CellTemplateSelector="{StaticResource NameStringHandleDataTemplate}" />
+	</GridView>
+
 	<GridView x:Key="TypeRefsView" AllowsColumnReorder="False">
 		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
 		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
-		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8">
-			<controls:FilterableGridViewColumn.CellTemplate>
-				<DataTemplate>
-					<TextBlock Text="{Binding Offset, StringFormat=X8}" />
-				</DataTemplate>
-			</controls:FilterableGridViewColumn.CellTemplate>
-		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
 		<controls:FilterableGridViewColumn Header="ResolutionScope" SortBy="ResolutionScope" FilterBy="ResolutionScope">
 			<controls:FilterableGridViewColumn.CellTemplateSelector>
 				<local:HandleTemplate ValuePropertyName="ResolutionScope" TooltipPropertyName="ResolutionScopeSignature" />
@@ -199,13 +195,7 @@
 	<GridView x:Key="TypeDefsView" AllowsColumnReorder="False">
 		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
 		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
-		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8">
-			<controls:FilterableGridViewColumn.CellTemplate>
-				<DataTemplate>
-					<TextBlock Text="{Binding Offset, StringFormat=X8}" />
-				</DataTemplate>
-			</controls:FilterableGridViewColumn.CellTemplate>
-		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
 		<controls:FilterableGridViewColumn Header="Attributes" SortBy="Attributes" FilterBy="Attributes">
 			<controls:FilterableGridViewColumn.CellTemplate>
 				<DataTemplate>
@@ -236,16 +226,17 @@
 		</controls:FilterableGridViewColumn>
 	</GridView>
 
+	<GridView x:Key="TypeSpecsView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Signature" SortBy="Signature" FilterBy="Signature" CellTemplateSelector="{StaticResource SignatureBlobHandleDataTemplate}"/>
+	</GridView>
+
 	<GridView x:Key="FieldDefsView" AllowsColumnReorder="False">
 		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
 		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
-		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8">
-			<controls:FilterableGridViewColumn.CellTemplate>
-				<DataTemplate>
-					<TextBlock Text="{Binding Offset, StringFormat=X8}" />
-				</DataTemplate>
-			</controls:FilterableGridViewColumn.CellTemplate>
-		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
 		<controls:FilterableGridViewColumn Header="Attributes" SortBy="Attributes" FilterBy="Attributes">
 			<controls:FilterableGridViewColumn.CellTemplate>
 				<DataTemplate>
@@ -260,13 +251,7 @@
 	<GridView x:Key="MethodDefsView" AllowsColumnReorder="False">
 		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
 		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
-		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8">
-			<controls:FilterableGridViewColumn.CellTemplate>
-				<DataTemplate>
-					<TextBlock Text="{Binding Offset, StringFormat=X8}" />
-				</DataTemplate>
-			</controls:FilterableGridViewColumn.CellTemplate>
-		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
 		<controls:FilterableGridViewColumn Header="Attributes" SortBy="Attributes" FilterBy="Attributes">
 			<controls:FilterableGridViewColumn.CellTemplate>
 				<DataTemplate>
@@ -278,28 +263,128 @@
 		<controls:FilterableGridViewColumn Header="Signature" SortBy="Signature" FilterBy="Signature" CellTemplateSelector="{StaticResource SignatureBlobHandleDataTemplate}"/>
 	</GridView>
 
+	<GridView x:Key="EventDefsView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Attributes" SortBy="Attributes" FilterBy="Attributes">
+			<controls:FilterableGridViewColumn.CellTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Attributes, StringFormat=X8}" ToolTip="{Binding AttributesTooltip}" />
+				</DataTemplate>
+			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Name" SortBy="Name" FilterBy="Name" CellTemplateSelector="{StaticResource NameStringHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Type" SortBy="Type" FilterBy="Type">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="Type" TooltipPropertyName="TypeTooltip" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+	</GridView>
+
+	<GridView x:Key="PropertyDefsView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Attributes" SortBy="Attributes" FilterBy="Attributes">
+			<controls:FilterableGridViewColumn.CellTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Attributes, StringFormat=X8}" ToolTip="{Binding AttributesTooltip}" />
+				</DataTemplate>
+			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Name" SortBy="Name" FilterBy="Name" CellTemplateSelector="{StaticResource NameStringHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Signature" SortBy="Signature" FilterBy="Signature" CellTemplateSelector="{StaticResource SignatureBlobHandleDataTemplate}"/>
+	</GridView>
+
+	<GridView x:Key="AssemblyView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="HashAlgorithm" SortBy="HashAlgorithm" FilterBy="HashAlgorithm">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:EnumTemplate ValuePropertyName="HashAlgorithm" TooltipPropertyName="HashAlgorithmTooltip"/>
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Flags" SortBy="Flags" FilterBy="Flags">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:EnumTemplate ValuePropertyName="Flags" TooltipPropertyName="FlagsTooltip"/>
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Version" SortBy="Version" FilterBy="Version">
+			<controls:FilterableGridViewColumn.CellTemplate>
+				<DataTemplate>
+					<Grid>
+						<TextBlock Margin="3,1,0,0" x:Name="textBlock" Text="{Binding Version}" />
+						<TextBox x:Name="textBox" Text="{Binding Version, Mode=OneWay}" Visibility="Hidden" IsReadOnly="True" IsReadOnlyCaretVisible="True" />
+					</Grid>
+					<DataTemplate.Triggers>
+						<Trigger Property="IsMouseOver" Value="True">
+							<Setter TargetName="textBox" Property="Visibility" Value="Visible" />
+							<Setter TargetName="textBlock" Property="Visibility" Value="Hidden" />
+						</Trigger>
+						<Trigger Property="IsKeyboardFocusWithin" Value="True">
+							<Setter TargetName="textBox" Property="Visibility" Value="Visible" />
+							<Setter TargetName="textBlock" Property="Visibility" Value="Hidden" />
+						</Trigger>
+					</DataTemplate.Triggers>
+				</DataTemplate>
+			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Name" SortBy="Name" FilterBy="Name" CellTemplateSelector="{StaticResource NameStringHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Culture" SortBy="Culture" FilterBy="Culture">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:StringHandleTemplate HandlePropertyName="CultureStringHandle" ValuePropertyName="Culture" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+	</GridView>
+
+	<GridView x:Key="AssemblyRefView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Flags" SortBy="Flags" FilterBy="Flags">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:EnumTemplate ValuePropertyName="Flags" TooltipPropertyName="FlagsTooltip"/>
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="PublicKeyOrToken" SortBy="PublicKeyOrToken" FilterBy="PublicKeyOrToken">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="PublicKeyOrToken" TooltipPropertyName="PublicKeyOrTokenTooltip" ValueStringFormat="X" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Version" SortBy="Version" FilterBy="Version">
+			<controls:FilterableGridViewColumn.CellTemplate>
+				<DataTemplate>
+					<Grid>
+						<TextBlock Margin="3,1,0,0" x:Name="textBlock" Text="{Binding Version}" />
+						<TextBox x:Name="textBox" Text="{Binding Version, Mode=OneWay}" Visibility="Hidden" IsReadOnly="True" IsReadOnlyCaretVisible="True" />
+					</Grid>
+					<DataTemplate.Triggers>
+						<Trigger Property="IsMouseOver" Value="True">
+							<Setter TargetName="textBox" Property="Visibility" Value="Visible" />
+							<Setter TargetName="textBlock" Property="Visibility" Value="Hidden" />
+						</Trigger>
+						<Trigger Property="IsKeyboardFocusWithin" Value="True">
+							<Setter TargetName="textBox" Property="Visibility" Value="Visible" />
+							<Setter TargetName="textBlock" Property="Visibility" Value="Hidden" />
+						</Trigger>
+					</DataTemplate.Triggers>
+				</DataTemplate>
+			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Name" SortBy="Name" FilterBy="Name" CellTemplateSelector="{StaticResource NameStringHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Culture" SortBy="Culture" FilterBy="Culture">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:StringHandleTemplate HandlePropertyName="CultureStringHandle" ValuePropertyName="Culture" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+	</GridView>
+
 	<GridView x:Key="ExportedTypesView" AllowsColumnReorder="False">
-		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID">
-			<controls:FilterableGridViewColumn.CellTemplate>
-				<DataTemplate>
-					<TextBlock Text="{Binding RID}" />
-				</DataTemplate>
-			</controls:FilterableGridViewColumn.CellTemplate>
-		</controls:FilterableGridViewColumn>
-		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8">
-			<controls:FilterableGridViewColumn.CellTemplate>
-				<DataTemplate>
-					<TextBlock Text="{Binding Token, StringFormat=X8}" />
-				</DataTemplate>
-			</controls:FilterableGridViewColumn.CellTemplate>
-		</controls:FilterableGridViewColumn>
-		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8">
-			<controls:FilterableGridViewColumn.CellTemplate>
-				<DataTemplate>
-					<TextBlock Text="{Binding Offset, StringFormat=X8}" />
-				</DataTemplate>
-			</controls:FilterableGridViewColumn.CellTemplate>
-		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
 		<controls:FilterableGridViewColumn Header="Attributes" SortBy="Attributes" FilterBy="Attributes" FilterFormatString="X8">
 			<controls:FilterableGridViewColumn.CellTemplate>
 				<DataTemplate>
@@ -315,18 +400,14 @@
 			</controls:FilterableGridViewColumn.CellTemplate>
 		</controls:FilterableGridViewColumn>
 		<controls:FilterableGridViewColumn Header="TypeName" SortBy="TypeName" FilterBy="TypeName">
-			<controls:FilterableGridViewColumn.CellTemplate>
-				<DataTemplate>
-					<TextBlock Text="{Binding TypeName, StringFormat=X}" ToolTip="{Binding TypeNameTooltip}" />
-				</DataTemplate>
-			</controls:FilterableGridViewColumn.CellTemplate>
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:StringHandleTemplate HandlePropertyName="TypeNamespaceStringHandle" ValuePropertyName="TypeName"/>
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
 		</controls:FilterableGridViewColumn>
 		<controls:FilterableGridViewColumn Header="TypeNamespace" SortBy="TypeNamespace" FilterBy="TypeNamespace">
-			<controls:FilterableGridViewColumn.CellTemplate>
-				<DataTemplate>
-					<TextBlock Text="{Binding TypeNamespace, StringFormat=X}" ToolTip="{Binding TypeNamespaceTooltip}" />
-				</DataTemplate>
-			</controls:FilterableGridViewColumn.CellTemplate>
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:StringHandleTemplate HandlePropertyName="TypeNamespaceStringHandle" ValuePropertyName="TypeNamespace"/>
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
 		</controls:FilterableGridViewColumn>
 		<controls:FilterableGridViewColumn Header="Implementation" SortBy="Implementation" FilterBy="Implementation">
 			<controls:FilterableGridViewColumn.CellTemplate>
@@ -334,6 +415,225 @@
 					<TextBlock Text="{Binding Implementation, StringFormat=X8}" />
 				</DataTemplate>
 			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+	</GridView>
+
+	<GridView x:Key="MethodSpecsView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Method" SortBy="MethodHandle" FilterBy="MethodHandle" FilterFormatString="X8">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="MethodHandle" TooltipPropertyName="Method" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Signature" SortBy="Signature" FilterBy="Signature" CellTemplateSelector="{StaticResource SignatureBlobHandleDataTemplate}"/>
+	</GridView>
+
+	<GridView x:Key="MemberRefsView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Name" SortBy="Name" FilterBy="Name" CellTemplateSelector="{StaticResource NameStringHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Parent" SortBy="ParentHandle" FilterBy="ParentHandle" FilterFormatString="X8">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="ParentHandle" TooltipPropertyName="ParentTooltip" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Signature" SortBy="Signature" FilterBy="Signature" CellTemplateSelector="{StaticResource SignatureBlobHandleDataTemplate}"/>
+	</GridView>
+
+	<GridView x:Key="CustomAttributesView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Parent" SortBy="ParentHandle" FilterBy="ParentHandle" FilterFormatString="X8">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="ParentHandle" TooltipPropertyName="ParentTooltip" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Constructor" SortBy="ConstructorHandle" FilterBy="ConstructorHandle" FilterFormatString="X8">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="ConstructorHandle" TooltipPropertyName="ConstructorTooltip" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Value" SortBy="ValueHandle" FilterBy="ValueHandle">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="ValueHandle" TooltipPropertyName="ValueTooltip" ValueStringFormat="X" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+	</GridView>
+
+	<GridView x:Key="DeclSecurityAttrsView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Parent" SortBy="ParentHandle" FilterBy="ParentHandle" FilterFormatString="X8">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="ParentHandle" TooltipPropertyName="ParentTooltip" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Action" SortBy="Action" FilterBy="Action" FilterFormatString="X8">
+			<controls:FilterableGridViewColumn.CellTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Action, StringFormat=X8}" ToolTip="{Binding ActionTooltip}" />
+				</DataTemplate>
+			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="PermissionSet" SortBy="PermissionSetHandle" FilterBy="PermissionSetHandle">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="PermissionSetHandle" TooltipPropertyName="PermissionSetTooltip" ValueStringFormat="X" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+	</GridView>
+
+	<GridView x:Key="MethodSemanticsView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Semantics" SortBy="Semantics" FilterBy="Semantics" FilterFormatString="X8">
+			<controls:FilterableGridViewColumn.CellTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Semantics, StringFormat=X8}" ToolTip="{Binding SemanticsTooltip}" />
+				</DataTemplate>
+			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Method" SortBy="MethodHandle" FilterBy="MethodHandle" FilterFormatString="X8">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="MethodHandle" TooltipPropertyName="Method" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Association" SortBy="AssociationHandle" FilterBy="AssociationHandle" FilterFormatString="X8">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="AssociationHandle" TooltipPropertyName="Association" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+	</GridView>
+
+	<GridView x:Key="ManifestResourcesView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Attributes" SortBy="Attributes" FilterBy="Attributes">
+			<controls:FilterableGridViewColumn.CellTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Attributes, StringFormat=X8}" ToolTip="{Binding AttributesTooltip}" />
+				</DataTemplate>
+			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Name" SortBy="Name" FilterBy="Name" CellTemplateSelector="{StaticResource NameStringHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Implementation" SortBy="ImplementationHandle" FilterBy="ImplementationHandle" FilterFormatString="X8">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="ImplementationHandle" TooltipPropertyName="ImplementationTooltip" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+	</GridView>
+
+	<GridView x:Key="FilesView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Attributes" SortBy="Attributes" FilterBy="Attributes">
+			<controls:FilterableGridViewColumn.CellTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Attributes, StringFormat=X8}" ToolTip="{Binding AttributesTooltip}" />
+				</DataTemplate>
+			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Name" SortBy="Name" FilterBy="Name" CellTemplateSelector="{StaticResource NameStringHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="HashValue" SortBy="HashValue" FilterBy="HashValue">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="HashValue" TooltipPropertyName="HashValueTooltip" ValueStringFormat="X" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+	</GridView>
+
+	<GridView x:Key="StandAloneSigsView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Signature" SortBy="Signature" FilterBy="Signature" CellTemplateSelector="{StaticResource SignatureBlobHandleDataTemplate}"/>
+	</GridView>
+
+	<GridView x:Key="ConstantsView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Type" SortBy="Type" FilterBy="Type">
+			<controls:FilterableGridViewColumn.CellTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Type, StringFormat=X8}" ToolTip="{Binding TypeTooltip}" />
+				</DataTemplate>
+			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Parent" SortBy="ParentHandle" FilterBy="ParentHandle" FilterFormatString="X8">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="ParentHandle" TooltipPropertyName="ParentTooltip" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Value" SortBy="Value" FilterBy="Value" CellTemplateSelector="{StaticResource ValueBlobHandleDataTemplate}"/>
+	</GridView>
+
+	<GridView x:Key="ParamsView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Sequence" SortBy="Sequence" FilterBy="Sequence">
+			<controls:FilterableGridViewColumn.CellTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Sequence}" />
+				</DataTemplate>
+			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Attributes" SortBy="Attributes" FilterBy="Attributes">
+			<controls:FilterableGridViewColumn.CellTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Attributes, StringFormat=X8}" ToolTip="{Binding AttributesTooltip}" />
+				</DataTemplate>
+			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Name" SortBy="Name" FilterBy="Name" CellTemplateSelector="{StaticResource NameStringHandleDataTemplate}"/>
+	</GridView>
+
+	<GridView x:Key="GenericParamsView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Number" SortBy="Number" FilterBy="Number">
+			<controls:FilterableGridViewColumn.CellTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Number}" />
+				</DataTemplate>
+			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Attributes" SortBy="Attributes" FilterBy="Attributes">
+			<controls:FilterableGridViewColumn.CellTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Attributes, StringFormat=X8}" ToolTip="{Binding AttributesTooltip}" />
+				</DataTemplate>
+			</controls:FilterableGridViewColumn.CellTemplate>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Owner" SortBy="OwnerHandle" FilterBy="OwnerHandle" FilterFormatString="X8">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="OwnerHandle" TooltipPropertyName="Owner" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Name" SortBy="Name" FilterBy="Name" CellTemplateSelector="{StaticResource NameStringHandleDataTemplate}"/>
+	</GridView>
+
+	<GridView x:Key="GenericParamConstraintsView" AllowsColumnReorder="False">
+		<controls:FilterableGridViewColumn Header="RID" SortBy="RID" FilterBy="RID" CellTemplate="{StaticResource RowIDDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Token" SortBy="Token" FilterBy="Token" FilterFormatString="X8" CellTemplateSelector="{StaticResource DefinitionHandleDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Offset" SortBy="Offset" FilterBy="Offset" FilterFormatString="X8" CellTemplate="{StaticResource OffsetDataTemplate}"/>
+		<controls:FilterableGridViewColumn Header="Owner" SortBy="OwnerHandle" FilterBy="OwnerHandle" FilterFormatString="X8">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="OwnerHandle" TooltipPropertyName="Owner" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
+		</controls:FilterableGridViewColumn>
+		<controls:FilterableGridViewColumn Header="Type" SortBy="Type" FilterBy="Type">
+			<controls:FilterableGridViewColumn.CellTemplateSelector>
+				<local:HandleTemplate ValuePropertyName="Type" TooltipPropertyName="TypeTooltip" />
+			</controls:FilterableGridViewColumn.CellTemplateSelector>
 		</controls:FilterableGridViewColumn>
 	</GridView>
 </ResourceDictionary>
