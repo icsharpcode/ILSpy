@@ -91,7 +91,8 @@ namespace ICSharpCode.ILSpy
 				var pluginDir = Path.GetDirectoryName(typeof(App).Module.FullyQualifiedName);
 				if (pluginDir != null) {
 					foreach (var plugin in Directory.GetFiles(pluginDir, "*.Plugin.dll")) {
-						var name = Path.GetFileNameWithoutExtension(plugin);
+						var assemblyName = AssemblyName.GetAssemblyName(plugin);
+						var name = assemblyName.FullName;
 						try {
 							var asm = Assembly.Load(name);
 							var parts = discovery.CreatePartsAsync(asm).GetAwaiter().GetResult();
