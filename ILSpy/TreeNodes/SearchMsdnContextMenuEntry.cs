@@ -20,6 +20,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 using System.Threading;
+using TSAccessibility = ICSharpCode.Decompiler.TypeSystem.Accessibility;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -76,9 +77,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (entity.DeclaringTypeDefinition == null)
 				return false;
 			switch (entity.DeclaringTypeDefinition.Accessibility) {
-				case Accessibility.Public:
-				case Accessibility.Protected:
-				case Accessibility.ProtectedOrInternal:
+				case TSAccessibility.Public:
+				case TSAccessibility.Protected:
+				case TSAccessibility.ProtectedOrInternal:
 					return true;
 				default:
 					return false;

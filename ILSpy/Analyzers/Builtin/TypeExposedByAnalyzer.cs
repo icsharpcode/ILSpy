@@ -24,6 +24,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler.TypeSystem;
+using TSAccessibility = ICSharpCode.Decompiler.TypeSystem.Accessibility;
 
 namespace ICSharpCode.ILSpy.Analyzers.Builtin
 {
@@ -80,7 +81,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		bool TypeIsExposedBy(TypeDefinitionUsedVisitor visitor, IField field)
 		{
-			if (field.Accessibility == Accessibility.Private)
+			if (field.Accessibility == TSAccessibility.Private)
 				return false;
 
 			visitor.Found = false;
@@ -91,7 +92,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		bool TypeIsExposedBy(TypeDefinitionUsedVisitor visitor, IProperty property)
 		{
-			if (property.Accessibility == Accessibility.Private) {
+			if (property.Accessibility == TSAccessibility.Private) {
 				if (!property.IsExplicitInterfaceImplementation)
 					return false;
 			}
@@ -108,7 +109,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		bool TypeIsExposedBy(TypeDefinitionUsedVisitor visitor, IEvent @event)
 		{
-			if (@event.Accessibility == Accessibility.Private) {
+			if (@event.Accessibility == TSAccessibility.Private) {
 				if (!@event.IsExplicitInterfaceImplementation)
 					return false;
 			}
@@ -121,7 +122,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		bool TypeIsExposedBy(TypeDefinitionUsedVisitor visitor, IMethod method)
 		{
-			if (method.Accessibility == Accessibility.Private) {
+			if (method.Accessibility == TSAccessibility.Private) {
 				if (!method.IsExplicitInterfaceImplementation)
 					return false;
 			}

@@ -6,6 +6,7 @@ using System.Windows.Media;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
+using TSAccessibility = ICSharpCode.Decompiler.TypeSystem.Accessibility;
 
 namespace ICSharpCode.ILSpy.Search
 {
@@ -28,9 +29,9 @@ namespace ICSharpCode.ILSpy.Search
 
 			do {
 				if (apiVisibility == ApiVisibility.PublicOnly) {
-					if (!(entity.Accessibility == Accessibility.Public ||
-						entity.Accessibility == Accessibility.Protected ||
-						entity.Accessibility == Accessibility.ProtectedOrInternal))
+					if (!(entity.Accessibility == TSAccessibility.Public ||
+						entity.Accessibility == TSAccessibility.Protected ||
+						entity.Accessibility == TSAccessibility.ProtectedOrInternal))
 						return false;
 				} else if (apiVisibility == ApiVisibility.PublicAndInternal) {
 					if (!language.ShowMember(entity))

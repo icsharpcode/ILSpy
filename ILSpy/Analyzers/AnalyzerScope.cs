@@ -27,6 +27,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using TSAccessibility = ICSharpCode.Decompiler.TypeSystem.Accessibility;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
@@ -45,7 +46,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public ITypeDefinition TypeScope => typeScope;
 
-		Accessibility memberAccessibility, typeAccessibility;
+		TSAccessibility memberAccessibility, typeAccessibility;
 
 		public AnalyzerScope(AssemblyList assemblyList, IEntity entity)
 		{
@@ -53,13 +54,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 			AnalyzedSymbol = entity;
 			if (entity is ITypeDefinition type) {
 				typeScope = type;
-				memberAccessibility = Accessibility.None;
+				memberAccessibility = TSAccessibility.None;
 			} else {
 				typeScope = entity.DeclaringTypeDefinition;
 				memberAccessibility = entity.Accessibility;
 			}
 			typeAccessibility = DetermineTypeAccessibility(ref typeScope);
-			IsLocal = memberAccessibility == Accessibility.Private || typeAccessibility == Accessibility.Private;
+			IsLocal = memberAccessibility == TSAccessibility.Private || typeAccessibility == TSAccessibility.Private;
 		}
 
 		public IEnumerable<PEFile> GetModulesInScope(CancellationToken ct)
@@ -67,10 +68,10 @@ namespace ICSharpCode.ILSpy.Analyzers
 			if (IsLocal)
 				return new[] { TypeScope.ParentModule.PEFile };
 
-			if (memberAccessibility == Accessibility.Internal ||
-				memberAccessibility == Accessibility.ProtectedOrInternal ||
-				typeAccessibility == Accessibility.Internal ||
-				typeAccessibility == Accessibility.ProtectedAndInternal)
+			if (memberAccessibility == TSAccessibility.Internal ||
+				memberAccessibility == TSAccessibility.ProtectedOrInternal ||
+				typeAccessibility == TSAccessibility.Internal ||
+				typeAccessibility == TSAccessibility.ProtectedAndInternal)
 				return GetModuleAndAnyFriends(TypeScope, ct);
 
 			return GetReferencingModules(TypeScope.ParentModule.PEFile, ct);
@@ -90,7 +91,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			if (IsLocal) {
 				var typeSystem = new DecompilerTypeSystem(TypeScope.ParentModule.PEFile, TypeScope.ParentModule.PEFile.GetAssemblyResolver());
 				ITypeDefinition scope = typeScope;
-				if (memberAccessibility != Accessibility.Private && typeScope.DeclaringTypeDefinition != null) {
+				if (memberAccessibility != TSAccessibility.Private && typeScope.DeclaringTypeDefinition != null) {
 					scope = typeScope.DeclaringTypeDefinition;
 				}
 				foreach (var type in TreeTraversal.PreOrder(scope, t => t.NestedTypes)) {
@@ -106,21 +107,21 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 		}
 
-		Accessibility DetermineTypeAccessibility(ref ITypeDefinition typeScope)
+		TSAccessibility DetermineTypeAccessibility(ref ITypeDefinition typeScope)
 		{
 			var typeAccessibility = typeScope.Accessibility;
 			while (typeScope.DeclaringType != null) {
-				Accessibility accessibility = typeScope.Accessibility;
+				TSAccessibility accessibility = typeScope.Accessibility;
 				if ((int)typeAccessibility > (int)accessibility) {
 					typeAccessibility = accessibility;
-					if (typeAccessibility == Accessibility.Private)
+					if (typeAccessibility == TSAccessibility.Private)
 						break;
 				}
 				typeScope = typeScope.DeclaringTypeDefinition;
 			}
 
-			if ((int)typeAccessibility > (int)Accessibility.Internal) {
-				typeAccessibility = Accessibility.Internal;
+			if ((int)typeAccessibility > (int)TSAccessibility.Internal) {
+				typeAccessibility = TSAccessibility.Internal;
 			}
 			return typeAccessibility;
 		}

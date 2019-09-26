@@ -21,6 +21,7 @@ using System.Linq;
 using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
+using TSAccessibility = ICSharpCode.Decompiler.TypeSystem.Accessibility;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -63,9 +64,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool IsPublicAPI {
 			get {
 				switch (type.Accessibility) {
-					case Accessibility.Public:
-					case Accessibility.Internal:
-					case Accessibility.ProtectedOrInternal:
+					case TSAccessibility.Public:
+					case TSAccessibility.Internal:
+					case TSAccessibility.ProtectedOrInternal:
 						return true;
 					default:
 						return false;

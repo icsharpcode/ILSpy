@@ -18,8 +18,7 @@
 
 using System;
 using System.ComponentModel;
-using System.ComponentModel.Composition;
-using System.Diagnostics;
+using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -42,13 +41,13 @@ namespace ICSharpCode.ILSpy
 	[ExportMainMenuCommand(Menu = nameof(Resources._Help), Header = nameof(Resources._About), MenuOrder = 99999)]
 	sealed class AboutPage : SimpleCommand
 	{
-		[Import]
-		DecompilerTextView decompilerTextView = null;
+		[Import] 
+		private DecompilerTextView DecompilerTextView { get; set; }
 		
 		public override void Execute(object parameter)
 		{
 			MainWindow.Instance.UnselectAll();
-			Display(decompilerTextView);
+			Display(DecompilerTextView);
 		}
 		
 		static readonly Uri UpdateUrl = new Uri("https://ilspy.net/updates.xml");

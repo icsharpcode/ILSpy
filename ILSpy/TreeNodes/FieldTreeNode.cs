@@ -20,6 +20,7 @@ using System;
 using System.Windows.Media;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
+using TSAccessibility = ICSharpCode.Decompiler.TypeSystem.Accessibility;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -76,9 +77,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool IsPublicAPI {
 			get {
 				switch (FieldDefinition.Accessibility) {
-					case Accessibility.Public:
-					case Accessibility.Protected:
-					case Accessibility.ProtectedOrInternal:
+					case TSAccessibility.Public:
+					case TSAccessibility.Protected:
+					case TSAccessibility.ProtectedOrInternal:
 						return true;
 					default:
 						return false;

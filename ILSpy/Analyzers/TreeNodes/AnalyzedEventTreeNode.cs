@@ -20,6 +20,7 @@ using System;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
+using TSAccessibility = ICSharpCode.Decompiler.TypeSystem.Accessibility;
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
@@ -67,7 +68,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		{
 			backingField = null;
 			foreach (var field in analyzedEvent.DeclaringTypeDefinition.GetFields(options: GetMemberOptions.IgnoreInheritedMembers)) {
-				if (field.Name == analyzedEvent.Name && field.Accessibility == Accessibility.Private) {
+				if (field.Name == analyzedEvent.Name && field.Accessibility == TSAccessibility.Private) {
 					backingField = field;
 					return true;
 				}

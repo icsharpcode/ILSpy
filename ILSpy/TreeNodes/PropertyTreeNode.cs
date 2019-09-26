@@ -24,6 +24,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using SRM = System.Reflection.Metadata;
+using TSAccessibility = ICSharpCode.Decompiler.TypeSystem.Accessibility;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -82,9 +83,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool IsPublicAPI {
 			get {
 				switch (PropertyDefinition.Accessibility) {
-					case Accessibility.Public:
-					case Accessibility.ProtectedOrInternal:
-					case Accessibility.Protected:
+					case TSAccessibility.Public:
+					case TSAccessibility.ProtectedOrInternal:
+					case TSAccessibility.Protected:
 						return true;
 					default:
 						return false;

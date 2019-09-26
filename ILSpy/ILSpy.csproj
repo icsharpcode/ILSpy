@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>net472;netcoreapp3.0</TargetFrameworks>
     <OutputType>WinExe</OutputType>
-    <LangVersion>7.2</LangVersion>
+    <LangVersion>7.3</LangVersion>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
 
@@ -49,7 +49,8 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="6.0.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Composition" Version="15.5.23" />
+    <PackageReference Include="Microsoft.VisualStudio.Composition" Version="16.3.7" />
+    <PackageReference Include="System.Composition" Version="1.3.0" />
     <PackageReference Include="Mono.Cecil" Version="0.10.3" />
     <PackageReference Include="OSVersionHelper" Version="1.0.11" />
   </ItemGroup>
@@ -625,6 +626,8 @@
   
   <Target Name="ApplyStackExtension" AfterTargets="PostBuildEvent">
     <Exec Condition="'$(VCToolsVersion)'!=''" Command="&quot;$(VCBasePath)Tools\MSVC\$(VCToolsVersion)\bin\Hostx64\x64\editbin.exe&quot; /stack:16777216 &quot;$(TargetPath)&quot;&#xD;&#xA;EXIT 0" />
-    <Exec Command="&quot;$(TargetFrameworkSDKToolsDirectory)sn.exe&quot; -R &quot;$(TargetPath)&quot; &quot;$(SolutionDir)\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk&quot;" />
+    <Exec 
+      Command="&quot;$(TargetFrameworkSDKToolsDirectory)sn.exe&quot; -R &quot;$(TargetPath)&quot; &quot;$(SolutionDir)\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk&quot;" 
+      Condition="'$(TargetFramework)' == 'net472'" />
   </Target>
 </Project>

@@ -24,6 +24,7 @@ using System.Windows.Media;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
 using SRM = System.Reflection.Metadata;
+using TSAccessibility = ICSharpCode.Decompiler.TypeSystem.Accessibility;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -46,9 +47,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool IsPublicAPI {
 			get {
 				switch (TypeDefinition.Accessibility) {
-					case Accessibility.Public:
-					case Accessibility.Protected:
-					case Accessibility.ProtectedOrInternal:
+					case TSAccessibility.Public:
+					case TSAccessibility.Protected:
+					case TSAccessibility.ProtectedOrInternal:
 						return true;
 					default:
 						return false;
@@ -136,16 +137,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		static AccessOverlayIcon GetOverlayIcon(ITypeDefinition type)
 		{
 			switch (type.Accessibility) {
-				case Accessibility.Public:
+				case TSAccessibility.Public:
 					return AccessOverlayIcon.Public;
-				case Accessibility.Internal:
+				case TSAccessibility.Internal:
 					return AccessOverlayIcon.Internal;
-				case Accessibility.ProtectedAndInternal:
+				case TSAccessibility.ProtectedAndInternal:
 					return AccessOverlayIcon.PrivateProtected;
-				case Accessibility.Protected:
-				case Accessibility.ProtectedOrInternal:
+				case TSAccessibility.Protected:
+				case TSAccessibility.ProtectedOrInternal:
 					return AccessOverlayIcon.Protected;
-				case Accessibility.Private:
+				case TSAccessibility.Private:
 					return AccessOverlayIcon.Private;
 				default:
 					return AccessOverlayIcon.CompilerControlled;
