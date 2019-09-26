@@ -94,7 +94,7 @@ namespace ICSharpCode.ILSpy
 						var name = Path.GetFileNameWithoutExtension(plugin);
 						try {
 							var asm = Assembly.Load(name);
-							var parts = discovery.CreatePartsAsync(asm).Result;
+							var parts = discovery.CreatePartsAsync(asm).GetAwaiter().GetResult();
 							catalog = catalog.AddParts(parts);
 						} catch (Exception ex) {
 							StartupExceptions.Add(new ExceptionData { Exception = ex, PluginName = name });
@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				// Add the built-in parts
-				catalog = catalog.AddParts(discovery.CreatePartsAsync(Assembly.GetExecutingAssembly()).Result);
+				catalog = catalog.AddParts(discovery.CreatePartsAsync(Assembly.GetExecutingAssembly()).GetAwaiter().GetResult());
 				// If/When the project switches to .NET Standard/Core, this will be needed to allow metadata interfaces (as opposed
 				// to metadata classes). When running on .NET Framework, it's automatic.
 				//   catalog.WithDesktopSupport();
