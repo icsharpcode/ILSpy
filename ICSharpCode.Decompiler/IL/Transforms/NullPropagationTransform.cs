@@ -17,22 +17,15 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
 	/// Transform that converts code patterns like "v != null ? v.M() : null" to "v?.M()"
 	/// </summary>
-	struct NullPropagationTransform
+	readonly struct NullPropagationTransform
 	{
 		internal static bool IsProtectedIfInst(IfInstruction ifInst)
 		{
@@ -193,6 +186,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return chainLength >= 1;
 				} else if (inst.MatchLdFld(out var target, out _)) {
 					inst = target;
+				} else if (inst.MatchLdFlda(out target, out var f)) {
+					if (target is AddressOf addressOf && f.DeclaringType.Kind == TypeKind.Struct) {
+						inst = addressOf.Value;
+					} else {
+						inst = target;
+					}
 				} else if (inst is CallInstruction call && call.OpCode != OpCode.NewObj) {
 					if (call.Arguments.Count == 0) {
 						return false;
@@ -204,14 +203,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false; // setter/adder/remover cannot be called with ?. syntax
 					}
 					inst = call.Arguments[0];
-					if ((call.ConstrainedTo ?? call.Method.DeclaringType).IsReferenceType == false && inst.MatchAddressOf(out var arg)) {
+					if ((call.ConstrainedTo ?? call.Method.DeclaringType).IsReferenceType == false && inst.MatchAddressOf(out var arg, out _)) {
 						inst = arg;
 					}
 					// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
 					if (ArgumentsAfterFirstMayUnwrapNull(call.Arguments))
 						return false;
+				} else if (inst is LdLen ldLen) {
+					inst = ldLen.Array;
 				} else if (inst is NullableUnwrap unwrap) {
 					inst = unwrap.Argument;
+					if (unwrap.RefInput && inst is AddressOf addressOf) {
+						inst = addressOf.Value;
+					}
 				} else if (inst is DynamicGetMemberInstruction dynGetMember) {
 					inst = dynGetMember.Target;
 				} else if (inst is DynamicInvokeMemberInstruction dynInvokeMember) {

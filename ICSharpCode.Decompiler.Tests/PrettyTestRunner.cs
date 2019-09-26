@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.Tests
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				NullPropagation = false,
 				// legacy csc generates a dead store in debug builds
-				RemoveDeadCode = (cscOptions == CompilerOptions.None)
+				RemoveDeadStores = (cscOptions == CompilerOptions.None)
 			});
 		}
 
@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				// legacy csc generates a dead store in debug builds
-				RemoveDeadCode = (cscOptions == CompilerOptions.None)
+				RemoveDeadStores = (cscOptions == CompilerOptions.None)
 			});
 		}
 
@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void DelegateConstruction([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		public void DelegateConstruction([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
@@ -180,8 +180,14 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				// legacy csc generates a dead store in debug builds
-				RemoveDeadCode = (cscOptions == CompilerOptions.None)
+				RemoveDeadStores = (cscOptions == CompilerOptions.None)
 			});
+		}
+
+		[Test]
+		public void LocalFunctions([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
@@ -234,6 +240,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void OutVariables([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void InitializerTests([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
@@ -252,13 +264,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void FixProxyCalls([Values(CompilerOptions.None, CompilerOptions.Optimize, CompilerOptions.UseRoslyn)] CompilerOptions cscOptions)
+		public void FixProxyCalls([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		[Ignore("Special cases not implemented in new decompiler.")]
 		public void ValueTypes([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
@@ -273,7 +284,9 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void VariableNamingWithoutSymbols([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings { UseDebugSymbols = false });
+			var settings = Tester.GetSettings(cscOptions);
+			settings.UseDebugSymbols = false;
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: settings);
 		}
 
 		[Test]
@@ -286,6 +299,18 @@ namespace ICSharpCode.Decompiler.Tests
 		public void AsyncMain([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void CustomTaskType([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void NullableRefTypes([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
@@ -308,6 +333,12 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public void RefLocalsAndReturns([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void ThrowExpressions([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
@@ -415,7 +446,19 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void YieldReturn([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		public void YieldReturn([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void UserDefinedConversions([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void Discards([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
@@ -427,26 +470,25 @@ namespace ICSharpCode.Decompiler.Tests
 
 		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
-			var ilFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".il";
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
-
-			if (!File.Exists(ilFile)) {
-				// re-create .il file if necessary
-				CompilerResults output = null;
-				try {
-					string outputFile = Path.ChangeExtension(ilFile,
-						cscOptions.HasFlag(CompilerOptions.Library) ? ".dll" : ".exe");
-					output = Tester.CompileCSharp(csFile, cscOptions, outputFile);
-					Tester.Disassemble(output.PathToAssembly, ilFile, asmOptions);
-				} finally {
-					if (output != null)
-						output.TempFiles.Delete();
-				}
+			var exeFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".exe";
+			if (cscOptions.HasFlag(CompilerOptions.Library)) {
+				exeFile = Path.ChangeExtension(exeFile, ".dll");
 			}
 
-			var executable = Tester.AssembleIL(ilFile, asmOptions);
-			var decompiled = Tester.DecompileCSharp(executable, decompilerSettings ?? Tester.GetSettings(cscOptions));
+			// 1. Compile
+			CompilerResults output = null;
+			try {
+				output = Tester.CompileCSharp(csFile, cscOptions, exeFile);
+			} finally {
+				if (output != null)
+					output.TempFiles.Delete();
+			}
+
+			// 2. Decompile
+			var decompiled = Tester.DecompileCSharp(exeFile, decompilerSettings ?? Tester.GetSettings(cscOptions));
 			
+			// 3. Compile
 			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(cscOptions).ToArray());
 		}
 	}

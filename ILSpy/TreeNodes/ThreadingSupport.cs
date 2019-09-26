@@ -26,6 +26,7 @@ using System.Windows;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -119,7 +120,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		sealed class LoadingTreeNode : ILSpyTreeNode
 		{
 			public override object Text {
-				get { return "Loading..."; }
+				get { return Resources.Loading; }
 			}
 			
 			public override FilterResult Filter(FilterSettings settings)
@@ -155,7 +156,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		[ExportContextMenuEntry(Header = "Copy error message")]
+		[ExportContextMenuEntry(Header = nameof(Resources.CopyErrorMessage))]
 		sealed class CopyErrorMessageContextMenu : IContextMenuEntry
 		{
 			public bool IsVisible(TextViewContext context)

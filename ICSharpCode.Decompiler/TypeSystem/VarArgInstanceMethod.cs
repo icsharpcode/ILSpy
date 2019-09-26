@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
@@ -112,6 +113,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMethod.GetAttributes();
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => baseMethod.GetReturnTypeAttributes();
+		bool IMethod.ReturnTypeIsRefReadOnly => baseMethod.ReturnTypeIsRefReadOnly;
 
 		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get { return baseMethod.TypeParameters; }
@@ -125,6 +127,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public bool IsExtensionMethod {
 			get { return baseMethod.IsExtensionMethod; }
+		}
+
+		bool IMethod.IsLocalFunction {
+			get { return baseMethod.IsLocalFunction; }
 		}
 
 		public bool IsConstructor {
@@ -142,14 +148,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public bool HasBody {
 			get { return baseMethod.HasBody; }
 		}
-
-		public bool IsAccessor {
-			get { return baseMethod.IsAccessor; }
-		}
-
-		public IMember AccessorOwner {
-			get { return baseMethod.AccessorOwner; }
-		}
+		
+		public bool IsAccessor => baseMethod.IsAccessor;
+		public IMember AccessorOwner => baseMethod.AccessorOwner;
+		public MethodSemanticsAttributes AccessorKind => baseMethod.AccessorKind;
 
 		public IMethod ReducedFrom {
 			get { return baseMethod.ReducedFrom; }
@@ -158,7 +160,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region IMember implementation
-		
+
 		IMember IMember.Specialize(TypeParameterSubstitution substitution)
 		{
 			return Specialize(substitution);

@@ -37,11 +37,6 @@ public static class Program
 	[CompilationMapping(SourceConstructFlags.Closure)]
 	internal sealed class disposable_00403 : IDisposable
 	{
-		public disposable_00403()
-		{
-			((object)this)._002Ector();
-		}
-
 		private void System_002DIDisposable_002DDispose()
 		{
 		}
@@ -172,10 +167,10 @@ public static class Program
 }
 namespace _003CStartupCode_0024ConsoleApplication1_003E
 {
-	internal static class _0024Program
+	internal static class _0024AssemblyInfo
 	{
 	}
-	internal static class _0024AssemblyInfo
+	internal static class _0024Program
 	{
 	}
 }

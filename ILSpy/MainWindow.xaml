@@ -3,8 +3,10 @@
 	x:Class="ICSharpCode.ILSpy.MainWindow"
 	x:ClassModifier="public"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:tv="clr-namespace:ICSharpCode.TreeView;assembly=ICSharpCode.TreeView"
-	xmlns:local="clr-namespace:ICSharpCode.ILSpy" xmlns:textView="clr-namespace:ICSharpCode.ILSpy.TextView"
+	xmlns:local="clr-namespace:ICSharpCode.ILSpy"
+	xmlns:textView="clr-namespace:ICSharpCode.ILSpy.TextView"
 	xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
+	xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"	
 	Title="ILSpy"
 	MinWidth="250"
 	MinHeight="200"
@@ -26,6 +28,7 @@
 			Executed="RefreshCommandExecuted" />
 		<CommandBinding
 			Command="Save"
+			CanExecute="SaveCommandCanExecute"
 			Executed="SaveCommandExecuted" />
 		<CommandBinding
 			Command="BrowseBack"
@@ -48,18 +51,11 @@
 	<DockPanel>
 		<!-- Main menu -->
 		<Menu DockPanel.Dock="Top" Name="mainMenu" Height="23" KeyboardNavigation.TabNavigation="None">
-			<MenuItem Header="_File" /> <!-- contents of file menu are added using MEF -->
-			<MenuItem Header="_View">
-				<MenuItem Header="Show _internal types and members" IsCheckable="True" IsChecked="{Binding FilterSettings.ShowInternalApi}">
-					<MenuItem.Icon>
-						<Image Width="16" Height="16" Source="Images/PrivateInternal.png" />
-					</MenuItem.Icon>
-				</MenuItem>
-				<MenuItem Header="Show _all types and members" IsCheckable="True" IsChecked="{Binding FilterSettings.ShowAllApi}">
-					<MenuItem.Icon>
-						<Image Width="16" Height="16" Source="Images/ShowAll.png" />
-					</MenuItem.Icon>
-				</MenuItem>
+			<MenuItem Header="{x:Static properties:Resources._File}" /> <!-- contents of file menu are added using MEF -->
+			<MenuItem Header="{x:Static properties:Resources._View}">
+				<MenuItem Header="{x:Static properties:Resources.Show_publiconlyTypesMembers}" IsCheckable="True" IsChecked="{Binding FilterSettings.ApiVisPublicOnly}" />
+				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True" IsChecked="{Binding FilterSettings.ApiVisPublicAndInternal}" />
+				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding FilterSettings.ApiVisAll}" />
 			</MenuItem>
 		</Menu>
 		<!-- ToolBar -->
@@ -82,17 +78,20 @@
 			<Separator />
 			<!-- 'Open' toolbar category is inserted here -->
 			<Separator />
-			<CheckBox IsChecked="{Binding FilterSettings.ShowInternalApi}" ToolTip="Show internal types and members">
-				<Image Width="16" Height="16" Source="Images/PrivateInternal.png" />
+			<CheckBox IsChecked="{Binding FilterSettings.ApiVisPublicOnly}" ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPublicOnly}" />
 			</CheckBox>
-			<CheckBox IsChecked="{Binding FilterSettings.ShowAllApi}" ToolTip="Show all types and members">
-				<Image Width="16" Height="16" Source="Images/ShowAll.png" />
+			<CheckBox IsChecked="{Binding FilterSettings.ApiVisPublicAndInternal}" ToolTip="{x:Static properties:Resources.ShowInternalTypesMembers}">
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPrivateInternal}" />
+			</CheckBox>
+			<CheckBox IsChecked="{Binding FilterSettings.ApiVisAll}" ToolTip="{x:Static properties:Resources.ShowAllTypesAndMembers}">
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowAll}" />
 			</CheckBox>
 			<Separator />
 			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100" MaxDropDownHeight="Auto"
-			          ItemsSource="{x:Static local:Languages.AllLanguages}"
+			          ItemsSource="{x:Static local:Languages.AllLanguages}" ToolTip="{x:Static properties:Resources.SelectLanguageDropdownTooltip}"
 			          SelectedItem="{Binding FilterSettings.Language}"/>
-			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" Width="120" MaxDropDownHeight="Auto"
+			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" Width="120" MaxDropDownHeight="Auto" ToolTip="{x:Static properties:Resources.SelectVersionDropdownTooltip}"
 			          Visibility="{Binding SelectedItem.HasLanguageVersions, ElementName=languageComboBox, Converter={StaticResource BooleanToVisibilityConverter}}"
 			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
 			          SelectedItem="{Binding FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
@@ -103,8 +102,8 @@
 				<TextBlock VerticalAlignment="Center"
 				           HorizontalAlignment="Right"
 				           x:Name="StatusLabel"
-				           ToolTip="Status"
-				           Text="Stand by..."/>
+				           ToolTip="{x:Static properties:Resources.Status}"
+				           Text="{x:Static properties:Resources.StandBy}"/>
 			</StatusBarItem>
 		</StatusBar>
 		<!-- Main grid separating left pane (treeView) from main pane (textEditor) -->
@@ -161,8 +160,8 @@
 					<DockPanel KeyboardNavigation.TabNavigation="Contained">
 						<Button DockPanel.Dock="Right" Click="updatePanelCloseButtonClick" MinWidth="0">X</Button>
 						<StackPanel Orientation="Horizontal">
-							<TextBlock Name="updatePanelMessage" Margin="4,0" VerticalAlignment="Center">A new ILSpy version is available.</TextBlock>
-							<Button Name="downloadOrCheckUpdateButton" Click="downloadOrCheckUpdateButtonClick">Download</Button>
+							<TextBlock Name="updatePanelMessage" Margin="4,0" VerticalAlignment="Center"  Text="{x:Static properties:Resources.ILSpyVersionAvailable}" />
+							<Button Name="downloadOrCheckUpdateButton" Click="downloadOrCheckUpdateButtonClick" Content="{x:Static properties:Resources.Download}"/>
 						</StackPanel>
 					</DockPanel>
 				</Border>

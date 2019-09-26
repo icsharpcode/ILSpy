@@ -75,5 +75,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			node.Remove();
 			return node;
 		}
+
+		public static Expression UnwrapInDirectionExpression(this Expression expr)
+		{
+			if (!(expr is DirectionExpression dir && dir.FieldDirection == FieldDirection.In))
+				return expr;
+			return dir.Expression.Detach();
+		}
 	}
 }

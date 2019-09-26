@@ -45,6 +45,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				if (context.Settings.StackAllocInitializers && DoTransformStackAllocInitializer(block, pos))
 					return;
+				if (DoTransformInlineRuntimeHelpersInitializeArray(block, pos))
+					return;
 			} finally {
 				this.context = null;
 			}
@@ -56,8 +58,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			ILInstruction inst = body.Instructions[pos];
 			if (inst.MatchStLoc(out var v, out var newarrExpr) && MatchNewArr(newarrExpr, out var elementType, out var arrayLength)) {
-				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, elementType, arrayLength, out var values, out var initArrayPos)) {
-					context.Step("ForwardScanInitializeArrayRuntimeHelper: single-dim", inst);
+				if (HandleRuntimeHelpersInitializeArray(body, pos + 1, v, elementType, arrayLength, out var values, out var initArrayPos)) {
+					context.Step("HandleRuntimeHelperInitializeArray: single-dim", inst);
 					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
 					var block = BlockFromInitializer(tempStore, elementType, arrayLength, values);
 					body.Instructions[pos] = new StLoc(v, block);
@@ -102,14 +104,52 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
+		internal static bool TransformSpanTArrayInitialization(NewObj inst, StatementTransformContext context, out Block block)
+		{
+			block = null;
+			if (MatchSpanTCtorWithPointerAndSize(inst, context, out var elementType, out var field, out var size)) {
+				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA)) {
+					var valuesList = new List<ILInstruction>();
+					var initialValue = field.GetInitialValue(context.PEFile.Reader, context.TypeSystem);
+					if (DecodeArrayInitializer(elementType, initialValue, new[] { size }, valuesList)) {
+						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.TypeSystem, elementType));
+						block = BlockFromInitializer(tempStore, elementType, new[] { size }, valuesList.ToArray());
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		static bool MatchSpanTCtorWithPointerAndSize(NewObj newObj, StatementTransformContext context, out IType elementType, out FieldDefinition field, out int size)
+		{
+			field = default;
+			size = default;
+			elementType = null;
+			IType type = newObj.Method.DeclaringType;
+			if (!type.IsKnownType(KnownTypeCode.SpanOfT) && !type.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+				return false;
+			if (newObj.Arguments.Count != 2 || type.TypeArguments.Count != 1)
+				return false;
+			elementType = type.TypeArguments[0];
+			if (!newObj.Arguments[0].UnwrapConv(ConversionKind.StopGCTracking).MatchLdsFlda(out var member))
+				return false;
+			if (member.MetadataToken.IsNil)
+				return false;
+			if (!newObj.Arguments[1].MatchLdcI4(out size))
+				return false;
+			field = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)member.MetadataToken);
+			return true;
+		}
+
 		bool DoTransformMultiDim(ILFunction function, Block body, int pos)
 		{
 			if (pos >= body.Instructions.Count - 2)
 				return false;
 			ILInstruction inst = body.Instructions[pos];
 			if (inst.MatchStLoc(out var v, out var newarrExpr) && MatchNewArr(newarrExpr, out var elementType, out var length)) {
-				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, elementType, length, out var values, out var initArrayPos)) {
-					context.Step("ForwardScanInitializeArrayRuntimeHelper: multi-dim", inst);
+				if (HandleRuntimeHelpersInitializeArray(body, pos + 1, v, elementType, length, out var values, out var initArrayPos)) {
+					context.Step("HandleRuntimeHelpersInitializeArray: multi-dim", inst);
 					var block = BlockFromInitializer(v, elementType, length, values);
 					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
 					body.Instructions.RemoveAt(initArrayPos);
@@ -237,7 +277,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!left.MatchLdLoc(store))
 						break;
-					var offsetInst = PointerArithmeticOffset.Detect(right, new PointerType(elementType), ((BinaryNumericInstruction)target).CheckForOverflow);
+					var offsetInst = PointerArithmeticOffset.Detect(right, elementType, ((BinaryNumericInstruction)target).CheckForOverflow);
 					if (offsetInst == null)
 						return false;
 					if (!offsetInst.MatchLdcI(out long offset) || offset < 0 || offset < minExpectedOffset)
@@ -245,7 +285,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					minExpectedOffset = offset;
 				}
 				if (values == null) {
-					var countInstruction = PointerArithmeticOffset.Detect(lengthInstruction, new PointerType(elementType), checkForOverflow: true);
+					var countInstruction = PointerArithmeticOffset.Detect(lengthInstruction, elementType, checkForOverflow: true);
 					if (countInstruction == null || !countInstruction.MatchLdcI(out long valuesLength) || valuesLength < 1)
 						return false;
 					values = new StObj[(int)valuesLength];
@@ -401,8 +441,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (elementCount >= length / 3 - 5)
 				return true;
-			int? unused = null;
-			if (ILInlining.IsCatchWhenBlock(block) || ILInlining.IsInConstructorInitializer(function, block.Instructions[startPos], ref unused))
+			if (ILInlining.IsCatchWhenBlock(block) || ILInlining.IsInConstructorInitializer(function, block.Instructions[startPos]))
 				return true;
 			return false;
 		}
@@ -463,7 +502,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& initializer.OpCode == OpCode.Block;
 		}
 		
-		Block BlockFromInitializer(ILVariable v, IType elementType, int[] arrayLength, ILInstruction[] values)
+		static Block BlockFromInitializer(ILVariable v, IType elementType, int[] arrayLength, ILInstruction[] values)
 		{
 			var block = new Block(BlockKind.ArrayInitializer);
 			block.Instructions.Add(new StLoc(v, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
@@ -496,15 +535,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return true;
 		}
-		
-		bool MatchInitializeArrayCall(ILInstruction instruction, out IMethod method, out ILVariable array, out FieldDefinition field)
+
+		bool MatchInitializeArrayCall(ILInstruction instruction, out ILInstruction array, out FieldDefinition field)
 		{
-			method = null;
 			array = null;
 			field = default;
 			if (!(instruction is Call call) || call.Arguments.Count != 2)
 				return false;
-			method = call.Method;
+			IMethod method = call.Method;
 			if (!method.IsStatic || method.Name != "InitializeArray" || method.DeclaringTypeDefinition == null)
 				return false;
 			var declaringType = method.DeclaringTypeDefinition;
@@ -513,8 +551,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			if (!call.Arguments[0].MatchLdLoc(out array))
-				return false;
+			array = call.Arguments[0];
 			if (!call.Arguments[1].MatchLdMemberToken(out var member))
 				return false;
 			if (member.MetadataToken.IsNil)
@@ -523,13 +560,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool ForwardScanInitializeArrayRuntimeHelper(Block body, int pos, ILVariable array, IType arrayType, int[] arrayLength, out ILInstruction[] values, out int foundPos)
+		bool HandleRuntimeHelpersInitializeArray(Block body, int pos, ILVariable array, IType arrayType, int[] arrayLength, out ILInstruction[] values, out int foundPos)
 		{
-			if (MatchInitializeArrayCall(body.Instructions[pos], out var method, out var v2, out var field) && array == v2) {
+			if (MatchInitializeArrayCall(body.Instructions[pos], out var arrayInst, out var field) && arrayInst.MatchLdLoc(array)) {
 				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA)) {
 					var valuesList = new List<ILInstruction>();
 					var initialValue = field.GetInitialValue(context.PEFile.Reader, context.TypeSystem);
-					if (DecodeArrayInitializer(arrayType, array, initialValue, arrayLength, valuesList)) {
+					if (DecodeArrayInitializer(arrayType, initialValue, arrayLength, valuesList)) {
 						values = valuesList.ToArray();
 						foundPos = pos;
 						return true;
@@ -541,35 +578,65 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		static bool DecodeArrayInitializer(IType type, ILVariable array, BlobReader initialValue, int[] arrayLength, List<ILInstruction> output)
+		/// <summary>
+		/// call InitializeArray(newarr T(size), ldmembertoken fieldToken)
+		/// =>
+		/// Block (ArrayInitializer) {
+		///		stloc i(newarr T(size))
+		///		stobj T(ldelema T(... indices ...), value)
+		///		final: ldloc i
+		/// }
+		/// </summary>
+		bool DoTransformInlineRuntimeHelpersInitializeArray(Block body, int pos)
+		{
+			var inst = body.Instructions[pos];
+			if (!MatchInitializeArrayCall(inst, out var arrayInst, out var field))
+				return false;
+			if (!MatchNewArr(arrayInst, out var elementType, out var arrayLength))
+				return false;
+			if (!field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
+				return false;
+			var valuesList = new List<ILInstruction>();
+			var initialValue = field.GetInitialValue(context.PEFile.Reader, context.TypeSystem);
+			if (!DecodeArrayInitializer(elementType, initialValue, arrayLength, valuesList))
+				return false;
+			context.Step("InlineRuntimeHelpersInitializeArray: single-dim", inst);
+			var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.TypeSystem, elementType, arrayLength.Length));
+			var block = BlockFromInitializer(tempStore, elementType, arrayLength, valuesList.ToArray());
+			body.Instructions[pos] = block;
+			ILInlining.InlineIfPossible(body, pos, context);
+			return true;
+		}
+
+		static bool DecodeArrayInitializer(IType type, BlobReader initialValue, int[] arrayLength, List<ILInstruction> output)
 		{
 			TypeCode typeCode = ReflectionHelper.GetTypeCode(type);
 			switch (typeCode) {
 				case TypeCode.Boolean:
 				case TypeCode.Byte:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadByte()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, (ref BlobReader r) => new LdcI4(r.ReadByte()));
 				case TypeCode.SByte:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadSByte()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, (ref BlobReader r) => new LdcI4(r.ReadSByte()));
 				case TypeCode.Int16:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadInt16()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, (ref BlobReader r) => new LdcI4(r.ReadInt16()));
 				case TypeCode.Char:
 				case TypeCode.UInt16:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadUInt16()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, (ref BlobReader r) => new LdcI4(r.ReadUInt16()));
 				case TypeCode.Int32:
 				case TypeCode.UInt32:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadInt32()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, (ref BlobReader r) => new LdcI4(r.ReadInt32()));
 				case TypeCode.Int64:
 				case TypeCode.UInt64:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI8(r.ReadInt64()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, (ref BlobReader r) => new LdcI8(r.ReadInt64()));
 				case TypeCode.Single:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r)  => new LdcF4(r.ReadSingle()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, (ref BlobReader r) => new LdcF4(r.ReadSingle()));
 				case TypeCode.Double:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcF8(r.ReadDouble()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, (ref BlobReader r) => new LdcF8(r.ReadDouble()));
 				case TypeCode.Object:
 				case TypeCode.Empty:
 					var typeDef = type.GetDefinition();
 					if (typeDef != null && typeDef.Kind == TypeKind.Enum)
-						return DecodeArrayInitializer(typeDef.EnumUnderlyingType, array, initialValue, arrayLength, output);
+						return DecodeArrayInitializer(typeDef.EnumUnderlyingType, initialValue, arrayLength, output);
 					return false;
 				default:
 					return false;
@@ -578,8 +645,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		delegate ILInstruction ValueDecoder(ref BlobReader reader);
 
-		static bool DecodeArrayInitializer(BlobReader initialValue, ILVariable array, int[] arrayLength,
-			List<ILInstruction> output, TypeCode elementType, IType type, ValueDecoder decoder)
+		static bool DecodeArrayInitializer(BlobReader initialValue, int[] arrayLength,
+			List<ILInstruction> output, TypeCode elementType, ValueDecoder decoder)
 		{
 			int elementSize = ElementSizeOf(elementType);
 			var totalLength = arrayLength.Aggregate(1, (t, l) => t * l);
@@ -591,7 +658,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				int next = i;
 				for (int j = arrayLength.Length - 1; j >= 0; j--) {
 					output.Add(new LdcI4(next % arrayLength[j]));
-					next = next / arrayLength[j];
+					next /= arrayLength[j];
 				}
 			}
 

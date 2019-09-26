@@ -35,6 +35,8 @@ using System.Reflection.Metadata;
 using static ICSharpCode.Decompiler.Metadata.DotNetCorePathFinderExtensions;
 using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Solution;
+using ICSharpCode.Decompiler.DebugInfo;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -72,11 +74,19 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public IAssemblyResolver AssemblyResolver { get; set; }
 
+		public IDebugInfoProvider DebugInfoProvider { get; set; }
+
 		/// <summary>
 		/// The MSBuild ProjectGuid to use for the new project.
 		/// <c>null</c> to automatically generate a new GUID.
 		/// </summary>
 		public Guid? ProjectGuid { get; set; }
+
+		/// <summary>
+		/// Path to the snk file to use for signing.
+		/// <c>null</c> to not sign.
+		/// </summary>
+		public string StrongNameKeyFile { get; set; }
 
 		public int MaxDegreeOfParallelism { get; set; } = Environment.ProcessorCount;
 		#endregion
@@ -101,7 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
+		public ProjectId DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (string.IsNullOrEmpty(targetDirectory)) {
 				throw new InvalidOperationException("Must set TargetDirectory");
@@ -110,7 +120,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			directories.Clear();
 			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
 			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
-			WriteProjectFile(projectFileWriter, files, moduleDefinition);
+			if (StrongNameKeyFile != null) {
+				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)));
+			}
+			return WriteProjectFile(projectFileWriter, files, moduleDefinition);
 		}
 
 		enum LanguageTargets
@@ -120,11 +133,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		#region WriteProjectFile
-		void WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, Metadata.PEFile module)
+		ProjectId WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, Metadata.PEFile module)
 		{
 			const string ns = "http://schemas.microsoft.com/developer/msbuild/2003";
 			string platformName = GetPlatformName(module);
 			Guid guid = this.ProjectGuid ?? Guid.NewGuid();
+
 			using (XmlTextWriter w = new XmlTextWriter(writer)) {
 				w.Formatting = Formatting.Indented;
 				w.WriteStartDocument();
@@ -167,6 +181,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				bool useTargetFrameworkAttribute = false;
 				LanguageTargets languageTargets = LanguageTargets.None;
 				string targetFramework = module.Reader.DetectTargetFrameworkId();
+				int frameworkVersionNumber = 0;
 				if (!string.IsNullOrEmpty(targetFramework)) {
 					string[] frameworkParts = targetFramework.Split(',');
 					string frameworkIdentifier = frameworkParts.FirstOrDefault(a => !a.StartsWith("Version=", StringComparison.OrdinalIgnoreCase) && !a.StartsWith("Profile=", StringComparison.OrdinalIgnoreCase));
@@ -182,6 +197,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (frameworkVersion != null) {
 						w.WriteElementString("TargetFrameworkVersion", frameworkVersion.Substring("Version=".Length));
 						useTargetFrameworkAttribute = true;
+						frameworkVersionNumber = int.Parse(frameworkVersion.Substring("Version=v".Length).Replace(".", ""));
+						if (frameworkVersionNumber < 100) frameworkVersionNumber *= 10;
 					}
 					string frameworkProfile = frameworkParts.FirstOrDefault(a => a.StartsWith("Profile=", StringComparison.OrdinalIgnoreCase));
 					if (frameworkProfile != null)
@@ -190,28 +207,40 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (!useTargetFrameworkAttribute) {
 					switch (module.GetRuntime()) {
 						case Metadata.TargetRuntime.Net_1_0:
+							frameworkVersionNumber = 100;
 							w.WriteElementString("TargetFrameworkVersion", "v1.0");
 							break;
 						case Metadata.TargetRuntime.Net_1_1:
+							frameworkVersionNumber = 110;
 							w.WriteElementString("TargetFrameworkVersion", "v1.1");
 							break;
 						case Metadata.TargetRuntime.Net_2_0:
+							frameworkVersionNumber = 200;
 							w.WriteElementString("TargetFrameworkVersion", "v2.0");
 							// TODO: Detect when .NET 3.0/3.5 is required
 							break;
 						default:
+							frameworkVersionNumber = 400;
 							w.WriteElementString("TargetFrameworkVersion", "v4.0");
 							break;
 					}
 				}
 				w.WriteElementString("WarningLevel", "4");
 				w.WriteElementString("AllowUnsafeBlocks", "True");
+				
+				if (StrongNameKeyFile != null) {
+					w.WriteElementString("SignAssembly", "True");
+					w.WriteElementString("AssemblyOriginatorKeyFile", Path.GetFileName(StrongNameKeyFile));
+				}
 
 				w.WriteEndElement(); // </PropertyGroup>
 
 				w.WriteStartElement("PropertyGroup"); // platform-specific
 				w.WriteAttributeString("Condition", " '$(Platform)' == '" + platformName + "' ");
 				w.WriteElementString("PlatformTarget", platformName);
+				if (frameworkVersionNumber > 400 && platformName == "AnyCPU" && (module.Reader.PEHeaders.CorHeader.Flags & CorFlags.Prefers32Bit) == 0) {
+					w.WriteElementString("Prefer32Bit", "false");
+				}
 				w.WriteEndElement(); // </PropertyGroup> (platform-specific)
 
 				w.WriteStartElement("PropertyGroup"); // Debug
@@ -271,6 +300,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				w.WriteEndDocument();
 			}
+
+			return new ProjectId(platformName, guid);
 		}
 
 		protected virtual bool IsGacAssembly(Metadata.IAssemblyReference r, Metadata.PEFile asm)
@@ -294,6 +325,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		CSharpDecompiler CreateDecompiler(DecompilerTypeSystem ts)
 		{
 			var decompiler = new CSharpDecompiler(ts, settings);
+			decompiler.DebugInfoProvider = DebugInfoProvider;
 			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			decompiler.AstTransforms.Add(new RemoveCLSCompliantAttribute());
 			return decompiler;
@@ -341,10 +373,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				},
 				delegate (IGrouping<string, TypeDefinitionHandle> file) {
 					using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, file.Key))) {
-						CSharpDecompiler decompiler = CreateDecompiler(ts);
-						decompiler.CancellationToken = cancellationToken;
-						var syntaxTree = decompiler.DecompileTypes(file.ToArray());
-						syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
+						try {
+							CSharpDecompiler decompiler = CreateDecompiler(ts);
+							decompiler.CancellationToken = cancellationToken;
+							var syntaxTree = decompiler.DecompileTypes(file.ToArray());
+							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
+						} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
+							throw new DecompilerException(module, $"Error decompiling for '{file.Key}'", innerException);
+						}
 					}
 				});
 			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
@@ -380,6 +416,8 @@ namespace ICSharpCode.Decompiler.CSharp
 							decodedIntoIndividualFiles = false;
 						}
 					} catch (BadImageFormatException) {
+						decodedIntoIndividualFiles = false;
+					} catch (EndOfStreamException) {
 						decodedIntoIndividualFiles = false;
 					}
 					if (decodedIntoIndividualFiles) {
@@ -417,6 +455,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					return new[] { Tuple.Create("EmbeddedResource", resx) };
 				} catch (BadImageFormatException) {
+					// if the .resources can't be decoded, just save them as-is
+				} catch (EndOfStreamException) {
 					// if the .resources can't be decoded, just save them as-is
 				}
 			} 
@@ -474,20 +514,26 @@ namespace ICSharpCode.Decompiler.CSharp
 		public static string GetPlatformName(Metadata.PEFile module)
 		{
 			var headers = module.Reader.PEHeaders;
-			switch (headers.CoffHeader.Machine) {
+			var architecture = headers.CoffHeader.Machine;
+			var characteristics = headers.CoffHeader.Characteristics;
+			var corflags = headers.CorHeader.Flags;
+			switch (architecture) {
 				case Machine.I386:
-					if ((headers.CorHeader.Flags & CorFlags.Prefers32Bit) != 0)
+					if ((corflags & CorFlags.Prefers32Bit) != 0)
 						return "AnyCPU";
-					else if ((headers.CorHeader.Flags & CorFlags.Requires32Bit) != 0)
+					if ((corflags & CorFlags.Requires32Bit) != 0)
 						return "x86";
-					else
-						return "AnyCPU";
+					// According to ECMA-335, II.25.3.3.1 CorFlags.Requires32Bit and Characteristics.Bit32Machine must be in sync
+					// for assemblies containing managed code. However, this is not true for C++/CLI assemblies.
+					if ((corflags & CorFlags.ILOnly) == 0 && (characteristics & Characteristics.Bit32Machine) != 0)
+						return "x86";
+					return "AnyCPU";
 				case Machine.Amd64:
 					return "x64";
 				case Machine.IA64:
 					return "Itanium";
 				default:
-					return headers.CoffHeader.Machine.ToString();
+					return architecture.ToString();
 			}
 		}
 	}

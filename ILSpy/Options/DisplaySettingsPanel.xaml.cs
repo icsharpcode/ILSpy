@@ -31,13 +31,16 @@ namespace ICSharpCode.ILSpy.Options
 	/// <summary>
 	/// Interaction logic for DisplaySettingsPanel.xaml
 	/// </summary>
-	[ExportOptionPage(Title = "Display", Order = 1)]
+	[ExportOptionPage(Title = nameof(Properties.Resources.Display), Order = 20)]
 	public partial class DisplaySettingsPanel : UserControl, IOptionPage
 	{
 		public DisplaySettingsPanel()
 		{
 			InitializeComponent();
-			
+
+			DataObject.AddPastingHandler(tabSizeTextBox, OnPaste);
+			DataObject.AddPastingHandler(indentSizeTextBox, OnPaste);
+
 			Task<FontFamily[]> task = new Task<FontFamily[]>(FontLoader);
 			task.Start();
 			task.ContinueWith(
@@ -57,7 +60,7 @@ namespace ICSharpCode.ILSpy.Options
 				}
 			);
 		}
-		
+
 		public void Load(ILSpySettings settings)
 		{
 			this.DataContext = LoadDisplaySettings(settings);
@@ -102,10 +105,16 @@ namespace ICSharpCode.ILSpy.Options
 			s.ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false;
 			s.ShowMetadataTokens = (bool?)e.Attribute("ShowMetadataTokens") ?? false;
 			s.ShowMetadataTokensInBase10 = (bool?)e.Attribute("ShowMetadataTokensInBase10") ?? false;
+			s.ShowDebugInfo = (bool?)e.Attribute("ShowDebugInfo") ?? false;
 			s.EnableWordWrap = (bool?)e.Attribute("EnableWordWrap") ?? false;
 			s.SortResults = (bool?)e.Attribute("SortResults") ?? true;
 			s.FoldBraces = (bool?)e.Attribute("FoldBraces") ?? false;
 			s.ExpandMemberDefinitions = (bool?)e.Attribute("ExpandMemberDefinitions") ?? false;
+			s.ExpandUsingDeclarations = (bool?)e.Attribute("ExpandUsingDeclarations") ?? false;
+			s.IndentationUseTabs = (bool?)e.Attribute("IndentationUseTabs") ?? true;
+			s.IndentationSize = (int?)e.Attribute("IndentationSize") ?? 4;
+			s.IndentationTabSize = (int?)e.Attribute("IndentationTabSize") ?? 4;
+			s.HighlightMatchingBraces = (bool?)e.Attribute("HighlightMatchingBraces") ?? true;
 
 			return s;
 		}
@@ -120,10 +129,15 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("ShowLineNumbers", s.ShowLineNumbers);
 			section.SetAttributeValue("ShowMetadataTokens", s.ShowMetadataTokens);
 			section.SetAttributeValue("ShowMetadataTokensInBase10", s.ShowMetadataTokensInBase10);
+			section.SetAttributeValue("ShowDebugInfo", s.ShowDebugInfo);
 			section.SetAttributeValue("EnableWordWrap", s.EnableWordWrap);
 			section.SetAttributeValue("SortResults", s.SortResults);
 			section.SetAttributeValue("FoldBraces", s.FoldBraces);
 			section.SetAttributeValue("ExpandMemberDefinitions", s.ExpandMemberDefinitions);
+			section.SetAttributeValue("IndentationUseTabs", s.IndentationUseTabs);
+			section.SetAttributeValue("IndentationSize", s.IndentationSize);
+			section.SetAttributeValue("IndentationTabSize", s.IndentationTabSize);
+			section.SetAttributeValue("HighlightMatchingBraces", s.HighlightMatchingBraces);
 
 			XElement existingElement = root.Element("DisplaySettings");
 			if (existingElement != null)
@@ -134,8 +148,23 @@ namespace ICSharpCode.ILSpy.Options
 			if (currentDisplaySettings != null)
 				currentDisplaySettings.CopyValues(s);
 		}
+
+		private void TextBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+		{
+			if (!e.Text.All(char.IsDigit))
+				e.Handled = true;
+		}
+
+		private void OnPaste(object sender, DataObjectPastingEventArgs e)
+		{
+			if (!e.SourceDataObject.GetDataPresent(DataFormats.UnicodeText, true))
+				return;
+			var text = (string)e.SourceDataObject.GetData(DataFormats.UnicodeText, true) ?? string.Empty;
+			if (!text.All(char.IsDigit))
+				e.CancelCommand();
+		}
 	}
-	
+
 	public class FontSizeConverter : IValueConverter
 	{
 		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)

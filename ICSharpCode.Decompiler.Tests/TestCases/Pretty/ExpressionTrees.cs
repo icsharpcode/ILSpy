@@ -22,6 +22,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
@@ -584,7 +585,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			2004,
 			2008,
 			2012
-		}).Any<int>));
+		}).Any));
 		}
 
 		public void MethodGroupConstant()
@@ -624,16 +625,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//no params
 			ToCode(X(), () => call(() => 42));
 			//one param
-			ToCode(X(), () => from x in new int[2] {
+			ToCode(X(), () => new int[2] {
 				37,
 				42
-			}
-			select x * 2);
+			}.Select((int x) => x * 2));
 			//two params
 			ToCode(X(), () => new int[2] {
-			37,
-			42
-		}.Select((int x, int i) => x * 2));
+				37,
+				42
+			}.Select((int x, int i) => x * 2));
 		}
 
 		public void CurriedLambda()
@@ -730,13 +730,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void QuotedWithAnonymous()
 		{
-			ToCode(X(), () => (from o in new[] {
+			ToCode(X(), () => new[] {
 				new {
 					X = "a",
 					Y = "b"
 				}
-			}
-			select o.X + o.Y).Single());
+			}.Select(o => o.X + o.Y).Single());
 		}
 
 		public void StaticCall()
@@ -836,12 +835,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void AsTypeExpr()
 		{
 			Test<Func<object, MyClass>>((object obj) => obj as MyClass, (object obj) => obj as MyClass);
+			Test<Func<object, int?>>((object obj) => obj as int?, (object obj) => obj as int?);
 			Test<Func<object, GenericClass<object>>>((object obj) => obj as GenericClass<object>, (object obj) => obj as GenericClass<object>);
 		}
 
 		public static void IsTypeExpr()
 		{
 			Test<Func<object, bool>>((object obj) => obj is MyClass, (object obj) => obj is MyClass);
+			Test<Func<object, bool>>((object obj) => obj is int?, (object obj) => obj is int?);
 		}
 
 		public static void UnaryLogicalOperators()
@@ -1023,6 +1024,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Property = 4,
 				Field = 3
 			});
+		}
+
+		public async Task Issue1524(string str)
+		{
+			await Task.Delay(100);
+			if (string.IsNullOrEmpty(str)) {
+#if ROSLYN
+				if (int.TryParse(str, out int id)) {
+#else
+				int id;
+				if (int.TryParse(str, out id)) {
+#endif
+					(from a in new List<int>().AsQueryable()
+						where a == id
+						select a).FirstOrDefault();
+				}
+			}
 		}
 	}
 

@@ -94,9 +94,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		RefStructs = 0x100,
 		/// <summary>
+		/// If this option is active, [IsUnmanagedAttribute] is removed from type parameters,
+		/// and HasUnmanagedConstraint is set instead.
+		/// </summary>
+		UnmanagedConstraints = 0x200,
+		/// <summary>
+		/// If this option is active, [NullableAttribute] is removed and reference types with
+		/// nullability annotations are used instead.
+		/// </summary>
+		NullabilityAnnotations = 0x400,
+		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# languages features enabled.
 		/// </summary>
-		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters | RefStructs
+		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters
+			| RefStructs | UnmanagedConstraints | NullabilityAnnotations
 	}
 
 	/// <summary>
@@ -122,6 +133,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.RefStructs;
 			if (settings.IntroduceReadonlyAndInModifiers)
 				typeSystemOptions |= TypeSystemOptions.ReadOnlyStructsAndParameters;
+			if (settings.IntroduceUnmanagedConstraint)
+				typeSystemOptions |= TypeSystemOptions.UnmanagedConstraints;
+			if (settings.NullableReferenceTypes)
+				typeSystemOptions |= TypeSystemOptions.NullabilityAnnotations;
 			return typeSystemOptions;
 		}
 

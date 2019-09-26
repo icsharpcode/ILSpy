@@ -22,6 +22,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Xml.Linq;
+using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.Options
 {
@@ -44,7 +45,7 @@ namespace ICSharpCode.ILSpy.Options
 			ILSpySettings settings = ILSpySettings.Load();
 			foreach (var optionPage in optionPages.OrderBy(p => p.Metadata.Order)) {
 				TabItem tabItem = new TabItem();
-				tabItem.Header = optionPage.Metadata.Title;
+				tabItem.Header = MainWindow.GetResourceString( optionPage.Metadata.Title);
 				tabItem.Content = optionPage.Value;
 				tabControl.Items.Add(tabItem);
 				
@@ -93,7 +94,7 @@ namespace ICSharpCode.ILSpy.Options
 		public int Order { get; set; }
 	}
 	
-	[ExportMainMenuCommand(Menu = "_View", Header = "_Options...", MenuCategory = "Options", MenuOrder = 999)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._View), Header = nameof(Resources._Options),  MenuCategory = nameof(Resources.Options) ,MenuOrder = 999)]
 	sealed class ShowOptionsCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)

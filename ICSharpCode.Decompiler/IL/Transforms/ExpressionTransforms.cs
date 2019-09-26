@@ -21,7 +21,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -60,10 +59,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		protected internal override void VisitBlockContainer(BlockContainer container)
+		{
+			if (container.Kind == ContainerKind.Switch) {
+				// Special case for switch: Only visit the switch condition block.
+				var switchInst =  (SwitchInstruction)container.EntryPoint.Instructions[0];
+				switchInst.Value.AcceptVisitor(this);
+			}
+			// No need to call base.VisitBlockContainer, see comment in VisitBlock.
+		}
+
 		protected internal override void VisitBlock(Block block)
 		{
-			// Don't visit child blocks; since this is a block transform
-			// we know those were already handled previously.
+			if (block.Kind == BlockKind.ControlFlow) {
+				// Don't visit child control flow blocks;
+				// since this is a block transform
+				// we know those were already handled previously.
+				return;
+			}
+			base.VisitBlock(block);
 		}
 
 		protected internal override void VisitComp(Comp inst)
@@ -267,9 +281,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				inst.ReplaceWith(decimalConstant);
 				return;
 			}
+			Block block;
 			if (TransformSpanTCtorContainingStackAlloc(inst, out ILInstruction locallocSpan)) {
+				context.Step("new Span<T>(stackalloc) -> stackalloc Span<T>", inst);
 				inst.ReplaceWith(locallocSpan);
-				Block block = null;
+				block = null;
 				ILInstruction stmt = locallocSpan;
 				while (stmt.Parent != null) {
 					if (stmt.Parent is Block b) {
@@ -278,10 +294,45 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					stmt = stmt.Parent;
 				}
-				//ILInlining.InlineIfPossible(block, stmt.ChildIndex - 1, context);
+				// Special case to eliminate extra store
+				if (stmt.GetNextSibling() is StLoc storeStmt && storeStmt.Value is LdLoc)
+					ILInlining.InlineIfPossible(block, stmt.ChildIndex, context);
+				return;
+			}
+			if (TransformArrayInitializers.TransformSpanTArrayInitialization(inst, context, out block)) {
+				context.Step("TransformSpanTArrayInitialization: single-dim", inst);
+				inst.ReplaceWith(block);
+				return;
+			}
+			if (TransformDelegateCtorLdVirtFtnToLdVirtDelegate(inst, out LdVirtDelegate ldVirtDelegate)) {
+				context.Step("new Delegate(target, ldvirtftn Method) -> ldvirtdelegate Delegate Method(target)", inst);
+				inst.ReplaceWith(ldVirtDelegate);
 				return;
 			}
 			base.VisitNewObj(inst);
+		}
+
+		/// <summary>
+		/// newobj Delegate..ctor(target, ldvirtftn TargetMethod(target))
+		/// =>
+		/// ldvirtdelegate System.Delegate TargetMethod(target)
+		/// </summary>
+		bool TransformDelegateCtorLdVirtFtnToLdVirtDelegate(NewObj inst, out LdVirtDelegate ldVirtDelegate)
+		{
+			ldVirtDelegate = null;
+			if (inst.Method.DeclaringType.Kind != TypeKind.Delegate)
+				return false;
+			if (inst.Arguments.Count != 2)
+				return false;
+			if (!(inst.Arguments[1] is LdVirtFtn ldVirtFtn))
+				return false;
+			if (!SemanticHelper.IsPure(inst.Arguments[0].Flags))
+				return false;
+			if (!inst.Arguments[0].Match(ldVirtFtn.Argument).Success)
+				return false;
+			ldVirtDelegate = new LdVirtDelegate(inst.Arguments[0], inst.Method.DeclaringType, ldVirtFtn.Method)
+				.WithILRange(inst).WithILRange(ldVirtFtn).WithILRange(ldVirtFtn.Argument);
+			return true;
 		}
 
 		/// <summary>
@@ -342,7 +393,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool MatchesElementCount(ILInstruction sizeInBytesInstr, IType elementType, ILInstruction elementCountInstr2)
 		{
 			var pointerType = new PointerType(elementType);
-			var elementCountInstr = PointerArithmeticOffset.Detect(sizeInBytesInstr, pointerType, checkForOverflow: true, unwrapZeroExtension: true);
+			var elementCountInstr = PointerArithmeticOffset.Detect(sizeInBytesInstr, pointerType.ElementType, checkForOverflow: true, unwrapZeroExtension: true);
 			if (!elementCountInstr.Match(elementCountInstr2).Success)
 				return false;
 			return true;
@@ -374,10 +425,37 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
+		bool TransformDecimalFieldToConstant(LdObj inst, out LdcDecimal result)
+		{
+			if (inst.MatchLdsFld(out var field) && field.DeclaringType.IsKnownType(KnownTypeCode.Decimal)) {
+				decimal? value = null;
+				if (field.Name == "One") {
+					value = decimal.One;
+				} else if (field.Name == "MinusOne") {
+					value = decimal.MinusOne;
+				} else if (field.Name == "Zero") {
+					value = decimal.Zero;
+				}
+				if (value != null) {
+					result = new LdcDecimal(value.Value).WithILRange(inst).WithILRange(inst.Target);
+					return true;
+				}
+			}
+			result = null;
+			return false;
+		}
+
 		protected internal override void VisitLdObj(LdObj inst)
 		{
 			base.VisitLdObj(inst);
-			EarlyExpressionTransforms.LdObjToLdLoc(inst, context);
+			EarlyExpressionTransforms.AddressOfLdLocToLdLoca(inst, context);
+			if (EarlyExpressionTransforms.LdObjToLdLoc(inst, context))
+				return;
+			if (TransformDecimalFieldToConstant(inst, out LdcDecimal decimalConstant)) {
+				context.Step("TransformDecimalFieldToConstant", inst);
+				inst.ReplaceWith(decimalConstant);
+				return;
+			}
 		}
 
 		protected internal override void VisitStObj(StObj inst)
@@ -387,6 +465,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.RequestRerun();
 				return;
 			}
+			TransformAssignment.HandleCompoundAssign(inst, context);
+		}
+
+		protected internal override void VisitStLoc(StLoc inst)
+		{
+			base.VisitStLoc(inst);
 			TransformAssignment.HandleCompoundAssign(inst, context);
 		}
 
@@ -454,9 +538,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(dynamicCompoundAssign.Target is DynamicGetMemberInstruction getMember))
 				return false;
-			if (!isEvent.Argument.Match(getMember.Target).Success)
-				return false;
 			if (!SemanticHelper.IsPure(isEvent.Argument.Flags))
+				return false;
+			if (!isEvent.Argument.Match(getMember.Target).Success)
 				return false;
 			if (!(trueInst is DynamicInvokeMemberInstruction invokeMember))
 				return false;
@@ -491,7 +575,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		protected internal override void VisitDynamicSetMemberInstruction(DynamicSetMemberInstruction inst)
 		{
 			base.VisitDynamicSetMemberInstruction(inst);
+			TransformDynamicSetMemberInstruction(inst, context);
+		}
 
+		internal static void TransformDynamicSetMemberInstruction(DynamicSetMemberInstruction inst, StatementTransformContext context)
+		{
 			if (!inst.BinderFlags.HasFlag(CSharpBinderFlags.ValueFromCompoundAssignment))
 				return;
 			if (!(inst.Value is DynamicBinaryOperatorInstruction binaryOp))
@@ -529,7 +617,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			for (int j = 0; j < dynamicGetIndex.Arguments.Count; j++) {
 				if (!SemanticHelper.IsPure(dynamicGetIndex.Arguments[j].Flags))
 					return;
-				if (!dynamicGetIndex.Arguments[j].Match(dynamicGetIndex.Arguments[j]).Success)
+				if (!dynamicGetIndex.Arguments[j].Match(inst.Arguments[j]).Success)
 					return;
 			}
 			if (!DynamicCompoundAssign.IsExpressionTypeSupported(binaryOp.Operation))
@@ -602,18 +690,56 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <summary>
-		/// Transform local exception variable.
+		/// catch ex : TException when (...) BlockContainer {
+		/// 	Block entryPoint (incoming: 1) {
+		/// 		stloc v(ldloc ex)
+		/// 		...
+		/// 	}
+		/// }
+		/// =>
+		/// catch v : TException when (...) BlockContainer {
+		/// 	Block entryPoint (incoming: 1) {
+		/// 		...
+		/// 	}
+		/// }
 		/// </summary>
 		void TransformCatchVariable(TryCatchHandler handler, Block entryPoint)
 		{
-			if (!entryPoint.Instructions[0].MatchStLoc(out var exceptionVar, out var exceptionSlotLoad))
+			if (!handler.Variable.IsSingleDefinition || handler.Variable.LoadCount != 1)
+				return; // handle.Variable already has non-trivial uses
+			if (!entryPoint.Instructions[0].MatchStLoc(out var exceptionVar, out var exceptionSlotLoad)) {
+				// Not the pattern with a second exceptionVar.
+				// However, it is still possible that we need to remove a pointless UnboxAny:
+				if (handler.Variable.LoadInstructions.Single().Parent is UnboxAny inlinedUnboxAny) {
+					if (inlinedUnboxAny.Type.Equals(handler.Variable.Type)) {
+						context.Step("TransformCatchVariable - remove inlined UnboxAny", inlinedUnboxAny);
+						inlinedUnboxAny.ReplaceWith(inlinedUnboxAny.Argument);
+					}
+				}
 				return;
-			if (!exceptionVar.IsSingleDefinition || exceptionVar.Kind != VariableKind.Local)
+			}
+			if (exceptionVar.Kind != VariableKind.Local && exceptionVar.Kind != VariableKind.StackSlot)
 				return;
-			if (!exceptionSlotLoad.MatchLdLoc(handler.Variable) || !handler.Variable.IsSingleDefinition || handler.Variable.LoadCount != 1)
+			if (exceptionSlotLoad is UnboxAny unboxAny) {
+				// When catching a type parameter, csc emits an unbox.any instruction
+				if (!unboxAny.Type.Equals(handler.Variable.Type))
+					return;
+				exceptionSlotLoad = unboxAny.Argument;
+			}
+			if (!exceptionSlotLoad.MatchLdLoc(handler.Variable))
 				return;
-			handler.Variable = exceptionVar;
+			// Check that exceptionVar is only used within the catch block:
+			var allUses = exceptionVar.LoadInstructions
+				.Concat(exceptionVar.StoreInstructions.Cast<ILInstruction>())
+				.Concat(exceptionVar.AddressInstructions);
+			foreach (var inst in allUses) {
+				if (!inst.IsDescendantOf(handler))
+					return;
+			}
+			context.Step("TransformCatchVariable", entryPoint.Instructions[0]);
 			exceptionVar.Kind = VariableKind.ExceptionLocal;
+			exceptionVar.Type = handler.Variable.Type;
+			handler.Variable = exceptionVar;
 			entryPoint.Instructions.RemoveAt(0);
 		}
 
@@ -624,6 +750,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			TransformCatchVariable(handler, entryPoint);
 			if (entryPoint.Instructions.Count == 1 && entryPoint.Instructions[0].MatchLeave(out _, out var condition)) {
+				context.Step("TransformCatchWhen", entryPoint.Instructions[0]);
 				handler.Filter = condition;
 			}
 		}

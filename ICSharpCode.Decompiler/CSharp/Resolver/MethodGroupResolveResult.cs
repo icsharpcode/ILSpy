@@ -174,12 +174,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			return extensionMethods ?? Enumerable.Empty<IEnumerable<IMethod>>();
 		}
-		
+
 		/// <summary>
 		/// Gets the eligible extension methods.
 		/// </summary>
 		/// <param name="substituteInferredTypes">
-		/// Specifies whether to produce a <see cref="SpecializedMethod"/>
+		/// Specifies whether to produce a <c>SpecializedMethod</c>
 		/// when type arguments could be inferred from <see cref="TargetType"/>.
 		/// This setting is only used for inferred types and has no effect if the type parameters are
 		/// specified explicitly.

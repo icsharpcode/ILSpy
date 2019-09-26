@@ -18,10 +18,10 @@
 
 using System;
 using System.Linq;
-using SRM = System.Reflection.Metadata;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -39,19 +39,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.parentAssembly = parentAssembly;
 			this.LazyLoading = true;
 		}
-		
-		public override object Text {
-			get { return "References"; }
-		}
-		
-		public override object Icon {
-			get { return Images.ReferenceFolderClosed; }
-		}
-		
-		public override object ExpandedIcon {
-			get { return Images.ReferenceFolderOpen; }
-		}
-		
+
+		public override object Text => Resources.References;
+
+		public override object Icon => Images.ReferenceFolder;
+
 		protected override void LoadChildren()
 		{
 			var metadata = module.Metadata;
@@ -70,6 +62,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			// Show metadata order of references
 			foreach (var node in this.Children.OfType<ILSpyTreeNode>())
 				node.Decompile(language, output, options);
+
+			output.WriteLine();
+			output.WriteLine();
+			// Show full assembly load log:
+			language.WriteCommentLine(output, "Assembly load log including transitive references:");
+			var info = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo;
+			foreach (var asm in info.Entries) {
+				language.WriteCommentLine(output, asm.FullName);
+				output.Indent();
+				foreach (var item in asm.Messages) {
+					language.WriteCommentLine(output, $"{item.Item1}: {item.Item2}");
+				}
+				output.Unindent();
+				output.WriteLine();
+			}
 		}
 	}
 }

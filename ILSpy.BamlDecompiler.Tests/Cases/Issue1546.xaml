@@ -1,0 +1,35 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:PresentationOptions="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:System="clr-namespace:System;assembly=mscorlib">
+	<SolidColorBrush x:Key="brushText">#f1f1f1</SolidColorBrush>
+	<SolidColorBrush x:Key="brushNormal">#2d2d30</SolidColorBrush>
+	<SolidColorBrush x:Key="brushFocused">#3f3f41</SolidColorBrush>
+	<SolidColorBrush x:Key="brushHighlight">#007acc</SolidColorBrush>
+	<SolidColorBrush x:Key="brushControlBackground">#333337</SolidColorBrush>
+	<SolidColorBrush x:Key="brushControlInactiveBorder">#3f3f3f</SolidColorBrush>
+	<SolidColorBrush x:Key="brushControlInactiveText">#999999</SolidColorBrush>
+	<SolidColorBrush x:Key="brushControlActive">#686868</SolidColorBrush>
+	<SolidColorBrush x:Key="brushControlActiveBorder">#9e9e9e</SolidColorBrush>
+	<Color x:Key="colorText">#f1f1f1</Color>
+	<Color x:Key="colorNormal">#2d2d30</Color>
+	<Color x:Key="colorFocused">#3f3f41</Color>
+	<Color x:Key="colorRED">#b20000</Color>
+	<Color x:Key="colorRED2">#990000</Color>
+	<Color x:Key="colorGREEN">#009700</Color>
+	<Color x:Key="colorGREEN2">#007400</Color>
+	<Color x:Key="colorHover">#1c97ea</Color>
+	<Color x:Key="colorHighlight">#007acc</Color>
+	<Color x:Key="colorControlBackground">#333337</Color>
+	<Color x:Key="colorControlInactiveBorder">#3f3f3f</Color>
+	<Color x:Key="colorControlInactiveText">#999999</Color>
+	<Color x:Key="colorControlActive">#686868</Color>
+	<Color x:Key="colorControlActiveBorder">#9e9e9e</Color>
+	<SolidColorBrush x:Key="ComboBoxNormalBorderBrush" Color="#e3e9ef" />
+	<SolidColorBrush x:Key="ComboBoxNormalBackgroundBrush" Color="#fff" />
+	<SolidColorBrush x:Key="ComboBoxDisabledForegroundBrush" Color="#888" />
+	<SolidColorBrush x:Key="ComboBoxDisabledBackgroundBrush" Color="#eee" />
+	<SolidColorBrush x:Key="ComboBoxDisabledBorderBrush" Color="#888" />
+	<Color x:Key="GrayLightExColorKey">#FFD1D1D1</Color>
+	<SolidColorBrush x:Key="GrayLightExColorSolidKey" PresentationOptions:Freeze="true" Color="{StaticResource GrayLightExColorKey}" />
+	<Color x:Key="GrayLightColorKey">#FFA3A3A3</Color>
+	<SolidColorBrush x:Key="GrayLightColorSolidKey" PresentationOptions:Freeze="true" Color="{StaticResource GrayLightColorKey}" />
+	<Color x:Key="GrayColorKey">#FF747474</Color>
+</ResourceDictionary>

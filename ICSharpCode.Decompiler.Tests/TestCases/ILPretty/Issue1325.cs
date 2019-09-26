@@ -12,16 +12,7 @@ using System.Runtime.Versioning;
 [assembly: TargetFramework(".NETCoreApp,Version=v2.1", FrameworkDisplayName = "")]
 [assembly: AssemblyConfiguration("Debug")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
-namespace Microsoft.VisualBasic
-{
-	[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Module | AttributeTargets.Class, Inherited = false)]
-	[CompilerGenerated]
-	[EditorBrowsable(EditorBrowsableState.Never)]
-	[Embedded]
-	internal sealed class Embedded : Attribute
-	{
-	}
-}
+
 namespace Issue1325
 {
 	[StandardModule]
@@ -40,19 +31,7 @@ namespace Issue1325
 			t.Unparameterized = str + "asdf";
 		}
 	}
-}
-namespace Microsoft.VisualBasic.CompilerServices
-{
-	[EditorBrowsable(EditorBrowsableState.Never)]
-	[AttributeUsage(AttributeTargets.Class, Inherited = false)]
-	[CompilerGenerated]
-	[Embedded]
-	internal sealed class StandardModuleAttribute : Attribute
-	{
-	}
-}
-namespace Issue1325
-{
+
 	internal class Test
 	{
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -70,5 +49,25 @@ namespace Issue1325
 			get;
 			set;
 		}
+	}
+}
+namespace Microsoft.VisualBasic
+{
+	[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Module | AttributeTargets.Class, Inherited = false)]
+	[CompilerGenerated]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	[Embedded]
+	internal sealed class Embedded : Attribute
+	{
+	}
+}
+namespace Microsoft.VisualBasic.CompilerServices
+{
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+	[CompilerGenerated]
+	[Embedded]
+	internal sealed class StandardModuleAttribute : Attribute
+	{
 	}
 }

@@ -18,12 +18,13 @@
 
 using System;
 using System.Collections.Generic;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_View", Header = "Sort assembly _list by name", MenuIcon = "Images/Sort.png", MenuCategory = "View")]
-	[ExportToolbarCommand(ToolTip = "Sort assembly list by name", ToolbarIcon = "Images/Sort.png", ToolbarCategory = "View")]
+	[ExportMainMenuCommand(Menu = nameof(Resources._View),  Header = nameof(Resources.SortAssembly_listName),  MenuIcon = "Images/Sort", MenuCategory = nameof(Resources.View))]
+	[ExportToolbarCommand(ToolTip = nameof(Resources.SortAssemblyListName),  ToolbarIcon = "Images/Sort",  ToolbarCategory = nameof(Resources.View))]
 	sealed class SortAssemblyListCommand : SimpleCommand, IComparer<LoadedAssembly>
 	{
 		public override void Execute(object parameter)
@@ -38,8 +39,8 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = "_View", Header = "_Collapse all tree nodes", MenuIcon = "Images/CollapseAll.png", MenuCategory = "View")]
-	[ExportToolbarCommand(ToolTip = "Collapse all tree nodes", ToolbarIcon = "Images/CollapseAll.png", ToolbarCategory = "View")]
+	[ExportMainMenuCommand(Menu = nameof(Resources._View),  Header = nameof(Resources._CollapseTreeNodes),  MenuIcon = "Images/CollapseAll", MenuCategory = nameof(Resources.View))]
+	[ExportToolbarCommand(ToolTip = nameof(Resources.CollapseTreeNodes),  ToolbarIcon = "Images/CollapseAll", ToolbarCategory = nameof(Resources.View))]
 	sealed class CollapseAllCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)

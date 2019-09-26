@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -44,6 +45,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				bool changed = false;
+				if (block.IncomingEdgeCount == 0)
+					continue;
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 					if (SimplifyCascadingIfStatements(block.Instructions, ref i)) {
 						changed = true;
@@ -173,6 +176,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (instructions[i - 1].MatchStLoc(switchValueVar, out switchValue)) {
 				// stloc switchValueVar(switchValue)
 				// if (call op_Equality(ldloc switchValueVar, ldstr value)) br firstBlock
+
+				// Newer versions of Roslyn use extra variables:
+				if (i >= 2 && switchValue.MatchLdLoc(out var otherSwitchValueVar) && otherSwitchValueVar.IsSingleDefinition && otherSwitchValueVar.LoadCount == 1
+					&& instructions[i - 2].MatchStLoc(otherSwitchValueVar, out var newSwitchValue)) {
+					switchValue = newSwitchValue;
+					extraLoad = true;
+				}
 			} else if (instructions[i - 1] is StLoc stloc) {
 				if (stloc.Value.MatchLdLoc(switchValueVar)) {
 					// in case of optimized legacy code there are two stlocs:
@@ -193,6 +203,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					switchValue = new LdLoc(switchValueVar);
 				}
 			} else {
+				// Instruction before the start of the switch is not related to the switch.
+				keepAssignmentBefore = true;
 				switchValue = new LdLoc(switchValueVar);
 			}
 			// if instruction must be followed by a branch to the next case
@@ -399,11 +411,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!switchValueVar.Type.IsKnownType(KnownTypeCode.String))
 				return false;
 			// either br nullCase or leave container
-			var leaveContainer = BlockContainer.FindClosestContainer(instructions[i]);
-			if (leaveContainer.Parent is TryInstruction) {
-				leaveContainer = BlockContainer.FindClosestContainer(leaveContainer.Parent);
-			}
-			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock) && !exitBlockJump.MatchLeave(leaveContainer))
+			BlockContainer leaveContainer = null;
+			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock) && !exitBlockJump.MatchLeave(out leaveContainer))
 				return false;
 			var nextBlockJump = instructions.ElementAtOrDefault(i + 1) as Branch;
 			if (nextBlockJump == null || nextBlockJump.TargetBlock.IncomingEdgeCount != 1)
@@ -776,85 +785,230 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool MatchRoslynSwitchOnString(InstructionCollection<ILInstruction> instructions, ref int i)
 		{
-			if (i < 1) return false;
+			if (i >= instructions.Count - 1) return false;
+			// stloc switchValueVar(switchValue)
+			// if (comp(ldloc switchValueVar == ldnull)) br nullCase
+			// br nextBlock
+			InstructionCollection<ILInstruction> switchBlockInstructions = instructions;
+			int switchBlockInstructionsOffset = i;
+			Block nullValueCaseBlock = null;
+			if (instructions[i].MatchIfInstruction(out var condition, out var exitBlockJump)
+				&& condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull())
+			{
+				var nextBlockJump = instructions[i + 1] as Branch;
+				if (nextBlockJump == null || nextBlockJump.TargetBlock.IncomingEdgeCount != 1)
+					return false;
+				if (!exitBlockJump.MatchBranch(out nullValueCaseBlock))
+					return false;
+				switchBlockInstructions = nextBlockJump.TargetBlock.Instructions;
+				switchBlockInstructionsOffset = 0;
+			}
 			// stloc switchValueVar(call ComputeStringHash(switchValue))
 			// switch (ldloc switchValueVar) {
 			// 	case [211455823..211455824): br caseBlock1
 			//  ... more cases ...
 			// 	case [long.MinValue..-365098645),...,[1697255802..long.MaxValue]: br defaultBlock
 			// }
-			if (!(instructions[i] is SwitchInstruction switchInst && switchInst.Value.MatchLdLoc(out var switchValueVar) &&
-				MatchComputeStringHashCall(instructions[i - 1], switchValueVar, out LdLoc switchValueLoad)))
+			if (!(switchBlockInstructionsOffset + 1 < switchBlockInstructions.Count && switchBlockInstructions[switchBlockInstructionsOffset + 1] is SwitchInstruction switchInst && switchInst.Value.MatchLdLoc(out var switchValueVar) &&
+				MatchComputeStringHashCall(switchBlockInstructions[switchBlockInstructionsOffset], switchValueVar, out LdLoc switchValueLoad)))
 				return false;
 
-			var stringValues = new List<(int, string, Block)>();
+			var stringValues = new List<(int Index, string Value, ILInstruction TargetBlockOrLeave)>();
 			int index = 0;
 			SwitchSection defaultSection = switchInst.Sections.MaxBy(s => s.Labels.Count());
+			Block exitOrDefaultBlock = null;
 			foreach (var section in switchInst.Sections) {
 				if (section == defaultSection) continue;
 				// extract target block
 				if (!section.Body.MatchBranch(out Block target))
 					return false;
-				if (!MatchRoslynCaseBlockHead(target, switchValueLoad.Variable, out Block body, out string stringValue))
+				string stringValue;
+				if (MatchRoslynEmptyStringCaseBlockHead(target, switchValueLoad.Variable, out ILInstruction targetOrLeave, out Block currentExitBlock)) {
+					stringValue = "";
+				} else if (!MatchRoslynCaseBlockHead(target, switchValueLoad.Variable, out targetOrLeave, out currentExitBlock, out stringValue)) {
 					return false;
-				stringValues.Add((index++, stringValue, body));
+				}
+
+				if (exitOrDefaultBlock != null && exitOrDefaultBlock != currentExitBlock)
+					return false;
+				exitOrDefaultBlock = currentExitBlock;
+				stringValues.Add((index++, stringValue, targetOrLeave));
 			}
+
+			if (nullValueCaseBlock != null && exitOrDefaultBlock != nullValueCaseBlock) {
+				stringValues.Add((index++, null, nullValueCaseBlock));
+			}
+
 			ILInstruction switchValueInst = switchValueLoad;
-			// stloc switchValueLoadVariable(switchValue)
-			// stloc switchValueVar(call ComputeStringHash(ldloc switchValueLoadVariable))
-			// switch (ldloc switchValueVar) {
-			bool keepAssignmentBefore;
-			// if the switchValueLoad.Variable is only used in the compiler generated case equality checks, we can remove it.
-			if (i > 1 && instructions[i - 2].MatchStLoc(switchValueLoad.Variable, out var switchValueTmp) &&
-				switchValueLoad.Variable.IsSingleDefinition && switchValueLoad.Variable.LoadCount == switchInst.Sections.Count)
-			{
-				switchValueInst = switchValueTmp;
-				keepAssignmentBefore = false;
+			if (instructions == switchBlockInstructions) {
+				// stloc switchValueLoadVariable(switchValue)
+				// stloc switchValueVar(call ComputeStringHash(ldloc switchValueLoadVariable))
+				// switch (ldloc switchValueVar) {
+				bool keepAssignmentBefore;
+				// if the switchValueLoad.Variable is only used in the compiler generated case equality checks, we can remove it.
+				if (i >= 1 && instructions[i - 1].MatchStLoc(switchValueLoad.Variable, out var switchValueTmp) &&
+					switchValueLoad.Variable.IsSingleDefinition && switchValueLoad.Variable.LoadCount == switchInst.Sections.Count) {
+					switchValueInst = switchValueTmp;
+					keepAssignmentBefore = false;
+				} else {
+					keepAssignmentBefore = true;
+				}
+				// replace stloc switchValueVar(call ComputeStringHash(...)) with new switch instruction
+				var newSwitch = ReplaceWithSwitchInstruction(i);
+				// remove old switch instruction
+				newSwitch.AddILRange(instructions[i + 1]);
+				instructions.RemoveAt(i + 1);
+				// remove extra assignment
+				if (!keepAssignmentBefore) {
+					newSwitch.AddILRange(instructions[i - 1]);
+					instructions.RemoveRange(i - 1, 1);
+					i -= 1;
+				}
 			} else {
-				keepAssignmentBefore = true;
+				bool keepAssignmentBefore;
+				// if the switchValueLoad.Variable is only used in the compiler generated case equality checks, we can remove it.
+				if (i >= 2 && instructions[i - 2].MatchStLoc(out var temporary, out var temporaryValue) && instructions[i - 1].MatchStLoc(switchValueLoad.Variable, out var tempLoad) && tempLoad.MatchLdLoc(temporary)) {
+					switchValueInst = temporaryValue;
+					keepAssignmentBefore = false;
+				} else {
+					keepAssignmentBefore = true;
+				}
+				// replace null check with new switch instruction
+				var newSwitch = ReplaceWithSwitchInstruction(i);
+				newSwitch.AddILRange(switchInst);
+				// remove jump instruction to switch block
+				newSwitch.AddILRange(instructions[i + 1]);
+				instructions.RemoveAt(i + 1);
+				// remove extra assignment
+				if (!keepAssignmentBefore) {
+					newSwitch.AddILRange(instructions[i - 2]);
+					instructions.RemoveRange(i - 2, 2);
+					i -= 2;
+				}
 			}
-			var defaultLabel = new LongSet(new LongInterval(0, index)).Invert();
-			var newSwitch = new SwitchInstruction(new StringToInt(switchValueInst, stringValues.Select(item => item.Item2).ToArray()));
-			newSwitch.Sections.AddRange(stringValues.Select(section => new SwitchSection { Labels = new Util.LongSet(section.Item1), Body = new Branch(section.Item3) }));
-			newSwitch.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = defaultSection.Body });
-			instructions[i].ReplaceWith(newSwitch);
-			if (keepAssignmentBefore) {
-				newSwitch.AddILRange(instructions[i - 1]);
-				instructions.RemoveAt(i - 1);
-				i--;
-			} else {
-				newSwitch.AddILRange(instructions[i - 2]);
-				instructions.RemoveRange(i - 2, 2);
-				i -= 2;
-			}
+
 			return true;
+
+			SwitchInstruction ReplaceWithSwitchInstruction(int offset)
+			{
+				var defaultLabel = new LongSet(new LongInterval(0, index)).Invert();
+				var values = new string[stringValues.Count];
+				var sections = new SwitchSection[stringValues.Count];
+				foreach (var (idx, (label, value, bodyInstruction)) in stringValues.WithIndex()) {
+					values[idx] = value;
+					var body = bodyInstruction is Block b ? new Branch(b) : bodyInstruction;
+					sections[idx] = new SwitchSection { Labels = new LongSet(label), Body = body };
+				}
+				var newSwitch = new SwitchInstruction(new StringToInt(switchValueInst, values));
+				newSwitch.Sections.AddRange(sections);
+				newSwitch.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = defaultSection.Body });
+				instructions[offset].ReplaceWith(newSwitch);
+				return newSwitch;
+			}
 		}
 
 		/// <summary>
 		/// Matches (and the negated version):
-		/// if (call op_Equality(ldloc V_0, ldstr "Fifth case")) br body
+		/// if (call op_Equality(ldloc switchValueVar, stringValue)) br body
 		/// br exit
 		/// </summary>
-		bool MatchRoslynCaseBlockHead(Block target, ILVariable switchValueVar, out Block body, out string stringValue)
+		bool MatchRoslynCaseBlockHead(Block target, ILVariable switchValueVar, out ILInstruction bodyOrLeave, out Block defaultOrExitBlock, out string stringValue)
 		{
-			body = null;
+			bodyOrLeave = null;
+			defaultOrExitBlock = null;
 			stringValue = null;
 			if (target.Instructions.Count != 2)
 				return false;
 			if (!target.Instructions[0].MatchIfInstruction(out var condition, out var bodyBranch))
 				return false;
-			if (MatchStringEqualityComparison(condition, switchValueVar, out stringValue)) {
-				var exitBranch = target.Instructions[1];
-				if (!(exitBranch.MatchBranch(out _) || exitBranch.MatchLeave(out _)))
-					return false;
-				return bodyBranch.MatchBranch(out body) && body != null;
-			} else if (condition.MatchLogicNot(out condition) && MatchStringEqualityComparison(condition, switchValueVar, out stringValue)) {
-				if (!(bodyBranch.MatchBranch(out _) || bodyBranch.MatchLeave(out _)))
-					return false;
-				return target.Instructions[1].MatchBranch(out body) && body != null;
+			ILInstruction exitBranch;
+			// Handle negated conditions first:
+			if (condition.MatchLogicNot(out var expr)) {
+				exitBranch = bodyBranch;
+				bodyBranch = target.Instructions[1];
+				condition = expr;
 			} else {
-				return false;
+				exitBranch = target.Instructions[1];
 			}
+			if (!MatchStringEqualityComparison(condition, switchValueVar, out stringValue))
+				return false;
+			if (!(exitBranch.MatchBranch(out defaultOrExitBlock) || exitBranch.MatchLeave(out _)))
+				return false;
+			if (bodyBranch.MatchLeave(out _)) {
+				bodyOrLeave = bodyBranch;
+				return true;
+			}
+			if (bodyBranch.MatchBranch(out var bodyBlock)) {
+				bodyOrLeave = bodyBlock;
+				return true;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Block target(incoming: 1) {
+		/// 	if (comp.o(ldloc switchValueVar == ldnull)) br exit
+		/// 	br lengthCheckBlock
+		/// }
+		/// 
+		/// Block lengthCheckBlock(incoming: 1) {
+		/// 	if (logic.not(call get_Length(ldloc switchValueVar))) br body
+		/// 	br exit
+		/// }
+		/// </summary>
+		bool MatchRoslynEmptyStringCaseBlockHead(Block target, ILVariable switchValueVar, out ILInstruction bodyOrLeave, out Block defaultOrExitBlock)
+		{
+			bodyOrLeave = null;
+			defaultOrExitBlock = null;
+			if (target.Instructions.Count != 2 || target.IncomingEdgeCount != 1)
+				return false;
+			if (!target.Instructions[0].MatchIfInstruction(out var nullComparisonCondition, out var exitBranch))
+				return false;
+			if (!nullComparisonCondition.MatchCompEqualsNull(out var arg) || !arg.MatchLdLoc(switchValueVar))
+				return false;
+			if (!target.Instructions[1].MatchBranch(out Block lengthCheckBlock))
+				return false;
+			if (lengthCheckBlock.Instructions.Count != 2 || lengthCheckBlock.IncomingEdgeCount != 1)
+				return false;
+			if (!lengthCheckBlock.Instructions[0].MatchIfInstruction(out var lengthCheckCondition, out var exitBranch2))
+				return false;
+			ILInstruction bodyBranch;
+			if (lengthCheckCondition.MatchLogicNot(out arg)) {
+				bodyBranch = exitBranch2;
+				exitBranch2 = lengthCheckBlock.Instructions[1];
+				lengthCheckCondition = arg;
+			} else {
+				bodyBranch = lengthCheckBlock.Instructions[1];
+			}
+			if (!(exitBranch2.MatchBranch(out defaultOrExitBlock) || exitBranch2.MatchLeave(out _)))
+				return false;
+			if (!MatchStringLengthCall(lengthCheckCondition, switchValueVar))
+				return false;
+			if (!(exitBranch.MatchBranch(out defaultOrExitBlock) && exitBranch2.MatchBranch(defaultOrExitBlock)))
+				return false;
+			if (bodyBranch.MatchLeave(out _)) {
+				bodyOrLeave = bodyBranch;
+				return true;
+			}
+			if (bodyBranch.MatchBranch(out var bodyBlock)) {
+				bodyOrLeave = bodyBlock;
+				return true;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// call get_Length(ldloc switchValueVar)
+		/// </summary>
+		bool MatchStringLengthCall(ILInstruction inst, ILVariable switchValueVar)
+		{
+			return inst is Call call
+				&& call.Method.DeclaringType.IsKnownType(KnownTypeCode.String)
+				&& call.Method.IsAccessor
+				&& call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter
+				&& call.Method.AccessorOwner.Name == "Length"
+				&& call.Arguments.Count == 1
+				&& call.Arguments[0].MatchLdLoc(switchValueVar);
 		}
 
 		/// <summary>

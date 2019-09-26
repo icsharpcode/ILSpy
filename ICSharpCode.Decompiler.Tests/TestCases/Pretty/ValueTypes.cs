@@ -25,6 +25,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			public int Field;
 
+			public int Property {
+				get {
+					return Field;
+				}
+				set {
+					Field = value;
+				}
+			}
+
 			public S(int field)
 			{
 				Field = field;
@@ -49,11 +58,62 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			private static void Test(ref S byRef)
 			{
 			}
+
+			public void CallOnThis()
+			{
+				// distinguish calls on 'this' from calls on a copy of 'this'
+				SetField();
+				S s = this;
+				s.SetField();
+			}
+
+			public void UseField(int val)
+			{
+				UseField(Get<S>().Field);
+			}
 		}
 
+#if CS72
+		public readonly struct R
+		{
+			public readonly int Field;
+
+			public int Property {
+				get {
+					return Field;
+				}
+				set {
+					Console.WriteLine("Setter on readonly struct");
+				}
+			}
+
+			public void Method()
+			{
+			}
+
+			public void CallOnThis()
+			{
+				// distinguish calls on 'this' from calls on a copy of 'this'
+				Method();
+				R r = this;
+				r.Method();
+			}
+		}
+#endif
+
+#if ROSLYN && OPT
+		// Roslyn optimizes out the explicit default-initialization
+		private static readonly S ReadOnlyS;
+		private static S MutableS;
+#else
 		private static readonly S ReadOnlyS = default(S);
 		private static S MutableS = default(S);
+#endif
 		private static volatile int VolatileInt;
+#if CS72
+		private static readonly R ReadOnlyR;
+		private static R MutableR;
+#endif
 
 		public static void CallMethodViaField()
 		{
@@ -61,14 +121,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			MutableS.SetField();
 			S mutableS = MutableS;
 			mutableS.SetField();
+
+#if CS72
+			ReadOnlyR.Method();
+			R readOnlyR = ReadOnlyR;
+			readOnlyR.Method();
+			R mutableR = MutableR;
+			mutableR.Method();
+#endif
 		}
 
+#if !(ROSLYN && OPT) || COPY_PROPAGATION_FIXED
 		public static S InitObj1()
 		{
 			S result = default(S);
 			MakeArray();
 			return result;
 		}
+#endif
 
 		public static S InitObj2()
 		{
@@ -80,17 +150,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			p = default(S);
 		}
 
-		public static S CallValueTypeCtor1()
+		public static S CallValueTypeCtor()
 		{
 			return new S(10);
 		}
-
-		public static S CallValueTypeCtor2()
-		{
-			S result = new S(10);
-			return result;
-		}
-
+		
 		public static S Copy1(S p)
 		{
 			return p;
@@ -181,6 +245,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (a.CompareTo(0) == 0) {
 				Console.WriteLine("true");
 			}
+		}
+
+		public static T Get<T>()
+		{
+			return default(T);
+		}
+
+		public static void CallOnTemporary()
+		{
+			// Method can be called directly on temporaries
+			Get<S>().MethodCalls();
+
+			// Setting a property requires a temporary to avoid
+			// CS1612 Cannot modify the return value of 'InitObj2()' because it is not a variable
+			S s = Get<S>();
+			s.Property = 1;
+
+#if CS72
+			Get<R>().Method();
+			R r = Get<R>();
+			r.Property = 2;
+#endif
+		}
+
+		public static void CallOnFieldOfTemporary()
+		{
+			Get<S>().Field.ToString();
+		}
+
+		public static string CallOnIntegerConstant()
+		{
+			return ulong.MaxValue.ToString();
 		}
 	}
 }

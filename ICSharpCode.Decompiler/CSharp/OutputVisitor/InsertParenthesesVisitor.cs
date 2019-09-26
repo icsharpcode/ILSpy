@@ -61,6 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					case UnaryOperatorType.PostDecrement:
 					case UnaryOperatorType.PostIncrement:
 					case UnaryOperatorType.NullConditional:
+					case UnaryOperatorType.SuppressNullableWarning:
 						return Primary;
 					case UnaryOperatorType.NullConditionalRewrap:
 						return NullableRewrap;
@@ -124,7 +125,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			if (expr is IsExpression || expr is AsExpression)
 				return RelationalAndTypeTesting;
-			if (expr is ConditionalExpression)
+			if (expr is ConditionalExpression || expr is DirectionExpression)
 				return Conditional;
 			if (expr is AssignmentExpression || expr is LambdaExpression)
 				return Assignment;
@@ -338,7 +339,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// (a ? b : c ? d : e) == (a ? b : (c ? d : e))
 			// (a ? b ? c : d : e) == (a ? (b ? c : d) : e)
 			// Only ((a ? b : c) ? d : e) strictly needs the additional parentheses
-			if (InsertParenthesesForReadability) {
+			if (InsertParenthesesForReadability && !IsConditionalRefExpression(conditionalExpression)) {
 				// Precedence of ?: can be confusing; so always put parentheses in nice-looking mode.
 				ParenthesizeIfRequired(conditionalExpression.Condition, NullableRewrap);
 				ParenthesizeIfRequired(conditionalExpression.TrueExpression, NullableRewrap);
@@ -350,12 +351,18 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			base.VisitConditionalExpression(conditionalExpression);
 		}
-		
+
+		private bool IsConditionalRefExpression(ConditionalExpression conditionalExpression)
+		{
+			return conditionalExpression.TrueExpression is DirectionExpression
+				|| conditionalExpression.FalseExpression is DirectionExpression;
+		}
+
 		public override void VisitAssignmentExpression(AssignmentExpression assignmentExpression)
 		{
 			// assignment is right-associative
 			ParenthesizeIfRequired(assignmentExpression.Left, Assignment + 1);
-			if (InsertParenthesesForReadability) {
+			if (InsertParenthesesForReadability && !(assignmentExpression.Right is DirectionExpression)) {
 				ParenthesizeIfRequired(assignmentExpression.Right, RelationalAndTypeTesting + 1);
 			} else {
 				ParenthesizeIfRequired(assignmentExpression.Right, Assignment);

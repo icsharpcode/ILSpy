@@ -109,12 +109,18 @@ namespace ICSharpCode.ILSpy.Analyzers
 				throw new ArgumentNullException(nameof(entity));
 			}
 
+			if (entity.MetadataToken.IsNil) {
+				MessageBox.Show(Properties.Resources.CannotAnalyzeMissingRef, "ILSpy");
+				return;
+			}
+
 			switch (entity) {
 				case ITypeDefinition td:
 					ShowOrFocus(new AnalyzedTypeTreeNode(td));
 					break;
 				case IField fd:
-					ShowOrFocus(new AnalyzedFieldTreeNode(fd));
+					if (!fd.IsConst)
+						ShowOrFocus(new AnalyzedFieldTreeNode(fd));
 					break;
 				case IMethod md:
 					ShowOrFocus(new AnalyzedMethodTreeNode(md));

@@ -28,7 +28,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// extern alias <Identifier>;
+	/// extern alias IDENTIFIER;
 	/// </summary>
 	public class ExternAliasDeclaration : AstNode
 	{

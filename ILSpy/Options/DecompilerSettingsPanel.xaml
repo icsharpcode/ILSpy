@@ -2,18 +2,62 @@
              x:ClassModifier="internal"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:options="clr-namespace:ICSharpCode.ILSpy.Options"
-	xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls">
+	xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
+	xmlns:options="clr-namespace:ICSharpCode.ILSpy.Options">
 	<UserControl.Resources>
-		<controls:BoolToVisibilityConverter x:Key="boolConv" />
+		<CollectionViewSource x:Key="SettingsCollection" Source="{Binding Settings}">
+			<CollectionViewSource.GroupDescriptions>
+				<PropertyGroupDescription PropertyName="Category" />
+			</CollectionViewSource.GroupDescriptions>
+		</CollectionViewSource>
 	</UserControl.Resources>
-	<StackPanel Margin="10">
-		<CheckBox IsChecked="{Binding UseDebugSymbols}">Use variable names from debug symbols, if available</CheckBox>
-		<CheckBox IsChecked="{Binding ShowDebugInfo}">Show info from debug symbols, if available</CheckBox>
-		<CheckBox IsChecked="{Binding ShowXmlDocumentation}">Show XML documentation in decompiled code</CheckBox>
-		<CheckBox IsChecked="{Binding RemoveDeadCode}">Remove dead and side effect free code</CheckBox>
-		<CheckBox IsChecked="{Binding UsingDeclarations}">Insert using declarations</CheckBox>
-		<CheckBox IsChecked="{Binding AlwaysUseBraces}">Always use braces</CheckBox>
-		<CheckBox IsChecked="{Binding ApplyWindowsRuntimeProjections}">Apply Windows Runtime projections on loaded assemblies</CheckBox>
-	</StackPanel>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="*" />
+		</Grid.ColumnDefinitions>
+		<TextBlock Margin="3" Grid.ColumnSpan="3" TextWrapping="Wrap" Text="{x:Static properties:Resources.DecompilerSettingsPanelLongText}" />
+		<ListBox Grid.Row="1" ItemsSource="{Binding Source={StaticResource SettingsCollection}}">
+			<ListBox.ItemContainerStyle>
+				<Style TargetType="ListBoxItem">
+					<Setter Property="IsTabStop" Value="False"/>
+					<Setter Property="Focusable" Value="False"/>
+				</Style>
+			</ListBox.ItemContainerStyle>
+			<ListBox.GroupStyle>
+				<GroupStyle>
+					<GroupStyle.Panel>
+						<ItemsPanelTemplate>
+							<VirtualizingStackPanel Orientation="Vertical" />
+						</ItemsPanelTemplate>
+					</GroupStyle.Panel>
+					<GroupStyle.ContainerStyle>
+						<Style TargetType="{x:Type GroupItem}">
+							<Setter Property="Template">
+								<Setter.Value>
+									<ControlTemplate>
+										<Expander Padding="0" BorderThickness="0" IsExpanded="True">
+											<Expander.Header>
+												<CheckBox Checked="OnGroupChecked" Unchecked="OnGroupUnchecked" Loaded="OnGroupLoaded" VerticalContentAlignment="Center"
+														  FontSize="16" FontWeight="Bold" Content="{Binding Name}" />
+											</Expander.Header>
+											<ItemsPresenter/>
+										</Expander>
+									</ControlTemplate>
+								</Setter.Value>
+							</Setter>
+						</Style>
+					</GroupStyle.ContainerStyle>
+				</GroupStyle>
+			</ListBox.GroupStyle>
+			<ListBox.ItemTemplate>
+				<DataTemplate>
+					<CheckBox Margin="19,0,0,0" IsChecked="{Binding IsEnabled}" Content="{Binding Description}" />
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
+	</Grid>
 </UserControl>

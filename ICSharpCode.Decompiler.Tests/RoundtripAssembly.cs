@@ -26,6 +26,7 @@ using System.Threading;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
+using Microsoft.Build.Locator;
 using Microsoft.Win32;
 using NUnit.Framework;
 
@@ -68,11 +69,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void ICSharpCode_Decompiler()
 		{
-			try {
-				RunWithTest("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll", "ICSharpCode.Decompiler.Tests.exe");
-			} catch (CompilationFailedException) {
-				Assert.Ignore("C# 7 local functions not yet supported.");
-			}
+			RunWithTest("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll", "ICSharpCode.Decompiler.Tests.exe");
 		}
 
 		[Test]
@@ -105,11 +102,11 @@ namespace ICSharpCode.Decompiler.Tests
 			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe");
 		}
 
-		void RunWithTest(string dir, string fileToRoundtrip, string fileToTest)
+		void RunWithTest(string dir, string fileToRoundtrip, string fileToTest, string keyFile = null)
 		{
-			RunInternal(dir, fileToRoundtrip, outputDir => RunTest(outputDir, fileToTest));
+			RunInternal(dir, fileToRoundtrip, outputDir => RunTest(outputDir, fileToTest), keyFile);
 		}
-		
+
 		void RunWithOutput(string dir, string fileToRoundtrip)
 		{
 			string inputDir = Path.Combine(TestDir, dir);
@@ -117,7 +114,7 @@ namespace ICSharpCode.Decompiler.Tests
 				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)));
 		}
 		
-		void RunInternal(string dir, string fileToRoundtrip, Action<string> testAction)
+		void RunInternal(string dir, string fileToRoundtrip, Action<string> testAction, string snkFilePath = null)
 		{
 			if (!Directory.Exists(TestDir)) {
 				Assert.Ignore($"Assembly-roundtrip test ignored: test directory '{TestDir}' needs to be checked out separately." + Environment.NewLine +
@@ -150,8 +147,14 @@ namespace ICSharpCode.Decompiler.Tests
 						resolver.RemoveSearchDirectory(".");
 						var decompiler = new TestProjectDecompiler(inputDir);
 						decompiler.AssemblyResolver = resolver;
+						// Let's limit the roundtrip tests to C# 7.3 for now; because 8.0 is still in preview
+						// and the generated project doesn't build as-is.
+						decompiler.Settings = new DecompilerSettings(LanguageVersion.CSharp7_3);
 						// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
 						decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
+						if (snkFilePath != null) {
+							decompiler.StrongNameKeyFile = Path.Combine(inputDir, snkFilePath);
+						}
 						decompiler.DecompileProject(module, decompiledDir);
 						Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
 						projectFile = Path.Combine(decompiledDir, module.Name + ".csproj");
@@ -185,22 +188,16 @@ namespace ICSharpCode.Decompiler.Tests
 				File.Delete(file);
 			}
 		}
-		
-		static string FindVS2017()
-		{
-			using (var key = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32)) {
-				using (var subkey = key.OpenSubKey(@"SOFTWARE\Microsoft\VisualStudio\SxS\VS7")) {
-					return subkey?.GetValue("15.0") as string;
-				}
-			}
-		}
 
 		static string FindMSBuild()
 		{
-			string vsPath = FindVS2017();
+			string vsPath = MSBuildLocator.QueryVisualStudioInstances(new VisualStudioInstanceQueryOptions { DiscoveryTypes = DiscoveryType.VisualStudioSetup })
+										  .OrderByDescending(i => i.Version)										  
+										  .FirstOrDefault()
+										  ?.MSBuildPath; 
 			if (vsPath == null)
-				throw new InvalidOperationException("Could not find VS2017");
-			return Path.Combine(vsPath, @"MSBuild\15.0\bin\MSBuild.exe");
+				throw new InvalidOperationException("Could not find MSBuild");
+			return Path.Combine(vsPath, "msbuild.exe");
 		}
 
 		static void Compile(string projectFile, string outputDir)

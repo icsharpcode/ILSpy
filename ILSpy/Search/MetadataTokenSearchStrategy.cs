@@ -1,18 +1,20 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using System.Threading;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Search
 {
-	class MetadataTokenSearchStrategy : AbstractSearchStrategy
+	class MetadataTokenSearchStrategy : AbstractEntitySearchStrategy
 	{
 		readonly EntityHandle searchTermToken;
 
-		public MetadataTokenSearchStrategy(Language language, Action<SearchResult> addResult, params string[] terms)
-			: base(language, addResult, terms)
+		public MetadataTokenSearchStrategy(Language language, ApiVisibility apiVisibility, IProducerConsumerCollection<SearchResult> resultQueue, params string[] terms)
+			: base(language, apiVisibility, resultQueue, terms)
 		{
 			if (terms.Length == 1) {
 				int.TryParse(terms[0], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var token);
@@ -20,8 +22,9 @@ namespace ICSharpCode.ILSpy.Search
 			}
 		}
 
-		public override void Search(PEFile module)
+		public override void Search(PEFile module, CancellationToken cancellationToken)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			if (searchTermToken.IsNil) return;
 			var typeSystem = module.GetTypeSystemOrNull();
 			if (typeSystem == null) return;
@@ -33,31 +36,36 @@ namespace ICSharpCode.ILSpy.Search
 					if (row < 1 || row > module.Metadata.TypeDefinitions.Count)
 						break;
 					var type = metadataModule.GetDefinition((TypeDefinitionHandle)searchTermToken);
-					addResult(ResultFromEntity(type));
+					if (!CheckVisibility(type)) break;
+					OnFoundResult(type);
 					break;
 				case HandleKind.MethodDefinition:
 					if (row < 1 || row > module.Metadata.MethodDefinitions.Count)
 						break;
 					var method = metadataModule.GetDefinition((MethodDefinitionHandle)searchTermToken);
-					addResult(ResultFromEntity(method));
+					if (!CheckVisibility(method)) break;
+					OnFoundResult(method);
 					break;
 				case HandleKind.FieldDefinition:
 					if (row < 1 || row > module.Metadata.FieldDefinitions.Count)
 						break;
 					var field = metadataModule.GetDefinition((FieldDefinitionHandle)searchTermToken);
-					addResult(ResultFromEntity(field));
+					if (!CheckVisibility(field)) break;
+					OnFoundResult(field);
 					break;
 				case HandleKind.PropertyDefinition:
 					if (row < 1 || row > module.Metadata.PropertyDefinitions.Count)
 						break;
 					var property = metadataModule.GetDefinition((PropertyDefinitionHandle)searchTermToken);
-					addResult(ResultFromEntity(property));
+					if (!CheckVisibility(property)) break;
+					OnFoundResult(property);
 					break;
 				case HandleKind.EventDefinition:
 					if (row < 1 || row > module.Metadata.EventDefinitions.Count)
 						break;
 					var @event = metadataModule.GetDefinition((EventDefinitionHandle)searchTermToken);
-					addResult(ResultFromEntity(@event));
+					if (!CheckVisibility(@event)) break;
+					OnFoundResult(@event);
 					break;
 			}
 		}

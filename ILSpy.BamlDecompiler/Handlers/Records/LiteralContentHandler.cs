@@ -30,7 +30,7 @@ namespace ILSpy.BamlDecompiler.Handlers {
 		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
 			var record = (LiteralContentRecord)((BamlRecordNode)node).Record;
 
-			var elem = new XElement(ctx.GetXamlNsName("XData", parent.Xaml));
+			var elem = new XElement(ctx.GetKnownNamespace("XData", XamlContext.KnownNamespace_Xaml, parent.Xaml));
 			var content = XElement.Parse(record.Value);
 			elem.Add(content);
 

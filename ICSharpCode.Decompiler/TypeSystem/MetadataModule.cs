@@ -40,6 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		internal readonly MetadataReader metadata;
 		readonly TypeSystemOptions options;
 		internal readonly TypeProvider TypeProvider;
+		internal readonly Nullability NullableContext;
 
 		readonly MetadataNamespace rootNamespace;
 		readonly MetadataTypeDefinition[] typeDefs;
@@ -66,6 +67,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				this.AssemblyName = metadata.GetString(moddef.Name);
 				this.FullAssemblyName = this.AssemblyName;
 			}
+			this.NullableContext = metadata.GetModuleDefinition().GetCustomAttributes().GetNullableContext(metadata) ?? Nullability.Oblivious;
 			this.rootNamespace = new MetadataNamespace(this, null, string.Empty, metadata.GetNamespaceDefinitionRoot());
 
 			if (!options.HasFlag(TypeSystemOptions.Uncached)) {
@@ -267,12 +269,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region Resolve Type
-		public IType ResolveType(EntityHandle typeRefDefSpec, GenericContext context, CustomAttributeHandleCollection? typeAttributes = null)
+		public IType ResolveType(EntityHandle typeRefDefSpec, GenericContext context, CustomAttributeHandleCollection? typeAttributes = null, Nullability nullableContext = Nullability.Oblivious)
 		{
-			return ResolveType(typeRefDefSpec, context, options, typeAttributes);
+			return ResolveType(typeRefDefSpec, context, options, typeAttributes, nullableContext);
 		}
 
-		public IType ResolveType(EntityHandle typeRefDefSpec, GenericContext context, TypeSystemOptions customOptions,  CustomAttributeHandleCollection? typeAttributes = null)
+		public IType ResolveType(EntityHandle typeRefDefSpec, GenericContext context, TypeSystemOptions customOptions, CustomAttributeHandleCollection? typeAttributes = null, Nullability nullableContext = Nullability.Oblivious)
 		{
 			if (typeRefDefSpec.IsNil)
 				return SpecialType.UnknownType;
@@ -293,7 +295,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				default:
 					throw new BadImageFormatException("Not a type handle");
 			}
-			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation, typeAttributes, metadata, customOptions);
+			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation, typeAttributes, metadata, customOptions, nullableContext);
 			return ty;
 		}
 
@@ -301,16 +303,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			// resolve without substituting dynamic/tuple types
 			var ty = ResolveType(declaringTypeReference, context,
-				options & ~(TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple));
+				options & ~(TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple | TypeSystemOptions.NullabilityAnnotations));
 			// but substitute tuple types in type arguments:
-			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation, null, metadata, options, typeChildrenOnly: true);
+			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation, null, metadata, options, Nullability.Oblivious, typeChildrenOnly: true);
 			return ty;
 		}
 
 		IType IntroduceTupleTypes(IType ty)
 		{
 			// run ApplyAttributeTypeVisitor without attributes, in order to introduce tuple types
-			return ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation, null, metadata, options);
+			return ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation, null, metadata, options, Nullability.Oblivious);
 		}
 		#endregion
 
@@ -475,7 +477,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					typeParameters.Add(new DefaultTypeParameter(m, i));
 				}
 				m.TypeParameters = typeParameters;
-				substitution = new TypeParameterSubstitution(null, typeParameters);
+				substitution = new TypeParameterSubstitution(declaringType.TypeArguments, typeParameters);
+			} else if (declaringType.TypeArguments.Count > 0) {
+				substitution = declaringType.GetSubstitution();
 			}
 			var parameters = new List<IParameter>();
 			for (int i = 0; i < signature.RequiredParameterCount; i++) {
@@ -551,6 +555,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var field = declaringType.GetFields(f => f.Name == name && CompareTypes(f.ReturnType, signature),
 				GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
 			if (field == null) {
+				// If it's a field in a generic type, we need to substitute the type arguments:
+				if (declaringType.TypeArguments.Count > 0) {
+					signature = signature.AcceptVisitor(declaringType.GetSubstitution());
+				}
 				field = new FakeField(Compilation) {
 					ReturnType = signature,
 					Name = name,
@@ -598,7 +606,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var b = new AttributeListBuilder(this);
 			if (metadata.IsAssembly) {
 				var assembly = metadata.GetAssemblyDefinition();
-				b.Add(metadata.GetCustomAttributes(Handle.AssemblyDefinition));
+				b.Add(metadata.GetCustomAttributes(Handle.AssemblyDefinition), SymbolKind.Module);
 				b.AddSecurityAttributes(assembly.GetDeclarativeSecurityAttributes());
 
 				// AssemblyVersionAttribute
@@ -617,7 +625,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public IEnumerable<IAttribute> GetModuleAttributes()
 		{
 			var b = new AttributeListBuilder(this);
-			b.Add(metadata.GetCustomAttributes(Handle.ModuleDefinition));
+			b.Add(metadata.GetCustomAttributes(Handle.ModuleDefinition), SymbolKind.Module);
 			if (!metadata.IsAssembly) {
 				AddTypeForwarderAttributes(ref b);
 			}

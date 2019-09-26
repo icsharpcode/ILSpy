@@ -10,16 +10,18 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Metadata;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using System.Threading;
+using System.Collections.Concurrent;
 
 namespace ICSharpCode.ILSpy.Search
 {
-	class LiteralSearchStrategy : AbstractSearchStrategy
+	class LiteralSearchStrategy : AbstractEntitySearchStrategy
 	{
 		readonly TypeCode searchTermLiteralType;
 		readonly object searchTermLiteralValue;
 
-		public LiteralSearchStrategy(Language language, Action<SearchResult> addResult, params string[] terms)
-			: base(language, addResult, terms)
+		public LiteralSearchStrategy(Language language, ApiVisibility apiVisibility, IProducerConsumerCollection<SearchResult> resultQueue, params string[] terms)
+			: base(language, apiVisibility, resultQueue, terms)
 		{
 			if (terms.Length == 1) {
 				var lexer = new Lexer(new LATextReader(new System.IO.StringReader(terms[0])));
@@ -50,20 +52,24 @@ namespace ICSharpCode.ILSpy.Search
 			}
 		}
 
-		public override void Search(PEFile module)
+		public override void Search(PEFile module, CancellationToken cancellationToken)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			var metadata = module.Metadata;
 			var typeSystem = module.GetTypeSystemOrNull();
 			if (typeSystem == null) return;
 
 			foreach (var handle in metadata.MethodDefinitions) {
+				cancellationToken.ThrowIfCancellationRequested();
 				var md = metadata.GetMethodDefinition(handle);
 				if (!md.HasBody() || !MethodIsLiteralMatch(module, md)) continue;
 				var method = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-				addResult(ResultFromEntity(method));
+				if (!CheckVisibility(method)) continue;
+				OnFoundResult(method);
 			}
 
 			foreach (var handle in metadata.FieldDefinitions) {
+				cancellationToken.ThrowIfCancellationRequested();
 				var fd = metadata.GetFieldDefinition(handle);
 				if (!fd.HasFlag(System.Reflection.FieldAttributes.Literal))
 					continue;
@@ -75,7 +81,8 @@ namespace ICSharpCode.ILSpy.Search
 				if (!IsLiteralMatch(metadata, blob.ReadConstant(constant.TypeCode)))
 					continue;
 				IField field = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-				addResult(ResultFromEntity(field));
+				if (!CheckVisibility(field)) continue;
+				OnFoundResult(field);
 			}
 		}
 

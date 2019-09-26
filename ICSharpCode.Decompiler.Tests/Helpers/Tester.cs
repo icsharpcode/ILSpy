@@ -54,6 +54,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		Library = 0x8,
 		UseRoslyn = 0x10,
 		UseMcs = 0x20,
+		ReferenceVisualBasic = 0x40,
 	}
 
 	[Flags]
@@ -181,20 +182,29 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return Regex.Replace(il, @"'<PrivateImplementationDetails>\{[0-9A-F-]+\}'", "'<PrivateImplementationDetails>'");
 		}
 
+		static readonly string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+				@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
+		static readonly string thisAsmPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
+
 		static readonly Lazy<IEnumerable<MetadataReference>> defaultReferences = new Lazy<IEnumerable<MetadataReference>>(delegate {
-			string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-				@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5");
 			return new[]
 			{
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Facades\\netstandard.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "mscorlib.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Core.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, @"Facades\System.Runtime.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Xml.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Microsoft.CSharp.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Microsoft.VisualBasic.dll")),
 					MetadataReference.CreateFromFile(typeof(ValueTuple).Assembly.Location),
+					MetadataReference.CreateFromFile(typeof(ValueTask).Assembly.Location),
 					MetadataReference.CreateFromFile(typeof(Span<>).Assembly.Location),
+			};
+		});
+
+		static readonly Lazy<IEnumerable<MetadataReference>> visualBasic = new Lazy<IEnumerable<MetadataReference>>(delegate {
+			return new[] {
+				MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Microsoft.VisualBasic.dll"))
 			};
 		});
 
@@ -236,10 +246,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			var preprocessorSymbols = GetPreprocessorSymbols(flags);
 
 			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
-				var parseOptions = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols.ToArray(), languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.Latest);
+				var parseOptions = new CSharpParseOptions(
+					preprocessorSymbols: preprocessorSymbols.ToArray(),
+					languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.CSharp8
+				);
 				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
+				var references = defaultReferences.Value;
+				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic)) {
+					references = references.Concat(visualBasic.Value);
+				}
 				var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(sourceFileName),
-					syntaxTrees, defaultReferences.Value,
+					syntaxTrees, references,
 					new CSharpCompilationOptions(
 						flags.HasFlag(CompilerOptions.Library) ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication,
 						platform: flags.HasFlag(CompilerOptions.Force32Bit) ? Platform.X86 : Platform.AnyCpu,
@@ -326,7 +343,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				options.ReferencedAssemblies.Add("System.Core.dll");
 				options.ReferencedAssemblies.Add("System.Xml.dll");
 				options.ReferencedAssemblies.Add("Microsoft.CSharp.dll");
-				options.ReferencedAssemblies.Add("Microsoft.VisualBasic.dll");
+				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic)) {
+					options.ReferencedAssemblies.Add("Microsoft.VisualBasic.dll");
+				}
 				CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
 				if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
 					StringBuilder b = new StringBuilder("Compiler error:");
@@ -431,10 +450,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				resolver.AddSearchDirectory(Path.GetDirectoryName(typeof(Span<>).Assembly.Location));
 				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
 				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings);
-				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
+				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAttributes());
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
-				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
+				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile(sortTypes: true);
 
 				StringWriter output = new StringWriter();
 				var visitor = new CSharpOutputVisitor(output, FormattingOptionsFactory.CreateSharpDevelop());
@@ -499,6 +518,44 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				}
 				Assert.Fail(b.ToString());
 			}
+		}
+
+		internal static void RepeatOnIOError(Action action, int numTries = 5)
+		{
+			for (int i = 0; i < numTries - 1; i++) {
+				try {
+					action();
+					return;
+				} catch (IOException) {
+				} catch (UnauthorizedAccessException) {
+					// potential virus scanner problem
+				}
+				Thread.Sleep(10);
+			}
+			// If the last try still fails, don't catch the exception
+			action();
+		}
+
+		public static void SignAssembly(string assemblyPath, string keyFilePath)
+		{
+			string snPath = SdkUtility.GetSdkPath("sn.exe");
+
+			ProcessStartInfo info = new ProcessStartInfo(snPath);
+			info.Arguments = $"-R \"{assemblyPath}\" \"{keyFilePath}\"";
+			info.RedirectStandardError = true;
+			info.RedirectStandardOutput = true;
+			info.UseShellExecute = false;
+
+			Process process = Process.Start(info);
+
+			var outputTask = process.StandardOutput.ReadToEndAsync();
+			var errorTask = process.StandardError.ReadToEndAsync();
+
+			Task.WaitAll(outputTask, errorTask);
+			process.WaitForExit();
+
+			Console.WriteLine("output: " + outputTask.Result);
+			Console.WriteLine("errors: " + errorTask.Result);
 		}
 	}
 }

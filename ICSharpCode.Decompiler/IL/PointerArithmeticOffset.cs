@@ -17,17 +17,17 @@ namespace ICSharpCode.Decompiler.IL
 		/// Returns null if no such instruction can be found.
 		/// </summary>
 		/// <param name="byteOffsetInst">Input instruction.</param>
-		/// <param name="pointerType">The pointer type.</param>
+		/// <param name="pointerElementType">The target type of the pointer type.</param>
 		/// <param name="checkForOverflow">Whether the pointer arithmetic operation checks for overflow.</param>
 		/// <param name="unwrapZeroExtension">Whether to allow zero extensions in the mul argument.</param>
-		public static ILInstruction Detect(ILInstruction byteOffsetInst, PointerType pointerType,
+		public static ILInstruction Detect(ILInstruction byteOffsetInst, IType pointerElementType,
 			bool checkForOverflow,
 			bool unwrapZeroExtension = false)
 		{
 			if (byteOffsetInst is Conv conv && conv.InputType == StackType.I8 && conv.ResultType == StackType.I) {
 				byteOffsetInst = conv.Argument;
 			}
-			int? elementSize = ComputeSizeOf(pointerType.ElementType);
+			int? elementSize = ComputeSizeOf(pointerElementType);
 			if (elementSize == 1) {
 				return byteOffsetInst;
 			} else if (byteOffsetInst is BinaryNumericInstruction mul && mul.Operator == BinaryNumericOperator.Mul) {
@@ -36,14 +36,14 @@ namespace ICSharpCode.Decompiler.IL
 				if (mul.CheckForOverflow != checkForOverflow)
 					return null;
 				if (elementSize > 0 && mul.Right.MatchLdcI(elementSize.Value)
-					|| mul.Right.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerType.ElementType)) {
+					|| mul.Right.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerElementType)) {
 					var countOffsetInst = mul.Left;
 					if (unwrapZeroExtension) {
 						countOffsetInst = countOffsetInst.UnwrapConv(ConversionKind.ZeroExtend);
 					}
 					return countOffsetInst;
 				}
-			} else if (byteOffsetInst.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerType.ElementType)) {
+			} else if (byteOffsetInst.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerElementType)) {
 				return new LdcI4(1).WithILRange(byteOffsetInst);
 			} else if (byteOffsetInst.MatchLdcI(out long val)) {
 				// If the offset is a constant, it's possible that the compiler

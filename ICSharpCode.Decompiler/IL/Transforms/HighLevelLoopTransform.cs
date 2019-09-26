@@ -434,18 +434,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		/// <summary>
 		/// Returns true if the instruction is stloc v(add(ldloc v, arg))
-		/// or stloc v(compound.assign(ldloc v, arg))
+		/// or compound.assign(ldloca v, arg)
 		/// </summary>
 		public static bool MatchIncrement(ILInstruction inst, out ILVariable variable)
 		{
-			if (!inst.MatchStLoc(out variable, out var value))
-				return false;
-			if (!value.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right)) {
-				if (value is CompoundAssignmentInstruction cai) {
-					left = cai.Target;
-				} else return false;
+			if (inst.MatchStLoc(out variable, out var value)) {
+				if (value.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right)) {
+					return left.MatchLdLoc(variable);
+				}
+			} else if (inst is CompoundAssignmentInstruction cai) {
+				return cai.TargetKind == CompoundTargetKind.Address && cai.Target.MatchLdLoca(out variable);
 			}
-			return left.MatchLdLoc(variable);
+			return false;
 		}
 
 		/// <summary>

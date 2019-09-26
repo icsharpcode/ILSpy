@@ -2,12 +2,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <LangVersion>7.3</LangVersion>
 
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
-    <NoWarn>1701;1702;1705,67,169,1058,728,1720,649,168,251</NoWarn>
+    <NoWarn>1701;1702;1705,67,169,1058,728,1720,649,168,251,660,661,675</NoWarn>
 
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 
@@ -32,18 +32,23 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;NET46;ROSLYN;CS60;CS70</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NET46;ROSLYN;CS60;CS70;CS71;CS72;CS73</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>TRACE;NET46;ROSLYN;CS60;CS70;CS71;CS72;CS73</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="2017.7.26.1241" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.10.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="2.10.0" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.2.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.3.0-beta1-final" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.3.0-beta1-final" />
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.11.2" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
-    <PackageReference Include="NUnit" Version="3.11.0" />
-    <PackageReference Include="System.Memory" Version="4.5.1" />
+    <PackageReference Include="NUnit" Version="3.12.0" />
+    <PackageReference Include="System.Memory" Version="4.5.3" />
   </ItemGroup>
 
   <ItemGroup>
@@ -55,11 +60,18 @@
     <None Include="TestCases\Correctness\StackTests.il" />
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
+    <None Include="TestCases\ILPretty\ConstantBlobs.il" />
+    <None Include="TestCases\ILPretty\CS1xSwitch_Debug.il" />
+    <None Include="TestCases\ILPretty\CS1xSwitch_Release.il" />
+    <None Include="TestCases\ILPretty\Issue1157.il" />
+    <None Include="TestCases\ILPretty\Issue684.cs" />
+    <None Include="TestCases\ILPretty\Issue684.il" />
     <None Include="TestCases\ILPretty\FSharpLoops.fs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.il" />
     <None Include="TestCases\ILPretty\FSharpLoops_Release.il" />
     <None Include="TestCases\ILPretty\FSharpUsing.fs" />
     <None Include="TestCases\ILPretty\FSharpUsing_Debug.il" />
+    <None Include="TestCases\ILPretty\DirectCallToExplicitInterfaceImpl.il" />
     <None Include="TestCases\ILPretty\FSharpUsing_Release.il" />
     <None Include="TestCases\Correctness\BitNot.il" />
     <None Include="TestCases\Correctness\Readme.txt" />
@@ -67,19 +79,34 @@
 
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
+    <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
+    <Compile Include="TestCases\Pretty\OutVariables.cs" />
+    <Compile Include="TestCases\Pretty\CustomTaskType.cs" />
+    <None Include="TestCases\VBPretty\VBCompoundAssign.cs" />
+    <Compile Include="TestCases\Pretty\ThrowExpressions.cs" />
+    <None Include="TestCases\ILPretty\Issue1145.cs" />
+    <Compile Include="TestCases\ILPretty\Issue1157.cs" />
+    <None Include="TestCases\ILPretty\Unsafe.cs" />
+    <None Include="TestCases\ILPretty\CS1xSwitch_Debug.cs" />
+    <None Include="TestCases\ILPretty\CS1xSwitch_Release.cs" />
+    <None Include="TestCases\ILPretty\DirectCallToExplicitInterfaceImpl.cs" />
     <Compile Include="TestCases\ILPretty\Issue1389.cs" />
+    <Compile Include="TestCases\ILPretty\Issue1454.cs" />
+    <Compile Include="TestCases\Pretty\Discards.cs" />
     <Compile Include="TestCases\Pretty\MultidimensionalArray.cs" />
     <Compile Include="Output\CSharpAmbienceTests.cs" />
     <Compile Include="Semantics\ConversionTests.cs" />
     <Compile Include="Semantics\ExplicitConversionTest.cs" />
     <Compile Include="Semantics\OverloadResolutionTests.cs" />
     <Compile Include="DataFlowTest.cs" />
-    <Compile Include="TestCases\Correctness\LocalFunctions.cs" />
-    <Compile Include="TestCases\Correctness\RefLocalsAndReturns.cs" />
+    <Compile Include="TestCases\Pretty\LocalFunctions.cs" />
     <Compile Include="TestCases\ILPretty\Issue1256.cs" />
     <Compile Include="TestCases\ILPretty\Issue1323.cs" />
     <Compile Include="TestCases\Pretty\CustomAttributes2.cs" />
     <Compile Include="TestCases\Pretty\EnumTests.cs" />
+    <Compile Include="TestCases\Pretty\UserDefinedConversions.cs" />
+    <None Include="TestCases\ILPretty\Unsafe.il" />
+    <None Include="TestCases\Pretty\NullableRefTypes.cs" />
     <Compile Include="TestCases\Pretty\TypeMemberTests.cs" />
     <Compile Include="TestCases\Pretty\ValueTypes.cs" />
     <None Include="TestCases\ILPretty\Issue1389.il" />
@@ -219,6 +246,7 @@
     <None Include="TestCases\ILPretty\Issue379.il" />
     <None Include="TestCases\ILPretty\Issue982.il" />
     <None Include="TestCases\Pretty\Readme.txt" />
+    <None Include="TestCases\VBPretty\VBCompoundAssign.vb" />
     <None Include="TestCases\VBPretty\Async.vb" />
   </ItemGroup>
 

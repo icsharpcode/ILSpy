@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <LangVersion>7.3</LangVersion>
 
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -42,9 +42,9 @@
 
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="2017.7.26.1241" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.10.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="2.10.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.11.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.0.0-beta4-final" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.0.0-beta4-final" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
     <PackageReference Include="NUnit" Version="3.11.0" />
   </ItemGroup>

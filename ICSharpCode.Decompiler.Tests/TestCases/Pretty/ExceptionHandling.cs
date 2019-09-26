@@ -243,7 +243,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 					Console.WriteLine("0");
 				}
-			
+
 				Console.WriteLine("End Try");
 
 			} catch {
@@ -259,7 +259,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						Console.WriteLine("Catch2");
 					}
 					return B(10) && B(11);
-				} catch { 
+				} catch {
 					Console.WriteLine("Catch");
 				} finally {
 					Console.WriteLine("Finally");
@@ -281,5 +281,75 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			}
 		}
+
+		public void ReassignExceptionVar()
+		{
+			try {
+				Console.WriteLine("ReassignExceptionVar");
+			} catch (Exception innerException) {
+				if (innerException.InnerException != null) {
+					innerException = innerException.InnerException;
+				}
+				Console.WriteLine(innerException);
+			}
+		}
+
+		public int UseExceptionVarOutsideCatch()
+		{
+			Exception ex2;
+			try {
+				return 1;
+			} catch (Exception ex) {
+				ex2 = ex;
+			}
+			Console.WriteLine(ex2 != null);
+			return 2;
+		}
+
+		public void GenericException<TException>(int input) where TException : Exception
+		{
+			try {
+				Console.WriteLine(input);
+			} catch (TException val) {
+				Console.WriteLine(val.Message);
+				throw;
+			}
+		}
+
+		public void GenericException2<T>() where T : Exception
+		{
+			try {
+				Console.WriteLine("CatchT");
+#if ROSLYN
+			} catch (T val) {
+				Console.WriteLine("{0} {1}", val, val.ToString());
+			}
+#else
+			} catch (T arg) {
+				Console.WriteLine("{0} {1}", arg, arg.ToString());
+			}
+#endif
+		}
+
+#if CS60
+		public void GenericExceptionWithCondition<TException>(int input) where TException : Exception
+		{
+			try {
+				Console.WriteLine(input);
+			} catch (TException val) when (val.Message.Contains("Test")) {
+				Console.WriteLine(val.Message);
+				throw;
+			}
+		}
+
+		public void GenericException2WithCondition<TException>(int input) where TException : Exception
+		{
+			try {
+				Console.WriteLine(input);
+			} catch (TException val) when (val.Message.Contains("Test")) {
+				Console.WriteLine("{0} {1}", val, val.ToString());
+			}
+		}
+#endif
 	}
 }

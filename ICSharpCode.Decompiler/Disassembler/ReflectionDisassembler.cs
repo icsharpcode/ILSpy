@@ -225,19 +225,25 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine();
 			output.Indent();
 			var declaringType = methodDefinition.GetDeclaringType();
-			var signatureProvider = new DisassemblerSignatureProvider(module, output);
-			var signature = methodDefinition.DecodeSignature(signatureProvider, genericContext);
-			if (signature.Header.HasExplicitThis) {
-				output.Write("instance explicit ");
-			} else if (signature.Header.IsInstance) {
-				output.Write("instance ");
+			MethodSignature<Action<ILNameSyntax>>? signature;
+			try {
+				var signatureProvider = new DisassemblerSignatureProvider(module, output);
+				signature = methodDefinition.DecodeSignature(signatureProvider, genericContext);
+				if (signature.Value.Header.HasExplicitThis) {
+					output.Write("instance explicit ");
+				} else if (signature.Value.Header.IsInstance) {
+					output.Write("instance ");
+				}
+
+				//call convention
+				WriteEnum(signature.Value.Header.CallingConvention, callingConvention);
+
+				//return type
+				signature.Value.ReturnType(ILNameSyntax.Signature);
+			} catch (BadImageFormatException) {
+				signature = null;
+				output.Write("<bad signature>");
 			}
-
-			//call convention
-			WriteEnum(signature.Header.CallingConvention, callingConvention);
-
-			//return type
-			signature.ReturnType(ILNameSyntax.Signature);
 			output.Write(' ');
 
 			var parameters = methodDefinition.GetParameters();
@@ -261,10 +267,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			//( params )
 			output.Write(" (");
-			if (signature.ParameterTypes.Length > 0) {
+			if (signature?.ParameterTypes.Length > 0) {
 				output.WriteLine();
 				output.Indent();
-				WriteParameters(metadata, parameters, signature);
+				WriteParameters(metadata, parameters, signature.Value);
 				output.Unindent();
 			}
 			output.Write(") ");
@@ -304,7 +310,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 
 			foreach (var p in methodDefinition.GetGenericParameters()) {
-				WriteGenericParameterAttributes(module, p);
+				WriteGenericParameterAttributes(module, genericContext, p);
 			}
 			foreach (var p in methodDefinition.GetParameters()) {
 				WriteParameterAttributes(module, p);
@@ -942,6 +948,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		void WriteParameters(MetadataReader metadata, IEnumerable<ParameterHandle> parameters, MethodSignature<Action<ILNameSyntax>> signature)
 		{
 			int i = 0;
+			int offset = signature.Header.IsInstance ? 1 : 0;
 
 			foreach (var h in parameters) {
 				var p = metadata.GetParameter(h);
@@ -955,7 +962,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.WriteLine();
 					}
 					signature.ParameterTypes[i](ILNameSyntax.Signature);
-					output.Write(" ''");
+					output.Write(' ');
+					output.WriteLocalReference("''", "param_" + (i + offset), isDefinition: true);
 					i++;
 				}
 
@@ -978,7 +986,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				if (!md.IsNil) {
 					WriteMarshalInfo(metadata.GetBlobReader(md));
 				}
-				output.WriteLocalReference(DisassemblerHelpers.Escape(metadata.GetString(p.Name)), p, isDefinition: true);
+				output.WriteLocalReference(DisassemblerHelpers.Escape(metadata.GetString(p.Name)), "param_" + (i + offset), isDefinition: true);
 				i++;
 			}
 
@@ -989,22 +997,36 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.WriteLine();
 				}
 				signature.ParameterTypes[i](ILNameSyntax.Signature);
-				output.Write(" ''");
+				output.Write(' ');
+				output.WriteLocalReference("''", "param_" + (i + offset), isDefinition: true);
 				i++;
 			}
 
 			output.WriteLine();
 		}
 
-		void WriteGenericParameterAttributes(PEFile module, GenericParameterHandle handle)
+		void WriteGenericParameterAttributes(PEFile module, GenericContext context, GenericParameterHandle handle)
 		{
 			var metadata = module.Metadata;
 			var p = metadata.GetGenericParameter(handle);
-			if (p.GetCustomAttributes().Count == 0)
-				return;
-			output.Write(".param type {0}", metadata.GetString(p.Name));
-			output.WriteLine();
-			WriteAttributes(module, p.GetCustomAttributes());
+			if (p.GetCustomAttributes().Count > 0) {
+				output.Write(".param type {0}", metadata.GetString(p.Name));
+				output.WriteLine();
+				output.Indent();
+				WriteAttributes(module, p.GetCustomAttributes());
+				output.Unindent();
+			}
+			foreach (var constraintHandle in p.GetConstraints()) {
+				var constraint = metadata.GetGenericParameterConstraint(constraintHandle);
+				if (constraint.GetCustomAttributes().Count > 0) {
+					output.Write(".param constraint {0}, ", metadata.GetString(p.Name));
+					constraint.Type.WriteTo(module, output, context, ILNameSyntax.TypeName);
+					output.WriteLine();
+					output.Indent();
+					WriteAttributes(module, constraint.GetCustomAttributes());
+					output.Unindent();
+				}
+			}
 		}
 
 		void WriteParameterAttributes(PEFile module, ParameterHandle handle)
@@ -1019,7 +1041,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 				WriteConstant(metadata, metadata.GetConstant(p.GetDefaultValue()));
 			}
 			output.WriteLine();
+			output.Indent();
 			WriteAttributes(module, p.GetCustomAttributes());
+			output.Unindent();
 		}
 
 		void WriteConstant(MetadataReader metadata, Constant constant)
@@ -1102,8 +1126,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Write(' ');
 			var fieldName = metadata.GetString(fieldDefinition.Name);
 			output.Write(DisassemblerHelpers.Escape(fieldName));
+			char sectionPrefix = 'D';
 			if (fieldDefinition.HasFlag(FieldAttributes.HasFieldRVA)) {
-				output.Write(" at I_{0:x8}", fieldDefinition.GetRelativeVirtualAddress());
+				int rva = fieldDefinition.GetRelativeVirtualAddress();
+				sectionPrefix = GetRVASectionPrefix(module.Reader.PEHeaders, rva);
+				output.Write(" at {1}_{0:X8}", rva, sectionPrefix);
 			}
 
 			var defaultValue = fieldDefinition.GetDefaultValue();
@@ -1117,6 +1144,52 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.MarkFoldStart();
 				WriteAttributes(module, fieldDefinition.GetCustomAttributes());
 				output.MarkFoldEnd();
+			}
+			if (fieldDefinition.HasFlag(FieldAttributes.HasFieldRVA)) {
+				// Field data as specified in II.16.3.1 of ECMA-335 6th edition
+				int rva = fieldDefinition.GetRelativeVirtualAddress();
+				int sectionIndex = module.Reader.PEHeaders.GetContainingSectionIndex(rva);
+				if (sectionIndex < 0) {
+					output.WriteLine($"// RVA {rva:X8} invalid (not in any section)");
+				} else {
+					BlobReader initVal;
+					try {
+						initVal = fieldDefinition.GetInitialValue(module.Reader, null);
+					} catch (BadImageFormatException ex) {
+						initVal = default;
+						output.WriteLine("// .data {2}_{0:X8} = {1}", fieldDefinition.GetRelativeVirtualAddress(), ex.Message, sectionPrefix);
+					}
+					if (initVal.Length > 0) {
+						var sectionHeader = module.Reader.PEHeaders.SectionHeaders[sectionIndex];
+						output.Write(".data ");
+						if (sectionHeader.Name == ".text") {
+							output.Write("cil ");
+						} else if (sectionHeader.Name == ".tls") {
+							output.Write("tls ");
+						} else if (sectionHeader.Name != ".data") {
+							output.Write($"/* {sectionHeader.Name} */ ");
+						}
+						output.Write($"{sectionPrefix}_{rva:X8} = bytearray ");
+						WriteBlob(initVal);
+						output.WriteLine();
+					}
+				}
+			}
+		}
+
+		char GetRVASectionPrefix(System.Reflection.PortableExecutable.PEHeaders headers, int rva)
+		{
+			int sectionIndex = headers.GetContainingSectionIndex(rva);
+			if (sectionIndex < 0)
+				return 'D';
+			var sectionHeader = headers.SectionHeaders[sectionIndex];
+			switch (sectionHeader.Name) {
+				case ".tls":
+					return 'T';
+				case ".text":
+					return 'I';
+				default:
+					return 'D';
 			}
 		}
 		#endregion
@@ -1320,6 +1393,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			isInType = true;
 			WriteAttributes(module, typeDefinition.GetCustomAttributes());
 			WriteSecurityDeclarations(module, typeDefinition.GetDeclarativeSecurityAttributes());
+			foreach (var tp in typeDefinition.GetGenericParameters()) {
+				WriteGenericParameterAttributes(module, genericContext, tp);
+			}
 			var layout = typeDefinition.GetLayout();
 			if (!layout.IsDefault) {
 				output.WriteLine(".pack {0}", layout.PackingSize);

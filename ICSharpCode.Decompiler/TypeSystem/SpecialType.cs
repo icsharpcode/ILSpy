@@ -101,5 +101,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return 81625621 ^ (int)kind;
 		}
+
+		public override IType ChangeNullability(Nullability nullability)
+		{
+			if (nullability == base.Nullability)
+				return this;
+			else
+				return new NullabilityAnnotatedType(this, nullability);
+		}
 	}
 }

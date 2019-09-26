@@ -135,6 +135,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		ReadOnlySpanOfT,
 		/// <summary><c>System.Memory{T}</c></summary>
 		MemoryOfT,
+		/// <summary><c>System.Runtime.CompilerServices.Unsafe</c></summary>
+		Unsafe,
 	}
 	
 	/// <summary>
@@ -143,7 +145,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public sealed class KnownTypeReference : ITypeReference
 	{
-		internal const int KnownTypeCodeCount = (int)KnownTypeCode.MemoryOfT + 1;
+		internal const int KnownTypeCodeCount = (int)KnownTypeCode.Unsafe + 1;
 
 		static readonly KnownTypeReference[] knownTypeReferences = new KnownTypeReference[KnownTypeCodeCount] {
 			null, // None
@@ -200,6 +202,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new KnownTypeReference(KnownTypeCode.SpanOfT, TypeKind.Struct, "System", "Span", 1),
 			new KnownTypeReference(KnownTypeCode.ReadOnlySpanOfT, TypeKind.Struct, "System", "ReadOnlySpan", 1),
 			new KnownTypeReference(KnownTypeCode.MemoryOfT, TypeKind.Struct, "System", "Memory", 1),
+			new KnownTypeReference(KnownTypeCode.Unsafe, TypeKind.Class, "System.Runtime.CompilerServices", "Unsafe", 0),
 		};
 		
 		/// <summary>

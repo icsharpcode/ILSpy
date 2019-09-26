@@ -176,6 +176,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 
 			bool IType.IsByRefLike => false;
+			Nullability IType.Nullability => Nullability.Oblivious;
+			Nullability ITypeDefinition.NullableContext => Nullability.Oblivious;
+
+			IType IType.ChangeNullability(Nullability nullability)
+			{
+				if (nullability == Nullability.Oblivious)
+					return this;
+				else
+					return new NullabilityAnnotatedType(this, nullability);
+			}
 
 			int IType.TypeParameterCount => KnownTypeReference.Get(typeCode).TypeParameterCount;
 
@@ -290,6 +300,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			IType IType.VisitChildren(TypeVisitor visitor)
 			{
 				return this;
+			}
+
+			public override string ToString()
+			{
+				return $"[MinimalCorlibType {typeCode}]";
 			}
 		}
 	}

@@ -28,6 +28,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Controls;
 using ICSharpCode.ILSpy.TextView;
 using Microsoft.Win32;
+using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -59,9 +60,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.LazyLoading = true;
 		}
 
-		public override object Icon {
-			get { return Images.ResourceResourcesFile; }
-		}
+		public override object Icon => Images.ResourceResourcesFile;
 
 		protected override void LoadChildren()
 		{
@@ -73,6 +72,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					ProcessResourceEntry(entry);
 				}
 			} catch (BadImageFormatException) {
+				// ignore errors
+			} catch (EndOfStreamException) {
 				// ignore errors
 			}
 		}
@@ -110,7 +111,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (s == null) return false;
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = DecompilerTextView.CleanUpName(Resource.Name);
-			dlg.Filter = "Resources file (*.resources)|*.resources|Resource XML file|*.resx";
+			dlg.Filter = Resources.ResourcesFileFilter;
 			if (dlg.ShowDialog() == true) {
 				s.Position = 0;
 				switch (dlg.FilterIndex) {
@@ -120,14 +121,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						}
 						break;
 					case 2:
-						using (var writer = new ResXResourceWriter(dlg.OpenFile())) {
-							foreach (var entry in new ResourcesFile(s)) {
-								writer.AddResource(entry.Key, entry.Value);
+						try {
+							using (var writer = new ResXResourceWriter(dlg.OpenFile())) {
+								foreach (var entry in new ResourcesFile(s)) {
+									writer.AddResource(entry.Key, entry.Value);
+								}
 							}
+						} catch (BadImageFormatException) {
+							// ignore errors
+						} catch (EndOfStreamException) {
+							// ignore errors
 						}
 						break;
 				}
 			}
+
 			return true;
 		}
 

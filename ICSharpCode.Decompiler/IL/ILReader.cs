@@ -124,9 +124,10 @@ namespace ICSharpCode.Decompiler.IL
 		EntityHandle ReadAndDecodeMetadataToken()
 		{
 			int token = reader.ReadInt32();
-			if (token < 0) {
+			if (token <= 0) {
 				// SRM uses negative tokens as "virtual tokens" and can get confused
 				// if we manually create them.
+				// Row-IDs < 1 are always invalid.
 				throw new BadImageFormatException("Invalid metadata token");
 			}
 			return MetadataTokens.EntityHandle(token);
@@ -480,21 +481,31 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Decodes the specified method body and returns an ILFunction.
 		/// </summary>
-		public ILFunction ReadIL(MethodDefinitionHandle method, MethodBodyBlock body, GenericContext genericContext = default, CancellationToken cancellationToken = default)
+		public ILFunction ReadIL(MethodDefinitionHandle method, MethodBodyBlock body, GenericContext genericContext = default, ILFunctionKind kind = ILFunctionKind.TopLevelFunction, CancellationToken cancellationToken = default)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			Init(method, body, genericContext);
 			ReadInstructions(cancellationToken);
 			var blockBuilder = new BlockBuilder(body, variableByExceptionHandler);
 			blockBuilder.CreateBlocks(mainContainer, instructionBuilder, isBranchTarget, cancellationToken);
-			var function = new ILFunction(this.method, body.GetCodeSize(), this.genericContext, mainContainer);
+			var function = new ILFunction(this.method, body.GetCodeSize(), this.genericContext, mainContainer, kind);
 			CollectionExtensions.AddRange(function.Variables, parameterVariables);
 			CollectionExtensions.AddRange(function.Variables, localVariables);
 			CollectionExtensions.AddRange(function.Variables, stackVariables);
 			CollectionExtensions.AddRange(function.Variables, variableByExceptionHandler.Values);
 			function.AddRef(); // mark the root node
+			var removedBlocks = new List<Block>();
 			foreach (var c in function.Descendants.OfType<BlockContainer>()) {
-				c.SortBlocks();
+				var newOrder = c.TopologicalSort(deleteUnreachableBlocks: true);
+				if (newOrder.Count < c.Blocks.Count) {
+					removedBlocks.AddRange(c.Blocks.Except(newOrder));
+				}
+				c.Blocks.ReplaceList(newOrder);
+			}
+			if (removedBlocks.Count > 0) {
+				removedBlocks.SortBy(b => b.StartILOffset);
+				function.Warnings.Add("Discarded unreachable code: "
+							+ string.Join(", ", removedBlocks.Select(b => $"IL_{b.StartILOffset:x4}")));
 			}
 			function.Warnings.AddRange(Warnings);
 			return function;
@@ -1187,14 +1198,14 @@ namespace ICSharpCode.Decompiler.IL
 					return Pop(StackType.O);
 				case false:
 					// field of value type: ldfld can handle temporaries
-					if (PeekStackType() == StackType.O)
-						return new AddressOf(Pop());
+					if (PeekStackType() == StackType.O || PeekStackType() == StackType.Unknown)
+						return new AddressOf(Pop(), field.DeclaringType);
 					else
 						return PopPointer();
 				default:
 					// field in unresolved type
-					if (PeekStackType() == StackType.O)
-						return Pop(StackType.O);
+					if (PeekStackType() == StackType.O || PeekStackType() == StackType.Unknown)
+						return Pop();
 					else
 						return PopPointer();
 			}
@@ -1401,12 +1412,17 @@ namespace ICSharpCode.Decompiler.IL
 			var signatureHandle = (StandaloneSignatureHandle)ReadAndDecodeMetadataToken();
 			var signature = module.DecodeMethodSignature(signatureHandle, genericContext);
 			var functionPointer = Pop(StackType.I);
-			Debug.Assert(!signature.Header.IsInstance);
-			var arguments = new ILInstruction[signature.ParameterTypes.Length];
+			int firstArgument = signature.Header.IsInstance ? 1 : 0;
+			var arguments = new ILInstruction[firstArgument + signature.ParameterTypes.Length];
 			for (int i = signature.ParameterTypes.Length - 1; i >= 0; i--) {
-				arguments[i] = Pop(signature.ParameterTypes[i].GetStackType());
+				arguments[firstArgument + i] = Pop(signature.ParameterTypes[i].GetStackType());
+			}
+			if (firstArgument == 1) {
+				arguments[0] = Pop();
 			}
 			var call = new CallIndirect(
+				signature.Header.IsInstance,
+				signature.Header.HasExplicitThis,
 				signature.Header.CallingConvention,
 				signature.ReturnType,
 				signature.ParameterTypes,

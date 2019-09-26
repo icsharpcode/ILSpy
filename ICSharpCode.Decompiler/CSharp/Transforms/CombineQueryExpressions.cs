@@ -45,7 +45,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		void CombineQueries(AstNode node, Dictionary<string, object> letIdentifiers)
 		{
-			for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
+			AstNode next;
+			for (AstNode child = node.FirstChild; child != null; child = next) {
+				// store referece to next child before transformation
+				next = child.NextSibling;
 				CombineQueries(child, letIdentifiers);
 			}
 			QueryExpression query = node as QueryExpression;
@@ -76,7 +79,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				Initializers = {
 					new Repeat(
 						new Choice {
-							new IdentifierExpression(Pattern.AnyString).WithName("expr"), // capture variable with same name
+							new IdentifierExpression(Pattern.AnyString).WithName("expr"), // name is equivalent to name = name
+							new MemberReferenceExpression(new AnyNode(), Pattern.AnyString).WithName("expr"), // expr.name is equivalent to name = expr.name
 							new NamedExpression {
 								Name = Pattern.AnyString,
 								Expression = new AnyNode()
@@ -117,20 +121,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					case IdentifierExpression identifier:
 						// nothing to add
 						continue;
+					case MemberReferenceExpression member:
+						AddQueryLetClause(member.MemberName, member);
+						break;
 					case NamedExpression namedExpression:
 						if (namedExpression.Expression is IdentifierExpression identifierExpression && namedExpression.Name == identifierExpression.Identifier) {
 							letClauses[namedExpression.Name] = identifierExpression.Annotation<ILVariableResolveResult>();
 							continue;
 						}
-						QueryLetClause letClause = new QueryLetClause { Identifier = namedExpression.Name, Expression = namedExpression.Expression.Detach() };
-						var annotation = new LetIdentifierAnnotation();
-						letClause.AddAnnotation(annotation);
-						letClauses[namedExpression.Name] = annotation;
-						query.Clauses.InsertAfter(insertionPos, letClause);
+						AddQueryLetClause(namedExpression.Name, namedExpression.Expression);
 						break;
 				}
 			}
 			return true;
+
+			void AddQueryLetClause(string name, Expression expression)
+			{
+				QueryLetClause letClause = new QueryLetClause { Identifier = name, Expression = expression.Detach() };
+				var annotation = new LetIdentifierAnnotation();
+				letClause.AddAnnotation(annotation);
+				letClauses[name] = annotation;
+				query.Clauses.InsertAfter(insertionPos, letClause);
+			}
 		}
 		
 		/// <summary>

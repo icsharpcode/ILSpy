@@ -20,7 +20,7 @@ using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	public class IndexerWithGetOnly
+	public class T01_IndexerWithGetOnly
 	{
 #if ROSLYN
 		public int this[int i] => i;
@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class IndexerWithSetOnly
+	public class T02_IndexerWithSetOnly
 	{
 		public int this[int i] {
 			set {
@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 	}
 
-	public class IndexerWithMoreParameters
+	public class T03_IndexerWithMoreParameters
 	{
 #if ROSLYN
 		public int this[int i, string s, Type t] => 0;
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 	}
 
-	public class IndexerInGenericClass<T>
+	public class T04_IndexerInGenericClass<T>
 	{
 #if ROSLYN
 		public int this[T t] => 0;
@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class OverloadedIndexer
+	public class T05_OverloadedIndexer
 	{
 #if ROSLYN
 		public int this[int t] => 0;
@@ -85,37 +85,37 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public interface IIndexerInInterface
+	public interface T06_IIndexerInInterface
 	{
 		int this[string s, string s2] {
 			set;
 		}
 	}
-	public interface IMyInterface_IndexerInterfaceExplicitImplementation
+	public interface T07_IMyInterface_IndexerInterfaceExplicitImplementation
 	{
 		int this[string s] {
 			get;
 		}
 	}
-	public class MyClass_IndexerInterfaceExplicitImplementation : IMyInterface_IndexerInterfaceExplicitImplementation
+	public class T07_MyClass_IndexerInterfaceExplicitImplementation : T07_IMyInterface_IndexerInterfaceExplicitImplementation
 	{
 #if ROSLYN
-		int IMyInterface_IndexerInterfaceExplicitImplementation.this[string s] => 3;
+		int T07_IMyInterface_IndexerInterfaceExplicitImplementation.this[string s] => 3;
 #else
-		int IMyInterface_IndexerInterfaceExplicitImplementation.this[string s] {
+		int T07_IMyInterface_IndexerInterfaceExplicitImplementation.this[string s] {
 			get {
 				return 3;
 			}
 		}
 #endif
 	}
-	public interface IMyInterface_IndexerInterfaceImplementation
+	public interface T08_IMyInterface_IndexerInterfaceImplementation
 	{
 		int this[string s] {
 			get;
 		}
 	}
-	public class MyClass_IndexerInterfaceImplementation : IMyInterface_IndexerInterfaceImplementation
+	public class T08_MyClass_IndexerInterfaceImplementation : T08_IMyInterface_IndexerInterfaceImplementation
 	{
 #if ROSLYN
 		public int this[string s] => 3;
@@ -127,7 +127,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public abstract class MyClass_IndexerAbstract
+
+	public interface T09_IMyInterface_MethodExplicit
+	{
+		void MyMethod();
+	}
+	public abstract class T09_MyClass_IndexerAbstract
 	{
 		public abstract int this[string s, string s2] {
 			set;
@@ -136,61 +141,58 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			get;
 		}
 	}
-	public interface IMyInterface_MethodExplicit
+	public class T09_MyClass_MethodExplicit : T09_IMyInterface_MethodExplicit
 	{
-		void MyMethod();
-	}
-	public class MyClass_MethodExplicit : IMyInterface_MethodExplicit
-	{
-		void IMyInterface_MethodExplicit.MyMethod()
+		void T09_IMyInterface_MethodExplicit.MyMethod()
 		{
 		}
 	}
-	public interface IMyInterface_MethodFromInterfaceVirtual
+
+	public interface T10_IMyInterface_MethodFromInterfaceVirtual
 	{
 		void MyMethod();
 	}
-	public class MyClass : IMyInterface_MethodFromInterfaceVirtual
+	public class T10_MyClass : T10_IMyInterface_MethodFromInterfaceVirtual
 	{
 		public virtual void MyMethod()
 		{
 		}
 	}
-	public interface IMyInterface_MethodFromInterface
+	public interface T11_IMyInterface_MethodFromInterface
 	{
 		void MyMethod();
 	}
-	public class MyClass_MethodFromInterface : IMyInterface_MethodFromInterface
+	public class T11_MyClass_MethodFromInterface : T11_IMyInterface_MethodFromInterface
 	{
 		public void MyMethod()
 		{
 		}
 	}
-	public interface IMyInterface_MethodFromInterfaceAbstract
+	public interface T12_IMyInterface_MethodFromInterfaceAbstract
 	{
 		void MyMethod();
 	}
-	public abstract class MyClass_MethodFromInterfaceAbstract : IMyInterface_MethodFromInterfaceAbstract
+	public abstract class T12_MyClass_MethodFromInterfaceAbstract : T12_IMyInterface_MethodFromInterfaceAbstract
 	{
 		public abstract void MyMethod();
 	}
-	public interface IMyInterface_PropertyInterface
+	public interface T13_IMyInterface_PropertyInterface
 	{
 		int MyProperty {
 			get;
 			set;
 		}
 	}
-	public interface IMyInterface_PropertyInterfaceExplicitImplementation
+	public interface T14_IMyInterface_PropertyInterfaceExplicitImplementation
 	{
 		int MyProperty {
 			get;
 			set;
 		}
 	}
-	public class MyClass_PropertyInterfaceExplicitImplementation : IMyInterface_PropertyInterfaceExplicitImplementation
+	public class T14_MyClass_PropertyInterfaceExplicitImplementation : T14_IMyInterface_PropertyInterfaceExplicitImplementation
 	{
-		int IMyInterface_PropertyInterfaceExplicitImplementation.MyProperty {
+		int T14_IMyInterface_PropertyInterfaceExplicitImplementation.MyProperty {
 			get {
 				return 0;
 			}
@@ -198,15 +200,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public interface IMyInterface_PropertyInterfaceImplementation
+	public interface T15_IMyInterface_PropertyInterfaceImplementation
 		{
 		int MyProperty {
 			get;
 			set;
 		}
 	}
-	public class MyClass_PropertyInterfaceImplementation : IMyInterface_PropertyInterfaceImplementation
-		{
+	public class T15_MyClass_PropertyInterfaceImplementation : T15_IMyInterface_PropertyInterfaceImplementation
+	{
 		public int MyProperty {
 			get {
 				return 0;
@@ -215,7 +217,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public class MyClass_PropertyPrivateGetPublicSet
+	public class T16_MyClass_PropertyPrivateGetPublicSet
 	{
 		public int MyProperty {
 			private get {
@@ -225,7 +227,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public class MyClass_PropertyPublicGetProtectedSet
+	public class T17_MyClass_PropertyPublicGetProtectedSet
 	{
 		public int MyProperty {
 			get {
@@ -235,7 +237,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public class MyClass_PropertyOverrideDefaultAccessorOnly
+	public class T18_Base_PropertyOverrideDefaultAccessorOnly
 	{
 		public virtual int MyProperty {
 			get {
@@ -245,7 +247,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public class Derived_PropertyOverrideDefaultAccessorOnly : MyClass_PropertyOverrideDefaultAccessorOnly
+	public class T18_Derived_PropertyOverrideDefaultAccessorOnly : T18_Base_PropertyOverrideDefaultAccessorOnly
 	{
 #if ROSLYN
 		public override int MyProperty => 4;
@@ -257,7 +259,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class MyClass_PropertyOverrideRestrictedAccessorOnly
+	public class T19_Base_PropertyOverrideRestrictedAccessorOnly
 	{
 		public virtual int MyProperty {
 			get {
@@ -267,14 +269,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public class Derived_PropertyOverrideRestrictedAccessorOnly : MyClass_PropertyOverrideRestrictedAccessorOnly
+	public class T19_Derived_PropertyOverrideRestrictedAccessorOnly : T19_Base_PropertyOverrideRestrictedAccessorOnly
 	{
 		public override int MyProperty {
 			protected set {
 			}
 		}
 	}
-	public class MyClass_PropertyOverrideOneAccessor
+	public class T20_Base_PropertyOverrideOneAccessor
 	{
 		protected internal virtual int MyProperty {
 			get {
@@ -284,21 +286,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public class DerivedNew_PropertyOverrideOneAccessor : MyClass_PropertyOverrideOneAccessor
+	public class T20_DerivedNew_PropertyOverrideOneAccessor : T20_Base_PropertyOverrideOneAccessor
 	{
 		public new virtual int MyProperty {
 			set {
 			}
 		}
 	}
-	public class DerivedOverride_PropertyOverrideOneAccessor : DerivedNew_PropertyOverrideOneAccessor
+	public class T20_DerivedOverride_PropertyOverrideOneAccessor : T20_DerivedNew_PropertyOverrideOneAccessor
 	{
 		public override int MyProperty {
 			set {
 			}
 		}
 	}
-	public class MyClass_IndexerOverrideRestrictedAccessorOnly
+	public class T21_Base_IndexerOverrideRestrictedAccessorOnly
 	{
 		public virtual int this[string s] {
 			get {
@@ -315,7 +317,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public class Derived_IndexerOverrideRestrictedAccessorOnly : MyClass_IndexerOverrideRestrictedAccessorOnly
+	public class T21_Derived_IndexerOverrideRestrictedAccessorOnly : T21_Base_IndexerOverrideRestrictedAccessorOnly
 	{
 		protected internal override int this[int i] {
 			protected get {
@@ -323,7 +325,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public class A_HideProperty
+	public class T22_A_HideProperty
 	{
 		public virtual int P {
 			get {
@@ -333,7 +335,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public class B_HideProperty : A_HideProperty
+	public class T22_B_HideProperty : T22_A_HideProperty
 	{
 		private new int P {
 			get {
@@ -343,14 +345,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public class C_HideProperty : B_HideProperty
+	public class T22_C_HideProperty : T22_B_HideProperty
 	{
 		public override int P {
 			set {
 			}
 		}
 	}
-	public class A_HideMembers
+	public class T23_A_HideMembers
 	{
 		public int F;
 #if ROSLYN
@@ -369,7 +371,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class B_HideMembers : A_HideMembers
+	public class T23_B_HideMembers : T23_A_HideMembers
 	{
 #if ROSLYN
 		public new int F => 3;
@@ -387,27 +389,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class C_HideMembers : A_HideMembers
+	public class T23_C_HideMembers : T23_A_HideMembers
 	{
 		public new int G;
 	}
-	public class D_HideMembers : A_HideMembers
+	public class T23_D_HideMembers : T23_A_HideMembers
 	{
 		public new void F()
 		{
 		}
 	}
-	public class D1_HideMembers : D_HideMembers
+	public class T23_D1_HideMembers : T23_D_HideMembers
 	{
 		public new int F;
 	}
-	public class E_HideMembers : A_HideMembers
+	public class T23_E_HideMembers : T23_A_HideMembers
 	{
 		private new class F
 		{
 		}
 	}
-	public class G_HideMembers2
+	public class T23_G_HideMembers2
 	{
 #if ROSLYN
 		public int Item => 1;
@@ -419,7 +421,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class G2_HideMembers2 : G_HideMembers2
+	public class T23_G2_HideMembers2 : T23_G_HideMembers2
 	{
 #if ROSLYN
 		public int this[int i] => 2;
@@ -431,7 +433,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class G3_HideMembers2 : G2_HideMembers2
+	public class T23_G3_HideMembers2 : T23_G2_HideMembers2
 	{
 #if ROSLYN
 		public new int Item => 4;
@@ -443,7 +445,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class H_HideMembers2
+	public class T23_H_HideMembers2
 	{
 #if ROSLYN
 		public int this[int j] => 0;
@@ -455,7 +457,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class H2_HideMembers2 : H_HideMembers2
+	public class T23_H2_HideMembers2 : T23_H_HideMembers2
 	{
 #if ROSLYN
 		public int Item => 2;
@@ -467,7 +469,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class H3_HideMembers2 : H2_HideMembers2
+	public class T23_H3_HideMembers2 : T23_H2_HideMembers2
 	{
 #if ROSLYN
 		public new string this[int j] => null;
@@ -479,21 +481,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public interface IA_HideMembers2a
+
+	public class T24_A_HideMembers2a : T24_IA_HideMembers2a
 	{
-		int this[int i] {
-			get;
-		}
-	}
-	public class A_HideMembers2a : IA_HideMembers2a
-	{
-		int IA_HideMembers2a.this[int i] {
+		int T24_IA_HideMembers2a.this[int i] {
 			get {
 				throw new NotImplementedException();
 			}
 		}
 	}
-	public class A1_HideMembers2a : A_HideMembers2a
+	public class T24_A1_HideMembers2a : T24_A_HideMembers2a
 	{
 #if ROSLYN
 		public int this[int i] => 3;
@@ -505,7 +502,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class G_HideMembers3<T>
+	public interface T24_IA_HideMembers2a
+	{
+		int this[int i] {
+			get;
+		}
+	}
+
+	public class T25_G_HideMembers3<T>
 	{
 		public void M1(T p)
 		{
@@ -515,7 +519,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return 3;
 		}
 	}
-	public class G1_HideMembers3<T> : G_HideMembers3<int>
+	public class T25_G1_HideMembers3<T> : T25_G_HideMembers3<int>
 	{
 		public new int M1(int i)
 		{
@@ -526,14 +530,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return 2;
 		}
 	}
-	public class G2_HideMembers3<T> : G_HideMembers3<int>
+	public class T25_G2_HideMembers3<T> : T25_G_HideMembers3<int>
 	{
 		public int M1(T p)
 		{
 			return 4;
 		}
 	}
-	public class J_HideMembers3
+	public class T25_J_HideMembers3
 	{
 #if ROSLYN
 		public int P => 2;
@@ -545,20 +549,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class J2_HideMembers3 : J_HideMembers3
+	public class T25_J2_HideMembers3 : T25_J_HideMembers3
 	{
 #pragma warning disable 0108
 		// Deliberate bad code for test case
 		public int get_P;
 #pragma warning restore 0108
 	}
-	public class A_HideMembers4
+	public class T26_A_HideMembers4
 	{
 		public void M<T>(T t)
 		{
 		}
 	}
-	public class A1_HideMembers4 : A_HideMembers4
+	public class T26_A1_HideMembers4 : T26_A_HideMembers4
 	{
 		public new void M<K>(K t)
 		{
@@ -567,7 +571,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class B_HideMembers4
+	public class T26_B_HideMembers4
 	{
 		public void M<T>()
 		{
@@ -579,7 +583,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class B1_HideMembers4 : B_HideMembers4
+	public class T26_B1_HideMembers4 : T26_B_HideMembers4
 	{
 		public void M<T1, T2>()
 		{
@@ -591,37 +595,37 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class C_HideMembers4<T>
+	public class T26_C_HideMembers4<T>
 	{
 		public void M<TT>(T t)
 		{
 		}
 	}
-	public class C1_HideMembers4<K> : C_HideMembers4<K>
+	public class T26_C1_HideMembers4<K> : T26_C_HideMembers4<K>
 	{
 		public void M<TT>(TT t)
 		{
 		}
 	}
-	public class A_HideMembers5
+	public class T27_A_HideMembers5
 	{
 		public void M(int t)
 		{
 		}
 	}
-	public class A1_HideMembers5 : A_HideMembers5
+	public class T27_A1_HideMembers5 : T27_A_HideMembers5
 	{
 		public void M(ref int t)
 		{
 		}
 	}
-	public class B_HideMembers5
+	public class T27_B_HideMembers5
 	{
 		public void M(ref int l)
 		{
 		}
 	}
-	public class B1_HideMembers5 : B_HideMembers5
+	public class T27_B1_HideMembers5 : T27_B_HideMembers5
 	{
 		public void M(out int l)
 		{
@@ -631,7 +635,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class A_HideMemberSkipNotVisible
+	public class T28_A_HideMemberSkipNotVisible
 	{
 		protected int F;
 #if ROSLYN
@@ -644,7 +648,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class B_HideMemberSkipNotVisible : A_HideMemberSkipNotVisible
+	public class T28_B_HideMemberSkipNotVisible : T28_A_HideMemberSkipNotVisible
 	{
 		private new string F;
 		private new int P {
@@ -652,7 +656,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public class A_HideNestedClass
+	public class T29_A_HideNestedClass
 	{
 		public class N1
 		{
@@ -670,7 +674,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class B_HideNestedClass : A_HideNestedClass
+	public class T29_B_HideNestedClass : T29_A_HideNestedClass
 	{
 		public new int N1;
 		public new int N2;
@@ -678,7 +682,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public new int N4;
 		public new int N5;
 	}
-	public class A_HidePropertyReservedMethod
+	public class T30_A_HidePropertyReservedMethod
 	{
 #if ROSLYN
 		public int P => 1;
@@ -690,7 +694,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class B_HidePropertyReservedMethod : A_HidePropertyReservedMethod
+	public class T30_B_HidePropertyReservedMethod : T30_A_HidePropertyReservedMethod
 	{
 		public int get_P()
 		{
@@ -700,7 +704,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class A_HideIndexerDiffAccessor
+	public class T31_A_HideIndexerDiffAccessor
 	{
 #if ROSLYN
 		public int this[int i] => 2;
@@ -712,14 +716,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class B_HideIndexerDiffAccessor : A_HideIndexerDiffAccessor
+	public class T31_B_HideIndexerDiffAccessor : T31_A_HideIndexerDiffAccessor
 	{
 		public new int this[int j] {
 			set {
 			}
 		}
 	}
-	public class A_HideIndexerGeneric<T>
+	public class T32_A_HideIndexerGeneric<T>
 	{
 		public virtual int this[T r] {
 			get {
@@ -729,7 +733,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public class B_HideIndexerGeneric : A_HideIndexerGeneric<int>
+	public class T32_B_HideIndexerGeneric : T32_A_HideIndexerGeneric<int>
 	{
 		private new int this[int k] {
 			get {
@@ -739,41 +743,41 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
-	public class C_HideIndexerGeneric<T> : A_HideIndexerGeneric<T>
+	public class T32_C_HideIndexerGeneric<T> : T32_A_HideIndexerGeneric<T>
 	{
 		public override int this[T s] {
 			set {
 			}
 		}
 	}
-	public class D_HideIndexerGeneric<T> : C_HideIndexerGeneric<T>
+	public class T32_D_HideIndexerGeneric<T> : T32_C_HideIndexerGeneric<T>
 	{
 		public new virtual int this[T s] {
 			set {
 			}
 		}
 	}
-	public class A_HideMethod
+	public class T33_A_HideMethod
 	{
 		public virtual void F()
 		{
 		}
 	}
-	public class B_HideMethod : A_HideMethod
+	public class T33_B_HideMethod : T33_A_HideMethod
 	{
 		private new void F()
 		{
 			base.F();
 		}
 	}
-	public class C_HideMethod : B_HideMethod
+	public class T33_C_HideMethod : T33_B_HideMethod
 	{
 		public override void F()
 		{
 			base.F();
 		}
 	}
-	public class A_HideMethodGeneric<T>
+	public class T34_A_HideMethodGeneric<T>
 	{
 		public virtual void F(T s)
 		{
@@ -783,7 +787,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return true;
 		}
 	}
-	public class B_HideMethodGeneric : A_HideMethodGeneric<string>
+	public class T34_B_HideMethodGeneric : T34_A_HideMethodGeneric<string>
 	{
 		private new void F(string k)
 		{
@@ -792,7 +796,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class C_HideMethodGeneric<T> : A_HideMethodGeneric<T>
+	public class T34_C_HideMethodGeneric<T> : T34_A_HideMethodGeneric<T>
 	{
 		public override void F(T r)
 		{
@@ -801,7 +805,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class D_HideMethodGeneric<T1> : C_HideMethodGeneric<T1>
+	public class T34_D_HideMethodGeneric<T1> : T34_C_HideMethodGeneric<T1>
 	{
 		public new virtual void F(T1 k)
 		{
@@ -813,13 +817,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class A_HideMethodGenericSkipPrivate<T>
+	public class T35_A_HideMethodGenericSkipPrivate<T>
 	{
 		public virtual void F(T t)
 		{
 		}
 	}
-	public class B_HideMethodGenericSkipPrivate<T> : A_HideMethodGenericSkipPrivate<T>
+	public class T35_B_HideMethodGenericSkipPrivate<T> : T35_A_HideMethodGenericSkipPrivate<T>
 	{
 		private new void F(T t)
 		{
@@ -828,7 +832,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class C_HideMethodGenericSkipPrivate<T> : B_HideMethodGenericSkipPrivate<T>
+	public class T35_C_HideMethodGenericSkipPrivate<T> : T35_B_HideMethodGenericSkipPrivate<T>
 	{
 		public override void F(T tt)
 		{
@@ -837,13 +841,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class D_HideMethodGenericSkipPrivate : B_HideMethodGenericSkipPrivate<int>
+	public class T35_D_HideMethodGenericSkipPrivate : T35_B_HideMethodGenericSkipPrivate<int>
 	{
 		public override void F(int t)
 		{
 		}
 	}
-	public class A_HideMethodGeneric2
+	public class T36_A_HideMethodGeneric2
 	{
 		public virtual void F(int i)
 		{
@@ -852,7 +856,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class B_HideMethodGeneric2<T> : A_HideMethodGeneric2
+	public class T36_B_HideMethodGeneric2<T> : T36_A_HideMethodGeneric2
 	{
 		protected virtual void F(T t)
 		{
@@ -861,7 +865,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class C_HideMethodGeneric2 : B_HideMethodGeneric2<int>
+	public class T36_C_HideMethodGeneric2 : T36_B_HideMethodGeneric2<int>
 	{
 		protected override void F(int k)
 		{
@@ -870,7 +874,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class D_HideMethodGeneric2 : B_HideMethodGeneric2<string>
+	public class T36_D_HideMethodGeneric2 : T36_B_HideMethodGeneric2<string>
 	{
 		public override void F(int k)
 		{
@@ -879,37 +883,37 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
-	public class E_HideMethodGeneric2<T>
+	public class T36_E_HideMethodGeneric2<T>
 	{
 		public void M<T2>(T t, T2 t2)
 		{
 		}
 	}
-	public class F_HideMethodGeneric2<T> : E_HideMethodGeneric2<T>
+	public class T36_F_HideMethodGeneric2<T> : T36_E_HideMethodGeneric2<T>
 	{
 		public void M(T t1, T t2)
 		{
 		}
 	}
-	public class C1_HideMethodDiffSignatures<T>
+	public class T37_C1_HideMethodDiffSignatures<T>
 	{
 		public virtual void M(T arg)
 		{
 		}
 	}
-	public class C2_HideMethodDiffSignatures<T1, T2> : C1_HideMethodDiffSignatures<T2>
+	public class T37_C2_HideMethodDiffSignatures<T1, T2> : T37_C1_HideMethodDiffSignatures<T2>
 	{
 		public new virtual void M(T2 arg)
 		{
 		}
 	}
-	public class C3_HideMethodDiffSignatures : C2_HideMethodDiffSignatures<int, bool>
+	public class T37_C3_HideMethodDiffSignatures : T37_C2_HideMethodDiffSignatures<int, bool>
 	{
 		public new virtual void M(bool arg)
 		{
 		}
 	}
-	public class A_HideMethodStatic
+	public class T38_A_HideMethodStatic
 	{
 #if ROSLYN
 		public int N => 0;
@@ -921,24 +925,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
-	public class B_HideMethodStatic
+	public class T38_B_HideMethodStatic
 	{
 		public int N()
 		{
 			return 0;
 		}
 	}
-	public class A_HideEvent
+	public class T39_A_HideEvent
 	{
 		public virtual event EventHandler E;
 		public event EventHandler F;
 	}
-	public class B_HideEvent : A_HideEvent
+	public class T39_B_HideEvent : T39_A_HideEvent
 	{
 		public new virtual event EventHandler E;
 		public new event EventHandler F;
 	}
-	public class C_HideEvent : B_HideEvent
+	public class T39_C_HideEvent : T39_B_HideEvent
 	{
 		public override event EventHandler E;
 	}

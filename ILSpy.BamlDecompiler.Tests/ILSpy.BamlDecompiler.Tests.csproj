@@ -2,12 +2,12 @@
 <Project Sdk="MSBuild.Sdk.Extras">
 
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
 
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 
     <EnableDefaultItems>false</EnableDefaultItems>
-    <ExtrasEnableWpfProjectSetup>true</ExtrasEnableWpfProjectSetup>
+    <UseWpf>true</UseWpf>
     <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
     <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
   </PropertyGroup>
@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NUnit" Version="3.11.0" />
+    <PackageReference Include="NUnit" Version="3.12.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,24 +45,20 @@
     <Compile Include="BamlTestRunner.cs" />
     <Compile Include="Cases\AttachedEvent.xaml.cs">
       <DependentUpon>AttachedEvent.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Cases\CustomControl.cs" />
+    <Compile Include="Cases\Issue1547.xaml.cs" />
     <Compile Include="Cases\MyControl.xaml.cs">
       <DependentUpon>MyControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Cases\Resources.xaml.cs">
       <DependentUpon>Resources.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Cases\Simple.xaml.cs">
       <DependentUpon>Simple.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Cases\SimpleNames.xaml.cs">
       <DependentUpon>SimpleNames.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="Mocks\AvalonDock.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -74,6 +70,15 @@
     <Page Include="Cases\AvalonDockCommon.xaml" />
     <Page Include="Cases\EscapeSequence.xaml">
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Cases\Issue1435.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Cases\Issue1546.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Cases\Issue1547.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Cases\Issue775.xaml">

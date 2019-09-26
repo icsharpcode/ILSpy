@@ -135,15 +135,15 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				}
 			}
 
-			stateMachineMethods.SortBy(row => row.MoveNextMethod);
+			stateMachineMethods.SortBy(row => MetadataTokens.GetRowNumber(row.MoveNextMethod));
 			foreach (var row in stateMachineMethods) {
 				metadata.AddStateMachineMethod(row.MoveNextMethod, row.KickoffMethod);
 			}
-			customMethodDebugInfo.SortBy(row => row.Parent);
+			customMethodDebugInfo.SortBy(row => MetadataTokens.GetRowNumber(row.Parent));
 			foreach (var row in customMethodDebugInfo) {
 				metadata.AddCustomDebugInformation(row.Parent, row.Guid, row.Blob);
 			}
-			customDocumentDebugInfo.SortBy(row => row.Parent);
+			customDocumentDebugInfo.SortBy(row => MetadataTokens.GetRowNumber(row.Parent));
 			foreach (var row in customDocumentDebugInfo) {
 				metadata.AddCustomDebugInformation(row.Parent, row.Guid, row.Blob);
 			}

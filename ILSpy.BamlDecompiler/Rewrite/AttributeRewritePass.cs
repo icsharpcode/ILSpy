@@ -29,7 +29,7 @@ namespace ILSpy.BamlDecompiler.Rewrite {
 		XName key;
 
 		public void Run(XamlContext ctx, XDocument document) {
-			key = ctx.GetXamlNsName("Key");
+			key = ctx.GetKnownNamespace("Key", XamlContext.KnownNamespace_Xaml);
 
 			bool doWork;
 			do {

@@ -46,22 +46,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// Gets whether a params-Array is being used in its expanded form.
 		/// </summary>
 		public readonly bool IsExpandedForm;
-		
-		readonly IReadOnlyList<int> argumentToParameterMap;
 
-		/// <summary>
-		/// If IsExtensionMethodInvocation is true this property holds the reduced method.
-		/// </summary>
-		IMethod reducedMethod;
-		public IMethod ReducedMethod {
-			get {
-				if (!IsExtensionMethodInvocation)
-					return null;
-				if (reducedMethod == null && Member is IMethod)
-					reducedMethod = new ReducedExtensionMethod ((IMethod)Member);
-				return reducedMethod;
-			}
-		}
+		readonly IReadOnlyList<int> argumentToParameterMap;
 		
 		public CSharpInvocationResolveResult(
 			ResolveResult targetResult, IParameterizedMember member,

@@ -21,26 +21,27 @@
 */
 
 using System;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ILSpy.BamlDecompiler.Xaml {
 	internal class NamespaceMap {
 		public string XmlnsPrefix { get; set; }
-		public IModule Assembly { get; set; }
+		public string FullAssemblyName { get; set; }
 		public string XMLNamespace { get; set; }
 		public string CLRNamespace { get; set; }
 
-		public NamespaceMap(string prefix, IModule asm, string xmlNs)
-			: this(prefix, asm, xmlNs, null) {
+		public NamespaceMap(string prefix, string fullAssemblyName, string xmlNs)
+			: this(prefix, fullAssemblyName, xmlNs, null) {
 		}
 
-		public NamespaceMap(string prefix, IModule asm, string xmlNs, string clrNs) {
+		public NamespaceMap(string prefix, string fullAssemblyName, string xmlNs, string clrNs) {
 			XmlnsPrefix = prefix;
-			Assembly = asm ?? throw new ArgumentNullException(nameof(asm));
+			FullAssemblyName = fullAssemblyName;
 			XMLNamespace = xmlNs;
 			CLRNamespace = clrNs;
 		}
 
-		public override string ToString() => $"{XmlnsPrefix}:[{Assembly.Name}|{CLRNamespace ?? XMLNamespace}]";
+		public override string ToString() => $"{XmlnsPrefix}:[{FullAssemblyName}|{CLRNamespace ?? XMLNamespace}]";
 	}
 }

@@ -24,17 +24,41 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!(function.Body is BlockContainer container && container.Blocks.Count == 1))
 				return;
-			var block = container.EntryPoint;
+			var combinedExit = CombineExits(container.EntryPoint);
+			if (combinedExit == null)
+				return;
+			ExpressionTransforms.RunOnSingleStatement(combinedExit, context);
+		}
+
+		static Leave CombineExits(Block block)
+		{
 			if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst && block.Instructions.LastOrDefault() is Leave leaveElse))
-				return;
+				return null;
 			if (!ifInst.FalseInst.MatchNop())
-				return;
-			if (!(Block.Unwrap(ifInst.TrueInst) is Leave leave))
-				return;
+				return null;
+			// try to unwrap true branch to single instruction:
+			var trueInstruction = Block.Unwrap(ifInst.TrueInst);
+			// if the true branch is a block with multiple instructions:
+			// try to apply the combine exits transform to the nested block
+			// and then continue on that transformed block.
+			// Example:
+			// if (cond) {
+			//   if (cond2) {
+			//     leave (value)
+		    //   }
+			//   leave (value2)
+			// }
+			// leave (value3)
+			// =>
+			// leave (if (cond) value else if (cond2) value2 else value3)
+			if (trueInstruction is Block nestedBlock && nestedBlock.Instructions.Count == 2)
+				trueInstruction = CombineExits(nestedBlock);
+			if (!(trueInstruction is Leave leave))
+				return null;
 			if (!(leave.IsLeavingFunction && leaveElse.IsLeavingFunction))
-				return;
+				return null;
 			if (leave.Value.MatchNop() || leaveElse.Value.MatchNop())
-				return;
+				return null;
 			// if (cond) {
 			//   leave (value)
 			// }
@@ -48,6 +72,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			combinedLeave.AddILRange(leave);
 			ifInst.ReplaceWith(combinedLeave);
 			block.Instructions.RemoveAt(combinedLeave.ChildIndex + 1);
+			return combinedLeave;
 		}
 	}
 }

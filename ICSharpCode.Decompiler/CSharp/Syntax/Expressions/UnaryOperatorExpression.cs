@@ -44,7 +44,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole AddressOfRole = new TokenRole ("&");
 		public readonly static TokenRole AwaitRole = new TokenRole ("await");
 		public readonly static TokenRole NullConditionalRole = new TokenRole ("?");
-		
+		public readonly static TokenRole SuppressNullableWarningRole = new TokenRole ("!");
+
 		public UnaryOperatorExpression()
 		{
 		}
@@ -119,6 +120,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case UnaryOperatorType.NullConditionalRewrap:
 				case UnaryOperatorType.IsTrue:
 					return null; // no syntax
+				case UnaryOperatorType.SuppressNullableWarning:
+					return SuppressNullableWarningRole;
 				default:
 					throw new NotSupportedException("Invalid value for UnaryOperatorType");
 			}
@@ -146,6 +149,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case UnaryOperatorType.Dereference:
 				case UnaryOperatorType.AddressOf:
 				case UnaryOperatorType.Await:
+				case UnaryOperatorType.SuppressNullableWarning:
 					return ExpressionType.Extension;
 				default:
 					throw new NotSupportedException("Invalid value for UnaryOperatorType");
@@ -178,7 +182,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		PostDecrement,
 		/// <summary>Dereferencing (*a)</summary>
 		Dereference,
-		/// <summary>Get address (&a)</summary>
+		/// <summary>Get address (&amp;a)</summary>
 		AddressOf,
 		/// <summary>C# 5.0 await</summary>
 		Await,
@@ -198,5 +202,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Implicit call of "operator true".
 		/// </summary>
 		IsTrue,
+		/// <summary>
+		/// C# 8 postfix ! operator (dammit operator)
+		/// </summary>
+		SuppressNullableWarning,
 	}
 }

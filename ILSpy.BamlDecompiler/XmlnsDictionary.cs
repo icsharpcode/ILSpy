@@ -21,6 +21,7 @@
 */
 
 using System.Collections.Generic;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ILSpy.BamlDecompiler.Xaml;
 
@@ -34,10 +35,9 @@ namespace ILSpy.BamlDecompiler {
 			Element = elem;
 		}
 
-
-		public string LookupXmlns(IModule asm, string clrNs) {
+		public string LookupXmlns(string fullAssemblyName, string clrNs) {
 			foreach (var ns in this) {
-				if (asm.FullAssemblyName == ns.Assembly.FullAssemblyName && ns.CLRNamespace == clrNs)
+				if (fullAssemblyName == ns.FullAssemblyName && ns.CLRNamespace == clrNs)
 					return ns.XMLNamespace;
 			}
 
@@ -58,16 +58,16 @@ namespace ILSpy.BamlDecompiler {
 
 		public void Add(NamespaceMap map) => CurrentScope.Add(map);
 
-		public void SetPIMapping(string xmlNs, string clrNs, IModule assembly) {
+		public void SetPIMapping(string xmlNs, string clrNs, string fullAssemblyName) {
 			if (!piMappings.ContainsKey(xmlNs)) {
-				var map = new NamespaceMap(null, assembly, xmlNs, clrNs);
+				var map = new NamespaceMap(null, fullAssemblyName, xmlNs, clrNs);
 				piMappings[xmlNs] = map;
 			}
 		}
 
 		NamespaceMap PIFixup(NamespaceMap map) {
 			if (piMappings.TryGetValue(map.XMLNamespace, out var piMap)) {
-				map.Assembly = piMap.Assembly;
+				map.FullAssemblyName = piMap.FullAssemblyName;
 				map.CLRNamespace = piMap.CLRNamespace;
 			}
 			return map;
@@ -101,16 +101,16 @@ namespace ILSpy.BamlDecompiler {
 			return null;
 		}
 
-		public string LookupXmlns(IModule asm, string clrNs) {
+		public string LookupXmlns(string fullAssemblyName, string clrNs) {
 			foreach (var map in piMappings) {
-				if (asm.FullAssemblyName == map.Value.Assembly.FullAssemblyName && map.Value.CLRNamespace == clrNs)
+				if (fullAssemblyName == map.Value.FullAssemblyName && map.Value.CLRNamespace == clrNs)
 					return map.Key;
 			}
 
 			var scope = CurrentScope;
 			while (scope != null) {
 				foreach (var ns in scope) {
-					if (asm.FullAssemblyName == ns.Assembly.FullAssemblyName && ns.CLRNamespace == clrNs)
+					if (fullAssemblyName == ns.FullAssemblyName && ns.CLRNamespace == clrNs)
 						return ns.XMLNamespace;
 				}
 

@@ -3,7 +3,7 @@
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <AssemblyName>ILSpy.BamlDecompiler.Plugin</AssemblyName>
     <LangVersion>7.2</LangVersion>
 
@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AvalonEdit" Version="5.0.4" />
+    <PackageReference Include="AvalonEdit" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -97,6 +97,8 @@
     <Compile Include="Handlers\Records\PropertyWithConverterHandler.cs" />
     <Compile Include="Handlers\Records\PropertyWithExtensionHandler.cs" />
     <Compile Include="Handlers\Records\PropertyWithStaticResourceIdHandler.cs" />
+    <Compile Include="Handlers\Records\StaticResourceStartHandler.cs" />
+    <Compile Include="Handlers\Records\StaticResourceIdHandler.cs" />
     <Compile Include="Handlers\Records\TextHandler.cs" />
     <Compile Include="Handlers\Records\TextWithConverterHandler.cs" />
     <Compile Include="Handlers\Records\TypeInfoHandler.cs" />

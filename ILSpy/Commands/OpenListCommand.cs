@@ -17,9 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 
+using ICSharpCode.ILSpy.Properties;
+
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_File", Header = "Open _List...", MenuIcon = "Images/AssemblyList.png", MenuCategory = "Open", MenuOrder = 1.7)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources.Open_List),   MenuIcon = "Images/AssemblyList", MenuCategory = nameof(Resources.Open), MenuOrder = 1.7)]
 	sealed class OpenListCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)

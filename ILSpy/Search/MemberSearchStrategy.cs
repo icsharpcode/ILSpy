@@ -1,78 +1,90 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Threading;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Search
 {
-	class MemberSearchStrategy : AbstractSearchStrategy
+	class MemberSearchStrategy : AbstractEntitySearchStrategy
 	{
 		readonly MemberSearchKind searchKind;
 
-		public MemberSearchStrategy(Language language, Action<SearchResult> addResult, string term, MemberSearchKind searchKind = MemberSearchKind.All)
-			: this(language, addResult, new[] { term }, searchKind)
+		public MemberSearchStrategy(Language language, ApiVisibility apiVisibility, string term, IProducerConsumerCollection<SearchResult> resultQueue, MemberSearchKind searchKind = MemberSearchKind.All)
+			: this(language, apiVisibility, resultQueue, new[] { term }, searchKind)
 		{
 		}
 
-		public MemberSearchStrategy(Language language, Action<SearchResult> addResult, string[] terms, MemberSearchKind searchKind = MemberSearchKind.All)
-			: base(language, addResult, terms)
+		public MemberSearchStrategy(Language language, ApiVisibility apiVisibility, IProducerConsumerCollection<SearchResult> resultQueue, string[] terms, MemberSearchKind searchKind = MemberSearchKind.All)
+			: base(language, apiVisibility, resultQueue, terms)
 		{
 			this.searchKind = searchKind;
 		}
 
-		public override void Search(PEFile module)
+		public override void Search(PEFile module, CancellationToken cancellationToken)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			var metadata = module.Metadata;
 			var typeSystem = module.GetTypeSystemOrNull();
 			if (typeSystem == null) return;
 
 			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Type) {
 				foreach (var handle in metadata.TypeDefinitions) {
-					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch);
+					cancellationToken.ThrowIfCancellationRequested();
+					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch, omitGenerics);
 					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
 					var type = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					addResult(ResultFromEntity(type));
+					if (!CheckVisibility(type)) continue;
+					OnFoundResult(type);
 				}
 			}
 
 			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Member || searchKind == MemberSearchKind.Method) {
 				foreach (var handle in metadata.MethodDefinitions) {
-					// TODO use method semantics to skip accessors
-					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch);
+					cancellationToken.ThrowIfCancellationRequested();
+					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch, omitGenerics);
 					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
 					var method = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					addResult(ResultFromEntity(method));
+					if (!CheckVisibility(method)) continue;
+					OnFoundResult(method);
 				}
 			}
 
 			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Member || searchKind == MemberSearchKind.Field) {
 				foreach (var handle in metadata.FieldDefinitions) {
-					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch);
+					cancellationToken.ThrowIfCancellationRequested();
+					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch, omitGenerics);
 					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
 					var field = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					addResult(ResultFromEntity(field));
+					if (!CheckVisibility(field)) continue;
+					OnFoundResult(field);
 				}
 			}
 
 			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Member || searchKind == MemberSearchKind.Property) {
 				foreach (var handle in metadata.PropertyDefinitions) {
-					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch);
+					cancellationToken.ThrowIfCancellationRequested();
+					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch, omitGenerics);
 					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
 					var property = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					addResult(ResultFromEntity(property));
+					if (!CheckVisibility(property)) continue;
+					OnFoundResult(property);
 				}
 			}
 
 			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Member || searchKind == MemberSearchKind.Event) {
 				foreach (var handle in metadata.EventDefinitions) {
-					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch);
+					cancellationToken.ThrowIfCancellationRequested();
+					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch, omitGenerics);
 					if (!IsMatch(languageSpecificName))
 						continue;
 					var @event = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					addResult(ResultFromEntity(@event));
+					if (!CheckVisibility(@event)) continue;
+					OnFoundResult(@event);
 				}
 			}
 		}

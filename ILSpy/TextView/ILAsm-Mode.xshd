@@ -252,6 +252,10 @@
 			<Word>int16</Word>
 			<Word>int32</Word>
 			<Word>int64</Word>
+			<Word>uint8</Word>
+			<Word>uint16</Word>
+			<Word>uint32</Word>
+			<Word>uint64</Word>
 			<Word>float</Word>
 			<Word>float32</Word>
 			<Word>float64</Word>

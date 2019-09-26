@@ -146,7 +146,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			}
 		}
 
-		public static object[] GetProperties(Properties properties, params string[] names)
+		public static object[] GetProperties(EnvDTE.Properties properties, params string[] names)
 		{
 			var values = new object[names.Length];
 			foreach (object p in properties) {
@@ -166,7 +166,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			return values;
 		}
 
-		public static List<(string, object)> GetAllProperties(Properties properties)
+		public static List<(string, object)> GetAllProperties(EnvDTE.Properties properties)
 		{
 			var result = new List<(string, object)>();
 			for (int i = 0; i < properties.Count; i++) {

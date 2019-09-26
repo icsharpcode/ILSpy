@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -116,16 +117,32 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			var propertyDef = module.metadata.GetPropertyDefinition(propertyHandle);
 			var genericContext = new GenericContext(DeclaringType.TypeParameters);
-			var signature = propertyDef.DecodeSignature(module.TypeProvider, genericContext);
-			var accessors = propertyDef.GetAccessors();
-			ParameterHandleCollection? parameterHandles;
-			if (!accessors.Getter.IsNil)
-				parameterHandles = module.metadata.GetMethodDefinition(accessors.Getter).GetParameters();
-			else if (!accessors.Setter.IsNil)
-				parameterHandles = module.metadata.GetMethodDefinition(accessors.Setter).GetParameters();
-			else
-				parameterHandles = null;
-			var (returnType, parameters) = MetadataMethod.DecodeSignature(module, this, signature, parameterHandles);
+			IType returnType;
+			IParameter[] parameters;
+			try {
+				var signature = propertyDef.DecodeSignature(module.TypeProvider, genericContext);
+				var accessors = propertyDef.GetAccessors();
+				ParameterHandleCollection? parameterHandles;
+				Nullability nullableContext;
+				if (!accessors.Getter.IsNil) {
+					var getter = module.metadata.GetMethodDefinition(accessors.Getter);
+					parameterHandles = getter.GetParameters();
+					nullableContext = getter.GetCustomAttributes().GetNullableContext(module.metadata)
+						?? DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious;
+				} else if (!accessors.Setter.IsNil) {
+					var setter = module.metadata.GetMethodDefinition(accessors.Setter);
+					parameterHandles = setter.GetParameters();
+					nullableContext = setter.GetCustomAttributes().GetNullableContext(module.metadata)
+						?? DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious;
+				} else {
+					parameterHandles = null;
+					nullableContext = DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious;
+				}
+				(returnType, parameters) = MetadataMethod.DecodeSignature(module, this, signature, parameterHandles, nullableContext);
+			} catch (BadImageFormatException) {
+				returnType = SpecialType.UnknownType;
+				parameters = Empty<IParameter>.Array;
+			}
 			LazyInit.GetOrSet(ref this.returnType, returnType);
 			LazyInit.GetOrSet(ref this.parameters, parameters);
 		}
@@ -155,7 +172,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (IsIndexer && Name != "Item" && !IsExplicitInterfaceImplementation) {
 				b.Add(KnownAttribute.IndexerName, KnownTypeCode.String, Name);
 			}
-			b.Add(propertyDef.GetCustomAttributes());
+			b.Add(propertyDef.GetCustomAttributes(), symbolKind);
 			return b.Build();
 		}
 		#endregion

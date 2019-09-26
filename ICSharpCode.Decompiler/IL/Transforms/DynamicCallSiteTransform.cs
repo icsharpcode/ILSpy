@@ -183,12 +183,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						arguments: targetInvokeCall.Arguments.Skip(2).ToArray()
 					);
 				case BinderMethodKind.InvokeConstructor:
+					var arguments = targetInvokeCall.Arguments.Skip(2).ToArray();
+					// Extract type information from targetInvokeCall:
+					// Must either be an inlined type or
+					// a reference to a variable that is initialized with a type.
+					if (!TransformExpressionTrees.MatchGetTypeFromHandle(arguments[0], out var type)) {
+						if (!(arguments[0].MatchLdLoc(out var temp) && temp.IsSingleDefinition && temp.StoreInstructions.FirstOrDefault() is StLoc initStore))
+							return null;
+						if (!TransformExpressionTrees.MatchGetTypeFromHandle(initStore.Value, out type))
+							return null;
+					}
 					deadArguments.AddRange(targetInvokeCall.Arguments.Take(2));
 					return new DynamicInvokeConstructorInstruction(
 						binderFlags: callsite.Flags,
+						type: type ?? SpecialType.UnknownType,
 						context: callsite.Context,
 						argumentInfo: callsite.ArgumentInfos,
-						arguments: targetInvokeCall.Arguments.Skip(2).ToArray()
+						arguments: arguments
 					);
 				case BinderMethodKind.InvokeMember:
 					deadArguments.AddRange(targetInvokeCall.Arguments.Take(2));
@@ -500,7 +511,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			int i = 0;
 			callSiteInfo.ArgumentInfos = new CSharpArgumentInfo[numberOfArguments];
-			var compileTimeTypes = callSiteInfo.DelegateType.GetDelegateInvokeMethod().Parameters.SelectReadOnlyArray(p => p.Type);
+			IMethod invokeMethod = callSiteInfo.DelegateType.GetDelegateInvokeMethod();
+			if (invokeMethod == null)
+				return false;
+			var compileTimeTypes = invokeMethod.Parameters.SelectReadOnlyArray(p => p.Type);
 			foreach (var (_, arg) in arguments) {
 				if (!(arg is Call createCall))
 					return false;

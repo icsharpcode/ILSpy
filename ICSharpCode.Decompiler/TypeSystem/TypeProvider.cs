@@ -131,7 +131,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle, byte rawTypeKind)
 		{
-			var asmref = handle.GetDeclaringModule(reader);
 			bool? isReferenceType = IsReferenceType(reader, handle, rawTypeKind);
 			var gctr = new GetClassTypeReference(handle.GetFullTypeName(reader), handle.GetDeclaringModule(reader), isReferenceType);
 			return gctr.Resolve(module != null ? new SimpleTypeResolveContext(module) : new SimpleTypeResolveContext(compilation));
@@ -142,8 +141,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (name == null) {
 				return null;
 			}
-			return ReflectionHelper.ParseReflectionName(name)
-				.Resolve(module != null ? new SimpleTypeResolveContext(module) : new SimpleTypeResolveContext(compilation));
+			try {
+				return ReflectionHelper.ParseReflectionName(name)
+					.Resolve(module != null ? new SimpleTypeResolveContext(module) : new SimpleTypeResolveContext(compilation));
+			} catch (ReflectionNameParseException ex) {
+				throw new BadImageFormatException($"Invalid type name: \"{name}\": {ex.Message}");
+			}
 		}
 		
 		public IType GetTypeFromSpecification(SRM.MetadataReader reader, GenericContext genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)

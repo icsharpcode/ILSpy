@@ -84,7 +84,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public bool? IsReferenceType => genericType.IsReferenceType;
 		public bool IsByRefLike => genericType.IsByRefLike;
-		
+		public Nullability Nullability => genericType.Nullability;
+
+		public IType ChangeNullability(Nullability nullability)
+		{
+			IType newGenericType = genericType.ChangeNullability(nullability);
+			if (newGenericType == genericType)
+				return this;
+			else
+				return new ParameterizedType(newGenericType, typeArguments);
+		}
+
 		public IType DeclaringType {
 			get {
 				IType declaringType = genericType.DeclaringType;
@@ -130,10 +140,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return b.ToString();
 			}
 		}
-		
+
 		public override string ToString()
 		{
-			return ReflectionName;
+			StringBuilder b = new StringBuilder(genericType.ToString());
+			b.Append('[');
+			for (int i = 0; i < typeArguments.Length; i++) {
+				if (i > 0)
+					b.Append(',');
+				b.Append('[');
+				b.Append(typeArguments[i].ToString());
+				b.Append(']');
+			}
+			b.Append(']');
+			return b.ToString();
 		}
 
 		public IReadOnlyList<IType> TypeArguments => typeArguments;
@@ -154,7 +174,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public ITypeDefinition GetDefinition()
 		{
-			return genericType as ITypeDefinition;
+			return genericType.GetDefinition();
 		}
 		
 		/// <summary>

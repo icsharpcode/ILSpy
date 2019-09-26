@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 
 			b.AddMarshalInfo(fieldDef.GetMarshallingDescriptor());
-			b.Add(fieldDef.GetCustomAttributes());
+			b.Add(fieldDef.GetCustomAttributes(), SymbolKind.Field);
 
 			return b.Build();
 		}
@@ -178,13 +178,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			var metadata = module.metadata;
 			var fieldDef = metadata.GetFieldDefinition(handle);
-			var ty = fieldDef.DecodeSignature(module.TypeProvider, new GenericContext(DeclaringType?.TypeParameters));
-			if (ty is ModifiedType mod && mod.Modifier.Name == "IsVolatile" && mod.Modifier.Namespace == "System.Runtime.CompilerServices") {
-				Volatile.Write(ref this.isVolatile, true);
-				ty = mod.ElementType;
+			IType ty;
+			try {
+				ty = fieldDef.DecodeSignature(module.TypeProvider, new GenericContext(DeclaringType?.TypeParameters));
+				if (ty is ModifiedType mod && mod.Modifier.Name == "IsVolatile" && mod.Modifier.Namespace == "System.Runtime.CompilerServices") {
+					Volatile.Write(ref this.isVolatile, true);
+					ty = mod.ElementType;
+				}
+				ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation,
+					fieldDef.GetCustomAttributes(), metadata, module.TypeSystemOptions,
+					DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious);
+			} catch (BadImageFormatException) {
+				ty = SpecialType.UnknownType;
 			}
-			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation,
-				fieldDef.GetCustomAttributes(), metadata, module.TypeSystemOptions);
 			return LazyInit.GetOrSet(ref this.type, ty);
 		}
 

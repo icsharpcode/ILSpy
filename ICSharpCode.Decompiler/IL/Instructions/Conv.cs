@@ -156,10 +156,10 @@ namespace ICSharpCode.Decompiler.IL
 		public Conv(ILInstruction argument, StackType inputType, Sign inputSign, PrimitiveType targetType, bool checkForOverflow, bool isLifted = false)
 			: base(OpCode.Conv, argument)
 		{
-			bool needsSign = checkForOverflow || targetType == PrimitiveType.R4 || targetType == PrimitiveType.R8;
+			bool needsSign = checkForOverflow || (!inputType.IsFloatType() && (targetType == PrimitiveType.R4 || targetType == PrimitiveType.R8));
 			Debug.Assert(!(needsSign && inputSign == Sign.None));
-			this.InputType = inputType;
 			this.InputSign = needsSign ? inputSign : Sign.None;
+			this.InputType = inputType;
 			this.TargetType = targetType;
 			this.CheckForOverflow = checkForOverflow;
 			this.Kind = GetConversionKind(targetType, this.InputType, this.InputSign);

@@ -31,6 +31,7 @@ using ICSharpCode.TreeView;
 using Microsoft.Win32;
 using ICSharpCode.Decompiler.TypeSystem;
 using TypeDefinitionHandle = System.Reflection.Metadata.TypeDefinitionHandle;
+using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -71,7 +72,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (LoadedAssembly.IsLoaded) {
 					return LoadedAssembly.HasLoadError ? Images.AssemblyWarning : Images.Assembly;
 				} else {
-					return Images.AssemblyLoading;
+					return Images.FindAssembly;
 				}
 			}
 		}
@@ -291,9 +292,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					foreach (string entry in Directory.GetFileSystemEntries(options.SaveAsProjectDirectory)) {
 						if (!string.Equals(entry, dlg.FileName, StringComparison.OrdinalIgnoreCase)) {
 							var result = MessageBox.Show(
-								"The directory is not empty. File will be overwritten." + Environment.NewLine +
-								"Are you sure you want to continue?",
-								"Project Directory not empty",
+								Resources.AssemblySaveCodeDirectoryNotEmpty,
+								Resources.AssemblySaveCodeDirectoryNotEmptyTitle,
 								MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
 							if (result == MessageBoxResult.No)
 								return true; // don't save, but mark the Save operation as handled
@@ -314,7 +314,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	[ExportContextMenuEntry(Header = "_Remove", Icon = "images/Delete.png")]
+	[ExportContextMenuEntry(Header = nameof(Resources._Remove), Icon = "images/Delete")]
 	sealed class RemoveAssembly : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -339,7 +339,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	[ExportContextMenuEntry(Header = "_Reload", Icon = "images/Refresh.png")]
+	[ExportContextMenuEntry(Header = nameof(Resources._Reload), Icon = "images/Refresh")]
 	sealed class ReloadAssembly : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -371,7 +371,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	[ExportContextMenuEntry(Header = "_Load Dependencies", Category = "Dependencies")]
+	[ExportContextMenuEntry(Header = nameof(Resources._LoadDependencies), Category = nameof(Resources.Dependencies))]
 	sealed class LoadDependencies : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -404,7 +404,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	[ExportContextMenuEntry(Header = "_Add To Main List", Category = "Dependencies")]
+	[ExportContextMenuEntry(Header = nameof(Resources._AddMainList), Category = nameof(Resources.Dependencies))]
 	sealed class AddToMainList : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -436,7 +436,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	[ExportContextMenuEntry(Header = "_Open Containing Folder", Category = "Shell")]
+	[ExportContextMenuEntry(Header = nameof(Resources._OpenContainingFolder), Category = nameof(Resources.Shell))]
 	sealed class OpenContainingFolder : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -485,7 +485,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	[ExportContextMenuEntry(Header = "_Open Command Line Here", Category = "Shell")]
+	[ExportContextMenuEntry(Header = nameof(Resources._OpenCommandLineHere), Category = nameof(Resources.Shell))]
 	sealed class OpenCmdHere : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

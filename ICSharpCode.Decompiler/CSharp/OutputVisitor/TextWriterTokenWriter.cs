@@ -382,6 +382,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					// ASCII characters we allow directly in the output even though we don't use
 					// other Unicode characters of the same category.
 					return null;
+				case '\ufffd':
+					return "\\u" + ((int)ch).ToString("x4");
 				default:
 					switch (char.GetUnicodeCategory(ch)) {
 						case UnicodeCategory.ModifierLetter:

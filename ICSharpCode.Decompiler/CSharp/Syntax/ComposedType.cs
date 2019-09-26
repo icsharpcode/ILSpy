@@ -35,10 +35,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class ComposedType : AstType
 	{
+		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
 		public static readonly TokenRole RefRole = new TokenRole("ref");
+		public static readonly TokenRole ReadonlyRole = new TokenRole("readonly");
 		public static readonly TokenRole NullableRole = new TokenRole("?");
 		public static readonly TokenRole PointerRole = new TokenRole("*");
 		public static readonly Role<ArraySpecifier> ArraySpecifierRole = new Role<ArraySpecifier>("ArraySpecifier");
+		public AstNodeCollection<AttributeSection> Attributes {
+			get { return base.GetChildrenByRole(AttributeRole); }
+		}
 
 		/// <summary>
 		/// Gets/sets whether this type has a 'ref' specifier.
@@ -54,6 +59,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		/// <summary>
+		/// Gets/sets whether this type has a 'readonly' specifier.
+		/// This is used for C# 7.2 'ref readonly' locals/ref return.
+		/// Parameters use ParameterDeclaration.ParameterModifier instead.
+		/// </summary>
+		public bool HasReadOnlySpecifier {
+			get {
+				return !GetChildByRole(ReadonlyRole).IsNull;
+			}
+			set {
+				SetChildByRole(ReadonlyRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
+			}
+		}
+
 		public AstType BaseType {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
@@ -65,6 +84,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			set {
 				SetChildByRole(NullableRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
+			}
+		}
+
+		public bool HasOnlyNullableSpecifier {
+			get {
+				return HasNullableSpecifier && !HasRefSpecifier && !HasReadOnlySpecifier && PointerRank == 0 && ArraySpecifiers.Count == 0;
 			}
 		}
 
@@ -123,6 +148,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				&& this.HasNullableSpecifier == o.HasNullableSpecifier
 				&& this.PointerRank == o.PointerRank
 				&& this.HasRefSpecifier == o.HasRefSpecifier
+				&& this.HasReadOnlySpecifier == o.HasReadOnlySpecifier
 				&& this.BaseType.DoMatch(o.BaseType, match)
 				&& this.ArraySpecifiers.DoMatch(o.ArraySpecifiers, match);
 		}
@@ -132,6 +158,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			StringBuilder b = new StringBuilder();
 			if (this.HasRefSpecifier)
 				b.Append("ref ");
+			if (this.HasReadOnlySpecifier)
+				b.Append("readonly ");
 			b.Append(this.BaseType.ToString());
 			if (this.HasNullableSpecifier)
 				b.Append('?');

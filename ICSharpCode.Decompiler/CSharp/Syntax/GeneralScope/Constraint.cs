@@ -36,9 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class Constraint : AstNode
 	{
 		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
+			get { return NodeType.Unknown; }
 		}
 
 		public CSharpTokenNode WhereKeyword {

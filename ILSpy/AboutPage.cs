@@ -33,11 +33,13 @@ using System.Xml.Linq;
 
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
+using OSVersionHelper;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_Help", Header = "_About", MenuOrder = 99999)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._Help), Header = nameof(Resources._About), MenuOrder = 99999)]
 	sealed class AboutPage : SimpleCommand
 	{
 		[Import]
@@ -56,9 +58,12 @@ namespace ICSharpCode.ILSpy
 		
 		public static void Display(DecompilerTextView textView)
 		{
-			AvalonEditTextOutput output = new AvalonEditTextOutput();
-			output.WriteLine("ILSpy version " + RevisionClass.FullVersion);
-			output.AddUIElement(
+			AvalonEditTextOutput output = new AvalonEditTextOutput() { EnableHyperlinks = true };
+			output.WriteLine(Resources.ILSpyVersion + RevisionClass.FullVersion);
+			if(WindowsVersionHelper.HasPackageIdentity) {
+				output.WriteLine($"Package Name: {WindowsVersionHelper.GetPackageFamilyName()}");
+			} else {// if we're running in an MSIX, updates work differently
+				output.AddUIElement(
 				delegate {
 					StackPanel stackPanel = new StackPanel();
 					stackPanel.HorizontalAlignment = HorizontalAlignment.Center;
@@ -71,7 +76,7 @@ namespace ICSharpCode.ILSpy
 					}
 					CheckBox checkBox = new CheckBox();
 					checkBox.Margin = new Thickness(4);
-					checkBox.Content = "Automatically check for updates every week";
+					checkBox.Content = Resources.AutomaticallyCheckUpdatesEveryWeek;
 					UpdateSettings settings = new UpdateSettings(ILSpySettings.Load());
 					checkBox.SetBinding(CheckBox.IsCheckedProperty, new Binding("AutomaticUpdateCheckEnabled") { Source = settings });
 					return new StackPanel {
@@ -80,7 +85,9 @@ namespace ICSharpCode.ILSpy
 						Children = { stackPanel, checkBox }
 					};
 				});
-			output.WriteLine();
+				output.WriteLine();
+			}
+			
 			foreach (var plugin in App.ExportProvider.GetExportedValues<IAboutPageAddition>())
 				plugin.Write(output);
 			output.WriteLine();
@@ -118,12 +125,12 @@ namespace ICSharpCode.ILSpy
 		static void AddUpdateCheckButton(StackPanel stackPanel, DecompilerTextView textView)
 		{
 			Button button = new Button();
-			button.Content = "Check for updates";
+			button.Content = Resources.CheckUpdates;
 			button.Cursor = Cursors.Arrow;
 			stackPanel.Children.Add(button);
 			
 			button.Click += delegate {
-				button.Content = "Checking...";
+				button.Content = Resources.Checking;
 				button.IsEnabled = false;
 				GetLatestVersionAsync().ContinueWith(
 					delegate (Task<AvailableVersionInfo> task) {
@@ -152,19 +159,19 @@ namespace ICSharpCode.ILSpy
 					});
 				stackPanel.Children.Add(
 					new TextBlock {
-						Text = "You are using the latest release.",
+						Text = Resources.UsingLatestRelease,
 						VerticalAlignment = VerticalAlignment.Bottom
 					});
 			} else if (currentVersion < availableVersion.Version) {
 				stackPanel.Children.Add(
 					new TextBlock {
-						Text = "Version " + availableVersion.Version + " is available.",
+						Text = string.Format(Resources.VersionAvailable, availableVersion.Version ),
 						Margin = new Thickness(0,0,8,0),
 						VerticalAlignment = VerticalAlignment.Bottom
 					});
 				if (availableVersion.DownloadUrl != null) {
 					Button button = new Button();
-					button.Content = "Download";
+					button.Content = Resources.Download;
 					button.Cursor = Cursors.Arrow;
 					button.Click += delegate {
 						MainWindow.OpenLink(availableVersion.DownloadUrl);
@@ -172,7 +179,7 @@ namespace ICSharpCode.ILSpy
 					stackPanel.Children.Add(button);
 				}
 			} else {
-				stackPanel.Children.Add(new TextBlock { Text = "You are using a nightly build newer than the latest release." });
+				stackPanel.Children.Add(new TextBlock { Text = Resources.UsingNightlyBuildNewerThanLatestRelease });
 			}
 		}
 		
@@ -282,7 +289,8 @@ namespace ICSharpCode.ILSpy
 		{
 			var tcs = new TaskCompletionSource<string>();
 			UpdateSettings s = new UpdateSettings(spySettings);
-			if (s.AutomaticUpdateCheckEnabled) {
+			// If we're in an MSIX package, updates work differently
+			if (s.AutomaticUpdateCheckEnabled && !WindowsVersionHelper.HasPackageIdentity) {
 				// perform update check if we never did one before;
 				// or if the last check wasn't in the past 7 days
 				if (s.LastSuccessfulUpdateCheck == null

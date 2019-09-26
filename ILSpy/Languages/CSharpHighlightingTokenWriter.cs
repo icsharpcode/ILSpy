@@ -1,4 +1,22 @@
-﻿using System;
+﻿// Copyright (c) 2018 Siegfried Pammer
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.AvalonEdit.Highlighting;
@@ -254,7 +272,9 @@ namespace ICSharpCode.ILSpy
 			HighlightingColor color = null;
 			switch (type) {
 				case "new":
-					color = typeKeywordsColor;
+				case "notnull":
+					// Not sure if reference type or value type
+					color = referenceTypeKeywordsColor;
 					break;
 				case "bool":
 				case "byte":
@@ -271,6 +291,7 @@ namespace ICSharpCode.ILSpy
 				case "uint":
 				case "ushort":
 				case "ulong":
+				case "unmanaged":
 					color = valueTypeKeywordsColor;
 					break;
 				case "class":
@@ -385,23 +406,10 @@ namespace ICSharpCode.ILSpy
 			var node = nodeStack.Peek();
 			if (node is Identifier)
 				node = node.Parent;
-			if (IsDefinition(ref node))
+			if (Decompiler.TextTokenWriter.IsDefinition(ref node))
 				return node.GetSymbol();
 
 			return null;
-		}
-
-		static bool IsDefinition(ref AstNode node)
-		{
-			if (node is EntityDeclaration)
-				return true;
-			if (node is VariableInitializer && node.Parent is FieldDeclaration) {
-				node = node.Parent;
-				return true;
-			}
-			if (node is FixedVariableInitializer)
-				return true;
-			return false;
 		}
 
 		ISymbol GetCurrentMemberReference()

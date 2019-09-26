@@ -3,10 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
 			 mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
 	<StackPanel Margin="10">
-		<CheckBox IsChecked="{Binding AllowMultipleInstances}">Allow multiple instances</CheckBox>
-		<CheckBox IsChecked="{Binding LoadPreviousAssemblies}">Load assemblies that were loaded in the last instance.</CheckBox>
+		<CheckBox IsChecked="{Binding AllowMultipleInstances}" Content="{x:Static properties:Resources.AllowMultipleInstances}"></CheckBox>
+		<CheckBox IsChecked="{Binding LoadPreviousAssemblies}" Content="{x:Static properties:Resources.LoadAssembliesThatWereLoadedInTheLastInstance}"></CheckBox>
 	</StackPanel>
 </UserControl>

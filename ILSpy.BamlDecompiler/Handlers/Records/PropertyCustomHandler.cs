@@ -47,7 +47,7 @@ namespace ILSpy.BamlDecompiler.Handlers {
 					case KnownTypes.DependencyPropertyConverter: {
 						if (value.Length == 2) {
 							var property = ctx.ResolveProperty(reader.ReadUInt16());
-							return ctx.ToString(elem, property.ToXName(ctx, elem, false));
+							return ctx.ToString(elem, property.ToXName(ctx, elem, NeedsFullName(property, ctx, elem)));
 						}
 						else {
 							var type = ctx.ResolveType(reader.ReadUInt16());
@@ -140,6 +140,18 @@ namespace ILSpy.BamlDecompiler.Handlers {
 				}
 			}
 			throw new NotSupportedException(ser.ToString());
+		}
+
+		private bool NeedsFullName(XamlProperty property, XamlContext ctx, XElement elem)
+		{
+			XElement p = elem.Parent;
+			while (p != null && p.Annotation<XamlType>()?.ResolvedType.FullName != "System.Windows.Style") {
+				p = p.Parent;
+			}
+			var type = p?.Annotation<TargetTypeAnnotation>()?.Type;
+			if (type == null)
+				return true;
+			return property.IsAttachedTo(type);
 		}
 
 		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {

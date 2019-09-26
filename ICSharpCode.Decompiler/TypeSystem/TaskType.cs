@@ -54,7 +54,67 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return false;
 		}
-		
+
+		/// <summary>
+		/// Gets whether the specified type is a Task-like type.
+		/// </summary>
+		public static bool IsCustomTask(IType type, out IType builderType)
+		{
+			builderType = null;
+			ITypeDefinition def = type.GetDefinition();
+			if (def != null) {
+				if (def.TypeParameterCount > 1)
+					return false;
+				var attribute = def.GetAttribute(KnownAttribute.AsyncMethodBuilder);
+				if (attribute == null || attribute.FixedArguments.Length != 1)
+					return false;
+				var arg = attribute.FixedArguments[0];
+				if (!arg.Type.IsKnownType(KnownTypeCode.Type))
+					return false;
+				builderType = (IType)arg.Value;
+				return true;
+			}
+			return false;
+		}
+
+		const string ns = "System.Runtime.CompilerServices";
+
+		/// <summary>
+		/// Gets whether the specified type is a non-generic Task-like type.
+		/// </summary>
+		/// <param name="builderTypeName">Returns the full type-name of the builder type, if successful.</param>
+		public static bool IsNonGenericTaskType(IType task, out FullTypeName builderTypeName)
+		{
+			if (task.IsKnownType(KnownTypeCode.Task)) {
+				builderTypeName = new TopLevelTypeName(ns, "AsyncTaskMethodBuilder");
+				return true;
+			}
+			if (IsCustomTask(task, out var builderType)) {
+				builderTypeName = new FullTypeName(builderType.ReflectionName);
+				return builderTypeName.TypeParameterCount == 0;
+			}
+			builderTypeName = default;
+			return false;
+		}
+
+		/// <summary>
+		/// Gets whether the specified type is a generic Task-like type.
+		/// </summary>
+		/// <param name="builderTypeName">Returns the full type-name of the builder type, if successful.</param>
+		public static bool IsGenericTaskType(IType task, out FullTypeName builderTypeName)
+		{
+			if (task.IsKnownType(KnownTypeCode.TaskOfT)) {
+				builderTypeName = new TopLevelTypeName(ns, "AsyncTaskMethodBuilder", 1);
+				return true;
+			}
+			if (IsCustomTask(task, out var builderType)) {
+				builderTypeName = new FullTypeName(builderType.ReflectionName);
+				return builderTypeName.TypeParameterCount == 1;
+			}
+			builderTypeName = default;
+			return false;
+		}
+
 		/// <summary>
 		/// Creates a task type.
 		/// </summary>

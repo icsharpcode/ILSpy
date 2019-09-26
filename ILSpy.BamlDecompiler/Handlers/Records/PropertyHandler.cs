@@ -35,15 +35,20 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			var xamlProp = ctx.ResolveProperty(record.AttributeId);
 			var value = XamlUtils.Escape(record.Value);
 
-			XAttribute attr;
-			if (xamlProp.PropertyName == "Name" && elemType.ResolvedType.GetDefinition()?.ParentModule.IsMainModule == true) {
-				attr = new XAttribute(ctx.GetXamlNsName("Name"), value);
-			} else {
-				attr = new XAttribute(xamlProp.ToXName(ctx, parent.Xaml, xamlProp.IsAttachedTo(elemType)), value);
-			}
-			parent.Xaml.Element.Add(attr);
+			parent.Xaml.Element.Add(ConstructXAttribute());
 
 			return null;
+
+			XAttribute ConstructXAttribute()
+			{
+				if (xamlProp.IsAttachedTo(elemType))
+					return new XAttribute(xamlProp.ToXName(ctx, parent.Xaml, true), value);
+
+				if (xamlProp.PropertyName == "Name" && elemType.ResolvedType.GetDefinition()?.ParentModule.IsMainModule == true)
+					return new XAttribute(ctx.GetKnownNamespace("Name", XamlContext.KnownNamespace_Xaml), value);
+
+				return new XAttribute(xamlProp.ToXName(ctx, parent.Xaml, false), value);
+			}
 		}
 	}
 }

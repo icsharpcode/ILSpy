@@ -128,7 +128,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			CleanDoFinallyBodies(function);
 
 			context.Step("Translate fields to local accesses", function);
-			MarkGeneratedVariables(function);
 			YieldReturnDecompiler.TranslateFieldsToLocalAccess(function, function, fieldToParameterMap);
 			TranslateCachedFieldsToLocals();
 
@@ -200,24 +199,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			taskType = function.Method.ReturnType;
 			builderType = startCall.Method.DeclaringTypeDefinition;
-			const string ns = "System.Runtime.CompilerServices";
 			if (taskType.IsKnownType(KnownTypeCode.Void)) {
 				methodType = AsyncMethodType.Void;
 				underlyingReturnType = taskType;
-				if (builderType?.FullTypeName != new TopLevelTypeName(ns, "AsyncVoidMethodBuilder"))
+				if (builderType?.FullTypeName != new TopLevelTypeName("System.Runtime.CompilerServices", "AsyncVoidMethodBuilder"))
 					return false;
-			} else if (taskType.IsKnownType(KnownTypeCode.Task)) {
+			} else if (TaskType.IsNonGenericTaskType(taskType, out var builderTypeName)) {
 				methodType = AsyncMethodType.Task;
 				underlyingReturnType = context.TypeSystem.FindType(KnownTypeCode.Void);
-				if (builderType?.FullTypeName != new TopLevelTypeName(ns, "AsyncTaskMethodBuilder", 0))
+				if (builderType?.FullTypeName != builderTypeName)
 					return false;
-			} else if (taskType.IsKnownType(KnownTypeCode.TaskOfT)) {
+			} else if (TaskType.IsGenericTaskType(taskType, out builderTypeName)) {
 				methodType = AsyncMethodType.TaskOfT;
-				underlyingReturnType = TaskType.UnpackTask(context.TypeSystem, taskType);
-				if (builderType?.FullTypeName != new TopLevelTypeName(ns, "AsyncTaskMethodBuilder", 1))
+				if (taskType.IsKnownType(KnownTypeCode.TaskOfT))
+					underlyingReturnType = TaskType.UnpackTask(context.TypeSystem, taskType);
+				else
+					underlyingReturnType = startCall.Method.DeclaringType.TypeArguments[0];
+				if (builderType?.FullTypeName != builderTypeName)
 					return false;
 			} else {
-				return false; // TODO: generalized async return type
+				return false;
 			}
 			if (startCall.Arguments.Count != 2)
 				return false;
@@ -355,28 +356,24 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				throw new SymbolicAnalysisFailedException();
 			if (blockContainer.EntryPoint.IncomingEdgeCount != 1)
 				throw new SymbolicAnalysisFailedException();
+			cachedStateVar = null;
 			int pos = 0;
-			if (blockContainer.EntryPoint.Instructions[0].MatchStLoc(out cachedStateVar, out var cachedStateInit)) {
-				// stloc(cachedState, ldfld(valuetype StateMachineStruct::<>1__state, ldloc(this)))
-				if (!cachedStateInit.MatchLdFld(out var target, out var loadedField))
-					throw new SymbolicAnalysisFailedException();
-				if (!target.MatchLdThis())
-					throw new SymbolicAnalysisFailedException();
-				if (loadedField.MemberDefinition != stateField)
-					throw new SymbolicAnalysisFailedException();
-				++pos;
-			}
 			while (blockContainer.EntryPoint.Instructions[pos] is StLoc stloc) {
 				// stloc V_1(ldfld <>4__this(ldloc this))
-				if (!stloc.Variable.IsSingleDefinition)
-					throw new SymbolicAnalysisFailedException();
 				if (!stloc.Value.MatchLdFld(out var target, out var field))
 					throw new SymbolicAnalysisFailedException();
 				if (!target.MatchLdThis())
 					throw new SymbolicAnalysisFailedException();
-				if (!fieldToParameterMap.TryGetValue((IField)field.MemberDefinition, out var param))
+				if (field.MemberDefinition == stateField && cachedStateVar == null) {
+					// stloc(cachedState, ldfld(valuetype StateMachineStruct::<>1__state, ldloc(this)))
+					cachedStateVar = stloc.Variable;
+				} else if (fieldToParameterMap.TryGetValue((IField)field.MemberDefinition, out var param)) {
+					if (!stloc.Variable.IsSingleDefinition)
+						throw new SymbolicAnalysisFailedException();
+					cachedFieldToParameterMap[stloc.Variable] = param;
+				} else {
 					throw new SymbolicAnalysisFailedException();
-				cachedFieldToParameterMap[stloc.Variable] = param;
+				}
 				pos++;
 			}
 			mainTryCatch = blockContainer.EntryPoint.Instructions[pos] as TryCatch;
@@ -735,14 +732,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// if (call get_IsCompleted(ldloca awaiterVar)) br completedBlock
 			if (!block.Instructions[block.Instructions.Count - 2].MatchIfInstruction(out var condition, out var trueInst))
 				return;
-			if (!MatchCall(condition, "get_IsCompleted", out var isCompletedArgs) || isCompletedArgs.Count != 1)
-				return;
-			if (!isCompletedArgs[0].MatchLdLocRef(awaiterVar))
-				return;
 			if (!trueInst.MatchBranch(out var completedBlock))
 				return;
 			// br awaitBlock
 			if (!block.Instructions.Last().MatchBranch(out var awaitBlock))
+				return;
+			// condition might be inverted, swap branches:
+			if (condition.MatchLogicNot(out var negatedCondition)) {
+				condition = negatedCondition;
+				ExtensionMethods.Swap(ref completedBlock, ref awaitBlock);
+			}
+			// continue matching call get_IsCompleted(ldloca awaiterVar)
+			if (!MatchCall(condition, "get_IsCompleted", out var isCompletedArgs) || isCompletedArgs.Count != 1)
+				return;
+			if (!isCompletedArgs[0].MatchLdLocRef(awaiterVar))
 				return;
 			// Check awaitBlock and resumeBlock:
 			if (!awaitBlocks.TryGetValue(awaitBlock, out var awaitBlockData))
@@ -901,17 +904,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return true;
 		}
 		#endregion
-
-		void MarkGeneratedVariables(ILFunction function)
-		{
-			// Variables after the awaiters are usually compiler-generated;
-			// so mark them as stack slots.
-			foreach (var v in function.Variables) {
-				if (v.Kind == VariableKind.Local && v.Index >= smallestAwaiterVarIndex) {
-					v.Kind = VariableKind.StackSlot;
-				}
-			}
-		}
 
 		/// <summary>
 		/// Eliminates usage of doFinallyBodies

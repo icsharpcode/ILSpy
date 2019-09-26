@@ -37,18 +37,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			SRM.CustomAttributeHandleCollection? attributes,
 			SRM.MetadataReader metadata,
 			TypeSystemOptions options,
+			Nullability nullableContext,
 			bool typeChildrenOnly = false)
 		{
-			bool useDynamicType = (options & TypeSystemOptions.Dynamic) != 0;
-			bool useTupleTypes = (options & TypeSystemOptions.Tuple) != 0;
 			bool hasDynamicAttribute = false;
 			bool[] dynamicAttributeData = null;
 			string[] tupleElementNames = null;
-			if (attributes != null && (useDynamicType || useTupleTypes)) {
+			Nullability nullability;
+			Nullability[] nullableAttributeData = null;
+			if ((options & TypeSystemOptions.NullabilityAnnotations) != 0) {
+				nullability = nullableContext;
+			} else {
+				nullability = Nullability.Oblivious;
+			}
+			const TypeSystemOptions relevantOptions = TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple | TypeSystemOptions.NullabilityAnnotations;
+			if (attributes != null && (options & relevantOptions) != 0) {
 				foreach (var attrHandle in attributes.Value) {
 					var attr = metadata.GetCustomAttribute(attrHandle);
 					var attrType = attr.GetAttributeType(metadata);
-					if (useDynamicType && attrType.IsKnownType(metadata, KnownAttribute.Dynamic)) {
+					if ((options & TypeSystemOptions.Dynamic) != 0 && attrType.IsKnownType(metadata, KnownAttribute.Dynamic)) {
 						hasDynamicAttribute = true;
 						var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
 						if (ctor.FixedArguments.Length == 1) {
@@ -58,7 +65,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 								dynamicAttributeData = values.SelectArray(v => (bool)v.Value);
 							}
 						}
-					} else if (useTupleTypes && attrType.IsKnownType(metadata, KnownAttribute.TupleElementNames)) {
+					} else if ((options & TypeSystemOptions.Tuple) != 0 && attrType.IsKnownType(metadata, KnownAttribute.TupleElementNames)) {
 						var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
 						if (ctor.FixedArguments.Length == 1) {
 							var arg = ctor.FixedArguments[0];
@@ -67,12 +74,27 @@ namespace ICSharpCode.Decompiler.TypeSystem
 								tupleElementNames = values.SelectArray(v => (string)v.Value);
 							}
 						}
+					} else if ((options & TypeSystemOptions.NullabilityAnnotations) != 0 && attrType.IsKnownType(metadata, KnownAttribute.Nullable)) {
+						var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
+						if (ctor.FixedArguments.Length == 1) {
+							var arg = ctor.FixedArguments[0];
+							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
+								&& values.All(v => v.Value is byte b && b <= 2)) {
+								nullableAttributeData = values.SelectArray(v => (Nullability)(byte)v.Value);
+							} else if (arg.Value is byte b && b <= 2) {
+								nullability = (Nullability)b;
+							}
+						}
 					}
 				}
 			}
-			if (hasDynamicAttribute || (options & (TypeSystemOptions.Tuple | TypeSystemOptions.KeepModifiers)) != TypeSystemOptions.KeepModifiers) {
+			if (hasDynamicAttribute || nullability != Nullability.Oblivious || nullableAttributeData != null 
+				|| (options & (TypeSystemOptions.Tuple | TypeSystemOptions.KeepModifiers)) != TypeSystemOptions.KeepModifiers)
+			{
 				var visitor = new ApplyAttributeTypeVisitor(
-					compilation, hasDynamicAttribute, dynamicAttributeData, options, tupleElementNames
+					compilation, hasDynamicAttribute, dynamicAttributeData,
+					options, tupleElementNames,
+					nullability, nullableAttributeData
 				);
 				if (typeChildrenOnly) {
 					return inputType.VisitChildren(visitor);
@@ -89,16 +111,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly bool[] dynamicAttributeData;
 		readonly TypeSystemOptions options;
 		readonly string[] tupleElementNames;
+		readonly Nullability defaultNullability;
+		readonly Nullability[] nullableAttributeData;
 		int dynamicTypeIndex = 0;
 		int tupleTypeIndex = 0;
+		int nullabilityTypeIndex = 0;
 
-		private ApplyAttributeTypeVisitor(ICompilation compilation, bool hasDynamicAttribute, bool[] dynamicAttributeData, TypeSystemOptions options, string[] tupleElementNames)
+		private ApplyAttributeTypeVisitor(ICompilation compilation, bool hasDynamicAttribute, bool[] dynamicAttributeData, TypeSystemOptions options, string[] tupleElementNames,
+			Nullability defaultNullability, Nullability[] nullableAttributeData)
 		{
 			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
 			this.hasDynamicAttribute = hasDynamicAttribute;
 			this.dynamicAttributeData = dynamicAttributeData;
 			this.options = options;
 			this.tupleElementNames = tupleElementNames;
+			this.defaultNullability = defaultNullability;
+			this.nullableAttributeData = nullableAttributeData;
 		}
 
 		public override IType VisitModOpt(ModifiedType type)
@@ -123,10 +151,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return base.VisitPointerType(type);
 		}
 
+		Nullability GetNullability()
+		{
+			if (nullabilityTypeIndex < nullableAttributeData?.Length)
+				return nullableAttributeData[nullabilityTypeIndex++];
+			else
+				return defaultNullability;
+		}
+
+		void ExpectDummyNullabilityForGenericValueType()
+		{
+			var n = GetNullability();
+			Debug.Assert(n == Nullability.Oblivious);
+		}
+
 		public override IType VisitArrayType(ArrayType type)
 		{
+			var nullability = GetNullability();
 			dynamicTypeIndex++;
-			return base.VisitArrayType(type);
+			return base.VisitArrayType(type).ChangeNullability(nullability);
 		}
 
 		public override IType VisitByReferenceType(ByReferenceType type)
@@ -149,6 +192,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						elementNames = ImmutableArray.CreateRange(extractedValues);
 					}
 					tupleTypeIndex += tupleCardinality;
+					ExpectDummyNullabilityForGenericValueType();
 					var elementTypes = ImmutableArray.CreateBuilder<IType>(tupleCardinality);
 					do {
 						int normalArgCount = Math.Min(type.TypeArguments.Count, TupleType.RestPosition - 1);
@@ -158,6 +202,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						}
 						if (type.TypeArguments.Count == TupleType.RestPosition) {
 							type = type.TypeArguments.Last() as ParameterizedType;
+							ExpectDummyNullabilityForGenericValueType();
 							dynamicTypeIndex++;
 							if (type != null && TupleType.IsTupleCompatible(type, out int nestedCardinality)) {
 								tupleTypeIndex += nestedCardinality;
@@ -184,6 +229,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// Visit generic type and type arguments.
 			// Like base implementation, except that it increments dynamicTypeIndex.
 			var genericType = type.GenericType.AcceptVisitor(this);
+			if (genericType.IsReferenceType != true && !genericType.IsKnownType(KnownTypeCode.NullableOfT)) {
+				ExpectDummyNullabilityForGenericValueType();
+			}
 			bool changed = type.GenericType != genericType;
 			var arguments = new IType[type.TypeArguments.Count];
 			for (int i = 0; i < type.TypeArguments.Count; i++) {
@@ -198,14 +246,35 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override IType VisitTypeDefinition(ITypeDefinition type)
 		{
+			IType newType = type;
 			if (type.KnownTypeCode == KnownTypeCode.Object && hasDynamicAttribute) {
 				if (dynamicAttributeData == null || dynamicTypeIndex >= dynamicAttributeData.Length)
-					return SpecialType.Dynamic;
-				if (dynamicAttributeData[dynamicTypeIndex])
-					return SpecialType.Dynamic;
-				return type;
+					newType = SpecialType.Dynamic;
+				else if (dynamicAttributeData[dynamicTypeIndex])
+					newType = SpecialType.Dynamic;
+			}
+			if (type.IsReferenceType == true) {
+				Nullability nullability = GetNullability();
+				return newType.ChangeNullability(nullability);
+			} else {
+				return newType;
+			}
+		}
+
+		public override IType VisitOtherType(IType type)
+		{
+			type = base.VisitOtherType(type);
+			if (type.Kind == TypeKind.Unknown && type.IsReferenceType == true) {
+				Nullability nullability = GetNullability();
+				type = type.ChangeNullability(nullability);
 			}
 			return type;
+		}
+
+		public override IType VisitTypeParameter(ITypeParameter type)
+		{
+			Nullability nullability = GetNullability();
+			return type.ChangeNullability(nullability);
 		}
 	}
 }

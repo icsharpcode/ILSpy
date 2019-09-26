@@ -2,6 +2,7 @@
 <UserControl x:Class="ICSharpCode.ILSpy.Controls.ResourceObjectTable"
 			 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
 			 xmlns:local="clr-namespace:ICSharpCode.ILSpy.Controls"
 			 Cursor="Arrow">
 	<UserControl.CommandBindings>
@@ -27,7 +28,7 @@
 			<RowDefinition />
 			<RowDefinition />
 		</Grid.RowDefinitions>
-		<Label Content="Other Resources"
+		<Label Content="{x:Static properties:Resources.OtherResources}"
 			   FontFamily="Segoe UI"
 			   FontWeight="Bold"
 			   FontSize="12pt" />
@@ -43,17 +44,17 @@
 				<GridView AllowsColumnReorder="False">
 					<GridView.Columns>
 						<local:SortableGridViewColumn DisplayMemberBinding="{Binding Key}" SortBy="Key">
-							<GridViewColumnHeader Content="Name"
+							<GridViewColumnHeader Content="{x:Static properties:Resources.Name}"
 												  HorizontalContentAlignment="Left"
 												  FontWeight="Bold" />
 						</local:SortableGridViewColumn>
 						<local:SortableGridViewColumn DisplayMemberBinding="{Binding Value}" SortBy="Value">
-							<GridViewColumnHeader Content="Value (as string)"
+							<GridViewColumnHeader Content="{x:Static properties:Resources.ValueString}"
 												  HorizontalContentAlignment="Left"
 												  FontWeight="Bold" />
 						</local:SortableGridViewColumn>
 						<local:SortableGridViewColumn DisplayMemberBinding="{Binding Type}" SortBy="Type">
-							<GridViewColumnHeader Content="Type"
+							<GridViewColumnHeader Content="{x:Static properties:Resources.Type}"
 												  HorizontalContentAlignment="Left"
 												  FontWeight="Bold" />
 						</local:SortableGridViewColumn>

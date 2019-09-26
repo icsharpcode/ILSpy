@@ -18,24 +18,59 @@
 
 using System;
 using System.Collections.Generic;
-using ICSharpCode.Decompiler.IL.Transforms;
+using System.Diagnostics;
 using System.Linq;
+
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
 	partial class ILFunction
 	{
+		/// <summary>
+		/// Gets the method definition from metadata.
+		/// May be null for functions that were not constructed from metadata,
+		/// e.g., expression trees.
+		/// </summary>
 		public readonly IMethod Method;
+
+		/// <summary>
+		/// Gets the generic context of this function.
+		/// </summary>
 		public readonly GenericContext GenericContext;
+
+		/// <summary>
+		/// Gets the name of this function, usually this returns the name from metadata.
+		/// <para>
+		/// For local functions:
+		/// This is the name that is used to declare and use the function.
+		/// It may not conflict with the names of local variables of ancestor functions
+		/// and may be overwritten by the AssignVariableNames step.
+		/// 
+		/// For top-level functions, delegates and expressions trees modifying this usually
+		/// has no effect, as the name should not be used in the final AST construction.
+		/// </para>
+		/// </summary>
+		public string Name;
+
 		/// <summary>
 		/// Size of the IL code in this function.
 		/// Note: after async/await transform, this is the code size of the MoveNext function.
 		/// </summary>
 		public int CodeSize;
+
+		/// <summary>
+		/// List of ILVariables used in this function.
+		/// </summary>
 		public readonly ILVariableCollection Variables;
+
+		/// <summary>
+		/// Gets the scope in which the local function is declared.
+		/// Returns null, if this is not a local function.
+		/// </summary>
+		public BlockContainer DeclarationScope { get; internal set; }
 
 		/// <summary>
 		/// List of warnings of ILReader.
@@ -51,6 +86,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool IsIterator;
 
+		/// <summary>
+		/// Gets whether the YieldReturnDecompiler determined that the Mono C# compiler was used to compile this function.
+		/// </summary>
 		public bool StateMachineCompiledWithMono;
 
 		/// <summary>
@@ -70,42 +108,128 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IMethod MoveNextMethod;
 
+		/// <summary>
+		/// If this function is a local function, this field stores the reduced version of the function.
+		/// </summary>
+		internal TypeSystem.Implementation.LocalFunctionMethod ReducedMethod;
+
 		internal DebugInfo.AsyncDebugInfo AsyncDebugInfo;
+
+		int ctorCallStart = int.MinValue;
+
+		/// <summary>
+		/// Returns the IL offset of the constructor call, -1 if this is not a constructor or no chained constructor call was found.
+		/// </summary>
+		internal int ChainedConstructorCallILOffset {
+			get {
+				if (ctorCallStart == int.MinValue) {
+					if (!this.Method.IsConstructor || this.Method.IsStatic)
+						ctorCallStart = -1;
+					else {
+						ctorCallStart = this.Descendants.FirstOrDefault(d => d is CallInstruction call && !(call is NewObj)
+							&& call.Method.IsConstructor
+							&& call.Method.DeclaringType.IsReferenceType == true
+							&& call.Parent is Block)?.StartILOffset ?? -1;
+					}
+				}
+				return ctorCallStart;
+			}
+		}
 
 		/// <summary>
 		/// If this is an expression tree or delegate, returns the expression tree type Expression{T} or T.
 		/// T is the delegate type that matches the signature of this method.
+		/// Otherwise this must be null.
 		/// </summary>
 		public IType DelegateType;
 
-		public bool IsExpressionTree => DelegateType != null && DelegateType.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1;
+		ILFunctionKind kind;
 
+		/// <summary>
+		/// Gets which kind of function this is.
+		/// </summary>
+		public ILFunctionKind Kind {
+			get => kind;
+			internal set {
+				if (kind == ILFunctionKind.TopLevelFunction || kind == ILFunctionKind.LocalFunction)
+					throw new InvalidOperationException("ILFunction.Kind of a top-level or local function may not be changed.");
+				kind = value;
+			}
+		}
+
+		/// <summary>
+		/// Return type of this function.
+		/// Might be null, if this function was not created from metadata.
+		/// </summary>
 		public readonly IType ReturnType;
 
+		/// <summary>
+		/// List of parameters of this function.
+		/// Might be null, if this function was not created from metadata.
+		/// </summary>
 		public readonly IReadOnlyList<IParameter> Parameters;
 
-		public ILFunction(IMethod method, int codeSize, GenericContext genericContext, ILInstruction body) : base(OpCode.ILFunction)
+		/// <summary>
+		/// Constructs a new ILFunction from the given metadata and with the given ILAst body.
+		/// </summary>
+		/// <remarks>
+		/// Use <see cref="ILReader"/> to create ILAst.
+		/// <paramref name="method"/> may be null.
+		/// </remarks>
+		public ILFunction(IMethod method, int codeSize, GenericContext genericContext, ILInstruction body, ILFunctionKind kind = ILFunctionKind.TopLevelFunction) : base(OpCode.ILFunction)
 		{
 			this.Method = method;
+			this.Name = Method?.Name;
 			this.CodeSize = codeSize;
 			this.GenericContext = genericContext;
 			this.Body = body;
 			this.ReturnType = Method?.ReturnType;
 			this.Parameters = Method?.Parameters;
 			this.Variables = new ILVariableCollection(this);
+			this.LocalFunctions = new InstructionCollection<ILFunction>(this, 1);
+			this.kind = kind;
 		}
 
-		public ILFunction(IType returnType, IReadOnlyList<IParameter> parameters, GenericContext genericContext, ILInstruction body) : base(OpCode.ILFunction)
+		/// <summary>
+		/// This constructor is only to be used by the TransformExpressionTrees step.
+		/// </summary>
+		internal ILFunction(IType returnType, IReadOnlyList<IParameter> parameters, GenericContext genericContext, ILInstruction body) : base(OpCode.ILFunction)
 		{
 			this.GenericContext = genericContext;
 			this.Body = body;
 			this.ReturnType = returnType;
 			this.Parameters = parameters;
 			this.Variables = new ILVariableCollection(this);
+			this.LocalFunctions = new InstructionCollection<ILFunction>(this, 1);
+			this.kind = ILFunctionKind.ExpressionTree;
 		}
 
 		internal override void CheckInvariant(ILPhase phase)
 		{
+			switch (kind) {
+				case ILFunctionKind.TopLevelFunction:
+					Debug.Assert(Parent == null);
+					Debug.Assert(DelegateType == null);
+					Debug.Assert(DeclarationScope == null);
+					Debug.Assert(Method != null);
+					break;
+				case ILFunctionKind.Delegate:
+					Debug.Assert(DelegateType != null);
+					Debug.Assert(DeclarationScope == null);
+					Debug.Assert(!(DelegateType?.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1));
+					break;
+				case ILFunctionKind.ExpressionTree:
+					Debug.Assert(DelegateType != null);
+					Debug.Assert(DeclarationScope == null);
+					Debug.Assert(DelegateType?.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1);
+					break;
+				case ILFunctionKind.LocalFunction:
+					Debug.Assert(Parent is ILFunction && SlotInfo == ILFunction.LocalFunctionsSlot);
+					Debug.Assert(DeclarationScope != null);
+					Debug.Assert(DelegateType == null);
+					Debug.Assert(Method != null);
+					break;
+			}
 			for (int i = 0; i < Variables.Count; i++) {
 				Debug.Assert(Variables[i].Function == this);
 				Debug.Assert(Variables[i].IndexInFunction == i);
@@ -127,8 +251,13 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(' ');
 				Method.WriteTo(output);
 			}
-			if (IsExpressionTree) {
-				output.Write(".ET");
+			switch (kind) {
+				case ILFunctionKind.ExpressionTree:
+					output.Write(".ET");
+					break;
+				case ILFunctionKind.LocalFunction:
+					output.Write(".local");
+					break;
 			}
 			if (DelegateType != null) {
 				output.Write("[");
@@ -143,6 +272,11 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			if (IsIterator) {
 				output.WriteLine(".iterator");
+			}
+			if (DeclarationScope != null) {
+				output.Write("declared as " + Name + " in ");
+				output.WriteLocalReference(DeclarationScope.EntryPoint.Label, DeclarationScope);
+				output.WriteLine();
 			}
 
 			output.MarkFoldStart(Variables.Count + " variable(s)", true);
@@ -159,6 +293,11 @@ namespace ICSharpCode.Decompiler.IL
 
 			body.WriteTo(output, options);
 			output.WriteLine();
+
+			foreach (var localFunction in LocalFunctions) {
+				output.WriteLine();
+				localFunction.WriteTo(output, options);
+			}
 
 			if (options.ShowILRanges) {
 				var unusedILRanges = FindUnusedILRanges();
@@ -229,7 +368,18 @@ namespace ICSharpCode.Decompiler.IL
 
 		public ILVariable RegisterVariable(VariableKind kind, IType type, string name = null)
 		{
-			var variable = new ILVariable(kind, type);
+			return RegisterVariable(kind, type, type.GetStackType(), name);
+		}
+
+		public ILVariable RegisterVariable(VariableKind kind, StackType stackType, string name = null)
+		{
+			var type = Method.Compilation.FindType(stackType.ToKnownTypeCode());
+			return RegisterVariable(kind, type, stackType, name);
+		}
+
+		ILVariable RegisterVariable(VariableKind kind, IType type, StackType stackType, string name = null)
+		{
+			var variable = new ILVariable(kind, type, stackType);
 			if (string.IsNullOrWhiteSpace(name)) {
 				name = "I_" + (helperVariableCount++);
 				variable.HasGeneratedName = true;
@@ -244,6 +394,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		internal void RecombineVariables(ILVariable variable1, ILVariable variable2)
 		{
+			if (variable1 == variable2)
+				return;
 			Debug.Assert(ILVariableEqualityComparer.Instance.Equals(variable1, variable2));
 			foreach (var ldloc in variable2.LoadInstructions.ToArray()) {
 				ldloc.Variable = variable1;
@@ -257,5 +409,34 @@ namespace ICSharpCode.Decompiler.IL
 			bool ok = Variables.Remove(variable2);
 			Debug.Assert(ok);
 		}
+	}
+
+	public enum ILFunctionKind
+	{
+		/// <summary>
+		/// ILFunction is a "top-level" function, i.e., method, accessor, constructor, destructor or operator.
+		/// </summary>
+		TopLevelFunction,
+		/// <summary>
+		/// ILFunction is a delegate or lambda expression.
+		/// </summary>
+		/// <remarks>
+		/// This kind is introduced by the DelegateConstruction and TransformExpressionTrees steps in the decompiler pipeline.
+		/// </remarks>
+		Delegate,
+		/// <summary>
+		/// ILFunction is an expression tree lambda.
+		/// </summary>
+		/// <remarks>
+		/// This kind is introduced by the TransformExpressionTrees step in the decompiler pipeline.
+		/// </remarks>
+		ExpressionTree,
+		/// <summary>
+		/// ILFunction is a C# 7.0 local function.
+		/// </summary>
+		/// <remarks>
+		/// This kind is introduced by the LocalFunctionDecompiler step in the decompiler pipeline.
+		/// </remarks>
+		LocalFunction
 	}
 }

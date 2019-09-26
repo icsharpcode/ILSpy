@@ -28,7 +28,7 @@ using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using Microsoft.Win32;
-
+using ICSharpCode.ILSpy.Properties;
 namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = "Generate portable PDB")]
@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = "_File", Header = "Generate portable PDB", MenuCategory = "Save")]
+	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources.GeneratePortable),  MenuCategory = "Save")]
 	class GeneratePdbMainMenuEntry : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)

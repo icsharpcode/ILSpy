@@ -38,6 +38,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public struct GenericStruct<T>
+		{
+			public T Field;
+			public T Property {
+				get;
+				set;
+			}
+		}
+
 		public ValueTuple VT0;
 		public ValueTuple<int> VT1;
 		public ValueTuple<int, int, int, int, int, int, int, ValueTuple> VT7EmptyRest;
@@ -87,6 +96,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public object NotTargetTyping => ((string)null, (object)1, (Action)delegate {
 		});
+
+		public void UnnamedTupleOut(out (int, string, Action, dynamic) tuple)
+		{
+			tuple = (42, "Hello", Console.WriteLine, null);
+		}
+
+		public void UnnamedTupleIn(in (int, string, Action, dynamic) tuple)
+		{
+
+		}
+
+		public void UnnamedTupleRef(ref (int, string, Action, dynamic) tuple)
+		{
+
+		}
+
+		public void NamedTupleOut(out (int A, string B, Action C, dynamic D) tuple)
+		{
+			tuple = (42, "Hello", Console.WriteLine, null);
+		}
+
+		public void NamedTupleIn(in (int A, string B, Action C, dynamic D) tuple)
+		{
+
+		}
+
+		public void NamedTupleRef(ref (int A, string B, Action C, dynamic D) tuple)
+		{
+
+		}
 
 		public void UseDict()
 		{
@@ -139,6 +178,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				(1, "a"),
 				(2, "b")
 			});
+		}
+
+		public void DynamicTuple((dynamic A, dynamic B) a)
+		{
+			a.A.DynamicCall();
+			a.B.Dynamic = 42;
+		}
+
+		public void GenericStructWithElementNames(GenericStruct<(int A, int B)> s)
+		{
+			Console.WriteLine(s.Field.A + s.Property.B);
+		}
+
+		public void RefCallSites(out (int, string, Action, dynamic) tuple)
+		{
+			UnnamedTupleOut(out tuple);
+			UnnamedTupleIn(in tuple);
+			UnnamedTupleRef(ref tuple);
+			NamedTupleOut(out tuple);
+			NamedTupleIn(in tuple);
+			NamedTupleRef(ref tuple);
 		}
 	}
 }

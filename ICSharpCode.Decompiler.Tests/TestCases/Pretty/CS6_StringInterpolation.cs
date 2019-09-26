@@ -97,6 +97,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			RequiresCast((IFormattable)$"\ta{$"a{args.Length}" == args[0]}");
 		}
 
+		public void Issue1497(string[] args)
+		{
+			Console.WriteLine($"args[0]: {args[0].Trim(':').Trim('&').Trim(':').Trim('&')} asdf {args.Length:x} test");
+		}
+
 		public void RequiresCast(string value)
 		{
 		}

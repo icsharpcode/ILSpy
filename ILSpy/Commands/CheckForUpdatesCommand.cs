@@ -17,11 +17,23 @@
 // DEALINGS IN THE SOFTWARE.
 
 
+using ICSharpCode.ILSpy.Properties;
+using OSVersionHelper;
+
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_Help", Header = "_Check for Updates", MenuOrder = 5000)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._Help),  Header = nameof(Resources._CheckUpdates),   MenuOrder = 5000)]
 	sealed class CheckForUpdatesCommand : SimpleCommand
 	{
+		public override bool CanExecute(object parameter)
+		{
+			if(WindowsVersionHelper.HasPackageIdentity) {
+				return false;
+			}
+
+			return base.CanExecute(parameter);
+		}
+
 		public override void Execute(object parameter)
 		{
 			MainWindow.Instance.ShowMessageIfUpdatesAvailableAsync(ILSpySettings.Load(), forceCheck: true);

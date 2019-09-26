@@ -36,6 +36,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		IEnumerable<IAttribute> IParameter.GetAttributes() => baseParameter.GetAttributes();
+		ReferenceKind IParameter.ReferenceKind => baseParameter.ReferenceKind;
 		bool IParameter.IsRef => baseParameter.IsRef;
 		bool IParameter.IsOut => baseParameter.IsOut;
 		bool IParameter.IsIn => baseParameter.IsIn;

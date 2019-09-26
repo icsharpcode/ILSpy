@@ -4577,12 +4577,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			new CustomClass().StringProp += 1;
 		}
 
-#if false
 		public uint PreIncrementIndexer(string name)
 		{
 			return ++M()[name];
 		}
-#endif
+
 		public int PreIncrementByRef(ref int i)
 		{
 			return ++i;
@@ -4591,6 +4590,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe int PreIncrementByPointer()
 		{
 			return ++(*GetPointer());
+		}
+
+		public unsafe int PreIncrementOfPointer(int* ptr)
+		{
+			return *(++ptr);
 		}
 
 		public int PreIncrement2DArray()
@@ -4627,12 +4631,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return array[Environment.TickCount] *= 10;
 		}
-#if false
+
 		public uint CompoundAssignIndexer(string name)
 		{
-			return M()[name] -= 2;
+			return M()[name] -= 2u;
 		}
-#endif
+
+		public uint CompoundAssignIndexerComplexIndex(string name)
+		{
+			return M()[ToString()] -= 2u;
+		}
+
 		public int CompoundAssignIncrement2DArray()
 		{
 			return Array()[1, 2] %= 10;
@@ -4641,6 +4650,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int CompoundAssignByRef(ref int i)
 		{
 			return i <<= 2;
+		}
+
+		public unsafe int* CompoundAssignOfPointer(int* ptr)
+		{
+			return ptr += 10;
 		}
 
 		public unsafe double CompoundAssignByPointer(double* ptr)
@@ -4669,17 +4683,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return array[pos]--;
 		}
-#if false
+
 		public uint PostIncrementIndexer(string name)
 		{
 			return M()[name]++;
 		}
 
+#if false
 		public unsafe int PostIncrementOfPointer(int* ptr)
 		{
 			return *(ptr++);
 		}
 #endif
+
 		public int PostDecrementInstanceField()
 		{
 			return M().Field--;
@@ -4704,5 +4720,50 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (*GetPointer())++;
 		}
+
+		public void Issue1552Pre(CustomStruct a, CustomStruct b)
+		{
+			CustomStruct customStruct = a + b;
+			Console.WriteLine(++customStruct);
+		}
+
+		public void Issue1552Stmt(CustomStruct a, CustomStruct b)
+		{
+			CustomStruct customStruct = a + b;
+			++customStruct;
+		}
+
+		public void Issue1552StmtUseLater(CustomStruct a, CustomStruct b)
+		{
+			CustomStruct lhs = a + b;
+			++lhs;
+			Console.WriteLine();
+			Console.WriteLine(lhs * b);
+		}
+
+		public void Issue1552Decimal(decimal a)
+		{
+			// Legacy csc compiles this using op_Increment,
+			// ensure we don't misdetect this as an invalid pre-increment "++(a * 10m)"
+			Console.WriteLine(a * 10m + 1m);
+		}
+
+#if !(ROSLYN && OPT)
+		// Roslyn opt no longer has a detectable post-increment pattern
+		// due to optimizing out some of the stores.
+		// Our emitted code is valid but has some additional temporaries.
+		public void Issue1552Post(CustomStruct a, CustomStruct b)
+		{
+			CustomStruct customStruct = a + b;
+			Console.WriteLine(customStruct++);
+		}
+
+		public void Issue1552StmtTwice(CustomStruct a, CustomStruct b)
+		{
+			CustomStruct customStruct = a + b;
+			++customStruct;
+			++customStruct;
+		}
+#endif
 	}
 }

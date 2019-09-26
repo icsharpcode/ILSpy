@@ -1,0 +1,100 @@
+trigger:
+- master
+- msix
+- 3.2.x
+
+pr:
+- master
+- 3.2.x
+
+variables:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  BuildPlatform: Any CPU
+
+jobs:
+- job: Build
+  pool:
+    vmImage: windows-2019
+  strategy:
+    matrix:
+      Config_Release_Zip:
+        BuildConfiguration: Release
+        ReleaseChannel: Zip
+        Solution: ILSpy.sln
+      Config_Debug_Zip:
+        BuildConfiguration: Debug
+        ReleaseChannel: Zip
+        Solution: ILSpy.sln
+      Config_Release_CI:
+        BuildConfiguration: Release
+        ReleaseChannel: CI
+        Solution: ILSpy.WithPackage.sln
+      Config_Release_Store:
+        BuildConfiguration: Release
+        ReleaseChannel: Store
+        Solution: ILSpy.WithPackage.sln
+
+  steps:
+  - checkout: self
+    submodules: recursive
+
+  - task: DotNetCoreInstaller@0
+    inputs:
+      version: '3.0.100-preview9-014004'
+
+  - powershell: .\BuildTools\pipelines-install.ps1
+    displayName: Install
+
+  - task: MSBuild@1
+    displayName: Restore ILSpy
+    inputs:
+      solution: $(Solution)
+      msbuildArguments: /t:restore
+      configuration: $(BuildConfiguration)
+      platform: $(BuildPlatform) 
+
+  - task: MSBuild@1
+    displayName: Build ILSpy
+    inputs:
+      solution: $(Solution)
+      msbuildArguments: /p:AppxPackageDir="$(Build.ArtifactStagingDirectory)\$(ReleaseChannel)\\" 
+      configuration: $(BuildConfiguration)
+      platform: $(BuildPlatform)
+      maximumCpuCount: true
+
+  - task: VSTest@2
+    displayName: Test
+    inputs:
+      testSelector: testAssemblies
+      testAssemblyVer2: |
+        ICSharpCode.Decompiler.Tests\bin\$(BuildConfiguration)\net472\ICSharpCode.Decompiler.Tests.exe
+        ILSpy.Tests\bin\$(BuildConfiguration)\net472\ILSpy.Tests.exe
+        ILSpy.BamlDecompiler.Tests\bin\$(BuildConfiguration)\net472\ILSpy.BamlDecompiler.Tests.dll
+
+  - task: ArchiveFiles@1
+    displayName: Create zip
+    inputs:
+      archiveType: zip
+      rootFolder: ILSpy/bin/$(BuildConfiguration)/net472
+      archiveFile: $(Build.ArtifactStagingDirectory)\$(ReleaseChannel)\ILSpy.$(Build.BuildNumber).zip
+      includeRootFolder: false
+    condition: and(succeeded(), eq(variables['ReleaseChannel'], 'Zip'))
+
+  - script: python BuildTools\tidy.py
+    displayName: Tab check
+
+  - task: CopyFiles@2
+    displayName: Move VSIX to publish directory
+    inputs:
+      contents: |
+        **\*.vsix
+        **\*.nupkg
+      targetFolder: $(Build.ArtifactStagingDirectory)\$(ReleaseChannel)
+      flattenFolders: true
+    condition: and(succeeded(), eq(variables['ReleaseChannel'], 'Zip'))
+  
+  - task: PublishPipelineArtifact@0
+    displayName: Publish $(ReleaseChannel) $(BuildConfiguration)
+    inputs:
+      targetPath: $(Build.ArtifactStagingDirectory)\$(ReleaseChannel)
+      artifactName: $(ReleaseChannel) - $(BuildConfiguration)

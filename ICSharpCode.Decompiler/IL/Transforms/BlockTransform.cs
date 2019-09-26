@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			if (running)
-				throw new InvalidOperationException("Reentrancy detected. Transforms (and the CSharpDecompiler) are neither neither thread-safe nor re-entrant.");
+				throw new InvalidOperationException("Reentrancy detected. Transforms (and the CSharpDecompiler) are neither thread-safe nor re-entrant.");
 			try {
 				running = true;
 				var blockContext = new BlockTransformContext(context);
@@ -85,7 +85,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					context.CancellationToken.ThrowIfCancellationRequested();
 					blockContext.ControlFlowGraph = new ControlFlowGraph(container, context.CancellationToken);
 					VisitBlock(blockContext.ControlFlowGraph.GetNode(container.EntryPoint), blockContext);
-					// TODO: handle unreachable code?
 				}
 			} finally {
 				running = false;

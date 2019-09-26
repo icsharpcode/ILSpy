@@ -141,20 +141,20 @@ namespace ICSharpCode.Decompiler.Disassembler
 				index--;
 			}
 			if (index < 0 || index >= parameters.Length) {
-				writer.Write(sequence.ToString());
+				writer.WriteLocalReference(sequence.ToString(), "param_" + index);
 			} else {
 				var param = parameters[index];
 				if (param.Name.IsNil) {
-					writer.Write(sequence.ToString());
+					writer.WriteLocalReference(sequence.ToString(), "param_" + index);
 				} else {
-					writer.Write(Escape(metadata.GetString(param.Name)));
+					writer.WriteLocalReference(Escape(metadata.GetString(param.Name)), "param_" + index);
 				}
 			}
 		}
 
 		public static void WriteVariableReference(ITextOutput writer, MetadataReader metadata, MethodDefinitionHandle handle, int index)
 		{
-			writer.Write(index.ToString());
+			writer.WriteLocalReference(index.ToString(), "loc_" + index);
 		}
 
 		public static void WriteOperand(ITextOutput writer, object operand)

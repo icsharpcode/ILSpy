@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		private static IType FindValueTupleType(ICompilation compilation, IModule valueTupleAssembly, int tpc)
 		{
-			FullTypeName typeName = new TopLevelTypeName("System", "ValueTuple", tpc);
+			var typeName = new TopLevelTypeName("System", "ValueTuple", tpc);
 			if (valueTupleAssembly != null) {
 				var typeDef = valueTupleAssembly.GetTypeDefinition(typeName);
 				if (typeDef != null)

@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if ((attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
 					b.Add(KnownAttribute.Out);
 			}
-			b.Add(parameter.GetCustomAttributes());
+			b.Add(parameter.GetCustomAttributes(), SymbolKind.Parameter);
 			b.AddMarshalInfo(parameter.GetMarshallingDescriptor());
 
 			return b.Build();
@@ -81,30 +81,26 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		const ParameterAttributes inOut = ParameterAttributes.In | ParameterAttributes.Out;
 
-		public bool IsRef {
-			get {
-				if (!(Type.Kind == TypeKind.ByReference && (attributes & inOut) != ParameterAttributes.Out))
-					return false;
-				if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) == 0)
-					return true;
-				var metadata = module.metadata;
-				var parameterDef = metadata.GetParameter(handle);
-				return !parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
-			}
-		}
-
+		public ReferenceKind ReferenceKind => DetectRefKind();
+		public bool IsRef => DetectRefKind() == ReferenceKind.Ref;
 		public bool IsOut => Type.Kind == TypeKind.ByReference && (attributes & inOut) == ParameterAttributes.Out;
+		public bool IsIn => DetectRefKind() == ReferenceKind.In;
+
 		public bool IsOptional => (attributes & ParameterAttributes.Optional) != 0;
 
-		public bool IsIn {
-			get {
-				if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) == 0 ||
-					Type.Kind != TypeKind.ByReference || (attributes & inOut) != ParameterAttributes.In)
-					return false;
+		ReferenceKind DetectRefKind()
+		{
+			if (Type.Kind != TypeKind.ByReference)
+				return ReferenceKind.None;
+			if ((attributes & inOut) == ParameterAttributes.Out)
+				return ReferenceKind.Out;
+			if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0) {
 				var metadata = module.metadata;
 				var parameterDef = metadata.GetParameter(handle);
-				return parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
+				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly))
+					return ReferenceKind.In;
 			}
+			return ReferenceKind.Ref;
 		}
 
 		public bool IsParams {

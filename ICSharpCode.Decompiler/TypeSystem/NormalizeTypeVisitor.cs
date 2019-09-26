@@ -18,6 +18,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			TupleToUnderlyingType = true,
 			RemoveModOpt = true,
 			RemoveModReq = true,
+			RemoveNullability = true,
 		};
 
 		public bool EquivalentTypes(IType a, IType b)
@@ -33,6 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public bool ReplaceMethodTypeParametersWithDummy = true;
 		public bool DynamicAndObject = true;
 		public bool TupleToUnderlyingType = true;
+		public bool RemoveNullability = true;
 
 		public override IType VisitTypeParameter(ITypeParameter type)
 		{
@@ -40,6 +42,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return DummyTypeParameter.GetMethodTypeParameter(type.Index);
 			} else if (type.OwnerType == SymbolKind.TypeDefinition && ReplaceClassTypeParametersWithDummy) {
 				return DummyTypeParameter.GetClassTypeParameter(type.Index);
+			} else if (RemoveNullability && type is NullabilityAnnotatedTypeParameter natp) {
+				return natp.TypeWithoutAnnotation.AcceptVisitor(this);
 			} else {
 				return base.VisitTypeParameter(type);
 			}
@@ -50,7 +54,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (DynamicAndObject && type.KnownTypeCode == KnownTypeCode.Object) {
 				// Instead of normalizing dynamic->object,
 				// we do this the opposite direction, so that we don't need a compilation to find the object type.
-				return SpecialType.Dynamic;
+				if (RemoveNullability)
+					return SpecialType.Dynamic;
+				else
+					return SpecialType.Dynamic.ChangeNullability(type.Nullability);
 			}
 			return base.VisitTypeDefinition(type);
 		}
@@ -62,6 +69,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			} else {
 				return base.VisitTupleType(type);
 			}
+		}
+
+		public override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
+		{
+			if (RemoveNullability)
+				return type.TypeWithoutAnnotation.AcceptVisitor(this);
+			else
+				return base.VisitNullabilityAnnotatedType(type);
+		}
+
+		public override IType VisitArrayType(ArrayType type)
+		{
+			if (RemoveNullability)
+				return base.VisitArrayType(type).ChangeNullability(Nullability.Oblivious);
+			else
+				return base.VisitArrayType(type);
 		}
 
 		public override IType VisitModOpt(ModifiedType type)

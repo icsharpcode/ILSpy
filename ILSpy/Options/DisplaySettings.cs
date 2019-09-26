@@ -155,6 +155,78 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		bool expandUsingDeclarations = false;
+
+		public bool ExpandUsingDeclarations {
+			get { return expandUsingDeclarations; }
+			set {
+				if (expandUsingDeclarations != value) {
+					expandUsingDeclarations = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool showDebugInfo;
+
+		public bool ShowDebugInfo {
+			get { return showDebugInfo; }
+			set {
+				if (showDebugInfo != value) {
+					showDebugInfo = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool indentationUseTabs = true;
+
+		public bool IndentationUseTabs {
+			get { return indentationUseTabs; }
+			set {
+				if (indentationUseTabs != value) {
+					indentationUseTabs = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		int indentationTabSize = 4;
+
+		public int IndentationTabSize {
+			get { return indentationTabSize; }
+			set {
+				if (indentationTabSize != value) {
+					indentationTabSize = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		int indentationSize = 4;
+
+		public int IndentationSize {
+			get { return indentationSize; }
+			set {
+				if (indentationSize != value) {
+					indentationSize = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool highlightMatchingBraces = true;
+
+		public bool HighlightMatchingBraces {
+			get { return highlightMatchingBraces; }
+			set {
+				if (highlightMatchingBraces != value) {
+					highlightMatchingBraces = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public void CopyValues(DisplaySettings s)
 		{
 			this.SelectedFont = s.selectedFont;
@@ -162,10 +234,16 @@ namespace ICSharpCode.ILSpy.Options
 			this.ShowLineNumbers = s.showLineNumbers;
 			this.ShowMetadataTokens = s.showMetadataTokens;
 			this.ShowMetadataTokensInBase10 = s.showMetadataTokensInBase10;
+			this.ShowDebugInfo = s.showDebugInfo;
 			this.EnableWordWrap = s.enableWordWrap;
 			this.SortResults = s.sortResults;
 			this.FoldBraces = s.foldBraces;
 			this.ExpandMemberDefinitions = s.expandMemberDefinitions;
+			this.ExpandUsingDeclarations = s.expandUsingDeclarations;
+			this.IndentationUseTabs = s.indentationUseTabs;
+			this.IndentationTabSize = s.indentationTabSize;
+			this.IndentationSize = s.indentationSize;
+			this.HighlightMatchingBraces = s.highlightMatchingBraces;
 		}
 	}
 }

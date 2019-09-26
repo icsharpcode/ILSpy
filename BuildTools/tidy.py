@@ -22,7 +22,7 @@ def main():
 			if '\\obj\\' in root:
 				continue
 			for filename in files:
-				if filename.lower().endswith('.cs'):
+				if filename.lower().endswith('.cs') and not filename.lower().endswith('resources.designer.cs'):
 					if not check(os.path.join(root, filename)):
 						ok = False
 	print('Tidy check: {}'.format('successful' if ok else 'failed'))

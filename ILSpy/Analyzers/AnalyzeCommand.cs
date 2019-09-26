@@ -18,13 +18,14 @@
 
 using System;
 using System.Linq;
-using System.Windows.Input;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
-	[ExportContextMenuEntry(Header = "Analyze", Icon = "images/Search.png", Category = "Analyze", InputGestureText = "Ctrl+R", Order = 100)]
+	[ExportContextMenuEntry(Header = nameof(Resources.Analyze), Icon = "Images/Search", Category = nameof(Resources.Analyze), InputGestureText = "Ctrl+R", Order = 100)]
 	internal sealed class AnalyzeCommand : SimpleCommand, IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -50,7 +51,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		bool IsValidReference(object reference)
 		{
-			return reference is IEntity;
+			return reference is IEntity && !(reference is IField f && f.IsConst);
 		}
 
 		public void Execute(TextViewContext context)

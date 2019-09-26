@@ -16,7 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -30,10 +32,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		/// <returns>SymbolKind.TypeDefinition or SymbolKind.Method</returns>
 		SymbolKind OwnerType { get; }
-		
+
 		/// <summary>
 		/// Gets the owning method/class.
-		/// This property may return null (for example for the dummy type parameters used by <see cref="ParameterListComparer.NormalizeMethodTypeParameters"/>).
+		/// This property may return null (for example for the dummy type parameters used by <see cref="NormalizeTypeVisitor.ReplaceMethodTypeParametersWithDummy"/>).
 		/// </summary>
 		/// <remarks>
 		/// For "class Outer&lt;T&gt; { class Inner {} }",
@@ -83,9 +85,37 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool HasReferenceTypeConstraint { get; }
 		
 		/// <summary>
-		/// Gets if the type parameter has the 'struct' constraint.
+		/// Gets if the type parameter has the 'struct' or 'unmanaged' constraint.
 		/// </summary>
 		bool HasValueTypeConstraint { get; }
+
+		/// <summary>
+		/// Gets if the type parameter has the 'unmanaged' constraint.
+		/// </summary>
+		bool HasUnmanagedConstraint { get; }
+
+		/// <summary>
+		/// Nullability of the reference type constraint. (e.g. "where T : class?").
+		/// 
+		/// Note that the nullability of a use of the type parameter may differ from this.
+		/// E.g. "T? GetNull&lt;T&gt;() where T : class => null;"
+		/// </summary>
+		Nullability NullabilityConstraint { get; }
+
+		IReadOnlyList<TypeConstraint> TypeConstraints { get; }
+	}
+
+	public readonly struct TypeConstraint
+	{
+		public SymbolKind SymbolKind => SymbolKind.Constraint;
+		public IType Type { get; }
+		public IReadOnlyList<IAttribute> Attributes { get; }
+
+		public TypeConstraint(IType type, IReadOnlyList<IAttribute> attributes = null)
+		{
+			this.Type = type ?? throw new ArgumentNullException(nameof(type));
+			this.Attributes = attributes ?? EmptyList<IAttribute>.Instance;
+		}
 	}
 	
 	/// <summary>

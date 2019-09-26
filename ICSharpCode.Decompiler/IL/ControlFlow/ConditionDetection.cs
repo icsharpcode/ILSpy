@@ -354,7 +354,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			//assert then block terminates
 			var trueExitInst = GetExit(ifInst.TrueInst);
 			var exitInst = GetExit(block);
-			context.Step("Negate if for desired branch "+trueExitInst, ifInst);
+			context.Step($"InvertIf at IL_{ifInst.StartILOffset:x4}", ifInst);
 			
 			//if the then block terminates, else blocks are redundant, and should not exist
 			Debug.Assert(IsEmpty(ifInst.FalseInst));
@@ -403,7 +403,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		///   if (cond) { if (nestedCond) { nestedThen... } }
 		/// ->
-		///   if (cond && nestedCond) { nestedThen... }
+		///   if (cond &amp;&amp; nestedCond) { nestedThen... }
 		/// </summary>
 		private void IntroduceShortCircuit(IfInstruction ifInst)
 		{

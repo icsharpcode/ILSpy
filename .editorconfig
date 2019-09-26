@@ -8,7 +8,9 @@ indent_size = 4
 [*.il]
 indent_style = space
 indent_size = 2
-
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
 [*.csproj]
 indent_style = space
 indent_size = 2

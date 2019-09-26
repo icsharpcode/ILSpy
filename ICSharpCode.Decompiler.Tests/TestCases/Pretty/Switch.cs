@@ -47,6 +47,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Null
 		}
 
+#if !ROSLYN
 		public static State SwitchOverNullableBool(bool? value)
 		{
 			switch (value) {
@@ -60,6 +61,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					throw new InvalidOperationException();
 			}
 		}
+#endif
 
 		public static bool? SwitchOverNullableEnum(State? state)
 		{
@@ -361,6 +363,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if !ROSLYN
 		public static string SwitchOverBool(bool b)
 		{
 			Console.WriteLine("SwitchOverBool: " + b.ToString());
@@ -373,6 +376,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					return null;
 			}
 		}
+#endif
 
 		public static void SwitchInLoop(int i)
 		{
@@ -914,9 +918,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		// These decompile poorly into switch statements and should be left as is
-		#region Overagressive Switch Use
+#region Overagressive Switch Use
 
-		#if ROSLYN || OPT
+#if ROSLYN || OPT
 		public static void SingleIf1(int i, bool a)
 		{
 			if (i == 1 || (i == 2 && a)) {
@@ -924,7 +928,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine(2);
 		}
-		#endif
+#endif
 		
 		public static void SingleIf2(int i, bool a, bool b)
 		{
@@ -1067,7 +1071,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				c = getChar();
 			} while (c != -1 && c != '\n' && c != '\u2028' && c != '\u2029');
 		}
-		#endregion
+#endregion
 		
 		// Ensure correctness of SwitchDetection.UseCSharpSwitch control flow heuristics
 		public static void SwitchWithBreakCase(int i, bool b)
@@ -1140,6 +1144,70 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					break;
 			}
 			Console.WriteLine();
+		}
+
+		public static string Issue1621(int x)
+		{
+			if (x == 5) {
+				return "5";
+			}
+			switch (x) {
+				case 1:
+					return "1";
+				case 2:
+				case 6:
+				case 7:
+					return "2-6-7";
+				case 3:
+					return "3";
+				case 4:
+					return "4";
+				case 5:
+					return "unreachable";
+				default:
+					throw new Exception();
+			}
+		}
+
+		public static int Issue1602(string x)
+		{
+			switch (x) {
+				case null:
+					return 0;
+				case "":
+					return -1;
+				case "A":
+					return 65;
+				case "B":
+					return 66;
+				case "C":
+					return 67;
+				case "D":
+					return 68;
+				case "E":
+					return 69;
+				case "F":
+					return 70;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+		}
+
+		public static bool DoNotRemoveAssignmentBeforeSwitch(string x, out ConsoleKey key)
+		{
+			key = (ConsoleKey)0;
+			switch (x) {
+				case "A":
+					key = ConsoleKey.A;
+					break;
+				case "B":
+					key = ConsoleKey.B;
+					break;
+				case "C":
+					key = ConsoleKey.C;
+					break;
+			}
+			return key != (ConsoleKey)0;
 		}
 	}
 }

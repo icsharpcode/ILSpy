@@ -32,7 +32,7 @@ namespace ILSpy.BamlDecompiler.Baml {
 		public IDecompilerTypeSystem TypeSystem { get; }
 		public KnownThings KnownThings { get; }
 
-		Dictionary<ushort, IModule> assemblyMap = new Dictionary<ushort, IModule>();
+		Dictionary<ushort, (string FullAssemblyName, IModule Assembly)> assemblyMap = new Dictionary<ushort, (string FullAssemblyName, IModule Assembly)>();
 
 		public Dictionary<ushort, AssemblyInfoRecord> AssemblyIdMap { get; }
 		public Dictionary<ushort, AttributeInfoRecord> AttributeIdMap { get; }
@@ -76,18 +76,18 @@ namespace ILSpy.BamlDecompiler.Baml {
 			return ctx;
 		}
 
-		public IModule ResolveAssembly(ushort id) {
+		public (string FullAssemblyName, IModule Assembly) ResolveAssembly(ushort id) {
 			id &= 0xfff;
 			if (!assemblyMap.TryGetValue(id, out var assembly)) {
 				if (AssemblyIdMap.TryGetValue(id, out var assemblyRec)) {
 					var assemblyName = Metadata.AssemblyNameReference.Parse(assemblyRec.AssemblyFullName);
 
 					if (assemblyName.Name == TypeSystem.MainModule.AssemblyName)
-						assembly = TypeSystem.MainModule;
+						assembly = (assemblyRec.AssemblyFullName, TypeSystem.MainModule);
 					else
-						assembly = TypeSystem.ReferencedModules.FirstOrDefault(m => m.FullAssemblyName == assemblyName.FullName);
+						assembly = (assemblyRec.AssemblyFullName, TypeSystem.ReferencedModules.FirstOrDefault(m => m.FullAssemblyName == assemblyName.FullName));
 				} else
-					assembly = null;
+					assembly = (null, null);
 
 				assemblyMap[id] = assembly;
 			}

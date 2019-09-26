@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// 
 	/// IfInstruction is also used to represent logical operators:
 	///   "a || b" ==> if (a) (ldc.i4 1) else (b)
-	///   "a && b" ==> if (a) (b) else (ldc.i4 0)
+	///   "a &amp;&amp; b" ==> if (a) (b) else (ldc.i4 0)
 	///   "a ? b : c" ==> if (a) (b) else (c)
 	/// </remarks>
 	partial class IfInstruction : ILInstruction

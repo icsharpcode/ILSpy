@@ -22,6 +22,7 @@ using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -64,10 +65,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 		}
 
-		public override object Icon
-		{
-			get { return Images.ResourceImage; }
-		}
+		public override object Icon => Images.ResourceImage;
 
 		public override bool View(DecompilerTextView textView)
 		{
@@ -80,7 +78,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				image.EndInit();
 				output.AddUIElement(() => new Image { Source = image });
 				output.WriteLine();
-				output.AddButton(Images.Save, "Save", delegate {
+				output.AddButton(Images.Save, Resources.Save, delegate {
 					Save(null);
 				});
 				textView.ShowNode(output, this);

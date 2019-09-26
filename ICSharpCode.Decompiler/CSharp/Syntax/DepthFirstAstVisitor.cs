@@ -390,7 +390,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			VisitChildren (variableDeclarationStatement);
 		}
-		
+
+		public virtual void VisitLocalFunctionDeclarationStatement(LocalFunctionDeclarationStatement localFunctionDeclarationStatement)
+		{
+			VisitChildren(localFunctionDeclarationStatement);
+		}
+
 		public virtual void VisitWhileStatement (WhileStatement whileStatement)
 		{
 			VisitChildren (whileStatement);
@@ -1037,7 +1042,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren (variableDeclarationStatement);
 		}
-		
+
+		public virtual T VisitLocalFunctionDeclarationStatement(LocalFunctionDeclarationStatement localFunctionDeclarationStatement)
+		{
+			return VisitChildren(localFunctionDeclarationStatement);
+		}
+
 		public virtual T VisitWhileStatement (WhileStatement whileStatement)
 		{
 			return VisitChildren (whileStatement);
@@ -1684,7 +1694,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren (variableDeclarationStatement, data);
 		}
-		
+
+		public virtual S VisitLocalFunctionDeclarationStatement(LocalFunctionDeclarationStatement localFunctionDeclarationStatement, T data)
+		{
+			return VisitChildren(localFunctionDeclarationStatement, data);
+		}
+
 		public virtual S VisitWhileStatement (WhileStatement whileStatement, T data)
 		{
 			return VisitChildren (whileStatement, data);

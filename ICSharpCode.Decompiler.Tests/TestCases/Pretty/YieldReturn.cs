@@ -21,6 +21,17 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	internal struct StructWithYieldReturn
+	{
+		private int val;
+
+		public IEnumerable<int> Count()
+		{
+			yield return val++;
+			yield return val++;
+		}
+	}
+
 	public class YieldReturnPrettyTest
 	{
 		private int fieldOnThis;
@@ -324,16 +335,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				yield return val;
 			}
 		}
-	}
 
-	internal struct StructWithYieldReturn
-	{
-		private int val;
-
-		public IEnumerable<int> Count()
+		public static IEnumerable<int> MultipleYieldBreakInTryFinally(int i)
 		{
-			yield return val++;
-			yield return val++;
+			try {
+				if (i == 2) {
+					yield break;
+				}
+
+				while (i < 40) {
+					if (i % 2 == 0) {
+						yield break;
+					}
+					i++;
+
+					yield return i;
+				}
+			} finally {
+				Console.WriteLine("finally");
+			}
+			Console.WriteLine("normal exit");
 		}
 	}
 }

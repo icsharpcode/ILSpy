@@ -532,7 +532,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						
 						var lookupGroup = lookupGroups[i];
 						if (typeBaseTypes.Contains(lookupGroup.DeclaringType)) {
-							if (method != null) {
+							if (method != null && !lookupGroup.MethodsAreHidden) {
 								// Find the matching method, and replace it with the override
 								for (int j = 0; j < lookupGroup.Methods.Count; j++) {
 									if (SignatureComparer.Ordinal.Equals(method, lookupGroup.Methods[j])) {

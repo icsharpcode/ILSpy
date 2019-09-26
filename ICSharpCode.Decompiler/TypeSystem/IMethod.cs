@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -35,6 +36,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IEnumerable<IAttribute> GetReturnTypeAttributes();
 
 		/// <summary>
+		/// Gets whether the return type is 'ref readonly'.
+		/// </summary>
+		bool ReturnTypeIsRefReadOnly { get; }
+
+		/// <summary>
 		/// Gets the type parameters of this method; or an empty list if the method is not generic.
 		/// </summary>
 		IReadOnlyList<ITypeParameter> TypeParameters { get; }
@@ -47,6 +53,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IReadOnlyList<IType> TypeArguments { get; }
 
 		bool IsExtensionMethod { get; }
+		bool IsLocalFunction { get; }
 		bool IsConstructor { get; }
 		bool IsDestructor { get; }
 		bool IsOperator { get; }
@@ -70,8 +77,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMember AccessorOwner { get; }
 
 		/// <summary>
-		/// If this method is reduced from an extension method return the original method, <c>null</c> otherwise.
-		/// A reduced method doesn't contain the extension method parameter. That means that has one parameter less than it's definition.
+		/// Gets the kind of accessor this is.
+		/// </summary>
+		MethodSemanticsAttributes AccessorKind { get; }
+
+		/// <summary>
+		/// If this method is reduced from an extension method or a local function returns the original method, <c>null</c> otherwise.
+		/// A reduced method doesn't contain the extension method parameter. That means that it has one parameter less than its definition.
+		/// A local function doesn't contain compiler-generated method parameters at the end.
 		/// </summary>
 		IMethod ReducedFrom { get; }
 		

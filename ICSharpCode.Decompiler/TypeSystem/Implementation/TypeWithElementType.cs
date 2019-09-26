@@ -46,7 +46,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override string ReflectionName {
 			get { return elementType.ReflectionName + NameSuffix; }
 		}
-		
+
+		public override string ToString()
+		{
+			return elementType.ToString() + NameSuffix;
+		}
+
 		public abstract string NameSuffix { get; }
 		
 		public IType ElementType {

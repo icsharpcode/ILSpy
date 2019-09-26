@@ -83,7 +83,7 @@ namespace ILSpy.BamlDecompiler {
 				if (piMap == null)
 					continue;
 
-				XmlNs.SetPIMapping(piMap.XmlNamespace, piMap.ClrNamespace, Baml.ResolveAssembly(piMap.AssemblyId));
+				XmlNs.SetPIMapping(piMap.XmlNamespace, piMap.ClrNamespace, Baml.ResolveAssembly(piMap.AssemblyId).FullAssemblyName);
 			}
 		}
 
@@ -93,21 +93,23 @@ namespace ILSpy.BamlDecompiler {
 
 			IType type;
 			IModule assembly;
+			string fullAssemblyName;
 
 			if (id > 0x7fff) {
 				type = Baml.KnownThings.Types((KnownTypes)(short)-unchecked((short)id));
 				assembly = type.GetDefinition().ParentModule;
+				fullAssemblyName = assembly.FullAssemblyName;
 			}
 			else {
 				var typeRec = Baml.TypeIdMap[id];
-				assembly = Baml.ResolveAssembly(typeRec.AssemblyId);
+				(fullAssemblyName, assembly) = Baml.ResolveAssembly(typeRec.AssemblyId);
 				type = ReflectionHelper.ParseReflectionName(typeRec.TypeFullName).Resolve(new SimpleTypeResolveContext(TypeSystem));
 			}
 
 			var clrNs = type.Namespace;
-			var xmlNs = XmlNs.LookupXmlns(assembly, clrNs);
+			var xmlNs = XmlNs.LookupXmlns(fullAssemblyName, clrNs);
 
-			typeMap[id] = xamlType = new XamlType(assembly, clrNs, type.Name, GetXmlNamespace(xmlNs)) {
+			typeMap[id] = xamlType = new XamlType(assembly, fullAssemblyName, clrNs, type.Name, GetXmlNamespace(xmlNs)) {
 				ResolvedType = type
 			};
 
@@ -162,6 +164,10 @@ namespace ILSpy.BamlDecompiler {
 			return ns;
 		}
 
+		public const string KnownNamespace_Xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+		public const string KnownNamespace_Presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+		public const string KnownNamespace_PresentationOptions = "http://schemas.microsoft.com/winfx/2006/xaml/presentation/options";
+
 		public string TryGetXmlNamespace(IModule assembly, string typeNamespace) {
 			if (assembly == null)
 				return null;
@@ -182,16 +188,16 @@ namespace ILSpy.BamlDecompiler {
 					possibleXmlNs.Add(xmlNs);
 			}
 
-			if (possibleXmlNs.Contains("http://schemas.microsoft.com/winfx/2006/xaml/presentation"))
-				return "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+			if (possibleXmlNs.Contains(KnownNamespace_Presentation))
+				return KnownNamespace_Presentation;
 
 			return possibleXmlNs.FirstOrDefault();
 		}
 
-		public XName GetXamlNsName(string name, XElement elem = null) {
-			var xNs = GetXmlNamespace("http://schemas.microsoft.com/winfx/2006/xaml");
+		public XName GetKnownNamespace(string name, string xmlNamespace, XElement context = null) {
+			var xNs = GetXmlNamespace(xmlNamespace);
 			XName xName;
-			if (elem != null && xNs == elem.GetDefaultNamespace())
+			if (context != null && xNs == context.GetDefaultNamespace())
 				xName = name;
 			else
 				xName = xNs + name;

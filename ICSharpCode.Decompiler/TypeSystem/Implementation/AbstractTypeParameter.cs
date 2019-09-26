@@ -158,7 +158,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public abstract bool HasDefaultConstructorConstraint { get; }
 		public abstract bool HasReferenceTypeConstraint { get; }
 		public abstract bool HasValueTypeConstraint { get; }
-		
+		public abstract bool HasUnmanagedConstraint { get; }
+		public abstract Nullability NullabilityConstraint { get; }
+
 		public TypeKind Kind {
 			get { return TypeKind.TypeParameter; }
 		}
@@ -192,7 +194,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		bool IType.IsByRefLike => false;
-		
+		Nullability IType.Nullability => Nullability.Oblivious;
+
+		public IType ChangeNullability(Nullability nullability)
+		{
+			if (nullability == Nullability.Oblivious)
+				return this;
+			else
+				return new NullabilityAnnotatedTypeParameter(this, nullability);
+		}
+
 		IType IType.DeclaringType {
 			get { return null; }
 		}
@@ -209,7 +220,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return EmptyList<IType>.Instance; }
 		}
 
-		public abstract IEnumerable<IType> DirectBaseTypes { get; }
+		public IEnumerable<IType> DirectBaseTypes {
+			get { return TypeConstraints.Select(t => t.Type); }
+		}
+
+		public abstract IReadOnlyList<TypeConstraint> TypeConstraints { get; }
 		
 		public string Name {
 			get { return name; }

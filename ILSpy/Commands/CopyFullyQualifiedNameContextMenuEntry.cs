@@ -3,11 +3,12 @@ using System.Windows;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportContextMenuEntry(Header = "Copy FQ Name", Icon = "images/Copy.png", Order = 9999)]
+	[ExportContextMenuEntry(Header = nameof(Resources.CopyName), Icon = "images/Copy", Order = 9999)]
 	public class CopyFullyQualifiedNameContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

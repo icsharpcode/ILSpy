@@ -16,9 +16,10 @@
 
     <EnableDefaultItems>false</EnableDefaultItems>
     <LangVersion>7.2</LangVersion>
-
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
+    <NoWarn>1701;1702;1591;1573</NoWarn>
   </PropertyGroup>
   
   <!-- HACK: Disable package generation on Unix due to tooling issues. -->
@@ -32,7 +33,6 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
-    <EmbedAllSources>true</EmbedAllSources>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>$(DefineConstants);STEP</DefineConstants>
   </PropertyGroup>
@@ -40,7 +40,6 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
-    <EmbedAllSources>true</EmbedAllSources>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -53,6 +52,10 @@
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
     <PackageReference Include="System.Reflection.Metadata" Version="1.6.0" />
     <PackageReference Include="System.ValueTuple" Version="4.3.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -61,6 +64,9 @@
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
     <Compile Include="CSharp\RequiredNamespaceCollector.cs" />
     <Compile Include="CSharp\SequencePointBuilder.cs" />
+    <Compile Include="Solution\ProjectId.cs" />
+    <Compile Include="Solution\ProjectItem.cs" />
+    <Compile Include="Solution\SolutionCreator.cs" />
     <Compile Include="CSharp\Syntax\AstNode.cs" />
     <Compile Include="CSharp\Syntax\AstNodeCollection.cs" />
     <Compile Include="CSharp\Syntax\AstType.cs" />
@@ -161,6 +167,7 @@
     <Compile Include="CSharp\Syntax\Statements\GotoStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\IfElseStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\LabelStatement.cs" />
+    <Compile Include="CSharp\Syntax\Statements\LocalFunctionDeclarationStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\LockStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\ReturnStatement.cs" />
     <Compile Include="CSharp\Syntax\Statements\Statement.cs" />
@@ -222,8 +229,9 @@
     <Compile Include="CSharp\Resolver\NameLookupMode.cs" />
     <Compile Include="CSharp\Resolver\OverloadResolution.cs" />
     <Compile Include="CSharp\Resolver\OverloadResolutionErrors.cs" />
-    <Compile Include="CSharp\Resolver\ReducedExtensionMethod.cs" />
-    <Compile Include="CSharp\Resolver\RenameCallbackArguments.cs" />
+    <Compile Include="IL\Transforms\FixRemainingIncrements.cs" />
+    <Compile Include="IL\Transforms\ILExtraction.cs" />
+    <Compile Include="TypeSystem\Implementation\LocalFunctionMethod.cs" />
     <Compile Include="CSharp\Resolver\TypeInference.cs" />
     <Compile Include="CSharp\Transforms\CombineQueryExpressions.cs" />
     <Compile Include="CSharp\Transforms\FlattenSwitchBlocks.cs" />
@@ -269,8 +277,10 @@
     <Compile Include="Disassembler\ILParser.cs" />
     <Compile Include="IL\ILInstructionExtensions.cs" />
     <Compile Include="IL\Transforms\CombineExitsTransform.cs" />
+    <Compile Include="IL\Transforms\DynamicIsEventAssignmentTransform.cs" />
     <Compile Include="IL\Transforms\ReduceNestingTransform.cs" />
     <Compile Include="IL\Transforms\LocalFunctionDecompiler.cs" />
+    <Compile Include="IL\Transforms\TransformDisplayClassUsage.cs" />
     <Compile Include="IL\Transforms\UserDefinedLogicTransform.cs" />
     <Compile Include="Metadata\AssemblyReferences.cs" />
     <Compile Include="Metadata\CodeMappingInfo.cs" />
@@ -355,6 +365,7 @@
     <Compile Include="TypeSystem\Implementation\AttributeListBuilder.cs" />
     <Compile Include="TypeSystem\Implementation\CustomAttribute.cs" />
     <Compile Include="TypeSystem\Implementation\DecimalConstantHelper.cs" />
+    <Compile Include="TypeSystem\Implementation\DecoratedType.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\FakeMember.cs" />
     <Compile Include="TypeSystem\Implementation\KnownAttributes.cs" />
@@ -372,8 +383,11 @@
     <Compile Include="TypeSystem\ModifiedType.cs" />
     <Compile Include="TypeSystem\Implementation\PinnedType.cs" />
     <Compile Include="Metadata\MetadataExtensions.cs" />
+    <Compile Include="Semantics\ThrowResolveResult.cs" />
     <Compile Include="Semantics\TupleResolveResult.cs" />
     <Compile Include="TypeSystem\NormalizeTypeVisitor.cs" />
+    <Compile Include="TypeSystem\Nullability.cs" />
+    <Compile Include="TypeSystem\Implementation\NullabilityAnnotatedType.cs" />
     <Compile Include="TypeSystem\TupleType.cs" />
     <Compile Include="TypeSystem\TypeProvider.cs" />
     <Compile Include="Util\GraphVizGraph.cs" />
@@ -420,7 +434,6 @@
     <Compile Include="IL\Instructions\SwitchInstruction.cs" />
     <Compile Include="IL\Instructions\TryInstruction.cs" />
     <Compile Include="IL\Instructions\UnaryInstruction.cs" />
-    <Compile Include="IL\IInlineContext.cs" />
     <Compile Include="IL\Patterns\ListMatch.cs" />
     <Compile Include="IL\Patterns\Match.cs" />
     <Compile Include="IL\SlotInfo.cs" />
@@ -430,7 +443,6 @@
     <Compile Include="IL\Transforms\IILTransform.cs" />
     <Compile Include="IL\Transforms\ILInlining.cs" />
     <Compile Include="IL\Transforms\ExpressionTransforms.cs" />
-    <Compile Include="IL\Transforms\LoopingTransform.cs" />
     <Compile Include="IL\Transforms\DelegateConstruction.cs" />
     <Compile Include="IL\Transforms\RemoveDeadVariableInit.cs" />
     <Compile Include="IL\Transforms\SplitVariables.cs" />
@@ -484,7 +496,6 @@
     <Compile Include="Semantics\TypeResolveResult.cs" />
     <Compile Include="Semantics\UnknownMemberResolveResult.cs" />
     <Compile Include="TypeSystem\Accessibility.cs" />
-    <Compile Include="TypeSystem\AnonymousType.cs" />
     <Compile Include="TypeSystem\ArrayType.cs" />
     <Compile Include="TypeSystem\AssemblyQualifiedTypeName.cs" />
     <Compile Include="TypeSystem\ByReferenceType.cs" />

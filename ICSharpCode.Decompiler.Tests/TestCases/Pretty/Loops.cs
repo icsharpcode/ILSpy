@@ -480,8 +480,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void ForEachOverListOfStruct(List<DataItem> items, int value)
 		{
 			foreach (DataItem item in items) {
+#if ROSLYN && OPT
+				// The variable name differs based on whether roslyn optimizes out the 'item' variable
+				DataItem current = item;
+				current.Property = value;
+#else
 				DataItem dataItem = item;
 				dataItem.Property = value;
+#endif
 			}
 		}
 
@@ -671,7 +677,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		
 		//other configurations work fine, just with different labels
-#if OPT && !MCS 
+#if OPT && !MCS
 		public void WhileWithGoto()
 		{
 			while (Condition("Main Loop")) {

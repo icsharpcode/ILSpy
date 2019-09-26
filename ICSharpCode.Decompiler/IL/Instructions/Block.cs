@@ -43,11 +43,11 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public static readonly SlotInfo InstructionSlot = new SlotInfo("Instruction", isCollection: true);
 		public static readonly SlotInfo FinalInstructionSlot = new SlotInfo("FinalInstruction");
-		
+
 		public readonly BlockKind Kind;
 		public readonly InstructionCollection<ILInstruction> Instructions;
 		ILInstruction finalInstruction;
-		
+
 		/// <summary>
 		/// For blocks in a block container, this field holds
 		/// the number of incoming control flow edges to this block.
@@ -77,21 +77,21 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref finalInstruction, value, Instructions.Count);
 			}
 		}
-		
+
 		protected internal override void InstructionCollectionUpdateComplete()
 		{
 			base.InstructionCollectionUpdateComplete();
 			if (finalInstruction.Parent == this)
 				finalInstruction.ChildIndex = Instructions.Count;
 		}
-		
+
 		public Block(BlockKind kind = BlockKind.ControlFlow) : base(OpCode.Block)
 		{
 			this.Kind = kind;
 			this.Instructions = new InstructionCollection<ILInstruction>(this, 0);
 			this.FinalInstruction = new Nop();
 		}
-		
+
 		public override ILInstruction Clone()
 		{
 			Block clone = new Block(Kind);
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.IL
 			clone.FinalInstruction = this.FinalInstruction.Clone();
 			return clone;
 		}
-		
+
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
@@ -133,18 +133,17 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 		}
-		
+
 		public override StackType ResultType {
 			get {
 				return finalInstruction.ResultType;
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets the name of this block.
 		/// </summary>
-		public string Label
-		{
+		public string Label {
 			get { return Disassembler.DisassemblerHelpers.OffsetToString(this.StartILOffset); }
 		}
 
@@ -179,19 +178,19 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write("}");
 			output.MarkFoldEnd();
 		}
-		
+
 		protected override int GetChildCount()
 		{
 			return Instructions.Count + 1;
 		}
-		
+
 		protected override ILInstruction GetChild(int index)
 		{
 			if (index == Instructions.Count)
 				return finalInstruction;
 			return Instructions[index];
 		}
-		
+
 		protected override void SetChild(int index, ILInstruction value)
 		{
 			if (index == Instructions.Count)
@@ -199,7 +198,7 @@ namespace ICSharpCode.Decompiler.IL
 			else
 				Instructions[index] = value;
 		}
-		
+
 		protected override SlotInfo GetChildSlot(int index)
 		{
 			if (index == Instructions.Count)
@@ -207,7 +206,7 @@ namespace ICSharpCode.Decompiler.IL
 			else
 				return InstructionSlot;
 		}
-		
+
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = InstructionFlags.None;
@@ -217,7 +216,7 @@ namespace ICSharpCode.Decompiler.IL
 			flags |= FinalInstruction.Flags;
 			return flags;
 		}
-		
+
 		public override InstructionFlags DirectFlags {
 			get {
 				return InstructionFlags.None;
@@ -280,6 +279,21 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
+		/// <summary>
+		/// Gets the closest parent Block.
+		/// Returns null, if the instruction is not a descendant of a Block.
+		/// </summary>
+		public static Block FindClosestBlock(ILInstruction inst)
+		{
+			var curr = inst;
+			while (curr != null) {
+				if (curr is Block)
+					return (Block)curr;
+				curr = curr.Parent;
+			}
+			return null;
+		}
+
 		public bool MatchInlineAssignBlock(out CallInstruction call, out ILInstruction value)
 		{
 			call = null;
@@ -314,13 +328,6 @@ namespace ICSharpCode.Decompiler.IL
 		CollectionInitializer,
 		ObjectInitializer,
 		StackAllocInitializer,
-		/// <summary>
-		/// Block is used for postfix operator on local variable.
-		/// </summary>
-		/// <remarks>
-		/// Postfix operators on non-locals use CompoundAssignmentInstruction with CompoundAssignmentType.EvaluatesToOldValue.
-		/// </remarks>
-		PostfixOperator,
 		/// <summary>
 		/// Block is used for using the result of a property setter inline.
 		/// Example: <code>Use(this.Property = value);</code>

@@ -28,10 +28,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// The variable to be used as the argument of the switch instruction.
 		/// </summary>
-		public ILVariable SwitchVariable
-		{
-			get { return switchVar; }
-		}
+		public ILVariable SwitchVariable => switchVar;
 
 		/// <summary>
 		/// Whether at least one the analyzed blocks contained an IL switch constructors.
@@ -61,6 +58,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public readonly List<Block> InnerBlocks = new List<Block>();
 		
 		public Block RootBlock { get; private set; }
+
+		/// <summary>
+		/// Gets/sets whether to allow unreachable cases in switch instructions.
+		/// </summary>
+		public bool AllowUnreachableCases { get; set; }
 
 		/// <summary>
 		/// Analyze the last two statements in the block and see if they can be turned into a
@@ -180,6 +182,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			foreach (var section in inst.Sections) {
 				var matchValues = section.Labels.AddOffset(offset).IntersectWith(inputValues);
+				if (!AllowUnreachableCases && matchValues.IsEmpty)
+					return false;
 				if (matchValues.Count() > 1 && section.Body.MatchBranch(out var targetBlock) && AnalyzeBlock(targetBlock, matchValues)) {
 					InnerBlocks.Add(targetBlock);
 				} else {

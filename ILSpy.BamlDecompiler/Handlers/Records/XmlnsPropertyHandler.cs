@@ -50,11 +50,11 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			var record = (XmlnsPropertyRecord)((BamlRecordNode)node).Record;
 			foreach (var asmId in record.AssemblyIds) {
 				var assembly = ctx.Baml.ResolveAssembly(asmId);
-				ctx.XmlNs.Add(new NamespaceMap(record.Prefix, assembly, record.XmlNamespace));
+				ctx.XmlNs.Add(new NamespaceMap(record.Prefix, assembly.FullAssemblyName, record.XmlNamespace));
 
-				if (assembly.IsMainModule) {
-					foreach (var clrNs in ResolveCLRNamespaces(assembly, record.XmlNamespace))
-						ctx.XmlNs.Add(new NamespaceMap(record.Prefix, assembly, record.XmlNamespace, clrNs));
+				if (assembly.Assembly?.IsMainModule == true) {
+					foreach (var clrNs in ResolveCLRNamespaces(assembly.Assembly, record.XmlNamespace))
+						ctx.XmlNs.Add(new NamespaceMap(record.Prefix, assembly.FullAssemblyName, record.XmlNamespace, clrNs));
 				}
 			}
 

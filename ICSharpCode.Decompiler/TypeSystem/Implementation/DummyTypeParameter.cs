@@ -162,17 +162,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IReadOnlyCollection<IType> ITypeParameter.EffectiveInterfaceSet {
 			get { return EmptyList<IType>.Instance; }
 		}
-		
-		bool ITypeParameter.HasDefaultConstructorConstraint {
-			get { return false; }
-		}
-		
-		bool ITypeParameter.HasReferenceTypeConstraint {
-			get { return false; }
-		}
-		
-		bool ITypeParameter.HasValueTypeConstraint {
-			get { return false; }
+
+		bool ITypeParameter.HasDefaultConstructorConstraint => false;
+		bool ITypeParameter.HasReferenceTypeConstraint => false;
+		bool ITypeParameter.HasValueTypeConstraint => false;
+		bool ITypeParameter.HasUnmanagedConstraint => false;
+		Nullability ITypeParameter.NullabilityConstraint => Nullability.Oblivious;
+
+		IReadOnlyList<TypeConstraint> ITypeParameter.TypeConstraints => EmptyList<TypeConstraint>.Instance;
+
+		public override IType ChangeNullability(Nullability nullability)
+		{
+			if (nullability == Nullability.Oblivious) {
+				return this;
+			} else {
+				return new NullabilityAnnotatedTypeParameter(this, nullability);
+			}
 		}
 	}
 }

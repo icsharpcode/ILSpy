@@ -2,14 +2,16 @@
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
 		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	    xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"	
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" x:Name="self" mc:Ignorable="d"
 		d:DesignHeight="300" d:DesignWidth="300">
 	<Grid>
 		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto"  />
-			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="3" />
+			<RowDefinition />
 		</Grid.RowDefinitions>
-		<Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+		<Border BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Margin="0">
 			<Grid Height="23">
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="*" />
@@ -17,10 +19,10 @@
 				</Grid.ColumnDefinitions>
 				<controls:SearchBox x:Name="searchBox" DockPanel.Dock="Top" Grid.Column="0" Grid.Row="0" Margin="1"
 						PreviewKeyDown="SearchBox_PreviewKeyDown"
-						Text="{Binding SearchTerm, ElementName=self}" ToolTip="Search" UpdateDelay="0:0:0.1"
-						WatermarkColor="Gray" WatermarkText="Search for t:TypeName, m:Member or c:Constant; use exact match (=term), 'should not contain' (-term) or 'must contain' (+term); use /reg(ular)?Ex(pressions)?/ or both - t:/Type(Name)?/..." />
+						Text="{Binding SearchTerm, ElementName=self}" ToolTip="{x:Static properties:Resources.SearchPane_Search}" UpdateDelay="0:0:0.1"
+						WatermarkColor="Gray" WatermarkText="{x:Static properties:Resources.WatermarkText}" />
 				<StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal">
-					<Label Margin="0,-1" Target="searchModeComboBox">_Search for:</Label>
+					<Label Margin="0,-1" Target="searchModeComboBox" Content="{x:Static properties:Resources._SearchFor}"/>
 					<ComboBox Width="100" Name="searchModeComboBox" Margin="1"
 							TextSearch.TextPath="Name"
 							SelectionChanged="SearchModeComboBox_SelectionChanged">
@@ -36,11 +38,14 @@
 				</StackPanel>
 			</Grid>
 		</Border>
-		<ListView Grid.Row="1" BorderThickness="0,0,0,0" HorizontalContentAlignment="Stretch" KeyDown="ListBox_KeyDown"
-				MouseDoubleClick="ListBox_MouseDoubleClick" Name="listBox" SelectionMode="Single" controls:SortableGridViewColumn.SortMode="Automatic" controls:GridViewColumnAutoSize.AutoWidth="50%;50%">
+		<ProgressBar x:Name="searchProgressBar" Grid.Row="1" BorderThickness="0" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+		<ListView Grid.Row="2" BorderThickness="0,1,0,0" HorizontalContentAlignment="Stretch" KeyDown="ListBox_KeyDown"
+				MouseDoubleClick="ListBox_MouseDoubleClick" Name="listBox" SelectionMode="Single" controls:SortableGridViewColumn.SortMode="Automatic" 
+				controls:GridViewColumnAutoSize.AutoWidth="40%;40%;20%" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+				ItemsSource="{Binding Results, ElementName=self}">
 			<ListView.View>
 				<GridView AllowsColumnReorder="False">
-					<controls:SortableGridViewColumn Header="Name" SortBy="Name">
+					<controls:SortableGridViewColumn Header="{x:Static properties:Resources.Name}" SortBy="Name">
 						<controls:SortableGridViewColumn.CellTemplate>
 							<DataTemplate>
 								<StackPanel Orientation="Horizontal">
@@ -50,12 +55,22 @@
 							</DataTemplate>
 						</controls:SortableGridViewColumn.CellTemplate>
 					</controls:SortableGridViewColumn>
-					<controls:SortableGridViewColumn Header="Location" SortBy="Location">
+					<controls:SortableGridViewColumn Header="{x:Static properties:Resources.Location}" SortBy="Location">
 						<controls:SortableGridViewColumn.CellTemplate>
 							<DataTemplate>
 								<StackPanel Orientation="Horizontal">
 									<Image Height="16" Margin="4,0,4,0" Width="16" Source="{Binding LocationImage}" />
-									<TextBlock Text="{Binding Location}" TextTrimming="CharacterEllipsis" />
+									<TextBlock Text="{Binding Location}" ToolTip="{Binding Location}" TextTrimming="CharacterEllipsis" />
+								</StackPanel>
+							</DataTemplate>
+						</controls:SortableGridViewColumn.CellTemplate>
+					</controls:SortableGridViewColumn>
+					<controls:SortableGridViewColumn Header="{x:Static properties:Resources.Assembly}" SortBy="Assembly">
+						<controls:SortableGridViewColumn.CellTemplate>
+							<DataTemplate>
+								<StackPanel Orientation="Horizontal">
+									<Image Height="16" Margin="4,0,4,0" Width="16" Source="{Binding AssemblyImage}" />
+									<TextBlock Text="{Binding Assembly}" ToolTip="{Binding Assembly}" TextTrimming="CharacterEllipsis" />
 								</StackPanel>
 							</DataTemplate>
 						</controls:SortableGridViewColumn.CellTemplate>

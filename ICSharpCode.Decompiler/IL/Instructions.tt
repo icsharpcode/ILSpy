@@ -49,8 +49,9 @@
 			VoidResult, NoArguments, CustomWriteTo),
 		new OpCode("ILFunction", "A container of IL blocks.",
 			CustomChildren(new [] {
-				new ChildInfo("body")
-			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("O")
+				new ChildInfo("body"),
+				new ChildInfo("localFunctions") { IsCollection = true, Type = "ILFunction" }
+			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("DelegateType?.GetStackType() ?? StackType.O")
 		),
 		new OpCode("BlockContainer", "A container of IL blocks.",
 			ResultType("this.ExpectedResultType"), CustomConstructor, CustomVariableName("container"),
@@ -74,19 +75,23 @@
 			CustomClassName("NumericCompoundAssign"), BaseClass("CompoundAssignmentInstruction"), CustomConstructor, CustomComputeFlags,
 			MayThrow, HasTypeOperand, ResultType("type.GetStackType()"), CustomWriteTo,
 			MatchCondition("CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator"),
+			MatchCondition("this.EvalMode == o.EvalMode"),
+			MatchCondition("this.TargetKind == o.TargetKind"),
 			MatchCondition("Target.PerformMatch(o.Target, ref match)"),
 			MatchCondition("Value.PerformMatch(o.Value, ref match)")),
 		new OpCode("user.compound", "Common instruction for user-defined compound assignments.",
 			CustomClassName("UserDefinedCompoundAssign"), BaseClass("CompoundAssignmentInstruction"), CustomConstructor,
 			MayThrow, SideEffect, CustomWriteTo,
 			MatchCondition("this.Method.Equals(o.Method)"),
-			MatchCondition("this.CompoundAssignmentType == o.CompoundAssignmentType"),
+			MatchCondition("this.EvalMode == o.EvalMode"),
+			MatchCondition("this.TargetKind == o.TargetKind"),
 			MatchCondition("Target.PerformMatch(o.Target, ref match)"),
 			MatchCondition("Value.PerformMatch(o.Value, ref match)")),
 		new OpCode("dynamic.compound", "Common instruction for dynamic compound assignments.",
 			CustomClassName("DynamicCompoundAssign"), BaseClass("CompoundAssignmentInstruction"),
 			MayThrow, SideEffect, CustomWriteTo, CustomConstructor, ResultType("O"),
-			MatchCondition("this.CompoundAssignmentType == o.CompoundAssignmentType"),
+			MatchCondition("this.EvalMode == o.EvalMode"),
+			MatchCondition("this.TargetKind == o.TargetKind"),
 			MatchCondition("Target.PerformMatch(o.Target, ref match)"),
 			MatchCondition("Value.PerformMatch(o.Value, ref match)")),
 		new OpCode("bit.not", "Bitwise NOT", Unary, CustomConstructor, MatchCondition("IsLifted == o.IsLifted && UnderlyingResultType == o.UnderlyingResultType")),
@@ -174,7 +179,7 @@
 			CustomClassName("StLoc"), HasVariableOperand("Store", generateCheckInvariant: false), CustomArguments(("value", null)),
 			ResultType("variable.StackType")),
 		new OpCode("addressof", "Stores the value into an anonymous temporary variable, and returns the address of that variable.",
-			CustomClassName("AddressOf"), CustomArguments(("value", null)), ResultType("Ref")),
+			CustomClassName("AddressOf"), CustomArguments(("value", null)), ResultType("Ref"), HasTypeOperand),
 		new OpCode("3vl.bool.and", "Three valued logic and. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.and(), does not have short-circuiting behavior.",
 			CustomClassName("ThreeValuedBoolAnd"), Binary, ResultType("O")),
 		new OpCode("3vl.bool.or", "Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.",
@@ -189,7 +194,7 @@
 				+ "returns the managed reference unmodified (if the value is non-null).",
 			Unary, CustomConstructor, CustomWriteTo, HasFlag("InstructionFlags.MayUnwrapNull")),
 		new OpCode("nullable.rewrap", "Serves as jump target for the nullable.unwrap instruction." + Environment.NewLine
-				+ "If the input evaluates normally, evaluates to the input value (wrapped in Nullable<T> if the input is a non-nullable value type)."
+				+ "If the input evaluates normally, evaluates to the input value (wrapped in Nullable&lt;T&gt; if the input is a non-nullable value type)."
 				+ "If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,"
 				+ "the nullable.rewrap instruction evaluates to null.",
 			Unary, CustomComputeFlags),
@@ -212,6 +217,9 @@
 			CustomClassName("LdFtn"), NoArguments, HasMethodOperand, ResultType("I")),
 		new OpCode("ldvirtftn", "Load method pointer",
 			CustomClassName("LdVirtFtn"), Unary, HasMethodOperand, MayThrow, ResultType("I")),
+		new OpCode("ldvirtdelegate", "Virtual delegate construction",
+			CustomClassName("LdVirtDelegate"), Unary, HasTypeOperand, HasMethodOperand,
+			MayThrow, ResultType("O")),
 		new OpCode("ldtypetoken", "Loads runtime representation of metadata token",
 			CustomClassName("LdTypeToken"), NoArguments, HasTypeOperand, ResultType("O")),
 		new OpCode("ldmembertoken", "Loads runtime representation of metadata token",
@@ -260,7 +268,7 @@
 		new OpCode("default.value", "Returns the default value for a type.",
 			NoArguments, HasTypeOperand, ResultType("type.GetStackType()")),
 		new OpCode("throw", "Throws an exception.",
-			Unary, MayThrow, UnconditionalBranch),
+			Unary, MayThrow, HasFlag("InstructionFlags.EndPointUnreachable"), ResultType("this.resultType")),
 		new OpCode("rethrow", "Rethrows the current exception.",
 			NoArguments, MayThrow, UnconditionalBranch),
 		new OpCode("sizeof", "Gets the size of a type in bytes.",
@@ -281,7 +289,7 @@
 			CustomClassName("ExpressionTreeCast"), Unary, HasTypeOperand, MayThrow, CustomConstructor, CustomWriteTo, ResultType("type.GetStackType()"),
 			MatchCondition("this.IsChecked == o.IsChecked")),
 
-		new OpCode("user.logic.operator", "Use of user-defined && or || operator.",
+		new OpCode("user.logic.operator", "Use of user-defined &amp;&amp; or || operator.",
 			CustomClassName("UserDefinedLogicOperator"),
 			HasMethodOperand, ResultType("O"),
 			CustomChildren(new []{
@@ -769,6 +777,7 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly string SlotName;
 		
 		public bool IsCollection;
+		public string Type = "ILInstruction";
 		public bool CanInlineInto;
 		public string[] ExpectedTypes;
 		
@@ -814,7 +823,7 @@ namespace ICSharpCode.Decompiler.IL
 					childCount = children.Length - 1;
 					opCode.Flags.Add(argProp + ".Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags)");
 					opCode.ConstructorParameters.Add("params ILInstruction[] " + arg);
-					opCode.ConstructorBody.Add("this." + argProp + " = new InstructionCollection<ILInstruction>(this, " + i + ");");
+					opCode.ConstructorBody.Add("this." + argProp + " = new InstructionCollection<" + children[i].Type + ">(this, " + i + ");");
 					opCode.ConstructorBody.Add("this." + argProp + ".AddRange(" + arg + ");");
 					opCode.PerformMatchConditions.Add("Patterns.ListMatch.DoMatch(this." + argProp + ", o." + argProp + ", ref match)");
 					if (i == 0)
@@ -827,7 +836,7 @@ namespace ICSharpCode.Decompiler.IL
 					opCode.WriteArguments.Add("\t" + arg + ".WriteTo(output, options);");
 					opCode.WriteArguments.Add("}");
 					opCode.Members.Add("public static readonly SlotInfo " + children[i].SlotName + " = " + children[i].GetSlotInit() + ";");
-					opCode.Members.Add("public InstructionCollection<ILInstruction> " + argProp + " { get; private set; }");
+					opCode.Members.Add("public InstructionCollection<" + children[i].Type + "> " + argProp + " { get; private set; }");
 				} else {
 					opCode.Flags.Add(arg + ".Flags");
 					opCode.ConstructorParameters.Add("ILInstruction " + arg);
@@ -906,7 +915,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (collection == null)
 				b.AppendLine("\t\t\tthrow new IndexOutOfRangeException();");
 			else {
-				b.AppendLine("\t\t\tthis." + collection.PropertyName + "[index - " + childCount + "] = value;");
+				b.AppendLine("\t\t\tthis." + collection.PropertyName + "[index - " + childCount + "] = (" + collection.Type + ")value;");
 				b.AppendLine("\t\t\tbreak;");
 			}
 			b.AppendLine("\t}");
@@ -936,8 +945,8 @@ namespace ICSharpCode.Decompiler.IL
 			b.AppendLine("\tvar clone = (" + opCode.Name + ")ShallowClone();");
 			for (int i = 0; i < children.Length; i++) {
 				if (children[i].IsCollection) {
-					b.AppendLine("\tclone." + children[i].PropertyName + " = new InstructionCollection<ILInstruction>(clone, " + i + ");");
-					b.AppendLine("\tclone." + children[i].PropertyName + ".AddRange(this." + children[i].PropertyName + ".Select(arg => arg.Clone()));");
+					b.AppendLine("\tclone." + children[i].PropertyName + " = new InstructionCollection<" + children[i].Type + ">(clone, " + i + ");");
+					b.AppendLine("\tclone." + children[i].PropertyName + ".AddRange(this." + children[i].PropertyName + ".Select(arg => (" + children[i].Type + ")arg.Clone()));");
 				} else {
 					b.AppendLine("\tclone." + children[i].PropertyName + " = this." + children[i].Name + ".Clone();");
 				}

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.VisualBasic;
@@ -26,8 +27,12 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
 				var parseOptions = new VisualBasicParseOptions(preprocessorSymbols: preprocessorSymbols, languageVersion: LanguageVersion.Latest);
 				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
+				var references = defaultReferences.Value;
+				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic)) {
+					references = references.Concat(visualBasic.Value);
+				}
 				var compilation = VisualBasicCompilation.Create(Path.GetFileNameWithoutExtension(sourceFileName),
-					syntaxTrees, defaultReferences.Value,
+					syntaxTrees, references,
 					new VisualBasicCompilationOptions(
 					flags.HasFlag(CompilerOptions.Library) ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication,
 					platform: flags.HasFlag(CompilerOptions.Force32Bit) ? Platform.X86 : Platform.AnyCpu,
@@ -51,10 +56,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				var provider = new VBCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 				CompilerParameters options = new CompilerParameters();
 				options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);
-				options.CompilerOptions = "/o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-");
+				options.CompilerOptions = "/optimize" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-");
 				options.CompilerOptions += (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "");
 				options.CompilerOptions += (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
-				options.CompilerOptions += "/optioninfer+ /optionexplicit+";
+				options.CompilerOptions += " /optioninfer+ /optionexplicit+";
 				if (preprocessorSymbols.Count > 0) {
 					options.CompilerOptions += " /d:" + string.Join(",", preprocessorSymbols.Select(p => $"{p.Key}={p.Value}"));
 				}
@@ -65,7 +70,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				options.ReferencedAssemblies.Add("System.dll");
 				options.ReferencedAssemblies.Add("System.Core.dll");
 				options.ReferencedAssemblies.Add("System.Xml.dll");
-				options.ReferencedAssemblies.Add("Microsoft.VisualBasic.dll");
+				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic)) {
+					options.ReferencedAssemblies.Add("Microsoft.VisualBasic.dll");
+				}
 				CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
 				if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
 					StringBuilder b = new StringBuilder("Compiler error:");

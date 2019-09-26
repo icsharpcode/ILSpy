@@ -115,6 +115,8 @@ namespace ICSharpCode.ILSpy
 			ReferenceSegment reference;
 			if (textView != null)
 				reference = textView.GetReferenceSegmentAtMousePosition();
+			else if (listBox?.SelectedItem is SearchResult result)
+				reference = new ReferenceSegment { Reference = result.Reference };
 			else if (listBox?.SelectedItem is TreeNodes.IMemberTreeNode provider)
 				reference = new ReferenceSegment { Reference = provider.Member };
 			else if (listBox?.SelectedItem != null)
@@ -261,14 +263,18 @@ namespace ICSharpCode.ILSpy
 							needSeparatorForCategory = false;
 						}
 						MenuItem menuItem = new MenuItem();
-						menuItem.Header = entryPair.Metadata.Header;
+						menuItem.Header = MainWindow.GetResourceString( entryPair.Metadata.Header);
 						menuItem.InputGestureText = entryPair.Metadata.InputGestureText;
 						if (!string.IsNullOrEmpty(entryPair.Metadata.Icon)) {
-							menuItem.Icon = new Image {
-								Width = 16,
-								Height = 16,
-								Source = Images.LoadImage(entry, entryPair.Metadata.Icon)
-							};
+							object image = Images.Load(entryPair.Value, entryPair.Metadata.Icon);
+							if (!(image is Viewbox)) {
+								image = new Image {
+									Width = 16,
+									Height = 16,
+									Source = (ImageSource)image
+								};
+							}
+							menuItem.Icon = image;
 						}
 						if (entryPair.Value.IsEnabled(context)) {
 							menuItem.Click += delegate { entry.Execute(context); };

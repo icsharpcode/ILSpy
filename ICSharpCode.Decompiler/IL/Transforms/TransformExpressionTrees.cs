@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -157,6 +156,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var returnType = functionType.GetDelegateInvokeMethod()?.ReturnType;
 			var function = new ILFunction(returnType, parameterList, context.Function.GenericContext, container);
 			function.DelegateType = functionType;
+			function.Kind = IsExpressionTree(functionType) ? ILFunctionKind.ExpressionTree : ILFunctionKind.Delegate;
 			function.Variables.AddRange(parameterVariablesList);
 			function.AddILRange(instruction);
 			lambdaStack.Push(function);
@@ -197,6 +197,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void SetExpressionTreeFlag(ILFunction lambda, CallInstruction call)
 		{
+			lambda.Kind = IsExpressionTree(call.Method.ReturnType) ? ILFunctionKind.ExpressionTree : ILFunctionKind.Delegate;
 			lambda.DelegateType = call.Method.ReturnType;
 		}
 
@@ -237,6 +238,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (result.Item1 != null) {
 				Debug.Assert(result.Item2 != null, "IType must be non-null!");
 				Debug.Assert(result.Item1.ResultType == result.Item2.GetStackType(), "StackTypes must match!");
+				if (typeHint != null) {
+					var inst = result.Item1;
+					if (inst.ResultType != typeHint.GetStackType()) {
+						return (new Conv(inst, typeHint.GetStackType().ToPrimitiveType(), false, typeHint.GetSign()), typeHint);
+					}
+				}
 			}
 			return result;
 
@@ -341,8 +348,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 						return (null, SpecialType.UnknownType);
 					case ILFunction function:
-						if (function.IsExpressionTree) {
+						if (function.Kind == ILFunctionKind.ExpressionTree) {
 							function.DelegateType = UnwrapExpressionTree(function.DelegateType);
+							function.Kind = ILFunctionKind.Delegate;
 						}
 						return (function, function.DelegateType);
 					case LdLoc ldloc:
@@ -350,7 +358,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							// Replace an already mapped parameter with the actual ILVariable,
 							// we generated earlier.
 							if (parameterMapping.TryGetValue(ldloc.Variable, out var v)) {
-								if (typeHint.SkipModifiers() is ByReferenceType brt && !v.Type.IsByRefLike)
+								if (typeHint.SkipModifiers() is ByReferenceType && !v.Type.IsByRefLike)
 									return (new LdLoca(v), typeHint);
 								return (new LdLoc(v), v.Type);
 							}
@@ -362,7 +370,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							// with references to mapped parameters.
 							if (ldloc.Variable.IsSingleDefinition && ldloc.Variable.StoreInstructions[0] is ILInstruction inst) {
 								if (MatchParameterVariableAssignment(inst, out _, out var type, out _))
-									return (ldloc, type);
+									return (new ExpressionTreeCast(type, ldloc, false), type);
 							}
 						}
 						return (null, SpecialType.UnknownType);
@@ -371,6 +379,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 		}
+
+		bool IsExpressionTree(IType delegateType) => delegateType is ParameterizedType pt
+			&& pt.FullName == "System.Linq.Expressions.Expression"
+			&& pt.TypeArguments.Count == 1;
 
 		IType UnwrapExpressionTree(IType delegateType)
 		{
@@ -498,14 +510,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (arguments == null)
 				return (null, SpecialType.UnknownType);
 			IMethod method = (IMethod)member;
-			Debug.Assert(arguments.Count == method.Parameters.Count);
-			for (int i = 0; i < arguments.Count; i++) {
-				var expectedType = method.Parameters[i].Type;
-				var (argument, argumentType) = ConvertInstruction(arguments[i], expectedType);
-				if (argument == null)
-					return (null, SpecialType.UnknownType);
-				arguments[i] = argument;
-			}
+			if (!ConvertCallArguments(arguments, method))
+				return (null, SpecialType.UnknownType);
 			if (method.FullName == "System.Reflection.MethodInfo.CreateDelegate" && method.Parameters.Count == 2) {
 				if (!MatchGetMethodFromHandle(target, out var targetMethod))
 					return (null, SpecialType.UnknownType);
@@ -535,7 +541,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (target.ResultType == StackType.Ref)
 						return target;
 					else
-						return new AddressOf(target);
+						return new AddressOf(target, expectedType);
 				case StackType.O:
 					if (targetType.IsReferenceType == false) {
 						return new Box(target, targetType);
@@ -543,8 +549,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return target;
 					}
 				default:
+					if (expectedType.Kind == TypeKind.Unknown && target.ResultType != StackType.Unknown) {
+						return new Conv(target, PrimitiveType.Unknown, false, Sign.None);
+					}
 					return target;
 			}
+		}
+
+		bool ConvertCallArguments(IList<ILInstruction> arguments, IMethod method)
+		{
+			Debug.Assert(arguments.Count == method.Parameters.Count);
+			for (int i = 0; i < arguments.Count; i++) {
+				var expectedType = method.Parameters[i].Type;
+				var argument = ConvertInstruction(arguments[i], expectedType).Item1;
+				if (argument == null)
+					return false;
+				arguments[i] = argument;
+			}
+			return true;
 		}
 
 		(ILInstruction, IType) ConvertCast(CallInstruction invocation, bool isChecked)
@@ -699,7 +721,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (member.DeclaringType.IsReferenceType == true) {
 					inst = new LdFlda(target, (IField)member);
 				} else {
-					inst = new LdFlda(new AddressOf(target), (IField)member);
+					inst = new LdFlda(new AddressOf(target, member.DeclaringType), (IField)member);
 				}
 			}
 			if (typeHint.SkipModifiers() is ByReferenceType brt && !member.ReturnType.IsByRefLike) {
@@ -722,12 +744,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				return (null, SpecialType.UnknownType);
-			for (int i = 0; i < arguments.Count; i++) {
-				var arg = ConvertInstruction(arguments[i]).Item1;
-				if (arg == null)
-					return (null, SpecialType.UnknownType);
-				arguments[i] = arg;
-			}
+			if (!ConvertCallArguments(arguments, invokeMethod))
+				return (null, SpecialType.UnknownType);
 			var call = new CallVirt(invokeMethod);
 			call.Arguments.Add(target);
 			call.Arguments.AddRange(arguments);
@@ -910,22 +928,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return (null, SpecialType.UnknownType);
 					if (!MatchArgumentList(invocation.Arguments[1], out arguments))
 						return (null, SpecialType.UnknownType);
-					var args = arguments.SelectArray(arg => ConvertInstruction(arg).Item1);
-					if (args.Any(a => a == null))
+					IMethod method = (IMethod)member;
+					if (!ConvertCallArguments(arguments, method))
 						return (null, SpecialType.UnknownType);
-					newObj = new NewObj((IMethod)member);
-					newObj.Arguments.AddRange(args);
+					newObj = new NewObj(method);
+					newObj.Arguments.AddRange(arguments);
 					return (newObj, member.DeclaringType);
 				case 3:
 					if (!MatchGetConstructorFromHandle(invocation.Arguments[0], out member))
 						return (null, SpecialType.UnknownType);
 					if (!MatchArgumentList(invocation.Arguments[1], out arguments))
 						return (null, SpecialType.UnknownType);
-					var args2 = arguments.SelectArray(arg => ConvertInstruction(arg).Item1);
-					if (args2.Any(a => a == null))
+					method = (IMethod)member;
+					if (!ConvertCallArguments(arguments, method))
 						return (null, SpecialType.UnknownType);
-					newObj = new NewObj((IMethod)member);
-					newObj.Arguments.AddRange(args2);
+					newObj = new NewObj(method);
+					newObj.Arguments.AddRange(arguments);
 					return (newObj, member.DeclaringType);
 			}
 			return (null, SpecialType.UnknownType);
@@ -969,11 +987,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (invocation.Arguments.Count != 3 || !MatchArgumentList(invocation.Arguments[2], out arguments)) {
 				arguments = new List<ILInstruction>();
 			} else {
-				for (int i = 0; i < arguments.Count; i++) {
-					arguments[i] = ConvertInstruction(arguments[i]).Item1;
-					if (arguments[i] == null)
-						return (null, SpecialType.UnknownType);
-				}
+				if (!ConvertCallArguments(arguments, (IMethod)member))
+					return (null, SpecialType.UnknownType);
 			}
 			CallInstruction call;
 			if (member.IsAbstract || member.IsVirtual || member.IsOverride) {
@@ -995,9 +1010,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var converted = ConvertInstruction(invocation.Arguments[0]).Item1;
 			if (!MatchGetTypeFromHandle(invocation.Arguments[1], out var type))
 				return (null, SpecialType.UnknownType);
-			if (converted != null)
-				return (new IsInst(converted, type), type);
-			return (null, SpecialType.UnknownType);
+			if (converted == null)
+				return (null, SpecialType.UnknownType);
+
+			ILInstruction inst = new IsInst(converted, type);
+			// We must follow ECMA-335, III.4.6:
+			// If typeTok is a nullable type, Nullable<T>, it is interpreted as "boxed" T.
+			if (type.IsKnownType(KnownTypeCode.NullableOfT))
+				inst = new UnboxAny(inst, type);
+			return (inst, type);
 		}
 
 		(ILInstruction, IType) ConvertTypeIs(CallInstruction invocation)
@@ -1065,14 +1086,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							&& v.StackType.IsIntegerType())
 							return new LdLoca(v);
 						return null;
+					} else if (IsClosureReference(ldloc.Variable)) {
+						if (ldloc.Variable.Kind == VariableKind.Local) {
+							ldloc.Variable.Kind = VariableKind.DisplayClassLocal;
+						}
+						if (ldloc.Variable.CaptureScope == null) {
+							ldloc.Variable.CaptureScope = BlockContainer.FindClosestContainer(context);
+						}
+						return ldloc;
 					} else {
-						if (ldloc.Variable.Kind != VariableKind.StackSlot)
-							return ldloc;
-						return null;
+						return ldloc;
 					}
 				default:
 					return value.Clone();
 			}
+		}
+
+		bool IsClosureReference(ILVariable variable)
+		{
+			if (!variable.IsSingleDefinition || !(variable.StoreInstructions.SingleOrDefault() is StLoc store))
+				return false;
+			if (!(store.Value is NewObj newObj))
+				return false;
+			return TransformDisplayClassUsage.IsPotentialClosure(this.context, newObj);
 		}
 
 		bool IsExpressionTreeParameter(ILVariable variable)

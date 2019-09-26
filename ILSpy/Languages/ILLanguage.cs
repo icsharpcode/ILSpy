@@ -27,6 +27,8 @@ using System.Reflection.Metadata.Ecma335;
 using System.Linq;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.Decompiler.Solution;
 
 namespace ICSharpCode.ILSpy
 {
@@ -52,6 +54,7 @@ namespace ICSharpCode.ILSpy
 		
 		protected virtual ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options)
 		{
+			output.IndentationString = options.DecompilerSettings.CSharpFormattingOptions.IndentationString;
 			return new ReflectionDisassembler(output, options.CancellationToken) {
 				DetectControlStructure = detectControlStructure,
 				ShowSequencePoints = options.DecompilerSettings.ShowDebugInfo,
@@ -149,7 +152,7 @@ namespace ICSharpCode.ILSpy
 			dis.DisassembleNamespace(nameSpace, module, types.Select(t => (TypeDefinitionHandle)t.MetadataToken));
 		}
 		
-		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			output.WriteLine("// " + assembly.FileName);
 			output.WriteLine();
@@ -173,6 +176,7 @@ namespace ICSharpCode.ILSpy
 					dis.WriteModuleContents(module);
 				}
 			}
+			return null;
 		}
 	}
 }
