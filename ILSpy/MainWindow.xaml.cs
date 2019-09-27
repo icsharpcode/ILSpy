@@ -331,6 +331,10 @@ namespace ICSharpCode.ILSpy
 							}
 						}
 					}
+				} else if (navigateTo == "none") {
+					// Don't navigate anywhere; start empty.
+					// Used by ILSpy VS addin, it'll send us the real location to navigate to via IPC.
+					found = true;
 				} else {
 					IEntity mr = await Task.Run(() => FindEntityInRelevantAssemblies(navigateTo, relevantAssemblies));
 					if (mr != null && mr.ParentModule.PEFile != null) {
@@ -354,15 +358,15 @@ namespace ICSharpCode.ILSpy
 				}
 			} else if (spySettings != null) {
 				SharpTreeNode node = null;
-				if (sessionSettings.ActiveTreeViewPath?.Length > 0) {
+				if (activeTreeViewPath?.Length > 0) {
 					foreach (var asm in assemblyList.GetAssemblies()) {
-						if (asm.FileName == sessionSettings.ActiveTreeViewPath[0]) {
+						if (asm.FileName == activeTreeViewPath[0]) {
 							// FindNodeByPath() blocks the UI if the assembly is not yet loaded,
 							// so use an async wait instead.
 							await asm.GetPEFileAsync().Catch<Exception>(ex => { });
 						}
 					}
-					node = FindNodeByPath(sessionSettings.ActiveTreeViewPath, true);
+					node = FindNodeByPath(activeTreeViewPath, true);
 				}
 				if (treeView.SelectedItem == initialSelection) {
 					if (node != null) {
