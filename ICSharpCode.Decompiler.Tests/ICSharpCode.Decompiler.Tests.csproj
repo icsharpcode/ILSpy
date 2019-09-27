@@ -82,6 +82,8 @@
     <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
     <Compile Include="TestCases\Pretty\OutVariables.cs" />
     <Compile Include="TestCases\Pretty\CustomTaskType.cs" />
+    <None Include="TestCases\Ugly\NoExtensionMethods.Expected.cs" />
+    <Compile Include="TestCases\Ugly\NoExtensionMethods.cs" />
     <None Include="TestCases\VBPretty\VBCompoundAssign.cs" />
     <Compile Include="TestCases\Pretty\ThrowExpressions.cs" />
     <None Include="TestCases\ILPretty\Issue1145.cs" />

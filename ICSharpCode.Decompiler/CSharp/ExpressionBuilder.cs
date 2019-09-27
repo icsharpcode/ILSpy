@@ -3134,6 +3134,22 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new OperatorResolveResult(SpecialType.Dynamic, inst.Operation, new[] { target.ResolveResult, value.ResolveResult }));
 		}
 
+		protected internal override TranslatedExpression VisitLdFtn(LdFtn inst, TranslationContext context)
+		{
+			ExpressionWithResolveResult delegateRef = new CallBuilder(this, typeSystem, settings).BuildMethodReference(inst.Method, isVirtual: false);
+			return new InvocationExpression(new IdentifierExpression("__ldftn"), delegateRef)
+				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.IntPtr)))
+				.WithILInstruction(inst);
+		}
+
+		protected internal override TranslatedExpression VisitLdVirtFtn(LdVirtFtn inst, TranslationContext context)
+		{
+			ExpressionWithResolveResult delegateRef = new CallBuilder(this, typeSystem, settings).BuildMethodReference(inst.Method, isVirtual: true);
+			return new InvocationExpression(new IdentifierExpression("__ldvirtftn"), delegateRef)
+				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.IntPtr)))
+				.WithILInstruction(inst);
+		}
+
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)
 		{
 			string message = "Error";

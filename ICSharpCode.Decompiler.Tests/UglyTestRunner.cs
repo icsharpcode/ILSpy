@@ -83,6 +83,14 @@ namespace ICSharpCode.Decompiler.Tests
 			});
 		}
 
+		[Test]
+		public void NoExtensionMethods([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+				ExtensionMethods = false
+			});
+		}
+
 		void RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, decompilerSettings);
