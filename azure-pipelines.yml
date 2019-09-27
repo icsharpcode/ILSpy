@@ -39,7 +39,7 @@ jobs:
 
   - task: DotNetCoreInstaller@0
     inputs:
-      version: '3.0.100-preview9-014004'
+      version: '3.0.100'
 
   - powershell: .\BuildTools\pipelines-install.ps1
     displayName: Install
