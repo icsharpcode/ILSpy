@@ -61,6 +61,30 @@
     IL_0001:  ret
   } // end of method NoExtensionMethods::Return
 
+  .method assembly hidebysig static class [mscorlib]System.Func`2<int32,int32> 
+          ExtensionMethodAsStaticFunc() cil managed
+  {
+    // Code size       13 (0xd)
+    .maxstack  8
+    IL_0000:  ldnull
+    IL_0001:  ldftn      !!0 ICSharpCode.Decompiler.Tests.TestCases.Ugly.NoExtensionMethods::Return<int32>(!!0)
+    IL_0007:  newobj     instance void class [mscorlib]System.Func`2<int32,int32>::.ctor(object,
+                                                                                         native int)
+    IL_000c:  ret
+  } // end of method NoExtensionMethods::ExtensionMethodAsStaticFunc
+
+  .method assembly hidebysig static class [mscorlib]System.Func`1<object> 
+          ExtensionMethodBoundToNull() cil managed
+  {
+    // Code size       13 (0xd)
+    .maxstack  8
+    IL_0000:  ldnull
+    IL_0001:  ldftn      !!0 ICSharpCode.Decompiler.Tests.TestCases.Ugly.NoExtensionMethods::Return<object>(!!0)
+    IL_0007:  newobj     instance void class [mscorlib]System.Func`1<object>::.ctor(object,
+                                                                                    native int)
+    IL_000c:  ret
+  } // end of method NoExtensionMethods::ExtensionMethodBoundToNull
+
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Ugly.NoExtensionMethods
 
 
