@@ -23,7 +23,9 @@ using System.Reflection;
 using System.Text;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -56,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var arguments = invocationExpression.Arguments.ToArray();
 
 			// Reduce "String.Concat(a, b)" to "a + b"
-			if (method.Name == "Concat" && method.DeclaringType.FullName == "System.String" && CheckArgumentsForStringConcat(arguments)) {
+			if (IsStringConcat(method) && CheckArgumentsForStringConcat(arguments)) {
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
 				Expression expr = arguments[0];
 				for (int i = 1; i < arguments.Length; i++) {
@@ -174,9 +176,77 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (arguments.Length < 2)
 				return false;
 
-			return !arguments.Any(arg => arg is NamedArgumentExpression) &&
-				(arguments[0].GetResolveResult().Type.IsKnownType(KnownTypeCode.String) ||
-				arguments[1].GetResolveResult().Type.IsKnownType(KnownTypeCode.String));
+			if (arguments.Any(arg => arg is NamedArgumentExpression))
+				return false;
+
+			// The evaluation order when the object.ToString() calls happen is a mess:
+			// The C# spec says the evaluation for order for each individual string + should be:
+			//   * evaluate left argument
+			//   * evaluate right argument
+			//   * call ToString() on object argument
+			// What actually happens pre-VS2019.3:
+			//   * evaluate all arguments in chain of + operators from left to right
+			//   * call ToString() on all object arguments from left to right
+			// What happens in VS2019.3:
+			//   * for each argument in chain of + operators fom left to right:
+			//       * evaluate argument
+			//       * call ToString() on object argument
+			// See https://github.com/dotnet/roslyn/issues/38641 for details.
+			// To ensure the decompiled code's behavior matches the original IL behavior,
+			// no matter which compiler is used to recompile it, we require that all
+			// implicit ToString() calls except for the last are free of side effects.
+			foreach (var arg in arguments.SkipLast(1)) {
+				if (!ToStringIsKnownEffectFree(arg.GetResolveResult().Type)) {
+					return false;
+				}
+			}
+			foreach (var arg in arguments) {
+				if (arg.GetResolveResult() is InvocationResolveResult rr && IsStringConcat(rr.Member)) {
+					// Roslyn + mcs also flatten nested string.Concat() invocations within a operator+ use,
+					// which causes it to use the incorrect evaluation order despite the code using an
+					// explicit string.Concat() call.
+					// This problem is avoided if the outer call remains string.Concat() as well.
+					return false;
+				}
+			}
+
+			// One of the first two arguments must be string, otherwise the + operator
+			// won't resolve to a string concatenation.
+			return arguments[0].GetResolveResult().Type.IsKnownType(KnownTypeCode.String)
+				|| arguments[1].GetResolveResult().Type.IsKnownType(KnownTypeCode.String);
+		}
+
+		private bool IsStringConcat(IParameterizedMember member)
+		{
+			return member is IMethod method
+				&& method.Name == "Concat"
+				&& method.DeclaringType.IsKnownType(KnownTypeCode.String);
+		}
+
+		static bool ToStringIsKnownEffectFree(IType type)
+		{
+			type = NullableType.GetUnderlyingType(type);
+			switch (type.GetDefinition()?.KnownTypeCode) {
+				case KnownTypeCode.Boolean:
+				case KnownTypeCode.Char:
+				case KnownTypeCode.SByte:
+				case KnownTypeCode.Byte:
+				case KnownTypeCode.Int16:
+				case KnownTypeCode.UInt16:
+				case KnownTypeCode.Int32:
+				case KnownTypeCode.UInt32:
+				case KnownTypeCode.Int64:
+				case KnownTypeCode.UInt64:
+				case KnownTypeCode.Single:
+				case KnownTypeCode.Double:
+				case KnownTypeCode.Decimal:
+				case KnownTypeCode.IntPtr:
+				case KnownTypeCode.UIntPtr:
+				case KnownTypeCode.String:
+					return true;
+				default:
+					return false;
+			}
 		}
 
 		static BinaryOperatorType? GetBinaryOperatorTypeFromMetadataName(string name)
