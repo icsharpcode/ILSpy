@@ -1235,12 +1235,38 @@ namespace ICSharpCode.Decompiler.CSharp
 				default:
 					throw new ArgumentException($"Unknown instruction type: {func.OpCode}");
 			}
-			if (method.IsStatic  && !method.IsExtensionMethod) {
+			if (CanUseDelegateConstruction(method, thisArg, inst.Method.DeclaringType.GetDelegateInvokeMethod())) {
+				return HandleDelegateConstruction(inst.Method.DeclaringType, method, expectedTargetDetails, thisArg, inst);
+			} else {
 				var argumentList = BuildArgumentList(expectedTargetDetails, null, inst.Method,
 					0, inst.Arguments, null);
 				return HandleConstructorCall(new ExpectedTargetDetails { CallOpCode = OpCode.NewObj }, null, inst.Method, argumentList).WithILInstruction(inst);
 			}
-			return HandleDelegateConstruction(inst.Method.DeclaringType, method, expectedTargetDetails, thisArg, inst);
+		}
+
+		private bool CanUseDelegateConstruction(IMethod targetMethod, ILInstruction thisArg, IMethod invokeMethod)
+		{
+			if (targetMethod.IsStatic) {
+				// If the invoke method is known, we can compare the parameter counts to figure out whether the
+				// delegate is static or binds the first argument
+				if (invokeMethod != null) {
+					if (invokeMethod.Parameters.Count == targetMethod.Parameters.Count) {
+						return thisArg.MatchLdNull();
+					} else if (targetMethod.IsExtensionMethod && invokeMethod.Parameters.Count == targetMethod.Parameters.Count - 1) {
+						return true;
+					} else {
+						return false;
+					}
+				} else {
+					// delegate type unknown:
+					return thisArg.MatchLdNull() || targetMethod.IsExtensionMethod;
+				}
+			} else {
+				// targetMethod is instance method
+				if (invokeMethod != null && invokeMethod.Parameters.Count != targetMethod.Parameters.Count)
+					return false;
+				return true;
+			}
 		}
 
 		internal TranslatedExpression Build(LdVirtDelegate inst)

@@ -42,7 +42,8 @@ namespace ICSharpCode.ILSpy.AddIn
 			var process = new Process() {
 				StartInfo = new ProcessStartInfo() {
 					FileName = GetILSpyPath(),
-					UseShellExecute = false
+					UseShellExecute = false,
+					Arguments = "/navigateTo:none"
 				}
 			};
 			process.Start();

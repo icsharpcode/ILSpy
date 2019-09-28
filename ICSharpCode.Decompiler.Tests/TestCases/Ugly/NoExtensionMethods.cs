@@ -13,5 +13,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 		{
 			return value;
 		}
+
+		internal static Func<int, int> ExtensionMethodAsStaticFunc()
+		{
+			return Return;
+		}
+
+		internal static Func<object> ExtensionMethodBoundToNull()
+		{
+			return ((object)null).Return;
+		}
 	}
 }
