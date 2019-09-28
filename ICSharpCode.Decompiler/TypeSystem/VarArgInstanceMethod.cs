@@ -114,6 +114,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMethod.GetAttributes();
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => baseMethod.GetReturnTypeAttributes();
 		bool IMethod.ReturnTypeIsRefReadOnly => baseMethod.ReturnTypeIsRefReadOnly;
+		bool IMethod.ThisIsRefReadOnly => baseMethod.ThisIsRefReadOnly;
 
 		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get { return baseMethod.TypeParameters; }

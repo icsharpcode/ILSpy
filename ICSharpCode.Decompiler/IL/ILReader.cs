@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler.IL
 					declaringType = new ParameterizedType(declaringType, declaringType.TypeParameters);
 				}
 				ILVariable ilVar = CreateILVariable(-1, declaringType, "this");
-				ilVar.IsRefReadOnly = declaringType.GetDefinition()?.IsReadOnly == true;
+				ilVar.IsRefReadOnly = method.ThisIsRefReadOnly;
 				parameterVariables[paramIndex++] = ilVar;
 			}
 			while (paramIndex < parameterVariables.Length) {

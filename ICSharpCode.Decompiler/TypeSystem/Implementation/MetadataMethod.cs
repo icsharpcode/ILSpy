@@ -426,6 +426,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		#endregion
 
+		public bool ThisIsRefReadOnly => DeclaringTypeDefinition?.IsReadOnly ?? false;
+
 		public Accessibility Accessibility => GetAccessibility(attributes);
 		
 		internal static Accessibility GetAccessibility(MethodAttributes attr)
