@@ -367,7 +367,7 @@ namespace ICSharpCode.ILSpy
 						SelectNode(node);
 
 						// only if not showing the about page, perform the update check:
-						ShowMessageIfUpdatesAvailableAsync(spySettings);
+						await ShowMessageIfUpdatesAvailableAsync(spySettings);
 					} else {
 						AboutPage.Display(decompilerTextView);
 					}
@@ -501,20 +501,21 @@ namespace ICSharpCode.ILSpy
 		#region Update Check
 		string updateAvailableDownloadUrl;
 
-		public void ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings, bool forceCheck = false)
+		public async Task ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings, bool forceCheck = false)
 		{
 			// Don't check for updates if we're in an MSIX since they work differently
 			if (WindowsVersionHelper.HasPackageIdentity) {
 				return;
 			}
 
-			Task<string> result;
+			string downloadUrl;
 			if (forceCheck) {
-				result = AboutPage.CheckForUpdatesAsync(spySettings);
+				downloadUrl = await AboutPage.CheckForUpdatesAsync(spySettings);
 			} else {
-				result = AboutPage.CheckForUpdatesIfEnabledAsync(spySettings);
+				downloadUrl = await AboutPage.CheckForUpdatesIfEnabledAsync(spySettings);
 			}
-			result.ContinueWith(task => AdjustUpdateUIAfterCheck(task, forceCheck), TaskScheduler.FromCurrentSynchronizationContext());
+			
+			AdjustUpdateUIAfterCheck(downloadUrl, forceCheck);
 		}
 
 		void updatePanelCloseButtonClick(object sender, RoutedEventArgs e)
@@ -522,22 +523,22 @@ namespace ICSharpCode.ILSpy
 			updatePanel.Visibility = Visibility.Collapsed;
 		}
 
-		void downloadOrCheckUpdateButtonClick(object sender, RoutedEventArgs e)
+		async void downloadOrCheckUpdateButtonClick(object sender, RoutedEventArgs e)
 		{
 			if (updateAvailableDownloadUrl != null) {
 				MainWindow.OpenLink(updateAvailableDownloadUrl);
 			} else {
 				updatePanel.Visibility = Visibility.Collapsed;
-				AboutPage.CheckForUpdatesAsync(ILSpySettings.Load())
-					.ContinueWith(task => AdjustUpdateUIAfterCheck(task, true), TaskScheduler.FromCurrentSynchronizationContext());
+				string downloadUrl = await AboutPage.CheckForUpdatesAsync(ILSpySettings.Load());
+				AdjustUpdateUIAfterCheck(downloadUrl, true);
 			}
 		}
 
-		void AdjustUpdateUIAfterCheck(Task<string> task, bool displayMessage)
+		void AdjustUpdateUIAfterCheck(string downloadUrl, bool displayMessage)
 		{
-			updateAvailableDownloadUrl = task.Result;
+			updateAvailableDownloadUrl = downloadUrl;
 			updatePanel.Visibility = displayMessage ? Visibility.Visible : Visibility.Collapsed;
-			if (task.Result != null) {
+			if (downloadUrl != null) {
 				updatePanelMessage.Text = Properties.Resources.ILSpyVersionAvailable;
 				downloadOrCheckUpdateButton.Content = Properties.Resources.Download;
 			} else {
