@@ -16,6 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+// We can't test this because "error CS8701: Target runtime doesn't support default interface implementation."
+#undef CS80
+
 using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
@@ -37,9 +40,42 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			event EventHandler MyEvent;
 			void Method();
+
+#if CS80
+			void DefaultMethod()
+			{
+				Method();
+				PrivateMethod();
+			}
+
+			private void PrivateMethod()
+			{
+				Method();
+			}
+
+			internal void InternalMethod()
+			{
+				Method();
+			}
+
+			sealed void SealedMethod()
+			{
+				Method();
+			}
+
+			static void StaticMethod()
+			{
+
+			}
+#endif
 		}
 		public interface IA2 : IA
 		{
+#if CS80
+			void IA.InternalMethod()
+			{
+			}
+#endif
 		}
 		public interface IB
 		{

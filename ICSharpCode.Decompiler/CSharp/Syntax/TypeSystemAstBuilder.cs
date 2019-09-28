@@ -1741,8 +1741,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		bool NeedsAccessibility(IMember member)
 		{
 			var declaringType = member.DeclaringType;
-			if ((declaringType != null && declaringType.Kind == TypeKind.Interface) || member.IsExplicitInterfaceImplementation)
+			if (member.IsExplicitInterfaceImplementation)
 				return false;
+			if (declaringType != null && declaringType.Kind == TypeKind.Interface) {
+				return member.Accessibility != Accessibility.Public;
+			}
 			switch (member.SymbolKind) {
 				case SymbolKind.Constructor:
 					return !member.IsStatic;
@@ -1764,13 +1767,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					m |= Modifiers.Static;
 				} else {
 					var declaringType = member.DeclaringType;
-					if (member.IsAbstract && declaringType != null && declaringType.Kind != TypeKind.Interface)
-						m |= Modifiers.Abstract;
-					if (member.IsOverride)
+					if (declaringType.Kind == TypeKind.Interface) {
+						if (!member.IsVirtual && !member.IsAbstract && !member.IsOverride && member.Accessibility != Accessibility.Private)
+							m |= Modifiers.Sealed;
+					} else {
+						if (member.IsAbstract)
+							m |= Modifiers.Abstract;
+						else if (member.IsVirtual && !member.IsOverride)
+							m |= Modifiers.Virtual;
+					}
+					if (member.IsOverride && !member.IsExplicitInterfaceImplementation)
 						m |= Modifiers.Override;
-					if (member.IsVirtual && !member.IsAbstract && !member.IsOverride && declaringType.Kind != TypeKind.Interface)
-						m |= Modifiers.Virtual;
-					if (member.IsSealed)
+					if (member.IsSealed && !member.IsExplicitInterfaceImplementation)
 						m |= Modifiers.Sealed;
 					if (member is IMethod method && method.ThisIsRefReadOnly && method.DeclaringTypeDefinition?.IsReadOnly == false)
 						m |= Modifiers.Readonly;
