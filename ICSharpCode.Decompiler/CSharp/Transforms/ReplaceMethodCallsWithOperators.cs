@@ -60,9 +60,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// Reduce "String.Concat(a, b)" to "a + b"
 			if (IsStringConcat(method) && CheckArgumentsForStringConcat(arguments)) {
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
-				Expression expr = arguments[0];
+				Expression expr = RemoveRedundantToStringInConcat(arguments[0], method).Detach();
 				for (int i = 1; i < arguments.Length; i++) {
-					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Add, arguments[i].UnwrapInDirectionExpression());
+					var arg = RemoveRedundantToStringInConcat(arguments[i], method).Detach();
+					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Add, arg);
 				}
 				expr.CopyAnnotationsFrom(invocationExpression);
 				invocationExpression.ReplaceWith(expr);
@@ -165,7 +166,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			return;
 		}
-
+		
 		bool IsInstantiableTypeParameter(IType type)
 		{
 			return type is ITypeParameter tp && tp.HasDefaultConstructorConstraint;
@@ -221,6 +222,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return member is IMethod method
 				&& method.Name == "Concat"
 				&& method.DeclaringType.IsKnownType(KnownTypeCode.String);
+		}
+		
+		static readonly InvocationExpression ToStringCallPattern = new InvocationExpression(new MemberReferenceExpression(new AnyNode("target"), "ToString"));
+
+		static Expression RemoveRedundantToStringInConcat(Expression expr, IMethod concatMethod)
+		{
+			var m = ToStringCallPattern.Match(expr);
+			if (m.Success) {
+				var target = m.Get<Expression>("target").Single();
+				if (ToStringIsKnownEffectFree(target.GetResolveResult().Type) && concatMethod.Parameters.All(IsStringParameter)) {
+					return target;
+				}
+			}
+			return expr;
+
+			bool IsStringParameter(IParameter p)
+			{
+				IType ty = p.Type;
+				if (p.IsParams && ty.Kind == TypeKind.Array)
+					ty = ((ArrayType)ty).ElementType;
+				return ty.IsKnownType(KnownTypeCode.String);
+			}
 		}
 
 		static bool ToStringIsKnownEffectFree(IType type)
