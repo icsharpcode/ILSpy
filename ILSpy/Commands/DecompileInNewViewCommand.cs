@@ -21,9 +21,9 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ICSharpCode.ILSpy.Commands
 {
-	[ExportContextMenuEntry(Header = nameof(Resources.DecompileToNewPanel), Icon = "images/Search", Category = nameof(Resources.Analyze), Order = 90)]
+	// [ExportContextMenuEntry(Header = nameof(Resources.DecompileToNewPanel), Icon = "images/Search", Category = nameof(Resources.Analyze), Order = 90)]
 	internal sealed class DecompileInNewViewCommand : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -40,13 +40,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 			return true;			
 		}
 
-		public void Execute(TextViewContext context)
+		public async void Execute(TextViewContext context)
 		{
 			var dtv = new DecompilerTextView();
 			var nodes = context.SelectedTreeNodes.Cast<ILSpyTreeNode>().ToArray();
 			var title = string.Join(", ", nodes.Select(x => x.ToString()));
 			MainWindow.Instance.ShowInNewPane(title, dtv, PanePosition.Document);
-			dtv.Decompile(MainWindow.Instance.CurrentLanguage, nodes, new DecompilationOptions());
+			await dtv.DecompileAsync(MainWindow.Instance.CurrentLanguage, nodes, new DecompilationOptions());
 		}
 	}
 }

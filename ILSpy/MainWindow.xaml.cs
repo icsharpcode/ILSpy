@@ -1047,13 +1047,13 @@ namespace ICSharpCode.ILSpy
 		{
 			if (panePosition == PanePosition.Document) {
 				var layoutDocument = new LayoutDocument() { Title = title, Content = content, ToolTip = toolTip, CanClose = true };
-			var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
+				var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
 				documentPane.Children.Add(layoutDocument);
 			} else {
 				var layoutAnchorable = new LayoutAnchorable() { Title = title, Content = content, ToolTip = toolTip, CanClose = true, CanHide = true };
 				var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
 				Docking.DockingHelper.DockHorizontal(layoutAnchorable, documentPane, new GridLength(200), panePosition == PanePosition.Top);
-		}
+			}
 		}
 
 		#endregion
