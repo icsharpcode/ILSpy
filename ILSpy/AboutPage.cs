@@ -19,7 +19,6 @@
 using System;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -44,7 +43,7 @@ namespace ICSharpCode.ILSpy
 	{
 		[Import]
 		DecompilerTextView decompilerTextView = null;
-		
+
 		public override void Execute(object parameter)
 		{
 			MainWindow.Instance.UnselectAll();
