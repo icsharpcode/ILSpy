@@ -113,6 +113,10 @@ namespace ICSharpCode.ILSpy.AddIn
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
+			if (uiShell == null) {
+				return 0;
+			}
+
 			Guid clsid = Guid.Empty;
 			int result;
 			Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(
@@ -136,6 +140,8 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public IEnumerable<T> GetSelectedItemsData<T>()
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			if (DTE.ToolWindows.SolutionExplorer.SelectedItems is IEnumerable<UIHierarchyItem> hierarchyItems) {
 				foreach (var item in hierarchyItems) {
 					if (item.Object is T typedItem) {

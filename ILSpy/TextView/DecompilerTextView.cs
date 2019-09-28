@@ -649,12 +649,13 @@ namespace ICSharpCode.ILSpy.TextView
 				if (referenceSegment == null) {
 					ClearLocalReferenceMarks();
 				} else if (referenceSegment.IsLocal || !referenceSegment.IsDefinition) {
-					JumpToReference(referenceSegment);
 					textEditor.TextArea.ClearSelection();
+					// cancel mouse selection to avoid AvalonEdit selecting between the new
+					// cursor position and the mouse position.
+					textEditor.TextArea.MouseSelectionMode = MouseSelectionMode.None;
+
+					JumpToReference(referenceSegment);
 				}
-				// cancel mouse selection to avoid AvalonEdit selecting between the new
-				// cursor position and the mouse position.
-				textEditor.TextArea.MouseSelectionMode = MouseSelectionMode.None;
 			}
 		}
 		

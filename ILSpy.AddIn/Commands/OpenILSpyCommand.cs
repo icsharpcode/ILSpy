@@ -55,6 +55,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		protected void OpenAssembliesInILSpy(ILSpyParameters parameters)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			if (parameters == null)
 				return;
 
@@ -71,6 +73,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		protected Dictionary<string, DetectedReference> GetReferences(Microsoft.CodeAnalysis.Project parentProject)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			var dict = new Dictionary<string, DetectedReference>();
 			foreach (var reference in parentProject.MetadataReferences) {
 				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
@@ -97,6 +101,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		protected EnvDTE.Project FindProject(IEnumerable<EnvDTE.Project> projects, string projectFile)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			foreach (var project in projects) {
 				switch (project.Kind) {
 					case DTEConstants.vsProjectKindSolutionItems:
