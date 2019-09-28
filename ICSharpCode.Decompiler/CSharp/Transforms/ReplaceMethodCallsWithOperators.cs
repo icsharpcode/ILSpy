@@ -59,10 +59,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			// Reduce "String.Concat(a, b)" to "a + b"
 			if (IsStringConcat(method) && CheckArgumentsForStringConcat(arguments)) {
-				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
-				Expression expr = RemoveRedundantToStringInConcat(arguments[0], method, isLastArgument: false).Detach();
+				bool isInExpressionTree = invocationExpression.Ancestors.OfType<LambdaExpression>().Any(
+					lambda => lambda.Annotation<IL.ILFunction>()?.Kind == IL.ILFunctionKind.ExpressionTree);
+				Expression expr = arguments[0].Detach();
+				if (!isInExpressionTree) {
+					expr = RemoveRedundantToStringInConcat(expr, method, isLastArgument: false).Detach();
+				}
 				for (int i = 1; i < arguments.Length; i++) {
-					var arg = RemoveRedundantToStringInConcat(arguments[i], method, isLastArgument: i == arguments.Length - 1).Detach();
+					var arg = arguments[i].Detach();
+					if (!isInExpressionTree) {
+						arg = RemoveRedundantToStringInConcat(arg, method, isLastArgument: i == arguments.Length - 1).Detach();
+					}
 					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Add, arg);
 				}
 				expr.CopyAnnotationsFrom(invocationExpression);

@@ -1026,6 +1026,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			});
 		}
 
+		public static void StringConcat()
+		{
+			Test<Func<string, object, string>>(null, (string a, object b) => a + b);
+			Test<Func<string, object, string>>(null, (string a, object b) => a + b.ToString());
+			Test<Func<string, int, string>>(null, (string a, int b) => a + b);
+			Test<Func<string, int, string>>(null, (string a, int b) => a + b.ToString());
+		}
+
 		public async Task Issue1524(string str)
 		{
 			await Task.Delay(100);
