@@ -16,12 +16,27 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class InterfaceTests
 	{
 		public interface IA
 		{
+			int Property1 {
+				get;
+			}
+			int Property2 {
+				set;
+			}
+			int Property3 {
+				get;
+				set;
+			}
+
+			event EventHandler MyEvent;
+			void Method();
 		}
 		public interface IA2 : IA
 		{
@@ -31,6 +46,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public class C : IA2, IA, IB
 		{
+			int IA.Property1 {
+				get {
+					throw new NotImplementedException();
+				}
+			}
+			int IA.Property2 {
+				set {
+					throw new NotImplementedException();
+				}
+			}
+			int IA.Property3 {
+				get {
+					throw new NotImplementedException();
+				}
+				set {
+					throw new NotImplementedException();
+				}
+			}
+
+			event EventHandler IA.MyEvent {
+				add {
+				}
+				remove {
+				}
+			}
+			void IA.Method()
+			{
+				throw new NotImplementedException();
+			}
 		}
 	}
 }
