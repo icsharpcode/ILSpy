@@ -233,14 +233,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		static readonly Pattern ToStringCallPattern = new Choice {
 			// target.ToString()
-			new InvocationExpression(new MemberReferenceExpression(new AnyNode("target"), "ToString")),
+			new InvocationExpression(new MemberReferenceExpression(new AnyNode("target"), "ToString")).WithName("call"),
 			// target?.ToString()
 			new UnaryOperatorExpression(
 				UnaryOperatorType.NullConditionalRewrap,
 				new InvocationExpression(
 					new MemberReferenceExpression(
 						new UnaryOperatorExpression(UnaryOperatorType.NullConditional, new AnyNode("target")),
-						"ToString"))
+						"ToString")
+				).WithName("call")
 			).WithName("nullConditional")
 		};
 
@@ -256,6 +257,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// generate additional ToString() calls in this case.
 				return expr;
 			}
+			var toStringMethod = m.Get<Expression>("call").Single().GetSymbol() as IMethod;
 			var target = m.Get<Expression>("target").Single();
 			var type = target.GetResolveResult().Type;
 			if (!(isLastArgument || ToStringIsKnownEffectFree(type))) {
@@ -264,6 +266,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			if (type.IsReferenceType != false && !m.Has("nullConditional")) {
 				// ToString() might throw NullReferenceException, but the builtin operator+ doesn't.
+				return expr;
+			}
+			if (!ToStringIsKnownEffectFree(type) && toStringMethod != null && IL.Transforms.ILInlining.MethodRequiresCopyForReadonlyLValue(toStringMethod)) {
+				// ToString() on a struct may mutate the struct.
+				// For operator+ the C# compiler creates a temporary copy before implicitly calling ToString(),
+				// whereas an explicit ToString() call would mutate the original lvalue.
+				// So we can't remove the compiler-generated ToString() call in cases where this might make a difference.
 				return expr;
 			}
 

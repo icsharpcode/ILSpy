@@ -249,7 +249,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Thus, we have to ensure we're operating on an r-value.
 			// Additionally, we cannot inline in cases where the C# compiler prohibits the direct use
 			// of the rvalue (e.g. M(ref (MyStruct)obj); is invalid).
-			if (!IsUsedAsThisPointerInCall(loadInst))
+			if (!IsUsedAsThisPointerInCall(loadInst, out var method))
 				return false;
 			switch (ClassifyExpression(inlinedExpression)) {
 				case ExpressionClassification.RValue:
@@ -261,14 +261,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case ExpressionClassification.ReadonlyLValue:
 					// For struct method calls on readonly lvalues, the C# compiler
 					// only generates a temporary if it isn't a "readonly struct"
-					return !(v.Type.GetDefinition()?.IsReadOnly == true);
+					return MethodRequiresCopyForReadonlyLValue(method);
 				default:
 					throw new InvalidOperationException("invalid expression classification");
 			}
 		}
 
+		internal static bool MethodRequiresCopyForReadonlyLValue(IMethod method)
+		{
+			var type = method.DeclaringType;
+			if (type.IsReferenceType == true)
+				return false; // reference types are never implicitly copied
+			if (type.GetDefinition()?.IsReadOnly == true)
+				return false; // readonly structs are never implicitly copied
+			return true;
+		}
+
 		internal static bool IsUsedAsThisPointerInCall(LdLoca ldloca)
 		{
+			return IsUsedAsThisPointerInCall(ldloca, out _);
+		}
+
+		static bool IsUsedAsThisPointerInCall(LdLoca ldloca, out IMethod method)
+		{
+			method = null;
 			if (ldloca.ChildIndex != 0)
 				return false;
 			if (ldloca.Variable.Type.IsReferenceType ?? false)
@@ -280,7 +296,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			switch (inst.Parent.OpCode) {
 				case OpCode.Call:
 				case OpCode.CallVirt:
-					var method = ((CallInstruction)inst.Parent).Method;
+					method = ((CallInstruction)inst.Parent).Method;
 					if (method.IsAccessor && method.AccessorKind != MethodSemanticsAttributes.Getter) {
 						// C# doesn't allow calling setters on temporary structs
 						return false;

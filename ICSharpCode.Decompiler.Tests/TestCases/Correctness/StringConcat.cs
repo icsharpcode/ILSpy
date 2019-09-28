@@ -6,7 +6,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		private class C
 		{
-			readonly int i;
+			int i;
 
 			public C(int i)
 			{
@@ -17,13 +17,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public override string ToString()
 			{
 				Console.WriteLine("  C(" + i + ").ToString()");
-				return i.ToString();
+				return (i++).ToString();
 			}
 		}
 
 		private struct S
 		{
-			readonly int i;
+			int i;
 
 			public S(int i)
 			{
@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public override string ToString()
 			{
 				Console.WriteLine("  S(" + i + ").ToString()");
-				return i.ToString();
+				return (i++).ToString();
 			}
 		}
 
@@ -98,10 +98,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine(string.Concat(new S(30), Space()) + new S(31));
 		}
 
+		static void TestStructMutation()
+		{
+			Console.WriteLine("TestStructMutation:");
+			S s = new S(0);
+			Console.WriteLine(Space() + s);
+			Console.WriteLine(Space() + s.ToString());
+			Console.WriteLine(s);
+		}
+
 		static void Main()
 		{
 			TestClass();
 			TestStruct();
+			TestStructMutation();
 		}
 	}
 }
