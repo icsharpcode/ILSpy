@@ -70,10 +70,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public readonly struct ReadOnlyStruct
 		{
-			private readonly int dummy;
+			private readonly int Field;
 
 			public void Method()
 			{
+				ref readonly int field = ref Field;
+				Console.WriteLine("No inlining");
+				Console.WriteLine(field.GetHashCode());
 			}
 		}
 
