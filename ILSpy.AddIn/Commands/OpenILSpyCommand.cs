@@ -79,14 +79,9 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			foreach (var reference in parentProject.MetadataReferences) {
 				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
 					string assemblyName = assemblyDef.Name.Name;
-					if (AssemblyFileFinder.IsReferenceAssembly(assemblyDef, reference.Display)) {
-						string resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
-						dict.Add(assemblyName,
-							new DetectedReference(assemblyName, resolvedAssemblyFile, false));
-					} else {
-						dict.Add(assemblyName,
-							new DetectedReference(assemblyName, reference.Display, false));
-					}
+					string resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
+					dict.Add(assemblyName,
+						new DetectedReference(assemblyName, resolvedAssemblyFile, false));
 				}
 			}
 			foreach (var projectReference in parentProject.ProjectReferences) {

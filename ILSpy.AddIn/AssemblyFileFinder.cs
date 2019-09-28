@@ -15,35 +15,13 @@ namespace ICSharpCode.ILSpy.AddIn
 	{
 		public static string FindAssemblyFile(AssemblyDefinition assemblyDefinition, string assemblyFile)
 		{
-			var assemblyName = assemblyDefinition.Name;
-
-			var detectedTargetFramework = DetectTargetFrameworkId(assemblyDefinition, assemblyFile);
-			if (string.IsNullOrEmpty(detectedTargetFramework)) {
-				// Without a target framework id it makes no sense to continue
-				return null;
+			var assemblyResolver = new UniversalAssemblyResolver(assemblyFile, false,
+				DetectTargetFrameworkId(assemblyDefinition, assemblyFile));
+			if (IsReferenceAssembly(assemblyDefinition, assemblyFile)) {
+				assemblyResolver.RemoveSearchDirectory(Path.GetDirectoryName(assemblyFile));
 			}
-
-			var targetFramework = detectedTargetFramework.Split(new[] { ",Version=v" }, StringSplitOptions.None);
-			string file = null;
-			switch (targetFramework[0]) {
-				case ".NETCoreApp":
-				case ".NETStandard":
-					if (targetFramework.Length != 2)
-						return FindAssemblyFromGAC(assemblyDefinition);
-					var version = targetFramework[1].Length == 3 ? new Version(targetFramework[1] + ".0") : new Version(targetFramework[1]);
-					var dotNetCorePathFinder = new DotNetCorePathFinder(assemblyFile, detectedTargetFramework, version);
-					file = dotNetCorePathFinder.TryResolveDotNetCore(Decompiler.Metadata.AssemblyNameReference.Parse(assemblyName.FullName));
-					if (file != null)
-						return file;
-					return FindAssemblyFromGAC(assemblyDefinition);
-				default:
-					return FindAssemblyFromGAC(assemblyDefinition);
-			}
-		}
-
-		static string FindAssemblyFromGAC(AssemblyDefinition assemblyDefinition)
-		{
-			return GacInterop.FindAssemblyInNetGac(Decompiler.Metadata.AssemblyNameReference.Parse(assemblyDefinition.Name.FullName));
+			return assemblyResolver.FindAssemblyFile(
+				ICSharpCode.Decompiler.Metadata.AssemblyNameReference.Parse(assemblyDefinition.Name.FullName));
 		}
 
 		static readonly string RefPathPattern = @"NuGetFallbackFolder[/\\][^/\\]+[/\\][^/\\]+[/\\]ref[/\\]";
