@@ -190,12 +190,15 @@ namespace ICSharpCode.Decompiler.IL
 					// and needs to be converted into a normally usable type.
 					declaringType = new ParameterizedType(declaringType, declaringType.TypeParameters);
 				}
-				parameterVariables[paramIndex++] = CreateILVariable(-1, declaringType, "this");
+				ILVariable ilVar = CreateILVariable(-1, declaringType, "this");
+				ilVar.IsRefReadOnly = declaringType.GetDefinition()?.IsReadOnly == true;
+				parameterVariables[paramIndex++] = ilVar;
 			}
 			while (paramIndex < parameterVariables.Length) {
-				IType type = method.Parameters[paramIndex - offset].Type;
-				string name = method.Parameters[paramIndex - offset].Name;
-				parameterVariables[paramIndex] = CreateILVariable(paramIndex - offset, type, name);
+				IParameter parameter = method.Parameters[paramIndex - offset];
+				ILVariable ilVar = CreateILVariable(paramIndex - offset, parameter.Type, parameter.Name);
+				ilVar.IsRefReadOnly = parameter.IsIn;
+				parameterVariables[paramIndex] = ilVar;
 				paramIndex++;
 			}
 			Debug.Assert(paramIndex == parameterVariables.Length);

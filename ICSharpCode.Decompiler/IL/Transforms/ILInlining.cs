@@ -329,7 +329,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			switch (inst.OpCode) {
 				case OpCode.LdLoc:
 				case OpCode.StLoc:
-					if (IsReadonlyRefLocal(((IInstructionWithVariableOperand)inst).Variable)) {
+					if (((IInstructionWithVariableOperand)inst).Variable.IsRefReadOnly) {
 						return ExpressionClassification.ReadonlyLValue;
 					} else {
 						return ExpressionClassification.MutableLValue;
@@ -363,7 +363,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private static bool IsReadonlyReference(ILInstruction addr)
+		internal static bool IsReadonlyReference(ILInstruction addr)
 		{
 			switch (addr) {
 				case LdFlda ldflda:
@@ -372,7 +372,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case LdsFlda ldsflda:
 					return ldsflda.Field.IsReadOnly;
 				case LdLoc ldloc:
-					return IsReadonlyRefLocal(ldloc.Variable);
+					return ldloc.Variable.IsRefReadOnly;
 				case Call call:
 					return call.Method.ReturnTypeIsRefReadOnly;
 				case AddressOf _:
@@ -381,19 +381,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				default:
 					return false;
 			}
-		}
-
-		private static bool IsReadonlyRefLocal(ILVariable variable)
-		{
-			if (variable.Kind == VariableKind.Parameter) {
-				if (variable.Index == -1) {
-					// this parameter in readonly struct
-					return variable.Function.Method?.DeclaringTypeDefinition?.IsReadOnly == true;
-				} else {
-					return variable.Function.Parameters[variable.Index.Value].IsIn;
-				}
-			}
-			return false;
 		}
 
 		/// <summary>
