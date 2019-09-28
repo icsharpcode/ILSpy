@@ -341,10 +341,10 @@ namespace ICSharpCode.ILSpy
 					output.Write(string.Format("Cannot find '{0}' in command line specified assemblies.", navigateTo));
 					decompilerTextView.ShowText(output);
 				}
-			} else if (commandLineLoadedAssemblies.Count == 1) {
+			} else if (relevantAssemblies.Count == 1) {
 				// NavigateTo == null and an assembly was given on the command-line:
 				// Select the newly loaded assembly
-				AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(commandLineLoadedAssemblies[0]);
+				AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(relevantAssemblies[0]);
 				if (asmNode != null && treeView.SelectedItem == initialSelection) {
 					SelectNode(asmNode);
 				}
