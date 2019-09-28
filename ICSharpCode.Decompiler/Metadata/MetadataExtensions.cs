@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return publicKeyTokenBytes.TakeLast(8).Reverse().ToHexString(8);
 		}
 
-		public static string GetFullAssemblyName(this MetadataReader reader)
+		public static string GetPublicKeyToken(this MetadataReader reader)
 		{
 			if (!reader.IsAssembly)
 				return string.Empty;
@@ -59,6 +59,15 @@ namespace ICSharpCode.Decompiler.Metadata
 				// AssemblyFlags.PublicKey does not apply to assembly definitions
 				publicKey = CalculatePublicKeyToken(asm.PublicKey, reader);
 			}
+			return publicKey;
+		}
+
+		public static string GetFullAssemblyName(this MetadataReader reader)
+		{
+			if (!reader.IsAssembly)
+				return string.Empty;
+			var asm = reader.GetAssemblyDefinition();
+			string publicKey = reader.GetPublicKeyToken();
 			return $"{reader.GetString(asm.Name)}, " +
 				$"Version={asm.Version}, " +
 				$"Culture={(asm.Culture.IsNil ? "neutral" : reader.GetString(asm.Culture))}, " +
