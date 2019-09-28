@@ -60,9 +60,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// Reduce "String.Concat(a, b)" to "a + b"
 			if (IsStringConcat(method) && CheckArgumentsForStringConcat(arguments)) {
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
-				Expression expr = RemoveRedundantToStringInConcat(arguments[0], method).Detach();
+				Expression expr = RemoveRedundantToStringInConcat(arguments[0], method, isLastArgument: false).Detach();
 				for (int i = 1; i < arguments.Length; i++) {
-					var arg = RemoveRedundantToStringInConcat(arguments[i], method).Detach();
+					var arg = RemoveRedundantToStringInConcat(arguments[i], method, isLastArgument: i == arguments.Length - 1).Detach();
 					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Add, arg);
 				}
 				expr.CopyAnnotationsFrom(invocationExpression);
@@ -223,19 +223,46 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				&& method.Name == "Concat"
 				&& method.DeclaringType.IsKnownType(KnownTypeCode.String);
 		}
-		
-		static readonly InvocationExpression ToStringCallPattern = new InvocationExpression(new MemberReferenceExpression(new AnyNode("target"), "ToString"));
 
-		static Expression RemoveRedundantToStringInConcat(Expression expr, IMethod concatMethod)
+		static readonly Pattern ToStringCallPattern = new Choice {
+			// target.ToString()
+			new InvocationExpression(new MemberReferenceExpression(new AnyNode("target"), "ToString")),
+			// target?.ToString()
+			new UnaryOperatorExpression(
+				UnaryOperatorType.NullConditionalRewrap,
+				new InvocationExpression(
+					new MemberReferenceExpression(
+						new UnaryOperatorExpression(UnaryOperatorType.NullConditional, new AnyNode("target")),
+						"ToString"))
+			).WithName("nullConditional")
+		};
+
+		internal static Expression RemoveRedundantToStringInConcat(Expression expr, IMethod concatMethod, bool isLastArgument)
 		{
 			var m = ToStringCallPattern.Match(expr);
-			if (m.Success) {
-				var target = m.Get<Expression>("target").Single();
-				if (ToStringIsKnownEffectFree(target.GetResolveResult().Type) && concatMethod.Parameters.All(IsStringParameter)) {
-					return target;
-				}
+			if (!m.Success)
+				return expr;
+
+			if (!concatMethod.Parameters.All(IsStringParameter)) {
+				// If we're using a string.Concat() overload involving object parameters,
+				// string.Concat() itself already calls ToString() so the C# compiler shouldn't
+				// generate additional ToString() calls in this case.
+				return expr;
 			}
-			return expr;
+			var target = m.Get<Expression>("target").Single();
+			var type = target.GetResolveResult().Type;
+			if (!(isLastArgument || ToStringIsKnownEffectFree(type))) {
+				// ToString() order of evaluation matters, see CheckArgumentsForStringConcat().
+				return expr;
+			}
+			if (type.IsReferenceType != false && !m.Has("nullConditional")) {
+				// ToString() might throw NullReferenceException, but the builtin operator+ doesn't.
+				return expr;
+			}
+
+			// All checks succeeded, we can eliminate the ToString() call.
+			// The C# compiler will generate an equivalent call if the code is recompiled.
+			return target;
 
 			bool IsStringParameter(IParameter p)
 			{

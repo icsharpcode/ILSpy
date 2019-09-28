@@ -401,7 +401,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("MoveNext");
 				if (enumerator.MoveNext()) {
 					object current = enumerator.Current;
-					Console.WriteLine("current: " + current);
+					Console.WriteLine("please don't inline 'current'");
+					Console.WriteLine(current);
 				}
 			} finally {
 				IDisposable disposable = enumerator as IDisposable;
