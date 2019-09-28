@@ -289,7 +289,6 @@ namespace ICSharpCode.ILSpy
 			} else {
 				return null;
 			}
-			return null;
 		}
 
 		public static Task<string> CheckForUpdatesAsync(ILSpySettings spySettings)
