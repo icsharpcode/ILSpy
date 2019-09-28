@@ -224,6 +224,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				preprocessorSymbols.Add("CS71");
 				preprocessorSymbols.Add("CS72");
 				preprocessorSymbols.Add("CS73");
+				preprocessorSymbols.Add("CS80");
 				preprocessorSymbols.Add("VB11");
 				preprocessorSymbols.Add("VB14");
 				preprocessorSymbols.Add("VB15");

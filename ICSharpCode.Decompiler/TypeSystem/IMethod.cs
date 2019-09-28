@@ -41,7 +41,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool ReturnTypeIsRefReadOnly { get; }
 
 		/// <summary>
-		/// Gets whether the method is readonly (C# 8): accepts the 'this' reference as ref readonly
+		/// Gets whether the method accepts the 'this' reference as ref readonly.
+		/// This can be either because the method is C# 8.0 'readonly', or because it is within a C# 7.2 'readonly struct'
 		/// </summary>
 		bool ThisIsRefReadOnly { get; }
 

@@ -201,7 +201,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "DecimalConstantAttribute":
 							return (options & TypeSystemOptions.DecimalConstants) != 0 && (target == SymbolKind.Field || target == SymbolKind.Parameter);
 						case "IsReadOnlyAttribute":
-							return (options & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0;
+							switch (target) {
+								case SymbolKind.TypeDefinition:
+								case SymbolKind.Parameter:
+									return (options & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0;
+								case SymbolKind.Method:
+								case SymbolKind.Accessor:
+									return (options & TypeSystemOptions.ReadOnlyMethods) != 0;
+								default:
+									return false;
+							}
 						case "IsByRefLikeAttribute":
 							return (options & TypeSystemOptions.RefStructs) != 0 && target == SymbolKind.TypeDefinition;
 						case "IsUnmanagedAttribute":
