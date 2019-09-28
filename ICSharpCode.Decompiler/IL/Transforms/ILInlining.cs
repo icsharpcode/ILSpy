@@ -272,8 +272,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var type = method.DeclaringType;
 			if (type.IsReferenceType == true)
 				return false; // reference types are never implicitly copied
-			if (type.GetDefinition()?.IsReadOnly == true)
-				return false; // readonly structs are never implicitly copied
+			if (method.ThisIsRefReadOnly)
+				return false; // no copies for calls on readonly structs
 			return true;
 		}
 

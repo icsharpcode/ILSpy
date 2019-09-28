@@ -1522,6 +1522,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Accessor decl = new Accessor();
 			if (this.ShowAccessibility && accessor.Accessibility != ownerAccessibility)
 				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility);
+			if (accessor.ThisIsRefReadOnly && accessor.DeclaringTypeDefinition?.IsReadOnly == false)
+				decl.Modifiers |= Modifiers.Readonly;
 			if (ShowAttributes) {
 				decl.Attributes.AddRange(ConvertAttributes(accessor.GetAttributes()));
 				decl.Attributes.AddRange(ConvertAttributes(accessor.GetReturnTypeAttributes(), "return"));
@@ -1551,9 +1553,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			decl.Getter = ConvertAccessor(property.Getter, property.Accessibility, false);
 			decl.Setter = ConvertAccessor(property.Setter, property.Accessibility, true);
 			decl.PrivateImplementationType = GetExplicitInterfaceType (property);
+			MergeReadOnlyModifiers(decl, decl.Getter, decl.Setter);
 			return decl;
 		}
 		
+		static void MergeReadOnlyModifiers(EntityDeclaration decl, Accessor accessor1, Accessor accessor2)
+		{
+			if (accessor1.HasModifier(Modifiers.Readonly) && accessor2.HasModifier(Modifiers.Readonly)) {
+				accessor1.Modifiers &= ~Modifiers.Readonly;
+				accessor2.Modifiers &= ~Modifiers.Readonly;
+				decl.Modifiers |= Modifiers.Readonly;
+			}
+		}
 		IndexerDeclaration ConvertIndexer(IProperty indexer)
 		{
 			IndexerDeclaration decl = new IndexerDeclaration();
@@ -1571,6 +1582,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			decl.Getter = ConvertAccessor(indexer.Getter, indexer.Accessibility, false);
 			decl.Setter = ConvertAccessor(indexer.Setter, indexer.Accessibility, true);
 			decl.PrivateImplementationType = GetExplicitInterfaceType (indexer);
+			MergeReadOnlyModifiers(decl, decl.Getter, decl.Setter);
 			return decl;
 		}
 		
@@ -1590,6 +1602,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.AddAccessor    = ConvertAccessor(ev.AddAccessor, ev.Accessibility, true);
 				decl.RemoveAccessor = ConvertAccessor(ev.RemoveAccessor, ev.Accessibility, true);
 				decl.PrivateImplementationType = GetExplicitInterfaceType (ev);
+				MergeReadOnlyModifiers(decl, decl.AddAccessor, decl.RemoveAccessor);
 				return decl;
 			} else {
 				EventDeclaration decl = new EventDeclaration();
@@ -1759,6 +1772,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						m |= Modifiers.Virtual;
 					if (member.IsSealed)
 						m |= Modifiers.Sealed;
+					if (member is IMethod method && method.ThisIsRefReadOnly && method.DeclaringTypeDefinition?.IsReadOnly == false)
+						m |= Modifiers.Readonly;
 				}
 			}
 			return m;
