@@ -112,7 +112,7 @@ namespace ICSharpCode.ILSpy
 		public void Show()
 		{
 			if (!IsVisible) {
-				MainWindow.Instance.ShowInTopPane(Properties.Resources.SearchPane_Search, this);
+				MainWindow.Instance.ShowInNewPane(Properties.Resources.SearchPane_Search, this, PanePosition.Top);
 				if (runSearchOnNextShow) {
 					runSearchOnNextShow = false;
 					StartSearch(this.SearchTerm);

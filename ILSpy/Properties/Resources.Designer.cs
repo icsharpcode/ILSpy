@@ -1009,6 +1009,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Decompile to new tab.
+        /// </summary>
+        public static string DecompileToNewPanel {
+            get {
+                return ResourceManager.GetString("DecompileToNewPanel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Decompiling....
         /// </summary>
         public static string Decompiling {

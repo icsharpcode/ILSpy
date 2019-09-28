@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2013 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,31 +17,36 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
+using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ICSharpCode.ILSpy.Commands
 {
-	[ExportContextMenuEntry(Header = "Remove", Icon = "images/Delete", Category = "Analyze", Order = 200)]
-	internal sealed class RemoveAnalyzeContextMenuEntry : IContextMenuEntry
+	// [ExportContextMenuEntry(Header = nameof(Resources.DecompileToNewPanel), Icon = "images/Search", Category = nameof(Resources.Analyze), Order = 90)]
+	internal sealed class DecompileInNewViewCommand : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
 		{
-			if (context.TreeView is AnalyzerTreeView && context.SelectedTreeNodes != null && context.SelectedTreeNodes.All(n => n.Parent.IsRoot))
-				return true;
-			return false;
+			if (context.SelectedTreeNodes == null)
+				return false;
+			return true;			
 		}
 
 		public bool IsEnabled(TextViewContext context)
 		{
-			return true;
+			if (context.SelectedTreeNodes == null)
+				return false;
+			return true;			
 		}
 
-		public void Execute(TextViewContext context)
+		public async void Execute(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes != null) {
-				foreach (var node in context.SelectedTreeNodes) {
-					node.Parent.Children.Remove(node);
-				}
-			}
+			var dtv = new DecompilerTextView();
+			var nodes = context.SelectedTreeNodes.Cast<ILSpyTreeNode>().ToArray();
+			var title = string.Join(", ", nodes.Select(x => x.ToString()));
+			MainWindow.Instance.ShowInNewPane(title, dtv, PanePosition.Document);
+			await dtv.DecompileAsync(MainWindow.Instance.CurrentLanguage, nodes, new DecompilationOptions());
 		}
 	}
 }

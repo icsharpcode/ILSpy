@@ -44,6 +44,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.TreeView;
 using Microsoft.Win32;
 using OSVersionHelper;
+using Xceed.Wpf.AvalonDock.Layout;
 
 namespace ICSharpCode.ILSpy
 {
@@ -90,10 +91,11 @@ namespace ICSharpCode.ILSpy
 			decompilerTextView = App.ExportProvider.GetExportedValue<DecompilerTextView>();
 			mainPane.Content = decompilerTextView;
 
-			if (sessionSettings.SplitterPosition > 0 && sessionSettings.SplitterPosition < 1) {
-				leftColumn.Width = new GridLength(sessionSettings.SplitterPosition, GridUnitType.Star);
-				rightColumn.Width = new GridLength(1 - sessionSettings.SplitterPosition, GridUnitType.Star);
-			}
+			//todo
+			//if (sessionSettings.SplitterPosition > 0 && sessionSettings.SplitterPosition < 1) {
+			//	leftColumn.Width = new GridLength(sessionSettings.SplitterPosition, GridUnitType.Star);
+			//	rightColumn.Width = new GridLength(1 - sessionSettings.SplitterPosition, GridUnitType.Star);
+			//}
 			sessionSettings.FilterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
 			InitMainMenu();
@@ -140,19 +142,15 @@ namespace ICSharpCode.ILSpy
 
 		Button MakeToolbarItem(Lazy<ICommand, IToolbarCommandMetadata> command)
 		{
-			object image = Images.Load(command.Value, command.Metadata.ToolbarIcon);
-			if (!(image is Viewbox)) {
-				image = new Image {
-					Width = 16,
-					Height = 16,
-					Source = (ImageSource)image
-				};
-			}
 			return new Button {
 				Command = CommandWrapper.Unwrap(command.Value),
 				ToolTip = Properties.Resources.ResourceManager.GetString(command.Metadata.ToolTip),
 				Tag = command.Metadata.Tag,
-				Content = image
+				Content = new Image {
+					Width = 16,
+					Height = 16,
+					Source = Images.Load(command.Value, command.Metadata.ToolbarIcon)
+				}
 			};
 		}
 		#endregion
@@ -178,15 +176,11 @@ namespace ICSharpCode.ILSpy
 						if (!string.IsNullOrEmpty(GetResourceString(entry.Metadata.Header)))
 							menuItem.Header = GetResourceString(entry.Metadata.Header);
 						if (!string.IsNullOrEmpty(entry.Metadata.MenuIcon)) {
-							object image = Images.Load(entry.Value, entry.Metadata.MenuIcon);
-							if (!(image is Viewbox)) {
-								image = new Image {
-									Width = 16,
-									Height = 16,
-									Source = (ImageSource)image
-								};
-							}
-							menuItem.Icon = image;
+							menuItem.Icon = new Image {
+								Width = 16,
+								Height = 16,
+								Source = Images.Load(entry.Value, entry.Metadata.MenuIcon)
+							};
 						}
 
 						menuItem.IsEnabled = entry.Metadata.IsEnabled;
@@ -1022,11 +1016,12 @@ namespace ICSharpCode.ILSpy
 			sessionSettings.ActiveTreeViewPath = GetPathForNode(treeView.SelectedItem as SharpTreeNode);
 			sessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(treeView.SelectedItem as SharpTreeNode);
 			sessionSettings.WindowBounds = this.RestoreBounds;
-			sessionSettings.SplitterPosition = leftColumn.Width.Value / (leftColumn.Width.Value + rightColumn.Width.Value);
-			if (topPane.Visibility == Visibility.Visible)
-				sessionSettings.TopPaneSplitterPosition = topPaneRow.Height.Value / (topPaneRow.Height.Value + textViewRow.Height.Value);
-			if (bottomPane.Visibility == Visibility.Visible)
-				sessionSettings.BottomPaneSplitterPosition = bottomPaneRow.Height.Value / (bottomPaneRow.Height.Value + textViewRow.Height.Value);
+			//todo
+			//sessionSettings.SplitterPosition = leftColumn.Width.Value / (leftColumn.Width.Value + rightColumn.Width.Value);
+			//if (topPane.Visibility == Visibility.Visible)
+			//	sessionSettings.TopPaneSplitterPosition = topPaneRow.Height.Value / (topPaneRow.Height.Value + textViewRow.Height.Value);
+			//if (bottomPane.Visibility == Visibility.Visible)
+			//	sessionSettings.BottomPaneSplitterPosition = bottomPaneRow.Height.Value / (bottomPaneRow.Height.Value + textViewRow.Height.Value);
 			sessionSettings.Save();
 		}
 
@@ -1048,95 +1043,19 @@ namespace ICSharpCode.ILSpy
 
 		#region Top/Bottom Pane management
 
-		/// <summary>
-		///   When grid is resized using splitter, row height value could become greater than 1.
-		///   As result, when a new pane is shown, both textView and pane could become very small.
-		///   This method normalizes two rows and ensures that height is less then 1.
-		/// </summary>
-		void NormalizePaneRowHeightValues(RowDefinition pane1Row, RowDefinition pane2Row)
+		public void ShowInNewPane(string title, object content, PanePosition panePosition, string toolTip = null)
 		{
-			var pane1Height = pane1Row.Height;
-			var pane2Height = pane2Row.Height;
-
-			//only star height values are normalized.
-			if (!pane1Height.IsStar || !pane2Height.IsStar) {
-				return;
+			if (panePosition == PanePosition.Document) {
+				var layoutDocument = new LayoutDocument() { Title = title, Content = content, ToolTip = toolTip, CanClose = true };
+				var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
+				documentPane.Children.Add(layoutDocument);
+			} else {
+				var layoutAnchorable = new LayoutAnchorable() { Title = title, Content = content, ToolTip = toolTip, CanClose = true, CanHide = true };
+				var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
+				Docking.DockingHelper.DockHorizontal(layoutAnchorable, documentPane, new GridLength(200), panePosition == PanePosition.Top);
 			}
-
-			var totalHeight = pane1Height.Value + pane2Height.Value;
-			if (totalHeight == 0) {
-				return;
-			}
-
-			pane1Row.Height = new GridLength(pane1Height.Value / totalHeight, GridUnitType.Star);
-			pane2Row.Height = new GridLength(pane2Height.Value / totalHeight, GridUnitType.Star);
 		}
 
-		public void ShowInTopPane(string title, object content)
-		{
-			topPaneRow.MinHeight = 100;
-			if (sessionSettings.TopPaneSplitterPosition > 0 && sessionSettings.TopPaneSplitterPosition < 1) {
-				//Ensure all 3 blocks are in fair conditions
-				NormalizePaneRowHeightValues(bottomPaneRow, textViewRow);
-
-				textViewRow.Height = new GridLength(1 - sessionSettings.TopPaneSplitterPosition, GridUnitType.Star);
-				topPaneRow.Height = new GridLength(sessionSettings.TopPaneSplitterPosition, GridUnitType.Star);
-			}
-			topPane.Title = title;
-			if (topPane.Content != content) {
-				IPane pane = topPane.Content as IPane;
-				if (pane != null)
-					pane.Closed();
-				topPane.Content = content;
-			}
-			topPane.Visibility = Visibility.Visible;
-		}
-
-		void TopPane_CloseButtonClicked(object sender, EventArgs e)
-		{
-			sessionSettings.TopPaneSplitterPosition = topPaneRow.Height.Value / (topPaneRow.Height.Value + textViewRow.Height.Value);
-			topPaneRow.MinHeight = 0;
-			topPaneRow.Height = new GridLength(0);
-			topPane.Visibility = Visibility.Collapsed;
-
-			IPane pane = topPane.Content as IPane;
-			topPane.Content = null;
-			if (pane != null)
-				pane.Closed();
-		}
-
-		public void ShowInBottomPane(string title, object content)
-		{
-			bottomPaneRow.MinHeight = 100;
-			if (sessionSettings.BottomPaneSplitterPosition > 0 && sessionSettings.BottomPaneSplitterPosition < 1) {
-				//Ensure all 3 blocks are in fair conditions
-				NormalizePaneRowHeightValues(topPaneRow, textViewRow);
-
-				textViewRow.Height = new GridLength(1 - sessionSettings.BottomPaneSplitterPosition, GridUnitType.Star);
-				bottomPaneRow.Height = new GridLength(sessionSettings.BottomPaneSplitterPosition, GridUnitType.Star);
-			}
-			bottomPane.Title = title;
-			if (bottomPane.Content != content) {
-				IPane pane = bottomPane.Content as IPane;
-				if (pane != null)
-					pane.Closed();
-				bottomPane.Content = content;
-			}
-			bottomPane.Visibility = Visibility.Visible;
-		}
-
-		void BottomPane_CloseButtonClicked(object sender, EventArgs e)
-		{
-			sessionSettings.BottomPaneSplitterPosition = bottomPaneRow.Height.Value / (bottomPaneRow.Height.Value + textViewRow.Height.Value);
-			bottomPaneRow.MinHeight = 0;
-			bottomPaneRow.Height = new GridLength(0);
-			bottomPane.Visibility = Visibility.Collapsed;
-
-			IPane pane = bottomPane.Content as IPane;
-			bottomPane.Content = null;
-			if (pane != null)
-				pane.Closed();
-		}
 		#endregion
 
 		public void UnselectAll()
