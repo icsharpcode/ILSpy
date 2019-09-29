@@ -769,4 +769,10 @@ Are you sure you want to continue?</value>
   <data name="DecompileToNewPanel" xml:space="preserve">
     <value>Decompile to new tab</value>
   </data>
+  <data name="DecompilerSettings.AsyncEnumerator" xml:space="preserve">
+    <value>Decompile async IAsyncEnumerator methods</value>
+  </data>
+  <data name="DecompilerSettings.ReadOnlyMethods" xml:space="preserve">
+    <value>Read-only methods</value>
+  </data>
 </root>

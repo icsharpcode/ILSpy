@@ -305,6 +305,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		bool MatchEnumeratorCreationNewObj(ILInstruction inst)
 		{
+			return MatchEnumeratorCreationNewObj(inst, metadata, currentType,
+				out enumeratorCtor, out enumeratorType);
+		}
+
+		internal static bool MatchEnumeratorCreationNewObj(ILInstruction inst, 
+			MetadataReader metadata, TypeDefinitionHandle currentType,
+			out MethodDefinitionHandle enumeratorCtor, out TypeDefinitionHandle enumeratorType)
+		{
+			enumeratorCtor = default;
+			enumeratorType = default;
 			// newobj(CurrentType/...::.ctor, ldc.i4(-2))
 			if (!(inst is NewObj newObj))
 				return false;

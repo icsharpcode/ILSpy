@@ -305,6 +305,8 @@ namespace ICSharpCode.Decompiler.CSharp
 							return true;
 						if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(typeHandle, metadata))
 							return true;
+						if (settings.AsyncEnumerator && AsyncAwaitDecompiler.IsCompilerGeneratorAsyncEnumerator(typeHandle, metadata))
+							return true;
 						if (settings.FixedBuffers && name.StartsWith("<", StringComparison.Ordinal) && name.Contains("__FixedBuffer"))
 							return true;
 					} else if (type.IsCompilerGenerated(metadata)) {
