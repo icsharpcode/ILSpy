@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			AddSearchDirectory(baseDirectory);
 		}
 
-		(TargetFrameworkIdentifier, Version) ParseTargetFramework(string targetFramework)
+		static (TargetFrameworkIdentifier, Version) ParseTargetFramework(string targetFramework)
 		{
 			string[] tokens = targetFramework.Split(',');
 			TargetFrameworkIdentifier identifier;
@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 				switch (pair[0].Trim().ToUpperInvariant()) {
 					case "VERSION":
-						var versionString = pair[1].TrimStart('v');
+						var versionString = pair[1].TrimStart('v', ' ', '\t');
 						if (identifier == TargetFrameworkIdentifier.NETCoreApp ||
 							identifier == TargetFrameworkIdentifier.NETStandard)
 						{

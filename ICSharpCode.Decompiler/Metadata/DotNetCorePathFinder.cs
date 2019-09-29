@@ -62,15 +62,18 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		readonly Dictionary<string, DotNetCorePackageInfo> packages;
 		ISet<string> packageBasePaths = new HashSet<string>(StringComparer.Ordinal);
-		readonly string assemblyName;
-		readonly string basePath;
 		readonly Version version;
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
 
+		public DotNetCorePathFinder(Version version)
+		{
+			this.version = version;
+		}
+
 		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkId, Version version, ReferenceLoadInfo loadInfo = null)
 		{
-			this.assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
-			this.basePath = Path.GetDirectoryName(parentAssemblyFileName);
+			string assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
+			string basePath = Path.GetDirectoryName(parentAssemblyFileName);
 			this.version = version;
 
 			var depsJsonFileName = Path.Combine(basePath, $"{assemblyName}.deps.json");

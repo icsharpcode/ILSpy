@@ -186,21 +186,36 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
 		static readonly string thisAsmPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
 
-		static readonly Lazy<IEnumerable<MetadataReference>> defaultReferences = new Lazy<IEnumerable<MetadataReference>>(delegate {
-			return new[]
-			{
-					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Facades\\netstandard.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "mscorlib.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Core.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, @"Facades\System.Runtime.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Xml.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Microsoft.CSharp.dll")),
-					MetadataReference.CreateFromFile(typeof(ValueTuple).Assembly.Location),
-					MetadataReference.CreateFromFile(typeof(ValueTask).Assembly.Location),
-					MetadataReference.CreateFromFile(typeof(Span<>).Assembly.Location),
-			};
-		});
+		static readonly Lazy<IEnumerable<MetadataReference>> defaultReferences = new Lazy<IEnumerable<MetadataReference>>(GetDefaultReferences);
+
+		static readonly string[] references = new string[] {
+			"netstandard, Version=2.1.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51",
+			"mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+			"System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+			"System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+			"System.Runtime, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
+			"System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
+			"Microsoft.CSharp, Version=4.0.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
+			"System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e",
+			"System.Console, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+		};
+
+		const string targetFrameworkAttributeSnippet = @"
+
+[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp, Version = v3.0"", FrameworkDisplayName = """")]
+
+";
+
+		static IEnumerable<MetadataReference> GetDefaultReferences()
+		{
+			DotNetCorePathFinder pathFinder = new DotNetCorePathFinder(new Version(3, 0));
+			foreach (var reference in references) {
+				var result = pathFinder.TryResolveDotNetCore(AssemblyNameReference.Parse(reference));
+				if (result != null) {
+					yield return MetadataReference.CreateFromFile(result);
+				}
+			}
+		}
 
 		static readonly Lazy<IEnumerable<MetadataReference>> visualBasic = new Lazy<IEnumerable<MetadataReference>>(delegate {
 			return new[] {
@@ -252,6 +267,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.CSharp8
 				);
 				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
+				syntaxTrees = syntaxTrees.Concat(new[] { SyntaxFactory.ParseSyntaxTree(targetFrameworkAttributeSnippet) });
 				var references = defaultReferences.Value;
 				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic)) {
 					references = references.Concat(visualBasic.Value);
@@ -446,7 +462,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				settings = new DecompilerSettings();
 			using (var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read)) {
 				var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
-				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
+				var resolver = new UniversalAssemblyResolver(assemblyFileName, true,
 					module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
 				resolver.AddSearchDirectory(Path.GetDirectoryName(typeof(Span<>).Assembly.Location));
 				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);

@@ -13,7 +13,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			var section = (AttributeSection)attribute.Parent;
 			SimpleType type = attribute.Type as SimpleType;
 			if (section.AttributeTarget == "assembly" &&
-				(type.Identifier == "CompilationRelaxations" || type.Identifier == "RuntimeCompatibility" || type.Identifier == "SecurityPermission" || type.Identifier == "PermissionSet" || type.Identifier == "AssemblyVersion" || type.Identifier == "Debuggable"))
+				(type.Identifier == "CompilationRelaxations" || type.Identifier == "RuntimeCompatibility" || type.Identifier == "SecurityPermission" || type.Identifier == "PermissionSet" || type.Identifier == "AssemblyVersion" || type.Identifier == "Debuggable" || type.Identifier == "TargetFramework"))
 			{
 				attribute.Remove();
 				if (section.Attributes.Count == 0)
