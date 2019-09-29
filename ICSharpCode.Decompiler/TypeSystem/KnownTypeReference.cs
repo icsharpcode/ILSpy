@@ -137,15 +137,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		MemoryOfT,
 		/// <summary><c>System.Runtime.CompilerServices.Unsafe</c></summary>
 		Unsafe,
+		/// <summary><c>System.Collections.Generic.IAsyncEnumerable{T}</c></summary>
+		IAsyncEnumerableOfT,
+		/// <summary><c>System.Collections.Generic.IAsyncEnumerator{T}</c></summary>
+		IAsyncEnumeratorOfT,
 	}
-	
+
 	/// <summary>
 	/// Contains well-known type references.
 	/// </summary>
 	[Serializable]
 	public sealed class KnownTypeReference : ITypeReference
 	{
-		internal const int KnownTypeCodeCount = (int)KnownTypeCode.Unsafe + 1;
+		internal const int KnownTypeCodeCount = (int)KnownTypeCode.IAsyncEnumeratorOfT + 1;
 
 		static readonly KnownTypeReference[] knownTypeReferences = new KnownTypeReference[KnownTypeCodeCount] {
 			null, // None
@@ -203,6 +207,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new KnownTypeReference(KnownTypeCode.ReadOnlySpanOfT, TypeKind.Struct, "System", "ReadOnlySpan", 1),
 			new KnownTypeReference(KnownTypeCode.MemoryOfT, TypeKind.Struct, "System", "Memory", 1),
 			new KnownTypeReference(KnownTypeCode.Unsafe, TypeKind.Class, "System.Runtime.CompilerServices", "Unsafe", 0),
+			new KnownTypeReference(KnownTypeCode.IAsyncEnumerableOfT, TypeKind.Interface, "System.Collections.Generic", "IAsyncEnumerable", 1),
+			new KnownTypeReference(KnownTypeCode.IAsyncEnumeratorOfT, TypeKind.Interface, "System.Collections.Generic", "IAsyncEnumerator", 1),
 		};
 		
 		/// <summary>
