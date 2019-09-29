@@ -311,6 +311,27 @@ namespace ICSharpCode.Decompiler.IL
 				return false;
 			return this.FinalInstruction.MatchLdLoc(tmp);
 		}
+
+		public bool MatchIfAtEndOfBlock(out ILInstruction condition, out ILInstruction trueInst, out ILInstruction falseInst)
+		{
+			condition = null;
+			trueInst = null;
+			falseInst = null;
+			if (Instructions.Count < 2)
+				return false;
+			if (Instructions[Instructions.Count - 2].MatchIfInstruction(out condition, out trueInst)) {
+				// Swap trueInst<>falseInst for every logic.not in the condition.
+				falseInst = Instructions.Last();
+				while (condition.MatchLogicNot(out var arg)) {
+					condition = arg;
+					ILInstruction tmp = trueInst;
+					trueInst = falseInst;
+					falseInst = tmp;
+				}
+				return true;
+			}
+			return false;
+		}
 	}
 	
 	public enum BlockKind
