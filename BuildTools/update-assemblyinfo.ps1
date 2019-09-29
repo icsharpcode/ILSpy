@@ -53,7 +53,7 @@ function gitCommitHash() {
 }
 
 function gitBranch() {
-    if (-not ((Test-Dir ".git") -and (Find-Git))) {
+    if (-not ((Test-Dir ".git" -or Test-File ".git") -and (Find-Git))) {
         return "no-branch";
     }
 

@@ -998,7 +998,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// continue matching call get_IsCompleted(ldloca awaiterVar)
 			if (!MatchCall(condition, "get_IsCompleted", out var isCompletedArgs) || isCompletedArgs.Count != 1)
 				return;
-			if (!isCompletedArgs[0].MatchLdLocRef(awaiterVar))
+			if (!UnwrapConvUnknown(isCompletedArgs[0]).MatchLdLocRef(awaiterVar))
 				return;
 			// Check awaitBlock and resumeBlock:
 			if (!awaitBlocks.TryGetValue(awaitBlock, out var awaitBlockData))
@@ -1016,14 +1016,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return;
 			if (!MatchCall(getResultCall, "GetResult", out var getResultArgs) || getResultArgs.Count != 1)
 				return;
-			if (!getResultArgs[0].MatchLdLocRef(awaiterVar))
+			if (!UnwrapConvUnknown(getResultArgs[0]).MatchLdLocRef(awaiterVar))
 				return;
 			// All checks successful, let's transform.
 			context.Step("Transform await pattern", block);
 			block.Instructions.RemoveAt(block.Instructions.Count - 3); // remove getAwaiter call
 			block.Instructions.RemoveAt(block.Instructions.Count - 2); // remove if (isCompleted)
 			((Branch)block.Instructions.Last()).TargetBlock = completedBlock; // instead, directly jump to completed block
-			Await awaitInst = new Await(getAwaiterCall.Arguments.Single());
+			Await awaitInst = new Await(UnwrapConvUnknown(getAwaiterCall.Arguments.Single()));
 			awaitInst.GetResultMethod = getResultCall.Method;
 			awaitInst.GetAwaiterMethod = getAwaiterCall.Method;
 			getResultCall.ReplaceWith(awaitInst);
@@ -1035,7 +1035,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 		}
-		
+
+		static ILInstruction UnwrapConvUnknown(ILInstruction inst)
+		{
+			if (inst is Conv conv && conv.TargetType == PrimitiveType.Unknown) {
+				return conv.Argument;
+			}
+			return inst;
+		}
+
 		bool CheckAwaitBlock(Block block, out Block resumeBlock, out IField stackField)
 		{
 			// awaitBlock:
