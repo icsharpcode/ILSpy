@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
@@ -27,6 +28,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			InterestingConstants();
 			TruncatedComp();
 			StringConcat();
+			LinqNullableMin();
+			LinqNullableMin(1, 2, 3);
 		}
 
 		static void Print<T>(T val)
@@ -100,6 +103,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Print(string.Concat("String concat:"));
 			Print(string.Concat(1, 2));
 			Print(string.Concat(1, 2, "str"));
+		}
+
+		static void LinqNullableMin(params int[] arr)
+		{
+			Print(string.Format("LinqNullableMin {0}:", arr.Length));
+			Print(arr.Min(v => (int?)v));
 		}
 	}
 }

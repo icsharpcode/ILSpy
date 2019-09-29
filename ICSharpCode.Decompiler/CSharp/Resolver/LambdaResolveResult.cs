@@ -162,7 +162,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 				}
 			}
-			if (conversions.IdentityConversion(returnType, this.ReturnType)) {
+			if (conversions.IdentityConversion(this.ReturnType, returnType)
+				|| conversions.ImplicitConversion(this.InferredReturnType, returnType).IsValid) {
 				return LambdaConversion.Instance;
 			} else {
 				return Conversion.None;
