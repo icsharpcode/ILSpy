@@ -77,6 +77,10 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 			SnapshotPoint caretPosition = textView.Caret.Position.BufferPosition;
 			var roslynDocument = GetRoslynDocument();
+			if (roslynDocument == null) {
+				owner.ShowMessage("This element is not analyzable in current view.");
+				return;
+			}
 			var ast = await roslynDocument.GetSyntaxRootAsync().ConfigureAwait(false);
 			var model = await roslynDocument.GetSemanticModelAsync().ConfigureAwait(false);
 			var node = ast.FindNode(new TextSpan(caretPosition.Position, 0), false, true);
