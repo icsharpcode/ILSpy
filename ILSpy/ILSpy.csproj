@@ -173,6 +173,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="RichTextModelOutput.cs" />
     <Compile Include="Search\AbstractEntitySearchStrategy.cs" />
     <Compile Include="Search\AssemblySearchStrategy.cs" />
     <Compile Include="Search\LiteralSearchStrategy.cs" />

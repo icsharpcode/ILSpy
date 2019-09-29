@@ -26,7 +26,9 @@ using System.Reflection.Metadata;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-
+using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.AvalonEdit.Utils;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -625,10 +627,15 @@ namespace ICSharpCode.ILSpy
 			return showAllMembers || !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, new DecompilationOptions().DecompilerSettings);
 		}
 
-		public override string GetTooltip(IEntity entity)
+		public override RichText GetRichTextTooltip(IEntity entity)
 		{
 			var flags = ConversionFlags.All & ~(ConversionFlags.ShowBody | ConversionFlags.PlaceReturnTypeAfterParameterList);
-			return new CSharpAmbience() { ConversionFlags = flags }.ConvertSymbol(entity);
+			var output = new StringWriter();
+			var decoratedWriter = new TextWriterTokenWriter(output);
+			var richTextOutput = new RichTextModelOutput(decoratedWriter);
+			var writer = new CSharpHighlightingTokenWriter(decoratedWriter, richTextOutput);
+			new CSharpAmbience() { ConversionFlags = flags }.ConvertSymbol(entity, writer, FormattingOptionsFactory.CreateEmpty());
+			return new RichText(output.ToString(), richTextOutput.Model);
 		}
 
 		public override CodeMappingInfo GetCodeMappingInfo(PEFile module, EntityHandle member)

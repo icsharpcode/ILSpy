@@ -419,6 +419,9 @@ namespace ICSharpCode.ILSpy
 
 		ISymbol GetCurrentMemberReference()
 		{
+			if (nodeStack == null || nodeStack.Count == 0)
+				return null;
+
 			AstNode node = nodeStack.Peek();
 			var symbol = node.GetSymbol();
 			if (symbol == null && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression) {
@@ -435,7 +438,7 @@ namespace ICSharpCode.ILSpy
 			return symbol;
 		}
 
-		Stack<AstNode> nodeStack = new Stack<AstNode>();
+		readonly Stack<AstNode> nodeStack = new Stack<AstNode>();
 
 		public override void StartNode(AstNode node)
 		{

@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy.TextView
 					}
 				});
 
-			/*HighlightingManager.Instance.RegisterHighlighting(
+			HighlightingManager.Instance.RegisterHighlighting(
 				"C#", new string[] { ".cs" },
 				delegate {
 					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "CSharp-Mode.xshd")) {
@@ -100,7 +100,7 @@ namespace ICSharpCode.ILSpy.TextView
 							return HighlightingLoader.Load(reader, HighlightingManager.Instance);
 						}
 					}
-				});*/
+				});
 
 			InitializeComponent();
 			
@@ -364,7 +364,8 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			Language currentLanguage = MainWindow.Instance.CurrentLanguage;
 			DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), currentLanguage.SyntaxHighlighting);
-			renderer.AddSignatureBlock(currentLanguage.GetTooltip(resolved));
+			RichText richText = currentLanguage.GetRichTextTooltip(resolved);
+			renderer.AddSignatureBlock(richText.Text, richText.ToRichTextModel());
 			try {
 				if (resolved.ParentModule == null || resolved.ParentModule.PEFile == null)
 					return null;
@@ -372,7 +373,6 @@ namespace ICSharpCode.ILSpy.TextView
 				if (docProvider != null) {
 					string documentation = docProvider.GetDocumentation(resolved.GetIdString());
 					if (documentation != null) {
-						//renderer.AppendText(Environment.NewLine);
 						renderer.AddXmlDocumentation(documentation);
 					}
 				}
@@ -392,8 +392,8 @@ namespace ICSharpCode.ILSpy.TextView
 				viewer = new FlowDocumentScrollViewer();
 				viewer.Document = document;
 				Border border = new Border {
-					Background = SystemColors.InfoBrush,
-					BorderBrush = SystemColors.InfoTextBrush,
+					Background = SystemColors.ControlBrush,
+					BorderBrush = SystemColors.ControlDarkBrush,
 					BorderThickness = new Thickness(1),
 					MaxHeight = 400,
 					Child = viewer

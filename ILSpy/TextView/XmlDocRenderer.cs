@@ -104,11 +104,10 @@ namespace ICSharpCode.ILSpy.TextView
 			AddBlock(block);
 		}
 
-		public void AddSignatureBlock(string signature)
+		public void AddSignatureBlock(string signature, RichTextModel highlighting = null)
 		{
 			var document = new TextDocument(signature);
-			var highlighter = new DocumentHighlighter(document, highlightingDefinition);
-			var richText = DocumentPrinter.ConvertTextDocumentToRichText(document, highlighter).ToRichTextModel();
+			var richText = highlighting ?? DocumentPrinter.ConvertTextDocumentToRichText(document, new DocumentHighlighter(document, highlightingDefinition)).ToRichTextModel();
 			var block = new Paragraph();
 			block.Inlines.AddRange(richText.CreateRuns(document));
 			block.FontFamily = GetCodeFont();

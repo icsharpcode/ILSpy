@@ -79,6 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	public interface ILocatable
 	{
 		TextLocation Location { get; }
+		int Length { get; }
 	}
 	
 	public abstract class DecoratingTokenWriter : TokenWriter

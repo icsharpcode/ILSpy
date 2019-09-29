@@ -56,6 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			AstNode node = astBuilder.ConvertSymbol(symbol);
+			writer.StartNode(node);
 			EntityDeclaration entityDecl = node as EntityDeclaration;
 			if (entityDecl != null)
 				PrintModifiers(entityDecl.Modifiers, writer);
@@ -167,6 +168,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				} else {
 					writer.WriteToken(Roles.Semicolon, ";");
 				}
+				writer.EndNode(node);
 			}
 		}
 		
@@ -190,6 +192,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			TypeSystemAstBuilder astBuilder = new TypeSystemAstBuilder();
 			astBuilder.AddTypeReferenceAnnotations = true;
+			astBuilder.AddResolveResultAnnotations = true;
 			astBuilder.ShowTypeParametersForUnboundTypes = true;
 			astBuilder.ShowModifiers = (ConversionFlags & ConversionFlags.ShowModifiers) == ConversionFlags.ShowModifiers;
 			astBuilder.ShowAccessibility = (ConversionFlags & ConversionFlags.ShowAccessibility) == ConversionFlags.ShowAccessibility;
