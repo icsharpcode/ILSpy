@@ -109,6 +109,25 @@ namespace ICSharpCode.Decompiler.Metadata
 			return FallbackToDotNetSharedDirectory(name, version);
 		}
 
+		internal string GetReferenceAssemblyPath(string targetFramework)
+		{
+			var (tfi, version) = UniversalAssemblyResolver.ParseTargetFramework(targetFramework);
+			string identifier, identifierExt;
+			switch (tfi) {
+				case TargetFrameworkIdentifier.NETCoreApp:
+					identifier = "Microsoft.NETCore.App";
+					identifierExt = "netcoreapp" + version.Major + "." + version.Minor;
+					break;
+				case TargetFrameworkIdentifier.NETStandard:
+					identifier = "NETStandard.Library";
+					identifierExt = "netstandard" + version.Major + "." + version.Minor;
+					break;
+				default:
+					throw new NotSupportedException();
+			}
+			return Path.Combine(dotnetBasePath, "packs", identifier + ".Ref", version.ToString(), "ref", identifierExt);
+		}
+
 		static IEnumerable<DotNetCorePackageInfo> LoadPackageInfos(string depsJsonFileName, string targetFramework)
 		{
 			var dependencies = JsonReader.Parse(File.ReadAllText(depsJsonFileName));

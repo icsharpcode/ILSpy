@@ -89,12 +89,12 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				outputFile += ".exe";
 				otherOptions += "/exe ";
 			}
-			
-			
+
+
 			if (options.HasFlag(AssemblerOptions.UseDebug)) {
 				otherOptions += "/debug ";
 			}
-			
+
 			ProcessStartInfo info = new ProcessStartInfo(ilasmPath);
 			info.Arguments = $"/nologo {otherOptions}/output=\"{outputFile}\" \"{sourceFileName}\"";
 			info.RedirectStandardError = true;
@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			return outputFile;
 		}
-		
+
 		public static string Disassemble(string sourceFileName, string outputFile, AssemblerOptions asmOptions)
 		{
 			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler)) {
@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 
 			string ildasmPath = SdkUtility.GetSdkPath("ildasm.exe");
-			
+
 			ProcessStartInfo info = new ProcessStartInfo(ildasmPath);
 			info.Arguments = $"/nobar /utf8 /out=\"{outputFile}\" \"{sourceFileName}\"";
 			info.RedirectStandardError = true;
@@ -182,23 +182,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return Regex.Replace(il, @"'<PrivateImplementationDetails>\{[0-9A-F-]+\}'", "'<PrivateImplementationDetails>'");
 		}
 
-		static readonly string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-				@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
+		static readonly string refAsmPath = new DotNetCorePathFinder(new Version(3, 0)).GetReferenceAssemblyPath(".NETCoreApp, Version = v3.0");
 		static readonly string thisAsmPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
 
 		static readonly Lazy<IEnumerable<MetadataReference>> defaultReferences = new Lazy<IEnumerable<MetadataReference>>(GetDefaultReferences);
-
-		static readonly string[] references = new string[] {
-			"netstandard, Version=2.1.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51",
-			"mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-			"System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-			"System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-			"System.Runtime, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
-			"System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
-			"Microsoft.CSharp, Version=4.0.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
-			"System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e",
-			"System.Console, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
-		};
 
 		const string targetFrameworkAttributeSnippet = @"
 
@@ -208,12 +195,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		static IEnumerable<MetadataReference> GetDefaultReferences()
 		{
-			DotNetCorePathFinder pathFinder = new DotNetCorePathFinder(new Version(3, 0));
-			foreach (var reference in references) {
-				var result = pathFinder.TryResolveDotNetCore(AssemblyNameReference.Parse(reference));
-				if (result != null) {
-					yield return MetadataReference.CreateFromFile(result);
-				}
+			foreach (var reference in Directory.EnumerateFiles(refAsmPath, "*.dll")) {
+				yield return MetadataReference.CreateFromFile(reference);
 			}
 		}
 
@@ -462,7 +445,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				settings = new DecompilerSettings();
 			using (var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read)) {
 				var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
-				var resolver = new UniversalAssemblyResolver(assemblyFileName, true,
+				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
 					module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
 				resolver.AddSearchDirectory(Path.GetDirectoryName(typeof(Span<>).Assembly.Location));
 				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
@@ -482,16 +465,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				return fileName;
 			}
 		}
-		
+
 		public static void RunAndCompareOutput(string testFileName, string outputFile, string decompiledOutputFile, string decompiledCodeFile = null)
 		{
 			string output1, output2, error1, error2;
 			int result1 = Tester.Run(outputFile, out output1, out error1);
 			int result2 = Tester.Run(decompiledOutputFile, out output2, out error2);
-			
+
 			Assert.AreEqual(0, result1, "Exit code != 0; did the test case crash?" + Environment.NewLine + error1);
 			Assert.AreEqual(0, result2, "Exit code != 0; did the decompiled code crash?" + Environment.NewLine + error2);
-			
+
 			if (output1 != output2 || error1 != error2) {
 				StringBuilder b = new StringBuilder();
 				b.AppendLine($"Test {testFileName} failed: output does not match.");
