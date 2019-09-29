@@ -8,6 +8,7 @@ using System.Text;
 using EnvDTE;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.LanguageServices;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
@@ -148,6 +149,8 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static object[] GetProperties(EnvDTE.Properties properties, params string[] names)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			var values = new object[names.Length];
 			foreach (object p in properties) {
 				try {
@@ -168,6 +171,8 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static List<(string, object)> GetAllProperties(EnvDTE.Properties properties)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			var result = new List<(string, object)>();
 			for (int i = 0; i < properties.Count; i++) {
 				try {
@@ -207,6 +212,10 @@ namespace ICSharpCode.ILSpy.AddIn
 		public static IWpfTextViewHost GetCurrentViewHost(IServiceProvider serviceProvider)
 		{
 			IVsTextManager txtMgr = (IVsTextManager)serviceProvider.GetService(typeof(SVsTextManager));
+			if (txtMgr == null) {
+				return null;
+			}
+
 			IVsTextView vTextView = null;
 			int mustHaveFocus = 1;
 			txtMgr.GetActiveView(mustHaveFocus, null, out vTextView);
@@ -235,6 +244,8 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static string GetProjectOutputAssembly(Project project, Microsoft.CodeAnalysis.Project roslynProject)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			string outputFileName = Path.GetFileName(roslynProject.OutputFilePath);
 
 			// Get the directory path based on the project file.

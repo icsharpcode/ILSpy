@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpy
 			if (textView != null)
 				reference = textView.GetReferenceSegmentAtMousePosition();
 			else if (listBox?.SelectedItem is SearchResult result)
-				reference = new ReferenceSegment { Reference = result.Member };
+				reference = new ReferenceSegment { Reference = result.Reference };
 			else
 				reference = null;
 			var position = textView != null ? textView.GetPositionFromMousePosition() : null;
@@ -222,15 +222,11 @@ namespace ICSharpCode.ILSpy
 						menuItem.Header = MainWindow.GetResourceString( entryPair.Metadata.Header);
 						menuItem.InputGestureText = entryPair.Metadata.InputGestureText;
 						if (!string.IsNullOrEmpty(entryPair.Metadata.Icon)) {
-							object image = Images.Load(entryPair.Value, entryPair.Metadata.Icon);
-							if (!(image is Viewbox)) {
-								image = new Image {
-									Width = 16,
-									Height = 16,
-									Source = (ImageSource)image
-								};
-							}
-							menuItem.Icon = image;
+							menuItem.Icon = new Image {
+								Width = 16,
+								Height = 16,
+								Source = Images.Load(entryPair.Value, entryPair.Metadata.Icon)
+							};
 						}
 						if (entryPair.Value.IsEnabled(context)) {
 							menuItem.Click += delegate { entry.Execute(context); };

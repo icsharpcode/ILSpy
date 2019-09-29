@@ -1235,7 +1235,38 @@ namespace ICSharpCode.Decompiler.CSharp
 				default:
 					throw new ArgumentException($"Unknown instruction type: {func.OpCode}");
 			}
-			return HandleDelegateConstruction(inst.Method.DeclaringType, method, expectedTargetDetails, thisArg, inst);
+			if (CanUseDelegateConstruction(method, thisArg, inst.Method.DeclaringType.GetDelegateInvokeMethod())) {
+				return HandleDelegateConstruction(inst.Method.DeclaringType, method, expectedTargetDetails, thisArg, inst);
+			} else {
+				var argumentList = BuildArgumentList(expectedTargetDetails, null, inst.Method,
+					0, inst.Arguments, null);
+				return HandleConstructorCall(new ExpectedTargetDetails { CallOpCode = OpCode.NewObj }, null, inst.Method, argumentList).WithILInstruction(inst);
+			}
+		}
+
+		private bool CanUseDelegateConstruction(IMethod targetMethod, ILInstruction thisArg, IMethod invokeMethod)
+		{
+			if (targetMethod.IsStatic) {
+				// If the invoke method is known, we can compare the parameter counts to figure out whether the
+				// delegate is static or binds the first argument
+				if (invokeMethod != null) {
+					if (invokeMethod.Parameters.Count == targetMethod.Parameters.Count) {
+						return thisArg.MatchLdNull();
+					} else if (targetMethod.IsExtensionMethod && invokeMethod.Parameters.Count == targetMethod.Parameters.Count - 1) {
+						return true;
+					} else {
+						return false;
+					}
+				} else {
+					// delegate type unknown:
+					return thisArg.MatchLdNull() || targetMethod.IsExtensionMethod;
+				}
+			} else {
+				// targetMethod is instance method
+				if (invokeMethod != null && invokeMethod.Parameters.Count != targetMethod.Parameters.Count)
+					return false;
+				return true;
+			}
 		}
 
 		internal TranslatedExpression Build(LdVirtDelegate inst)
@@ -1243,9 +1274,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			return HandleDelegateConstruction(inst.Type, inst.Method, new ExpectedTargetDetails { CallOpCode = OpCode.CallVirt }, inst.Argument, inst);
 		}
 
-		TranslatedExpression HandleDelegateConstruction(IType delegateType, IMethod method, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg, ILInstruction inst)
+		internal ExpressionWithResolveResult BuildMethodReference(IMethod method, bool isVirtual)
 		{
-			var invokeMethod = delegateType.GetDelegateInvokeMethod();
+			var expr = BuildDelegateReference(method, invokeMethod: null, new ExpectedTargetDetails { CallOpCode = isVirtual ? OpCode.CallVirt : OpCode.Call }, thisArg: null);
+			expr.Expression.RemoveAnnotations<ResolveResult>();
+			return expr.Expression.WithRR(new MemberResolveResult(null, method));
+		}
+
+		ExpressionWithResolveResult BuildDelegateReference(IMethod method, IMethod invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg)
+		{
 			TranslatedExpression target;
 			IType targetType;
 			bool requireTarget;
@@ -1331,27 +1368,32 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 			requireTarget = !method.IsLocalFunction && (step & 1) != 0;
-			Expression targetExpression;
+			ExpressionWithResolveResult targetExpression;
 			Debug.Assert(result != null);
 			if (requireTarget) {
 				Debug.Assert(target.Expression != null);
 				var mre = new MemberReferenceExpression(target, methodName);
 				if ((step & 2) != 0)
 					mre.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
-				mre.WithRR(result);
-				targetExpression = mre;
+				targetExpression = mre.WithRR(result);
 			} else {
 				var ide = new IdentifierExpression(methodName);
 				if ((step & 2) != 0)
 					ide.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
-				ide.WithRR(result);
-				targetExpression = ide;
+				targetExpression = ide.WithRR(result);
 			}
+			return targetExpression;
+		}
+
+		TranslatedExpression HandleDelegateConstruction(IType delegateType, IMethod method, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg, ILInstruction inst)
+		{
+			var invokeMethod = delegateType.GetDelegateInvokeMethod();
+			var targetExpression = BuildDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg);
 			var oce = new ObjectCreateExpression(expressionBuilder.ConvertType(delegateType), targetExpression)
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(
 					delegateType,
-					result,
+					targetExpression.ResolveResult,
 					Conversion.MethodGroupConversion(method, expectedTargetDetails.CallOpCode == OpCode.CallVirt, false)));
 			return oce;
 		}

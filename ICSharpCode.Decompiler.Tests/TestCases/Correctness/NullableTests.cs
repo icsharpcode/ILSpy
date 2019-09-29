@@ -24,6 +24,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		static void Main()
 		{
+			AvoidLifting();
+			BitNot();
+		}
+
+		static void AvoidLifting()
+		{
 			Console.WriteLine("MayThrow:");
 			Console.WriteLine(MayThrow(10, 2, 3));
 			Console.WriteLine(MayThrow(10, 0, null));
@@ -33,8 +39,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine(NotUsingAllInputs(5, null));
 
 			Console.WriteLine("UsingUntestedValue:");
-			Console.WriteLine(NotUsingAllInputs(5, 3));
-			Console.WriteLine(NotUsingAllInputs(5, null));
+			Console.WriteLine(UsingUntestedValue(5, 3));
+			Console.WriteLine(UsingUntestedValue(5, null));
 		}
 
 		static int? MayThrow(int? a, int? b, int? c)
@@ -53,6 +59,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			// cannot be lifted because the value differs if b == null
 			return a.HasValue ? a.GetValueOrDefault() + b.GetValueOrDefault() : default(int?);
+		}
+
+		static void BitNot()
+		{
+			UInt32? value = 0;
+			Assert(~value == UInt32.MaxValue);
+			UInt64? value2 = 0;
+			Assert(~value2 == UInt64.MaxValue);
+			UInt16? value3 = 0;
+			Assert((UInt16)~value3 == (UInt16)UInt16.MaxValue);
+			UInt32 value4 = 0;
+			Assert(~value4 == UInt32.MaxValue);
+			UInt64 value5 = 0;
+			Assert(~value5 == UInt64.MaxValue);
+			UInt16 value6 = 0;
+			Assert((UInt16)~value6 == UInt16.MaxValue);
+		}
+
+		static void Assert(bool b)
+		{
+			if (!b)
+				throw new InvalidOperationException();
 		}
 	}
 }

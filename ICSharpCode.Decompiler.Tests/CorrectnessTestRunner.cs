@@ -281,6 +281,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void StringConcat([ValueSource("defaultOptions")] CompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
+		[Test]
 		public void MiniJSON([ValueSource("defaultOptions")] CompilerOptions options)
 		{
 			if (options.HasFlag(CompilerOptions.UseMcs)) {

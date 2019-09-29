@@ -300,7 +300,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (sequencePoint.Offset < pos) {
 						// overlapping sequence point?
 						// delete previous sequence points that are after sequencePoint.Offset
-						while (newList.Count > 0 && newList.Last().EndOffset > pos) {
+						while (newList.Count > 0 && newList.Last().EndOffset > sequencePoint.Offset) {
 							var last = newList.Last();
 							if (last.Offset >= sequencePoint.Offset) {
 								newList.RemoveAt(newList.Count - 1);

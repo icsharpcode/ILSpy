@@ -53,6 +53,13 @@ namespace ICSharpCode.Decompiler.Metadata
 			 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages")
 		};
 
+		static readonly string[] RuntimePacks = new[] {
+			"Microsoft.NETCore.App",
+			"Microsoft.WindowsDesktop.App",
+			"Microsoft.AspNetCore.App",
+			"Microsoft.AspNetCore.All"
+		};
+
 		readonly Dictionary<string, DotNetCorePackageInfo> packages;
 		ISet<string> packageBasePaths = new HashSet<string>(StringComparer.Ordinal);
 		readonly string assemblyName;
@@ -124,13 +131,16 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		string FallbackToDotNetSharedDirectory(IAssemblyReference name, Version version)
 		{
-			if (dotnetBasePath == null) return null;
-			var basePath = Path.Combine(dotnetBasePath, "shared", "Microsoft.NETCore.App");
-			var closestVersion = GetClosestVersionFolder(basePath, version);
-			if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".dll"))) {
-				return Path.Combine(basePath, closestVersion, name.Name + ".dll");
-			} else if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".exe"))) {
-				return Path.Combine(basePath, closestVersion, name.Name + ".exe");
+			if (dotnetBasePath == null)
+				return null;
+			var basePaths = RuntimePacks.Select(pack => Path.Combine(dotnetBasePath, "shared", pack));
+			foreach (var basePath in basePaths) {
+				var closestVersion = GetClosestVersionFolder(basePath, version);
+				if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".dll"))) {
+					return Path.Combine(basePath, closestVersion, name.Name + ".dll");
+				} else if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".exe"))) {
+					return Path.Combine(basePath, closestVersion, name.Name + ".exe");
+				}
 			}
 			return null;
 		}

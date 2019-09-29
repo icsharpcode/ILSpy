@@ -9,7 +9,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Search
 {
-	class MetadataTokenSearchStrategy : AbstractSearchStrategy
+	class MetadataTokenSearchStrategy : AbstractEntitySearchStrategy
 	{
 		readonly EntityHandle searchTermToken;
 

@@ -63,17 +63,68 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			private readonly int dummy;
 
+			public int Property {
+				get {
+					return 1;
+				}
+				set {
+				}
+			}
+
+#if CS80
+			public readonly int ReadOnlyProperty {
+				get {
+					return 1;
+				}
+				set {
+				}
+			}
+
+			public int PropertyWithReadOnlyGetter {
+				readonly get {
+					return 1;
+				}
+				set {
+				}
+			}
+
+			public int PropertyWithReadOnlySetter {
+				get {
+					return 1;
+				}
+				readonly set {
+				}
+			}
+
+			public event EventHandler NormalEvent;
+
+			public readonly event EventHandler ReadOnlyEvent {
+				add {
+				}
+				remove {
+				}
+			}
+#endif
 			public void Method()
 			{
 			}
+
+#if CS80
+			public readonly void ReadOnlyMethod()
+			{
+			}
+#endif
 		}
 
 		public readonly struct ReadOnlyStruct
 		{
-			private readonly int dummy;
+			private readonly int Field;
 
 			public void Method()
 			{
+				ref readonly int field = ref Field;
+				Console.WriteLine("No inlining");
+				Console.WriteLine(field.GetHashCode());
 			}
 		}
 

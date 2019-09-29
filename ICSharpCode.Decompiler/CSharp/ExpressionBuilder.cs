@@ -1409,7 +1409,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (UserDefinedCompoundAssign.IsStringConcat(inst.Method)) {
 				Debug.Assert(inst.Method.Parameters.Count == 2);
 				var value = Translate(inst.Value).ConvertTo(inst.Method.Parameters[1].Type, this, allowImplicitConversion: true);
-				return new AssignmentExpression(target, AssignmentOperatorType.Add, value)
+				var valueExpr = ReplaceMethodCallsWithOperators.RemoveRedundantToStringInConcat(value, inst.Method, isLastArgument: true).Detach();
+				return new AssignmentExpression(target, AssignmentOperatorType.Add, valueExpr)
 					.WithILInstruction(inst)
 					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, ExpressionType.AddAssign, inst.Method, inst.IsLifted, new[] { target.ResolveResult, value.ResolveResult }));
 			} else if (inst.Method.Parameters.Count == 2) {
@@ -3132,6 +3133,22 @@ namespace ICSharpCode.Decompiler.CSharp
 				ae.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
 			return ae.WithILInstruction(inst)
 				.WithRR(new OperatorResolveResult(SpecialType.Dynamic, inst.Operation, new[] { target.ResolveResult, value.ResolveResult }));
+		}
+
+		protected internal override TranslatedExpression VisitLdFtn(LdFtn inst, TranslationContext context)
+		{
+			ExpressionWithResolveResult delegateRef = new CallBuilder(this, typeSystem, settings).BuildMethodReference(inst.Method, isVirtual: false);
+			return new InvocationExpression(new IdentifierExpression("__ldftn"), delegateRef)
+				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.IntPtr)))
+				.WithILInstruction(inst);
+		}
+
+		protected internal override TranslatedExpression VisitLdVirtFtn(LdVirtFtn inst, TranslationContext context)
+		{
+			ExpressionWithResolveResult delegateRef = new CallBuilder(this, typeSystem, settings).BuildMethodReference(inst.Method, isVirtual: true);
+			return new InvocationExpression(new IdentifierExpression("__ldvirtftn"), delegateRef)
+				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.IntPtr)))
+				.WithILInstruction(inst);
 		}
 
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)

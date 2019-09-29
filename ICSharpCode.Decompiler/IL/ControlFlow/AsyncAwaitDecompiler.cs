@@ -85,6 +85,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		TryCatch mainTryCatch;
 		Block setResultAndExitBlock; // block that is jumped to for return statements
 		int finalState;       // final state after the setResultAndExitBlock
+		bool finalStateKnown;
 		ILVariable resultVar; // the variable that gets returned by the setResultAndExitBlock
 		ILVariable doFinallyBodies;
 
@@ -352,7 +353,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			moveNextFunction = YieldReturnDecompiler.CreateILAst(moveNextMethod, context);
 			if (!(moveNextFunction.Body is BlockContainer blockContainer))
 				throw new SymbolicAnalysisFailedException();
-			if (blockContainer.Blocks.Count != 2)
+			if (blockContainer.Blocks.Count != 2 && blockContainer.Blocks.Count != 1)
 				throw new SymbolicAnalysisFailedException();
 			if (blockContainer.EntryPoint.IncomingEdgeCount != 1)
 				throw new SymbolicAnalysisFailedException();
@@ -389,7 +390,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				doFinallyBodies = initDoFinallyBodies.Variable;
 			}
 
-			setResultAndExitBlock = blockContainer.Blocks[1];
+			setResultAndExitBlock = blockContainer.Blocks.ElementAtOrDefault(1);
+			if (setResultAndExitBlock == null) {
+				// This block can be absent if the function never exits normally,
+				// but always throws an exception/loops infinitely.
+				resultVar = null;
+				finalStateKnown = false; // final state will be detected in ValidateCatchBlock() instead
+				return;
+			}
 			// stobj System.Int32(ldflda [Field ICSharpCode.Decompiler.Tests.TestCases.Pretty.Async+<SimpleBoolTaskMethod>d__7.<>1__state](ldloc this), ldc.i4 -2)
 			// call SetResult(ldflda [Field ICSharpCode.Decompiler.Tests.TestCases.Pretty.Async+<SimpleBoolTaskMethod>d__7.<>t__builder](ldloc this), ldloc result)
 			// leave IL_0000
@@ -397,6 +405,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				throw new SymbolicAnalysisFailedException();
 			if (!MatchStateAssignment(setResultAndExitBlock.Instructions[0], out finalState))
 				throw new SymbolicAnalysisFailedException();
+			finalStateKnown = true;
 			if (!MatchCall(setResultAndExitBlock.Instructions[1], "SetResult", out var args))
 				throw new SymbolicAnalysisFailedException();
 			if (!IsBuilderFieldOnThis(args[0]))
@@ -442,8 +451,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!stloc.Value.MatchLdLoc(handler.Variable))
 				throw new SymbolicAnalysisFailedException();
 			// stfld <>1__state(ldloc this, ldc.i4 -2)
-			if (!MatchStateAssignment(catchBlock.Instructions[1], out int newState) || newState != finalState)
+			if (!MatchStateAssignment(catchBlock.Instructions[1], out int newState))
 				throw new SymbolicAnalysisFailedException();
+			if (finalStateKnown) {
+				if (newState != finalState)
+					throw new SymbolicAnalysisFailedException();
+			} else {
+				finalState = newState;
+				finalStateKnown = true;
+			}
 			// call SetException(ldfld <>t__builder(ldloc this), ldloc exception)
 			if (!MatchCall(catchBlock.Instructions[2], "SetException", out var args))
 				throw new SymbolicAnalysisFailedException();

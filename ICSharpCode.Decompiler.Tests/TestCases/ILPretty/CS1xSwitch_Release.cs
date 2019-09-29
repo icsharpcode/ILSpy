@@ -270,7 +270,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverBool(bool b)
 		{
-			Console.WriteLine("SwitchOverBool: " + b.ToString());
+			Console.WriteLine("SwitchOverBool: " + b);
 			switch (b) {
 				case true:
 					return bool.TrueString;

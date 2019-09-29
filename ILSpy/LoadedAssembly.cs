@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy
 		public PEFile GetPEFileOrNull()
 		{
 			try {
-				return GetPEFileAsync().Result;
+				return GetPEFileAsync().GetAwaiter().GetResult();
 			} catch (Exception ex) {
 				System.Diagnostics.Trace.TraceError(ex.ToString());
 				return null;

@@ -766,4 +766,7 @@ Are you sure you want to continue?</value>
   <data name="Assembly" xml:space="preserve">
     <value>Assembly</value>
   </data>
+  <data name="DecompileToNewPanel" xml:space="preserve">
+    <value>Decompile to new tab</value>
+  </data>
 </root>

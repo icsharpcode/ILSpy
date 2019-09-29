@@ -7,6 +7,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static int Main(string[] args)
 		{
 			Issue999();
+			Issue1656();
 			return 0;
 		}
 
@@ -19,6 +20,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static float M(float v)
 		{
 			return 0.99f * v + 0.01f;
+		}
+
+		static void Issue1656()
+		{
+			double primary = 'B';
+			CxAssert((++primary) == 'C');
+			CxAssert((--primary) == 'B');
+			CxAssert((primary++) == 'B');
+			CxAssert((primary--) == 'C');
+		}
+
+		static void CxAssert(bool v)
+		{
+			if (!v) {
+				throw new InvalidOperationException();
+			}
 		}
 	}
 }

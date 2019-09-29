@@ -23,6 +23,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		protected override void OnBeforeQueryStatus(object sender, EventArgs e)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			if (sender is OleMenuCommand menuItem) {
 				menuItem.Visible = false;
 
@@ -46,6 +48,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		Document GetRoslynDocument()
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			var document = owner.DTE.ActiveDocument;
 			var selection = (EnvDTE.TextPoint)((EnvDTE.TextSelection)document.Selection).ActivePoint;
 			var id = owner.Workspace.CurrentSolution.GetDocumentIdsWithFilePath(document.FullName).FirstOrDefault();
@@ -57,18 +61,26 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		EnvDTE.TextPoint GetEditorSelection()
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			var document = owner.DTE.ActiveDocument;
 			return ((EnvDTE.TextSelection)document.Selection).ActivePoint;
 		}
 
 		protected override async void OnExecute(object sender, EventArgs e)
 		{
+			await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
 			var textView = Utils.GetCurrentViewHost(owner)?.TextView;
 			if (textView == null)
 				return;
 
 			SnapshotPoint caretPosition = textView.Caret.Position.BufferPosition;
 			var roslynDocument = GetRoslynDocument();
+			if (roslynDocument == null) {
+				owner.ShowMessage("This element is not analyzable in current view.");
+				return;
+			}
 			var ast = await roslynDocument.GetSyntaxRootAsync().ConfigureAwait(false);
 			var model = await roslynDocument.GetSemanticModelAsync().ConfigureAwait(false);
 			var node = ast.FindNode(new TextSpan(caretPosition.Position, 0), false, true);
@@ -89,6 +101,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 			// Add our own project as well (not among references)
 			var project = FindProject(owner.DTE.Solution.Projects.OfType<EnvDTE.Project>(), roslynProject.FilePath);
+
 			if (project == null) {
 				owner.ShowMessage(OLEMSGICON.OLEMSGICON_WARNING, "Can't show ILSpy for this code element!");
 				return;

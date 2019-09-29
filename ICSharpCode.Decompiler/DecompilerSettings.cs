@@ -107,12 +107,13 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp8_0) {
 				nullableReferenceTypes = false;
+				readOnlyMethods = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (nullableReferenceTypes)
+			if (nullableReferenceTypes || readOnlyMethods)
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers)
 				return CSharp.LanguageVersion.CSharp7_3;
@@ -837,6 +838,20 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (introduceReadonlyAndInModifiers != value) {
 					introduceReadonlyAndInModifiers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool readOnlyMethods = true;
+
+		[Category("C# 8.0 / VS 2019")]
+		[Description("DecompilerSettings.IsReadOnlyAttributeShouldBeReplacedWithReadonlyInModifiersOnStructsParameters")]
+		public bool ReadOnlyMethods {
+			get { return readOnlyMethods; }
+			set {
+				if (readOnlyMethods != value) {
+					readOnlyMethods = value;
 					OnPropertyChanged();
 				}
 			}

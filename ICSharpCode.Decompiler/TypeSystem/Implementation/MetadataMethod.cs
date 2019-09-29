@@ -49,6 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IParameter[] parameters;
 		IType returnType;
 		byte returnTypeIsRefReadonly = ThreeState.Unknown;
+		byte thisIsRefReadonly = ThreeState.Unknown;
 
 		internal MetadataMethod(MetadataModule module, MethodDefinitionHandle handle)
 		{
@@ -424,6 +425,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return hasReadOnlyAttr;
 			}
 		}
+
+		public bool ThisIsRefReadOnly {
+			get {
+				if (thisIsRefReadonly != ThreeState.Unknown) {
+					return thisIsRefReadonly == ThreeState.True;
+				}
+				var metadata = module.metadata;
+				var methodDefinition = metadata.GetMethodDefinition(handle);
+				bool hasReadOnlyAttr = DeclaringTypeDefinition?.IsReadOnly ?? false;
+				if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyMethods) != 0) {
+					hasReadOnlyAttr |= methodDefinition.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
+				}
+				this.thisIsRefReadonly = ThreeState.From(hasReadOnlyAttr);
+				return hasReadOnlyAttr;
+			}
+		}
+
 		#endregion
 
 		public Accessibility Accessibility => GetAccessibility(attributes);

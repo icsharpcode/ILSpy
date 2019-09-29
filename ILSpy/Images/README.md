@@ -14,7 +14,7 @@ Icons used in ILSpy:
 | Constructor               |  x  |  x   | based on VS 2017 Icon Pack (Method) using a different colour                    |         |
 | Copy                      |  x  |  x   | VS 2017 Icon Pack (Copy)                                                        |         |
 | Delegate                  |  x  |  x   | VS 2017 Icon Pack (Delegate)                                                    |         |
-| Delete                    |  x  |  x   |                                                                                 |         |
+| Delete                    |  x  |  x   | VS 2017 Icon Pack (Remove_color)                                                |         |
 | Enum                      |  x  |  x   | VS 2017 Icon Pack (Enumerator)                                                  |         |
 | EnumValue                 |  x  |  x   | VS 2017 Icon Pack (EnumItem)                                                    |         |
 | Event                     |  x  |  x   | VS 2017 Icon Pack (Event)                                                       |         |
@@ -45,10 +45,10 @@ Icons used in ILSpy:
 | Property                  |  x  |  x   | VS 2017 Icon Pack (Property)                                                    |         |
 | ReferenceFolder           |  x  |  x   | combined VS 2017 Icon Pack (Reference) two times                                |         |
 | Refresh                   |  x  |  x   | VS 2017 Icon Pack (Refresh)                                                     |         |
-| Resource                  |  x  |  x   |                                                                                 |         |
-| ResourceImage             |  x  |  x   |                                                                                 |         |
-| ResourceResourcesFile     |  x  |  x   |                                                                                 |         |
-| ResourceXml               |  x  |  x   |                                                                                 |         |
+| Resource                  |  x  |  x   | VS 2017 Icon Pack (Document)                                                    |         |
+| ResourceImage             |  x  |  x   | VS 2017 Icon Pack (Image)                                                       |         |
+| ResourceResourcesFile     |  x  |  x   | VS 2017 Icon Pack (LocalResources)                                              |         |
+| ResourceXml               |  x  |  x   | VS 2017 Icon Pack (XMLFile)                                                     |         |
 | ResourceXsd               |  x  |  x   | combined VS 2017 Icon Pack (XMLSchema) with the "file symbol in ResourceXslt    |         |
 | ResourceXsl               |  x  |  x   | VS 2017 Icon Pack (XMLTransformation)                                           |         |
 | ResourceXslt              |  x  |  x   | VS 2017 Icon Pack (XSLTTemplate)                                                |         |
@@ -57,12 +57,12 @@ Icons used in ILSpy:
 | SearchMsdn                |  x  |  x   | based on VS 2017 Icon Pack (Search) + Microsoft Logo                            |         |
 | ShowAll                   |  x  |  x   | combined PublicOnly, OverlayPrivate, OverlayProtected, OverlayInternal          |         |
 | ShowPrivateInternal       |  x  |  x   | combined OverlayPrivate and OverlayInternal                                     |         |
-| ShowPublicOnly            |  x  |  x   |                                                                                 |         |
+| ShowPublicOnly            |  x  |  x   | VS 2017 Icon Pack (Type)                                                        |         |
 | Sort                      |  x  |  x   | VS 2017 Icon Pack (SortAscending)                                               |         |
 | Struct                    |  x  |  x   | VS 2017 Icon Pack (Structure)                                                   |         |
-| SubTypes                  |  x  |  x   |                                                                                 |         |
-| SuperTypes                |  x  |  x   |                                                                                 |         |
-| ViewCode                  |  x  |  x   |                                                                                 |         |
+| SubTypes                  |  x  |  x   | based on VS 2017 Icon Pack (BaseType) rotated +90°                              |         |
+| SuperTypes                |  x  |  x   | based on VS 2017 Icon Pack (BaseType) rotated -90°                              |         |
+| ViewCode                  |  x  |  x   | VS 2017 Icon Pack (GoToSourceCode)                                              |         |
 | VirtualMethod             |  x  |  x   | combined VS 2017 Icon Pack (Method) two times                                   |         |
 | Warning                   |  x  |  x   | VS 2017 Icon Pack (StatusWarning)                                               |         |
 

@@ -7,7 +7,6 @@ configuration:
 image: Visual Studio 2019
 
 install:
-- cmd: choco install dotnetcore-sdk --pre
 - git submodule update --init --recursive
 - ps: .\BuildTools\appveyor-install.ps1
 
@@ -43,7 +42,7 @@ for:
 - branches:
     only:
       - master
-      - 3.2.x
+      - 5.0.x
   artifacts:
     - path: ILSpy_binaries.zip
       name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% binaries

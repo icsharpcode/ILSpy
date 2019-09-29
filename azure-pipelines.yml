@@ -1,11 +1,10 @@
 trigger:
 - master
-- msix
-- 3.2.x
+- 5.0.x
 
 pr:
 - master
-- 3.2.x
+- 5.0.x
 
 variables:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
@@ -40,7 +39,7 @@ jobs:
 
   - task: DotNetCoreInstaller@0
     inputs:
-      version: '3.0.100-preview9-014004'
+      version: '3.0.100'
 
   - powershell: .\BuildTools\pipelines-install.ps1
     displayName: Install

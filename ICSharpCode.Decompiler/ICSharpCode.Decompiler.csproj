@@ -328,6 +328,7 @@
     <Compile Include="IL\Transforms\HighLevelLoopTransform.cs" />
     <Compile Include="IL\Transforms\NamedArgumentTransform.cs" />
     <Compile Include="IL\Transforms\IntroduceDynamicTypeOnLocals.cs" />
+    <Compile Include="IL\Transforms\IntroduceRefReadOnlyModifierOnLocals.cs" />
     <Compile Include="IL\Transforms\NullPropagationTransform.cs" />
     <Compile Include="IL\Transforms\ProxyCallReplacer.cs" />
     <Compile Include="IL\Instructions\StringToInt.cs" />

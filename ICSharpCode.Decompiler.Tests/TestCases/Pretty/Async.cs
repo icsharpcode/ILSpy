@@ -167,6 +167,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			};
 		}
 
+		public static async Task AlwaysThrow()
+		{
+			throw null;
+		}
+
+		public static async Task InfiniteLoop()
+		{
+			while (true) {
+			}
+		}
+
+		public static async Task InfiniteLoopWithAwait()
+		{
+			while (true) {
+				await Task.Delay(10);
+			}
+		}
+
 #if CS70
 		public static async Task<int> AsyncLocalFunctions()
 		{

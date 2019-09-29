@@ -32,12 +32,12 @@
   <ItemGroup>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AvalonEdit" Version="6.0.0-rc1" />
+    <PackageReference Include="AvalonEdit" Version="6.0.0" />
+    <PackageReference Include="System.Composition" Version="1.3.0" />
   </ItemGroup>
 
   <ItemGroup>
