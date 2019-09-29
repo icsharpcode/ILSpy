@@ -45,6 +45,7 @@ using ICSharpCode.TreeView;
 using Microsoft.Win32;
 using OSVersionHelper;
 using Xceed.Wpf.AvalonDock.Layout;
+using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
 namespace ICSharpCode.ILSpy
 {
@@ -91,11 +92,8 @@ namespace ICSharpCode.ILSpy
 			decompilerTextView = App.ExportProvider.GetExportedValue<DecompilerTextView>();
 			mainPane.Content = decompilerTextView;
 
-			//todo
-			//if (sessionSettings.SplitterPosition > 0 && sessionSettings.SplitterPosition < 1) {
-			//	leftColumn.Width = new GridLength(sessionSettings.SplitterPosition, GridUnitType.Star);
-			//	rightColumn.Width = new GridLength(1 - sessionSettings.SplitterPosition, GridUnitType.Star);
-			//}
+			sessionSettings.DockLayout.Deserialize(new XmlLayoutSerializer(DockManager));
+
 			sessionSettings.FilterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
 			InitMainMenu();
@@ -514,7 +512,7 @@ namespace ICSharpCode.ILSpy
 			} else {
 				downloadUrl = await AboutPage.CheckForUpdatesIfEnabledAsync(spySettings);
 			}
-			
+
 			AdjustUpdateUIAfterCheck(downloadUrl, forceCheck);
 		}
 
@@ -1017,12 +1015,7 @@ namespace ICSharpCode.ILSpy
 			sessionSettings.ActiveTreeViewPath = GetPathForNode(treeView.SelectedItem as SharpTreeNode);
 			sessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(treeView.SelectedItem as SharpTreeNode);
 			sessionSettings.WindowBounds = this.RestoreBounds;
-			//todo
-			//sessionSettings.SplitterPosition = leftColumn.Width.Value / (leftColumn.Width.Value + rightColumn.Width.Value);
-			//if (topPane.Visibility == Visibility.Visible)
-			//	sessionSettings.TopPaneSplitterPosition = topPaneRow.Height.Value / (topPaneRow.Height.Value + textViewRow.Height.Value);
-			//if (bottomPane.Visibility == Visibility.Visible)
-			//	sessionSettings.BottomPaneSplitterPosition = bottomPaneRow.Height.Value / (bottomPaneRow.Height.Value + textViewRow.Height.Value);
+			sessionSettings.DockLayout.Serialize(new XmlLayoutSerializer(DockManager));
 			sessionSettings.Save();
 		}
 

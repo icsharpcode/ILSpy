@@ -139,6 +139,7 @@
       <DependentUpon>DebugSteps.xaml</DependentUpon>
     </Compile>
     <Compile Include="Docking\DockingHelper.cs" />
+    <Compile Include="Docking\DockLayoutSettings.cs" />
     <Compile Include="ILSpyTraceListener.cs" />
     <Compile Include="DecompilationOptions.cs" />
     <Compile Include="ExtensionMethods.cs" />
