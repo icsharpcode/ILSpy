@@ -486,7 +486,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return newTargetType.IsKnownType(KnownTypeCode.FormattableString)
 					|| newTargetType.IsKnownType(KnownTypeCode.IFormattable);
 			}
-			return oldTargetType.Equals(newTargetType);
+			return conversions.IdentityConversion(oldTargetType, newTargetType);
 		}
 		
 		TranslatedExpression LdcI4(ICompilation compilation, int val)
