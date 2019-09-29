@@ -14,7 +14,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		internal NullabilityAnnotatedType(IType type, Nullability nullability)
 			: base(type)
 		{
-			Debug.Assert(nullability != type.Nullability);
+			Debug.Assert(type.Nullability == Nullability.Oblivious);
+			Debug.Assert(nullability != Nullability.Oblivious);
 			// Due to IType -> concrete type casts all over the type system, we can insert
 			// the NullabilityAnnotatedType wrapper only in some limited places.
 			Debug.Assert(type is ITypeDefinition
