@@ -370,7 +370,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override string ToString()
 		{
-			return this.ReflectionName + " (owner=" + owner + ")";
+			return this.ReflectionName;
 		}
 	}
 }
