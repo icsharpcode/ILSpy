@@ -108,13 +108,14 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp8_0) {
 				nullableReferenceTypes = false;
 				readOnlyMethods = false;
+				asyncUsingAndForEachStatement = false;
 				asyncEnumerator = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator)
+			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement)
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers)
 				return CSharp.LanguageVersion.CSharp7_3;
@@ -871,6 +872,20 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (readOnlyMethods != value) {
 					readOnlyMethods = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool asyncUsingAndForEachStatement = true;
+
+		[Category("C# 8.0 / VS 2019")]
+		[Description("DecompilerSettings.DetectAsyncUsingAndForeachStatements")]
+		public bool AsyncUsingAndForEachStatement {
+			get { return asyncUsingAndForEachStatement; }
+			set {
+				if (asyncUsingAndForEachStatement != value) {
+					asyncUsingAndForEachStatement = value;
 					OnPropertyChanged();
 				}
 			}

@@ -411,14 +411,29 @@ namespace ICSharpCode.Decompiler.CSharp
 				return transformed;
 			AstNode usingInit = resource;
 			var var = inst.Variable;
-			if (!inst.ResourceExpression.MatchLdNull() && !NullableType.GetUnderlyingType(var.Type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable))) {
+			KnownTypeCode knownTypeCode;
+			IType disposeType;
+			string disposeTypeMethodName;
+			if (inst.IsAsync) {
+				knownTypeCode = KnownTypeCode.IAsyncDisposable;
+				disposeType = exprBuilder.compilation.FindType(KnownTypeCode.IAsyncDisposable);
+				disposeTypeMethodName = "DisposeAsync";
+			} else {
+				knownTypeCode = KnownTypeCode.IDisposable;
+				disposeType = exprBuilder.compilation.FindType(KnownTypeCode.IDisposable);
+				disposeTypeMethodName = "Dispose";
+			}
+			if (!inst.ResourceExpression.MatchLdNull() && !NullableType.GetUnderlyingType(var.Type).GetAllBaseTypes().Any(b => b.IsKnownType(knownTypeCode))) {
 				Debug.Assert(var.Kind == VariableKind.UsingLocal);
 				var.Kind = VariableKind.Local;
-				var disposeType = exprBuilder.compilation.FindType(KnownTypeCode.IDisposable);
 				var disposeVariable = currentFunction.RegisterVariable(
 					VariableKind.Local, disposeType,
 					AssignVariableNames.GenerateVariableName(currentFunction, disposeType)
 				);
+				Expression disposeInvocation = new InvocationExpression(new MemberReferenceExpression(exprBuilder.ConvertVariable(disposeVariable).Expression, disposeTypeMethodName));
+				if (inst.IsAsync) {
+					disposeInvocation = new UnaryOperatorExpression { Expression = disposeInvocation, Operator = UnaryOperatorType.Await };
+				}
 				return new BlockStatement {
 					new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(var).Expression, resource.Detach())),
 					new TryCatchStatement {
@@ -427,7 +442,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(disposeVariable).Expression, new AsExpression(exprBuilder.ConvertVariable(var).Expression, exprBuilder.ConvertType(disposeType)))),
 							new IfElseStatement {
 								Condition = new BinaryOperatorExpression(exprBuilder.ConvertVariable(disposeVariable), BinaryOperatorType.InEquality, new NullReferenceExpression()),
-								TrueStatement = new ExpressionStatement(new InvocationExpression(new MemberReferenceExpression(exprBuilder.ConvertVariable(disposeVariable).Expression, "Dispose")))
+								TrueStatement = new ExpressionStatement(disposeInvocation)
 							}
 						}
 					},
@@ -441,6 +456,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return new UsingStatement {
 					ResourceAcquisition = usingInit,
+					IsAsync = inst.IsAsync,
 					EmbeddedStatement = ConvertAsBlock(inst.Body)
 				};
 			}

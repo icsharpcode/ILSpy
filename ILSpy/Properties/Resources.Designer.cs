@@ -674,6 +674,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Detect awaited using and foreach statements.
+        /// </summary>
+        public static string DecompilerSettings_DetectAsyncUsingAndForeachStatements {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.DetectAsyncUsingAndForeachStatements", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Detect foreach statements.
         /// </summary>
         public static string DecompilerSettings_DetectForeachStatements {

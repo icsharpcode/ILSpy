@@ -115,10 +115,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Task,
 		/// <summary><c>System.Threading.Tasks.Task{T}</c></summary>
 		TaskOfT,
+		/// <summary><c>System.Threading.Tasks.ValueTask</c></summary>
+		ValueTask,
+		/// <summary><c>System.Threading.Tasks.ValueTask{T}</c></summary>
+		ValueTaskOfT,
 		/// <summary><c>System.Nullable{T}</c></summary>
 		NullableOfT,
 		/// <summary><c>System.IDisposable</c></summary>
 		IDisposable,
+		/// <summary><c>System.IAsyncDisposable</c></summary>
+		IAsyncDisposable,
 		/// <summary><c>System.Runtime.CompilerServices.INotifyCompletion</c></summary>
 		INotifyCompletion,
 		/// <summary><c>System.Runtime.CompilerServices.ICriticalNotifyCompletion</c></summary>
@@ -193,10 +199,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			new KnownTypeReference(KnownTypeCode.IReadOnlyCollectionOfT, TypeKind.Interface, "System.Collections.Generic", "IReadOnlyCollection", 1),
 			new KnownTypeReference(KnownTypeCode.IReadOnlyListOfT, TypeKind.Interface, "System.Collections.Generic", "IReadOnlyList", 1),
-			new KnownTypeReference(KnownTypeCode.Task,        TypeKind.Class, "System.Threading.Tasks", "Task"),
-			new KnownTypeReference(KnownTypeCode.TaskOfT,     TypeKind.Class, "System.Threading.Tasks", "Task", 1, baseType: KnownTypeCode.Task),
+			new KnownTypeReference(KnownTypeCode.Task,         TypeKind.Class, "System.Threading.Tasks", "Task"),
+			new KnownTypeReference(KnownTypeCode.TaskOfT,      TypeKind.Class, "System.Threading.Tasks", "Task", 1, baseType: KnownTypeCode.Task),
+			new KnownTypeReference(KnownTypeCode.ValueTask,    TypeKind.Struct, "System.Threading.Tasks", "ValueTask"),
+			new KnownTypeReference(KnownTypeCode.ValueTaskOfT, TypeKind.Struct, "System.Threading.Tasks", "ValueTask", 1),
 			new KnownTypeReference(KnownTypeCode.NullableOfT, TypeKind.Struct, "System", "Nullable", 1),
 			new KnownTypeReference(KnownTypeCode.IDisposable, TypeKind.Interface, "System", "IDisposable"),
+			new KnownTypeReference(KnownTypeCode.IAsyncDisposable, TypeKind.Interface, "System", "IAsyncDisposable"),
 			new KnownTypeReference(KnownTypeCode.INotifyCompletion, TypeKind.Interface, "System.Runtime.CompilerServices", "INotifyCompletion"),
 			new KnownTypeReference(KnownTypeCode.ICriticalNotifyCompletion, TypeKind.Interface, "System.Runtime.CompilerServices", "ICriticalNotifyCompletion"),
 
