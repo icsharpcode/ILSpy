@@ -55,6 +55,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		UseRoslyn = 0x10,
 		UseMcs = 0x20,
 		ReferenceVisualBasic = 0x40,
+		ReferenceCore = 0x80,
 	}
 
 	[Flags]
@@ -182,10 +183,29 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return Regex.Replace(il, @"'<PrivateImplementationDetails>\{[0-9A-F-]+\}'", "'<PrivateImplementationDetails>'");
 		}
 
-		static readonly string refAsmPath = new DotNetCorePathFinder(new Version(3, 0)).GetReferenceAssemblyPath(".NETCoreApp, Version = v3.0");
+		static readonly string coreRefAsmPath = new DotNetCorePathFinder(new Version(3, 0)).GetReferenceAssemblyPath(".NETCoreApp, Version = v3.0");
+		
+		static readonly string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
 		static readonly string thisAsmPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
 
-		static readonly Lazy<IEnumerable<MetadataReference>> defaultReferences = new Lazy<IEnumerable<MetadataReference>>(GetDefaultReferences);
+		static readonly Lazy<IEnumerable<MetadataReference>> defaultReferences = new Lazy<IEnumerable<MetadataReference>>(delegate {
+			return new[]
+			{
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Facades\\netstandard.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "mscorlib.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Core.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, @"Facades\System.Runtime.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Xml.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Microsoft.CSharp.dll")),
+					MetadataReference.CreateFromFile(typeof(ValueTuple).Assembly.Location),
+					MetadataReference.CreateFromFile(typeof(ValueTask).Assembly.Location),
+					MetadataReference.CreateFromFile(typeof(Span<>).Assembly.Location),
+			};
+		});
+
+		static readonly Lazy<IEnumerable<MetadataReference>> coreDefaultReferences = new Lazy<IEnumerable<MetadataReference>>(GetDefaultReferences);
 
 		const string targetFrameworkAttributeSnippet = @"
 
@@ -195,7 +215,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		static IEnumerable<MetadataReference> GetDefaultReferences()
 		{
-			foreach (var reference in Directory.EnumerateFiles(refAsmPath, "*.dll")) {
+			foreach (var reference in Directory.EnumerateFiles(coreRefAsmPath, "*.dll")) {
 				yield return MetadataReference.CreateFromFile(reference);
 			}
 		}
@@ -214,6 +234,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 			if (flags.HasFlag(CompilerOptions.Optimize)) {
 				preprocessorSymbols.Add("OPT");
+			}
+			if (flags.HasFlag(CompilerOptions.ReferenceCore)) {
+				preprocessorSymbols.Add("NETCORE");
 			}
 			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
 				preprocessorSymbols.Add("ROSLYN");
@@ -250,8 +273,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.CSharp8
 				);
 				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
-				syntaxTrees = syntaxTrees.Concat(new[] { SyntaxFactory.ParseSyntaxTree(targetFrameworkAttributeSnippet) });
-				var references = defaultReferences.Value;
+				if (flags.HasFlag(CompilerOptions.ReferenceCore)) {
+					syntaxTrees = syntaxTrees.Concat(new[] { SyntaxFactory.ParseSyntaxTree(targetFrameworkAttributeSnippet) });
+				}
+				IEnumerable<MetadataReference> references;
+				if (flags.HasFlag(CompilerOptions.ReferenceCore)) {
+					references = coreDefaultReferences.Value;
+				} else {
+					references = defaultReferences.Value;
+				}
 				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic)) {
 					references = references.Concat(visualBasic.Value);
 				}
