@@ -1343,7 +1343,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (localSettings.DecompileMemberBodies && !body.Descendants.Any(d => d is YieldReturnStatement || d is YieldBreakStatement)) {
 						body.Add(new YieldBreakStatement());
 					}
-					RemoveAttribute(entityDecl, KnownAttribute.IteratorStateMachine);
+					if (function.IsAsync) {
+						RemoveAttribute(entityDecl, KnownAttribute.AsyncIteratorStateMachine);
+					} else {
+						RemoveAttribute(entityDecl, KnownAttribute.IteratorStateMachine);
+					}
 					if (function.StateMachineCompiledWithMono) {
 						RemoveAttribute(entityDecl, KnownAttribute.DebuggerHidden);
 					}

@@ -174,9 +174,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				CopyPropagation.Propagate(stloc, context);
 			}
 			new RemoveDeadVariableInit().Run(function, context);
-			// Run inlining, but don't remove dead variables (they might get revived by TranslateFieldsToLocalAccess)
 			foreach (var block in function.Descendants.OfType<Block>()) {
+				// Run inlining, but don't remove dead variables (they might get revived by TranslateFieldsToLocalAccess)
 				ILInlining.InlineAllInBlock(function, block, context);
+				if (IsAsyncEnumerator) {
+					// Remove lone 'ldc.i4', those are sometimes left over after C# compiler
+					// optimizes out stores to the state variable.
+					block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.LdcI4);
+				}
 			}
 			context.StepEndGroup();
 		}
