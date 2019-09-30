@@ -17,6 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -256,6 +258,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private static int? GenericRefStructConstraintInt<T>(ref T? t) where T : struct, ITest
 		{
 			return t?.Int();
+		}
+
+		public int? Issue1709(object obj)
+		{
+			return (obj as ICollection)?.Count + (obj as ICollection<int>)?.Count;
 		}
 
 		private static dynamic DynamicNullProp(dynamic a)

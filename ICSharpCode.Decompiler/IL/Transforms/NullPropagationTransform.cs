@@ -272,7 +272,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool IsGetter(IMethod method)
 		{
-			return method.AccessorOwner is IProperty p && p.Getter == method;
+			return method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter;
 		}
 
 		private void IntroduceUnwrap(ILVariable testedVar, ILInstruction varLoad, Mode mode)
