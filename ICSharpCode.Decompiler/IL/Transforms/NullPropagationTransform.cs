@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -211,6 +212,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 				} else if (inst is LdLen ldLen) {
 					inst = ldLen.Array;
+				} else if (inst is LdElema ldElema) {
+					inst = ldElema.Array;
+					// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
+					if (ldElema.Indices.Any(i => i.HasFlag(InstructionFlags.MayUnwrapNull)))
+						return false;
 				} else if (inst is NullableUnwrap unwrap) {
 					inst = unwrap.Argument;
 					if (unwrap.RefInput && inst is AddressOf addressOf) {

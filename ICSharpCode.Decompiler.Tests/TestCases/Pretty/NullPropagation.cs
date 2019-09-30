@@ -184,7 +184,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Use(GetMyClass()?.Text ?? "Hello");
 		}
-		
+
 		public void CallOnValueTypeField()
 		{
 			Use(GetMyClass()?.IntVal.ToString());
@@ -265,6 +265,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return (obj as ICollection)?.Count + (obj as ICollection<int>)?.Count;
 		}
 
+		private static void Issue1689(List<byte[]> setsOfNumbers)
+		{
+			Console.WriteLine(setsOfNumbers?[0]?[1].ToString() == "2");
+			Console.WriteLine(setsOfNumbers?[1]?[1].ToString() == null);
+		}
+	
 		private static dynamic DynamicNullProp(dynamic a)
 		{
 			return a?.b.c(1)?.d[10];
