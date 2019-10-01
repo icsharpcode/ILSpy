@@ -281,6 +281,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return ty;
 		}
 
+		public static bool HasReadonlyModifier(this IMethod accessor)
+		{
+			return accessor.ThisIsRefReadOnly && accessor.DeclaringTypeDefinition?.IsReadOnly == false;
+		}
+
 		#region GetType/Member
 		/// <summary>
 		/// Gets all type definitions in the compilation.

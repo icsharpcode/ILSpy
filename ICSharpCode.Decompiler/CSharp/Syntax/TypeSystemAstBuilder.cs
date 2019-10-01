@@ -1522,7 +1522,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Accessor decl = new Accessor();
 			if (this.ShowAccessibility && accessor.Accessibility != ownerAccessibility)
 				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility);
-			if (accessor.ThisIsRefReadOnly && accessor.DeclaringTypeDefinition?.IsReadOnly == false)
+			if (accessor.HasReadonlyModifier())
 				decl.Modifiers |= Modifiers.Readonly;
 			if (ShowAttributes) {
 				decl.Attributes.AddRange(ConvertAttributes(accessor.GetAttributes()));
