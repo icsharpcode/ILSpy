@@ -60,19 +60,12 @@ Windows:
   - Run project "ILSpy" for the ILSpy UI
   - Use the Visual Studio "Test Explorer" to see/run the tests
 
-Unix:
+Unix / Mac:
 - Make sure .NET Core 2.1 LTS Runtime is installed (you can get it here: https://get.dot.net).
 - Make sure [.NET Core SDK 3](https://dotnet.microsoft.com/download/dotnet-core) is installed.
 - Check out the repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Use `dotnet build Frontends.sln` to build the non-Windows flavors of ILSpy (.NET Core Global Tool and PowerShell Core).
-
-(Visual Studio for Mac users only:)
-- Edit `\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj`
-  Add `Sdk="Microsoft.NET.Sdk"` to the `Project` element.
-  This is required due to a tooling issue.
-  Please do not commit this when contributing a pull request!
-- Use Frontends.sln to work.
 
 How to contribute
 -----------------
