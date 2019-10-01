@@ -722,6 +722,8 @@ namespace ICSharpCode.ILSpy
 					return assemblyListTreeNode.FindPropertyNode(pd);
 				case IEvent ed:
 					return assemblyListTreeNode.FindEventNode(ed);
+				case INamespace nd:
+					return AssemblyListTreeNode.FindNamespaceNode(nd);
 				default:
 					return null;
 			}
