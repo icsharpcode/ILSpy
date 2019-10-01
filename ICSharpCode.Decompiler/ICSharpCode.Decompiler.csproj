@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project>
-  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -620,12 +619,11 @@
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
-  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
-
-  <Target Name="BeforeBuild">
+  <Target Name="ILSpyUpdateAssemblyInfo" BeforeTargets="BeforeBuild">
     <PropertyGroup>
       <UpdateAssemblyInfo>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/update-assemblyinfo.ps1 $(Configuration)</UpdateAssemblyInfo>
     </PropertyGroup>
     <Exec WorkingDirectory=".." Command="$(UpdateAssemblyInfo)" Timeout="60000" />
   </Target>
+  
 </Project>
