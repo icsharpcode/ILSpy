@@ -61,6 +61,12 @@ Remarks:
 		[Option("-r|--referencepath <path>", "Path to a directory containing dependencies of the assembly that is being decompiled.", CommandOptionType.MultipleValue)]
 		public string[] ReferencePaths { get; } = new string[0];
 
+		[Option("--no-dead-code", "Remove dead code.", CommandOptionType.NoValue)]
+		public bool RemoveDeadCode { get; }
+
+		[Option("--no-dead-stores", "Remove dead stores.", CommandOptionType.NoValue)]
+		public bool RemoveDeadStores { get; }
+
 		private int OnExecute(CommandLineApplication app)
 		{
 			TextWriter output = System.Console.Out;
@@ -120,6 +126,15 @@ Remarks:
 			return 0;
 		}
 
+		DecompilerSettings GetSettings()
+		{
+			return new DecompilerSettings(LanguageVersion) {
+				ThrowOnAssemblyResolveErrors = false,
+				RemoveDeadCode = RemoveDeadCode,
+				RemoveDeadStores = RemoveDeadStores
+			};
+		}
+
 		CSharpDecompiler GetDecompiler(string assemblyFileName)
 		{
 			var module = new PEFile(assemblyFileName);
@@ -127,7 +142,7 @@ Remarks:
 			foreach (var path in ReferencePaths) {
 				resolver.AddSearchDirectory(path);
 			}
-			return new CSharpDecompiler(assemblyFileName, resolver, new DecompilerSettings(LanguageVersion));
+			return new CSharpDecompiler(assemblyFileName, resolver, GetSettings());
 		}
 
 		int ListContent(string assemblyFileName, TextWriter output, ISet<TypeKind> kinds)
@@ -153,7 +168,7 @@ Remarks:
 
 		int DecompileAsProject(string assemblyFileName, string outputDirectory)
 		{
-			var decompiler = new WholeProjectDecompiler() { LanguageVersion = LanguageVersion };
+			var decompiler = new WholeProjectDecompiler() { Settings = GetSettings() };
 			var module = new PEFile(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Reader.DetectTargetFrameworkId());
 			foreach (var path in ReferencePaths) {
@@ -191,7 +206,7 @@ Remarks:
 
 			using (FileStream stream = new FileStream(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write)) {
 				var decompiler = GetDecompiler(assemblyFileName);
-				PortablePdbWriter.WritePdb(module, decompiler, new DecompilerSettings(LanguageVersion) { ThrowOnAssemblyResolveErrors = false }, stream);
+				PortablePdbWriter.WritePdb(module, decompiler, GetSettings(), stream);
 			}
 
 			return 0;
