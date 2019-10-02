@@ -141,16 +141,10 @@ Remarks:
 
 		int ShowIL(string assemblyFileName, TextWriter output)
 		{
-			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName, referencePaths);
-			ITextOutput textOutput = new PlainTextOutput();
-			ReflectionDisassembler disassembler = new ReflectionDisassembler(textOutput, CancellationToken.None);
-
-			disassembler.DisassembleNamespace(decompiler.TypeSystem.MainModule.RootNamespace.Name,
-				decompiler.TypeSystem.MainModule.PEFile,
-				decompiler.TypeSystem.MainModule.TypeDefinitions.Select(x => (TypeDefinitionHandle)x.MetadataToken));
-
-			output.WriteLine($"// IL code: {decompiler.TypeSystem.MainModule.AssemblyName}");
-			output.WriteLine(textOutput.ToString());
+			var module = new PEFile(assemblyFileName);
+			output.WriteLine($"// IL code: {module.Name}");
+			var disassembler = new ReflectionDisassembler(new PlainTextOutput(output), CancellationToken.None);
+			disassembler.WriteModuleContents(module);
 			return 0;
 		}
 
