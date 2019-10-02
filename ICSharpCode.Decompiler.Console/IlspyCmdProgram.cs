@@ -22,7 +22,7 @@ Remarks:
   -o is valid with every option and required when using -p.
 ")]
 	[HelpOption("-h|--help")]
-	[ProjectOptionRequiresOutputDirectoryValidationAttribute]
+	[ProjectOptionRequiresOutputDirectoryValidation]
 	class ILSpyCmdProgram
 	{
 		public static int Main(string[] args) => CommandLineApplication.Execute<ILSpyCmdProgram>(args);
@@ -53,6 +53,9 @@ Remarks:
 
 		[Option("-v|--version", "Show version of ICSharpCode.Decompiler used.", CommandOptionType.NoValue)]
 		public bool ShowVersion { get; }
+
+		[Option("-lv|--languageversion", "C# Language version: CSharp1, CSharp2, CSharp3, CSharp4, CSharp5, CSharp6, CSharp7_0, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0 or Latest", CommandOptionType.SingleValue)]
+		public LanguageVersion LanguageVersion { get; } = LanguageVersion.Latest;
 
 		[DirectoryExists]
 		[Option("-r|--referencepath <path>", "Path to a directory containing dependencies of the assembly that is being decompiled.", CommandOptionType.MultipleValue)]
@@ -124,7 +127,7 @@ Remarks:
 			foreach (var path in ReferencePaths) {
 				resolver.AddSearchDirectory(path);
 			}
-			return new CSharpDecompiler(assemblyFileName, resolver, new DecompilerSettings());
+			return new CSharpDecompiler(assemblyFileName, resolver, new DecompilerSettings(LanguageVersion));
 		}
 
 		int ListContent(string assemblyFileName, TextWriter output, ISet<TypeKind> kinds)
@@ -150,7 +153,7 @@ Remarks:
 
 		int DecompileAsProject(string assemblyFileName, string outputDirectory)
 		{
-			var decompiler = new WholeProjectDecompiler();
+			var decompiler = new WholeProjectDecompiler() { LanguageVersion = LanguageVersion };
 			var module = new PEFile(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Reader.DetectTargetFrameworkId());
 			foreach (var path in ReferencePaths) {
@@ -188,7 +191,7 @@ Remarks:
 
 			using (FileStream stream = new FileStream(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write)) {
 				var decompiler = GetDecompiler(assemblyFileName);
-				PortablePdbWriter.WritePdb(module, decompiler, new DecompilerSettings() { ThrowOnAssemblyResolveErrors = false }, stream);
+				PortablePdbWriter.WritePdb(module, decompiler, new DecompilerSettings(LanguageVersion) { ThrowOnAssemblyResolveErrors = false }, stream);
 			}
 
 			return 0;
