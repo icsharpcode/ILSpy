@@ -820,7 +820,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		void AnalyzeStateMachine(ILFunction function)
 		{
-			context.Step("AnalyzeStateMachine()", function);
+			context.StepStartGroup("AnalyzeStateMachine()", function);
 			smallestAwaiterVarIndex = int.MaxValue;
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
 				// Use a separate state range analysis per container.
@@ -834,6 +834,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					context.CancellationToken.ThrowIfCancellationRequested();
 					if (block.Instructions.Last() is Leave leave && moveNextLeaves.Contains(leave)) {
 						// This is likely an 'await' block
+						context.Step($"AnalyzeAwaitBlock({block.StartILOffset:x4})", block);
 						if (AnalyzeAwaitBlock(block, out var awaiterVar, out var awaiterField, out int state, out int yieldOffset)) {
 							block.Instructions.Add(new Await(new LdLoca(awaiterVar)));
 							Block targetBlock = stateToBlockMap.GetOrDefault(state);
@@ -849,7 +850,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							}
 						}
 					} else if (block.Instructions.Last().MatchBranch(setResultYieldBlock)) {
-						// This is a 'yield' in an async enumerator.
+						// This is a 'yield return' in an async enumerator.
+						context.Step($"AnalyzeYieldReturn({block.StartILOffset:x4})", block);
 						if (AnalyzeYieldReturn(block, out var yieldValue, out int state)) {
 							block.Instructions.Add(new YieldReturn(yieldValue));
 							Block targetBlock = stateToBlockMap.GetOrDefault(state);
@@ -862,6 +864,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							block.Instructions.Add(new InvalidBranch("Could not detect 'yield return'"));
 						}
 					}
+					TransformYieldBreak(block);
+				}
+				foreach (var block in container.Blocks) {
 					SimplifyIfDisposeMode(block);
 				}
 				// Skip the state dispatcher and directly jump to the initial state
@@ -874,6 +879,74 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					});
 				}
 				container.SortBlocks(deleteUnreachableBlocks: true);
+			}
+			context.StepEndGroup();
+		}
+
+		private bool TransformYieldBreak(Block block)
+		{
+			// stfld disposeMode(ldloc this, ldc.i4 1)
+			// br nextBlock
+			if (block.Instructions.Count < 2)
+				return false;
+			if (!(block.Instructions.Last() is Branch branch))
+				return false;
+			if (!block.Instructions[block.Instructions.Count - 2].MatchStFld(out var target, out var field, out var value))
+				return false;
+			if (!target.MatchLdThis())
+				return false;
+			if (field.MemberDefinition != disposeModeField)
+				return false;
+			if (!value.MatchLdcI4(1))
+				return false;
+
+			// Detected a 'yield break;'
+			context.Step($"TransformYieldBreak({block.StartILOffset:x4})", block);
+			var breakTarget = FindYieldBreakTarget(branch.TargetBlock);
+			if (breakTarget is Block targetBlock) {
+				branch.TargetBlock = targetBlock;
+			} else {
+				Debug.Assert(breakTarget is BlockContainer);
+				branch.ReplaceWith(new Leave((BlockContainer)breakTarget).WithILRange(branch));
+			}
+			return true;
+		}
+
+		ILInstruction FindYieldBreakTarget(Block block)
+		{
+			// We'll follow the branch and evaluate the following instructions
+			// under the assumption that disposeModeField==1, which lets us follow a series of jumps
+			// to determine the final target.
+			var visited = new HashSet<Block>();
+			var evalContext = new SymbolicEvaluationContext(disposeModeField);
+			while (true) {
+				for (int i = 0; i < block.Instructions.Count; i++) {
+					ILInstruction inst = block.Instructions[i];
+					while (inst.MatchIfInstruction(out var condition, out var trueInst, out var falseInst)) {
+						var condVal = evalContext.Eval(condition).AsBool();
+						if (condVal.Type == SymbolicValueType.IntegerConstant) {
+							inst = condVal.Constant != 0 ? trueInst : falseInst;
+						} else if (condVal.Type == SymbolicValueType.StateInSet) {
+							inst = condVal.ValueSet.Contains(1) ? trueInst : falseInst;
+						} else {
+							return block;
+						}
+					}
+					if (inst.MatchBranch(out var targetBlock)) {
+						if (visited.Add(block)) {
+							block = targetBlock;
+							break; // continue with next block
+						} else {
+							return block; // infinite loop detected
+						}
+					} else if (inst is Leave leave && leave.Value.OpCode == OpCode.Nop) {
+						return leave.TargetContainer;
+					} else if (inst.OpCode == OpCode.Nop) {
+						continue; // continue with next instruction in this block
+					} else {
+						return block;
+					}
+				}
 			}
 		}
 
@@ -1023,6 +1096,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				if (!SemanticHelper.IsPure(stloc.Value.Flags))
 					return false;
+				pos--;
 			}
 
 			if (pos < 0 || !block.Instructions[pos].MatchStFld(out var target, out var field, out yieldValue))
