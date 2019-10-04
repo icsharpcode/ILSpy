@@ -657,8 +657,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (name.Length == 0)
 				return "obj";
-			else
-				return char.ToLower(name[0]) + name.Substring(1);
+			string lowerCaseName = char.ToLower(name[0]) + name.Substring(1);
+			if (CSharp.OutputVisitor.CSharpOutputVisitor.IsKeyword(lowerCaseName))
+				return null;
+			return lowerCaseName;
 		}
 
 		internal static IType GuessType(IType variableType, ILInstruction inst, ILTransformContext context)

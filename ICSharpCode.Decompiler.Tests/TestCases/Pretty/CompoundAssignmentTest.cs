@@ -4943,8 +4943,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void Issue1779(int value)
 		{
-			CustomStruct2 @struct = GetStruct();
-			@struct.IntProp += value;
+			CustomStruct2 customStruct = GetStruct();
+			customStruct.IntProp += value;
 		}
 	}
 }
