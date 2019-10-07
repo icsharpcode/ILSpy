@@ -8,7 +8,7 @@
     <owners>Daniel Grunwald, SharpDevelop</owners>
     <license type="expression">MIT</license>
     <projectUrl>https://github.com/icsharpcode/ILSpy/</projectUrl>
-    <iconUrl>https://ilspy.net/images/icon32.png</iconUrl>
+    <icon>images\DecompilerNuGetPackageIcon.png</icon>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>ICSharpCode.Decompiler is the decompiler engine used in ILSpy.</description>
     <!--<releaseNotes></releaseNotes>-->
@@ -22,6 +22,7 @@
     </dependencies>
   </metadata>
   <files>
+    <file src="DecompilerNuGetPackageIcon.png" target="images\" />
     <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.dll" target="lib\netstandard2.0" />
     <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.pdb" target="lib\netstandard2.0" />
     <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.xml" target="lib\netstandard2.0" />
