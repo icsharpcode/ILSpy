@@ -103,4 +103,13 @@ namespace ICSharpCode.ILSpy
 		public override ImageSource Image => Images.Assembly;
 		public override ImageSource LocationImage => Images.Library;
 	}
+
+	public class NamespaceSearchResult : SearchResult
+	{
+		public INamespace Namespace { get; set; }
+		public override object Reference => Namespace;
+
+		public override ImageSource Image => Images.Namespace;
+		public override ImageSource LocationImage => Images.Assembly;
+	}
 }

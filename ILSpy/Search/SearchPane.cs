@@ -77,6 +77,7 @@ namespace ICSharpCode.ILSpy
 			searchModeComboBox.Items.Add(new { Image = Images.Library, Name = "Metadata Token" });
 			searchModeComboBox.Items.Add(new { Image = Images.Resource, Name = "Resource" });
 			searchModeComboBox.Items.Add(new { Image = Images.Assembly, Name = "Assembly" });
+			searchModeComboBox.Items.Add(new { Image = Images.Namespace, Name = "Namespace" });
 
 			ContextMenuProvider.Add(listBox);
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
@@ -355,6 +356,9 @@ namespace ICSharpCode.ILSpy
 
 					if (searchTerm[0].StartsWith("an:", StringComparison.Ordinal))
 						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.FullName);
+
+					if (searchTerm[0].StartsWith("n:", StringComparison.Ordinal))
+						return new NamespaceSearchStrategy(searchTerm[0].Substring(2), resultQueue);
 				}
 
 				switch (searchMode)
@@ -381,6 +385,8 @@ namespace ICSharpCode.ILSpy
 						return new ResourceSearchStrategy(apiVisibility, resultQueue, searchTerm);
 					case SearchMode.Assembly:
 						return new AssemblySearchStrategy(resultQueue, searchTerm, AssemblySearchKind.NameOrFileName);
+					case SearchMode.Namespace:
+						return new NamespaceSearchStrategy(resultQueue, searchTerm);
 				}
 
 				return null;
@@ -413,6 +419,7 @@ namespace ICSharpCode.ILSpy
 		Literal,
 		Token,
 		Resource,
-		Assembly
+		Assembly,
+		Namespace
 	}
 }

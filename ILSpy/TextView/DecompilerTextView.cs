@@ -606,6 +606,11 @@ namespace ICSharpCode.ILSpy.TextView
 				foldingManager = FoldingManager.Install(textEditor.TextArea);
 				foldingManager.UpdateFoldings(textOutput.Foldings.OrderBy(f => f.StartOffset), -1);
 				Debug.WriteLine("  Updating folding: {0}", w.Elapsed); w.Restart();
+			} else if (highlighting?.Name == "XML") {
+				foldingManager = FoldingManager.Install(textEditor.TextArea);
+				var foldingStrategy = new XmlFoldingStrategy();
+				foldingStrategy.UpdateFoldings(foldingManager, textEditor.Document);
+				Debug.WriteLine("  Updating folding: {0}", w.Elapsed); w.Restart();
 			}
 		}
 		#endregion

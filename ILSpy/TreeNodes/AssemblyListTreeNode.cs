@@ -318,6 +318,24 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			typeNode.EnsureLazyChildren();
 			return typeNode.Children.OfType<EventTreeNode>().FirstOrDefault(m => m.EventDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
 		}
+
+		/// <summary>
+		/// Looks up the event node corresponding to the namespace definition.
+		/// Returns null if no matching node is found.
+		/// </summary>
+		public NamespaceTreeNode FindNamespaceNode(INamespace def)
+		{
+			var module = def.ContributingModules.FirstOrDefault();
+			if (module == null)
+				return null;
+
+			AssemblyTreeNode assemblyNode = FindAssemblyNode(module);
+			if (assemblyNode == null)
+				return null;
+
+			assemblyNode.EnsureLazyChildren();
+			return assemblyNode.Children.OfType<NamespaceTreeNode>().FirstOrDefault(n => def.FullName.Length == 0 || def.FullName.Equals(n.Text));
+		}
 		#endregion
 	}
 }

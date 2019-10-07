@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void ICSharpCode_Decompiler()
 		{
-			RunWithTest("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll", "ICSharpCode.Decompiler.Tests.exe");
+			RunOnly("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll");
 		}
 
 		[Test]
@@ -113,7 +113,12 @@ namespace ICSharpCode.Decompiler.Tests
 			RunInternal(dir, fileToRoundtrip,
 				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)));
 		}
-		
+
+		void RunOnly(string dir, string fileToRoundtrip)
+		{
+			RunInternal(dir, fileToRoundtrip, outputDir => { });
+		}
+
 		void RunInternal(string dir, string fileToRoundtrip, Action<string> testAction, string snkFilePath = null)
 		{
 			if (!Directory.Exists(TestDir)) {

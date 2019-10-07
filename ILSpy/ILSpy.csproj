@@ -175,6 +175,7 @@
     </Compile>
     <Compile Include="RichTextModelOutput.cs" />
     <Compile Include="Search\AbstractEntitySearchStrategy.cs" />
+    <Compile Include="Search\NamespaceSearchStrategy.cs" />
     <Compile Include="Search\AssemblySearchStrategy.cs" />
     <Compile Include="Search\LiteralSearchStrategy.cs" />
     <Compile Include="LoadedAssembly.cs" />
