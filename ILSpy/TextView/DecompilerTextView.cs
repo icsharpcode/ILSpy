@@ -340,7 +340,7 @@ namespace ICSharpCode.ILSpy.TextView
 				if (docProvider != null) {
 					string documentation = docProvider.GetDocumentation("F:System.Reflection.Emit.OpCodes." + code.EncodedName);
 					if (documentation != null) {
-						renderer.AddXmlDocumentation(documentation);
+						renderer.AddXmlDocumentation(documentation, null, null);
 					}
 				}
 				return new FlowDocumentTooltip(renderer.CreateDocument());
@@ -373,13 +373,18 @@ namespace ICSharpCode.ILSpy.TextView
 				if (docProvider != null) {
 					string documentation = docProvider.GetDocumentation(resolved.GetIdString());
 					if (documentation != null) {
-						renderer.AddXmlDocumentation(documentation);
+						renderer.AddXmlDocumentation(documentation, resolved, ResolveReference);
 					}
 				}
 			} catch (XmlException) {
 				// ignore
 			}
 			return renderer.CreateDocument();
+
+			IEntity ResolveReference(string idString)
+			{
+				return MainWindow.FindEntityInRelevantAssemblies(idString, MainWindow.Instance.CurrentAssemblyList.GetAssemblies());
+			}
 		}
 
 		sealed class FlowDocumentTooltip : Popup
@@ -389,7 +394,7 @@ namespace ICSharpCode.ILSpy.TextView
 			public FlowDocumentTooltip(FlowDocument document)
 			{
 				TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
-				viewer = new FlowDocumentScrollViewer();
+				viewer = new FlowDocumentScrollViewer() { HorizontalScrollBarVisibility = ScrollBarVisibility.Visible };
 				viewer.Document = document;
 				Border border = new Border {
 					Background = SystemColors.ControlBrush,

@@ -487,7 +487,7 @@ namespace ICSharpCode.ILSpy
 				// HACK : UnknownType is not supported by CSharpAmbience.
 			} else if (type.Kind == TypeKind.Unknown) {
 				return (includeNamespace ? type.FullName : type.Name)
-					+ (type.TypeParameterCount > 0 ? "<" + string.Join(",", type.TypeArguments.Select(t => t.Name)) + ">" : "");
+					+ (type.TypeParameterCount > 0 ? "<" + string.Join(", ", type.TypeArguments.Select(t => t.Name)) + ">" : "");
 			} else {
 				return ambience.ConvertType(type);
 			}
@@ -633,8 +633,8 @@ namespace ICSharpCode.ILSpy
 			var output = new StringWriter();
 			var decoratedWriter = new TextWriterTokenWriter(output);
 			var richTextOutput = new RichTextModelOutput(decoratedWriter);
-			var writer = new CSharpHighlightingTokenWriter(decoratedWriter, richTextOutput);
-			new CSharpAmbience() { ConversionFlags = flags }.ConvertSymbol(entity, writer, FormattingOptionsFactory.CreateEmpty());
+			var writer = new CSharpHighlightingTokenWriter(new InsertRequiredSpacesDecorator(decoratedWriter), richTextOutput);
+			new CSharpAmbience() { ConversionFlags = flags }.ConvertSymbol(entity, writer, new DecompilerSettings().CSharpFormattingOptions);
 			return new RichText(output.ToString(), richTextOutput.Model);
 		}
 

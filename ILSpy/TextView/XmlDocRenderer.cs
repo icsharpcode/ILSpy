@@ -115,14 +115,14 @@ namespace ICSharpCode.ILSpy.TextView
 			AddBlock(block);
 		}
 		
-		public void AddXmlDocumentation(string xmlDocumentation)
+		public void AddXmlDocumentation(string xmlDocumentation, IEntity declaringEntity, Func<string, IEntity> resolver)
 		{
 			if (xmlDocumentation == null)
 				return;
 			Debug.WriteLine(xmlDocumentation);
 			AXmlParser parser = new AXmlParser();
 			var doc = parser.Parse(new Decompiler.Xml.StringTextSource(xmlDocumentation));
-			AddDocumentationElement(new XmlDocumentationElement(doc, null, null));
+			AddDocumentationElement(new XmlDocumentationElement(doc, declaringEntity, resolver));
 		}
 		
 
@@ -319,7 +319,9 @@ namespace ICSharpCode.ILSpy.TextView
 		Inline ConvertReference(IEntity referencedEntity)
 		{
 			var h = new Hyperlink(new Run(ambience.ConvertSymbol(referencedEntity)));
-			//h.Click += CreateNavigateOnClickHandler(referencedEntity);
+			h.Click += (sender, e) => {
+				MainWindow.Instance.JumpToReference(referencedEntity);
+			};
 			return h;
 		}
 

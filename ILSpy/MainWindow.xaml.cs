@@ -373,7 +373,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private IEntity FindEntityInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
+		internal static IEntity FindEntityInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
 		{
 			ITypeReference typeRef = null;
 			IMemberReference memberRef = null;
@@ -397,7 +397,7 @@ namespace ICSharpCode.ILSpy
 			return null;
 		}
 
-		private bool CanResolveTypeInPEFile(PEFile module, ITypeReference typeRef, out EntityHandle typeHandle)
+		static bool CanResolveTypeInPEFile(PEFile module, ITypeReference typeRef, out EntityHandle typeHandle)
 		{
 			switch (typeRef) {
 				case GetPotentiallyNestedClassTypeReference topLevelType:
