@@ -12,7 +12,7 @@
     <Copyright>Copyright 2011-2019 AlphaSierraPapa</Copyright>
     <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIconUrl>https://ilspy.net/images/icon32.png</PackageIconUrl>
+	<PackageIcon>ILSpyCmdNuGetPackageIcon.png</PackageIcon>
     <RepositoryUrl>https://github.com/icsharpcode/ILSpy/</RepositoryUrl>
     <Company />
     <AssemblyVersion>5.0.0.0</AssemblyVersion>
@@ -26,6 +26,9 @@
     <WarningsAsErrors>NU1605</WarningsAsErrors>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="ILSpyCmdNuGetPackageIcon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
