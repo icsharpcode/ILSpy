@@ -67,6 +67,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			var target = new TextWriterTokenWriter(writer) { IndentationString = indentation };
 			return new InsertSpecialsDecorator(new InsertRequiredSpacesDecorator(new InsertMissingTokensDecorator(target, target)));
 		}
+
+		public static TokenWriter InsertRequiredSpaces(TokenWriter writer)
+		{
+			return new InsertRequiredSpacesDecorator(writer);
+		}
 		
 		public static TokenWriter WrapInWriterThatSetsLocationsInAST(TokenWriter writer)
 		{

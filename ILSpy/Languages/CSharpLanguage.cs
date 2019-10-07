@@ -633,7 +633,7 @@ namespace ICSharpCode.ILSpy
 			var output = new StringWriter();
 			var decoratedWriter = new TextWriterTokenWriter(output);
 			var richTextOutput = new RichTextModelOutput(decoratedWriter);
-			var writer = new CSharpHighlightingTokenWriter(new InsertRequiredSpacesDecorator(decoratedWriter), richTextOutput);
+			var writer = new CSharpHighlightingTokenWriter(TokenWriter.InsertRequiredSpaces(decoratedWriter), richTextOutput);
 			new CSharpAmbience() { ConversionFlags = flags }.ConvertSymbol(entity, writer, new DecompilerSettings().CSharpFormattingOptions);
 			return new RichText(output.ToString(), richTextOutput.Model);
 		}

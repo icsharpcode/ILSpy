@@ -26,10 +26,6 @@ namespace ICSharpCode.Decompiler.Xml
 	/// A line/column position.
 	/// Text editor lines/columns are counted started from one.
 	/// </summary>
-	/// <remarks>
-	/// The document provides the methods <see cref="Editor.IDocument.GetLocation"/> and
-	/// <see cref="Editor.IDocument.GetOffset(TextLocation)"/> to convert between offsets and TextLocations.
-	/// </remarks>
 	[Serializable]
 	[TypeConverter(typeof(TextLocationConverter))]
 	public struct TextLocation : IComparable<TextLocation>, IEquatable<TextLocation>
