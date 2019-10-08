@@ -109,6 +109,15 @@ namespace ICSharpCode.ILSpy.TextView
 			var document = new TextDocument(signature);
 			var richText = highlighting ?? DocumentPrinter.ConvertTextDocumentToRichText(document, new DocumentHighlighter(document, highlightingDefinition)).ToRichTextModel();
 			var block = new Paragraph();
+			// HACK: measure width of signature using a TextBlock
+			// Paragraph sadly does not support TextWrapping.NoWrap
+			var text = new TextBlock {
+				FontFamily = GetCodeFont(),
+				TextAlignment = TextAlignment.Left
+			};
+			text.Inlines.AddRange(richText.CreateRuns(document));
+			text.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+			this.document.MinPageWidth = text.DesiredSize.Width;
 			block.Inlines.AddRange(richText.CreateRuns(document));
 			block.FontFamily = GetCodeFont();
 			block.TextAlignment = TextAlignment.Left;
@@ -262,11 +271,9 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-
 		bool? ParseBool(string input)
 		{
-			bool result;
-			if (bool.TryParse(input, out result))
+			if (bool.TryParse(input, out bool result))
 				return result;
 			else
 				return null;
@@ -356,8 +363,9 @@ namespace ICSharpCode.ILSpy.TextView
 			if (referencedEntity != null) {
 				if (element.Children.Any()) {
 					Hyperlink link = new Hyperlink();
-					// TODO
-					//link.Click += CreateNavigateOnClickHandler(referencedEntity);
+					link.Click += (sender, e) => {
+						MainWindow.Instance.JumpToReference(referencedEntity);
+					};
 					AddSpan(link, element.Children);
 				} else {
 					AddInline(ConvertReference(referencedEntity));

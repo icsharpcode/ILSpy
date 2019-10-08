@@ -394,7 +394,7 @@ namespace ICSharpCode.ILSpy.TextView
 			public FlowDocumentTooltip(FlowDocument document)
 			{
 				TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
-				viewer = new FlowDocumentScrollViewer() { HorizontalScrollBarVisibility = ScrollBarVisibility.Visible };
+				viewer = new FlowDocumentScrollViewer() { Width = document.MinPageWidth + 100 };
 				viewer.Document = document;
 				Border border = new Border {
 					Background = SystemColors.ControlBrush,
