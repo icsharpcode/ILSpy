@@ -73,7 +73,8 @@ namespace ICSharpCode.Decompiler.Xml
 		{
 			return new AXmlReader(CreateIteratorForReader(), settings);
 		}
-		
+
+		/*
 		/// <summary>
 		/// Creates an XML reader that reads from this document.
 		/// </summary>
@@ -82,12 +83,13 @@ namespace ICSharpCode.Decompiler.Xml
 		/// <param name="document">
 		/// The document that was used to parse the XML. It is used to convert offsets to line information.
 		/// </param>
-		//public XmlReader CreateReader(XmlReaderSettings settings, IDocument document)
-		//{
-		//	if (document == null)
-		//		throw new ArgumentNullException("document");
-		//	return new AXmlReader(CreateIteratorForReader(), settings, document.GetLocation);
-		//}
+		public XmlReader CreateReader(XmlReaderSettings settings, IDocument document)
+		{
+			if (document == null)
+				throw new ArgumentNullException("document");
+			return new AXmlReader(CreateIteratorForReader(), settings, document.GetLocation);
+		}
+		*/
 		
 		/// <summary>
 		/// Creates an XML reader that reads from this document.
