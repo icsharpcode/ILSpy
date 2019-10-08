@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.Xml
 					foreach (var text in childTag.Children.OfType<AXmlText>())
 						list.Add(new XmlDocumentationElement(text.Value, declaringEntity));
 				} else if (childElement != null) {
-					/*if (nestingLevel < 5 && childElement.Name == "inheritdoc") {
+					if (nestingLevel < 5 && childElement.Name == "inheritdoc") {
 						string cref = childElement.GetAttributeValue("cref");
 						IEntity inheritedFrom = null;
 						string inheritedDocumentation = null;
@@ -204,7 +204,7 @@ namespace ICSharpCode.Decompiler.Xml
 						}
 
 						if (inheritedDocumentation != null) {
-							var doc = new AXmlParser().Parse(inheritedDocumentation);
+							var doc = new AXmlParser().Parse(new StringTextSource(inheritedDocumentation));
 
 							// XPath filter not yet implemented
 							if (childElement.Parent is AXmlDocument && childElement.GetAttributeValue("select") == null) {
@@ -220,12 +220,12 @@ namespace ICSharpCode.Decompiler.Xml
 										return !(inheritedElement != null && doNotInherit.Contains(inheritedElement.Name));
 									});
 
-								list.AddRange(CreateElements(inheritedChildren, inheritedFrom, inheritedDocumentation.ResolveCref, nestingLevel + 1));
+								list.AddRange(CreateElements(inheritedChildren, inheritedFrom, crefResolver, nestingLevel + 1));
 							}
 						}
-					} else {*/
+					} else {
 						list.Add(new XmlDocumentationElement(childElement, declaringEntity, crefResolver) { nestingLevel = nestingLevel });
-					//}
+					}
 				}
 			}
 			if (list.Count > 0 && list[0].IsTextNode) {
