@@ -20,6 +20,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class ConstructorInitializers
 	{
+		public struct Issue1743
+		{
+			public int Leet;
+
+			public Issue1743(int dummy)
+				: this(dummy, dummy)
+			{
+				Leet += dummy;
+			}
+
+			public Issue1743(int dummy1, int dummy2)
+			{
+				Leet = dummy1 + dummy2;
+			}
+		}
+
 		public struct SimpleStruct
 		{
 			public int Field1;
