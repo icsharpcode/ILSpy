@@ -1408,13 +1408,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			
 			if (this.ShowBaseTypes) {
 				foreach (IType baseType in typeDefinition.DirectBaseTypes) {
-					if (baseType.IsKnownType (KnownTypeCode.Enum)) {
-						if (!typeDefinition.EnumUnderlyingType.IsKnownType (KnownTypeCode.Int32)) {
-							decl.BaseTypes.Add (ConvertType (typeDefinition.EnumUnderlyingType));
+					// if the declared type is an enum, replace all references to System.Enum with the enum-underlying type
+					if (typeDefinition.Kind == TypeKind.Enum && baseType.IsKnownType(KnownTypeCode.Enum)) {
+						if (!typeDefinition.EnumUnderlyingType.IsKnownType(KnownTypeCode.Int32)) {
+							decl.BaseTypes.Add(ConvertType(typeDefinition.EnumUnderlyingType));
 						}
-					} else if (!baseType.IsKnownType (KnownTypeCode.Object) &&
-						 !baseType.IsKnownType (KnownTypeCode.ValueType)) {
-						decl.BaseTypes.Add (ConvertType (baseType));
+					// if the declared type is a struct, ignore System.ValueType
+					} else if (typeDefinition.Kind == TypeKind.Struct && baseType.IsKnownType(KnownTypeCode.ValueType)) {
+						continue;
+					// always ignore System.Object
+					} else if (baseType.IsKnownType(KnownTypeCode.Object)) {
+						continue;
+					} else {
+						decl.BaseTypes.Add(ConvertType(baseType));
 					}
 				}
 			}
