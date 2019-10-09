@@ -639,8 +639,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			index = -1;
 			if (!(inst is CallInstruction c && c.Method.Name == "Add" && c.Arguments.Count == 3))
 				return false;
-			if (!(c.Arguments[0].MatchLdLoc(dictVar) && c.Arguments[1].MatchLdStr(out value)))
+			if (!c.Arguments[0].MatchLdLoc(dictVar))
 				return false;
+			if (!c.Arguments[1].MatchLdStr(out value)) {
+				if (c.Arguments[1].MatchLdsFld(out var field) && field.DeclaringType.IsKnownType(KnownTypeCode.String) && field.Name == "Empty") {
+					value = "";
+				} else {
+					return false;
+				}
+			}
 			if (!(c.Method.DeclaringType.Equals(dictionaryType) && !c.Method.IsStatic))
 				return false;
 			return (c.Arguments[2].MatchLdcI4(out index) || (c.Arguments[2].MatchBox(out var arg, out _) && arg.MatchLdcI4(out index)));
