@@ -56,7 +56,7 @@ jobs:
     displayName: Build ILSpy
     inputs:
       solution: $(Solution)
-      msbuildArguments: /p:AppxPackageDir="$(Build.ArtifactStagingDirectory)\$(ReleaseChannel)\\" 
+      msbuildArguments: /p:AppxPackageDir="$(Build.ArtifactStagingDirectory)\$(ReleaseChannel)\\" /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild_$(ReleaseChannel).binlog"
       configuration: $(BuildConfiguration)
       platform: $(BuildPlatform)
       maximumCpuCount: true
@@ -97,3 +97,11 @@ jobs:
     inputs:
       targetPath: $(Build.ArtifactStagingDirectory)\$(ReleaseChannel)
       artifactName: $(ReleaseChannel) - $(BuildConfiguration)
+  
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: $(Build.ArtifactStagingDirectory)/build_logs
+      ArtifactName: build_logs
+      ArtifactType: Container
+    displayName: Publish build_logs artifacts
+    condition: succeededOrFailed()
