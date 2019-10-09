@@ -1246,6 +1246,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		private bool CanUseDelegateConstruction(IMethod targetMethod, ILInstruction thisArg, IMethod invokeMethod)
 		{
+			// Accessors cannot be directly referenced as method group in C#
+			// see https://github.com/icsharpcode/ILSpy/issues/1741#issuecomment-540179101
+			if (targetMethod.IsAccessor)
+				return false;
 			if (targetMethod.IsStatic) {
 				// If the invoke method is known, we can compare the parameter counts to figure out whether the
 				// delegate is static or binds the first argument
