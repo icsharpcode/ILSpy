@@ -7,7 +7,7 @@
     <LangVersion>7.2</LangVersion>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
-
+    <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
     <EnableDefaultItems>false</EnableDefaultItems>
     <UseWpf>true</UseWpf>
     <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
