@@ -1193,6 +1193,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static void Issue1745(string aaa)
+		{
+			switch (aaa) {
+				case "a":
+				case "b":
+				case "c":
+				case "d":
+				case "e":
+				case "f":
+					Console.WriteLine(aaa);
+					break;
+				case null:
+					Console.WriteLine("<null>");
+					break;
+				case "":
+					Console.WriteLine("<empty>");
+					break;
+			}
+		}
+
 		public static bool DoNotRemoveAssignmentBeforeSwitch(string x, out ConsoleKey key)
 		{
 			key = (ConsoleKey)0;

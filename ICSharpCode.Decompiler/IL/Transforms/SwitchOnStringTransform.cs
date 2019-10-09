@@ -449,7 +449,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!tryGetValueBlock.Instructions[0].MatchIfInstruction(out condition, out var defaultBlockJump))
 				return false;
-			if (!defaultBlockJump.MatchBranch(out var defaultBlock) && !defaultBlockJump.MatchLeave(leaveContainer))
+			if (!defaultBlockJump.MatchBranch(out var defaultBlock) && !((leaveContainer != null && defaultBlockJump.MatchLeave(leaveContainer)) || defaultBlockJump.MatchLeave(out _)))
 				return false;
 			if (!(condition.MatchLogicNot(out var arg) && arg is CallInstruction c && c.Method.Name == "TryGetValue" &&
 				MatchDictionaryFieldLoad(c.Arguments[0], IsStringToIntDictionary, out var dictField2, out _) && dictField2.Equals(dictField)))
@@ -557,9 +557,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool AddNullSection(List<SwitchSection> sections, List<(string, int)> stringValues, Block nullValueCaseBlock)
+		bool AddNullSection(List<SwitchSection> sections, List<(string Value, int Index)> stringValues, Block nullValueCaseBlock)
 		{
-			var label = new LongSet(sections.Count);
+			var label = new LongSet(stringValues.Max(item => item.Index) + 1);
 			var possibleConflicts = sections.Where(sec => sec.Labels.Overlaps(label)).ToArray();
 			if (possibleConflicts.Length > 1)
 				return false;
@@ -984,7 +984,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!MatchStringLengthCall(lengthCheckCondition, switchValueVar))
 				return false;
-			if (!(exitBranch.MatchBranch(out defaultOrExitBlock) && exitBranch2.MatchBranch(defaultOrExitBlock)))
+			if (!exitBranch.Match(exitBranch2).Success)
 				return false;
 			if (bodyBranch.MatchLeave(out _)) {
 				bodyOrLeave = bodyBranch;
