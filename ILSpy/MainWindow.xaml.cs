@@ -1041,6 +1041,14 @@ namespace ICSharpCode.ILSpy
 
 		public void ShowInNewPane(string title, object content, PanePosition panePosition, string toolTip = null)
 		{
+			// Hack to avoid opening the same pane multiple times
+			var existingPane = DockManager.Layout.Descendents().OfType<LayoutContent>().FirstOrDefault(
+					a => (a.Title == title) && (a.Content != null));
+			if (existingPane != null) {
+				existingPane.IsActive = true;
+				return;
+			}
+
 			if (panePosition == PanePosition.Document) {
 				var layoutDocument = new LayoutDocument() { Title = title, Content = content, ToolTip = toolTip, CanClose = true };
 				var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
