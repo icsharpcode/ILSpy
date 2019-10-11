@@ -31,7 +31,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Search;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy
 {
@@ -42,7 +44,6 @@ namespace ICSharpCode.ILSpy
 	{
 		const int MAX_RESULTS = 1000;
 		const int MAX_REFRESH_TIME_MS = 10; // More means quicker forward of data, less means better responsibility
-		static SearchPane instance;
 		RunningSearch currentSearch;
 		bool runSearchOnNextShow;
 
@@ -53,17 +54,7 @@ namespace ICSharpCode.ILSpy
 			get { return (ObservableCollection<SearchResult>)GetValue(ResultsProperty); }
 		}
 
-		public static SearchPane Instance {
-			get {
-				if (instance == null) {
-					App.Current.VerifyAccess();
-					instance = new SearchPane();
-				}
-				return instance;
-			}
-		}
-		
-		private SearchPane()
+		public SearchPane()
 		{
 			InitializeComponent();
 			searchModeComboBox.Items.Add(new { Image = Images.Library, Name = "Types and Members" });
@@ -114,7 +105,7 @@ namespace ICSharpCode.ILSpy
 		public void Show()
 		{
 			if (!IsVisible) {
-				MainWindow.Instance.ShowInNewPane(Properties.Resources.SearchPane_Search, this, PanePosition.Top);
+				DockWorkspace.Instance.ToolPanes.Add(SearchPaneModel.Instance);
 				if (runSearchOnNextShow) {
 					runSearchOnNextShow = false;
 					StartSearch(this.SearchTerm);

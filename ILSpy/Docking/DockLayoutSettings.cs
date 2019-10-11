@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.Docking
 		public void Deserialize(XmlLayoutSerializer serializer)
 		{
 			if (!Valid)
-				return;
+				rawSettings = "<LayoutRoot />";
 
 			using (StringReader reader = new StringReader(rawSettings)) {
 				serializer.Deserialize(reader);

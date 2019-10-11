@@ -58,17 +58,17 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			if (context.SelectedTreeNodes != null) {
 				foreach (IMemberTreeNode node in context.SelectedTreeNodes) {
-					AnalyzerTreeView.Instance.Analyze(node.Member);
+					MainWindow.Instance.AnalyzerTreeView.Analyze(node.Member);
 				}
 			} else if (context.Reference != null && context.Reference.Reference is IEntity entity) {
-				AnalyzerTreeView.Instance.Analyze(entity);
+				MainWindow.Instance.AnalyzerTreeView.Analyze(entity);
 			}
 		}
 
 		public override bool CanExecute(object parameter)
 		{
-			if (AnalyzerTreeView.Instance.IsKeyboardFocusWithin) {
-				return AnalyzerTreeView.Instance.SelectedItems.OfType<object>().All(n => n is IMemberTreeNode);
+			if (MainWindow.Instance.AnalyzerTreeView.IsKeyboardFocusWithin) {
+				return MainWindow.Instance.AnalyzerTreeView.SelectedItems.OfType<object>().All(n => n is IMemberTreeNode);
 			} else {
 				return MainWindow.Instance.SelectedNodes.All(n => n is IMemberTreeNode);
 			}
@@ -76,13 +76,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public override void Execute(object parameter)
 		{
-			if (AnalyzerTreeView.Instance.IsKeyboardFocusWithin) {
-				foreach (IMemberTreeNode node in AnalyzerTreeView.Instance.SelectedItems.OfType<IMemberTreeNode>().ToArray()) {
-					AnalyzerTreeView.Instance.Analyze(node.Member);
+			if (MainWindow.Instance.AnalyzerTreeView.IsKeyboardFocusWithin) {
+				foreach (IMemberTreeNode node in MainWindow.Instance.AnalyzerTreeView.SelectedItems.OfType<IMemberTreeNode>().ToArray()) {
+					MainWindow.Instance.AnalyzerTreeView.Analyze(node.Member);
 				}
 			} else {
 				foreach (IMemberTreeNode node in MainWindow.Instance.SelectedNodes) {
-					AnalyzerTreeView.Instance.Analyze(node.Member);
+					MainWindow.Instance.AnalyzerTreeView.Analyze(node.Member);
 				}
 			}
 		}

@@ -138,8 +138,20 @@
     <Compile Include="DebugSteps.xaml.cs">
       <DependentUpon>DebugSteps.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Docking\ActiveDocumentConverter.cs" />
+    <Compile Include="ViewModels\AssemblyListPaneModel.cs" />
     <Compile Include="Docking\DockingHelper.cs" />
     <Compile Include="Docking\DockLayoutSettings.cs" />
+    <Compile Include="ViewModels\DocumentModel.cs" />
+    <Compile Include="Docking\LayoutUpdateStrategy.cs" />
+    <Compile Include="Docking\PaneCollection.cs" />
+    <Compile Include="ViewModels\PaneModel.cs" />
+    <Compile Include="Docking\PaneStyleSelector.cs" />
+    <Compile Include="Docking\PaneTemplateSelector.cs" />
+    <Compile Include="ViewModels\DebugStepsPaneModel.cs" />
+    <Compile Include="ViewModels\AnalyzerPaneModel.cs" />
+    <Compile Include="ViewModels\SearchPaneModel.cs" />
+    <Compile Include="ViewModels\ToolPaneModel.cs" />
     <Compile Include="ILSpyTraceListener.cs" />
     <Compile Include="DecompilationOptions.cs" />
     <Compile Include="ExtensionMethods.cs" />
@@ -252,6 +264,7 @@
     <Compile Include="TreeNodes\ResourceNodes\XmlResourceNode.cs" />
     <Compile Include="TreeNodes\SearchMsdnContextMenuEntry.cs" />
     <Compile Include="Analyzers\Builtin\TypeExtensionMethodsAnalyzer.cs" />
+    <Compile Include="Docking\DockWorkspace.cs" />
     <EmbeddedResource Include="..\doc\LGPL.txt">
       <Link>LGPL.txt</Link>
     </EmbeddedResource>

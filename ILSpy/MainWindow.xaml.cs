@@ -38,9 +38,12 @@ using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.Controls;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.TreeView;
 using Microsoft.Win32;
 using OSVersionHelper;
@@ -49,6 +52,12 @@ using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
 namespace ICSharpCode.ILSpy
 {
+	class MainWindowDataContext
+	{
+		public DockWorkspace Workspace { get; set; }
+		public SessionSettings SessionSettings { get; set; }
+	}
+
 	/// <summary>
 	/// The main window of the application.
 	/// </summary>
@@ -76,6 +85,30 @@ namespace ICSharpCode.ILSpy
 			get { return sessionSettings; }
 		}
 
+		public ContentPresenter mainPane {
+			get {
+				return FindResource("MainPane") as ContentPresenter;
+			}
+		}
+
+		public SharpTreeView treeView {
+			get {
+				return FindResource("TreeView") as SharpTreeView;
+			}
+		}
+
+		public AnalyzerTreeView AnalyzerTreeView {
+			get {
+				return FindResource("AnalyzerTreeView") as AnalyzerTreeView;
+			}
+		}
+
+		public SearchPane SearchPane {
+			get {
+				return FindResource("SearchPane") as SearchPane;
+			}
+		}
+
 		public MainWindow()
 		{
 			instance = this;
@@ -86,9 +119,13 @@ namespace ICSharpCode.ILSpy
 
 			this.Icon = new BitmapImage(new Uri("pack://application:,,,/ILSpy;component/images/ILSpy.ico"));
 
-			this.DataContext = sessionSettings;
+			this.DataContext = new MainWindowDataContext {
+				Workspace = DockWorkspace.Instance,
+				SessionSettings = sessionSettings
+			};
 
 			InitializeComponent();
+
 			decompilerTextView = App.ExportProvider.GetExportedValue<DecompilerTextView>();
 			mainPane.Content = decompilerTextView;
 
@@ -295,8 +332,8 @@ namespace ICSharpCode.ILSpy
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
 			NavigateOnLaunch(args.NavigateTo, sessionSettings.ActiveTreeViewPath, spySettings, relevantAssemblies);
 			if (args.Search != null) {
-				SearchPane.Instance.SearchTerm = args.Search;
-				SearchPane.Instance.Show();
+				SearchPane.SearchTerm = args.Search;
+				SearchPane.Show();
 			}
 		}
 
@@ -877,7 +914,7 @@ namespace ICSharpCode.ILSpy
 
 		void SearchCommandExecuted(object sender, ExecutedRoutedEventArgs e)
 		{
-			SearchPane.Instance.Show();
+			DockWorkspace.Instance.ToolPanes.Add(SearchPaneModel.Instance);
 		}
 		#endregion
 
@@ -1037,22 +1074,22 @@ namespace ICSharpCode.ILSpy
 			return loadedAssy.FileName;
 		}
 
-		#region Top/Bottom Pane management
+		//#region Top/Bottom Pane management
 
-		public void ShowInNewPane(string title, object content, PanePosition panePosition, string toolTip = null)
-		{
-			if (panePosition == PanePosition.Document) {
-				var layoutDocument = new LayoutDocument() { Title = title, Content = content, ToolTip = toolTip, CanClose = true };
-				var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
-				documentPane.Children.Add(layoutDocument);
-			} else {
-				var layoutAnchorable = new LayoutAnchorable() { Title = title, Content = content, ToolTip = toolTip, CanClose = true, CanHide = true };
-				var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
-				Docking.DockingHelper.DockHorizontal(layoutAnchorable, documentPane, new GridLength(200), panePosition == PanePosition.Top);
-			}
-		}
+		//public void ShowInNewPane(string title, object content, PanePosition panePosition, string toolTip = null)
+		//{
+		//	if (panePosition == PanePosition.Document) {
+		//		var layoutDocument = new LayoutDocument() { Title = title, Content = content, ToolTip = toolTip, CanClose = true };
+		//		var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
+		//		documentPane.Children.Add(layoutDocument);
+		//	} else {
+		//		var layoutAnchorable = new LayoutAnchorable() { Title = title, Content = content, ToolTip = toolTip, CanClose = true, CanHide = true };
+		//		var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
+		//		Docking.DockingHelper.DockHorizontal(layoutAnchorable, documentPane, new GridLength(200), panePosition == PanePosition.Top);
+		//	}
+		//}
 
-		#endregion
+		//#endregion
 
 		public void UnselectAll()
 		{
@@ -1075,6 +1112,11 @@ namespace ICSharpCode.ILSpy
 		public ItemCollection GetToolBarItems()
 		{
 			return toolBar.Items;
+		}
+
+		private void DockManager_DocumentClosed(object sender, Xceed.Wpf.AvalonDock.DocumentClosedEventArgs e)
+		{
+
 		}
 	}
 }

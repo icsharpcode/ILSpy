@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -45,7 +46,9 @@ namespace ICSharpCode.ILSpy.Commands
 			var dtv = new DecompilerTextView();
 			var nodes = context.SelectedTreeNodes.Cast<ILSpyTreeNode>().ToArray();
 			var title = string.Join(", ", nodes.Select(x => x.ToString()));
-			MainWindow.Instance.ShowInNewPane(title, dtv, PanePosition.Document);
+			// TODO
+			//MainWindow.Instance.ShowInNewPane(title, dtv, PanePosition.Document);
+			//DockWorkspace.Instance.Documents.Add(new ViewModels.DocumentModel() { Title = title });
 			await dtv.DecompileAsync(MainWindow.Instance.CurrentLanguage, nodes, new DecompilationOptions());
 		}
 	}

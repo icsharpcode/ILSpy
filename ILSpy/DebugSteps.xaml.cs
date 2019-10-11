@@ -4,6 +4,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy
 {
@@ -20,7 +22,7 @@ namespace ICSharpCode.ILSpy
 		ILAstLanguage language;
 #endif
 
-		DebugSteps()
+		public DebugSteps()
 		{
 			InitializeComponent();
 
@@ -79,7 +81,7 @@ namespace ICSharpCode.ILSpy
 
 		public static void Show()
 		{
-			MainWindow.Instance.ShowInNewPane(Properties.Resources.DebugSteps, new DebugSteps(), PanePosition.Top);
+			DockWorkspace.Instance.ToolPanes.Add(DebugStepsPaneModel.Instance);
 		}
 
 		void IPane.Closed()
