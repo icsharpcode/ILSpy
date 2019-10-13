@@ -564,14 +564,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return attr;
 		}
 
-		private IEnumerable<AttributeSection> ConvertAttributes(IEnumerable<IAttribute> attibutes)
+		private IEnumerable<AttributeSection> ConvertAttributes(IEnumerable<IAttribute> attributes)
 		{
-			return attibutes.Select(a => new AttributeSection(ConvertAttribute(a)));
+			return attributes.Select(a => new AttributeSection(ConvertAttribute(a)));
 		}
 
-		private IEnumerable<AttributeSection> ConvertAttributes(IEnumerable<IAttribute> attibutes, string target)
+		private IEnumerable<AttributeSection> ConvertAttributes(IEnumerable<IAttribute> attributes, string target)
 		{
-			return attibutes.Select(a => new AttributeSection(ConvertAttribute(a)) {
+			return attributes.Select(a => new AttributeSection(ConvertAttribute(a)) {
 				AttributeTarget = target
 			});
 		}
