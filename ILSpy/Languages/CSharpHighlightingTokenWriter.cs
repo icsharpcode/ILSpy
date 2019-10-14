@@ -194,7 +194,6 @@ namespace ICSharpCode.ILSpy
 				case "event":
 				case "extern":
 				case "override":
-				case "readonly":
 				case "sealed":
 				case "static":
 				case "virtual":
@@ -202,6 +201,12 @@ namespace ICSharpCode.ILSpy
 				case "async":
 				case "partial":
 					color = modifiersColor;
+					break;
+				case "readonly":
+					if (role == ComposedType.ReadonlyRole)
+						color = parameterModifierColor;
+					else
+						color = modifiersColor;
 					break;
 				case "checked":
 				case "unchecked":

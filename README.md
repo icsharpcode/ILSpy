@@ -2,7 +2,7 @@
 
 ILSpy is the open-source .NET assembly browser and decompiler.
 
-Download: [latest release](https://github.com/icsharpcode/ILSpy/releases) | [latest CI build (master)](https://ci.appveyor.com/api/projects/icsharpcode/ilspy/artifacts/ILSpy_binaries.zip?branch=master&job=Configuration%3A+Release)
+Download: [latest release](https://github.com/icsharpcode/ILSpy/releases) | [latest CI build (master)](https://ci.appveyor.com/api/projects/icsharpcode/ilspy/artifacts/ILSpy_binaries.zip?branch=master&job=Configuration%3A+Release) | [Microsoft Store (RC & RTM versions only)](https://www.microsoft.com/store/apps/9MXFBKFVSQ13)
 
 CI Build Nuget Feed (master): https://ci.appveyor.com/nuget/ilspy-masterfeed
 
@@ -11,7 +11,7 @@ Decompiler Frontends
 
 Aside from the WPF UI ILSpy (downloadable via Releases, see also [plugins](https://github.com/icsharpcode/ILSpy/wiki/Plugins)), the following other frontends are available:
 
-* Visual Studio 2017 extension [marketplace](https://marketplace.visualstudio.com/items?itemName=SharpDevelopTeam.ILSpy)
+* Visual Studio 2017/2019 extension [marketplace](https://marketplace.visualstudio.com/items?itemName=SharpDevelopTeam.ILSpy)
 * Visual Studio Code Extension [repository](https://github.com/icsharpcode/ilspy-vscode) | [marketplace](https://marketplace.visualstudio.com/items?itemName=icsharpcode.ilspy-vscode)
 * [ICSharpCode.Decompiler](https://www.nuget.org/packages/ICSharpCode.Decompiler/) NuGet for your own projects
 * Linux/Mac/Windows ILSpy UI based on [Avalonia](http://www.avaloniaui.net/) - check out https://github.com/icsharpcode/AvaloniaILSpy
@@ -48,13 +48,11 @@ How to build
 ------------
 
 Windows:
-- Install Visual Studio (minimum version: 2019.2) with the following components:
-  - Workload ".NET Desktop Development"
-  - .NET Framework 4.6.2 Targeting Pack (if the VS installer does not offer this option, install the [.NET 4.6.2 developer pack](https://www.microsoft.com/en-us/download/details.aspx?id=53321) separately)
-  - Individual Component "MSVC v142 - VS 2019 C++ x64/x86 build tools (v14.22)" (or similar)
+- Install Visual Studio (documented version: 16.3) with the following components:
+  - Workload ".NET Desktop Development". This includes by default .NET Framework 4.8 SDK and the .NET Framework 4.7.2 targeting pack, as well as the .NET Core 3 SDK (ILSpy.csproj targets .NET 4.7.2, and ILSpy.sln uses SDK-style projects).
+  - Workload "Visual Studio extension development" (ILSpy.sln contains a VS extension project)
+  - Individual Component "MSVC v142 - VS 2019 C++ x64/x86 build tools (v14.23)" (or similar)
     - The VC++ toolset is optional; if present it is used for `editbin.exe` to modify the stack size used by ILSpy.exe from 1MB to 16MB, because the decompiler makes heavy use of recursion, where small stack sizes lead to problems in very complex methods.
-- Install the [.NET Core SDK 2.2](https://dotnet.microsoft.com/download)
-- Install the [.NET Core SDK 3](https://dotnet.microsoft.com/download/dotnet-core)
 - Check out the ILSpy repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Open ILSpy.sln in Visual Studio.
@@ -62,19 +60,12 @@ Windows:
   - Run project "ILSpy" for the ILSpy UI
   - Use the Visual Studio "Test Explorer" to see/run the tests
 
-Unix:
-- Make sure .NET Core 2.2 is installed (you can get it here: https://get.dot.net).
-- Make sure [.NET Core SDK 3](https://dotnet.microsoft.com/download/dotnet-core) is installed.
+Unix / Mac:
+- Make sure .NET Core 2.1 LTS Runtime is installed (you can get it here: https://get.dot.net).
+- Make sure [.NET Core 3 SDK](https://dotnet.microsoft.com/download/dotnet-core) is installed.
 - Check out the repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
-- Use `dotnet build Frontends.sln` to build the non-Windows flavors of ILSpy (cli and powershell core).
-
-(Visual Studio for Mac users only:)
-- Edit `\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj`
-  Add `Sdk="Microsoft.NET.Sdk"` to the `Project` element.
-  This is required due to a tooling issue.
-  Please do not commit this when contributing a pull request!
-- Use Frontends.sln to work.
+- Use `dotnet build Frontends.sln` to build the non-Windows flavors of ILSpy (.NET Core Global Tool and PowerShell Core).
 
 How to contribute
 -----------------
@@ -83,3 +74,9 @@ How to contribute
 - If you want to contribute a pull request, please add https://gist.github.com/siegfriedpammer/75700ea61609eb22714d21885e4eb084 to your `.git/hooks` to prevent checking in code with wrong indentation. We use tabs and not spaces. The build server runs the same script, so any pull requests using wrong indentation will fail.
 
 Current and past [contributors](https://github.com/icsharpcode/ILSpy/graphs/contributors).
+
+Privacy Policy for ILSpy
+------------------------
+
+ILSpy does not collect any personally identifiable information, nor does it send user files to 3rd party services. 
+ILSpy does not use any APM (Application Performance Management) service to collect telemetry or metrics.

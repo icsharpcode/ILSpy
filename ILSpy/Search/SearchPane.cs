@@ -32,7 +32,6 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Search;
-using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy
 {
@@ -76,6 +75,9 @@ namespace ICSharpCode.ILSpy
 			searchModeComboBox.Items.Add(new { Image = Images.Event, Name = "Event" });
 			searchModeComboBox.Items.Add(new { Image = Images.Literal, Name = "Constant" });
 			searchModeComboBox.Items.Add(new { Image = Images.Library, Name = "Metadata Token" });
+			searchModeComboBox.Items.Add(new { Image = Images.Resource, Name = "Resource" });
+			searchModeComboBox.Items.Add(new { Image = Images.Assembly, Name = "Assembly" });
+			searchModeComboBox.Items.Add(new { Image = Images.Namespace, Name = "Namespace" });
 
 			ContextMenuProvider.Add(listBox);
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
@@ -112,7 +114,7 @@ namespace ICSharpCode.ILSpy
 		public void Show()
 		{
 			if (!IsVisible) {
-				MainWindow.Instance.ShowInTopPane(Properties.Resources.SearchPane_Search, this);
+				MainWindow.Instance.ShowInNewPane(Properties.Resources.SearchPane_Search, this, PanePosition.Top);
 				if (runSearchOnNextShow) {
 					runSearchOnNextShow = false;
 					StartSearch(this.SearchTerm);
@@ -263,7 +265,7 @@ namespace ICSharpCode.ILSpy
 		void JumpToSelectedItem()
 		{
 			if (listBox.SelectedItem is SearchResult result) {
-				MainWindow.Instance.JumpToReference(result.Member);
+				MainWindow.Instance.JumpToReference(result.Reference);
 			}
 		}
 		
@@ -342,6 +344,21 @@ namespace ICSharpCode.ILSpy
 
 					if (searchTerm[0].StartsWith("@", StringComparison.Ordinal))
 						return new MetadataTokenSearchStrategy(language, apiVisibility, resultQueue, searchTerm[0].Substring(1));
+
+					if (searchTerm[0].StartsWith("r:", StringComparison.Ordinal))
+						return new ResourceSearchStrategy(apiVisibility, resultQueue, searchTerm[0].Substring(2));
+
+					if (searchTerm[0].StartsWith("a:", StringComparison.Ordinal))
+						return new AssemblySearchStrategy(searchTerm[0].Substring(2), resultQueue, AssemblySearchKind.NameOrFileName);
+
+					if (searchTerm[0].StartsWith("af:", StringComparison.Ordinal))
+						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.FilePath);
+
+					if (searchTerm[0].StartsWith("an:", StringComparison.Ordinal))
+						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.FullName);
+
+					if (searchTerm[0].StartsWith("n:", StringComparison.Ordinal))
+						return new NamespaceSearchStrategy(searchTerm[0].Substring(2), resultQueue);
 				}
 
 				switch (searchMode)
@@ -364,6 +381,12 @@ namespace ICSharpCode.ILSpy
 						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Event);
 					case SearchMode.Token:
 						return new MetadataTokenSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
+					case SearchMode.Resource:
+						return new ResourceSearchStrategy(apiVisibility, resultQueue, searchTerm);
+					case SearchMode.Assembly:
+						return new AssemblySearchStrategy(resultQueue, searchTerm, AssemblySearchKind.NameOrFileName);
+					case SearchMode.Namespace:
+						return new NamespaceSearchStrategy(resultQueue, searchTerm);
 				}
 
 				return null;
@@ -371,35 +394,8 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	public sealed class SearchResult : IMemberTreeNode
-	{
-		public static readonly System.Collections.Generic.IComparer<SearchResult> Comparer = new SearchResultComparer();
-		
-		public IEntity Member { get; set; }
-		public float Fitness { get; set; }
-		
-		public string Location { get; set; }
-		public string Name { get; set; }
-		public object ToolTip { get; set; }
-		public ImageSource Image { get; set; }
-		public ImageSource LocationImage { get; set; }
-		
-		public override string ToString()
-		{
-			return Name;
-		}
-		
-		class SearchResultComparer : System.Collections.Generic.IComparer<SearchResult>
-		{
-			public int Compare(SearchResult x, SearchResult y)
-			{
-				return StringComparer.Ordinal.Compare(x?.Name ?? "", y?.Name ?? "");
-			}
-		}
-	}
-
-	[ExportMainMenuCommand(Menu = nameof(Properties.Resources._View), Header =nameof(Properties.Resources.Search), MenuIcon = "Images/Find.png", MenuCategory = nameof(Properties.Resources.View), MenuOrder = 100)]
-	[ExportToolbarCommand(ToolTip = nameof(Properties.Resources.SearchCtrlShiftFOrCtrlE), ToolbarIcon = "Images/Find.png", ToolbarCategory = nameof(Properties.Resources.View), ToolbarOrder = 100)]
+	[ExportMainMenuCommand(Menu = nameof(Properties.Resources._View), Header =nameof(Properties.Resources.Search), MenuIcon = "Images/Search", MenuCategory = nameof(Properties.Resources.View), MenuOrder = 100)]
+	[ExportToolbarCommand(ToolTip = nameof(Properties.Resources.SearchCtrlShiftFOrCtrlE), ToolbarIcon = "Images/Search", ToolbarCategory = nameof(Properties.Resources.View), ToolbarOrder = 100)]
 	sealed class ShowSearchCommand : CommandWrapper
 	{
 		public ShowSearchCommand()
@@ -421,6 +417,9 @@ namespace ICSharpCode.ILSpy
 		Property,
 		Event,
 		Literal,
-		Token
+		Token,
+		Resource,
+		Assembly,
+		Namespace
 	}
 }

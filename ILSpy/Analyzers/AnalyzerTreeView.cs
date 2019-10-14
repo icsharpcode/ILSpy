@@ -73,7 +73,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public void Show()
 		{
 			if (!IsVisible)
-				MainWindow.Instance.ShowInBottomPane("Analyzer", this);
+				MainWindow.Instance.ShowInNewPane("Analyzer", this, PanePosition.Bottom);
 		}
 
 		public void Show(AnalyzerTreeNode node)

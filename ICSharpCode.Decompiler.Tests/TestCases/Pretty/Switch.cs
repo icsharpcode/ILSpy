@@ -366,7 +366,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if !ROSLYN
 		public static string SwitchOverBool(bool b)
 		{
-			Console.WriteLine("SwitchOverBool: " + b.ToString());
+			Console.WriteLine("SwitchOverBool: " + b);
 			switch (b) {
 				case true:
 					return bool.TrueString;
@@ -1190,6 +1190,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					return 70;
 				default:
 					throw new ArgumentOutOfRangeException();
+			}
+		}
+
+		public static void Issue1745(string aaa)
+		{
+			switch (aaa) {
+				case "a":
+				case "b":
+				case "c":
+				case "d":
+				case "e":
+				case "f":
+					Console.WriteLine(aaa);
+					break;
+				case null:
+					Console.WriteLine("<null>");
+					break;
+				case "":
+					Console.WriteLine("<empty>");
+					break;
 			}
 		}
 

@@ -325,7 +325,7 @@ namespace ICSharpCode.ILSpy
 						new Image {
 							Width = 32,
 							Height = 32,
-							Source = Images.LoadImage(this, "Images/Warning.png")
+							Source = Images.Load(this, "Images/Warning")
 						},
 						new TextBlock {
 							Margin = new Thickness(5, 0, 0, 0),
@@ -440,7 +440,6 @@ namespace ICSharpCode.ILSpy
 				foreach (var handler in App.ExportProvider.GetExportedValues<IResourceFileHandler>()) {
 					if (handler.CanHandle(fileName, options)) {
 						entryStream.Position = 0;
-						fileName = Path.Combine(targetDirectory, fileName);
 						fileName = handler.WriteResourceToFile(assembly, fileName, entryStream, options);
 						return new[] { Tuple.Create(handler.EntryType, fileName) };
 					}

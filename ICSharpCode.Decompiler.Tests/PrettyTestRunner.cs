@@ -284,7 +284,9 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void VariableNamingWithoutSymbols([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings { UseDebugSymbols = false });
+			var settings = Tester.GetSettings(cscOptions);
+			settings.UseDebugSymbols = false;
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: settings);
 		}
 
 		[Test]

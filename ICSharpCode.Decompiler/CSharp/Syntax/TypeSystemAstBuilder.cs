@@ -1408,13 +1408,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			
 			if (this.ShowBaseTypes) {
 				foreach (IType baseType in typeDefinition.DirectBaseTypes) {
-					if (baseType.IsKnownType (KnownTypeCode.Enum)) {
-						if (!typeDefinition.EnumUnderlyingType.IsKnownType (KnownTypeCode.Int32)) {
-							decl.BaseTypes.Add (ConvertType (typeDefinition.EnumUnderlyingType));
+					// if the declared type is an enum, replace all references to System.Enum with the enum-underlying type
+					if (typeDefinition.Kind == TypeKind.Enum && baseType.IsKnownType(KnownTypeCode.Enum)) {
+						if (!typeDefinition.EnumUnderlyingType.IsKnownType(KnownTypeCode.Int32)) {
+							decl.BaseTypes.Add(ConvertType(typeDefinition.EnumUnderlyingType));
 						}
-					} else if (!baseType.IsKnownType (KnownTypeCode.Object) &&
-						 !baseType.IsKnownType (KnownTypeCode.ValueType)) {
-						decl.BaseTypes.Add (ConvertType (baseType));
+					// if the declared type is a struct, ignore System.ValueType
+					} else if (typeDefinition.Kind == TypeKind.Struct && baseType.IsKnownType(KnownTypeCode.ValueType)) {
+						continue;
+					// always ignore System.Object
+					} else if (baseType.IsKnownType(KnownTypeCode.Object)) {
+						continue;
+					} else {
+						decl.BaseTypes.Add(ConvertType(baseType));
 					}
 				}
 			}
@@ -1522,6 +1528,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Accessor decl = new Accessor();
 			if (this.ShowAccessibility && accessor.Accessibility != ownerAccessibility)
 				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility);
+			if (accessor.HasReadonlyModifier())
+				decl.Modifiers |= Modifiers.Readonly;
 			if (ShowAttributes) {
 				decl.Attributes.AddRange(ConvertAttributes(accessor.GetAttributes()));
 				decl.Attributes.AddRange(ConvertAttributes(accessor.GetReturnTypeAttributes(), "return"));
@@ -1551,9 +1559,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			decl.Getter = ConvertAccessor(property.Getter, property.Accessibility, false);
 			decl.Setter = ConvertAccessor(property.Setter, property.Accessibility, true);
 			decl.PrivateImplementationType = GetExplicitInterfaceType (property);
+			MergeReadOnlyModifiers(decl, decl.Getter, decl.Setter);
 			return decl;
 		}
 		
+		static void MergeReadOnlyModifiers(EntityDeclaration decl, Accessor accessor1, Accessor accessor2)
+		{
+			if (accessor1.HasModifier(Modifiers.Readonly) && accessor2.HasModifier(Modifiers.Readonly)) {
+				accessor1.Modifiers &= ~Modifiers.Readonly;
+				accessor2.Modifiers &= ~Modifiers.Readonly;
+				decl.Modifiers |= Modifiers.Readonly;
+			}
+		}
 		IndexerDeclaration ConvertIndexer(IProperty indexer)
 		{
 			IndexerDeclaration decl = new IndexerDeclaration();
@@ -1571,6 +1588,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			decl.Getter = ConvertAccessor(indexer.Getter, indexer.Accessibility, false);
 			decl.Setter = ConvertAccessor(indexer.Setter, indexer.Accessibility, true);
 			decl.PrivateImplementationType = GetExplicitInterfaceType (indexer);
+			MergeReadOnlyModifiers(decl, decl.Getter, decl.Setter);
 			return decl;
 		}
 		
@@ -1590,6 +1608,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.AddAccessor    = ConvertAccessor(ev.AddAccessor, ev.Accessibility, true);
 				decl.RemoveAccessor = ConvertAccessor(ev.RemoveAccessor, ev.Accessibility, true);
 				decl.PrivateImplementationType = GetExplicitInterfaceType (ev);
+				MergeReadOnlyModifiers(decl, decl.AddAccessor, decl.RemoveAccessor);
 				return decl;
 			} else {
 				EventDeclaration decl = new EventDeclaration();
@@ -1728,8 +1747,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		bool NeedsAccessibility(IMember member)
 		{
 			var declaringType = member.DeclaringType;
-			if ((declaringType != null && declaringType.Kind == TypeKind.Interface) || member.IsExplicitInterfaceImplementation)
+			if (member.IsExplicitInterfaceImplementation)
 				return false;
+			if (declaringType != null && declaringType.Kind == TypeKind.Interface) {
+				return member.Accessibility != Accessibility.Public;
+			}
 			switch (member.SymbolKind) {
 				case SymbolKind.Constructor:
 					return !member.IsStatic;
@@ -1751,14 +1773,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					m |= Modifiers.Static;
 				} else {
 					var declaringType = member.DeclaringType;
-					if (member.IsAbstract && declaringType != null && declaringType.Kind != TypeKind.Interface)
-						m |= Modifiers.Abstract;
-					if (member.IsOverride)
+					if (declaringType.Kind == TypeKind.Interface) {
+						if (!member.IsVirtual && !member.IsAbstract && !member.IsOverride && member.Accessibility != Accessibility.Private)
+							m |= Modifiers.Sealed;
+					} else {
+						if (member.IsAbstract)
+							m |= Modifiers.Abstract;
+						else if (member.IsVirtual && !member.IsOverride)
+							m |= Modifiers.Virtual;
+					}
+					if (member.IsOverride && !member.IsExplicitInterfaceImplementation)
 						m |= Modifiers.Override;
-					if (member.IsVirtual && !member.IsAbstract && !member.IsOverride && declaringType.Kind != TypeKind.Interface)
-						m |= Modifiers.Virtual;
-					if (member.IsSealed)
+					if (member.IsSealed && !member.IsExplicitInterfaceImplementation)
 						m |= Modifiers.Sealed;
+					if (member is IMethod method && method.ThisIsRefReadOnly && method.DeclaringTypeDefinition?.IsReadOnly == false)
+						m |= Modifiers.Readonly;
 				}
 			}
 			return m;

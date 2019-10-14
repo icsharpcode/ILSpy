@@ -107,12 +107,13 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp8_0) {
 				nullableReferenceTypes = false;
+				readOnlyMethods = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (nullableReferenceTypes)
+			if (nullableReferenceTypes || readOnlyMethods)
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers)
 				return CSharp.LanguageVersion.CSharp7_3;
@@ -537,6 +538,26 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool alwaysShowEnumMemberValues = false;
+
+		/// <summary>
+		/// Gets/Sets whether to always show enum member values.
+		/// true: <c>enum Kind { A = 0, B = 1, C = 5 }</c>
+		/// false: <c>enum Kind { A, B, C = 5 }</c>
+		/// default: false
+		/// </summary>
+		[Category("Other")]
+		[Description("DecompilerSettings.AlwaysShowEnumMemberValues")]
+		public bool AlwaysShowEnumMemberValues {
+			get { return alwaysShowEnumMemberValues; }
+			set {
+				if (alwaysShowEnumMemberValues != value) {
+					alwaysShowEnumMemberValues = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool useDebugSymbols = true;
 
 		/// <summary>
@@ -817,6 +838,20 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (introduceReadonlyAndInModifiers != value) {
 					introduceReadonlyAndInModifiers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool readOnlyMethods = true;
+
+		[Category("C# 8.0 / VS 2019")]
+		[Description("DecompilerSettings.IsReadOnlyAttributeShouldBeReplacedWithReadonlyInModifiersOnStructsParameters")]
+		public bool ReadOnlyMethods {
+			get { return readOnlyMethods; }
+			set {
+				if (readOnlyMethods != value) {
+					readOnlyMethods = value;
 					OnPropertyChanged();
 				}
 			}

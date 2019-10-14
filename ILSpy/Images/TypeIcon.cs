@@ -25,7 +25,6 @@ namespace ICSharpCode.ILSpy
 		Enum,
 		Struct,
 		Interface,
-		Delegate,
-		StaticClass
+		Delegate
 	}
 }

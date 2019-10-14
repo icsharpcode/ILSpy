@@ -111,6 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SwitchOnStringTransform(),
 				new SwitchOnNullableTransform(),
 				new SplitVariables(), // split variables once again, because SwitchOnNullableTransform eliminates ldloca 
+				new IntroduceRefReadOnlyModifierOnLocals(),
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
 						// Even though it's a post-order block-transform as most other transforms,
@@ -1170,6 +1171,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		EnumValueDisplayMode DetectBestEnumValueDisplayMode(ITypeDefinition typeDef, PEFile module)
 		{
+			if (settings.AlwaysShowEnumMemberValues)
+				return EnumValueDisplayMode.All;
 			if (typeDef.HasAttribute(KnownAttribute.Flags, inherit: false))
 				return EnumValueDisplayMode.All;
 			bool first = true;

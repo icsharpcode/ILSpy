@@ -428,6 +428,11 @@ namespace ICSharpCode.ILSpy.TextView
 				foldingManager = FoldingManager.Install(textEditor.TextArea);
 				foldingManager.UpdateFoldings(textOutput.Foldings.OrderBy(f => f.StartOffset), -1);
 				Debug.WriteLine("  Updating folding: {0}", w.Elapsed); w.Restart();
+			} else if (highlighting?.Name == "XML") {
+				foldingManager = FoldingManager.Install(textEditor.TextArea);
+				var foldingStrategy = new XmlFoldingStrategy();
+				foldingStrategy.UpdateFoldings(foldingManager, textEditor.Document);
+				Debug.WriteLine("  Updating folding: {0}", w.Elapsed); w.Restart();
 			}
 		}
 		#endregion
@@ -649,12 +654,13 @@ namespace ICSharpCode.ILSpy.TextView
 				if (referenceSegment == null) {
 					ClearLocalReferenceMarks();
 				} else if (referenceSegment.IsLocal || !referenceSegment.IsDefinition) {
-					JumpToReference(referenceSegment);
 					textEditor.TextArea.ClearSelection();
+					// cancel mouse selection to avoid AvalonEdit selecting between the new
+					// cursor position and the mouse position.
+					textEditor.TextArea.MouseSelectionMode = MouseSelectionMode.None;
+
+					JumpToReference(referenceSegment);
 				}
-				// cancel mouse selection to avoid AvalonEdit selecting between the new
-				// cursor position and the mouse position.
-				textEditor.TextArea.MouseSelectionMode = MouseSelectionMode.None;
 			}
 		}
 		

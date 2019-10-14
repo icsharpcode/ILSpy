@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
 using EnvDTE;
+using Microsoft.VisualStudio.Shell;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
@@ -27,6 +28,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// <returns><see cref="ProjectItemForILSpy"/> instance or <c>null</c>, if item is not a supported project.</returns>
 		public static ProjectItemForILSpy Detect(ILSpyAddInPackage package, SelectedItem item)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			var project = item.Project;
 			var roslynProject = package.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == project.FileName);
 			if (roslynProject == null)
@@ -42,6 +45,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// <returns>Parameters object or <c>null, if not applicable.</c></returns>
 		public ILSpyParameters GetILSpyParameters(ILSpyAddInPackage package)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			return new ILSpyParameters(new[] { Utils.GetProjectOutputAssembly(project, roslynProject) });
 		}
 	}

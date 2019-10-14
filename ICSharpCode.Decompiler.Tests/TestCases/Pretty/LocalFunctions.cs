@@ -310,6 +310,17 @@ namespace LocalFunctions
 			}
 		}
 
+		public void WriteCapturedParameter(int i)
+		{
+			ParamWrite();
+			Console.WriteLine(i);
+
+			void ParamWrite()
+			{
+				i++;
+			}
+		}
+
 		//public static void LocalFunctionInUsing()
 		//{
 		//	using (MemoryStream memoryStream = new MemoryStream()) {

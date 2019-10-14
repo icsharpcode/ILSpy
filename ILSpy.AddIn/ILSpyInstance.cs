@@ -42,7 +42,8 @@ namespace ICSharpCode.ILSpy.AddIn
 			var process = new Process() {
 				StartInfo = new ProcessStartInfo() {
 					FileName = GetILSpyPath(),
-					UseShellExecute = false
+					UseShellExecute = false,
+					Arguments = "/navigateTo:none"
 				}
 			};
 			process.Start();
@@ -53,6 +54,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			}
 		}
 
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "VSTHRD110:Observe result of async calls", Justification = "<Pending>")]
 		void SendMessage(Process ilspyProcess, string message, bool activate)
 		{
 			// We wait asynchronously until target window can be found and try to find it multiple times

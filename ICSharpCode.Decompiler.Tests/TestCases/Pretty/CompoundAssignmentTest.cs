@@ -4562,9 +4562,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			// same temporary. In order to inline the generated value-type temporary, we
 			// need to split it, even though it has the address taken for the ToString() call.
 			if (flag) {
-				strings[1] += chars[i].ToString();
+				strings[1] += chars[i];
 			} else {
-				strings[0] += chars[i].ToString();
+				strings[0] += chars[i];
 			}
 		}
 #endif
