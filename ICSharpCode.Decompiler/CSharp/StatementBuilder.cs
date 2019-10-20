@@ -420,7 +420,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					AssignVariableNames.GenerateVariableName(currentFunction, disposeType)
 				);
 				return new BlockStatement {
-					new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(var).Expression, resource.Detach())),
+					new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(var).Expression, resource?.Detach())),
 					new TryCatchStatement {
 						TryBlock = ConvertAsBlock(inst.Body),
 						FinallyBlock = new BlockStatement() {
