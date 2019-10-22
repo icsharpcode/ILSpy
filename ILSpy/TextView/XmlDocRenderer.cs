@@ -28,12 +28,13 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Xml;
+using System.Xml.Linq;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Utils;
+using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Xml;
 using ICSharpCode.ILSpy.Options;
 
 namespace ICSharpCode.ILSpy.TextView
@@ -129,9 +130,8 @@ namespace ICSharpCode.ILSpy.TextView
 			if (xmlDocumentation == null)
 				return;
 			Debug.WriteLine(xmlDocumentation);
-			AXmlParser parser = new AXmlParser();
-			var doc = parser.Parse(new Decompiler.Xml.StringTextSource(xmlDocumentation));
-			AddDocumentationElement(new XmlDocumentationElement(doc, declaringEntity, resolver));
+			var xml = XElement.Parse("<doc>" + xmlDocumentation + "</doc>");
+			AddDocumentationElement(new XmlDocumentationElement(xml, declaringEntity, resolver));
 		}
 		
 

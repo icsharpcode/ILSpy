@@ -21,11 +21,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Xml.Linq;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.Decompiler.Xml
+namespace ICSharpCode.Decompiler.Documentation
 {
 	/// <summary>
 	/// Represents an element in the XML documentation.
@@ -35,12 +36,10 @@ namespace ICSharpCode.Decompiler.Xml
 	{
 		static XmlDocumentationElement Create(string documentationComment, IEntity declaringEntity)
 		{
-			var doc = new AXmlParser().Parse(new StringTextSource(documentationComment));
-			return new XmlDocumentationElement(doc, declaringEntity, null);
+			return new XmlDocumentationElement(XElement.Parse(documentationComment), declaringEntity, null);
 		}
 
-		readonly AXmlObject xmlObject;
-		readonly AXmlElement element;
+		readonly XElement element;
 		readonly IEntity declaringEntity;
 		readonly Func<string, IEntity> crefResolver;
 		volatile string textContent;
@@ -53,24 +52,11 @@ namespace ICSharpCode.Decompiler.Xml
 		/// <summary>
 		/// Creates a new documentation element.
 		/// </summary>
-		public XmlDocumentationElement(AXmlElement element, IEntity declaringEntity, Func<string, IEntity> crefResolver)
+		public XmlDocumentationElement(XElement element, IEntity declaringEntity, Func<string, IEntity> crefResolver)
 		{
 			if (element == null)
 				throw new ArgumentNullException("element");
 			this.element = element;
-			this.xmlObject = element;
-			this.declaringEntity = declaringEntity;
-			this.crefResolver = crefResolver;
-		}
-
-		/// <summary>
-		/// Creates a new documentation element.
-		/// </summary>
-		public XmlDocumentationElement(AXmlDocument document, IEntity declaringEntity, Func<string, IEntity> crefResolver)
-		{
-			if (document == null)
-				throw new ArgumentNullException("document");
-			this.xmlObject = document;
 			this.declaringEntity = declaringEntity;
 			this.crefResolver = crefResolver;
 		}
@@ -118,7 +104,7 @@ namespace ICSharpCode.Decompiler.Xml
 		/// </summary>
 		public string Name {
 			get {
-				return element != null ? element.Name : string.Empty;
+				return element != null ? element.Name.LocalName : string.Empty;
 			}
 		}
 
@@ -127,14 +113,14 @@ namespace ICSharpCode.Decompiler.Xml
 		/// </summary>
 		public string GetAttribute(string name)
 		{
-			return element != null ? element.GetAttributeValue(name) : string.Empty;
+			return element != null ? element.Attribute(name).Value : string.Empty;
 		}
 
 		/// <summary>
 		/// Gets whether this is a pure text node.
 		/// </summary>
 		public bool IsTextNode {
-			get { return xmlObject == null; }
+			get { return element == null; }
 		}
 
 		/// <summary>
@@ -159,11 +145,11 @@ namespace ICSharpCode.Decompiler.Xml
 		/// </summary>
 		public IList<XmlDocumentationElement> Children {
 			get {
-				if (xmlObject == null)
+				if (element == null)
 					return EmptyList<XmlDocumentationElement>.Instance;
 				return LazyInitializer.EnsureInitialized(
 					ref this.children,
-					() => CreateElements(xmlObject.Children, declaringEntity, crefResolver, nestingLevel));
+					() => CreateElements(element.Nodes(), declaringEntity, crefResolver, nestingLevel));
 			}
 		}
 
@@ -172,21 +158,20 @@ namespace ICSharpCode.Decompiler.Xml
 			"remarks", "returns", "threadsafety", "value"
 		};
 
-		static List<XmlDocumentationElement> CreateElements(IEnumerable<AXmlObject> childObjects, IEntity declaringEntity, Func<string, IEntity> crefResolver, int nestingLevel)
+		static List<XmlDocumentationElement> CreateElements(IEnumerable<XObject> childObjects, IEntity declaringEntity, Func<string, IEntity> crefResolver, int nestingLevel)
 		{
 			List<XmlDocumentationElement> list = new List<XmlDocumentationElement>();
 			foreach (var child in childObjects) {
-				var childText = child as AXmlText;
-				var childTag = child as AXmlTag;
-				var childElement = child as AXmlElement;
+				var childText = child as XText;
+				var childTag = child as XCData;
+				var childElement = child as XElement;
 				if (childText != null) {
 					list.Add(new XmlDocumentationElement(childText.Value, declaringEntity));
-				} else if (childTag != null && childTag.IsCData) {
-					foreach (var text in childTag.Children.OfType<AXmlText>())
-						list.Add(new XmlDocumentationElement(text.Value, declaringEntity));
+				} else if (childTag != null) {
+					list.Add(new XmlDocumentationElement(childTag.Value, declaringEntity));
 				} else if (childElement != null) {
 					if (nestingLevel < 5 && childElement.Name == "inheritdoc") {
-						string cref = childElement.GetAttributeValue("cref");
+						string cref = childElement.Attribute("cref").Value;
 						IEntity inheritedFrom = null;
 						string inheritedDocumentation = null;
 						if (cref != null) {
@@ -204,20 +189,20 @@ namespace ICSharpCode.Decompiler.Xml
 						}
 
 						if (inheritedDocumentation != null) {
-							var doc = new AXmlParser().Parse(new StringTextSource(inheritedDocumentation));
+							var doc = XDocument.Parse(inheritedDocumentation);
 
 							// XPath filter not yet implemented
-							if (childElement.Parent is AXmlDocument && childElement.GetAttributeValue("select") == null) {
+							if (childElement.Parent == null && childElement.Attribute("select").Value == null) {
 								// Inheriting documentation at the root level
 								List<string> doNotInherit = new List<string>();
 								doNotInherit.Add("overloads");
-								doNotInherit.AddRange(childObjects.OfType<AXmlElement>().Select(e => e.Name).Intersect(
+								doNotInherit.AddRange(childObjects.OfType<XElement>().Select(e => e.Name.LocalName).Intersect(
 									doNotInheritIfAlreadyPresent));
 
-								var inheritedChildren = doc.Children.Where(
+								var inheritedChildren = doc.Nodes().Where(
 									inheritedObject => {
-										AXmlElement inheritedElement = inheritedObject as AXmlElement;
-										return !(inheritedElement != null && doNotInherit.Contains(inheritedElement.Name));
+										XElement inheritedElement = inheritedObject as XElement;
+										return !(inheritedElement != null && doNotInherit.Contains(inheritedElement.Name.LocalName));
 									});
 
 								list.AddRange(CreateElements(inheritedChildren, inheritedFrom, crefResolver, nestingLevel + 1));
