@@ -135,6 +135,8 @@ namespace ICSharpCode.Decompiler.Metadata
 				return null;
 			var basePaths = RuntimePacks.Select(pack => Path.Combine(dotnetBasePath, "shared", pack));
 			foreach (var basePath in basePaths) {
+				if (!Directory.Exists(basePath))
+					continue;
 				var closestVersion = GetClosestVersionFolder(basePath, version);
 				if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".dll"))) {
 					return Path.Combine(basePath, closestVersion, name.Name + ".dll");
