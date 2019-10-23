@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.Tests
 		};
 
 		[Test]
-		public void NoArrayInitializers([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		public void NoArrayInitializers([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				ArrayInitializers = false
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void NoDecimalConstants([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		public void NoDecimalConstants([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				DecimalConstants = false
@@ -84,10 +84,18 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void NoExtensionMethods([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		public void NoExtensionMethods([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				ExtensionMethods = false
+			});
+		}
+
+		[Test]
+		public void NoForEachStatement([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+				ForEachStatement = false
 			});
 		}
 
