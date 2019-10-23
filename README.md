@@ -60,6 +60,8 @@ Windows:
   - Run project "ILSpy" for the ILSpy UI
   - Use the Visual Studio "Test Explorer" to see/run the tests
 
+**Note:** Visual Studio 16.3 and later include a version of the .NET Core SDK that is managed by the Visual Studio installer, once you update to 16.4 it may get upgraded to version 3.1. Please note that ILSpy is not compatible with the .NET Core 3.1 SDK and Visual Studio will refuse to load some projects in the solution. If this problem occurs, please manually install the .NET Core 3.0 SDK from [here](https://dotnet.microsoft.com/download/dotnet-core/3.0).
+
 Unix / Mac:
 - Make sure .NET Core 2.1 LTS Runtime is installed (you can get it here: https://get.dot.net).
 - Make sure [.NET Core 3 SDK](https://dotnet.microsoft.com/download/dotnet-core) is installed.
