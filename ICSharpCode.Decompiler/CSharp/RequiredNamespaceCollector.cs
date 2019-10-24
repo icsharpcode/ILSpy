@@ -122,13 +122,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					break;
 				case IProperty property:
 					HandleAttributes(property.GetAttributes());
-					CollectNamespaces(property.Getter, module);
-					CollectNamespaces(property.Setter, module);
+					CollectNamespaces(property.Getter, module, mappingInfo);
+					CollectNamespaces(property.Setter, module, mappingInfo);
 					break;
 				case IEvent @event:
 					HandleAttributes(@event.GetAttributes());
-					CollectNamespaces(@event.AddAccessor, module);
-					CollectNamespaces(@event.RemoveAccessor, module);
+					CollectNamespaces(@event.AddAccessor, module, mappingInfo);
+					CollectNamespaces(@event.RemoveAccessor, module, mappingInfo);
 					break;
 			}
 		}
