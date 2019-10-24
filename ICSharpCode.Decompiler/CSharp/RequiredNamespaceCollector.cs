@@ -55,10 +55,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (entity == null || entity.MetadataToken.IsNil)
 				return;
+			if (mappingInfo == null)
+				mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentModule.PEFile, entity.MetadataToken);
 			switch (entity) {
 				case ITypeDefinition td:
-					if (mappingInfo == null)
-						mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentModule.PEFile, entity.MetadataToken);
 					namespaces.Add(td.Namespace);
 					HandleAttributes(td.GetAttributes());
 					HandleTypeParameters(td.TypeParameters);
@@ -100,23 +100,19 @@ namespace ICSharpCode.Decompiler.CSharp
 						CollectNamespacesForTypeReference(param.Type);
 					}
 					HandleTypeParameters(method.TypeParameters);
-					if (!method.MetadataToken.IsNil) {
-						if (mappingInfo == null)
-							mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentModule.PEFile, entity.MetadataToken);
-						var reader = module.PEFile.Reader;
-						var parts = mappingInfo.GetMethodParts((MethodDefinitionHandle)method.MetadataToken).ToList();
-						foreach (var part in parts) {
-							HandleOverrides(part.GetMethodImplementations(module.metadata), module);
-							var methodDef = module.metadata.GetMethodDefinition(part);
-							if (method.HasBody) {
-								MethodBodyBlock body;
-								try {
-									body = reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-								} catch (BadImageFormatException) {
-									continue;
-								}
-								CollectNamespacesFromMethodBody(body, module);
+					var reader = module.PEFile.Reader;
+					var parts = mappingInfo.GetMethodParts((MethodDefinitionHandle)method.MetadataToken).ToList();
+					foreach (var part in parts) {
+						HandleOverrides(part.GetMethodImplementations(module.metadata), module);
+						var methodDef = module.metadata.GetMethodDefinition(part);
+						if (method.HasBody) {
+							MethodBodyBlock body;
+							try {
+								body = reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+							} catch (BadImageFormatException) {
+								continue;
 							}
+							CollectNamespacesFromMethodBody(body, module);
 						}
 					}
 					break;
