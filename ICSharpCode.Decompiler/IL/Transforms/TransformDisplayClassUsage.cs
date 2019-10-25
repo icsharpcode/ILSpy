@@ -64,9 +64,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// Inner functions are transformed before outer functions
 				foreach (var f in function.Descendants.OfType<ILFunction>()) {
 					foreach (var v in f.Variables.ToArray()) {
-						if (HandleMonoStateMachine(function, v, decompilationContext, f))
+						if (context.Settings.YieldReturn && HandleMonoStateMachine(function, v, decompilationContext, f))
 							continue;
-						if (IsClosure(v, out ITypeDefinition closureType, out var inst)) {
+						if ((context.Settings.AnonymousMethods || context.Settings.ExpressionTrees) && IsClosure(v, out ITypeDefinition closureType, out var inst)) {
 							AddOrUpdateDisplayClass(f, v, closureType, inst, localFunctionClosureParameter: false);
 						}
 						if (context.Settings.LocalFunctions && f.Kind == ILFunctionKind.LocalFunction && v.Kind == VariableKind.Parameter && v.Index > -1 && f.Method.Parameters[v.Index.Value] is IParameter p && LocalFunctionDecompiler.IsClosureParameter(p, decompilationContext)) {
