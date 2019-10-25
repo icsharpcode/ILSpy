@@ -321,7 +321,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (displayClass.IsMono && displayClass.CaptureScope == null && !IsOuterClosureReference(field)) {
 						displayClass.CaptureScope = BlockContainer.FindClosestContainer(inst);
 					}
-					v = displayClass.DeclaringFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
+					v = displayClass.DeclaringFunction.RegisterVariable(VariableKind.Local, GetVariableTypeFromClosureField(field), field.Name);
 					v.HasInitialValue = true;
 					v.CaptureScope = displayClass.CaptureScope;
 					inst.ReplaceWith(new StLoc(v, inst.Value).WithILRange(inst));
@@ -370,7 +370,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.Step($"Introduce captured variable for {field.FullName}", inst);
 				// Introduce a fresh variable for the display class field.
 				Debug.Assert(displayClass.Definition == field.DeclaringTypeDefinition);
-				var v = displayClass.DeclaringFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
+				var v = displayClass.DeclaringFunction.RegisterVariable(VariableKind.Local, GetVariableTypeFromClosureField(field), field.Name);
 				v.HasInitialValue = true;
 				v.CaptureScope = displayClass.CaptureScope;
 				inst.ReplaceWith(new LdLoca(v).WithILRange(inst));
@@ -380,6 +380,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				Debug.Fail("LdFlda pattern not supported!");
 			}
+		}
+
+		private IType GetVariableTypeFromClosureField(IField field)
+		{
+			if (!(field.Type is ITypeParameter typeParameter))
+				return field.Type;
+			var rootMethod = context.Function.Method;
+			if (typeParameter.Owner != field.DeclaringTypeDefinition)
+				return field.Type;
+			if (typeParameter.Index >= rootMethod.TypeParameters.Count) {
+				Debug.Assert(false, "Cannot map display-class type parameter to method type parameter");
+				return field.Type;
+			}
+
+			return rootMethod.TypeParameters[typeParameter.Index];
 		}
 	}
 }

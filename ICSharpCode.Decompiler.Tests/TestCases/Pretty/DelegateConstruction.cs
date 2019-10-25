@@ -151,6 +151,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			void M3();
 		}
+
 		public class BaseClass : IM3
 		{
 			protected virtual void M1()
@@ -163,6 +164,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 			}
 		}
+
 		public class SubClass : BaseClass
 		{
 			protected override void M2()
@@ -193,6 +195,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Noop("M3", M3);
 #endif
 			}
+
 			public void Test2()
 			{
 				Noop("M3.new", new BaseClass().M3);
@@ -201,6 +204,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			private void Noop(string name, Action _)
 			{
+			}
+		}
+
+		public class GenericTest<TNonCaptured, TCaptured>
+		{
+			public Func<TCaptured> GetFunc(Func<TNonCaptured, TCaptured> f)
+			{
+				TCaptured captured = f(default(TNonCaptured));
+				return delegate {
+					Console.WriteLine(captured.GetType().FullName);
+					return captured;
+				};
+			}
+
+			public Func<TNonCaptured, TNonCapturedMP, TCaptured> GetFunc<TNonCapturedMP>(Func<TCaptured> f)
+			{
+				TCaptured captured = f();
+				return delegate(TNonCaptured a, TNonCapturedMP d) {
+					Console.WriteLine(a.GetHashCode());
+					Console.WriteLine(captured.GetType().FullName);
+					return captured;
+				};
 			}
 		}
 
@@ -341,6 +366,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static Func<int, Func<int, Func<int, int>>> CurriedAddition2(int a)
 		{
 			return (int b) => (int c) => (int d) => a + b + c + d;
+		}
+
+		public static Func<TCaptured> CapturedTypeParameter1<TNonCaptured, TCaptured>(TNonCaptured a, Func<TNonCaptured, TCaptured> f)
+		{
+			TCaptured captured = f(a);
+			return delegate {
+				Console.WriteLine(captured.GetType().FullName);
+				return captured;
+			};
 		}
 	}
 }
