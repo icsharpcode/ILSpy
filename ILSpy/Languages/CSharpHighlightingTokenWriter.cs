@@ -318,8 +318,14 @@ namespace ICSharpCode.ILSpy
 		public override void WriteIdentifier(Identifier identifier)
 		{
 			HighlightingColor color = null;
-			if (identifier.Name == "value" && identifier.Ancestors.OfType<Accessor>().FirstOrDefault() is Accessor accessor && accessor.Role != PropertyDeclaration.GetterRole)
+			if (identifier.Name == "value"
+				&& identifier.Parent?.GetResolveResult() is ILVariableResolveResult rr
+				&& rr.Variable.Kind == Decompiler.IL.VariableKind.Parameter
+				&& identifier.Ancestors.OfType<Accessor>().FirstOrDefault() is Accessor accessor
+				&& accessor.Role != PropertyDeclaration.GetterRole)
+			{
 				color = valueKeywordColor;
+			}
 			if ((identifier.Name == "dynamic" || identifier.Name == "var") && identifier.Parent is AstType)
 				color = queryKeywordsColor;
 			switch (GetCurrentDefinition()) {

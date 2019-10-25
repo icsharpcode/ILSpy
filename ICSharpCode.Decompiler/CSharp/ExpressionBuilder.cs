@@ -203,7 +203,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						return true;
 				}
 
-				foreach (var f in function.LocalFunctions.OfType<ILFunction>()) {
+				foreach (var f in function.LocalFunctions) {
 					if (f.Name == name)
 						return true;
 				}
