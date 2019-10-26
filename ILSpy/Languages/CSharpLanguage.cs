@@ -632,10 +632,9 @@ namespace ICSharpCode.ILSpy
 			var flags = ConversionFlags.All & ~(ConversionFlags.ShowBody | ConversionFlags.PlaceReturnTypeAfterParameterList);
 			var output = new StringWriter();
 			var decoratedWriter = new TextWriterTokenWriter(output);
-			var richTextOutput = new RichTextModelOutput(decoratedWriter);
-			var writer = new CSharpHighlightingTokenWriter(TokenWriter.InsertRequiredSpaces(decoratedWriter), richTextOutput);
+			var writer = new CSharpHighlightingTokenWriter(TokenWriter.InsertRequiredSpaces(decoratedWriter), locatable: decoratedWriter);
 			new CSharpAmbience() { ConversionFlags = flags }.ConvertSymbol(entity, writer, new DecompilerSettings().CSharpFormattingOptions);
-			return new RichText(output.ToString(), richTextOutput.Model);
+			return new RichText(output.ToString(), writer.HighlightingModel);
 		}
 
 		public override CodeMappingInfo GetCodeMappingInfo(PEFile module, EntityHandle member)
