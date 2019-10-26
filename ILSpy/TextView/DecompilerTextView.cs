@@ -394,7 +394,11 @@ namespace ICSharpCode.ILSpy.TextView
 			public FlowDocumentTooltip(FlowDocument document)
 			{
 				TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
-				viewer = new FlowDocumentScrollViewer() { Width = document.MinPageWidth + 100 };
+				double fontSize = DisplaySettingsPanel.CurrentDisplaySettings.SelectedFontSize;
+				viewer = new FlowDocumentScrollViewer() {
+					Width = document.MinPageWidth + fontSize * 5,
+					MaxWidth = MainWindow.Instance.ActualWidth
+				};
 				viewer.Document = document;
 				Border border = new Border {
 					Background = SystemColors.ControlBrush,
@@ -405,7 +409,7 @@ namespace ICSharpCode.ILSpy.TextView
 				};
 				this.Child = border;
 				viewer.Foreground = SystemColors.InfoTextBrush;
-				document.FontSize = DisplaySettingsPanel.CurrentDisplaySettings.SelectedFontSize;
+				document.FontSize = fontSize;
 			}
 
 			public bool CloseWhenMouseMovesAway {
