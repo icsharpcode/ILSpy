@@ -114,6 +114,7 @@ namespace ICSharpCode.ILSpy.TextView
 			// Paragraph sadly does not support TextWrapping.NoWrap
 			var text = new TextBlock {
 				FontFamily = GetCodeFont(),
+				FontSize = DisplaySettingsPanel.CurrentDisplaySettings.SelectedFontSize,
 				TextAlignment = TextAlignment.Left
 			};
 			text.Inlines.AddRange(richText.CreateRuns(document));
