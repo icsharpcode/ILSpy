@@ -1511,7 +1511,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			TranslatedExpression resultExpr;
 			if (inst.EvalMode == CompoundEvalMode.EvaluatesToOldValue) {
 				Debug.Assert(op == AssignmentOperatorType.Add || op == AssignmentOperatorType.Subtract);
-				Debug.Assert(inst.Value.MatchLdcI(1));
+				Debug.Assert(inst.Value.MatchLdcI(1) || inst.Value.MatchLdcF4(1) || inst.Value.MatchLdcF8(1));
 				UnaryOperatorType unary;
 				ExpressionType exprType;
 				if (op == AssignmentOperatorType.Add) {

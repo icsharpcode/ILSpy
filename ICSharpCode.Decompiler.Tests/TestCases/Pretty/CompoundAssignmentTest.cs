@@ -4721,6 +4721,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return (*GetPointer())++;
 		}
 
+		public float PostIncrementFloat(float f)
+		{
+			return f++;
+		}
+
+		public double PostIncrementDouble(double d)
+		{
+			return d++;
+		}
+
 		public void Issue1552Pre(CustomStruct a, CustomStruct b)
 		{
 			CustomStruct customStruct = a + b;
