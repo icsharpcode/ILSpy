@@ -269,6 +269,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal static bool MethodRequiresCopyForReadonlyLValue(IMethod method)
 		{
+			if (method == null)
+				return true;
 			var type = method.DeclaringType;
 			if (type.IsReferenceType == true)
 				return false; // reference types are never implicitly copied
@@ -303,6 +305,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					return !method.IsStatic;
 				case OpCode.Await:
+					method = ((Await)inst.Parent).GetAwaiterMethod;
 					return true;
 				case OpCode.NullableUnwrap:
 					return ((NullableUnwrap)inst.Parent).RefInput;
