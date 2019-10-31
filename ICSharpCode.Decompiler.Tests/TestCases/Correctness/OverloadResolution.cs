@@ -33,6 +33,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			ConstructorTest();
 			TestIndexer();
 			Issue1281();
+			Issue1747();
 		}
 
 		#region ConstructorTest
@@ -200,6 +201,37 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void GenericsTest<T>(object x) where T : struct
 		{
 			Console.WriteLine("GenericsTest<" + typeof(T).Name + ">(object: " + x + ");");
+		}
+		#endregion
+
+		#region NullableValueTypes
+		private static void Issue1747()
+		{
+			Console.WriteLine("Issue1747:");
+			M1747(null);
+			M1747(true);
+			M1747(false);
+			M1747((bool?)true);
+			M1747((bool?)false);
+			Console.WriteLine("Issue1747, non-constant:");
+			bool b = Get<bool>();
+			M1747(b);
+			M1747((bool?)b);
+		}
+
+		private static void M1747(bool b)
+		{
+			Console.WriteLine("bool=" + b);
+		}
+
+		private static void M1747(bool? b)
+		{
+			Console.WriteLine("bool?=" + b);
+		}
+
+		static T Get<T>()
+		{
+			return default(T);
 		}
 		#endregion
 
