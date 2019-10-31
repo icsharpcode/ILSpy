@@ -376,5 +376,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				return captured;
 			};
 		}
+
+		public static Func<TCaptured> CapturedTypeParameter2<TNonCaptured, TCaptured>(TNonCaptured a, Func<TNonCaptured, List<TCaptured>> f)
+		{
+			List<TCaptured> captured = f(a);
+			return delegate {
+				Console.WriteLine(captured.GetType().FullName);
+				return captured.FirstOrDefault();
+			};
+		}
 	}
 }
