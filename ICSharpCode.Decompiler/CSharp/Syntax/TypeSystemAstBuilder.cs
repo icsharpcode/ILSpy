@@ -212,8 +212,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		private void AddTypeAnnotation(AstType astType, IType type)
 		{
-			if (AddTypeReferenceAnnotations)
-				astType.AddAnnotation(type);
 			if (AddResolveResultAnnotations)
 				astType.AddAnnotation(new TypeResolveResult(type));
 		}

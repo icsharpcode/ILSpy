@@ -39,6 +39,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System.IO.Compression" />
@@ -225,7 +226,7 @@
     <Compile Include="TextView\EditorCommands.cs" />
     <Compile Include="TextView\FoldingCommands.cs" />
     <Compile Include="Commands\SaveCodeContextMenuEntry.cs" />
-    <Compile Include="TextView\XmlDocRenderer.cs" />
+    <Compile Include="TextView\DocumentationUIBuilder.cs" />
     <Compile Include="Analyzers\AnalyzeCommand.cs" />
     <Compile Include="Analyzers\Builtin\FieldAccessAnalyzer.cs" />
     <Compile Include="Analyzers\TreeNodes\AnalyzedFieldTreeNode.cs" />
