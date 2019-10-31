@@ -579,6 +579,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!IsAsyncEnumerator)
 				return false;
 			var block = blockContainer.Blocks.ElementAtOrDefault(pos);
+			if (block == null)
+				return false;
 			// call SetResult(ldflda <>v__promiseOfValueOrEnd(ldloc this), ldc.i4 1)
 			// leave IL_0000(nop)
 			if (block.Instructions.Count != 2)
@@ -658,8 +660,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!handler.Filter.MatchLdcI4(1))
 				throw new SymbolicAnalysisFailedException();
 			var catchBlock = YieldReturnDecompiler.SingleBlock(handler.Body);
+			if (catchBlock == null)
+				throw new SymbolicAnalysisFailedException();
 			catchHandlerOffset = catchBlock.StartILOffset;
-			if (catchBlock?.Instructions.Count != 4)
+			if (catchBlock.Instructions.Count != 4)
 				throw new SymbolicAnalysisFailedException();
 			// stloc exception(ldloc E_143)
 			if (!(catchBlock.Instructions[0] is StLoc stloc))
