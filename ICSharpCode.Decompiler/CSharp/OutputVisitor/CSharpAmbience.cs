@@ -191,7 +191,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		TypeSystemAstBuilder CreateAstBuilder()
 		{
 			TypeSystemAstBuilder astBuilder = new TypeSystemAstBuilder();
-			astBuilder.AddTypeReferenceAnnotations = true;
 			astBuilder.AddResolveResultAnnotations = true;
 			astBuilder.ShowTypeParametersForUnboundTypes = true;
 			astBuilder.ShowModifiers = (ConversionFlags & ConversionFlags.ShowModifiers) == ConversionFlags.ShowModifiers;
