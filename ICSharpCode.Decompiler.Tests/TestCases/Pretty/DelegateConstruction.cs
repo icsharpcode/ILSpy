@@ -385,5 +385,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				return captured.FirstOrDefault();
 			};
 		}
+
+		public static Func<int> Issue1773(short data)
+		{
+			int integerData = data;
+			return () => integerData;
+		}
 	}
 }
