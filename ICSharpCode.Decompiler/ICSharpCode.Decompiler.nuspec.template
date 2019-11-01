@@ -15,10 +15,12 @@
     <copyright>Copyright 2011-$INSERTYEAR$ AlphaSierraPapa</copyright>
     <tags>C# Decompiler ILSpy</tags>
     <dependencies>
-      <dependency id="Humanizer.Core" version="2.2.0" />
-      <dependency id="System.Collections.Immutable" version="1.5.0" />
-      <dependency id="System.Reflection.Metadata" version="1.6.0" />
-      <dependency id="System.ValueTuple" version="4.3.0" />
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="Humanizer.Core" version="2.2.0" />
+        <dependency id="System.Collections.Immutable" version="1.5.0" />
+        <dependency id="System.Reflection.Metadata" version="1.6.0" />
+        <dependency id="System.ValueTuple" version="4.3.0" />
+      </group>
     </dependencies>
   </metadata>
   <files>
