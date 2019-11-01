@@ -314,7 +314,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				// This is an uninitialized variable:
 				ILInstruction value;
-				if (inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter && currentFunction == v.Function) {
+				if (inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter && currentFunction == v.Function && v.Type.Equals(fieldType)) {
 					// Special case for parameters: remove copies of parameter values.
 					instructionsToRemove.Add(inst);
 					value = inst.Value;
