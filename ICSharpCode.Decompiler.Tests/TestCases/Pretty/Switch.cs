@@ -47,6 +47,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Null
 		}
 
+		private static char ch1767;
+
 #if !ROSLYN
 		public static State SwitchOverNullableBool(bool? value)
 		{
@@ -465,7 +467,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine("End of method");
 		}
-		
+
 		public static void SwitchWithGotoComplex(string s)
 		{
 			Console.WriteLine("SwitchWithGotoComplex: " + s);
@@ -640,7 +642,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine();
 			}
 		}
-		
+
 		// while condition, return and break cases
 		public static void SwitchWithContinue2(int i, bool b)
 		{
@@ -681,7 +683,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				i++;
 			}
 		}
-		
+
 		// for loop version
 		public static void SwitchWithContinue3(bool b)
 		{
@@ -721,7 +723,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("loop-tail");
 			}
 		}
-		
+
 		// foreach version
 		public static void SwitchWithContinue4(bool b)
 		{
@@ -843,7 +845,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						continue;
 				}
 				Console.WriteLine("loop-tail");
-			 } while (++i < 10);
+			} while (++i < 10);
 		}
 
 		// double break from switch to loop exit requires additional pattern matching in HighLevelLoopTransform
@@ -918,7 +920,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		// These decompile poorly into switch statements and should be left as is
-#region Overagressive Switch Use
+		#region Overagressive Switch Use
 
 #if ROSLYN || OPT
 		public static void SingleIf1(int i, bool a)
@@ -929,7 +931,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(2);
 		}
 #endif
-		
+
 		public static void SingleIf2(int i, bool a, bool b)
 		{
 			if (i == 1 || (i == 2 && a) || (i == 3 && b)) {
@@ -937,7 +939,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine(2);
 		}
-		
+
 		public static void SingleIf3(int i, bool a, bool b)
 		{
 			if (a || i == 1 || (i == 2 && b)) {
@@ -945,7 +947,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine(2);
 		}
-		
+
 		public static void SingleIf4(int i, bool a)
 		{
 			if (i == 1 || i == 2 || (i != 3 && a) || i != 4) {
@@ -964,7 +966,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine();
 		}
-		
+
 		public static void IfChainWithCondition(int i)
 		{
 			if (i == 0) {
@@ -985,7 +987,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			Console.WriteLine();
 		}
-		
+
 		public static bool SwitchlikeIf(int i, int j)
 		{
 			if (i != 0 && j != 0) {
@@ -1023,7 +1025,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 				return false;
 			}
-			
+
 			return true;
 		}
 
@@ -1052,7 +1054,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine("end");
 		}
-		
+
 		public static bool Loop8(char c, bool b, Func<char> getChar)
 		{
 			if (b) {
@@ -1071,8 +1073,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				c = getChar();
 			} while (c != -1 && c != '\n' && c != '\u2028' && c != '\u2029');
 		}
-#endregion
-		
+		#endregion
+
 		// Ensure correctness of SwitchDetection.UseCSharpSwitch control flow heuristics
 		public static void SwitchWithBreakCase(int i, bool b)
 		{
@@ -1108,7 +1110,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine();
 		}
-		
+
 		public static int SwitchWithReturnAndBreak2(int i, bool b)
 		{
 			switch (i) {
@@ -1130,7 +1132,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine();
 			return 0;
 		}
-		
+
 		public static void SwitchWithReturnAndBreak3(int i)
 		{
 			switch (i) {
@@ -1193,6 +1195,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static void Issue1745(string aaa)
+		{
+			switch (aaa) {
+				case "a":
+				case "b":
+				case "c":
+				case "d":
+				case "e":
+				case "f":
+					Console.WriteLine(aaa);
+					break;
+				case null:
+					Console.WriteLine("<null>");
+					break;
+				case "":
+					Console.WriteLine("<empty>");
+					break;
+			}
+		}
+
 		public static bool DoNotRemoveAssignmentBeforeSwitch(string x, out ConsoleKey key)
 		{
 			key = (ConsoleKey)0;
@@ -1208,6 +1230,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					break;
 			}
 			return key != (ConsoleKey)0;
+		}
+
+		public static void Issue1767(string s)
+		{
+			switch (s) {
+				case "a":
+					ch1767 = s[0];
+					break;
+				case "b":
+					ch1767 = s[0];
+					break;
+				case "c":
+					ch1767 = s[0];
+					break;
+				case "d":
+					ch1767 = s[0];
+					break;
+				case "e":
+					ch1767 = s[0];
+					break;
+				case "f":
+					ch1767 = s[0];
+					break;
+			}
 		}
 	}
 }

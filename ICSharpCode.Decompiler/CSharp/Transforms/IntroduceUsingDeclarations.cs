@@ -25,6 +25,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -55,8 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					for (int i = 1; i < parts.Length; i++) {
 						nsType = new MemberType { Target = nsType, MemberName = parts[i] };
 					}
-					var reference = nsType.ToTypeReference(NameLookupMode.TypeInUsingDeclaration) as TypeOrNamespaceReference;
-					if (reference != null)
+					if (nsType.ToTypeReference(NameLookupMode.TypeInUsingDeclaration) is TypeOrNamespaceReference reference)
 						usingScope.Usings.Add(reference);
 					rootNode.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType }, SyntaxTree.MemberRole);
 				}
@@ -109,28 +109,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				base.VisitNamespaceDeclaration(namespaceDeclaration);
 				currentNamespace = oldNamespace;
-			}/*
-
-			public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
-			{
-				string oldNamespace = currentNamespace;
-				if (!(typeDeclaration.Parent is NamespaceDeclaration || typeDeclaration.Parent is TypeDeclaration)) {
-					var symbol = typeDeclaration.GetSymbol() as ITypeDefinition;
-					if (symbol != null) {
-						currentNamespace = symbol.Namespace;
-						DeclaredNamespaces.Add(currentNamespace);
-					}
-				}
-				base.VisitTypeDeclaration(typeDeclaration);
-				currentNamespace = oldNamespace;
-			}*/
+			}
 		}
 		
 		sealed class FullyQualifyAmbiguousTypeNamesVisitor : DepthFirstAstVisitor
 		{
-			Stack<CSharpTypeResolveContext> context;
+			readonly Stack<CSharpTypeResolveContext> context;
+			readonly bool ignoreUsingScope;
+
 			TypeSystemAstBuilder astBuilder;
-			bool ignoreUsingScope;
 			
 			public FullyQualifyAmbiguousTypeNamesVisitor(TransformContext context, UsingScope usingScope)
 			{
@@ -152,9 +139,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				this.astBuilder = CreateAstBuilder(currentContext);
 			}
 
-			static TypeSystemAstBuilder CreateAstBuilder(CSharpTypeResolveContext context)
+			static TypeSystemAstBuilder CreateAstBuilder(CSharpTypeResolveContext context, IL.ILFunction function = null)
 			{
-				return new TypeSystemAstBuilder(new CSharpResolver(context)) {
+				CSharpResolver resolver = new CSharpResolver(context);
+				if (function != null) {
+					foreach (var v in function.Variables) {
+						if (v.Kind != IL.VariableKind.Parameter)
+							resolver = resolver.AddVariable(new DefaultVariable(v.Type, v.Name));
+					}
+				}
+				
+				return new TypeSystemAstBuilder(resolver) {
 					AddResolveResultAnnotations = true,
 					UseAliases = true
 				};
@@ -202,23 +197,54 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public override void VisitMethodDeclaration(MethodDeclaration methodDeclaration)
 			{
+				Visit(methodDeclaration, base.VisitMethodDeclaration);
+			}
+
+			public override void VisitAccessor(Accessor accessor)
+			{
+				Visit(accessor, base.VisitAccessor);
+			}
+
+			public override void VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
+			{
+				Visit(constructorDeclaration, base.VisitConstructorDeclaration);
+			}
+
+			public override void VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration)
+			{
+				Visit(destructorDeclaration, base.VisitDestructorDeclaration);
+			}
+
+			public override void VisitOperatorDeclaration(OperatorDeclaration operatorDeclaration)
+			{
+				Visit(operatorDeclaration, base.VisitOperatorDeclaration);
+			}
+
+			void Visit<T>(T entityDeclaration, Action<T> baseCall) where T : EntityDeclaration
+			{
 				if (ignoreUsingScope) {
-					base.VisitMethodDeclaration(methodDeclaration);
+					baseCall(entityDeclaration);
 					return;
 				}
-				if (methodDeclaration.GetSymbol() is IMethod method && CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(method)) {
+				if (entityDeclaration.GetSymbol() is IMethod method) {
 					var previousContext = context.Peek();
-					var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule);
+					CSharpTypeResolveContext currentContext;
+					if (CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(method)) {
+						currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule);
+					} else {
+						currentContext = previousContext.WithCurrentMember(method);
+					}
 					context.Push(currentContext);
 					try {
-						astBuilder = CreateAstBuilder(currentContext);
-						base.VisitMethodDeclaration(methodDeclaration);
+						var function = entityDeclaration.Annotation<IL.ILFunction>();
+						astBuilder = CreateAstBuilder(currentContext, function);
+						baseCall(entityDeclaration);
 					} finally {
 						astBuilder = CreateAstBuilder(previousContext);
 						context.Pop();
 					}
 				} else {
-					base.VisitMethodDeclaration(methodDeclaration);
+					baseCall(entityDeclaration);
 				}
 			}
 

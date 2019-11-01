@@ -285,7 +285,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			IType utype = NullableType.GetUnderlyingType(type);
 			IType targetUType = NullableType.GetUnderlyingType(targetType);
-			if (type.IsKnownType(KnownTypeCode.Boolean) && targetUType.GetStackType().IsIntegerType()) {
+			if (type.IsKnownType(KnownTypeCode.Boolean) && !targetUType.IsKnownType(KnownTypeCode.Boolean)
+				&& targetUType.GetStackType().IsIntegerType()) {
 				// convert from boolean to integer (or enum)
 				return new ConditionalExpression(
 					this.Expression,

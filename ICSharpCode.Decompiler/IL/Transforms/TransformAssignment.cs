@@ -643,7 +643,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			StLoc stloc;
 			var binary = UnwrapSmallIntegerConv(value, out var conv) as BinaryNumericInstruction;
-			if (binary != null && binary.Right.MatchLdcI(1)) {
+			if (binary != null && (binary.Right.MatchLdcI(1) || binary.Right.MatchLdcF4(1) || binary.Right.MatchLdcF8(1))) {
 				if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
 					return false;
 				if (!ValidateCompoundAssign(binary, conv, targetType))
@@ -717,7 +717,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			}
 			if (UnwrapSmallIntegerConv(value, out var conv) is BinaryNumericInstruction binary) {
-				if (!binary.Left.MatchLdLoc(tmpVar) || !binary.Right.MatchLdcI(1))
+				if (!binary.Left.MatchLdLoc(tmpVar) || !(binary.Right.MatchLdcI(1) || binary.Right.MatchLdcF4(1) || binary.Right.MatchLdcF8(1)))
 					return false;
 				if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
 					return false;

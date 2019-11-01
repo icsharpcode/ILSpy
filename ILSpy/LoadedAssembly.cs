@@ -156,7 +156,8 @@ namespace ICSharpCode.ILSpy
 			// runs on background thread
 			if (state is Stream stream) {
 				// Read the module from a precrafted stream
-				module = new PEFile(fileName, stream, metadataOptions: options);
+				var streamOptions = stream is MemoryStream ? PEStreamOptions.PrefetchEntireImage : PEStreamOptions.Default;
+				module = new PEFile(fileName, stream, streamOptions, metadataOptions: options);
 			} else {
 				// Read the module from disk (by default)
 				stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);

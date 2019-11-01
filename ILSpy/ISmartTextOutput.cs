@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy
 		void BeginSpan(HighlightingColor highlightingColor);
 		void EndSpan();
 	}
-	
+
 	public static class SmartTextOutputExtensions
 	{
 		/// <summary>

@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///   "a.GetValueOrDefault() == b.GetValueOrDefault() &amp;&amp; (a.HasValue &amp; b.HasValue)"
 		/// to
 		///   "(a.GetValueOrDefault() == b.GetValueOrDefault()) &amp; (a.HasValue &amp; b.HasValue)"
-		/// so this secondary entry point analyses logic.and as-if it was a short-circuting &amp;&amp;.
+		/// so this secondary entry point analyses logic.and as-if it was a short-circuiting &amp;&amp;.
 		/// </summary>
 		public bool Run(BinaryNumericInstruction bni)
 		{

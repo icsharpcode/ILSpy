@@ -406,7 +406,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override Statement VisitUsingInstruction(UsingInstruction inst)
 		{
-			var transformed = TransformToForeach(inst, out var resource);
+			var resource = exprBuilder.Translate(inst.ResourceExpression).Expression;
+			var transformed = TransformToForeach(inst, resource);
 			if (transformed != null)
 				return transformed;
 			AstNode usingInit = resource;
@@ -446,14 +447,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		Statement TransformToForeach(UsingInstruction inst, out Expression resource)
+		Statement TransformToForeach(UsingInstruction inst, Expression resource)
 		{
 			if (!settings.ForEachStatement) {
-				resource = null;
 				return null;
 			}
 			// Check if the using resource matches the GetEnumerator pattern.
-			resource = exprBuilder.Translate(inst.ResourceExpression);
 			var m = getEnumeratorPattern.Match(resource);
 			// The using body must be a BlockContainer.
 			if (!(inst.Body is BlockContainer container) || !m.Success)
@@ -791,7 +790,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		bool ParentIsCurrentGetter(ILInstruction inst)
 		{
 			return inst.Parent is CallInstruction cv && cv.Method.IsAccessor &&
-				cv.Method.AccessorOwner is IProperty p && p.Getter.Equals(cv.Method);
+				cv.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter;
 		}
 		#endregion
 

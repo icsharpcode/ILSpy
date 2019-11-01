@@ -783,6 +783,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			syntaxTree = new SyntaxTree();
 
 			foreach (var type in types) {
+				CancellationToken.ThrowIfCancellationRequested();
 				if (type.IsNil)
 					throw new ArgumentException("types contains null element");
 				RequiredNamespaceCollector.CollectNamespaces(type, module, decompileRun.Namespaces);
@@ -1297,6 +1298,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
 						i++;
 					}
+					entityDecl.AddAnnotation(function);
 				}
 
 				var localSettings = settings.Clone();

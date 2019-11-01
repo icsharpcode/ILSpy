@@ -238,7 +238,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				throw new NotSupportedException();
 			}
 			
-			public UnaryOperatorMethod(ICompilation compilaton) : base(compilaton)
+			public UnaryOperatorMethod(ICompilation compilation) : base(compilation)
 			{
 			}
 		}
