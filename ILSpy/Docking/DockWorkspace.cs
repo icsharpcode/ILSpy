@@ -12,8 +12,6 @@ namespace ICSharpCode.ILSpy.Docking
 
 		private DockWorkspace()
 		{
-			Documents.Add(new DocumentModel());
-			ToolPanes.Add(AssemblyListPaneModel.Instance);
 		}
 
 		public PaneCollection<DocumentModel> Documents { get; } = new PaneCollection<DocumentModel>();

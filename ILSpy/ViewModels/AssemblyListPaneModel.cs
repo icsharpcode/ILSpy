@@ -6,6 +6,8 @@
 
 		public static AssemblyListPaneModel Instance { get; } = new AssemblyListPaneModel();
 
+		public override PanePosition DefaultPosition => PanePosition.Left;
+
 		private AssemblyListPaneModel()
 		{
 			Title = "Assemblies";

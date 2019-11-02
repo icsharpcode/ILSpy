@@ -1,9 +1,12 @@
 ﻿using System.ComponentModel;
+using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-	public class PaneModel : INotifyPropertyChanged
+	public abstract class PaneModel : INotifyPropertyChanged
 	{
+		public abstract PanePosition DefaultPosition { get; }
+
 		public event PropertyChangedEventHandler PropertyChanged;
 
 		protected void RaisePropertyChanged(string propertyName)

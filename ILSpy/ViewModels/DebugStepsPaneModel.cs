@@ -6,6 +6,8 @@
 
 		public static DebugStepsPaneModel Instance { get; } = new DebugStepsPaneModel();
 
+		public override PanePosition DefaultPosition => PanePosition.Top;
+
 		private DebugStepsPaneModel()
 		{
 			ContentId = PaneContentId;

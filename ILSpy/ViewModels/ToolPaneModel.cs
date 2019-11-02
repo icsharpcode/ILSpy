@@ -1,6 +1,6 @@
 ﻿namespace ICSharpCode.ILSpy.ViewModels
 {
-	public class ToolPaneModel : PaneModel
+	public abstract class ToolPaneModel : PaneModel
 	{
 
 	}

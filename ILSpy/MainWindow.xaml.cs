@@ -460,6 +460,9 @@ namespace ICSharpCode.ILSpy
 
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
+			DockWorkspace.Instance.ToolPanes.Add(AssemblyListPaneModel.Instance);
+			DockWorkspace.Instance.Documents.Add(new DocumentModel());
+
 			ILSpySettings spySettings = this.spySettingsForMainWindow_Loaded;
 			this.spySettingsForMainWindow_Loaded = null;
 			var loadPreviousAssemblies = Options.MiscSettingsPanel.CurrentMiscSettings.LoadPreviousAssemblies;
@@ -1073,23 +1076,6 @@ namespace ICSharpCode.ILSpy
 
 			return loadedAssy.FileName;
 		}
-
-		//#region Top/Bottom Pane management
-
-		//public void ShowInNewPane(string title, object content, PanePosition panePosition, string toolTip = null)
-		//{
-		//	if (panePosition == PanePosition.Document) {
-		//		var layoutDocument = new LayoutDocument() { Title = title, Content = content, ToolTip = toolTip, CanClose = true };
-		//		var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
-		//		documentPane.Children.Add(layoutDocument);
-		//	} else {
-		//		var layoutAnchorable = new LayoutAnchorable() { Title = title, Content = content, ToolTip = toolTip, CanClose = true, CanHide = true };
-		//		var documentPane = this.DockManager.Layout.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
-		//		Docking.DockingHelper.DockHorizontal(layoutAnchorable, documentPane, new GridLength(200), panePosition == PanePosition.Top);
-		//	}
-		//}
-
-		//#endregion
 
 		public void UnselectAll()
 		{
