@@ -391,5 +391,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			int integerData = data;
 			return () => integerData;
 		}
+
+		public static Func<int> Issue1773b(object data)
+		{
+			dynamic dynamicData = data;
+			return () => dynamicData.DynamicCall();
+		}
+
+		public static Func<int> Issue1773c(object data)
+		{
+			dynamic dynamicData = data;
+			return () => dynamicData;
+		}
+#if ROSLYN
+		public static Func<string> Issue1773d((int Integer, string String) data)
+		{
+			(int Integer, string RenamedString) valueTuple = data;
+			return () => valueTuple.RenamedString;
+		}
+#endif
 	}
 }
