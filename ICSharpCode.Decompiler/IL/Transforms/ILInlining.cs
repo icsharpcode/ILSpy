@@ -299,9 +299,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case OpCode.Call:
 				case OpCode.CallVirt:
 					method = ((CallInstruction)inst.Parent).Method;
-					if (method.IsAccessor && method.AccessorKind != MethodSemanticsAttributes.Getter) {
-						// C# doesn't allow calling setters on temporary structs
-						return false;
+					if (method.IsAccessor) {
+						if (method.AccessorKind == MethodSemanticsAttributes.Getter) {
+							// C# doesn't allow property compound assignments on temporary structs
+							return !(inst.Parent.Parent is CompoundAssignmentInstruction cai
+								&& cai.TargetKind == CompoundTargetKind.Property
+								&& cai.Target == inst.Parent);
+						} else {
+							// C# doesn't allow calling setters on temporary structs
+							return false;
+						}
 					}
 					return !method.IsStatic;
 				case OpCode.Await:
