@@ -399,6 +399,11 @@ namespace ICSharpCode.ILSpy
 
 		static bool CanResolveTypeInPEFile(PEFile module, ITypeReference typeRef, out EntityHandle typeHandle)
 		{
+			if (module == null) {
+				typeHandle = default;
+				return false;
+			}
+
 			switch (typeRef) {
 				case GetPotentiallyNestedClassTypeReference topLevelType:
 					typeHandle = topLevelType.ResolveInPEFile(module);
