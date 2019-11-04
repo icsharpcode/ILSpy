@@ -373,7 +373,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		public static IType TupleUnderlyingTypeOrSelf(this IType type)
 		{
-			return (type as TupleType)?.UnderlyingType ?? type;
+			var t = (type as TupleType)?.UnderlyingType ?? type;
+			return t.WithoutNullability();
 		}
 	}
 }

@@ -197,6 +197,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	{
 		public static void Run(ILFunction function, ILTransformContext context)
 		{
+			if (!context.Settings.AwaitInCatchFinally)
+				return;
 			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
 
 			// analyze all try-catch statements in the function

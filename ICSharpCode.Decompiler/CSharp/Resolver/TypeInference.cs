@@ -393,11 +393,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		static IMethod GetDelegateOrExpressionTreeSignature(IType t)
 		{
-			ParameterizedType pt = t as ParameterizedType;
-			if (pt != null && pt.TypeParameterCount == 1 && pt.Name == "Expression"
-			    && pt.Namespace == "System.Linq.Expressions")
+			if (t.TypeParameterCount == 1 && t.Name == "Expression"
+			    && t.Namespace == "System.Linq.Expressions")
 			{
-				t = pt.GetTypeArgument(0);
+				t = t.TypeArguments[0];
 			}
 			return t.GetDelegateInvokeMethod();
 		}
@@ -569,8 +568,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			Log.WriteLine("MakeExactInference from " + U + " to " + V);
 
-			if (V is NullabilityAnnotatedTypeParameter nullableTP) {
-				V = nullableTP.OriginalTypeParameter;
+			if (U.Nullability == V.Nullability) {
+				U = U.WithoutNullability();
+				V = V.WithoutNullability();
 			}
 
 			// If V is one of the unfixed Xi then U is added to the set of bounds for Xi.
@@ -611,8 +611,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		TP GetTPForType(IType v)
 		{
-			ITypeParameter p = v as ITypeParameter;
-			if (p != null) {
+			if (v is NullabilityAnnotatedTypeParameter natp) {
+				v = natp.OriginalTypeParameter;
+			}
+			if (v is ITypeParameter p) {
 				int index = p.Index;
 				if (index < typeParameters.Length && typeParameters[index].TypeParameter == p)
 					return typeParameters[index];
@@ -629,7 +631,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		void MakeLowerBoundInference(IType U, IType V)
 		{
 			Log.WriteLine(" MakeLowerBoundInference from " + U + " to " + V);
-			
+			if (U.Nullability == V.Nullability) {
+				U = U.WithoutNullability();
+				V = V.WithoutNullability();
+			}
+
 			// If V is one of the unfixed Xi then U is added to the set of bounds for Xi.
 			TP tp = GetTPForType(V);
 			if (tp != null && tp.IsFixed == false) {
@@ -726,7 +732,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		void MakeUpperBoundInference(IType U, IType V)
 		{
 			Log.WriteLine(" MakeUpperBoundInference from " + U + " to " + V);
-			
+			if (U.Nullability == V.Nullability) {
+				U = U.WithoutNullability();
+				V = V.WithoutNullability();
+			}
+
 			// If V is one of the unfixed Xi then U is added to the set of bounds for Xi.
 			TP tp = GetTPForType(V);
 			if (tp != null && tp.IsFixed == false) {

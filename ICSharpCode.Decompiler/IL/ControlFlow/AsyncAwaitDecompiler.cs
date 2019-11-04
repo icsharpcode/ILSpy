@@ -62,14 +62,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			Void,
 			Task,
-			TaskOfT
+			TaskOfT,
+			AsyncEnumerator,
+			AsyncEnumerable
 		}
 
 		ILTransformContext context;
 
-		// These fields are set by MatchTaskCreationPattern()
-		IType taskType; // return type of the async method
-		IType underlyingReturnType; // return type of the method (only the "T" for Task{T})
+		// These fields are set by MatchTaskCreationPattern() or MatchEnumeratorCreationNewObj()
+		IType taskType; // return type of the async method; or IAsyncEnumerable{T}/IAsyncEnumerator{T}
+		IType underlyingReturnType; // return type of the method (only the "T" for Task{T}), for async enumerators this is the type being yielded
 		AsyncMethodType methodType;
 		ITypeDefinition stateMachineType;
 		ITypeDefinition builderType;
@@ -78,15 +80,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		int initialState;
 		Dictionary<IField, ILVariable> fieldToParameterMap = new Dictionary<IField, ILVariable>();
 		Dictionary<ILVariable, ILVariable> cachedFieldToParameterMap = new Dictionary<ILVariable, ILVariable>();
+		IField disposeModeField; // 'disposeMode' field (IAsyncEnumerable/IAsyncEnumerator only)
 
 		// These fields are set by AnalyzeMoveNext():
 		ILFunction moveNextFunction;
 		ILVariable cachedStateVar; // variable in MoveNext that caches the stateField.
 		TryCatch mainTryCatch;
 		Block setResultAndExitBlock; // block that is jumped to for return statements
+									 // Note: for async enumerators, a jump to setResultAndExitBlock is a 'yield break;'
 		int finalState;       // final state after the setResultAndExitBlock
 		bool finalStateKnown;
 		ILVariable resultVar; // the variable that gets returned by the setResultAndExitBlock
+		Block setResultYieldBlock; // block that is jumped to for 'yield return' statements
 		ILVariable doFinallyBodies;
 
 		// These fields are set by AnalyzeStateMachine():
@@ -110,11 +115,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			awaitBlocks.Clear();
 			awaitDebugInfos.Clear();
 			moveNextLeaves.Clear();
-			if (!MatchTaskCreationPattern(function))
+			if (!MatchTaskCreationPattern(function) && !MatchAsyncEnumeratorCreationPattern(function))
 				return;
 			try {
 				AnalyzeMoveNext();
 				ValidateCatchBlock();
+				AnalyzeDisposeAsync();
 			} catch (SymbolicAnalysisFailedException) {
 				return;
 			}
@@ -133,7 +139,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			TranslateCachedFieldsToLocals();
 
 			FinalizeInlineMoveNext(function);
-			((BlockContainer)function.Body).ExpectedResultType = underlyingReturnType.GetStackType();
+			if (methodType == AsyncMethodType.AsyncEnumerable || methodType == AsyncMethodType.AsyncEnumerator) {
+				((BlockContainer)function.Body).ExpectedResultType = StackType.Void;
+			} else {
+				((BlockContainer)function.Body).ExpectedResultType = underlyingReturnType.GetStackType();
+			}
 
 			// Re-run control flow simplification over the newly constructed set of gotos,
 			// and inlining because TranslateFieldsToLocalAccess() might have opened up new inlining opportunities.
@@ -164,9 +174,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				CopyPropagation.Propagate(stloc, context);
 			}
 			new RemoveDeadVariableInit().Run(function, context);
-			// Run inlining, but don't remove dead variables (they might get revived by TranslateFieldsToLocalAccess)
 			foreach (var block in function.Descendants.OfType<Block>()) {
+				// Run inlining, but don't remove dead variables (they might get revived by TranslateFieldsToLocalAccess)
 				ILInlining.InlineAllInBlock(function, block, context);
+				if (IsAsyncEnumerator) {
+					// Remove lone 'ldc.i4', those are sometimes left over after C# compiler
+					// optimizes out stores to the state variable.
+					block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.LdcI4);
+				}
 			}
 			context.StepEndGroup();
 		}
@@ -337,6 +352,160 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 		#endregion
 
+		#region MatchAsyncEnumeratorCreationPattern
+		private bool MatchAsyncEnumeratorCreationPattern(ILFunction function)
+		{
+			if (!context.Settings.AsyncEnumerator)
+				return false;
+			taskType = function.ReturnType;
+			if (taskType.IsKnownType(KnownTypeCode.IAsyncEnumeratorOfT)) {
+				methodType = AsyncMethodType.AsyncEnumerator;
+			} else if (taskType.IsKnownType(KnownTypeCode.IAsyncEnumerableOfT)) {
+				methodType = AsyncMethodType.AsyncEnumerable;
+			} else {
+				return false;
+			}
+			underlyingReturnType = taskType.TypeArguments.Single();
+			if (!(function.Body is BlockContainer blockContainer))
+				return false;
+			if (blockContainer.Blocks.Count != 1)
+				return false;
+			var body = blockContainer.EntryPoint;
+			if (body.Instructions.Count == 1) {
+				// No parameters passed to enumerator (not even 'this'):
+				// ret(newobj(...))
+				if (!body.Instructions[0].MatchReturn(out var newObj))
+					return false;
+				if (MatchEnumeratorCreationNewObj(newObj, context, out initialState, out stateMachineType)) {
+					// HACK: the normal async/await logic expects 'initialState' to be the 'in progress' state
+					initialState = -1;
+					try {
+						AnalyzeEnumeratorCtor(((NewObj)newObj).Method, context, out builderField, out builderType, out stateField);
+					} catch (SymbolicAnalysisFailedException) {
+						return false;
+					}
+					return true;
+				} else {
+					return false;
+				}
+			} else {
+
+				// stloc v(newobj<CountUpSlowly> d__0..ctor(ldc.i4 - 2))
+				// stfld <>4__this(ldloc v, ldloc this)
+				// stfld <>3__otherParam(ldloc v, ldloc otherParam)
+				// leave IL_0000(ldloc v)
+				int pos = 0;
+				if (!body.Instructions[pos].MatchStLoc(out var v, out var newObj))
+					return false;
+				if (!MatchEnumeratorCreationNewObj(newObj, context, out initialState, out stateMachineType))
+					return false;
+				pos++;
+
+				while (MatchStFld(body.Instructions[pos], v, out var field, out var value)) {
+					if (!value.MatchLdLoc(out var p))
+						return false;
+					fieldToParameterMap[field] = p;
+					pos++;
+				}
+				if (!body.Instructions[pos].MatchReturn(out var returnValue))
+					return false;
+				if (!returnValue.MatchLdLoc(v))
+					return false;
+				
+				// HACK: the normal async/await logic expects 'initialState' to be the 'in progress' state
+				initialState = -1;
+				try {
+					AnalyzeEnumeratorCtor(((NewObj)newObj).Method, context, out builderField, out builderType, out stateField);
+					if (methodType == AsyncMethodType.AsyncEnumerable) {
+						ResolveIEnumerableIEnumeratorFieldMapping();
+					}
+				} catch (SymbolicAnalysisFailedException) {
+					return false;
+				}
+				return true;
+			}
+		}
+
+		static bool MatchEnumeratorCreationNewObj(ILInstruction inst, ILTransformContext context,
+			out int initialState, out ITypeDefinition stateMachineType)
+		{
+			initialState = default;
+			stateMachineType = default;
+			// newobj(CurrentType/...::.ctor, ldc.i4(-2))
+			if (!(inst is NewObj newObj))
+				return false;
+			if (newObj.Arguments.Count != 1)
+				return false;
+			if (!newObj.Arguments[0].MatchLdcI4(out initialState))
+				return false;
+			stateMachineType = newObj.Method.DeclaringTypeDefinition;
+			if (stateMachineType == null)
+				return false;
+			if (stateMachineType.DeclaringTypeDefinition != context.Function.Method.DeclaringTypeDefinition)
+				return false;
+			return IsCompilerGeneratorAsyncEnumerator(
+				(TypeDefinitionHandle)stateMachineType.MetadataToken,
+				context.TypeSystem.MainModule.metadata);
+		}
+
+		public static bool IsCompilerGeneratorAsyncEnumerator(TypeDefinitionHandle type, MetadataReader metadata)
+		{
+			TypeDefinition td;
+			if (type.IsNil || !type.IsCompilerGeneratedOrIsInCompilerGeneratedClass(metadata) || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
+				return false;
+			foreach (var i in td.GetInterfaceImplementations()) {
+				var tr = metadata.GetInterfaceImplementation(i).Interface.GetFullTypeName(metadata);
+				if (!tr.IsNested && tr.TopLevelTypeName.Namespace == "System.Collections.Generic" && tr.TopLevelTypeName.Name == "IAsyncEnumerator" && tr.TopLevelTypeName.TypeParameterCount == 1)
+					return true;
+			}
+			return false;
+		}
+
+		static void AnalyzeEnumeratorCtor(IMethod ctor, ILTransformContext context, out IField builderField, out ITypeDefinition builderType, out IField stateField)
+		{
+			builderField = null;
+			stateField = null;
+
+			var ctorHandle = (MethodDefinitionHandle)ctor.MetadataToken;
+			Block body = YieldReturnDecompiler.SingleBlock(YieldReturnDecompiler.CreateILAst(ctorHandle, context).Body);
+			if (body == null)
+				throw new SymbolicAnalysisFailedException("Missing enumeratorCtor.Body");
+			// Block IL_0000 (incoming: 1) {
+			//   call Object..ctor(ldloc this)
+			// 	 stfld <>1__state(ldloc this, ldloc <>1__state)
+			// 	 stfld <>t__builder(ldloc this, call Create())
+			// 	 leave IL_0000 (nop)
+			// }
+			foreach (var inst in body.Instructions) {
+				if (inst.MatchStFld(out var target, out var field, out var value)
+				&& target.MatchLdThis()
+				&& value.MatchLdLoc(out var arg)
+				&& arg.Kind == VariableKind.Parameter && arg.Index == 0) {
+					stateField = (IField)field.MemberDefinition;
+				}
+				if (inst.MatchStFld(out target, out field, out value)
+					&& target.MatchLdThis()
+					&& value is Call call && call.Method.Name == "Create") {
+					builderField = (IField)field.MemberDefinition;
+				}
+			}
+			if (stateField == null || builderField == null)
+				throw new SymbolicAnalysisFailedException();
+
+			builderType = builderField.Type.GetDefinition();
+			if (builderType == null)
+				throw new SymbolicAnalysisFailedException();
+		}
+
+		private void ResolveIEnumerableIEnumeratorFieldMapping()
+		{
+			var getAsyncEnumerator = stateMachineType.Methods.FirstOrDefault(m => m.Name.EndsWith(".GetAsyncEnumerator", StringComparison.Ordinal));
+			if (getAsyncEnumerator == null)
+				throw new SymbolicAnalysisFailedException();
+			YieldReturnDecompiler.ResolveIEnumerableIEnumeratorFieldMapping((MethodDefinitionHandle)getAsyncEnumerator.MetadataToken, context, fieldToParameterMap);
+		}
+		#endregion
+
 		#region AnalyzeMoveNext
 		/// <summary>
 		/// First peek into MoveNext(); analyzes everything outside the big try-catch.
@@ -352,8 +521,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				throw new SymbolicAnalysisFailedException();
 			moveNextFunction = YieldReturnDecompiler.CreateILAst(moveNextMethod, context);
 			if (!(moveNextFunction.Body is BlockContainer blockContainer))
-				throw new SymbolicAnalysisFailedException();
-			if (blockContainer.Blocks.Count != 2 && blockContainer.Blocks.Count != 1)
 				throw new SymbolicAnalysisFailedException();
 			if (blockContainer.EntryPoint.IncomingEdgeCount != 1)
 				throw new SymbolicAnalysisFailedException();
@@ -385,12 +552,51 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (((BlockContainer)mainTryCatch.TryBlock).EntryPoint.Instructions[0] is StLoc initDoFinallyBodies
 				&& initDoFinallyBodies.Variable.Kind == VariableKind.Local
 				&& initDoFinallyBodies.Variable.Type.IsKnownType(KnownTypeCode.Boolean)
-				&& initDoFinallyBodies.Value.MatchLdcI4(1))
-			{
+				&& initDoFinallyBodies.Value.MatchLdcI4(1)) {
 				doFinallyBodies = initDoFinallyBodies.Variable;
 			}
 
-			setResultAndExitBlock = blockContainer.Blocks.ElementAtOrDefault(1);
+			Debug.Assert(blockContainer.Blocks[0] == blockContainer.EntryPoint); // already checked this block
+			pos = 1;
+			if (MatchYieldBlock(blockContainer, pos)) {
+				setResultYieldBlock = blockContainer.Blocks[pos];
+				pos++;
+			} else {
+				setResultYieldBlock = null;
+			}
+
+			setResultAndExitBlock = blockContainer.Blocks.ElementAtOrDefault(pos);
+			CheckSetResultAndExitBlock(blockContainer);
+
+			if (pos + 1 < blockContainer.Blocks.Count)
+				throw new SymbolicAnalysisFailedException("too many blocks");
+		}
+
+		private bool IsAsyncEnumerator => methodType == AsyncMethodType.AsyncEnumerable || methodType == AsyncMethodType.AsyncEnumerator;
+
+		bool MatchYieldBlock(BlockContainer blockContainer, int pos)
+		{
+			if (!IsAsyncEnumerator)
+				return false;
+			var block = blockContainer.Blocks.ElementAtOrDefault(pos);
+			if (block == null)
+				return false;
+			// call SetResult(ldflda <>v__promiseOfValueOrEnd(ldloc this), ldc.i4 1)
+			// leave IL_0000(nop)
+			if (block.Instructions.Count != 2)
+				return false;
+			if (!MatchCall(block.Instructions[0], "SetResult", out var args))
+				return false;
+			if (args.Count != 2)
+				return false;
+			if (!IsBuilderOrPromiseFieldOnThis(args[0]))
+				return false;
+			if (!args[1].MatchLdcI4(1))
+				return false;
+			return block.Instructions[1].MatchLeave(blockContainer);
+		}
+		void CheckSetResultAndExitBlock(BlockContainer blockContainer)
+		{
 			if (setResultAndExitBlock == null) {
 				// This block can be absent if the function never exits normally,
 				// but always throws an exception/loops infinitely.
@@ -408,17 +614,29 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			finalStateKnown = true;
 			if (!MatchCall(setResultAndExitBlock.Instructions[1], "SetResult", out var args))
 				throw new SymbolicAnalysisFailedException();
-			if (!IsBuilderFieldOnThis(args[0]))
+			if (!IsBuilderOrPromiseFieldOnThis(args[0]))
 				throw new SymbolicAnalysisFailedException();
-			if (methodType == AsyncMethodType.TaskOfT) {
-				if (args.Count != 2)
-					throw new SymbolicAnalysisFailedException();
-				if (!args[1].MatchLdLoc(out resultVar))
-					throw new SymbolicAnalysisFailedException();
-			} else {
-				resultVar = null;
-				if (args.Count != 1)
-					throw new SymbolicAnalysisFailedException();
+			switch (methodType) {
+				case AsyncMethodType.TaskOfT:
+					if (args.Count != 2)
+						throw new SymbolicAnalysisFailedException();
+					if (!args[1].MatchLdLoc(out resultVar))
+						throw new SymbolicAnalysisFailedException();
+					break;
+				case AsyncMethodType.Task:
+				case AsyncMethodType.Void:
+					resultVar = null;
+					if (args.Count != 1)
+						throw new SymbolicAnalysisFailedException();
+					break;
+				case AsyncMethodType.AsyncEnumerable:
+				case AsyncMethodType.AsyncEnumerator:
+					resultVar = null;
+					if (args.Count != 2)
+						throw new SymbolicAnalysisFailedException();
+					if (!args[1].MatchLdcI4(0))
+						throw new SymbolicAnalysisFailedException();
+					break;
 			}
 			if (!setResultAndExitBlock.Instructions[2].MatchLeave(blockContainer))
 				throw new SymbolicAnalysisFailedException();
@@ -442,8 +660,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!handler.Filter.MatchLdcI4(1))
 				throw new SymbolicAnalysisFailedException();
 			var catchBlock = YieldReturnDecompiler.SingleBlock(handler.Body);
+			if (catchBlock == null)
+				throw new SymbolicAnalysisFailedException();
 			catchHandlerOffset = catchBlock.StartILOffset;
-			if (catchBlock?.Instructions.Count != 4)
+			if (catchBlock.Instructions.Count != 4)
 				throw new SymbolicAnalysisFailedException();
 			// stloc exception(ldloc E_143)
 			if (!(catchBlock.Instructions[0] is StLoc stloc))
@@ -465,7 +685,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				throw new SymbolicAnalysisFailedException();
 			if (args.Count != 2)
 				throw new SymbolicAnalysisFailedException();
-			if (!IsBuilderFieldOnThis(args[0]))
+			if (!IsBuilderOrPromiseFieldOnThis(args[0]))
 				throw new SymbolicAnalysisFailedException();
 			if (!args[1].MatchLdLoc(stloc.Variable))
 				throw new SymbolicAnalysisFailedException();
@@ -490,18 +710,54 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return target.MatchLdThis() && field.MemberDefinition == builderField;
 		}
 
+		bool IsBuilderOrPromiseFieldOnThis(ILInstruction inst)
+		{
+			if (methodType == AsyncMethodType.AsyncEnumerable || methodType == AsyncMethodType.AsyncEnumerator) {
+				return true; // TODO: check against uses of promise fields in other methods?
+			} else {
+				return IsBuilderFieldOnThis(inst);
+			}
+		}
+
 		bool MatchStateAssignment(ILInstruction inst, out int newState)
 		{
 			// stfld(StateMachine::<>1__state, ldloc(this), ldc.i4(stateId))
 			if (inst.MatchStFld(out var target, out var field, out var value)
-				&& target.MatchLdThis()
+				&& StackSlotValue(target).MatchLdThis()
 				&& field.MemberDefinition == stateField
-				&& value.MatchLdcI4(out newState))
+				&& StackSlotValue(value).MatchLdcI4(out newState))
 			{
 				return true;
 			}
 			newState = 0;
 			return false;
+		}
+
+		/// <summary>
+		/// Analyse the DisposeAsync() method in order to find the disposeModeField.
+		/// </summary>
+		private void AnalyzeDisposeAsync()
+		{
+			disposeModeField = null;
+			if (!IsAsyncEnumerator) {
+				return;
+			}
+			var disposeAsync = stateMachineType.Methods.FirstOrDefault(m => m.Name.EndsWith(".DisposeAsync", StringComparison.Ordinal));
+			if (disposeAsync == null)
+				throw new SymbolicAnalysisFailedException("Could not find DisposeAsync()");
+			var disposeAsyncHandle = (MethodDefinitionHandle)disposeAsync.MetadataToken;
+			var function = YieldReturnDecompiler.CreateILAst(disposeAsyncHandle, context);
+			foreach (var store in function.Descendants) {
+				if (!store.MatchStFld(out var target, out var field, out var value))
+					continue;
+				if (!target.MatchLdThis())
+					continue;
+				if (!value.MatchLdcI4(1))
+					throw new SymbolicAnalysisFailedException();
+				if (disposeModeField != null)
+					throw new SymbolicAnalysisFailedException("Multiple stores to disposeMode in DisposeAsync()");
+				disposeModeField = (IField)field.MemberDefinition;
+			}
 		}
 		#endregion
 
@@ -513,12 +769,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			function.AsyncReturnType = underlyingReturnType;
 			function.MoveNextMethod = moveNextFunction.Method;
 			function.CodeSize = moveNextFunction.CodeSize;
+			function.IsIterator = IsAsyncEnumerator;
 			moveNextFunction.Variables.Clear();
 			moveNextFunction.ReleaseRef();
 			foreach (var branch in function.Descendants.OfType<Branch>()) {
 				if (branch.TargetBlock == setResultAndExitBlock) {
 					branch.ReplaceWith(new Leave((BlockContainer)function.Body, resultVar == null ? null : new LdLoc(resultVar)).WithILRange(branch));
 				}
+			}
+			if (setResultYieldBlock != null) {
+				// We still might have branches to this block; and we can't quite yet get rid of it.
+				((BlockContainer)function.Body).Blocks.Add(setResultYieldBlock);
 			}
 			foreach (var leave in function.Descendants.OfType<Leave>()) {
 				if (leave.TargetContainer == moveNextFunction.Body) {
@@ -563,7 +824,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		void AnalyzeStateMachine(ILFunction function)
 		{
-			context.Step("AnalyzeStateMachine()", function);
+			context.StepStartGroup("AnalyzeStateMachine()", function);
 			smallestAwaiterVarIndex = int.MaxValue;
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
 				// Use a separate state range analysis per container.
@@ -577,6 +838,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					context.CancellationToken.ThrowIfCancellationRequested();
 					if (block.Instructions.Last() is Leave leave && moveNextLeaves.Contains(leave)) {
 						// This is likely an 'await' block
+						context.Step($"AnalyzeAwaitBlock({block.StartILOffset:x4})", block);
 						if (AnalyzeAwaitBlock(block, out var awaiterVar, out var awaiterField, out int state, out int yieldOffset)) {
 							block.Instructions.Add(new Await(new LdLoca(awaiterVar)));
 							Block targetBlock = stateToBlockMap.GetOrDefault(state);
@@ -591,7 +853,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 								smallestAwaiterVarIndex = awaiterVar.Index.Value;
 							}
 						}
+					} else if (block.Instructions.Last().MatchBranch(setResultYieldBlock)) {
+						// This is a 'yield return' in an async enumerator.
+						context.Step($"AnalyzeYieldReturn({block.StartILOffset:x4})", block);
+						if (AnalyzeYieldReturn(block, out var yieldValue, out int state)) {
+							block.Instructions.Add(new YieldReturn(yieldValue));
+							Block targetBlock = stateToBlockMap.GetOrDefault(state);
+							if (targetBlock != null) {
+								block.Instructions.Add(new Branch(targetBlock));
+							} else {
+								block.Instructions.Add(new InvalidBranch("Could not find block for state " + state));
+							}
+						} else {
+							block.Instructions.Add(new InvalidBranch("Could not detect 'yield return'"));
+						}
 					}
+					TransformYieldBreak(block);
+				}
+				foreach (var block in container.Blocks) {
+					SimplifyIfDisposeMode(block);
 				}
 				// Skip the state dispatcher and directly jump to the initial state
 				var entryPoint = stateToBlockMap.GetOrDefault(initialState);
@@ -604,6 +884,89 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				container.SortBlocks(deleteUnreachableBlocks: true);
 			}
+			context.StepEndGroup();
+		}
+
+		private bool TransformYieldBreak(Block block)
+		{
+			// stfld disposeMode(ldloc this, ldc.i4 1)
+			// br nextBlock
+			if (block.Instructions.Count < 2)
+				return false;
+			if (!(block.Instructions.Last() is Branch branch))
+				return false;
+			if (!block.Instructions[block.Instructions.Count - 2].MatchStFld(out var target, out var field, out var value))
+				return false;
+			if (!target.MatchLdThis())
+				return false;
+			if (field.MemberDefinition != disposeModeField)
+				return false;
+			if (!value.MatchLdcI4(1))
+				return false;
+
+			// Detected a 'yield break;'
+			context.Step($"TransformYieldBreak({block.StartILOffset:x4})", block);
+			var breakTarget = FindYieldBreakTarget(branch.TargetBlock);
+			if (breakTarget is Block targetBlock) {
+				branch.TargetBlock = targetBlock;
+			} else {
+				Debug.Assert(breakTarget is BlockContainer);
+				branch.ReplaceWith(new Leave((BlockContainer)breakTarget).WithILRange(branch));
+			}
+			return true;
+		}
+
+		ILInstruction FindYieldBreakTarget(Block block)
+		{
+			// We'll follow the branch and evaluate the following instructions
+			// under the assumption that disposeModeField==1, which lets us follow a series of jumps
+			// to determine the final target.
+			var visited = new HashSet<Block>();
+			var evalContext = new SymbolicEvaluationContext(disposeModeField);
+			while (true) {
+				for (int i = 0; i < block.Instructions.Count; i++) {
+					ILInstruction inst = block.Instructions[i];
+					while (inst.MatchIfInstruction(out var condition, out var trueInst, out var falseInst)) {
+						var condVal = evalContext.Eval(condition).AsBool();
+						if (condVal.Type == SymbolicValueType.IntegerConstant) {
+							inst = condVal.Constant != 0 ? trueInst : falseInst;
+						} else if (condVal.Type == SymbolicValueType.StateInSet) {
+							inst = condVal.ValueSet.Contains(1) ? trueInst : falseInst;
+						} else {
+							return block;
+						}
+					}
+					if (inst.MatchBranch(out var targetBlock)) {
+						if (visited.Add(block)) {
+							block = targetBlock;
+							break; // continue with next block
+						} else {
+							return block; // infinite loop detected
+						}
+					} else if (inst is Leave leave && leave.Value.OpCode == OpCode.Nop) {
+						return leave.TargetContainer;
+					} else if (inst.OpCode == OpCode.Nop) {
+						continue; // continue with next instruction in this block
+					} else {
+						return block;
+					}
+				}
+			}
+		}
+
+		private bool SimplifyIfDisposeMode(Block block)
+		{
+			// if (logic.not(ldfld disposeMode(ldloc this))) br falseInst
+			// br trueInst
+			if (!block.MatchIfAtEndOfBlock(out var condition, out _, out var falseInst))
+				return false;
+			if (!condition.MatchLdFld(out var target, out var field))
+				return false;
+			if (!(target.MatchLdThis() && field.MemberDefinition == disposeModeField))
+				return false;
+			block.Instructions[block.Instructions.Count - 2] = falseInst;
+			block.Instructions.RemoveAt(block.Instructions.Count - 1);
+			return true;
 		}
 
 		bool AnalyzeAwaitBlock(Block block, out ILVariable awaiter, out IField awaiterField, out int state, out int yieldOffset)
@@ -705,6 +1068,50 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			return inst;
 		}
+
+		private bool AnalyzeYieldReturn(Block block, out ILInstruction yieldValue, out int newState)
+		{
+			yieldValue = default;
+			newState = default;
+			Debug.Assert(block.Instructions.Last().MatchBranch(setResultYieldBlock));
+			// stfld current(ldloc this, ldstr "yieldValue")
+			// stloc S_45(ldloc this)
+			// stloc S_46(ldc.i4 -5)
+			// stloc V_0(ldloc S_46)
+			// stfld stateField(ldloc S_45, ldloc S_46)
+			// br setResultYieldBlock
+
+			int pos = block.Instructions.Count - 2;
+			// Immediately before the 'yield return', there should be a state assignment:
+			if (pos < 0 || !MatchStateAssignment(block.Instructions[pos], out newState))
+				return false;
+			pos--;
+
+			if (pos >= 0 && block.Instructions[pos].MatchStLoc(cachedStateVar, out var cachedStateNewValue)) {
+				if (StackSlotValue(cachedStateNewValue).MatchLdcI4(newState)) {
+					pos--; // OK, ignore V_0 store
+				} else {
+					return false;
+				}
+			}
+
+			while (pos >= 0 && block.Instructions[pos] is StLoc stloc) {
+				if (stloc.Variable.Kind != VariableKind.StackSlot)
+					return false;
+				if (!SemanticHelper.IsPure(stloc.Value.Flags))
+					return false;
+				pos--;
+			}
+
+			if (pos < 0 || !block.Instructions[pos].MatchStFld(out var target, out var field, out yieldValue))
+				return false;
+			if (!StackSlotValue(target).MatchLdThis())
+				return false;
+			// TODO: check that we are accessing the current field (compare with get_Current)
+
+			block.Instructions.RemoveRange(pos, block.Instructions.Count - pos);
+			return true;
+		}
 		#endregion
 
 		#region DetectAwaitPattern
@@ -761,7 +1168,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// continue matching call get_IsCompleted(ldloca awaiterVar)
 			if (!MatchCall(condition, "get_IsCompleted", out var isCompletedArgs) || isCompletedArgs.Count != 1)
 				return;
-			if (!isCompletedArgs[0].MatchLdLocRef(awaiterVar))
+			if (!UnwrapConvUnknown(isCompletedArgs[0]).MatchLdLocRef(awaiterVar))
 				return;
 			// Check awaitBlock and resumeBlock:
 			if (!awaitBlocks.TryGetValue(awaitBlock, out var awaitBlockData))
@@ -779,14 +1186,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return;
 			if (!MatchCall(getResultCall, "GetResult", out var getResultArgs) || getResultArgs.Count != 1)
 				return;
-			if (!getResultArgs[0].MatchLdLocRef(awaiterVar))
+			if (!UnwrapConvUnknown(getResultArgs[0]).MatchLdLocRef(awaiterVar))
 				return;
 			// All checks successful, let's transform.
 			context.Step("Transform await pattern", block);
 			block.Instructions.RemoveAt(block.Instructions.Count - 3); // remove getAwaiter call
 			block.Instructions.RemoveAt(block.Instructions.Count - 2); // remove if (isCompleted)
 			((Branch)block.Instructions.Last()).TargetBlock = completedBlock; // instead, directly jump to completed block
-			Await awaitInst = new Await(getAwaiterCall.Arguments.Single());
+			Await awaitInst = new Await(UnwrapConvUnknown(getAwaiterCall.Arguments.Single()));
 			awaitInst.GetResultMethod = getResultCall.Method;
 			awaitInst.GetAwaiterMethod = getAwaiterCall.Method;
 			getResultCall.ReplaceWith(awaitInst);
@@ -798,7 +1205,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 		}
-		
+
+		static ILInstruction UnwrapConvUnknown(ILInstruction inst)
+		{
+			if (inst is Conv conv && conv.TargetType == PrimitiveType.Unknown) {
+				return conv.Argument;
+			}
+			return inst;
+		}
+
 		bool CheckAwaitBlock(Block block, out Block resumeBlock, out IField stackField)
 		{
 			// awaitBlock:

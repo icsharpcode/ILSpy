@@ -535,5 +535,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return KnownAttributes.IsKnownAttributeType(type);
 		}
+
+		public static IType WithoutNullability(this IType type)
+		{
+			return type.ChangeNullability(Nullability.Oblivious);
+		}
 	}
 }

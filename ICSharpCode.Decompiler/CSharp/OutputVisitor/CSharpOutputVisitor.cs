@@ -1112,6 +1112,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			var opSymbol = UnaryOperatorExpression.GetOperatorRole(opType);
 			if (opType == UnaryOperatorType.Await) {
 				WriteKeyword(opSymbol);
+				Space();
 			} else if (!IsPostfixOperator(opType) && opSymbol != null) {
 				WriteToken(opSymbol);
 			}
@@ -1863,6 +1864,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitUsingStatement(UsingStatement usingStatement)
 		{
 			StartNode(usingStatement);
+			if (usingStatement.IsAsync) {
+				WriteKeyword(UsingStatement.AwaitRole);
+			}
 			WriteKeyword(UsingStatement.UsingKeywordRole);
 			Space(policy.SpaceBeforeUsingParentheses);
 			LPar();

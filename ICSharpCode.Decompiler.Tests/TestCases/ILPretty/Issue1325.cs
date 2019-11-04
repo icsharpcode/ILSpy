@@ -6,10 +6,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.Versioning;
 [assembly: Embedded]
 [assembly: AssemblyInformationalVersion("1.0.0")]
-[assembly: TargetFramework(".NETCoreApp,Version=v2.1", FrameworkDisplayName = "")]
 [assembly: AssemblyConfiguration("Debug")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
