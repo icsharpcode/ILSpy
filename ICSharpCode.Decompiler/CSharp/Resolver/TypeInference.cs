@@ -361,8 +361,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 		
 		#region Input Types / Output Types (§7.5.2.3 + §7.5.2.4)
-		static readonly IType[] emptyTypeArray = new IType[0];
-		
 		IType[] InputTypes(ResolveResult e, IType t)
 		{
 			// C# 4.0 spec: §7.5.2.3 Input types
@@ -377,7 +375,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return inputTypes;
 				}
 			}
-			return emptyTypeArray;
+			return Empty<IType>.Array;
 		}
 		
 		IType[] OutputTypes(ResolveResult e, IType t)
@@ -390,7 +388,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return new[] { m.ReturnType };
 				}
 			}
-			return emptyTypeArray;
+			return Empty<IType>.Array;
 		}
 		
 		static IMethod GetDelegateOrExpressionTreeSignature(IType t)

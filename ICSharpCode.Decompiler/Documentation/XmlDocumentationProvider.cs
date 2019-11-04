@@ -24,6 +24,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Documentation
 {
@@ -392,11 +393,11 @@ namespace ICSharpCode.Decompiler.Documentation
 				}
 			} catch (IOException) {
 				// Ignore errors on reload; IEntity.Documentation callers aren't prepared to handle exceptions
-				this.index = new IndexEntry[0]; // clear index to avoid future load attempts
+				this.index = Empty<IndexEntry>.Array; // clear index to avoid future load attempts
 				return null;
 			} catch (XmlException) {
-				this.index = new IndexEntry[0]; // clear index to avoid future load attempts
-				return null;				
+				this.index = Empty<IndexEntry>.Array; // clear index to avoid future load attempts
+				return null;
 			}
 			return GetDocumentation(key, allowReload: false); // prevent infinite reload loops
 		}

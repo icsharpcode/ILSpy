@@ -379,14 +379,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						return UnaryOperatorResolveResult(new PointerType(expression.Type), op, expression);
 					case UnaryOperatorType.Await: {
 						ResolveResult getAwaiterMethodGroup = ResolveMemberAccess(expression, "GetAwaiter", EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
-						ResolveResult getAwaiterInvocation = ResolveInvocation(getAwaiterMethodGroup, new ResolveResult[0], argumentNames: null, allowOptionalParameters: false);
+						ResolveResult getAwaiterInvocation = ResolveInvocation(getAwaiterMethodGroup, Empty<ResolveResult>.Array, argumentNames: null, allowOptionalParameters: false);
 
 						var lookup = CreateMemberLookup();
 						IMethod getResultMethod;
 						IType awaitResultType;
 						var getResultMethodGroup = lookup.Lookup(getAwaiterInvocation, "GetResult", EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
 						if (getResultMethodGroup != null) {
-							var getResultOR = getResultMethodGroup.PerformOverloadResolution(compilation, new ResolveResult[0], allowExtensionMethods: false, conversions: conversions);
+							var getResultOR = getResultMethodGroup.PerformOverloadResolution(compilation, Empty<ResolveResult>.Array, allowExtensionMethods: false, conversions: conversions);
 							getResultMethod = getResultOR.FoundApplicableCandidate ? getResultOR.GetBestCandidateWithSubstitutedTypeArguments() as IMethod : null;
 							awaitResultType = getResultMethod != null ? getResultMethod.ReturnType : SpecialType.UnknownType;
 						}
@@ -1698,12 +1698,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 				getEnumeratorInvocation = ResolveCast(collectionType, expression);
 				getEnumeratorInvocation = ResolveMemberAccess(getEnumeratorInvocation, "GetEnumerator", EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
-				getEnumeratorInvocation = ResolveInvocation(getEnumeratorInvocation, new ResolveResult[0]);
+				getEnumeratorInvocation = ResolveInvocation(getEnumeratorInvocation, Empty<ResolveResult>.Array);
 			} else {
 				var getEnumeratorMethodGroup = memberLookup.Lookup(expression, "GetEnumerator", EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
 				if (getEnumeratorMethodGroup != null) {
 					var or = getEnumeratorMethodGroup.PerformOverloadResolution(
-						compilation, new ResolveResult[0],
+						compilation, Empty<ResolveResult>.Array,
 						allowExtensionMethods: false, allowExpandingParams: false, allowOptionalParameters: false);
 					if (or.FoundApplicableCandidate && !or.IsAmbiguous && !or.BestCandidate.IsStatic && or.BestCandidate.Accessibility == Accessibility.Public) {
 						collectionType = expression.Type;
@@ -1722,7 +1722,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			var moveNextMethodGroup = memberLookup.Lookup(new ResolveResult(enumeratorType), "MoveNext", EmptyList<IType>.Instance, false) as MethodGroupResolveResult;
 			if (moveNextMethodGroup != null) {
 				var or = moveNextMethodGroup.PerformOverloadResolution(
-					compilation, new ResolveResult[0],
+					compilation, Empty<ResolveResult>.Array,
 					allowExtensionMethods: false, allowExpandingParams: false, allowOptionalParameters: false);
 				moveNextMethod = or.GetBestCandidateWithSubstitutedTypeArguments() as IMethod;
 			}
@@ -1763,7 +1763,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			getEnumeratorInvocation = ResolveCast(collectionType, expression);
 			getEnumeratorInvocation = ResolveMemberAccess(getEnumeratorInvocation, "GetEnumerator", EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
-			getEnumeratorInvocation = ResolveInvocation(getEnumeratorInvocation, new ResolveResult[0]);
+			getEnumeratorInvocation = ResolveInvocation(getEnumeratorInvocation, Empty<ResolveResult>.Array);
 		}
 		#endregion
 

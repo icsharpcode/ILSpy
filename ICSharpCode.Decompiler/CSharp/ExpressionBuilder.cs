@@ -369,7 +369,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			expr.Arguments.AddRange(args.Select(arg => arg.Expression));
 			return expr.WithILInstruction(inst)
-				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, inst.Type, dimensions), args.Select(a => a.ResolveResult).ToList(), new ResolveResult[0]));
+				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, inst.Type, dimensions), args.Select(a => a.ResolveResult).ToList(), Empty<ResolveResult>.Array));
 		}
 
 		protected internal override TranslatedExpression VisitLocAlloc(LocAlloc inst, TranslationContext context)

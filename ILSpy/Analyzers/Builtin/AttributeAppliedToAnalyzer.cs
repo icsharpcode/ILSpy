@@ -24,6 +24,7 @@ using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.Analyzers.Builtin
 {
@@ -33,7 +34,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
 			if (!(analyzedSymbol is ITypeDefinition attributeType))
-				return Array.Empty<ISymbol>();
+				return Empty<ISymbol>.Array;
 
 			var scope = context.GetScopeOf(attributeType);
 			// TODO: DeclSecurity attributes are not supported.
