@@ -30,9 +30,9 @@ namespace ICSharpCode.Decompiler.Util
 		public ProjectedList(IList<TInput> input, Func<TInput, TOutput> projection)
 		{
 			if (input == null)
-				throw new ArgumentNullException("input");
+				throw new ArgumentNullException(nameof(input));
 			if (projection == null)
-				throw new ArgumentNullException("projection");
+				throw new ArgumentNullException(nameof(projection));
 			this.input = input;
 			this.projection = projection;
 			this.items = new TOutput[input.Count];
@@ -75,9 +75,9 @@ namespace ICSharpCode.Decompiler.Util
 		public ProjectedList(TContext context, IList<TInput> input, Func<TContext, TInput, TOutput> projection)
 		{
 			if (input == null)
-				throw new ArgumentNullException("input");
+				throw new ArgumentNullException(nameof(input));
 			if (projection == null)
-				throw new ArgumentNullException("projection");
+				throw new ArgumentNullException(nameof(projection));
 			this.input = input;
 			this.context = context;
 			this.projection = projection;

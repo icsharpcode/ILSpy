@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler
 		string ToString(Exception exception)
 		{
 			if (exception == null)
-				throw new ArgumentNullException("exception");
+				throw new ArgumentNullException(nameof(exception));
 			string exceptionType = GetTypeName(exception);
 			string stacktrace = GetStackTrace(exception);
 			while (exception.InnerException != null) {

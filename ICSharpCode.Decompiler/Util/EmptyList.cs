@@ -30,8 +30,8 @@ namespace ICSharpCode.Decompiler.Util
 		private EmptyList() {}
 		
 		public T this[int index] {
-			get { throw new ArgumentOutOfRangeException("index"); }
-			set { throw new ArgumentOutOfRangeException("index"); }
+			get { throw new ArgumentOutOfRangeException(nameof(index)); }
+			set { throw new ArgumentOutOfRangeException(nameof(index)); }
 		}
 		
 		public int Count {

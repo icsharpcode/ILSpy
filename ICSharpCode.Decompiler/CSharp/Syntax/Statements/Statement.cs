@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Statement ReplaceWith(Func<Statement, Statement> replaceFunction)
 		{
 			if (replaceFunction == null)
-				throw new ArgumentNullException("replaceFunction");
+				throw new ArgumentNullException(nameof(replaceFunction));
 			return (Statement)base.ReplaceWith(node => replaceFunction((Statement)node));
 		}
 		

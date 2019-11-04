@@ -37,9 +37,9 @@ namespace ICSharpCode.Decompiler.Semantics
 			: base(booleanType)
 		{
 			if (input == null)
-				throw new ArgumentNullException("input");
+				throw new ArgumentNullException(nameof(input));
 			if (targetType == null)
-				throw new ArgumentNullException("targetType");
+				throw new ArgumentNullException(nameof(targetType));
 			this.Input = input;
 			this.TargetType = targetType;
 		}

@@ -89,16 +89,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Role(string name)
 		{
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			this.name = name;
 		}
 		
 		public Role(string name, T nullObject)
 		{
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			if (nullObject == null)
-				throw new ArgumentNullException ("nullObject");
+				throw new ArgumentNullException (nameof(nullObject));
 			this.nullObject = nullObject;
 			this.name = name;
 		}

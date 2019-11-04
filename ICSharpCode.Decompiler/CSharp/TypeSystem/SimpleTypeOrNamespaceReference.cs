@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public SimpleTypeOrNamespaceReference(string identifier, IList<ITypeReference> typeArguments, NameLookupMode lookupMode = NameLookupMode.Type)
 		{
 			if (identifier == null)
-				throw new ArgumentNullException("identifier");
+				throw new ArgumentNullException(nameof(identifier));
 			this.identifier = identifier;
 			this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
 			this.lookupMode = lookupMode;

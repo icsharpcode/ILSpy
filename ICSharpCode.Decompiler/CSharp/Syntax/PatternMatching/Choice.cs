@@ -32,14 +32,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		public void Add(string name, INode alternative)
 		{
 			if (alternative == null)
-				throw new ArgumentNullException("alternative");
+				throw new ArgumentNullException(nameof(alternative));
 			alternatives.Add(new NamedNode(name, alternative));
 		}
 		
 		public void Add(INode alternative)
 		{
 			if (alternative == null)
-				throw new ArgumentNullException("alternative");
+				throw new ArgumentNullException(nameof(alternative));
 			alternatives.Add(alternative);
 		}
 		

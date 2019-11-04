@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		protected AbstractTypeParameter(IEntity owner, int index, string name, VarianceModifier variance)
 		{
 			if (owner == null)
-				throw new ArgumentNullException("owner");
+				throw new ArgumentNullException(nameof(owner));
 			this.owner = owner;
 			this.compilation = owner.Compilation;
 			this.ownerType = owner.SymbolKind;
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		protected AbstractTypeParameter(ICompilation compilation, SymbolKind ownerType, int index, string name, VarianceModifier variance)
 		{
 			if (compilation == null)
-				throw new ArgumentNullException("compilation");
+				throw new ArgumentNullException(nameof(compilation));
 			this.compilation = compilation;
 			this.ownerType = ownerType;
 			this.index = index;

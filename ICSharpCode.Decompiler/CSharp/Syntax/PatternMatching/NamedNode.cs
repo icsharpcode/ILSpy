@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		public NamedNode(string groupName, INode childNode)
 		{
 			if (childNode == null)
-				throw new ArgumentNullException("childNode");
+				throw new ArgumentNullException(nameof(childNode));
 			this.groupName = groupName;
 			this.childNode = childNode;
 		}

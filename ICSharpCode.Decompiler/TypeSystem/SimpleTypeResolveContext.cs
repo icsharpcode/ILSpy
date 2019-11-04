@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public SimpleTypeResolveContext(ICompilation compilation)
 		{
 			if (compilation == null)
-				throw new ArgumentNullException("compilation");
+				throw new ArgumentNullException(nameof(compilation));
 			this.compilation = compilation;
 		}
 		
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public SimpleTypeResolveContext(IEntity entity)
 		{
 			if (entity == null)
-				throw new ArgumentNullException("entity");
+				throw new ArgumentNullException(nameof(entity));
 			this.compilation = entity.Compilation;
 			this.currentModule = entity.ParentModule;
 			this.currentTypeDefinition = (entity as ITypeDefinition) ?? entity.DeclaringTypeDefinition;

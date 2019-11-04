@@ -69,10 +69,10 @@ namespace ICSharpCode.Decompiler.Util
 		public ResXResourceWriter(Stream stream)
 		{
 			if (stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			if (!stream.CanWrite)
-				throw new ArgumentException("stream is not writable.", "stream");
+				throw new ArgumentException("stream is not writable.", nameof(stream));
 
 			this.stream = stream;
 		}
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.Util
 		public ResXResourceWriter(TextWriter textWriter)
 		{
 			if (textWriter == null)
-				throw new ArgumentNullException("textWriter");
+				throw new ArgumentNullException(nameof(textWriter));
 
 			this.textwriter = textWriter;
 		}
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.Util
 		public ResXResourceWriter(string fileName)
 		{
 			if (fileName == null)
-				throw new ArgumentNullException("fileName");
+				throw new ArgumentNullException(nameof(fileName));
 
 			this.filename = fileName;
 		}
@@ -217,10 +217,10 @@ namespace ICSharpCode.Decompiler.Util
 		public void AddResource(string name, byte[] value)
 		{
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			if (value == null)
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.Util
 			}
 
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -307,10 +307,10 @@ namespace ICSharpCode.Decompiler.Util
 		private void AddResource(string name, string value, string comment)
 		{
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			if (value == null)
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -324,10 +324,10 @@ namespace ICSharpCode.Decompiler.Util
 		public void AddMetadata(string name, string value)
 		{
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			if (value == null)
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -347,10 +347,10 @@ namespace ICSharpCode.Decompiler.Util
 		public void AddMetadata(string name, byte[] value)
 		{
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			if (value == null)
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -383,10 +383,10 @@ namespace ICSharpCode.Decompiler.Util
 			}
 
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			if (value == null)
-				throw new ArgumentNullException("value");
+				throw new ArgumentNullException(nameof(value));
 
 			if (!value.GetType().IsSerializable)
 				throw new InvalidOperationException(String.Format("The element '{0}' of type '{1}' is not serializable.", name, value.GetType().Name));

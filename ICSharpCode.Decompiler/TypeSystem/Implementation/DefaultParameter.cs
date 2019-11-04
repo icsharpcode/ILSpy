@@ -39,9 +39,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public DefaultParameter(IType type, string name)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			this.type = type;
 			this.name = name;
 			this.attributes = EmptyList<IAttribute>.Instance;
@@ -51,9 +51,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		                        ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false, object defaultValue = null)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			this.type = type;
 			this.name = name;
 			this.owner = owner;

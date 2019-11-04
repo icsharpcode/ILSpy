@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public IdentifierExpressionBackreference(string referencedGroupName)
 		{
 			if (referencedGroupName == null)
-				throw new ArgumentNullException("referencedGroupName");
+				throw new ArgumentNullException(nameof(referencedGroupName));
 			this.referencedGroupName = referencedGroupName;
 		}
 		

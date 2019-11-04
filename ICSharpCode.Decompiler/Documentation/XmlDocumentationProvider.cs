@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			public XmlDocumentationCache(int size = 50)
 			{
 				if (size <= 0)
-					throw new ArgumentOutOfRangeException("size", size, "Value must be positive");
+					throw new ArgumentOutOfRangeException(nameof(size), size, "Value must be positive");
 				this.entries = new KeyValuePair<string, string>[size];
 			}
 			
@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		public XmlDocumentationProvider(string fileName)
 		{
 			if (fileName == null)
-				throw new ArgumentNullException("fileName");
+				throw new ArgumentNullException(nameof(fileName));
 			
 			using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
 				using (XmlTextReader xmlReader = new XmlTextReader(fs)) {
@@ -328,7 +328,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		public string GetDocumentation(string key)
 		{
 			if (key == null)
-				throw new ArgumentNullException("key");
+				throw new ArgumentNullException(nameof(key));
 			return GetDocumentation(key, true);
 		}
 

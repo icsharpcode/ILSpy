@@ -313,7 +313,7 @@ namespace ICSharpCode.Decompiler.IL
 			: base(OpCode.DynamicCompoundAssign, CompoundEvalModeFromOperation(op), target, targetKind, value)
 		{
 			if (!IsExpressionTypeSupported(op))
-				throw new ArgumentOutOfRangeException("op");
+				throw new ArgumentOutOfRangeException(nameof(op));
 			this.BinderFlags = binderFlags;
 			this.Operation = op;
 			this.TargetArgumentInfo = targetArgumentInfo;

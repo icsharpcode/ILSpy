@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IEnumerable<IType> GetAllBaseTypes(this IType type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			BaseTypeCollector collector = new BaseTypeCollector();
 			collector.CollectBaseTypes(type);
 			return collector;
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IEnumerable<IType> GetNonInterfaceBaseTypes(this IType type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			BaseTypeCollector collector = new BaseTypeCollector();
 			collector.SkipImplementedInterfaces = true;
 			collector.CollectBaseTypes(type);
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IEnumerable<ITypeDefinition> GetAllBaseTypeDefinitions(this IType type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			
 			return type.GetAllBaseTypes().Select(t => t.GetDefinition()).Where(d => d != null).Distinct();
 		}
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static bool IsDerivedFrom(this ITypeDefinition type, ITypeDefinition baseType)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			if (baseType == null)
 				return false;
 			if (type.Compilation != baseType.Compilation) {
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static bool IsDerivedFrom(this ITypeDefinition type, KnownTypeCode baseType)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			if (baseType == KnownTypeCode.None)
 				return false;
 			return IsDerivedFrom(type, type.Compilation.FindType(baseType).GetDefinition());
@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static bool IsOpen(this IType type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			TypeClassificationVisitor v = new TypeClassificationVisitor();
 			type.AcceptVisitor(v);
 			return v.isOpen;
@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		static IEntity GetTypeParameterOwner(IType type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			TypeClassificationVisitor v = new TypeClassificationVisitor();
 			type.AcceptVisitor(v);
 			return v.typeParameterOwner;
@@ -210,7 +210,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static bool IsUnbound(this IType type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			return type is ITypeDefinition && type.TypeParameterCount > 0;
 		}
 		
@@ -265,7 +265,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IMethod GetDelegateInvokeMethod(this IType type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			if (type.Kind == TypeKind.Delegate)
 				return type.GetMethods(m => m.Name == "Invoke", GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
 			else
@@ -310,7 +310,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IReadOnlyList<IType> Resolve(this IList<ITypeReference> typeReferences, ITypeResolveContext context)
 		{
 			if (typeReferences == null)
-				throw new ArgumentNullException("typeReferences");
+				throw new ArgumentNullException(nameof(typeReferences));
 			if (typeReferences.Count == 0)
 				return EmptyList<IType>.Instance;
 			else
@@ -336,7 +336,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IType FindType(this ICompilation compilation, FullTypeName fullTypeName)
 		{
 			if (compilation == null)
-				throw new ArgumentNullException("compilation");
+				throw new ArgumentNullException(nameof(compilation));
 			foreach (IModule asm in compilation.Modules) {
 				ITypeDefinition def = asm.GetTypeDefinition(fullTypeName);
 				if (def != null)

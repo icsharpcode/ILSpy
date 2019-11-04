@@ -40,9 +40,9 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public MemberTypeOrNamespaceReference(TypeOrNamespaceReference target, string identifier, IList<ITypeReference> typeArguments, NameLookupMode lookupMode = NameLookupMode.Type)
 		{
 			if (target == null)
-				throw new ArgumentNullException("target");
+				throw new ArgumentNullException(nameof(target));
 			if (identifier == null)
-				throw new ArgumentNullException("identifier");
+				throw new ArgumentNullException(nameof(identifier));
 			this.target = target;
 			this.identifier = identifier;
 			this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;

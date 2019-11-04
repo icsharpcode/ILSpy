@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			: base(resultType)
 		{
 			if (operands == null)
-				throw new ArgumentNullException("operands");
+				throw new ArgumentNullException(nameof(operands));
 			this.operatorType = operatorType;
 			this.operands = operands;
 		}
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			: base(resultType)
 		{
 			if (operands == null)
-				throw new ArgumentNullException("operands");
+				throw new ArgumentNullException(nameof(operands));
 			this.operatorType = operatorType;
 			this.userDefinedOperatorMethod = userDefinedOperatorMethod;
 			this.isLiftedOperator = isLiftedOperator;

@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public CSharpResolver(ICompilation compilation)
 		{
 			if (compilation == null)
-				throw new ArgumentNullException("compilation");
+				throw new ArgumentNullException(nameof(compilation));
 			this.compilation = compilation;
 			this.conversions = CSharpConversions.Get(compilation);
 			this.context = new CSharpTypeResolveContext(compilation.MainModule);
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public CSharpResolver(CSharpTypeResolveContext context)
 		{
 			if (context == null)
-				throw new ArgumentNullException("context");
+				throw new ArgumentNullException(nameof(context));
 			this.compilation = context.Compilation;
 			this.conversions = CSharpConversions.Get(compilation);
 			this.context = context;
@@ -262,7 +262,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public CSharpResolver AddVariable(IVariable variable)
 		{
 			if (variable == null)
-				throw new ArgumentNullException("variable");
+				throw new ArgumentNullException(nameof(variable));
 			return WithLocalVariableStack(localVariableStack.Push(variable));
 		}
 		
@@ -313,7 +313,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public CSharpResolver PushObjectInitializer(ResolveResult initializedObject)
 		{
 			if (initializedObject == null)
-				throw new ArgumentNullException("initializedObject");
+				throw new ArgumentNullException(nameof(initializedObject));
 			return WithObjectInitializerStack(new ObjectInitializerContext(initializedObject, objectInitializerStack));
 		}
 		
@@ -1313,9 +1313,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// C# 4.0 spec: §3.8 Namespace and type names; §7.6.2 Simple Names
 			
 			if (identifier == null)
-				throw new ArgumentNullException("identifier");
+				throw new ArgumentNullException(nameof(identifier));
 			if (typeArguments == null)
-				throw new ArgumentNullException("typeArguments");
+				throw new ArgumentNullException(nameof(typeArguments));
 			
 			int k = typeArguments.Count;
 			
@@ -1866,9 +1866,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public static bool IsEligibleExtensionMethod(IType targetType, IMethod method, bool useTypeInference, out IType[] outInferredTypes)
 		{
 			if (targetType == null)
-				throw new ArgumentNullException("targetType");
+				throw new ArgumentNullException(nameof(targetType));
 			if (method == null)
-				throw new ArgumentNullException("method");
+				throw new ArgumentNullException(nameof(method));
 			var compilation = method.Compilation;
 			return IsEligibleExtensionMethod(compilation, CSharpConversions.Get(compilation), targetType, method, useTypeInference, out outInferredTypes);
 		}
@@ -2348,7 +2348,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public ResolveResult ResolveCondition(ResolveResult input)
 		{
 			if (input == null)
-				throw new ArgumentNullException("input");
+				throw new ArgumentNullException(nameof(input));
 			IType boolean = compilation.FindType(KnownTypeCode.Boolean);
 			Conversion c = conversions.ImplicitConversion(input, boolean);
 			if (!c.IsValid) {
@@ -2368,7 +2368,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public ResolveResult ResolveConditionFalse(ResolveResult input)
 		{
 			if (input == null)
-				throw new ArgumentNullException("input");
+				throw new ArgumentNullException(nameof(input));
 			IType boolean = compilation.FindType(KnownTypeCode.Boolean);
 			Conversion c = conversions.ImplicitConversion(input, boolean);
 			if (!c.IsValid) {

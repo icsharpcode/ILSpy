@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.Util
 		public void Save(TextWriter writer)
 		{
 			if (writer == null)
-				throw new ArgumentNullException("writer");
+				throw new ArgumentNullException(nameof(writer));
 			writer.WriteLine("digraph G {");
 			writer.WriteLine("node [fontsize = 16];");
 			WriteGraphAttribute(writer, "rankdir", rankdir);
@@ -147,9 +147,9 @@ namespace ICSharpCode.Decompiler.Util
 		public GraphVizEdge(string source, string target)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 			if (target == null)
-				throw new ArgumentNullException("target");
+				throw new ArgumentNullException(nameof(target));
 			this.Source = source;
 			this.Target = target;
 		}
@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler.Util
 		public GraphVizNode(string id)
 		{
 			if (id == null)
-				throw new ArgumentNullException("id");
+				throw new ArgumentNullException(nameof(id));
 			this.ID = id;
 		}
 

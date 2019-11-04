@@ -44,9 +44,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public MergedNamespace(ICompilation compilation, INamespace[] namespaces, string externAlias = null)
 		{
 			if (compilation == null)
-				throw new ArgumentNullException("compilation");
+				throw new ArgumentNullException(nameof(compilation));
 			if (namespaces == null)
-				throw new ArgumentNullException("namespaces");
+				throw new ArgumentNullException(nameof(namespaces));
 			this.compilation = compilation;
 			this.namespaces = namespaces;
 			this.externAlias = externAlias;
@@ -60,9 +60,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public MergedNamespace(INamespace parentNamespace, INamespace[] namespaces)
 		{
 			if (parentNamespace == null)
-				throw new ArgumentNullException("parentNamespace");
+				throw new ArgumentNullException(nameof(parentNamespace));
 			if (namespaces == null)
-				throw new ArgumentNullException("namespaces");
+				throw new ArgumentNullException(nameof(namespaces));
 			this.parentNamespace = parentNamespace;
 			this.namespaces = namespaces;
 			this.compilation = parentNamespace.Compilation;
