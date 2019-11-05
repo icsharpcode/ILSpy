@@ -326,11 +326,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// stfld StateMachine.field(ldloca stateMachine, ldvar(param))
 				if (!MatchStFld(body[pos], stateMachineVar, out var field, out var fieldInit))
 					return false;
-				if (!fieldInit.MatchLdLoc(out var v))
+				if (fieldInit.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter) {
+					// OK, copies parameter into state machine
+					fieldToParameterMap[field] = v;
+				} else if (fieldInit is LdObj ldobj && ldobj.Target.MatchLdThis()) {
+					// stfld <>4__this(ldloc stateMachine, ldobj AsyncInStruct(ldloc this))
+					fieldToParameterMap[field] = ((LdLoc)ldobj.Target).Variable;
+				} else {
 					return false;
-				if (v.Kind != VariableKind.Parameter)
-					return false;
-				fieldToParameterMap[field] = v;
+				}
 			}
 
 			return true;
@@ -413,9 +417,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				pos++;
 
 				while (MatchStFld(body.Instructions[pos], v, out var field, out var value)) {
-					if (!value.MatchLdLoc(out var p))
+					if (value.MatchLdLoc(out var p) && p.Kind == VariableKind.Parameter) {
+						fieldToParameterMap[field] = p;
+					} else if (value is LdObj ldobj && ldobj.Target.MatchLdThis()) {
+						fieldToParameterMap[field] = ((LdLoc)ldobj.Target).Variable;
+					} else {
 						return false;
-					fieldToParameterMap[field] = p;
+					}
 					pos++;
 				}
 				if (!body.Instructions[pos].MatchReturn(out var returnValue))
@@ -967,18 +975,27 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		private bool SimplifyIfDisposeMode(Block block)
 		{
+			// Occasionally Roslyn optimizes out an "if (disposeMode)", but keeps the
+			// disposeMode field access. Get rid of those field accesses:
+			block.Instructions.RemoveAll(MatchLdDisposeMode);
+
 			// if (logic.not(ldfld disposeMode(ldloc this))) br falseInst
 			// br trueInst
 			if (!block.MatchIfAtEndOfBlock(out var condition, out _, out var falseInst))
 				return false;
-			if (!condition.MatchLdFld(out var target, out var field))
-				return false;
-			if (!(target.MatchLdThis() && field.MemberDefinition == disposeModeField))
+			if (!MatchLdDisposeMode(condition))
 				return false;
 			context.Step($"SimplifyIfDisposeMode({block.StartILOffset:x4})", block);
 			block.Instructions[block.Instructions.Count - 2] = falseInst;
 			block.Instructions.RemoveAt(block.Instructions.Count - 1);
 			return true;
+
+			bool MatchLdDisposeMode(ILInstruction inst)
+			{
+				if (!inst.MatchLdFld(out var target, out var field))
+					return false;
+				return target.MatchLdThis() && field.MemberDefinition == disposeModeField;
+			}
 		}
 
 		bool AnalyzeAwaitBlock(Block block, out ILVariable awaiter, out IField awaiterField, out int state, out int yieldOffset)

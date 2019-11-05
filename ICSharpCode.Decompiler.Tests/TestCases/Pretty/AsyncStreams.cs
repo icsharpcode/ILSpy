@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
@@ -32,6 +33,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				await Task.Delay(10);
 			}
 			yield break;
+		}
+
+		public async IAsyncEnumerable<int> AwaitInFinally()
+		{
+			try {
+				Console.WriteLine("try");
+				yield return 1;
+				Console.WriteLine("end try");
+			} finally {
+				Console.WriteLine("finally");
+				await Task.Yield();
+				Console.WriteLine("end finally");
+			}
+		}
+	}
+
+	public struct TestStruct
+	{
+		private int i;
+
+		public async IAsyncEnumerable<int> AwaitInStruct(TestStruct xx)
+		{
+			xx.i++;
+			i++;
+			await Task.Yield();
+			yield return i;
+			yield return xx.i;
 		}
 	}
 }
