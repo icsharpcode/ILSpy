@@ -194,22 +194,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (blockContainer.Blocks.Count != 1)
 				return false;
 			var body = blockContainer.EntryPoint.Instructions;
-			if (body.Count < 5)
+			if (body.Count < 4)
 				return false;
 			/* Example:
-			    V_0 is an instance of the compiler-generated struct/class,
+				V_0 is an instance of the compiler-generated struct/class,
 				V_1 is an instance of the builder struct/class
 				Block IL_0000 (incoming: 1)  {
-					stobj System.Runtime.CompilerServices.AsyncVoidMethodBuilder(ldflda [Field ICSharpCode.Decompiler.Tests.TestCases.Pretty.Async+<AwaitYield>d__3.<>t__builder](ldloca V_0), call Create())
-					stobj System.Int32(ldflda [Field ICSharpCode.Decompiler.Tests.TestCases.Pretty.Async+<AwaitYield>d__3.<>1__state](ldloca V_0), ldc.i4 -1)
-					stloc V_1(ldobj System.Runtime.CompilerServices.AsyncVoidMethodBuilder(ldflda [Field ICSharpCode.Decompiler.Tests.TestCases.Pretty.Async+<AwaitYield>d__3.<>t__builder](ldloc V_0)))
+					...
+					stobj AsyncVoidMethodBuilder(ldflda [Field Async+<AwaitYield>d__3.<>t__builder](ldloca V_0), call Create())
+					stobj System.Int32(ldflda [Field Async+<AwaitYield>d__3.<>1__state](ldloca V_0), ldc.i4 -1)
+					stloc V_1(ldobj System.Runtime.CompilerServices.AsyncVoidMethodBuilder(ldflda [Field Async+<AwaitYield>d__3.<>t__builder](ldloc V_0)))
 					call Start(ldloca V_1, ldloca V_0)
 					leave IL_0000 (or ret for non-void async methods)
 				}
+				With custom task types, it's possible that the builder is a reference type.
+				In that case, the variable V_1 may be inlined.
 			*/
 
 			// Check the second-to-last instruction (the start call) first, as we can get the most information from that
-			if (!(body[body.Count - 2] is Call startCall))
+			int pos = body.Count - 2;
+			if (!(body[pos] is CallInstruction startCall))
 				return false;
 			if (startCall.Method.Name != "Start")
 				return false;
@@ -238,18 +242,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			if (startCall.Arguments.Count != 2)
 				return false;
-			if (!startCall.Arguments[0].MatchLdLocRef(out ILVariable builderVar))
-				return false;
+			ILInstruction loadBuilderExpr = startCall.Arguments[0];
 			if (!startCall.Arguments[1].MatchLdLoca(out ILVariable stateMachineVar))
 				return false;
 			stateMachineType = stateMachineVar.Type.GetDefinition();
 			if (stateMachineType == null)
 				return false;
+			pos--;
 
-			// Check third-to-last instruction (copy of builder)
-			// stloc builder(ldfld StateMachine::<>t__builder(ldloc stateMachine))
-			if (!body[body.Count - 3].MatchStLoc(builderVar, out var loadBuilderExpr))
-				return false;
+			if (loadBuilderExpr.MatchLdLocRef(out ILVariable builderVar)) {
+				// Check third-to-last instruction (copy of builder)
+				// stloc builder(ldfld StateMachine::<>t__builder(ldloc stateMachine))
+				if (!body[pos].MatchStLoc(builderVar, out loadBuilderExpr))
+					return false;
+				pos--;
+			}
 			if (!loadBuilderExpr.MatchLdFld(out var loadStateMachineForBuilderExpr, out builderField))
 				return false;
 			builderField = (IField)builderField.MemberDefinition;
@@ -277,22 +284,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				if (builderField2.MemberDefinition != builderField)
 					return false;
-				if (!target.MatchLdLocRef(stateMachineVar))
+				if (!(target.MatchLdLoc(stateMachineVar) || target.MatchLdLoca(stateMachineVar)))
 					return false;
 			}
 
 			// Check the last field assignment - this should be the state field
 			// stfld <>1__state(ldloca stateField, ldc.i4 -1)
-			if (!MatchStFld(body[body.Count - 4], stateMachineVar, out stateField, out var initialStateExpr))
+			if (!MatchStFld(body[pos], stateMachineVar, out stateField, out var initialStateExpr))
 				return false;
 			if (!initialStateExpr.MatchLdcI4(out initialState))
 				return false;
 			if (initialState != -1)
 				return false;
+			pos--;
 
 			// Check the second-to-last field assignment - this should be the builder field
 			// stfld StateMachine.builder(ldloca stateMachine, call Create())
-			if (!MatchStFld(body[body.Count - 5], stateMachineVar, out var builderField3, out var builderInitialization))
+			if (pos < 0)
+				return false;
+			if (!MatchStFld(body[pos], stateMachineVar, out var builderField3, out var builderInitialization))
 				return false;
 			if (builderField3 != builderField)
 				return false;
@@ -301,7 +311,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (createCall.Method.Name != "Create" || createCall.Arguments.Count != 0)
 				return false;
 
-			int pos = 0;
+			int stopPos = pos;
+			pos = 0;
 			if (stateMachineType.Kind == TypeKind.Class) {
 				// If state machine is a class, the first instruction creates an instance:
 				// stloc stateMachine(newobj StateMachine.ctor())
@@ -311,7 +322,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				pos++;
 			}
-			for (; pos < body.Count - 5; pos++) {
+			for (; pos < stopPos; pos++) {
 				// stfld StateMachine.field(ldloca stateMachine, ldvar(param))
 				if (!MatchStFld(body[pos], stateMachineVar, out var field, out var fieldInit))
 					return false;
@@ -964,6 +975,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!(target.MatchLdThis() && field.MemberDefinition == disposeModeField))
 				return false;
+			context.Step($"SimplifyIfDisposeMode({block.StartILOffset:x4})", block);
 			block.Instructions[block.Instructions.Count - 2] = falseInst;
 			block.Instructions.RemoveAt(block.Instructions.Count - 1);
 			return true;
@@ -1248,6 +1260,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// stloc awaiterVar(ldfld awaiterField(ldloc this))
 			if (!block.Instructions[pos].MatchStLoc(awaiterVar, out var value))
 				return false;
+			if (value is CastClass cast && cast.Type.Equals(awaiterVar.Type)) {
+				// If the awaiter is a reference type, it might get stored in a field of type `object`
+				// and cast back to the awaiter type in the resume block
+				value = cast.Argument;
+			}
 			if (!value.MatchLdFld(out var target, out var field))
 				return false;
 			if (!target.MatchLdThis())
@@ -1260,7 +1277,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (block.Instructions[pos].MatchStFld(out target, out field, out value)
 				&& target.MatchLdThis()
 				&& field.Equals(awaiterField)
-				&& value.OpCode == OpCode.DefaultValue)
+				&& (value.OpCode == OpCode.DefaultValue || value.OpCode == OpCode.LdNull))
 			{
 				pos++;
 			} else {
