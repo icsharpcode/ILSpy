@@ -298,15 +298,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					}
 					return;
 				}
-				if (f == 0 && 1 / f == float.NegativeInfinity) {
+				var str = f.ToString("R", NumberFormatInfo.InvariantInfo) + "f";
+				if (f == 0 && 1 / f == float.NegativeInfinity && str[0] != '-') {
 					// negative zero is a special case
 					// (again, not a primitive expression, but it's better to handle
 					// the special case here than to do it in all code generators)
-					textWriter.Write("-");
-					column++;
-					Length++;
+					str = '-' + str;
 				}
-				var str = f.ToString("R", NumberFormatInfo.InvariantInfo) + "f";
 				column += str.Length;
 				Length += str.Length;
 				textWriter.Write(str);
@@ -334,14 +332,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					}
 					return;
 				}
-				if (f == 0 && 1 / f == double.NegativeInfinity) {
+				string number = f.ToString("R", NumberFormatInfo.InvariantInfo);
+				if (f == 0 && 1 / f == double.NegativeInfinity && number[0] != '-') {
 					// negative zero is a special case
 					// (again, not a primitive expression, but it's better to handle
 					// the special case here than to do it in all code generators)
-					textWriter.Write("-");
-					Length++;
+					number = '-' + number;
 				}
-				string number = f.ToString("R", NumberFormatInfo.InvariantInfo);
 				if (number.IndexOf('.') < 0 && number.IndexOf('E') < 0) {
 					number += ".0";
 				}
