@@ -294,6 +294,7 @@
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
     <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
     <Compile Include="IL\ControlFlow\AwaitInCatchTransform.cs" />
+    <Compile Include="IL\ControlFlow\AwaitInFinallyTransform.cs" />
     <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
     <Compile Include="Metadata\CustomAttributeDecoder.cs" />
     <Compile Include="Metadata\Dom.cs" />
