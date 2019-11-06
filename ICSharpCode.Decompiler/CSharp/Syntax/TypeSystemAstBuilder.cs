@@ -1772,7 +1772,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				} else {
 					var declaringType = member.DeclaringType;
 					if (declaringType.Kind == TypeKind.Interface) {
-						if (!member.IsVirtual && !member.IsAbstract && !member.IsOverride && member.Accessibility != Accessibility.Private)
+						if (!member.IsVirtual && !member.IsAbstract && !member.IsOverride && member.Accessibility != Accessibility.Private && member is IMethod method2 && method2.HasBody)
 							m |= Modifiers.Sealed;
 					} else {
 						if (member.IsAbstract)
