@@ -666,7 +666,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Conv_u:
 					return Push(new Conv(Pop(), PrimitiveType.U, false, Sign.None));
 				case ILOpCode.Conv_r_un:
-					return Push(new Conv(Pop(), PrimitiveType.R8, false, Sign.Unsigned));
+					return Push(new Conv(Pop(), PrimitiveType.R, false, Sign.Unsigned));
 				case ILOpCode.Conv_ovf_i1:
 					return Push(new Conv(Pop(), PrimitiveType.I1, true, Sign.Signed));
 				case ILOpCode.Conv_ovf_i2:
