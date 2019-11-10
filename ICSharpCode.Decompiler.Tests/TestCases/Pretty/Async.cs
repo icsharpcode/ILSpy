@@ -199,6 +199,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 	}
 
+	public struct AsyncInStruct
+	{
+		private int i;
+
+		public async Task<int> Test(AsyncInStruct xx)
+		{
+			xx.i++;
+			i++;
+			await Task.Yield();
+			return i + xx.i;
+		}
+	}
+
 	public struct HopToThreadPoolAwaitable : INotifyCompletion
 	{
 		public bool IsCompleted {

@@ -44,9 +44,9 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public ResolvedUsingScope(CSharpTypeResolveContext context, UsingScope usingScope)
 		{
 			if (context == null)
-				throw new ArgumentNullException("context");
+				throw new ArgumentNullException(nameof(context));
 			if (usingScope == null)
-				throw new ArgumentNullException("usingScope");
+				throw new ArgumentNullException(nameof(usingScope));
 			this.parentContext = context;
 			this.usingScope = usingScope;
 			if (usingScope.Parent != null) {

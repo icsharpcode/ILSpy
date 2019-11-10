@@ -42,9 +42,9 @@ namespace ICSharpCode.Decompiler.Semantics
 			: base(targetType)
 		{
 			if (input == null)
-				throw new ArgumentNullException("input");
+				throw new ArgumentNullException(nameof(input));
 			if (conversion == null)
-				throw new ArgumentNullException("conversion");
+				throw new ArgumentNullException(nameof(conversion));
 			this.Input = input;
 			this.Conversion = conversion;
 		}

@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			public NestedTypeName(string name, int additionalTypeParameterCount)
 			{
 				if (name == null)
-					throw new ArgumentNullException("name");
+					throw new ArgumentNullException(nameof(name));
 				this.Name = name;
 				this.AdditionalTypeParameterCount = additionalTypeParameterCount;
 			}
@@ -217,7 +217,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public FullTypeName NestedType(string name, int additionalTypeParameterCount)
 		{
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			var newNestedType = new NestedTypeName(name, additionalTypeParameterCount);
 			if (nestedTypes == null)
 				return new FullTypeName(topLevelType, new[] { newNestedType });

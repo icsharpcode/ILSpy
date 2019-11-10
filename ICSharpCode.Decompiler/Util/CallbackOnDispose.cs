@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Util
 		public CallbackOnDispose(Action action)
 		{
 			if (action == null)
-				throw new ArgumentNullException("action");
+				throw new ArgumentNullException(nameof(action));
 			this.action = action;
 		}
 		

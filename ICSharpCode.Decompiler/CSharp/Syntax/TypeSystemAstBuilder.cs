@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public TypeSystemAstBuilder(CSharpResolver resolver)
 		{
 			if (resolver == null)
-				throw new ArgumentNullException("resolver");
+				throw new ArgumentNullException(nameof(resolver));
 			this.resolver = resolver;
 			InitProperties();
 		}
@@ -204,7 +204,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstType ConvertType(IType type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			AstType astType = ConvertTypeHelper(type);
 			AddTypeAnnotation(astType, type);
 			return astType;
@@ -579,7 +579,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstType ConvertAttributeType(IType type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			AstType astType = ConvertTypeHelper(type);
 
 			string shortName = null;
@@ -663,7 +663,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Expression ConvertConstantValue(ResolveResult rr)
 		{
 			if (rr == null)
-				throw new ArgumentNullException("rr");
+				throw new ArgumentNullException(nameof(rr));
 			bool isBoxing = false;
 			if (rr is ConversionResolveResult crr) {
 				// unpack ConversionResolveResult if necessary
@@ -734,7 +734,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Expression ConvertConstantValue(IType expectedType, IType type, object constantValue)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			if (constantValue == null) {
 				if (type.IsReferenceType == true || type.IsKnownType(KnownTypeCode.NullableOfT)) {
 					var expr = new NullReferenceExpression();
@@ -1248,7 +1248,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public ParameterDeclaration ConvertParameter(IParameter parameter)
 		{
 			if (parameter == null)
-				throw new ArgumentNullException("parameter");
+				throw new ArgumentNullException(nameof(parameter));
 			ParameterDeclaration decl = new ParameterDeclaration();
 			if (parameter.IsRef) {
 				decl.ParameterModifier = ParameterModifier.Ref;
@@ -1286,7 +1286,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstNode ConvertSymbol(ISymbol symbol)
 		{
 			if (symbol == null)
-				throw new ArgumentNullException("symbol");
+				throw new ArgumentNullException(nameof(symbol));
 			switch (symbol.SymbolKind) {
 				case SymbolKind.Namespace:
 					return ConvertNamespaceDeclaration((INamespace)symbol);
@@ -1307,7 +1307,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public EntityDeclaration ConvertEntity(IEntity entity)
 		{
 			if (entity == null)
-				throw new ArgumentNullException("entity");
+				throw new ArgumentNullException(nameof(entity));
 			switch (entity.SymbolKind) {
 				case SymbolKind.TypeDefinition:
 					return ConvertTypeDefinition((ITypeDefinition)entity);
@@ -1772,7 +1772,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				} else {
 					var declaringType = member.DeclaringType;
 					if (declaringType.Kind == TypeKind.Interface) {
-						if (!member.IsVirtual && !member.IsAbstract && !member.IsOverride && member.Accessibility != Accessibility.Private)
+						if (!member.IsVirtual && !member.IsAbstract && !member.IsOverride && member.Accessibility != Accessibility.Private && member is IMethod method2 && method2.HasBody)
 							m |= Modifiers.Sealed;
 					} else {
 						if (member.IsAbstract)

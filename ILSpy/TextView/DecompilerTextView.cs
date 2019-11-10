@@ -345,14 +345,20 @@ namespace ICSharpCode.ILSpy.TextView
 				}
 				return new FlowDocumentTooltip(renderer.CreateDocument());
 			} else if (segment.Reference is IEntity entity) {
-				return new FlowDocumentTooltip(CreateTooltipForEntity(entity));
+				var document = CreateTooltipForEntity(entity);
+				if (document == null)
+					return null;
+				return new FlowDocumentTooltip(document);
 			} else if (segment.Reference is ValueTuple<PEFile, System.Reflection.Metadata.EntityHandle> unresolvedEntity) {
 				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
 				try {
 					IEntity resolved = typeSystem.MainModule.ResolveEntity(unresolvedEntity.Item2);
 					if (resolved == null)
 						return null;
-					return new FlowDocumentTooltip(CreateTooltipForEntity(resolved));
+					var document = CreateTooltipForEntity(resolved);
+					if (document == null)
+						return null;
+					return new FlowDocumentTooltip(document);
 				} catch (BadImageFormatException) {
 					return null;
 				}

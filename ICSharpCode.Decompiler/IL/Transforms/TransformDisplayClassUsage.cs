@@ -322,7 +322,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			parameter = null;
 			if (!IsDisplayClassFieldAccess(inst.Target, out var displayClassVar, out displayClass, out field))
 				return false;
-			if (!(inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter && v.Function == currentFunction))
+			if (!(inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter && v.Function == currentFunction && v.Type.Equals(field.Type)))
 				return false;
 			if (displayClass.Variables.ContainsKey((IField)field.MemberDefinition))
 				return false;

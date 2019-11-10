@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// This can also refer to an UnsafeOnCompleted method, if the awaiter type implements <c>System.Runtime.CompilerServices.ICriticalNotifyCompletion</c>.
 		/// </summary>
 		public readonly IMethod OnCompletedMethod;
-		
+
 		/// <summary>
 		/// Method representing the GetResult method on the awaiter type. Can be null if the awaiter type or the method was not found, or when awaiting a dynamic expression.
 		/// </summary>
@@ -58,21 +58,22 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			: base(resultType)
 		{
 			if (awaiterType == null)
-				throw new ArgumentNullException("awaiterType");
+				throw new ArgumentNullException(nameof(awaiterType));
 			if (getAwaiterInvocation == null)
-				throw new ArgumentNullException("getAwaiterInvocation");
+				throw new ArgumentNullException(nameof(getAwaiterInvocation));
 			this.GetAwaiterInvocation = getAwaiterInvocation;
 			this.AwaiterType = awaiterType;
 			this.IsCompletedProperty = isCompletedProperty;
 			this.OnCompletedMethod = onCompletedMethod;
 			this.GetResultMethod = getResultMethod;
 		}
-		
+
 		public override bool IsError {
 			get { return this.GetAwaiterInvocation.IsError || (AwaiterType.Kind != TypeKind.Dynamic && (this.IsCompletedProperty == null || this.OnCompletedMethod == null || this.GetResultMethod == null)); }
 		}
 
-		public override IEnumerable<ResolveResult> GetChildResults() {
+		public override IEnumerable<ResolveResult> GetChildResults()
+		{
 			return new[] { GetAwaiterInvocation };
 		}
 	}

@@ -38,17 +38,14 @@ namespace ICSharpCode.Decompiler.IL
 					return StackType.I8;
 				case PrimitiveType.I:
 				case PrimitiveType.U:
-				case (PrimitiveType)0x0f: // Ptr
-				case (PrimitiveType)0x1b: // FnPtr
 					return StackType.I;
 				case PrimitiveType.R4:
 					return StackType.F4;
 				case PrimitiveType.R8:
+				case PrimitiveType.R:
 					return StackType.F8;
-				case (PrimitiveType)0x10: // ByRef
+				case PrimitiveType.Ref: // ByRef
 					return StackType.Ref;
-				case (PrimitiveType)0x01: // Void
-					return StackType.Void;
 				case PrimitiveType.Unknown:
 					return StackType.Unknown;
 				default:
@@ -65,6 +62,7 @@ namespace ICSharpCode.Decompiler.IL
 				case PrimitiveType.I8:
 				case PrimitiveType.R4:
 				case PrimitiveType.R8:
+				case PrimitiveType.R:
 				case PrimitiveType.I:
 					return Sign.Signed;
 				case PrimitiveType.U1:
@@ -100,6 +98,7 @@ namespace ICSharpCode.Decompiler.IL
 				case PrimitiveType.I8:
 				case PrimitiveType.R8:
 				case PrimitiveType.U8:
+				case PrimitiveType.R:
 					return 8;
 				case PrimitiveType.I:
 				case PrimitiveType.U:
@@ -124,6 +123,18 @@ namespace ICSharpCode.Decompiler.IL
 		public static bool IsIntegerType(this PrimitiveType primitiveType)
 		{
 			return primitiveType.GetStackType().IsIntegerType();
+		}
+
+		public static bool IsFloatType(this PrimitiveType type)
+		{
+			switch (type) {
+				case PrimitiveType.R4:
+				case PrimitiveType.R8:
+				case PrimitiveType.R:
+					return true;
+				default:
+					return false;
+			}
 		}
 
 		/// <summary>

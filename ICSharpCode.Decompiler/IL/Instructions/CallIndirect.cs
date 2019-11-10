@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.IsInstance = isInstance;
 			this.HasExplicitThis = hasExplicitThis;
 			this.CallingConvention = callingConvention;
-			this.ReturnType = returnType ?? throw new ArgumentNullException("returnType");
+			this.ReturnType = returnType ?? throw new ArgumentNullException(nameof(returnType));
 			this.ParameterTypes = parameterTypes.ToImmutableArray();
 			this.Arguments = new InstructionCollection<ILInstruction>(this, 0);
 			this.Arguments.AddRange(arguments);

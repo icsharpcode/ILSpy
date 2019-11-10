@@ -198,6 +198,12 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(settings: new DecompilerSettings { RemoveDeadStores = true });
 		}
 
+		[Test]
+		public void WeirdEnums()
+		{
+			Run();
+		}
+
 		void Run([CallerMemberName] string testName = null, DecompilerSettings settings = null)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName + ".il");

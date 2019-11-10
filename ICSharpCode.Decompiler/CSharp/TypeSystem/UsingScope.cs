@@ -67,9 +67,9 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public UsingScope(UsingScope parent, string shortName)
 		{
 			if (parent == null)
-				throw new ArgumentNullException("parent");
+				throw new ArgumentNullException(nameof(parent));
 			if (shortName == null)
-				throw new ArgumentNullException("shortName");
+				throw new ArgumentNullException(nameof(shortName));
 			this.parent = parent;
 			this.shortName = shortName;
 		}

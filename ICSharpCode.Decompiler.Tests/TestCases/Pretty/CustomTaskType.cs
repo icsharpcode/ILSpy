@@ -2,11 +2,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	public class CustomTaskType
+	public class ValueTaskType
 	{
 		private int memberField;
 
@@ -122,6 +123,79 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				await Task.Delay(i);
 				return i;
 			}
+		}
+	}
+}
+
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1788
+{
+	[AsyncMethodBuilder(typeof(builder))]
+	internal class async
+	{
+		public awaiter GetAwaiter()
+		{
+			throw null;
+		}
+	}
+	internal class await
+	{
+		public awaiter GetAwaiter()
+		{
+			throw null;
+		}
+	}
+
+	internal class awaiter : INotifyCompletion
+	{
+		public bool IsCompleted => true;
+		public void GetResult()
+		{
+		}
+		public void OnCompleted(Action continuation)
+		{
+		}
+	}
+
+	internal class builder
+	{
+		public async Task {
+			get {
+				throw null;
+			}
+		}
+		public static builder Create()
+		{
+			throw null;
+		}
+		public void SetResult()
+		{
+		}
+		public void SetException(Exception e)
+		{
+		}
+		public void Start<TStateMachine>(ref TStateMachine stateMachine) where TStateMachine : IAsyncStateMachine
+		{
+			throw null;
+		}
+		public void AwaitOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine) where TAwaiter : INotifyCompletion where TStateMachine : IAsyncStateMachine
+		{
+			throw null;
+		}
+		public void AwaitUnsafeOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine) where TAwaiter : ICriticalNotifyCompletion where TStateMachine : IAsyncStateMachine
+		{
+			throw null;
+		}
+		public void SetStateMachine(IAsyncStateMachine stateMachine)
+		{
+			throw null;
+		}
+	}
+
+	public class C
+	{
+		internal async async @await(@await async)
+		{
+			await async;
 		}
 	}
 }

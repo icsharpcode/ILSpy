@@ -385,5 +385,44 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				return captured.FirstOrDefault();
 			};
 		}
+
+		public static Func<int> Issue1773(short data)
+		{
+			int integerData = data;
+			return () => integerData;
+		}
+
+#if !MCS
+		// does not compile with mcs...
+		public static Func<int> Issue1773b(object data)
+		{
+#if ROSLYN
+			dynamic dynamicData = data;
+			return () => dynamicData.DynamicCall();
+#else
+			// This is a bug in the old csc: captured dynamic local variables did not have the [DynamicAttribute]
+			// on the display-class field.
+			return () => ((dynamic)data).DynamicCall();
+#endif
+		}
+
+		public static Func<int> Issue1773c(object data)
+		{
+#if ROSLYN
+			dynamic dynamicData = data;
+			return () => dynamicData;
+#else
+			return () => (dynamic)data;
+#endif
+		}
+#endif
+
+#if ROSLYN
+		public static Func<string> Issue1773d((int Integer, string String) data)
+		{
+			(int Integer, string RenamedString) valueTuple = data;
+			return () => valueTuple.RenamedString;
+		}
+#endif
 	}
 }

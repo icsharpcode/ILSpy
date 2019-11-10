@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			: base(arrayType)
 		{
 			if (sizeArguments == null)
-				throw new ArgumentNullException("sizeArguments");
+				throw new ArgumentNullException(nameof(sizeArguments));
 			this.SizeArguments = sizeArguments;
 			this.InitializerElements = initializerElements;
 		}

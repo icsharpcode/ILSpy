@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		static AstType ConstructType(string[] arr, int i)
 		{
 			if (i < 0 || i >= arr.Length)
-				throw new ArgumentOutOfRangeException("i");
+				throw new ArgumentOutOfRangeException(nameof(i));
 			if (i == 0)
 				return new SimpleType(arr[i]);
 			return new MemberType(ConstructType(arr, i - 1), arr[i]);

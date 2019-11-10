@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			: base(SpecialType.NoType)
 		{
 			if (methods == null)
-				throw new ArgumentNullException("methods");
+				throw new ArgumentNullException(nameof(methods));
 			this.targetResult = targetResult;
 			this.methodName = methodName;
 			this.methodLists = methods;

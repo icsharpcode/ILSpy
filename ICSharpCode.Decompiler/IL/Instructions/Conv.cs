@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Converts from the current precision available on the evaluation stack to the precision specified by
 		/// the <c>TargetType</c>.
-		/// Uses "round-to-nearest" mode is the precision is reduced.
+		/// Uses "round-to-nearest" mode if the precision is reduced.
 		/// </summary>
 		FloatPrecisionChange,
 		/// <summary>
@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.IL
 		public Conv(ILInstruction argument, StackType inputType, Sign inputSign, PrimitiveType targetType, bool checkForOverflow, bool isLifted = false)
 			: base(OpCode.Conv, argument)
 		{
-			bool needsSign = checkForOverflow || (!inputType.IsFloatType() && (targetType == PrimitiveType.R4 || targetType == PrimitiveType.R8));
+			bool needsSign = checkForOverflow || (!inputType.IsFloatType() && targetType.IsFloatType());
 			Debug.Assert(!(needsSign && inputSign == Sign.None));
 			this.InputSign = needsSign ? inputSign : Sign.None;
 			this.InputType = inputType;
@@ -264,6 +264,7 @@ namespace ICSharpCode.Decompiler.IL
 						default:
 							return ConversionKind.Invalid;
 					}
+				case PrimitiveType.R:
 				case PrimitiveType.R8:
 					switch (inputType) {
 						case StackType.I4:

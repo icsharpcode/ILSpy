@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		protected TypeWithElementType(IType elementType)
 		{
 			if (elementType == null)
-				throw new ArgumentNullException("elementType");
+				throw new ArgumentNullException(nameof(elementType));
 			this.elementType = elementType;
 		}
 		

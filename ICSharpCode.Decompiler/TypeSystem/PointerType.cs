@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public PointerTypeReference(ITypeReference elementType)
 		{
 			if (elementType == null)
-				throw new ArgumentNullException("elementType");
+				throw new ArgumentNullException(nameof(elementType));
 			this.elementType = elementType;
 		}
 		

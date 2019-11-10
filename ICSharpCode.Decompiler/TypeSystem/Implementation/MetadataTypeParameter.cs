@@ -230,7 +230,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override string ToString()
 		{
-			return $"{MetadataTokens.GetToken(handle):X8} Index={Index} Owner={Owner}";
+			return $"{MetadataTokens.GetToken(handle):X8} {ReflectionName}";
 		}
 	}
 }

@@ -89,21 +89,21 @@ namespace ICSharpCode.Decompiler.Semantics
 		public static Conversion UserDefinedConversion(IMethod operatorMethod, bool isImplicit, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted = false, bool isAmbiguous = false)
 		{
 			if (operatorMethod == null)
-				throw new ArgumentNullException("operatorMethod");
+				throw new ArgumentNullException(nameof(operatorMethod));
 			return new UserDefinedConv(isImplicit, operatorMethod, conversionBeforeUserDefinedOperator, conversionAfterUserDefinedOperator, isLifted, isAmbiguous);
 		}
 		
 		public static Conversion MethodGroupConversion(IMethod chosenMethod, bool isVirtualMethodLookup, bool delegateCapturesFirstArgument)
 		{
 			if (chosenMethod == null)
-				throw new ArgumentNullException("chosenMethod");
+				throw new ArgumentNullException(nameof(chosenMethod));
 			return new MethodGroupConv(chosenMethod, isVirtualMethodLookup, delegateCapturesFirstArgument, isValid: true);
 		}
 		
 		public static Conversion InvalidMethodGroupConversion(IMethod chosenMethod, bool isVirtualMethodLookup, bool delegateCapturesFirstArgument)
 		{
 			if (chosenMethod == null)
-				throw new ArgumentNullException("chosenMethod");
+				throw new ArgumentNullException(nameof(chosenMethod));
 			return new MethodGroupConv(chosenMethod, isVirtualMethodLookup, delegateCapturesFirstArgument, isValid: false);
 		}
 

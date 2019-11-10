@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IType Resolve(ITypeResolveContext context)
 		{
 			if (context == null)
-				throw new ArgumentNullException("context");
+				throw new ArgumentNullException(nameof(context));
 			
 			IType type = null;
 			if (module == null) {

@@ -305,6 +305,8 @@ namespace ICSharpCode.Decompiler.CSharp
 							return true;
 						if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(typeHandle, metadata))
 							return true;
+						if (settings.AsyncEnumerator && AsyncAwaitDecompiler.IsCompilerGeneratorAsyncEnumerator(typeHandle, metadata))
+							return true;
 						if (settings.FixedBuffers && name.StartsWith("<", StringComparison.Ordinal) && name.Contains("__FixedBuffer"))
 							return true;
 					} else if (type.IsCompilerGenerated(metadata)) {
@@ -1343,7 +1345,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (localSettings.DecompileMemberBodies && !body.Descendants.Any(d => d is YieldReturnStatement || d is YieldBreakStatement)) {
 						body.Add(new YieldBreakStatement());
 					}
-					RemoveAttribute(entityDecl, KnownAttribute.IteratorStateMachine);
+					if (function.IsAsync) {
+						RemoveAttribute(entityDecl, KnownAttribute.AsyncIteratorStateMachine);
+					} else {
+						RemoveAttribute(entityDecl, KnownAttribute.IteratorStateMachine);
+					}
 					if (function.StateMachineCompiledWithMono) {
 						RemoveAttribute(entityDecl, KnownAttribute.DebuggerHidden);
 					}

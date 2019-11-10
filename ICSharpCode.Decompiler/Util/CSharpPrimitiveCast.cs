@@ -64,6 +64,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (char)(float)input;
 								case TypeCode.Double:  return (char)(double)input;
 								case TypeCode.Decimal: return (char)(decimal)input;
+								case TypeCode.Boolean: return (char)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.SByte:
@@ -79,6 +80,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (sbyte)(float)input;
 								case TypeCode.Double:  return (sbyte)(double)input;
 								case TypeCode.Decimal: return (sbyte)(decimal)input;
+								case TypeCode.Boolean: return (sbyte)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Byte:
@@ -94,6 +96,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (byte)(float)input;
 								case TypeCode.Double:  return (byte)(double)input;
 								case TypeCode.Decimal: return (byte)(decimal)input;
+								case TypeCode.Boolean: return (byte)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Int16:
@@ -109,6 +112,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (short)(float)input;
 								case TypeCode.Double:  return (short)(double)input;
 								case TypeCode.Decimal: return (short)(decimal)input;
+								case TypeCode.Boolean: return (short)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.UInt16:
@@ -124,6 +128,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (ushort)(float)input;
 								case TypeCode.Double:  return (ushort)(double)input;
 								case TypeCode.Decimal: return (ushort)(decimal)input;
+								case TypeCode.Boolean: return (ushort)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Int32:
@@ -139,6 +144,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (int)(float)input;
 								case TypeCode.Double:  return (int)(double)input;
 								case TypeCode.Decimal: return (int)(decimal)input;
+								case TypeCode.Boolean: return (int)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.UInt32:
@@ -154,6 +160,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (uint)(float)input;
 								case TypeCode.Double:  return (uint)(double)input;
 								case TypeCode.Decimal: return (uint)(decimal)input;
+								case TypeCode.Boolean: return (uint)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Int64:
@@ -169,6 +176,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (long)(float)input;
 								case TypeCode.Double:  return (long)(double)input;
 								case TypeCode.Decimal: return (long)(decimal)input;
+								case TypeCode.Boolean: return (long)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.UInt64:
@@ -184,6 +192,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (ulong)(float)input;
 								case TypeCode.Double:  return (ulong)(double)input;
 								case TypeCode.Decimal: return (ulong)(decimal)input;
+								case TypeCode.Boolean: return (ulong)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Single:
@@ -199,6 +208,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.UInt64:  return (float)(ulong)input;
 								case TypeCode.Double:  return (float)(double)input;
 								case TypeCode.Decimal: return (float)(decimal)input;
+								case TypeCode.Boolean: return (float)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Double:
@@ -214,6 +224,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.UInt64:  return (double)(ulong)input;
 								case TypeCode.Single:  return (double)(float)input;
 								case TypeCode.Decimal: return (double)(decimal)input;
+								case TypeCode.Boolean: return (double)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Decimal:
@@ -229,6 +240,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.UInt64:  return (decimal)(ulong)input;
 								case TypeCode.Single:  return (decimal)(float)input;
 								case TypeCode.Double:  return (decimal)(double)input;
+								case TypeCode.Boolean: return (decimal)((bool)input ? 1 : 0);
 						}
 						break;
 				}
@@ -256,6 +268,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (char)(float)input;
 								case TypeCode.Double:  return (char)(double)input;
 								case TypeCode.Decimal: return (char)(decimal)input;
+								case TypeCode.Boolean: return (char)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.SByte:
@@ -271,6 +284,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (sbyte)(float)input;
 								case TypeCode.Double:  return (sbyte)(double)input;
 								case TypeCode.Decimal: return (sbyte)(decimal)input;
+								case TypeCode.Boolean: return (sbyte)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Byte:
@@ -286,6 +300,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (byte)(float)input;
 								case TypeCode.Double:  return (byte)(double)input;
 								case TypeCode.Decimal: return (byte)(decimal)input;
+								case TypeCode.Boolean: return (byte)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Int16:
@@ -301,6 +316,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (short)(float)input;
 								case TypeCode.Double:  return (short)(double)input;
 								case TypeCode.Decimal: return (short)(decimal)input;
+								case TypeCode.Boolean: return (short)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.UInt16:
@@ -316,6 +332,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (ushort)(float)input;
 								case TypeCode.Double:  return (ushort)(double)input;
 								case TypeCode.Decimal: return (ushort)(decimal)input;
+								case TypeCode.Boolean: return (ushort)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Int32:
@@ -331,6 +348,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (int)(float)input;
 								case TypeCode.Double:  return (int)(double)input;
 								case TypeCode.Decimal: return (int)(decimal)input;
+								case TypeCode.Boolean: return (int)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.UInt32:
@@ -346,6 +364,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (uint)(float)input;
 								case TypeCode.Double:  return (uint)(double)input;
 								case TypeCode.Decimal: return (uint)(decimal)input;
+								case TypeCode.Boolean: return (uint)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Int64:
@@ -361,6 +380,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (long)(float)input;
 								case TypeCode.Double:  return (long)(double)input;
 								case TypeCode.Decimal: return (long)(decimal)input;
+								case TypeCode.Boolean: return (long)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.UInt64:
@@ -376,6 +396,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.Single:  return (ulong)(float)input;
 								case TypeCode.Double:  return (ulong)(double)input;
 								case TypeCode.Decimal: return (ulong)(decimal)input;
+								case TypeCode.Boolean: return (ulong)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Single:
@@ -391,6 +412,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.UInt64:  return (float)(ulong)input;
 								case TypeCode.Double:  return (float)(double)input;
 								case TypeCode.Decimal: return (float)(decimal)input;
+								case TypeCode.Boolean: return (float)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Double:
@@ -406,6 +428,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.UInt64:  return (double)(ulong)input;
 								case TypeCode.Single:  return (double)(float)input;
 								case TypeCode.Decimal: return (double)(decimal)input;
+								case TypeCode.Boolean: return (double)((bool)input ? 1 : 0);
 						}
 						break;
 					case TypeCode.Decimal:
@@ -421,6 +444,7 @@ namespace ICSharpCode.Decompiler.Util
 								case TypeCode.UInt64:  return (decimal)(ulong)input;
 								case TypeCode.Single:  return (decimal)(float)input;
 								case TypeCode.Double:  return (decimal)(double)input;
+								case TypeCode.Boolean: return (decimal)((bool)input ? 1 : 0);
 						}
 						break;
 				}

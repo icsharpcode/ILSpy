@@ -989,6 +989,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			foundMember = null;
 			bestCandidateIsExpandedForm = false;
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
+
+			Log.WriteLine("IsUnambiguousCall: Performing overload resolution for " + method);
+			Log.WriteCollection("  Arguments: ", arguments.Select(a => a.ResolveResult));
+
 			var or = new OverloadResolution(resolver.Compilation,
 				firstOptionalArgumentIndex < 0 ? arguments.SelectArray(a => a.ResolveResult) : arguments.Take(firstOptionalArgumentIndex).Select(a => a.ResolveResult).ToArray(),
 				argumentNames: firstOptionalArgumentIndex < 0 || argumentNames == null ? argumentNames : argumentNames.Take(firstOptionalArgumentIndex).ToArray(),
@@ -1043,6 +1047,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		bool IsUnambiguousAccess(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method,
 			IList<TranslatedExpression> arguments, string[] argumentNames, out IMember foundMember)
 		{
+			Log.WriteLine("IsUnambiguousAccess: Performing overload resolution for " + method);
+			Log.WriteCollection("  Arguments: ", arguments.Select(a => a.ResolveResult));
+
 			foundMember = null;
 			if (target == null) {
 				var result = resolver.ResolveSimpleName(method.AccessorOwner.Name,
@@ -1404,6 +1411,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		bool IsUnambiguousMethodReference(ExpectedTargetDetails expectedTargetDetails, IMethod method, ResolveResult target, IReadOnlyList<IType> typeArguments, out ResolveResult result)
 		{
+			Log.WriteLine("IsUnambiguousMethodReference: Performing overload resolution for " + method);
+
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
 			var or = new OverloadResolution(resolver.Compilation,
 				arguments: method.Parameters.SelectReadOnlyArray(p => new TypeResolveResult(p.Type)), // there are no arguments, use parameter types

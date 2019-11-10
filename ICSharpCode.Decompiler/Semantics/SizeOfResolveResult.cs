@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			: base(int32)
 		{
 			if (referencedType == null)
-				throw new ArgumentNullException("referencedType");
+				throw new ArgumentNullException(nameof(referencedType));
 			this.referencedType = referencedType;
 			this.constantValue = constantValue;
 		}

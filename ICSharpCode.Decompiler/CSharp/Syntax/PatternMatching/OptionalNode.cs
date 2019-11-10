@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		public OptionalNode(INode childNode)
 		{
 			if (childNode == null)
-				throw new ArgumentNullException("childNode");
+				throw new ArgumentNullException(nameof(childNode));
 			this.childNode = childNode;
 		}
 		

@@ -15,14 +15,12 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 
 [assembly: FSharpInterfaceDataVersion(2, 0, 0)]
 [assembly: AssemblyTitle("ConsoleApplication1")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("ConsoleApplication1")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
-[assembly: TargetFramework(".NETFramework,Version=v4.6.1", FrameworkDisplayName = ".NET Framework 4.6.1")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]

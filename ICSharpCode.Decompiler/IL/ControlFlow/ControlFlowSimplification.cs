@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				context.CancellationToken.ThrowIfCancellationRequested();
 
 				RemoveNopInstructions(block);
-				RemoveDeadStackStores(block, aggressive: context.Settings.RemoveDeadStores);
+				RemoveDeadStackStores(block, context);
 
 				InlineVariableInReturnBlock(block, context);
 				// 1st pass SimplifySwitchInstruction before SimplifyBranchChains()
@@ -70,13 +70,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.Nop);
 		}
 
-		private void RemoveDeadStackStores(Block block, bool aggressive)
+		private static void RemoveDeadStackStores(Block block, ILTransformContext context)
 		{
+			bool aggressive = context.Settings.RemoveDeadStores;
 			// Previously copy propagation did this;
 			// ideally the ILReader would already do this,
 			// for now do this here (even though it's not control-flow related).
 			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 				if (block.Instructions[i] is StLoc stloc && stloc.Variable.IsSingleDefinition && stloc.Variable.LoadCount == 0 && stloc.Variable.Kind == VariableKind.StackSlot) {
+					context.Step($"Remove dead stack store {stloc.Variable.Name}", stloc);
 					if (aggressive ? SemanticHelper.IsPure(stloc.Value.Flags) : IsSimple(stloc.Value)) {
 						Debug.Assert(SemanticHelper.IsPure(stloc.Value.Flags));
 						block.Instructions.RemoveAt(i++);

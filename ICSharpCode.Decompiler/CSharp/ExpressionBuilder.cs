@@ -67,6 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </remarks>
 	sealed class ExpressionBuilder : ILVisitor<TranslationContext, TranslatedExpression>
 	{
+		readonly StatementBuilder statementBuilder;
 		readonly IDecompilerTypeSystem typeSystem;
 		internal readonly ITypeResolveContext decompilationContext;
 		internal readonly ILFunction currentFunction;
@@ -77,9 +78,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
 		
-		public ExpressionBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, ILFunction currentFunction, DecompilerSettings settings, CancellationToken cancellationToken)
+		public ExpressionBuilder(StatementBuilder statementBuilder, IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, ILFunction currentFunction, DecompilerSettings settings, CancellationToken cancellationToken)
 		{
 			Debug.Assert(decompilationContext != null);
+			this.statementBuilder = statementBuilder;
 			this.typeSystem = typeSystem;
 			this.decompilationContext = decompilationContext;
 			this.currentFunction = currentFunction;
@@ -369,7 +371,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			expr.Arguments.AddRange(args.Select(arg => arg.Expression));
 			return expr.WithILInstruction(inst)
-				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, inst.Type, dimensions), args.Select(a => a.ResolveResult).ToList(), new ResolveResult[0]));
+				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, inst.Type, dimensions), args.Select(a => a.ResolveResult).ToList(), Empty<ResolveResult>.Array));
 		}
 
 		protected internal override TranslatedExpression VisitLocAlloc(LocAlloc inst, TranslationContext context)
@@ -1937,6 +1939,31 @@ namespace ICSharpCode.Decompiler.CSharp
 					pd.AddAnnotation(new ILVariableResolveResult(v, parameters[i].Type));
 				yield return pd;
 				i++;
+			}
+		}
+
+		protected internal override TranslatedExpression VisitBlockContainer(BlockContainer container, TranslationContext context)
+		{
+			var oldReturnContainer = statementBuilder.currentReturnContainer;
+			var oldResultType = statementBuilder.currentResultType;
+			var oldIsIterator = statementBuilder.currentIsIterator;
+
+			statementBuilder.currentReturnContainer = container;
+			statementBuilder.currentResultType = context.TypeHint;
+			statementBuilder.currentIsIterator = false;
+			try {
+				var body = statementBuilder.ConvertAsBlock(container);
+				body.InsertChildAfter(null, new Comment(" Could not convert BlockContainer to single expression"), Roles.Comment);
+				var ame = new AnonymousMethodExpression { Body = body };
+				var delegateType = new ParameterizedType(compilation.FindType(typeof(Func<>)), InferReturnType(body));
+				var invocationTarget = new CastExpression(ConvertType(delegateType), ame);
+				return new InvocationExpression(new MemberReferenceExpression(invocationTarget, "Invoke"))
+					.WithILInstruction(container)
+					.WithRR(new CSharpInvocationResolveResult(new ResolveResult(delegateType), delegateType.GetDelegateInvokeMethod(), EmptyList<ResolveResult>.Instance));
+			} finally {
+				statementBuilder.currentReturnContainer = oldReturnContainer;
+				statementBuilder.currentResultType = oldResultType;
+				statementBuilder.currentIsIterator = oldIsIterator;
 			}
 		}
 

@@ -262,7 +262,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return NullableLiftingTransform.MatchGetValueOrDefault(inst, out ILInstruction arg)
 							&& arg.MatchLdLoc(testedVar);
 					default:
-						throw new ArgumentOutOfRangeException("mode");
+						throw new ArgumentOutOfRangeException(nameof(mode));
 				}
 			}
 
@@ -306,7 +306,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					).WithILRange(varLoad);
 					break;
 				default:
-					throw new ArgumentOutOfRangeException("mode");
+					throw new ArgumentOutOfRangeException(nameof(mode));
 			}
 			oldParentChildren[oldChildIndex] = replacement;
 		}
