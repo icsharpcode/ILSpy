@@ -625,9 +625,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			// stobj System.Int32(ldflda [Field ICSharpCode.Decompiler.Tests.TestCases.Pretty.Async+<SimpleBoolTaskMethod>d__7.<>1__state](ldloc this), ldc.i4 -2)
 			// call SetResult(ldflda [Field ICSharpCode.Decompiler.Tests.TestCases.Pretty.Async+<SimpleBoolTaskMethod>d__7.<>t__builder](ldloc this), ldloc result)
+			// [optional] call Complete(ldflda <>t__builder(ldloc this))
 			// leave IL_0000
-			if (setResultAndExitBlock.Instructions.Count != 3)
-				throw new SymbolicAnalysisFailedException();
 			if (!MatchStateAssignment(setResultAndExitBlock.Instructions[0], out finalState))
 				throw new SymbolicAnalysisFailedException();
 			finalStateKnown = true;
@@ -657,7 +656,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						throw new SymbolicAnalysisFailedException();
 					break;
 			}
-			if (!setResultAndExitBlock.Instructions[2].MatchLeave(blockContainer))
+			int pos = 2;
+			if (MatchCall(setResultAndExitBlock.Instructions[pos], "Complete", out args)) {
+				if (!(args.Count == 1 && IsBuilderFieldOnThis(args[0])))
+					throw new SymbolicAnalysisFailedException();
+				pos++;
+			}
+			if (!setResultAndExitBlock.Instructions[pos].MatchLeave(blockContainer))
 				throw new SymbolicAnalysisFailedException();
 		}
 
@@ -668,6 +673,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// 		stloc exception(ldloc E_143)
 			// 		stfld <>1__state(ldloc this, ldc.i4 -2)
 			// 		call SetException(ldfld <>t__builder(ldloc this), ldloc exception)
+			//      [optional] call Complete(ldfld <>t__builder(ldloc this))
 			// 		leave IL_0000
 			// 	}
 			// }
@@ -682,8 +688,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (catchBlock == null)
 				throw new SymbolicAnalysisFailedException();
 			catchHandlerOffset = catchBlock.StartILOffset;
-			if (catchBlock.Instructions.Count != 4)
-				throw new SymbolicAnalysisFailedException();
 			// stloc exception(ldloc E_143)
 			if (!(catchBlock.Instructions[0] is StLoc stloc))
 				throw new SymbolicAnalysisFailedException();
@@ -708,8 +712,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				throw new SymbolicAnalysisFailedException();
 			if (!args[1].MatchLdLoc(stloc.Variable))
 				throw new SymbolicAnalysisFailedException();
+
+			int pos = 3;
+			// [optional] call Complete(ldfld <>t__builder(ldloc this))
+			if (MatchCall(catchBlock.Instructions[pos], "Complete", out args)) {
+				if (!(args.Count == 1 && IsBuilderFieldOnThis(args[0])))
+					throw new SymbolicAnalysisFailedException();
+				pos++;
+			}
+
 			// leave IL_0000
-			if (!catchBlock.Instructions[3].MatchLeave((BlockContainer)moveNextFunction.Body))
+			if (!catchBlock.Instructions[pos].MatchLeave((BlockContainer)moveNextFunction.Body))
 				throw new SymbolicAnalysisFailedException();
 		}
 
