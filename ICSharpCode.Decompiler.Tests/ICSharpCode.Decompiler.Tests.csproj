@@ -60,6 +60,7 @@
     <None Include="TestCases\Correctness\StackTests.il" />
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
+    <None Include="TestCases\ILPretty\WeirdEnums.il" />
     <None Include="TestCases\ILPretty\ConstantBlobs.il" />
     <None Include="TestCases\ILPretty\CS1xSwitch_Debug.il" />
     <None Include="TestCases\ILPretty\CS1xSwitch_Release.il" />
@@ -80,6 +81,7 @@
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
+    <None Include="TestCases\ILPretty\WeirdEnums.cs" />
     <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
     <None Include="TestCases\Pretty\AsyncStreams.cs" />
     <None Include="TestCases\Pretty\AsyncUsing.cs" />
