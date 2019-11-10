@@ -28,7 +28,6 @@ using System;
 using System.Threading;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-using ICSharpCode.Decompiler.CSharp.Resolver;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -40,11 +39,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
 
+		internal BlockContainer currentReturnContainer;
+		internal IType currentResultType;
+		internal bool currentIsIterator;
+
 		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, ILFunction currentFunction, DecompilerSettings settings, CancellationToken cancellationToken)
 		{
 			Debug.Assert(typeSystem != null && decompilationContext != null);
-			this.exprBuilder = new ExpressionBuilder(typeSystem, decompilationContext, currentFunction, settings, cancellationToken);
+			this.exprBuilder = new ExpressionBuilder(this, typeSystem, decompilationContext, currentFunction, settings, cancellationToken);
 			this.currentFunction = currentFunction;
+			this.currentReturnContainer = (BlockContainer)currentFunction.Body;
+			this.currentIsIterator = currentFunction.IsIterator;
+			this.currentResultType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentFunction.ReturnType;
 			this.typeSystem = typeSystem;
 			this.settings = settings;
 			this.cancellationToken = cancellationToken;
@@ -300,19 +306,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (inst.TargetContainer == breakTarget)
 				return new BreakStatement();
-			if (inst.IsLeavingFunction) {
-				if (currentFunction.IsIterator)
+			if (inst.TargetContainer == currentReturnContainer) {
+				if (currentIsIterator)
 					return new YieldBreakStatement();
 				else if (!inst.Value.MatchNop()) {
-					IType targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentFunction.ReturnType;
-					var expr = exprBuilder.Translate(inst.Value, typeHint: targetType)
-						.ConvertTo(targetType, exprBuilder, allowImplicitConversion: true);
+					var expr = exprBuilder.Translate(inst.Value, typeHint: currentResultType)
+						.ConvertTo(currentResultType, exprBuilder, allowImplicitConversion: true);
 					return new ReturnStatement(expr);
 				} else
 					return new ReturnStatement();
 			}
-			string label;
-			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out label)) {
+			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out string label)) {
 				label = "end_" + inst.TargetLabel;
 				endContainerLabels.Add(inst.TargetContainer, label);
 			}

@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Fast internal version of the constructor. (no safety checks)
 		/// Keeps the array that was passed and assumes it won't be modified.
 		/// </summary>
-		internal ParameterizedType(IType genericType, IType[] typeArguments)
+		internal ParameterizedType(IType genericType, params IType[] typeArguments)
 		{
 			Debug.Assert(genericType.TypeParameterCount == typeArguments.Length);
 			this.genericType = genericType;
