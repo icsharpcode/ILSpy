@@ -59,7 +59,6 @@ jobs:
       msbuildArguments: /p:AppxPackageDir="$(Build.ArtifactStagingDirectory)\$(ReleaseChannel)\\" 
       configuration: $(BuildConfiguration)
       platform: $(BuildPlatform)
-      maximumCpuCount: true
 
   - task: VSTest@2
     displayName: Test
