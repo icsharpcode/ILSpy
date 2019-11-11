@@ -37,9 +37,12 @@ jobs:
   - checkout: self
     submodules: recursive
 
-  - task: DotNetCoreInstaller@0
+  - task: UseDotNet@2
+    displayName: 'Install .net core 3.0'
     inputs:
+      packageType: sdk
       version: '3.0.100'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
 
   - powershell: .\BuildTools\pipelines-install.ps1
     displayName: Install
