@@ -31,7 +31,7 @@ jobs:
       Config_Release_Store:
         BuildConfiguration: Release
         ReleaseChannel: Store
-        Solution: ILSpy.WithPackage.sln
+        Solution: .\ILSpy.Package\ILSpy.Package.wapproj
 
   steps:
   - checkout: self
