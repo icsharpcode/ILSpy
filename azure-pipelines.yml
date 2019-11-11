@@ -20,18 +20,22 @@ jobs:
         BuildConfiguration: Release
         ReleaseChannel: Zip
         Solution: ILSpy.sln
+        SolutionToBuild: ILSpy.sln
       Config_Debug_Zip:
         BuildConfiguration: Debug
         ReleaseChannel: Zip
         Solution: ILSpy.sln
+        SolutionToBuild: ILSpy.sln
       Config_Release_CI:
         BuildConfiguration: Release
         ReleaseChannel: CI
         Solution: ILSpy.WithPackage.sln
+        SolutionToBuild: ILSpy.WithPackage.sln
       Config_Release_Store:
         BuildConfiguration: Release
         ReleaseChannel: Store
-        Solution: .\ILSpy.Package\ILSpy.Package.wapproj
+        Solution: ILSpy.WithPackage.sln
+        SolutionToBuild: .\ILSpy.Package\ILSpy.Package.wapproj
 
   steps:
   - checkout: self
@@ -58,7 +62,7 @@ jobs:
   - task: MSBuild@1
     displayName: Build ILSpy
     inputs:
-      solution: $(Solution)
+      solution: $(SolutionToBuild)
       msbuildArguments: /p:AppxPackageDir="$(Build.ArtifactStagingDirectory)\$(ReleaseChannel)\\" /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild_$(ReleaseChannel)_$(BuildConfiguration).binlog"
       configuration: $(BuildConfiguration)
       platform: $(BuildPlatform)
