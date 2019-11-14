@@ -773,6 +773,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Introduce static local functions.
+        /// </summary>
+        public static string DecompilerSettings_IntroduceStaticLocalFunctions {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.IntroduceStaticLocalFunctions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to IsByRefLikeAttribute should be replaced with &apos;ref&apos; modifiers on structs.
         /// </summary>
         public static string DecompilerSettings_IsByRefLikeAttributeShouldBeReplacedWithRefModifiersOnStructs {

@@ -775,4 +775,7 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.DetectAsyncUsingAndForeachStatements" xml:space="preserve">
     <value>Detect awaited using and foreach statements</value>
   </data>
+  <data name="DecompilerSettings.IntroduceStaticLocalFunctions" xml:space="preserve">
+    <value>Introduce static local functions</value>
+  </data>
 </root>

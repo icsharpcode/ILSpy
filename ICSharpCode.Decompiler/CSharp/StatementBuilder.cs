@@ -1001,6 +1001,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (function.IsAsync) {
 					stmt.Modifiers |= Modifiers.Async;
 				}
+				if (settings.StaticLocalFunctions && function.Method.IsStatic && function.ReducedMethod.NumberOfCompilerGeneratedParameters == 0) {
+					stmt.Modifiers |= Modifiers.Static;
+				}
 				stmt.AddAnnotation(new MemberResolveResult(null, function.ReducedMethod));
 				return stmt;
 			}
