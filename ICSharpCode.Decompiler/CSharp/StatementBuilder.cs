@@ -987,6 +987,17 @@ namespace ICSharpCode.Decompiler.CSharp
 				stmt.Parameters.AddRange(exprBuilder.MakeParameters(function.Parameters, function));
 				stmt.ReturnType = exprBuilder.ConvertType(function.Method.ReturnType);
 				stmt.Body = nestedBuilder.ConvertAsBlock(function.Body);
+				if (function.Method.TypeParameters.Count > 0) {
+					var parentMethod = ((ILFunction)function.Parent).Method;
+					int skipCount = parentMethod.DeclaringType.TypeParameterCount + parentMethod.TypeParameters.Count - function.Method.DeclaringType.TypeParameterCount;
+					var astBuilder = exprBuilder.astBuilder;
+					if (astBuilder.ShowTypeParameters) {
+						stmt.TypeParameters.AddRange(function.Method.TypeParameters.Skip(skipCount).Select(t => astBuilder.ConvertTypeParameter(t)));
+						if (astBuilder.ShowTypeParameterConstraints) {
+							stmt.Constraints.AddRange(function.Method.TypeParameters.Skip(skipCount).Select(t => astBuilder.ConvertTypeParameterConstraint(t)).Where(c => c != null));
+						}
+					}
+				}
 				if (function.IsAsync) {
 					stmt.Modifiers |= Modifiers.Async;
 				}

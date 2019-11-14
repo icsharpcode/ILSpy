@@ -91,10 +91,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 					foreach (var useSite in info.UseSites) {
 						context.Step($"Transform use site at IL_{useSite.StartILOffset:x4}", useSite);
+						DetermineCaptureAndDeclarationScope(localFunction, useSite);
 						if (useSite.OpCode == OpCode.NewObj) {
 							TransformToLocalFunctionReference(localFunction, useSite);
 						} else {
-							DetermineCaptureAndDeclarationScope(localFunction, useSite);
 							TransformToLocalFunctionInvocation(localFunction.ReducedMethod, useSite);
 						}
 
@@ -129,6 +129,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			void HandleUseSite(IMethod targetMethod, CallInstruction inst)
 			{
 				if (!localFunctions.TryGetValue((MethodDefinitionHandle)targetMethod.MetadataToken, out var info)) {
+					targetMethod = (IMethod)targetMethod.MemberDefinition;
 					context.StepStartGroup($"Read local function '{targetMethod.Name}'", inst);
 					info = new LocalFunctionInfo() {
 						UseSites = new List<CallInstruction>() { inst },
@@ -151,12 +152,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
 			if (!methodDefinition.HasBody())
 				return null;
-			var genericContext = DelegateConstruction.GenericContextFromTypeArguments(targetMethod.Substitution);
-			if (genericContext == null)
-				return null;
 			var ilReader = context.CreateILReader();
 			var body = context.PEFile.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
-			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, ILFunctionKind.LocalFunction, context.CancellationToken);
+			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, default, ILFunctionKind.LocalFunction, context.CancellationToken);
 			// Embed the local function into the parent function's ILAst, so that "Show steps" can show
 			// how the local function body is being transformed.
 			rootFunction.LocalFunctions.Add(function);
@@ -219,12 +217,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			useSite.Arguments[0].ReplaceWith(new LdNull().WithILRange(useSite.Arguments[0]));
 			var fnptr = (IInstructionWithMethodOperand)useSite.Arguments[1];
-			var replacement = new LdFtn(function.ReducedMethod).WithILRange((ILInstruction)fnptr);
+			LocalFunctionMethod reducedMethod = function.ReducedMethod;
+			if (reducedMethod.TypeParameters.Count > 0)
+				reducedMethod = new LocalFunctionMethod(fnptr.Method, reducedMethod.NumberOfCompilerGeneratedParameters);
+			var replacement = new LdFtn(reducedMethod).WithILRange((ILInstruction)fnptr);
 			useSite.Arguments[1].ReplaceWith(replacement);
 		}
 
 		void TransformToLocalFunctionInvocation(LocalFunctionMethod reducedMethod, CallInstruction useSite)
 		{
+			if (reducedMethod.TypeParameters.Count > 0)
+				reducedMethod = new LocalFunctionMethod(useSite.Method, reducedMethod.NumberOfCompilerGeneratedParameters);
 			bool wasInstanceCall = !useSite.Method.IsStatic;
 			var replacement = new Call(reducedMethod);
 			int firstArgumentIndex = wasInstanceCall ? 1 : 0;

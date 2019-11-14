@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly ILFunction currentFunction;
 		internal readonly ICompilation compilation;
 		internal readonly CSharpResolver resolver;
-		readonly TypeSystemAstBuilder astBuilder;
+		internal readonly TypeSystemAstBuilder astBuilder;
 		internal readonly TypeInference typeInference;
 		internal readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
@@ -217,7 +217,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal ILFunction ResolveLocalFunction(IMethod method)
 		{
 			Debug.Assert(method.IsLocalFunction);
-			method = method.ReducedFrom;
+			method = (IMethod)method.ReducedFrom.MemberDefinition;
 			foreach (var parent in currentFunction.Ancestors.OfType<ILFunction>()) {
 				var definition = parent.LocalFunctions.FirstOrDefault(f => f.Method.Equals(method));
 				if (definition != null) {

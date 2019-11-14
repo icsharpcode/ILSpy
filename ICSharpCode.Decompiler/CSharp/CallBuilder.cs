@@ -195,8 +195,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (callOpCode == OpCode.NewObj) {
 				target = default(TranslatedExpression); // no target
 			} else if (method.IsLocalFunction && localFunction != null) {
-				target = new IdentifierExpression(localFunction.Name)
-					.WithoutILInstruction()
+				var ide = new IdentifierExpression(localFunction.Name);
+				if (method.TypeArguments.Count > 0) {
+					var parentMethod = ((ILFunction)localFunction.Parent).Method;
+					int skipCount = parentMethod.DeclaringType.TypeParameterCount + parentMethod.TypeParameters.Count - localFunction.Method.DeclaringType.TypeParameterCount;
+#if DEBUG
+					Debug.Assert(skipCount >= 0);
+					if (skipCount > 0) {
+						var currentMethod = expressionBuilder.currentFunction.Method;
+						currentMethod = currentMethod.ReducedFrom ?? currentMethod;
+						Debug.Assert(currentMethod.DeclaringType.TypeParameters.Concat(currentMethod.TypeParameters).Take(skipCount).SequenceEqual(method.DeclaringType.TypeArguments.Concat(method.TypeArguments).Take(skipCount)));
+					}
+#endif
+					ide.TypeArguments.AddRange(method.TypeArguments.Skip(skipCount).Select(expressionBuilder.ConvertType));
+				}
+				target = ide.WithoutILInstruction()
 					.WithRR(ToMethodGroup(method, localFunction));
 			} else {
 				target = expressionBuilder.TranslateTarget(
@@ -1304,10 +1317,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			// 2. add type arguments (represented as bit 1)
 			// 3. cast target (represented as bit 2)
 			int step;
+			ILFunction localFunction = null;
 			if (method.IsLocalFunction) {
-				step = 0;
+				localFunction = expressionBuilder.ResolveLocalFunction(method);
+				Debug.Assert(localFunction != null);
+			}
+			if (localFunction != null) {
+				step = 2;
 				requireTarget = false;
-				var localFunction = expressionBuilder.ResolveLocalFunction(method);
 				result = ToMethodGroup(method, localFunction);
 				target = default;
 				targetType = default;
@@ -1389,8 +1406,22 @@ namespace ICSharpCode.Decompiler.CSharp
 				targetExpression = mre.WithRR(result);
 			} else {
 				var ide = new IdentifierExpression(methodName);
-				if ((step & 2) != 0)
-					ide.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
+				if ((step & 2) != 0) {
+					int skipCount = 0;
+					if (localFunction != null && method.TypeArguments.Count > 0) {
+						var parentMethod = ((ILFunction)localFunction.Parent).Method;
+						skipCount = parentMethod.DeclaringType.TypeParameterCount + parentMethod.TypeParameters.Count - localFunction.Method.DeclaringType.TypeParameterCount;
+#if DEBUG
+						Debug.Assert(skipCount >= 0);
+						if (skipCount > 0) {
+							var currentMethod = expressionBuilder.currentFunction.Method;
+							currentMethod = currentMethod.ReducedFrom ?? currentMethod;
+							Debug.Assert(currentMethod.DeclaringType.TypeParameters.Concat(currentMethod.TypeParameters).Take(skipCount).SequenceEqual(method.DeclaringType.TypeArguments.Concat(method.TypeArguments).Take(skipCount)));
+						}
+#endif
+					}
+					ide.TypeArguments.AddRange(method.TypeArguments.Skip(skipCount).Select(expressionBuilder.ConvertType));
+				}
 				targetExpression = ide.WithRR(result);
 			}
 			return targetExpression;
@@ -1448,7 +1479,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						method.DeclaringType,
 						new IParameterizedMember[] { method }
 					)
-				}, EmptyList<IType>.Instance
+				}, method.TypeArguments
 			);
 		}
 
