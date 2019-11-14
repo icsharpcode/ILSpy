@@ -80,25 +80,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					continue;
 				}
 
-				var firstUseSite = info.UseSites[0];
 				context.StepStartGroup($"Transform " + info.Definition.Name, info.Definition);
 				try {
 					var localFunction = info.Definition;
 					if (!localFunction.Method.IsStatic) {
-						var target = firstUseSite.Arguments[0];
+						var target = info.UseSites[0].Arguments[0];
 						context.Step($"Replace 'this' with {target}", localFunction);
 						var thisVar = localFunction.Variables.SingleOrDefault(VariableKindExtensions.IsThis);
 						localFunction.AcceptVisitor(new DelegateConstruction.ReplaceDelegateTargetVisitor(target, thisVar));
 					}
 
 					foreach (var useSite in info.UseSites) {
-						context.Step($"Transform use site at IL_{useSite.StartILOffset:x4}", useSite);
 						DetermineCaptureAndDeclarationScope(localFunction, useSite);
-						if (useSite.OpCode == OpCode.NewObj) {
-							TransformToLocalFunctionReference(localFunction, useSite);
-						} else {
-							TransformToLocalFunctionInvocation(localFunction.ReducedMethod, useSite);
-						}
 
 						if (function.Method.IsConstructor && localFunction.DeclarationScope == null) {
 							localFunction.DeclarationScope = BlockContainer.FindClosestContainer(useSite);
@@ -111,10 +104,67 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						function.LocalFunctions.Remove(localFunction);
 						declaringFunction.LocalFunctions.Add(localFunction);
 					}
+
+					if (TryValidateSkipCount(info, out int skipCount) && skipCount != localFunction.ReducedMethod.NumberOfCompilerGeneratedGenerics) {
+						Debug.Assert(false);
+						function.Warnings.Add($"Could not decode local function '{info.Method}'");
+						if (localFunction.DeclarationScope != function.Body && localFunction.DeclarationScope.Parent is ILFunction declaringFunction) {
+							declaringFunction.LocalFunctions.Remove(localFunction);
+						}
+						continue;
+					}
+
+					foreach (var useSite in info.UseSites) {
+						context.Step($"Transform use site at IL_{useSite.StartILOffset:x4}", useSite);
+						if (useSite.OpCode == OpCode.NewObj) {
+							TransformToLocalFunctionReference(localFunction, useSite);
+						} else {
+							TransformToLocalFunctionInvocation(localFunction.ReducedMethod, useSite);
+						}
+					}
 				} finally {
 					context.StepEndGroup();
 				}
 			}
+		}
+
+		bool TryValidateSkipCount(LocalFunctionInfo info, out int skipCount)
+		{
+			skipCount = 0;
+			var localFunction = info.Definition;
+			if (localFunction.Method.TypeParameters.Count == 0)
+				return true;
+			var parentMethod = ((ILFunction)localFunction.Parent).Method;
+			var method = localFunction.Method;
+			skipCount = parentMethod.DeclaringType.TypeParameterCount - method.DeclaringType.TypeParameterCount;
+
+			if (skipCount > 0)
+				return false;
+			skipCount += parentMethod.TypeParameters.Count;
+			Debug.Assert(skipCount >= 0 && skipCount <= method.TypeArguments.Count);
+			if (skipCount < 0 || skipCount > method.TypeArguments.Count)
+				return false;
+
+			if (skipCount > 0) {
+#if DEBUG
+				foreach (var useSite in info.UseSites) {
+					var callerMethod = useSite.Ancestors.OfType<ILFunction>().First().Method;
+					callerMethod = callerMethod.ReducedFrom ?? callerMethod;
+					IMethod method0;
+					if (useSite.OpCode == OpCode.NewObj) {
+						method0 = ((LdFtn)useSite.Arguments[1]).Method;
+					} else {
+						method0 = useSite.Method;
+					}
+					var totalSkipCount = skipCount + method0.DeclaringType.TypeParameterCount;
+					var methodSkippedArgs = method0.DeclaringType.TypeArguments.Concat(method0.TypeArguments).Take(totalSkipCount);
+					Debug.Assert(methodSkippedArgs.SequenceEqual(callerMethod.DeclaringType.TypeArguments.Concat(callerMethod.TypeArguments).Take(totalSkipCount)));
+					Debug.Assert(methodSkippedArgs.All(p => p.Kind == TypeKind.TypeParameter));
+					Debug.Assert(methodSkippedArgs.Select(p => p.Name).SequenceEqual(method0.DeclaringType.TypeParameters.Concat(method0.TypeParameters).Take(totalSkipCount).Select(p => p.Name)));
+				}
+#endif
+			}
+			return true;
 		}
 
 		void FindUseSites(ILFunction function, ILTransformContext context, Dictionary<MethodDefinitionHandle, LocalFunctionInfo> localFunctions)
@@ -131,13 +181,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			void HandleUseSite(IMethod targetMethod, CallInstruction inst)
 			{
 				if (!localFunctions.TryGetValue((MethodDefinitionHandle)targetMethod.MetadataToken, out var info)) {
-					targetMethod = (IMethod)targetMethod.MemberDefinition;
 					context.StepStartGroup($"Read local function '{targetMethod.Name}'", inst);
 					info = new LocalFunctionInfo() {
 						UseSites = new List<CallInstruction>() { inst },
-						Method = targetMethod,
-						Definition = ReadLocalFunctionDefinition(context.Function, targetMethod)
+						Method = (IMethod)targetMethod.MemberDefinition,
 					};
+					var rootFunction = context.Function;
+					int skipCount = GetSkipCount(rootFunction, targetMethod);
+					info.Definition = ReadLocalFunctionDefinition(rootFunction, targetMethod, skipCount);
 					localFunctions.Add((MethodDefinitionHandle)targetMethod.MetadataToken, info);
 					if (info.Definition != null) {
 						FindUseSites(info.Definition, context, localFunctions);
@@ -149,14 +200,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		ILFunction ReadLocalFunctionDefinition(ILFunction rootFunction, IMethod targetMethod)
+		ILFunction ReadLocalFunctionDefinition(ILFunction rootFunction, IMethod targetMethod, int skipCount)
 		{
 			var methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
 			if (!methodDefinition.HasBody())
 				return null;
 			var ilReader = context.CreateILReader();
 			var body = context.PEFile.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
-			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, default, ILFunctionKind.LocalFunction, context.CancellationToken);
+			var genericContext = GenericContextFromTypeArguments(targetMethod, skipCount);
+			if (genericContext == null)
+				return null;
+			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.GetValueOrDefault(), ILFunctionKind.LocalFunction, context.CancellationToken);
 			// Embed the local function into the parent function's ILAst, so that "Show steps" can show
 			// how the local function body is being transformed.
 			rootFunction.LocalFunctions.Add(function);
@@ -165,8 +219,62 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var nestedContext = new ILTransformContext(context, function);
 			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is LocalFunctionDecompiler)), nestedContext);
 			function.DeclarationScope = null;
-			function.ReducedMethod = ReduceToLocalFunction(targetMethod);
+			function.ReducedMethod = ReduceToLocalFunction(function.Method);
+			function.ReducedMethod.NumberOfCompilerGeneratedGenerics = skipCount;
 			return function;
+		}
+
+		int GetSkipCount(ILFunction rootFunction, IMethod targetMethod)
+		{
+			targetMethod = (IMethod)targetMethod.MemberDefinition;
+			var skipCount = rootFunction.Method.DeclaringType.TypeParameters.Count + rootFunction.Method.TypeParameters.Count - targetMethod.DeclaringType.TypeParameters.Count;
+			if (skipCount < 0) {
+				skipCount = 0;
+			}
+			if (targetMethod.TypeParameters.Count > 0) {
+				var lastParams = targetMethod.Parameters.Where(p => IsClosureParameter(p, this.resolveContext)).SelectMany(p => UnwrapByRef(p.Type).TypeArguments)
+					.Select(pt => (int?)targetMethod.TypeArguments.IndexOf(pt)).DefaultIfEmpty().Max();
+				if (lastParams != null && lastParams.GetValueOrDefault() + 1 > skipCount)
+					skipCount = lastParams.GetValueOrDefault() + 1;
+			}
+			return skipCount;
+		}
+
+		static TypeSystem.GenericContext? GenericContextFromTypeArguments(IMethod targetMethod, int skipCount)
+		{
+			if (skipCount < 0 || skipCount > targetMethod.TypeParameters.Count) {
+				Debug.Assert(false);
+				return null;
+			}
+			int total = targetMethod.DeclaringType.TypeParameters.Count + skipCount;
+			if (total == 0)
+				return default(TypeSystem.GenericContext);
+
+			var classTypeParameters = new List<ITypeParameter>(targetMethod.DeclaringType.TypeParameters);
+			var methodTypeParameters = new List<ITypeParameter>(targetMethod.TypeParameters);
+			var a = targetMethod.DeclaringType.TypeArguments.Concat(targetMethod.TypeArguments).Take(total);
+			int idx = 0;
+			foreach (var curA in a) {
+				int curIdx;
+				List<ITypeParameter> curParameters;
+				IReadOnlyList<IType> curArgs;
+				if (idx < classTypeParameters.Count) {
+					curIdx = idx;
+					curParameters = classTypeParameters;
+					curArgs = targetMethod.DeclaringType.TypeArguments;
+				} else {
+					curIdx = idx - classTypeParameters.Count;
+					curParameters = methodTypeParameters;
+					curArgs = targetMethod.TypeArguments;
+				}
+				if (curArgs[curIdx].Kind != TypeKind.TypeParameter)
+					break;
+				curParameters[curIdx] = (ITypeParameter)curA;
+				idx++;
+			}
+			Debug.Assert(idx == total);
+
+			return new TypeSystem.GenericContext(classTypeParameters, methodTypeParameters);
 		}
 
 		static T FindCommonAncestorInstruction<T>(ILInstruction a, ILInstruction b)
@@ -219,19 +327,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			useSite.Arguments[0].ReplaceWith(new LdNull().WithILRange(useSite.Arguments[0]));
 			var fnptr = (IInstructionWithMethodOperand)useSite.Arguments[1];
-			LocalFunctionMethod reducedMethod = function.ReducedMethod;
-			if (reducedMethod.TypeParameters.Count > 0)
-				reducedMethod = new LocalFunctionMethod(fnptr.Method, reducedMethod.NumberOfCompilerGeneratedParameters);
-			var replacement = new LdFtn(reducedMethod).WithILRange((ILInstruction)fnptr);
+			var specializeMethod = function.ReducedMethod.Specialize(fnptr.Method.Substitution);
+			var replacement = new LdFtn(specializeMethod).WithILRange((ILInstruction)fnptr);
 			useSite.Arguments[1].ReplaceWith(replacement);
 		}
 
 		void TransformToLocalFunctionInvocation(LocalFunctionMethod reducedMethod, CallInstruction useSite)
 		{
-			if (reducedMethod.TypeParameters.Count > 0)
-				reducedMethod = new LocalFunctionMethod(useSite.Method, reducedMethod.NumberOfCompilerGeneratedParameters);
+			var specializeMethod = reducedMethod.Specialize(useSite.Method.Substitution);
 			bool wasInstanceCall = !useSite.Method.IsStatic;
-			var replacement = new Call(reducedMethod);
+			var replacement = new Call(specializeMethod);
 			int firstArgumentIndex = wasInstanceCall ? 1 : 0;
 			int argumentCount = useSite.Arguments.Count;
 			int reducedArgumentCount = argumentCount - (reducedMethod.NumberOfCompilerGeneratedParameters + firstArgumentIndex);

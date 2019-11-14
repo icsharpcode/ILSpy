@@ -217,9 +217,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal ILFunction ResolveLocalFunction(IMethod method)
 		{
 			Debug.Assert(method.IsLocalFunction);
-			method = (IMethod)method.ReducedFrom.MemberDefinition;
+			method = (IMethod)((IMethod)method.MemberDefinition).ReducedFrom.MemberDefinition;
 			foreach (var parent in currentFunction.Ancestors.OfType<ILFunction>()) {
-				var definition = parent.LocalFunctions.FirstOrDefault(f => f.Method.Equals(method));
+				var definition = parent.LocalFunctions.FirstOrDefault(f => f.Method.MemberDefinition.Equals(method));
 				if (definition != null) {
 					return definition;
 				}

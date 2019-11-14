@@ -988,10 +988,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				stmt.ReturnType = exprBuilder.ConvertType(function.Method.ReturnType);
 				stmt.Body = nestedBuilder.ConvertAsBlock(function.Body);
 				if (function.Method.TypeParameters.Count > 0) {
-					var parentMethod = ((ILFunction)function.Parent).Method;
-					int skipCount = parentMethod.DeclaringType.TypeParameterCount + parentMethod.TypeParameters.Count - function.Method.DeclaringType.TypeParameterCount;
 					var astBuilder = exprBuilder.astBuilder;
 					if (astBuilder.ShowTypeParameters) {
+						int skipCount = function.ReducedMethod.NumberOfCompilerGeneratedGenerics;
 						stmt.TypeParameters.AddRange(function.Method.TypeParameters.Skip(skipCount).Select(t => astBuilder.ConvertTypeParameter(t)));
 						if (astBuilder.ShowTypeParameterConstraints) {
 							stmt.Constraints.AddRange(function.Method.TypeParameters.Skip(skipCount).Select(t => astBuilder.ConvertTypeParameterConstraint(t)).Where(c => c != null));
@@ -1001,7 +1000,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (function.IsAsync) {
 					stmt.Modifiers |= Modifiers.Async;
 				}
-				if (settings.StaticLocalFunctions && function.Method.IsStatic && function.ReducedMethod.NumberOfCompilerGeneratedParameters == 0) {
+				if (settings.StaticLocalFunctions && function.ReducedMethod.IsStaticLocalFunction) {
 					stmt.Modifiers |= Modifiers.Static;
 				}
 				stmt.AddAnnotation(new MemberResolveResult(null, function.ReducedMethod));

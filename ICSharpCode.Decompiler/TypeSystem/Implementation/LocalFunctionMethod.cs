@@ -67,6 +67,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		internal int NumberOfCompilerGeneratedParameters { get; }
 
+		internal int NumberOfCompilerGeneratedGenerics { get; set; }
+
+		internal bool IsStaticLocalFunction => NumberOfCompilerGeneratedParameters == 0 && baseMethod.IsStatic;
+
 		public IMember MemberDefinition => this;
 
 		public IType ReturnType => baseMethod.ReturnType;

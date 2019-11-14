@@ -194,19 +194,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			TranslatedExpression target;
 			if (callOpCode == OpCode.NewObj) {
 				target = default(TranslatedExpression); // no target
-			} else if (method.IsLocalFunction && localFunction != null) {
+			} else if (localFunction != null) {
 				var ide = new IdentifierExpression(localFunction.Name);
 				if (method.TypeArguments.Count > 0) {
-					var parentMethod = ((ILFunction)localFunction.Parent).Method;
-					int skipCount = parentMethod.DeclaringType.TypeParameterCount + parentMethod.TypeParameters.Count - localFunction.Method.DeclaringType.TypeParameterCount;
-#if DEBUG
-					Debug.Assert(skipCount >= 0);
-					if (skipCount > 0) {
-						var currentMethod = expressionBuilder.currentFunction.Method;
-						currentMethod = currentMethod.ReducedFrom ?? currentMethod;
-						Debug.Assert(currentMethod.DeclaringType.TypeParameters.Concat(currentMethod.TypeParameters).Take(skipCount).SequenceEqual(method.DeclaringType.TypeArguments.Concat(method.TypeArguments).Take(skipCount)));
-					}
-#endif
+					int skipCount = localFunction.ReducedMethod.NumberOfCompilerGeneratedGenerics;
 					ide.TypeArguments.AddRange(method.TypeArguments.Skip(skipCount).Select(expressionBuilder.ConvertType));
 				}
 				target = ide.WithoutILInstruction()
@@ -238,7 +229,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var argumentList = BuildArgumentList(expectedTargetDetails, target.ResolveResult, method,
 				firstParamIndex, callArguments, argumentToParameterMap);
 
-			if (method.IsLocalFunction) {
+			if (localFunction != null) {
 				return new InvocationExpression(target, argumentList.GetArgumentExpressions())
 					.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, method,
 						argumentList.GetArgumentResolveResults().ToList(), isExpandedForm: argumentList.IsExpandedForm));
@@ -1368,11 +1359,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					memberDeclaringType: method.DeclaringType);
 				requireTarget = expressionBuilder.HidesVariableWithName(method.Name)
 					|| (method.IsStatic ? !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression));
-
+				step = requireTarget ? 1 : 0;
 				var savedTarget = target;
-				for (step = requireTarget ? 1 : 0; step < 7; step++) {
+				for (; step < 7; step++) {
 					ResolveResult targetResolveResult;
-					if (!method.IsLocalFunction && (step & 1) != 0) {
+					//TODO: why there is an check for IsLocalFunction here, it should be unreachable in old code
+					if (localFunction == null && (step & 1) != 0) {
 						targetResolveResult = savedTarget.ResolveResult;
 						target = savedTarget;
 					} else {
@@ -1395,7 +1387,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 				}
 			}
-			requireTarget = !method.IsLocalFunction && (step & 1) != 0;
+			requireTarget = localFunction == null && (step & 1) != 0;
 			ExpressionWithResolveResult targetExpression;
 			Debug.Assert(result != null);
 			if (requireTarget) {
@@ -1409,16 +1401,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if ((step & 2) != 0) {
 					int skipCount = 0;
 					if (localFunction != null && method.TypeArguments.Count > 0) {
-						var parentMethod = ((ILFunction)localFunction.Parent).Method;
-						skipCount = parentMethod.DeclaringType.TypeParameterCount + parentMethod.TypeParameters.Count - localFunction.Method.DeclaringType.TypeParameterCount;
-#if DEBUG
-						Debug.Assert(skipCount >= 0);
-						if (skipCount > 0) {
-							var currentMethod = expressionBuilder.currentFunction.Method;
-							currentMethod = currentMethod.ReducedFrom ?? currentMethod;
-							Debug.Assert(currentMethod.DeclaringType.TypeParameters.Concat(currentMethod.TypeParameters).Take(skipCount).SequenceEqual(method.DeclaringType.TypeArguments.Concat(method.TypeArguments).Take(skipCount)));
-						}
-#endif
+						skipCount = localFunction.ReducedMethod.NumberOfCompilerGeneratedGenerics;
 					}
 					ide.TypeArguments.AddRange(method.TypeArguments.Skip(skipCount).Select(expressionBuilder.ConvertType));
 				}
