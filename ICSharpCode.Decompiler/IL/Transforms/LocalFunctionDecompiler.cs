@@ -65,6 +65,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!context.Settings.LocalFunctions)
 				return;
+			if (IsLocalFunctionMethod(function.Method, context) || IsLocalFunctionDisplayClass(function.Method.ParentModule.PEFile, (TypeDefinitionHandle)function.Method.DeclaringTypeDefinition.MetadataToken, context))
+				return;
 			this.context = context;
 			this.resolveContext = new SimpleTypeResolveContext(function.Method);
 			var localFunctions = new Dictionary<MethodDefinitionHandle, LocalFunctionInfo>();
