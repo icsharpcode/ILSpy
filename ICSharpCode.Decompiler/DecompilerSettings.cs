@@ -1065,7 +1065,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool staticLocalFunctions = true;
+		bool staticLocalFunctions = false;
 
 		/// <summary>
 		/// Gets/Sets whether C# 8.0 static local functions should be transformed.
