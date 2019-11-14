@@ -27,12 +27,14 @@ namespace LocalFunctions
 		{
 			public int MixedLocalFunction<T2>() where T2 : ICloneable, IConvertible
 			{
+				T2 t2 = default(T2);
 				object z = this;
 				for (int j = 0; j < 10; j++) {
 					int i = 0;
 					i += NonStaticMethod6<object>();
 					int NonStaticMethod6<T3>()
 					{
+						t2 = default(T2);
 						int l = 0;
 						return NonStaticMethod6_1<T1>() + NonStaticMethod6_1<T2>() + z.GetHashCode();
 						int NonStaticMethod6_1<T4>()
@@ -48,13 +50,15 @@ namespace LocalFunctions
 				}
 				int StaticMethod1<T3>() where T3 : struct
 				{
-					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + StaticMethod1<float>() + StaticMethod1_1<T3, DayOfWeek>() + StaticMethod2<T2, T3, DayOfWeek>();
+					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + StaticMethod1<float>() + StaticMethod1_1<T3, DayOfWeek>() + StaticMethod2_RepeatT2<T2, T3, DayOfWeek>();
 				}
 				int StaticMethod1_1<T3, T4>() where T3 : struct where T4 : Enum
 				{
 					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + typeof(T4).Name.Length + StaticMethod1<float>() + StaticMethod1_1<T3, DayOfWeek>();
 				}
-				int StaticMethod2<T2, T3, T4>() where T2 : IConvertible where T3 : struct where T4 : Enum
+#pragma warning disable CS8387
+				int StaticMethod2_RepeatT2<T2, T3, T4>() where T2 : IConvertible where T3 : struct where T4 : Enum
+#pragma warning restore CS8387
 				{
 					return typeof(T2).Name.Length;
 				}
@@ -75,12 +79,14 @@ namespace LocalFunctions
 
 			public int MixedLocalFunction2Delegate<T2>() where T2 : ICloneable, IConvertible
 			{
+				T2 t2 = default(T2);
 				object z = this;
 				for (int j = 0; j < 10; j++) {
 					int i = 0;
 					i += StaticInvokeAsFunc(NonStaticMethod6<object>);
 					int NonStaticMethod6<T3>()
 					{
+						t2 = default(T2);
 						int l = 0;
 						return StaticInvokeAsFunc(NonStaticMethod6_1<T1>) + StaticInvokeAsFunc(NonStaticMethod6_1<T2>) + z.GetHashCode();
 						int NonStaticMethod6_1<T4>()
@@ -104,13 +110,15 @@ namespace LocalFunctions
 				}
 				int StaticMethod1<T3>() where T3 : struct
 				{
-					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + StaticInvokeAsFunc(StaticMethod1<float>) + StaticInvokeAsFunc(StaticMethod1_1<T3, DayOfWeek>) + StaticInvokeAsFunc(StaticMethod2<T2, T3, DayOfWeek>);
+					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + StaticInvokeAsFunc(StaticMethod1<float>) + StaticInvokeAsFunc(StaticMethod1_1<T3, DayOfWeek>) + StaticInvokeAsFunc(StaticMethod2_RepeatT2<T2, T3, DayOfWeek>);
 				}
 				int StaticMethod1_1<T3, T4>() where T3 : struct where T4 : Enum
 				{
 					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + typeof(T4).Name.Length + StaticInvokeAsFunc(StaticMethod1<float>) + StaticInvokeAsFunc(StaticMethod1_1<T3, DayOfWeek>);
 				}
-				int StaticMethod2<T2, T3, T4>() where T2 : IConvertible where T3 : struct where T4 : Enum
+#pragma warning disable CS8387
+				int StaticMethod2_RepeatT2<T2, T3, T4>() where T2 : IConvertible where T3 : struct where T4 : Enum
+#pragma warning restore CS8387
 				{
 					return typeof(T2).Name.Length;
 				}
@@ -126,6 +134,52 @@ namespace LocalFunctions
 					{
 						return k;
 					}
+				}
+			}
+
+			public static void Test_CaptureT<T2>()
+			{
+				T2 t2 = default(T2);
+				Method1<int>();
+				void Method1<T3>()
+				{
+					t2 = default(T2);
+					T2 t2x = t2;
+					T3 t3 = default(T3);
+					Method1_1();
+					void Method1_1()
+					{
+						t2 = default(T2);
+						t2x = t2;
+						t3 = default(T3);
+					}
+				}
+			}
+
+			public void TestGenericArgs<T2>() where T2 : List<T2>
+			{
+				ZZ<T2>(null);
+				ZZ2<object>(null);
+				void Nop<T>(T data)
+				{
+				}
+				void ZZ<T3>(T3 t3) where T3 : T2
+				{
+					Nop<List<T2>>(t3);
+					ZZ1<T3>(t3);
+					ZZ3();
+					void ZZ3()
+					{
+						Nop<List<T2>>(t3);
+					}
+				}
+				void ZZ1<T3>(T3 t3)
+				{
+					Nop<List<T2>>((List<T2>)(object)t3);
+				}
+				void ZZ2<T3>(T3 t3)
+				{
+					Nop<List<T2>>((List<T2>)(object)t3);
 				}
 			}
 		}
@@ -439,5 +493,53 @@ namespace LocalFunctions
 		//		}
 		//	}
 		//}
+
+		public void NestedCapture1()
+		{
+			Method1(null);
+
+			Action<object> Method1(Action<object> action)
+			{
+				return Method1_1;
+
+				void Method1_1(object containerBuilder) =>
+					Method1_2(containerBuilder);
+
+				void Method1_2(object containerBuilder) =>
+					action(containerBuilder);
+			}
+		}
+
+		public int NestedCapture2()
+		{
+			return Method();
+			int Method()
+			{
+				int t0 = 0;
+				return ZZZ_0();
+				int ZZZ_0()
+				{
+					t0 = 0;
+					var t1 = t0;
+					Func<int> zzz2 = () => {
+						t0 = 0;
+						t1 = 0;
+						return ZZZ_1();
+					};
+					return zzz2();
+				}
+				int ZZZ_1()
+				{
+					t0 = 0;
+					var t1 = t0;
+					Func<int> zzz = () => {
+						t0 = 0;
+						t1 = 0;
+						return 0;
+					};
+					return zzz();
+				}
+			}
+		}
 	}
 }
