@@ -514,6 +514,7 @@ namespace LocalFunctions
 			}
 		}
 
+#if false
 		public int NestedCapture2()
 		{
 			return Method();
@@ -545,5 +546,6 @@ namespace LocalFunctions
 				}
 			}
 		}
+#endif
 	}
 }
