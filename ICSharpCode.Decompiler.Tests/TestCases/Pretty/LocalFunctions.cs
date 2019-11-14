@@ -502,11 +502,15 @@ namespace LocalFunctions
 			{
 				return Method1_1;
 
-				void Method1_1(object containerBuilder) =>
+				void Method1_1(object containerBuilder)
+				{
 					Method1_2(containerBuilder);
+				}
 
-				void Method1_2(object containerBuilder) =>
+				void Method1_2(object containerBuilder)
+				{
 					action(containerBuilder);
+				}
 			}
 		}
 

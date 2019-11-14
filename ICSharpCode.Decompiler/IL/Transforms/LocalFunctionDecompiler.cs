@@ -379,8 +379,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (closureVar.Kind == VariableKind.NamedArgument)
 					return false;
-				ITypeDefinition potentialDisplayClass = UnwrapByRef(closureVar.Type).GetDefinition();
-				if (!TransformDisplayClassUsage.IsPotentialClosure(context, potentialDisplayClass))
+				if (!TransformDisplayClassUsage.IsClosure(context, closureVar, null, out _, out _))
 					return false;
 				if (i - firstArgumentIndex >= 0) {
 					Debug.Assert(i - firstArgumentIndex < function.Method.Parameters.Count && IsClosureParameter(function.Method.Parameters[i - firstArgumentIndex], resolveContext));
