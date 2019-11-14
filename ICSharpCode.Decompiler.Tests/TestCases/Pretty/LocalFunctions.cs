@@ -23,6 +23,113 @@ namespace LocalFunctions
 {
 	internal class LocalFunctions
 	{
+		public class Generic<T1> where T1 : struct, ICloneable, IConvertible
+		{
+			public int MixedLocalFunction<T2>() where T2 : ICloneable, IConvertible
+			{
+				object z = this;
+				for (int j = 0; j < 10; j++) {
+					int i = 0;
+					i += NonStaticMethod6<object>();
+					int NonStaticMethod6<T3>()
+					{
+						int l = 0;
+						return NonStaticMethod6_1<T1>() + NonStaticMethod6_1<T2>() + z.GetHashCode();
+						int NonStaticMethod6_1<T4>()
+						{
+							return i + l + NonStaticMethod6<T4>() + StaticMethod1<decimal>();
+						}
+					}
+				}
+				return MixedLocalFunction<T1>() + MixedLocalFunction<T2>() + StaticMethod1<decimal>() + StaticMethod1<int>() + NonStaticMethod3() + StaticMethod4<object>(null) + StaticMethod5<T1>();
+				int NonStaticMethod3()
+				{
+					return GetHashCode();
+				}
+				int StaticMethod1<T3>() where T3 : struct
+				{
+					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + StaticMethod1<float>() + StaticMethod1_1<T3, DayOfWeek>() + StaticMethod2<T2, T3, DayOfWeek>();
+				}
+				int StaticMethod1_1<T3, T4>() where T3 : struct where T4 : Enum
+				{
+					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + typeof(T4).Name.Length + StaticMethod1<float>() + StaticMethod1_1<T3, DayOfWeek>();
+				}
+				int StaticMethod2<T2, T3, T4>() where T2 : IConvertible where T3 : struct where T4 : Enum
+				{
+					return typeof(T2).Name.Length;
+				}
+				int StaticMethod4<T>(T dd)
+				{
+					return 0;
+				}
+				int StaticMethod5<T3>()
+				{
+					int k = 0;
+					return k + NonStaticMethod5_1<T1>();
+					int NonStaticMethod5_1<T4>()
+					{
+						return k;
+					}
+				}
+			}
+
+			public int MixedLocalFunction2Delegate<T2>() where T2 : ICloneable, IConvertible
+			{
+				object z = this;
+				for (int j = 0; j < 10; j++) {
+					int i = 0;
+					i += StaticInvokeAsFunc(NonStaticMethod6<object>);
+					int NonStaticMethod6<T3>()
+					{
+						int l = 0;
+						return StaticInvokeAsFunc(NonStaticMethod6_1<T1>) + StaticInvokeAsFunc(NonStaticMethod6_1<T2>) + z.GetHashCode();
+						int NonStaticMethod6_1<T4>()
+						{
+							return i + l + StaticInvokeAsFunc(NonStaticMethod6<T4>) + StaticInvokeAsFunc(StaticMethod1<decimal>);
+						}
+					}
+				}
+				return StaticInvokeAsFunc(MixedLocalFunction2Delegate<T1>) + StaticInvokeAsFunc(MixedLocalFunction2Delegate<T2>) + StaticInvokeAsFunc(StaticMethod1<decimal>) + StaticInvokeAsFunc(StaticMethod1<int>) + StaticInvokeAsFunc(NonStaticMethod3) + StaticInvokeAsFunc(StaticMethod5<T1>) + new Func<object, int>(StaticMethod4<object>)(null) + StaticInvokeAsFunc2<object>(StaticMethod4<object>) + new Func<Func<object, int>, int>(StaticInvokeAsFunc2<object>)(StaticMethod4<object>);
+				int NonStaticMethod3()
+				{
+					return GetHashCode();
+				}
+				int StaticInvokeAsFunc(Func<int> func)
+				{
+					return func();
+				}
+				int StaticInvokeAsFunc2<T>(Func<T, int> func)
+				{
+					return func(default(T));
+				}
+				int StaticMethod1<T3>() where T3 : struct
+				{
+					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + StaticInvokeAsFunc(StaticMethod1<float>) + StaticInvokeAsFunc(StaticMethod1_1<T3, DayOfWeek>) + StaticInvokeAsFunc(StaticMethod2<T2, T3, DayOfWeek>);
+				}
+				int StaticMethod1_1<T3, T4>() where T3 : struct where T4 : Enum
+				{
+					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + typeof(T4).Name.Length + StaticInvokeAsFunc(StaticMethod1<float>) + StaticInvokeAsFunc(StaticMethod1_1<T3, DayOfWeek>);
+				}
+				int StaticMethod2<T2, T3, T4>() where T2 : IConvertible where T3 : struct where T4 : Enum
+				{
+					return typeof(T2).Name.Length;
+				}
+				int StaticMethod4<T>(T dd)
+				{
+					return 0;
+				}
+				int StaticMethod5<T3>()
+				{
+					int k = 0;
+					return k + StaticInvokeAsFunc(NonStaticMethod5_1<T1>);
+					int NonStaticMethod5_1<T4>()
+					{
+						return k;
+					}
+				}
+			}
+		}
+
 		private int field;
 
 		private Lazy<object> nonCapturinglocalFunctionInLambda = new Lazy<object>(delegate {
