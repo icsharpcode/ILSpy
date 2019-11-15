@@ -118,7 +118,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return await Nested(1) + await Nested(2);
 
+#if CS80
+			static async ValueTask<int> Nested(int i)
+#else
 			async ValueTask<int> Nested(int i)
+#endif
 			{
 				await Task.Delay(i);
 				return i;

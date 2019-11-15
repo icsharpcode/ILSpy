@@ -190,7 +190,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return await Nested(1) + await Nested(2);
 
+#if CS80
+			static async Task<int> Nested(int i)
+#else
 			async Task<int> Nested(int i)
+#endif
 			{
 				await Task.Delay(i);
 				return i;

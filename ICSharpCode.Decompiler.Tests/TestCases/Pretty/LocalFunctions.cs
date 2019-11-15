@@ -48,25 +48,45 @@ namespace LocalFunctions
 				{
 					return GetHashCode();
 				}
+#if CS80
+				static int StaticMethod1<T3>() where T3 : struct
+#else
 				int StaticMethod1<T3>() where T3 : struct
+#endif
 				{
 					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + StaticMethod1<float>() + StaticMethod1_1<T3, DayOfWeek>() + StaticMethod2_RepeatT2<T2, T3, DayOfWeek>();
 				}
+#if CS80
+				static int StaticMethod1_1<T3, T4>() where T3 : struct where T4 : Enum
+#else
 				int StaticMethod1_1<T3, T4>() where T3 : struct where T4 : Enum
+#endif
 				{
 					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + typeof(T4).Name.Length + StaticMethod1<float>() + StaticMethod1_1<T3, DayOfWeek>();
 				}
 #pragma warning disable CS8387
+#if CS80
+				static int StaticMethod2_RepeatT2<T2, T3, T4>() where T2 : IConvertible where T3 : struct where T4 : Enum
+#else
 				int StaticMethod2_RepeatT2<T2, T3, T4>() where T2 : IConvertible where T3 : struct where T4 : Enum
+#endif
 #pragma warning restore CS8387
 				{
 					return typeof(T2).Name.Length;
 				}
+#if CS80
+				static int StaticMethod4<T>(T dd)
+#else
 				int StaticMethod4<T>(T dd)
+#endif
 				{
 					return 0;
 				}
+#if CS80
+				static int StaticMethod5<T3>()
+#else
 				int StaticMethod5<T3>()
+#endif
 				{
 					int k = 0;
 					return k + NonStaticMethod5_1<T1>();
@@ -100,33 +120,61 @@ namespace LocalFunctions
 				{
 					return GetHashCode();
 				}
+#if CS80
+				static int StaticInvokeAsFunc(Func<int> func)
+#else
 				int StaticInvokeAsFunc(Func<int> func)
+#endif
 				{
 					return func();
 				}
+#if CS80
+				static int StaticInvokeAsFunc2<T>(Func<T, int> func)
+#else
 				int StaticInvokeAsFunc2<T>(Func<T, int> func)
+#endif
 				{
 					return func(default(T));
 				}
+#if CS80
+				static int StaticMethod1<T3>() where T3 : struct
+#else
 				int StaticMethod1<T3>() where T3 : struct
+#endif
 				{
 					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + StaticInvokeAsFunc(StaticMethod1<float>) + StaticInvokeAsFunc(StaticMethod1_1<T3, DayOfWeek>) + StaticInvokeAsFunc(StaticMethod2_RepeatT2<T2, T3, DayOfWeek>);
 				}
+#if CS80
+				static int StaticMethod1_1<T3, T4>() where T3 : struct where T4 : Enum
+#else
 				int StaticMethod1_1<T3, T4>() where T3 : struct where T4 : Enum
+#endif
 				{
 					return typeof(T1).Name.Length + typeof(T2).Name.Length + typeof(T3).Name.Length + typeof(T4).Name.Length + StaticInvokeAsFunc(StaticMethod1<float>) + StaticInvokeAsFunc(StaticMethod1_1<T3, DayOfWeek>);
 				}
 #pragma warning disable CS8387
+#if CS80
+				static int StaticMethod2_RepeatT2<T2, T3, T4>() where T2 : IConvertible where T3 : struct where T4 : Enum
+#else
 				int StaticMethod2_RepeatT2<T2, T3, T4>() where T2 : IConvertible where T3 : struct where T4 : Enum
+#endif
 #pragma warning restore CS8387
 				{
 					return typeof(T2).Name.Length;
 				}
+#if CS80
+				static int StaticMethod4<T>(T dd)
+#else
 				int StaticMethod4<T>(T dd)
+#endif
 				{
 					return 0;
 				}
+#if CS80
+				static int StaticMethod5<T3>()
+#else
 				int StaticMethod5<T3>()
+#endif
 				{
 					int k = 0;
 					return k + StaticInvokeAsFunc(NonStaticMethod5_1<T1>);
@@ -160,10 +208,18 @@ namespace LocalFunctions
 			{
 				ZZ<T2>(null);
 				ZZ2<object>(null);
+#if CS80
+				static void Nop<T>(T data)
+#else
 				void Nop<T>(T data)
+#endif
 				{
 				}
+#if CS80
+				static void ZZ<T3>(T3 t3) where T3 : T2
+#else
 				void ZZ<T3>(T3 t3) where T3 : T2
+#endif
 				{
 					Nop<List<T2>>(t3);
 					ZZ1<T3>(t3);
@@ -173,11 +229,19 @@ namespace LocalFunctions
 						Nop<List<T2>>(t3);
 					}
 				}
+#if CS80
+				static void ZZ1<T3>(T3 t3)
+#else
 				void ZZ1<T3>(T3 t3)
+#endif
 				{
 					Nop<List<T2>>((List<T2>)(object)t3);
 				}
+#if CS80
+				static void ZZ2<T3>(T3 t3)
+#else
 				void ZZ2<T3>(T3 t3)
+#endif
 				{
 					Nop<List<T2>>((List<T2>)(object)t3);
 				}
@@ -189,7 +253,11 @@ namespace LocalFunctions
 		private Lazy<object> nonCapturinglocalFunctionInLambda = new Lazy<object>(delegate {
 			return CreateValue();
 
+#if CS80
+			static object CreateValue()
+#else
 			object CreateValue()
+#endif
 			{
 				return null;
 			}
@@ -230,7 +298,11 @@ namespace LocalFunctions
 				LocalWrite("Hello " + i);
 			}
 
+#if CS80
+			static void LocalWrite(string s)
+#else
 			void LocalWrite(string s)
+#endif
 			{
 				Console.WriteLine(s);
 			}
@@ -266,7 +338,11 @@ namespace LocalFunctions
 				LocalWrite("Hello " + i);
 			}
 
+#if CS80
+			static void LocalWrite(string s)
+#else
 			void LocalWrite(string s)
+#endif
 			{
 				Console.WriteLine(s);
 			}
@@ -327,7 +403,11 @@ namespace LocalFunctions
 			Test(5);
 			LocalFunctions.Test(2);
 
+#if CS80
+			static void Test(int x)
+#else
 			void Test(int x)
+#endif
 			{
 				Console.WriteLine("x: {0}", x);
 			}
@@ -344,7 +424,11 @@ namespace LocalFunctions
 			Name();
 			action();
 
+#if CS80
+			static void Name()
+#else
 			void Name()
+#endif
 			{
 
 			}
@@ -355,12 +439,20 @@ namespace LocalFunctions
 			Use(Get(1), Get(2), Get(3));
 			Use(Get(1), c: Get(2), b: Get(3));
 
+#if CS80
+			static int Get(int i)
+#else
 			int Get(int i)
+#endif
 			{
 				return i;
 			}
 
+#if CS80
+			static void Use(int a, int b, int c)
+#else
 			void Use(int a, int b, int c)
+#endif
 			{
 				Console.WriteLine(a + b + c);
 			}
@@ -393,7 +485,11 @@ namespace LocalFunctions
 		{
 			return FibHelper(i);
 
+#if CS80
+			static int FibHelper(int n)
+#else
 			int FibHelper(int n)
+#endif
 			{
 				if (n <= 0) {
 					return 0;
@@ -406,7 +502,11 @@ namespace LocalFunctions
 		{
 			return B(4) + C(3);
 
+#if CS80
+			static int A(int i)
+#else
 			int A(int i)
+#endif
 			{
 				if (i > 0) {
 					return A(i - 1) + 2 * B(i - 1) + 3 * C(i - 1);
@@ -414,7 +514,11 @@ namespace LocalFunctions
 				return 1;
 			}
 
+#if CS80
+			static int B(int i)
+#else
 			int B(int i)
+#endif
 			{
 				if (i > 0) {
 					return 3 * A(i - 1) + B(i - 1);
@@ -422,7 +526,11 @@ namespace LocalFunctions
 				return 1;
 			}
 
+#if CS80
+			static int C(int i)
+#else
 			int C(int i)
+#endif
 			{
 				if (i > 0) {
 					return 2 * A(i - 1) + C(i - 1);
@@ -498,7 +606,11 @@ namespace LocalFunctions
 		{
 			Method1(null);
 
+#if CS80
+			static Action<object> Method1(Action<object> action)
+#else
 			Action<object> Method1(Action<object> action)
+#endif
 			{
 				return Method1_1;
 
@@ -518,7 +630,11 @@ namespace LocalFunctions
 		public int NestedCapture2()
 		{
 			return Method();
+#if CS80
+			static int Method()
+#else
 			int Method()
+#endif
 			{
 				int t0 = 0;
 				return ZZZ_0();
