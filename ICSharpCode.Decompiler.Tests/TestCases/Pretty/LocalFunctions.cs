@@ -246,6 +246,62 @@ namespace LocalFunctions
 					Nop<List<T2>>((List<T2>)(object)t3);
 				}
 			}
+
+#if false
+			public void GenericArgsWithAnonymousType()
+			{
+				Method<int>();
+#if CS80
+				static void Method<T2>()
+#else
+				void Method<T2>()
+#endif
+				{
+					int i = 0;
+					var obj2 = new {
+						A = 1
+					};
+					Method2(obj2);
+					Method3(obj2);
+					void Method2<T3>(T3 obj1)
+					{
+						//keep nested
+						i = 0;
+					}
+#if CS80
+					static void Method3<T3>(T3 obj1)
+#else
+					void Method3<T3>(T3 obj1)
+#endif
+					{
+					}
+				}
+			}
+#if CS80
+			public void NameConflict()
+			{
+				int i = 0;
+				Method<int>();
+				void Method<T2>()
+				{
+					Method();
+					void Method()
+					{
+						Method<T2>();
+						i = 0;
+						void Method<T2>()
+						{
+							i = 0;
+							Method();
+							static void Method()
+							{
+							}
+						}
+					}
+				}
+			}
+#endif
+#endif
 		}
 
 		private int field;
