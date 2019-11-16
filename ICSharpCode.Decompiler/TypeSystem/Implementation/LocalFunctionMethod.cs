@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using ICSharpCode.Decompiler.Util;
 
@@ -42,7 +43,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (!(obj is LocalFunctionMethod other))
 				return false;
 			return baseMethod.Equals(other.baseMethod, typeNormalization)
-				&& NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters;
+				&& NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters
+				&& NumberOfCompilerGeneratedGenerics == other.NumberOfCompilerGeneratedGenerics;
 		}
 
 		public override bool Equals(object obj)
@@ -50,7 +52,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (!(obj is LocalFunctionMethod other))
 				return false;
 			return baseMethod.Equals(other.baseMethod)
-				&& NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters;
+				&& NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters
+				&& NumberOfCompilerGeneratedGenerics == other.NumberOfCompilerGeneratedGenerics;
 		}
 		
 		public override int GetHashCode()
@@ -62,14 +65,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override string ToString()
 		{
-			return string.Format("[LocalFunctionMethod: ReducedFrom={0}, NumberOfGeneratedParameters={1}]", ReducedFrom, NumberOfCompilerGeneratedParameters);
+			return string.Format("[LocalFunctionMethod: ReducedFrom={0}, NumberOfGeneratedParameters={1}, NumberOfCompilerGeneratedGenerics={2}]", ReducedFrom, NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedGenerics);
 		}
 
 		internal int NumberOfCompilerGeneratedParameters { get; }
 
 		internal int NumberOfCompilerGeneratedGenerics { get; set; }
 
-		internal bool IsStaticLocalFunction => NumberOfCompilerGeneratedParameters == 0 && baseMethod.IsStatic;
+		internal bool IsStaticLocalFunction => NumberOfCompilerGeneratedParameters == 0 && (baseMethod.IsStatic || (baseMethod.DeclaringTypeDefinition.IsCompilerGenerated() && !baseMethod.DeclaringType.GetFields(f => !f.IsStatic).Any()));
 
 		public IMember MemberDefinition => this;
 
