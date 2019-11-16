@@ -2,3 +2,6 @@
 	path = ILSpy-tests
 	url = https://github.com/icsharpcode/ILSpy-tests
    
+[submodule "AvalonDock"]
+	path = AvalonDock
+	url = https://github.com/siegfriedpammer/AvalonDock
