@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy
 		
 		public static void Display(DecompilerTextView textView)
 		{
-			AvalonEditTextOutput output = new AvalonEditTextOutput() { EnableHyperlinks = true };
+			AvalonEditTextOutput output = new AvalonEditTextOutput() { Title = Resources._About, EnableHyperlinks = true };
 			output.WriteLine(Resources.ILSpyVersion + RevisionClass.FullVersion);
 			if(WindowsVersionHelper.HasPackageIdentity) {
 				output.WriteLine($"Package Name: {WindowsVersionHelper.GetPackageFamilyName()}");
