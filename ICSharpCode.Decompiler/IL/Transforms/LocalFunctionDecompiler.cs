@@ -84,9 +84,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				try {
 					var localFunction = info.Definition;
 					if (!localFunction.Method.IsStatic) {
-						var target = info.UseSites[0].Arguments[0];
-						context.Step($"Replace 'this' with {target}", localFunction);
 						var thisVar = localFunction.Variables.SingleOrDefault(VariableKindExtensions.IsThis);
+						var target = info.UseSites.Where(us => us.Arguments[0].MatchLdLoc(out _)).FirstOrDefault()?.Arguments[0];
+						if (target == null) {
+							target = info.UseSites[0].Arguments[0];
+							if (target.MatchLdObj(out var target1, out var type) && target1 is LdFlda && thisVar.Type == type && type.Kind == TypeKind.Class && TransformDisplayClassUsage.IsPotentialClosure(context, type.GetDefinition())) {
+								var variable = function.Descendants.OfType<ILFunction>().SelectMany(f => f.Variables).Where(v => !v.IsThis() && TransformDisplayClassUsage.IsClosure(context, v, null, out var varType, out _) && varType == type).OnlyOrDefault();
+								if (variable != null) {
+									target = new LdLoc(variable);
+									HandleArgument(localFunction, 1, 0, target);
+								}
+							}
+						}
+						context.Step($"Replace 'this' with {target}", localFunction);
 						localFunction.AcceptVisitor(new DelegateConstruction.ReplaceDelegateTargetVisitor(target, thisVar));
 					}
 
@@ -141,7 +151,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (skipCount > 0)
 				return false;
 			skipCount += parentMethod.TypeParameters.Count;
-			Debug.Assert(skipCount >= 0 && skipCount <= method.TypeArguments.Count);
 			if (skipCount < 0 || skipCount > method.TypeArguments.Count)
 				return false;
 
@@ -272,7 +281,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				curParameters[curIdx] = (ITypeParameter)curA;
 				idx++;
 			}
-			Debug.Assert(idx == total);
+			if (idx != total) {
+				Debug.Assert(false);
+				return null;
+			}
 
 			return new TypeSystem.GenericContext(classTypeParameters, methodTypeParameters);
 		}
@@ -365,41 +377,37 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			int firstArgumentIndex = function.Method.IsStatic ? 0 : 1;
 			for (int i = useSite.Arguments.Count - 1; i >= firstArgumentIndex; i--) {
-				if (!HandleArgument(i, useSite.Arguments[i]))
+				if (!HandleArgument(function, firstArgumentIndex, i, useSite.Arguments[i]))
 					break;
 			}
 			if (firstArgumentIndex > 0) {
-				HandleArgument(0, useSite.Arguments[0]);
+				HandleArgument(function, firstArgumentIndex, 0, useSite.Arguments[0]);
 			}
+		}
 
-			bool HandleArgument(int i, ILInstruction arg)
-			{
-				ILVariable closureVar;
-				if (!(arg.MatchLdLoc(out closureVar) || arg.MatchLdLoca(out closureVar)))
-					return false;
-				if (closureVar.Kind == VariableKind.NamedArgument)
-					return false;
-				if (!TransformDisplayClassUsage.IsClosure(context, closureVar, null, out _, out _))
-					return false;
-				if (i - firstArgumentIndex >= 0) {
-					Debug.Assert(i - firstArgumentIndex < function.Method.Parameters.Count && IsClosureParameter(function.Method.Parameters[i - firstArgumentIndex], resolveContext));
-				}
-				if (closureVar.AddressCount == 0 && closureVar.StoreInstructions.Count == 0)
-					return true;
-				// determine the capture scope of closureVar and the declaration scope of the function 
-				var instructions = closureVar.StoreInstructions.OfType<ILInstruction>()
-					.Concat(closureVar.AddressInstructions).OrderBy(inst => inst.StartILOffset).ToList();
-				var additionalScope = BlockContainer.FindClosestContainer(instructions.First());
-				if (closureVar.CaptureScope == null)
-					closureVar.CaptureScope = additionalScope;
-				else
-					closureVar.CaptureScope = FindCommonAncestorInstruction<BlockContainer>(closureVar.CaptureScope, additionalScope);
-				if (function.DeclarationScope == null)
-					function.DeclarationScope = closureVar.CaptureScope;
-				else if (!IsInNestedLocalFunction(function.DeclarationScope, closureVar.CaptureScope.Ancestors.OfType<ILFunction>().First()))
-					function.DeclarationScope = FindCommonAncestorInstruction<BlockContainer>(function.DeclarationScope, closureVar.CaptureScope);
-				return true;
+		bool HandleArgument(ILFunction function, int firstArgumentIndex, int i, ILInstruction arg)
+		{
+			ILVariable closureVar;
+			if (!(arg.MatchLdLoc(out closureVar) || arg.MatchLdLoca(out closureVar)))
+				return false;
+			if (closureVar.Kind == VariableKind.NamedArgument)
+				return false;
+			if (!TransformDisplayClassUsage.IsClosure(context, closureVar, null, out _, out var initializer))
+				return false;
+			if (i - firstArgumentIndex >= 0) {
+				Debug.Assert(i - firstArgumentIndex < function.Method.Parameters.Count && IsClosureParameter(function.Method.Parameters[i - firstArgumentIndex], resolveContext));
 			}
+			// determine the capture scope of closureVar and the declaration scope of the function 
+			var additionalScope = BlockContainer.FindClosestContainer(initializer);
+			if (closureVar.CaptureScope == null)
+				closureVar.CaptureScope = additionalScope;
+			else
+				closureVar.CaptureScope = FindCommonAncestorInstruction<BlockContainer>(closureVar.CaptureScope, additionalScope);
+			if (function.DeclarationScope == null)
+				function.DeclarationScope = closureVar.CaptureScope;
+			else if (!IsInNestedLocalFunction(function.DeclarationScope, closureVar.CaptureScope.Ancestors.OfType<ILFunction>().First()))
+				function.DeclarationScope = FindCommonAncestorInstruction<BlockContainer>(function.DeclarationScope, closureVar.CaptureScope);
+			return true;
 		}
 
 		bool IsInNestedLocalFunction(BlockContainer declarationScope, ILFunction function)

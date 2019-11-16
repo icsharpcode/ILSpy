@@ -682,7 +682,6 @@ namespace LocalFunctions
 			}
 		}
 
-#if false
 		public int NestedCapture2()
 		{
 			return Method();
@@ -697,27 +696,28 @@ namespace LocalFunctions
 				int ZZZ_0()
 				{
 					t0 = 0;
-					var t1 = t0;
-					Func<int> zzz2 = () => {
+					int t2 = t0;
+					return new Func<int>(ZZZ_0_0)();
+					int ZZZ_0_0()
+					{
 						t0 = 0;
-						t1 = 0;
+						t2 = 0;
 						return ZZZ_1();
-					};
-					return zzz2();
+					}
 				}
 				int ZZZ_1()
 				{
 					t0 = 0;
-					var t1 = t0;
-					Func<int> zzz = () => {
+					int t = t0;
+					return new Func<int>(ZZZ_1_0)();
+					int ZZZ_1_0()
+					{
 						t0 = 0;
-						t1 = 0;
+						t = 0;
 						return 0;
-					};
-					return zzz();
+					}
 				}
 			}
 		}
-#endif
 	}
 }
