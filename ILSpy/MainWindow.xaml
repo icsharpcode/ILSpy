@@ -162,11 +162,11 @@
 		</StatusBar>
 
 		<avalondock:DockingManager x:Name="DockManager"
-								   DataContext="{Binding Workspace}"
-								   AnchorablesSource="{Binding ToolPanes}" 
-								   DocumentsSource="{Binding Documents}"
-								   ActiveContent="{Binding ActiveDocument, Mode=TwoWay, Converter={StaticResource ActiveDocumentConverter}}"
-								   AllowMixedOrientation="True">
+									DataContext="{Binding Workspace}"
+									AnchorablesSource="{Binding ToolPanes}" 
+									DocumentsSource="{Binding Documents}"
+									ActiveContent="{Binding ActiveDocument, Mode=TwoWay, Converter={StaticResource ActiveDocumentConverter}}"
+									AllowMixedOrientation="True">
 			<avalondock:LayoutRoot>
 				<avalondock:LayoutPanel Orientation="Horizontal">
 					<avalondock:LayoutAnchorablePane DockMinWidth="150" Name="LeftPane" />
@@ -178,6 +178,17 @@
 					<avalondock:LayoutAnchorablePane DockMinWidth="150" Name="RightPane" />
 				</avalondock:LayoutPanel>
 			</avalondock:LayoutRoot>
+
+			<avalondock:DockingManager.DocumentHeaderTemplate>
+				<DataTemplate>
+					<TextBlock x:Name="headerText" Text="{Binding Title}" />
+					<DataTemplate.Triggers>
+						<DataTrigger Binding="{Binding IsActive}" Value="True">
+							<Setter TargetName="headerText" Property="FontWeight" Value="Bold" />
+						</DataTrigger>
+					</DataTemplate.Triggers>
+				</DataTemplate>
+			</avalondock:DockingManager.DocumentHeaderTemplate>
 			
 			<avalondock:DockingManager.LayoutUpdateStrategy>
 				<docking:LayoutUpdateStrategy />
@@ -216,6 +227,7 @@
 							<Setter Property="ContentId" Value="{Binding Model.ContentId}"/>
 							<Setter Property="IsSelected" Value="{Binding Model.IsSelected, Mode=TwoWay}"/>
 							<Setter Property="IsActive" Value="{Binding Model.IsActive, Mode=TwoWay}"/>
+							<Setter Property="CloseCommand" Value="{Binding Model.CloseCommand}" />
 							<Setter Property="CanClose" Value="{Binding Model.IsCloseable}" />
 						</Style>
 					</docking:PaneStyleSelector.DocumentStyle>
