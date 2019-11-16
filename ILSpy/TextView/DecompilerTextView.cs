@@ -629,6 +629,10 @@ namespace ICSharpCode.ILSpy.TextView
 				foldingStrategy.UpdateFoldings(foldingManager, textEditor.Document);
 				Debug.WriteLine("  Updating folding: {0}", w.Elapsed); w.Restart();
 			}
+
+			if (this.DataContext is PaneModel model) {
+				model.Title = textOutput.Title;
+			}
 		}
 		#endregion
 		
@@ -751,6 +755,9 @@ namespace ICSharpCode.ILSpy.TextView
 		void DecompileNodes(DecompilationContext context, ITextOutput textOutput)
 		{
 			var nodes = context.TreeNodes;
+			if (textOutput is ISmartTextOutput smartTextOutput) {
+				smartTextOutput.Title = string.Join(", ", nodes.Select(n => n.ToString()));
+			}
 			for (int i = 0; i < nodes.Length; i++) {
 				if (i > 0)
 					textOutput.WriteLine();
