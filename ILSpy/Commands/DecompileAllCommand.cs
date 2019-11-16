@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void Execute(object parameter)
 		{
-			MainWindow.Instance.TextView.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				Parallel.ForEach(MainWindow.Instance.CurrentAssemblyList.GetAssemblies(), new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct }, delegate(LoadedAssembly asm) {
 					if (!asm.HasLoadError) {
@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpy
 					}
 				});
 				return output;
-			}, ct)).Then(output => MainWindow.Instance.TextView.ShowText(output)).HandleExceptions();
+			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowText(output)).HandleExceptions();
 		}
 	}
 
@@ -77,7 +77,7 @@ namespace ICSharpCode.ILSpy
 			var language = MainWindow.Instance.CurrentLanguage;
 			var nodes = MainWindow.Instance.SelectedNodes.ToArray();
 			var options = new DecompilationOptions();
-			MainWindow.Instance.TextView.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				options.CancellationToken = ct;
 				Stopwatch w = Stopwatch.StartNew();
 				for (int i = 0; i < numRuns; ++i) {
@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy
 				double msPerRun = w.Elapsed.TotalMilliseconds / numRuns;
 				output.Write($"Average time: {msPerRun.ToString("f1")}ms\n");
 				return output;
-			}, ct)).Then(output => MainWindow.Instance.TextView.ShowText(output)).HandleExceptions();
+			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowText(output)).HandleExceptions();
 		}
 	}
 }

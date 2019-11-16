@@ -123,8 +123,8 @@ namespace ICSharpCode.ILSpy
 		{
 			lastSelectedStep = step;
 			var window = MainWindow.Instance;
-			var state = window.TextView.GetState();
-			window.TextView.DecompileAsync(window.CurrentLanguage, window.SelectedNodes,
+			var state = DockWorkspace.Instance.GetState();
+			DockWorkspace.Instance.GetTextView().DecompileAsync(window.CurrentLanguage, window.SelectedNodes,
 				new DecompilationOptions(window.CurrentLanguageVersion) {
 					StepLimit = step,
 					IsDebug = isDebug,

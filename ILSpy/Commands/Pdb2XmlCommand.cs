@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy
 		{
 			var highlighting = HighlightingManager.Instance.GetDefinitionByExtension(".xml");
 			var options = PdbToXmlOptions.IncludeEmbeddedSources | PdbToXmlOptions.IncludeMethodSpans | PdbToXmlOptions.IncludeTokens;
-			MainWindow.Instance.TextView.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				var writer = new TextOutputWriter(output);
 				foreach (var node in nodes) {
@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy
 						PdbToXmlConverter.ToXml(writer, pdbStream, peStream, options);
 				}
 				return output;
-			}, ct)).Then(output => MainWindow.Instance.TextView.ShowNodes(output, null, highlighting)).HandleExceptions();
+			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowNodes(output, null, highlighting)).HandleExceptions();
 		}
 	}
 

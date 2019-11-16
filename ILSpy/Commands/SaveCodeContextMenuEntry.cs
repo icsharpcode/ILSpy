@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpy.TextView
 		public static void Execute(IReadOnlyList<SharpTreeNode> selectedNodes)
 		{
 			var currentLanguage = MainWindow.Instance.CurrentLanguage;
-			var textView = MainWindow.Instance.TextView;
+			var textView = Docking.DockWorkspace.Instance.GetTextView();
 			if (selectedNodes.Count == 1 && selectedNodes[0] is ILSpyTreeNode singleSelection) {
 				// if there's only one treenode selected
 				// we will invoke the custom Save logic

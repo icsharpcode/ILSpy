@@ -73,8 +73,6 @@ namespace ICSharpCode.ILSpy
 		AssemblyList assemblyList;
 		AssemblyListTreeNode assemblyListTreeNode;
 
-		readonly DecompilerTextView decompilerTextView;
-
 		static MainWindow instance;
 
 		public static MainWindow Instance {
@@ -126,16 +124,13 @@ namespace ICSharpCode.ILSpy
 
 			InitializeComponent();
 
-			decompilerTextView = App.ExportProvider.GetExportedValue<DecompilerTextView>();
-			mainPane.Content = decompilerTextView;
-
 			sessionSettings.DockLayout.Deserialize(new XmlLayoutSerializer(DockManager));
 
 			sessionSettings.FilterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
 			InitMainMenu();
 			InitToolbar();
-			ContextMenuProvider.Add(treeView, decompilerTextView);
+			ContextMenuProvider.Add(treeView);
 
 			this.Loaded += MainWindow_Loaded;
 		}
@@ -376,7 +371,7 @@ namespace ICSharpCode.ILSpy
 				if (!found && treeView.SelectedItem == initialSelection) {
 					AvalonEditTextOutput output = new AvalonEditTextOutput();
 					output.Write(string.Format("Cannot find '{0}' in command line specified assemblies.", navigateTo));
-					decompilerTextView.ShowText(output);
+					DockWorkspace.Instance.ShowText(output);
 				}
 			} else if (relevantAssemblies.Count == 1) {
 				// NavigateTo == null and an assembly was given on the command-line:
@@ -404,7 +399,7 @@ namespace ICSharpCode.ILSpy
 						// only if not showing the about page, perform the update check:
 						await ShowMessageIfUpdatesAvailableAsync(spySettings);
 					} else {
-						AboutPage.Display(decompilerTextView);
+						AboutPage.Display(DockWorkspace.Instance.GetTextView());
 					}
 				}
 			}
@@ -466,7 +461,8 @@ namespace ICSharpCode.ILSpy
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
 			DockWorkspace.Instance.ToolPanes.Add(AssemblyListPaneModel.Instance);
-			DockWorkspace.Instance.Documents.Add(new DocumentModel());
+			DockWorkspace.Instance.Documents.Add(new DecompiledDocumentModel() { IsCloseable = false });
+			DockWorkspace.Instance.ActiveDocument = DockWorkspace.Instance.Documents.First();
 
 			ILSpySettings spySettings = this.spySettingsForMainWindow_Loaded;
 			this.spySettingsForMainWindow_Loaded = null;
@@ -504,7 +500,7 @@ namespace ICSharpCode.ILSpy
 
 			AvalonEditTextOutput output = new AvalonEditTextOutput();
 			if (FormatExceptions(App.StartupExceptions.ToArray(), output))
-				decompilerTextView.ShowText(output);
+				DockWorkspace.Instance.ShowText(output);
 		}
 
 		bool FormatExceptions(App.ExceptionData[] exceptions, ITextOutput output)
@@ -931,8 +927,7 @@ namespace ICSharpCode.ILSpy
 		{
 			DecompileSelectedNodes();
 
-			if (SelectionChanged != null)
-				SelectionChanged(sender, e);
+			SelectionChanged?.Invoke(sender, e);
 		}
 
 		Task decompilationTask;
@@ -947,7 +942,7 @@ namespace ICSharpCode.ILSpy
 				return;
 
 			if (recordHistory) {
-				var dtState = decompilerTextView.GetState();
+				var dtState = DockWorkspace.Instance.GetState();
 				if (dtState != null)
 					history.UpdateCurrent(new NavigationState(dtState));
 				history.Record(new NavigationState(treeView.SelectedItems.OfType<SharpTreeNode>()));
@@ -955,10 +950,10 @@ namespace ICSharpCode.ILSpy
 
 			if (treeView.SelectedItems.Count == 1) {
 				ILSpyTreeNode node = treeView.SelectedItem as ILSpyTreeNode;
-				if (node != null && node.View(decompilerTextView))
+				if (node != null && node.View(DockWorkspace.Instance.GetTextView()))
 					return;
 			}
-			decompilationTask = decompilerTextView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions() { TextViewState = state });
+			decompilationTask = DockWorkspace.Instance.GetTextView().DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions() { TextViewState = state });
 		}
 
 		void SaveCommandCanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -980,10 +975,6 @@ namespace ICSharpCode.ILSpy
 			} finally {
 				refreshInProgress = false;
 			}
-		}
-
-		public DecompilerTextView TextView {
-			get { return decompilerTextView; }
 		}
 
 		public Language CurrentLanguage => sessionSettings.FilterSettings.Language;
@@ -1029,7 +1020,7 @@ namespace ICSharpCode.ILSpy
 
 		void NavigateHistory(bool forward)
 		{
-			var dtState = decompilerTextView.GetState();
+			var dtState = DockWorkspace.Instance.GetState();
 			if (dtState != null)
 				history.UpdateCurrent(new NavigationState(dtState));
 			var newState = forward ? history.GoForward() : history.GoBack();

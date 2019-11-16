@@ -126,19 +126,22 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Enables extensible context menu support for the specified tree view.
 		/// </summary>
-		public static void Add(SharpTreeView treeView, DecompilerTextView textView = null)
+		public static void Add(SharpTreeView treeView)
 		{
-			var provider = new ContextMenuProvider(treeView, textView);
+			var provider = new ContextMenuProvider(treeView);
 			treeView.ContextMenuOpening += provider.treeView_ContextMenuOpening;
 			// Context menu is shown only when the ContextMenu property is not null before the
 			// ContextMenuOpening event handler is called.
 			treeView.ContextMenu = new ContextMenu();
-			if (textView != null) {
-				textView.ContextMenuOpening += provider.textView_ContextMenuOpening;
-				// Context menu is shown only when the ContextMenu property is not null before the
-				// ContextMenuOpening event handler is called.
-				textView.ContextMenu = new ContextMenu();
-			}
+		}
+
+		public static void Add(DecompilerTextView textView)
+		{
+			var provider = new ContextMenuProvider(textView);
+			textView.ContextMenuOpening += provider.textView_ContextMenuOpening;
+			// Context menu is shown only when the ContextMenu property is not null before the
+			// ContextMenuOpening event handler is called.
+			textView.ContextMenu = new ContextMenu();
 		}
 		
 		public static void Add(ListBox listBox)
@@ -157,16 +160,23 @@ namespace ICSharpCode.ILSpy
 		{
 			entries = App.ExportProvider.GetExports<IContextMenuEntry, IContextMenuEntryMetadata>().ToArray();
 		}
-		
-		ContextMenuProvider(SharpTreeView treeView, DecompilerTextView textView = null) : this()
+
+		ContextMenuProvider(DecompilerTextView textView)
+			: this()
 		{
-			this.treeView = treeView;
-			this.textView = textView;
+			this.textView = textView ?? throw new ArgumentNullException(nameof(textView));
 		}
 		
-		ContextMenuProvider(ListBox listBox) : this()
+		ContextMenuProvider(SharpTreeView treeView)
+			: this()
 		{
-			this.listBox = listBox;
+			this.treeView = treeView ?? throw new ArgumentNullException(nameof(treeView));
+		}
+		
+		ContextMenuProvider(ListBox listBox)
+			: this()
+		{
+			this.listBox = listBox ?? throw new ArgumentNullException(nameof(listBox));
 		}
 		
 		void treeView_ContextMenuOpening(object sender, ContextMenuEventArgs e)

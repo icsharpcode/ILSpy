@@ -1,10 +1,38 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
 	public abstract class PaneModel : INotifyPropertyChanged
 	{
+		class CloseCommandImpl : ICommand
+		{
+			readonly PaneModel model;
+
+			public CloseCommandImpl(PaneModel model)
+			{
+				this.model = model;
+			}
+
+			public event EventHandler CanExecuteChanged;
+
+			public bool CanExecute(object parameter)
+			{
+				return model.IsCloseable;
+			}
+
+			public void Execute(object parameter)
+			{
+				Docking.DockWorkspace.Instance.Remove(model);
+			}
+		}
+
+		public PaneModel()
+		{
+			this.closeCommand = new CloseCommandImpl(this);
+		}
+
 		public abstract PanePosition DefaultPosition { get; }
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -54,6 +82,17 @@ namespace ICSharpCode.ILSpy.ViewModels
 				if (isCloseable != value) {
 					isCloseable = value;
 					RaisePropertyChanged(nameof(IsCloseable));
+				}
+			}
+		}
+
+		private ICommand closeCommand;
+		public ICommand CloseCommand {
+			get { return closeCommand; }
+			set {
+				if (closeCommand != value) {
+					closeCommand = value;
+					RaisePropertyChanged(nameof(CloseCommand));
 				}
 			}
 		}

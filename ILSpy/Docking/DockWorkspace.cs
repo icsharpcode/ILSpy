@@ -1,5 +1,10 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Threading;
+using System.Threading.Tasks;
+using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Docking
@@ -40,6 +45,31 @@ namespace ICSharpCode.ILSpy.Docking
 		protected void RaisePropertyChanged(string propertyName)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
+
+		public void ShowText(AvalonEditTextOutput textOutput)
+		{
+			GetTextView().ShowText(textOutput);
+		}
+
+		public DecompilerTextView GetTextView()
+		{
+			return ((DecompiledDocumentModel)ActiveDocument).TextView;
+		}
+
+		public DecompilerTextViewState GetState()
+		{
+			return GetTextView().GetState();
+		}
+
+		public Task<T> RunWithCancellation<T>(Func<CancellationToken, Task<T>> taskCreation)
+		{
+			return GetTextView().RunWithCancellation(taskCreation);
+		}
+
+		internal void ShowNodes(AvalonEditTextOutput output, TreeNodes.ILSpyTreeNode[] nodes, IHighlightingDefinition highlighting)
+		{
+			GetTextView().ShowNodes(output, nodes, highlighting);
 		}
 	}
 }

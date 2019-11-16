@@ -41,13 +41,10 @@ namespace ICSharpCode.ILSpy
 	[ExportMainMenuCommand(Menu = nameof(Resources._Help), Header = nameof(Resources._About), MenuOrder = 99999)]
 	sealed class AboutPage : SimpleCommand
 	{
-		[Import]
-		DecompilerTextView decompilerTextView = null;
-
 		public override void Execute(object parameter)
 		{
 			MainWindow.Instance.UnselectAll();
-			Display(decompilerTextView);
+			Display(Docking.DockWorkspace.Instance.GetTextView());
 		}
 		
 		static readonly Uri UpdateUrl = new Uri("https://ilspy.net/updates.xml");
