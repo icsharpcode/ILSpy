@@ -18,6 +18,7 @@
 
 using System;
 using System.Linq;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
@@ -30,27 +31,35 @@ namespace ICSharpCode.ILSpy.Commands
 	{
 		public bool IsVisible(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes == null)
-				return false;
-			return true;			
+			return context.SelectedTreeNodes != null || context.Reference?.Reference is IEntity;
 		}
 
 		public bool IsEnabled(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes == null)
-				return false;
-			return true;			
+			return context.SelectedTreeNodes != null || context.Reference?.Reference is IEntity;
 		}
 
 		public void Execute(TextViewContext context)
 		{
-			var nodes = context.SelectedTreeNodes.Cast<ILSpyTreeNode>().ToArray();
+			if (context.SelectedTreeNodes != null) {
+				var nodes = context.SelectedTreeNodes.Cast<ILSpyTreeNode>().ToArray();
+				DecompileNodes(nodes);
+			} else if (context.Reference?.Reference is IEntity entity) {
+				var node = MainWindow.Instance.FindTreeNode(entity);
+				if (node != null) {
+					DecompileNodes(node);
+				}
+			}
+		}
+
+		private static void DecompileNodes(params ILSpyTreeNode[] nodes)
+		{
 			var title = string.Join(", ", nodes.Select(x => x.ToString()));
 			DockWorkspace.Instance.Documents.Add(new ViewModels.DecompiledDocumentModel(title, title));
 			DockWorkspace.Instance.ActiveDocument = DockWorkspace.Instance.Documents.Last();
-			MainWindow.Instance.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, (Action)(delegate {
+			MainWindow.Instance.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, (Action)delegate {
 				DockWorkspace.Instance.GetTextView().DecompileAsync(MainWindow.Instance.CurrentLanguage, nodes, new DecompilationOptions());
-			}));
+			});
 		}
 	}
 }
