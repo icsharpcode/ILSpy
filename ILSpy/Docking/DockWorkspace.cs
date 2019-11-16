@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ICSharpCode.AvalonEdit.Highlighting;
@@ -11,6 +12,8 @@ namespace ICSharpCode.ILSpy.Docking
 {
 	public class DockWorkspace : INotifyPropertyChanged
 	{
+		private SessionSettings sessionSettings;
+
 		public event PropertyChangedEventHandler PropertyChanged;
 
 		public static DockWorkspace Instance { get; } = new DockWorkspace();
@@ -37,12 +40,16 @@ namespace ICSharpCode.ILSpy.Docking
 			set {
 				if (_activeDocument != value) {
 					_activeDocument = value;
+					if (value is DecompiledDocumentModel ddm) {
+						this.sessionSettings.FilterSettings.Language = ddm.Language;
+						this.sessionSettings.FilterSettings.LanguageVersion = ddm.LanguageVersion;
+					}
 					RaisePropertyChanged(nameof(ActiveDocument));
 				}
 			}
 		}
 
-		protected void RaisePropertyChanged(string propertyName)
+		protected void RaisePropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
@@ -70,6 +77,22 @@ namespace ICSharpCode.ILSpy.Docking
 		internal void ShowNodes(AvalonEditTextOutput output, TreeNodes.ILSpyTreeNode[] nodes, IHighlightingDefinition highlighting)
 		{
 			GetTextView().ShowNodes(output, nodes, highlighting);
+		}
+
+		internal void LoadSettings(SessionSettings sessionSettings)
+		{
+			this.sessionSettings = sessionSettings;
+			sessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
+		}
+
+		private void FilterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		{
+			if (ActiveDocument is DecompiledDocumentModel ddm) {
+				if (e.PropertyName == "Language" || e.PropertyName == "LanguageVersion") {
+					ddm.Language = sessionSettings.FilterSettings.Language;
+					ddm.LanguageVersion = sessionSettings.FilterSettings.LanguageVersion;
+				}
+			}
 		}
 	}
 }

@@ -122,6 +122,8 @@ namespace ICSharpCode.ILSpy
 				SessionSettings = sessionSettings
 			};
 
+			DockWorkspace.Instance.LoadSettings(sessionSettings);
+
 			InitializeComponent();
 
 			sessionSettings.DockLayout.Deserialize(new XmlLayoutSerializer(DockManager));
@@ -461,7 +463,7 @@ namespace ICSharpCode.ILSpy
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
 			DockWorkspace.Instance.ToolPanes.Add(AssemblyListPaneModel.Instance);
-			DockWorkspace.Instance.Documents.Add(new DecompiledDocumentModel() { IsCloseable = false });
+			DockWorkspace.Instance.Documents.Add(new DecompiledDocumentModel() { IsCloseable = false, Language = CurrentLanguage, LanguageVersion = CurrentLanguageVersion });
 			DockWorkspace.Instance.ActiveDocument = DockWorkspace.Instance.Documents.First();
 
 			ILSpySettings spySettings = this.spySettingsForMainWindow_Loaded;

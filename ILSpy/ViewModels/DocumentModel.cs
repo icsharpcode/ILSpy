@@ -36,5 +36,27 @@ namespace ICSharpCode.ILSpy.ViewModels
 				}
 			}
 		}
+
+		private Language language;
+		public Language Language {
+			get => language;
+			set {
+				if (language != value) {
+					language = value;
+					RaisePropertyChanged(nameof(Language));
+				}
+			}
+		}
+
+		private LanguageVersion languageVersion;
+		public LanguageVersion LanguageVersion {
+			get => languageVersion;
+			set {
+				if (languageVersion != value) {
+					languageVersion = value;
+					RaisePropertyChanged(nameof(LanguageVersion));
+				}
+			}
+		}
 	}
 }

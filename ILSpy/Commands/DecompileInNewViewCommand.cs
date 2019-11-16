@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpy.Commands
 		private static void DecompileNodes(params ILSpyTreeNode[] nodes)
 		{
 			var title = string.Join(", ", nodes.Select(x => x.ToString()));
-			DockWorkspace.Instance.Documents.Add(new ViewModels.DecompiledDocumentModel(title, title));
+			DockWorkspace.Instance.Documents.Add(new ViewModels.DecompiledDocumentModel(title, title) { Language = MainWindow.Instance.CurrentLanguage, LanguageVersion = MainWindow.Instance.CurrentLanguageVersion });
 			DockWorkspace.Instance.ActiveDocument = DockWorkspace.Instance.Documents.Last();
 			MainWindow.Instance.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, (Action)delegate {
 				DockWorkspace.Instance.GetTextView().DecompileAsync(MainWindow.Instance.CurrentLanguage, nodes, new DecompilationOptions());
