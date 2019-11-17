@@ -1097,10 +1097,5 @@ namespace ICSharpCode.ILSpy
 		{
 			return toolBar.Items;
 		}
-
-		private void DockManager_DocumentClosed(object sender, Xceed.Wpf.AvalonDock.DocumentClosedEventArgs e)
-		{
-
-		}
 	}
 }

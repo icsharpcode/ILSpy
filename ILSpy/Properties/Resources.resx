@@ -775,4 +775,10 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.DetectAsyncUsingAndForeachStatements" xml:space="preserve">
     <value>Detect awaited using and foreach statements</value>
   </data>
+  <data name="About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="Assemblies" xml:space="preserve">
+    <value>Assemblies</value>
+  </data>
 </root>
