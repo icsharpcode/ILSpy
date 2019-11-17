@@ -50,6 +50,7 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="6.0.0" />
+    <PackageReference Include="Dirkster.AvalonDock" Version="3.6.1" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="16.3.7" />
     <PackageReference Include="System.Composition" Version="1.3.0" />
     <PackageReference Include="Mono.Cecil" Version="0.10.3" />
@@ -59,7 +60,6 @@
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj" />
-    <ProjectReference Include="..\AvalonDock\source\Components\Xceed.Wpf.AvalonDock\Xceed.Wpf.AvalonDock.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
