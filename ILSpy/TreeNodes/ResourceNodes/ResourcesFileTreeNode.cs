@@ -122,7 +122,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						break;
 					case 2:
 						try {
-							using (var writer = new ResXResourceWriter(dlg.OpenFile())) {
+							using (var fs = dlg.OpenFile())
+							using (var writer = new ResXResourceWriter(fs)) {
 								foreach (var entry in new ResourcesFile(s)) {
 									writer.AddResource(entry.Key, entry.Value);
 								}
