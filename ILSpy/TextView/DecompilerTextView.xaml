@@ -1,8 +1,9 @@
 ﻿<UserControl x:Class="ICSharpCode.ILSpy.TextView.DecompilerTextView" x:ClassModifier="public" x:Name="self"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"	
-             xmlns:ae="clr-namespace:ICSharpCode.AvalonEdit;assembly=ICSharpCode.AvalonEdit">
+			 xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
+             xmlns:ae="clr-namespace:ICSharpCode.AvalonEdit;assembly=ICSharpCode.AvalonEdit"
+			 DataContextChanged="self_DataContextChanged">
 	<UserControl.Resources>
 		<BooleanToVisibilityConverter x:Key="boolToVisibility" />
 	</UserControl.Resources>

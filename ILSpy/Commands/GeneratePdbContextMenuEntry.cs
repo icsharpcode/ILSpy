@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpy
 			if (dlg.ShowDialog() != true) return;
 			DecompilationOptions options = new DecompilationOptions();
 			string fileName = dlg.FileName;
-			MainWindow.Instance.TextView.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				using (FileStream stream = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write)) {
@@ -83,7 +83,7 @@ namespace ICSharpCode.ILSpy
 				output.AddButton(null, "Open Explorer", delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
 				output.WriteLine();
 				return output;
-			}, ct)).Then(output => MainWindow.Instance.TextView.ShowText(output)).HandleExceptions();
+			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowText(output)).HandleExceptions();
 		}
 	}
 

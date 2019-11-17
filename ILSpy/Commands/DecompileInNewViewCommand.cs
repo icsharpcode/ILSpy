@@ -16,37 +16,50 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Commands
 {
-	// [ExportContextMenuEntry(Header = nameof(Resources.DecompileToNewPanel), Icon = "images/Search", Category = nameof(Resources.Analyze), Order = 90)]
+	[ExportContextMenuEntry(Header = nameof(Resources.DecompileToNewPanel), Icon = "images/Search", Category = nameof(Resources.Analyze), Order = 90)]
 	internal sealed class DecompileInNewViewCommand : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes == null)
-				return false;
-			return true;			
+			return context.SelectedTreeNodes != null || context.Reference?.Reference is IEntity;
 		}
 
 		public bool IsEnabled(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes == null)
-				return false;
-			return true;			
+			return context.SelectedTreeNodes != null || context.Reference?.Reference is IEntity;
 		}
 
-		public async void Execute(TextViewContext context)
+		public void Execute(TextViewContext context)
 		{
-			var dtv = new DecompilerTextView();
-			var nodes = context.SelectedTreeNodes.Cast<ILSpyTreeNode>().ToArray();
+			if (context.SelectedTreeNodes != null) {
+				var nodes = context.SelectedTreeNodes.Cast<ILSpyTreeNode>().ToArray();
+				DecompileNodes(nodes);
+			} else if (context.Reference?.Reference is IEntity entity) {
+				var node = MainWindow.Instance.FindTreeNode(entity);
+				if (node != null) {
+					DecompileNodes(node);
+				}
+			}
+		}
+
+		private static void DecompileNodes(params ILSpyTreeNode[] nodes)
+		{
 			var title = string.Join(", ", nodes.Select(x => x.ToString()));
-			MainWindow.Instance.ShowInNewPane(title, dtv, PanePosition.Document);
-			await dtv.DecompileAsync(MainWindow.Instance.CurrentLanguage, nodes, new DecompilationOptions());
+			DockWorkspace.Instance.Documents.Add(new ViewModels.DecompiledDocumentModel(title, title) { Language = MainWindow.Instance.CurrentLanguage, LanguageVersion = MainWindow.Instance.CurrentLanguageVersion });
+			DockWorkspace.Instance.ActiveDocument = DockWorkspace.Instance.Documents.Last();
+			MainWindow.Instance.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, (Action)delegate {
+				DockWorkspace.Instance.GetTextView().DecompileAsync(MainWindow.Instance.CurrentLanguage, nodes, new DecompilationOptions());
+			});
 		}
 	}
 }

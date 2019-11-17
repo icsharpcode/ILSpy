@@ -53,6 +53,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy.TextView
@@ -61,7 +62,6 @@ namespace ICSharpCode.ILSpy.TextView
 	/// Manages the TextEditor showing the decompiled code.
 	/// Contains all the threading logic that makes the decompiler work in the background.
 	/// </summary>
-	[Export, PartCreationPolicy(CreationPolicy.Shared)]
 	public sealed partial class DecompilerTextView : UserControl, IDisposable
 	{
 		readonly ReferenceElementGenerator referenceElementGenerator;
@@ -103,7 +103,7 @@ namespace ICSharpCode.ILSpy.TextView
 				});
 
 			InitializeComponent();
-			
+
 			this.referenceElementGenerator = new ReferenceElementGenerator(this.JumpToReference, this.IsLink);
 			textEditor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
 			this.uiElementGenerator = new UIElementGenerator();
@@ -140,6 +140,8 @@ namespace ICSharpCode.ILSpy.TextView
 			// add marker service & margin
 			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
+
+			ContextMenuProvider.Add(this);
 		}
 
 		void RemoveEditCommand(RoutedUICommand command)
@@ -627,6 +629,10 @@ namespace ICSharpCode.ILSpy.TextView
 				foldingStrategy.UpdateFoldings(foldingManager, textEditor.Document);
 				Debug.WriteLine("  Updating folding: {0}", w.Elapsed); w.Restart();
 			}
+
+			if (this.DataContext is PaneModel model) {
+				model.Title = textOutput.Title;
+			}
 		}
 		#endregion
 		
@@ -749,6 +755,9 @@ namespace ICSharpCode.ILSpy.TextView
 		void DecompileNodes(DecompilationContext context, ITextOutput textOutput)
 		{
 			var nodes = context.TreeNodes;
+			if (textOutput is ISmartTextOutput smartTextOutput) {
+				smartTextOutput.Title = string.Join(", ", nodes.Select(n => n.ToString()));
+			}
 			for (int i = 0; i < nodes.Length; i++) {
 				if (i > 0)
 					textOutput.WriteLine();
@@ -1032,6 +1041,14 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 		#endregion
+
+		private void self_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+		{
+			if (e.OldValue is DecompiledDocumentModel oldModel)
+				oldModel.TextView = null;
+			if (e.NewValue is DecompiledDocumentModel newModel)
+				newModel.TextView = this;
+		}
 	}
 
 	public class DecompilerTextViewState

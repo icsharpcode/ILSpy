@@ -33,6 +33,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.PdbP
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.Tests", "ILSpy.Tests\ILSpy.Tests.csproj", "{B51C6636-B8D1-4200-9869-08F2689DE6C2}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xceed.Wpf.AvalonDock", "AvalonDock\source\Components\Xceed.Wpf.AvalonDock\Xceed.Wpf.AvalonDock.csproj", "{D87D783A-A8EE-4A36-AAED-3AB21DC98046}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,6 +81,10 @@ Global
 		{B51C6636-B8D1-4200-9869-08F2689DE6C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B51C6636-B8D1-4200-9869-08F2689DE6C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B51C6636-B8D1-4200-9869-08F2689DE6C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D87D783A-A8EE-4A36-AAED-3AB21DC98046}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D87D783A-A8EE-4A36-AAED-3AB21DC98046}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D87D783A-A8EE-4A36-AAED-3AB21DC98046}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D87D783A-A8EE-4A36-AAED-3AB21DC98046}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

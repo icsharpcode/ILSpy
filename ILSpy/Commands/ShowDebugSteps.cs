@@ -1,6 +1,8 @@
 ﻿#if DEBUG
 
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Commands
 {
@@ -9,7 +11,7 @@ namespace ICSharpCode.ILSpy.Commands
 	{
 		public override void Execute(object parameter)
 		{
-			DebugSteps.Show();
+			DockWorkspace.Instance.ToolPanes.Add(DebugStepsPaneModel.Instance);
 		}
 	}
 }

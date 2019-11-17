@@ -244,7 +244,7 @@ namespace ICSharpCode.ILSpy
 						}
 					}
 				}
-				ILSpy.MainWindow.Instance.TextView.ShowText(output);
+				Docking.DockWorkspace.Instance.ShowText(output);
 				e.Handled = true;
 			}
 		}

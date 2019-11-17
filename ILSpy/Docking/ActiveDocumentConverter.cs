@@ -17,52 +17,27 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.IO;
-using System.Linq;
-using System.Xml;
-using System.Xml.Linq;
-using Xceed.Wpf.AvalonDock.Layout.Serialization;
+using System.Windows.Data;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class DockLayoutSettings
+	public class ActiveDocumentConverter : IValueConverter
 	{
-		private string rawSettings;
-
-		public bool Valid => rawSettings != null;
-
-		public DockLayoutSettings(XElement element)
+		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			if ((element != null) && element.HasElements) {
-				rawSettings = element.Elements().FirstOrDefault()?.ToString();
-			}
+			if (value is DocumentModel)
+				return value;
+
+			return Binding.DoNothing;
 		}
 
-		public XElement SaveAsXml()
+		public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			try {
-				return XElement.Parse(rawSettings);
-			} catch (Exception) {
-				return null;
-			}
-		}
+			if (value is DocumentModel)
+				return value;
 
-		public void Deserialize(XmlLayoutSerializer serializer)
-		{
-			if (!Valid)
-				rawSettings = "<LayoutRoot />";
-
-			using (StringReader reader = new StringReader(rawSettings)) {
-				serializer.Deserialize(reader);
-			}
-		}
-
-		public void Serialize(XmlLayoutSerializer serializer)
-		{
-			using (StringWriter fs = new StringWriter()) {
-				serializer.Serialize(fs);
-				rawSettings = fs.ToString();
-			}
+			return Binding.DoNothing;
 		}
 	}
 }

@@ -17,52 +17,27 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.IO;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Xml;
-using System.Xml.Linq;
-using Xceed.Wpf.AvalonDock.Layout.Serialization;
+using System.Windows;
+using System.Windows.Controls;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class DockLayoutSettings
+	public class TemplateMapping
 	{
-		private string rawSettings;
+		public Type Type { get; set; }
+		public DataTemplate Template { get; set; }
+	}
 
-		public bool Valid => rawSettings != null;
+	public class PaneTemplateSelector : DataTemplateSelector
+	{
+		public Collection<TemplateMapping> Mappings { get; set; } = new Collection<TemplateMapping>();
 
-		public DockLayoutSettings(XElement element)
+		public override DataTemplate SelectTemplate(object item, DependencyObject container)
 		{
-			if ((element != null) && element.HasElements) {
-				rawSettings = element.Elements().FirstOrDefault()?.ToString();
-			}
-		}
-
-		public XElement SaveAsXml()
-		{
-			try {
-				return XElement.Parse(rawSettings);
-			} catch (Exception) {
-				return null;
-			}
-		}
-
-		public void Deserialize(XmlLayoutSerializer serializer)
-		{
-			if (!Valid)
-				rawSettings = "<LayoutRoot />";
-
-			using (StringReader reader = new StringReader(rawSettings)) {
-				serializer.Deserialize(reader);
-			}
-		}
-
-		public void Serialize(XmlLayoutSerializer serializer)
-		{
-			using (StringWriter fs = new StringWriter()) {
-				serializer.Serialize(fs);
-				rawSettings = fs.ToString();
-			}
+			return Mappings.FirstOrDefault(m => m.Type == item.GetType())?.Template
+				?? base.SelectTemplate(item, container);
 		}
 	}
 }

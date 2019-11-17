@@ -41,13 +41,10 @@ namespace ICSharpCode.ILSpy
 	[ExportMainMenuCommand(Menu = nameof(Resources._Help), Header = nameof(Resources._About), MenuOrder = 99999)]
 	sealed class AboutPage : SimpleCommand
 	{
-		[Import]
-		DecompilerTextView decompilerTextView = null;
-
 		public override void Execute(object parameter)
 		{
 			MainWindow.Instance.UnselectAll();
-			Display(decompilerTextView);
+			Display(Docking.DockWorkspace.Instance.GetTextView());
 		}
 		
 		static readonly Uri UpdateUrl = new Uri("https://ilspy.net/updates.xml");
@@ -57,7 +54,7 @@ namespace ICSharpCode.ILSpy
 		
 		public static void Display(DecompilerTextView textView)
 		{
-			AvalonEditTextOutput output = new AvalonEditTextOutput() { EnableHyperlinks = true };
+			AvalonEditTextOutput output = new AvalonEditTextOutput() { Title = Resources.About, EnableHyperlinks = true };
 			output.WriteLine(Resources.ILSpyVersion + RevisionClass.FullVersion);
 			if(WindowsVersionHelper.HasPackageIdentity) {
 				output.WriteLine($"Package Name: {WindowsVersionHelper.GetPackageFamilyName()}");

@@ -1,4 +1,7 @@
-﻿// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
+﻿using System.Windows;
+using System.Windows.Controls;
+using ICSharpCode.ILSpy.ViewModels;
+// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,53 +19,23 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.IO;
-using System.Linq;
-using System.Xml;
-using System.Xml.Linq;
-using Xceed.Wpf.AvalonDock.Layout.Serialization;
-
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class DockLayoutSettings
+	public class PaneStyleSelector : StyleSelector
 	{
-		private string rawSettings;
+		public Style ToolPaneStyle { get; set; }
 
-		public bool Valid => rawSettings != null;
+		public Style DocumentStyle { get; set; }
 
-		public DockLayoutSettings(XElement element)
+		public override Style SelectStyle(object item, DependencyObject container)
 		{
-			if ((element != null) && element.HasElements) {
-				rawSettings = element.Elements().FirstOrDefault()?.ToString();
-			}
-		}
+			if (item is DocumentModel)
+				return DocumentStyle;
 
-		public XElement SaveAsXml()
-		{
-			try {
-				return XElement.Parse(rawSettings);
-			} catch (Exception) {
-				return null;
-			}
-		}
+			if (item is ToolPaneModel)
+				return ToolPaneStyle;
 
-		public void Deserialize(XmlLayoutSerializer serializer)
-		{
-			if (!Valid)
-				rawSettings = "<LayoutRoot />";
-
-			using (StringReader reader = new StringReader(rawSettings)) {
-				serializer.Deserialize(reader);
-			}
-		}
-
-		public void Serialize(XmlLayoutSerializer serializer)
-		{
-			using (StringWriter fs = new StringWriter()) {
-				serializer.Serialize(fs);
-				rawSettings = fs.ToString();
-			}
+			return base.SelectStyle(item, container);
 		}
 	}
 }

@@ -16,53 +16,23 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.IO;
-using System.Linq;
-using System.Xml;
-using System.Xml.Linq;
-using Xceed.Wpf.AvalonDock.Layout.Serialization;
+using ICSharpCode.ILSpy.Properties;
 
-namespace ICSharpCode.ILSpy.Docking
+namespace ICSharpCode.ILSpy.ViewModels
 {
-	public class DockLayoutSettings
+	public class AssemblyListPaneModel : ToolPaneModel
 	{
-		private string rawSettings;
+		public const string PaneContentId = "assemblyListPane";
 
-		public bool Valid => rawSettings != null;
+		public static AssemblyListPaneModel Instance { get; } = new AssemblyListPaneModel();
 
-		public DockLayoutSettings(XElement element)
+		public override PanePosition DefaultPosition => PanePosition.Left;
+
+		private AssemblyListPaneModel()
 		{
-			if ((element != null) && element.HasElements) {
-				rawSettings = element.Elements().FirstOrDefault()?.ToString();
-			}
-		}
-
-		public XElement SaveAsXml()
-		{
-			try {
-				return XElement.Parse(rawSettings);
-			} catch (Exception) {
-				return null;
-			}
-		}
-
-		public void Deserialize(XmlLayoutSerializer serializer)
-		{
-			if (!Valid)
-				rawSettings = "<LayoutRoot />";
-
-			using (StringReader reader = new StringReader(rawSettings)) {
-				serializer.Deserialize(reader);
-			}
-		}
-
-		public void Serialize(XmlLayoutSerializer serializer)
-		{
-			using (StringWriter fs = new StringWriter()) {
-				serializer.Serialize(fs);
-				rawSettings = fs.ToString();
-			}
+			Title = Resources.Assemblies;
+			ContentId = PaneContentId;
+			IsCloseable = false;
 		}
 	}
 }

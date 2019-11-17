@@ -268,6 +268,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to About.
+        /// </summary>
+        public static string About {
+            get {
+                return ResourceManager.GetString("About", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to |All Files|*.*.
         /// </summary>
         public static string AllFiles {
@@ -300,6 +309,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string Analyze {
             get {
                 return ResourceManager.GetString("Analyze", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Assemblies.
+        /// </summary>
+        public static string Assemblies {
+            get {
+                return ResourceManager.GetString("Assemblies", resourceCulture);
             }
         }
         
