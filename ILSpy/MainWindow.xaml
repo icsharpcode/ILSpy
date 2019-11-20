@@ -56,8 +56,6 @@
 			<ContentControl Content="{StaticResource AnalyzerTreeView}" />
 		</DataTemplate>
 
-		<ContentPresenter x:Key="MainPane" />
-
 		<DataTemplate x:Key="DecompilerTextViewTemplate">
 			<textview:DecompilerTextView DataContext="{Binding}" />
 		</DataTemplate>

@@ -29,13 +29,13 @@ namespace ICSharpCode.ILSpy.Controls
 	/// </summary>
 	public partial class ResourceObjectTable : UserControl
 	{
-		public ResourceObjectTable(IEnumerable resources, ContentPresenter contentPresenter)
+		public ResourceObjectTable(IEnumerable resources, FrameworkElement container)
 		{
 			InitializeComponent();
 			// set size to fit decompiler window
-			contentPresenter.SizeChanged += OnParentSizeChanged;
-			Width = contentPresenter.ActualWidth - 45;
-			MaxHeight = contentPresenter.ActualHeight;
+			container.SizeChanged += OnParentSizeChanged;
+			Width = container.ActualWidth - 45;
+			MaxHeight = container.ActualHeight;
 			resourceListView.ItemsSource = resources;
 		}
 

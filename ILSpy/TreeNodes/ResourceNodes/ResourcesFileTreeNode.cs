@@ -149,7 +149,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (null != smartOutput) {
 					smartOutput.AddUIElement(
 						delegate {
-							return new ResourceStringTable(stringTableEntries, MainWindow.Instance.mainPane);
+							return new ResourceStringTable(stringTableEntries, Docking.DockWorkspace.Instance.GetTextView());
 						}
 					);
 				}
@@ -161,7 +161,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (null != smartOutput) {
 					smartOutput.AddUIElement(
 						delegate {
-							return new ResourceObjectTable(otherEntries, MainWindow.Instance.mainPane);
+							return new ResourceObjectTable(otherEntries, Docking.DockWorkspace.Instance.GetTextView());
 						}
 					);
 				}

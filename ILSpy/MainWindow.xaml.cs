@@ -83,12 +83,6 @@ namespace ICSharpCode.ILSpy
 			get { return sessionSettings; }
 		}
 
-		public ContentPresenter mainPane {
-			get {
-				return FindResource("MainPane") as ContentPresenter;
-			}
-		}
-
 		public SharpTreeView treeView {
 			get {
 				return FindResource("TreeView") as SharpTreeView;
