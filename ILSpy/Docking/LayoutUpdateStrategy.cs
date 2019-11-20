@@ -74,7 +74,14 @@ namespace ICSharpCode.ILSpy.Docking
 				case "Bottom":
 					var centerLayoutPanel = layoutPanel.Children.OfType<LayoutPanel>().FirstOrDefault();
 					if (centerLayoutPanel == null) {
-						layoutPanel.Children.Insert(0, centerLayoutPanel = new LayoutPanel() { Orientation = Orientation.Vertical });
+						centerLayoutPanel = new LayoutPanel() { Orientation = Orientation.Vertical };
+						var documentPanel = layoutPanel.Children.OfType<LayoutDocumentPane>().FirstOrDefault();
+						if (documentPanel != null) {
+							layoutPanel.ReplaceChild(documentPanel, centerLayoutPanel);
+							centerLayoutPanel.Children.Add(documentPanel);
+						} else {
+							layoutPanel.Children.Insert(0, centerLayoutPanel);
+						}
 					}
 					if (centerLayoutPanel.Orientation != Orientation.Vertical) {
 						centerLayoutPanel.Orientation = Orientation.Vertical;
