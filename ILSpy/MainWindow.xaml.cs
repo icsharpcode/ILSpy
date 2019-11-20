@@ -134,6 +134,8 @@ namespace ICSharpCode.ILSpy
 				serializer.LayoutSerializationCallback -= DockWorkspace.Instance.LayoutSerializationCallback;
 			}
 
+			DockWorkspace.Instance.EnsureUnclosablePanes();
+
 			sessionSettings.FilterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
 			InitMainMenu();

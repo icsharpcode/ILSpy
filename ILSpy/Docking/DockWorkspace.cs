@@ -102,6 +102,11 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
+		internal void EnsureUnclosablePanes()
+		{
+			ToolPanes.Add(AssemblyListPaneModel.Instance);
+		}
+
 		protected void RaisePropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
