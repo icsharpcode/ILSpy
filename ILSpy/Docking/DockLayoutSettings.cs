@@ -51,9 +51,17 @@ namespace ICSharpCode.ILSpy.Docking
 		{
 			if (!Valid)
 				rawSettings = "<LayoutRoot />";
+			try {
+				Deserialize(rawSettings);
+			} catch (Exception) {
+				Deserialize("<LayoutRoot />");
+			}
 
-			using (StringReader reader = new StringReader(rawSettings)) {
-				serializer.Deserialize(reader);
+			void Deserialize(string settings)
+			{
+				using (StringReader reader = new StringReader(settings)) {
+					serializer.Deserialize(reader);
+				}
 			}
 		}
 

@@ -126,7 +126,13 @@ namespace ICSharpCode.ILSpy
 
 			InitializeComponent();
 
-			sessionSettings.DockLayout.Deserialize(new XmlLayoutSerializer(DockManager));
+			XmlLayoutSerializer serializer = new XmlLayoutSerializer(DockManager);
+			serializer.LayoutSerializationCallback += DockWorkspace.Instance.LayoutSerializationCallback;
+			try {
+				sessionSettings.DockLayout.Deserialize(serializer);
+			} finally {
+				serializer.LayoutSerializationCallback -= DockWorkspace.Instance.LayoutSerializationCallback;
+			}
 
 			sessionSettings.FilterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
@@ -462,8 +468,11 @@ namespace ICSharpCode.ILSpy
 
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
-			DockWorkspace.Instance.ToolPanes.Add(AssemblyListPaneModel.Instance);
-			DockWorkspace.Instance.Documents.Add(new DecompiledDocumentModel() { IsCloseable = false, Language = CurrentLanguage, LanguageVersion = CurrentLanguageVersion });
+			DockWorkspace.Instance.Documents.Add(new DecompiledDocumentModel() {
+				IsCloseable = false,
+				Language = CurrentLanguage,
+				LanguageVersion = CurrentLanguageVersion
+			});
 			DockWorkspace.Instance.ActiveDocument = DockWorkspace.Instance.Documents.First();
 
 			ILSpySettings spySettings = this.spySettingsForMainWindow_Loaded;

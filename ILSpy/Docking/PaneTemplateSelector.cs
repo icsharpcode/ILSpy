@@ -36,6 +36,10 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public override DataTemplate SelectTemplate(object item, DependencyObject container)
 		{
+			if (item == null) {
+				return base.SelectTemplate(item, container);
+			}
+
 			return Mappings.FirstOrDefault(m => m.Type == item.GetType())?.Template
 				?? base.SelectTemplate(item, container);
 		}

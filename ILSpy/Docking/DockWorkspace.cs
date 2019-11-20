@@ -25,6 +25,8 @@ using System.Threading.Tasks;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
+using Xceed.Wpf.AvalonDock.Layout;
+using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
 namespace ICSharpCode.ILSpy.Docking
 {
@@ -64,6 +66,39 @@ namespace ICSharpCode.ILSpy.Docking
 					}
 					RaisePropertyChanged(nameof(ActiveDocument));
 				}
+			}
+		}
+
+		internal void LayoutSerializationCallback(object sender, LayoutSerializationCallbackEventArgs e)
+		{
+			switch (e.Model) {
+				case LayoutAnchorable la:
+					switch (la.ContentId) {
+						case AssemblyListPaneModel.PaneContentId:
+							e.Content = AssemblyListPaneModel.Instance;
+							break;
+						case SearchPaneModel.PaneContentId:
+							e.Content = SearchPaneModel.Instance;
+							break;
+						case AnalyzerPaneModel.PaneContentId:
+							e.Content = AnalyzerPaneModel.Instance;
+							break;
+#if DEBUG
+						case DebugStepsPaneModel.PaneContentId:
+							e.Content = DebugStepsPaneModel.Instance;
+							break;
+#endif
+						default:
+							e.Cancel = true;
+							break;
+					}
+					if (!e.Cancel) {
+						ToolPanes.Add((ToolPaneModel)e.Content);
+					}
+					break;
+				default:
+					e.Cancel = true;
+					break;
 			}
 		}
 
