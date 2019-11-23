@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections;
 using System.Text;
 using System.Windows;
@@ -34,15 +35,16 @@ namespace ICSharpCode.ILSpy.Controls
 			InitializeComponent();
 			// set size to fit decompiler window
 			container.SizeChanged += OnParentSizeChanged;
-			Width = container.ActualWidth - 45;
+			if (!double.IsNaN(container.ActualWidth))
+				Width = Math.Max(container.ActualWidth - 45, 0);
 			MaxHeight = container.ActualHeight;
 			resourceListView.ItemsSource = strings;
 		}
 
 		private void OnParentSizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			if (e.WidthChanged)
-				Width = e.NewSize.Width - 45;
+			if (e.WidthChanged && !double.IsNaN(e.NewSize.Width))
+				Width = Math.Max(e.NewSize.Width - 45, 0);
 			if (e.HeightChanged)
 				MaxHeight = e.NewSize.Height;
 		}
