@@ -268,6 +268,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to _Window.
+        /// </summary>
+        public static string _Window {
+            get {
+                return ResourceManager.GetString("_Window", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to About.
         /// </summary>
         public static string About {
@@ -2049,6 +2058,24 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string WatermarkText {
             get {
                 return ResourceManager.GetString("WatermarkText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Close all documents.
+        /// </summary>
+        public static string Window_CloseAllDocuments {
+            get {
+                return ResourceManager.GetString("Window_CloseAllDocuments", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reset layout.
+        /// </summary>
+        public static string Window_ResetLayout {
+            get {
+                return ResourceManager.GetString("Window_ResetLayout", resourceCulture);
             }
         }
     }

@@ -781,4 +781,13 @@ Are you sure you want to continue?</value>
   <data name="Assemblies" xml:space="preserve">
     <value>Assemblies</value>
   </data>
+  <data name="Window_CloseAllDocuments" xml:space="preserve">
+    <value>Close all documents</value>
+  </data>
+  <data name="Window_ResetLayout" xml:space="preserve">
+    <value>Reset layout</value>
+  </data>
+  <data name="_Window" xml:space="preserve">
+    <value>_Window</value>
+  </data>
 </root>

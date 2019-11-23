@@ -63,6 +63,11 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public bool Valid => rawSettings != null;
 
+		public void Reset()
+		{
+			this.rawSettings = DefaultLayout;
+		}
+
 		public DockLayoutSettings(XElement element)
 		{
 			if ((element != null) && element.HasElements) {

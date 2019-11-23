@@ -98,8 +98,6 @@ namespace ICSharpCode.ILSpy.Docking
 			} finally {
 				serializer.LayoutSerializationCallback -= LayoutSerializationCallback;
 			}
-
-			EnsureUnclosablePanes();
 		}
 
 		void LayoutSerializationCallback(object sender, LayoutSerializationCallbackEventArgs e)
@@ -134,11 +132,6 @@ namespace ICSharpCode.ILSpy.Docking
 					e.Cancel = true;
 					break;
 			}
-		}
-
-		internal void EnsureUnclosablePanes()
-		{
-			AssemblyListPaneModel.Instance.IsVisible = true;
 		}
 
 		protected void RaisePropertyChanged([CallerMemberName] string propertyName = null)
@@ -185,6 +178,23 @@ namespace ICSharpCode.ILSpy.Docking
 					ddm.LanguageVersion = sessionSettings.FilterSettings.LanguageVersion;
 				}
 			}
+		}
+
+		internal void CloseAllDocuments()
+		{
+			foreach (var doc in Documents.ToArray()) {
+				if (doc.IsCloseable)
+					Documents.Remove(doc);
+			}
+		}
+
+		internal void ResetLayout()
+		{
+			foreach (var pane in ToolPanes) {
+				pane.IsVisible = false;
+			}
+			sessionSettings.DockLayout.Reset();
+			InitializeLayout(MainWindow.Instance.DockManager);
 		}
 	}
 }

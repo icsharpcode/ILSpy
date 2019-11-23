@@ -99,6 +99,7 @@
 				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.FilterSettings.ApiVisPublicAndInternal}" />
 				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.FilterSettings.ApiVisAll}" />
 			</MenuItem>
+			<MenuItem Header="{x:Static properties:Resources._Window}" />
 		</Menu>
 		<!-- ToolBar -->
 		<ToolBar
