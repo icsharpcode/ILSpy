@@ -37,9 +37,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstNodeCollection(AstNode node, Role<T> role)
 		{
 			if (node == null)
-				throw new ArgumentNullException("node");
+				throw new ArgumentNullException(nameof(node));
 			if (role == null)
-				throw new ArgumentNullException("role");
+				throw new ArgumentNullException(nameof(role));
 			this.node = node;
 			this.role = role;
 		}
@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public void MoveTo(ICollection<T> targetCollection)
 		{
 			if (targetCollection == null)
-				throw new ArgumentNullException("targetCollection");
+				throw new ArgumentNullException(nameof(targetCollection));
 			foreach (T node in this) {
 				node.Remove();
 				targetCollection.Add(node);

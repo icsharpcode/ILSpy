@@ -23,7 +23,9 @@ using System.Reflection;
 using System.Text;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -56,11 +58,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var arguments = invocationExpression.Arguments.ToArray();
 
 			// Reduce "String.Concat(a, b)" to "a + b"
-			if (method.Name == "Concat" && method.DeclaringType.FullName == "System.String" && CheckArgumentsForStringConcat(arguments)) {
-				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
-				Expression expr = arguments[0];
+			if (IsStringConcat(method) && CheckArgumentsForStringConcat(arguments)) {
+				bool isInExpressionTree = invocationExpression.Ancestors.OfType<LambdaExpression>().Any(
+					lambda => lambda.Annotation<IL.ILFunction>()?.Kind == IL.ILFunctionKind.ExpressionTree);
+				Expression expr = arguments[0].Detach();
+				if (!isInExpressionTree) {
+					expr = RemoveRedundantToStringInConcat(expr, method, isLastArgument: false).Detach();
+				}
 				for (int i = 1; i < arguments.Length; i++) {
-					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Add, arguments[i].UnwrapInDirectionExpression());
+					var arg = arguments[i].Detach();
+					if (!isInExpressionTree) {
+						arg = RemoveRedundantToStringInConcat(arg, method, isLastArgument: i == arguments.Length - 1).Detach();
+					}
+					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Add, arg);
 				}
 				expr.CopyAnnotationsFrom(invocationExpression);
 				invocationExpression.ReplaceWith(expr);
@@ -163,7 +173,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			return;
 		}
-
+		
 		bool IsInstantiableTypeParameter(IType type)
 		{
 			return type is ITypeParameter tp && tp.HasDefaultConstructorConstraint;
@@ -174,9 +184,135 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (arguments.Length < 2)
 				return false;
 
-			return !arguments.Any(arg => arg is NamedArgumentExpression) &&
-				(arguments[0].GetResolveResult().Type.IsKnownType(KnownTypeCode.String) ||
-				arguments[1].GetResolveResult().Type.IsKnownType(KnownTypeCode.String));
+			if (arguments.Any(arg => arg is NamedArgumentExpression))
+				return false;
+
+			// The evaluation order when the object.ToString() calls happen is a mess:
+			// The C# spec says the evaluation for order for each individual string + should be:
+			//   * evaluate left argument
+			//   * evaluate right argument
+			//   * call ToString() on object argument
+			// What actually happens pre-VS2019.3:
+			//   * evaluate all arguments in chain of + operators from left to right
+			//   * call ToString() on all object arguments from left to right
+			// What happens in VS2019.3:
+			//   * for each argument in chain of + operators fom left to right:
+			//       * evaluate argument
+			//       * call ToString() on object argument
+			// See https://github.com/dotnet/roslyn/issues/38641 for details.
+			// To ensure the decompiled code's behavior matches the original IL behavior,
+			// no matter which compiler is used to recompile it, we require that all
+			// implicit ToString() calls except for the last are free of side effects.
+			foreach (var arg in arguments.SkipLast(1)) {
+				if (!ToStringIsKnownEffectFree(arg.GetResolveResult().Type)) {
+					return false;
+				}
+			}
+			foreach (var arg in arguments) {
+				if (arg.GetResolveResult() is InvocationResolveResult rr && IsStringConcat(rr.Member)) {
+					// Roslyn + mcs also flatten nested string.Concat() invocations within a operator+ use,
+					// which causes it to use the incorrect evaluation order despite the code using an
+					// explicit string.Concat() call.
+					// This problem is avoided if the outer call remains string.Concat() as well.
+					return false;
+				}
+			}
+
+			// One of the first two arguments must be string, otherwise the + operator
+			// won't resolve to a string concatenation.
+			return arguments[0].GetResolveResult().Type.IsKnownType(KnownTypeCode.String)
+				|| arguments[1].GetResolveResult().Type.IsKnownType(KnownTypeCode.String);
+		}
+
+		private bool IsStringConcat(IParameterizedMember member)
+		{
+			return member is IMethod method
+				&& method.Name == "Concat"
+				&& method.DeclaringType.IsKnownType(KnownTypeCode.String);
+		}
+
+		static readonly Pattern ToStringCallPattern = new Choice {
+			// target.ToString()
+			new InvocationExpression(new MemberReferenceExpression(new AnyNode("target"), "ToString")).WithName("call"),
+			// target?.ToString()
+			new UnaryOperatorExpression(
+				UnaryOperatorType.NullConditionalRewrap,
+				new InvocationExpression(
+					new MemberReferenceExpression(
+						new UnaryOperatorExpression(UnaryOperatorType.NullConditional, new AnyNode("target")),
+						"ToString")
+				).WithName("call")
+			).WithName("nullConditional")
+		};
+
+		internal static Expression RemoveRedundantToStringInConcat(Expression expr, IMethod concatMethod, bool isLastArgument)
+		{
+			var m = ToStringCallPattern.Match(expr);
+			if (!m.Success)
+				return expr;
+
+			if (!concatMethod.Parameters.All(IsStringParameter)) {
+				// If we're using a string.Concat() overload involving object parameters,
+				// string.Concat() itself already calls ToString() so the C# compiler shouldn't
+				// generate additional ToString() calls in this case.
+				return expr;
+			}
+			var toStringMethod = m.Get<Expression>("call").Single().GetSymbol() as IMethod;
+			var target = m.Get<Expression>("target").Single();
+			var type = target.GetResolveResult().Type;
+			if (!(isLastArgument || ToStringIsKnownEffectFree(type))) {
+				// ToString() order of evaluation matters, see CheckArgumentsForStringConcat().
+				return expr;
+			}
+			if (type.IsReferenceType != false && !m.Has("nullConditional")) {
+				// ToString() might throw NullReferenceException, but the builtin operator+ doesn't.
+				return expr;
+			}
+			if (!ToStringIsKnownEffectFree(type) && toStringMethod != null && IL.Transforms.ILInlining.MethodRequiresCopyForReadonlyLValue(toStringMethod)) {
+				// ToString() on a struct may mutate the struct.
+				// For operator+ the C# compiler creates a temporary copy before implicitly calling ToString(),
+				// whereas an explicit ToString() call would mutate the original lvalue.
+				// So we can't remove the compiler-generated ToString() call in cases where this might make a difference.
+				return expr;
+			}
+
+			// All checks succeeded, we can eliminate the ToString() call.
+			// The C# compiler will generate an equivalent call if the code is recompiled.
+			return target;
+
+			bool IsStringParameter(IParameter p)
+			{
+				IType ty = p.Type;
+				if (p.IsParams && ty.Kind == TypeKind.Array)
+					ty = ((ArrayType)ty).ElementType;
+				return ty.IsKnownType(KnownTypeCode.String);
+			}
+		}
+
+		static bool ToStringIsKnownEffectFree(IType type)
+		{
+			type = NullableType.GetUnderlyingType(type);
+			switch (type.GetDefinition()?.KnownTypeCode) {
+				case KnownTypeCode.Boolean:
+				case KnownTypeCode.Char:
+				case KnownTypeCode.SByte:
+				case KnownTypeCode.Byte:
+				case KnownTypeCode.Int16:
+				case KnownTypeCode.UInt16:
+				case KnownTypeCode.Int32:
+				case KnownTypeCode.UInt32:
+				case KnownTypeCode.Int64:
+				case KnownTypeCode.UInt64:
+				case KnownTypeCode.Single:
+				case KnownTypeCode.Double:
+				case KnownTypeCode.Decimal:
+				case KnownTypeCode.IntPtr:
+				case KnownTypeCode.UIntPtr:
+				case KnownTypeCode.String:
+					return true;
+				default:
+					return false;
+			}
 		}
 
 		static BinaryOperatorType? GetBinaryOperatorTypeFromMetadataName(string name)

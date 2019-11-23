@@ -167,6 +167,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			};
 		}
 
+		public static async Task AlwaysThrow()
+		{
+			throw null;
+		}
+
+		public static async Task InfiniteLoop()
+		{
+			while (true) {
+			}
+		}
+
+		public static async Task InfiniteLoopWithAwait()
+		{
+			while (true) {
+				await Task.Delay(10);
+			}
+		}
+
 #if CS70
 		public static async Task<int> AsyncLocalFunctions()
 		{
@@ -179,6 +197,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 #endif
+	}
+
+	public struct AsyncInStruct
+	{
+		private int i;
+
+		public async Task<int> Test(AsyncInStruct xx)
+		{
+			xx.i++;
+			i++;
+			await Task.Yield();
+			return i + xx.i;
+		}
 	}
 
 	public struct HopToThreadPoolAwaitable : INotifyCompletion

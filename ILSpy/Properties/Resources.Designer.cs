@@ -268,6 +268,24 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to _Window.
+        /// </summary>
+        public static string _Window {
+            get {
+                return ResourceManager.GetString("_Window", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to About.
+        /// </summary>
+        public static string About {
+            get {
+                return ResourceManager.GetString("About", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to |All Files|*.*.
         /// </summary>
         public static string AllFiles {
@@ -300,6 +318,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string Analyze {
             get {
                 return ResourceManager.GetString("Analyze", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Assemblies.
+        /// </summary>
+        public static string Assemblies {
+            get {
+                return ResourceManager.GetString("Assemblies", resourceCulture);
             }
         }
         
@@ -557,6 +584,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Decompile async IAsyncEnumerator methods.
+        /// </summary>
+        public static string DecompilerSettings_AsyncEnumerator {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.AsyncEnumerator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Decompile ?. and ?[] operators.
         /// </summary>
         public static string DecompilerSettings_DecompileAndOperators {
@@ -661,6 +697,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilerSettings_DecompileUseOfTheDynamicType {
             get {
                 return ResourceManager.GetString("DecompilerSettings.DecompileUseOfTheDynamicType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Detect awaited using and foreach statements.
+        /// </summary>
+        public static string DecompilerSettings_DetectAsyncUsingAndForeachStatements {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.DetectAsyncUsingAndForeachStatements", resourceCulture);
             }
         }
         
@@ -807,6 +852,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilerSettings_Other {
             get {
                 return ResourceManager.GetString("DecompilerSettings.Other", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Read-only methods.
+        /// </summary>
+        public static string DecompilerSettings_ReadOnlyMethods {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.ReadOnlyMethods", resourceCulture);
             }
         }
         
@@ -1005,6 +1059,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilerSettingsPanelLongText {
             get {
                 return ResourceManager.GetString("DecompilerSettingsPanelLongText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Decompile to new tab.
+        /// </summary>
+        public static string DecompileToNewPanel {
+            get {
+                return ResourceManager.GetString("DecompileToNewPanel", resourceCulture);
             }
         }
         
@@ -1995,6 +2058,24 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string WatermarkText {
             get {
                 return ResourceManager.GetString("WatermarkText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Close all documents.
+        /// </summary>
+        public static string Window_CloseAllDocuments {
+            get {
+                return ResourceManager.GetString("Window_CloseAllDocuments", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reset layout.
+        /// </summary>
+        public static string Window_ResetLayout {
+            get {
+                return ResourceManager.GetString("Window_ResetLayout", resourceCulture);
             }
         }
     }

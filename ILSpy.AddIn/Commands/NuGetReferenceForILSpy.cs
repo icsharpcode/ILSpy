@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using EnvDTE;
+using Microsoft.VisualStudio.Shell;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
@@ -26,6 +27,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// <returns><see cref="NuGetReferenceForILSpy"/> instance or <c>null</c>, if item is not a supported project.</returns>
 		public static NuGetReferenceForILSpy Detect(object itemData)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			if (itemData is ProjectItem projectItem) {
 				var properties = Utils.GetProperties(projectItem.Properties, "Type");
 				if ((properties[0] as string) == "Package") {
@@ -42,6 +45,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// <returns>Parameters object or <c>null, if not applicable.</c></returns>
 		public ILSpyParameters GetILSpyParameters()
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			var properties = Utils.GetProperties(projectItem.Properties, "Name", "Version", "Path");
 			if (properties[0] != null && properties[1] != null && properties[2] != null) {
 				return new ILSpyParameters(new[] { $"{properties[2]}\\{properties[0]}.{properties[1]}.nupkg" });

@@ -4,16 +4,16 @@ $baseCommit = "d779383cb85003d6dabeb976f0845631e07bf463";
 $baseCommitRev = 1;
 
 # make sure this list matches artifacts-only branches list in appveyor.yml!
-$masterBranches = @("master", "3.2.x");
+$masterBranches = @("master", "5.0.x");
 
 $globalAssemblyInfoTemplateFile = "ILSpy/Properties/AssemblyInfo.template.cs";
 
 function Test-File([string]$filename) {
-    return [System.IO.File]::Exists( (Join-Path (Get-Location) $filename) );
+    return [System.IO.File]::Exists((Join-Path (Get-Location) $filename));
 }
 
 function Test-Dir([string]$name) {
-    return [System.IO.Directory]::Exists( (Join-Path (Get-Location) $name) );
+    return [System.IO.Directory]::Exists((Join-Path (Get-Location) $name));
 }
 
 function Find-Git() {
@@ -38,22 +38,26 @@ function Find-Git() {
 	return $false;
 }
 
+function No-Git() {
+    return -not (((Test-Dir ".git") -or (Test-File ".git")) -and (Find-Git));
+}
+
 function gitVersion() {
-    if (-not ((Test-Dir ".git") -and (Find-Git))) {
+    if (No-Git) {
         return 0;
     }
     return [Int32]::Parse((git rev-list --count "$baseCommit..HEAD")) + $baseCommitRev;
 }
 
 function gitCommitHash() {
-    if (-not ((Test-Dir ".git") -and (Find-Git))) {
+    if (No-Git) {
         return "0000000000000000000000000000000000000000";
     }
     return (git rev-list "$baseCommit..HEAD") | Select -First 1;
 }
 
 function gitBranch() {
-    if (-not ((Test-Dir ".git") -and (Find-Git))) {
+    if (No-Git) {
         return "no-branch";
     }
 

@@ -580,7 +580,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				List<ControlFlowNode> additionalNodes = new List<ControlFlowNode>();
 				// Find additionalNodes nodes and mark them as visited.
 				candidate.TraversePreOrder(n => n.Predecessors, additionalNodes.Add);
-				// This means Visited now represents the candiate extended loop.
+				// This means Visited now represents the candidate extended loop.
 				// Determine new exit points that are reachable from the additional nodes
 				// (note: some of these might have previously been exit points, too)
 				var newExitPoints = additionalNodes.SelectMany(n => n.Successors).Where(n => !n.Visited).ToHashSet();

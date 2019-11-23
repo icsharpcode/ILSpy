@@ -29,8 +29,6 @@ namespace ICSharpCode.ILSpy
 {
 	class CSharpHighlightingTokenWriter : DecoratingTokenWriter
 	{
-		ISmartTextOutput textOutput;
-
 		HighlightingColor visibilityKeywordsColor;
 		HighlightingColor namespaceKeywordsColor;
 		HighlightingColor structureKeywordsColor;
@@ -65,12 +63,15 @@ namespace ICSharpCode.ILSpy
 		HighlightingColor trueKeywordColor;
 		HighlightingColor typeKeywordsColor;
 
-		public CSharpHighlightingTokenWriter(TokenWriter decoratedWriter, ISmartTextOutput textOutput) : base(decoratedWriter)
+		public RichTextModel HighlightingModel { get; } = new RichTextModel();
+
+		public CSharpHighlightingTokenWriter(TokenWriter decoratedWriter, ISmartTextOutput textOutput = null, ILocatable locatable = null)
+			: base(decoratedWriter)
 		{
-			this.textOutput = textOutput;
 			var highlighting = HighlightingManager.Instance.GetDefinition("C#");
 
-			//this.defaultTextColor = ???;
+			this.locatable = locatable;
+			this.textOutput = textOutput;
 
 			this.visibilityKeywordsColor = highlighting.GetNamedColor("Visibility");
 			this.namespaceKeywordsColor = highlighting.GetNamedColor("NamespaceKeywords");
@@ -194,7 +195,6 @@ namespace ICSharpCode.ILSpy
 				case "event":
 				case "extern":
 				case "override":
-				case "readonly":
 				case "sealed":
 				case "static":
 				case "virtual":
@@ -202,6 +202,12 @@ namespace ICSharpCode.ILSpy
 				case "async":
 				case "partial":
 					color = modifiersColor;
+					break;
+				case "readonly":
+					if (role == ComposedType.ReadonlyRole)
+						color = parameterModifierColor;
+					else
+						color = modifiersColor;
 					break;
 				case "checked":
 				case "unchecked":
@@ -259,11 +265,11 @@ namespace ICSharpCode.ILSpy
 			if (nodeStack.PeekOrDefault() is AttributeSection)
 				color = attributeKeywordsColor;
 			if (color != null) {
-				textOutput.BeginSpan(color);
+				BeginSpan(color);
 			}
 			base.WriteKeyword(role, keyword);
 			if (color != null) {
-				textOutput.EndSpan();
+				EndSpan();
 			}
 		}
 
@@ -302,19 +308,25 @@ namespace ICSharpCode.ILSpy
 					break;
 			}
 			if (color != null) {
-				textOutput.BeginSpan(color);
+				BeginSpan(color);
 			}
 			base.WritePrimitiveType(type);
 			if (color != null) {
-				textOutput.EndSpan();
+				EndSpan();
 			}
 		}
 
 		public override void WriteIdentifier(Identifier identifier)
 		{
 			HighlightingColor color = null;
-			if (identifier.Name == "value" && identifier.Ancestors.OfType<Accessor>().FirstOrDefault() is Accessor accessor && accessor.Role != PropertyDeclaration.GetterRole)
+			if (identifier.Name == "value"
+				&& identifier.Parent?.GetResolveResult() is ILVariableResolveResult rr
+				&& rr.Variable.Kind == Decompiler.IL.VariableKind.Parameter
+				&& identifier.Ancestors.OfType<Accessor>().FirstOrDefault() is Accessor accessor
+				&& accessor.Role != PropertyDeclaration.GetterRole)
+			{
 				color = valueKeywordColor;
+			}
 			if ((identifier.Name == "dynamic" || identifier.Name == "var") && identifier.Parent is AstType)
 				color = queryKeywordsColor;
 			switch (GetCurrentDefinition()) {
@@ -372,11 +384,11 @@ namespace ICSharpCode.ILSpy
 					break;
 			}
 			if (color != null) {
-				textOutput.BeginSpan(color);
+				BeginSpan(color);
 			}
 			base.WriteIdentifier(identifier);
 			if (color != null) {
-				textOutput.EndSpan();
+				EndSpan();
 			}
 		}
 
@@ -390,11 +402,11 @@ namespace ICSharpCode.ILSpy
 				color = trueKeywordColor;
 			}
 			if (color != null) {
-				textOutput.BeginSpan(color);
+				BeginSpan(color);
 			}
 			base.WritePrimitiveValue(value, literalValue);
 			if (color != null) {
-				textOutput.EndSpan();
+				EndSpan();
 			}
 		}
 
@@ -414,6 +426,9 @@ namespace ICSharpCode.ILSpy
 
 		ISymbol GetCurrentMemberReference()
 		{
+			if (nodeStack == null || nodeStack.Count == 0)
+				return null;
+
 			AstNode node = nodeStack.Peek();
 			var symbol = node.GetSymbol();
 			if (symbol == null && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression) {
@@ -430,7 +445,7 @@ namespace ICSharpCode.ILSpy
 			return symbol;
 		}
 
-		Stack<AstNode> nodeStack = new Stack<AstNode>();
+		readonly Stack<AstNode> nodeStack = new Stack<AstNode>();
 
 		public override void StartNode(AstNode node)
 		{
@@ -442,6 +457,40 @@ namespace ICSharpCode.ILSpy
 		{
 			base.EndNode(node);
 			nodeStack.Pop();
+		}
+
+		readonly Stack<HighlightingColor> colorStack = new Stack<HighlightingColor>();
+		HighlightingColor currentColor = new HighlightingColor();
+		int currentColorBegin = -1;
+		readonly ILocatable locatable;
+		readonly ISmartTextOutput textOutput;
+
+		private void BeginSpan(HighlightingColor highlightingColor)
+		{
+			if (textOutput != null) {
+				textOutput.BeginSpan(highlightingColor);
+				return;
+			}
+
+			if (currentColorBegin > -1)
+				HighlightingModel.SetHighlighting(currentColorBegin, locatable.Length - currentColorBegin, currentColor);
+			colorStack.Push(currentColor);
+			currentColor = currentColor.Clone();
+			currentColorBegin = locatable.Length;
+			currentColor.MergeWith(highlightingColor);
+			currentColor.Freeze();
+		}
+
+		private void EndSpan()
+		{
+			if (textOutput != null) {
+				textOutput.EndSpan();
+				return;
+			}
+
+			HighlightingModel.SetHighlighting(currentColorBegin, locatable.Length - currentColorBegin, currentColor);
+			currentColor = colorStack.Pop();
+			currentColorBegin = locatable.Length;
 		}
 	}
 }

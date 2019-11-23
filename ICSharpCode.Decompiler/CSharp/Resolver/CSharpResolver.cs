@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public CSharpResolver(ICompilation compilation)
 		{
 			if (compilation == null)
-				throw new ArgumentNullException("compilation");
+				throw new ArgumentNullException(nameof(compilation));
 			this.compilation = compilation;
 			this.conversions = CSharpConversions.Get(compilation);
 			this.context = new CSharpTypeResolveContext(compilation.MainModule);
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public CSharpResolver(CSharpTypeResolveContext context)
 		{
 			if (context == null)
-				throw new ArgumentNullException("context");
+				throw new ArgumentNullException(nameof(context));
 			this.compilation = context.Compilation;
 			this.conversions = CSharpConversions.Get(compilation);
 			this.context = context;
@@ -262,7 +262,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public CSharpResolver AddVariable(IVariable variable)
 		{
 			if (variable == null)
-				throw new ArgumentNullException("variable");
+				throw new ArgumentNullException(nameof(variable));
 			return WithLocalVariableStack(localVariableStack.Push(variable));
 		}
 		
@@ -313,7 +313,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public CSharpResolver PushObjectInitializer(ResolveResult initializedObject)
 		{
 			if (initializedObject == null)
-				throw new ArgumentNullException("initializedObject");
+				throw new ArgumentNullException(nameof(initializedObject));
 			return WithObjectInitializerStack(new ObjectInitializerContext(initializedObject, objectInitializerStack));
 		}
 		
@@ -379,14 +379,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						return UnaryOperatorResolveResult(new PointerType(expression.Type), op, expression);
 					case UnaryOperatorType.Await: {
 						ResolveResult getAwaiterMethodGroup = ResolveMemberAccess(expression, "GetAwaiter", EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
-						ResolveResult getAwaiterInvocation = ResolveInvocation(getAwaiterMethodGroup, new ResolveResult[0], argumentNames: null, allowOptionalParameters: false);
+						ResolveResult getAwaiterInvocation = ResolveInvocation(getAwaiterMethodGroup, Empty<ResolveResult>.Array, argumentNames: null, allowOptionalParameters: false);
 
 						var lookup = CreateMemberLookup();
 						IMethod getResultMethod;
 						IType awaitResultType;
 						var getResultMethodGroup = lookup.Lookup(getAwaiterInvocation, "GetResult", EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
 						if (getResultMethodGroup != null) {
-							var getResultOR = getResultMethodGroup.PerformOverloadResolution(compilation, new ResolveResult[0], allowExtensionMethods: false, conversions: conversions);
+							var getResultOR = getResultMethodGroup.PerformOverloadResolution(compilation, Empty<ResolveResult>.Array, allowExtensionMethods: false, conversions: conversions);
 							getResultMethod = getResultOR.FoundApplicableCandidate ? getResultOR.GetBestCandidateWithSubstitutedTypeArguments() as IMethod : null;
 							awaitResultType = getResultMethod != null ? getResultMethod.ReturnType : SpecialType.UnknownType;
 						}
@@ -1313,9 +1313,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// C# 4.0 spec: §3.8 Namespace and type names; §7.6.2 Simple Names
 			
 			if (identifier == null)
-				throw new ArgumentNullException("identifier");
+				throw new ArgumentNullException(nameof(identifier));
 			if (typeArguments == null)
-				throw new ArgumentNullException("typeArguments");
+				throw new ArgumentNullException(nameof(typeArguments));
 			
 			int k = typeArguments.Count;
 			
@@ -1698,12 +1698,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 				getEnumeratorInvocation = ResolveCast(collectionType, expression);
 				getEnumeratorInvocation = ResolveMemberAccess(getEnumeratorInvocation, "GetEnumerator", EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
-				getEnumeratorInvocation = ResolveInvocation(getEnumeratorInvocation, new ResolveResult[0]);
+				getEnumeratorInvocation = ResolveInvocation(getEnumeratorInvocation, Empty<ResolveResult>.Array);
 			} else {
 				var getEnumeratorMethodGroup = memberLookup.Lookup(expression, "GetEnumerator", EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
 				if (getEnumeratorMethodGroup != null) {
 					var or = getEnumeratorMethodGroup.PerformOverloadResolution(
-						compilation, new ResolveResult[0],
+						compilation, Empty<ResolveResult>.Array,
 						allowExtensionMethods: false, allowExpandingParams: false, allowOptionalParameters: false);
 					if (or.FoundApplicableCandidate && !or.IsAmbiguous && !or.BestCandidate.IsStatic && or.BestCandidate.Accessibility == Accessibility.Public) {
 						collectionType = expression.Type;
@@ -1722,7 +1722,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			var moveNextMethodGroup = memberLookup.Lookup(new ResolveResult(enumeratorType), "MoveNext", EmptyList<IType>.Instance, false) as MethodGroupResolveResult;
 			if (moveNextMethodGroup != null) {
 				var or = moveNextMethodGroup.PerformOverloadResolution(
-					compilation, new ResolveResult[0],
+					compilation, Empty<ResolveResult>.Array,
 					allowExtensionMethods: false, allowExpandingParams: false, allowOptionalParameters: false);
 				moveNextMethod = or.GetBestCandidateWithSubstitutedTypeArguments() as IMethod;
 			}
@@ -1763,7 +1763,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			getEnumeratorInvocation = ResolveCast(collectionType, expression);
 			getEnumeratorInvocation = ResolveMemberAccess(getEnumeratorInvocation, "GetEnumerator", EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
-			getEnumeratorInvocation = ResolveInvocation(getEnumeratorInvocation, new ResolveResult[0]);
+			getEnumeratorInvocation = ResolveInvocation(getEnumeratorInvocation, Empty<ResolveResult>.Array);
 		}
 		#endregion
 
@@ -1866,9 +1866,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public static bool IsEligibleExtensionMethod(IType targetType, IMethod method, bool useTypeInference, out IType[] outInferredTypes)
 		{
 			if (targetType == null)
-				throw new ArgumentNullException("targetType");
+				throw new ArgumentNullException(nameof(targetType));
 			if (method == null)
-				throw new ArgumentNullException("method");
+				throw new ArgumentNullException(nameof(method));
 			var compilation = method.Compilation;
 			return IsEligibleExtensionMethod(compilation, CSharpConversions.Get(compilation), targetType, method, useTypeInference, out outInferredTypes);
 		}
@@ -2348,7 +2348,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public ResolveResult ResolveCondition(ResolveResult input)
 		{
 			if (input == null)
-				throw new ArgumentNullException("input");
+				throw new ArgumentNullException(nameof(input));
 			IType boolean = compilation.FindType(KnownTypeCode.Boolean);
 			Conversion c = conversions.ImplicitConversion(input, boolean);
 			if (!c.IsValid) {
@@ -2368,7 +2368,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public ResolveResult ResolveConditionFalse(ResolveResult input)
 		{
 			if (input == null)
-				throw new ArgumentNullException("input");
+				throw new ArgumentNullException(nameof(input));
 			IType boolean = compilation.FindType(KnownTypeCode.Boolean);
 			Conversion c = conversions.ImplicitConversion(input, boolean);
 			if (!c.IsValid) {

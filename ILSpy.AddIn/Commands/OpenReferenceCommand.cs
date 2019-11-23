@@ -22,6 +22,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		protected override void OnBeforeQueryStatus(object sender, EventArgs e)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			if (sender is OleMenuCommand menuItem) {
 				menuItem.Visible = false;
 
@@ -44,6 +46,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		protected override void OnExecute(object sender, EventArgs e)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			var itemObject = owner.GetSelectedItemsData<object>().FirstOrDefault();
 			if (itemObject == null)
 				return;

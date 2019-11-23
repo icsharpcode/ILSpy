@@ -398,6 +398,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case PrimitiveType.R4:
 					return KnownTypeCode.Single;
 				case PrimitiveType.R8:
+				case PrimitiveType.R:
 					return KnownTypeCode.Double;
 				case PrimitiveType.U1:
 					return KnownTypeCode.Byte;

@@ -31,7 +31,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Search;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy
 {
@@ -42,7 +44,6 @@ namespace ICSharpCode.ILSpy
 	{
 		const int MAX_RESULTS = 1000;
 		const int MAX_REFRESH_TIME_MS = 10; // More means quicker forward of data, less means better responsibility
-		static SearchPane instance;
 		RunningSearch currentSearch;
 		bool runSearchOnNextShow;
 
@@ -53,17 +54,7 @@ namespace ICSharpCode.ILSpy
 			get { return (ObservableCollection<SearchResult>)GetValue(ResultsProperty); }
 		}
 
-		public static SearchPane Instance {
-			get {
-				if (instance == null) {
-					App.Current.VerifyAccess();
-					instance = new SearchPane();
-				}
-				return instance;
-			}
-		}
-		
-		private SearchPane()
+		public SearchPane()
 		{
 			InitializeComponent();
 			searchModeComboBox.Items.Add(new { Image = Images.Library, Name = "Types and Members" });
@@ -76,6 +67,8 @@ namespace ICSharpCode.ILSpy
 			searchModeComboBox.Items.Add(new { Image = Images.Literal, Name = "Constant" });
 			searchModeComboBox.Items.Add(new { Image = Images.Library, Name = "Metadata Token" });
 			searchModeComboBox.Items.Add(new { Image = Images.Resource, Name = "Resource" });
+			searchModeComboBox.Items.Add(new { Image = Images.Assembly, Name = "Assembly" });
+			searchModeComboBox.Items.Add(new { Image = Images.Namespace, Name = "Namespace" });
 
 			ContextMenuProvider.Add(listBox);
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
@@ -112,7 +105,7 @@ namespace ICSharpCode.ILSpy
 		public void Show()
 		{
 			if (!IsVisible) {
-				MainWindow.Instance.ShowInTopPane(Properties.Resources.SearchPane_Search, this);
+				SearchPaneModel.Instance.IsVisible = true;
 				if (runSearchOnNextShow) {
 					runSearchOnNextShow = false;
 					StartSearch(this.SearchTerm);
@@ -345,6 +338,18 @@ namespace ICSharpCode.ILSpy
 
 					if (searchTerm[0].StartsWith("r:", StringComparison.Ordinal))
 						return new ResourceSearchStrategy(apiVisibility, resultQueue, searchTerm[0].Substring(2));
+
+					if (searchTerm[0].StartsWith("a:", StringComparison.Ordinal))
+						return new AssemblySearchStrategy(searchTerm[0].Substring(2), resultQueue, AssemblySearchKind.NameOrFileName);
+
+					if (searchTerm[0].StartsWith("af:", StringComparison.Ordinal))
+						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.FilePath);
+
+					if (searchTerm[0].StartsWith("an:", StringComparison.Ordinal))
+						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.FullName);
+
+					if (searchTerm[0].StartsWith("n:", StringComparison.Ordinal))
+						return new NamespaceSearchStrategy(searchTerm[0].Substring(2), resultQueue);
 				}
 
 				switch (searchMode)
@@ -369,6 +374,10 @@ namespace ICSharpCode.ILSpy
 						return new MetadataTokenSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
 					case SearchMode.Resource:
 						return new ResourceSearchStrategy(apiVisibility, resultQueue, searchTerm);
+					case SearchMode.Assembly:
+						return new AssemblySearchStrategy(resultQueue, searchTerm, AssemblySearchKind.NameOrFileName);
+					case SearchMode.Namespace:
+						return new NamespaceSearchStrategy(resultQueue, searchTerm);
 				}
 
 				return null;
@@ -400,6 +409,8 @@ namespace ICSharpCode.ILSpy
 		Event,
 		Literal,
 		Token,
-		Resource
+		Resource,
+		Assembly,
+		Namespace
 	}
 }

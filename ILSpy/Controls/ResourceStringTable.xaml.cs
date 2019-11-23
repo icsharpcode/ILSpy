@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections;
 using System.Text;
 using System.Windows;
@@ -29,20 +30,21 @@ namespace ICSharpCode.ILSpy.Controls
 	/// </summary>
 	public partial class ResourceStringTable : UserControl
 	{
-		public ResourceStringTable(IEnumerable strings, ContentPresenter contentPresenter)
+		public ResourceStringTable(IEnumerable strings, FrameworkElement container)
 		{
 			InitializeComponent();
 			// set size to fit decompiler window
-			contentPresenter.SizeChanged += OnParentSizeChanged;
-			Width = contentPresenter.ActualWidth - 45;
-			MaxHeight = contentPresenter.ActualHeight;
+			container.SizeChanged += OnParentSizeChanged;
+			if (!double.IsNaN(container.ActualWidth))
+				Width = Math.Max(container.ActualWidth - 45, 0);
+			MaxHeight = container.ActualHeight;
 			resourceListView.ItemsSource = strings;
 		}
 
 		private void OnParentSizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			if (e.WidthChanged)
-				Width = e.NewSize.Width - 45;
+			if (e.WidthChanged && !double.IsNaN(e.NewSize.Width))
+				Width = Math.Max(e.NewSize.Width - 45, 0);
 			if (e.HeightChanged)
 				MaxHeight = e.NewSize.Height;
 		}

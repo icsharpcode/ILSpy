@@ -396,7 +396,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		/// <summary>
 		/// Does some of the analysis of SwitchOnNullableTransform to add the null case control flow
-		/// to the results of SwitchAnaylsis
+		/// to the results of SwitchAnalysis
 		/// </summary>
 		private void AddNullCase(List<ControlFlowNode> flowNodes, List<ControlFlowNode> caseNodes)
 		{

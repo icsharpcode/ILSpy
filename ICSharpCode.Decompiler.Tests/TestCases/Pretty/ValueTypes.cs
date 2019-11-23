@@ -184,7 +184,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void Issue56(int i, out string str)
 		{
 			str = "qq";
-			str += i.ToString();
+			str += i;
 		}
 
 		public static void CopyAroundAndModifyField(S s)

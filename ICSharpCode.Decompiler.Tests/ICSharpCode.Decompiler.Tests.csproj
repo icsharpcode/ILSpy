@@ -42,8 +42,8 @@
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="2017.7.26.1241" />
     <PackageReference Include="Microsoft.Build.Locator" Version="1.2.2" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.3.0-beta1-final" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.3.0-beta1-final" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.4.0-beta3-final" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.4.0-beta3-final" />
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
@@ -60,6 +60,7 @@
     <None Include="TestCases\Correctness\StackTests.il" />
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
+    <None Include="TestCases\ILPretty\WeirdEnums.il" />
     <None Include="TestCases\ILPretty\ConstantBlobs.il" />
     <None Include="TestCases\ILPretty\CS1xSwitch_Debug.il" />
     <None Include="TestCases\ILPretty\CS1xSwitch_Release.il" />
@@ -79,9 +80,17 @@
 
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
+    <Compile Include="TestCases\Correctness\StringConcat.cs" />
+    <None Include="TestCases\ILPretty\WeirdEnums.cs" />
     <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
+    <None Include="TestCases\Pretty\AsyncStreams.cs" />
+    <None Include="TestCases\Pretty\AsyncUsing.cs" />
     <Compile Include="TestCases\Pretty\OutVariables.cs" />
     <Compile Include="TestCases\Pretty\CustomTaskType.cs" />
+    <None Include="TestCases\Ugly\NoForEachStatement.Expected.cs" />
+    <Compile Include="TestCases\Ugly\NoForEachStatement.cs" />
+    <None Include="TestCases\Ugly\NoExtensionMethods.Expected.cs" />
+    <Compile Include="TestCases\Ugly\NoExtensionMethods.cs" />
     <None Include="TestCases\VBPretty\VBCompoundAssign.cs" />
     <Compile Include="TestCases\Pretty\ThrowExpressions.cs" />
     <None Include="TestCases\ILPretty\Issue1145.cs" />

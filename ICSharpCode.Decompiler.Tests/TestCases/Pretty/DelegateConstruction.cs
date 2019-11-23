@@ -151,6 +151,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			void M3();
 		}
+
 		public class BaseClass : IM3
 		{
 			protected virtual void M1()
@@ -163,6 +164,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 			}
 		}
+
 		public class SubClass : BaseClass
 		{
 			protected override void M2()
@@ -193,6 +195,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Noop("M3", M3);
 #endif
 			}
+
 			public void Test2()
 			{
 				Noop("M3.new", new BaseClass().M3);
@@ -201,6 +204,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			private void Noop(string name, Action _)
 			{
+			}
+		}
+
+		public class GenericTest<TNonCaptured, TCaptured>
+		{
+			public Func<TCaptured> GetFunc(Func<TNonCaptured, TCaptured> f)
+			{
+				TCaptured captured = f(default(TNonCaptured));
+				return delegate {
+					Console.WriteLine(captured.GetType().FullName);
+					return captured;
+				};
+			}
+
+			public Func<TNonCaptured, TNonCapturedMP, TCaptured> GetFunc<TNonCapturedMP>(Func<TCaptured> f)
+			{
+				TCaptured captured = f();
+				return delegate(TNonCaptured a, TNonCapturedMP d) {
+					Console.WriteLine(a.GetHashCode());
+					Console.WriteLine(captured.GetType().FullName);
+					return captured;
+				};
 			}
 		}
 
@@ -342,5 +367,62 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (int b) => (int c) => (int d) => a + b + c + d;
 		}
+
+		public static Func<TCaptured> CapturedTypeParameter1<TNonCaptured, TCaptured>(TNonCaptured a, Func<TNonCaptured, TCaptured> f)
+		{
+			TCaptured captured = f(a);
+			return delegate {
+				Console.WriteLine(captured.GetType().FullName);
+				return captured;
+			};
+		}
+
+		public static Func<TCaptured> CapturedTypeParameter2<TNonCaptured, TCaptured>(TNonCaptured a, Func<TNonCaptured, List<TCaptured>> f)
+		{
+			List<TCaptured> captured = f(a);
+			return delegate {
+				Console.WriteLine(captured.GetType().FullName);
+				return captured.FirstOrDefault();
+			};
+		}
+
+		public static Func<int> Issue1773(short data)
+		{
+			int integerData = data;
+			return () => integerData;
+		}
+
+#if !MCS
+		// does not compile with mcs...
+		public static Func<int> Issue1773b(object data)
+		{
+#if ROSLYN
+			dynamic dynamicData = data;
+			return () => dynamicData.DynamicCall();
+#else
+			// This is a bug in the old csc: captured dynamic local variables did not have the [DynamicAttribute]
+			// on the display-class field.
+			return () => ((dynamic)data).DynamicCall();
+#endif
+		}
+
+		public static Func<int> Issue1773c(object data)
+		{
+#if ROSLYN
+			dynamic dynamicData = data;
+			return () => dynamicData;
+#else
+			return () => (dynamic)data;
+#endif
+		}
+#endif
+
+#if ROSLYN
+		public static Func<string> Issue1773d((int Integer, string String) data)
+		{
+			(int Integer, string RenamedString) valueTuple = data;
+			return () => valueTuple.RenamedString;
+		}
+#endif
 	}
 }

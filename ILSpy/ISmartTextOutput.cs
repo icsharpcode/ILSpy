@@ -38,8 +38,13 @@ namespace ICSharpCode.ILSpy
 
 		void BeginSpan(HighlightingColor highlightingColor);
 		void EndSpan();
+
+		/// <summary>
+		/// Gets/sets the title displayed in the document tab's header.
+		/// </summary>
+		string Title { get; set; }
 	}
-	
+
 	public static class SmartTextOutputExtensions
 	{
 		/// <summary>

@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private void UsingStatementOnNullableStruct(UsingStruct? us)
 		{
 			using (us) {
-				Console.WriteLine("using-body: " + us);
+				Console.WriteLine("using-body: " + us.ToString());
 			}
 		}
 

@@ -59,6 +59,12 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
 		};
 
+		static readonly CompilerOptions[] dotnetCoreOnlyOptions =
+		{
+			CompilerOptions.UseRoslyn | CompilerOptions.ReferenceCore,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn | CompilerOptions.ReferenceCore
+		};
+
 		static readonly CompilerOptions[] defaultOptions =
 		{
 			CompilerOptions.None,
@@ -302,6 +308,18 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void AsyncStreams([ValueSource(nameof(dotnetCoreOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void AsyncUsing([ValueSource(nameof(dotnetCoreOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void CustomTaskType([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
@@ -436,7 +454,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void InterfaceTests([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions);
+			RunForLibrary(cscOptions: cscOptions | CompilerOptions.ReferenceCore);
 		}
 
 		[Test]

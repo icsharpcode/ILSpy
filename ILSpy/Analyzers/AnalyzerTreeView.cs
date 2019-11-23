@@ -23,6 +23,8 @@ using System.Linq;
 using System.Windows;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Analyzers.TreeNodes;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.Analyzers
@@ -32,21 +34,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// </summary>
 	public class AnalyzerTreeView : SharpTreeView, IPane
 	{
-		static AnalyzerTreeView instance;
-
-		public static AnalyzerTreeView Instance
-		{
-			get
-			{
-				if (instance == null) {
-					App.Current.VerifyAccess();
-					instance = new AnalyzerTreeView();
-				}
-				return instance;
-			}
-		}
-
-		private AnalyzerTreeView()
+		public AnalyzerTreeView()
 		{
 			this.ShowRoot = false;
 			this.Root = new AnalyzerRootNode { Language = MainWindow.Instance.CurrentLanguage };
@@ -72,8 +60,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public void Show()
 		{
-			if (!IsVisible)
-				MainWindow.Instance.ShowInBottomPane("Analyzer", this);
+			AnalyzerPaneModel.Instance.IsVisible = true;
 		}
 
 		public void Show(AnalyzerTreeNode node)

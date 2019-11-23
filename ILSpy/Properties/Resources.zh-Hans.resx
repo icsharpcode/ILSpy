@@ -729,4 +729,7 @@
   <data name="SearchMSDN" xml:space="preserve">
     <value>搜索MSDN...</value>
   </data>
+  <data name="About" xml:space="preserve">
+    <value>关于</value>
+  </data>
 </root>

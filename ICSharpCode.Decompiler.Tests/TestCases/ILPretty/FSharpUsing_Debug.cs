@@ -36,7 +36,7 @@ public static class FSharpUsingPatterns
 			num = fileStream.ReadByte();
 		}
 		int num2 = num;
-		Console.WriteLine("read:" + num2.ToString());
+		Console.WriteLine("read:" + num2);
 	}
 
 	public static void sample5()

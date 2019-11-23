@@ -35,7 +35,18 @@ namespace ICSharpCode.Decompiler.IL
 		U8 = PrimitiveTypeCode.UInt64,
 		I = PrimitiveTypeCode.IntPtr,
 		U = PrimitiveTypeCode.UIntPtr,
+		/// <summary>Managed reference</summary>
 		Ref = 16,
+		/// <summary>Floating point type of unspecified size:
+		/// usually 80 bits on x86 (when the runtime uses x87 instructions);
+		/// but only 64-bit on x64.
+		/// This only occurs for "conv.r.un" instructions. The C# compiler usually follows those
+		/// with a "conv.r4" or "conv.r8" instruction to indicate the desired float type, so
+		/// we only use this as conversion target type and don't bother tracking it as its own stack type:
+		/// basically everything treats R identical to R8, except for the (conv.r.un + conv.r[48] => conv.r[48].un)
+		/// combining logic which should not combine (conv.r.un + conv.r8 + conv.r4) into a single conv.r4.un.
+		/// </summary>
+		R = 254,
 		Unknown = 255
 	}
 }

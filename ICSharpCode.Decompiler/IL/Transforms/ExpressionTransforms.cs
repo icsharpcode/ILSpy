@@ -177,6 +177,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.Step("conv.i4(ldlen array) => ldlen.i4(array)", inst);
 				inst.AddILRange(inst.Argument);
 				inst.ReplaceWith(new LdLen(inst.TargetType.GetStackType(), array).WithILRange(inst));
+				return;
+			}
+			if (inst.TargetType.IsFloatType() && inst.Argument is Conv conv 
+				&& conv.Kind == ConversionKind.IntToFloat && conv.TargetType == PrimitiveType.R)
+			{
+				// IL conv.r.un does not indicate whether to convert the target type to R4 or R8,
+				// so the C# compiler usually follows it with an explicit conv.r4 or conv.r8.
+				// To avoid emitting '(float)(double)val', we combine these two conversions:
+				context.Step("conv.rN(conv.r.un(...)) => conv.rN.un(...)", inst);
+				inst.ReplaceWith(new Conv(conv.Argument, conv.InputType, conv.InputSign, inst.TargetType, inst.CheckForOverflow, inst.IsLifted | conv.IsLifted));
+				return;
 			}
 		}
 

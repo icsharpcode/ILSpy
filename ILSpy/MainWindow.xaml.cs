@@ -38,15 +38,26 @@ using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.Controls;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.TreeView;
 using Microsoft.Win32;
 using OSVersionHelper;
+using Xceed.Wpf.AvalonDock.Layout;
+using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
 namespace ICSharpCode.ILSpy
 {
+	class MainWindowDataContext
+	{
+		public DockWorkspace Workspace { get; set; }
+		public SessionSettings SessionSettings { get; set; }
+	}
+
 	/// <summary>
 	/// The main window of the application.
 	/// </summary>
@@ -62,8 +73,6 @@ namespace ICSharpCode.ILSpy
 		AssemblyList assemblyList;
 		AssemblyListTreeNode assemblyListTreeNode;
 
-		readonly DecompilerTextView decompilerTextView;
-
 		static MainWindow instance;
 
 		public static MainWindow Instance {
@@ -72,6 +81,24 @@ namespace ICSharpCode.ILSpy
 
 		public SessionSettings SessionSettings {
 			get { return sessionSettings; }
+		}
+
+		public SharpTreeView treeView {
+			get {
+				return FindResource("TreeView") as SharpTreeView;
+			}
+		}
+
+		public AnalyzerTreeView AnalyzerTreeView {
+			get {
+				return FindResource("AnalyzerTreeView") as AnalyzerTreeView;
+			}
+		}
+
+		public SearchPane SearchPane {
+			get {
+				return FindResource("SearchPane") as SearchPane;
+			}
 		}
 
 		public MainWindow()
@@ -84,21 +111,22 @@ namespace ICSharpCode.ILSpy
 
 			this.Icon = new BitmapImage(new Uri("pack://application:,,,/ILSpy;component/images/ILSpy.ico"));
 
-			this.DataContext = sessionSettings;
+			this.DataContext = new MainWindowDataContext {
+				Workspace = DockWorkspace.Instance,
+				SessionSettings = sessionSettings
+			};
+
+			DockWorkspace.Instance.LoadSettings(sessionSettings);
 
 			InitializeComponent();
-			decompilerTextView = App.ExportProvider.GetExportedValue<DecompilerTextView>();
-			mainPane.Content = decompilerTextView;
 
-			if (sessionSettings.SplitterPosition > 0 && sessionSettings.SplitterPosition < 1) {
-				leftColumn.Width = new GridLength(sessionSettings.SplitterPosition, GridUnitType.Star);
-				rightColumn.Width = new GridLength(1 - sessionSettings.SplitterPosition, GridUnitType.Star);
-			}
+			DockWorkspace.Instance.InitializeLayout(DockManager);
+
 			sessionSettings.FilterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
 			InitMainMenu();
 			InitToolbar();
-			ContextMenuProvider.Add(treeView, decompilerTextView);
+			ContextMenuProvider.Add(treeView);
 
 			this.Loaded += MainWindow_Loaded;
 		}
@@ -140,19 +168,15 @@ namespace ICSharpCode.ILSpy
 
 		Button MakeToolbarItem(Lazy<ICommand, IToolbarCommandMetadata> command)
 		{
-			object image = Images.Load(command.Value, command.Metadata.ToolbarIcon);
-			if (!(image is Viewbox)) {
-				image = new Image {
-					Width = 16,
-					Height = 16,
-					Source = (ImageSource)image
-				};
-			}
 			return new Button {
 				Command = CommandWrapper.Unwrap(command.Value),
 				ToolTip = Properties.Resources.ResourceManager.GetString(command.Metadata.ToolTip),
 				Tag = command.Metadata.Tag,
-				Content = image
+				Content = new Image {
+					Width = 16,
+					Height = 16,
+					Source = Images.Load(command.Value, command.Metadata.ToolbarIcon)
+				}
 			};
 		}
 		#endregion
@@ -178,15 +202,11 @@ namespace ICSharpCode.ILSpy
 						if (!string.IsNullOrEmpty(GetResourceString(entry.Metadata.Header)))
 							menuItem.Header = GetResourceString(entry.Metadata.Header);
 						if (!string.IsNullOrEmpty(entry.Metadata.MenuIcon)) {
-							object image = Images.Load(entry.Value, entry.Metadata.MenuIcon);
-							if (!(image is Viewbox)) {
-								image = new Image {
-									Width = 16,
-									Height = 16,
-									Source = (ImageSource)image
-								};
-							}
-							menuItem.Icon = image;
+							menuItem.Icon = new Image {
+								Width = 16,
+								Height = 16,
+								Source = Images.Load(entry.Value, entry.Metadata.MenuIcon)
+							};
 						}
 
 						menuItem.IsEnabled = entry.Metadata.IsEnabled;
@@ -303,8 +323,8 @@ namespace ICSharpCode.ILSpy
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
 			NavigateOnLaunch(args.NavigateTo, sessionSettings.ActiveTreeViewPath, spySettings, relevantAssemblies);
 			if (args.Search != null) {
-				SearchPane.Instance.SearchTerm = args.Search;
-				SearchPane.Instance.Show();
+				SearchPane.SearchTerm = args.Search;
+				SearchPane.Show();
 			}
 		}
 
@@ -331,6 +351,10 @@ namespace ICSharpCode.ILSpy
 							}
 						}
 					}
+				} else if (navigateTo == "none") {
+					// Don't navigate anywhere; start empty.
+					// Used by ILSpy VS addin, it'll send us the real location to navigate to via IPC.
+					found = true;
 				} else {
 					IEntity mr = await Task.Run(() => FindEntityInRelevantAssemblies(navigateTo, relevantAssemblies));
 					if (mr != null && mr.ParentModule.PEFile != null) {
@@ -343,41 +367,41 @@ namespace ICSharpCode.ILSpy
 				if (!found && treeView.SelectedItem == initialSelection) {
 					AvalonEditTextOutput output = new AvalonEditTextOutput();
 					output.Write(string.Format("Cannot find '{0}' in command line specified assemblies.", navigateTo));
-					decompilerTextView.ShowText(output);
+					DockWorkspace.Instance.ShowText(output);
 				}
-			} else if (commandLineLoadedAssemblies.Count == 1) {
+			} else if (relevantAssemblies.Count == 1) {
 				// NavigateTo == null and an assembly was given on the command-line:
 				// Select the newly loaded assembly
-				AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(commandLineLoadedAssemblies[0]);
+				AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(relevantAssemblies[0]);
 				if (asmNode != null && treeView.SelectedItem == initialSelection) {
 					SelectNode(asmNode);
 				}
 			} else if (spySettings != null) {
 				SharpTreeNode node = null;
-				if (sessionSettings.ActiveTreeViewPath?.Length > 0) {
+				if (activeTreeViewPath?.Length > 0) {
 					foreach (var asm in assemblyList.GetAssemblies()) {
-						if (asm.FileName == sessionSettings.ActiveTreeViewPath[0]) {
+						if (asm.FileName == activeTreeViewPath[0]) {
 							// FindNodeByPath() blocks the UI if the assembly is not yet loaded,
 							// so use an async wait instead.
 							await asm.GetPEFileAsync().Catch<Exception>(ex => { });
 						}
 					}
-					node = FindNodeByPath(sessionSettings.ActiveTreeViewPath, true);
+					node = FindNodeByPath(activeTreeViewPath, true);
 				}
 				if (treeView.SelectedItem == initialSelection) {
 					if (node != null) {
 						SelectNode(node);
 
 						// only if not showing the about page, perform the update check:
-						ShowMessageIfUpdatesAvailableAsync(spySettings);
+						await ShowMessageIfUpdatesAvailableAsync(spySettings);
 					} else {
-						AboutPage.Display(decompilerTextView);
+						AboutPage.Display(DockWorkspace.Instance.GetTextView());
 					}
 				}
 			}
 		}
 
-		private IEntity FindEntityInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
+		internal static IEntity FindEntityInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
 		{
 			ITypeReference typeRef = null;
 			IMemberReference memberRef = null;
@@ -401,8 +425,13 @@ namespace ICSharpCode.ILSpy
 			return null;
 		}
 
-		private bool CanResolveTypeInPEFile(PEFile module, ITypeReference typeRef, out EntityHandle typeHandle)
+		static bool CanResolveTypeInPEFile(PEFile module, ITypeReference typeRef, out EntityHandle typeHandle)
 		{
+			if (module == null) {
+				typeHandle = default;
+				return false;
+			}
+
 			switch (typeRef) {
 				case GetPotentiallyNestedClassTypeReference topLevelType:
 					typeHandle = topLevelType.ResolveInPEFile(module);
@@ -427,6 +456,13 @@ namespace ICSharpCode.ILSpy
 
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
+			DockWorkspace.Instance.Documents.Add(new DecompiledDocumentModel() {
+				IsCloseable = false,
+				Language = CurrentLanguage,
+				LanguageVersion = CurrentLanguageVersion
+			});
+			DockWorkspace.Instance.ActiveDocument = DockWorkspace.Instance.Documents.First();
+
 			ILSpySettings spySettings = this.spySettingsForMainWindow_Loaded;
 			this.spySettingsForMainWindow_Loaded = null;
 			var loadPreviousAssemblies = Options.MiscSettingsPanel.CurrentMiscSettings.LoadPreviousAssemblies;
@@ -463,7 +499,7 @@ namespace ICSharpCode.ILSpy
 
 			AvalonEditTextOutput output = new AvalonEditTextOutput();
 			if (FormatExceptions(App.StartupExceptions.ToArray(), output))
-				decompilerTextView.ShowText(output);
+				DockWorkspace.Instance.ShowText(output);
 		}
 
 		bool FormatExceptions(App.ExceptionData[] exceptions, ITextOutput output)
@@ -503,20 +539,21 @@ namespace ICSharpCode.ILSpy
 		#region Update Check
 		string updateAvailableDownloadUrl;
 
-		public void ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings, bool forceCheck = false)
+		public async Task ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings, bool forceCheck = false)
 		{
 			// Don't check for updates if we're in an MSIX since they work differently
 			if (WindowsVersionHelper.HasPackageIdentity) {
 				return;
 			}
 
-			Task<string> result;
+			string downloadUrl;
 			if (forceCheck) {
-				result = AboutPage.CheckForUpdatesAsync(spySettings);
+				downloadUrl = await AboutPage.CheckForUpdatesAsync(spySettings);
 			} else {
-				result = AboutPage.CheckForUpdatesIfEnabledAsync(spySettings);
+				downloadUrl = await AboutPage.CheckForUpdatesIfEnabledAsync(spySettings);
 			}
-			result.ContinueWith(task => AdjustUpdateUIAfterCheck(task, forceCheck), TaskScheduler.FromCurrentSynchronizationContext());
+
+			AdjustUpdateUIAfterCheck(downloadUrl, forceCheck);
 		}
 
 		void updatePanelCloseButtonClick(object sender, RoutedEventArgs e)
@@ -524,22 +561,22 @@ namespace ICSharpCode.ILSpy
 			updatePanel.Visibility = Visibility.Collapsed;
 		}
 
-		void downloadOrCheckUpdateButtonClick(object sender, RoutedEventArgs e)
+		async void downloadOrCheckUpdateButtonClick(object sender, RoutedEventArgs e)
 		{
 			if (updateAvailableDownloadUrl != null) {
 				MainWindow.OpenLink(updateAvailableDownloadUrl);
 			} else {
 				updatePanel.Visibility = Visibility.Collapsed;
-				AboutPage.CheckForUpdatesAsync(ILSpySettings.Load())
-					.ContinueWith(task => AdjustUpdateUIAfterCheck(task, true), TaskScheduler.FromCurrentSynchronizationContext());
+				string downloadUrl = await AboutPage.CheckForUpdatesAsync(ILSpySettings.Load());
+				AdjustUpdateUIAfterCheck(downloadUrl, true);
 			}
 		}
 
-		void AdjustUpdateUIAfterCheck(Task<string> task, bool displayMessage)
+		void AdjustUpdateUIAfterCheck(string downloadUrl, bool displayMessage)
 		{
-			updateAvailableDownloadUrl = task.Result;
+			updateAvailableDownloadUrl = downloadUrl;
 			updatePanel.Visibility = displayMessage ? Visibility.Visible : Visibility.Collapsed;
-			if (task.Result != null) {
+			if (downloadUrl != null) {
 				updatePanelMessage.Text = Properties.Resources.ILSpyVersionAvailable;
 				downloadOrCheckUpdateButton.Content = Properties.Resources.Download;
 			} else {
@@ -725,6 +762,8 @@ namespace ICSharpCode.ILSpy
 					return assemblyListTreeNode.FindPropertyNode(pd);
 				case IEvent ed:
 					return assemblyListTreeNode.FindEventNode(ed);
+				case INamespace nd:
+					return AssemblyListTreeNode.FindNamespaceNode(nd);
 				default:
 					return null;
 			}
@@ -878,7 +917,7 @@ namespace ICSharpCode.ILSpy
 
 		void SearchCommandExecuted(object sender, ExecutedRoutedEventArgs e)
 		{
-			SearchPane.Instance.Show();
+			SearchPaneModel.Instance.IsVisible = true;
 		}
 		#endregion
 
@@ -887,8 +926,7 @@ namespace ICSharpCode.ILSpy
 		{
 			DecompileSelectedNodes();
 
-			if (SelectionChanged != null)
-				SelectionChanged(sender, e);
+			SelectionChanged?.Invoke(sender, e);
 		}
 
 		Task decompilationTask;
@@ -903,7 +941,7 @@ namespace ICSharpCode.ILSpy
 				return;
 
 			if (recordHistory) {
-				var dtState = decompilerTextView.GetState();
+				var dtState = DockWorkspace.Instance.GetState();
 				if (dtState != null)
 					history.UpdateCurrent(new NavigationState(dtState));
 				history.Record(new NavigationState(treeView.SelectedItems.OfType<SharpTreeNode>()));
@@ -911,10 +949,10 @@ namespace ICSharpCode.ILSpy
 
 			if (treeView.SelectedItems.Count == 1) {
 				ILSpyTreeNode node = treeView.SelectedItem as ILSpyTreeNode;
-				if (node != null && node.View(decompilerTextView))
+				if (node != null && node.View(DockWorkspace.Instance.GetTextView()))
 					return;
 			}
-			decompilationTask = decompilerTextView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions() { TextViewState = state });
+			decompilationTask = DockWorkspace.Instance.GetTextView().DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions() { TextViewState = state });
 		}
 
 		void SaveCommandCanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -936,10 +974,6 @@ namespace ICSharpCode.ILSpy
 			} finally {
 				refreshInProgress = false;
 			}
-		}
-
-		public DecompilerTextView TextView {
-			get { return decompilerTextView; }
 		}
 
 		public Language CurrentLanguage => sessionSettings.FilterSettings.Language;
@@ -985,7 +1019,7 @@ namespace ICSharpCode.ILSpy
 
 		void NavigateHistory(bool forward)
 		{
-			var dtState = decompilerTextView.GetState();
+			var dtState = DockWorkspace.Instance.GetState();
 			if (dtState != null)
 				history.UpdateCurrent(new NavigationState(dtState));
 			var newState = forward ? history.GoForward() : history.GoBack();
@@ -1018,11 +1052,7 @@ namespace ICSharpCode.ILSpy
 			sessionSettings.ActiveTreeViewPath = GetPathForNode(treeView.SelectedItem as SharpTreeNode);
 			sessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(treeView.SelectedItem as SharpTreeNode);
 			sessionSettings.WindowBounds = this.RestoreBounds;
-			sessionSettings.SplitterPosition = leftColumn.Width.Value / (leftColumn.Width.Value + rightColumn.Width.Value);
-			if (topPane.Visibility == Visibility.Visible)
-				sessionSettings.TopPaneSplitterPosition = topPaneRow.Height.Value / (topPaneRow.Height.Value + textViewRow.Height.Value);
-			if (bottomPane.Visibility == Visibility.Visible)
-				sessionSettings.BottomPaneSplitterPosition = bottomPaneRow.Height.Value / (bottomPaneRow.Height.Value + textViewRow.Height.Value);
+			sessionSettings.DockLayout.Serialize(new XmlLayoutSerializer(DockManager));
 			sessionSettings.Save();
 		}
 
@@ -1041,99 +1071,6 @@ namespace ICSharpCode.ILSpy
 
 			return loadedAssy.FileName;
 		}
-
-		#region Top/Bottom Pane management
-
-		/// <summary>
-		///   When grid is resized using splitter, row height value could become greater than 1.
-		///   As result, when a new pane is shown, both textView and pane could become very small.
-		///   This method normalizes two rows and ensures that height is less then 1.
-		/// </summary>
-		void NormalizePaneRowHeightValues(RowDefinition pane1Row, RowDefinition pane2Row)
-		{
-			var pane1Height = pane1Row.Height;
-			var pane2Height = pane2Row.Height;
-
-			//only star height values are normalized.
-			if (!pane1Height.IsStar || !pane2Height.IsStar) {
-				return;
-			}
-
-			var totalHeight = pane1Height.Value + pane2Height.Value;
-			if (totalHeight == 0) {
-				return;
-			}
-
-			pane1Row.Height = new GridLength(pane1Height.Value / totalHeight, GridUnitType.Star);
-			pane2Row.Height = new GridLength(pane2Height.Value / totalHeight, GridUnitType.Star);
-		}
-
-		public void ShowInTopPane(string title, object content)
-		{
-			topPaneRow.MinHeight = 100;
-			if (sessionSettings.TopPaneSplitterPosition > 0 && sessionSettings.TopPaneSplitterPosition < 1) {
-				//Ensure all 3 blocks are in fair conditions
-				NormalizePaneRowHeightValues(bottomPaneRow, textViewRow);
-
-				textViewRow.Height = new GridLength(1 - sessionSettings.TopPaneSplitterPosition, GridUnitType.Star);
-				topPaneRow.Height = new GridLength(sessionSettings.TopPaneSplitterPosition, GridUnitType.Star);
-			}
-			topPane.Title = title;
-			if (topPane.Content != content) {
-				IPane pane = topPane.Content as IPane;
-				if (pane != null)
-					pane.Closed();
-				topPane.Content = content;
-			}
-			topPane.Visibility = Visibility.Visible;
-		}
-
-		void TopPane_CloseButtonClicked(object sender, EventArgs e)
-		{
-			sessionSettings.TopPaneSplitterPosition = topPaneRow.Height.Value / (topPaneRow.Height.Value + textViewRow.Height.Value);
-			topPaneRow.MinHeight = 0;
-			topPaneRow.Height = new GridLength(0);
-			topPane.Visibility = Visibility.Collapsed;
-
-			IPane pane = topPane.Content as IPane;
-			topPane.Content = null;
-			if (pane != null)
-				pane.Closed();
-		}
-
-		public void ShowInBottomPane(string title, object content)
-		{
-			bottomPaneRow.MinHeight = 100;
-			if (sessionSettings.BottomPaneSplitterPosition > 0 && sessionSettings.BottomPaneSplitterPosition < 1) {
-				//Ensure all 3 blocks are in fair conditions
-				NormalizePaneRowHeightValues(topPaneRow, textViewRow);
-
-				textViewRow.Height = new GridLength(1 - sessionSettings.BottomPaneSplitterPosition, GridUnitType.Star);
-				bottomPaneRow.Height = new GridLength(sessionSettings.BottomPaneSplitterPosition, GridUnitType.Star);
-			}
-			bottomPane.Title = title;
-			if (bottomPane.Content != content) {
-				IPane pane = bottomPane.Content as IPane;
-				if (pane != null)
-					pane.Closed();
-				bottomPane.Content = content;
-			}
-			bottomPane.Visibility = Visibility.Visible;
-		}
-
-		void BottomPane_CloseButtonClicked(object sender, EventArgs e)
-		{
-			sessionSettings.BottomPaneSplitterPosition = bottomPaneRow.Height.Value / (bottomPaneRow.Height.Value + textViewRow.Height.Value);
-			bottomPaneRow.MinHeight = 0;
-			bottomPaneRow.Height = new GridLength(0);
-			bottomPane.Visibility = Visibility.Collapsed;
-
-			IPane pane = bottomPane.Content as IPane;
-			bottomPane.Content = null;
-			if (pane != null)
-				pane.Closed();
-		}
-		#endregion
 
 		public void UnselectAll()
 		{

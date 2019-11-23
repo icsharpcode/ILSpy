@@ -18,6 +18,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Windows;
+using System.Windows.Media;
 using ICSharpCode.ILSpy.Options;
 
 namespace ICSharpCode.ILSpy
@@ -161,5 +163,43 @@ namespace ICSharpCode.ILSpy
 			}
 			return result;
 		}
+
+		#region DPI independence
+		public static Rect TransformToDevice(this Rect rect, Visual visual)
+		{
+			Matrix matrix = PresentationSource.FromVisual(visual).CompositionTarget.TransformToDevice;
+			return Rect.Transform(rect, matrix);
+		}
+
+		public static Rect TransformFromDevice(this Rect rect, Visual visual)
+		{
+			Matrix matrix = PresentationSource.FromVisual(visual).CompositionTarget.TransformFromDevice;
+			return Rect.Transform(rect, matrix);
+		}
+
+		public static Size TransformToDevice(this Size size, Visual visual)
+		{
+			Matrix matrix = PresentationSource.FromVisual(visual).CompositionTarget.TransformToDevice;
+			return new Size(size.Width * matrix.M11, size.Height * matrix.M22);
+		}
+
+		public static Size TransformFromDevice(this Size size, Visual visual)
+		{
+			Matrix matrix = PresentationSource.FromVisual(visual).CompositionTarget.TransformFromDevice;
+			return new Size(size.Width * matrix.M11, size.Height * matrix.M22);
+		}
+
+		public static Point TransformToDevice(this Point point, Visual visual)
+		{
+			Matrix matrix = PresentationSource.FromVisual(visual).CompositionTarget.TransformToDevice;
+			return matrix.Transform(point);
+		}
+
+		public static Point TransformFromDevice(this Point point, Visual visual)
+		{
+			Matrix matrix = PresentationSource.FromVisual(visual).CompositionTarget.TransformFromDevice;
+			return matrix.Transform(point);
+		}
+		#endregion
 	}
 }

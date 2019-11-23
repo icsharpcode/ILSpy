@@ -53,9 +53,9 @@ namespace ICSharpCode.Decompiler.Semantics
 			: base(argument.Type)
 		{
 			if (parameter == null)
-				throw new ArgumentNullException("parameter");
+				throw new ArgumentNullException(nameof(parameter));
 			if (argument == null)
-				throw new ArgumentNullException("argument");
+				throw new ArgumentNullException(nameof(argument));
 			this.Member = member;
 			this.Parameter = parameter;
 			this.ParameterName = parameter.Name;
@@ -66,9 +66,9 @@ namespace ICSharpCode.Decompiler.Semantics
 			: base(argument.Type)
 		{
 			if (parameterName == null)
-				throw new ArgumentNullException("parameterName");
+				throw new ArgumentNullException(nameof(parameterName));
 			if (argument == null)
-				throw new ArgumentNullException("argument");
+				throw new ArgumentNullException(nameof(argument));
 			this.ParameterName = parameterName;
 			this.Argument = argument;
 		}

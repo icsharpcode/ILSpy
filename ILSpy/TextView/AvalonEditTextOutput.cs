@@ -81,6 +81,8 @@ namespace ICSharpCode.ILSpy.TextView
 		bool needsIndent;
 
 		public string IndentationString { get; set; } = "\t";
+
+		public string Title { get; set; }
 		
 		internal readonly List<VisualLineElementGenerator> elementGenerators = new List<VisualLineElementGenerator>();
 		

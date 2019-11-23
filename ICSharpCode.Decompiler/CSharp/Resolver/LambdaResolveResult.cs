@@ -152,7 +152,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (this.Parameters.Count != parameterTypes.Length)
 					return Conversion.None;
 				for (int i = 0; i < parameterTypes.Length; ++i) {
-					if (!parameterTypes[i].Equals(this.Parameters[i].Type)) {
+					if (!conversions.IdentityConversion(parameterTypes[i], this.Parameters[i].Type)) {
 						if (IsImplicitlyTyped) {
 							// it's possible that different parameter types also lead to a valid conversion
 							return LambdaConversion.Instance;
@@ -162,7 +162,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 				}
 			}
-			if (returnType.Equals(this.ReturnType)) {
+			if (conversions.IdentityConversion(this.ReturnType, returnType)
+				|| conversions.ImplicitConversion(this.InferredReturnType, returnType).IsValid) {
 				return LambdaConversion.Instance;
 			} else {
 				return Conversion.None;

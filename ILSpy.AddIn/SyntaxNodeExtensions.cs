@@ -404,15 +404,15 @@ namespace ICSharpCode.ILSpy.AddIn
 
         public static NamespaceDeclarationSyntax GetInnermostNamespaceDeclarationWithUsings(this SyntaxNode contextNode)
         {
-            var usingDirectiveAncsestor = contextNode.GetAncestor<UsingDirectiveSyntax>();
-            if (usingDirectiveAncsestor == null)
+            var usingDirectiveAncestor = contextNode.GetAncestor<UsingDirectiveSyntax>();
+            if (usingDirectiveAncestor == null)
             {
                 return contextNode.GetAncestorsOrThis<NamespaceDeclarationSyntax>().FirstOrDefault(n => n.Usings.Count > 0);
             }
             else
             {
                 // We are inside a using directive. In this case, we should find and return the first 'parent' namespace with usings.
-                var containingNamespace = usingDirectiveAncsestor.GetAncestor<NamespaceDeclarationSyntax>();
+                var containingNamespace = usingDirectiveAncestor.GetAncestor<NamespaceDeclarationSyntax>();
                 if (containingNamespace == null)
                 {
                     // We are inside a top level using directive (i.e. one that's directly in the compilation unit).

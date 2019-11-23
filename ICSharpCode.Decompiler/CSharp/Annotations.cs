@@ -41,8 +41,8 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Currently unused; we'll probably use the LdToken ILInstruction as annotation instead when LdToken support gets reimplemented.
 	/// </summary>
-	public class LdTokenAnnotation {}
-	
+	public class LdTokenAnnotation { }
+
 	public static class AnnotationExtensions
 	{
 		internal static ExpressionWithILInstruction WithILInstruction(this Expression expression, ILInstruction instruction)
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			expression.Expression.AddAnnotation(resolveResult);
 			return new TranslatedExpression(expression, resolveResult);
 		}
-		
+
 		/// <summary>
 		/// Retrieves the <see cref="ISymbol"/> associated with this AstNode, or null if no symbol is associated with the node.
 		/// </summary>
@@ -208,7 +208,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return node;
 		}
 	}
-	
+
 	/// <summary>
 	/// Represents a reference to a local variable.
 	/// </summary>
@@ -223,7 +223,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public ILVariableResolveResult(ILVariable v, IType type) : base(type)
 		{
-			this.Variable = v ?? throw new ArgumentNullException("v");
+			this.Variable = v ?? throw new ArgumentNullException(nameof(v));
 		}
 	}
 

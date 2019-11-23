@@ -283,10 +283,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					UnwrapChild(uoe.Expression).ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion)
 				).WithRR(new ResolveResult(targetType)).WithoutILInstruction();
 			}
-			bool isLifted = type.IsKnownType(KnownTypeCode.NullableOfT) && targetType.IsKnownType(KnownTypeCode.NullableOfT);
-			IType utype = isLifted ? NullableType.GetUnderlyingType(type) : type;
-			IType targetUType = isLifted ? NullableType.GetUnderlyingType(targetType) : targetType;
-			if (type.IsKnownType(KnownTypeCode.Boolean) && targetType.GetStackType().IsIntegerType()) {
+			IType utype = NullableType.GetUnderlyingType(type);
+			IType targetUType = NullableType.GetUnderlyingType(targetType);
+			if (type.IsKnownType(KnownTypeCode.Boolean) && !targetUType.IsKnownType(KnownTypeCode.Boolean)
+				&& targetUType.GetStackType().IsIntegerType()) {
 				// convert from boolean to integer (or enum)
 				return new ConditionalExpression(
 					this.Expression,
@@ -318,7 +318,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 				}
 			}
-			if (targetType.IsKnownType(KnownTypeCode.IntPtr)) { // Conversion to IntPtr
+			if (targetUType.IsKnownType(KnownTypeCode.IntPtr)) { // Conversion to IntPtr
 				if (type.IsKnownType(KnownTypeCode.Int32)) {
 					// normal casts work for int (both in checked and unchecked context)
 				} else if (checkForOverflow) {
@@ -336,7 +336,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 					}
 				}
-			} else if (targetType.IsKnownType(KnownTypeCode.UIntPtr)) { // Conversion to UIntPtr
+			} else if (targetUType.IsKnownType(KnownTypeCode.UIntPtr)) { // Conversion to UIntPtr
 				if (type.IsKnownType(KnownTypeCode.UInt32) || type.Kind == TypeKind.Pointer) {
 					// normal casts work for uint and pointers (both in checked and unchecked context)
 				} else if (checkForOverflow) {
@@ -359,14 +359,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				// -> convert via underlying type
 				return this.ConvertTo(type.GetEnumUnderlyingType(), expressionBuilder, checkForOverflow)
 					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
-			} else if (targetType.Kind == TypeKind.Enum && type.Kind == TypeKind.Pointer) {
+			} else if (targetUType.Kind == TypeKind.Enum && type.Kind == TypeKind.Pointer) {
 				// pointer to enum: C# doesn't allow such casts
 				// -> convert via underlying type
-				return this.ConvertTo(targetType.GetEnumUnderlyingType(), expressionBuilder, checkForOverflow)
+				return this.ConvertTo(targetUType.GetEnumUnderlyingType(), expressionBuilder, checkForOverflow)
 					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 			}
 			if (targetType.Kind == TypeKind.Pointer && type.IsKnownType(KnownTypeCode.Char)
-			   || targetType.IsKnownType(KnownTypeCode.Char) && type.Kind == TypeKind.Pointer) {
+			   || targetUType.IsKnownType(KnownTypeCode.Char) && type.Kind == TypeKind.Pointer) {
 				// char <-> pointer: C# doesn't allow such casts
 				// -> convert via ushort
 				return this.ConvertTo(compilation.FindType(KnownTypeCode.UInt16), expressionBuilder, checkForOverflow)
@@ -417,6 +417,17 @@ namespace ICSharpCode.Decompiler.CSharp
 				return new DirectionExpression(FieldDirection.Ref, expr)
 					.WithoutILInstruction()
 					.WithRR(new ByReferenceResolveResult(elementRR, ReferenceKind.Ref));
+			}
+			if (this.ResolveResult.IsCompileTimeConstant && this.ResolveResult.ConstantValue != null
+				&& NullableType.IsNullable(targetType) && !utype.Equals(targetUType))
+			{
+				// Casts like `(uint?)-1` are only valid in an explicitly unchecked context, but we
+				// don't have logic to ensure such a context (usually we emit into an implicitly unchecked context).
+				// This only applies with constants as input (int->uint? is fine in implicitly unchecked context).
+				// We use an intermediate cast to the nullable's underlying type, which results
+				// in a constant conversion, so the final output will be something like `(uint?)uint.MaxValue`
+				return ConvertTo(targetUType, expressionBuilder, checkForOverflow, allowImplicitConversion: false)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 			}
 			var rr = expressionBuilder.resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult);
 			if (rr.IsCompileTimeConstant && !rr.IsError) {
@@ -476,7 +487,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return newTargetType.IsKnownType(KnownTypeCode.FormattableString)
 					|| newTargetType.IsKnownType(KnownTypeCode.IFormattable);
 			}
-			return oldTargetType.Equals(newTargetType);
+			return conversions.IdentityConversion(oldTargetType, newTargetType);
 		}
 		
 		TranslatedExpression LdcI4(ICompilation compilation, int val)

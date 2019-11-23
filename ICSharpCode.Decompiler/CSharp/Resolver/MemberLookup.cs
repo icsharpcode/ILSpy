@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public static bool IsInvocable(IMember member)
 		{
 			if (member == null)
-				throw new ArgumentNullException("member");
+				throw new ArgumentNullException(nameof(member));
 			// C# 4.0 spec, §7.4 member lookup
 			if (member is IEvent || member is IMethod)
 				return true;
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public bool IsAccessible(IEntity entity, bool allowProtectedAccess)
 		{
 			if (entity == null)
-				throw new ArgumentNullException("entity");
+				throw new ArgumentNullException(nameof(entity));
 			// C# 4.0 spec, §3.5.2 Accessiblity domains
 			switch (entity.Accessibility) {
 				case Accessibility.None:
@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public IEnumerable<IEntity> GetAccessibleMembers(ResolveResult targetResolveResult)
 		{
 			if (targetResolveResult == null)
-				throw new ArgumentNullException("targetResolveResult");
+				throw new ArgumentNullException(nameof(targetResolveResult));
 			
 			bool targetIsTypeParameter = targetResolveResult.Type.Kind == TypeKind.TypeParameter;
 			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
@@ -276,11 +276,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public ResolveResult LookupType(IType declaringType, string name, IReadOnlyList<IType> typeArguments, bool parameterizeResultType = true)
 		{
 			if (declaringType == null)
-				throw new ArgumentNullException("declaringType");
+				throw new ArgumentNullException(nameof(declaringType));
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			if (typeArguments == null)
-				throw new ArgumentNullException("typeArguments");
+				throw new ArgumentNullException(nameof(typeArguments));
 			
 			int typeArgumentCount = typeArguments.Count;
 			Predicate<ITypeDefinition> filter = delegate (ITypeDefinition d) {
@@ -335,11 +335,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public ResolveResult Lookup(ResolveResult targetResolveResult, string name, IReadOnlyList<IType> typeArguments, bool isInvocation)
 		{
 			if (targetResolveResult == null)
-				throw new ArgumentNullException("targetResolveResult");
+				throw new ArgumentNullException(nameof(targetResolveResult));
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			if (typeArguments == null)
-				throw new ArgumentNullException("typeArguments");
+				throw new ArgumentNullException(nameof(typeArguments));
 			
 			bool targetIsTypeParameter = targetResolveResult.Type.Kind == TypeKind.TypeParameter;
 			
@@ -413,7 +413,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public IReadOnlyList<MethodListWithDeclaringType> LookupIndexers(ResolveResult targetResolveResult)
 		{
 			if (targetResolveResult == null)
-				throw new ArgumentNullException("targetResolveResult");
+				throw new ArgumentNullException(nameof(targetResolveResult));
 			
 			IType targetType = targetResolveResult.Type;
 			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);

@@ -44,9 +44,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public ParameterizedType(IType genericType, IEnumerable<IType> typeArguments)
 		{
 			if (genericType == null)
-				throw new ArgumentNullException("genericType");
+				throw new ArgumentNullException(nameof(genericType));
 			if (typeArguments == null)
-				throw new ArgumentNullException("typeArguments");
+				throw new ArgumentNullException(nameof(typeArguments));
 			this.genericType = genericType;
 			this.typeArguments = typeArguments.ToArray(); // copy input array to ensure it isn't modified
 			if (this.typeArguments.Length == 0)
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Fast internal version of the constructor. (no safety checks)
 		/// Keeps the array that was passed and assumes it won't be modified.
 		/// </summary>
-		internal ParameterizedType(IType genericType, IType[] typeArguments)
+		internal ParameterizedType(IType genericType, params IType[] typeArguments)
 		{
 			Debug.Assert(genericType.TypeParameterCount == typeArguments.Length);
 			this.genericType = genericType;
@@ -358,9 +358,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public ParameterizedTypeReference(ITypeReference genericType, IEnumerable<ITypeReference> typeArguments)
 		{
 			if (genericType == null)
-				throw new ArgumentNullException("genericType");
+				throw new ArgumentNullException(nameof(genericType));
 			if (typeArguments == null)
-				throw new ArgumentNullException("typeArguments");
+				throw new ArgumentNullException(nameof(typeArguments));
 			this.genericType = genericType;
 			this.typeArguments = typeArguments.ToArray();
 			for (int i = 0; i < this.typeArguments.Length; i++) {

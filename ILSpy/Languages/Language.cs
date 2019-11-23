@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
+using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
@@ -347,6 +348,15 @@ namespace ICSharpCode.ILSpy
 		public virtual string GetTooltip(IEntity entity)
 		{
 			return GetDisplayName(entity, true, true, true);
+		}
+
+		/// <summary>
+		/// Converts a member signature to a string.
+		/// This is used for displaying the tooltip on a member reference.
+		/// </summary>
+		public virtual RichText GetRichTextTooltip(IEntity entity)
+		{
+			return GetTooltip(entity);
 		}
 
 		public virtual string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)

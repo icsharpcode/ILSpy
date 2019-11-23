@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			: base(SpecialType.UnknownType)
 		{
 			if (targetType == null)
-				throw new ArgumentNullException("targetType");
+				throw new ArgumentNullException(nameof(targetType));
 			this.targetType = targetType;
 			this.memberName = memberName;
 			this.typeArguments = new ReadOnlyCollection<IType>(typeArguments.ToArray());

@@ -131,6 +131,11 @@ namespace ICSharpCode.Decompiler.IL
 				type = value;
 			}
 		}
+
+		/// <summary>
+		/// This variable is either a C# 7 'in' parameter or must be declared as 'ref readonly'.
+		/// </summary>
+		public bool IsRefReadOnly { get; internal set; }
 		
 		/// <summary>
 		/// The index of the local variable or parameter (depending on Kind)
@@ -371,6 +376,9 @@ namespace ICSharpCode.Decompiler.IL
 		
 		internal void WriteDefinitionTo(ITextOutput output)
 		{
+			if (IsRefReadOnly) {
+				output.Write("readonly ");
+			}
 			switch (Kind) {
 				case VariableKind.Local:
 					output.Write("local ");

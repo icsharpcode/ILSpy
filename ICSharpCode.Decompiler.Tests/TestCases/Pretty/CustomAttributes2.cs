@@ -1,7 +1,7 @@
 using System;
 namespace CustomAttributes2
 {
-	public static class CustomAtributes
+	public static class CustomAttributes
 	{
 		[Flags]
 		public enum EnumWithFlag

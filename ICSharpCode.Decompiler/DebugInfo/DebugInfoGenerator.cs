@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 		public DebugInfoGenerator(IDecompilerTypeSystem typeSystem)
 		{
-			this.typeSystem = typeSystem ?? throw new ArgumentNullException("typeSystem");
+			this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
 			this.currentImportScope = globalImportScope;
 		}
 

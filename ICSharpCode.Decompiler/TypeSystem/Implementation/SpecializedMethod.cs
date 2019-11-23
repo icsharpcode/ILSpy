@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			: base(methodDefinition)
 		{
 			if (substitution == null)
-				throw new ArgumentNullException("substitution");
+				throw new ArgumentNullException(nameof(substitution));
 			this.methodDefinition = methodDefinition;
 			this.isParameterized = substitution.MethodTypeArguments != null;
 			if (methodDefinition.TypeParameters.Count > 0) {
@@ -96,6 +96,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<IAttribute> GetReturnTypeAttributes() => methodDefinition.GetReturnTypeAttributes();
 		public bool ReturnTypeIsRefReadOnly => methodDefinition.ReturnTypeIsRefReadOnly;
+
+		bool IMethod.ThisIsRefReadOnly => methodDefinition.ThisIsRefReadOnly;
 
 		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get {

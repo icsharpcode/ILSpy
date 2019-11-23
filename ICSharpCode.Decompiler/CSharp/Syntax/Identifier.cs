@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return this.name; }
 			set {
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 				ThrowIfFrozen();
 				this.name = value;
 			}
@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		protected Identifier (string name, TextLocation location)
 		{
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			this.Name = name;
 			this.startLocation = location;
 		}

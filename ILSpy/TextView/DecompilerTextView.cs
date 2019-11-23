@@ -27,6 +27,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -44,12 +45,15 @@ using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.AvalonEdit.Search;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy.TextView
@@ -58,12 +62,11 @@ namespace ICSharpCode.ILSpy.TextView
 	/// Manages the TextEditor showing the decompiled code.
 	/// Contains all the threading logic that makes the decompiler work in the background.
 	/// </summary>
-	[Export, PartCreationPolicy(CreationPolicy.Shared)]
 	public sealed partial class DecompilerTextView : UserControl, IDisposable
 	{
 		readonly ReferenceElementGenerator referenceElementGenerator;
 		readonly UIElementGenerator uiElementGenerator;
-		List<VisualLineElementGenerator> activeCustomElementGenerators = new List<VisualLineElementGenerator>();
+		readonly List<VisualLineElementGenerator> activeCustomElementGenerators = new List<VisualLineElementGenerator>();
 		RichTextColorizer activeRichTextColorizer;
 		BracketHighlightRenderer bracketHighlightRenderer;
 		FoldingManager foldingManager;
@@ -100,7 +103,7 @@ namespace ICSharpCode.ILSpy.TextView
 				});
 
 			InitializeComponent();
-			
+
 			this.referenceElementGenerator = new ReferenceElementGenerator(this.JumpToReference, this.IsLink);
 			textEditor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
 			this.uiElementGenerator = new UIElementGenerator();
@@ -112,6 +115,8 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.TextArea.PreviewMouseDown += TextAreaMouseDown;
 			textEditor.TextArea.PreviewMouseUp += TextAreaMouseUp;
 			textEditor.TextArea.Caret.PositionChanged += HighlightBrackets;
+			textEditor.MouseMove += TextEditorMouseMove;
+			textEditor.MouseLeave += TextEditorMouseLeave;
 			textEditor.SetBinding(Control.FontFamilyProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("SelectedFont") });
 			textEditor.SetBinding(Control.FontSizeProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("SelectedFontSize") });
 			textEditor.SetBinding(TextEditor.WordWrapProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("EnableWordWrap") });
@@ -135,6 +140,8 @@ namespace ICSharpCode.ILSpy.TextView
 			// add marker service & margin
 			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
+
+			ContextMenuProvider.Add(this);
 		}
 
 		void RemoveEditCommand(RoutedUICommand command)
@@ -166,20 +173,18 @@ namespace ICSharpCode.ILSpy.TextView
 				}
 			}
 		}
-		
+
 		#endregion
-		
+
 		#region Tooltip support
-		ToolTip tooltip;
-		
-		void TextViewMouseHoverStopped(object sender, MouseEventArgs e)
-		{
-			if (tooltip != null)
-				tooltip.IsOpen = false;
-		}
+		ToolTip toolTip;
+		Popup popupToolTip;
 
 		void TextViewMouseHover(object sender, MouseEventArgs e)
 		{
+			if (!TryCloseExistingPopup(false)) {
+				return;
+			}
 			TextViewPosition? position = GetPositionFromMousePosition();
 			if (position == null)
 				return;
@@ -190,35 +195,172 @@ namespace ICSharpCode.ILSpy.TextView
 			if (seg == null)
 				return;
 			object content = GenerateTooltip(seg);
-			if (tooltip != null)
-				tooltip.IsOpen = false;
-			if (content != null)
-				tooltip = new ToolTip() { Content = content, IsOpen = true };
+	
+			if (content != null) {
+				popupToolTip = content as Popup;
+
+				if (popupToolTip != null) {
+					var popupPosition = GetPopupPosition(e);
+					popupToolTip.Closed += ToolTipClosed;
+					popupToolTip.HorizontalOffset = popupPosition.X;
+					popupToolTip.VerticalOffset = popupPosition.Y;
+					popupToolTip.StaysOpen = true;  // We will close it ourselves
+
+					e.Handled = true;
+					popupToolTip.IsOpen = true;
+					distanceToPopupLimit = double.PositiveInfinity; // reset limit; we'll re-calculate it on the next mouse movement
+				} else {
+					if (toolTip == null) {
+						toolTip = new ToolTip();
+						toolTip.Closed += ToolTipClosed;
+					}
+					toolTip.PlacementTarget = this; // required for property inheritance
+
+					if (content is string s) {
+						toolTip.Content = new TextBlock {
+							Text = s,
+							TextWrapping = TextWrapping.Wrap
+						};
+					} else
+						toolTip.Content = content;
+
+					e.Handled = true;
+					toolTip.IsOpen = true;
+				}
+			}
 		}
-		
+
+		bool TryCloseExistingPopup(bool mouseClick)
+		{
+			if (popupToolTip != null) {
+				if (popupToolTip.IsOpen && !mouseClick && popupToolTip is FlowDocumentTooltip t && !t.CloseWhenMouseMovesAway) {
+					return false; // Popup does not want to be closed yet
+				}
+				popupToolTip.IsOpen = false;
+				popupToolTip = null;
+			}
+			return true;
+		}
+
+		/// <summary> Returns Popup position based on mouse position, in device independent units </summary>
+		Point GetPopupPosition(MouseEventArgs mouseArgs)
+		{
+			Point mousePos = mouseArgs.GetPosition(this);
+			Point positionInPixels;
+			// align Popup with line bottom
+			TextViewPosition? logicalPos = textEditor.GetPositionFromPoint(mousePos);
+			if (logicalPos.HasValue) {
+				var textView = textEditor.TextArea.TextView;
+				positionInPixels =
+					textView.PointToScreen(
+						textView.GetVisualPosition(logicalPos.Value, VisualYPosition.LineBottom) - textView.ScrollOffset);
+				positionInPixels.X -= 4;
+			} else {
+				positionInPixels = PointToScreen(mousePos + new Vector(-4, 6));
+			}
+			// use device independent units, because Popup Left/Top are in independent units
+			return positionInPixels.TransformFromDevice(this);
+		}
+
+		void TextViewMouseHoverStopped(object sender, MouseEventArgs e)
+		{
+			// Non-popup tooltips get closed as soon as the mouse starts moving again
+			if (toolTip != null) {
+				toolTip.IsOpen = false;
+				e.Handled = true;
+			}
+		}
+
+		double distanceToPopupLimit;
+		const double MaxMovementAwayFromPopup = 5;
+
+		void TextEditorMouseMove(object sender, MouseEventArgs e)
+		{
+			if (popupToolTip != null) {
+				double distanceToPopup = GetDistanceToPopup(e);
+				if (distanceToPopup > distanceToPopupLimit) {
+					// Close popup if mouse moved away, exceeding the limit
+					TryCloseExistingPopup(false);
+				} else {
+					// reduce distanceToPopupLimit
+					distanceToPopupLimit = Math.Min(distanceToPopupLimit, distanceToPopup + MaxMovementAwayFromPopup);
+				}
+			}
+		}
+
+		double GetDistanceToPopup(MouseEventArgs e)
+		{
+			Point p = popupToolTip.Child.PointFromScreen(PointToScreen(e.GetPosition(this)));
+			Size size = popupToolTip.Child.RenderSize;
+			double x = 0;
+			if (p.X < 0)
+				x = -p.X;
+			else if (p.X > size.Width)
+				x = p.X - size.Width;
+			double y = 0;
+			if (p.Y < 0)
+				y = -p.Y;
+			else if (p.Y > size.Height)
+				y = p.Y - size.Height;
+			return Math.Sqrt(x * x + y * y);
+		}
+
+		void TextEditorMouseLeave(object sender, MouseEventArgs e)
+		{
+			if (popupToolTip != null && !popupToolTip.IsMouseOver) {
+				// do not close popup if mouse moved from editor to popup
+				TryCloseExistingPopup(false);
+			}
+		}
+
+		void OnUnloaded(object sender, EventArgs e)
+		{
+			// Close popup when another document gets selected
+			// TextEditorMouseLeave is not sufficient for this because the mouse might be over the popup when the document switch happens (e.g. Ctrl+Tab)
+			TryCloseExistingPopup(true);
+		}
+
+		void ToolTipClosed(object sender, EventArgs e)
+		{
+			if (toolTip == sender) {
+				toolTip = null;
+			}
+			if (popupToolTip == sender) {
+				// Because popupToolTip instances are created by the tooltip provider,
+				// they might be reused; so we should detach the event handler
+				popupToolTip.Closed -= ToolTipClosed;
+				popupToolTip = null;
+			}
+		}
+
 		object GenerateTooltip(ReferenceSegment segment)
 		{
 			if (segment.Reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo code) {
 				XmlDocumentationProvider docProvider = XmlDocLoader.MscorlibDocumentation;
-				if (docProvider != null){
+				DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), MainWindow.Instance.CurrentLanguage.SyntaxHighlighting);
+				renderer.AddSignatureBlock($"{code.Name} (0x{code.Code:x})");
+				if (docProvider != null) {
 					string documentation = docProvider.GetDocumentation("F:System.Reflection.Emit.OpCodes." + code.EncodedName);
 					if (documentation != null) {
-						XmlDocRenderer renderer = new XmlDocRenderer();
-						renderer.AppendText($"{code.Name} (0x{code.Code:x}) - ");
-						renderer.AddXmlDocumentation(documentation);
-						return renderer.CreateTextBlock();
+						renderer.AddXmlDocumentation(documentation, null, null);
 					}
 				}
-				return $"{code.Name} (0x{code.Code:x})";
+				return new FlowDocumentTooltip(renderer.CreateDocument());
 			} else if (segment.Reference is IEntity entity) {
-				return CreateTextBlockForEntity(entity);
+				var document = CreateTooltipForEntity(entity);
+				if (document == null)
+					return null;
+				return new FlowDocumentTooltip(document);
 			} else if (segment.Reference is ValueTuple<PEFile, System.Reflection.Metadata.EntityHandle> unresolvedEntity) {
 				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
 				try {
 					IEntity resolved = typeSystem.MainModule.ResolveEntity(unresolvedEntity.Item2);
 					if (resolved == null)
 						return null;
-					return CreateTextBlockForEntity(resolved);
+					var document = CreateTooltipForEntity(resolved);
+					if (document == null)
+						return null;
+					return new FlowDocumentTooltip(document);
 				} catch (BadImageFormatException) {
 					return null;
 				}
@@ -226,10 +368,12 @@ namespace ICSharpCode.ILSpy.TextView
 			return null;
 		}
 
-		static TextBlock CreateTextBlockForEntity(IEntity resolved)
+		static FlowDocument CreateTooltipForEntity(IEntity resolved)
 		{
-			XmlDocRenderer renderer = new XmlDocRenderer();
-			renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(resolved));
+			Language currentLanguage = MainWindow.Instance.CurrentLanguage;
+			DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), currentLanguage.SyntaxHighlighting);
+			RichText richText = currentLanguage.GetRichTextTooltip(resolved);
+			renderer.AddSignatureBlock(richText.Text, richText.ToRichTextModel());
 			try {
 				if (resolved.ParentModule == null || resolved.ParentModule.PEFile == null)
 					return null;
@@ -237,14 +381,65 @@ namespace ICSharpCode.ILSpy.TextView
 				if (docProvider != null) {
 					string documentation = docProvider.GetDocumentation(resolved.GetIdString());
 					if (documentation != null) {
-						renderer.AppendText(Environment.NewLine);
-						renderer.AddXmlDocumentation(documentation);
+						renderer.AddXmlDocumentation(documentation, resolved, ResolveReference);
 					}
 				}
 			} catch (XmlException) {
 				// ignore
 			}
-			return renderer.CreateTextBlock();
+			return renderer.CreateDocument();
+
+			IEntity ResolveReference(string idString)
+			{
+				return MainWindow.FindEntityInRelevantAssemblies(idString, MainWindow.Instance.CurrentAssemblyList.GetAssemblies());
+			}
+		}
+
+		sealed class FlowDocumentTooltip : Popup
+		{
+			readonly FlowDocumentScrollViewer viewer;
+
+			public FlowDocumentTooltip(FlowDocument document)
+			{
+				TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
+				double fontSize = DisplaySettingsPanel.CurrentDisplaySettings.SelectedFontSize;
+				viewer = new FlowDocumentScrollViewer() {
+					Width = document.MinPageWidth + fontSize * 5,
+					MaxWidth = MainWindow.Instance.ActualWidth
+				};
+				viewer.Document = document;
+				Border border = new Border {
+					Background = SystemColors.ControlBrush,
+					BorderBrush = SystemColors.ControlDarkBrush,
+					BorderThickness = new Thickness(1),
+					MaxHeight = 400,
+					Child = viewer
+				};
+				this.Child = border;
+				viewer.Foreground = SystemColors.InfoTextBrush;
+				document.FontSize = fontSize;
+			}
+
+			public bool CloseWhenMouseMovesAway {
+				get { return !this.IsKeyboardFocusWithin; }
+			}
+
+			protected override void OnLostKeyboardFocus(KeyboardFocusChangedEventArgs e)
+			{
+				base.OnLostKeyboardFocus(e);
+				this.IsOpen = false;
+			}
+
+			protected override void OnMouseLeave(MouseEventArgs e)
+			{
+				base.OnMouseLeave(e);
+				// When the mouse is over the popup, it is possible for ILSpy to be minimized,
+				// or moved into the background, and yet the popup stays open.
+				// We don't have a good method here to check whether the mouse moved back into the text area
+				// or somewhere else, so we'll just close the popup.
+				if (CloseWhenMouseMovesAway)
+					this.IsOpen = false;
+			}
 		}
 		#endregion
 
@@ -336,7 +531,7 @@ namespace ICSharpCode.ILSpy.TextView
 			return tcs.Task;
 		}
 		
-		void cancelButton_Click(object sender, RoutedEventArgs e)
+		void CancelButton_Click(object sender, RoutedEventArgs e)
 		{
 			if (currentCancellationTokenSource != null) {
 				currentCancellationTokenSource.Cancel();
@@ -375,6 +570,7 @@ namespace ICSharpCode.ILSpy.TextView
 				this.nextDecompilationRun.TaskCompletionSource.TrySetCanceled();
 				this.nextDecompilationRun = null;
 			}
+			textOutput.Title = string.Join(", ", nodes.Select(n => n.ToString()));
 			ShowOutput(textOutput, highlighting);
 			decompiledNodes = nodes;
 		}
@@ -435,6 +631,15 @@ namespace ICSharpCode.ILSpy.TextView
 				foldingManager = FoldingManager.Install(textEditor.TextArea);
 				foldingManager.UpdateFoldings(textOutput.Foldings.OrderBy(f => f.StartOffset), -1);
 				Debug.WriteLine("  Updating folding: {0}", w.Elapsed); w.Restart();
+			} else if (highlighting?.Name == "XML") {
+				foldingManager = FoldingManager.Install(textEditor.TextArea);
+				var foldingStrategy = new XmlFoldingStrategy();
+				foldingStrategy.UpdateFoldings(foldingManager, textEditor.Document);
+				Debug.WriteLine("  Updating folding: {0}", w.Elapsed); w.Restart();
+			}
+
+			if (this.DataContext is PaneModel model) {
+				model.Title = textOutput.Title;
 			}
 		}
 		
@@ -566,6 +771,9 @@ namespace ICSharpCode.ILSpy.TextView
 		void DecompileNodes(DecompilationContext context, ITextOutput textOutput)
 		{
 			var nodes = context.TreeNodes;
+			if (textOutput is ISmartTextOutput smartTextOutput) {
+				smartTextOutput.Title = string.Join(", ", nodes.Select(n => n.ToString()));
+			}
 			for (int i = 0; i < nodes.Length; i++) {
 				if (i > 0)
 					textOutput.WriteLine();
@@ -664,12 +872,13 @@ namespace ICSharpCode.ILSpy.TextView
 				if (referenceSegment == null) {
 					ClearLocalReferenceMarks();
 				} else if (referenceSegment.IsLocal || !referenceSegment.IsDefinition) {
-					JumpToReference(referenceSegment);
 					textEditor.TextArea.ClearSelection();
+					// cancel mouse selection to avoid AvalonEdit selecting between the new
+					// cursor position and the mouse position.
+					textEditor.TextArea.MouseSelectionMode = MouseSelectionMode.None;
+
+					JumpToReference(referenceSegment);
 				}
-				// cancel mouse selection to avoid AvalonEdit selecting between the new
-				// cursor position and the mouse position.
-				textEditor.TextArea.MouseSelectionMode = MouseSelectionMode.None;
 			}
 		}
 		
@@ -848,6 +1057,14 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 		#endregion
+
+		private void self_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+		{
+			if (e.OldValue is DecompiledDocumentModel oldModel)
+				oldModel.TextView = null;
+			if (e.NewValue is DecompiledDocumentModel newModel)
+				newModel.TextView = this;
+		}
 	}
 
 	public class DecompilerTextViewState

@@ -39,7 +39,7 @@ namespace LightJson
 		/// </summary>
 		/// <param name="key">The key of the property to get or set.</param>
 		/// <remarks>
-		/// The getter will return JsonValue.Null if the given key is not assosiated with any value.
+		/// The getter will return JsonValue.Null if the given key is not associated with any value.
 		/// </remarks>
 		public JsonValue this[string key] {
 			get {

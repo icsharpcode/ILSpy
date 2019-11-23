@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// Improves code quality by duplicating keyword exits to reduce nesting and restoring IL order.
 	/// </summary>
 	/// <remarks>
-	/// ConditionDetection and DetectSwitchBody both have agressive inlining policies for else blocks and default cases respectively.
+	/// ConditionDetection and DetectSwitchBody both have aggressive inlining policies for else blocks and default cases respectively.
 	/// This can lead to excessive indentation when the entire rest of the method/loop is included in the else block/default case.
 	/// When an If/SwitchInstruction is followed immediately by a keyword exit, the exit can be moved into the child blocks
 	/// allowing the else block or default case to be moved after the if/switch as all prior cases exit.

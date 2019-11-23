@@ -447,9 +447,6 @@
   <data name="Version" xml:space="preserve">
     <value>Version</value>
   </data>
-  <data name="Culture" xml:space="preserve">
-    <value>Culture</value>
-  </data>
   <data name="PublicToken" xml:space="preserve">
     <value>Public Key Token</value>
   </data>
@@ -765,5 +762,32 @@ Are you sure you want to continue?</value>
   </data>
   <data name="Assembly" xml:space="preserve">
     <value>Assembly</value>
+  </data>
+  <data name="DecompileToNewPanel" xml:space="preserve">
+    <value>Decompile to new tab</value>
+  </data>
+  <data name="DecompilerSettings.AsyncEnumerator" xml:space="preserve">
+    <value>Decompile async IAsyncEnumerator methods</value>
+  </data>
+  <data name="DecompilerSettings.ReadOnlyMethods" xml:space="preserve">
+    <value>Read-only methods</value>
+  </data>
+  <data name="DecompilerSettings.DetectAsyncUsingAndForeachStatements" xml:space="preserve">
+    <value>Detect awaited using and foreach statements</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="Assemblies" xml:space="preserve">
+    <value>Assemblies</value>
+  </data>
+  <data name="Window_CloseAllDocuments" xml:space="preserve">
+    <value>Close all documents</value>
+  </data>
+  <data name="Window_ResetLayout" xml:space="preserve">
+    <value>Reset layout</value>
+  </data>
+  <data name="_Window" xml:space="preserve">
+    <value>_Window</value>
   </data>
 </root>

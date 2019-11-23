@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 using System;
 using System.Collections.Generic;
+using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler
@@ -85,6 +86,14 @@ namespace ICSharpCode.Decompiler
 					ContainsAnonType = true;
 				return base.VisitTypeDefinition(type);
 			}
+		}
+
+		internal static string GetDocumentation(this IEntity entity)
+		{
+			var docProvider = XmlDocLoader.LoadDocumentation(entity.ParentModule.PEFile);
+			if (docProvider == null)
+				return null;
+			return docProvider.GetDocumentation(entity);
 		}
 	}
 }

@@ -36,10 +36,16 @@ namespace ICSharpCode.Decompiler.IL
 	/// </remarks>
 	partial class UsingInstruction
 	{
+		public bool IsAsync { get; set; }
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
-			output.Write("using (");
+			output.Write("using");
+			if (IsAsync) {
+				output.Write(".async");
+			}
+			output.Write(" (");
 			Variable.WriteTo(output);
 			output.Write(" = ");
 			ResourceExpression.WriteTo(output, options);

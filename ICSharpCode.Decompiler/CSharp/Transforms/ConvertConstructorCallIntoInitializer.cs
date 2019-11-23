@@ -58,30 +58,55 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override void VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
 		{
-			var stmt = constructorDeclaration.Body.Statements.FirstOrDefault() as ExpressionStatement;
-			if (stmt == null)
+			if (!(constructorDeclaration.Body.Statements.FirstOrDefault() is ExpressionStatement stmt))
 				return;
-			if (!(stmt.Expression is InvocationExpression invocation))
-				return;
-			if (invocation.Target is MemberReferenceExpression mre && mre.MemberName == ".ctor") {
-				ConstructorInitializer ci = new ConstructorInitializer();
-				var target = mre.Target;
-				// Ignore casts, those might be added if references are missing.
-				if (target is CastExpression cast)
-					target = cast.Expression;
-				if (target is ThisReferenceExpression)
-					ci.ConstructorInitializerType = ConstructorInitializerType.This;
-				else if (target is BaseReferenceExpression)
-					ci.ConstructorInitializerType = ConstructorInitializerType.Base;
-				else
-					return;
-				// Move arguments from invocation to initializer:
-				invocation.Arguments.MoveTo(ci.Arguments);
-				// Add the initializer: (unless it is the default 'base()')
-				if (!(ci.ConstructorInitializerType == ConstructorInitializerType.Base && ci.Arguments.Count == 0))
-					constructorDeclaration.Initializer = ci.CopyAnnotationsFrom(invocation);
-				// Remove the statement:
-				stmt.Remove();
+			var currentCtor = (IMethod)constructorDeclaration.GetSymbol();
+			ConstructorInitializer ci;
+			switch (stmt.Expression) {
+				// Pattern for reference types:
+				// this..ctor(...);
+				case InvocationExpression invocation:
+					if (!(invocation.Target is MemberReferenceExpression mre) || mre.MemberName != ".ctor")
+						return;
+					if (!(invocation.GetSymbol() is IMethod ctor && ctor.IsConstructor))
+						return;
+					ci = new ConstructorInitializer();
+					var target = mre.Target;
+					// Ignore casts, those might be added if references are missing.
+					if (target is CastExpression cast)
+						target = cast.Expression;
+					if (target is ThisReferenceExpression)
+						ci.ConstructorInitializerType = ConstructorInitializerType.This;
+					else if (target is BaseReferenceExpression)
+						ci.ConstructorInitializerType = ConstructorInitializerType.Base;
+					else
+						return;
+					// Move arguments from invocation to initializer:
+					invocation.Arguments.MoveTo(ci.Arguments);
+					// Add the initializer: (unless it is the default 'base()')
+					if (!(ci.ConstructorInitializerType == ConstructorInitializerType.Base && ci.Arguments.Count == 0))
+						constructorDeclaration.Initializer = ci.CopyAnnotationsFrom(invocation);
+					// Remove the statement:
+					stmt.Remove();
+					break;
+				// Pattern for value types:
+				// this = new TSelf(...);
+				case AssignmentExpression assignment:
+					if (!(assignment.Right is ObjectCreateExpression oce && oce.GetSymbol() is IMethod ctor2 && ctor2.DeclaringTypeDefinition == currentCtor.DeclaringTypeDefinition))
+						return;
+					ci = new ConstructorInitializer();
+					if (assignment.Left is ThisReferenceExpression)
+						ci.ConstructorInitializerType = ConstructorInitializerType.This;
+					else
+						return;
+					// Move arguments from invocation to initializer:
+					oce.Arguments.MoveTo(ci.Arguments);
+					// Add the initializer: (unless it is the default 'base()')
+					if (!(ci.ConstructorInitializerType == ConstructorInitializerType.Base && ci.Arguments.Count == 0))
+						constructorDeclaration.Initializer = ci.CopyAnnotationsFrom(oce);
+					// Remove the statement:
+					stmt.Remove();
+					break;
 			}
 		}
 		

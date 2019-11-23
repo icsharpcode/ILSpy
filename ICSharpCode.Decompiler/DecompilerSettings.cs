@@ -107,12 +107,15 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp8_0) {
 				nullableReferenceTypes = false;
+				readOnlyMethods = false;
+				asyncUsingAndForEachStatement = false;
+				asyncEnumerator = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (nullableReferenceTypes)
+			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement)
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers)
 				return CSharp.LanguageVersion.CSharp7_3;
@@ -267,6 +270,24 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (awaitInCatchFinally != value) {
 					awaitInCatchFinally = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool asyncEnumerator = true;
+
+		/// <summary>
+		/// Decompile IAsyncEnumerator/IAsyncEnumerable.
+		/// Only has an effect if <see cref="AsyncAwait"/> is enabled.
+		/// </summary>
+		[Category("C# 8.0 / VS 2019")]
+		[Description("DecompilerSettings.AsyncEnumerator")]
+		public bool AsyncEnumerator {
+			get { return asyncEnumerator; }
+			set {
+				if (asyncEnumerator != value) {
+					asyncEnumerator = value;
 					OnPropertyChanged();
 				}
 			}
@@ -837,6 +858,34 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (introduceReadonlyAndInModifiers != value) {
 					introduceReadonlyAndInModifiers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool readOnlyMethods = true;
+
+		[Category("C# 8.0 / VS 2019")]
+		[Description("DecompilerSettings.ReadOnlyMethods")]
+		public bool ReadOnlyMethods {
+			get { return readOnlyMethods; }
+			set {
+				if (readOnlyMethods != value) {
+					readOnlyMethods = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool asyncUsingAndForEachStatement = true;
+
+		[Category("C# 8.0 / VS 2019")]
+		[Description("DecompilerSettings.DetectAsyncUsingAndForeachStatements")]
+		public bool AsyncUsingAndForEachStatement {
+			get { return asyncUsingAndForEachStatement; }
+			set {
+				if (asyncUsingAndForEachStatement != value) {
+					asyncUsingAndForEachStatement = value;
 					OnPropertyChanged();
 				}
 			}

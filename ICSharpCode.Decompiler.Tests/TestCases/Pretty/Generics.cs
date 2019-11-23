@@ -24,9 +24,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		private class GenericClass<T>
 		{
+			private readonly T issue1760;
+
 			public void M(out GenericClass<T> self)
 			{
 				self = this;
+			}
+
+			public void Issue1760()
+			{
+				Console.WriteLine(", " + issue1760);
 			}
 		}
 

@@ -447,6 +447,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					} else {
 						type = context.TypeSystemAstBuilder.ConvertType(v.Type);
 					}
+					if (v.ILVariable.IsRefReadOnly && type is ComposedType composedType && composedType.HasRefSpecifier) {
+						composedType.HasReadOnlySpecifier = true;
+					}
 					var vds = new VariableDeclarationStatement(type, v.Name, assignment.Right.Detach());
 					var init = vds.Variables.Single();
 					init.AddAnnotation(assignment.Left.GetResolveResult());

@@ -53,17 +53,27 @@ namespace ICSharpCode.Decompiler.Metadata
 			 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages")
 		};
 
+		static readonly string[] RuntimePacks = new[] {
+			"Microsoft.NETCore.App",
+			"Microsoft.WindowsDesktop.App",
+			"Microsoft.AspNetCore.App",
+			"Microsoft.AspNetCore.All"
+		};
+
 		readonly Dictionary<string, DotNetCorePackageInfo> packages;
 		ISet<string> packageBasePaths = new HashSet<string>(StringComparer.Ordinal);
-		readonly string assemblyName;
-		readonly string basePath;
 		readonly Version version;
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
 
+		public DotNetCorePathFinder(Version version)
+		{
+			this.version = version;
+		}
+
 		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkId, Version version, ReferenceLoadInfo loadInfo = null)
 		{
-			this.assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
-			this.basePath = Path.GetDirectoryName(parentAssemblyFileName);
+			string assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
+			string basePath = Path.GetDirectoryName(parentAssemblyFileName);
 			this.version = version;
 
 			var depsJsonFileName = Path.Combine(basePath, $"{assemblyName}.deps.json");
@@ -99,6 +109,25 @@ namespace ICSharpCode.Decompiler.Metadata
 			return FallbackToDotNetSharedDirectory(name, version);
 		}
 
+		internal string GetReferenceAssemblyPath(string targetFramework)
+		{
+			var (tfi, version) = UniversalAssemblyResolver.ParseTargetFramework(targetFramework);
+			string identifier, identifierExt;
+			switch (tfi) {
+				case TargetFrameworkIdentifier.NETCoreApp:
+					identifier = "Microsoft.NETCore.App";
+					identifierExt = "netcoreapp" + version.Major + "." + version.Minor;
+					break;
+				case TargetFrameworkIdentifier.NETStandard:
+					identifier = "NETStandard.Library";
+					identifierExt = "netstandard" + version.Major + "." + version.Minor;
+					break;
+				default:
+					throw new NotSupportedException();
+			}
+			return Path.Combine(dotnetBasePath, "packs", identifier + ".Ref", version.ToString(), "ref", identifierExt);
+		}
+
 		static IEnumerable<DotNetCorePackageInfo> LoadPackageInfos(string depsJsonFileName, string targetFramework)
 		{
 			var dependencies = JsonReader.Parse(File.ReadAllText(depsJsonFileName));
@@ -124,13 +153,18 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		string FallbackToDotNetSharedDirectory(IAssemblyReference name, Version version)
 		{
-			if (dotnetBasePath == null) return null;
-			var basePath = Path.Combine(dotnetBasePath, "shared", "Microsoft.NETCore.App");
-			var closestVersion = GetClosestVersionFolder(basePath, version);
-			if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".dll"))) {
-				return Path.Combine(basePath, closestVersion, name.Name + ".dll");
-			} else if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".exe"))) {
-				return Path.Combine(basePath, closestVersion, name.Name + ".exe");
+			if (dotnetBasePath == null)
+				return null;
+			var basePaths = RuntimePacks.Select(pack => Path.Combine(dotnetBasePath, "shared", pack));
+			foreach (var basePath in basePaths) {
+				if (!Directory.Exists(basePath))
+					continue;
+				var closestVersion = GetClosestVersionFolder(basePath, version);
+				if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".dll"))) {
+					return Path.Combine(basePath, closestVersion, name.Name + ".dll");
+				} else if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".exe"))) {
+					return Path.Combine(basePath, closestVersion, name.Name + ".exe");
+				}
 			}
 			return null;
 		}

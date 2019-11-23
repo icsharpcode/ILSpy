@@ -105,6 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SwitchOnStringTransform(),
 				new SwitchOnNullableTransform(),
 				new SplitVariables(), // split variables once again, because SwitchOnNullableTransform eliminates ldloca 
+				new IntroduceRefReadOnlyModifierOnLocals(),
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
 						// Even though it's a post-order block-transform as most other transforms,
@@ -303,6 +304,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(typeHandle, metadata))
 							return true;
 						if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(typeHandle, metadata))
+							return true;
+						if (settings.AsyncEnumerator && AsyncAwaitDecompiler.IsCompilerGeneratorAsyncEnumerator(typeHandle, metadata))
 							return true;
 						if (settings.FixedBuffers && name.StartsWith("<", StringComparison.Ordinal) && name.Contains("__FixedBuffer"))
 							return true;
@@ -782,6 +785,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			syntaxTree = new SyntaxTree();
 
 			foreach (var type in types) {
+				CancellationToken.ThrowIfCancellationRequested();
 				if (type.IsNil)
 					throw new ArgumentException("types contains null element");
 				RequiredNamespaceCollector.CollectNamespaces(type, module, decompileRun.Namespaces);
@@ -1296,6 +1300,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
 						i++;
 					}
+					entityDecl.AddAnnotation(function);
 				}
 
 				var localSettings = settings.Clone();
@@ -1340,7 +1345,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (localSettings.DecompileMemberBodies && !body.Descendants.Any(d => d is YieldReturnStatement || d is YieldBreakStatement)) {
 						body.Add(new YieldBreakStatement());
 					}
-					RemoveAttribute(entityDecl, KnownAttribute.IteratorStateMachine);
+					if (function.IsAsync) {
+						RemoveAttribute(entityDecl, KnownAttribute.AsyncIteratorStateMachine);
+					} else {
+						RemoveAttribute(entityDecl, KnownAttribute.IteratorStateMachine);
+					}
 					if (function.StateMachineCompiledWithMono) {
 						RemoveAttribute(entityDecl, KnownAttribute.DebuggerHidden);
 					}

@@ -26,6 +26,21 @@ using System.Text;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
+	enum TargetFrameworkIdentifier
+	{
+		NETFramework,
+		NETCoreApp,
+		NETStandard,
+		Silverlight
+	}
+
+	enum DecompilerRuntime
+	{
+		NETFramework,
+		NETCoreApp,
+		Mono
+	}
+
 	// This is inspired by Mono.Cecil's BaseAssemblyResolver/DefaultAssemblyResolver.
 	public class UniversalAssemblyResolver : IAssemblyResolver
 	{
@@ -67,21 +82,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			return directories.ToArray();
 		}
 
-		enum TargetFrameworkIdentifier
-		{
-			NETFramework,
-			NETCoreApp,
-			NETStandard,
-			Silverlight
-		}
-
-		enum DecompilerRuntime
-		{
-			NETFramework,
-			NETCoreApp,
-			Mono
-		}
-
 		string targetFramework;
 		TargetFrameworkIdentifier targetFrameworkIdentifier;
 		Version targetFrameworkVersion;
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			AddSearchDirectory(baseDirectory);
 		}
 
-		(TargetFrameworkIdentifier, Version) ParseTargetFramework(string targetFramework)
+		internal static (TargetFrameworkIdentifier, Version) ParseTargetFramework(string targetFramework)
 		{
 			string[] tokens = targetFramework.Split(',');
 			TargetFrameworkIdentifier identifier;
@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 				switch (pair[0].Trim().ToUpperInvariant()) {
 					case "VERSION":
-						var versionString = pair[1].TrimStart('v');
+						var versionString = pair[1].TrimStart('v', ' ', '\t');
 						if (identifier == TargetFrameworkIdentifier.NETCoreApp ||
 							identifier == TargetFrameworkIdentifier.NETStandard)
 						{
