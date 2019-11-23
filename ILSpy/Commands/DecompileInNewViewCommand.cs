@@ -42,18 +42,26 @@ namespace ICSharpCode.ILSpy.Commands
 		public void Execute(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes != null) {
-				var nodes = context.SelectedTreeNodes.Cast<ILSpyTreeNode>().ToArray();
+				var nodes = context.SelectedTreeNodes.OfType<IMemberTreeNode>().Select(FindTreeNode).ToArray();
 				DecompileNodes(nodes);
 			} else if (context.Reference?.Reference is IEntity entity) {
-				var node = MainWindow.Instance.FindTreeNode(entity);
-				if (node != null) {
+				if (MainWindow.Instance.FindTreeNode(entity) is ILSpyTreeNode node) {
 					DecompileNodes(node);
 				}
+			}
+
+			ILSpyTreeNode FindTreeNode(IMemberTreeNode node)
+			{
+				if (node is ILSpyTreeNode ilspyNode)
+					return ilspyNode;
+				return MainWindow.Instance.FindTreeNode(node.Member);
 			}
 		}
 
 		private static void DecompileNodes(params ILSpyTreeNode[] nodes)
 		{
+			if (nodes.Length == 0)
+				return;
 			var title = string.Join(", ", nodes.Select(x => x.ToString()));
 			DockWorkspace.Instance.Documents.Add(new ViewModels.DecompiledDocumentModel(title, title) { Language = MainWindow.Instance.CurrentLanguage, LanguageVersion = MainWindow.Instance.CurrentLanguageVersion });
 			DockWorkspace.Instance.ActiveDocument = DockWorkspace.Instance.Documents.Last();
