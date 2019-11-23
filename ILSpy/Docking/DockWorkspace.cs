@@ -17,8 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.ComponentModel.Composition;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,12 +47,29 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public PaneCollection<DocumentModel> Documents { get; } = new PaneCollection<DocumentModel>();
 
-		public PaneCollection<ToolPaneModel> ToolPanes { get; } = new PaneCollection<ToolPaneModel>();
+		private ToolPaneModel[] toolPanes;
+		public IEnumerable<ToolPaneModel> ToolPanes {
+			get {
+				if (toolPanes == null) {
+					toolPanes = new ToolPaneModel[] {
+						AssemblyListPaneModel.Instance,
+						SearchPaneModel.Instance,
+						AnalyzerPaneModel.Instance,
+#if DEBUG
+						DebugStepsPaneModel.Instance,
+#endif
+					};
+				}
+				return toolPanes;
+			}
+		}
 
 		public void Remove(PaneModel model)
 		{
-			Documents.Remove(model as DocumentModel);
-			ToolPanes.Remove(model as ToolPaneModel);
+			if (model is DocumentModel document)
+				Documents.Remove(document);
+			if (model is ToolPaneModel tool)
+				tool.IsVisible = false;
 		}
 
 		private DocumentModel _activeDocument = null;
@@ -69,7 +89,20 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
-		internal void LayoutSerializationCallback(object sender, LayoutSerializationCallbackEventArgs e)
+		public void InitializeLayout(Xceed.Wpf.AvalonDock.DockingManager manager)
+		{
+			XmlLayoutSerializer serializer = new XmlLayoutSerializer(manager);
+			serializer.LayoutSerializationCallback += LayoutSerializationCallback;
+			try {
+				sessionSettings.DockLayout.Deserialize(serializer);
+			} finally {
+				serializer.LayoutSerializationCallback -= LayoutSerializationCallback;
+			}
+
+			EnsureUnclosablePanes();
+		}
+
+		void LayoutSerializationCallback(object sender, LayoutSerializationCallbackEventArgs e)
 		{
 			switch (e.Model) {
 				case LayoutAnchorable la:
@@ -93,7 +126,8 @@ namespace ICSharpCode.ILSpy.Docking
 							break;
 					}
 					if (!e.Cancel) {
-						ToolPanes.Add((ToolPaneModel)e.Content);
+						e.Cancel = ((ToolPaneModel)e.Content).IsVisible;
+						((ToolPaneModel)e.Content).IsVisible = true;
 					}
 					break;
 				default:
@@ -104,7 +138,7 @@ namespace ICSharpCode.ILSpy.Docking
 
 		internal void EnsureUnclosablePanes()
 		{
-			ToolPanes.Add(AssemblyListPaneModel.Instance);
+			AssemblyListPaneModel.Instance.IsVisible = true;
 		}
 
 		protected void RaisePropertyChanged([CallerMemberName] string propertyName = null)

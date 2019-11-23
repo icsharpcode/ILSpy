@@ -120,15 +120,7 @@ namespace ICSharpCode.ILSpy
 
 			InitializeComponent();
 
-			XmlLayoutSerializer serializer = new XmlLayoutSerializer(DockManager);
-			serializer.LayoutSerializationCallback += DockWorkspace.Instance.LayoutSerializationCallback;
-			try {
-				sessionSettings.DockLayout.Deserialize(serializer);
-			} finally {
-				serializer.LayoutSerializationCallback -= DockWorkspace.Instance.LayoutSerializationCallback;
-			}
-
-			DockWorkspace.Instance.EnsureUnclosablePanes();
+			DockWorkspace.Instance.InitializeLayout(DockManager);
 
 			sessionSettings.FilterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
@@ -925,7 +917,7 @@ namespace ICSharpCode.ILSpy
 
 		void SearchCommandExecuted(object sender, ExecutedRoutedEventArgs e)
 		{
-			DockWorkspace.Instance.ToolPanes.Add(SearchPaneModel.Instance);
+			SearchPaneModel.Instance.IsVisible = true;
 		}
 		#endregion
 

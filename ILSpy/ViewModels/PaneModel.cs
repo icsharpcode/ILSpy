@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			}
 		}
 
-		private bool isVisible = true;
+		private bool isVisible;
 		public bool IsVisible {
 			get { return isVisible; }
 			set {

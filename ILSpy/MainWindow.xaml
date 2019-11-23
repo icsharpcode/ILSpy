@@ -22,10 +22,9 @@
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
 >
 	<Window.Resources>
-		<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+		<controls:BoolToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 		<docking:ActiveDocumentConverter x:Key="ActiveDocumentConverter"/>
-		<avalondock:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-		
+
 		<tv:SharpTreeView x:Key="TreeView"
 				AutomationProperties.Name="Assemblies and Classes"
 				SelectionChanged="TreeView_SelectionChanged"
@@ -165,17 +164,6 @@
 									DocumentsSource="{Binding Documents}"
 									ActiveContent="{Binding ActiveDocument, Mode=TwoWay, Converter={StaticResource ActiveDocumentConverter}}"
 									AllowMixedOrientation="True">
-			<avalondock:LayoutRoot>
-				<avalondock:LayoutPanel Orientation="Horizontal">
-					<avalondock:LayoutAnchorablePane DockMinWidth="150" Name="LeftPane" />
-					<avalondock:LayoutPanel Orientation="Vertical">
-						<avalondock:LayoutAnchorablePane DockMinHeight="150" Name="TopPane" />
-						<avalondock:LayoutDocumentPane />
-						<avalondock:LayoutAnchorablePane DockMinHeight="150" Name="BottomPane" />
-					</avalondock:LayoutPanel>
-					<avalondock:LayoutAnchorablePane DockMinWidth="150" Name="RightPane" />
-				</avalondock:LayoutPanel>
-			</avalondock:LayoutRoot>
 
 			<avalondock:DockingManager.DocumentHeaderTemplate>
 				<DataTemplate>
@@ -187,10 +175,6 @@
 					</DataTemplate.Triggers>
 				</DataTemplate>
 			</avalondock:DockingManager.DocumentHeaderTemplate>
-			
-			<avalondock:DockingManager.LayoutUpdateStrategy>
-				<docking:LayoutUpdateStrategy />
-			</avalondock:DockingManager.LayoutUpdateStrategy>
 
 			<avalondock:DockingManager.LayoutItemTemplateSelector>
 				<docking:PaneTemplateSelector>

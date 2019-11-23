@@ -105,7 +105,7 @@ namespace ICSharpCode.ILSpy
 		public void Show()
 		{
 			if (!IsVisible) {
-				DockWorkspace.Instance.ToolPanes.Add(SearchPaneModel.Instance);
+				SearchPaneModel.Instance.IsVisible = true;
 				if (runSearchOnNextShow) {
 					runSearchOnNextShow = false;
 					StartSearch(this.SearchTerm);

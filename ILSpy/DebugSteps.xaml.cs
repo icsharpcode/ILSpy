@@ -81,7 +81,7 @@ namespace ICSharpCode.ILSpy
 
 		public static void Show()
 		{
-			DockWorkspace.Instance.ToolPanes.Add(DebugStepsPaneModel.Instance);
+			DebugStepsPaneModel.Instance.IsVisible = true;
 		}
 
 		void IPane.Closed()
