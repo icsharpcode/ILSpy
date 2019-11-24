@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string SignatureTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					typeSpec.DecodeSignature(new DisassemblerSignatureProvider(module, output), GenericContext.Empty)(ILNameSyntax.Signature);
+					typeSpec.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), GenericContext.Empty)(ILNameSyntax.Signature);
 					return output.ToString();
 				}
 			}

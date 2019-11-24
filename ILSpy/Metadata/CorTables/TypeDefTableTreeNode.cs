@@ -100,7 +100,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string BaseTypeSignature {
 				get {
 					var output = new PlainTextOutput();
-					var provider = new DisassemblerSignatureProvider(module, output);
+					var provider = new DisassemblerSignatureTypeProvider(module, output);
 					if (typeDef.BaseType.IsNil)
 						return null;
 					switch (typeDef.BaseType.Kind) {

@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		PEFile module;
 		MetadataReader metadata;
 		GenericContext genericContext;
-		DisassemblerSignatureProvider signatureDecoder;
+		DisassemblerSignatureTypeProvider signatureDecoder;
 
 		public MethodBodyDisassembler(ITextOutput output, CancellationToken cancellationToken)
 		{
@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			metadata = module.Metadata;
 			genericContext = new GenericContext(handle, module);
-			signatureDecoder = new DisassemblerSignatureProvider(module, output);
+			signatureDecoder = new DisassemblerSignatureTypeProvider(module, output);
 			var methodDefinition = metadata.GetMethodDefinition(handle);
 
 			// start writing IL code
@@ -171,7 +171,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.module = module;
 			metadata = module.Metadata;
 			genericContext = new GenericContext(handle, module);
-			signatureDecoder = new DisassemblerSignatureProvider(module, output);
+			signatureDecoder = new DisassemblerSignatureTypeProvider(module, output);
 			var handlers = body.ExceptionRegions;
 			if (!handlers.IsEmpty) {
 				output.WriteLine();

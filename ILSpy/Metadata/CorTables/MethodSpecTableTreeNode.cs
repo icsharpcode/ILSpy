@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string SignatureTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var signature = methodSpec.DecodeSignature(new DisassemblerSignatureProvider(module, output), GenericContext.Empty);
+					var signature = methodSpec.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), GenericContext.Empty);
 					bool first = true;
 					foreach (var type in signature) {
 						if (first)
