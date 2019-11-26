@@ -417,7 +417,9 @@ namespace ICSharpCode.ILSpy.TextView
 				};
 				this.Child = border;
 				viewer.Foreground = SystemColors.InfoTextBrush;
+				document.TextAlignment = TextAlignment.Left;
 				document.FontSize = fontSize;
+				document.FontFamily = SystemFonts.SmallCaptionFontFamily;
 			}
 
 			public bool CloseWhenMouseMovesAway {
