@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			public DotNetCorePackageInfo(string fullName, string type, string path, string[] runtimeComponents)
 			{
 				var parts = fullName.Split('/');
-				this.Name = parts[0];
+				this.Name = fullName; // Do not use a short name because the different versions of the same library can be referred
 				this.Version = parts[1];
 				this.Type = type;
 				this.Path = path;
