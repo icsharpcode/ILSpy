@@ -457,7 +457,6 @@ namespace ICSharpCode.ILSpy
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
 			DockWorkspace.Instance.Documents.Add(new DecompiledDocumentModel() {
-				IsCloseable = false,
 				Language = CurrentLanguage,
 				LanguageVersion = CurrentLanguageVersion
 			});

@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.Docking
 			item.IsActive = true;
 		}
 
-		public int Count => observableCollection.Count();
+		public int Count => observableCollection.Count;
 		public bool IsReadOnly => false;
 		public void Clear() => observableCollection.Clear();
 		public bool Contains(T item) => observableCollection.Contains(item);

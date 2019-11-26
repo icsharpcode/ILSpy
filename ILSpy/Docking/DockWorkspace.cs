@@ -43,6 +43,16 @@ namespace ICSharpCode.ILSpy.Docking
 
 		private DockWorkspace()
 		{
+			this.Documents.CollectionChanged += Documents_CollectionChanged;
+		}
+
+		private void Documents_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		{
+			var collection = (PaneCollection<DocumentModel>)sender;
+			bool canClose = collection.Count > 1;
+			foreach (var item in collection) {
+				item.IsCloseable = canClose;
+			}
 		}
 
 		public PaneCollection<DocumentModel> Documents { get; } = new PaneCollection<DocumentModel>();
