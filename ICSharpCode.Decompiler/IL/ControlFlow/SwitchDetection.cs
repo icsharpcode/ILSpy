@@ -228,8 +228,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 					return false;
 				});
-			AdjustLabels(sw);
-			SortSwitchSections(sw);
+
+			// If only universe target left we can replace whole switch with that block
+			if (sw.Sections.Count < 1) {
+				block.Instructions[block.Instructions.Count - 1].ReplaceWith(new Nop());
+			} else if (sw.Sections.Count == 1) {
+				var section = sw.Sections.First();
+				if (section.Labels.SetEquals(LongSet.Universe)) {
+					block.Instructions[block.Instructions.Count - 1].ReplaceWith(section.Body);
+				}
+			} else {
+				AdjustLabels(sw);
+				SortSwitchSections(sw);
+			}
 		}
 
 		static void SortSwitchSections(SwitchInstruction sw)
