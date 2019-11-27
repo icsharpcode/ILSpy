@@ -55,6 +55,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			SimplifyBranchChains(function, context);
 			CleanUpEmptyBlocks(function, context);
+			RemoveDeadIfs(function, context);
 		}
 
 		private static void RemoveNopInstructions(Block block)
@@ -98,6 +99,40 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					default:
 						return false;
 				}
+			}
+		}
+
+		private static bool IsEmpty(ILInstruction inst) =>
+			inst is Nop || inst is Block block && block.Instructions.Count == 0 && block.FinalInstruction is Nop;
+
+		// Replaces dead code with NOPs
+		// if (...) nop; [else nop;] -> nop;
+		// if (...) { x; } x; -> x;
+		// if (...) { x; } else { x; } -> x;
+		// TODO: FIXME: Extra processing required to eliminate condition dead code and dead stack stores
+		private static void RemoveDeadIfs(ILFunction function, ILTransformContext context)
+		{
+			foreach (var block in function.Descendants.OfType<Block>()) {
+				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+					if (block.Instructions[i] is IfInstruction ifInst) {
+						if (IsEmpty(ifInst.TrueInst) && IsEmpty(ifInst.FalseInst)) {
+							block.Instructions[i].ReplaceWith(new Nop().WithILRange(ifInst));
+						} else {
+							var t = ifInst.TrueInst;
+							var f = ifInst.FalseInst;
+							var n = i < block.Instructions.Count - 1 ? block.Instructions[i + 1] : null;
+							if (t.ToString().CompareTo(f.ToString()) == 0) {
+								block.Instructions[i].ReplaceWith(ifInst.TrueInst);
+							}
+							else if (n != null && IsEmpty(f) && t.ToString().CompareTo(n.ToString()) == 0) {
+								block.Instructions[i].ReplaceWith(new Nop().WithILRange(ifInst));
+							}
+						}
+					}
+				}
+
+				RemoveNopInstructions(block);
+				RemoveDeadStackStores(block, context);
 			}
 		}
 
