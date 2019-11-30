@@ -196,6 +196,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			readOnlyStruct.Method();
 		}
 
+		public void M(in DateTime a = default(DateTime))
+		{
+		}
+
+		public void M2<T>(in T a = default(T))
+		{
+		}
+
+		public void M3<T>(in T? a = null) where T : struct
+		{
+		}
+
 		public static TReturn Invoker<T1, TReturn>(RefFunc<T1, TReturn> action, T1 value)
 		{
 			return action(value);

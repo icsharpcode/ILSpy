@@ -1268,18 +1268,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (ShowAttributes) {
 				decl.Attributes.AddRange(ConvertAttributes(parameter.GetAttributes()));
 			}
+			IType parameterType;
 			if (parameter.Type.Kind == TypeKind.ByReference) {
 				// avoid 'out ref'
-				decl.Type = ConvertType(((ByReferenceType)parameter.Type).ElementType);
+				parameterType = ((ByReferenceType)parameter.Type).ElementType;
 			} else {
-				decl.Type = ConvertType(parameter.Type);
+				parameterType = parameter.Type;
 			}
+			decl.Type = ConvertType(parameterType);
 			if (this.ShowParameterNames) {
 				decl.Name = parameter.Name;
 			}
 			if (parameter.IsOptional && parameter.HasConstantValueInSignature && this.ShowConstantValues) {
 				try {
-					decl.DefaultExpression = ConvertConstantValue(parameter.Type, parameter.GetConstantValue(throwOnInvalidMetadata: true));
+					decl.DefaultExpression = ConvertConstantValue(parameterType, parameter.GetConstantValue(throwOnInvalidMetadata: true));
 				} catch (BadImageFormatException ex) {
 					decl.DefaultExpression = new ErrorExpression(ex.Message);
 				}
