@@ -93,6 +93,9 @@ namespace ICSharpCode.ILSpy.Docking
 					if (value is DecompiledDocumentModel ddm) {
 						this.sessionSettings.FilterSettings.Language = ddm.Language;
 						this.sessionSettings.FilterSettings.LanguageVersion = ddm.LanguageVersion;
+						if (ddm.TextView is DecompilerTextView view) {
+							MainWindow.Instance.SelectNodes(view.GetState().DecompiledNodes);
+						}
 					}
 					RaisePropertyChanged(nameof(ActiveDocument));
 				}

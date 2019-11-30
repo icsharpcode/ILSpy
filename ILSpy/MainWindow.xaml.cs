@@ -117,11 +117,8 @@ namespace ICSharpCode.ILSpy
 			};
 
 			DockWorkspace.Instance.LoadSettings(sessionSettings);
-
 			InitializeComponent();
-
 			DockWorkspace.Instance.InitializeLayout(DockManager);
-
 			sessionSettings.FilterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
 			InitMainMenu();

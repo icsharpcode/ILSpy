@@ -62,12 +62,11 @@ namespace ICSharpCode.ILSpy.Commands
 		{
 			if (nodes.Length == 0)
 				return;
+
 			var title = string.Join(", ", nodes.Select(x => x.ToString()));
 			DockWorkspace.Instance.Documents.Add(new ViewModels.DecompiledDocumentModel(title, title) { Language = MainWindow.Instance.CurrentLanguage, LanguageVersion = MainWindow.Instance.CurrentLanguageVersion });
 			DockWorkspace.Instance.ActiveDocument = DockWorkspace.Instance.Documents.Last();
-			MainWindow.Instance.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, (Action)delegate {
-				DockWorkspace.Instance.GetTextView().DecompileAsync(MainWindow.Instance.CurrentLanguage, nodes, new DecompilationOptions());
-			});
+			MainWindow.Instance.SelectNodes(nodes);
 		}
 	}
 }
