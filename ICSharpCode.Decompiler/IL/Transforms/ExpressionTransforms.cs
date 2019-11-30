@@ -679,11 +679,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						if (new NullableLiftingTransform(context).Run(inst)) {
 							// e.g. "(a.GetValueOrDefault() == b.GetValueOrDefault()) & (a.HasValue & b.HasValue)"
-						} else if (SemanticHelper.IsPure(inst.Right.Flags)) {
-							context.Step("Replace bit.and with logic.and", inst);
-							var expr = IfInstruction.LogicAnd(inst.Left, inst.Right);
-							inst.ReplaceWith(expr);
-							expr.AcceptVisitor(this);
 						}
 					}
 					break;
