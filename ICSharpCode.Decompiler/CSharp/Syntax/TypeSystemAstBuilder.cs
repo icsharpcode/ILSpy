@@ -272,26 +272,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return astType;
 			} else {
 				AstType astType;
-				if (type is ITypeDefinition typeDef) {
-					if (ShowTypeParametersForUnboundTypes) {
-						astType = ConvertTypeHelper(typeDef, typeDef.TypeArguments);
-					} else if (typeDef.TypeParameterCount > 0) {
-						// Unbound type
-						IType[] typeArguments = new IType[typeDef.TypeParameterCount];
-						for (int i = 0; i < typeArguments.Length; i++) {
-							typeArguments[i] = SpecialType.UnboundTypeArgument;
+				switch (type) {
+					case ITypeDefinition _:
+					case UnknownType _:
+						if (type.IsUnbound()) {
+							if (ShowTypeParametersForUnboundTypes) {
+								astType = ConvertTypeHelper(type, type.TypeArguments);
+							} else {
+								IType[] typeArguments = new IType[type.TypeParameterCount];
+								for (int i = 0; i < typeArguments.Length; i++) {
+									typeArguments[i] = SpecialType.UnboundTypeArgument;
+								}
+								astType = ConvertTypeHelper(type, typeArguments);
+							}
+						} else {
+							astType = ConvertTypeHelper(type, EmptyList<IType>.Instance);
 						}
-						astType = ConvertTypeHelper(typeDef, typeArguments);
-					} else {
-						astType = ConvertTypeHelper(typeDef, EmptyList<IType>.Instance);
-					}
-				} else if (type is ParameterizedType pt) {
-					if (AlwaysUseBuiltinTypeNames && pt.IsKnownType(KnownTypeCode.NullableOfT)) {
-						return ConvertType(pt.TypeArguments[0]).MakeNullableType();
-					}
-					astType = ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
-				} else {
-					astType = MakeSimpleType(type.Name);
+						break;
+					case ParameterizedType pt:
+						if (AlwaysUseBuiltinTypeNames && pt.IsKnownType(KnownTypeCode.NullableOfT)) {
+							return ConvertType(pt.TypeArguments[0]).MakeNullableType();
+						}
+						astType = ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
+						break;
+					default:
+						astType = MakeSimpleType(type.Name);
+						break;
 				}
 				if (type.Nullability == Nullability.Nullable) {
 					AddTypeAnnotation(astType, type.ChangeNullability(Nullability.Oblivious));
