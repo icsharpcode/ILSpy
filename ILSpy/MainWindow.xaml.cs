@@ -119,9 +119,6 @@ namespace ICSharpCode.ILSpy
 			DockWorkspace.Instance.LoadSettings(sessionSettings);
 			InitializeComponent();
 			DockWorkspace.Instance.InitializeLayout(DockManager);
-			DockWorkspace.Instance.PropertyChanged += filter_DockWorkspace_PropertyChanged;
-
-
 			sessionSettings.FilterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
 			InitMainMenu();
@@ -129,17 +126,6 @@ namespace ICSharpCode.ILSpy
 			ContextMenuProvider.Add(treeView);
 
 			this.Loaded += MainWindow_Loaded;
-		}
-
-		private void filter_DockWorkspace_PropertyChanged(object sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == "ActiveDocument") {
-				if ((sender as DockWorkspace).ActiveDocument is DecompiledDocumentModel doc) {
-					var view = doc.TextView;
-					if (view != null)
-						MainWindow.Instance.SelectNodes(view.GetState().DecompiledNodes);
-				}
-			}
 		}
 
 		void SetWindowBounds(Rect bounds)
