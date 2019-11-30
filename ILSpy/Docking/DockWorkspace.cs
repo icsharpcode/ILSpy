@@ -94,7 +94,9 @@ namespace ICSharpCode.ILSpy.Docking
 						this.sessionSettings.FilterSettings.Language = ddm.Language;
 						this.sessionSettings.FilterSettings.LanguageVersion = ddm.LanguageVersion;
 						if (ddm.TextView is DecompilerTextView view) {
-							MainWindow.Instance.SelectNodes(view.GetState().DecompiledNodes);
+							var state = view.GetState();
+							if (state != null)
+								MainWindow.Instance.SelectNodes(state.DecompiledNodes);
 						}
 					}
 					RaisePropertyChanged(nameof(ActiveDocument));
@@ -136,6 +138,7 @@ namespace ICSharpCode.ILSpy.Docking
 							e.Cancel = true;
 							break;
 					}
+					la.CanDockAsTabbedDocument = false;
 					if (!e.Cancel) {
 						e.Cancel = ((ToolPaneModel)e.Content).IsVisible;
 						((ToolPaneModel)e.Content).IsVisible = true;
