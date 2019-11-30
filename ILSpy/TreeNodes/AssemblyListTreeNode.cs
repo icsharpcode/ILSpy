@@ -116,6 +116,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					foreach (LoadedAssembly asm in assemblies) {
 						assemblyList.assemblies.Insert(index, asm);
 					}
+					var nodes = assemblies.SelectArray(MainWindow.Instance.FindTreeNode);
+					MainWindow.Instance.SelectNodes(nodes);
 				}
 			}
 		}
