@@ -60,6 +60,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				get;
 				set;
 			}
+
+			public bool BoolProperty {
+				get;
+				set;
+			}
 			
 			public uint this[string name] {
 				get {
@@ -800,6 +805,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int DoubleInstancePropertyByteAndReturn()
 		{
 			return M().ByteProperty *= 2;
+		}
+
+		public void BitManipBoolProperty(bool b)
+		{
+			M().BoolProperty |= b;
+			M().BoolProperty &= b;
+			M().BoolProperty ^= b;
+		}
+
+		public bool BitOrBoolPropertyAndReturn(bool b)
+		{
+			return M().BoolProperty |= b;
+		}
+
+		public bool BitAndBoolPropertyAndReturn(bool b)
+		{
+			return M().BoolProperty &= b;
 		}
 
 		public int PreIncrementStaticField()

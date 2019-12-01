@@ -211,7 +211,7 @@
 							<Setter Property="IsSelected" Value="{Binding Model.IsSelected, Mode=TwoWay}"/>
 							<Setter Property="IsActive" Value="{Binding Model.IsActive, Mode=TwoWay}"/>
 							<Setter Property="CloseCommand" Value="{Binding Model.CloseCommand}" />
-							<Setter Property="CanClose" Value="{Binding Model.IsCloseable}" />
+							<Setter Property="CanClose" Value="{Binding Model.IsCloseable, Mode=TwoWay}" />
 						</Style>
 					</docking:PaneStyleSelector.DocumentStyle>
 				</docking:PaneStyleSelector>

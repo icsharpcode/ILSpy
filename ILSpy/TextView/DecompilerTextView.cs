@@ -417,7 +417,9 @@ namespace ICSharpCode.ILSpy.TextView
 				};
 				this.Child = border;
 				viewer.Foreground = SystemColors.InfoTextBrush;
+				document.TextAlignment = TextAlignment.Left;
 				document.FontSize = fontSize;
+				document.FontFamily = SystemFonts.SmallCaptionFontFamily;
 			}
 
 			public bool CloseWhenMouseMovesAway {
@@ -570,7 +572,8 @@ namespace ICSharpCode.ILSpy.TextView
 				this.nextDecompilationRun.TaskCompletionSource.TrySetCanceled();
 				this.nextDecompilationRun = null;
 			}
-			textOutput.Title = string.Join(", ", nodes.Select(n => n.ToString()));
+			if (nodes != null && string.IsNullOrEmpty(textOutput.Title))
+				textOutput.Title = string.Join(", ", nodes.Select(n => n.ToString()));
 			ShowOutput(textOutput, highlighting);
 			decompiledNodes = nodes;
 		}

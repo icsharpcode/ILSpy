@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			"Microsoft.AspNetCore.All"
 		};
 
-		readonly Dictionary<string, DotNetCorePackageInfo> packages;
+		readonly DotNetCorePackageInfo[] packages;
 		ISet<string> packageBasePaths = new HashSet<string>(StringComparer.Ordinal);
 		readonly Version version;
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
@@ -82,13 +82,13 @@ namespace ICSharpCode.Decompiler.Metadata
 				return;
 			}
 
-			packages = LoadPackageInfos(depsJsonFileName, targetFrameworkId).ToDictionary(i => i.Name);
+			packages = LoadPackageInfos(depsJsonFileName, targetFrameworkId).ToArray();
 
 			foreach (var path in LookupPaths) {
-				foreach (var pk in packages) {
-					foreach (var item in pk.Value.RuntimeComponents) {
+				foreach (var p in packages) {
+					foreach (var item in p.RuntimeComponents) {
 						var itemPath = Path.GetDirectoryName(item);
-						var fullPath = Path.Combine(path, pk.Value.Name, pk.Value.Version, itemPath).ToLowerInvariant();
+						var fullPath = Path.Combine(path, p.Name, p.Version, itemPath).ToLowerInvariant();
 						if (Directory.Exists(fullPath))
 							packageBasePaths.Add(fullPath);
 					}

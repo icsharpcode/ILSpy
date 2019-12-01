@@ -25,6 +25,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
@@ -43,6 +44,16 @@ namespace ICSharpCode.ILSpy.Docking
 
 		private DockWorkspace()
 		{
+			this.Documents.CollectionChanged += Documents_CollectionChanged;
+		}
+
+		private void Documents_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		{
+			var collection = (PaneCollection<DocumentModel>)sender;
+			bool canClose = collection.Count > 1;
+			foreach (var item in collection) {
+				item.IsCloseable = canClose;
+			}
 		}
 
 		public PaneCollection<DocumentModel> Documents { get; } = new PaneCollection<DocumentModel>();
@@ -83,6 +94,11 @@ namespace ICSharpCode.ILSpy.Docking
 					if (value is DecompiledDocumentModel ddm) {
 						this.sessionSettings.FilterSettings.Language = ddm.Language;
 						this.sessionSettings.FilterSettings.LanguageVersion = ddm.LanguageVersion;
+						if (ddm.TextView is DecompilerTextView view) {
+							var state = view.GetState();
+							if (state != null)
+								MainWindow.Instance.SelectNodes(state.DecompiledNodes);
+						}
 					}
 					RaisePropertyChanged(nameof(ActiveDocument));
 				}
@@ -123,6 +139,7 @@ namespace ICSharpCode.ILSpy.Docking
 							e.Cancel = true;
 							break;
 					}
+					la.CanDockAsTabbedDocument = false;
 					if (!e.Cancel) {
 						e.Cancel = ((ToolPaneModel)e.Content).IsVisible;
 						((ToolPaneModel)e.Content).IsVisible = true;
@@ -151,7 +168,7 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public DecompilerTextViewState GetState()
 		{
-			return GetTextView().GetState();
+			return GetTextView()?.GetState();
 		}
 
 		public Task<T> RunWithCancellation<T>(Func<CancellationToken, Task<T>> taskCreation)
@@ -193,8 +210,10 @@ namespace ICSharpCode.ILSpy.Docking
 			foreach (var pane in ToolPanes) {
 				pane.IsVisible = false;
 			}
+			CloseAllDocuments();
 			sessionSettings.DockLayout.Reset();
 			InitializeLayout(MainWindow.Instance.DockManager);
+			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);
 		}
 	}
 }

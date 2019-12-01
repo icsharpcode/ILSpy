@@ -272,26 +272,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return astType;
 			} else {
 				AstType astType;
-				if (type is ITypeDefinition typeDef) {
-					if (ShowTypeParametersForUnboundTypes) {
-						astType = ConvertTypeHelper(typeDef, typeDef.TypeArguments);
-					} else if (typeDef.TypeParameterCount > 0) {
-						// Unbound type
-						IType[] typeArguments = new IType[typeDef.TypeParameterCount];
-						for (int i = 0; i < typeArguments.Length; i++) {
-							typeArguments[i] = SpecialType.UnboundTypeArgument;
+				switch (type) {
+					case ITypeDefinition _:
+					case UnknownType _:
+						if (type.IsUnbound()) {
+							if (ShowTypeParametersForUnboundTypes) {
+								astType = ConvertTypeHelper(type, type.TypeArguments);
+							} else {
+								IType[] typeArguments = new IType[type.TypeParameterCount];
+								for (int i = 0; i < typeArguments.Length; i++) {
+									typeArguments[i] = SpecialType.UnboundTypeArgument;
+								}
+								astType = ConvertTypeHelper(type, typeArguments);
+							}
+						} else {
+							astType = ConvertTypeHelper(type, EmptyList<IType>.Instance);
 						}
-						astType = ConvertTypeHelper(typeDef, typeArguments);
-					} else {
-						astType = ConvertTypeHelper(typeDef, EmptyList<IType>.Instance);
-					}
-				} else if (type is ParameterizedType pt) {
-					if (AlwaysUseBuiltinTypeNames && pt.IsKnownType(KnownTypeCode.NullableOfT)) {
-						return ConvertType(pt.TypeArguments[0]).MakeNullableType();
-					}
-					astType = ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
-				} else {
-					astType = MakeSimpleType(type.Name);
+						break;
+					case ParameterizedType pt:
+						if (AlwaysUseBuiltinTypeNames && pt.IsKnownType(KnownTypeCode.NullableOfT)) {
+							return ConvertType(pt.TypeArguments[0]).MakeNullableType();
+						}
+						astType = ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
+						break;
+					default:
+						astType = MakeSimpleType(type.Name);
+						break;
 				}
 				if (type.Nullability == Nullability.Nullable) {
 					AddTypeAnnotation(astType, type.ChangeNullability(Nullability.Oblivious));
@@ -1262,18 +1268,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (ShowAttributes) {
 				decl.Attributes.AddRange(ConvertAttributes(parameter.GetAttributes()));
 			}
+			IType parameterType;
 			if (parameter.Type.Kind == TypeKind.ByReference) {
 				// avoid 'out ref'
-				decl.Type = ConvertType(((ByReferenceType)parameter.Type).ElementType);
+				parameterType = ((ByReferenceType)parameter.Type).ElementType;
 			} else {
-				decl.Type = ConvertType(parameter.Type);
+				parameterType = parameter.Type;
 			}
+			decl.Type = ConvertType(parameterType);
 			if (this.ShowParameterNames) {
 				decl.Name = parameter.Name;
 			}
 			if (parameter.IsOptional && parameter.HasConstantValueInSignature && this.ShowConstantValues) {
 				try {
-					decl.DefaultExpression = ConvertConstantValue(parameter.Type, parameter.GetConstantValue(throwOnInvalidMetadata: true));
+					decl.DefaultExpression = ConvertConstantValue(parameterType, parameter.GetConstantValue(throwOnInvalidMetadata: true));
 				} catch (BadImageFormatException ex) {
 					decl.DefaultExpression = new ErrorExpression(ex.Message);
 				}

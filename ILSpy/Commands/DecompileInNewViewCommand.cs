@@ -18,6 +18,7 @@
 
 using System;
 using System.Linq;
+using System.Windows.Threading;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
@@ -42,7 +43,12 @@ namespace ICSharpCode.ILSpy.Commands
 		public void Execute(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes != null) {
-				var nodes = context.SelectedTreeNodes.OfType<IMemberTreeNode>().Select(FindTreeNode).ToArray();
+				ILSpyTreeNode[] nodes;
+				if (context.TreeView != MainWindow.Instance.treeView) {
+					nodes = context.SelectedTreeNodes.OfType<IMemberTreeNode>().Select(FindTreeNode).ToArray();
+				} else {
+					nodes = context.SelectedTreeNodes.OfType<ILSpyTreeNode>().ToArray();
+				}
 				DecompileNodes(nodes);
 			} else if (context.Reference?.Reference is IEntity entity) {
 				if (MainWindow.Instance.FindTreeNode(entity) is ILSpyTreeNode node) {
@@ -62,12 +68,12 @@ namespace ICSharpCode.ILSpy.Commands
 		{
 			if (nodes.Length == 0)
 				return;
+
 			var title = string.Join(", ", nodes.Select(x => x.ToString()));
 			DockWorkspace.Instance.Documents.Add(new ViewModels.DecompiledDocumentModel(title, title) { Language = MainWindow.Instance.CurrentLanguage, LanguageVersion = MainWindow.Instance.CurrentLanguageVersion });
 			DockWorkspace.Instance.ActiveDocument = DockWorkspace.Instance.Documents.Last();
-			MainWindow.Instance.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, (Action)delegate {
-				DockWorkspace.Instance.GetTextView().DecompileAsync(MainWindow.Instance.CurrentLanguage, nodes, new DecompilationOptions());
-			});
+			MainWindow.Instance.SelectNodes(nodes);
+			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);
 		}
 	}
 }

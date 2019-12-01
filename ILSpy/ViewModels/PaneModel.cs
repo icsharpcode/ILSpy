@@ -31,6 +31,14 @@ namespace ICSharpCode.ILSpy.ViewModels
 			public CloseCommandImpl(PaneModel model)
 			{
 				this.model = model;
+				this.model.PropertyChanged += Model_PropertyChanged;
+			}
+
+			private void Model_PropertyChanged(object sender, PropertyChangedEventArgs e)
+			{
+				if (e.PropertyName == nameof(model.IsCloseable)) {
+					CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+				}
 			}
 
 			public event EventHandler CanExecuteChanged;

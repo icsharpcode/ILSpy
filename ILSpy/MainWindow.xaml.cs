@@ -117,11 +117,8 @@ namespace ICSharpCode.ILSpy
 			};
 
 			DockWorkspace.Instance.LoadSettings(sessionSettings);
-
 			InitializeComponent();
-
 			DockWorkspace.Instance.InitializeLayout(DockManager);
-
 			sessionSettings.FilterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
 			InitMainMenu();
@@ -457,7 +454,6 @@ namespace ICSharpCode.ILSpy
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
 			DockWorkspace.Instance.Documents.Add(new DecompiledDocumentModel() {
-				IsCloseable = false,
 				Language = CurrentLanguage,
 				LanguageVersion = CurrentLanguageVersion
 			});
@@ -746,6 +742,8 @@ namespace ICSharpCode.ILSpy
 		public ILSpyTreeNode FindTreeNode(object reference)
 		{
 			switch (reference) {
+				case LoadedAssembly lasm:
+					return assemblyListTreeNode.FindAssemblyNode(lasm);
 				case PEFile asm:
 					return assemblyListTreeNode.FindAssemblyNode(asm);
 				case Resource res:
