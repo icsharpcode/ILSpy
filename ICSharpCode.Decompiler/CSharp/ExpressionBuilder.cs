@@ -2115,20 +2115,28 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitLdLen(LdLen inst, TranslationContext context)
 		{
-			TranslatedExpression arrayExpr = Translate(inst.Array, typeHint: compilation.FindType(KnownTypeCode.Array));
+			IType arrayType = compilation.FindType(KnownTypeCode.Array);
+			TranslatedExpression arrayExpr = Translate(inst.Array, typeHint: arrayType);
 			if (arrayExpr.Type.Kind != TypeKind.Array) {
-				arrayExpr = arrayExpr.ConvertTo(compilation.FindType(KnownTypeCode.Array), this);
+				arrayExpr = arrayExpr.ConvertTo(arrayType, this);
 			}
 			arrayExpr = EnsureTargetNotNullable(arrayExpr);
+			string memberName;
+			KnownTypeCode code;
 			if (inst.ResultType == StackType.I4) {
-				return new MemberReferenceExpression(arrayExpr.Expression, "Length")
-					.WithILInstruction(inst)
-					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Int32)));
+				memberName = "Length";
+				code = KnownTypeCode.Int32;
 			} else {
-				return new MemberReferenceExpression(arrayExpr.Expression, "LongLength")
-					.WithILInstruction(inst)
-					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Int64)));
+				memberName = "LongLength";
+				code = KnownTypeCode.Int64;
 			}
+			IProperty member = arrayType.GetProperties(p => p.Name == memberName).FirstOrDefault();
+			ResolveResult rr = member == null
+				? new ResolveResult(compilation.FindType(code))
+				: new MemberResolveResult(arrayExpr.ResolveResult, member);
+			return new MemberReferenceExpression(arrayExpr.Expression, memberName)
+				.WithILInstruction(inst)
+				.WithRR(rr);
 		}
 		
 		protected internal override TranslatedExpression VisitLdFlda(LdFlda inst, TranslationContext context)
