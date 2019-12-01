@@ -1280,6 +1280,18 @@ namespace ICSharpCode.Decompiler.CSharp
 						right.ResolveResult));
 				}
 			}
+			if (op.IsBitwise() 
+				&& left.Type.IsKnownType(KnownTypeCode.Boolean) 
+				&& right.Type.IsKnownType(KnownTypeCode.Boolean)
+				&& SemanticHelper.IsPure(inst.Right.Flags))
+			{
+				// Undo the C# compiler's optimization of "a && b" to "a & b".
+				if (op == BinaryOperatorType.BitwiseAnd) {
+					op = BinaryOperatorType.ConditionalAnd;
+				} else if (op == BinaryOperatorType.BitwiseOr) {
+					op = BinaryOperatorType.ConditionalOr;
+				}
+			}
 
 			if (op.IsBitwise() && (left.Type.Kind == TypeKind.Enum || right.Type.Kind == TypeKind.Enum)) {
 				left = AdjustConstantExpressionToType(left, right.Type);
