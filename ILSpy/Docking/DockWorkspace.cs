@@ -25,6 +25,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
@@ -167,7 +168,7 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public DecompilerTextViewState GetState()
 		{
-			return GetTextView().GetState();
+			return GetTextView()?.GetState();
 		}
 
 		public Task<T> RunWithCancellation<T>(Func<CancellationToken, Task<T>> taskCreation)
@@ -209,8 +210,10 @@ namespace ICSharpCode.ILSpy.Docking
 			foreach (var pane in ToolPanes) {
 				pane.IsVisible = false;
 			}
+			CloseAllDocuments();
 			sessionSettings.DockLayout.Reset();
 			InitializeLayout(MainWindow.Instance.DockManager);
+			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);
 		}
 	}
 }
