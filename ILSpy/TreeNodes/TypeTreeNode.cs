@@ -122,6 +122,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				case TypeKind.Interface:
 					return TypeIcon.Interface;
 				case TypeKind.Struct:
+				case TypeKind.Void:
 					return TypeIcon.Struct;
 				case TypeKind.Delegate:
 					return TypeIcon.Delegate;
