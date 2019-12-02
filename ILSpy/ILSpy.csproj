@@ -141,11 +141,11 @@
     <Compile Include="DebugSteps.xaml.cs">
       <DependentUpon>DebugSteps.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Docking\ActiveDocumentConverter.cs" />
+    <Compile Include="Docking\ActiveTabPageConverter.cs" />
     <Compile Include="Docking\CloseAllDocumentsCommand.cs" />
     <Compile Include="ViewModels\AssemblyListPaneModel.cs" />
     <Compile Include="Docking\DockLayoutSettings.cs" />
-    <Compile Include="ViewModels\DocumentModel.cs" />
+    <Compile Include="ViewModels\TabPageModel.cs" />
     <Compile Include="Docking\PaneCollection.cs" />
     <Compile Include="ViewModels\PaneModel.cs" />
     <Compile Include="Docking\PaneStyleSelector.cs" />
@@ -184,7 +184,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Compile>
     <Compile Include="Options\DecompilerSettingsPanel.xaml.cs" />
-    <Compile Include="Docking\PanePosition.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

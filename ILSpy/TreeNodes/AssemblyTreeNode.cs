@@ -32,6 +32,7 @@ using Microsoft.Win32;
 using ICSharpCode.Decompiler.TypeSystem;
 using TypeDefinitionHandle = System.Reflection.Metadata.TypeDefinitionHandle;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -276,7 +277,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.DecompileAssembly(LoadedAssembly, output, options);
 		}
 
-		public override bool Save(DecompilerTextView textView)
+		public override bool Save(TabPageModel tabPage)
 		{
 			Language language = this.Language;
 			if (string.IsNullOrEmpty(language.ProjectFileExtension))
@@ -301,7 +302,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						}
 					}
 				}
-				textView.SaveToDisk(language, new[] { this }, options, dlg.FileName);
+				tabPage.ShowTextView(textView => textView.SaveToDisk(language, new[] { this }, options, dlg.FileName));
 			}
 			return true;
 		}

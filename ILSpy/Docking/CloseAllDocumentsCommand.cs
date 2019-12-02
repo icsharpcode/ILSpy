@@ -12,7 +12,7 @@ namespace ICSharpCode.ILSpy.Docking
 	{
 		public override void Execute(object parameter)
 		{
-			DockWorkspace.Instance.CloseAllDocuments();
+			DockWorkspace.Instance.CloseAllTabs();
 		}
 	}
 

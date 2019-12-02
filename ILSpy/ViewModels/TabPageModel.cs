@@ -16,45 +16,15 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.ILSpy.Properties;
+using System;
+using System.Threading.Tasks;
+using System.Windows;
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-	public abstract class DocumentModel : PaneModel
+	public class TabPageModel : PaneModel
 	{
-		public override PanePosition DefaultPosition => PanePosition.Document;
-
-		protected DocumentModel(string contentId, string title)
-		{
-			this.ContentId = contentId;
-			this.Title = title;
-		}
-	}
-
-	public class DecompiledDocumentModel : DocumentModel
-	{
-		public DecompiledDocumentModel()
-			: base("//Decompiled", Resources.View)
-		{
-		}
-
-		public DecompiledDocumentModel(string id, string title)
-			: base("//Decompiled/" + id, title)
-		{
-		}
-
-		private DecompilerTextView textView;
-		public DecompilerTextView TextView {
-			get => textView;
-			set {
-				if (textView != value) {
-					textView = value;
-					RaisePropertyChanged(nameof(TextView));
-				}
-			}
-		}
-
 		private Language language;
 		public Language Language {
 			get => language;
@@ -75,6 +45,57 @@ namespace ICSharpCode.ILSpy.ViewModels
 					RaisePropertyChanged(nameof(LanguageVersion));
 				}
 			}
+		}
+
+		private bool supportsLanguageSwitching = true;
+		public bool SupportsLanguageSwitching {
+			get => supportsLanguageSwitching;
+			set {
+				if (supportsLanguageSwitching != value) {
+					supportsLanguageSwitching = value;
+					RaisePropertyChanged(nameof(SupportsLanguageSwitching));
+				}
+			}
+		}
+
+		private object content;
+		public object Content {
+			get => content;
+			set {
+				if (content != value) {
+					content = value;
+					RaisePropertyChanged(nameof(Content));
+				}
+			}
+		}
+
+		public ViewState GetState()
+		{
+			return null;
+		}
+	}
+
+	public static class TabPageModelExtensions
+	{
+		public static Task<T> ShowTextViewAsync<T>(this TabPageModel tabPage, Func<DecompilerTextView, Task<T>> action)
+		{
+			var textView = new DecompilerTextView();
+			tabPage.Content = textView;
+			return action(textView);
+		}
+
+		public static Task ShowTextViewAsync(this TabPageModel tabPage, Func<DecompilerTextView, Task> action)
+		{
+			var textView = new DecompilerTextView();
+			tabPage.Content = textView;
+			return action(textView);
+		}
+
+		public static void ShowTextView(this TabPageModel tabPage, Action<DecompilerTextView> action)
+		{
+			var textView = new DecompilerTextView();
+			tabPage.Content = textView;
+			action(textView);
 		}
 	}
 }

@@ -39,8 +39,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Icon => Images.Literal;
 
-		public override bool View(DecompilerTextView textView)
+		public override bool View(ViewModels.TabPageModel tabPage)
 		{
+			tabPage.SupportsLanguageSwitching = false;
 			var dataGrid = new DataGrid {
 				Columns = {
 					new DataGridTextColumn { IsReadOnly = true, Header = "Name", Binding = new Binding("Name") },
@@ -76,7 +77,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			dataGrid.ItemsSource = entries;
 
-			textView.ShowContent(new[] { this }, dataGrid);
+			tabPage.Content = dataGrid;
 			return true;
 		}
 

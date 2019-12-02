@@ -21,8 +21,8 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
@@ -39,8 +39,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Icon => Images.Literal;
 
-		public override bool View(DecompilerTextView textView)
+		public override bool View(TabPageModel tabPage)
 		{
+			tabPage.SupportsLanguageSwitching = false;
 			var view = Helpers.CreateListView("EntryView");
 			var reader = module.Reader.GetEntireImage().GetReader(0, 64);
 
@@ -80,7 +81,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			view.ItemsSource = entries;
 
-			textView.ShowContent(new[] { this }, view);
+			tabPage.Content = view;
 			return true;
 		}
 

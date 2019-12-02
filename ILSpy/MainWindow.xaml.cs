@@ -392,7 +392,7 @@ namespace ICSharpCode.ILSpy
 						// only if not showing the about page, perform the update check:
 						await ShowMessageIfUpdatesAvailableAsync(spySettings);
 					} else {
-						AboutPage.Display(DockWorkspace.Instance.GetTextView());
+						DockWorkspace.Instance.ActiveTabPage.ShowTextView(AboutPage.Display);
 					}
 				}
 			}
@@ -453,11 +453,11 @@ namespace ICSharpCode.ILSpy
 
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
-			DockWorkspace.Instance.Documents.Add(new DecompiledDocumentModel() {
+			DockWorkspace.Instance.TabPages.Add(new TabPageModel() {
 				Language = CurrentLanguage,
 				LanguageVersion = CurrentLanguageVersion
 			});
-			DockWorkspace.Instance.ActiveDocument = DockWorkspace.Instance.Documents.First();
+			DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.First();
 
 			ILSpySettings spySettings = this.spySettingsForMainWindow_Loaded;
 			this.spySettingsForMainWindow_Loaded = null;
@@ -930,7 +930,7 @@ namespace ICSharpCode.ILSpy
 		Task decompilationTask;
 		bool ignoreDecompilationRequests;
 
-		void DecompileSelectedNodes(DecompilerTextViewState state = null, bool recordHistory = true)
+		void DecompileSelectedNodes(DecompilerTextViewState newState = null, bool recordHistory = true)
 		{
 			if (ignoreDecompilationRequests)
 				return;
@@ -939,18 +939,20 @@ namespace ICSharpCode.ILSpy
 				return;
 
 			if (recordHistory) {
-				var dtState = DockWorkspace.Instance.GetState();
-				if (dtState != null)
-					history.UpdateCurrent(new NavigationState(dtState));
+				var currentState = DockWorkspace.Instance.ActiveTabPage.GetState();
+				if (currentState != null)
+					history.UpdateCurrent(new NavigationState(currentState));
 				history.Record(new NavigationState(treeView.SelectedItems.OfType<SharpTreeNode>()));
 			}
 
+			DockWorkspace.Instance.ActiveTabPage.SupportsLanguageSwitching = true;
+
 			if (treeView.SelectedItems.Count == 1) {
 				ILSpyTreeNode node = treeView.SelectedItem as ILSpyTreeNode;
-				if (node != null && node.View(DockWorkspace.Instance.GetTextView()))
+				if (node != null && node.View(DockWorkspace.Instance.ActiveTabPage))
 					return;
 			}
-			decompilationTask = DockWorkspace.Instance.GetTextView().DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions() { TextViewState = state });
+			decompilationTask = DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions() { TextViewState = newState }));
 		}
 
 		void SaveCommandCanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -1017,9 +1019,9 @@ namespace ICSharpCode.ILSpy
 
 		void NavigateHistory(bool forward)
 		{
-			var dtState = DockWorkspace.Instance.GetState();
-			if (dtState != null)
-				history.UpdateCurrent(new NavigationState(dtState));
+			var state = DockWorkspace.Instance.ActiveTabPage.GetState();
+			if (state != null)
+				history.UpdateCurrent(new NavigationState(state));
 			var newState = forward ? history.GoForward() : history.GoBack();
 
 			ignoreDecompilationRequests = true;
@@ -1030,7 +1032,7 @@ namespace ICSharpCode.ILSpy
 			if (newState.TreeNodes.Any())
 				treeView.FocusNode(newState.TreeNodes.First());
 			ignoreDecompilationRequests = false;
-			DecompileSelectedNodes(newState.ViewState, false);
+			DecompileSelectedNodes(newState.ViewState as DecompilerTextViewState, false);
 		}
 
 		#endregion

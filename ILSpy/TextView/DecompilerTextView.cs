@@ -559,9 +559,6 @@ namespace ICSharpCode.ILSpy.TextView
 		/// </summary>
 		public void ShowNodes(AvalonEditTextOutput textOutput, ILSpyTreeNode[] nodes, IHighlightingDefinition highlighting = null)
 		{
-			textEditor.Visibility = Visibility.Visible;
-			dynamicContent.Visibility = Visibility.Hidden;
-			dynamicContent.Content = null;
 			// Cancel the decompilation task:
 			if (currentCancellationTokenSource != null) {
 				currentCancellationTokenSource.Cancel();
@@ -583,10 +580,6 @@ namespace ICSharpCode.ILSpy.TextView
 		/// </summary>
 		void ShowOutput(AvalonEditTextOutput textOutput, IHighlightingDefinition highlighting = null, DecompilerTextViewState state = null)
 		{
-			textEditor.Visibility = Visibility.Visible;
-			dynamicContent.Visibility = Visibility.Hidden;
-			dynamicContent.Content = null;
-
 			Debug.WriteLine("Showing {0} characters of output", textOutput.TextLength);
 			Stopwatch w = Stopwatch.StartNew();
 
@@ -644,14 +637,6 @@ namespace ICSharpCode.ILSpy.TextView
 			if (this.DataContext is PaneModel model) {
 				model.Title = textOutput.Title;
 			}
-		}
-		
-		public void ShowContent(ILSpyTreeNode[] nodes, object content)
-		{
-			textEditor.Visibility = Visibility.Collapsed;
-			dynamicContent.Visibility = Visibility.Visible;
-			dynamicContent.Content = content;
-			decompiledNodes = nodes;
 		}
 		#endregion
 		
@@ -1060,23 +1045,19 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 		#endregion
-
-		private void self_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
-		{
-			if (e.OldValue is DecompiledDocumentModel oldModel)
-				oldModel.TextView = null;
-			if (e.NewValue is DecompiledDocumentModel newModel)
-				newModel.TextView = this;
-		}
 	}
 
-	public class DecompilerTextViewState
+	public class ViewState
+	{
+		public ILSpyTreeNode[] DecompiledNodes;
+	}
+	
+	public class DecompilerTextViewState : ViewState
 	{
 		private List<Tuple<int, int>> ExpandedFoldings;
 		private int FoldingsChecksum;
 		public double VerticalOffset;
 		public double HorizontalOffset;
-		public ILSpyTreeNode[] DecompiledNodes;
 
 		public void SaveFoldingsState(IEnumerable<FoldingSection> foldings)
 		{

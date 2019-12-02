@@ -28,9 +28,9 @@ namespace ICSharpCode.ILSpy
 		private readonly HashSet<SharpTreeNode> treeNodes;
 
 		public IEnumerable<SharpTreeNode> TreeNodes { get { return treeNodes; } }
-		public DecompilerTextViewState ViewState { get; private set; }
+		public ViewState ViewState { get; private set; }
 
-		public NavigationState(DecompilerTextViewState viewState)
+		public NavigationState(ViewState viewState)
 		{
 			this.treeNodes = new HashSet<SharpTreeNode>(viewState.DecompiledNodes);
 			ViewState = viewState;

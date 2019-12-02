@@ -70,8 +70,8 @@ namespace ICSharpCode.ILSpy.Commands
 				return;
 
 			var title = string.Join(", ", nodes.Select(x => x.ToString()));
-			DockWorkspace.Instance.Documents.Add(new ViewModels.DecompiledDocumentModel(title, title) { Language = MainWindow.Instance.CurrentLanguage, LanguageVersion = MainWindow.Instance.CurrentLanguageVersion });
-			DockWorkspace.Instance.ActiveDocument = DockWorkspace.Instance.Documents.Last();
+			DockWorkspace.Instance.TabPages.Add(new ViewModels.TabPageModel() { Language = MainWindow.Instance.CurrentLanguage, LanguageVersion = MainWindow.Instance.CurrentLanguageVersion });
+			DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
 			MainWindow.Instance.SelectNodes(nodes);
 			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);
 		}

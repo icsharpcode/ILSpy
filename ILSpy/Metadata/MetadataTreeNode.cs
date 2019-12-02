@@ -28,6 +28,7 @@ using System.Windows.Data;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
@@ -46,6 +47,12 @@ namespace ICSharpCode.ILSpy.Metadata
 		public override object Text => "Metadata";
 
 		public override object Icon => Images.Library;
+
+		public override bool View(TabPageModel tabPage)
+		{
+			tabPage.SupportsLanguageSwitching = false;
+			return false;
+		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{

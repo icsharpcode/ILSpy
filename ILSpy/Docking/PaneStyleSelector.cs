@@ -25,12 +25,12 @@ namespace ICSharpCode.ILSpy.Docking
 	{
 		public Style ToolPaneStyle { get; set; }
 
-		public Style DocumentStyle { get; set; }
+		public Style TabPageStyle { get; set; }
 
 		public override Style SelectStyle(object item, DependencyObject container)
 		{
-			if (item is DocumentModel)
-				return DocumentStyle;
+			if (item is TabPageModel)
+				return TabPageStyle;
 
 			if (item is ToolPaneModel)
 				return ToolPaneStyle;

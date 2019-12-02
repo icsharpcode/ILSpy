@@ -25,6 +25,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
@@ -41,8 +42,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Icon => Images.Literal;
 
-		public override bool View(DecompilerTextView textView)
+		public override bool View(TabPageModel tabPage)
 		{
+			tabPage.SupportsLanguageSwitching = false;
 			var dataGrid = new DataGrid {
 				Columns = {
 					new DataGridTextColumn { IsReadOnly = true, Header = "Member", Binding = new Binding("Member") },
@@ -71,7 +73,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			dataGrid.ItemsSource = entries;
 
-			textView.ShowContent(new[] { this }, dataGrid);
+			tabPage.Content = dataGrid;
 			return true;
 		}
 

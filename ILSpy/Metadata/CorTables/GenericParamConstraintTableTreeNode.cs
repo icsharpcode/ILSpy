@@ -50,8 +50,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Icon => Images.Literal;
 
-		public override bool View(DecompilerTextView textView)
+		public override bool View(ViewModels.TabPageModel tabPage)
 		{
+			tabPage.SupportsLanguageSwitching = false;
 			ListView view = Helpers.CreateListView("GenericParamConstraintsView");
 			var metadata = module.Metadata;
 			
@@ -61,8 +62,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				list.Add(new GenericParamConstraintEntry(module, MetadataTokens.GenericParameterConstraintHandle(row)));
 			}
 			view.ItemsSource = list;
-			
-			textView.ShowContent(new[] { this }, view);
+
+			tabPage.Content = view;
 			return true;
 		}
 

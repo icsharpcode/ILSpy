@@ -59,8 +59,6 @@ namespace ICSharpCode.ILSpy.ViewModels
 			this.closeCommand = new CloseCommandImpl(this);
 		}
 
-		public abstract PanePosition DefaultPosition { get; }
-
 		public event PropertyChangedEventHandler PropertyChanged;
 
 		protected void RaisePropertyChanged(string propertyName)
