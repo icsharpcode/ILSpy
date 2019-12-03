@@ -810,16 +810,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				default:
 					return false;
 			}
-			if (!ev.ReturnType.IsMatch(m.Get("type").Single())) {
-				// Variable types must match event type,
-				// except that the event type may have an additional nullability annotation
-				if (ev.ReturnType is ComposedType ct && ct.HasOnlyNullableSpecifier) {
-					if (!ct.BaseType.IsMatch(m.Get("type").Single()))
-						return false;
-				} else {
-					return false;
-				}
-			}
+			var returnType = ev.ReturnType.GetResolveResult().Type;
+			var eventType = m.Get<AstType>("type").Single().GetResolveResult().Type;
+			// ignore tuple element names, dynamic and nullability
+			if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(returnType, eventType))
+				return false;
 			var combineMethod = m.Get<AstNode>("delegateCombine").Single().Parent.GetSymbol() as IMethod;
 			if (combineMethod == null || combineMethod.Name != (isAddAccessor ? "Combine" : "Remove"))
 				return false;
@@ -889,9 +884,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			ed.Modifiers = ev.Modifiers;
 			ed.Variables.Add(new VariableInitializer(ev.Name));
 			ed.CopyAnnotationsFrom(ev);
-			
-			IEvent eventDef = ev.GetSymbol() as IEvent;
-			if (eventDef != null) {
+
+			if (ev.GetSymbol() is IEvent eventDef) {
 				IField field = eventDef.DeclaringType.GetFields(f => f.Name == ev.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
 				if (field != null) {
 					ed.AddAnnotation(field);
@@ -907,7 +901,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 				}
 			}
-			
+
 			ev.ReplaceWith(ed);
 			return ed;
 		}

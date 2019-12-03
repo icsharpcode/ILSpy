@@ -191,6 +191,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public event EventHandler AutomaticEventWithInitializer = delegate {
 		};
 
+#if ROSLYN
+		// Legacy csc has a bug where EventHandler<dynamic> is only used for the backing field
+		public event EventHandler<dynamic> DynamicAutoEvent;
+		public event EventHandler<(int A, string B)> AutoEventWithTuple;
+#endif
+
 		public event EventHandler CustomEvent {
 			add {
 				AutomaticEvent += value;
