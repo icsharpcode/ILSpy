@@ -1362,6 +1362,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			ClassType classType;
 			switch (typeDefinition.Kind) {
 				case TypeKind.Struct:
+				case TypeKind.Void:
 					classType = ClassType.Struct;
 					modifiers &= ~Modifiers.Sealed;
 					if (ShowModifiers) {
@@ -1420,7 +1421,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 							decl.BaseTypes.Add(ConvertType(typeDefinition.EnumUnderlyingType));
 						}
 					// if the declared type is a struct, ignore System.ValueType
-					} else if (typeDefinition.Kind == TypeKind.Struct && baseType.IsKnownType(KnownTypeCode.ValueType)) {
+					} else if ((typeDefinition.Kind == TypeKind.Struct || typeDefinition.Kind == TypeKind.Void) && baseType.IsKnownType(KnownTypeCode.ValueType)) {
 						continue;
 					// always ignore System.Object
 					} else if (baseType.IsKnownType(KnownTypeCode.Object)) {
