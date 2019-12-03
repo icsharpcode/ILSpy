@@ -196,6 +196,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public event EventHandler<dynamic> DynamicAutoEvent;
 		public event EventHandler<(int A, string B)> AutoEventWithTuple;
 #endif
+#if CS80
+		public event EventHandler<(int a, dynamic? b)> ComplexAutoEvent;
+#endif
 
 		public event EventHandler CustomEvent {
 			add {
