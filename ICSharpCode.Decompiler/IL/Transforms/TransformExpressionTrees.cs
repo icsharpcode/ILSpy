@@ -604,7 +604,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				targetType = fallbackInstType;
 			}
-			return (new NullCoalescingInstruction(kind, trueInst, fallbackInst), targetType);
+			return (new NullCoalescingInstruction(kind, trueInst, fallbackInst) { 
+				UnderlyingResultType  = trueInstTypeNonNullable.GetStackType()
+			}, targetType);
 		}
 
 		(ILInstruction, IType) ConvertComparison(CallInstruction invocation, ComparisonKind kind)
