@@ -199,19 +199,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 				if (asm != null) {
 					referencedAssemblies.Add(asm);
-					var metadata = asm.Metadata;
-					foreach (var h in metadata.ExportedTypes) {
-						var exportedType = metadata.GetExportedType(h);
-						switch (exportedType.Implementation.Kind) {
-							case SRM.HandleKind.AssemblyReference:
-								assemblyReferenceQueue.Enqueue((true, asm, new AssemblyReference(asm, (SRM.AssemblyReferenceHandle)exportedType.Implementation)));
-								break;
-							case SRM.HandleKind.AssemblyFile:
-								var file = metadata.GetAssemblyFile((SRM.AssemblyFileHandle)exportedType.Implementation);
-								assemblyReferenceQueue.Enqueue((false, asm, metadata.GetString(file.Name)));
-								break;
-						}
-					}
 				}
 			}
 			var mainModuleWithOptions = mainModule.WithOptions(typeSystemOptions);
