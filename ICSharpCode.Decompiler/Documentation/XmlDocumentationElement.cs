@@ -91,8 +91,12 @@ namespace ICSharpCode.Decompiler.Documentation
 			get {
 				if (!referencedEntityInitialized) {
 					string cref = GetAttribute("cref");
-					if (!string.IsNullOrEmpty(cref) && crefResolver != null)
-						referencedEntity = crefResolver(cref);
+					try {
+						if (!string.IsNullOrEmpty(cref) && crefResolver != null)
+							referencedEntity = crefResolver(cref);
+					} catch {
+						referencedEntity = null;
+					}
 					referencedEntityInitialized = true;
 				}
 				return referencedEntity;
@@ -113,7 +117,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		public string GetAttribute(string name)
 		{
-			return element?.Attribute(name)?.Value ?? string.Empty;
+			return element?.Attribute(name)?.Value;
 		}
 
 		/// <summary>
