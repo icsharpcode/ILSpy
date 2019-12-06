@@ -134,24 +134,39 @@ namespace ICSharpCode.ILSpy.Analyzers
 			if (typeScope.TypeParameterCount > 0)
 				reflectionTypeScopeName += "`" + typeScope.TypeParameterCount;
 
-			foreach (var assembly in AssemblyList.GetAssemblies()) {
-				ct.ThrowIfCancellationRequested();
-				bool found = false;
-				var module = assembly.GetPEFileOrNull();
-				if (module == null || !module.IsAssembly)
-					continue;
-				var resolver = assembly.GetAssemblyResolver();
-				foreach (var reference in module.AssemblyReferences) {
-					using (LoadedAssembly.DisableAssemblyLoad()) {
-						if (resolver.Resolve(reference) == self) {
-							found = true;
-							break;
+			var toWalkFiles = new Stack<PEFile>();
+			var checkedFiles = new HashSet<PEFile>();
+
+			toWalkFiles.Push(self);
+			checkedFiles.Add(self);
+
+			do {
+				PEFile curFile = toWalkFiles.Pop();
+				foreach (var assembly in AssemblyList.GetAssemblies()) {
+					ct.ThrowIfCancellationRequested();
+					bool found = false;
+					var module = assembly.GetPEFileOrNull();
+					if (module == null || !module.IsAssembly)
+						continue;
+					if (checkedFiles.Contains(module))
+						continue;
+					var resolver = assembly.GetAssemblyResolver();
+					foreach (var reference in module.AssemblyReferences) {
+						using (LoadedAssembly.DisableAssemblyLoad()) {
+							if (resolver.Resolve(reference) == curFile) {
+								found = true;
+								break;
+							}
 						}
 					}
+					if (found && checkedFiles.Add(module)) {
+						if (ModuleReferencesScopeType(module.Metadata, reflectionTypeScopeName, typeScope.Namespace))
+							yield return module;
+						if (ModuleForwardsScopeType(module.Metadata, reflectionTypeScopeName, typeScope.Namespace))
+							toWalkFiles.Push(module);
+					}
 				}
-				if (found && ModuleReferencesScopeType(module.Metadata, reflectionTypeScopeName, typeScope.Namespace))
-					yield return module;
-			}
+			} while (toWalkFiles.Count > 0);
 		}
 
 		IEnumerable<PEFile> GetModuleAndAnyFriends(ITypeDefinition typeScope, CancellationToken ct)
@@ -197,6 +212,19 @@ namespace ICSharpCode.ILSpy.Analyzers
 				}
 			}
 			return hasRef;
+		}
+
+		bool ModuleForwardsScopeType(MetadataReader metadata, string typeScopeName, string typeScopeNamespace)
+		{
+			bool hasForward = false;
+			foreach (var h in metadata.ExportedTypes) {
+				var exportedType = metadata.GetExportedType(h);
+				if (exportedType.IsForwarder && metadata.StringComparer.Equals(exportedType.Name, typeScopeName) && metadata.StringComparer.Equals(exportedType.Namespace, typeScopeNamespace)) {
+					hasForward = true;
+					break;
+				}
+			}
+			return hasForward;
 		}
 		#endregion
 	}
