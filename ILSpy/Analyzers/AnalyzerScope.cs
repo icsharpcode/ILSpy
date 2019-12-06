@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public ITypeDefinition TypeScope => typeScope;
 
-		Accessibility memberAccessibility, typeAccessibility;
+		Accessibility effectiveAccessibility;
 
 		public AnalyzerScope(AssemblyList assemblyList, IEntity entity)
 		{
@@ -53,13 +53,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 			AnalyzedSymbol = entity;
 			if (entity is ITypeDefinition type) {
 				typeScope = type;
-				memberAccessibility = Accessibility.None;
+				effectiveAccessibility = DetermineEffectiveAccessibility(ref typeScope);
 			} else {
 				typeScope = entity.DeclaringTypeDefinition;
-				memberAccessibility = entity.Accessibility;
+				effectiveAccessibility = DetermineEffectiveAccessibility(ref typeScope, entity.Accessibility);
 			}
-			typeAccessibility = DetermineTypeAccessibility(ref typeScope);
-			IsLocal = memberAccessibility == Accessibility.Private || typeAccessibility == Accessibility.Private;
+			IsLocal = effectiveAccessibility.LessThanOrEqual(Accessibility.Private);
 		}
 
 		public IEnumerable<PEFile> GetModulesInScope(CancellationToken ct)
@@ -67,10 +66,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			if (IsLocal)
 				return new[] { TypeScope.ParentModule.PEFile };
 
-			if (memberAccessibility == Accessibility.Internal ||
-				memberAccessibility == Accessibility.ProtectedOrInternal ||
-				typeAccessibility == Accessibility.Internal ||
-				typeAccessibility == Accessibility.ProtectedAndInternal)
+			if (effectiveAccessibility.LessThanOrEqual(Accessibility.Internal))
 				return GetModuleAndAnyFriends(TypeScope, ct);
 
 			return GetReferencingModules(TypeScope.ParentModule.PEFile, ct);
@@ -89,11 +85,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			if (IsLocal) {
 				var typeSystem = new DecompilerTypeSystem(TypeScope.ParentModule.PEFile, TypeScope.ParentModule.PEFile.GetAssemblyResolver());
-				ITypeDefinition scope = typeScope;
-				if (memberAccessibility != Accessibility.Private && typeScope.DeclaringTypeDefinition != null) {
-					scope = typeScope.DeclaringTypeDefinition;
-				}
-				foreach (var type in TreeTraversal.PreOrder(scope, t => t.NestedTypes)) {
+				foreach (var type in TreeTraversal.PreOrder(typeScope, t => t.NestedTypes)) {
 					yield return type;
 				}
 			} else {
@@ -106,23 +98,17 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 		}
 
-		Accessibility DetermineTypeAccessibility(ref ITypeDefinition typeScope)
+		static Accessibility DetermineEffectiveAccessibility(ref ITypeDefinition typeScope, Accessibility memberAccessibility = Accessibility.Public)
 		{
-			var typeAccessibility = typeScope.Accessibility;
-			while (typeScope.DeclaringType != null) {
-				Accessibility accessibility = typeScope.Accessibility;
-				if ((int)typeAccessibility > (int)accessibility) {
-					typeAccessibility = accessibility;
-					if (typeAccessibility == Accessibility.Private)
-						break;
-				}
+			Accessibility accessibility = memberAccessibility;
+			while (typeScope.DeclaringTypeDefinition != null && !accessibility.LessThanOrEqual(Accessibility.Private)) {
+				accessibility = accessibility.Intersect(typeScope.Accessibility);
 				typeScope = typeScope.DeclaringTypeDefinition;
 			}
-
-			if ((int)typeAccessibility > (int)Accessibility.Internal) {
-				typeAccessibility = Accessibility.Internal;
-			}
-			return typeAccessibility;
+			// Once we reach a private entity, we leave the loop with typeScope set to the class that
+			// contains the private entity = the scope that needs to be searched.
+			// Otherwise (if we don't find a private entity) we return the top-level class.
+			return accessibility;
 		}
 
 		#region Find modules

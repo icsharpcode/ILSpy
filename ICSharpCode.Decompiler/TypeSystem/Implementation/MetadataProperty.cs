@@ -196,36 +196,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						return baseMember.Accessibility;
 				}
 			}
-			return MergePropertyAccessibility(
+			return AccessibilityExtensions.Union(
 				this.Getter?.Accessibility ?? Accessibility.None,
 				this.Setter?.Accessibility ?? Accessibility.None);
-		}
-
-		static internal Accessibility MergePropertyAccessibility(Accessibility left, Accessibility right)
-		{
-			if (left == Accessibility.Public || right == Accessibility.Public)
-				return Accessibility.Public;
-
-			if (left == Accessibility.ProtectedOrInternal || right == Accessibility.ProtectedOrInternal)
-				return Accessibility.ProtectedOrInternal;
-
-			if (left == Accessibility.Protected && right == Accessibility.Internal ||
-				left == Accessibility.Internal && right == Accessibility.Protected)
-				return Accessibility.ProtectedOrInternal;
-
-			if (left == Accessibility.Protected || right == Accessibility.Protected)
-				return Accessibility.Protected;
-
-			if (left == Accessibility.Internal || right == Accessibility.Internal)
-				return Accessibility.Internal;
-
-			if (left == Accessibility.ProtectedAndInternal || right == Accessibility.ProtectedAndInternal)
-				return Accessibility.ProtectedAndInternal;
-
-			if (left == Accessibility.Private || right == Accessibility.Private)
-				return Accessibility.Private;
-
-			return left;
 		}
 		#endregion
 
