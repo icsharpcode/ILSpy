@@ -354,6 +354,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return ptr->ToString();
 		}
 
+#if CS73
+		public unsafe void PinSpan(Span<int> span)
+		{
+			fixed (int* ptr = span) {
+				UsePointer(ptr);
+			}
+		}
+#endif
+
 		public unsafe string StackAlloc(int count)
 		{
 			char* ptr = stackalloc char[count];
