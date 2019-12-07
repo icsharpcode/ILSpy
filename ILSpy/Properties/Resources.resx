@@ -790,4 +790,7 @@ Are you sure you want to continue?</value>
   <data name="_Window" xml:space="preserve">
     <value>_Window</value>
   </data>
+  <data name="DecompilerSettings.UsePatternBasedFixedStatement" xml:space="preserve">
+    <value>Use pattern-based fixed statement</value>
+  </data>
 </root>
