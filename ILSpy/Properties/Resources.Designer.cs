@@ -764,6 +764,24 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Transform to do-while, if possible..
+        /// </summary>
+        public static string DecompilerSettings_DoWhileStatement {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.DoWhileStatement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Transform to for, if possible..
+        /// </summary>
+        public static string DecompilerSettings_ForStatement {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.ForStatement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to F#-specific options.
         /// </summary>
         public static string DecompilerSettings_FSpecificOptions {
@@ -888,6 +906,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilerSettings_RemoveOptionalArgumentsIfPossible {
             get {
                 return ResourceManager.GetString("DecompilerSettings.RemoveOptionalArgumentsIfPossible", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible..
+        /// </summary>
+        public static string DecompilerSettings_SeparateLocalVariableDeclarations {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.SeparateLocalVariableDeclarations", resourceCulture);
             }
         }
         

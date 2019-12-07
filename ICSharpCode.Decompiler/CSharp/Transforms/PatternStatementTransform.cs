@@ -165,6 +165,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public ForStatement TransformFor(ExpressionStatement node)
 		{
+			if (!context.Settings.ForStatement)
+				return null;
 			Match m1 = variableAssignPattern.Match(node);
 			if (!m1.Success) return null;
 			var variable = m1.Get<IdentifierExpression>("variable").Single().GetILVariable();

@@ -790,4 +790,13 @@ Are you sure you want to continue?</value>
   <data name="_Window" xml:space="preserve">
     <value>_Window</value>
   </data>
+  <data name="DecompilerSettings.DoWhileStatement" xml:space="preserve">
+    <value>Transform to do-while, if possible.</value>
+  </data>
+  <data name="DecompilerSettings.ForStatement" xml:space="preserve">
+    <value>Transform to for, if possible.</value>
+  </data>
+  <data name="DecompilerSettings.SeparateLocalVariableDeclarations" xml:space="preserve">
+    <value>Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible.</value>
+  </data>
 </root>
