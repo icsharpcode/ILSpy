@@ -1036,5 +1036,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitBinaryOperatorExpression(expr);
 		}
 		#endregion
+
+		#region C# 7.3 pattern based fixed
+		static readonly Expression addressOfPinnableReference = new UnaryOperatorExpression {
+			Operator = UnaryOperatorType.AddressOf,
+			Expression = new InvocationExpression {
+				Target = new MemberReferenceExpression(new AnyNode("target"), "GetPinnableReference"),
+				Arguments = { }
+			}
+		};
+
+		public override AstNode VisitFixedStatement(FixedStatement fixedStatement)
+		{
+			if (context.Settings.PatternBasedFixedStatement) {
+				foreach (var v in fixedStatement.Variables) {
+					var m = addressOfPinnableReference.Match(v.Initializer);
+					if (m.Success) {
+						v.Initializer = m.Get<Expression>("target").Single().Detach();
+					}
+				}
+			}
+			return base.VisitFixedStatement(fixedStatement);
+		}
+		#endregion
 	}
 }

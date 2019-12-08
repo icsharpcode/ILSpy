@@ -1027,6 +1027,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use pattern-based fixed statement.
+        /// </summary>
+        public static string DecompilerSettings_UsePatternBasedFixedStatement {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UsePatternBasedFixedStatement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use stackalloc initializer syntax.
         /// </summary>
         public static string DecompilerSettings_UseStackallocInitializerSyntax {
