@@ -793,4 +793,13 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.UsePatternBasedFixedStatement" xml:space="preserve">
     <value>Use pattern-based fixed statement</value>
   </data>
+  <data name="DecompilerSettings.DoWhileStatement" xml:space="preserve">
+    <value>Transform to do-while, if possible.</value>
+  </data>
+  <data name="DecompilerSettings.ForStatement" xml:space="preserve">
+    <value>Transform to for, if possible.</value>
+  </data>
+  <data name="DecompilerSettings.SeparateLocalVariableDeclarations" xml:space="preserve">
+    <value>Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible.</value>
+  </data>
 </root>
