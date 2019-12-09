@@ -379,7 +379,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return UseSpan(span);
 		}
 
+		public string GetSpan3()
+		{
+			Span<decimal> span = stackalloc decimal[GetSize()];
+			return UseSpan(span);
+		}
+
+		public string GetSpan4()
+		{
+			Span<decimal> span = stackalloc decimal[4] {
+				1m,
+				2m,
+				3m,
+				4m
+			};
+			return UseSpan(span);
+		}
+
 		public string UseSpan(Span<int> span)
+		{
+			throw new NotImplementedException();
+		}
+
+		public string UseSpan(Span<decimal> span)
 		{
 			throw new NotImplementedException();
 		}
