@@ -372,12 +372,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public unsafe void CustomPinReferenceType(CustomPinnable mem)
-		{
-			fixed (int* ptr = mem) {
-				UsePointer(ptr);
-			}
-		}
+		//public unsafe void CustomPinReferenceType(CustomPinnable mem)
+		//{
+		//	fixed (int* ptr = mem) {
+		//		UsePointer(ptr);
+		//	}
+		//}
 #endif
 
 		public unsafe string StackAlloc(int count)
