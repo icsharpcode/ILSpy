@@ -139,11 +139,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			bool modified = false;
 			for (int i = 0; i < container.Blocks.Count; i++) {
 				var block = container.Blocks[i];
-				ILVariable v, p;
-				Block targetBlock;
-				if (IsNullSafeArrayToPointerPattern(block, out v, out p, out targetBlock)) {
+				if (IsNullSafeArrayToPointerPattern(block, out ILVariable v, out ILVariable p, out Block targetBlock)) {
 					context.Step("NullSafeArrayToPointerPattern", block);
-					ILInstruction arrayToPointer = new ArrayToPointer(new LdLoc(v));
+					ILInstruction arrayToPointer = new GetPinnableReference(new LdLoc(v), null);
 					if (p.StackType != StackType.Ref) {
 						arrayToPointer = new Conv(arrayToPointer, p.StackType.ToPrimitiveType(), false, Sign.None);
 					}
@@ -432,7 +430,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						return; // variable access that is not LdLoc
 				}
 			}
-			if (!(ldloc.Parent is ArrayToPointer arrayToPointer))
+			if (!(ldloc.Parent is GetPinnableReference arrayToPointer))
 				return;
 			if (!(arrayToPointer.Parent is Conv conv && conv.Kind == ConversionKind.StopGCTracking))
 				return;
@@ -446,7 +444,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			newVar.HasGeneratedName = oldVar.HasGeneratedName;
 			oldVar.Function.Variables.Add(newVar);
 			pinnedRegion.Variable = newVar;
-			pinnedRegion.Init = new ArrayToPointer(pinnedRegion.Init).WithILRange(arrayToPointer);
+			pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, arrayToPointer.Method).WithILRange(arrayToPointer);
 			conv.ReplaceWith(new LdLoc(newVar).WithILRange(conv));
 		}
 
@@ -514,7 +512,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					newVar.HasGeneratedName = pinnedRegion.Variable.HasGeneratedName;
 					pinnedRegion.Variable.Function.Variables.Add(newVar);
 					pinnedRegion.Variable = newVar;
-					pinnedRegion.Init = new ArrayToPointer(pinnedRegion.Init);
+					pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, null);
 				}
 				return;
 			}
@@ -542,7 +540,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// make targetBlock the new entry point
 			body.Blocks.RemoveAt(targetBlock.ChildIndex);
 			body.Blocks.Insert(0, targetBlock);
-			pinnedRegion.Init = new ArrayToPointer(pinnedRegion.Init);
+			pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, null);
 
 			ILVariable otherVar;
 			ILInstruction otherVarInit;
