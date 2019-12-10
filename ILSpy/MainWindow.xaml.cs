@@ -915,7 +915,7 @@ namespace ICSharpCode.ILSpy
 
 		void SearchCommandExecuted(object sender, ExecutedRoutedEventArgs e)
 		{
-			SearchPaneModel.Instance.IsVisible = true;
+			SearchPaneModel.Instance.Show();
 		}
 		#endregion
 

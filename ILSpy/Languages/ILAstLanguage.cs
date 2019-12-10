@@ -31,6 +31,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 using SRM = System.Reflection.Metadata;
 using static System.Reflection.Metadata.PEReaderExtensions;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy
 {
@@ -140,7 +141,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				(output as ISmartTextOutput)?.AddButton(Images.ViewCode, "Show Steps", delegate {
-					DebugSteps.Show();
+					DebugStepsPaneModel.Instance.Show();
 				});
 				output.WriteLine();
 				il.WriteTo(output, DebugSteps.Options);

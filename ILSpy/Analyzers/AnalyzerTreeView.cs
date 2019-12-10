@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public void Show()
 		{
-			AnalyzerPaneModel.Instance.IsVisible = true;
+			AnalyzerPaneModel.Instance.Show();
 		}
 
 		public void Show(AnalyzerTreeNode node)
