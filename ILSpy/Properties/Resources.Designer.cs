@@ -1594,6 +1594,24 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Reset to defaults.
+        /// </summary>
+        public static string ResetToDefaults {
+            get {
+                return ResourceManager.GetString("ResetToDefaults", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Do you really want to load the default settings for the active page?.
+        /// </summary>
+        public static string ResetToDefaultsConfirmationMessage {
+            get {
+                return ResourceManager.GetString("ResetToDefaultsConfirmationMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Resources file (*.resources)|*.resources|Resource XML file|*.resx.
         /// </summary>
         public static string ResourcesFileFilter {

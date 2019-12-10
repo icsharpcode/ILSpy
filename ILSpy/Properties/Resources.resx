@@ -802,4 +802,10 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.SeparateLocalVariableDeclarations" xml:space="preserve">
     <value>Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible.</value>
   </data>
+  <data name="ResetToDefaults" xml:space="preserve">
+    <value>Reset to defaults</value>
+  </data>
+  <data name="ResetToDefaultsConfirmationMessage" xml:space="preserve">
+    <value>Do you really want to load the default settings for the active page?</value>
+  </data>
 </root>

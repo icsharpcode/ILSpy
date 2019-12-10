@@ -68,8 +68,17 @@ namespace ICSharpCode.ILSpy.Options
 			this.DialogResult = true;
 			Close();
 		}
+
+		private void DefaultsButton_Click(object sender, RoutedEventArgs e)
+		{
+			if (MessageBox.Show(Properties.Resources.ResetToDefaultsConfirmationMessage, "ILSpy", MessageBoxButton.YesNo) == MessageBoxResult.Yes) {
+				var page = ((TabItem)tabControl.SelectedItem).Content as IOptionPage;
+				if (page != null)
+					page.LoadDefaults();
+			}
+		}
 	}
-	
+
 	public interface IOptionsMetadata
 	{
 		string Title { get; }
@@ -80,6 +89,7 @@ namespace ICSharpCode.ILSpy.Options
 	{
 		void Load(ILSpySettings settings);
 		void Save(XElement root);
+		void LoadDefaults();
 	}
 	
 	[MetadataAttribute]

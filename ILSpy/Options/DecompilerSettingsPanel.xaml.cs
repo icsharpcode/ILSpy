@@ -128,6 +128,12 @@ namespace ICSharpCode.ILSpy.Options
 			CheckBox checkBox = (CheckBox)sender;
 			checkBox.IsChecked = IsGroupChecked((CollectionViewGroup)checkBox.DataContext);
 		}
+
+		public void LoadDefaults()
+		{
+			currentDecompilerSettings = new Decompiler.DecompilerSettings();
+			this.DataContext = new DecompilerSettings(currentDecompilerSettings);
+		}
 	}
 
 	public class DecompilerSettings : INotifyPropertyChanged

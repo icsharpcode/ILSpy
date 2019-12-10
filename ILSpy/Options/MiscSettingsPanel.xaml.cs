@@ -71,5 +71,11 @@ namespace ICSharpCode.ILSpy.Options
 
 			currentMiscSettings = null; // invalidate cached settings
 		}
+
+		public void LoadDefaults()
+		{
+			currentMiscSettings = new MiscSettings();
+			this.DataContext = currentMiscSettings;
+		}
 	}
 }
