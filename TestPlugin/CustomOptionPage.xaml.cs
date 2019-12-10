@@ -30,7 +30,12 @@ namespace TestPlugin
 			s.UselessOption2 = (double?)e.Attribute("useless2") ?? s.UselessOption2;
 			this.DataContext = s;
 		}
-		
+
+		public void LoadDefaults()
+		{
+			this.DataContext = new Options();
+		}
+
 		public void Save(XElement root)
 		{
 			Options s = (Options)this.DataContext;
