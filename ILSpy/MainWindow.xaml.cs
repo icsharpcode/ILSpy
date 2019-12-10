@@ -24,6 +24,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -56,6 +57,7 @@ namespace ICSharpCode.ILSpy
 	{
 		public DockWorkspace Workspace { get; set; }
 		public SessionSettings SessionSettings { get; set; }
+		public AssemblyListManager AssemblyListManager { get; set; }
 	}
 
 	/// <summary>
@@ -113,19 +115,28 @@ namespace ICSharpCode.ILSpy
 
 			this.DataContext = new MainWindowDataContext {
 				Workspace = DockWorkspace.Instance,
-				SessionSettings = sessionSettings
+				SessionSettings = sessionSettings,
+				AssemblyListManager = assemblyListManager
 			};
 
 			DockWorkspace.Instance.LoadSettings(sessionSettings);
 			InitializeComponent();
 			DockWorkspace.Instance.InitializeLayout(DockManager);
 			sessionSettings.FilterSettings.PropertyChanged += filterSettings_PropertyChanged;
+			sessionSettings.PropertyChanged += SessionSettings_PropertyChanged;
 
 			InitMainMenu();
 			InitToolbar();
 			ContextMenuProvider.Add(treeView);
 
 			this.Loaded += MainWindow_Loaded;
+		}
+
+		private void SessionSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == "ActiveAssemblyList") {
+				ShowAssemblyList(sessionSettings.ActiveAssemblyList);
+			}
 		}
 
 		void SetWindowBounds(Rect bounds)
@@ -376,7 +387,7 @@ namespace ICSharpCode.ILSpy
 			} else if (spySettings != null) {
 				SharpTreeNode node = null;
 				if (activeTreeViewPath?.Length > 0) {
-					foreach (var asm in assemblyList.GetAssemblies()) {
+					foreach (var asm in CurrentAssemblyList.GetAssemblies()) {
 						if (asm.FileName == activeTreeViewPath[0]) {
 							// FindNodeByPath() blocks the UI if the assembly is not yet loaded,
 							// so use an async wait instead.
@@ -466,7 +477,7 @@ namespace ICSharpCode.ILSpy
 			if (loadPreviousAssemblies) {
 				// Load AssemblyList only in Loaded event so that WPF is initialized before we start the CPU-heavy stuff.
 				// This makes the UI come up a bit faster.
-				this.assemblyList = assemblyListManager.LoadList(spySettings, sessionSettings.ActiveAssemblyList);
+				this.assemblyList = assemblyListManager.LoadList(sessionSettings.ActiveAssemblyList);
 			} else {
 				this.assemblyList = new AssemblyList(AssemblyListManager.DefaultListName);
 				assemblyListManager.ClearAll();
@@ -584,8 +595,7 @@ namespace ICSharpCode.ILSpy
 
 		public void ShowAssemblyList(string name)
 		{
-			ILSpySettings settings = ILSpySettings.Load();
-			AssemblyList list = this.assemblyListManager.LoadList(settings, name);
+			AssemblyList list = this.assemblyListManager.LoadList(name);
 			//Only load a new list when it is a different one
 			if (list.ListName != CurrentAssemblyList.ListName) {
 				ShowAssemblyList(list);
@@ -906,7 +916,7 @@ namespace ICSharpCode.ILSpy
 			try {
 				refreshInProgress = true;
 				var path = GetPathForNode(treeView.SelectedItem as SharpTreeNode);
-				ShowAssemblyList(assemblyListManager.LoadList(ILSpySettings.Load(), assemblyList.ListName));
+				ShowAssemblyList(assemblyListManager.LoadList(assemblyList.ListName));
 				SelectNode(FindNodeByPath(path, true));
 			} finally {
 				refreshInProgress = false;

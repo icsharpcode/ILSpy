@@ -1711,6 +1711,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select a list of assemblies.
+        /// </summary>
+        public static string SelectAssemblyListDropdownTooltip {
+            get {
+                return ResourceManager.GetString("SelectAssemblyListDropdownTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Select language to decompile to.
         /// </summary>
         public static string SelectLanguageDropdownTooltip {

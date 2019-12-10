@@ -808,4 +808,7 @@ Are you sure you want to continue?</value>
   <data name="ResetToDefaultsConfirmationMessage" xml:space="preserve">
     <value>Do you really want to load the default settings for the active page?</value>
   </data>
+  <data name="SelectAssemblyListDropdownTooltip" xml:space="preserve">
+    <value>Select a list of assemblies</value>
+  </data>
 </root>
