@@ -12,6 +12,7 @@ using System.Threading;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler.DebugInfo;
+using ICSharpCode.Decompiler.PdbProvider;
 // ReSharper disable All
 
 namespace ICSharpCode.Decompiler.Console
@@ -45,8 +46,12 @@ Remarks:
 		[Option("-il|--ilcode", "Show IL code.", CommandOptionType.NoValue)]
 		public bool ShowILCodeFlag { get; }
 
-		[Option("-d|--debuginfo", "Generate PDB.", CommandOptionType.NoValue)]
+		[Option("-genpdb", "Generate PDB.", CommandOptionType.NoValue)]
 		public bool CreateDebugInfoFlag { get; }
+
+		[FileExistsOrNull]
+		[Option("-usepdb", "Use PDB.", CommandOptionType.SingleOrNoValue)]
+		public (bool IsSet, string Value) InputPDBFile { get; }
 
 		[Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(interface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue)]
 		public string[] EntityTypes { get; } = new string[0];
@@ -142,7 +147,9 @@ Remarks:
 			foreach (var path in ReferencePaths) {
 				resolver.AddSearchDirectory(path);
 			}
-			return new CSharpDecompiler(assemblyFileName, resolver, GetSettings());
+			return new CSharpDecompiler(assemblyFileName, resolver, GetSettings()) {
+				DebugInfoProvider = TryLoadPDB(module)
+			};
 		}
 
 		int ListContent(string assemblyFileName, TextWriter output, ISet<TypeKind> kinds)
@@ -175,6 +182,7 @@ Remarks:
 				resolver.AddSearchDirectory(path);
 			}
 			decompiler.AssemblyResolver = resolver;
+			decompiler.DebugInfoProvider = TryLoadPDB(module);
 			decompiler.DecompileProject(module, outputDirectory);
 			return 0;
 		}
@@ -210,6 +218,17 @@ Remarks:
 			}
 
 			return 0;
+		}
+
+		IDebugInfoProvider TryLoadPDB(PEFile module)
+		{
+			if (InputPDBFile.IsSet) {
+				if (InputPDBFile.Value == null)
+					return DebugInfoUtils.LoadSymbols(module);
+				return DebugInfoUtils.FromFile(module, InputPDBFile.Value);
+			}
+
+			return null;
 		}
 	}
 }

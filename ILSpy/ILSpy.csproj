@@ -135,6 +135,7 @@
     <Compile Include="CreateListDialog.xaml.cs">
       <DependentUpon>CreateListDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="DebugInfo\DebugInfoUtils.cs" />
     <Compile Include="DebugInfo\PortableDebugInfoProvider.cs" />
     <Compile Include="DebugSteps.xaml.cs">
       <DependentUpon>DebugSteps.xaml</DependentUpon>

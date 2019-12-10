@@ -20,9 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.DebugInfo;
-using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.DebugInfo
+namespace ICSharpCode.Decompiler.PdbProvider
 {
 	class PortableDebugInfoProvider : IDebugInfoProvider
 	{

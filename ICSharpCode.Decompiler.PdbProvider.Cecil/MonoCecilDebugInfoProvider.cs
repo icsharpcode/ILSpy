@@ -30,7 +30,7 @@ using Mono.Cecil;
 using Mono.Cecil.Pdb;
 using SRM = System.Reflection.Metadata;
 
-namespace ICSharpCode.Decompiler.PdbProvider.Cecil
+namespace ICSharpCode.Decompiler.PdbProvider
 {
 	public class MonoCecilDebugInfoProvider : IDebugInfoProvider
 	{
