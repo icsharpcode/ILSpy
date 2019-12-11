@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return Regex.Replace(il, @"'<PrivateImplementationDetails>\{[0-9A-F-]+\}'", "'<PrivateImplementationDetails>'");
 		}
 
-		static readonly string coreRefAsmPath = new DotNetCorePathFinder(new Version(3, 0)).GetReferenceAssemblyPath(".NETCoreApp, Version = v3.0");
+		static readonly string coreRefAsmPath = new DotNetCorePathFinder(new Version(3, 1)).GetReferenceAssemblyPath(".NETCoreApp, Version = v3.1");
 		
 		static readonly string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
 			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		const string targetFrameworkAttributeSnippet = @"
 
-[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp, Version = v3.0"", FrameworkDisplayName = """")]
+[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp, Version = v3.1"", FrameworkDisplayName = """")]
 
 ";
 
