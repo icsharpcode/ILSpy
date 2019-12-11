@@ -30,8 +30,8 @@
 		<StackPanel Grid.Column="5" Grid.RowSpan="2" Margin="4, 8">
 			<Button Margin="2 2 2 10" Command="{Binding NewCommand}" CommandParameter="{Binding ., RelativeSource={RelativeSource AncestorType=Window}}" Content="{x:Static properties:Resources._New}"/>
 			<Button Margin="2" Command="{Binding CloneCommand}" CommandParameter="{Binding ., RelativeSource={RelativeSource AncestorType=Window}}" Content="{x:Static properties:Resources.C_lone}"/>
-			<Button Margin="2" Command="{Binding ResetCommand}" CommandParameter="{Binding ., RelativeSource={RelativeSource AncestorType=Window}}" Content="{x:Static properties:Resources._Reset}"/>
 			<Button Margin="2" Command="{Binding DeleteCommand}" CommandParameter="{Binding ., RelativeSource={RelativeSource AncestorType=Window}}" Content="{x:Static properties:Resources.OpenListDialog__Delete}"/>
+			<Button Margin="2 10 2 2" Command="{Binding ResetCommand}" CommandParameter="{Binding ., RelativeSource={RelativeSource AncestorType=Window}}" Content="{x:Static properties:Resources._Reset}"/>
 		</StackPanel>
 		
 		<Button IsCancel="True" Grid.Row="2" Margin="2,0" Content="{x:Static properties:Resources.Close}" />
