@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	sealed class AssemblyListManager
 	{
-		readonly ILSpySettings spySettings;
+		ILSpySettings spySettings;
 
 		public AssemblyListManager(ILSpySettings spySettings)
 		{
@@ -47,8 +47,9 @@ namespace ICSharpCode.ILSpy
 		/// Loads an assembly list from the ILSpySettings.
 		/// If no list with the specified name is found, the default list is loaded instead.
 		/// </summary>
-		public AssemblyList LoadList(string listName)
+		public AssemblyList LoadList(ILSpySettings settings, string listName)
 		{
+			this.spySettings = settings;
 			AssemblyList list = DoLoadList(spySettings, listName);
 			if (!AssemblyLists.Contains(list.ListName))
 				AssemblyLists.Add(list.ListName);
@@ -65,11 +66,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 			}
-			XElement firstList = doc.Elements("List").FirstOrDefault();
-			if (firstList != null)
-				return new AssemblyList(firstList);
-			else
-				return new AssemblyList(listName ?? DefaultListName);
+			return new AssemblyList(listName ?? DefaultListName);
 		}
 
 		public bool CloneList(string selectedAssemblyList, string newListName)
