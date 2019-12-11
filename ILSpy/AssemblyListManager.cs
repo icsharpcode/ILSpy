@@ -71,7 +71,14 @@ namespace ICSharpCode.ILSpy
 			else
 				return new AssemblyList(listName ?? DefaultListName);
 		}
-		
+
+		public bool CloneList(string selectedAssemblyList, string newListName)
+		{
+			var list = DoLoadList(spySettings, selectedAssemblyList);
+			var newList = new AssemblyList(list, newListName);
+			return CreateList(newList);
+		}
+
 		public const string DefaultListName = "(Default)";
 		
 		/// <summary>

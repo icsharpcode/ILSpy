@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Siegfried Pammer
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,19 +16,20 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Input;
-using ICSharpCode.ILSpy.Analyzers;
+using System.Windows;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy
 {
-	static class ILSpyCommands
+	/// <summary>
+	/// Interaction logic for ManageAssemblyListsDialog.xaml
+	/// </summary>
+	public partial class ManageAssemblyListsDialog : Window
 	{
-		public static readonly AnalyzeCommand Analyze = new AnalyzeCommand();
-		public static readonly ManageAssemblyListsCommand ManageAssemblyListsCommand = new ManageAssemblyListsCommand();
+		public ManageAssemblyListsDialog()
+		{
+			InitializeComponent();
+			DataContext = new ManageAssemblyListsViewModel();
+		}
 	}
 }

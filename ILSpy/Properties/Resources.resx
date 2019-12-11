@@ -156,8 +156,8 @@
   <data name="OpenFrom_GAC" xml:space="preserve">
     <value>Open from _GAC...</value>
   </data>
-  <data name="Open_List" xml:space="preserve">
-    <value>Open _List...</value>
+  <data name="ManageAssembly_Lists" xml:space="preserve">
+    <value>Manage assembly _lists...</value>
   </data>
   <data name="ReloadAssemblies" xml:space="preserve">
     <value>Reload all assemblies</value>
@@ -450,14 +450,14 @@
   <data name="PublicToken" xml:space="preserve">
     <value>Public Key Token</value>
   </data>
-  <data name="OpenList" xml:space="preserve">
-    <value>Open List</value>
+  <data name="ManageAssemblyLists" xml:space="preserve">
+    <value>Manage Assembly Lists</value>
   </data>
   <data name="SelectList" xml:space="preserve">
     <value>Select a list:</value>
   </data>
-  <data name="_Create" xml:space="preserve">
-    <value>_Create</value>
+  <data name="_New" xml:space="preserve">
+    <value>_New</value>
   </data>
   <data name="OpenListDialog__Open" xml:space="preserve">
     <value>_Open</value>
@@ -810,5 +810,20 @@ Are you sure you want to continue?</value>
   </data>
   <data name="SelectAssemblyListDropdownTooltip" xml:space="preserve">
     <value>Select a list of assemblies</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="C_lone" xml:space="preserve">
+    <value>C_lone</value>
+  </data>
+  <data name="ListDeleteConfirmation" xml:space="preserve">
+    <value>Are you sure that you want to delete the selected assembly list?</value>
+  </data>
+  <data name="ListExistsAlready" xml:space="preserve">
+    <value>A list with the same name was found.</value>
+  </data>
+  <data name="ListsResetConfirmation" xml:space="preserve">
+    <value>Are you sure that you want to remove all assembly lists and recreate the default assembly lists?</value>
   </data>
 </root>

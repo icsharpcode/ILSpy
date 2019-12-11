@@ -123,6 +123,9 @@
 			<ComboBox Name="assemblyListComboBox" Width="100" MaxDropDownHeight="Auto"
 			          ItemsSource="{Binding AssemblyListManager.AssemblyLists}" ToolTip="{x:Static properties:Resources.SelectAssemblyListDropdownTooltip}"
 			          SelectedItem="{Binding SessionSettings.ActiveAssemblyList}"/>
+			<Button Command="{x:Static local:ILSpyCommands.ManageAssemblyListsCommand}" ToolTip="{x:Static properties:Resources.ManageAssemblyLists}">
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/AssemblyList}" />
+			</Button>
 			<Separator />
 			<CheckBox IsChecked="{Binding SessionSettings.FilterSettings.ApiVisPublicOnly}" ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPublicOnly}" />
