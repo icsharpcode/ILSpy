@@ -41,7 +41,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
+			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
+
 			var dataGrid = new DataGrid {
 				Columns = {
 					new DataGridTextColumn { IsReadOnly = true, Header = "Name", Binding = new Binding("Name") },

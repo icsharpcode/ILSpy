@@ -55,6 +55,7 @@
     <PackageReference Include="System.Composition" Version="1.3.0" />
     <PackageReference Include="Mono.Cecil" Version="0.10.3" />
     <PackageReference Include="OSVersionHelper" Version="1.0.11" />
+    <PackageReference Include="DataGridExtensions" Version="2.1.1" />
   </ItemGroup>
 
   <ItemGroup>

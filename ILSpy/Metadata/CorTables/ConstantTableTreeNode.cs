@@ -45,7 +45,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override bool View(TabPageModel tabPage)
 		{
+			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
+
 			ListView view = Helpers.CreateListView("ConstantsView");
 			var metadata = module.Metadata;
 

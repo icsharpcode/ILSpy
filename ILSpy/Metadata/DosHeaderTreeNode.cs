@@ -41,7 +41,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override bool View(TabPageModel tabPage)
 		{
+			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
+
 			var view = Helpers.CreateListView("EntryView");
 			var reader = module.Reader.GetEntireImage().GetReader(0, 64);
 

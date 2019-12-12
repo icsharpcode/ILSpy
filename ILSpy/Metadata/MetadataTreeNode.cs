@@ -50,7 +50,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override bool View(TabPageModel tabPage)
 		{
+			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
+
 			return false;
 		}
 

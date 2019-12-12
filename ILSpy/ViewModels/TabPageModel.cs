@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public ViewState GetState()
 		{
-			return null;
+			return (Content as IHaveState)?.GetState();
 		}
 	}
 
@@ -79,23 +79,34 @@ namespace ICSharpCode.ILSpy.ViewModels
 	{
 		public static Task<T> ShowTextViewAsync<T>(this TabPageModel tabPage, Func<DecompilerTextView, Task<T>> action)
 		{
-			var textView = new DecompilerTextView();
-			tabPage.Content = textView;
+			if (!(tabPage.Content is DecompilerTextView textView)) {
+				textView = new DecompilerTextView();
+				tabPage.Content = textView;
+			}
 			return action(textView);
 		}
 
 		public static Task ShowTextViewAsync(this TabPageModel tabPage, Func<DecompilerTextView, Task> action)
 		{
-			var textView = new DecompilerTextView();
-			tabPage.Content = textView;
+			if (!(tabPage.Content is DecompilerTextView textView)) {
+				textView = new DecompilerTextView();
+				tabPage.Content = textView;
+			}
 			return action(textView);
 		}
 
 		public static void ShowTextView(this TabPageModel tabPage, Action<DecompilerTextView> action)
 		{
-			var textView = new DecompilerTextView();
-			tabPage.Content = textView;
+			if (!(tabPage.Content is DecompilerTextView textView)) {
+				textView = new DecompilerTextView();
+				tabPage.Content = textView;
+			}
 			action(textView);
 		}
+	}
+
+	public interface IHaveState
+	{
+		ViewState GetState();
 	}
 }

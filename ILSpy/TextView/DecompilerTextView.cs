@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpy.TextView
 	/// Manages the TextEditor showing the decompiled code.
 	/// Contains all the threading logic that makes the decompiler work in the background.
 	/// </summary>
-	public sealed partial class DecompilerTextView : UserControl, IDisposable
+	public sealed partial class DecompilerTextView : UserControl, IDisposable, IHaveState
 	{
 		readonly ReferenceElementGenerator referenceElementGenerator;
 		readonly UIElementGenerator uiElementGenerator;
@@ -1011,7 +1011,9 @@ namespace ICSharpCode.ILSpy.TextView
 			state.DecompiledNodes = decompiledNodes;
 			return state;
 		}
-		
+
+		ViewState IHaveState.GetState() => GetState();
+
 		public void Dispose()
 		{
 			DisplaySettingsPanel.CurrentDisplaySettings.PropertyChanged -= CurrentDisplaySettings_PropertyChanged;
