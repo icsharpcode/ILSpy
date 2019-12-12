@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,61 +16,117 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.ObjectModel;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
-using System;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.Commands;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpy.ViewModels
 {
-	/// <summary>
-	/// Interaction logic for OpenListDialog.xaml
-	/// </summary>
-	public partial class OpenListDialog : Window
+	public class ManageAssemblyListsViewModel : ViewModelBase
 	{
-
 		public const string DotNet4List = ".NET 4 (WPF)";
 		public const string DotNet35List = ".NET 3.5";
 		public const string ASPDotNetMVC3List = "ASP.NET (MVC3)";
 
-		readonly AssemblyListManager manager;
+		private readonly AssemblyListManager manager;
 
-		public OpenListDialog()
+		public ManageAssemblyListsViewModel()
 		{
-			InitializeComponent();
-			manager = MainWindow.Instance.assemblyListManager;
-		}
-
-		private void listView_Loaded(object sender, RoutedEventArgs e)
-		{
-			listView.ItemsSource = manager.AssemblyLists;
+			this.manager = MainWindow.Instance.AssemblyListManager;
 			CreateDefaultAssemblyLists();
+
+			NewCommand = new DelegateCommand<ManageAssemblyListsDialog>(ExecuteNew);
+			CloneCommand = new DelegateCommand<ManageAssemblyListsDialog>(ExecuteClone, CanExecuteClone);
+			ResetCommand = new DelegateCommand<ManageAssemblyListsDialog>(ExecuteReset);
+			DeleteCommand = new DelegateCommand<ManageAssemblyListsDialog>(ExecuteDelete, CanExecuteDelete);
 		}
 
-		void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			okButton.IsEnabled = listView.SelectedItem != null;
-			deleteButton.IsEnabled = listView.SelectedItem != null;
-		}
+		public ObservableCollection<string> AssemblyLists => manager.AssemblyLists;
 
-		void OKButton_Click(object sender, RoutedEventArgs e)
-		{
-			this.DialogResult = true;
-		}
+		private string selectedAssemblyList;
 
-		public string SelectedListName
-		{
-			get
-			{
-				return listView.SelectedItem.ToString();
+		public string SelectedAssemblyList {
+			get => selectedAssemblyList;
+			set {
+				if (selectedAssemblyList != value) {
+					selectedAssemblyList = value;
+					RaisePropertyChanged();
+				}
 			}
+		}
+
+		public ICommand NewCommand { get; }
+		public ICommand CloneCommand { get; }
+		public ICommand ResetCommand { get; }
+		public ICommand DeleteCommand { get; }
+
+		private void ExecuteNew(ManageAssemblyListsDialog dialog)
+		{
+			CreateListDialog dlg = new CreateListDialog();
+			dlg.Owner = dialog;
+			dlg.Closing += (s, args) => {
+				if (dlg.DialogResult == true) {
+					if (manager.AssemblyLists.Contains(dlg.NewListName)) {
+						args.Cancel = true;
+						MessageBox.Show(Properties.Resources.ListExistsAlready, null, MessageBoxButton.OK);
+					}
+				}
+			};
+			if (dlg.ShowDialog() == true) {
+				manager.CreateList(new AssemblyList(dlg.NewListName));
+			}
+		}
+
+		private bool CanExecuteClone(ManageAssemblyListsDialog _)
+		{
+			return selectedAssemblyList != null;
+		}
+
+		private void ExecuteClone(ManageAssemblyListsDialog dialog)
+		{
+			CreateListDialog dlg = new CreateListDialog();
+			dlg.Owner = dialog;
+			dlg.Closing += (s, args) => {
+				if (dlg.DialogResult == true) {
+					if (manager.AssemblyLists.Contains(dlg.NewListName)) {
+						args.Cancel = true;
+						MessageBox.Show(Properties.Resources.ListExistsAlready, null, MessageBoxButton.OK);
+					}
+				}
+			};
+			if (dlg.ShowDialog() == true) {
+				manager.CloneList(SelectedAssemblyList, dlg.NewListName);
+			}
+		}
+
+		private void ExecuteReset(ManageAssemblyListsDialog dialog)
+		{
+			if (MessageBox.Show(dialog, Properties.Resources.ListsResetConfirmation,
+				"ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, MessageBoxOptions.None) != MessageBoxResult.Yes)
+				return;
+			manager.ClearAll();
+			CreateDefaultAssemblyLists();
+			MainWindow.Instance.SessionSettings.ActiveAssemblyList = manager.AssemblyLists[0];
+		}
+
+		private void ExecuteDelete(ManageAssemblyListsDialog dialog)
+		{
+			if (MessageBox.Show(dialog, Properties.Resources.ListDeleteConfirmation,
+"ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, MessageBoxOptions.None) != MessageBoxResult.Yes)
+				return;
+			manager.DeleteList(SelectedAssemblyList);
+		}
+
+		private bool CanExecuteDelete(ManageAssemblyListsDialog _)
+		{
+			return selectedAssemblyList != null;
 		}
 
 		private void CreateDefaultAssemblyLists()
 		{
-			if (!manager.AssemblyLists.Contains(DotNet4List))
-			{
+			if (!manager.AssemblyLists.Contains(DotNet4List)) {
 				AssemblyList dotnet4 = new AssemblyList(DotNet4List);
 				AddToList(dotnet4, "mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 				AddToList(dotnet4, "System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
@@ -85,14 +141,12 @@ namespace ICSharpCode.ILSpy
 				AddToList(dotnet4, "PresentationFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
 				AddToList(dotnet4, "WindowsBase, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
 
-				if (dotnet4.assemblies.Count > 0)
-				{
+				if (dotnet4.assemblies.Count > 0) {
 					manager.CreateList(dotnet4);
 				}
 			}
 
-			if (!manager.AssemblyLists.Contains(DotNet35List))
-			{
+			if (!manager.AssemblyLists.Contains(DotNet35List)) {
 				AssemblyList dotnet35 = new AssemblyList(DotNet35List);
 				AddToList(dotnet35, "mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 				AddToList(dotnet35, "System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
@@ -105,14 +159,12 @@ namespace ICSharpCode.ILSpy
 				AddToList(dotnet35, "PresentationFramework, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
 				AddToList(dotnet35, "WindowsBase, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
 
-				if (dotnet35.assemblies.Count > 0)
-				{
+				if (dotnet35.assemblies.Count > 0) {
 					manager.CreateList(dotnet35);
 				}
 			}
 
-			if (!manager.AssemblyLists.Contains(ASPDotNetMVC3List))
-			{
+			if (!manager.AssemblyLists.Contains(ASPDotNetMVC3List)) {
 				AssemblyList mvc = new AssemblyList(ASPDotNetMVC3List);
 				AddToList(mvc, "mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 				AddToList(mvc, "System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
@@ -139,8 +191,7 @@ namespace ICSharpCode.ILSpy
 				AddToList(mvc, "System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 				AddToList(mvc, "Microsoft.CSharp, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
 
-				if (mvc.assemblies.Count > 0)
-				{
+				if (mvc.assemblies.Count > 0) {
 					manager.CreateList(mvc);
 				}
 			}
@@ -153,52 +204,5 @@ namespace ICSharpCode.ILSpy
 			if (file != null)
 				list.OpenAssembly(file);
 		}
-
-		private void CreateButton_Click(object sender, RoutedEventArgs e)
-		{
-			CreateListDialog dlg = new CreateListDialog();
-			dlg.Owner = this;
-			dlg.Closing += (s, args) =>
-			{
-				if (dlg.DialogResult == true)
-				{
-					if (manager.AssemblyLists.Contains(dlg.NewListName))
-					{
-						args.Cancel = true;
-						MessageBox.Show("A list with the same name was found.", null, MessageBoxButton.OK);
-					}
-				}
-			};
-			if (dlg.ShowDialog() == true)
-			{
-				manager.CreateList(new AssemblyList(dlg.NewListName));
-			}
-		}
-
-		private void DeleteButton_Click(object sender, RoutedEventArgs e)
-		{
-			if (listView.SelectedItem == null)
-				return;
-			if (MessageBox.Show(this, "Are you sure that you want to delete the selected assembly list?",
-"ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, MessageBoxOptions.None) != MessageBoxResult.Yes)
-				return;
-			manager.DeleteList(listView.SelectedItem.ToString());
-		}
-
-		private void ResetButton_Click(object sender, RoutedEventArgs e)
-		{
-			if (MessageBox.Show(this, "Are you sure that you want to remove all assembly lists and recreate the default assembly lists?",
-				"ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, MessageBoxOptions.None) != MessageBoxResult.Yes)
-				return;
-			manager.ClearAll();
-			CreateDefaultAssemblyLists();
-		}
-
-		private void listView_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
-		{
-			if (e.ChangedButton == MouseButton.Left && listView.SelectedItem != null)
-				this.DialogResult = true;
-		}
-
 	}
 }

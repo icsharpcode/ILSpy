@@ -11,7 +11,7 @@ namespace ICSharpCode.ILSpy.Commands
 	{
 		public override void Execute(object parameter)
 		{
-			DebugStepsPaneModel.Instance.IsVisible = true;
+			DebugStepsPaneModel.Instance.Show();
 		}
 	}
 }

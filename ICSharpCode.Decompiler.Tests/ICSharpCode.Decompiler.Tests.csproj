@@ -81,6 +81,7 @@
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
+    <Compile Include="TestCases\VBPretty\Select.cs" />
     <None Include="TestCases\ILPretty\WeirdEnums.cs" />
     <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
     <None Include="TestCases\Pretty\AsyncStreams.cs" />
@@ -91,6 +92,7 @@
     <Compile Include="TestCases\Ugly\NoForEachStatement.cs" />
     <None Include="TestCases\Ugly\NoExtensionMethods.Expected.cs" />
     <Compile Include="TestCases\Ugly\NoExtensionMethods.cs" />
+    <None Include="TestCases\VBPretty\Select.vb" />
     <None Include="TestCases\VBPretty\VBCompoundAssign.cs" />
     <Compile Include="TestCases\Pretty\ThrowExpressions.cs" />
     <None Include="TestCases\ILPretty\Issue1145.cs" />
@@ -261,6 +263,7 @@
 
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.VisualBasic" />
   </ItemGroup>
 
   <ItemGroup>

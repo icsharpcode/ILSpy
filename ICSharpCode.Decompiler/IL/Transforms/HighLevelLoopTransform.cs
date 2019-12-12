@@ -42,10 +42,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (loop.Kind != ContainerKind.Loop)
 					continue;
 				if (MatchWhileLoop(loop, out var condition, out var loopBody)) {
-					MatchForLoop(loop, condition, loopBody);
+					if (context.Settings.ForStatement)
+						MatchForLoop(loop, condition, loopBody);
 					continue;
 				}
-				if (MatchDoWhileLoop(loop))
+				if (context.Settings.DoWhileStatement && MatchDoWhileLoop(loop))
 					continue;
 			}
 		}

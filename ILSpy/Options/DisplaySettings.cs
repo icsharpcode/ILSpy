@@ -29,6 +29,13 @@ namespace ICSharpCode.ILSpy.Options
 	{
 		public DisplaySettings()
 		{
+			this.selectedFont = new FontFamily("Consolas");
+			this.selectedFontSize = 10.0 * 4 / 3;
+			this.sortResults = true;
+			this.indentationUseTabs = true;
+			this.indentationSize = 4;
+			this.indentationTabSize = 4;
+			this.highlightMatchingBraces = true;
 		}
 		
 		#region INotifyPropertyChanged implementation

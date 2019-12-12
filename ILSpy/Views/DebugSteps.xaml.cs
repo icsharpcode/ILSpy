@@ -79,11 +79,6 @@ namespace ICSharpCode.ILSpy
 #endif
 		}
 
-		public static void Show()
-		{
-			DebugStepsPaneModel.Instance.IsVisible = true;
-		}
-
 		void IPane.Closed()
 		{
 #if DEBUG

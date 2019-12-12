@@ -432,6 +432,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				&& identExpr.TypeArguments.Count == 0;
 		}
 
+		bool CombineDeclarationAndInitializer(VariableToDeclare v, TransformContext context)
+		{
+			if (v.Type.IsByRefLike)
+				return true; // by-ref-like variables always must be initialized at their declaration.
+
+			if (v.InsertionPoint.nextNode.Role == ForStatement.InitializerRole)
+				return true; // for-statement initializers always should combine declaration and initialization.
+
+			return !context.Settings.SeparateLocalVariableDeclarations;
+		}
+
 		void InsertVariableDeclarations(TransformContext context)
 		{
 			var replacements = new List<(AstNode, AstNode)>();
@@ -439,7 +450,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (v.RemovedDueToCollision)
 					continue;
 
-				if (IsMatchingAssignment(v, out AssignmentExpression assignment)) {
+				if (CombineDeclarationAndInitializer(v, context) && IsMatchingAssignment(v, out AssignmentExpression assignment)) {
 					// 'int v; v = expr;' can be combined to 'int v = expr;'
 					AstType type;
 					if (context.Settings.AnonymousTypes && v.Type.ContainsAnonymousType()) {

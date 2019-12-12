@@ -164,6 +164,12 @@ namespace ICSharpCode.ILSpy.Options
 			if (!text.All(char.IsDigit))
 				e.CancelCommand();
 		}
+
+		public void LoadDefaults()
+		{
+			currentDisplaySettings = new DisplaySettings();
+			this.DataContext = currentDisplaySettings;
+		}
 	}
 
 	public class FontSizeConverter : IValueConverter

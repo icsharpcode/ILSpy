@@ -26,6 +26,11 @@ namespace ICSharpCode.ILSpy.Options
 		bool allowMultipleInstances;
 		bool loadPreviousAssemblies;
 
+		public MiscSettings()
+		{
+			this.loadPreviousAssemblies = true;
+		}
+
 		/// <summary>
 		/// Allow multiple instances.
 		/// </summary>

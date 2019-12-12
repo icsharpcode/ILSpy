@@ -70,6 +70,15 @@ namespace ICSharpCode.ILSpy
 			}
 			this.dirty = false; // OpenAssembly() sets dirty, so reset it afterwards
 		}
+
+		/// <summary>
+		/// Creates a copy of an assembly list.
+		/// </summary>
+		public AssemblyList(AssemblyList list, string newName)
+			: this(newName)
+		{
+			this.assemblies.AddRange(list.assemblies);
+		}
 		
 		/// <summary>
 		/// Gets the loaded assemblies. This method is thread-safe.

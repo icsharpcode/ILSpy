@@ -20,6 +20,7 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -63,10 +64,9 @@ namespace ICSharpCode.ILSpy
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		void OnPropertyChanged(string propertyName)
+		void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
-			if (PropertyChanged != null)
-				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
 		public FilterSettings FilterSettings { get; private set; }
@@ -75,7 +75,15 @@ namespace ICSharpCode.ILSpy
 		public string[] ActiveTreeViewPath;
 		public string ActiveAutoLoadedAssembly;
 
-		public string ActiveAssemblyList;
+		public string ActiveAssemblyList {
+			get => activeAssemblyList;
+			set {
+				if (value != activeAssemblyList) {
+					activeAssemblyList = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		public WindowState WindowState = WindowState.Normal;
 		public Rect WindowBounds;
@@ -118,6 +126,7 @@ namespace ICSharpCode.ILSpy
 		}
 
 		static Regex regex = new Regex("\\\\x(?<num>[0-9A-f]{4})");
+		private string activeAssemblyList;
 
 		static string Escape(string p)
 		{

@@ -6,7 +6,6 @@
 	xmlns:local="clr-namespace:ICSharpCode.ILSpy"
 	xmlns:avalondock="http://schemas.xceed.com/wpf/xaml/avalondock"
 	xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
-	xmlns:avalondockproperties="clr-namespace:Xceed.Wpf.AvalonDock.Properties;assembly=Xceed.Wpf.AvalonDock"
 	xmlns:docking="clr-namespace:ICSharpCode.ILSpy.Docking"
 	xmlns:textview="clr-namespace:ICSharpCode.ILSpy.TextView"
 	xmlns:analyzers="clr-namespace:ICSharpCode.ILSpy.Analyzers"
@@ -120,6 +119,13 @@
 			<!-- 'Navigation' toolbar category is inserted here -->
 			<Separator />
 			<!-- 'Open' toolbar category is inserted here -->
+			<Separator />
+			<ComboBox Name="assemblyListComboBox" Width="100" MaxDropDownHeight="Auto"
+			          ItemsSource="{Binding AssemblyListManager.AssemblyLists}" ToolTip="{x:Static properties:Resources.SelectAssemblyListDropdownTooltip}"
+			          SelectedItem="{Binding SessionSettings.ActiveAssemblyList}"/>
+			<Button Command="{x:Static local:ILSpyCommands.ManageAssemblyListsCommand}" ToolTip="{x:Static properties:Resources.ManageAssemblyLists}">
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/AssemblyList}" />
+			</Button>
 			<Separator />
 			<CheckBox IsChecked="{Binding SessionSettings.FilterSettings.ApiVisPublicOnly}" ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPublicOnly}" />

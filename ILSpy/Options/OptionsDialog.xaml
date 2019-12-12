@@ -15,8 +15,9 @@
 		</Grid.RowDefinitions>
 		<TabControl Name="tabControl" />
 		<StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="12,8">
-			<Button IsDefault="True" Margin="2,0" Name="okButton" Click="OKButton_Click" Content="{x:Static properties:Resources.OK}"></Button>
-			<Button IsCancel="True" Margin="2,0" Content="{x:Static properties:Resources.Cancel}"></Button>
+			<Button Margin="2,0" Name="defaultsButton" Click="DefaultsButton_Click" Content="{x:Static properties:Resources.ResetToDefaults}" />
+			<Button IsDefault="True" Margin="2,0" Name="okButton" Click="OKButton_Click" Content="{x:Static properties:Resources.OK}" />
+			<Button IsCancel="True" Margin="2,0" Content="{x:Static properties:Resources.Cancel}" />
 		</StackPanel>
 	</Grid>
 </Window>

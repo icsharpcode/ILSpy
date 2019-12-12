@@ -108,12 +108,13 @@
     <Compile Include="Commands\BrowseBackCommand.cs" />
     <Compile Include="Commands\BrowseForwardCommand.cs" />
     <Compile Include="CommandLineArguments.cs" />
+    <Compile Include="Commands\DelegateCommand.cs" />
     <Compile Include="Commands\DecompileCommand.cs" />
     <Compile Include="Commands\DisassembleAllCommand.cs" />
     <Compile Include="Commands\ExitCommand.cs" />
     <Compile Include="Commands\CommandWrapper.cs" />
     <Compile Include="Commands\ILSpyCommands.cs" />
-    <Compile Include="Commands\OpenListCommand.cs" />
+    <Compile Include="Commands\ManageAssemblyListsCommand.cs" />
     <Compile Include="Commands\Pdb2XmlCommand.cs" />
     <Compile Include="Commands\RemoveAssembliesWithLoadErrors.cs" />
     <Compile Include="Commands\ShowCFGContextMenuEntry.cs" />
@@ -135,11 +136,14 @@
     <Compile Include="Controls\SearchBox.cs" />
     <Compile Include="Controls\SortableGridViewColumn.cs" />
     <Compile Include="Controls\XamlResourceExtension.cs" />
-    <Compile Include="CreateListDialog.xaml.cs">
+    <Compile Include="ViewModels\ManageAssemblyListsViewModel.cs" />
+    <Compile Include="ViewModels\ViewModelBase.cs" />
+    <Compile Include="Views\CreateListDialog.xaml.cs">
       <DependentUpon>CreateListDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="DebugInfo\DebugInfoUtils.cs" />
     <Compile Include="DebugInfo\PortableDebugInfoProvider.cs" />
-    <Compile Include="DebugSteps.xaml.cs">
+    <Compile Include="Views\DebugSteps.xaml.cs">
       <DependentUpon>DebugSteps.xaml</DependentUpon>
     </Compile>
     <Compile Include="Docking\ActiveTabPageConverter.cs" />
@@ -313,18 +317,16 @@
     <Compile Include="NavigationState.cs" />
     <Compile Include="Commands\OpenCommand.cs" />
     <Compile Include="Commands\OpenFromGacCommand.cs" />
-    <Compile Include="NugetPackageBrowserDialog.xaml.cs">
+    <Compile Include="Views\NugetPackageBrowserDialog.xaml.cs">
       <DependentUpon>NugetPackageBrowserDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="OpenFromGacDialog.xaml.cs">
+    <Compile Include="Views\OpenFromGacDialog.xaml.cs">
       <DependentUpon>OpenFromGacDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\ResourceStringTable.xaml.cs">
       <DependentUpon>ResourceStringTable.xaml</DependentUpon>
     </Compile>
-    <Compile Include="OpenListDialog.xaml.cs">
-      <DependentUpon>OpenListDialog.xaml</DependentUpon>
-    </Compile>
+    <Compile Include="Views\ManageAssemblyListsDialog.xaml.cs" />
     <Compile Include="Options\DisplaySettings.cs" />
     <Compile Include="Options\DisplaySettingsPanel.xaml.cs">
       <DependentUpon>DisplaySettingsPanel.xaml</DependentUpon>
@@ -438,8 +440,8 @@
     <Page Include="Controls\ResourceObjectTable.xaml" />
     <Page Include="Controls\ResourceStringTable.xaml" />
     <Page Include="Controls\SearchBoxStyle.xaml" />
-    <Page Include="CreateListDialog.xaml" />
-    <Page Include="DebugSteps.xaml" />
+    <Page Include="Views\CreateListDialog.xaml" />
+    <Page Include="Views\DebugSteps.xaml" />
     <Page Include="Images\Assembly.xaml" />
     <Page Include="Images\AssemblyList.xaml" />
     <Page Include="Images\AssemblyListGAC.xaml" />
@@ -504,9 +506,9 @@
     <Page Include="Images\Warning.xaml" />
     <Page Include="MainWindow.xaml" />
     <Page Include="Metadata\MetadataTableViews.xaml" />
-    <Page Include="OpenFromGacDialog.xaml" />
-    <Page Include="OpenListDialog.xaml" />
-    <Page Include="NugetPackageBrowserDialog.xaml" />
+    <Page Include="Views\OpenFromGacDialog.xaml" />
+    <Page Include="Views\ManageAssemblyListsDialog.xaml" />
+    <Page Include="Views\NugetPackageBrowserDialog.xaml" />
     <Page Include="Options\DecompilerSettingsPanel.xaml" />
     <Page Include="Options\DisplaySettingsPanel.xaml" />
     <Page Include="Options\MiscSettingsPanel.xaml" />

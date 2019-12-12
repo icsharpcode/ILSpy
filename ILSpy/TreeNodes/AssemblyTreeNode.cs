@@ -127,8 +127,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			RaisePropertyChanged("Tooltip");
 			if (moduleTask.IsFaulted) {
 				RaisePropertyChanged("ShowExpander"); // cannot expand assemblies with load error
-													  // observe the exception so that the Task's finalizer doesn't re-throw it
-				try { moduleTask.Wait(); } catch (AggregateException) { }
 			} else {
 				RaisePropertyChanged("Text"); // shortname might have changed
 			}

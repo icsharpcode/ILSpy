@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		static readonly CompilerOptions[] defaultOptions =
-{
+		{
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
 			CompilerOptions.UseRoslyn,
@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.Tests
 		};
 
 		static readonly CompilerOptions[] roslynOnlyOptions =
-{
+		{
 			CompilerOptions.UseRoslyn,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn,
 		};
@@ -68,6 +68,12 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test] // TODO: legacy VB compound assign
 		public void VBCompoundAssign([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions options)
+		{
+			Run(options: options | CompilerOptions.Library);
+		}
+
+		[Test]
+		public void Select([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			Run(options: options | CompilerOptions.Library);
 		}

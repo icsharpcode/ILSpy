@@ -30,22 +30,26 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	sealed class AssemblyListManager
 	{
+		ILSpySettings spySettings;
+
 		public AssemblyListManager(ILSpySettings spySettings)
 		{
+			this.spySettings = spySettings;
 			XElement doc = spySettings["AssemblyLists"];
 			foreach (var list in doc.Elements("List")) {
 				AssemblyLists.Add((string)list.Attribute("name"));
 			}
 		}
 		
-		public readonly ObservableCollection<string> AssemblyLists = new ObservableCollection<string>();
+		public ObservableCollection<string> AssemblyLists { get; } = new ObservableCollection<string>();
 		
 		/// <summary>
 		/// Loads an assembly list from the ILSpySettings.
 		/// If no list with the specified name is found, the default list is loaded instead.
 		/// </summary>
-		public AssemblyList LoadList(ILSpySettings spySettings, string listName)
+		public AssemblyList LoadList(ILSpySettings settings, string listName)
 		{
+			this.spySettings = settings;
 			AssemblyList list = DoLoadList(spySettings, listName);
 			if (!AssemblyLists.Contains(list.ListName))
 				AssemblyLists.Add(list.ListName);
@@ -62,13 +66,16 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 			}
-			XElement firstList = doc.Elements("List").FirstOrDefault();
-			if (firstList != null)
-				return new AssemblyList(firstList);
-			else
-				return new AssemblyList(listName ?? DefaultListName);
+			return new AssemblyList(listName ?? DefaultListName);
 		}
-		
+
+		public bool CloneList(string selectedAssemblyList, string newListName)
+		{
+			var list = DoLoadList(spySettings, selectedAssemblyList);
+			var newList = new AssemblyList(list, newListName);
+			return CreateList(newList);
+		}
+
 		public const string DefaultListName = "(Default)";
 		
 		/// <summary>

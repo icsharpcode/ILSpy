@@ -104,6 +104,7 @@ namespace ICSharpCode.Decompiler
 				introduceUnmanagedConstraint = false;
 				stackAllocInitializers = false;
 				tupleComparisons = false;
+				patternBasedFixedStatement = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp8_0) {
 				nullableReferenceTypes = false;
@@ -117,7 +118,7 @@ namespace ICSharpCode.Decompiler
 		{
 			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement)
 				return CSharp.LanguageVersion.CSharp8_0;
-			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers)
+			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers || patternBasedFixedStatement)
 				return CSharp.LanguageVersion.CSharp7_3;
 			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments || refExtensionMethods)
 				return CSharp.LanguageVersion.CSharp7_2;
@@ -926,6 +927,23 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool patternBasedFixedStatement = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 7.3 pattern based fixed statement should be used.
+		/// </summary>
+		[Category("C# 7.3 / VS 2017.7")]
+		[Description("DecompilerSettings.UsePatternBasedFixedStatement")]
+		public bool PatternBasedFixedStatement {
+			get { return patternBasedFixedStatement; }
+			set {
+				if (patternBasedFixedStatement != value) {
+					patternBasedFixedStatement = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool tupleTypes = true;
 
 		/// <summary>
@@ -1223,6 +1241,57 @@ namespace ICSharpCode.Decompiler
 		}
 
 		#endregion
+
+		bool forStatement = true;
+
+		/// <summary>
+		/// Gets/sets whether the decompiler should produce for loops.
+		/// </summary>
+		[Category("C# 1.0 / VS .NET")]
+		[Description("DecompilerSettings.ForStatement")]
+		public bool ForStatement {
+			get { return forStatement; }
+			set {
+				if (forStatement != value) {
+					forStatement = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool doWhileStatement = true;
+
+		/// <summary>
+		/// Gets/sets whether the decompiler should produce do-while loops.
+		/// </summary>
+		[Category("C# 1.0 / VS .NET")]
+		[Description("DecompilerSettings.DoWhileStatement")]
+		public bool DoWhileStatement {
+			get { return doWhileStatement; }
+			set {
+				if (doWhileStatement != value) {
+					doWhileStatement = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool separateLocalVariableDeclarations = false;
+
+		/// <summary>
+		/// Gets/sets whether the decompiler should separate local variable declarations from their initialization.
+		/// </summary>
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.SeparateLocalVariableDeclarations")]
+		public bool SeparateLocalVariableDeclarations {
+			get { return separateLocalVariableDeclarations; }
+			set {
+				if (separateLocalVariableDeclarations != value) {
+					separateLocalVariableDeclarations = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		CSharpFormattingOptions csharpFormattingOptions;
 

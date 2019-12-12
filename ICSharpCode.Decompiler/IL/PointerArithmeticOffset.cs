@@ -77,6 +77,8 @@ namespace ICSharpCode.Decompiler.IL
 				case KnownTypeCode.UInt64:
 				case KnownTypeCode.Double:
 					return 8;
+				case KnownTypeCode.Decimal:
+					return 16;
 			}
 			return null;
 		}

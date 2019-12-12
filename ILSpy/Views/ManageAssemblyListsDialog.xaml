@@ -1,0 +1,39 @@
+﻿<Window
+	x:Class="ICSharpCode.ILSpy.ManageAssemblyListsDialog" 
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+	xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
+	Title="{x:Static properties:Resources.ManageAssemblyLists}"
+	Style="{DynamicResource DialogWindow}"
+	WindowStartupLocation="CenterOwner"
+	ResizeMode="CanResizeWithGrip"
+	MinWidth="480"
+	MinHeight="250"
+	Height="350"
+	Width="480"
+	FocusManager.FocusedElement="{Binding ElementName=listView}">
+	<Grid Margin="12,8">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="*" />
+			<ColumnDefinition Width="*" />
+			<ColumnDefinition Width="*" />
+			<ColumnDefinition Width="*" />
+			<ColumnDefinition Width="Auto" />
+		</Grid.ColumnDefinitions>
+		<ListBox Name="listView" Margin="0 8" Grid.ColumnSpan="4" SelectedItem="{Binding SelectedAssemblyList}"
+				 SelectionMode="Single" ItemsSource="{Binding AssemblyLists}" />
+
+		<StackPanel Grid.Column="5" Grid.RowSpan="2" Margin="4, 8">
+			<Button Margin="2 2 2 10" Command="{Binding NewCommand}" CommandParameter="{Binding ., RelativeSource={RelativeSource AncestorType=Window}}" Content="{x:Static properties:Resources._New}"/>
+			<Button Margin="2" Command="{Binding CloneCommand}" CommandParameter="{Binding ., RelativeSource={RelativeSource AncestorType=Window}}" Content="{x:Static properties:Resources.C_lone}"/>
+			<Button Margin="2" Command="{Binding DeleteCommand}" CommandParameter="{Binding ., RelativeSource={RelativeSource AncestorType=Window}}" Content="{x:Static properties:Resources.OpenListDialog__Delete}"/>
+			<Button Margin="2 10 2 2" Command="{Binding ResetCommand}" CommandParameter="{Binding ., RelativeSource={RelativeSource AncestorType=Window}}" Content="{x:Static properties:Resources._Reset}"/>
+		</StackPanel>
+		
+		<Button IsCancel="True" Grid.Row="2" Margin="2,0" Content="{x:Static properties:Resources.Close}" />
+	</Grid>
+</Window>

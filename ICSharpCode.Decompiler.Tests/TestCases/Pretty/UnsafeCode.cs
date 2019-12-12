@@ -65,6 +65,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if CS73
+		public class CustomPinnable
+		{
+			public ref int GetPinnableReference()
+			{
+				throw new NotImplementedException();
+			}
+		}
+#endif
+
 		public unsafe delegate void UnsafeDelegate(byte* ptr);
 
 		private UnsafeDelegate unsafeDelegate;
@@ -353,6 +363,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return ptr->ToString();
 		}
+
+#if CS73
+		public unsafe void PinSpan(Span<int> span)
+		{
+			fixed (int* ptr = span) {
+				UsePointer(ptr);
+			}
+		}
+
+		//public unsafe void CustomPinReferenceType(CustomPinnable mem)
+		//{
+		//	fixed (int* ptr = mem) {
+		//		UsePointer(ptr);
+		//	}
+		//}
+#endif
 
 		public unsafe string StackAlloc(int count)
 		{

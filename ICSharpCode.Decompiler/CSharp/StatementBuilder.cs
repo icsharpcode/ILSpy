@@ -819,8 +819,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			var fixedStmt = new FixedStatement();
 			fixedStmt.Type = exprBuilder.ConvertType(inst.Variable.Type);
 			Expression initExpr;
-			if (inst.Init.OpCode == OpCode.ArrayToPointer) {
-				initExpr = exprBuilder.Translate(((ArrayToPointer)inst.Init).Array);
+			if (inst.Init is GetPinnableReference gpr) {
+				if (gpr.Method != null) {
+					IType expectedType = gpr.Method.IsStatic ? gpr.Method.Parameters[0].Type : gpr.Method.DeclaringType;
+					initExpr = exprBuilder.Translate(gpr.Argument, typeHint: expectedType).ConvertTo(expectedType, exprBuilder);
+				} else {
+					initExpr = exprBuilder.Translate(gpr.Argument);
+				}
 			} else {
 				initExpr = exprBuilder.Translate(inst.Init, typeHint: inst.Variable.Type).ConvertTo(inst.Variable.Type, exprBuilder);
 			}

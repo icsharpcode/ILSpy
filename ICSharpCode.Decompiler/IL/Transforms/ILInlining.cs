@@ -459,7 +459,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				case OpCode.DynamicCompoundAssign:
 					return true;
-				case OpCode.ArrayToPointer:
+				case OpCode.GetPinnableReference:
 				case OpCode.LocAllocSpan:
 					return true; // inline size-expressions into localloc.span
 				case OpCode.Call:

@@ -279,9 +279,11 @@
 		new OpCode("ldelema", "Load address of array element.",
 			CustomClassName("LdElema"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
 			MayThrowIfNotDelayed, ResultType("Ref"), SupportsReadonlyPrefix),
-		new OpCode("array.to.pointer", "Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty." + Environment.NewLine
-			+ "Also used to convert a string to a reference to the first character.",
-			CustomArguments(("array", new[] { "O" })), ResultType("Ref")),
+		new OpCode("get.pinnable.reference", "Retrieves a pinnable reference for the input object." + Environment.NewLine
+				+ "The input must be an object reference (O)." + Environment.NewLine
+				+ "If the input is an array/string, evaluates to a reference to the first element/character, or to a null reference if the array is null or empty." + Environment.NewLine
+				+ "Otherwise, uses the GetPinnableReference method to get the reference, or evaluates to a null reference if the input is null." + Environment.NewLine,
+			CustomArguments(("argument", new[] { "O" })), ResultType("Ref"), HasMethodOperand),
 		new OpCode("string.to.int", "Maps a string value to an integer. This is used in switch(string).",
 			CustomArguments(("argument", new[] { "O" })), CustomConstructor, CustomWriteTo, ResultType("I4")),
 

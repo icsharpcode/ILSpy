@@ -160,6 +160,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// if (comp(ldloc switchValueVar == ldnull)) br defaultBlock
 			if (!instructions[i].MatchIfInstruction(out var condition, out var firstBlockOrDefaultJump))
 				return false;
+			var nextCaseJump = instructions[i + 1];
+			while (condition.MatchLogicNot(out var arg)) {
+				condition = arg;
+				ExtensionMethods.Swap(ref firstBlockOrDefaultJump, ref nextCaseJump);
+			}
+			// match call to operator ==(string, string)
+			if (!MatchStringEqualityComparison(condition, out var switchValueVar, out string firstBlockValue, out bool isVBCompareString))
+				return false;
+			if (isVBCompareString) {
+				ExtensionMethods.Swap(ref firstBlockOrDefaultJump, ref nextCaseJump);
+			}
 
 			if (firstBlockOrDefaultJump.MatchBranch(out var firstBlock)) {
 				// success
@@ -172,11 +183,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			List<(string, ILInstruction)> values = new List<(string, ILInstruction)>();
 			ILInstruction switchValue = null;
-
-			// match call to operator ==(string, string)
-			if (!MatchStringEqualityComparison(condition, out var switchValueVar, out string firstBlockValue))
-				return false;
-			values.Add((firstBlockValue, firstBlock ?? firstBlockOrDefaultJump));
+			if (isVBCompareString && string.IsNullOrEmpty(firstBlockValue)) {
+				values.Add((null, firstBlock ?? firstBlockOrDefaultJump));
+				values.Add((string.Empty, firstBlock ?? firstBlockOrDefaultJump));
+			} else {
+				values.Add((firstBlockValue, firstBlock ?? firstBlockOrDefaultJump));
+			}
 
 			bool extraLoad = false;
 			bool keepAssignmentBefore = false;
@@ -215,13 +227,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				switchValue = new LdLoc(switchValueVar);
 			}
 			// if instruction must be followed by a branch to the next case
-			if (!(instructions.ElementAtOrDefault(i + 1) is Branch nextCaseJump))
+			if (!nextCaseJump.MatchBranch(out Block currentCaseBlock))
 				return false;
 			// extract all cases and add them to the values list.
-			Block currentCaseBlock = nextCaseJump.TargetBlock;
 			ILInstruction nextCaseBlock;
-			while ((nextCaseBlock = MatchCaseBlock(currentCaseBlock, switchValueVar, out string value, out Block block)) != null) {
-				values.Add((value, block));
+			while ((nextCaseBlock = MatchCaseBlock(currentCaseBlock, switchValueVar, out string value, out bool emptyStringEqualsNull, out Block block)) != null) {
+				if (emptyStringEqualsNull && string.IsNullOrEmpty(value)) {
+					values.Add((null, block));
+					values.Add((string.Empty, block));
+				} else {
+					values.Add((value, block));
+				}
 				currentCaseBlock = nextCaseBlock as Block;
 				if (currentCaseBlock == null)
 					break;
@@ -367,37 +383,34 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// The <paramref name="switchVariable"/> is updated if the value gets copied to a different variable.
 		/// See comments below for more info.
 		/// </summary>
-		ILInstruction MatchCaseBlock(Block currentBlock, ILVariable switchVariable, out string value, out Block caseBlock)
+		ILInstruction MatchCaseBlock(Block currentBlock, ILVariable switchVariable, out string value, out bool emptyStringEqualsNull, out Block caseBlock)
 		{
 			value = null;
 			caseBlock = null;
+			emptyStringEqualsNull = false;
 
 			if (currentBlock.IncomingEdgeCount != 1 || currentBlock.Instructions.Count != 2)
 				return null;
-			if (!currentBlock.Instructions[0].MatchIfInstruction(out var condition, out var caseBlockBranch))
+			if (!currentBlock.MatchIfAtEndOfBlock(out var condition, out var caseBlockBranch, out var nextBlockBranch))
 				return null;
+			if (!MatchStringEqualityComparison(condition, switchVariable, out value, out bool isVBCompareString)) {
+				return null;
+			}
+			if (isVBCompareString) {
+				ExtensionMethods.Swap(ref caseBlockBranch, ref nextBlockBranch);
+				emptyStringEqualsNull = true;
+			}
 			if (!caseBlockBranch.MatchBranch(out caseBlock))
 				return null;
-			Block nextBlock;
-			BlockContainer blockContainer = null;
-			if (condition.MatchLogicNot(out var inner)) {
-				condition = inner;
-				nextBlock = caseBlock;
-				if (!currentBlock.Instructions[1].MatchBranch(out caseBlock))
-					return null;
+			if (nextBlockBranch.MatchBranch(out Block nextBlock)) {
+				// success
+				return nextBlock;
+			} else if (nextBlockBranch.MatchLeave(out BlockContainer blockContainer)) {
+				// success
+				return blockContainer;
 			} else {
-				if (currentBlock.Instructions[1].MatchBranch(out nextBlock)) {
-					// success
-				} else if (currentBlock.Instructions[1].MatchLeave(out blockContainer)) {
-					// success
-				} else {
-					return null;
-				}
-			}
-			if (!MatchStringEqualityComparison(condition, switchVariable, out value)) {
 				return null;
 			}
-			return nextBlock ?? (ILInstruction)blockContainer;
 		}
 
 		/// <summary>
@@ -836,8 +849,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				MatchComputeStringHashCall(switchBlockInstructions[switchBlockInstructionsOffset], switchValueVar, out LdLoc switchValueLoad)))
 				return false;
 
-			var stringValues = new List<(int Index, string Value, ILInstruction TargetBlockOrLeave)>();
-			int index = 0;
+			var stringValues = new List<(string Value, ILInstruction TargetBlockOrLeave)>();
 			SwitchSection defaultSection = switchInst.Sections.MaxBy(s => s.Labels.Count());
 			Block exitOrDefaultBlock = null;
 			foreach (var section in switchInst.Sections) {
@@ -846,20 +858,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!section.Body.MatchBranch(out Block target))
 					return false;
 				string stringValue;
+				bool emptyStringEqualsNull;
 				if (MatchRoslynEmptyStringCaseBlockHead(target, switchValueLoad.Variable, out ILInstruction targetOrLeave, out Block currentExitBlock)) {
 					stringValue = "";
-				} else if (!MatchRoslynCaseBlockHead(target, switchValueLoad.Variable, out targetOrLeave, out currentExitBlock, out stringValue)) {
+					emptyStringEqualsNull = false;
+				} else if (!MatchRoslynCaseBlockHead(target, switchValueLoad.Variable, out targetOrLeave, out currentExitBlock, out stringValue, out emptyStringEqualsNull)) {
 					return false;
 				}
 
 				if (exitOrDefaultBlock != null && exitOrDefaultBlock != currentExitBlock)
 					return false;
 				exitOrDefaultBlock = currentExitBlock;
-				stringValues.Add((index++, stringValue, targetOrLeave));
+				if (emptyStringEqualsNull && string.IsNullOrEmpty(stringValue)) {
+					stringValues.Add((null, targetOrLeave));
+					stringValues.Add((string.Empty, targetOrLeave));
+				} else {
+					stringValues.Add((stringValue, targetOrLeave));
+				}
 			}
 
 			if (nullValueCaseBlock != null && exitOrDefaultBlock != nullValueCaseBlock) {
-				stringValues.Add((index++, null, nullValueCaseBlock));
+				stringValues.Add((null, nullValueCaseBlock));
 			}
 
 			ILInstruction switchValueInst = switchValueLoad;
@@ -914,13 +933,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			SwitchInstruction ReplaceWithSwitchInstruction(int offset)
 			{
-				var defaultLabel = new LongSet(new LongInterval(0, index)).Invert();
+				var defaultLabel = new LongSet(new LongInterval(0, stringValues.Count)).Invert();
 				var values = new string[stringValues.Count];
 				var sections = new SwitchSection[stringValues.Count];
-				foreach (var (idx, (label, value, bodyInstruction)) in stringValues.WithIndex()) {
+				foreach (var (idx, (value, bodyInstruction)) in stringValues.WithIndex()) {
 					values[idx] = value;
 					var body = bodyInstruction is Block b ? new Branch(b) : bodyInstruction;
-					sections[idx] = new SwitchSection { Labels = new LongSet(label), Body = body };
+					sections[idx] = new SwitchSection { Labels = new LongSet(idx), Body = body };
 				}
 				var newSwitch = new SwitchInstruction(new StringToInt(switchValueInst, values));
 				newSwitch.Sections.AddRange(sections);
@@ -935,26 +954,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// if (call op_Equality(ldloc switchValueVar, stringValue)) br body
 		/// br exit
 		/// </summary>
-		bool MatchRoslynCaseBlockHead(Block target, ILVariable switchValueVar, out ILInstruction bodyOrLeave, out Block defaultOrExitBlock, out string stringValue)
+		bool MatchRoslynCaseBlockHead(Block target, ILVariable switchValueVar, out ILInstruction bodyOrLeave, out Block defaultOrExitBlock, out string stringValue, out bool emptyStringEqualsNull)
 		{
 			bodyOrLeave = null;
 			defaultOrExitBlock = null;
 			stringValue = null;
+			emptyStringEqualsNull = false;
 			if (target.Instructions.Count != 2)
 				return false;
 			if (!target.Instructions[0].MatchIfInstruction(out var condition, out var bodyBranch))
 				return false;
-			ILInstruction exitBranch;
+			ILInstruction exitBranch = target.Instructions[1];
 			// Handle negated conditions first:
-			if (condition.MatchLogicNot(out var expr)) {
-				exitBranch = bodyBranch;
-				bodyBranch = target.Instructions[1];
+			while (condition.MatchLogicNot(out var expr)) {
+				ExtensionMethods.Swap(ref exitBranch, ref bodyBranch);
 				condition = expr;
-			} else {
-				exitBranch = target.Instructions[1];
 			}
-			if (!MatchStringEqualityComparison(condition, switchValueVar, out stringValue))
+			if (!MatchStringEqualityComparison(condition, switchValueVar, out stringValue, out bool isVBCompareString))
 				return false;
+			if (isVBCompareString) {
+				ExtensionMethods.Swap(ref exitBranch, ref bodyBranch);
+				emptyStringEqualsNull = true;
+			}
 			if (!(exitBranch.MatchBranch(out defaultOrExitBlock) || exitBranch.MatchLeave(out _)))
 				return false;
 			if (bodyBranch.MatchLeave(out _)) {
@@ -1054,25 +1075,45 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Matches 'call string.op_Equality(ldloc(variable), ldstr(stringValue))'
 		///      or 'comp(ldloc(variable) == ldnull)'
 		/// </summary>
-		bool MatchStringEqualityComparison(ILInstruction condition, ILVariable variable, out string stringValue)
+		bool MatchStringEqualityComparison(ILInstruction condition, ILVariable variable, out string stringValue, out bool isVBCompareString)
 		{
-			return MatchStringEqualityComparison(condition, out var v, out stringValue) && v == variable;
+			return MatchStringEqualityComparison(condition, out var v, out stringValue, out isVBCompareString) && v == variable;
 		}
 
 		/// <summary>
 		/// Matches 'call string.op_Equality(ldloc(variable), ldstr(stringValue))'
 		///      or 'comp(ldloc(variable) == ldnull)'
 		/// </summary>
-		bool MatchStringEqualityComparison(ILInstruction condition, out ILVariable variable, out string stringValue)
+		bool MatchStringEqualityComparison(ILInstruction condition, out ILVariable variable, out string stringValue, out bool isVBCompareString)
 		{
 			stringValue = null;
 			variable = null;
-			ILInstruction left, right;
-			if (condition is Call c && c.Method.IsOperator && c.Method.Name == "op_Equality"
-				&& c.Method.DeclaringType.IsKnownType(KnownTypeCode.String) && c.Arguments.Count == 2)
-			{
-				left = c.Arguments[0];
-				right = c.Arguments[1];
+			isVBCompareString = false;
+			while (condition is Comp comp && comp.Kind == ComparisonKind.Inequality && comp.Right.MatchLdcI4(0)) {
+				// if (x != 0) == if (x)
+				condition = comp.Left;
+			}
+			if (condition is Call c) {
+				ILInstruction left, right;
+				if (c.Method.IsOperator && c.Method.Name == "op_Equality"
+					&& c.Method.DeclaringType.IsKnownType(KnownTypeCode.String) && c.Arguments.Count == 2) {
+					left = c.Arguments[0];
+					right = c.Arguments[1];
+				} else if (c.Method.IsStatic && c.Method.Name == "CompareString"
+					&& c.Method.DeclaringType.FullName == "Microsoft.VisualBasic.CompilerServices.Operators"
+					&& c.Arguments.Count == 3) {
+					left = c.Arguments[0];
+					right = c.Arguments[1];
+					// VB CompareString(): return 0 on equality -> condition is effectively negated.
+					// Also, the empty string is considered equal to null.
+					isVBCompareString = true;
+					if (!c.Arguments[2].MatchLdcI4(0)) {
+						// Option Compare Text: case insensitive comparison is not supported in C#
+						return false;
+					}
+				} else {
+					return false;
+				}
 				return left.MatchLdLoc(out variable) && right.MatchLdStr(out stringValue);
 			} else if (condition.MatchCompEqualsNull(out var arg)) {
 				stringValue = null;
