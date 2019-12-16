@@ -333,6 +333,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
+		public static bool LocalFunctionNeedsAccessibilityChange(PEFile module, MethodDefinitionHandle methodHandle)
+		{
+			if (!IsLocalFunctionMethod(module, methodHandle))
+				return false;
+
+			var metadata = module.Metadata;
+			var method = metadata.GetMethodDefinition(methodHandle);
+
+			FindRefStructParameters visitor = new FindRefStructParameters();
+			method.DecodeSignature(visitor, default);
+
+			foreach (var h in visitor.RefStructTypes) {
+				var td = metadata.GetTypeDefinition(h);
+				if (td.IsCompilerGenerated(metadata) && td.IsValueType(metadata))
+					return true;
+			}
+
+			return false;
+		}
+
 		public static bool IsLocalFunctionDisplayClass(PEFile module, TypeDefinitionHandle typeHandle, ILTransformContext context = null)
 		{
 			if (context != null && context.PEFile != module)
@@ -413,6 +433,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
 			}
+		}
+
+		class FindRefStructParameters : ISignatureTypeProvider<TypeDefinitionHandle, Unit>
+		{
+			public readonly List<TypeDefinitionHandle> RefStructTypes = new List<TypeDefinitionHandle>();
+
+			public TypeDefinitionHandle GetArrayType(TypeDefinitionHandle elementType, ArrayShape shape) => default;
+			public TypeDefinitionHandle GetFunctionPointerType(MethodSignature<TypeDefinitionHandle> signature) => default;
+			public TypeDefinitionHandle GetGenericInstantiation(TypeDefinitionHandle genericType, ImmutableArray<TypeDefinitionHandle> typeArguments) => default;
+			public TypeDefinitionHandle GetGenericMethodParameter(Unit genericContext, int index) => default;
+			public TypeDefinitionHandle GetGenericTypeParameter(Unit genericContext, int index) => default;
+			public TypeDefinitionHandle GetModifiedType(TypeDefinitionHandle modifier, TypeDefinitionHandle unmodifiedType, bool isRequired) => default;
+			public TypeDefinitionHandle GetPinnedType(TypeDefinitionHandle elementType) => default;
+			public TypeDefinitionHandle GetPointerType(TypeDefinitionHandle elementType) => default;
+			public TypeDefinitionHandle GetPrimitiveType(PrimitiveTypeCode typeCode) => default;
+			public TypeDefinitionHandle GetSZArrayType(TypeDefinitionHandle elementType) => default;
+
+			public TypeDefinitionHandle GetByReferenceType(TypeDefinitionHandle elementType)
+			{
+				if (!elementType.IsNil)
+					RefStructTypes.Add(elementType);
+				return elementType;
+			}
+
+			public TypeDefinitionHandle GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind) => default;
+			public TypeDefinitionHandle GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind) => handle;
+			public TypeDefinitionHandle GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind) => default;
 		}
 	}
 }
