@@ -107,11 +107,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine(s);
 		}
 
+		static void TestCharPlusChar(string a)
+		{
+			Console.WriteLine("TestCharPlusChar:");
+			Console.WriteLine(a[0] + a[1]);
+			Console.WriteLine(a[0].ToString() + a[1].ToString());
+		}
+
 		static void Main()
 		{
 			TestClass();
 			TestStruct();
 			TestStructMutation();
+			TestCharPlusChar("ab");
 		}
 	}
 }

@@ -61,11 +61,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (IsStringConcat(method) && CheckArgumentsForStringConcat(arguments)) {
 				bool isInExpressionTree = invocationExpression.Ancestors.OfType<LambdaExpression>().Any(
 					lambda => lambda.Annotation<IL.ILFunction>()?.Kind == IL.ILFunctionKind.ExpressionTree);
-				Expression expr = arguments[0].Detach();
+				Expression arg0 = arguments[0].Detach();
+				Expression arg1 = arguments[1].Detach();
 				if (!isInExpressionTree) {
-					expr = RemoveRedundantToStringInConcat(expr, method, isLastArgument: false).Detach();
+					arg1 = RemoveRedundantToStringInConcat(arg1, method, isLastArgument: arguments.Length == 2).Detach();
+					if (arg1.GetResolveResult().Type.IsKnownType(KnownTypeCode.String)) {
+						arg0 = RemoveRedundantToStringInConcat(arg0, method, isLastArgument: false).Detach();
+					}
 				}
-				for (int i = 1; i < arguments.Length; i++) {
+				var expr = new BinaryOperatorExpression(arg0, BinaryOperatorType.Add, arg1);
+				for (int i = 2; i < arguments.Length; i++) {
 					var arg = arguments[i].Detach();
 					if (!isInExpressionTree) {
 						arg = RemoveRedundantToStringInConcat(arg, method, isLastArgument: i == arguments.Length - 1).Detach();
