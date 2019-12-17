@@ -209,8 +209,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!block.Instructions[0].MatchIfInstruction(out ILInstruction condition, out ILInstruction trueInst))
 				return false;
-			if (!condition.UnwrapConv(ConversionKind.Truncate).MatchLdLen(StackType.I, out ILInstruction array))
+			condition = condition.UnwrapConv(ConversionKind.Truncate);
+			if (condition.MatchLdLen(StackType.I, out ILInstruction array)) {
+				// OK
+			} else if (condition is CallInstruction call && call.Method.Name == "get_Length") {
+				// Used instead of ldlen for multi-dimensional arrays
+				if (!call.Method.DeclaringType.IsKnownType(KnownTypeCode.Array))
+					return false;
+				if (call.Arguments.Count != 1)
+					return false;
+				array = call.Arguments[0];
+			} else {
 				return false;
+			}
 			if (!array.MatchLdLoc(v))
 				return false;
 			if (!trueInst.MatchBranch(out Block notNullAndNotEmptyBlock))

@@ -364,15 +364,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return ptr->ToString();
 		}
 
+		public unsafe void FixedMultiDimArray(int[,] arr)
+		{
+			fixed (int* ptr = arr) {
+				UsePointer(ptr);
+			}
+		}
+
 #if CS73
-		public unsafe void PinSpan(Span<int> span)
+		public unsafe void FixedSpan(Span<int> span)
 		{
 			fixed (int* ptr = span) {
 				UsePointer(ptr);
 			}
 		}
 
-		//public unsafe void CustomPinReferenceType(CustomPinnable mem)
+		//public unsafe void FixedCustomReferenceType(CustomPinnable mem)
 		//{
 		//	fixed (int* ptr = mem) {
 		//		UsePointer(ptr);

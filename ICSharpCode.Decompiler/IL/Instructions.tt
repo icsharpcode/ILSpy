@@ -1081,12 +1081,14 @@ protected override void Disconnected()
 		opCode.Members.Add("readonly IMethod method;");
 		opCode.ConstructorBody.Add("this.method = method;");
 		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IMethod", Name = "method", FieldName = "Method" });
-		opCode.PerformMatchConditions.Add("method.Equals(o.method)");
+		opCode.PerformMatchConditions.Add("object.Equals(method, o.method)");
 		opCode.Members.Add("/// <summary>Returns the method operand.</summary>" + Environment.NewLine
 						+ "public IMethod Method { get { return method; } }");
 		opCode.GenerateWriteTo = true;
-		opCode.WriteOperand.Add("output.Write(' ');");
-		opCode.WriteOperand.Add("method.WriteTo(output);");
+		opCode.WriteOperand.Add("if (method != null) {");
+		opCode.WriteOperand.Add("\toutput.Write(' ');");
+		opCode.WriteOperand.Add("\tmethod.WriteTo(output);");
+		opCode.WriteOperand.Add("}");
 		opCode.Interfaces.Add("IInstructionWithMethodOperand");
 	};
 	

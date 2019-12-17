@@ -3021,8 +3021,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			output.Write(' ');
-			method.WriteTo(output);
+			if (method != null) {
+				output.Write(' ');
+				method.WriteTo(output);
+			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3039,7 +3041,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdFtn;
-			return o != null && method.Equals(o.method);
+			return o != null && object.Equals(method, o.method);
 		}
 	}
 }
@@ -3069,8 +3071,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			output.Write(' ');
-			method.WriteTo(output);
+			if (method != null) {
+				output.Write(' ');
+				method.WriteTo(output);
+			}
 			output.Write('(');
 			Argument.WriteTo(output, options);
 			output.Write(')');
@@ -3090,7 +3094,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdVirtFtn;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && method.Equals(o.method);
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && object.Equals(method, o.method);
 		}
 	}
 }
@@ -3129,8 +3133,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
-			output.Write(' ');
-			method.WriteTo(output);
+			if (method != null) {
+				output.Write(' ');
+				method.WriteTo(output);
+			}
 			output.Write('(');
 			Argument.WriteTo(output, options);
 			output.Write(')');
@@ -3150,7 +3156,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdVirtDelegate;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type) && method.Equals(o.method);
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type) && object.Equals(method, o.method);
 		}
 	}
 }
@@ -4835,8 +4841,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			output.Write(' ');
-			method.WriteTo(output);
+			if (method != null) {
+				output.Write(' ');
+				method.WriteTo(output);
+			}
 			output.Write('(');
 			this.argument.WriteTo(output, options);
 			output.Write(')');
@@ -4856,7 +4864,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as GetPinnableReference;
-			return o != null && this.argument.PerformMatch(o.argument, ref match) && method.Equals(o.method);
+			return o != null && this.argument.PerformMatch(o.argument, ref match) && object.Equals(method, o.method);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -5074,8 +5082,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			output.Write(' ');
-			method.WriteTo(output);
+			if (method != null) {
+				output.Write(' ');
+				method.WriteTo(output);
+			}
 			output.Write('(');
 			this.left.WriteTo(output, options);
 			output.Write(", ");
@@ -5097,7 +5107,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as UserDefinedLogicOperator;
-			return o != null && method.Equals(o.method) && this.left.PerformMatch(o.left, ref match) && this.right.PerformMatch(o.right, ref match);
+			return o != null && object.Equals(method, o.method) && this.left.PerformMatch(o.left, ref match) && this.right.PerformMatch(o.right, ref match);
 		}
 	}
 }
