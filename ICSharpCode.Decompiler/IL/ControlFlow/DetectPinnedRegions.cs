@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.context = context;
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
 				context.CancellationToken.ThrowIfCancellationRequested();
-				DetectNullSafeArrayToPointer(container);
+				DetectNullSafeArrayToPointerOrCustomRefPin(container);
 				SplitBlocksAtWritesToPinnedLocals(container);
 				foreach (var block in container.Blocks)
 					DetectPinnedRegion(block);
@@ -112,30 +112,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 
 		#region null-safe array to pointer
-		void DetectNullSafeArrayToPointer(BlockContainer container)
+		void DetectNullSafeArrayToPointerOrCustomRefPin(BlockContainer container)
 		{
-			// Detect the following pattern:
-			//   ...
-			//   stloc V(ldloc S)
-			//   if (comp(ldloc S == ldnull)) br B_null_or_empty
-			//   br B_not_null
-			// }
-			// Block B_not_null {
-			//   if (conv i->i4 (ldlen(ldloc V))) br B_not_null_and_not_empty
-			//   br B_null_or_empty
-			// }
-			// Block B_not_null_and_not_empty {
-			//   stloc P(ldelema(ldloc V, ldc.i4 0, ...))
-			//   br B_target
-			// }
-			// Block B_null_or_empty {
-			//   stloc P(conv i4->u(ldc.i4 0))
-			//   br B_target
-			// }
-			// And convert the whole thing into:
-			//   ...
-			//   stloc P(array.to.pointer(V))
-			//   br B_target
 			bool modified = false;
 			for (int i = 0; i < container.Blocks.Count; i++) {
 				var block = container.Blocks[i];
@@ -149,13 +127,140 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						.WithILRange(block.Instructions[block.Instructions.Count - 2]);
 					((Branch)block.Instructions.Last()).TargetBlock = targetBlock;
 					modified = true;
+				} else if (IsCustomRefPinPattern(block, out ILInstruction ldlocMem, out var callGPR, out v, out var stlocPtr, out targetBlock)) {
+					context.Step("CustomRefPinPattern", block);
+					ILInstruction gpr;
+					if (context.Settings.PatternBasedFixedStatement) {
+						gpr = new GetPinnableReference(ldlocMem, callGPR.Method);
+					} else {
+						gpr = new IfInstruction(
+							condition: new Comp(ComparisonKind.Inequality, Sign.None, ldlocMem, new LdNull()),
+							trueInst: callGPR,
+							falseInst: new Conv(new LdcI4(0), PrimitiveType.Ref, checkForOverflow: false, inputSign: Sign.None)
+						);
+					}
+					block.Instructions[block.Instructions.Count - 2] = new StLoc(v, gpr)
+						.WithILRange(block.Instructions[block.Instructions.Count - 2]);
+					block.Instructions.Insert(block.Instructions.Count - 1, stlocPtr);
+					((Branch)block.Instructions.Last()).TargetBlock = targetBlock;
+					modified = true;
 				}
 			}
 			if (modified) {
 				container.Blocks.RemoveAll(b => b.IncomingEdgeCount == 0); // remove blocks made unreachable
 			}
 		}
-		
+
+		// Detect the following pattern:
+		//      if (comp.o(ldloc mem != ldnull)) br notNullBlock
+		//      br nullBlock
+		//  }
+		//
+		//  Block nullBlock (incoming: 1) {
+		//      stloc ptr(conv i4->u <zero extend>(ldc.i4 0))
+		//      br targetBlock
+		//  }
+		//
+		//  Block notNullBlock (incoming: 1) {
+		//      stloc V_1(call GetPinnableReference(ldloc mem))
+		//      stloc ptr(conv ref->u (ldloc V_1))
+		//      br targetBlock
+		//  }
+		// It will be replaced with:
+		//      stloc V_1(get.pinnable.reference(ldloc mem))
+		//      stloc ptr(conv ref->u (ldloc V_1))
+		//      br targetBlock
+		private bool IsCustomRefPinPattern(Block block, out ILInstruction ldlocMem, out CallInstruction callGPR,
+			out ILVariable v, out StLoc ptrAssign, out Block targetBlock)
+		{
+			ldlocMem = null;
+			callGPR = null;
+			v = null;
+			ptrAssign = null;
+			targetBlock = null;
+			//      if (comp.o(ldloc mem != ldnull)) br on_not_null
+			//      br on_null
+			if (!block.MatchIfAtEndOfBlock(out var ifCondition, out var trueInst, out var falseInst))
+				return false;
+			if (!ifCondition.MatchCompNotEqualsNull(out ldlocMem))
+				return false;
+			if (!SemanticHelper.IsPure(ldlocMem.Flags))
+				return false;
+			if (!trueInst.MatchBranch(out Block notNullBlock) || notNullBlock.Parent != block.Parent)
+				return false;
+			if (!falseInst.MatchBranch(out Block nullBlock) || nullBlock.Parent != block.Parent)
+				return false;
+
+			//  Block nullBlock (incoming: 1) {
+			//      stloc ptr(conv i4->u <zero extend>(ldc.i4 0))
+			//      br targetBlock
+			//  }
+			if (nullBlock.IncomingEdgeCount != 1)
+				return false;
+			if (nullBlock.Instructions.Count != 2)
+				return false;
+			if (!nullBlock.Instructions[0].MatchStLoc(out var ptr, out var nullPointerInst))
+				return false;
+			if (!nullPointerInst.MatchLdcI(0))
+				return false;
+			if (!nullBlock.Instructions[1].MatchBranch(out targetBlock))
+				return false;
+
+			//  Block notNullBlock (incoming: 1) {
+			//      stloc V_1(call GetPinnableReference(ldloc mem))
+			//      stloc ptr(conv ref->u (ldloc V_1))
+			//      br targetBlock
+			//  }
+			if (notNullBlock.IncomingEdgeCount != 1)
+				return false;
+			if (notNullBlock.Instructions.Count != 3)
+				return false;
+			// stloc V_1(call GetPinnableReference(ldloc mem))
+			if (!notNullBlock.Instructions[0].MatchStLoc(out v, out var value))
+				return false;
+			if (v.Kind != VariableKind.PinnedLocal)
+				return false;
+			callGPR = value as CallInstruction;
+			if (callGPR == null || callGPR.Arguments.Count != 1)
+				return false;
+			if (callGPR.Method.Name != "GetPinnableReference")
+				return false;
+			if (!ldlocMem.Match(callGPR.Arguments[0]).Success)
+				return false;
+			// stloc ptr(conv ref->u (ldloc V_1))
+			ptrAssign = notNullBlock.Instructions[1] as StLoc;
+			if (ptrAssign == null || ptrAssign.Variable != ptr)
+				return false;
+			if (!ptrAssign.Value.UnwrapConv(ConversionKind.StopGCTracking).MatchLdLoc(v))
+				return false;
+			// br targetBlock
+			if (!notNullBlock.Instructions[2].MatchBranch(targetBlock))
+				return false;
+			return true;
+		}
+
+		// Detect the following pattern:
+		//   ...
+		//   stloc V(ldloc S)
+		//   if (comp(ldloc S == ldnull)) br B_null_or_empty
+		//   br B_not_null
+		// }
+		// Block B_not_null {
+		//   if (conv i->i4 (ldlen(ldloc V))) br B_not_null_and_not_empty
+		//   br B_null_or_empty
+		// }
+		// Block B_not_null_and_not_empty {
+		//   stloc P(ldelema(ldloc V, ldc.i4 0, ...))
+		//   br B_target
+		// }
+		// Block B_null_or_empty {
+		//   stloc P(conv i4->u(ldc.i4 0))
+		//   br B_target
+		// }
+		// And convert the whole thing into:
+		//   ...
+		//   stloc P(array.to.pointer(V))
+		//   br B_target
 		bool IsNullSafeArrayToPointerPattern(Block block, out ILVariable v, out ILVariable p, out Block targetBlock)
 		{
 			v = null;
