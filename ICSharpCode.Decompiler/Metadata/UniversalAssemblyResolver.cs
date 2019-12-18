@@ -26,7 +26,7 @@ using System.Text;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	enum TargetFrameworkIdentifier
+	public enum TargetFrameworkIdentifier
 	{
 		NETFramework,
 		NETCoreApp,
@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					if (IsZeroOrAllOnes(targetFrameworkVersion))
 						goto default;
 					if (dotNetCorePathFinder == null) {
-						dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, targetFrameworkVersion);
+						dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, targetFrameworkIdentifier, targetFrameworkVersion);
 					}
 					file = dotNetCorePathFinder.TryResolveDotNetCore(name);
 					if (file != null)
