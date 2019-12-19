@@ -826,4 +826,7 @@ Are you sure you want to continue?</value>
   <data name="ListsResetConfirmation" xml:space="preserve">
     <value>Are you sure that you want to remove all assembly lists and recreate the default assembly lists?</value>
   </data>
+  <data name="DecompilerSettings.IntroduceStaticLocalFunctions" xml:space="preserve">
+    <value>Introduce static local functions</value>
+  </data>
 </root>

@@ -187,7 +187,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Noop("M3", this.M3);
 				Noop("M3", M3);
 
+#if CS80
+				static void M3()
+#else
 				void M3()
+#endif
 				{
 
 				}

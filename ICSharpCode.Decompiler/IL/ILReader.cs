@@ -100,7 +100,6 @@ namespace ICSharpCode.Decompiler.IL
 				this.method = this.method.Specialize(genericContext.ToSubstitution());
 			}
 			this.genericContext = genericContext;
-			var methodDefinition = metadata.GetMethodDefinition(methodDefinitionHandle);
 			this.body = body;
 			this.reader = body.GetILReader();
 			this.currentStack = ImmutableStack<ILVariable>.Empty;

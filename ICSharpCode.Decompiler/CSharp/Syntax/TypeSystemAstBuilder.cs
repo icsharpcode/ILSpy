@@ -1807,7 +1807,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#endregion
 		
 		#region Convert Type Parameter
-		TypeParameterDeclaration ConvertTypeParameter(ITypeParameter tp)
+		internal TypeParameterDeclaration ConvertTypeParameter(ITypeParameter tp)
 		{
 			TypeParameterDeclaration decl = new TypeParameterDeclaration();
 			decl.Variance = tp.Variance;
@@ -1817,7 +1817,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return decl;
 		}
 		
-		Constraint ConvertTypeParameterConstraint(ITypeParameter tp)
+		internal Constraint ConvertTypeParameterConstraint(ITypeParameter tp)
 		{
 			if (!tp.HasDefaultConstructorConstraint && !tp.HasReferenceTypeConstraint && !tp.HasValueTypeConstraint && tp.NullabilityConstraint != Nullability.NotNullable && tp.DirectBaseTypes.All(IsObjectOrValueType)) {
 				return null;

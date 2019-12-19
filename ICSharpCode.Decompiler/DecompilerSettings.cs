@@ -111,12 +111,13 @@ namespace ICSharpCode.Decompiler
 				readOnlyMethods = false;
 				asyncUsingAndForEachStatement = false;
 				asyncEnumerator = false;
+				staticLocalFunctions = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement)
+			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement || staticLocalFunctions)
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers || patternBasedFixedStatement)
 				return CSharp.LanguageVersion.CSharp7_3;
@@ -1077,6 +1078,23 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (localFunctions != value) {
 					localFunctions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool staticLocalFunctions = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 8.0 static local functions should be transformed.
+		/// </summary>
+		[Category("C# 8.0 / VS 2019")]
+		[Description("DecompilerSettings.IntroduceStaticLocalFunctions")]
+		public bool StaticLocalFunctions {
+			get { return staticLocalFunctions; }
+			set {
+				if (staticLocalFunctions != value) {
+					staticLocalFunctions = value;
 					OnPropertyChanged();
 				}
 			}

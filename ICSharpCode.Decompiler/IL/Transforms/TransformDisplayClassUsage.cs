@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					foreach (var v in f.Variables.ToArray()) {
 						if (context.Settings.YieldReturn && HandleMonoStateMachine(function, v, decompilationContext, f))
 							continue;
-						if ((context.Settings.AnonymousMethods || context.Settings.ExpressionTrees) && IsClosure(v, out ITypeDefinition closureType, out var inst)) {
+						if ((context.Settings.AnonymousMethods || context.Settings.ExpressionTrees) && IsClosure(context, v, instructionsToRemove, out ITypeDefinition closureType, out var inst)) {
 							AddOrUpdateDisplayClass(f, v, closureType, inst, localFunctionClosureParameter: false);
 						}
 						if (context.Settings.LocalFunctions && f.Kind == ILFunctionKind.LocalFunction && v.Kind == VariableKind.Parameter && v.Index > -1 && f.Method.Parameters[v.Index.Value] is IParameter p && LocalFunctionDecompiler.IsClosureParameter(p, decompilationContext)) {
@@ -110,30 +110,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool IsClosure(ILVariable variable, out ITypeDefinition closureType, out ILInstruction initializer)
+		internal static bool IsClosure(ILTransformContext context, ILVariable variable, List<ILInstruction> instructionsToRemove, out ITypeDefinition closureType, out ILInstruction initializer)
 		{
 			closureType = null;
 			initializer = null;
 			if (variable.IsSingleDefinition && variable.StoreInstructions.SingleOrDefault() is StLoc inst) {
 				initializer = inst;
-				if (IsClosureInit(inst, out closureType)) {
-					instructionsToRemove.Add(inst);
+				if (IsClosureInit(context, inst, out closureType)) {
+					instructionsToRemove?.Add(inst);
 					return true;
 				}
 			}
 			closureType = variable.Type.GetDefinition();
-			if (context.Settings.LocalFunctions && closureType?.Kind == TypeKind.Struct && variable.HasInitialValue && IsPotentialClosure(this.context, closureType)) {
+			if (context.Settings.LocalFunctions && closureType?.Kind == TypeKind.Struct && variable.HasInitialValue && IsPotentialClosure(context, closureType)) {
 				initializer = LocalFunctionDecompiler.GetStatement(variable.AddressInstructions.OrderBy(i => i.StartILOffset).First());
 				return true;
 			}
 			return false;
 		}
 
-		bool IsClosureInit(StLoc inst, out ITypeDefinition closureType)
+		static bool IsClosureInit(ILTransformContext context, StLoc inst, out ITypeDefinition closureType)
 		{
 			if (inst.Value is NewObj newObj) {
 				closureType = newObj.Method.DeclaringTypeDefinition;
-				return closureType != null && IsPotentialClosure(this.context, newObj);
+				return closureType != null && IsPotentialClosure(context, newObj);
 			}
 			closureType = null;
 			return false;
