@@ -283,6 +283,8 @@
     <EmbeddedResource Condition=" '$(COMPUTERNAME)' != 'DANIEL-E590' " Include="Properties\Resources.zh-Hans.resx" />
     <Resource Include="Images\ILSpy.ico" />
     <EmbeddedResource Include="TextView\CSharp-Mode.xshd" />
+    <EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
+    <EmbeddedResource Include="TextView\Asm-Mode.xshd" />
     <None Include="app.config" />
     <None Include="app.manifest" />
     <None Include="Properties\app.config.template" />
@@ -318,7 +320,6 @@
     <Compile Include="TreeNodes\ThreadingSupport.cs" />
     <Compile Include="TreeNodes\TypeTreeNode.cs" />
     <EmbeddedResource Include="README.txt" />
-    <EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
   </ItemGroup>
 
   <ItemGroup>
