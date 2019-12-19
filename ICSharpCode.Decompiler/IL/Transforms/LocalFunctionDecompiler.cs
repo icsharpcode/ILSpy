@@ -53,18 +53,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 
 		/// <para>
 		/// local functions can either be used in method calls, i.e., call and callvirt instructions,
-		/// or can be used as part of the "delegate construction" pattern, i.e., <c>newobj Delegate(&lt;target-expression&gt;, ldftn &lt;method&gt;)</c>.
+		/// or can be used as part of the "delegate construction" pattern, i.e.,
+		/// <c>newobj Delegate(&lt;target-expression&gt;, ldftn &lt;method&gt;)</c>.
 		/// </para>
-		/// As local functions can be declared practically anywhere, we have to take a look at all use-sites and infer the declaration location from that. Use-sites can be call, callvirt and ldftn instructions.
-		/// After all use-sites are collected we construct the ILAst of the local function and add it to the parent function.
-		/// Then all use-sites of the local-function are transformed to a call to the <c>LocalFunctionMethod</c> or a ldftn of the <c>LocalFunctionMethod</c>.
+		/// As local functions can be declared practically anywhere, we have to take a look at
+		/// all use-sites and infer the declaration location from that. Use-sites can be call,
+		/// callvirt and ldftn instructions.
+		/// After all use-sites are collected we construct the ILAst of the local function
+		/// and add it to the parent function.
+		/// Then all use-sites of the local-function are transformed to a call to the 
+		/// <c>LocalFunctionMethod</c> or a ldftn of the <c>LocalFunctionMethod</c>.
 		/// In a next step we handle all nested local functions.
-		/// After all local functions are transformed, we move all local functions that capture any variables to their respective declaration scope.
+		/// After all local functions are transformed, we move all local functions that capture
+		/// any variables to their respective declaration scope.
 		/// </summary>
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			if (!context.Settings.LocalFunctions)
 				return;
+			// Disable the transform if we are decompiling a display-class or local function method:
+			// This happens if a local function or display class is selected in the ILSpy tree view.
 			if (IsLocalFunctionMethod(function.Method, context) || IsLocalFunctionDisplayClass(function.Method.ParentModule.PEFile, (TypeDefinitionHandle)function.Method.DeclaringTypeDefinition.MetadataToken, context))
 				return;
 			this.context = context;
@@ -88,8 +96,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						var target = info.UseSites.Where(us => us.Arguments[0].MatchLdLoc(out _)).FirstOrDefault()?.Arguments[0];
 						if (target == null) {
 							target = info.UseSites[0].Arguments[0];
-							if (target.MatchLdObj(out var target1, out var type) && target1 is LdFlda && thisVar.Type == type && type.Kind == TypeKind.Class && TransformDisplayClassUsage.IsPotentialClosure(context, type.GetDefinition())) {
-								var variable = function.Descendants.OfType<ILFunction>().SelectMany(f => f.Variables).Where(v => !v.IsThis() && TransformDisplayClassUsage.IsClosure(context, v, null, out var varType, out _) && varType == type).OnlyOrDefault();
+							if (target.MatchLdFld(out var target1, out var field) && thisVar.Type.Equals(field.Type) && field.Type.Kind == TypeKind.Class && TransformDisplayClassUsage.IsPotentialClosure(context, field.Type.GetDefinition())) {
+								var variable = function.Descendants.OfType<ILFunction>().SelectMany(f => f.Variables).Where(v => !v.IsThis() && TransformDisplayClassUsage.IsClosure(context, v, null, out var varType, out _) && varType.Equals(field.Type)).OnlyOrDefault();
 								if (variable != null) {
 									target = new LdLoc(variable);
 									HandleArgument(localFunction, 1, 0, target);
@@ -241,7 +249,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (targetMethod.TypeParameters.Count > 0) {
 				var lastParams = targetMethod.Parameters.Where(p => IsClosureParameter(p, this.resolveContext)).SelectMany(p => UnwrapByRef(p.Type).TypeArguments)
-					.Select(pt => (int?)targetMethod.TypeArguments.IndexOf(pt)).DefaultIfEmpty().Max();
+					.Select(pt => (int?)targetMethod.TypeParameters.IndexOf(pt)).DefaultIfEmpty().Max();
 				if (lastParams != null && lastParams.GetValueOrDefault() + 1 > skipCount)
 					skipCount = lastParams.GetValueOrDefault() + 1;
 			}
@@ -260,9 +268,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			var classTypeParameters = new List<ITypeParameter>(targetMethod.DeclaringType.TypeParameters);
 			var methodTypeParameters = new List<ITypeParameter>(targetMethod.TypeParameters);
-			var a = targetMethod.DeclaringType.TypeArguments.Concat(targetMethod.TypeArguments).Take(total);
+			var skippedTypeArguments = targetMethod.DeclaringType.TypeArguments.Concat(targetMethod.TypeArguments).Take(total);
 			int idx = 0;
-			foreach (var curA in a) {
+			foreach (var skippedTA in skippedTypeArguments) {
 				int curIdx;
 				List<ITypeParameter> curParameters;
 				IReadOnlyList<IType> curArgs;
@@ -277,7 +285,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				if (curArgs[curIdx].Kind != TypeKind.TypeParameter)
 					break;
-				curParameters[curIdx] = (ITypeParameter)curA;
+				curParameters[curIdx] = (ITypeParameter)skippedTA;
 				idx++;
 			}
 			if (idx != total) {

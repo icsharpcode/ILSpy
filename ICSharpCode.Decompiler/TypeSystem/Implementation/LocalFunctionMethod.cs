@@ -35,8 +35,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (baseMethod == null)
 				throw new ArgumentNullException(nameof(baseMethod));
-			if (baseMethod is SpecializedMethod)
-				throw new ArgumentException("Must not be a specialized method!", nameof(baseMethod));
 			this.baseMethod = baseMethod;
 			this.NumberOfCompilerGeneratedParameters = numberOfCompilerGeneratedParameters;
 			this.NumberOfCompilerGeneratedTypeParameters = numberOfCompilerGeneratedTypeParameters;
@@ -88,7 +86,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IMethod Specialize(TypeParameterSubstitution substitution)
 		{
-			return SpecializedMethod.Create(this, substitution);
+			return new LocalFunctionMethod(
+				baseMethod.Specialize(substitution),
+				NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedTypeParameters);
 		}
 		
 		IMember IMember.Specialize(TypeParameterSubstitution substitution)

@@ -1462,7 +1462,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						method.DeclaringType,
 						new IParameterizedMember[] { method }
 					)
-				}, method.TypeArguments
+				}, method.TypeArguments.Skip(localFunction.ReducedMethod.NumberOfCompilerGeneratedTypeParameters).ToArray()
 			);
 		}
 
