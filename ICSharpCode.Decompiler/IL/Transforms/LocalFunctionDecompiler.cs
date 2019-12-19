@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						declaringFunction.LocalFunctions.Add(localFunction);
 					}
 
-					if (TryValidateSkipCount(info, out int skipCount) && skipCount != localFunction.ReducedMethod.NumberOfCompilerGeneratedGenerics) {
+					if (TryValidateSkipCount(info, out int skipCount) && skipCount != localFunction.ReducedMethod.NumberOfCompilerGeneratedTypeParameters) {
 						Debug.Assert(false);
 						function.Warnings.Add($"Could not decode local function '{info.Method}'");
 						if (localFunction.DeclarationScope != function.Body && localFunction.DeclarationScope.Parent is ILFunction declaringFunction) {
@@ -228,8 +228,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var nestedContext = new ILTransformContext(context, function);
 			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is LocalFunctionDecompiler)), nestedContext);
 			function.DeclarationScope = null;
-			function.ReducedMethod = ReduceToLocalFunction(function.Method);
-			function.ReducedMethod.NumberOfCompilerGeneratedGenerics = skipCount;
+			function.ReducedMethod = ReduceToLocalFunction(function.Method, skipCount);
 			return function;
 		}
 
@@ -324,7 +323,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return inst;
 		}
 
-		LocalFunctionMethod ReduceToLocalFunction(IMethod method)
+		LocalFunctionMethod ReduceToLocalFunction(IMethod method, int skipCount)
 		{
 			int parametersToRemove = 0;
 			for (int i = method.Parameters.Count - 1; i >= 0; i--) {
@@ -332,7 +331,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				parametersToRemove++;
 			}
-			return new LocalFunctionMethod(method, parametersToRemove);
+			return new LocalFunctionMethod(method, parametersToRemove, skipCount);
 		}
 
 		static void TransformToLocalFunctionReference(ILFunction function, CallInstruction useSite)

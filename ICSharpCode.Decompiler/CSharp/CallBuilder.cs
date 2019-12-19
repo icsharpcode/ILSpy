@@ -197,7 +197,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else if (localFunction != null) {
 				var ide = new IdentifierExpression(localFunction.Name);
 				if (method.TypeArguments.Count > 0) {
-					int skipCount = localFunction.ReducedMethod.NumberOfCompilerGeneratedGenerics;
+					int skipCount = localFunction.ReducedMethod.NumberOfCompilerGeneratedTypeParameters;
 					ide.TypeArguments.AddRange(method.TypeArguments.Skip(skipCount).Select(expressionBuilder.ConvertType));
 				}
 				target = ide.WithoutILInstruction()
@@ -1401,7 +1401,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if ((step & 2) != 0) {
 					int skipCount = 0;
 					if (localFunction != null && method.TypeArguments.Count > 0) {
-						skipCount = localFunction.ReducedMethod.NumberOfCompilerGeneratedGenerics;
+						skipCount = localFunction.ReducedMethod.NumberOfCompilerGeneratedTypeParameters;
 					}
 					ide.TypeArguments.AddRange(method.TypeArguments.Skip(skipCount).Select(expressionBuilder.ConvertType));
 				}

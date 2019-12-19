@@ -990,7 +990,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (function.Method.TypeParameters.Count > 0) {
 					var astBuilder = exprBuilder.astBuilder;
 					if (astBuilder.ShowTypeParameters) {
-						int skipCount = function.ReducedMethod.NumberOfCompilerGeneratedGenerics;
+						int skipCount = function.ReducedMethod.NumberOfCompilerGeneratedTypeParameters;
 						stmt.TypeParameters.AddRange(function.Method.TypeParameters.Skip(skipCount).Select(t => astBuilder.ConvertTypeParameter(t)));
 						if (astBuilder.ShowTypeParameterConstraints) {
 							stmt.Constraints.AddRange(function.Method.TypeParameters.Skip(skipCount).Select(t => astBuilder.ConvertTypeParameterConstraint(t)).Where(c => c != null));
