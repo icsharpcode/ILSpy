@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			var inst = This();
 			if (inst.PublicKeyOrToken.IsNil)
-				return Empty<byte>.Array;
+				return null;
 			var bytes = Module.Metadata.GetBlobBytes(inst.PublicKeyOrToken);
 			if ((inst.Flags & AssemblyFlags.PublicKey) != 0) {
 				return sha1.ComputeHash(bytes).Skip(12).ToArray();

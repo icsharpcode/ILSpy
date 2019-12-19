@@ -70,11 +70,18 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.version = version;
 		}
 
-		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkId, Version version, ReferenceLoadInfo loadInfo = null)
+		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkIdString, TargetFrameworkIdentifier targetFramework, Version version, ReferenceLoadInfo loadInfo = null)
 		{
 			string assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
 			string basePath = Path.GetDirectoryName(parentAssemblyFileName);
 			this.version = version;
+
+			if (targetFramework == TargetFrameworkIdentifier.NETStandard) {
+				// .NET Standard 2.1 is implemented by .NET Core 3.0 or higher
+				if (version.Major == 2 && version.Minor == 1) {
+					this.version = new Version(3, 0, 0);
+				}
+			}
 
 			var depsJsonFileName = Path.Combine(basePath, $"{assemblyName}.deps.json");
 			if (!File.Exists(depsJsonFileName)) {
@@ -82,7 +89,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				return;
 			}
 
-			packages = LoadPackageInfos(depsJsonFileName, targetFrameworkId).ToArray();
+			packages = LoadPackageInfos(depsJsonFileName, targetFrameworkIdString).ToArray();
 
 			foreach (var path in LookupPaths) {
 				foreach (var p in packages) {

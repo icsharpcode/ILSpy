@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
@@ -539,6 +540,31 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IType WithoutNullability(this IType type)
 		{
 			return type.ChangeNullability(Nullability.Oblivious);
+		}
+
+		public static bool IsDirectImportOf(this ITypeDefinition type, IModule module)
+		{
+			var moduleReference = type.ParentModule;
+			foreach (var asmRef in module.PEFile.AssemblyReferences) {
+				if (asmRef.FullName == moduleReference.FullAssemblyName)
+					return true;
+				if (asmRef.Name == "netstandard" && asmRef.GetPublicKeyToken() != null) {
+					var referencedModule = module.Compilation.FindModuleByReference(asmRef);
+					if (referencedModule != null && !referencedModule.PEFile.GetTypeForwarder(type.FullTypeName).IsNil)
+						return true;
+				}
+			}
+			return false;
+		}
+
+		public static IModule FindModuleByReference(this ICompilation compilation, IAssemblyReference assemblyName)
+		{
+			foreach (var module in compilation.Modules) {
+				if (module.FullAssemblyName == assemblyName.FullName) {
+					return module;
+				}
+			}
+			return null;
 		}
 	}
 }
