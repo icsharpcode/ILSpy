@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpy
 		IDebugInfoProvider debugInfoProvider;
 
 		/// <summary>
-		/// Gets the Cecil ModuleDefinition.
+		/// Gets the <see cref="PEFile"/>.
 		/// </summary>
 		public Task<PEFile> GetPEFileAsync()
 		{
@@ -80,7 +80,7 @@ namespace ICSharpCode.ILSpy
 		}
 
 		/// <summary>
-		/// Gets the Cecil ModuleDefinition.
+		/// Gets the <see cref="PEFile"/>.
 		/// Returns null in case of load errors.
 		/// </summary>
 		public PEFile GetPEFileOrNull()
