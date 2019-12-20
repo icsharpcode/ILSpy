@@ -1,0 +1,32 @@
+﻿<Control x:Class="ICSharpCode.ILSpy.Metadata.HexFilterControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ICSharpCode.ILSpy.Metadata"
+             xmlns:dgx="urn:tom-englert.de/DataGridExtensions"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+	<Control.Template>
+		<ControlTemplate>
+			<Grid>
+				<Control Style="{DynamicResource {x:Static dgx:DataGridFilter.IconStyleKey}}"/>
+				<StackPanel x:Name="inputPanel" Orientation="Horizontal" Margin="4,0,0,0">
+					<TextBlock Text="0x"/>
+					<TextBox x:Name="textBox" TextChanged="TextBox_TextChanged" MinWidth="20" Style="{DynamicResource {x:Static dgx:DataGridFilter.ColumnHeaderSearchTextBoxStyleKey}}" />
+				</StackPanel>
+			</Grid>
+			<ControlTemplate.Triggers>
+				<Trigger SourceName="textBox" Property="Text" Value="">
+					<Setter TargetName="inputPanel" Property="Opacity" Value="0"/>
+				</Trigger>
+				<Trigger Property="IsMouseOver" Value="True">
+					<Setter TargetName="inputPanel" Property="Opacity" Value="1"/>
+				</Trigger>
+				<Trigger SourceName="textBox" Property="IsFocused" Value="True">
+					<Setter TargetName="inputPanel" Property="Opacity" Value="1"/>
+				</Trigger>
+			</ControlTemplate.Triggers>
+		</ControlTemplate>
+	</Control.Template>
+</Control>

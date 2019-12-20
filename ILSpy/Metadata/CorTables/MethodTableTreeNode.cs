@@ -31,6 +31,8 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
@@ -52,9 +54,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
 
-			ListView view = Helpers.CreateListView("MethodDefsView");
+			var view = Helpers.PrepareDataGrid(tabPage);
 			var metadata = module.Metadata;
-
 			var list = new List<MethodDefEntry>();
 
 			foreach (var row in metadata.MethodDefinitions)
@@ -82,26 +83,37 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.MethodDef)
 				+ metadata.GetTableRowSize(TableIndex.MethodDef) * (RID - 1);
 
-			public int Attributes => (int)methodDef.Attributes;
+			public MethodAttributes Attributes => methodDef.Attributes;
 
-			public string AttributesTooltip => null; //Helpers.AttributesToString(MethodDef.Attributes);
+			public object AttributesTooltip => new FlagsTooltip((int)methodDef.Attributes, typeof(MethodAttributes));
 
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(methodDef.Name);
+			public MethodImplAttributes ImplAttributes => methodDef.ImplAttributes;
+
+			public object ImplAttributesTooltip => new FlagsTooltip((int)methodDef.ImplAttributes, typeof(MethodImplAttributes));
+
+			public int RVA => methodDef.RelativeVirtualAddress;
 
 			public string Name => metadata.GetString(methodDef.Name);
 
-			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemOrNull()?.MainModule).GetDefinition(handle);
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(methodDef.Name):X} \"{Name}\"";
 
 			public int Signature => MetadataTokens.GetHeapOffset(methodDef.Signature);
 
+			string signatureTooltip;
+
 			public string SignatureTooltip {
 				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)handle).WriteTo(module, output, context);
-					return output.ToString();
+					if (signatureTooltip == null) {
+						ITextOutput output = new PlainTextOutput();
+						var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
+						((EntityHandle)handle).WriteTo(module, output, context);
+						signatureTooltip = output.ToString();
+					}
+					return signatureTooltip;
 				}
 			}
+
+			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemOrNull()?.MainModule).GetDefinition(handle);
 
 			public MethodDefEntry(PEFile module, MethodDefinitionHandle handle)
 			{
@@ -110,6 +122,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.methodDef = metadata.GetMethodDefinition(handle);
+				this.signatureTooltip = null;
 			}
 		}
 

@@ -24,10 +24,6 @@ namespace ICSharpCode.ILSpy.Commands
 		public bool IsVisible(TextViewContext context)
 		{
 			var (c, selectedItem) = context.GetColumnAndRowFromMousePosition();
-			if (c is FilterableGridViewColumn column && column.CellTemplateSelector is HandleTemplate && selectedItem is IMemberTreeNode) {
-				var selectedHandle = MetadataTokens.EntityHandle((int)selectedItem.GetType().GetProperty(column.SortBy).GetValue(selectedItem));
-				return !selectedHandle.IsNil && (selectedHandle.Kind == HandleKind.TypeDefinition || selectedHandle.Kind == HandleKind.FieldDefinition || selectedHandle.Kind == HandleKind.MethodDefinition || selectedHandle.Kind == HandleKind.PropertyDefinition || selectedHandle.Kind == HandleKind.EventDefinition);
-			}
 			if (context.SelectedTreeNodes == null)
 				return context.Reference?.Reference is IEntity;
 			return context.SelectedTreeNodes.Length == 1 && context.SelectedTreeNodes.All(n => n is IMemberTreeNode);
@@ -36,10 +32,6 @@ namespace ICSharpCode.ILSpy.Commands
 		public bool IsEnabled(TextViewContext context)
 		{
 			var (c, selectedItem) = context.GetColumnAndRowFromMousePosition();
-			if (c is FilterableGridViewColumn column && column.CellTemplateSelector is HandleTemplate && selectedItem is IMemberTreeNode) {
-				var selectedHandle = MetadataTokens.EntityHandle((int)selectedItem.GetType().GetProperty(column.SortBy).GetValue(selectedItem));
-				return !selectedHandle.IsNil && (selectedHandle.Kind == HandleKind.TypeDefinition || selectedHandle.Kind == HandleKind.FieldDefinition || selectedHandle.Kind == HandleKind.MethodDefinition || selectedHandle.Kind == HandleKind.PropertyDefinition || selectedHandle.Kind == HandleKind.EventDefinition);
-			}
 			if (context.SelectedTreeNodes == null)
 				return context.Reference?.Reference is IEntity;
 			foreach (IMemberTreeNode node in context.SelectedTreeNodes) {
@@ -58,28 +50,7 @@ namespace ICSharpCode.ILSpy.Commands
 		public void Execute(TextViewContext context)
 		{
 			IEntity selection = null;
-			var (c, selectedItem) = context.GetColumnAndRowFromMousePosition();
-			if (c is FilterableGridViewColumn column && column.CellTemplateSelector is HandleTemplate && selectedItem is IMemberTreeNode semanticContext) {
-				var selectedHandle = MetadataTokens.EntityHandle((int)selectedItem.GetType().GetProperty(column.SortBy).GetValue(selectedItem));
-				var module = (MetadataModule)semanticContext.Member.ParentModule;
-				switch (selectedHandle.Kind) {
-					case HandleKind.TypeDefinition:
-						selection = module.GetDefinition((TypeDefinitionHandle)selectedHandle);
-						break;
-					case HandleKind.FieldDefinition:
-						selection = module.GetDefinition((FieldDefinitionHandle)selectedHandle);
-						break;
-					case HandleKind.MethodDefinition:
-						selection = module.GetDefinition((MethodDefinitionHandle)selectedHandle);
-						break;
-					case HandleKind.PropertyDefinition:
-						selection = module.GetDefinition((PropertyDefinitionHandle)selectedHandle);
-						break;
-					case HandleKind.EventDefinition:
-						selection = module.GetDefinition((EventDefinitionHandle)selectedHandle);
-						break;
-				}
-			} else if (context.SelectedTreeNodes?[0] is IMemberTreeNode node) {
+			if (context.SelectedTreeNodes?[0] is IMemberTreeNode node) {
 				selection = node.Member;
 			} else if (context.Reference?.Reference is IEntity entity) {
 				selection = entity;

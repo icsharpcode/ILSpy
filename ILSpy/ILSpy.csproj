@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <OutputType>WinExe</OutputType>
-    <LangVersion>7.2</LangVersion>
+    <LangVersion>7.3</LangVersion>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
     <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
@@ -124,7 +124,6 @@
     <Compile Include="Controls\CustomDialog.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Controls\FilterableGridViewColumn.cs" />
     <Compile Include="Controls\GridViewColumnAutoSize.cs" />
     <Compile Include="Controls\MarkupExtensions.cs" />
     <Compile Include="Controls\ResourceObjectTable.xaml.cs">
@@ -136,6 +135,10 @@
     <Compile Include="Controls\SearchBox.cs" />
     <Compile Include="Controls\SortableGridViewColumn.cs" />
     <Compile Include="Controls\XamlResourceExtension.cs" />
+    <Compile Include="Metadata\DataGridCustomTextColumn.cs" />
+    <Compile Include="Metadata\FlagsFilterControl.xaml.cs" />
+    <Compile Include="Metadata\FlagsTooltip.xaml.cs" />
+    <Compile Include="Metadata\HexFilterControl.xaml.cs" />
     <Compile Include="ViewModels\ManageAssemblyListsViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="Views\CreateListDialog.xaml.cs">
@@ -300,9 +303,7 @@
     <Compile Include="Metadata\DataDirectoriesTreeNode.cs" />
     <Compile Include="Metadata\DosHeaderTreeNode.cs" />
     <Compile Include="Metadata\CoffHeaderTreeNode.cs" />
-    <Compile Include="Metadata\EntityHandleTemplate.cs" />
     <Compile Include="Metadata\Helpers.cs" />
-    <Compile Include="Metadata\StringHandleTemplate.cs" />
     <Compile Include="Metadata\MetadataTableViews.xaml.cs" />
     <Compile Include="Metadata\MetadataTreeNode.cs" />
     <Compile Include="Metadata\OptionalHeaderTreeNode.cs" />
@@ -440,6 +441,9 @@
     <Page Include="Controls\ResourceObjectTable.xaml" />
     <Page Include="Controls\ResourceStringTable.xaml" />
     <Page Include="Controls\SearchBoxStyle.xaml" />
+    <Page Include="Metadata\FlagsFilterControl.xaml" />
+    <Page Include="Metadata\FlagsTooltip.xaml" />
+    <Page Include="Metadata\HexFilterControl.xaml" />
     <Page Include="Views\CreateListDialog.xaml" />
     <Page Include="Views\DebugSteps.xaml" />
     <Page Include="Images\Assembly.xaml" />
@@ -520,6 +524,15 @@
 
   <ItemGroup>
     <Page Update="@(Page)" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Update="Metadata\FlagsFilterControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Metadata\FlagsTooltip.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Metadata\HexFilterControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Metadata\MetadataTableViews.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>

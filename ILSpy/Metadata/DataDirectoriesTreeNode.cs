@@ -44,17 +44,12 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
 
-			var dataGrid = new DataGrid {
-				Columns = {
-					new DataGridTextColumn { IsReadOnly = true, Header = "Name", Binding = new Binding("Name") },
-					new DataGridTextColumn { IsReadOnly = true, Header = "RVA", Binding = new Binding("RVA") { StringFormat = "X8" } },
-					new DataGridTextColumn { IsReadOnly = true, Header = "Size", Binding = new Binding("Size") { StringFormat = "X8" } },
-					new DataGridTextColumn { IsReadOnly = true, Header = "Section", Binding = new Binding("Section") },
-				},
-				AutoGenerateColumns = false,
-				CanUserAddRows = false,
-				CanUserDeleteRows = false,
-			};
+			var dataGrid = Helpers.PrepareDataGrid(tabPage);
+			//dataGrid.AutoGenerateColumns = false;
+			//dataGrid.Columns.Add(new DataGridTextColumn { IsReadOnly = true, Header = "Name", Binding = new Binding("Name") });
+			//dataGrid.Columns.Add(new DataGridTextColumn { IsReadOnly = true, Header = "RVA", Binding = new Binding("RVA") { StringFormat = "X8" } });
+			//dataGrid.Columns.Add(new DataGridTextColumn { IsReadOnly = true, Header = "Size", Binding = new Binding("Size") { StringFormat = "X8" } });
+			//dataGrid.Columns.Add(new DataGridTextColumn { IsReadOnly = true, Header = "Section", Binding = new Binding("Section") });
 			var headers = module.Reader.PEHeaders;
 			var reader = module.Reader.GetEntireImage().GetReader(headers.PEHeaderStartOffset, 128);
 			var header = headers.PEHeader;

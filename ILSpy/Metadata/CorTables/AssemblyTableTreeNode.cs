@@ -53,10 +53,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
 
-			ListView view = Helpers.CreateListView("AssemblyView");
-
-			var metadata = module.Metadata;
-
+			var view = Helpers.PrepareDataGrid(tabPage);
 			var list = new List<AssemblyEntry>();
 
 			list.Add(new AssemblyEntry(module));

@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
 
-			ListView view = Helpers.CreateListView("GenericParamsView");
+			var view = Helpers.PrepareDataGrid(tabPage);
 			var metadata = module.Metadata;
 			
 			var list = new List<GenericParamEntry>();

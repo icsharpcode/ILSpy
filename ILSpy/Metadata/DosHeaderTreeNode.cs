@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
 
-			var view = Helpers.CreateListView("EntryView");
+			var view = Helpers.PrepareDataGrid(tabPage);
 			var reader = module.Reader.GetEntireImage().GetReader(0, 64);
 
 			var entries = new List<Entry>();
