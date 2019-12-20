@@ -429,4 +429,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 	}
+
+	public class Issue1867
+	{
+		private int value;
+
+		public Func<bool> TestLambda(Issue1867 x)
+		{
+			Issue1867 m1;
+			Issue1867 m2;
+			if (x.value > value) {
+				m1 = this;
+				m2 = x;
+			} else {
+				m1 = x;
+				m2 = this;
+			}
+
+			return () => m1.value + 1 == 4 && m2.value > 5;
+		}
+	}
 }

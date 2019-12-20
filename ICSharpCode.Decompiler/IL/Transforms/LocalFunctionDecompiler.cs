@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (target == null) {
 							target = info.UseSites[0].Arguments[0];
 							if (target.MatchLdFld(out var target1, out var field) && thisVar.Type.Equals(field.Type) && field.Type.Kind == TypeKind.Class && TransformDisplayClassUsage.IsPotentialClosure(context, field.Type.GetDefinition())) {
-								var variable = function.Descendants.OfType<ILFunction>().SelectMany(f => f.Variables).Where(v => !v.IsThis() && TransformDisplayClassUsage.IsClosure(context, v, null, out var varType, out _) && varType.Equals(field.Type)).OnlyOrDefault();
+								var variable = function.Descendants.OfType<ILFunction>().SelectMany(f => f.Variables).Where(v => !v.IsThis() && TransformDisplayClassUsage.IsClosure(context, v, out var varType, out _) && varType.Equals(field.Type)).OnlyOrDefault();
 								if (variable != null) {
 									target = new LdLoc(variable);
 									HandleArgument(localFunction, 1, 0, target);
@@ -399,7 +399,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (closureVar.Kind == VariableKind.NamedArgument)
 				return false;
-			if (!TransformDisplayClassUsage.IsClosure(context, closureVar, null, out _, out var initializer))
+			if (!TransformDisplayClassUsage.IsClosure(context, closureVar, out _, out var initializer))
 				return false;
 			if (i - firstArgumentIndex >= 0) {
 				Debug.Assert(i - firstArgumentIndex < function.Method.Parameters.Count && IsClosureParameter(function.Method.Parameters[i - firstArgumentIndex], resolveContext));
