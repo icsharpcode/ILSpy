@@ -175,8 +175,12 @@ namespace ICSharpCode.ILSpy.Docking
 
 		private void FilterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == "Language" || e.PropertyName == "LanguageVersion") {
+			if (e.PropertyName == "Language") {
 				ActiveTabPage.Language = sessionSettings.FilterSettings.Language;
+				if (sessionSettings.FilterSettings.Language.HasLanguageVersions) {
+					sessionSettings.FilterSettings.LanguageVersion = ActiveTabPage.LanguageVersion;
+				}
+			} else if (e.PropertyName == "LanguageVersion") {
 				ActiveTabPage.LanguageVersion = sessionSettings.FilterSettings.LanguageVersion;
 			}
 		}

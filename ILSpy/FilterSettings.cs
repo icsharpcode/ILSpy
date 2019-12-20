@@ -141,7 +141,6 @@ namespace ICSharpCode.ILSpy
 			set {
 				if (language != value) {
 					language = value;
-					LanguageVersion = language.LanguageVersions.LastOrDefault();
 					OnPropertyChanged();
 				}
 			}

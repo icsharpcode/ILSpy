@@ -17,21 +17,36 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
 	public class TabPageModel : PaneModel
 	{
+		private readonly Dictionary<Language, LanguageVersion> languageVersionHistory = new Dictionary<Language, LanguageVersion>();
+
 		private Language language;
 		public Language Language {
 			get => language;
 			set {
 				if (language != value) {
+					if (language != null && language.HasLanguageVersions) {
+						languageVersionHistory[language] = languageVersion;
+					}
 					language = value;
 					RaisePropertyChanged(nameof(Language));
+					if (language.HasLanguageVersions) {
+						if (languageVersionHistory.TryGetValue(value, out var version)) {
+							LanguageVersion = version;
+						} else {
+							LanguageVersion = Language.LanguageVersions.Last();
+						}
+					} else {
+						LanguageVersion = default;
+					}
 				}
 			}
 		}
@@ -42,6 +57,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 			set {
 				if (languageVersion != value) {
 					languageVersion = value;
+					if (language.HasLanguageVersions) {
+						languageVersionHistory[language] = languageVersion;
+					}
 					RaisePropertyChanged(nameof(LanguageVersion));
 				}
 			}
