@@ -31,6 +31,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using System.Reflection;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
@@ -82,11 +83,11 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Event)
 				+ metadata.GetTableRowSize(TableIndex.Event) * (RID - 1);
 
-			public int Attributes => (int)eventDef.Attributes;
+			public EventAttributes Attributes => eventDef.Attributes;
 
-			public string AttributesTooltip => null; //Helpers.AttributesToString(EventDef.Attributes);
+			public object AttributesTooltip => new FlagsTooltip((int)eventDef.Attributes, typeof(EventAttributes));
 
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(eventDef.Name);
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(eventDef.Name):X} \"{Name}\"";
 
 			public string Name => metadata.GetString(eventDef.Name);
 

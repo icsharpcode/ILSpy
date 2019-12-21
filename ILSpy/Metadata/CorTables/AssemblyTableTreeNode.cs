@@ -83,17 +83,17 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string HashAlgorithmTooltip => assembly.HashAlgorithm.ToString();
 
-			public int Flags => (int)assembly.Flags;
+			public AssemblyFlags Flags => assembly.Flags;
 
-			public string FlagsTooltip => null;// Helpers.AttributesToString(assembly.Flags);
+			public object FlagsTooltip => new FlagsTooltip((int)assembly.Flags, typeof(AssemblyFlags));
 
 			public Version Version => assembly.Version;
 
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(assembly.Name);
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(assembly.Name):X} \"{Name}\"";
 
 			public string Name => metadata.GetString(assembly.Name);
 
-			public int CultureStringHandle => MetadataTokens.GetHeapOffset(assembly.Culture);
+			public string CultureTooltip => $"{MetadataTokens.GetHeapOffset(assembly.Culture):X} \"{Culture}\"";
 
 			public string Culture => metadata.GetString(assembly.Culture);
 

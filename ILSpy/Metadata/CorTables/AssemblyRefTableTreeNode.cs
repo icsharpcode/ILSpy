@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Windows.Controls;
@@ -78,9 +79,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public Version Version => assemblyRef.Version;
 
-			public int Flags => (int)assemblyRef.Flags;
+			public AssemblyFlags Flags => assemblyRef.Flags;
 
-			public string FlagsTooltip => null;// Helpers.AttributesToString(assemblyRef.Flags);
+			public object FlagsTooltip => new FlagsTooltip((int)assemblyRef.Flags, typeof(AssemblyFlags));
 
 			public int PublicKeyOrToken => MetadataTokens.GetHeapOffset(assemblyRef.PublicKeyOrToken);
 
@@ -93,11 +94,11 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(assemblyRef.Name);
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(assemblyRef.Name):X} \"{Name}\"";
 
 			public string Name => metadata.GetString(assemblyRef.Name);
 
-			public int CultureStringHandle => MetadataTokens.GetHeapOffset(assemblyRef.Culture);
+			public string CultureTooltip => $"{MetadataTokens.GetHeapOffset(assemblyRef.Culture):X} \"{Culture}\"";
 
 			public string Culture => metadata.GetString(assemblyRef.Culture);
 

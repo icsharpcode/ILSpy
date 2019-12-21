@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
@@ -82,16 +83,17 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Field)
 				+ metadata.GetTableRowSize(TableIndex.Field) * (RID - 1);
 
-			public int Attributes => (int)fieldDef.Attributes;
+			public FieldAttributes Attributes => fieldDef.Attributes;
 
-			public string AttributesTooltip => null; //Helpers.AttributesToString(fieldDef.Attributes);
-
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(fieldDef.Name);
+			public object AttributesTooltip => new FlagsTooltip((int)fieldDef.Attributes, typeof(FieldAttributes));
 
 			public string Name => metadata.GetString(fieldDef.Name);
 
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(fieldDef.Name):X} \"{Name}\"";
+
 			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemOrNull()?.MainModule).GetDefinition(handle);
 
+			[StringFormat("X8")]
 			public int Signature => MetadataTokens.GetHeapOffset(fieldDef.Signature);
 
 			public string SignatureTooltip {

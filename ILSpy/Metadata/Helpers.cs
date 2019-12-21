@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -86,17 +87,16 @@ namespace ICSharpCode.ILSpy.Metadata
 			switch (e.PropertyName) {
 				case "RID":
 					e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["DefaultFilter"]);
+					((DataGridCustomTextColumn)e.Column).ToolTipBinding = null;
 					break;
 				case "Token":
 				case "Offset":
 				case "RVA":
-				case "Signature":
 					binding.StringFormat = "X8";
 					e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["HexFilter"]);
+					((DataGridCustomTextColumn)e.Column).ToolTipBinding = null;
 					break;
-				case "Name":
-					e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["DefaultFilter"]);
-					break;
+				case "Flags":
 				case "Attributes":
 				case "ImplAttributes":
 					binding.Converter = new UnderlyingEnumValueConverter();
@@ -105,7 +105,24 @@ namespace ICSharpCode.ILSpy.Metadata
 					break;
 				default:
 					e.Cancel = e.PropertyName.Contains("Tooltip");
+					if (!e.Cancel) {
+						e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["DefaultFilter"]);
+					}
 					break;
+			}
+			if (!e.Cancel) {
+				ApplyAttributes((PropertyDescriptor)e.PropertyDescriptor, binding, e.Column);
+			}
+		}
+
+		static void ApplyAttributes(PropertyDescriptor descriptor, BindingBase binding, DataGridColumn column)
+		{
+			var stringFormat = descriptor.Attributes.OfType<StringFormatAttribute>().FirstOrDefault();
+			if (stringFormat != null) {
+				binding.StringFormat = stringFormat.Format;
+				if (stringFormat.Format.StartsWith("X", StringComparison.OrdinalIgnoreCase)) {
+					column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["HexFilter"]);
+				}
 			}
 		}
 
@@ -127,61 +144,15 @@ namespace ICSharpCode.ILSpy.Metadata
 				throw new NotImplementedException();
 			}
 		}
+	}
 
-		public static string AttributesToString(TypeAttributes attributes)
-		{
-			const TypeAttributes allMasks = TypeAttributes.ClassSemanticsMask | TypeAttributes.CustomFormatMask | TypeAttributes.LayoutMask | TypeAttributes.ReservedMask | TypeAttributes.StringFormatMask | TypeAttributes.VisibilityMask;
-			StringBuilder sb = new StringBuilder();
-			var visibility = attributes & TypeAttributes.VisibilityMask;
-			sb.AppendLine("Visibility: " + (visibility == 0 ? "NotPublic" : typeof(TypeAttributes).GetEnumName(visibility)));
-			var layout = attributes & TypeAttributes.LayoutMask;
-			sb.AppendLine("Class layout: " + (layout == 0 ? "AutoLayout" : typeof(TypeAttributes).GetEnumName(layout)));
-			var semantics = attributes & TypeAttributes.ClassSemanticsMask;
-			sb.AppendLine("Class semantics: " + (semantics == 0 ? "Class" : typeof(TypeAttributes).GetEnumName(semantics)));
-			var stringFormat = attributes & TypeAttributes.StringFormatMask;
-			sb.AppendLine("String format: " + (stringFormat == 0 ? "AnsiClass" : typeof(TypeAttributes).GetEnumName(stringFormat)));
-			var customStringFormat = attributes & TypeAttributes.CustomFormatMask;
-			sb.AppendLine("Custom string format: 0x" + customStringFormat.ToString("x"));
-			var reserved = attributes & TypeAttributes.ReservedMask;
-			sb.AppendLine("Reserved attributes: " + (reserved == 0 ? "" : reserved.ToString()));
-			var additional = attributes & ~allMasks;
-			sb.Append("Additional attributes: ");
-			AdditionalAttributes(sb, (int)additional);
-			if (sb.Length == 0)
-				return null;
-			return sb.ToString();
-		}
+	class StringFormatAttribute : Attribute
+	{
+		public string Format { get; }
 
-		public static string AttributesToString(MethodAttributes attributes)
+		public StringFormatAttribute(string format)
 		{
-			const MethodAttributes allMasks = MethodAttributes.MemberAccessMask | MethodAttributes.ReservedMask | MethodAttributes.VtableLayoutMask;
-			StringBuilder sb = new StringBuilder();
-			var visibility = attributes & MethodAttributes.MemberAccessMask;
-			sb.AppendLine("MemberAccess: " + (visibility == 0 ? "CompilerControlled" : typeof(MethodAttributes).GetEnumName(visibility)));
-			var layout = attributes & MethodAttributes.VtableLayoutMask;
-			sb.AppendLine("V-Table layout: " + (layout == 0 ? "ReuseSlot" : typeof(MethodAttributes).GetEnumName(layout)));
-			var reserved = attributes & MethodAttributes.ReservedMask;
-			sb.AppendLine("Reserved attributes: " + (reserved == 0 ? "" : reserved.ToString()));
-			var additional = attributes & ~allMasks;
-			sb.Append("Additional attributes: ");
-			AdditionalAttributes(sb, (int)additional);
-			if (sb.Length == 0)
-				return null;
-			return sb.ToString();
-		}
-
-		static void AdditionalAttributes(StringBuilder sb, int attributes)
-		{
-			bool first = true;
-			for (int bit = 0; bit < 32; bit++) {
-				var value = 1 << bit;
-				if ((attributes & value) != 0) {
-					if (!first)
-						sb.Append(", ");
-					first = false;
-					sb.Append(typeof(TypeAttributes).GetEnumName(value));
-				}
-			}
+			this.Format = format;
 		}
 	}
 }

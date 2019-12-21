@@ -4,6 +4,7 @@
 			 xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
 			 xmlns:local="clr-namespace:ICSharpCode.ILSpy.Metadata"
 			 xmlns:reflection="clr-namespace:System.Reflection;assembly=mscorlib"
+			 xmlns:srm="clr-namespace:System.Reflection;assembly=System.Reflection.Metadata"
 			 xmlns:dgx="urn:tom-englert.de/DataGridExtensions">
 
 	<Style x:Key="DataGridCustomTextColumnTextBoxStyle" TargetType="TextBox">
@@ -42,12 +43,40 @@
 		<local:HexFilterControl Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
 	</ControlTemplate>
 
+	<ControlTemplate x:Key="AssemblyFlagsFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type srm:AssemblyFlags}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
 	<ControlTemplate x:Key="MethodAttributesFilter">
 		<local:FlagsFilterControl FlagsType="{x:Type reflection:MethodAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
 	</ControlTemplate>
 
 	<ControlTemplate x:Key="MethodImplAttributesFilter">
 		<local:FlagsFilterControl FlagsType="{x:Type reflection:MethodImplAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="TypeAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type reflection:TypeAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="PropertyAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type reflection:PropertyAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="EventAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type reflection:EventAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="FieldAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type reflection:FieldAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="ManifestResourceAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type srm:ManifestResourceAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="GenericParameterAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type reflection:GenericParameterAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
 	</ControlTemplate>
 
 	<Style x:Key="ItemContainerStyle" TargetType="ListViewItem">

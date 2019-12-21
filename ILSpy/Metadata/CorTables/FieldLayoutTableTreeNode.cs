@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			//public int Attributes => (int)fieldDef.Attributes;
 
-			//public string AttributesTooltip => null; //Helpers.AttributesToString(fieldDef.Attributes);
+			//public object AttributesTooltip => new FlagsTooltip((int)eventDef.Attributes, typeof(EventAttributes));
 
 			//public int NameStringHandle => MetadataTokens.GetHeapOffset(fieldDef.Name);
 

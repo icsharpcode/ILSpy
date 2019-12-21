@@ -31,6 +31,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using System.Reflection;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
@@ -82,13 +83,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Property)
 				+ metadata.GetTableRowSize(TableIndex.Property) * (RID - 1);
 
-			public int Attributes => (int)propertyDef.Attributes;
+			public PropertyAttributes Attributes => propertyDef.Attributes;
 
-			public string AttributesTooltip => null; //Helpers.AttributesToString(PropertyDef.Attributes);
-
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(propertyDef.Name);
+			public object AttributesTooltip => new FlagsTooltip((int)propertyDef.Attributes, typeof(PropertyAttributes));
 
 			public string Name => metadata.GetString(propertyDef.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(propertyDef.Name):X} \"{Name}\"";
 
 			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemOrNull()?.MainModule).GetDefinition(handle);
 

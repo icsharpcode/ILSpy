@@ -84,9 +84,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.TypeRef)
 				+ metadata.GetTableRowSize(TableIndex.TypeRef) * (RID-1);
 
+			[StringFormat("X8")]
 			public int ResolutionScope => MetadataTokens.GetToken(typeRef.ResolutionScope);
 
-			public string ResolutionScopeSignature {
+			public string ResolutionScopeTooltip {
 				get {
 					if (typeRef.ResolutionScope.IsNil)
 						return null;
@@ -111,11 +112,11 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(typeRef.Name);
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(typeRef.Name):X} \"{Name}\"";
 
 			public string Name => metadata.GetString(typeRef.Name);
 
-			public int NamespaceStringHandle => MetadataTokens.GetHeapOffset(typeRef.Namespace);
+			public string NamespaceTooltip => $"{MetadataTokens.GetHeapOffset(typeRef.Namespace):X} \"{Namespace}\"";
 
 			public string Namespace => metadata.GetString(typeRef.Namespace);
 

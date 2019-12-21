@@ -31,7 +31,9 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			TextBox textBox = new TextBox() { Style = (Style)MetadataTableViews.Instance["DataGridCustomTextColumnTextBoxStyle"] };
 			BindingOperations.SetBinding(textBox, TextBox.TextProperty, Binding);
-			BindingOperations.SetBinding(textBox, TextBox.ToolTipProperty, ToolTipBinding);
+			if (ToolTipBinding != null) {
+				BindingOperations.SetBinding(textBox, TextBox.ToolTipProperty, ToolTipBinding);
+			}
 			return textBox;
 		}
 	}

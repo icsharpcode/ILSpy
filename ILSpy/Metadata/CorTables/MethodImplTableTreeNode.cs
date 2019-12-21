@@ -84,9 +84,9 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.MethodDef)
 				+ metadata.GetTableRowSize(TableIndex.MethodDef) * (RID - 1);
 
-			public int MethodDeclarationHandle => MetadataTokens.GetToken(methodImpl.MethodDeclaration);
+			public int MethodDeclaration => MetadataTokens.GetToken(methodImpl.MethodDeclaration);
 
-			public string MethodDeclaration {
+			public string MethodDeclarationTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					methodImpl.MethodDeclaration.WriteTo(module, output, Decompiler.Metadata.GenericContext.Empty);
@@ -94,9 +94,9 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			public int MethodBodyHandle => MetadataTokens.GetToken(methodImpl.MethodBody);
+			public int MethodBody => MetadataTokens.GetToken(methodImpl.MethodBody);
 
-			public string MethodBody {
+			public string MethodBodyTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					methodImpl.MethodBody.WriteTo(module, output, Decompiler.Metadata.GenericContext.Empty);
@@ -104,9 +104,9 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			public int TypeHandle => MetadataTokens.GetToken(methodImpl.Type);
+			public int Type => MetadataTokens.GetToken(methodImpl.Type);
 
-			public string Type {
+			public string TypeTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					((EntityHandle)methodImpl.Type).WriteTo(module, output, Decompiler.Metadata.GenericContext.Empty);

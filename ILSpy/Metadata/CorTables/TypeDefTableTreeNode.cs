@@ -86,21 +86,22 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.TypeDef)
 				+ metadata.GetTableRowSize(TableIndex.TypeDef) * (RID-1);
 
-			public int Attributes => (int)typeDef.Attributes;
+			public TypeAttributes Attributes => typeDef.Attributes;
 
-			public string AttributesTooltip => Helpers.AttributesToString(typeDef.Attributes);
+			public object AttributesTooltip => new FlagsTooltip((int)typeDef.Attributes, typeof(TypeAttributes));
 
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(typeDef.Name);
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(typeDef.Name):X} \"{Name}\"";
 
 			public string Name => metadata.GetString(typeDef.Name);
 
-			public int NamespaceStringHandle => MetadataTokens.GetHeapOffset(typeDef.Namespace);
+			public string NamespaceTooltip => $"{MetadataTokens.GetHeapOffset(typeDef.Namespace):X} \"{Namespace}\"";
 
 			public string Namespace => metadata.GetString(typeDef.Namespace);
 
+			[StringFormat("X8")]
 			public int BaseType => MetadataTokens.GetToken(typeDef.BaseType);
 
-			public string BaseTypeSignature {
+			public string BaseTypeTooltip {
 				get {
 					var output = new PlainTextOutput();
 					var provider = new DisassemblerSignatureTypeProvider(module, output);
@@ -122,8 +123,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
+			[StringFormat("X8")]
 			public int FieldList => MetadataTokens.GetToken(typeDef.GetFields().FirstOrDefault());
 
+			[StringFormat("X8")]
 			public int MethodList => MetadataTokens.GetToken(typeDef.GetMethods().FirstOrDefault());
 
 			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemOrNull()?.MainModule).GetDefinition(handle);

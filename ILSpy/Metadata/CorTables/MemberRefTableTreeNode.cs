@@ -92,9 +92,9 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(memberRef.Name);
-
 			public string Name => metadata.GetString(memberRef.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(memberRef.Name):X} \"{Name}\"";
 
 			public int Signature => MetadataTokens.GetHeapOffset(memberRef.Signature);
 

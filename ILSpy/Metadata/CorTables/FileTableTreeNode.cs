@@ -86,9 +86,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string AttributesTooltip => assemblyFile.ContainsMetadata ? "ContainsMetaData" : "ContainsNoMetaData";
 
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(assemblyFile.Name);
-
 			public string Name => metadata.GetString(assemblyFile.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(assemblyFile.Name):X} \"{Name}\"";
 
 			public int HashValue => MetadataTokens.GetHeapOffset(assemblyFile.HashValue);
 

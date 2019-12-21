@@ -86,13 +86,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Param)
 				+ metadata.GetTableRowSize(TableIndex.Param) * (RID-1);
 
-			public int Attributes => (int)param.Attributes;
+			public ParameterAttributes Attributes => param.Attributes;
 
-			public string AttributesTooltip => null; //Helpers.AttributesToString(param.Attributes);
-
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(param.Name);
+			public object AttributesTooltip => new FlagsTooltip((int)param.Attributes, typeof(ParameterAttributes));
 
 			public string Name => metadata.GetString(param.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(param.Name):X} \"{Name}\"";
 
 			public int Sequence => param.SequenceNumber;
 

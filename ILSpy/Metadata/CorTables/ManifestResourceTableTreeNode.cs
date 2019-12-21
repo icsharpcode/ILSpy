@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
@@ -82,13 +83,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.ManifestResource)
 				+ metadata.GetTableRowSize(TableIndex.ManifestResource) * (RID - 1);
 
-			public int Attributes => (int)manifestResource.Attributes;
+			public ManifestResourceAttributes Attributes => manifestResource.Attributes;
 
-			public string AttributesTooltip => null; // TODO : Helpers.AttributesToString(manifestResource.Attributes);
-
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(manifestResource.Name);
+			public object AttributesTooltip => new FlagsTooltip((int)manifestResource.Attributes, typeof(ManifestResourceAttributes));
 
 			public string Name => metadata.GetString(manifestResource.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(manifestResource.Name):X} \"{Name}\"";
 
 			public int ImplementationHandle => MetadataTokens.GetToken(manifestResource.Implementation);
 

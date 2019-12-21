@@ -87,9 +87,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Number => genericParam.Index;
 
-			public int Attributes => (int)genericParam.Attributes;
+			public GenericParameterAttributes Attributes => genericParam.Attributes;
 
-			public string AttributesTooltip => null; // TODO
+			public object AttributesTooltip => new FlagsTooltip((int)genericParam.Attributes, typeof(GenericParameterAttributes));
 
 			public int OwnerHandle => MetadataTokens.GetToken(genericParam.Parent);
 
@@ -101,9 +101,9 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(genericParam.Name);
-
 			public string Name => metadata.GetString(genericParam.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(genericParam.Name):X} \"{Name}\"";
 
 			public GenericParamEntry(PEFile module, GenericParameterHandle handle)
 			{

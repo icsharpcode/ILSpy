@@ -83,9 +83,9 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.ModuleRef)
 				+ metadata.GetTableRowSize(TableIndex.ModuleRef) * (RID-1);
 
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(moduleRef.Name);
-
 			public string Name => metadata.GetString(moduleRef.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(moduleRef.Name):X} \"{Name}\"";
 
 			public ModuleRefEntry(PEFile module, ModuleReferenceHandle handle)
 			{

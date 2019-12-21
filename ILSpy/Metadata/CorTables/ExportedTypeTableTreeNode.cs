@@ -82,19 +82,19 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.ExportedType)
 				+ metadata.GetTableRowSize(TableIndex.ExportedType) * (RID-1);
 
-			public int Attributes => (int)type.Attributes;
+			public TypeAttributes Attributes => type.Attributes;
 
-			public string AttributesTooltip => Helpers.AttributesToString(type.Attributes);
+			public object AttributesTooltip => new FlagsTooltip((int)type.Attributes, typeof(TypeAttributes));
 
 			public int TypeDefId => type.GetTypeDefinitionId();
 
-			public int TypeNameStringHandle => MetadataTokens.GetHeapOffset(type.Name);
+			public string TypeNameTooltip => $"{MetadataTokens.GetHeapOffset(type.Name):X} \"{TypeName}\"";
 
 			public string TypeName => metadata.GetString(type.Name);
 
-			public int TypeNamespaceStringHandle => MetadataTokens.GetHeapOffset(type.Namespace);
+			public string TypeNamespaceTooltip => $"{MetadataTokens.GetHeapOffset(type.Name):X} \"{TypeNamespace}\"";
 
-			public string TypeNamespace => metadata.GetString(type.Namespace);
+			public string TypeNamespace => metadata.GetString(type.Name);
 
 			public int Implementation => MetadataTokens.GetToken(type.Implementation);
 

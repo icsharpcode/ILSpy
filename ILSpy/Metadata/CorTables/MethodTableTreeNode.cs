@@ -97,6 +97,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(methodDef.Name):X} \"{Name}\"";
 
+			[StringFormat("X8")]
 			public int Signature => MetadataTokens.GetHeapOffset(methodDef.Signature);
 
 			string signatureTooltip;

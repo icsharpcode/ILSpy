@@ -84,9 +84,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Generation => moduleDef.Generation;
 
-			public int NameStringHandle => MetadataTokens.GetHeapOffset(moduleDef.Name);
-
 			public string Name => metadata.GetString(moduleDef.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(moduleDef.Name):X} \"{Name}\"";
 
 			public int Mvid => MetadataTokens.GetHeapOffset(moduleDef.Mvid);
 
