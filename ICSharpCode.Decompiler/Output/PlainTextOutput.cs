@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public void WriteReference(PEFile module, EntityHandle handle, string text, bool isDefinition = false)
+		public void WriteReference(PEFile module, Handle handle, string text, string protocol = "decompile", bool isDefinition = false)
 		{
 			Write(text);
 		}
@@ -217,9 +217,9 @@ namespace ICSharpCode.Decompiler
 			actions.Add(target => target.WriteReference(opCode));
 		}
 
-		public void WriteReference(PEFile module, EntityHandle handle, string text, bool isDefinition = false)
+		public void WriteReference(PEFile module, Handle handle, string text, string protocol = "decompile", bool isDefinition = false)
 		{
-			actions.Add(target => target.WriteReference(module, handle, text, isDefinition));
+			actions.Add(target => target.WriteReference(module, handle, text, protocol, isDefinition));
 		}
 
 		public void WriteReference(IType type, string text, bool isDefinition = false)

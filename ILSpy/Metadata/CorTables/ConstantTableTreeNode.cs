@@ -19,24 +19,20 @@
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Windows.Controls;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class ConstantTableTreeNode : ILSpyTreeNode
+	internal class ConstantTableTreeNode : MetadataTableTreeNode
 	{
-		private PEFile module;
-
 		public ConstantTableTreeNode(PEFile module)
+			: base((HandleKind)0x0B, module)
 		{
-			this.module = module;
 		}
 
 		public override object Text => $"0B Constant ({module.Metadata.GetTableRowCount(TableIndex.Constant)})";

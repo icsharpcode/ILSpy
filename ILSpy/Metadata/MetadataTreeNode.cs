@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
@@ -101,6 +102,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.Children.Add(new GenericParamTableTreeNode(module));
 			this.Children.Add(new MethodSpecTableTreeNode(module));
 			this.Children.Add(new GenericParamConstraintTableTreeNode(module));
+		}
+
+		public ILSpyTreeNode FindNodeByHandleKind(HandleKind kind)
+		{
+			return this.Children.OfType<MetadataTableTreeNode>().SingleOrDefault(x => x.Kind == kind);
 		}
 	}
 

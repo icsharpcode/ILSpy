@@ -230,7 +230,7 @@ namespace ICSharpCode.ILSpy.TextView
 			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = opCode });
 		}
 
-		public void WriteReference(PEFile module, EntityHandle handle, string text, bool isDefinition = false)
+		public void WriteReference(PEFile module, Handle handle, string text, string protocol = "decompile", bool isDefinition = false)
 		{
 			WriteIndent();
 			int start = this.TextLength;
@@ -239,7 +239,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (isDefinition) {
 				this.DefinitionLookup.AddDefinition((module, handle), this.TextLength);
 			}
-			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = (module, handle), IsDefinition = isDefinition });
+			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = (protocol, module, handle), IsDefinition = isDefinition });
 		}
 
 		public void WriteReference(IType type, string text, bool isDefinition = false)

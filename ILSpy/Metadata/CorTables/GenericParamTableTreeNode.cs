@@ -16,34 +16,23 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Windows.Controls;
-using System.Windows.Data;
+
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.Controls;
-using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class GenericParamTableTreeNode : ILSpyTreeNode
+	internal class GenericParamTableTreeNode : MetadataTableTreeNode
 	{
-		private PEFile module;
-
 		public GenericParamTableTreeNode(PEFile module)
+			: base(HandleKind.GenericParameter, module)
 		{
-			this.module = module;
 		}
 
 		public override object Text => $"2A GenericParam ({module.Metadata.GetTableRowCount(TableIndex.GenericParam)})";

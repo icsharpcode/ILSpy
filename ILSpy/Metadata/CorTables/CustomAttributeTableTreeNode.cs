@@ -16,30 +16,22 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Controls;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class CustomAttributeTableTreeNode : ILSpyTreeNode
+	class CustomAttributeTableTreeNode : MetadataTableTreeNode
 	{
-		private PEFile module;
-
 		public CustomAttributeTableTreeNode(PEFile module)
+			: base(HandleKind.CustomAttribute, module)
 		{
-			this.module = module;
 		}
 
 		public override object Text => $"0C CustomAttribute ({module.Metadata.GetTableRowCount(TableIndex.CustomAttribute)})";

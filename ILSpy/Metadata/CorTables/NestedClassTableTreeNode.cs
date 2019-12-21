@@ -16,32 +16,22 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Controls;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class NestedClassTableTreeNode : ILSpyTreeNode
+	class NestedClassTableTreeNode : MetadataTableTreeNode
 	{
-		private PEFile module;
-
 		public NestedClassTableTreeNode(PEFile module)
+			: base((HandleKind)0x29, module)
 		{
-			this.module = module;
 		}
 
 		public override object Text => $"29 NestedClass ({module.Metadata.GetTableRowCount(TableIndex.NestedClass)})";

@@ -16,35 +16,25 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
+
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Controls;
-using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class TypeDefTableTreeNode : ILSpyTreeNode
+	internal class TypeDefTableTreeNode : MetadataTableTreeNode
 	{
-		private PEFile module;
-
 		public TypeDefTableTreeNode(PEFile module)
+			: base(HandleKind.TypeDefinition, module)
 		{
-			this.module = module;
 		}
 
 		public override object Text => $"02 TypeDef ({module.Metadata.GetTableRowCount(TableIndex.TypeDef)})";

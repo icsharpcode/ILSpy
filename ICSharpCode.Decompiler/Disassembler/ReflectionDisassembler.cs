@@ -159,7 +159,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			var metadata = module.Metadata;
 
-			WriteMetadataToken(handle, spaceAfter:true);
+			WriteMetadataToken(output, module, handle, MetadataTokens.GetToken(handle),
+				spaceAfter: true, spaceBefore: false, ShowMetadataTokens, ShowMetadataTokensInBase10);
 			var methodDefinition = metadata.GetMethodDefinition(handle);
 			//    .method public hidebysig  specialname
 			//               instance default class [mscorlib]System.IO.TextWriter get_BaseWriter ()  cil managed
@@ -285,10 +286,19 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Unindent();
 		}
 
-		void WriteMetadataToken(Handle handle, bool spaceAfter)
+		internal static void WriteMetadataToken(ITextOutput output, PEFile module, Handle? handle, int metadataToken, bool spaceAfter, bool spaceBefore, bool showMetadataTokens, bool base10)
 		{
-			if (ShowMetadataTokens) {
-				output.Write("/* {0:X8} */", MetadataTokens.GetToken(handle));
+			if (showMetadataTokens || handle == null) {
+				if (spaceBefore) {
+					output.Write(' ');
+				}
+				output.Write("/* ");
+				if (base10) {
+					output.WriteReference(module, handle.GetValueOrDefault(), metadataToken.ToString(), "metadata");
+				} else {
+					output.WriteReference(module, handle.GetValueOrDefault(), metadataToken.ToString("X8"), "metadata");
+				}
+				output.Write(" */");
 				if (spaceAfter) {
 					output.Write(' ');
 				}
@@ -1205,7 +1215,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			var metadata = module.Metadata;
 			var propertyDefinition = metadata.GetPropertyDefinition(property);
-			output.WriteReference(module, property, ".property", true);
+			output.WriteReference(module, property, ".property", isDefinition: true);
 			output.Write(" ");
 			WriteFlags(propertyDefinition.Attributes, propertyAttributes);
 			var accessors = propertyDefinition.GetAccessors();
@@ -1270,7 +1280,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			} else {
 				declaringType = module.Metadata.GetMethodDefinition(accessors.Raiser).GetDeclaringType();
 			}
-			output.WriteReference(module, handle, ".event", true);
+			output.WriteReference(module, handle, ".event", isDefinition: true);
 			output.Write(" ");
 			WriteFlags(eventDefinition.Attributes, eventAttributes);
 			var provider = new DisassemblerSignatureTypeProvider(module, output);
@@ -1342,7 +1352,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public void DisassembleType(PEFile module, TypeDefinitionHandle type)
 		{
 			var typeDefinition = module.Metadata.GetTypeDefinition(type);
-			output.WriteReference(module, type, ".class", true);
+			output.WriteReference(module, type, ".class", isDefinition: true);
 			output.Write(" ");
 			if ((typeDefinition.Attributes & TypeAttributes.ClassSemanticsMask) == TypeAttributes.Interface)
 				output.Write("interface ");

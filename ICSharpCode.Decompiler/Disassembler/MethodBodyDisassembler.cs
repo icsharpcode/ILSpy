@@ -489,16 +489,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		private void WriteMetadataToken(Handle? handle, int metadataToken, bool spaceBefore)
 		{
-			if (ShowMetadataTokens || handle == null) {
-				if (spaceBefore) {
-					output.Write(' ');
-				}
-				if (ShowMetadataTokensInBase10) {
-					output.Write("/* {0} */", metadataToken);
-				} else {
-					output.Write("/* {0:X8} */", metadataToken);
-				}
-			}
+			ReflectionDisassembler.WriteMetadataToken(output, module, handle, metadataToken,
+				spaceAfter: false, spaceBefore, ShowMetadataTokens, ShowMetadataTokensInBase10);
 		}
 	}
 }

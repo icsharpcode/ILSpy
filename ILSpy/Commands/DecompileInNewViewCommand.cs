@@ -69,10 +69,7 @@ namespace ICSharpCode.ILSpy.Commands
 			if (nodes.Length == 0)
 				return;
 
-			var title = string.Join(", ", nodes.Select(x => x.Text.ToString()));
-			DockWorkspace.Instance.TabPages.Add(new ViewModels.TabPageModel() { Language = MainWindow.Instance.CurrentLanguage, LanguageVersion = MainWindow.Instance.CurrentLanguageVersion });
-			DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
-			MainWindow.Instance.SelectNodes(nodes);
+			MainWindow.Instance.SelectNodes(nodes, inNewTabPage: true);
 			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);
 		}
 	}

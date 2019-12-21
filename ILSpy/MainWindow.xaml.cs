@@ -24,6 +24,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -611,7 +612,7 @@ namespace ICSharpCode.ILSpy
 
 			assemblyListTreeNode = new AssemblyListTreeNode(assemblyList);
 			assemblyListTreeNode.FilterSettings = sessionSettings.FilterSettings.Clone();
-			assemblyListTreeNode.Select = SelectNode;
+			assemblyListTreeNode.Select = x => SelectNode(x, inNewTabPage: false);
 			treeView.Root = assemblyListTreeNode;
 
 			if (assemblyList.ListName == AssemblyListManager.DefaultListName)
@@ -684,10 +685,19 @@ namespace ICSharpCode.ILSpy
 
 		#region Node Selection
 
-		public void SelectNode(SharpTreeNode obj)
+		public void SelectNode(SharpTreeNode obj, bool inNewTabPage = false)
 		{
 			if (obj != null) {
 				if (!obj.AncestorsAndSelf().Any(node => node.IsHidden)) {
+					if (inNewTabPage) {
+						DockWorkspace.Instance.TabPages.Add(
+							new TabPageModel() {
+								Language = CurrentLanguage,
+								LanguageVersion = CurrentLanguageVersion
+							});
+						DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
+					}
+
 					// Set both the selection and focus to ensure that keyboard navigation works as expected.
 					treeView.FocusNode(obj);
 					treeView.SelectedItem = obj;
@@ -700,9 +710,18 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public void SelectNodes(IEnumerable<SharpTreeNode> nodes)
+		public void SelectNodes(IEnumerable<SharpTreeNode> nodes, bool inNewTabPage = false)
 		{
 			if (nodes.Any() && nodes.All(n => !n.AncestorsAndSelf().Any(a => a.IsHidden))) {
+				if (inNewTabPage) {
+					DockWorkspace.Instance.TabPages.Add(
+						new TabPageModel() {
+							Language = CurrentLanguage,
+							LanguageVersion = CurrentLanguageVersion
+						});
+					DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
+				}
+
 				treeView.FocusNode(nodes.First());
 				treeView.SetSelectedNodes(nodes);
 			}
@@ -796,11 +815,25 @@ namespace ICSharpCode.ILSpy
 				case Decompiler.Disassembler.OpCodeInfo opCode:
 					OpenLink(opCode.Link);
 					break;
-				case ValueTuple<PEFile, System.Reflection.Metadata.EntityHandle> unresolvedEntity:
-					var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver(),
+				case ValueTuple<string, PEFile, Handle> unresolvedEntity:
+					string protocol = unresolvedEntity.Item1 ?? "decompile";
+					if (protocol != "decompile") {
+						var protocolHandlers = App.ExportProvider.GetExports<IProtocolHandler>();
+						foreach (var handler in protocolHandlers) {
+							var node = handler.Value.Resolve(protocol, unresolvedEntity.Item2, unresolvedEntity.Item3, out bool newTabPage);
+							if (node != null) {
+								SelectNode(node, newTabPage);
+								return decompilationTask;
+							}
+						}
+					}
+					if (MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(unresolvedEntity.Item3)) != null) {
+						var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item2, unresolvedEntity.Item2.GetAssemblyResolver(),
 						TypeSystemOptions.Default | TypeSystemOptions.Uncached);
-					reference = typeSystem.MainModule.ResolveEntity(unresolvedEntity.Item2);
-					goto default;
+						reference = typeSystem.MainModule.ResolveEntity((EntityHandle)unresolvedEntity.Item3);
+						goto default;
+					}
+					break;
 				default:
 					ILSpyTreeNode treeNode = FindTreeNode(reference);
 					if (treeNode != null)

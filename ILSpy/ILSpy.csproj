@@ -114,6 +114,7 @@
     <Compile Include="Commands\ExitCommand.cs" />
     <Compile Include="Commands\CommandWrapper.cs" />
     <Compile Include="Commands\ILSpyCommands.cs" />
+    <Compile Include="Commands\IProtocolHandler.cs" />
     <Compile Include="Commands\ManageAssemblyListsCommand.cs" />
     <Compile Include="Commands\Pdb2XmlCommand.cs" />
     <Compile Include="Commands\RemoveAssembliesWithLoadErrors.cs" />
@@ -171,6 +172,8 @@
     <Compile Include="Metadata\FlagsFilterControl.xaml.cs" />
     <Compile Include="Metadata\FlagsTooltip.xaml.cs" />
     <Compile Include="Metadata\HexFilterControl.xaml.cs" />
+    <Compile Include="Metadata\MetadataProtocolHandler.cs" />
+    <Compile Include="Metadata\MetadataTableTreeNode.cs" />
     <Compile Include="ViewModels\ManageAssemblyListsViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="Views\CreateListDialog.xaml.cs">

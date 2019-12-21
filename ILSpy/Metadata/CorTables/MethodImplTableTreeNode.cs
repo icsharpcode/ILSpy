@@ -16,32 +16,22 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Controls;
+
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
-using System.Reflection;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class MethodImplTableTreeNode : ILSpyTreeNode
+	internal class MethodImplTableTreeNode : MetadataTableTreeNode
 	{
-		private PEFile module;
-
 		public MethodImplTableTreeNode(PEFile module)
+			: base((HandleKind)0x19, module)
 		{
-			this.module = module;
 		}
 
 		public override object Text => $"19 MethodImpl ({module.Metadata.GetTableRowCount(TableIndex.MethodImpl)})";

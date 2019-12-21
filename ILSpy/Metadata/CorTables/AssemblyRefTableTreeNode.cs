@@ -21,21 +21,17 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Windows.Controls;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class AssemblyRefTableTreeNode : ILSpyTreeNode
+	internal class AssemblyRefTableTreeNode : MetadataTableTreeNode
 	{
-		private PEFile module;
-
 		public AssemblyRefTableTreeNode(PEFile module)
+			: base(HandleKind.AssemblyReference, module)
 		{
-			this.module = module;
 		}
 
 		public override object Text => $"23 AssemblyRef ({module.Metadata.GetTableRowCount(TableIndex.AssemblyRef)})";
