@@ -22,7 +22,9 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -126,6 +128,42 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static unsafe int GetRowNum(byte* ptr, int size)
+		{
+			int result = 0;
+			for (int i = 0; i < size; i += 2) {
+				result |= ptr[i] << 8 * i;
+				result |= ptr[i + 1] << 8 * (i + 1);
+			}
+			return result;
+		}
+
+		static Helpers()
+		{
+			rowCounts = typeof(MetadataReader)
+				.GetField("TableRowCounts", BindingFlags.NonPublic | BindingFlags.Instance);
+			computeCodedTokenSize = typeof(MetadataReader)
+				.GetMethod("ComputeCodedTokenSize", BindingFlags.Instance | BindingFlags.NonPublic);
+			fromTypeDefOrRefTag = typeof(TypeDefinitionHandle).Assembly
+				.GetType("System.Reflection.Metadata.Ecma335.TypeDefOrRefTag")
+				.GetMethod("ConvertToHandle", BindingFlags.Static | BindingFlags.NonPublic);
+		}
+
+		readonly static FieldInfo rowCounts;
+		readonly static MethodInfo computeCodedTokenSize;
+		readonly static MethodInfo fromTypeDefOrRefTag;
+
+		public static EntityHandle FromTypeDefOrRefTag(uint tag)
+		{
+			return (EntityHandle)fromTypeDefOrRefTag.Invoke(null, new object[] { tag });
+		}
+
+		public static int ComputeCodedTokenSize(this MetadataReader metadata, int largeRowSize, TableMask mask)
+		{
+			return (int)computeCodedTokenSize.Invoke(metadata, new object[] { largeRowSize, rowCounts.GetValue(metadata), (ulong)mask });
+		}
+
 		class UnderlyingEnumValueConverter : IValueConverter
 		{
 			public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -154,5 +192,65 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			this.Format = format;
 		}
+	}
+
+	[Flags]
+	internal enum TableMask : ulong
+	{
+		Module = 0x1,
+		TypeRef = 0x2,
+		TypeDef = 0x4,
+		FieldPtr = 0x8,
+		Field = 0x10,
+		MethodPtr = 0x20,
+		MethodDef = 0x40,
+		ParamPtr = 0x80,
+		Param = 0x100,
+		InterfaceImpl = 0x200,
+		MemberRef = 0x400,
+		Constant = 0x800,
+		CustomAttribute = 0x1000,
+		FieldMarshal = 0x2000,
+		DeclSecurity = 0x4000,
+		ClassLayout = 0x8000,
+		FieldLayout = 0x10000,
+		StandAloneSig = 0x20000,
+		EventMap = 0x40000,
+		EventPtr = 0x80000,
+		Event = 0x100000,
+		PropertyMap = 0x200000,
+		PropertyPtr = 0x400000,
+		Property = 0x800000,
+		MethodSemantics = 0x1000000,
+		MethodImpl = 0x2000000,
+		ModuleRef = 0x4000000,
+		TypeSpec = 0x8000000,
+		ImplMap = 0x10000000,
+		FieldRva = 0x20000000,
+		EnCLog = 0x40000000,
+		EnCMap = 0x80000000,
+		Assembly = 0x100000000,
+		AssemblyRef = 0x800000000,
+		File = 0x4000000000,
+		ExportedType = 0x8000000000,
+		ManifestResource = 0x10000000000,
+		NestedClass = 0x20000000000,
+		GenericParam = 0x40000000000,
+		MethodSpec = 0x80000000000,
+		GenericParamConstraint = 0x100000000000,
+		Document = 0x1000000000000,
+		MethodDebugInformation = 0x2000000000000,
+		LocalScope = 0x4000000000000,
+		LocalVariable = 0x8000000000000,
+		LocalConstant = 0x10000000000000,
+		ImportScope = 0x20000000000000,
+		StateMachineMethod = 0x40000000000000,
+		CustomDebugInformation = 0x80000000000000,
+		PtrTables = 0x4800A8,
+		EncTables = 0xC0000000,
+		TypeSystemTables = 0x1FC9FFFFFFFF,
+		DebugTables = 0xFF000000000000,
+		AllTables = 0xFF1FC9FFFFFFFF,
+		ValidPortablePdbExternalTables = 0x1FC93FB7FF57
 	}
 }

@@ -34,16 +34,16 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class ClassLayoutTableTreeNode : ILSpyTreeNode
+	class InterfaceImplTableTreeNode : ILSpyTreeNode
 	{
 		private PEFile module;
 
-		public ClassLayoutTableTreeNode(PEFile module)
+		public InterfaceImplTableTreeNode(PEFile module)
 		{
 			this.module = module;
 		}
 
-		public override object Text => $"0F ClassLayout ({module.Metadata.GetTableRowCount(TableIndex.ClassLayout)})";
+		public override object Text => $"09 InterfaceImpl ({module.Metadata.GetTableRowCount(TableIndex.InterfaceImpl)})";
 
 		public override object Icon => Images.Literal;
 
@@ -55,13 +55,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			var view = Helpers.PrepareDataGrid(tabPage);
 			var metadata = module.Metadata;
 
-			var list = new List<ClassLayoutEntry>();
+			var list = new List<InterfaceImplEntry>();
 
-			var length = metadata.GetTableRowCount(TableIndex.ClassLayout);
+			var length = metadata.GetTableRowCount(TableIndex.InterfaceImpl);
 			byte* ptr = metadata.MetadataPointer;
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++) {
-				list.Add(new ClassLayoutEntry(module, ptr, metadataOffset, rid));
+				list.Add(new InterfaceImplEntry(module, ptr, metadataOffset, rid));
 			}
 
 			view.ItemsSource = list;
@@ -70,65 +70,69 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		readonly struct ClassLayout
+		readonly struct InterfaceImpl
 		{
-			public readonly ushort PackingSize;
-			public readonly EntityHandle Parent;
-			public readonly uint ClassSize;
+			public readonly EntityHandle Class;
+			public readonly EntityHandle Interface;
 
-			public unsafe ClassLayout(byte *ptr, bool small)
+			public unsafe InterfaceImpl(byte *ptr, int classSize, int interfaceSize)
 			{
-				PackingSize = (ushort)(ptr[0] | (ptr[1] << 8));
-				ClassSize = (uint)(ptr[2] | (ptr[3] << 8) | (ptr[4] << 16) | (ptr[5] << 24));
-				Parent = MetadataTokens.TypeDefinitionHandle(small ? (int)(ptr[6] | (ptr[7] << 8)) : (int)(ptr[6] | (ptr[7] << 8) | (ptr[8] << 16) | (ptr[9] << 24)));
+				Class = MetadataTokens.TypeDefinitionHandle(Helpers.GetRowNum(ptr, classSize));
+				Interface = Helpers.FromTypeDefOrRefTag((uint)Helpers.GetRowNum(ptr + classSize, interfaceSize));
 			}
 		}
 
-		unsafe struct ClassLayoutEntry
+		unsafe struct InterfaceImplEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
-			readonly ClassLayout classLayout;
+			readonly InterfaceImpl interfaceImpl;
 
 			public int RID { get; }
 
-			public int Token => 0x0F000000 | RID;
+			public int Token => 0x09000000 | RID;
 
 			public int Offset { get; }
 
 			[StringFormat("X8")]
-			public int Parent => MetadataTokens.GetToken(classLayout.Parent);
+			public int Class => MetadataTokens.GetToken(interfaceImpl.Class);
 
-			public string ParentTooltip {
+			public string ClassTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					var context = new GenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)classLayout.Parent).WriteTo(module, output, context);
+					((EntityHandle)interfaceImpl.Class).WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}
 
-			[StringFormat("X4")]
-			public ushort PackingSize => classLayout.PackingSize;
-
 			[StringFormat("X8")]
-			public uint ClassSize => classLayout.ClassSize;
+			public int Interface => MetadataTokens.GetToken(interfaceImpl.Interface);
 
-			public ClassLayoutEntry(PEFile module, byte* ptr, int metadataOffset, int row)
+			public string InterfaceTooltip {
+				get {
+					ITextOutput output = new PlainTextOutput();
+					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					((EntityHandle)interfaceImpl.Interface).WriteTo(module, output, context);
+					return output.ToString();
+				}
+			}
+
+			public InterfaceImplEntry(PEFile module, byte* ptr, int metadataOffset, int row)
 			{
 				this.module = module;
 				this.metadata = module.Metadata;
 				this.RID = row;
-				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.ClassLayout)
-					+ metadata.GetTableRowSize(TableIndex.ClassLayout) * (row - 1);
+				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.InterfaceImpl)
+					+ metadata.GetTableRowSize(TableIndex.InterfaceImpl) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
-				this.classLayout = new ClassLayout(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) <= ushort.MaxValue);
+				this.interfaceImpl = new InterfaceImpl(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4, metadata.ComputeCodedTokenSize(16384, TableMask.TypeDef | TableMask.TypeRef | TableMask.TypeSpec));
 			}
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, "ClassLayouts");
+			language.WriteCommentLine(output, "InterfaceImpls");
 		}
 	}
 }

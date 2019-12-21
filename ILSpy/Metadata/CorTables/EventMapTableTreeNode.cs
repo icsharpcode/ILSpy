@@ -34,16 +34,16 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class ClassLayoutTableTreeNode : ILSpyTreeNode
+	class EventMapTableTreeNode : ILSpyTreeNode
 	{
 		private PEFile module;
 
-		public ClassLayoutTableTreeNode(PEFile module)
+		public EventMapTableTreeNode(PEFile module)
 		{
 			this.module = module;
 		}
 
-		public override object Text => $"0F ClassLayout ({module.Metadata.GetTableRowCount(TableIndex.ClassLayout)})";
+		public override object Text => $"12 EventMap ({module.Metadata.GetTableRowCount(TableIndex.EventMap)})";
 
 		public override object Icon => Images.Literal;
 
@@ -55,13 +55,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			var view = Helpers.PrepareDataGrid(tabPage);
 			var metadata = module.Metadata;
 
-			var list = new List<ClassLayoutEntry>();
+			var list = new List<EventMapEntry>();
 
-			var length = metadata.GetTableRowCount(TableIndex.ClassLayout);
+			var length = metadata.GetTableRowCount(TableIndex.EventMap);
 			byte* ptr = metadata.MetadataPointer;
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++) {
-				list.Add(new ClassLayoutEntry(module, ptr, metadataOffset, rid));
+				list.Add(new EventMapEntry(module, ptr, metadataOffset, rid));
 			}
 
 			view.ItemsSource = list;
@@ -70,65 +70,71 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		readonly struct ClassLayout
+		readonly struct EventMap
 		{
-			public readonly ushort PackingSize;
-			public readonly EntityHandle Parent;
-			public readonly uint ClassSize;
+			public readonly TypeDefinitionHandle Parent;
+			public readonly EventDefinitionHandle EventList;
 
-			public unsafe ClassLayout(byte *ptr, bool small)
+			public unsafe EventMap(byte *ptr, int typeDefSize, int eventDefSize)
 			{
-				PackingSize = (ushort)(ptr[0] | (ptr[1] << 8));
-				ClassSize = (uint)(ptr[2] | (ptr[3] << 8) | (ptr[4] << 16) | (ptr[5] << 24));
-				Parent = MetadataTokens.TypeDefinitionHandle(small ? (int)(ptr[6] | (ptr[7] << 8)) : (int)(ptr[6] | (ptr[7] << 8) | (ptr[8] << 16) | (ptr[9] << 24)));
+				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetRowNum(ptr, typeDefSize));
+				EventList = MetadataTokens.EventDefinitionHandle(Helpers.GetRowNum(ptr + typeDefSize, eventDefSize));
 			}
 		}
 
-		unsafe struct ClassLayoutEntry
+		unsafe struct EventMapEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
-			readonly ClassLayout classLayout;
+			readonly EventMap eventMap;
 
 			public int RID { get; }
 
-			public int Token => 0x0F000000 | RID;
+			public int Token => 0x12000000 | RID;
 
 			public int Offset { get; }
 
 			[StringFormat("X8")]
-			public int Parent => MetadataTokens.GetToken(classLayout.Parent);
+			public int Parent => MetadataTokens.GetToken(eventMap.Parent);
 
 			public string ParentTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					var context = new GenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)classLayout.Parent).WriteTo(module, output, context);
+					((EntityHandle)eventMap.Parent).WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}
 
-			[StringFormat("X4")]
-			public ushort PackingSize => classLayout.PackingSize;
-
 			[StringFormat("X8")]
-			public uint ClassSize => classLayout.ClassSize;
+			public int EventList => MetadataTokens.GetToken(eventMap.EventList);
 
-			public ClassLayoutEntry(PEFile module, byte* ptr, int metadataOffset, int row)
+			public string EventListTooltip {
+				get {
+					ITextOutput output = new PlainTextOutput();
+					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					((EntityHandle)eventMap.EventList).WriteTo(module, output, context);
+					return output.ToString();
+				}
+			}
+
+			public EventMapEntry(PEFile module, byte* ptr, int metadataOffset, int row)
 			{
 				this.module = module;
 				this.metadata = module.Metadata;
 				this.RID = row;
-				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.ClassLayout)
-					+ metadata.GetTableRowSize(TableIndex.ClassLayout) * (row - 1);
+				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.EventMap)
+					+ metadata.GetTableRowSize(TableIndex.EventMap) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
-				this.classLayout = new ClassLayout(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) <= ushort.MaxValue);
+				int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
+				int eventDefSize = metadata.GetTableRowCount(TableIndex.Event) < ushort.MaxValue ? 2 : 4;
+				this.eventMap = new EventMap(ptr + rowOffset, typeDefSize, eventDefSize);
 			}
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, "ClassLayouts");
+			language.WriteCommentLine(output, "EventMap");
 		}
 	}
 }

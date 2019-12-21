@@ -34,16 +34,16 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class ClassLayoutTableTreeNode : ILSpyTreeNode
+	class PropertyMapTableTreeNode : ILSpyTreeNode
 	{
 		private PEFile module;
 
-		public ClassLayoutTableTreeNode(PEFile module)
+		public PropertyMapTableTreeNode(PEFile module)
 		{
 			this.module = module;
 		}
 
-		public override object Text => $"0F ClassLayout ({module.Metadata.GetTableRowCount(TableIndex.ClassLayout)})";
+		public override object Text => $"15 PropertyMap ({module.Metadata.GetTableRowCount(TableIndex.PropertyMap)})";
 
 		public override object Icon => Images.Literal;
 
@@ -55,13 +55,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			var view = Helpers.PrepareDataGrid(tabPage);
 			var metadata = module.Metadata;
 
-			var list = new List<ClassLayoutEntry>();
+			var list = new List<PropertyMapEntry>();
 
-			var length = metadata.GetTableRowCount(TableIndex.ClassLayout);
+			var length = metadata.GetTableRowCount(TableIndex.PropertyMap);
 			byte* ptr = metadata.MetadataPointer;
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++) {
-				list.Add(new ClassLayoutEntry(module, ptr, metadataOffset, rid));
+				list.Add(new PropertyMapEntry(module, ptr, metadataOffset, rid));
 			}
 
 			view.ItemsSource = list;
@@ -70,65 +70,71 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		readonly struct ClassLayout
+		readonly struct PropertyMap
 		{
-			public readonly ushort PackingSize;
-			public readonly EntityHandle Parent;
-			public readonly uint ClassSize;
+			public readonly TypeDefinitionHandle Parent;
+			public readonly PropertyDefinitionHandle PropertyList;
 
-			public unsafe ClassLayout(byte *ptr, bool small)
+			public unsafe PropertyMap(byte *ptr, int typeDefSize, int propertyDefSize)
 			{
-				PackingSize = (ushort)(ptr[0] | (ptr[1] << 8));
-				ClassSize = (uint)(ptr[2] | (ptr[3] << 8) | (ptr[4] << 16) | (ptr[5] << 24));
-				Parent = MetadataTokens.TypeDefinitionHandle(small ? (int)(ptr[6] | (ptr[7] << 8)) : (int)(ptr[6] | (ptr[7] << 8) | (ptr[8] << 16) | (ptr[9] << 24)));
+				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetRowNum(ptr, typeDefSize));
+				PropertyList = MetadataTokens.PropertyDefinitionHandle(Helpers.GetRowNum(ptr + typeDefSize, propertyDefSize));
 			}
 		}
 
-		unsafe struct ClassLayoutEntry
+		unsafe struct PropertyMapEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
-			readonly ClassLayout classLayout;
+			readonly PropertyMap propertyMap;
 
 			public int RID { get; }
 
-			public int Token => 0x0F000000 | RID;
+			public int Token => 0x15000000 | RID;
 
 			public int Offset { get; }
 
 			[StringFormat("X8")]
-			public int Parent => MetadataTokens.GetToken(classLayout.Parent);
+			public int Parent => MetadataTokens.GetToken(propertyMap.Parent);
 
 			public string ParentTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					var context = new GenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)classLayout.Parent).WriteTo(module, output, context);
+					((EntityHandle)propertyMap.Parent).WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}
 
-			[StringFormat("X4")]
-			public ushort PackingSize => classLayout.PackingSize;
-
 			[StringFormat("X8")]
-			public uint ClassSize => classLayout.ClassSize;
+			public int EventList => MetadataTokens.GetToken(propertyMap.PropertyList);
 
-			public ClassLayoutEntry(PEFile module, byte* ptr, int metadataOffset, int row)
+			public string PropertyListTooltip {
+				get {
+					ITextOutput output = new PlainTextOutput();
+					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					((EntityHandle)propertyMap.PropertyList).WriteTo(module, output, context);
+					return output.ToString();
+				}
+			}
+
+			public PropertyMapEntry(PEFile module, byte* ptr, int metadataOffset, int row)
 			{
 				this.module = module;
 				this.metadata = module.Metadata;
 				this.RID = row;
-				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.ClassLayout)
-					+ metadata.GetTableRowSize(TableIndex.ClassLayout) * (row - 1);
+				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.PropertyMap)
+					+ metadata.GetTableRowSize(TableIndex.PropertyMap) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
-				this.classLayout = new ClassLayout(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) <= ushort.MaxValue);
+				int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
+				int propertyDefSize = metadata.GetTableRowCount(TableIndex.Property) < ushort.MaxValue ? 2 : 4;
+				this.propertyMap = new PropertyMap(ptr + rowOffset, typeDefSize, propertyDefSize);
 			}
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, "ClassLayouts");
+			language.WriteCommentLine(output, "PropertyMap");
 		}
 	}
 }
