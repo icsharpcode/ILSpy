@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>ILSpy.ReadyToRun.Plugin</AssemblyName>
+    <LangVersion>7.2</LangVersion>
+
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+
+    <EnableDefaultItems>false</EnableDefaultItems>
+
+    <BaseAddress>6488064</BaseAddress>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <OutputPath>..\ILSpy\bin\$(Configuration)\</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj">
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\ILSpy\ILSpy.csproj">
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj">
+      <Private>False</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Iced">
+      <HintPath>..\..\iced\Iced\bin\Debug\netstandard2.0\Iced.dll</HintPath>
+    </Reference>
+    <Reference Include="ILCompiler.Reflection.ReadyToRun">
+      <HintPath>..\..\runtime\artifacts\bin\coreclr\Windows_NT.x64.Debug\ILCompiler.Reflection.ReadyToRun.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="ReadyToRunLanguage.cs" />
+  </ItemGroup>
+
+  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
+
+  <Target Name="RemoveTransitiveProjectReferences" AfterTargets="IncludeTransitiveProjectReferences">
+    <ItemGroup>
+      <ProjectReference Remove="@(_TransitiveProjectReferences)" />
+    </ItemGroup>
+  </Target>
+
+</Project>
