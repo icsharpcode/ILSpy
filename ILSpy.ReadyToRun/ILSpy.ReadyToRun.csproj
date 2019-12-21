@@ -42,9 +42,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Iced">
-      <HintPath>..\..\iced\Iced\bin\Debug\netstandard2.0\Iced.dll</HintPath>
-    </Reference>
     <Reference Include="ILCompiler.Reflection.ReadyToRun">
       <HintPath>..\..\runtime\artifacts\bin\coreclr\Windows_NT.x64.Debug\ILCompiler.Reflection.ReadyToRun.dll</HintPath>
     </Reference>
@@ -52,6 +49,10 @@
 
   <ItemGroup>
     <Compile Include="ReadyToRunLanguage.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Iced" Version="1.4.0" />
   </ItemGroup>
 
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
