@@ -82,7 +82,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.MemberRef)
 				+ metadata.GetTableRowSize(TableIndex.MemberRef) * (RID - 1);
 
-			public int ParentHandle => MetadataTokens.GetToken(memberRef.Parent);
+			[StringFormat("X8")]
+			public int Parent => MetadataTokens.GetToken(memberRef.Parent);
 
 			public string ParentTooltip {
 				get {
@@ -96,6 +97,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(memberRef.Name):X} \"{Name}\"";
 
+			[StringFormat("X8")]
 			public int Signature => MetadataTokens.GetHeapOffset(memberRef.Signature);
 
 			public string SignatureTooltip {

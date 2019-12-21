@@ -135,6 +135,10 @@
     <Compile Include="Controls\SearchBox.cs" />
     <Compile Include="Controls\SortableGridViewColumn.cs" />
     <Compile Include="Controls\XamlResourceExtension.cs" />
+    <Compile Include="Metadata\CorTables\ClassLayoutTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
     <Compile Include="Metadata\DataGridCustomTextColumn.cs" />
     <Compile Include="Metadata\FlagsFilterControl.xaml.cs" />
     <Compile Include="Metadata\FlagsTooltip.xaml.cs" />

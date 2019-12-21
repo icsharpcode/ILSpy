@@ -85,16 +85,25 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.GenericParamConstraint)
 				+ metadata.GetTableRowSize(TableIndex.GenericParamConstraint) * (RID-1);
 
-			public int OwnerHandle => MetadataTokens.GetToken(genericParamConstraint.Parameter);
+			[StringFormat("X8")]
+			public int Owner => MetadataTokens.GetToken(genericParamConstraint.Parameter);
 
-			public string Owner {
+			string ownerTooltip;
+
+			public string OwnerTooltip {
 				get {
-					ITextOutput output = new PlainTextOutput();
-					((EntityHandle)genericParamConstraint.Parameter).WriteTo(module, output, GenericContext.Empty);
-					return output.ToString();
+					if (ownerTooltip == null) {
+						ITextOutput output = new PlainTextOutput();
+						var p = metadata.GetGenericParameter(genericParamConstraint.Parameter);
+						output.Write("parameter " + p.Index + (p.Name.IsNil ? "" : " (" + metadata.GetString(p.Name) + ")") + " of ");
+						p.Parent.WriteTo(module, output, GenericContext.Empty);
+						ownerTooltip = output.ToString();
+					}
+					return ownerTooltip;
 				}
 			}
 
+			[StringFormat("X8")]
 			public int Type => MetadataTokens.GetToken(genericParamConstraint.Type);
 
 			public string TypeTooltip {
@@ -112,6 +121,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.genericParamConstraint = metadata.GetGenericParameterConstraint(handle);
+				this.ownerTooltip = null;
 			}
 		}
 

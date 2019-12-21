@@ -78,6 +78,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.Children.Add(new ConstantTableTreeNode(module));
 			this.Children.Add(new CustomAttributeTableTreeNode(module));
 			this.Children.Add(new DeclSecurityTableTreeNode(module));
+			this.Children.Add(new ClassLayoutTableTreeNode(module));
 			this.Children.Add(new StandAloneSigTableTreeNode(module));
 			this.Children.Add(new EventTableTreeNode(module));
 			this.Children.Add(new PropertyTableTreeNode(module));
