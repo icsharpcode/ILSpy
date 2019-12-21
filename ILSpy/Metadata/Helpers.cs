@@ -32,6 +32,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using DataGridExtensions;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Controls;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -101,6 +102,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				case "Flags":
 				case "Attributes":
 				case "ImplAttributes":
+				case "MappingFlags":
 					binding.Converter = new UnderlyingEnumValueConverter();
 					binding.StringFormat = "X4";
 					e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance[e.PropertyType.Name + "Filter"]);
@@ -129,7 +131,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static unsafe int GetRowNum(byte* ptr, int size)
+		public static unsafe int GetValue(byte* ptr, int size)
 		{
 			int result = 0;
 			for (int i = 0; i < size; i += 2) {
@@ -148,11 +150,29 @@ namespace ICSharpCode.ILSpy.Metadata
 			fromTypeDefOrRefTag = typeof(TypeDefinitionHandle).Assembly
 				.GetType("System.Reflection.Metadata.Ecma335.TypeDefOrRefTag")
 				.GetMethod("ConvertToHandle", BindingFlags.Static | BindingFlags.NonPublic);
+			fromHasFieldMarshalTag = typeof(TypeDefinitionHandle).Assembly
+				.GetType("System.Reflection.Metadata.Ecma335.HasFieldMarshalTag")
+				.GetMethod("ConvertToHandle", BindingFlags.Static | BindingFlags.NonPublic);
+			fromMemberForwardedTag = typeof(TypeDefinitionHandle).Assembly
+				.GetType("System.Reflection.Metadata.Ecma335.MemberForwardedTag")
+				.GetMethod("ConvertToHandle", BindingFlags.Static | BindingFlags.NonPublic);
 		}
 
 		readonly static FieldInfo rowCounts;
 		readonly static MethodInfo computeCodedTokenSize;
 		readonly static MethodInfo fromTypeDefOrRefTag;
+		readonly static MethodInfo fromHasFieldMarshalTag;
+		readonly static MethodInfo fromMemberForwardedTag;
+
+		public static EntityHandle FromHasFieldMarshalTag(uint tag)
+		{
+			return (EntityHandle)fromHasFieldMarshalTag.Invoke(null, new object[] { tag });
+		}
+
+		public static EntityHandle FromMemberForwardedTag(uint tag)
+		{
+			return (EntityHandle)fromMemberForwardedTag.Invoke(null, new object[] { tag });
+		}
 
 		public static EntityHandle FromTypeDefOrRefTag(uint tag)
 		{
@@ -170,9 +190,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			{
 				var t = value.GetType();
 				if (t.IsEnum) {
-					var u = t.GetEnumUnderlyingType();
-					if (u == typeof(int))
-						return (int)value;
+					return (int)CSharpPrimitiveCast.Cast(TypeCode.Int32, value, false);
 				}
 				return value;
 			}

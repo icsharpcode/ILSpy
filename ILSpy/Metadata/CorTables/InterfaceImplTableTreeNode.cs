@@ -77,8 +77,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public unsafe InterfaceImpl(byte *ptr, int classSize, int interfaceSize)
 			{
-				Class = MetadataTokens.TypeDefinitionHandle(Helpers.GetRowNum(ptr, classSize));
-				Interface = Helpers.FromTypeDefOrRefTag((uint)Helpers.GetRowNum(ptr + classSize, interfaceSize));
+				Class = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, classSize));
+				Interface = Helpers.FromTypeDefOrRefTag((uint)Helpers.GetValue(ptr + classSize, interfaceSize));
 			}
 		}
 

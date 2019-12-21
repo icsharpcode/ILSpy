@@ -77,8 +77,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public unsafe PropertyMap(byte *ptr, int typeDefSize, int propertyDefSize)
 			{
-				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetRowNum(ptr, typeDefSize));
-				PropertyList = MetadataTokens.PropertyDefinitionHandle(Helpers.GetRowNum(ptr + typeDefSize, propertyDefSize));
+				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, typeDefSize));
+				PropertyList = MetadataTokens.PropertyDefinitionHandle(Helpers.GetValue(ptr + typeDefSize, propertyDefSize));
 			}
 		}
 

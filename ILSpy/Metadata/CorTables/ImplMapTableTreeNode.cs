@@ -31,19 +31,20 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class EventMapTableTreeNode : ILSpyTreeNode
+	class ImplMapTableTreeNode : ILSpyTreeNode
 	{
 		private PEFile module;
 
-		public EventMapTableTreeNode(PEFile module)
+		public ImplMapTableTreeNode(PEFile module)
 		{
 			this.module = module;
 		}
 
-		public override object Text => $"12 EventMap ({module.Metadata.GetTableRowCount(TableIndex.EventMap)})";
+		public override object Text => $"1C ImplMap ({module.Metadata.GetTableRowCount(TableIndex.ImplMap)})";
 
 		public override object Icon => Images.Literal;
 
@@ -55,13 +56,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			var view = Helpers.PrepareDataGrid(tabPage);
 			var metadata = module.Metadata;
 
-			var list = new List<EventMapEntry>();
+			var list = new List<ImplMapEntry>();
 
-			var length = metadata.GetTableRowCount(TableIndex.EventMap);
+			var length = metadata.GetTableRowCount(TableIndex.ImplMap);
 			byte* ptr = metadata.MetadataPointer;
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++) {
-				list.Add(new EventMapEntry(module, ptr, metadataOffset, rid));
+				list.Add(new ImplMapEntry(module, ptr, metadataOffset, rid));
 			}
 
 			view.ItemsSource = list;
@@ -70,71 +71,84 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		readonly struct EventMap
+		readonly struct ImplMap
 		{
-			public readonly TypeDefinitionHandle Parent;
-			public readonly EventDefinitionHandle EventList;
+			public readonly PInvokeAttributes MappingFlags;
+			public readonly EntityHandle MemberForwarded;
+			public readonly StringHandle ImportName;
+			public readonly ModuleReferenceHandle ImportScope;
 
-			public unsafe EventMap(byte *ptr, int typeDefSize, int eventDefSize)
+			public unsafe ImplMap(byte *ptr, int moduleRefSize, int memberForwardedTagRefSize, int stringHandleSize)
 			{
-				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, typeDefSize));
-				EventList = MetadataTokens.EventDefinitionHandle(Helpers.GetValue(ptr + typeDefSize, eventDefSize));
+				MappingFlags = (PInvokeAttributes)Helpers.GetValue(ptr, 2);
+				MemberForwarded = Helpers.FromMemberForwardedTag((uint)Helpers.GetValue(ptr + 2, memberForwardedTagRefSize));
+				ImportName = MetadataTokens.StringHandle(Helpers.GetValue(ptr + 2 + memberForwardedTagRefSize, stringHandleSize));
+				ImportScope = MetadataTokens.ModuleReferenceHandle(Helpers.GetValue(ptr + 2 + memberForwardedTagRefSize + stringHandleSize, moduleRefSize));
 			}
 		}
 
-		unsafe struct EventMapEntry
+		unsafe struct ImplMapEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
-			readonly EventMap eventMap;
+			readonly ImplMap implMap;
 
 			public int RID { get; }
 
-			public int Token => 0x12000000 | RID;
+			public int Token => 0x1C000000 | RID;
 
 			public int Offset { get; }
 
-			[StringFormat("X8")]
-			public int Parent => MetadataTokens.GetToken(eventMap.Parent);
+			public PInvokeAttributes MappingFlags => implMap.MappingFlags;
 
-			public string ParentTooltip {
+			public object MappingFlagsTooltip => new FlagsTooltip((int)implMap.MappingFlags, typeof(PInvokeAttributes));
+
+			[StringFormat("X8")]
+			public int MemberForwarded => MetadataTokens.GetToken(implMap.MemberForwarded);
+
+			public string MemberForwardedTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					var context = new GenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)eventMap.Parent).WriteTo(module, output, context);
+					((EntityHandle)implMap.MemberForwarded).WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}
 
 			[StringFormat("X8")]
-			public int EventList => MetadataTokens.GetToken(eventMap.EventList);
+			public object ImportScope => MetadataTokens.GetToken(implMap.ImportScope);
 
-			public string EventListTooltip {
+			public string ImportScopeTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					var context = new GenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)eventMap.EventList).WriteTo(module, output, context);
+					((EntityHandle)implMap.ImportScope).WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}
 
-			public EventMapEntry(PEFile module, byte* ptr, int metadataOffset, int row)
+			public string ImportName => metadata.GetString(implMap.ImportName);
+
+			public string ImportNameTooltip => $"{MetadataTokens.GetHeapOffset(implMap.ImportName):X} \"{ImportName}\"";
+
+			public unsafe ImplMapEntry(PEFile module, byte* ptr, int metadataOffset, int row)
 			{
 				this.module = module;
 				this.metadata = module.Metadata;
 				this.RID = row;
-				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.EventMap)
-					+ metadata.GetTableRowSize(TableIndex.EventMap) * (row - 1);
+				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.ImplMap)
+					+ metadata.GetTableRowSize(TableIndex.ImplMap) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
-				int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
-				int eventDefSize = metadata.GetTableRowCount(TableIndex.Event) < ushort.MaxValue ? 2 : 4;
-				this.eventMap = new EventMap(ptr + rowOffset, typeDefSize, eventDefSize);
+				int moduleRefSize = metadata.GetTableRowCount(TableIndex.ModuleRef) < ushort.MaxValue ? 2 : 4;
+				int memberForwardedTagRefSize = metadata.ComputeCodedTokenSize(32768, TableMask.MethodDef | TableMask.Field);
+				int stringHandleSize = metadata.GetHeapSize(HeapIndex.String) < ushort.MaxValue ? 2 : 4;
+				this.implMap = new ImplMap(ptr + rowOffset, moduleRefSize, memberForwardedTagRefSize, stringHandleSize);
 			}
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, "EventMap");
+			language.WriteCommentLine(output, "ImplMap");
 		}
 	}
 }

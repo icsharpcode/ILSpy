@@ -51,7 +51,6 @@ namespace ICSharpCode.ILSpy.Metadata
 			//dataGrid.Columns.Add(new DataGridTextColumn { IsReadOnly = true, Header = "Size", Binding = new Binding("Size") { StringFormat = "X8" } });
 			//dataGrid.Columns.Add(new DataGridTextColumn { IsReadOnly = true, Header = "Section", Binding = new Binding("Section") });
 			var headers = module.Reader.PEHeaders;
-			var reader = module.Reader.GetEntireImage().GetReader(headers.PEHeaderStartOffset, 128);
 			var header = headers.PEHeader;
 
 			var entries = new DataDirectoryEntry[] {

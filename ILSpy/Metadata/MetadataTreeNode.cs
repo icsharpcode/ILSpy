@@ -77,8 +77,10 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.Children.Add(new MemberRefTableTreeNode(module));
 			this.Children.Add(new ConstantTableTreeNode(module));
 			this.Children.Add(new CustomAttributeTableTreeNode(module));
+			this.Children.Add(new FieldMarshalTableTreeNode(module));
 			this.Children.Add(new DeclSecurityTableTreeNode(module));
 			this.Children.Add(new ClassLayoutTableTreeNode(module));
+			this.Children.Add(new FieldLayoutTableTreeNode(module));
 			this.Children.Add(new StandAloneSigTableTreeNode(module));
 			this.Children.Add(new EventMapTableTreeNode(module));
 			this.Children.Add(new EventTableTreeNode(module));
@@ -88,11 +90,14 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.Children.Add(new MethodImplTableTreeNode(module));
 			this.Children.Add(new ModuleRefTableTreeNode(module));
 			this.Children.Add(new TypeSpecTableTreeNode(module));
+			this.Children.Add(new ImplMapTableTreeNode(module)); ;
+			this.Children.Add(new FieldRVATableTreeNode(module));
 			this.Children.Add(new AssemblyTableTreeNode(module));
 			this.Children.Add(new AssemblyRefTableTreeNode(module));
 			this.Children.Add(new FileTableTreeNode(module));
 			this.Children.Add(new ExportedTypeTableTreeNode(module));
 			this.Children.Add(new ManifestResourceTableTreeNode(module));
+			this.Children.Add(new NestedClassTableTreeNode(module));
 			this.Children.Add(new GenericParamTableTreeNode(module));
 			this.Children.Add(new MethodSpecTableTreeNode(module));
 			this.Children.Add(new GenericParamConstraintTableTreeNode(module));

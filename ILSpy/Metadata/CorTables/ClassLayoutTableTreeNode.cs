@@ -76,11 +76,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			public readonly EntityHandle Parent;
 			public readonly uint ClassSize;
 
-			public unsafe ClassLayout(byte *ptr, bool small)
+			public unsafe ClassLayout(byte *ptr, int typeDefSize)
 			{
-				PackingSize = (ushort)(ptr[0] | (ptr[1] << 8));
-				ClassSize = (uint)(ptr[2] | (ptr[3] << 8) | (ptr[4] << 16) | (ptr[5] << 24));
-				Parent = MetadataTokens.TypeDefinitionHandle(small ? (int)(ptr[6] | (ptr[7] << 8)) : (int)(ptr[6] | (ptr[7] << 8) | (ptr[8] << 16) | (ptr[9] << 24)));
+				PackingSize = (ushort)Helpers.GetValue(ptr, 2);
+				ClassSize = (uint)Helpers.GetValue(ptr + 2, 4);
+				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr + 6, typeDefSize));
 			}
 		}
 
@@ -122,7 +122,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.ClassLayout)
 					+ metadata.GetTableRowSize(TableIndex.ClassLayout) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
-				this.classLayout = new ClassLayout(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) <= ushort.MaxValue);
+				this.classLayout = new ClassLayout(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4);
 			}
 		}
 

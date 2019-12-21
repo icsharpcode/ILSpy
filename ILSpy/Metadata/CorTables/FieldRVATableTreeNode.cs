@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
@@ -29,21 +28,22 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class EventMapTableTreeNode : ILSpyTreeNode
+	internal class FieldRVATableTreeNode : ILSpyTreeNode
 	{
 		private PEFile module;
 
-		public EventMapTableTreeNode(PEFile module)
+		public FieldRVATableTreeNode(PEFile module)
 		{
 			this.module = module;
 		}
 
-		public override object Text => $"12 EventMap ({module.Metadata.GetTableRowCount(TableIndex.EventMap)})";
+		public override object Text => $"1D FieldRVA ({module.Metadata.GetTableRowCount(TableIndex.FieldRva)})";
 
 		public override object Icon => Images.Literal;
 
@@ -55,13 +55,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			var view = Helpers.PrepareDataGrid(tabPage);
 			var metadata = module.Metadata;
 
-			var list = new List<EventMapEntry>();
+			var list = new List<FieldRVAEntry>();
 
-			var length = metadata.GetTableRowCount(TableIndex.EventMap);
+			var length = metadata.GetTableRowCount(TableIndex.FieldRva);
 			byte* ptr = metadata.MetadataPointer;
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++) {
-				list.Add(new EventMapEntry(module, ptr, metadataOffset, rid));
+				list.Add(new FieldRVAEntry(module, ptr, metadataOffset, rid));
 			}
 
 			view.ItemsSource = list;
@@ -70,71 +70,61 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		readonly struct EventMap
+		readonly struct FieldRVA
 		{
-			public readonly TypeDefinitionHandle Parent;
-			public readonly EventDefinitionHandle EventList;
+			public readonly int Offset;
+			public readonly FieldDefinitionHandle Field;
 
-			public unsafe EventMap(byte *ptr, int typeDefSize, int eventDefSize)
+			public unsafe FieldRVA(byte* ptr, int fieldDefSize)
 			{
-				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, typeDefSize));
-				EventList = MetadataTokens.EventDefinitionHandle(Helpers.GetValue(ptr + typeDefSize, eventDefSize));
+				Offset = Helpers.GetValue(ptr, 4);
+				Field = MetadataTokens.FieldDefinitionHandle(Helpers.GetValue(ptr + 4, fieldDefSize));
 			}
 		}
 
-		unsafe struct EventMapEntry
+		unsafe struct FieldRVAEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
-			readonly EventMap eventMap;
+			readonly FieldRVA fieldLayout;
 
 			public int RID { get; }
 
-			public int Token => 0x12000000 | RID;
+			public int Token => 0x1D000000 | RID;
 
 			public int Offset { get; }
 
 			[StringFormat("X8")]
-			public int Parent => MetadataTokens.GetToken(eventMap.Parent);
+			public int Field => MetadataTokens.GetToken(fieldLayout.Field);
 
-			public string ParentTooltip {
+			public string FieldTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)eventMap.Parent).WriteTo(module, output, context);
+					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
+					((EntityHandle)fieldLayout.Field).WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}
 
 			[StringFormat("X8")]
-			public int EventList => MetadataTokens.GetToken(eventMap.EventList);
+			public int FieldOffset => fieldLayout.Offset;
 
-			public string EventListTooltip {
-				get {
-					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)eventMap.EventList).WriteTo(module, output, context);
-					return output.ToString();
-				}
-			}
-
-			public EventMapEntry(PEFile module, byte* ptr, int metadataOffset, int row)
+			public FieldRVAEntry(PEFile module, byte* ptr, int metadataOffset, int row)
 			{
 				this.module = module;
 				this.metadata = module.Metadata;
 				this.RID = row;
-				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.EventMap)
-					+ metadata.GetTableRowSize(TableIndex.EventMap) * (row - 1);
+				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.FieldRva)
+					+ metadata.GetTableRowSize(TableIndex.FieldRva) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
-				int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
-				int eventDefSize = metadata.GetTableRowCount(TableIndex.Event) < ushort.MaxValue ? 2 : 4;
-				this.eventMap = new EventMap(ptr + rowOffset, typeDefSize, eventDefSize);
+				int fieldDefSize = metadata.GetTableRowCount(TableIndex.Field) < ushort.MaxValue ? 2 : 4;
+				this.fieldLayout = new FieldRVA(ptr + rowOffset, fieldDefSize);
 			}
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, "EventMap");
+			language.WriteCommentLine(output, "FieldRVAs");
 		}
 	}
 }

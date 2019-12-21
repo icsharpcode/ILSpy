@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using DataGridExtensions;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
@@ -57,7 +58,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			foreach (var item in flagsType.GetFields(BindingFlags.Static | BindingFlags.Public)) {
 				if (item.Name.EndsWith("Mask", StringComparison.Ordinal))
 					continue;
-				int value = (int)item.GetRawConstantValue();
+				int value = (int)CSharpPrimitiveCast.Cast(TypeCode.Int32, item.GetRawConstantValue(), false);
 				yield return new Flag($"{item.Name} ({value:X4})", value);
 			}
 		}

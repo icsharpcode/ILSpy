@@ -4,6 +4,7 @@
 			 xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
 			 xmlns:local="clr-namespace:ICSharpCode.ILSpy.Metadata"
 			 xmlns:reflection="clr-namespace:System.Reflection;assembly=mscorlib"
+			 xmlns:cecil="clr-namespace:Mono.Cecil;assembly=Mono.Cecil"
 			 xmlns:srm="clr-namespace:System.Reflection;assembly=System.Reflection.Metadata"
 			 xmlns:dgx="urn:tom-englert.de/DataGridExtensions">
 
@@ -77,6 +78,10 @@
 
 	<ControlTemplate x:Key="GenericParameterAttributesFilter">
 		<local:FlagsFilterControl FlagsType="{x:Type reflection:GenericParameterAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="PInvokeAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type cecil:PInvokeAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
 	</ControlTemplate>
 
 	<Style x:Key="ItemContainerStyle" TargetType="ListViewItem">

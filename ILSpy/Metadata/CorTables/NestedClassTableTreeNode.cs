@@ -31,19 +31,20 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class EventMapTableTreeNode : ILSpyTreeNode
+	class NestedClassTableTreeNode : ILSpyTreeNode
 	{
 		private PEFile module;
 
-		public EventMapTableTreeNode(PEFile module)
+		public NestedClassTableTreeNode(PEFile module)
 		{
 			this.module = module;
 		}
 
-		public override object Text => $"12 EventMap ({module.Metadata.GetTableRowCount(TableIndex.EventMap)})";
+		public override object Text => $"29 NestedClass ({module.Metadata.GetTableRowCount(TableIndex.NestedClass)})";
 
 		public override object Icon => Images.Literal;
 
@@ -55,13 +56,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			var view = Helpers.PrepareDataGrid(tabPage);
 			var metadata = module.Metadata;
 
-			var list = new List<EventMapEntry>();
+			var list = new List<NestedClassEntry>();
 
-			var length = metadata.GetTableRowCount(TableIndex.EventMap);
+			var length = metadata.GetTableRowCount(TableIndex.NestedClass);
 			byte* ptr = metadata.MetadataPointer;
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++) {
-				list.Add(new EventMapEntry(module, ptr, metadataOffset, rid));
+				list.Add(new NestedClassEntry(module, ptr, metadataOffset, rid));
 			}
 
 			view.ItemsSource = list;
@@ -70,71 +71,70 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		readonly struct EventMap
+		readonly struct NestedClass
 		{
-			public readonly TypeDefinitionHandle Parent;
-			public readonly EventDefinitionHandle EventList;
+			public readonly TypeDefinitionHandle Nested;
+			public readonly TypeDefinitionHandle Enclosing;
 
-			public unsafe EventMap(byte *ptr, int typeDefSize, int eventDefSize)
+			public unsafe NestedClass(byte *ptr, int typeDefSize)
 			{
-				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, typeDefSize));
-				EventList = MetadataTokens.EventDefinitionHandle(Helpers.GetValue(ptr + typeDefSize, eventDefSize));
+				Nested = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, typeDefSize));
+				Enclosing = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr + typeDefSize, typeDefSize));
 			}
 		}
 
-		unsafe struct EventMapEntry
+		unsafe struct NestedClassEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
-			readonly EventMap eventMap;
+			readonly NestedClass nestedClass;
 
 			public int RID { get; }
 
-			public int Token => 0x12000000 | RID;
+			public int Token => 0x29000000 | RID;
 
 			public int Offset { get; }
 
 			[StringFormat("X8")]
-			public int Parent => MetadataTokens.GetToken(eventMap.Parent);
+			public int NestedClass => MetadataTokens.GetToken(nestedClass.Nested);
 
-			public string ParentTooltip {
+			public string NestedClassTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)eventMap.Parent).WriteTo(module, output, context);
+					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
+					((EntityHandle)nestedClass.Nested).WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}
 
 			[StringFormat("X8")]
-			public int EventList => MetadataTokens.GetToken(eventMap.EventList);
+			public int EnclosingClass => MetadataTokens.GetToken(nestedClass.Enclosing);
 
-			public string EventListTooltip {
+			public string EnclosingClassTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)eventMap.EventList).WriteTo(module, output, context);
+					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
+					((EntityHandle)nestedClass.Enclosing).WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}
 
-			public EventMapEntry(PEFile module, byte* ptr, int metadataOffset, int row)
+			public unsafe NestedClassEntry(PEFile module, byte* ptr, int metadataOffset, int row)
 			{
 				this.module = module;
 				this.metadata = module.Metadata;
 				this.RID = row;
-				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.EventMap)
-					+ metadata.GetTableRowSize(TableIndex.EventMap) * (row - 1);
+				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.NestedClass)
+					+ metadata.GetTableRowSize(TableIndex.NestedClass) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
 				int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
-				int eventDefSize = metadata.GetTableRowCount(TableIndex.Event) < ushort.MaxValue ? 2 : 4;
-				this.eventMap = new EventMap(ptr + rowOffset, typeDefSize, eventDefSize);
+				this.nestedClass = new NestedClass(ptr + rowOffset, typeDefSize);
 			}
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, "EventMap");
+			language.WriteCommentLine(output, "NestedClass");
 		}
 	}
 }

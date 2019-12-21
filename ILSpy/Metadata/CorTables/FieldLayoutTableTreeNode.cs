@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override object Icon => Images.Literal;
 
-		public override bool View(ViewModels.TabPageModel tabPage)
+		public unsafe override bool View(ViewModels.TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
@@ -57,10 +57,11 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			var list = new List<FieldLayoutEntry>();
 
-			foreach (var row in metadata.GetFieldLayouts()) {
-				FieldDefinition d = default;
-				d.GetOffset();
-				list.Add(new FieldLayoutEntry(module, row));
+			var length = metadata.GetTableRowCount(TableIndex.FieldLayout);
+			byte* ptr = metadata.MetadataPointer;
+			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
+			for (int rid = 1; rid <= length; rid++) {
+				list.Add(new FieldLayoutEntry(module, ptr, metadataOffset, rid));
 			}
 
 			view.ItemsSource = list;
@@ -69,48 +70,55 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct FieldLayoutEntry
+		readonly struct FieldLayout
 		{
-			readonly int metadataOffset;
+			public readonly int Offset;
+			public readonly FieldDefinitionHandle Field;
+
+			public unsafe FieldLayout(byte* ptr, int fieldDefSize)
+			{
+				Offset = Helpers.GetValue(ptr, 4);
+				Field = MetadataTokens.FieldDefinitionHandle(Helpers.GetValue(ptr + 4, fieldDefSize));
+			}
+		}
+
+		unsafe struct FieldLayoutEntry
+		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
-			readonly EntityHandle handle;
-			//readonly  fieldDef;
+			readonly FieldLayout fieldLayout;
 
-			public int RID => MetadataTokens.GetRowNumber(handle);
+			public int RID { get; }
 
-			public int Token => MetadataTokens.GetToken(handle);
+			public int Token => 0x10000000 | RID;
 
-			public int Offset => metadataOffset
-				+ metadata.GetTableMetadataOffset(TableIndex.FieldLayout)
-				+ metadata.GetTableRowSize(TableIndex.FieldLayout) * (RID - 1);
+			public int Offset { get; }
 
-			//public int Attributes => (int)fieldDef.Attributes;
+			[StringFormat("X8")]
+			public int Field => MetadataTokens.GetToken(fieldLayout.Field);
 
-			//public object AttributesTooltip => new FlagsTooltip((int)eventDef.Attributes, typeof(EventAttributes));
-
-			//public int NameStringHandle => MetadataTokens.GetHeapOffset(fieldDef.Name);
-
-			//public string Name => metadata.GetString(fieldDef.Name);
-
-			//public int Signature => MetadataTokens.GetHeapOffset(fieldDef.Signature);
-
-			public string SignatureTooltip {
+			public string FieldTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)handle).WriteTo(module, output, context);
+					((EntityHandle)fieldLayout.Field).WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}
 
-			public FieldLayoutEntry(PEFile module, EntityHandle handle)
+			[StringFormat("X8")]
+			public int FieldOffset => fieldLayout.Offset;
+
+			public FieldLayoutEntry(PEFile module, byte* ptr, int metadataOffset, int row)
 			{
-				this.metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 				this.module = module;
 				this.metadata = module.Metadata;
-				this.handle = handle;
-				//this.fieldDef = metadata.GetFieldLayoutinition(handle);
+				this.RID = row;
+				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.FieldLayout)
+					+ metadata.GetTableRowSize(TableIndex.FieldLayout) * (row - 1);
+				this.Offset = metadataOffset + rowOffset;
+				int fieldDefSize = metadata.GetTableRowCount(TableIndex.Field) < ushort.MaxValue ? 2 : 4;
+				this.fieldLayout = new FieldLayout(ptr + rowOffset, fieldDefSize);
 			}
 		}
 
