@@ -43,6 +43,7 @@ Included open-source libraries:
  * SharpTreeView: LGPL
  * ILSpy.BamlDecompiler: MIT license
  * CommandLineUtils: Apache License 2.0 (part of ICSharpCode.Decompiler.Console)
+ * ILCompiler.Reflection.ReadyToRun: MIT License (part of ILSpy.ReadyToRun)
 
 How to build
 ------------
