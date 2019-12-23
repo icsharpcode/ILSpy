@@ -42,17 +42,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="ILCompiler.Reflection.ReadyToRun">
-      <HintPath>..\..\runtime\artifacts\bin\coreclr\Windows_NT.x64.Debug\ILCompiler.Reflection.ReadyToRun.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Include="ReadyToRunLanguage.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Iced" Version="1.4.0" />
+    <PackageReference Include="ILCompiler.Reflection.ReadyToRun" Version="1.0.0-alpha" />
   </ItemGroup>
 
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
