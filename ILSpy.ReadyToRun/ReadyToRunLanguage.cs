@@ -65,8 +65,7 @@ namespace ICSharpCode.ILSpy
 							code[i] = reader.Image[reader.GetOffset(runtimeFunction.StartAddress) + i];
 						}
 						// TODO: Bitness
-						// TODO: RIP
-						DecoderFormatterExample(output, code, 64, 0);
+						DecoderFormatterExample(output, code, 64, (ulong)runtimeFunction.StartAddress);
 					}
 
 				}
