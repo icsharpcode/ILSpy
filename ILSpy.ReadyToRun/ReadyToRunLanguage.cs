@@ -18,6 +18,7 @@
 
 using System;
 using System.ComponentModel.Composition;
+using System.Reflection.PortableExecutable;
 using Iced.Intel;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
@@ -56,6 +57,16 @@ namespace ICSharpCode.ILSpy
 			PEFile module = method.ParentModule.PEFile;
 			// TODO: avoid eager parsing in R2RReader
 			R2RReader reader = new R2RReader(new R2RAssemblyResolver(), module.Metadata, module.Reader, module.FileName);
+			int bitness = -1;
+			if (reader.Machine == Machine.Amd64) {
+				bitness = 64;
+			} else if (reader.Machine == Machine.I386) {
+				bitness = 32;
+			}
+			else {
+				// TODO: Architecture other than x86/amd64
+				throw new NotImplementedException("");
+			}
 			foreach (var m in reader.R2RMethods) {
 				if (m.MethodHandle == method.MetadataToken) {
 					// TODO: Indexing
@@ -64,8 +75,7 @@ namespace ICSharpCode.ILSpy
 						for (int i = 0; i < runtimeFunction.Size; i++) {
 							code[i] = reader.Image[reader.GetOffset(runtimeFunction.StartAddress) + i];
 						}
-						// TODO: Bitness
-						DecoderFormatterExample(output, code, 64, (ulong)runtimeFunction.StartAddress);
+						DecoderFormatterExample(output, code, bitness, (ulong)runtimeFunction.StartAddress);
 					}
 
 				}
