@@ -48,13 +48,24 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 			
 			var list = new List<GenericParamEntry>();
+			GenericParamEntry scrollTargetEntry = default;
 
 			for (int row = 1; row <= module.Metadata.GetTableRowCount(TableIndex.GenericParam); row++) {
-				list.Add(new GenericParamEntry(module, MetadataTokens.GenericParameterHandle(row)));
+				GenericParamEntry entry = new GenericParamEntry(module, MetadataTokens.GenericParameterHandle(row));
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -76,13 +87,18 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Number => genericParam.Index;
 
+			[StringFormat("X8")]
 			public GenericParameterAttributes Attributes => genericParam.Attributes;
 
-			public object AttributesTooltip => new FlagsTooltip((int)genericParam.Attributes, typeof(GenericParameterAttributes));
+			public object AttributesTooltip => new FlagsTooltip {
+				FlagGroup.CreateSingleChoiceGroup(typeof(GenericParameterAttributes), "Code type: ", (int)GenericParameterAttributes.VarianceMask, (int)(genericParam.Attributes & GenericParameterAttributes.VarianceMask), new Flag("None (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(GenericParameterAttributes), "Managed type: ", (int)GenericParameterAttributes.SpecialConstraintMask, (int)(genericParam.Attributes & GenericParameterAttributes.SpecialConstraintMask), new Flag("None (0000)", 0, false), includeAny: false),
+			};
 
-			public int OwnerHandle => MetadataTokens.GetToken(genericParam.Parent);
+			[StringFormat("X8")]
+			public int Owner => MetadataTokens.GetToken(genericParam.Parent);
 
-			public string Owner {
+			public string OwnerTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					genericParam.Parent.WriteTo(module, output, GenericContext.Empty);

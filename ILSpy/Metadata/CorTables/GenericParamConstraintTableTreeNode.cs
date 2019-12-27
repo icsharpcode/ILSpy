@@ -47,13 +47,24 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 			
 			var list = new List<GenericParamConstraintEntry>();
+			GenericParamConstraintEntry scrollTargetEntry = default;
 
 			for (int row = 1; row <= metadata.GetTableRowCount(TableIndex.GenericParamConstraint); row++) {
-				list.Add(new GenericParamConstraintEntry(module, MetadataTokens.GenericParameterConstraintHandle(row)));
+				GenericParamConstraintEntry entry = new GenericParamConstraintEntry(module, MetadataTokens.GenericParameterConstraintHandle(row));
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 

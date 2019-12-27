@@ -46,14 +46,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 			
 			var list = new List<ParamEntry>();
+			ParamEntry scrollTargetEntry = default;
 
 			for (int row = 1; row <= module.Metadata.GetTableRowCount(TableIndex.Param); row++) {
-				list.Add(new ParamEntry(module, MetadataTokens.ParameterHandle(row)));
+				ParamEntry entry = new ParamEntry(module, MetadataTokens.ParameterHandle(row));
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
 			
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -73,9 +84,12 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Param)
 				+ metadata.GetTableRowSize(TableIndex.Param) * (RID-1);
 
+			[StringFormat("X8")]
 			public ParameterAttributes Attributes => param.Attributes;
 
-			public object AttributesTooltip => new FlagsTooltip((int)param.Attributes, typeof(ParameterAttributes));
+			public object AttributesTooltip => new FlagsTooltip {
+				FlagGroup.CreateMultipleChoiceGroup(typeof(ParameterAttributes), selectedValue: (int)param.Attributes, includeAll: false)
+			};
 
 			public string Name => metadata.GetString(param.Name);
 

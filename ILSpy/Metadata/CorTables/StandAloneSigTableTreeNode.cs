@@ -21,6 +21,8 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -45,14 +47,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 
 			var list = new List<StandAloneSigEntry>();
+			StandAloneSigEntry scrollTargetEntry = default;
 
 			for (int row = 1; row <= module.Metadata.GetTableRowCount(TableIndex.StandAloneSig); row++) {
-				list.Add(new StandAloneSigEntry(module, MetadataTokens.StandaloneSignatureHandle(row)));
+				StandAloneSigEntry entry = new StandAloneSigEntry(module, MetadataTokens.StandaloneSignatureHandle(row));
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -72,11 +85,15 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.StandAloneSig)
 				+ metadata.GetTableRowSize(TableIndex.StandAloneSig) * (RID - 1);
 
+			[StringFormat("X")]
 			public int Signature => MetadataTokens.GetHeapOffset(standaloneSig.Signature);
 
 			public string SignatureTooltip {
 				get {
-					return null;
+					ITextOutput output = new PlainTextOutput();
+					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
+					((EntityHandle)handle).WriteTo(module, output, context);
+					return output.ToString();
 				}
 			}
 

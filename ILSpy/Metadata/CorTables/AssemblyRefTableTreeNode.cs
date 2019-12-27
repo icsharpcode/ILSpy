@@ -46,14 +46,24 @@ namespace ICSharpCode.ILSpy.Metadata
 			var view = Helpers.PrepareDataGrid(tabPage);
 			var metadata = module.Metadata;
 			var list = new List<AssemblyRefEntry>();
+			AssemblyRefEntry scrollTargetEntry = default;
 
 			foreach (var row in metadata.AssemblyReferences) {
-				list.Add(new AssemblyRefEntry(module, row));
+				AssemblyRefEntry entry = new AssemblyRefEntry(module, row);
+				if (scrollTarget == MetadataTokens.GetRowNumber(row)) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
-
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -75,10 +85,14 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public Version Version => assemblyRef.Version;
 
+			[StringFormat("X8")]
 			public AssemblyFlags Flags => assemblyRef.Flags;
 
-			public object FlagsTooltip => new FlagsTooltip((int)assemblyRef.Flags, typeof(AssemblyFlags));
+			public object FlagsTooltip => new FlagsTooltip((int)assemblyRef.Flags, null) {
+				FlagGroup.CreateMultipleChoiceGroup(typeof(AssemblyFlags), selectedValue: (int)assemblyRef.Flags, includeAll: false)
+			};
 
+			[StringFormat("X")]
 			public int PublicKeyOrToken => MetadataTokens.GetHeapOffset(assemblyRef.PublicKeyOrToken);
 
 			public string PublicKeyOrTokenTooltip {

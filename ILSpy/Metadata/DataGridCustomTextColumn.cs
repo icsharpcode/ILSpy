@@ -19,6 +19,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -32,9 +33,17 @@ namespace ICSharpCode.ILSpy.Metadata
 			TextBox textBox = new TextBox() { Style = (Style)MetadataTableViews.Instance["DataGridCustomTextColumnTextBoxStyle"] };
 			BindingOperations.SetBinding(textBox, TextBox.TextProperty, Binding);
 			if (ToolTipBinding != null) {
-				BindingOperations.SetBinding(textBox, TextBox.ToolTipProperty, ToolTipBinding);
+				textBox.MouseMove += TextBox_MouseMove;
 			}
 			return textBox;
+		}
+
+		private void TextBox_MouseMove(object sender, MouseEventArgs e)
+		{
+			e.Handled = true;
+			var textBox = (TextBox)sender;
+			BindingOperations.SetBinding(textBox, TextBox.ToolTipProperty, ToolTipBinding);
+			textBox.MouseMove -= TextBox_MouseMove;
 		}
 	}
 }

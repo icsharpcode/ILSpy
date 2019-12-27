@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.Children.Add(new GenericParamConstraintTableTreeNode(module));
 		}
 
-		public ILSpyTreeNode FindNodeByHandleKind(HandleKind kind)
+		public MetadataTableTreeNode FindNodeByHandleKind(HandleKind kind)
 		{
 			return this.Children.OfType<MetadataTableTreeNode>().SingleOrDefault(x => x.Kind == kind);
 		}
@@ -112,11 +112,11 @@ namespace ICSharpCode.ILSpy.Metadata
 
 	class Entry
 	{
-		public string Member { get; set; }
-		public int Offset { get; set; }
-		public int Size { get; set; }
-		public object Value { get; set; }
-		public string Meaning { get; set; }
+		public string Member { get; }
+		public int Offset { get; }
+		public int Size { get; }
+		public object Value { get; }
+		public string Meaning { get; }
 
 		public Entry(int offset, object value, int size, string member, string meaning)
 		{

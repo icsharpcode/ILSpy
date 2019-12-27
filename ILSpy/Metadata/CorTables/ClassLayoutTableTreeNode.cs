@@ -51,13 +51,24 @@ namespace ICSharpCode.ILSpy.Metadata
 			var length = metadata.GetTableRowCount(TableIndex.ClassLayout);
 			byte* ptr = metadata.MetadataPointer;
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
+			ClassLayoutEntry scrollTargetEntry = default;
+
 			for (int rid = 1; rid <= length; rid++) {
-				list.Add(new ClassLayoutEntry(module, ptr, metadataOffset, rid));
+				ClassLayoutEntry entry = new ClassLayoutEntry(module, ptr, metadataOffset, rid);
+				if (scrollTarget == rid) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
-
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 

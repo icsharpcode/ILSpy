@@ -46,13 +46,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 			
 			var list = new List<TypeRefEntry>();
-			
-			foreach (var row in metadata.TypeReferences)
-				list.Add(new TypeRefEntry(module, row));
+			TypeRefEntry scrollTargetEntry = default;
+
+			foreach (var row in metadata.TypeReferences) {
+				TypeRefEntry entry = new TypeRefEntry(module, row);
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
+			}
 
 			view.ItemsSource = list;
 			
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 

@@ -43,20 +43,19 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public override bool View(ViewModels.TabPageModel tabPage)
 		{
-			var dataGrid = new DataGrid {
-				Columns = {
-					new DataGridTextColumn { IsReadOnly = true, Header = "Member", Binding = new Binding("Member") },
-					new DataGridTextColumn { IsReadOnly = true, Header = "Offset", Binding = new Binding("Offset") { StringFormat = "X8" } },
-					new DataGridTextColumn { IsReadOnly = true, Header = "Size", Binding = new Binding("Size") },
-					new DataGridTextColumn { IsReadOnly = true, Header = "Value", Binding = new Binding(".") { Converter = ByteWidthConverter.Instance } },
-					new DataGridTextColumn { IsReadOnly = true, Header = "Meaning", Binding = new Binding("Meaning") },
-				},
-				AutoGenerateColumns = false,
-				CanUserAddRows = false,
-				CanUserDeleteRows = false,
-				RowDetailsTemplateSelector = new DllCharacteristicsDataTemplateSelector(),
-				RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Visible
-			};
+			tabPage.Title = Text.ToString();
+			tabPage.SupportsLanguageSwitching = false;
+
+			var dataGrid = Helpers.PrepareDataGrid(tabPage);
+			dataGrid.RowDetailsTemplateSelector = new DllCharacteristicsDataTemplateSelector();
+			dataGrid.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Visible;
+			dataGrid.AutoGenerateColumns = false;
+			dataGrid.Columns.Add(new DataGridCustomTextColumn { Header = "Member", Binding = new Binding("Member") { Mode = BindingMode.OneWay } });
+			dataGrid.Columns.Add(new DataGridCustomTextColumn { Header = "Offset", Binding = new Binding("Offset") { StringFormat = "X8", Mode = BindingMode.OneWay } });
+			dataGrid.Columns.Add(new DataGridCustomTextColumn { Header = "Size", Binding = new Binding("Size") { Mode = BindingMode.OneWay } });
+			dataGrid.Columns.Add(new DataGridCustomTextColumn { Header = "Value", Binding = new Binding(".") { Converter = ByteWidthConverter.Instance, Mode = BindingMode.OneWay } });
+			dataGrid.Columns.Add(new DataGridCustomTextColumn { Header = "Meaning", Binding = new Binding("Meaning") { Mode = BindingMode.OneWay } });
+
 			var headers = module.Reader.PEHeaders;
 			var reader = module.Reader.GetEntireImage().GetReader(headers.PEHeaderStartOffset, 128);
 			var header = headers.PEHeader;
@@ -129,6 +128,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					new { Value = (flags & 0x4000) != 0, Meaning = "Image supports Control Flow Guard" },
 					new { Value = (flags & 0x8000) != 0, Meaning = "Image is Terminal Server aware" },
 				});
+				dataGridFactory.SetValue(DataGrid.GridLinesVisibilityProperty, DataGridGridLinesVisibility.None);
 				DataTemplate template = new DataTemplate();
 				template.VisualTree = dataGridFactory;
 				return template;

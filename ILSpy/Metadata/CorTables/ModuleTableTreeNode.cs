@@ -45,12 +45,19 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 			
 			var list = new List<ModuleEntry>();
-			
+			ModuleEntry scrollTargetEntry = default;
+
 			list.Add(new ModuleEntry(module, EntityHandle.ModuleDefinition));
 
 			view.ItemsSource = list;
 			
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -76,14 +83,17 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(moduleDef.Name):X} \"{Name}\"";
 
+			[StringFormat("X")]
 			public int Mvid => MetadataTokens.GetHeapOffset(moduleDef.Mvid);
 
 			public string MvidTooltip => metadata.GetGuid(moduleDef.Mvid).ToString();
 
+			[StringFormat("X")]
 			public int GenerationId => MetadataTokens.GetHeapOffset(moduleDef.GenerationId);
 
 			public string GenerationIdTooltip => moduleDef.GenerationId.IsNil ? null : metadata.GetGuid(moduleDef.GenerationId).ToString();
 
+			[StringFormat("X")]
 			public int BaseGenerationId => MetadataTokens.GetHeapOffset(moduleDef.BaseGenerationId);
 
 			public string BaseGenerationIdTooltip => moduleDef.BaseGenerationId.IsNil ? null : metadata.GetGuid(moduleDef.BaseGenerationId).ToString();

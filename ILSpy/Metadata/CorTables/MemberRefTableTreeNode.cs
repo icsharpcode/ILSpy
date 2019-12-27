@@ -47,13 +47,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 
 			var list = new List<MemberRefEntry>();
+			MemberRefEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.MemberReferences)
-				list.Add(new MemberRefEntry(module, row));
+			foreach (var row in metadata.MemberReferences) {
+				MemberRefEntry entry = new MemberRefEntry(module, row);
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
+			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -88,7 +100,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(memberRef.Name):X} \"{Name}\"";
 
-			[StringFormat("X8")]
+			[StringFormat("X")]
 			public int Signature => MetadataTokens.GetHeapOffset(memberRef.Signature);
 
 			public string SignatureTooltip {

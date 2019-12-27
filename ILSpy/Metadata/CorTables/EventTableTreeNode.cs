@@ -50,13 +50,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 
 			var list = new List<EventDefEntry>();
+			EventDefEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.EventDefinitions)
-				list.Add(new EventDefEntry(module, row));
+			foreach (var row in metadata.EventDefinitions) {
+				EventDefEntry entry = new EventDefEntry(module, row);
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
+			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -76,9 +88,12 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Event)
 				+ metadata.GetTableRowSize(TableIndex.Event) * (RID - 1);
 
+			[StringFormat("X8")]
 			public EventAttributes Attributes => eventDef.Attributes;
 
-			public object AttributesTooltip => new FlagsTooltip((int)eventDef.Attributes, typeof(EventAttributes));
+			public object AttributesTooltip => new FlagsTooltip {
+				FlagGroup.CreateMultipleChoiceGroup(typeof(EventAttributes), selectedValue: (int)eventDef.Attributes, includeAll: false),
+			};
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(eventDef.Name):X} \"{Name}\"";
 
@@ -86,6 +101,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemOrNull()?.MainModule).GetDefinition(handle);
 
+			[StringFormat("X8")]
 			public int Type => MetadataTokens.GetToken(eventDef.Type);
 
 			public string TypeTooltip {

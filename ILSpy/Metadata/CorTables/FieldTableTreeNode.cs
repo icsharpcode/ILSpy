@@ -16,11 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
@@ -45,18 +48,30 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
-
 			var view = Helpers.PrepareDataGrid(tabPage);
 			var metadata = module.Metadata;
 
 			var list = new List<FieldDefEntry>();
 
-			foreach (var row in metadata.FieldDefinitions)
-				list.Add(new FieldDefEntry(module, row));
+			FieldDefEntry scrollTargetEntry = default;
+
+			foreach (var row in metadata.FieldDefinitions) {
+				var entry = new FieldDefEntry(module, row);
+				if (scrollTarget.Equals(row)) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
+			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -76,9 +91,15 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Field)
 				+ metadata.GetTableRowSize(TableIndex.Field) * (RID - 1);
 
+			[StringFormat("X8")]
 			public FieldAttributes Attributes => fieldDef.Attributes;
 
-			public object AttributesTooltip => new FlagsTooltip((int)fieldDef.Attributes, typeof(FieldAttributes));
+			const FieldAttributes otherFlagsMask = ~(FieldAttributes.FieldAccessMask);
+
+			public object AttributesTooltip => new FlagsTooltip() {
+				FlagGroup.CreateSingleChoiceGroup(typeof(FieldAttributes), "Field access: ", (int)FieldAttributes.FieldAccessMask, (int)(fieldDef.Attributes & FieldAttributes.FieldAccessMask), new Flag("CompilerControlled (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateMultipleChoiceGroup(typeof(FieldAttributes), "Flags:", (int)otherFlagsMask, (int)(fieldDef.Attributes & otherFlagsMask), includeAll: false),
+			};
 
 			public string Name => metadata.GetString(fieldDef.Name);
 
@@ -86,7 +107,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemOrNull()?.MainModule).GetDefinition(handle);
 
-			[StringFormat("X8")]
+			[StringFormat("X")]
 			public int Signature => MetadataTokens.GetHeapOffset(fieldDef.Signature);
 
 			public string SignatureTooltip {
@@ -112,5 +133,24 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			language.WriteCommentLine(output, "FieldDefs");
 		}
+	}
+}
+
+class Time : IDisposable
+{
+	readonly System.Diagnostics.Stopwatch stopwatch;
+	readonly string title;
+
+	public Time(string title)
+	{
+		this.title = title;
+		this.stopwatch = new System.Diagnostics.Stopwatch();
+		stopwatch.Start();
+	}
+
+	public void Dispose()
+	{
+		stopwatch.Stop();
+		System.Diagnostics.Debug.WriteLine(title + " took " + stopwatch.ElapsedMilliseconds + "ms");
 	}
 }

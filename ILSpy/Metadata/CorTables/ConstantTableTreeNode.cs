@@ -48,14 +48,24 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 
 			var list = new List<ConstantEntry>();
+			ConstantEntry scrollTargetEntry = default;
 
 			for (int row = 1; row <= metadata.GetTableRowCount(TableIndex.Constant); row++) {
-				list.Add(new ConstantEntry(module, MetadataTokens.ConstantHandle(row)));
+				ConstantEntry entry = new ConstantEntry(module, MetadataTokens.ConstantHandle(row));
+				if (scrollTarget == row) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
-
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -75,11 +85,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Constant)
 				+ metadata.GetTableRowSize(TableIndex.Constant) * (RID - 1);
 
-			public int Type => (int)constant.TypeCode;
+			[StringFormat("X8")]
+			public ConstantTypeCode Type => constant.TypeCode;
 
 			public string TypeTooltip => constant.TypeCode.ToString();
 
-			public int ParentHandle => MetadataTokens.GetToken(constant.Parent);
+			[StringFormat("X8")]
+			public int Parent => MetadataTokens.GetToken(constant.Parent);
 
 			public string ParentTooltip {
 				get {
@@ -90,6 +102,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
+			[StringFormat("X")]
 			public int Value => MetadataTokens.GetHeapOffset(constant.Value);
 
 			public string ValueTooltip {

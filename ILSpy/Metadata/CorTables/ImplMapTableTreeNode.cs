@@ -49,17 +49,28 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 
 			var list = new List<ImplMapEntry>();
+			ImplMapEntry scrollTargetEntry = default;
 
 			var length = metadata.GetTableRowCount(TableIndex.ImplMap);
 			byte* ptr = metadata.MetadataPointer;
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++) {
-				list.Add(new ImplMapEntry(module, ptr, metadataOffset, rid));
+				ImplMapEntry entry = new ImplMapEntry(module, ptr, metadataOffset, rid);
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -91,9 +102,16 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset { get; }
 
+			[StringFormat("X8")]
 			public PInvokeAttributes MappingFlags => implMap.MappingFlags;
 
-			public object MappingFlagsTooltip => new FlagsTooltip((int)implMap.MappingFlags, typeof(PInvokeAttributes));
+			const PInvokeAttributes otherFlagsMask = ~(PInvokeAttributes.CallConvMask | PInvokeAttributes.CharSetMask);
+
+			public object MappingFlagsTooltip => new FlagsTooltip {
+				FlagGroup.CreateSingleChoiceGroup(typeof(PInvokeAttributes), "Character set: ", (int)PInvokeAttributes.CharSetMask, (int)(implMap.MappingFlags & PInvokeAttributes.CharSetMask), new Flag("CharSetNotSpec (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(PInvokeAttributes), "Calling convention: ", (int)PInvokeAttributes.CallConvMask, (int)(implMap.MappingFlags & PInvokeAttributes.CallConvMask), new Flag("Invalid (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateMultipleChoiceGroup(typeof(PInvokeAttributes), "Flags:", (int)otherFlagsMask, (int)(implMap.MappingFlags & otherFlagsMask), includeAll: false),
+			};
 
 			[StringFormat("X8")]
 			public int MemberForwarded => MetadataTokens.GetToken(implMap.MemberForwarded);

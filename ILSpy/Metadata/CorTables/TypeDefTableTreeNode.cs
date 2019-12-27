@@ -24,6 +24,7 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -50,13 +51,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 
 			var list = new List<TypeDefEntry>();
+			TypeDefEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.TypeDefinitions)
-				list.Add(new TypeDefEntry(module, row));
+			foreach (var row in metadata.TypeDefinitions) {
+				TypeDefEntry entry = new TypeDefEntry(module, row);
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
+			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -76,9 +89,19 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.TypeDef)
 				+ metadata.GetTableRowSize(TableIndex.TypeDef) * (RID-1);
 
+			[StringFormat("X8")]
 			public TypeAttributes Attributes => typeDef.Attributes;
 
-			public object AttributesTooltip => new FlagsTooltip((int)typeDef.Attributes, typeof(TypeAttributes));
+			const TypeAttributes otherFlagsMask = ~(TypeAttributes.VisibilityMask | TypeAttributes.LayoutMask | TypeAttributes.ClassSemanticsMask | TypeAttributes.StringFormatMask | TypeAttributes.CustomFormatMask);
+
+			public object AttributesTooltip => new FlagsTooltip {
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Visibility: ", (int)TypeAttributes.VisibilityMask, (int)(typeDef.Attributes & TypeAttributes.VisibilityMask), new Flag("NotPublic (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Class layout: ", (int)TypeAttributes.LayoutMask, (int)(typeDef.Attributes & TypeAttributes.LayoutMask), new Flag("AutoLayout (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Class semantics: ", (int)TypeAttributes.ClassSemanticsMask, (int)(typeDef.Attributes & TypeAttributes.ClassSemanticsMask), new Flag("Class (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "String format: ", (int)TypeAttributes.StringFormatMask, (int)(typeDef.Attributes & TypeAttributes.StringFormatMask), new Flag("AnsiClass (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Custom format: ", (int)TypeAttributes.CustomFormatMask, (int)(typeDef.Attributes & TypeAttributes.CustomFormatMask), new Flag("Value0 (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateMultipleChoiceGroup(typeof(TypeAttributes), "Flags:", (int)otherFlagsMask, (int)(typeDef.Attributes & otherFlagsMask), includeAll: false),
+			};
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(typeDef.Name):X} \"{Name}\"";
 
@@ -116,8 +139,32 @@ namespace ICSharpCode.ILSpy.Metadata
 			[StringFormat("X8")]
 			public int FieldList => MetadataTokens.GetToken(typeDef.GetFields().FirstOrDefault());
 
+			public string FieldListTooltip {
+				get {
+					var field = typeDef.GetFields().FirstOrDefault();
+					if (field.IsNil)
+						return null;
+					ITextOutput output = new PlainTextOutput();
+					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
+					((EntityHandle)field).WriteTo(module, output, context);
+					return output.ToString();
+				}
+			}
+
 			[StringFormat("X8")]
 			public int MethodList => MetadataTokens.GetToken(typeDef.GetMethods().FirstOrDefault());
+
+			public string MethodListTooltip {
+				get {
+					var method = typeDef.GetMethods().FirstOrDefault();
+					if (method.IsNil)
+						return null;
+					ITextOutput output = new PlainTextOutput();
+					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
+					((EntityHandle)method).WriteTo(module, output, context);
+					return output.ToString();
+				}
+			}
 
 			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemOrNull()?.MainModule).GetDefinition(handle);
 

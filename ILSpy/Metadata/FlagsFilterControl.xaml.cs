@@ -41,25 +41,12 @@ namespace ICSharpCode.ILSpy.Metadata
 			base.OnApplyTemplate();
 
 			listBox = Template.FindName("ListBox", this) as ListBox;
-			listBox.ItemsSource = CreateFlags(FlagsType);
+			listBox.ItemsSource = FlagGroup.GetFlags(FlagsType, neutralItem: "<All>");
 
 			var filter = Filter;
 
 			if (filter == null || filter.Mask == -1) {
 				listBox?.SelectAll();
-			}
-		}
-
-		internal static IEnumerable<Flag> CreateFlags(Type flagsType, bool includeAll = true)
-		{
-			if (includeAll)
-				yield return new Flag("<All>", -1);
-
-			foreach (var item in flagsType.GetFields(BindingFlags.Static | BindingFlags.Public)) {
-				if (item.Name.EndsWith("Mask", StringComparison.Ordinal))
-					continue;
-				int value = (int)CSharpPrimitiveCast.Cast(TypeCode.Int32, item.GetRawConstantValue(), false);
-				yield return new Flag($"{item.Name} ({value:X4})", value);
 			}
 		}
 
@@ -110,7 +97,10 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public bool IsMatch(object value)
 		{
-			return (Mask & (int)value) != 0;
+			if (value == null)
+				return true;
+
+			return Mask == -1 || (Mask & (int)value) != 0;
 		}
 	}
 }

@@ -48,13 +48,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 
 			var list = new List<MethodSemanticsEntry>();
+			MethodSemanticsEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.GetMethodSemantics())
-				list.Add(new MethodSemanticsEntry(module, row.Handle, row.Semantics, row.Method, row.Association));
+			foreach (var row in metadata.GetMethodSemantics()) {
+				MethodSemanticsEntry entry = new MethodSemanticsEntry(module, row.Handle, row.Semantics, row.Method, row.Association);
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
+			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -76,13 +88,15 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.MethodDef)
 				+ metadata.GetTableRowSize(TableIndex.MethodDef) * (RID - 1);
 
-			public int Semantics => (int)semantics;
+			[StringFormat("X8")]
+			public MethodSemanticsAttributes Semantics => semantics;
 
 			public string SemanticsTooltip => semantics.ToString();
 
-			public int MethodHandle => MetadataTokens.GetToken(method);
+			[StringFormat("X8")]
+			public int Method => MetadataTokens.GetToken(method);
 
-			public string Method {
+			public string MethodTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					((EntityHandle)method).WriteTo(module, output, Decompiler.Metadata.GenericContext.Empty);
@@ -90,9 +104,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			public int AssociationHandle => MetadataTokens.GetToken(association);
+			[StringFormat("X8")]
+			public int Association => MetadataTokens.GetToken(association);
 
-			public string Association {
+			public string AssociationTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					association.WriteTo(module, output, Decompiler.Metadata.GenericContext.Empty);

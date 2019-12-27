@@ -48,12 +48,20 @@
 		<local:FlagsFilterControl FlagsType="{x:Type srm:AssemblyFlags}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
 	</ControlTemplate>
 
+	<ControlTemplate x:Key="AssemblyHashAlgorithmFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type srm:AssemblyHashAlgorithm}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
 	<ControlTemplate x:Key="MethodAttributesFilter">
 		<local:FlagsFilterControl FlagsType="{x:Type reflection:MethodAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
 	</ControlTemplate>
 
 	<ControlTemplate x:Key="MethodImplAttributesFilter">
 		<local:FlagsFilterControl FlagsType="{x:Type reflection:MethodImplAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="MethodSemanticsAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type srm:MethodSemanticsAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
 	</ControlTemplate>
 
 	<ControlTemplate x:Key="TypeAttributesFilter">

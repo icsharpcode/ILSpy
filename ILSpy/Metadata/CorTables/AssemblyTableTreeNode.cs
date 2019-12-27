@@ -44,12 +44,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage);
-			var list = new List<AssemblyEntry>();
-
-			list.Add(new AssemblyEntry(module));
-
-			view.ItemsSource = list;
-
+			view.ItemsSource = new[] { new AssemblyEntry(module) };
 			tabPage.Content = view;
 			return true;
 		}
@@ -69,13 +64,19 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Assembly)
 				+ metadata.GetTableRowSize(TableIndex.Assembly) * (RID - 1);
 
-			public int HashAlgorithm => (int)assembly.HashAlgorithm;
+			[StringFormat("X4")]
+			public AssemblyHashAlgorithm HashAlgorithm => assembly.HashAlgorithm;
 
-			public string HashAlgorithmTooltip => assembly.HashAlgorithm.ToString();
+			public object HashAlgorithmTooltip => new FlagsTooltip() {
+				FlagGroup.CreateSingleChoiceGroup(typeof(AssemblyHashAlgorithm), selectedValue: (int)assembly.HashAlgorithm, defaultFlag: new Flag("None (0000)", 0, false), includeAny: false)
+			};
 
+			[StringFormat("X4")]
 			public AssemblyFlags Flags => assembly.Flags;
 
-			public object FlagsTooltip => new FlagsTooltip((int)assembly.Flags, typeof(AssemblyFlags));
+			public object FlagsTooltip => new FlagsTooltip() {
+				FlagGroup.CreateMultipleChoiceGroup(typeof(AssemblyFlags), selectedValue: (int)assembly.Flags, includeAll: false)
+			};
 
 			public Version Version => assembly.Version;
 

@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -47,14 +48,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 
 			var list = new List<DeclSecurityEntry>();
+			DeclSecurityEntry scrollTargetEntry = default;
 
 			foreach (var row in metadata.DeclarativeSecurityAttributes) {
-				list.Add(new DeclSecurityEntry(module, row));
+				var entry = new DeclSecurityEntry(module, row);
+				if (scrollTarget == MetadataTokens.GetRowNumber(row)) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -74,7 +86,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.DeclSecurity)
 				+ metadata.GetTableRowSize(TableIndex.DeclSecurity) * (RID - 1);
 
-			public int ParentHandle => MetadataTokens.GetToken(declSecAttr.Parent);
+			[StringFormat("X8")]
+			public int Parent => MetadataTokens.GetToken(declSecAttr.Parent);
 
 			public string ParentTooltip {
 				get {
@@ -85,15 +98,17 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			public int Action => (int)declSecAttr.Action;
+			[StringFormat("X8")]
+			public DeclarativeSecurityAction Action => declSecAttr.Action;
 
 			public string ActionTooltip {
 				get {
-					return null;
+					return declSecAttr.Action.ToString();
 				}
 			}
 
-			public int PermissionSetHandle => MetadataTokens.GetHeapOffset(declSecAttr.PermissionSet);
+			[StringFormat("X")]
+			public int PermissionSet => MetadataTokens.GetHeapOffset(declSecAttr.PermissionSet);
 
 			public string PermissionSetTooltip {
 				get {

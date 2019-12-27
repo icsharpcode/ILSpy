@@ -50,13 +50,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 
 			var list = new List<PropertyDefEntry>();
+			PropertyDefEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.PropertyDefinitions)
-				list.Add(new PropertyDefEntry(module, row));
+			foreach (var row in metadata.PropertyDefinitions) {
+				PropertyDefEntry entry = new PropertyDefEntry(module, row);
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
+			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -76,9 +88,12 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.Property)
 				+ metadata.GetTableRowSize(TableIndex.Property) * (RID - 1);
 
+			[StringFormat("X8")]
 			public PropertyAttributes Attributes => propertyDef.Attributes;
 
-			public object AttributesTooltip => new FlagsTooltip((int)propertyDef.Attributes, typeof(PropertyAttributes));
+			public object AttributesTooltip => new FlagsTooltip {
+				FlagGroup.CreateMultipleChoiceGroup(typeof(PropertyAttributes), selectedValue: (int)propertyDef.Attributes, includeAll: false),
+			};
 
 			public string Name => metadata.GetString(propertyDef.Name);
 
@@ -86,6 +101,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemOrNull()?.MainModule).GetDefinition(handle);
 
+			[StringFormat("X")]
 			public int Signature => MetadataTokens.GetHeapOffset(propertyDef.Signature);
 
 			public string SignatureTooltip {

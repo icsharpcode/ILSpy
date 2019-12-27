@@ -46,13 +46,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 			
 			var list = new List<TypeSpecEntry>();
+			TypeSpecEntry scrollTargetEntry = default;
 			
-			foreach (var row in metadata.GetTypeSpecifications())
-				list.Add(new TypeSpecEntry(module, row));
+			foreach (var row in metadata.GetTypeSpecifications()) {
+				TypeSpecEntry entry = new TypeSpecEntry(module, row);
+				if (scrollTarget.Equals(row)) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
+			}
 
 			view.ItemsSource = list;
 			
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -72,6 +84,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.TypeSpec)
 				+ metadata.GetTableRowSize(TableIndex.TypeSpec) * (RID-1);
 
+			[StringFormat("X")]
 			public int Signature => MetadataTokens.GetHeapOffset(typeSpec.Signature);
 
 			public string SignatureTooltip {

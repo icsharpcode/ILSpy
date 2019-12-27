@@ -49,13 +49,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var view = Helpers.PrepareDataGrid(tabPage);
 			var metadata = module.Metadata;
 			var list = new List<MethodDefEntry>();
+			MethodDefEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.MethodDefinitions)
-				list.Add(new MethodDefEntry(module, row));
+			foreach (var row in metadata.MethodDefinitions) {
+				MethodDefEntry entry = new MethodDefEntry(module, row);
+				if (entry.RID == scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
+			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -75,13 +87,24 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.MethodDef)
 				+ metadata.GetTableRowSize(TableIndex.MethodDef) * (RID - 1);
 
+			[StringFormat("X8")]
 			public MethodAttributes Attributes => methodDef.Attributes;
 
-			public object AttributesTooltip => new FlagsTooltip((int)methodDef.Attributes, typeof(MethodAttributes));
+			const MethodAttributes otherFlagsMask = ~(MethodAttributes.MemberAccessMask | MethodAttributes.VtableLayoutMask);
 
+			public object AttributesTooltip => new FlagsTooltip {
+				FlagGroup.CreateSingleChoiceGroup(typeof(MethodAttributes), "Member access: ", (int)MethodAttributes.MemberAccessMask, (int)(methodDef.Attributes & MethodAttributes.MemberAccessMask), new Flag("CompilerControlled (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(MethodAttributes), "Vtable layout: ", (int)MethodAttributes.VtableLayoutMask, (int)(methodDef.Attributes & MethodAttributes.VtableLayoutMask), new Flag("ReuseSlot (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateMultipleChoiceGroup(typeof(MethodAttributes), "Flags:", (int)otherFlagsMask, (int)(methodDef.Attributes & otherFlagsMask), includeAll: false),
+			};
+
+			[StringFormat("X8")]
 			public MethodImplAttributes ImplAttributes => methodDef.ImplAttributes;
 
-			public object ImplAttributesTooltip => new FlagsTooltip((int)methodDef.ImplAttributes, typeof(MethodImplAttributes));
+			public object ImplAttributesTooltip => new FlagsTooltip {
+				FlagGroup.CreateSingleChoiceGroup(typeof(MethodImplAttributes), "Code type: ", (int)MethodImplAttributes.CodeTypeMask, (int)(methodDef.ImplAttributes & MethodImplAttributes.CodeTypeMask), new Flag("IL (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(MethodImplAttributes), "Managed type: ", (int)MethodImplAttributes.ManagedMask, (int)(methodDef.ImplAttributes & MethodImplAttributes.ManagedMask), new Flag("Managed (0000)", 0, false), includeAny: false),
+			};
 
 			public int RVA => methodDef.RelativeVirtualAddress;
 
@@ -89,7 +112,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(methodDef.Name):X} \"{Name}\"";
 
-			[StringFormat("X8")]
+			[StringFormat("X")]
 			public int Signature => MetadataTokens.GetHeapOffset(methodDef.Signature);
 
 			string signatureTooltip;

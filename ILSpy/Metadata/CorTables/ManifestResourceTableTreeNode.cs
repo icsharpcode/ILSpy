@@ -48,14 +48,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 
 			var list = new List<ManifestResourceEntry>();
+			ManifestResourceEntry scrollTargetEntry = default;
 
 			foreach (var row in metadata.ManifestResources) {
-				list.Add(new ManifestResourceEntry(module, row));
+				ManifestResourceEntry entry = new ManifestResourceEntry(module, row);
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -75,15 +86,17 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.ManifestResource)
 				+ metadata.GetTableRowSize(TableIndex.ManifestResource) * (RID - 1);
 
+			[StringFormat("X8")]
 			public ManifestResourceAttributes Attributes => manifestResource.Attributes;
 
-			public object AttributesTooltip => new FlagsTooltip((int)manifestResource.Attributes, typeof(ManifestResourceAttributes));
+			public object AttributesTooltip => manifestResource.Attributes.ToString();
 
 			public string Name => metadata.GetString(manifestResource.Name);
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(manifestResource.Name):X} \"{Name}\"";
 
-			public int ImplementationHandle => MetadataTokens.GetToken(manifestResource.Implementation);
+			[StringFormat("X8")]
+			public int Implementation => MetadataTokens.GetToken(manifestResource.Implementation);
 
 			public string ImplementationTooltip {
 				get {

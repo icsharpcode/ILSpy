@@ -47,14 +47,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 
 			var list = new List<CustomAttributeEntry>();
+			CustomAttributeEntry scrollTargetEntry = default;
 
 			foreach (var row in metadata.CustomAttributes) {
-				list.Add(new CustomAttributeEntry(module, row));
+				CustomAttributeEntry entry = new CustomAttributeEntry(module, row);
+				if (scrollTarget == MetadataTokens.GetRowNumber(row)) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -98,7 +109,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
+			[StringFormat("X")]
 			public int Value => MetadataTokens.GetHeapOffset(customAttr.Value);
 
 			public string ValueTooltip {

@@ -47,13 +47,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 			
 			var list = new List<MethodSpecEntry>();
-			
-			foreach (var row in metadata.GetMethodSpecifications())
-				list.Add(new MethodSpecEntry(module, row));
+			MethodSpecEntry scrollTargetEntry = default;
+
+			foreach (var row in metadata.GetMethodSpecifications()) {
+				MethodSpecEntry entry = new MethodSpecEntry(module, row);
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
+			}
 
 			view.ItemsSource = list;
 			
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -73,9 +85,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.MethodSpec)
 				+ metadata.GetTableRowSize(TableIndex.MethodSpec) * (RID-1);
 
-			public int MethodHandle => MetadataTokens.GetToken(methodSpec.Method);
+			[StringFormat("X8")]
+			public int Method => MetadataTokens.GetToken(methodSpec.Method);
 
-			public string Method {
+			public string MethodTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					methodSpec.Method.WriteTo(module, output, GenericContext.Empty);
@@ -83,6 +96,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
+			[StringFormat("X")]
 			public int Signature => MetadataTokens.GetHeapOffset(methodSpec.Signature);
 
 			public string SignatureTooltip {

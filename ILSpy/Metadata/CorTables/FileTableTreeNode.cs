@@ -45,14 +45,25 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 
 			var list = new List<FileEntry>();
+			FileEntry scrollTargetEntry = default;
 
 			foreach (var row in metadata.AssemblyFiles) {
-				list.Add(new FileEntry(module, row));
+				FileEntry entry = new FileEntry(module, row);
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
@@ -72,6 +83,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.File)
 				+ metadata.GetTableRowSize(TableIndex.File) * (RID - 1);
 
+			[StringFormat("X8")]
 			public int Attributes => assemblyFile.ContainsMetadata ? 1 : 0;
 
 			public string AttributesTooltip => assemblyFile.ContainsMetadata ? "ContainsMetaData" : "ContainsNoMetaData";
@@ -80,6 +92,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(assemblyFile.Name):X} \"{Name}\"";
 
+			[StringFormat("X")]
 			public int HashValue => MetadataTokens.GetHeapOffset(assemblyFile.HashValue);
 
 			public string HashValueTooltip {

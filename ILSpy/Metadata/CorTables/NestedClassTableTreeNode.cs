@@ -47,17 +47,28 @@ namespace ICSharpCode.ILSpy.Metadata
 			var metadata = module.Metadata;
 
 			var list = new List<NestedClassEntry>();
+			NestedClassEntry scrollTargetEntry = default;
 
 			var length = metadata.GetTableRowCount(TableIndex.NestedClass);
 			byte* ptr = metadata.MetadataPointer;
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++) {
-				list.Add(new NestedClassEntry(module, ptr, metadataOffset, rid));
+				NestedClassEntry entry = new NestedClassEntry(module, ptr, metadataOffset, rid);
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 

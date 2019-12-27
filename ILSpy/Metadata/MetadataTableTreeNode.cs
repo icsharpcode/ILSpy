@@ -16,9 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -26,6 +30,7 @@ namespace ICSharpCode.ILSpy.Metadata
 	internal abstract class MetadataTableTreeNode : ILSpyTreeNode
 	{
 		protected PEFile module;
+		protected int scrollTarget;
 
 		public HandleKind Kind { get; }
 
@@ -33,6 +38,11 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			this.module = module;
 			this.Kind = kind;
+		}
+
+		internal void ScrollTo(Handle handle)
+		{
+			this.scrollTarget = MetadataTokens.GetRowNumber((EntityHandle)handle);
 		}
 	}
 }

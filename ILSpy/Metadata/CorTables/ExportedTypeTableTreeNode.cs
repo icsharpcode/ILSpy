@@ -22,6 +22,7 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -45,20 +46,32 @@ namespace ICSharpCode.ILSpy.Metadata
 			var view = Helpers.PrepareDataGrid(tabPage);
 			var metadata = module.Metadata;
 			var list = new List<ExportedTypeEntry>();
-			
+			ExportedTypeEntry scrollTargetEntry = default;
+
 			foreach (var row in metadata.ExportedTypes) {
-				list.Add(new ExportedTypeEntry(module.Reader.PEHeaders.MetadataStartOffset, metadata, row, metadata.GetExportedType(row)));
+				ExportedTypeEntry entry = new ExportedTypeEntry(module.Reader.PEHeaders.MetadataStartOffset, module, row, metadata.GetExportedType(row));
+				if (entry.RID == this.scrollTarget) {
+					scrollTargetEntry = entry;
+				}
+				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
 
 			tabPage.Content = view;
+
+			if (scrollTargetEntry.RID > 0) {
+				view.ScrollIntoView(scrollTargetEntry);
+				this.scrollTarget = default;
+			}
+
 			return true;
 		}
 
 		struct ExportedTypeEntry
 		{
 			readonly int metadataOffset;
+			readonly PEFile module;
 			readonly MetadataReader metadata;
 			readonly ExportedTypeHandle handle;
 			readonly ExportedType type;
@@ -85,12 +98,25 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string TypeNamespace => metadata.GetString(type.Name);
 
+			[StringFormat("X8")]
 			public int Implementation => MetadataTokens.GetToken(type.Implementation);
 
-			public ExportedTypeEntry(int metadataOffset, MetadataReader metadata, ExportedTypeHandle handle, ExportedType type)
+			public string ImplementationTooltip {
+				get {
+					if (type.Implementation.IsNil)
+						return null;
+					ITextOutput output = new PlainTextOutput();
+					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					type.Implementation.WriteTo(module, output, context);
+					return output.ToString();
+				}
+			}
+
+			public ExportedTypeEntry(int metadataOffset, PEFile module, ExportedTypeHandle handle, ExportedType type)
 			{
 				this.metadataOffset = metadataOffset;
-				this.metadata = metadata;
+				this.module = module;
+				this.metadata = module.Metadata;
 				this.handle = handle;
 				this.type = type;
 			}

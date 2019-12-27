@@ -24,7 +24,9 @@ namespace ICSharpCode.ILSpy.Metadata
 			var mxNode = assemblyTreeNode.Children.OfType<MetadataTreeNode>().FirstOrDefault();
 			if (mxNode != null) {
 				mxNode.EnsureLazyChildren();
-				return mxNode.FindNodeByHandleKind(handle.Kind);
+				var node = mxNode.FindNodeByHandleKind(handle.Kind);
+				node?.ScrollTo(handle);
+				return node;
 			}
 			return null;
 		}
