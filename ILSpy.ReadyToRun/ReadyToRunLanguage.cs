@@ -84,13 +84,14 @@ namespace ICSharpCode.ILSpy
 				if (m.MethodHandle == method.MetadataToken) {
 					// TODO: Indexing
 					foreach (RuntimeFunction runtimeFunction in m.RuntimeFunctions) {
+						output.WriteLine(m.SignatureString);
 						byte[] code = new byte[runtimeFunction.Size];
 						for (int i = 0; i < runtimeFunction.Size; i++) {
 							code[i] = reader.Image[reader.GetOffset(runtimeFunction.StartAddress) + i];
 						}
 						DecoderFormatterExample(output, code, bitness, (ulong)runtimeFunction.StartAddress);
+						output.WriteLine();
 					}
-
 				}
 			}
 		}
