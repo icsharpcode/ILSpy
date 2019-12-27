@@ -57,10 +57,10 @@ namespace ICSharpCode.ILSpy
 			PEFile module = assembly.GetPEFileOrNull();
 			R2RReader reader = GetReader(module);
 
-			output.WriteLine("// TODO - display ready to run information");
+			WriteCommentLine(output, "TODO - display ready to run information");
 			// TODO: display other header information
 			foreach (var method in reader.R2RMethods) {
-				output.WriteLine(method.SignatureString);
+				WriteCommentLine(output, method.SignatureString);
 			}
 
 			return base.DecompileAssembly(assembly, output, options);
@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy
 				if (m.MethodHandle == method.MetadataToken) {
 					// TODO: Indexing
 					foreach (RuntimeFunction runtimeFunction in m.RuntimeFunctions) {
-						output.WriteLine(m.SignatureString);
+						WriteCommentLine(output, m.SignatureString);
 						byte[] code = new byte[runtimeFunction.Size];
 						for (int i = 0; i < runtimeFunction.Size; i++) {
 							code[i] = reader.Image[reader.GetOffset(runtimeFunction.StartAddress) + i];
@@ -153,6 +153,11 @@ namespace ICSharpCode.ILSpy
 			{
 				throw new NotImplementedException();
 			}
+		}
+
+		public override void WriteCommentLine(ITextOutput output, string comment)
+		{
+			output.WriteLine("; " + comment);
 		}
 	}
 }
