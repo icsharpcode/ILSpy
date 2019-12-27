@@ -19,6 +19,7 @@
 using System;
 using System.ComponentModel.Composition;
 using System.Reflection.PortableExecutable;
+using System.Runtime.CompilerServices;
 using Iced.Intel;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
@@ -31,17 +32,30 @@ namespace ICSharpCode.ILSpy
 	[Export(typeof(Language))]
 	class ReadyToRunLanguage : Language
 	{
+		private ConditionalWeakTable<PEFile, R2RReader> r2rReaders = new ConditionalWeakTable<PEFile, R2RReader>();
 		public override string Name => "ReadyToRun";
 
 		public override string FileExtension {
 			get { return ".asm"; }
 		}
 
+		private R2RReader GetReader(PEFile module)
+		{
+			R2RReader result;
+			lock (r2rReaders) {
+				if (!r2rReaders.TryGetValue(module, out result)) {
+					// TODO: avoid eager parsing 
+					result = new R2RReader(new R2RAssemblyResolver(), module.Metadata, module.Reader, module.FileName);
+					r2rReaders.Add(module, result);
+				}
+			}
+			return result;
+		}
+
 		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile module = assembly.GetPEFileOrNull();
-			// TODO: avoid eager parsing 
-			R2RReader reader = new R2RReader(new R2RAssemblyResolver(), module.Metadata, module.Reader, module.FileName);
+			R2RReader reader = GetReader(module);
 
 			output.WriteLine("// TODO - display ready to run information");
 			// TODO: display other header information
@@ -55,8 +69,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile module = method.ParentModule.PEFile;
-			// TODO: avoid eager parsing in R2RReader
-			R2RReader reader = new R2RReader(new R2RAssemblyResolver(), module.Metadata, module.Reader, module.FileName);
+			R2RReader reader = GetReader(module);
 			int bitness = -1;
 			if (reader.Machine == Machine.Amd64) {
 				bitness = 64;
@@ -81,6 +94,7 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 		}
+
 		private void DecoderFormatterExample(ITextOutput output, byte[] exampleCode, int exampleCodeBitness, ulong exampleCodeRIP)
 		{
 			// TODO: Decorate the disassembly with Unwind, GC and debug info
