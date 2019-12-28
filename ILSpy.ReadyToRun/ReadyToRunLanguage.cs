@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy
 	[Export(typeof(Language))]
 	class ReadyToRunLanguage : Language
 	{
-		private ConditionalWeakTable<PEFile, R2RReader> r2rReaders = new ConditionalWeakTable<PEFile, R2RReader>();
+		private static readonly ConditionalWeakTable<PEFile, R2RReader> r2rReaders = new ConditionalWeakTable<PEFile, R2RReader>();
 		public override string Name => "ReadyToRun";
 
 		public override string FileExtension {
