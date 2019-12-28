@@ -30,5 +30,11 @@ namespace ICSharpCode.ILSpy.ViewModels
 			Title = Properties.Resources.SearchPane_Search;
 			IsCloseable = true;
 		}
+
+		public override void Show()
+		{
+			base.Show();
+			MainWindow.Instance.SearchPane.Show();
+		}
 	}
 }

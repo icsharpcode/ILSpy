@@ -20,7 +20,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 {
 	public abstract class ToolPaneModel : PaneModel
 	{
-		public void Show()
+		public virtual void Show()
 		{
 			this.IsActive = true;
 			this.IsVisible = true;
