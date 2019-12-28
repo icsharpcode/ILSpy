@@ -175,12 +175,12 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsKnownType(this EntityHandle handle, MetadataReader reader, KnownTypeCode knownType)
 		{
-			return GetFullTypeName(handle, reader) == KnownTypeReference.Get(knownType).TypeName;
+			return !handle.IsNil && GetFullTypeName(handle, reader) == KnownTypeReference.Get(knownType).TypeName;
 		}
 		
 		internal static bool IsKnownType(this EntityHandle handle, MetadataReader reader, KnownAttribute knownType)
 		{
-			return GetFullTypeName(handle, reader) == knownType.GetTypeName();
+			return !handle.IsNil && GetFullTypeName(handle, reader) == knownType.GetTypeName();
 		}
 
 		public static FullTypeName GetFullTypeName(this TypeSpecificationHandle handle, MetadataReader reader)
