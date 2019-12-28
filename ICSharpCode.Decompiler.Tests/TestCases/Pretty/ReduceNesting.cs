@@ -194,7 +194,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 		
-		// nesting should not be reduced as maximum nesting level is 2
+		// nesting should be reduced as maximum nesting level is 2
 		public void EarlyExit2()
 		{
 			if (B(0)) {
@@ -265,6 +265,139 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			}
 			return s;
+		}
+
+		public void EarlyExitBeforeTry()
+		{
+			if (B(0)) {
+				return;
+			}
+
+			try {
+				if (B(1)) {
+					Console.WriteLine();
+				}
+			} catch {
+			}
+		}
+
+		public void EarlyExitInTry()
+		{
+			try {
+				if (B(0)) {
+					return;
+				}
+
+				Console.WriteLine();
+
+				if (B(1)) {
+					for (int i = 0; i < 10; i++) {
+						Console.WriteLine(i);
+					}
+				}
+			} catch {
+			}
+		}
+
+		public void ContinueLockInLoop()
+		{
+			while (B(0)) {
+				lock (Console.Out) {
+					if (B(1)) {
+						continue;
+					}
+
+					Console.WriteLine();
+
+					if (B(2)) {
+						for (int i = 0; i < 10; i++) {
+							Console.WriteLine(i);
+						}
+					}
+				}
+			}
+		}
+
+		public void BreakLockInLoop()
+		{
+			while (B(0)) {
+				lock (Console.Out) {
+					// Before ReduceNestingTransform, the rest of the lock body is nested in if(!B(1)) with a continue;
+					// the B(1) case falls through to a break outside the lock
+					if (B(1)) {
+						break;
+					}
+
+					Console.WriteLine();
+
+					if (B(2)) {
+						for (int i = 0; i < 10; i++) {
+							Console.WriteLine(i);
+						}
+					}
+
+					// the break gets duplicated into the lock (replacing the leave) making the lock 'endpoint unreachable' and the break outside the lock is removed
+					// After the condition is inverted, ReduceNestingTransform isn't smart enough to then move the continue out of the lock
+					// Thus the redundant continue;
+					continue;
+				}
+			}
+			Console.WriteLine();
+		}
+
+		public unsafe void BreakPinnedInLoop(int[] arr)
+		{
+			while (B(0)) {
+				fixed (int* ptr = arr) {
+					if (B(1)) {
+						break;
+					}
+
+					Console.WriteLine();
+
+					if (B(2)) {
+						for (int i = 0; i < 10; i++) {
+							Console.WriteLine(ptr[i]);
+						}
+					}
+
+					// Same reason as BreakLockInLoop
+					continue;
+				}
+			}
+			Console.WriteLine();
+		}
+
+		public void CannotEarlyExitInTry()
+		{
+			try {
+				if (B(0)) {
+					Console.WriteLine();
+
+					if (B(1)) {
+						for (int i = 0; i < 10; i++) {
+							Console.WriteLine(i);
+						}
+					}
+				}
+			} catch {
+			}
+			Console.WriteLine();
+		}
+
+		public void EndpointUnreachableDueToEarlyExit()
+		{
+			using (Console.Out) {
+				if (B(0)) {
+					return;
+				}
+				do {
+					if (B(1)) {
+						return;
+					}
+				} while (B(2));
+				throw new Exception();
+			}
 		}
 	}
 }
