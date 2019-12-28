@@ -61,7 +61,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					foreach (var v in f.Variables.ToArray()) {
 						if (context.Settings.YieldReturn && HandleMonoStateMachine(function, v, decompilationContext, f))
 							continue;
-						if ((context.Settings.AnonymousMethods || context.Settings.ExpressionTrees) && IsClosure(context, v, instructionsToRemove, out ITypeDefinition closureType, out var inst)) {
+						if ((context.Settings.AnonymousMethods || context.Settings.ExpressionTrees) && IsClosure(context, v, out ITypeDefinition closureType, out var inst)) {
+							if (!CanRemoveAllReferencesTo(context, v))
+								continue;
+							instructionsToRemove.Add(inst);
 							AddOrUpdateDisplayClass(f, v, closureType, inst, localFunctionClosureParameter: false);
 							continue;
 						}
@@ -87,6 +90,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				fieldAssignmentsWithVariableValue.Clear();
 				this.context = null;
 			}
+		}
+
+		private bool CanRemoveAllReferencesTo(ILTransformContext context, ILVariable v)
+		{
+			foreach (var use in v.LoadInstructions) {
+				if (use.Parent.MatchStLoc(out var targetVar) && !IsClosure(context, targetVar, out _, out _)) {
+					return false;
+				}
+			}
+			return true;
 		}
 
 		private void AnalyzeUseSites(ILVariable v)
@@ -142,17 +155,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal static bool IsClosure(ILTransformContext context, ILVariable variable, out ITypeDefinition closureType, out ILInstruction initializer)
 		{
-			return IsClosure(context, variable, instructionsToRemove: null, out closureType, out initializer);
-		}
-
-		static bool IsClosure(ILTransformContext context, ILVariable variable, List<ILInstruction> instructionsToRemove, out ITypeDefinition closureType, out ILInstruction initializer)
-		{
 			closureType = null;
 			initializer = null;
 			if (variable.IsSingleDefinition && variable.StoreInstructions.SingleOrDefault() is StLoc inst) {
 				initializer = inst;
 				if (IsClosureInit(context, inst, out closureType)) {
-					instructionsToRemove?.Add(inst);
 					return true;
 				}
 			}
