@@ -80,6 +80,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine(NoForeachCallWithSideEffect(new CustomClassEnumeratorWithIDisposable<int>()));
 			LoopWithGotoRepeat();
 			Console.WriteLine("LoopFollowedByIf: {0}", LoopFollowedByIf());
+			NoForeachDueToVariableAssignment();
 		}
 
 		public static void ForWithMultipleVariables()
@@ -275,6 +276,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 						Console.WriteLine("50");
 						goto again;
 				}
+			}
+		}
+
+		private static void NoForeachDueToVariableAssignment()
+		{
+			try {
+				int[] array = new int[] { 1, 2, 3 };
+				for (int i = 0; i < array.Length; i++) {
+					Console.WriteLine(array[i]);
+					array = null;
+				}
+			} catch (Exception ex) {
+				Console.WriteLine(ex.GetType() + ": " + ex.Message);
 			}
 		}
 	}
