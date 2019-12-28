@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -37,24 +38,28 @@ namespace ICSharpCode.ILSpy.Commands
 
 		public bool IsEnabled(TextViewContext context)
 		{
-			return context.SelectedTreeNodes != null || context.Reference?.Reference is IEntity;
+			return GetNodes(context).Any();
 		}
 
 		public void Execute(TextViewContext context)
 		{
+			DecompileNodes(GetNodes(context).ToArray());
+		}
+
+		IEnumerable<ILSpyTreeNode> GetNodes(TextViewContext context)
+		{
 			if (context.SelectedTreeNodes != null) {
-				ILSpyTreeNode[] nodes;
 				if (context.TreeView != MainWindow.Instance.treeView) {
-					nodes = context.SelectedTreeNodes.OfType<IMemberTreeNode>().Select(FindTreeNode).ToArray();
+					return context.SelectedTreeNodes.OfType<IMemberTreeNode>().Select(FindTreeNode).Where(n => n != null);
 				} else {
-					nodes = context.SelectedTreeNodes.OfType<ILSpyTreeNode>().ToArray();
+					return context.SelectedTreeNodes.OfType<ILSpyTreeNode>().Where(n => n != null);
 				}
-				DecompileNodes(nodes);
 			} else if (context.Reference?.Reference is IEntity entity) {
 				if (MainWindow.Instance.FindTreeNode(entity) is ILSpyTreeNode node) {
-					DecompileNodes(node);
+					return new[] { node };
 				}
 			}
+			return Array.Empty<ILSpyTreeNode>();
 
 			ILSpyTreeNode FindTreeNode(IMemberTreeNode node)
 			{
@@ -64,7 +69,7 @@ namespace ICSharpCode.ILSpy.Commands
 			}
 		}
 
-		private static void DecompileNodes(params ILSpyTreeNode[] nodes)
+		static void DecompileNodes(ILSpyTreeNode[] nodes)
 		{
 			if (nodes.Length == 0)
 				return;
