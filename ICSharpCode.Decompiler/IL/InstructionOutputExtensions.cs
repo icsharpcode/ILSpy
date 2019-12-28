@@ -253,16 +253,16 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case HandleKind.StandaloneSignature:
 					var standaloneSig = metadata.GetStandaloneSignature((StandaloneSignatureHandle)entity);
-					switch (standaloneSig.GetKind()) {
-						case StandaloneSignatureKind.Method:
+					var header = metadata.GetBlobReader(standaloneSig.Signature).ReadSignatureHeader();
+					switch (header.Kind) {
+						case SignatureKind.Method:
 							methodSignature = standaloneSig.DecodeMethodSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
 							WriteSignatureHeader(output, methodSignature);
 							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							WriteParameterList(output, methodSignature);
 							break;
-						case StandaloneSignatureKind.LocalVariables:
 						default:
-							output.Write($"@{MetadataTokens.GetToken(entity):X8} /* signature {standaloneSig.GetKind()} */");
+							output.Write($"@{MetadataTokens.GetToken(entity):X8} /* signature {header.Kind} */");
 							break;
 					}
 					break;
