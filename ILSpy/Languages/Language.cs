@@ -33,7 +33,7 @@ using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy
 {
-	public struct LanguageVersion : IEquatable<LanguageVersion>
+	public class LanguageVersion
 	{
 		public string Version { get; }
 		public string DisplayName { get; }
@@ -44,23 +44,10 @@ namespace ICSharpCode.ILSpy
 			this.DisplayName = name ?? version.ToString();
 		}
 
-		public bool Equals(LanguageVersion other)
+		public override string ToString()
 		{
-			return other.Version == this.Version && other.DisplayName == this.DisplayName;
+			return $"[LanguageVersion DisplayName={DisplayName}, Version={Version}]";
 		}
-
-		public override bool Equals(object obj)
-		{
-			return obj is LanguageVersion version && Equals(version);
-		}
-
-		public override int GetHashCode()
-		{
-			return unchecked(982451629 * Version.GetHashCode() + 982451653 * DisplayName.GetHashCode());
-		}
-
-		public static bool operator ==(LanguageVersion lhs, LanguageVersion rhs) => lhs.Equals(rhs);
-		public static bool operator !=(LanguageVersion lhs, LanguageVersion rhs) => !lhs.Equals(rhs);
 	}
 
 	/// <summary>

@@ -26,6 +26,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
 using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -65,12 +66,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			ISmartTextOutput smartOutput = output as ISmartTextOutput;
 			if (smartOutput != null) {
-				smartOutput.AddButton(Images.Save, Resources.Save, delegate { Save(Docking.DockWorkspace.Instance.GetTextView()); });
+				smartOutput.AddButton(Images.Save, Resources.Save, delegate { Save(Docking.DockWorkspace.Instance.ActiveTabPage); });
 				output.WriteLine();
 			}
 		}
 
-		public override bool View(DecompilerTextView textView)
+		public override bool View(TabPageModel tabPage)
 		{
 			Stream s = Resource.TryOpenStream();
 			if (s != null && s.Length < DecompilerTextView.DefaultOutputLengthLimit) {
@@ -85,14 +86,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						ext = ".xml";
 					else
 						ext = Path.GetExtension(DecompilerTextView.CleanUpName(Resource.Name));
-					textView.ShowNode(output, this, HighlightingManager.Instance.GetDefinitionByExtension(ext));
+					tabPage.ShowTextView(textView => textView.ShowNode(output, this, HighlightingManager.Instance.GetDefinitionByExtension(ext)));
+					tabPage.SupportsLanguageSwitching = false;
 					return true;
 				}
 			}
 			return false;
 		}
 
-		public override bool Save(DecompilerTextView textView)
+		public override bool Save(TabPageModel tabPage)
 		{
 			Stream s = Resource.TryOpenStream();
 			if (s == null)

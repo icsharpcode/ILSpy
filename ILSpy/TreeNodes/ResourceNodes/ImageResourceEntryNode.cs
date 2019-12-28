@@ -24,6 +24,7 @@ using System.Windows.Media.Imaging;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -67,7 +68,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Icon => Images.ResourceImage;
 
-		public override bool View(DecompilerTextView textView)
+		public override bool View(TabPageModel tabPage)
 		{
 			try {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
@@ -81,7 +82,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				output.AddButton(Images.Save, Resources.Save, delegate {
 					Save(null);
 				});
-				textView.ShowNode(output, this);
+				tabPage.ShowTextView(textView => textView.ShowNode(output, this));
+				tabPage.SupportsLanguageSwitching = false;
 				return true;
 			}
 			catch (Exception) {

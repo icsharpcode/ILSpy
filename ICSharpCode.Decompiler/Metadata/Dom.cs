@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 	}
 
-	public sealed class FullTypeNameSignatureDecoder : ISignatureTypeProvider<FullTypeName, Unit>
+	public sealed class FullTypeNameSignatureDecoder : ISignatureTypeProvider<FullTypeName, Unit>, ICustomAttributeTypeProvider<FullTypeName>
 	{
 		readonly MetadataReader metadata;
 
@@ -170,6 +170,11 @@ namespace ICSharpCode.Decompiler.Metadata
 			return new TopLevelTypeName(ktr.Namespace, ktr.Name, ktr.TypeParameterCount);
 		}
 
+		public FullTypeName GetSystemType()
+		{
+			return new TopLevelTypeName("System", "Type");
+		}
+
 		public FullTypeName GetSZArrayType(FullTypeName elementType)
 		{
 			return elementType;
@@ -185,9 +190,24 @@ namespace ICSharpCode.Decompiler.Metadata
 			return handle.GetFullTypeName(reader);
 		}
 
+		public FullTypeName GetTypeFromSerializedName(string name)
+		{
+			return new FullTypeName(name);
+		}
+
 		public FullTypeName GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
 		{
 			return reader.GetTypeSpecification(handle).DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default);
+		}
+
+		public PrimitiveTypeCode GetUnderlyingEnumType(FullTypeName type)
+		{
+			throw new NotImplementedException();
+		}
+
+		public bool IsSystemType(FullTypeName type)
+		{
+			return type.IsKnownType(KnownTypeCode.Type);
 		}
 	}
 

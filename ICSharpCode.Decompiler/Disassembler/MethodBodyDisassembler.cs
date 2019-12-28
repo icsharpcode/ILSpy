@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		PEFile module;
 		MetadataReader metadata;
 		GenericContext genericContext;
-		DisassemblerSignatureProvider signatureDecoder;
+		DisassemblerSignatureTypeProvider signatureDecoder;
 
 		public MethodBodyDisassembler(ITextOutput output, CancellationToken cancellationToken)
 		{
@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			metadata = module.Metadata;
 			genericContext = new GenericContext(handle, module);
-			signatureDecoder = new DisassemblerSignatureProvider(module, output);
+			signatureDecoder = new DisassemblerSignatureTypeProvider(module, output);
 			var methodDefinition = metadata.GetMethodDefinition(handle);
 
 			// start writing IL code
@@ -171,7 +171,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.module = module;
 			metadata = module.Metadata;
 			genericContext = new GenericContext(handle, module);
-			signatureDecoder = new DisassemblerSignatureProvider(module, output);
+			signatureDecoder = new DisassemblerSignatureTypeProvider(module, output);
 			var handlers = body.ExceptionRegions;
 			if (!handlers.IsEmpty) {
 				output.WriteLine();
@@ -489,16 +489,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		private void WriteMetadataToken(Handle? handle, int metadataToken, bool spaceBefore)
 		{
-			if (ShowMetadataTokens || handle == null) {
-				if (spaceBefore) {
-					output.Write(' ');
-				}
-				if (ShowMetadataTokensInBase10) {
-					output.Write("/* {0} */", metadataToken);
-				} else {
-					output.Write("/* {0:X8} */", metadataToken);
-				}
-			}
+			ReflectionDisassembler.WriteMetadataToken(output, module, handle, metadataToken,
+				spaceAfter: false, spaceBefore, ShowMetadataTokens, ShowMetadataTokensInBase10);
 		}
 	}
 }

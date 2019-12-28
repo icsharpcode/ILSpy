@@ -32,6 +32,8 @@ using System.Xml.Linq;
 
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using OSVersionHelper;
@@ -44,7 +46,7 @@ namespace ICSharpCode.ILSpy
 		public override void Execute(object parameter)
 		{
 			MainWindow.Instance.UnselectAll();
-			Display(Docking.DockWorkspace.Instance.GetTextView());
+			DockWorkspace.Instance.ActiveTabPage.ShowTextView(Display);
 		}
 		
 		static readonly Uri UpdateUrl = new Uri("https://ilspy.net/updates.xml");

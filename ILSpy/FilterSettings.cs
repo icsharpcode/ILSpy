@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy
 				"FilterSettings",
 				new XElement("ShowAPILevel", (int)this.ShowApiLevel),
 				new XElement("Language", this.Language.Name),
-				new XElement("LanguageVersion", this.LanguageVersion.Version)
+				new XElement("LanguageVersion", this.LanguageVersion?.Version)
 			);
 		}
 		
@@ -141,7 +141,6 @@ namespace ICSharpCode.ILSpy
 			set {
 				if (language != value) {
 					language = value;
-					LanguageVersion = language.LanguageVersions.LastOrDefault();
 					OnPropertyChanged();
 				}
 			}

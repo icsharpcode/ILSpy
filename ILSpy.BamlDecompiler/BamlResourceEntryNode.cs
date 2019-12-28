@@ -19,6 +19,7 @@ using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ILSpy.BamlDecompiler.Baml;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ILSpy.BamlDecompiler
 {
@@ -28,11 +29,12 @@ namespace ILSpy.BamlDecompiler
 		{
 		}
 		
-		public override bool View(DecompilerTextView textView)
+		public override bool View(TabPageModel tabPage)
 		{
 			IHighlightingDefinition highlighting = null;
-			
-			textView.RunWithCancellation(
+
+			tabPage.SupportsLanguageSwitching = false;
+			tabPage.ShowTextView(textView => textView.RunWithCancellation(
 				token => Task.Factory.StartNew(
 					() => {
 						AvalonEditTextOutput output = new AvalonEditTextOutput();
@@ -45,7 +47,7 @@ namespace ILSpy.BamlDecompiler
 						return output;
 					}, token))
 				.Then(output => textView.ShowNode(output, this, highlighting))
-				.HandleExceptions();
+				.HandleExceptions());
 			return true;
 		}
 		

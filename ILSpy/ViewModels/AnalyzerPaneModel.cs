@@ -24,8 +24,6 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public static AnalyzerPaneModel Instance { get; } = new AnalyzerPaneModel();
 
-		public override PanePosition DefaultPosition => PanePosition.Bottom;
-
 		private AnalyzerPaneModel()
 		{
 			ContentId = PaneContentId;

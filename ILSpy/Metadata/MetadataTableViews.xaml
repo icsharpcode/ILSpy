@@ -1,0 +1,100 @@
+﻿<ResourceDictionary x:Class="ICSharpCode.ILSpy.Metadata.MetadataTableViews"
+			 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
+			 xmlns:local="clr-namespace:ICSharpCode.ILSpy.Metadata"
+			 xmlns:reflection="clr-namespace:System.Reflection;assembly=mscorlib"
+			 xmlns:cecil="clr-namespace:Mono.Cecil;assembly=Mono.Cecil"
+			 xmlns:srm="clr-namespace:System.Reflection;assembly=System.Reflection.Metadata"
+			 xmlns:dgx="urn:tom-englert.de/DataGridExtensions">
+
+	<Style x:Key="DataGridCustomTextColumnTextBoxStyle" TargetType="TextBox">
+		<Setter Property="IsReadOnly" Value="True" />
+		<Setter Property="IsReadOnlyCaretVisible" Value="True" />
+		<Setter Property="Padding" Value="2" />
+		<Style.Triggers>
+			<MultiTrigger>
+				<MultiTrigger.Conditions>
+					<Condition Property="IsMouseOver" Value="False" />
+					<Condition Property="IsFocused" Value="False" />
+				</MultiTrigger.Conditions>
+				<Setter Property="BorderBrush" Value="Transparent" />
+				<Setter Property="Background" Value="Transparent" />
+			</MultiTrigger>
+			<MultiDataTrigger>
+				<MultiDataTrigger.Conditions>
+					<Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridCell}}" Value="True" />
+					<Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Mode=Self}}" Value="False" />
+					<Condition Binding="{Binding IsFocused, RelativeSource={RelativeSource Mode=Self}}" Value="False" />
+				</MultiDataTrigger.Conditions>
+				<Setter Property="Foreground" Value="White" />
+			</MultiDataTrigger>
+		</Style.Triggers>
+	</Style>
+	
+	<ControlTemplate x:Key="DefaultFilter">
+		<Grid>
+			<Control Style="{DynamicResource {x:Static dgx:DataGridFilter.IconStyleKey}}" />
+			<TextBox Style="{DynamicResource {x:Static dgx:DataGridFilter.ColumnHeaderSearchTextBoxStyleKey}}"
+				Text="{Binding Path=Filter, UpdateSourceTrigger=PropertyChanged}" />
+		</Grid>
+	</ControlTemplate>
+	
+	<ControlTemplate x:Key="HexFilter">
+		<local:HexFilterControl Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="AssemblyFlagsFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type srm:AssemblyFlags}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="AssemblyHashAlgorithmFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type srm:AssemblyHashAlgorithm}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="MethodAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type reflection:MethodAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="MethodImplAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type reflection:MethodImplAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="MethodSemanticsAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type srm:MethodSemanticsAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="TypeAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type reflection:TypeAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="PropertyAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type reflection:PropertyAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="EventAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type reflection:EventAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="FieldAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type reflection:FieldAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="ManifestResourceAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type srm:ManifestResourceAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="GenericParameterAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type reflection:GenericParameterAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<ControlTemplate x:Key="PInvokeAttributesFilter">
+		<local:FlagsFilterControl FlagsType="{x:Type cecil:PInvokeAttributes}" Filter="{Binding Path=Filter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=dgx:DataGridFilterColumnControl}}" />
+	</ControlTemplate>
+
+	<Style x:Key="ItemContainerStyle" TargetType="ListViewItem">
+		<Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+	</Style>
+
+	<local:ByteWidthConverter x:Key="byteWidthConverter" />
+</ResourceDictionary>

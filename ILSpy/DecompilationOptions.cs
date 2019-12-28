@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpy
 
 		public DecompilationOptions(LanguageVersion version, Decompiler.DecompilerSettings settings, Options.DisplaySettings displaySettings)
 		{
-			if (!Enum.TryParse(version.Version, out Decompiler.CSharp.LanguageVersion languageVersion)) 
+			if (!Enum.TryParse(version?.Version, out Decompiler.CSharp.LanguageVersion languageVersion)) 
 				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
 			var newSettings = this.DecompilerSettings = settings.Clone();
 			newSettings.SetLanguageVersion(languageVersion);

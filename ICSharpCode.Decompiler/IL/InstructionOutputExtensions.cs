@@ -27,7 +27,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	static partial class InstructionOutputExtensions
+	public static partial class InstructionOutputExtensions
 	{
 		public static void Write(this ITextOutput output, OpCode opCode)
 		{
@@ -118,13 +118,13 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				case HandleKind.TypeSpecification: {
 						var ts = metadata.GetTypeSpecification((TypeSpecificationHandle)entity);
-						signature = ts.DecodeSignature(new DisassemblerSignatureProvider(module, output), genericContext);
+						signature = ts.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
 						signature(syntax);
 						break;
 					}
 				case HandleKind.FieldDefinition: {
 						var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)entity);
-						signature = fd.DecodeSignature(new DisassemblerSignatureProvider(module, output), new Metadata.GenericContext(fd.GetDeclaringType(), module));
+						signature = fd.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new Metadata.GenericContext(fd.GetDeclaringType(), module));
 						signature(ILNameSyntax.SignatureNoNamedTypeParameters);
 						output.Write(' ');
 						((EntityHandle)fd.GetDeclaringType()).WriteTo(module, output, Metadata.GenericContext.Empty, ILNameSyntax.TypeName);
@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				case HandleKind.MethodDefinition: {
 						var md = metadata.GetMethodDefinition((MethodDefinitionHandle)entity);
-						methodSignature = md.DecodeSignature(new DisassemblerSignatureProvider(module, output), new Metadata.GenericContext((MethodDefinitionHandle)entity, module));
+						methodSignature = md.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new Metadata.GenericContext((MethodDefinitionHandle)entity, module));
 						WriteSignatureHeader(output, methodSignature);
 						methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 						output.Write(' ');
@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.IL
 					memberName = metadata.GetString(mr.Name);
 					switch (mr.GetKind()) {
 						case MemberReferenceKind.Method:
-							methodSignature = mr.DecodeMethodSignature(new DisassemblerSignatureProvider(module, output), genericContext);
+							methodSignature = mr.DecodeMethodSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
 							WriteSignatureHeader(output, methodSignature);
 							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							output.Write(' ');
@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.IL
 							WriteParameterList(output, methodSignature);
 							break;
 						case MemberReferenceKind.Field:
-							var fieldSignature = mr.DecodeFieldSignature(new DisassemblerSignatureProvider(module, output), genericContext);
+							var fieldSignature = mr.DecodeFieldSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
 							fieldSignature(ILNameSyntax.SignatureNoNamedTypeParameters);
 							output.Write(' ');
 							WriteParent(output, module, metadata, mr.Parent, genericContext, syntax);
@@ -213,12 +213,12 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case HandleKind.MethodSpecification:
 					var ms = metadata.GetMethodSpecification((MethodSpecificationHandle)entity);
-					var substitution = ms.DecodeSignature(new DisassemblerSignatureProvider(module, output), genericContext);
+					var substitution = ms.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
 					switch (ms.Method.Kind) {
 						case HandleKind.MethodDefinition:
 							var methodDefinition = metadata.GetMethodDefinition((MethodDefinitionHandle)ms.Method);
 							var methodName = metadata.GetString(methodDefinition.Name);
-							methodSignature = methodDefinition.DecodeSignature(new DisassemblerSignatureProvider(module, output), genericContext);
+							methodSignature = methodDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
 							WriteSignatureHeader(output, methodSignature);
 							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							output.Write(' ');
@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.IL
 						case HandleKind.MemberReference:
 							var memberReference = metadata.GetMemberReference((MemberReferenceHandle)ms.Method);
 							memberName = metadata.GetString(memberReference.Name);
-							methodSignature = memberReference.DecodeMethodSignature(new DisassemblerSignatureProvider(module, output), genericContext);
+							methodSignature = memberReference.DecodeMethodSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
 							WriteSignatureHeader(output, methodSignature);
 							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							output.Write(' ');
@@ -253,16 +253,16 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case HandleKind.StandaloneSignature:
 					var standaloneSig = metadata.GetStandaloneSignature((StandaloneSignatureHandle)entity);
-					switch (standaloneSig.GetKind()) {
-						case StandaloneSignatureKind.Method:
-							methodSignature = standaloneSig.DecodeMethodSignature(new DisassemblerSignatureProvider(module, output), genericContext);
+					var header = metadata.GetBlobReader(standaloneSig.Signature).ReadSignatureHeader();
+					switch (header.Kind) {
+						case SignatureKind.Method:
+							methodSignature = standaloneSig.DecodeMethodSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
 							WriteSignatureHeader(output, methodSignature);
 							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							WriteParameterList(output, methodSignature);
 							break;
-						case StandaloneSignatureKind.LocalVariables:
 						default:
-							output.Write($"@{MetadataTokens.GetToken(entity):X8} /* signature {standaloneSig.GetKind()} */");
+							output.Write($"@{MetadataTokens.GetToken(entity):X8} /* signature {header.Kind} */");
 							break;
 					}
 					break;

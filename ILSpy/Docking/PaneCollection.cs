@@ -26,13 +26,12 @@ using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class PaneCollection<T> : INotifyCollectionChanged, INotifyPropertyChanged, ICollection<T>
+	public class PaneCollection<T> : INotifyCollectionChanged, ICollection<T>
 		where T : PaneModel
 	{
 		private ObservableCollection<T> observableCollection = new ObservableCollection<T>();
 
 		public event NotifyCollectionChangedEventHandler CollectionChanged;
-		public event PropertyChangedEventHandler PropertyChanged;
 
 		public PaneCollection()
 		{
@@ -41,9 +40,7 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public void Add(T item)
 		{
-			if (!this.Any(pane => pane.ContentId == item.ContentId)) {
-				observableCollection.Add(item);
-			}
+			observableCollection.Add(item);
 
 			item.IsVisible = true;
 			item.IsActive = true;

@@ -118,13 +118,13 @@ namespace ICSharpCode.ILSpy
 		{
 			lastSelectedStep = step;
 			var window = MainWindow.Instance;
-			var state = DockWorkspace.Instance.GetState();
-			DockWorkspace.Instance.GetTextView().DecompileAsync(window.CurrentLanguage, window.SelectedNodes,
+			var state = DockWorkspace.Instance.ActiveTabPage.GetState();
+			DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(window.CurrentLanguage, window.SelectedNodes,
 				new DecompilationOptions(window.CurrentLanguageVersion) {
 					StepLimit = step,
 					IsDebug = isDebug,
-					TextViewState = state
-				});
+					TextViewState = state as TextView.DecompilerTextViewState
+				}));
 		}
 
 		private void tree_KeyDown(object sender, KeyEventArgs e)

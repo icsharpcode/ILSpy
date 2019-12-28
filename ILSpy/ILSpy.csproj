@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <OutputType>WinExe</OutputType>
-    <LangVersion>7.2</LangVersion>
+    <LangVersion>7.3</LangVersion>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
     <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
@@ -55,6 +55,7 @@
     <PackageReference Include="System.Composition" Version="1.3.0" />
     <PackageReference Include="Mono.Cecil" Version="0.10.3" />
     <PackageReference Include="OSVersionHelper" Version="1.0.11" />
+    <PackageReference Include="DataGridExtensions" Version="2.1.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -108,10 +109,12 @@
     <Compile Include="Commands\BrowseForwardCommand.cs" />
     <Compile Include="CommandLineArguments.cs" />
     <Compile Include="Commands\DelegateCommand.cs" />
+    <Compile Include="Commands\DecompileCommand.cs" />
     <Compile Include="Commands\DisassembleAllCommand.cs" />
     <Compile Include="Commands\ExitCommand.cs" />
     <Compile Include="Commands\CommandWrapper.cs" />
     <Compile Include="Commands\ILSpyCommands.cs" />
+    <Compile Include="Commands\IProtocolHandler.cs" />
     <Compile Include="Commands\ManageAssemblyListsCommand.cs" />
     <Compile Include="Commands\Pdb2XmlCommand.cs" />
     <Compile Include="Commands\RemoveAssembliesWithLoadErrors.cs" />
@@ -133,6 +136,44 @@
     <Compile Include="Controls\SearchBox.cs" />
     <Compile Include="Controls\SortableGridViewColumn.cs" />
     <Compile Include="Controls\XamlResourceExtension.cs" />
+    <Compile Include="Metadata\CorTables\FieldRVATableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\FieldMarshalTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\NestedClassTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ImplMapTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\PropertyMapTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\EventMapTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\InterfaceImplTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ClassLayoutTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\DataGridCustomTextColumn.cs" />
+    <Compile Include="Metadata\FlagsFilterControl.xaml.cs" />
+    <Compile Include="Metadata\FlagsTooltip.xaml.cs" />
+    <Compile Include="Metadata\HexFilterControl.xaml.cs" />
+    <Compile Include="Metadata\MetadataProtocolHandler.cs" />
+    <Compile Include="Metadata\MetadataTableTreeNode.cs" />
     <Compile Include="ViewModels\ManageAssemblyListsViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="Views\CreateListDialog.xaml.cs">
@@ -143,11 +184,11 @@
     <Compile Include="Views\DebugSteps.xaml.cs">
       <DependentUpon>DebugSteps.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Docking\ActiveDocumentConverter.cs" />
+    <Compile Include="Docking\ActiveTabPageConverter.cs" />
     <Compile Include="Docking\CloseAllDocumentsCommand.cs" />
     <Compile Include="ViewModels\AssemblyListPaneModel.cs" />
     <Compile Include="Docking\DockLayoutSettings.cs" />
-    <Compile Include="ViewModels\DocumentModel.cs" />
+    <Compile Include="ViewModels\TabPageModel.cs" />
     <Compile Include="Docking\PaneCollection.cs" />
     <Compile Include="ViewModels\PaneModel.cs" />
     <Compile Include="Docking\PaneStyleSelector.cs" />
@@ -181,8 +222,11 @@
     <Compile Include="Languages\IResourceFileHandler.cs" />
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Languages\Languages.cs" />
+    <Compile Include="Metadata\CorTables\MethodImplTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
     <Compile Include="Options\DecompilerSettingsPanel.xaml.cs" />
-    <Compile Include="Docking\PanePosition.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -191,6 +235,113 @@
     <Compile Include="Search\AbstractEntitySearchStrategy.cs" />
     <Compile Include="Search\NamespaceSearchStrategy.cs" />
     <Compile Include="Search\AssemblySearchStrategy.cs" />
+    <Compile Include="Metadata\CorTables\AssemblyRefTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\AssemblyTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ConstantTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\CustomAttributeTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\DeclSecurityTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\EventTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ExportedTypeTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\FieldLayoutTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\FieldTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\FileTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\GenericParamConstraintTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\GenericParamTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ManifestResourceTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\MemberRefTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\MethodSemanticsTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\MethodSpecTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\MethodTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ModuleRefTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ModuleTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\ParamTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\PropertyTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\StandAloneSigTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\TypeDefTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\TypeRefTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\CorTables\TypeSpecTableTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\DataDirectoriesTreeNode.cs" />
+    <Compile Include="Metadata\DosHeaderTreeNode.cs" />
+    <Compile Include="Metadata\CoffHeaderTreeNode.cs" />
+    <Compile Include="Metadata\Helpers.cs" />
+    <Compile Include="Metadata\MetadataTableViews.xaml.cs" />
+    <Compile Include="Metadata\MetadataTreeNode.cs" />
+    <Compile Include="Metadata\OptionalHeaderTreeNode.cs" />
     <Compile Include="Search\LiteralSearchStrategy.cs" />
     <Compile Include="LoadedAssembly.cs" />
     <Compile Include="LoadedAssemblyExtensions.cs" />
@@ -248,7 +399,7 @@
     <Compile Include="Analyzers\AnalyzerTreeNode.cs" />
     <Compile Include="Analyzers\RemoveAnalyzeContextMenuEntry.cs" />
     <Compile Include="TreeNodes\BaseTypesEntryNode.cs" />
-    <Compile Include="TreeNodes\CopyFullyQualifiedNameContextMenuEntry.cs" />
+    <Compile Include="Commands\CopyFullyQualifiedNameContextMenuEntry.cs" />
     <Compile Include="TreeNodes\DerivedTypesEntryNode.cs" />
     <Compile Include="TreeNodes\FilterResult.cs" />
     <Compile Include="Commands\GeneratePdbContextMenuEntry.cs" />
@@ -264,7 +415,7 @@
     <Compile Include="TreeNodes\ResourceNodes\ResourceTreeNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\XamlResourceNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\XmlResourceNode.cs" />
-    <Compile Include="TreeNodes\SearchMsdnContextMenuEntry.cs" />
+    <Compile Include="Commands\SearchMsdnContextMenuEntry.cs" />
     <Compile Include="Analyzers\Builtin\TypeExtensionMethodsAnalyzer.cs" />
     <Compile Include="Docking\DockWorkspace.cs" />
     <EmbeddedResource Include="..\doc\LGPL.txt">
@@ -326,6 +477,9 @@
     <Page Include="Controls\ResourceObjectTable.xaml" />
     <Page Include="Controls\ResourceStringTable.xaml" />
     <Page Include="Controls\SearchBoxStyle.xaml" />
+    <Page Include="Metadata\FlagsFilterControl.xaml" />
+    <Page Include="Metadata\FlagsTooltip.xaml" />
+    <Page Include="Metadata\HexFilterControl.xaml" />
     <Page Include="Views\CreateListDialog.xaml" />
     <Page Include="Views\DebugSteps.xaml" />
     <Page Include="Images\Assembly.xaml" />
@@ -391,6 +545,7 @@
     <Page Include="Images\VirtualMethod.xaml" />
     <Page Include="Images\Warning.xaml" />
     <Page Include="MainWindow.xaml" />
+    <Page Include="Metadata\MetadataTableViews.xaml" />
     <Page Include="Views\OpenFromGacDialog.xaml" />
     <Page Include="Views\ManageAssemblyListsDialog.xaml" />
     <Page Include="Views\NugetPackageBrowserDialog.xaml" />
@@ -405,6 +560,18 @@
 
   <ItemGroup>
     <Page Update="@(Page)" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Update="Metadata\FlagsFilterControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Metadata\FlagsTooltip.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Metadata\HexFilterControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Metadata\MetadataTableViews.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Images\Assembly.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

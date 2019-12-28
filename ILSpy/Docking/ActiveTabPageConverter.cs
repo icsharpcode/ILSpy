@@ -22,11 +22,11 @@ using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class ActiveDocumentConverter : IValueConverter
+	public class ActiveTabPageConverter : IValueConverter
 	{
 		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			if (value is DocumentModel)
+			if (value is TabPageModel)
 				return value;
 
 			return Binding.DoNothing;
@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			if (value is DocumentModel)
+			if (value is TabPageModel)
 				return value;
 
 			return Binding.DoNothing;

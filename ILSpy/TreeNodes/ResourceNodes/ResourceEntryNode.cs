@@ -68,7 +68,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.WriteCommentLine(output, string.Format("{0} = {1}", key, data));
 		}
 
-		public override bool Save(DecompilerTextView textView)
+		public override bool Save(ViewModels.TabPageModel tabPage)
 		{
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = Path.GetFileName(DecompilerTextView.CleanUpName(key));

@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpy.TextView
 	/// Manages the TextEditor showing the decompiled code.
 	/// Contains all the threading logic that makes the decompiler work in the background.
 	/// </summary>
-	public sealed partial class DecompilerTextView : UserControl, IDisposable
+	public sealed partial class DecompilerTextView : UserControl, IDisposable, IHaveState
 	{
 		readonly ReferenceElementGenerator referenceElementGenerator;
 		readonly UIElementGenerator uiElementGenerator;
@@ -1021,7 +1021,9 @@ namespace ICSharpCode.ILSpy.TextView
 			state.DecompiledNodes = decompiledNodes;
 			return state;
 		}
-		
+
+		ViewState IHaveState.GetState() => GetState();
+
 		public void Dispose()
 		{
 			DisplaySettingsPanel.CurrentDisplaySettings.PropertyChanged -= CurrentDisplaySettings_PropertyChanged;
@@ -1055,23 +1057,19 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 		#endregion
-
-		private void self_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
-		{
-			if (e.OldValue is DecompiledDocumentModel oldModel)
-				oldModel.TextView = null;
-			if (e.NewValue is DecompiledDocumentModel newModel)
-				newModel.TextView = this;
-		}
 	}
 
-	public class DecompilerTextViewState
+	public class ViewState
+	{
+		public ILSpyTreeNode[] DecompiledNodes;
+	}
+	
+	public class DecompilerTextViewState : ViewState
 	{
 		private List<Tuple<int, int>> ExpandedFoldings;
 		private int FoldingsChecksum;
 		public double VerticalOffset;
 		public double HorizontalOffset;
-		public ILSpyTreeNode[] DecompiledNodes;
 
 		public void SaveFoldingsState(IEnumerable<FoldingSection> foldings)
 		{

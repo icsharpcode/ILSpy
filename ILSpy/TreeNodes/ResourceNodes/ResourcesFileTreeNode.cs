@@ -29,6 +29,7 @@ using ICSharpCode.ILSpy.Controls;
 using ICSharpCode.ILSpy.TextView;
 using Microsoft.Win32;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -105,7 +106,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		public override bool Save(DecompilerTextView textView)
+		public override bool Save(TabPageModel tabPage)
 		{
 			Stream s = Resource.TryOpenStream();
 			if (s == null) return false;
@@ -144,12 +145,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			EnsureLazyChildren();
 			base.Decompile(language, output, options);
+			var textView = (DecompilerTextView)Docking.DockWorkspace.Instance.ActiveTabPage.Content;
 			if (stringTableEntries.Count != 0) {
 				ISmartTextOutput smartOutput = output as ISmartTextOutput;
 				if (null != smartOutput) {
 					smartOutput.AddUIElement(
 						delegate {
-							return new ResourceStringTable(stringTableEntries, Docking.DockWorkspace.Instance.GetTextView());
+							return new ResourceStringTable(stringTableEntries, textView);
 						}
 					);
 				}
@@ -161,7 +163,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (null != smartOutput) {
 					smartOutput.AddUIElement(
 						delegate {
-							return new ResourceObjectTable(otherEntries, Docking.DockWorkspace.Instance.GetTextView());
+							return new ResourceObjectTable(otherEntries, textView);
 						}
 					);
 				}

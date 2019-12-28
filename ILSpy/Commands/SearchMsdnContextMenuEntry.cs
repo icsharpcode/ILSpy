@@ -19,9 +19,9 @@
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.TreeNodes;
 using System.Threading;
-
-namespace ICSharpCode.ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.SearchMSDN), Icon = "images/SearchMsdn", Order = 9999)]
 	internal sealed class SearchMsdnContextMenuEntry : IContextMenuEntry

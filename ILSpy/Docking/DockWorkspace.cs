@@ -44,19 +44,19 @@ namespace ICSharpCode.ILSpy.Docking
 
 		private DockWorkspace()
 		{
-			this.Documents.CollectionChanged += Documents_CollectionChanged;
+			this.TabPages.CollectionChanged += Documents_CollectionChanged;
 		}
 
 		private void Documents_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
 		{
-			var collection = (PaneCollection<DocumentModel>)sender;
+			var collection = (PaneCollection<TabPageModel>)sender;
 			bool canClose = collection.Count > 1;
 			foreach (var item in collection) {
 				item.IsCloseable = canClose;
 			}
 		}
 
-		public PaneCollection<DocumentModel> Documents { get; } = new PaneCollection<DocumentModel>();
+		public PaneCollection<TabPageModel> TabPages { get; } = new PaneCollection<TabPageModel>();
 
 		private ToolPaneModel[] toolPanes;
 		public IEnumerable<ToolPaneModel> ToolPanes {
@@ -77,30 +77,26 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public void Remove(PaneModel model)
 		{
-			if (model is DocumentModel document)
-				Documents.Remove(document);
+			if (model is TabPageModel document)
+				TabPages.Remove(document);
 			if (model is ToolPaneModel tool)
 				tool.IsVisible = false;
 		}
 
-		private DocumentModel _activeDocument = null;
-		public DocumentModel ActiveDocument {
+		private TabPageModel _activeTabPage = null;
+		public TabPageModel ActiveTabPage {
 			get {
-				return _activeDocument;
+				return _activeTabPage;
 			}
 			set {
-				if (_activeDocument != value) {
-					_activeDocument = value;
-					if (value is DecompiledDocumentModel ddm) {
-						this.sessionSettings.FilterSettings.Language = ddm.Language;
-						this.sessionSettings.FilterSettings.LanguageVersion = ddm.LanguageVersion;
-						if (ddm.TextView is DecompilerTextView view) {
-							var state = view.GetState();
-							if (state != null)
-								MainWindow.Instance.SelectNodes(state.DecompiledNodes);
-						}
-					}
-					RaisePropertyChanged(nameof(ActiveDocument));
+				if (_activeTabPage != value) {
+					_activeTabPage = value;
+					this.sessionSettings.FilterSettings.Language = value.Language;
+					this.sessionSettings.FilterSettings.LanguageVersion = value.LanguageVersion;
+					var state = value.GetState();
+					if (state != null)
+						MainWindow.Instance.SelectNodes(state.DecompiledNodes);
+					RaisePropertyChanged(nameof(ActiveTabPage));
 				}
 			}
 		}
@@ -158,27 +154,17 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public void ShowText(AvalonEditTextOutput textOutput)
 		{
-			GetTextView().ShowText(textOutput);
-		}
-
-		public DecompilerTextView GetTextView()
-		{
-			return ((DecompiledDocumentModel)ActiveDocument).TextView;
-		}
-
-		public DecompilerTextViewState GetState()
-		{
-			return GetTextView()?.GetState();
+			ActiveTabPage.ShowTextView(textView => textView.ShowText(textOutput));
 		}
 
 		public Task<T> RunWithCancellation<T>(Func<CancellationToken, Task<T>> taskCreation)
 		{
-			return GetTextView().RunWithCancellation(taskCreation);
+			return ActiveTabPage.ShowTextViewAsync(textView => textView.RunWithCancellation(taskCreation));
 		}
 
 		internal void ShowNodes(AvalonEditTextOutput output, TreeNodes.ILSpyTreeNode[] nodes, IHighlightingDefinition highlighting)
 		{
-			GetTextView().ShowNodes(output, nodes, highlighting);
+			ActiveTabPage.ShowTextView(textView => textView.ShowNodes(output, nodes, highlighting));
 		}
 
 		internal void LoadSettings(SessionSettings sessionSettings)
@@ -189,19 +175,21 @@ namespace ICSharpCode.ILSpy.Docking
 
 		private void FilterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (ActiveDocument is DecompiledDocumentModel ddm) {
-				if (e.PropertyName == "Language" || e.PropertyName == "LanguageVersion") {
-					ddm.Language = sessionSettings.FilterSettings.Language;
-					ddm.LanguageVersion = sessionSettings.FilterSettings.LanguageVersion;
+			if (e.PropertyName == "Language") {
+				ActiveTabPage.Language = sessionSettings.FilterSettings.Language;
+				if (sessionSettings.FilterSettings.Language.HasLanguageVersions) {
+					sessionSettings.FilterSettings.LanguageVersion = ActiveTabPage.LanguageVersion;
 				}
+			} else if (e.PropertyName == "LanguageVersion") {
+				ActiveTabPage.LanguageVersion = sessionSettings.FilterSettings.LanguageVersion;
 			}
 		}
 
-		internal void CloseAllDocuments()
+		internal void CloseAllTabs()
 		{
-			foreach (var doc in Documents.ToArray()) {
+			foreach (var doc in TabPages.ToArray()) {
 				if (doc.IsCloseable)
-					Documents.Remove(doc);
+					TabPages.Remove(doc);
 			}
 		}
 
@@ -210,7 +198,7 @@ namespace ICSharpCode.ILSpy.Docking
 			foreach (var pane in ToolPanes) {
 				pane.IsVisible = false;
 			}
-			CloseAllDocuments();
+			CloseAllTabs();
 			sessionSettings.DockLayout.Reset();
 			InitializeLayout(MainWindow.Instance.DockManager);
 			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);

@@ -24,8 +24,6 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public static SearchPaneModel Instance { get; } = new SearchPaneModel();
 
-		public override PanePosition DefaultPosition => PanePosition.Top;
-
 		private SearchPaneModel()
 		{
 			ContentId = PaneContentId;

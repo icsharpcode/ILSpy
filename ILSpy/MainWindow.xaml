@@ -22,7 +22,7 @@
 >
 	<Window.Resources>
 		<controls:BoolToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-		<docking:ActiveDocumentConverter x:Key="ActiveDocumentConverter"/>
+		<docking:ActiveTabPageConverter x:Key="ActiveTabPageConverter"/>
 
 		<tv:SharpTreeView x:Key="TreeView"
 				AutomationProperties.Name="Assemblies and Classes"
@@ -54,8 +54,8 @@
 			<ContentControl Content="{StaticResource AnalyzerTreeView}" />
 		</DataTemplate>
 
-		<DataTemplate x:Key="DecompilerTextViewTemplate">
-			<textview:DecompilerTextView DataContext="{Binding}" />
+		<DataTemplate x:Key="DefaultContentTemplate">
+			<ContentPresenter Content="{Binding Content}" />
 		</DataTemplate>
 	</Window.Resources>
 
@@ -138,10 +138,12 @@
 			</CheckBox>
 			<Separator />
 			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100" MaxDropDownHeight="Auto"
+					  IsEnabled="{Binding ActiveTabPage.SupportsLanguageSwitching, Source={x:Static docking:DockWorkspace.Instance}}"
 			          ItemsSource="{x:Static local:Languages.AllLanguages}" ToolTip="{x:Static properties:Resources.SelectLanguageDropdownTooltip}"
 			          SelectedItem="{Binding SessionSettings.FilterSettings.Language}"/>
 			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" Width="120" MaxDropDownHeight="Auto" ToolTip="{x:Static properties:Resources.SelectVersionDropdownTooltip}"
 			          Visibility="{Binding SelectedItem.HasLanguageVersions, ElementName=languageComboBox, Converter={StaticResource BooleanToVisibilityConverter}}"
+					  IsEnabled="{Binding ActiveTabPage.SupportsLanguageSwitching, Source={x:Static docking:DockWorkspace.Instance}}"
 			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
 			          SelectedItem="{Binding SessionSettings.FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
 		</ToolBar>
@@ -168,8 +170,8 @@
 		<avalondock:DockingManager x:Name="DockManager"
 									DataContext="{Binding Workspace}"
 									AnchorablesSource="{Binding ToolPanes}" 
-									DocumentsSource="{Binding Documents}"
-									ActiveContent="{Binding ActiveDocument, Mode=TwoWay, Converter={StaticResource ActiveDocumentConverter}}"
+									DocumentsSource="{Binding TabPages}"
+									ActiveContent="{Binding ActiveTabPage, Mode=TwoWay, Converter={StaticResource ActiveTabPageConverter}}"
 									AllowMixedOrientation="True">
 
 			<avalondock:DockingManager.DocumentHeaderTemplate>
@@ -190,7 +192,7 @@
 						<docking:TemplateMapping Type="{x:Type viewmodels:SearchPaneModel}" Template="{StaticResource SearchPaneTemplate}" />
 						<docking:TemplateMapping Type="{x:Type viewmodels:DebugStepsPaneModel}" Template="{StaticResource DebugStepsPaneTemplate}" />
 						<docking:TemplateMapping Type="{x:Type viewmodels:AnalyzerPaneModel}" Template="{StaticResource AnalyzerPaneTemplate}" />
-						<docking:TemplateMapping Type="{x:Type viewmodels:DecompiledDocumentModel}" Template="{StaticResource DecompilerTextViewTemplate}" />
+						<docking:TemplateMapping Type="{x:Type viewmodels:TabPageModel}" Template="{StaticResource DefaultContentTemplate}" />
 					</docking:PaneTemplateSelector.Mappings>
 				</docking:PaneTemplateSelector>
 			</avalondock:DockingManager.LayoutItemTemplateSelector>
@@ -209,7 +211,7 @@
 							<Setter Property="CanClose" Value="{Binding Model.IsCloseable}" />
 						</Style>
 					</docking:PaneStyleSelector.ToolPaneStyle>
-					<docking:PaneStyleSelector.DocumentStyle>
+					<docking:PaneStyleSelector.TabPageStyle>
 						<Style TargetType="{x:Type avalondock:LayoutItem}">
 							<Setter Property="Title" Value="{Binding Model.Title}"/>
 							<Setter Property="Visibility" Value="{Binding Model.IsVisible, Mode=TwoWay, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter={x:Static Visibility.Hidden}}"/>
@@ -219,7 +221,7 @@
 							<Setter Property="CloseCommand" Value="{Binding Model.CloseCommand}" />
 							<Setter Property="CanClose" Value="{Binding Model.IsCloseable, Mode=TwoWay}" />
 						</Style>
-					</docking:PaneStyleSelector.DocumentStyle>
+					</docking:PaneStyleSelector.TabPageStyle>
 				</docking:PaneStyleSelector>
 			</avalondock:DockingManager.LayoutItemContainerStyleSelector>
 		</avalondock:DockingManager>

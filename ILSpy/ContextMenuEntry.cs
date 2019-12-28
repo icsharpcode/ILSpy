@@ -19,7 +19,9 @@
 using System;
 using System.ComponentModel.Composition;
 using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.ILSpy.TextView;
@@ -53,13 +55,19 @@ namespace ICSharpCode.ILSpy
 		/// Returns null, if context menu is not assigned to a text view.
 		/// </summary>
 		public DecompilerTextView TextView { get; private set; }
-		
+
 		/// <summary>
 		/// Returns the list box the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a list box.
 		/// </summary>
 		public ListBox ListBox { get; private set; }
-		
+
+		/// <summary>
+		/// Returns the data grid the context menu is assigned to.
+		/// Returns null, if context menu is not assigned to a data grid.
+		/// </summary>
+		public DataGrid DataGrid { get; private set; }
+
 		/// <summary>
 		/// Returns the reference the mouse cursor is currently hovering above.
 		/// Returns null, if there was no reference found.
@@ -71,24 +79,37 @@ namespace ICSharpCode.ILSpy
 		/// Returns null, if TextView returns null;
 		/// </summary>
 		public TextViewPosition? Position { get; private set; }
-		
-		public static TextViewContext Create(SharpTreeView treeView = null, DecompilerTextView textView = null, ListBox listBox = null)
+
+		public Point MousePosition { get; private set; }
+
+		public static TextViewContext Create(SharpTreeView treeView = null, DecompilerTextView textView = null, ListBox listBox = null, DataGrid dataGrid = null)
 		{
 			ReferenceSegment reference;
 			if (textView != null)
 				reference = textView.GetReferenceSegmentAtMousePosition();
 			else if (listBox?.SelectedItem is SearchResult result)
 				reference = new ReferenceSegment { Reference = result.Reference };
+			else if (listBox?.SelectedItem is TreeNodes.IMemberTreeNode provider)
+				reference = new ReferenceSegment { Reference = provider.Member };
+			else if (listBox?.SelectedItem != null)
+				reference = new ReferenceSegment { Reference = listBox.SelectedItem };
+			else if (dataGrid?.SelectedItem is TreeNodes.IMemberTreeNode provider2)
+				reference = new ReferenceSegment { Reference = provider2.Member };
+			else if (dataGrid?.SelectedItem != null)
+				reference = new ReferenceSegment { Reference = dataGrid.SelectedItem };
 			else
 				reference = null;
 			var position = textView != null ? textView.GetPositionFromMousePosition() : null;
 			var selectedTreeNodes = treeView != null ? treeView.GetTopLevelSelection().ToArray() : null;
 			return new TextViewContext {
+				ListBox = listBox,
+				DataGrid = dataGrid,
 				TreeView = treeView,
 				SelectedTreeNodes = selectedTreeNodes,
 				TextView = textView,
 				Reference = reference,
-				Position = position
+				Position = position,
+				MousePosition = ((Visual)textView ?? treeView ?? (Visual)listBox ?? dataGrid).PointToScreen(Mouse.GetPosition((IInputElement)textView ?? treeView ?? (IInputElement)listBox ?? dataGrid))
 			};
 		}
 	}
@@ -143,17 +164,25 @@ namespace ICSharpCode.ILSpy
 			// ContextMenuOpening event handler is called.
 			textView.ContextMenu = new ContextMenu();
 		}
-		
+
 		public static void Add(ListBox listBox)
 		{
 			var provider = new ContextMenuProvider(listBox);
 			listBox.ContextMenuOpening += provider.listBox_ContextMenuOpening;
 			listBox.ContextMenu = new ContextMenu();
 		}
-		
+
+		public static void Add(DataGrid dataGrid)
+		{
+			var provider = new ContextMenuProvider(dataGrid);
+			dataGrid.ContextMenuOpening += provider.dataGrid_ContextMenuOpening;
+			dataGrid.ContextMenu = new ContextMenu();
+		}
+
 		readonly SharpTreeView treeView;
 		readonly DecompilerTextView textView;
 		readonly ListBox listBox;
+		readonly DataGrid dataGrid;
 		readonly Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[] entries;
 		
 		private ContextMenuProvider()
@@ -172,13 +201,19 @@ namespace ICSharpCode.ILSpy
 		{
 			this.treeView = treeView ?? throw new ArgumentNullException(nameof(treeView));
 		}
-		
+
 		ContextMenuProvider(ListBox listBox)
 			: this()
 		{
 			this.listBox = listBox ?? throw new ArgumentNullException(nameof(listBox));
 		}
-		
+
+		ContextMenuProvider(DataGrid dataGrid)
+			: this()
+		{
+			this.dataGrid = dataGrid ?? throw new ArgumentNullException(nameof(dataGrid));
+		}
+
 		void treeView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
 			TextViewContext context = TextViewContext.Create(treeView);
@@ -215,7 +250,18 @@ namespace ICSharpCode.ILSpy
 				// hide the context menu.
 				e.Handled = true;
 		}
-		
+
+		void dataGrid_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+		{
+			TextViewContext context = TextViewContext.Create(dataGrid: dataGrid);
+			ContextMenu menu;
+			if (ShowContextMenu(context, out menu))
+				dataGrid.ContextMenu = menu;
+			else
+				// hide the context menu.
+				e.Handled = true;
+		}
+
 		bool ShowContextMenu(TextViewContext context, out ContextMenu menu)
 		{
 			menu = new ContextMenu();
@@ -229,7 +275,7 @@ namespace ICSharpCode.ILSpy
 							needSeparatorForCategory = false;
 						}
 						MenuItem menuItem = new MenuItem();
-						menuItem.Header = MainWindow.GetResourceString( entryPair.Metadata.Header);
+						menuItem.Header = MainWindow.GetResourceString(entryPair.Metadata.Header);
 						menuItem.InputGestureText = entryPair.Metadata.InputGestureText;
 						if (!string.IsNullOrEmpty(entryPair.Metadata.Icon)) {
 							menuItem.Icon = new Image {

@@ -25,6 +25,7 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Xaml
 {
@@ -79,12 +80,12 @@ namespace ICSharpCode.ILSpy.Xaml
 			}
 		}
 
-		public override bool View(DecompilerTextView textView)
+		public override bool View(TabPageModel tabPage)
 		{
 			AvalonEditTextOutput output = new AvalonEditTextOutput();
 			IHighlightingDefinition highlighting = null;
-			
-			textView.RunWithCancellation(
+
+			tabPage.ShowTextView(textView => textView.RunWithCancellation(
 				token => Task.Factory.StartNew(
 					() => {
 						try {
@@ -102,7 +103,9 @@ namespace ICSharpCode.ILSpy.Xaml
 						}
 						return output;
 					}, token)
-			).Then(t => textView.ShowNode(t, this, highlighting)).HandleExceptions();
+			).Then(t => textView.ShowNode(t, this, highlighting))
+			.HandleExceptions());
+			tabPage.SupportsLanguageSwitching = false;
 			return true;
 		}
 	}
