@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
 
-			var view = Helpers.PrepareDataGrid(tabPage);
+			var view = Helpers.PrepareDataGrid(tabPage, this);
 			view.ItemsSource = new[] { new AssemblyEntry(module) };
 			tabPage.Content = view;
 			return true;

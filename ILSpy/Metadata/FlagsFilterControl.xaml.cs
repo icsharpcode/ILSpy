@@ -76,9 +76,18 @@ namespace ICSharpCode.ILSpy.Metadata
 				listBox.UnselectAll();
 				return;
 			}
+			if (e.AddedItems?.OfType<Flag>().Any(f => f.Value == -1) == true) {
+				Filter = new FlagsContentFilter(-1);
+				listBox.SelectAll();
+				return;
+			}
+
+			bool deselectAny = e.RemovedItems?.OfType<Flag>().Any(f => f.Value != -1) == true;
 
 			int mask = 0;
 			foreach (var item in listBox.SelectedItems.Cast<Flag>()) {
+				if (deselectAny && item.Value == -1)
+					continue;
 				mask |= item.Value;
 			}
 

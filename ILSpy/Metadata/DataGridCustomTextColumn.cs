@@ -35,7 +35,16 @@ namespace ICSharpCode.ILSpy.Metadata
 			if (ToolTipBinding != null) {
 				textBox.MouseMove += TextBox_MouseMove;
 			}
+			textBox.GotFocus += TextBox_GotFocus;
 			return textBox;
+		}
+
+		private void TextBox_GotFocus(object sender, RoutedEventArgs e)
+		{
+			TextBox tb = (TextBox)sender;
+			var cell = tb.GetParent<DataGridCell>();
+			var row = cell.GetParent<DataGridRow>();
+			row.IsSelected = cell.IsSelected = true;
 		}
 
 		private void TextBox_MouseMove(object sender, MouseEventArgs e)

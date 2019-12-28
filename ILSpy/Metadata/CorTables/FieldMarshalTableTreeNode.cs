@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
 
-			var view = Helpers.PrepareDataGrid(tabPage);
+			var view = Helpers.PrepareDataGrid(tabPage, this);
 			var metadata = module.Metadata;
 
 			var list = new List<FieldMarshalEntry>();
@@ -65,8 +65,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.Content = view;
 
 			if (scrollTargetEntry.RID > 0) {
-				view.ScrollIntoView(scrollTargetEntry);
-				this.scrollTarget = default;
+				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
 			return true;
@@ -77,10 +76,10 @@ namespace ICSharpCode.ILSpy.Metadata
 			public readonly BlobHandle NativeType;
 			public readonly EntityHandle Parent;
 
-			public unsafe FieldMarshal(byte* ptr, int hasFieldMarshalRefSize)
+			public unsafe FieldMarshal(byte* ptr, int blobHeapSize, int hasFieldMarshalRefSize)
 			{
-				NativeType = MetadataTokens.BlobHandle(Helpers.GetValue(ptr, 4));
-				Parent = Helpers.FromHasFieldMarshalTag((uint)Helpers.GetValue(ptr + 4, hasFieldMarshalRefSize));
+				Parent = Helpers.FromHasFieldMarshalTag((uint)Helpers.GetValue(ptr, hasFieldMarshalRefSize));
+				NativeType = MetadataTokens.BlobHandle(Helpers.GetValue(ptr + hasFieldMarshalRefSize, blobHeapSize));
 			}
 		}
 
@@ -120,7 +119,8 @@ namespace ICSharpCode.ILSpy.Metadata
 					+ metadata.GetTableRowSize(TableIndex.FieldMarshal) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
 				int hasFieldMarshalRefSize = metadata.ComputeCodedTokenSize(32768, TableMask.Field | TableMask.Param);
-				this.fieldMarshal = new FieldMarshal(ptr + rowOffset, hasFieldMarshalRefSize);
+				int blobHeapSize = metadata.GetHeapSize(HeapIndex.Blob) < ushort.MaxValue ? 2 : 4;
+				this.fieldMarshal = new FieldMarshal(ptr + rowOffset, blobHeapSize, hasFieldMarshalRefSize);
 			}
 		}
 

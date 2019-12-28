@@ -16,11 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-
+using System.Windows.Controls;
+using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
@@ -46,7 +48,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
 
-			var view = Helpers.PrepareDataGrid(tabPage);
+			var view = Helpers.PrepareDataGrid(tabPage, this);
 			var metadata = module.Metadata;
 			var list = new List<MethodDefEntry>();
 			MethodDefEntry scrollTargetEntry = default;
@@ -63,9 +65,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
-				view.ScrollIntoView(scrollTargetEntry);
-				this.scrollTarget = default;
+			if (scrollTargetEntry.RID > 1) {
+				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
 			return true;

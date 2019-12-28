@@ -19,6 +19,8 @@
 using System;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using System.Windows.Controls;
+using System.Windows.Threading;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -43,6 +45,21 @@ namespace ICSharpCode.ILSpy.Metadata
 		internal void ScrollTo(Handle handle)
 		{
 			this.scrollTarget = MetadataTokens.GetRowNumber((EntityHandle)handle);
+		}
+
+		protected void ScrollItemIntoView(DataGrid view, object item)
+		{
+			view.Loaded += View_Loaded;
+			view.Dispatcher.BeginInvoke((Action)(() => view.SelectItem(item)), DispatcherPriority.Background);
+		}
+
+		private void View_Loaded(object sender, System.Windows.RoutedEventArgs e)
+		{
+			DataGrid view = (DataGrid)sender;
+			var sv = view.FindVisualChild<ScrollViewer>();
+			sv.ScrollToVerticalOffset(scrollTarget - 1);
+			view.Loaded -= View_Loaded;
+			this.scrollTarget = default;
 		}
 	}
 }

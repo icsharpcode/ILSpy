@@ -696,6 +696,7 @@ namespace ICSharpCode.ILSpy
 								LanguageVersion = CurrentLanguageVersion
 							});
 						DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
+						treeView.SelectedItem = null;
 					}
 
 					// Set both the selection and focus to ensure that keyboard navigation works as expected.

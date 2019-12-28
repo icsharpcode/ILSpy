@@ -82,40 +82,6 @@ namespace ICSharpCode.ILSpy
 
 		public Point MousePosition { get; private set; }
 
-		public (GridViewColumn, object) GetColumnAndRowFromMousePosition()
-		{
-			if (!(ListBox is ListView listView))
-				return (null, null);
-
-			GridViewColumn column = null;
-			var directChild = (FrameworkElement)listView.InputHitTest(listView.PointFromScreen(MousePosition));
-			var (presenter, previous) = GetAncestorOf<GridViewRowPresenter>(directChild);
-			if (presenter == null)
-				return (null, null);
-			(var container, _) = GetAncestorOf<ListViewItem>(presenter);
-			var item = listView.ItemContainerGenerator.ItemFromContainer(container);
-
-			int count = VisualTreeHelper.GetChildrenCount(presenter);
-			for (int i = 0; i < count; i++) {
-				if (VisualTreeHelper.GetChild(presenter, i) != previous)
-					continue;
-				column = presenter.Columns[i];
-				break;
-			}
-			return (column, item);
-
-			(T, FrameworkElement) GetAncestorOf<T>(FrameworkElement element) where T : FrameworkElement
-			{
-				var current = element;
-				FrameworkElement prev = null;
-				while (current != null && !(current is T)) {
-					prev = current;
-					current = (FrameworkElement)VisualTreeHelper.GetParent(current);
-				}
-				return (current as T, prev);
-			}
-		}
-
 		public static TextViewContext Create(SharpTreeView treeView = null, DecompilerTextView textView = null, ListBox listBox = null, DataGrid dataGrid = null)
 		{
 			ReferenceSegment reference;

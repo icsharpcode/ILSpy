@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
 
-			var dataGrid = Helpers.PrepareDataGrid(tabPage);
+			var dataGrid = Helpers.PrepareDataGrid(tabPage, this);
 			dataGrid.RowDetailsTemplateSelector = new DllCharacteristicsDataTemplateSelector();
 			dataGrid.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Visible;
 			dataGrid.AutoGenerateColumns = false;

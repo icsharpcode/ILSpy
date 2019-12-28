@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
 
-			var view = Helpers.PrepareDataGrid(tabPage);
+			var view = Helpers.PrepareDataGrid(tabPage, this);
 			var metadata = module.Metadata;
 			var list = new List<AssemblyRefEntry>();
 			AssemblyRefEntry scrollTargetEntry = default;
@@ -59,9 +59,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			view.ItemsSource = list;
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
-				view.ScrollIntoView(scrollTargetEntry);
-				this.scrollTarget = default;
+			if (scrollTargetEntry.RID > 1) {
+				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
 			return true;

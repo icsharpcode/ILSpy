@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
 
-			var dataGrid = Helpers.PrepareDataGrid(tabPage);
+			var dataGrid = Helpers.PrepareDataGrid(tabPage, this);
 			//dataGrid.AutoGenerateColumns = false;
 			//dataGrid.Columns.Add(new DataGridTextColumn { IsReadOnly = true, Header = "Name", Binding = new Binding("Name") });
 			//dataGrid.Columns.Add(new DataGridTextColumn { IsReadOnly = true, Header = "RVA", Binding = new Binding("RVA") { StringFormat = "X8" } });

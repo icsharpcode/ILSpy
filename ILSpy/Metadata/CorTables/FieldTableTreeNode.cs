@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
-			var view = Helpers.PrepareDataGrid(tabPage);
+			var view = Helpers.PrepareDataGrid(tabPage, this);
 			var metadata = module.Metadata;
 
 			var list = new List<FieldDefEntry>();
@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.FieldDefinitions) {
 				var entry = new FieldDefEntry(module, row);
-				if (scrollTarget.Equals(row)) {
+				if (scrollTarget == entry.RID) {
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -68,8 +68,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.Content = view;
 
 			if (scrollTargetEntry.RID > 0) {
-				view.ScrollIntoView(scrollTargetEntry);
-				this.scrollTarget = default;
+				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
 			return true;
