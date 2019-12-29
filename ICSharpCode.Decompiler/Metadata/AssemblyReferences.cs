@@ -167,18 +167,18 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		static readonly SHA1 sha1 = SHA1.Create();
 
-		public PEFile Module { get; }
+		public MetadataReader Metadata { get; }
 		public AssemblyReferenceHandle Handle { get; }
 
-		System.Reflection.Metadata.AssemblyReference This() => Module.Metadata.GetAssemblyReference(Handle);
+		System.Reflection.Metadata.AssemblyReference This() => Metadata.GetAssemblyReference(Handle);
 
 		public bool IsWindowsRuntime => (This().Flags & AssemblyFlags.WindowsRuntime) != 0;
 		public bool IsRetargetable => (This().Flags & AssemblyFlags.Retargetable) != 0;
 
-		public string Name => Module.Metadata.GetString(This().Name);
-		public string FullName => This().GetFullAssemblyName(Module.Metadata);
+		public string Name => Metadata.GetString(This().Name);
+		public string FullName => This().GetFullAssemblyName(Metadata);
 		public Version Version => This().Version;
-		public string Culture => Module.Metadata.GetString(This().Culture);
+		public string Culture => Metadata.GetString(This().Culture);
 		byte[] IAssemblyReference.PublicKeyToken => GetPublicKeyToken();
 
 		public byte[] GetPublicKeyToken()
@@ -186,18 +186,30 @@ namespace ICSharpCode.Decompiler.Metadata
 			var inst = This();
 			if (inst.PublicKeyOrToken.IsNil)
 				return null;
-			var bytes = Module.Metadata.GetBlobBytes(inst.PublicKeyOrToken);
+			var bytes = Metadata.GetBlobBytes(inst.PublicKeyOrToken);
 			if ((inst.Flags & AssemblyFlags.PublicKey) != 0) {
 				return sha1.ComputeHash(bytes).Skip(12).ToArray();
 			}
 			return bytes;
 		}
 
-		public AssemblyReference(PEFile module, AssemblyReferenceHandle handle)
+		public AssemblyReference(MetadataReader metadata, AssemblyReferenceHandle handle)
 		{
-			Module = module ?? throw new ArgumentNullException(nameof(module));
+			if (metadata == null)
+				throw new ArgumentNullException(nameof(metadata));
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
+			Metadata = metadata;
+			Handle = handle;
+		}
+
+		public AssemblyReference(PEFile module, AssemblyReferenceHandle handle)
+		{
+			if (module == null)
+				throw new ArgumentNullException(nameof(module));
+			if (handle.IsNil)
+				throw new ArgumentNullException(nameof(handle));
+			Metadata = module.Metadata;
 			Handle = handle;
 		}
 

@@ -18,6 +18,7 @@
 
 using System;
 using System.ComponentModel.Composition;
+using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using Iced.Intel;
@@ -39,13 +40,13 @@ namespace ICSharpCode.ILSpy
 			get { return ".asm"; }
 		}
 
-		private R2RReader GetReader(PEFile module)
+		private R2RReader GetReader(LoadedAssembly assembly, PEFile module)
 		{
 			R2RReader result;
 			lock (r2rReaders) {
 				if (!r2rReaders.TryGetValue(module, out result)) {
 					// TODO: avoid eager parsing 
-					result = new R2RReader(new R2RAssemblyResolver(), module.Metadata, module.Reader, module.FileName);
+					result = new R2RReader(new R2RAssemblyResolver(assembly), module.Metadata, module.Reader, module.FileName);
 					r2rReaders.Add(module, result);
 				}
 			}
@@ -55,7 +56,7 @@ namespace ICSharpCode.ILSpy
 		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile module = assembly.GetPEFileOrNull();
-			R2RReader reader = GetReader(module);
+			R2RReader reader = GetReader(assembly, module);
 
 			WriteCommentLine(output, "TODO - display ready to run information");
 			// TODO: display other header information
@@ -69,7 +70,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile module = method.ParentModule.PEFile;
-			R2RReader reader = GetReader(module);
+			R2RReader reader = GetReader(null, module);
 			int bitness = -1;
 			if (reader.Machine == Machine.Amd64) {
 				bitness = 64;
@@ -143,15 +144,21 @@ namespace ICSharpCode.ILSpy
 
 		private class R2RAssemblyResolver : ILCompiler.Reflection.ReadyToRun.IAssemblyResolver
 		{
+			private LoadedAssembly loadedAssembly;
+			public R2RAssemblyResolver(LoadedAssembly loadedAssembly)
+			{
+				this.loadedAssembly = loadedAssembly;
+			}
 			public bool Naked => false;
 
 			public bool SignatureBinary => false;
 
 			public bool InlineSignatureBinary => false;
 
-			public string FindAssembly(string name, string filename)
+			public MetadataReader FindAssembly(MetadataReader metadataReader, AssemblyReferenceHandle assemblyReferenceHandle, string parentFile)
 			{
-				throw new NotImplementedException();
+				LoadedAssembly loadedAssembly = this.loadedAssembly.LookupReferencedAssembly(new Decompiler.Metadata.AssemblyReference(metadataReader, assemblyReferenceHandle));
+				return loadedAssembly?.GetPEFileOrNull()?.Metadata;
 			}
 		}
 
