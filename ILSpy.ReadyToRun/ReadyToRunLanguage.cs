@@ -18,6 +18,7 @@
 
 using System;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
@@ -31,37 +32,28 @@ using ILCompiler.Reflection.ReadyToRun;
 namespace ICSharpCode.ILSpy
 {
 	[Export(typeof(Language))]
-	class ReadyToRunLanguage : Language
+	internal class ReadyToRunLanguage : Language
 	{
-		private static readonly ConditionalWeakTable<PEFile, R2RReader> r2rReaders = new ConditionalWeakTable<PEFile, R2RReader>();
+		private static readonly ConditionalWeakTable<PEFile, R2RReaderCacheEntry> r2rReaders = new ConditionalWeakTable<PEFile, R2RReaderCacheEntry>();
 		public override string Name => "ReadyToRun";
 
 		public override string FileExtension {
 			get { return ".asm"; }
 		}
 
-		private R2RReader GetReader(LoadedAssembly assembly, PEFile module)
-		{
-			R2RReader result;
-			lock (r2rReaders) {
-				if (!r2rReaders.TryGetValue(module, out result)) {
-					// TODO: avoid eager parsing 
-					result = new R2RReader(new R2RAssemblyResolver(assembly), module.Metadata, module.Reader, module.FileName);
-					r2rReaders.Add(module, result);
-				}
-			}
-			return result;
-		}
-
 		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile module = assembly.GetPEFileOrNull();
-			R2RReader reader = GetReader(assembly, module);
-
-			WriteCommentLine(output, "TODO - display ready to run information");
-			// TODO: display other header information
-			foreach (var method in reader.R2RMethods) {
-				WriteCommentLine(output, method.SignatureString);
+			R2RReaderCacheEntry r2rReaderCacheEntry  = GetReader(assembly, module);
+			if (r2rReaderCacheEntry.r2rReader == null) {
+				WriteCommentLine(output, r2rReaderCacheEntry.failureReason);
+			} else {
+				R2RReader reader = r2rReaderCacheEntry.r2rReader;
+				WriteCommentLine(output, "TODO - display ready to run information");
+				// TODO: display other header information
+				foreach (var method in reader.R2RMethods) {
+					WriteCommentLine(output, method.SignatureString);
+				}
 			}
 
 			return base.DecompileAssembly(assembly, output, options);
@@ -70,68 +62,64 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile module = method.ParentModule.PEFile;
-			R2RReader reader = GetReader(module.GetLoadedAssembly(), module);
-			int bitness = -1;
-			if (reader.Machine == Machine.Amd64) {
-				bitness = 64;
-			} else if (reader.Machine == Machine.I386) {
-				bitness = 32;
-			}
-			else {
-				// TODO: Architecture other than x86/amd64
-				throw new NotImplementedException("");
-			}
-			foreach (var m in reader.R2RMethods) {
-				if (m.MethodHandle == method.MetadataToken) {
-					// TODO: Indexing
-					foreach (RuntimeFunction runtimeFunction in m.RuntimeFunctions) {
-						WriteCommentLine(output, m.SignatureString);
-						byte[] code = new byte[runtimeFunction.Size];
-						for (int i = 0; i < runtimeFunction.Size; i++) {
-							code[i] = reader.Image[reader.GetOffset(runtimeFunction.StartAddress) + i];
+			R2RReaderCacheEntry r2rReaderCacheEntry = GetReader(module.GetLoadedAssembly(), module);
+			if (r2rReaderCacheEntry.r2rReader == null) {
+				WriteCommentLine(output, r2rReaderCacheEntry.failureReason);
+			} else {
+				R2RReader reader = r2rReaderCacheEntry.r2rReader;
+				int bitness = -1;
+				if (reader.Machine == Machine.Amd64) {
+					bitness = 64;
+				} else {
+					Debug.Assert(reader.Machine == Machine.I386);
+					bitness = 32;
+				}
+				foreach (var m in reader.R2RMethods) {
+					if (m.MethodHandle == method.MetadataToken) {
+						// TODO: Indexing
+						foreach (RuntimeFunction runtimeFunction in m.RuntimeFunctions) {
+							WriteCommentLine(output, m.SignatureString);
+							byte[] code = new byte[runtimeFunction.Size];
+							for (int i = 0; i < runtimeFunction.Size; i++) {
+								code[i] = reader.Image[reader.GetOffset(runtimeFunction.StartAddress) + i];
+							}
+							Disassemble(output, code, bitness, (ulong)runtimeFunction.StartAddress);
+							output.WriteLine();
 						}
-						DecoderFormatterExample(output, code, bitness, (ulong)runtimeFunction.StartAddress);
-						output.WriteLine();
 					}
 				}
 			}
 		}
 
-		private void DecoderFormatterExample(ITextOutput output, byte[] exampleCode, int exampleCodeBitness, ulong exampleCodeRIP)
+		public override void WriteCommentLine(ITextOutput output, string comment)
+		{
+			output.WriteLine("; " + comment);
+		}
+
+		private void Disassemble(ITextOutput output, byte[] codeBytes, int bitness, ulong address)
 		{
 			// TODO: Decorate the disassembly with Unwind, GC and debug info
-			// You can also pass in a hex string, eg. "90 91 929394", or you can use your own CodeReader
-			// reading data from a file or memory etc
-			var codeBytes = exampleCode;
 			var codeReader = new ByteArrayCodeReader(codeBytes);
-			var decoder = Decoder.Create(exampleCodeBitness, codeReader);
-			decoder.IP = exampleCodeRIP;
+			var decoder = Decoder.Create(bitness, codeReader);
+			decoder.IP = address;
 			ulong endRip = decoder.IP + (uint)codeBytes.Length;
 
-			// This list is faster than List<Instruction> since it uses refs to the Instructions
-			// instead of copying them (each Instruction is 32 bytes in size). It has a ref indexer,
-			// and a ref iterator. Add() uses 'in' (ref readonly).
 			var instructions = new InstructionList();
 			while (decoder.IP < endRip) {
-				// The method allocates an uninitialized element at the end of the list and
-				// returns a reference to it which is initialized by Decode().
 				decoder.Decode(out instructions.AllocUninitializedElement());
 			}
 
-			// Formatters: Masm*, Nasm*, Gas* (AT&T) and Intel* (XED)
 			// TODO: DecompilationOptions?
 			var formatter = new NasmFormatter();
 			formatter.Options.DigitSeparator = "`";
 			formatter.Options.FirstOperandCharIndex = 10;
 			var tempOutput = new StringBuilderFormatterOutput();
-			// Use InstructionList's ref iterator (C# 7.3) to prevent copying 32 bytes every iteration
 			foreach (var instr in instructions) {
-				// Don't use instr.ToString(), it allocates more, uses masm syntax and default options
 				formatter.Format(instr, tempOutput);
 				output.Write(instr.IP.ToString("X16"));
 				output.Write(" ");
 				int instrLen = instr.ByteLength;
-				int byteBaseIndex = (int)(instr.IP - exampleCodeRIP);
+				int byteBaseIndex = (int)(instr.IP - address);
 				for (int i = 0; i < instrLen; i++)
 					output.Write(codeBytes[byteBaseIndex + i].ToString("X2"));
 				int missingBytes = 10 - instrLen;
@@ -140,6 +128,28 @@ namespace ICSharpCode.ILSpy
 				output.Write(" ");
 				output.WriteLine(tempOutput.ToStringAndReset());
 			}
+		}
+
+		private R2RReaderCacheEntry GetReader(LoadedAssembly assembly, PEFile module)
+		{
+			R2RReaderCacheEntry result;
+			lock (r2rReaders) {
+				if (!r2rReaders.TryGetValue(module, out result)) {
+					result = new R2RReaderCacheEntry();
+					try {
+						// TODO: avoid eager parsing 
+						result.r2rReader = new R2RReader(new R2RAssemblyResolver(assembly), module.Metadata, module.Reader, module.FileName);
+						if (result.r2rReader.Machine != Machine.Amd64 && result.r2rReader.Machine != Machine.I386) {
+							result.failureReason = $"Architecture {result.r2rReader.Machine} is not currently supported.";
+							result.r2rReader = null;
+						}
+					} catch (BadImageFormatException e) {
+						result.failureReason = e.Message;
+					}
+					r2rReaders.Add(module, result);
+				}
+			}
+			return result;
 		}
 
 		private class R2RAssemblyResolver : ILCompiler.Reflection.ReadyToRun.IAssemblyResolver
@@ -162,9 +172,10 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override void WriteCommentLine(ITextOutput output, string comment)
+		private class R2RReaderCacheEntry
 		{
-			output.WriteLine("; " + comment);
+			public R2RReader r2rReader;
+			public string failureReason;
 		}
 	}
 }
