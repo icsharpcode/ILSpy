@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile module = method.ParentModule.PEFile;
-			R2RReader reader = GetReader(null, module);
+			R2RReader reader = GetReader(module.GetLoadedAssembly(), module);
 			int bitness = -1;
 			if (reader.Machine == Machine.Amd64) {
 				bitness = 64;
