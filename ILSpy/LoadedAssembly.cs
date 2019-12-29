@@ -56,7 +56,6 @@ namespace ICSharpCode.ILSpy
 			this.assemblyTask = Task.Factory.StartNew(LoadAssembly, stream); // requires that this.fileName is set
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 			this.resolver = new MyAssemblyResolver(this);
-			this.universalResolver = new MyUniversalResolver(this);
 		}
 
 		/// <summary>
@@ -271,7 +270,7 @@ namespace ICSharpCode.ILSpy
 		}
 
 		static readonly Dictionary<string, LoadedAssembly> loadingAssemblies = new Dictionary<string, LoadedAssembly>();
-		readonly MyUniversalResolver universalResolver;
+		MyUniversalResolver universalResolver;
 
 		LoadedAssembly LookupReferencedAssemblyInternal(Decompiler.Metadata.IAssemblyReference fullName, bool isWinRT)
 		{
@@ -289,6 +288,10 @@ namespace ICSharpCode.ILSpy
 						LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.FullName, MessageKind.Info, "Success - Found in Assembly List");
 						return loaded;
 					}
+				}
+
+				if (universalResolver == null) {
+					universalResolver = new MyUniversalResolver(this);
 				}
 
 				file = universalResolver.FindAssemblyFile(fullName);
