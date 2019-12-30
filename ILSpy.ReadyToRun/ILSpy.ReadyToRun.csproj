@@ -37,10 +37,22 @@
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj">
       <Private>False</Private>
     </ProjectReference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="ReadyToRunLanguage.cs" />
+    <Compile Include="ReadyToRunOptionPage.xaml.cs">
+      <DependentUpon>ReadyToRunOptionPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ReadyToRunOptions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="ReadyToRunOptionPage.xaml" />
   </ItemGroup>
 
   <ItemGroup>

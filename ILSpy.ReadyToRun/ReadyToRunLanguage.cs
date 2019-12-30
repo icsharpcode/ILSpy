@@ -29,7 +29,7 @@ using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ILCompiler.Reflection.ReadyToRun;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpy.ReadyToRun
 {
 	[Export(typeof(Language))]
 	internal class ReadyToRunLanguage : Language
@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy
 		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile module = assembly.GetPEFileOrNull();
-			R2RReaderCacheEntry r2rReaderCacheEntry  = GetReader(assembly, module);
+			R2RReaderCacheEntry r2rReaderCacheEntry = GetReader(assembly, module);
 			if (r2rReaderCacheEntry.r2rReader == null) {
 				WriteCommentLine(output, r2rReaderCacheEntry.failureReason);
 			} else {
@@ -109,8 +109,14 @@ namespace ICSharpCode.ILSpy
 				decoder.Decode(out instructions.AllocUninitializedElement());
 			}
 
-			// TODO: DecompilationOptions?
-			var formatter = new NasmFormatter();
+			string disassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(null);
+			Formatter formatter = null;
+			if (disassemblyFormat.Equals(ReadyToRunOptions.intel)) {
+				formatter = new NasmFormatter();
+			} else {
+				Debug.Assert(disassemblyFormat.Equals(ReadyToRunOptions.gas));
+				formatter = new GasFormatter();
+			}
 			formatter.Options.DigitSeparator = "`";
 			formatter.Options.FirstOperandCharIndex = 10;
 			var tempOutput = new StringBuilderFormatterOutput();
