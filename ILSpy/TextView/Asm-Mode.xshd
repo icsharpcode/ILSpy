@@ -1190,7 +1190,7 @@
 			<Begin>;</Begin>
 		</Span>
 		<Rule color="NumberLiteral">
-			\b0[xX][0-9a-fA-F]+  # hex number
+			\b(0[xXhH])?[0-9a-fA-F_`]+[h]?  # hex number
 			|
 			(	\b\d+(\.[0-9]+)?   #number with optional floating point
 			|	\.[0-9]+           #or just starting with floating point

@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy
 			return GetLoadedAssembly(file).GetTypeSystemOrNull();
 		}
 
-		static LoadedAssembly GetLoadedAssembly(PEFile file)
+		public static LoadedAssembly GetLoadedAssembly(this PEFile file)
 		{
 			if (file == null)
 				throw new ArgumentNullException(nameof(file));

@@ -13,5 +13,7 @@ Included open-source libraries:
  SharpTreeView: LGPL
  ILSpy.BamlDecompiler: MIT License
  CommandLineUtils: Apache License 2.0 (part of ICSharpCode.Decompiler.Console)
+ ILCompiler.Reflection.ReadyToRun: MIT License (part of ILSpy.ReadyToRun)
+ Iced: MIT License (part of ILSpy.ReadyToRun)
 
 Current and past contributors: https://github.com/icsharpcode/ILSpy/graphs/contributors
