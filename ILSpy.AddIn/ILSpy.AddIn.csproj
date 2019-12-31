@@ -116,9 +116,13 @@
     <AdditionalDependencies Include="$(ILSpyBuildPath)Mono.Cecil.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)Mono.Cecil.Pdb.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)ILSpy.BamlDecompiler.Plugin.dll" />
-	  <AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.DiaSymReader*.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.DiaSymReader*.dll" />
   	<AdditionalDependencies Include="$(ILSpyBuildPath)OSVersionHelper.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)Xceed.Wpf.AvalonDock.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)DataGridExtensions.dll" />  
+    <AdditionalDependencies Include="$(ILSpyBuildPath)Iced.dll" />  
+    <AdditionalDependencies Include="$(ILSpyBuildPath)ILCompiler.Reflection.ReadyToRun.dll" />  
+    <AdditionalDependencies Include="$(ILSpyBuildPath)ILSpy.ReadyToRun.Plugin.dll" />  
   </ItemGroup>
 
   <ItemGroup>
