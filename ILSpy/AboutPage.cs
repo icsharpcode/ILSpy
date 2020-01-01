@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpy
 			foreach (var plugin in App.ExportProvider.GetExportedValues<IAboutPageAddition>())
 				plugin.Write(output);
 			output.WriteLine();
-			using (Stream s = typeof(AboutPage).Assembly.GetManifestResourceStream(typeof(AboutPage), "README.txt")) {
+			using (Stream s = typeof(AboutPage).Assembly.GetManifestResourceStream(typeof(AboutPage), "ILSpyAboutPage.txt")) {
 				using (StreamReader r = new StreamReader(s)) {
 					string line;
 					while ((line = r.ReadLine()) != null) {
@@ -97,10 +97,10 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 			}
-			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("SharpDevelop", "http://www.icsharpcode.net/opensource/sd/"));
 			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("MIT License", "resource:license.txt"));
 			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("LGPL", "resource:LGPL.txt"));
 			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("MS-PL", "resource:MS-PL.txt"));
+			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("third-party notices", "resource:third-party-notices.txt"));
 			textView.ShowText(output);
 		}
 		

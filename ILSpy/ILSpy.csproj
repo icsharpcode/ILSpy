@@ -418,7 +418,8 @@
     <Compile Include="Commands\SearchMsdnContextMenuEntry.cs" />
     <Compile Include="Analyzers\Builtin\TypeExtensionMethodsAnalyzer.cs" />
     <Compile Include="Docking\DockWorkspace.cs" />
-    <EmbeddedResource Include="..\doc\README.txt" />
+    <EmbeddedResource Include="..\doc\ILSpyAboutPage.txt" />
+    <EmbeddedResource Include="..\doc\third-party-notices.txt" />
     <EmbeddedResource Include="..\doc\LGPL.txt">
       <Link>LGPL.txt</Link>
     </EmbeddedResource>
