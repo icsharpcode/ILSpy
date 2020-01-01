@@ -418,6 +418,7 @@
     <Compile Include="Commands\SearchMsdnContextMenuEntry.cs" />
     <Compile Include="Analyzers\Builtin\TypeExtensionMethodsAnalyzer.cs" />
     <Compile Include="Docking\DockWorkspace.cs" />
+    <EmbeddedResource Include="..\doc\README.txt" />
     <EmbeddedResource Include="..\doc\LGPL.txt">
       <Link>LGPL.txt</Link>
     </EmbeddedResource>
@@ -470,7 +471,6 @@
     <Compile Include="TreeNodes\ResourceListTreeNode.cs" />
     <Compile Include="TreeNodes\ThreadingSupport.cs" />
     <Compile Include="TreeNodes\TypeTreeNode.cs" />
-    <EmbeddedResource Include="README.txt" />
   </ItemGroup>
 
   <ItemGroup>
