@@ -18,11 +18,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy
 {
+	[DebuggerDisplay("Nodes = {treeNodes.Count}, State = [{ViewState}]")]
 	public class NavigationState : IEquatable<NavigationState>
 	{
 		private readonly HashSet<SharpTreeNode> treeNodes;
@@ -32,7 +34,7 @@ namespace ICSharpCode.ILSpy
 
 		public NavigationState(ViewState viewState)
 		{
-			this.treeNodes = new HashSet<SharpTreeNode>(viewState.DecompiledNodes);
+			this.treeNodes = new HashSet<SharpTreeNode>((IEnumerable<SharpTreeNode>)viewState.DecompiledNodes ?? Array.Empty<SharpTreeNode>());
 			ViewState = viewState;
 		}
 
@@ -44,8 +46,16 @@ namespace ICSharpCode.ILSpy
 
 		public bool Equals(NavigationState other)
 		{
-			// TODO: should this care about the view state as well?
-			return this.treeNodes.SetEquals(other.treeNodes);
+			if (!this.treeNodes.SetEquals(other.treeNodes))
+				return false;
+
+			if (object.ReferenceEquals(this.ViewState, other.ViewState))
+				return true;
+
+			if (this.ViewState == null)
+				return false;
+
+			return this.ViewState.Equals(other.ViewState);
 		}
 	}
 }

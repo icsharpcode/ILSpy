@@ -83,6 +83,12 @@ namespace ICSharpCode.ILSpy.TextView
 		public string IndentationString { get; set; } = "\t";
 
 		public string Title { get; set; }
+
+		/// <summary>
+		/// Gets/sets the <see cref="Uri"/> that is displayed by this view.
+		/// Used to identify the AboutPage and other views built into ILSpy in the navigation history.
+		/// </summary>
+		public Uri Address { get; set; }
 		
 		internal readonly List<VisualLineElementGenerator> elementGenerators = new List<VisualLineElementGenerator>();
 		

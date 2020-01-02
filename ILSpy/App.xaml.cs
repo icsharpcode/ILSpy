@@ -22,17 +22,16 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Navigation;
 using System.Windows.Threading;
 
-using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Options;
 
 using Microsoft.VisualStudio.Composition;
-using System.Text;
 
 namespace ICSharpCode.ILSpy
 {
@@ -233,20 +232,7 @@ namespace ICSharpCode.ILSpy
 		
 		void Window_RequestNavigate(object sender, RequestNavigateEventArgs e)
 		{
-			if (e.Uri.Scheme == "resource") {
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
-				using (Stream s = typeof(App).Assembly.GetManifestResourceStream(typeof(App), e.Uri.AbsolutePath)) {
-					using (StreamReader r = new StreamReader(s)) {
-						string line;
-						while ((line = r.ReadLine()) != null) {
-							output.Write(line);
-							output.WriteLine();
-						}
-					}
-				}
-				Docking.DockWorkspace.Instance.ShowText(output);
-				e.Handled = true;
-			}
+			ILSpy.MainWindow.Instance.NavigateTo(e);
 		}
 	}
 }

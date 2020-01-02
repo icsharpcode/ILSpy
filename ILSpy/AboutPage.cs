@@ -18,7 +18,6 @@
 
 using System;
 using System.ComponentModel;
-using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -28,14 +27,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Navigation;
 using System.Xml.Linq;
 
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
-using ICSharpCode.ILSpy.Docking;
-using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
+
 using OSVersionHelper;
 
 namespace ICSharpCode.ILSpy
@@ -45,8 +44,7 @@ namespace ICSharpCode.ILSpy
 	{
 		public override void Execute(object parameter)
 		{
-			MainWindow.Instance.UnselectAll();
-			DockWorkspace.Instance.ActiveTabPage.ShowTextView(Display);
+			MainWindow.Instance.NavigateTo(new RequestNavigateEventArgs(new Uri("resource://aboutpage"), null));
 		}
 		
 		static readonly Uri UpdateUrl = new Uri("https://ilspy.net/updates.xml");
@@ -89,6 +87,7 @@ namespace ICSharpCode.ILSpy
 			foreach (var plugin in App.ExportProvider.GetExportedValues<IAboutPageAddition>())
 				plugin.Write(output);
 			output.WriteLine();
+			output.Address = new Uri("resource://AboutPage");
 			using (Stream s = typeof(AboutPage).Assembly.GetManifestResourceStream(typeof(AboutPage), "ILSpyAboutPage.txt")) {
 				using (StreamReader r = new StreamReader(s)) {
 					string line;
