@@ -25,7 +25,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -34,6 +33,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Documentation;
@@ -41,7 +41,6 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.Analyzers;
-using ICSharpCode.ILSpy.Controls;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -49,7 +48,6 @@ using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.TreeView;
 using Microsoft.Win32;
 using OSVersionHelper;
-using Xceed.Wpf.AvalonDock.Layout;
 using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
 namespace ICSharpCode.ILSpy
@@ -996,6 +994,10 @@ namespace ICSharpCode.ILSpy
 				if (node != null && node.View(DockWorkspace.Instance.ActiveTabPage))
 					return;
 			}
+			if (newState?.ViewedUri != null) {
+				NavigateTo(new RequestNavigateEventArgs(newState.ViewedUri, null), recordHistory: false);
+				return;
+			}
 			decompilationTask = DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions() { TextViewState = newState }));
 		}
 
@@ -1078,8 +1080,49 @@ namespace ICSharpCode.ILSpy
 			ignoreDecompilationRequests = false;
 			DecompileSelectedNodes(newState.ViewState as DecompilerTextViewState, false);
 		}
-
 		#endregion
+
+		internal void NavigateTo(RequestNavigateEventArgs e, bool recordHistory = true)
+		{
+			if (e.Uri.Scheme == "resource") {
+				if (e.Uri.Host == "aboutpage") {
+					RecordHistory();
+					DockWorkspace.Instance.ActiveTabPage.ShowTextView(AboutPage.Display);
+					e.Handled = true;
+					return;
+				}
+				AvalonEditTextOutput output = new AvalonEditTextOutput {
+					Address = e.Uri,
+					Title = e.Uri.AbsolutePath,
+					EnableHyperlinks = true
+				};
+				using (Stream s = typeof(App).Assembly.GetManifestResourceStream(typeof(App), e.Uri.AbsolutePath)) {
+					using (StreamReader r = new StreamReader(s)) {
+						string line;
+						while ((line = r.ReadLine()) != null) {
+							output.Write(line);
+							output.WriteLine();
+						}
+					}
+				}
+				RecordHistory();
+				DockWorkspace.Instance.ShowText(output);
+				e.Handled = true;
+			}
+
+			void RecordHistory()
+			{
+				if (!recordHistory)
+					return;
+				var currentState = DockWorkspace.Instance.ActiveTabPage.GetState();
+				if (currentState != null)
+					history.UpdateCurrent(new NavigationState(currentState));
+				ignoreDecompilationRequests = true;
+				UnselectAll();
+				ignoreDecompilationRequests = false;
+				history.Record(new NavigationState(new ViewState { ViewedUri = e.Uri }));
+			}
+		}
 
 		protected override void OnStateChanged(EventArgs e)
 		{

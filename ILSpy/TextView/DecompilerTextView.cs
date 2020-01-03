@@ -71,6 +71,7 @@ namespace ICSharpCode.ILSpy.TextView
 		BracketHighlightRenderer bracketHighlightRenderer;
 		FoldingManager foldingManager;
 		ILSpyTreeNode[] decompiledNodes;
+		Uri currentAddress;
 		
 		DefinitionLookup definitionLookup;
 		TextSegmentCollection<ReferenceSegment> references;
@@ -647,6 +648,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (this.DataContext is PaneModel model) {
 				model.Title = textOutput.Title;
 			}
+			currentAddress = textOutput.Address;
 		}
 		#endregion
 		
@@ -1010,7 +1012,7 @@ namespace ICSharpCode.ILSpy.TextView
 		
 		public DecompilerTextViewState GetState()
 		{
-			if (decompiledNodes == null)
+			if (decompiledNodes == null && currentAddress == null)
 				return null;
 
 			var state = new DecompilerTextViewState();
@@ -1018,7 +1020,8 @@ namespace ICSharpCode.ILSpy.TextView
 				state.SaveFoldingsState(foldingManager.AllFoldings);
 			state.VerticalOffset = textEditor.VerticalOffset;
 			state.HorizontalOffset = textEditor.HorizontalOffset;
-			state.DecompiledNodes = decompiledNodes;
+			state.DecompiledNodes = decompiledNodes == null ? null : new HashSet<ILSpyTreeNode>(decompiledNodes);
+			state.ViewedUri = currentAddress;
 			return state;
 		}
 
@@ -1059,9 +1062,16 @@ namespace ICSharpCode.ILSpy.TextView
 		#endregion
 	}
 
-	public class ViewState
+	[DebuggerDisplay("Nodes = {DecompiledNodes}, ViewedUri = {ViewedUri}")]
+	public class ViewState : IEquatable<ViewState>
 	{
-		public ILSpyTreeNode[] DecompiledNodes;
+		public HashSet<ILSpyTreeNode> DecompiledNodes;
+		public Uri ViewedUri;
+
+		public virtual bool Equals(ViewState other)
+		{
+			return ViewedUri == other.ViewedUri && (DecompiledNodes == other.DecompiledNodes || DecompiledNodes?.SetEquals(other.DecompiledNodes) == true);
+		}
 	}
 	
 	public class DecompilerTextViewState : ViewState
@@ -1083,6 +1093,17 @@ namespace ICSharpCode.ILSpy.TextView
 			if (FoldingsChecksum == checksum)
 				foreach (var folding in list)
 					folding.DefaultClosed = !ExpandedFoldings.Any(f => f.Item1 == folding.StartOffset && f.Item2 == folding.EndOffset);
+		}
+
+		public override bool Equals(ViewState other)
+		{
+			if (other is DecompilerTextViewState vs) {
+				return base.Equals(vs)
+					&& FoldingsChecksum == vs.FoldingsChecksum
+					&& VerticalOffset == vs.VerticalOffset
+					&& HorizontalOffset == vs.HorizontalOffset;
+			}
+			return false;
 		}
 	}
 }

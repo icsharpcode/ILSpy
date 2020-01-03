@@ -33,6 +33,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.PdbP
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.Tests", "ILSpy.Tests\ILSpy.Tests.csproj", "{B51C6636-B8D1-4200-9869-08F2689DE6C2}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.ReadyToRun", "ILSpy.ReadyToRun\ILSpy.ReadyToRun.csproj", "{4A9EDD49-EE62-4417-9140-EF82E39214E4}"
+EndProject
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "ILSpy.Package", "ILSpy.Package\ILSpy.Package.wapproj", "{BAB51A23-9C15-42CC-8465-EB732BF9A932}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{58AA7BDB-174C-4566-BD8A-EC461F1D6848}"
@@ -189,6 +191,18 @@ Global
 		{BAB51A23-9C15-42CC-8465-EB732BF9A932}.Release|x86.ActiveCfg = Release|x86
 		{BAB51A23-9C15-42CC-8465-EB732BF9A932}.Release|x86.Build.0 = Release|x86
 		{BAB51A23-9C15-42CC-8465-EB732BF9A932}.Release|x86.Deploy.0 = Release|x86
+		{4A9EDD49-EE62-4417-9140-EF82E39214E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A9EDD49-EE62-4417-9140-EF82E39214E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A9EDD49-EE62-4417-9140-EF82E39214E4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4A9EDD49-EE62-4417-9140-EF82E39214E4}.Debug|x64.Build.0 = Debug|Any CPU
+		{4A9EDD49-EE62-4417-9140-EF82E39214E4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4A9EDD49-EE62-4417-9140-EF82E39214E4}.Debug|x86.Build.0 = Debug|Any CPU
+		{4A9EDD49-EE62-4417-9140-EF82E39214E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A9EDD49-EE62-4417-9140-EF82E39214E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A9EDD49-EE62-4417-9140-EF82E39214E4}.Release|x64.ActiveCfg = Release|Any CPU
+		{4A9EDD49-EE62-4417-9140-EF82E39214E4}.Release|x64.Build.0 = Release|Any CPU
+		{4A9EDD49-EE62-4417-9140-EF82E39214E4}.Release|x86.ActiveCfg = Release|Any CPU
+		{4A9EDD49-EE62-4417-9140-EF82E39214E4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

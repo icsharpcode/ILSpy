@@ -1,4 +1,4 @@
-Copyright 2011-2020 for the SharpDevelop team
+Copyright 2011-2020 for the ILSpy team
 by
 
   AlphaSierraPapa, Christoph Wille
@@ -8,4 +8,3 @@ by
 
   email: office@alphasierrapapa.com
   court of jurisdiction: Landesgericht Leoben
-
