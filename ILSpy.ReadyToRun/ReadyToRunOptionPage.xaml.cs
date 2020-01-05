@@ -23,7 +23,7 @@ using ICSharpCode.ILSpy.Options;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
-	[ExportOptionPage(Title = "ReadyToRun", Order = 0)]
+	[ExportOptionPage(Title = "ReadyToRun", Order = 40)]
 	partial class ReadyToRunOptionPage : UserControl, IOptionPage
 	{
 		public ReadyToRunOptionPage()
