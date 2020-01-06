@@ -387,8 +387,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 License Notice for ILCompiler.Reflection.ReadyToRun (part of ILSpy.ReadyToRun)
 ---------------------------
 
-https://github.com/dotnet/runtime/blob/master/LICENSE.TXT
-
 The MIT License (MIT)
 
 Copyright (c) .NET Foundation and Contributors
