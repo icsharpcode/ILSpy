@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.0" />
-    <PackageReference Include="ICSharpCode.Decompiler" Version="6.0.0.5420-preview1" />
+    <PackageReference Include="ICSharpCode.Decompiler" Version="6.0.0.5559-preview2" />
     <PackageReference Include="Mono.Cecil" Version="0.10.3" />
   </ItemGroup>
 
