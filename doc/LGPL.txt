@@ -1,5 +1,4 @@
-This license applies to the ICSharpCode.AvalonEdit and
-ICSharpCode.TreeView libraries.
+This license applies to the ICSharpCode.TreeView library.
 
 		  GNU LESSER GENERAL PUBLIC LICENSE
 		       Version 2.1, February 1999
