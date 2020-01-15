@@ -536,14 +536,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Expression expr;
 			IType constantType;
+			object constantValue;
 			if (type.IsReferenceType == true || type.IsKnownType(KnownTypeCode.NullableOfT)) {
 				expr = new NullReferenceExpression();
 				constantType = SpecialType.NullType;
+				constantValue = null;
 			} else {
 				expr = new DefaultValueExpression(ConvertType(type));
 				constantType = type;
+				constantValue = CSharpResolver.GetDefaultValue(type);
 			}
-			return expr.WithRR(new ConstantResolveResult(constantType, null));
+			return expr.WithRR(new ConstantResolveResult(constantType, constantValue));
 		}
 		
 		protected internal override TranslatedExpression VisitSizeOf(SizeOf inst, TranslationContext context)

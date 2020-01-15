@@ -82,6 +82,7 @@
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
     <Compile Include="TestCases\Ugly\NoLocalFunctions.cs" />
+    <Compile Include="TestCases\VBPretty\Issue1906.cs" />
     <Compile Include="TestCases\VBPretty\Select.cs" />
     <None Include="TestCases\ILPretty\WeirdEnums.cs" />
     <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
@@ -93,6 +94,7 @@
     <Compile Include="TestCases\Ugly\NoForEachStatement.cs" />
     <None Include="TestCases\Ugly\NoExtensionMethods.Expected.cs" />
     <Compile Include="TestCases\Ugly\NoExtensionMethods.cs" />
+    <None Include="TestCases\VBPretty\Issue1906.vb" />
     <None Include="TestCases\VBPretty\Select.vb" />
     <None Include="TestCases\VBPretty\VBCompoundAssign.cs" />
     <Compile Include="TestCases\Pretty\ThrowExpressions.cs" />
