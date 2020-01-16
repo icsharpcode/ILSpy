@@ -477,6 +477,21 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return sb.ToString();
 		}
 
+		public static bool ContainsNonPrintableIdentifierChar(string identifier)
+		{
+			if (string.IsNullOrEmpty(identifier))
+				return false;
+
+			for (int i = 0; i < identifier.Length; i++) {
+				if (char.IsWhiteSpace(identifier[i]))
+					return true;
+				if (!IsPrintableIdentifierChar(identifier, i))
+					return true;
+			}
+
+			return false;
+		}
+
 		static bool IsPrintableIdentifierChar(string identifier, int index)
 		{
 			switch (identifier[index]) {

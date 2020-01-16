@@ -23,6 +23,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Humanizer;
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -421,7 +422,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// remove the 'I' for interfaces
 				if (name.Length >= 3 && name[0] == 'I' && char.IsUpper(name[1]) && char.IsLower(name[2]))
 					name = name.Substring(1);
-				name = CleanUpVariableName(name);
+				name = CleanUpVariableName(name) ?? "obj";
 			}
 			return name;
 		}
@@ -465,6 +466,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				name = name.Substring(2);
 			else if (name.Length > 1 && name[0] == '_' && (char.IsLetter(name[1]) || name[1] == '_'))
 				name = name.Substring(1);
+
+			if (TextWriterTokenWriter.ContainsNonPrintableIdentifierChar(name)) {
+				return null;
+			}
 
 			if (name.Length == 0)
 				return "obj";
