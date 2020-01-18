@@ -1070,7 +1070,9 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public virtual bool Equals(ViewState other)
 		{
-			return ViewedUri == other.ViewedUri && (DecompiledNodes == other.DecompiledNodes || DecompiledNodes?.SetEquals(other.DecompiledNodes) == true);
+			return other != null
+				&& ViewedUri == other.ViewedUri
+				&& (DecompiledNodes == other.DecompiledNodes || DecompiledNodes?.SetEquals(other.DecompiledNodes) == true);
 		}
 	}
 	
