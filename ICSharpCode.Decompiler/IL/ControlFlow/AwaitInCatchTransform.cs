@@ -43,17 +43,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				foreach (var result in transformableCatchBlocks) {
 					var node = cfg.GetNode(result.RealCatchBlockEntryPoint);
 
-					context.Step("Inline catch block with await", result.Handler);
+					context.StepStartGroup("Inline catch block with await", result.Handler);
 
 					// Remove the IfInstruction from the jump table and eliminate all branches to the block.
 					var jumpTableBlock = (Block)result.JumpTableEntry.Parent;
+					context.Step("Remove jump-table entry", result.JumpTableEntry);
 					jumpTableBlock.Instructions.RemoveAt(result.JumpTableEntry.ChildIndex);
 
 					foreach (var branch in tryCatch.Descendants.OfType<Branch>()) {
 						if (branch.TargetBlock == jumpTableBlock) {
 							if (result.NextBlockOrExitContainer is BlockContainer exitContainer) {
+								context.Step("branch jumpTableBlock => leave exitContainer", branch);
 								branch.ReplaceWith(new Leave(exitContainer));
 							} else {
+								context.Step("branch jumpTableBlock => branch nextBlock", branch);
 								branch.ReplaceWith(new Branch((Block)result.NextBlockOrExitContainer));
 							}
 						}
@@ -77,6 +80,23 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						}
 					}
 
+					// Remove unreachable pattern blocks
+					// TODO : sanity check
+					if (result.NextBlockOrExitContainer is Block nextBlock && nextBlock.IncomingEdgeCount == 0) {
+						List<Block> dependentBlocks = new List<Block>();
+						Block current = nextBlock;
+						
+						do {
+							foreach (var branch in current.Descendants.OfType<Branch>()) {
+								dependentBlocks.Add(branch.TargetBlock);
+							}
+							
+							current.Remove();
+							dependentBlocks.Remove(current);
+							current = dependentBlocks.FirstOrDefault(b => b.IncomingEdgeCount == 0);
+						} while (current != null);
+					}
+
 					// Remove all assignments to the common object variable that stores the exception object.
 					if (result.ObjectVariableStore != null) {
 						foreach (var load in result.ObjectVariableStore.Variable.LoadInstructions.ToArray()) {
@@ -86,6 +106,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 								load.ReplaceWith(new LdLoc(result.Handler.Variable));
 						}
 					}
+
+					context.StepEndGroup(keepIfEmpty: true);
 				}
 			}
 
