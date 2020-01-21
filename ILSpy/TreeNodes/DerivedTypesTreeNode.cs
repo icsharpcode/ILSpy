@@ -73,7 +73,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					var td = metadata.GetTypeDefinition(h);
 					foreach (var iface in td.GetInterfaceImplementations()) {
 						var ifaceImpl = metadata.GetInterfaceImplementation(iface);
-						if (IsSameType(metadata, ifaceImpl.Interface, definitionMetadata, metadataToken))
+						if (!ifaceImpl.Interface.IsNil && IsSameType(metadata, ifaceImpl.Interface, definitionMetadata, metadataToken))
 							yield return new DerivedTypesEntryNode(list, assembly.GetDefinition(h));
 					}
 					SRM.EntityHandle baseType = td.GetBaseTypeOrNil();
