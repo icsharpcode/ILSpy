@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 	[Export(typeof(Language))]
 	internal class ReadyToRunLanguage : Language
 	{
-		private static readonly ConditionalWeakTable<PEFile, R2RReaderCacheEntry> r2rReaders = new ConditionalWeakTable<PEFile, R2RReaderCacheEntry>();
+		private static readonly ConditionalWeakTable<PEFile, ReadyToRunReaderCacheEntry> readyToRunReaders = new ConditionalWeakTable<PEFile, ReadyToRunReaderCacheEntry>();
 		public override string Name => "ReadyToRun";
 
 		public override string FileExtension {
@@ -44,16 +44,15 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile module = assembly.GetPEFileOrNull();
-			R2RReaderCacheEntry r2rReaderCacheEntry = GetReader(assembly, module);
-			if (r2rReaderCacheEntry.r2rReader == null) {
-				WriteCommentLine(output, r2rReaderCacheEntry.failureReason);
+			ReadyToRunReaderCacheEntry cacheEntry = GetReader(assembly, module);
+			if (cacheEntry.readyToRunReader == null) {
+				WriteCommentLine(output, cacheEntry.failureReason);
 			} else {
-				R2RReader reader = r2rReaderCacheEntry.r2rReader;
-				WriteCommentLine(output, "TODO - display ready to run information");
-				// TODO: display other header information
-				foreach (var method in reader.R2RMethods) {
-					WriteCommentLine(output, method.SignatureString);
-				}
+				ReadyToRunReader reader = cacheEntry.readyToRunReader;
+				WriteCommentLine(output, reader.Machine.ToString());
+				WriteCommentLine(output, reader.OperatingSystem.ToString());
+				WriteCommentLine(output, reader.CompilerIdentifier);
+				WriteCommentLine(output, "TODO - display more header information");
 			}
 
 			return base.DecompileAssembly(assembly, output, options);
@@ -62,11 +61,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile module = method.ParentModule.PEFile;
-			R2RReaderCacheEntry r2rReaderCacheEntry = GetReader(module.GetLoadedAssembly(), module);
-			if (r2rReaderCacheEntry.r2rReader == null) {
-				WriteCommentLine(output, r2rReaderCacheEntry.failureReason);
+			ReadyToRunReaderCacheEntry cacheEntry = GetReader(module.GetLoadedAssembly(), module);
+			if (cacheEntry.readyToRunReader == null) {
+				WriteCommentLine(output, cacheEntry.failureReason);
 			} else {
-				R2RReader reader = r2rReaderCacheEntry.r2rReader;
+				ReadyToRunReader reader = cacheEntry.readyToRunReader;
 				int bitness = -1;
 				if (reader.Machine == Machine.Amd64) {
 					bitness = 64;
@@ -74,11 +73,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 					Debug.Assert(reader.Machine == Machine.I386);
 					bitness = 32;
 				}
-				foreach (var m in reader.R2RMethods) {
-					if (m.MethodHandle == method.MetadataToken) {
+				foreach (ReadyToRunMethod readyToRunMethod in reader.Methods) {
+					if (readyToRunMethod.MethodHandle == method.MetadataToken) {
 						// TODO: Indexing
-						foreach (RuntimeFunction runtimeFunction in m.RuntimeFunctions) {
-							WriteCommentLine(output, m.SignatureString);
+						foreach (RuntimeFunction runtimeFunction in readyToRunMethod.RuntimeFunctions) {
+							WriteCommentLine(output, readyToRunMethod.SignatureString);
 							byte[] code = new byte[runtimeFunction.Size];
 							for (int i = 0; i < runtimeFunction.Size; i++) {
 								code[i] = reader.Image[reader.GetOffset(runtimeFunction.StartAddress) + i];
@@ -136,32 +135,32 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		private R2RReaderCacheEntry GetReader(LoadedAssembly assembly, PEFile module)
+		private ReadyToRunReaderCacheEntry GetReader(LoadedAssembly assembly, PEFile module)
 		{
-			R2RReaderCacheEntry result;
-			lock (r2rReaders) {
-				if (!r2rReaders.TryGetValue(module, out result)) {
-					result = new R2RReaderCacheEntry();
+			ReadyToRunReaderCacheEntry result;
+			lock (readyToRunReaders) {
+				if (!readyToRunReaders.TryGetValue(module, out result)) {
+					result = new ReadyToRunReaderCacheEntry();
 					try {
 						// TODO: avoid eager parsing 
-						result.r2rReader = new R2RReader(new R2RAssemblyResolver(assembly), module.Metadata, module.Reader, module.FileName);
-						if (result.r2rReader.Machine != Machine.Amd64 && result.r2rReader.Machine != Machine.I386) {
-							result.failureReason = $"Architecture {result.r2rReader.Machine} is not currently supported.";
-							result.r2rReader = null;
+						result.readyToRunReader = new ReadyToRunReader(new ReadyToRunAssemblyResolver(assembly), module.Metadata, module.Reader, module.FileName);
+						if (result.readyToRunReader.Machine != Machine.Amd64 && result.readyToRunReader.Machine != Machine.I386) {
+							result.failureReason = $"Architecture {result.readyToRunReader.Machine} is not currently supported.";
+							result.readyToRunReader = null;
 						}
 					} catch (BadImageFormatException e) {
 						result.failureReason = e.Message;
 					}
-					r2rReaders.Add(module, result);
+					readyToRunReaders.Add(module, result);
 				}
 			}
 			return result;
 		}
 
-		private class R2RAssemblyResolver : ILCompiler.Reflection.ReadyToRun.IAssemblyResolver
+		private class ReadyToRunAssemblyResolver : ILCompiler.Reflection.ReadyToRun.IAssemblyResolver
 		{
 			private LoadedAssembly loadedAssembly;
-			public R2RAssemblyResolver(LoadedAssembly loadedAssembly)
+			public ReadyToRunAssemblyResolver(LoadedAssembly loadedAssembly)
 			{
 				this.loadedAssembly = loadedAssembly;
 			}
@@ -178,9 +177,9 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		private class R2RReaderCacheEntry
+		private class ReadyToRunReaderCacheEntry
 		{
-			public R2RReader r2rReader;
+			public ReadyToRunReader readyToRunReader;
 			public string failureReason;
 		}
 	}
