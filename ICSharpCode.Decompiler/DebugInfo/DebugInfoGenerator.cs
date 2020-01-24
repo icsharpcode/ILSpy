@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		readonly ImportScopeInfo globalImportScope = new ImportScopeInfo();
 		ImportScopeInfo currentImportScope;
 		List<ImportScopeInfo> importScopes = new List<ImportScopeInfo>();
-		List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length, HashSet<ILVariable> Locals)> localScopes = new List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length, HashSet<ILVariable> Locals)>();
+		internal List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length, HashSet<ILVariable> Locals)> LocalScopes { get; } = new List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length, HashSet<ILVariable> Locals)>();
 		List<ILFunction> functions = new List<ILFunction>();
 
 		/// <summary>
@@ -64,24 +64,11 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			this.currentImportScope = globalImportScope;
 		}
 
-		public void Generate(MetadataBuilder metadata, ImportScopeHandle globalImportScope)
+		public void GenerateImportScopes(MetadataBuilder metadata, ImportScopeHandle globalImportScope)
 		{
 			foreach (var scope in importScopes) {
 				var blob = EncodeImports(metadata, scope);
 				scope.Handle = metadata.AddImportScope(scope.Parent == null ? globalImportScope : scope.Parent.Handle, blob);
-			}
-
-			foreach (var localScope in localScopes) {
-				int nextRow = metadata.GetRowCount(TableIndex.LocalVariable) + 1;
-				var firstLocalVariable = MetadataTokens.LocalVariableHandle(nextRow);
-				
-				foreach (var local in localScope.Locals.OrderBy(l => l.Index)) {
-					var name = local.Name != null ? metadata.GetOrAddString(local.Name) : default;
-					metadata.AddLocalVariable(LocalVariableAttributes.None, local.Index.Value, name);
-				}
-
-				metadata.AddLocalScope(localScope.Method, localScope.Import.Handle, firstLocalVariable,
-					default, localScope.Offset, localScope.Length);
 			}
 		}
 
@@ -185,7 +172,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				}
 			}
 
-			localScopes.Add(((MethodDefinitionHandle)method.MetadataToken, currentImportScope,
+			LocalScopes.Add(((MethodDefinitionHandle)method.MetadataToken, currentImportScope,
 				0, methodBody.GetCodeSize(), localVariables));
 		}
 	}

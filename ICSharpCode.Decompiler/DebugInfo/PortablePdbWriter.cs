@@ -63,6 +63,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 			var sequencePointBlobs = new Dictionary<MethodDefinitionHandle, (DocumentHandle Document, BlobHandle SequencePoints)>();
 			var emptyList = new List<SequencePoint>();
+			var localScopes = new List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length, HashSet<ILVariable> Locals)>();
 			var stateMachineMethods = new List<(MethodDefinitionHandle MoveNextMethod, MethodDefinitionHandle KickoffMethod)>();
 			var customDocumentDebugInfo = new List<(DocumentHandle Parent, GuidHandle Guid, BlobHandle Blob)>();
 			var customMethodDebugInfo = new List<(MethodDefinitionHandle Parent, GuidHandle Guid, BlobHandle Blob)>();
@@ -103,7 +104,9 @@ namespace ICSharpCode.Decompiler.DebugInfo
 						metadata.GetOrAddGuid(DebugInfoEmbeddedSource),
 						sourceBlob));
 
-					debugInfoGen.Generate(metadata, globalImportScope);
+					debugInfoGen.GenerateImportScopes(metadata, globalImportScope);
+
+					localScopes.AddRange(debugInfoGen.LocalScopes);
 
 					foreach (var function in debugInfoGen.Functions) {
 						var method = function.MoveNextMethod ?? function.Method;
@@ -133,6 +136,28 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				} else {
 					metadata.AddMethodDebugInformation(default, default);
 				}
+			}
+
+			localScopes.Sort((x, y) => {
+				if (x.Method != y.Method) {
+					return MetadataTokens.GetRowNumber(x.Method) - MetadataTokens.GetRowNumber(y.Method);
+				}
+				if (x.Offset != y.Offset) {
+					return x.Offset - y.Offset;
+				}
+				return y.Length - x.Length;
+			});
+			foreach (var localScope in localScopes) {
+				int nextRow = metadata.GetRowCount(TableIndex.LocalVariable) + 1;
+				var firstLocalVariable = MetadataTokens.LocalVariableHandle(nextRow);
+
+				foreach (var local in localScope.Locals.OrderBy(l => l.Index)) {
+					var localVarName = local.Name != null ? metadata.GetOrAddString(local.Name) : default;
+					metadata.AddLocalVariable(LocalVariableAttributes.None, local.Index.Value, localVarName);
+				}
+
+				metadata.AddLocalScope(localScope.Method, localScope.Import.Handle, firstLocalVariable,
+					default, localScope.Offset, localScope.Length);
 			}
 
 			stateMachineMethods.SortBy(row => MetadataTokens.GetRowNumber(row.MoveNextMethod));
