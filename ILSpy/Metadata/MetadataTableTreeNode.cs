@@ -62,4 +62,15 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.scrollTarget = default;
 		}
 	}
+
+	internal abstract class DebugMetadataTableTreeNode : MetadataTableTreeNode
+	{
+		protected MetadataReader metadata;
+
+		public DebugMetadataTableTreeNode(HandleKind kind, PEFile module, MetadataReader metadata)
+			: base(kind, module)
+		{
+			this.metadata = metadata;
+		}
+	}
 }

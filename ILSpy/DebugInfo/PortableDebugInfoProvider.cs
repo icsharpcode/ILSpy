@@ -26,19 +26,22 @@ namespace ICSharpCode.Decompiler.PdbProvider
 	class PortableDebugInfoProvider : IDebugInfoProvider
 	{
 		string pdbFileName;
-		MetadataReaderProvider provider;
+
+		internal MetadataReaderProvider Provider { get; }
+
+		internal bool IsEmbedded => pdbFileName == null;
 
 		public PortableDebugInfoProvider(string pdbFileName, MetadataReaderProvider provider)
 		{
 			this.pdbFileName = pdbFileName;
-			this.provider = provider;
+			this.Provider = provider;
 		}
 
 		public string Description => pdbFileName == null ? "Embedded in this assembly" : $"Loaded from portable PDB: {pdbFileName}";
 
 		public IList<Decompiler.DebugInfo.SequencePoint> GetSequencePoints(MethodDefinitionHandle method)
 		{
-			var metadata = provider.GetMetadataReader();
+			var metadata = Provider.GetMetadataReader();
 			var debugInfo = metadata.GetMethodDebugInformation(method);
 			var sequencePoints = new List<Decompiler.DebugInfo.SequencePoint>();
 
@@ -67,7 +70,7 @@ namespace ICSharpCode.Decompiler.PdbProvider
 
 		public IList<Variable> GetVariables(MethodDefinitionHandle method)
 		{
-			var metadata = provider.GetMetadataReader();
+			var metadata = Provider.GetMetadataReader();
 			var variables = new List<Variable>();
 
 			foreach (var h in metadata.GetLocalScopes(method)) {
@@ -83,7 +86,7 @@ namespace ICSharpCode.Decompiler.PdbProvider
 
 		public bool TryGetName(MethodDefinitionHandle method, int index, out string name)
 		{
-			var metadata = provider.GetMetadataReader();
+			var metadata = Provider.GetMetadataReader();
 			name = null;
 
 			foreach (var h in metadata.GetLocalScopes(method)) {

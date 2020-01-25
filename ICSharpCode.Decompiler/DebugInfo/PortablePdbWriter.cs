@@ -41,13 +41,6 @@ namespace ICSharpCode.Decompiler.DebugInfo
 {
 	public class PortablePdbWriter
 	{
-		static readonly Guid CSharpLanguageGuid = new Guid("3f5162f8-07c6-11d3-9053-00c04fa302a1");
-
-		static readonly Guid DebugInfoEmbeddedSource = new Guid("0e8a571b-6926-466e-b4ad-8ab04611f5fe");
-		static readonly Guid MethodSteppingInformationBlobId = new Guid("54FD2AC5-E925-401A-9C2A-F94F171072F8");
-
-		static readonly Guid HashAlgorithmSHA1 = new Guid("ff1816ec-aa5e-4d10-87f7-6f4963833460");
-		static readonly Guid HashAlgorithmSHA256 = new Guid("8829d00f-11b8-4213-878b-770e8597ac16");
 		static readonly FileVersionInfo decompilerVersion = FileVersionInfo.GetVersionInfo(typeof(CSharpDecompiler).Assembly.Location);
 
 		public static bool HasCodeViewDebugDirectoryEntry(PEFile file)
@@ -95,13 +88,13 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 					// Create Document(Handle)
 					var document = metadata.AddDocument(name,
-						hashAlgorithm: metadata.GetOrAddGuid(HashAlgorithmSHA256),
+						hashAlgorithm: metadata.GetOrAddGuid(KnownGuids.HashAlgorithmSHA256),
 						hash: metadata.GetOrAddBlob(sourceCheckSum),
-						language: metadata.GetOrAddGuid(CSharpLanguageGuid));
+						language: metadata.GetOrAddGuid(KnownGuids.CSharpLanguageGuid));
 
 					// Add embedded source to the PDB
 					customDocumentDebugInfo.Add((document,
-						metadata.GetOrAddGuid(DebugInfoEmbeddedSource),
+						metadata.GetOrAddGuid(KnownGuids.EmbeddedSource),
 						sourceBlob));
 
 					debugInfoGen.GenerateImportScopes(metadata, globalImportScope);
@@ -121,7 +114,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 						}
 						if (function.IsAsync) {
 							customMethodDebugInfo.Add((methodHandle,
-								metadata.GetOrAddGuid(MethodSteppingInformationBlobId),
+								metadata.GetOrAddGuid(KnownGuids.MethodSteppingInformation),
 								metadata.GetOrAddBlob(function.AsyncDebugInfo.BuildBlob(methodHandle))));
 						}
 					}
