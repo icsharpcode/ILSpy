@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(localConst.Name):X} \"{Name}\"";
 
 			[StringFormat("X")]
-			public int Signature => MetadataTokens.GetToken(localConst.Signature);
+			public int Signature => MetadataTokens.GetHeapOffset(localConst.Signature);
 
 			public LocalConstantEntry(PEFile module, MetadataReader metadata, bool isEmbedded, LocalConstantHandle handle)
 			{
