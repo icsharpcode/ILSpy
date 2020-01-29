@@ -361,8 +361,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreach (var handler in inst.Handlers) {
 				var catchClause = new CatchClause();
 				var v = handler.Variable;
-				catchClause.AddAnnotation(new ILVariableResolveResult(v, v.Type));
 				if (v != null) {
+					catchClause.AddAnnotation(new ILVariableResolveResult(v, v.Type));
 					if (v.StoreCount > 1 || v.LoadCount > 0 || v.AddressCount > 0) {
 						catchClause.VariableName = v.Name;
 						catchClause.Type = exprBuilder.ConvertType(v.Type);
