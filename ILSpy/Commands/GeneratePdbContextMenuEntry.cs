@@ -29,6 +29,7 @@ using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using Microsoft.Win32;
 using ICSharpCode.ILSpy.Properties;
+
 namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = "Generate portable PDB")]

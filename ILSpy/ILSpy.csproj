@@ -118,6 +118,7 @@
     <Compile Include="Commands\ManageAssemblyListsCommand.cs" />
     <Compile Include="Commands\Pdb2XmlCommand.cs" />
     <Compile Include="Commands\RemoveAssembliesWithLoadErrors.cs" />
+    <Compile Include="Commands\SelectPdbContextMenuEntry.cs" />
     <Compile Include="Commands\ShowCFGContextMenuEntry.cs" />
     <Compile Include="Commands\ShowDebugSteps.cs" />
     <Compile Include="Commands\SortAssemblyListCommand.cs" />

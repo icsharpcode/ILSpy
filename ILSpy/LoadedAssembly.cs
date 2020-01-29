@@ -143,6 +143,8 @@ namespace ICSharpCode.ILSpy
 
 		public bool IsAutoLoaded { get; set; }
 
+		public string PdbFileOverride { get; set; }
+
 		PEFile LoadAssembly(object state)
 		{
 			MetadataReaderOptions options;
@@ -167,7 +169,8 @@ namespace ICSharpCode.ILSpy
 
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols) {
 				try {
-					debugInfoProvider = DebugInfoUtils.LoadSymbols(module);
+					debugInfoProvider = DebugInfoUtils.FromFile(module, PdbFileOverride)
+						?? DebugInfoUtils.LoadSymbols(module);
 				} catch (IOException) {
 				} catch (UnauthorizedAccessException) {
 				} catch (InvalidOperationException) {
