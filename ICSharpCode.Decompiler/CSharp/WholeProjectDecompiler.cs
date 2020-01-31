@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -89,6 +88,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		public string StrongNameKeyFile { get; set; }
 
 		public int MaxDegreeOfParallelism { get; set; } = Environment.ProcessorCount;
+
+		public IProgress<DecompilationProgress> ProgressIndicator { get; set; }
 		#endregion
 
 		// per-run members
@@ -364,6 +365,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return Path.Combine(dir, file);
 					}
 				}, StringComparer.OrdinalIgnoreCase).ToList();
+			int total = files.Count;
+			var progress = this.ProgressIndicator;
 			DecompilerTypeSystem ts = new DecompilerTypeSystem(module, AssemblyResolver, settings);
 			Parallel.ForEach(
 				files,
@@ -382,6 +385,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							throw new DecompilerException(module, $"Error decompiling for '{file.Key}'", innerException);
 						}
 					}
+					progress?.Report(new DecompilationProgress(total, file.Key));
 				});
 			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
 		}
@@ -535,6 +539,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				default:
 					return architecture.ToString();
 			}
+		}
+	}
+
+	public readonly struct DecompilationProgress
+	{
+		public readonly int TotalNumberOfFiles;
+		public readonly string Status;
+
+		public DecompilationProgress(int total, string status = null)
+		{
+			this.TotalNumberOfFiles = total;
+			this.Status = status ?? "";
 		}
 	}
 }
