@@ -19,8 +19,10 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Xml;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
@@ -41,13 +43,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						continue;
 					string doc = provider.GetDocumentation(entity);
 					if (doc != null) {
-						if (context.Settings.RemoveLineBreaksInXmlDocumentation) {
-							string[] lines = doc.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-							for (int i = 0; i < lines.Length; i++) {
-								lines[i] = lines[i].Trim();
-							}
-							doc = string.Join(" ", lines);
-						}
 						InsertXmlDocumentation(entityDecl, new StringReader(doc));
 					}
 				}

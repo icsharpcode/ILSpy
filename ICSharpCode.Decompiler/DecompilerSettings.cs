@@ -722,22 +722,6 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool removeLineBreaksInXmlDocumentation = false;
-		
-		/// <summary>
-		/// Gets/Sets whether to remove line breaks from XML documentation comments.
-		/// </summary>
-		[Browsable(false)]
-		public bool RemoveLineBreaksInXmlDocumentation {
-			get { return removeLineBreaksInXmlDocumentation; }
-			set {
-				if (removeLineBreaksInXmlDocumentation != value) {
-					removeLineBreaksInXmlDocumentation = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
 		bool foldBraces = false;
 
 		[Browsable(false)]
