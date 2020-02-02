@@ -21,18 +21,19 @@ namespace ICSharpCode.Decompiler.PowerShell
 		[ValidateNotNullOrEmpty]
 		public string LiteralPath { get; set; }
 
+		readonly object syncObject = new object();
 		int completed;
 		string fileName;
-		ConcurrentQueue<ProgressRecord> progress = new ConcurrentQueue<ProgressRecord>();
+		ProgressRecord progress;
 
 		public void Report(DecompilationProgress value)
 		{
-			int current = completed;
-			int next = current + 1;
-			next = Interlocked.CompareExchange(ref completed, next, current);
-			progress.Enqueue(new ProgressRecord(1, "Decompiling " + fileName, $"Completed {next} of {value.TotalNumberOfFiles}: {value.Status}") {
-				PercentComplete = (int)(next * 100.0 / value.TotalNumberOfFiles)
-			});
+			lock (syncObject) {
+				completed++;
+				progress = new ProgressRecord(1, "Decompiling " + fileName, $"Completed {completed} of {value.TotalNumberOfFiles}: {value.Status}") {
+					PercentComplete = (int)(completed * 100.0 / value.TotalNumberOfFiles)
+				};
+			}
 		}
 
 		protected override void ProcessRecord()
@@ -51,12 +52,14 @@ namespace ICSharpCode.Decompiler.PowerShell
 				Thread.Sleep(timeout);
 
 				while (!task.IsCompleted) {
-					if (progress.TryDequeue(out var record)) {
-						while (progress.TryDequeue(out var next)) {
-							record = next;
-						}
+					ProgressRecord progress;
+					lock (syncObject) {
+						progress = this.progress;
+						this.progress = null;
+					}
+					if (progress != null) {
 						timeout = 100;
-						WriteProgress(record);
+						WriteProgress(progress);
 					} else {
 						Thread.Sleep(timeout);
 						timeout = Math.Min(1000, timeout * 2);
