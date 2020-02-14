@@ -787,6 +787,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				string literalValue = null;
 				if (PrintIntegralValuesAsHex) {
 					literalValue = $"0x{constantValue:X}";
+					if (constantValue is uint || constantValue is ulong) {
+						literalValue += "u";
+					}
+					if (constantValue is long || constantValue is ulong) {
+						literalValue += "L";
+					}
 				}
 				expr = new PrimitiveExpression(constantValue, literalValue);
 				if (AddResolveResultAnnotations)
