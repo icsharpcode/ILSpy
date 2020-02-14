@@ -1422,7 +1422,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						if (enumDec.Initializer is PrimitiveExpression primitive
 							&& initValue >= 0 && (decompilationContext.CurrentTypeDefinition.HasAttribute(KnownAttribute.Flags)
 								|| (initValue > 9 && (unchecked(initValue & (initValue - 1)) == 0 || unchecked(initValue & (initValue + 1)) == 0)))) {
-							primitive.SetValue(initValue, $"0x{initValue:X}");
+							primitive.Format = LiteralFormat.HexadecimalNumber;
 						}
 					}
 					enumDec.Attributes.AddRange(field.GetAttributes().Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));

@@ -51,29 +51,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly object AnyValue = new object();
 		
 		TextLocation startLocation;
-		public override TextLocation StartLocation {
-			get {
-				return startLocation;
-			}
-		}
+		TextLocation endLocation;
+		public override TextLocation StartLocation  => startLocation;
+		public override TextLocation EndLocation  => endLocation;
 		
 		internal void SetLocation(TextLocation startLocation, TextLocation endLocation)
 		{
 			ThrowIfFrozen();
 			this.startLocation = startLocation;
 			this.endLocation = endLocation;
-		}
-		
-		string literalValue;
-		TextLocation? endLocation;
-		public override TextLocation EndLocation {
-			get {
-				if (!endLocation.HasValue) {
-					endLocation = value is string ? AdvanceLocation (StartLocation, literalValue ?? "") :
-						new TextLocation (StartLocation.Line, StartLocation.Column + (literalValue ?? "").Length);
-				}
-				return endLocation.Value;
-			}
 		}
 		
 		object value;
@@ -87,14 +73,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 		
-		public void SetValue(object value, string literalValue)
-		{
-			if (value == null)
-				throw new ArgumentNullException();
-			ThrowIfFrozen();
-			this.value = value;
-			this.literalValue = literalValue;
-		}
 
 		public LiteralFormat Format {
 			get {  return format;}
