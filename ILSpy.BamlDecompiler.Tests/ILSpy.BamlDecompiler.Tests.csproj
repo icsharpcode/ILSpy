@@ -10,6 +10,10 @@
     <UseWpf>true</UseWpf>
     <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
     <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
+
+    <OutputType>Exe</OutputType>
+    <StartupObject>ILSpy.BamlDecompiler.Tests.Stub</StartupObject>
+    <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -62,6 +66,7 @@
     </Compile>
     <Compile Include="Mocks\AvalonDock.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Stub.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -96,10 +101,6 @@
     <Page Include="Cases\SimplePropertyElement.xaml" />
     <Page Include="Cases\Dictionary1.xaml" />
     <Page Include="Cases\Issue445.xaml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="app.config" />
   </ItemGroup>
 
 </Project>
