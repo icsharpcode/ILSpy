@@ -623,14 +623,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				finalStateKnown = false; // final state will be detected in ValidateCatchBlock() instead
 				return;
 			}
-			// stobj System.Int32(ldflda [Field ICSharpCode.Decompiler.Tests.TestCases.Pretty.Async+<SimpleBoolTaskMethod>d__7.<>1__state](ldloc this), ldc.i4 -2)
-			// call SetResult(ldflda [Field ICSharpCode.Decompiler.Tests.TestCases.Pretty.Async+<SimpleBoolTaskMethod>d__7.<>t__builder](ldloc this), ldloc result)
+			// stfld <>1__state(ldloc this, ldc.i4 -2)
+			// [optional] stfld <>u__N(ldloc this, ldnull)
+			// call SetResult(ldflda <>t__builder(ldloc this), ldloc result)
 			// [optional] call Complete(ldflda <>t__builder(ldloc this))
 			// leave IL_0000
-			if (!MatchStateAssignment(setResultAndExitBlock.Instructions[0], out finalState))
+			int pos = 0;
+			if (!MatchStateAssignment(setResultAndExitBlock.Instructions[pos], out finalState))
 				throw new SymbolicAnalysisFailedException();
 			finalStateKnown = true;
-			if (!MatchCall(setResultAndExitBlock.Instructions[1], "SetResult", out var args))
+			pos++;
+			MatchHoistedLocalCleanup(setResultAndExitBlock, ref pos);
+			if (!MatchCall(setResultAndExitBlock.Instructions[pos], "SetResult", out var args))
 				throw new SymbolicAnalysisFailedException();
 			if (!IsBuilderOrPromiseFieldOnThis(args[0]))
 				throw new SymbolicAnalysisFailedException();
@@ -656,7 +660,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						throw new SymbolicAnalysisFailedException();
 					break;
 			}
-			int pos = 2;
+			pos++;
 			if (MatchCall(setResultAndExitBlock.Instructions[pos], "Complete", out args)) {
 				if (!(args.Count == 1 && IsBuilderFieldOnThis(args[0])))
 					throw new SymbolicAnalysisFailedException();
@@ -666,12 +670,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				throw new SymbolicAnalysisFailedException();
 		}
 
+		private void MatchHoistedLocalCleanup(Block block, ref int pos)
+		{
+			while (block.Instructions[pos].MatchStFld(out var target, out _, out var value)) {
+				// https://github.com/dotnet/roslyn/pull/39735 hoisted local cleanup
+				if (!target.MatchLdThis())
+					throw new SymbolicAnalysisFailedException();
+				if (!(value.MatchLdNull() || value is DefaultValue))
+					throw new SymbolicAnalysisFailedException();
+				pos++;
+			}
+		}
+
 		void ValidateCatchBlock()
 		{
 			// catch E_143 : System.Exception if (ldc.i4 1) BlockContainer {
 			// 	Block IL_008f (incoming: 1)  {
 			// 		stloc exception(ldloc E_143)
 			// 		stfld <>1__state(ldloc this, ldc.i4 -2)
+			//      [optional] stfld <>u__N(ldloc this, ldnull)
 			// 		call SetException(ldfld <>t__builder(ldloc this), ldloc exception)
 			//      [optional] call Complete(ldfld <>t__builder(ldloc this))
 			// 		leave IL_0000
@@ -703,8 +720,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				finalState = newState;
 				finalStateKnown = true;
 			}
+			int pos = 2;
+			MatchHoistedLocalCleanup(catchBlock, ref pos);
 			// call SetException(ldfld <>t__builder(ldloc this), ldloc exception)
-			if (!MatchCall(catchBlock.Instructions[2], "SetException", out var args))
+			if (!MatchCall(catchBlock.Instructions[pos], "SetException", out var args))
 				throw new SymbolicAnalysisFailedException();
 			if (args.Count != 2)
 				throw new SymbolicAnalysisFailedException();
@@ -713,7 +732,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!args[1].MatchLdLoc(stloc.Variable))
 				throw new SymbolicAnalysisFailedException();
 
-			int pos = 3;
+			pos++;
 			// [optional] call Complete(ldfld <>t__builder(ldloc this))
 			if (MatchCall(catchBlock.Instructions[pos], "Complete", out args)) {
 				if (!(args.Count == 1 && IsBuilderFieldOnThis(args[0])))
