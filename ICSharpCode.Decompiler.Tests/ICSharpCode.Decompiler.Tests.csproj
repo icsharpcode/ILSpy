@@ -60,6 +60,7 @@
     <None Include="TestCases\Correctness\StackTests.il" />
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
+    <None Include="TestCases\ILPretty\Issue1922.il" />
     <None Include="TestCases\ILPretty\WeirdEnums.il" />
     <None Include="TestCases\ILPretty\ConstantBlobs.il" />
     <None Include="TestCases\ILPretty\CS1xSwitch_Debug.il" />
@@ -81,6 +82,7 @@
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
+    <Compile Include="TestCases\ILPretty\Issue1922.cs" />
     <Compile Include="TestCases\Ugly\NoLocalFunctions.cs" />
     <Compile Include="TestCases\VBPretty\Issue1906.cs" />
     <Compile Include="TestCases\VBPretty\Select.cs" />

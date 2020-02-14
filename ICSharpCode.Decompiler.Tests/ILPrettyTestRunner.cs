@@ -95,6 +95,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Issue1922()
+		{
+			Run();
+		}
+
+		[Test]
 		public void FSharpUsing_Debug()
 		{
 			Run(settings: new DecompilerSettings { RemoveDeadStores = true });

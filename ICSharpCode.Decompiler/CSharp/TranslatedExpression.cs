@@ -431,8 +431,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var rr = expressionBuilder.resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult);
 			if (rr.IsCompileTimeConstant && !rr.IsError) {
-				return expressionBuilder.ConvertConstantValue(rr, allowImplicitConversion)
+				var convertedResult = expressionBuilder.ConvertConstantValue(rr, allowImplicitConversion)
 					.WithILInstruction(this.ILInstructions);
+				if (convertedResult.Expression is PrimitiveExpression outputLiteral && this.Expression is PrimitiveExpression inputLiteral) {
+					outputLiteral.Format = inputLiteral.Format;
+				}
+				return convertedResult;
 			} else if (rr.IsError && targetType.IsReferenceType == true && type.IsReferenceType == true) {
 				// Conversion between two reference types, but no direct cast allowed? cast via object
 				// Just make sure we avoid infinite recursion even if the resolver falsely claims we can't cast directly:
