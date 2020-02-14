@@ -992,7 +992,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitPrimitiveExpression(PrimitiveExpression primitiveExpression)
 		{
 			StartNode(primitiveExpression);
-			writer.WritePrimitiveValue(primitiveExpression.Value, primitiveExpression.UnsafeLiteralValue);
+			writer.WritePrimitiveValue(primitiveExpression.Value, primitiveExpression.Format);
 			isAfterSpace = false;
 			EndNode(primitiveExpression);
 		}
@@ -1019,7 +1019,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			interpolation.Expression.AcceptVisitor(this);
 			if (interpolation.Suffix != null) {
 				writer.WriteToken(Roles.Colon, ":");
-				writer.WritePrimitiveValue("", interpolation.Suffix);
+				writer.WriteInterpolatedText(interpolation.Suffix);
 			}
 			writer.WriteToken(Interpolation.RBrace, "}");
 
@@ -1029,7 +1029,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitInterpolatedStringText(InterpolatedStringText interpolatedStringText)
 		{
 			StartNode(interpolatedStringText);
-			writer.WritePrimitiveValue("", TextWriterTokenWriter.ConvertString(interpolatedStringText.Text));
+			writer.WriteInterpolatedText(interpolatedStringText.Text);
 			EndNode(interpolatedStringText);
 		}
 		#endregion

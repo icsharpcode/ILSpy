@@ -30,6 +30,20 @@ using ICSharpCode.Decompiler.Util;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
+	/// Form of a C# literal.
+	/// </summary>
+	public enum LiteralFormat : byte
+	{
+		None,
+		DecimalNumber,
+		HexadecimalNumber,
+		BinaryNumber,
+		StringLiteral,
+		VerbatimStringLiteral,
+		CharLiteral,
+	}
+
+	/// <summary>
 	/// Represents a literal value.
 	/// </summary>
 	public class PrimitiveExpression : Expression
@@ -63,24 +77,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		
 		object value;
-		
+		LiteralFormat format;
+
 		public object Value {
 			get { return this.value; }
 			set {
 				ThrowIfFrozen();
 				this.value = value;
-				literalValue = null;
 			}
-		}
-		
-		/// <remarks>Never returns null.</remarks>
-		public string LiteralValue {
-			get { return literalValue ?? ""; }
-		}
-		
-		/// <remarks>Can be null.</remarks>
-		public string UnsafeLiteralValue {
-			get { return literalValue; }
 		}
 		
 		public void SetValue(object value, string literalValue)
@@ -91,24 +95,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.value = value;
 			this.literalValue = literalValue;
 		}
-		
+
+		public LiteralFormat Format {
+			get {  return format;}
+			set {
+				ThrowIfFrozen();
+				format = value;
+			}
+		}
+
 		public PrimitiveExpression (object value)
 		{
 			this.Value = value;
-			this.literalValue = null;
 		}
 		
-		public PrimitiveExpression (object value, string literalValue)
+		public PrimitiveExpression (object value, LiteralFormat format)
 		{
 			this.Value = value;
-			this.literalValue = literalValue;
-		}
-		
-		public PrimitiveExpression (object value, TextLocation startLocation, string literalValue)
-		{
-			this.Value = value;
-			this.startLocation = startLocation;
-			this.literalValue = literalValue;
+			this.format = format;
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)

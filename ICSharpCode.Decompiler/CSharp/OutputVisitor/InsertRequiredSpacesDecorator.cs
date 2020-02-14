@@ -129,12 +129,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			lastWritten = LastWritten.Whitespace;
 		}
 		
-		public override void WritePrimitiveValue(object value, string literalValue = null)
+		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
 		{
 			if (lastWritten == LastWritten.KeywordOrIdentifier) {
 				Space();
 			}
-			base.WritePrimitiveValue(value, literalValue);
+			base.WritePrimitiveValue(value, format);
 			if (value == null || value is bool)
 				return;
 			if (value is string) {

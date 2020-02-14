@@ -116,11 +116,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.WriteIdentifier(identifier);
 		}
 		
-		public override void WritePrimitiveValue(object value, string literalValue = null)
+		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
 		{
 			Expression node = nodes.Peek().LastOrDefault() as Expression;
 			var startLocation = locationProvider.Location;
-			base.WritePrimitiveValue(value, literalValue);
+			base.WritePrimitiveValue(value, format);
 			if (node is PrimitiveExpression) {
 				((PrimitiveExpression)node).SetLocation(startLocation, locationProvider.Location);
 			}
@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				((NullReferenceExpression)node).SetStartLocation(startLocation);
 			}
 		}
-		
+
 		public override void WritePrimitiveType(string type)
 		{
 			PrimitiveType node = nodes.Peek().LastOrDefault() as PrimitiveType;

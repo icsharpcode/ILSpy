@@ -45,9 +45,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Writes a primitive/literal value
 		/// </summary>
-		public abstract void WritePrimitiveValue(object value, string literalValue = null);
+		public abstract void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None);
 
 		public abstract void WritePrimitiveType(string type);
+
+		/// <summary>
+		/// Write a piece of text in an interpolated string literal.
+		/// </summary>
+		public abstract void WriteInterpolatedText(string text);
 
 		public abstract void Space();
 		public abstract void Indent();
@@ -123,14 +128,19 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			decoratedWriter.WriteToken(role, token);
 		}
 
-		public override void WritePrimitiveValue(object value, string literalValue = null)
+		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
 		{
-			decoratedWriter.WritePrimitiveValue(value, literalValue);
+			decoratedWriter.WritePrimitiveValue(value, format);
 		}
 
 		public override void WritePrimitiveType(string type)
 		{
 			decoratedWriter.WritePrimitiveType(type);
+		}
+
+		public override void WriteInterpolatedText(string text)
+		{
+			decoratedWriter.WriteInterpolatedText(text);
 		}
 
 		public override void Space()

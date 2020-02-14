@@ -322,11 +322,16 @@ namespace ICSharpCode.Decompiler
 			output.WriteLine();
 		}
 		
-		public override void WritePrimitiveValue(object value, string literalValue = null)
+		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
 		{
-			new TextWriterTokenWriter(new TextOutputWriter(output)).WritePrimitiveValue(value, literalValue);
+			new TextWriterTokenWriter(new TextOutputWriter(output)).WritePrimitiveValue(value, format);
 		}
-		
+
+		public override void WriteInterpolatedText(string text)
+		{
+			output.Write(TextWriterTokenWriter.ConvertString(text));
+		}
+
 		public override void WritePrimitiveType(string type)
 		{
 			switch (type) {

@@ -392,7 +392,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override void WritePrimitiveValue(object value, string literalValue = null)
+		public override void WritePrimitiveValue(object value, Decompiler.CSharp.Syntax.LiteralFormat format)
 		{
 			HighlightingColor color = null;
 			if (value is null) {
@@ -404,7 +404,7 @@ namespace ICSharpCode.ILSpy
 			if (color != null) {
 				BeginSpan(color);
 			}
-			base.WritePrimitiveValue(value, literalValue);
+			base.WritePrimitiveValue(value, format);
 			if (color != null) {
 				EndSpan();
 			}

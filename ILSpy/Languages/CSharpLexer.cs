@@ -9,7 +9,7 @@ using System.Text;
 
 namespace ICSharpCode.ILSpy
 {
-	public class LATextReader : TextReader
+	class LATextReader : TextReader
 	{
 		List<int> buffer;
 		TextReader reader;
@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	public enum LiteralFormat : byte
+	enum LiteralFormat : byte
 	{
 		None,
 		DecimalNumber,
@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpy
 		DateTimeLiteral
 	}
 
-	public class Literal
+	class Literal
 	{
 		internal readonly LiteralFormat literalFormat;
 		internal readonly object literalValue;
