@@ -1970,11 +1970,21 @@ namespace ICSharpCode.Decompiler.CSharp
 				var body = statementBuilder.ConvertAsBlock(container);
 				body.InsertChildAfter(null, new Comment(" Could not convert BlockContainer to single expression"), Roles.Comment);
 				var ame = new AnonymousMethodExpression { Body = body };
-				var delegateType = new ParameterizedType(compilation.FindType(typeof(Func<>)), InferReturnType(body));
+				var systemFuncType = compilation.FindType(typeof(Func<>));
+				var blockReturnType = InferReturnType(body);
+				var delegateType = new ParameterizedType(systemFuncType, blockReturnType);
 				var invocationTarget = new CastExpression(ConvertType(delegateType), ame);
+				ResolveResult rr;
+				// This might happen when trying to decompile an assembly built for a target framework where System.Func<T> does not exist yet.
+				if (systemFuncType.Kind == TypeKind.Unknown) {
+					rr = new ResolveResult(blockReturnType);
+				} else {
+					var invokeMethod = delegateType.GetDelegateInvokeMethod();
+					rr = new CSharpInvocationResolveResult(new ResolveResult(delegateType), invokeMethod, EmptyList<ResolveResult>.Instance);
+				}
 				return new InvocationExpression(new MemberReferenceExpression(invocationTarget, "Invoke"))
 					.WithILInstruction(container)
-					.WithRR(new CSharpInvocationResolveResult(new ResolveResult(delegateType), delegateType.GetDelegateInvokeMethod(), EmptyList<ResolveResult>.Instance));
+					.WithRR(rr);
 			} finally {
 				statementBuilder.currentReturnContainer = oldReturnContainer;
 				statementBuilder.currentResultType = oldResultType;
