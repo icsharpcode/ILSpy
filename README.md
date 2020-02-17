@@ -59,6 +59,9 @@ If this problem occurs, please manually install the .NET Core 3.1 SDK from [here
 Unix / Mac:
 - Make sure .NET Core 2.1 LTS Runtime is installed (you can get it here: https://get.dot.net).
 - Make sure [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download/dotnet-core/3.1) is installed.
+- Make sure [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-macos?view=powershell-7)[]() is installed as single executable.  (Not as dotnet tool)
+  - WORKAROUND: Make it executable by the name of `powershell` .
+  - `$ ln -s /usr/local/bin/pwsh /usr/local/bin/powershell`
 - Check out the repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Use `dotnet build Frontends.sln` to build the non-Windows flavors of ILSpy (.NET Core Global Tool and PowerShell Core).
