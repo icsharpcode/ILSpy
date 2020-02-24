@@ -175,6 +175,13 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				LoadedAssembly loadedAssembly = this.loadedAssembly.LookupReferencedAssembly(new Decompiler.Metadata.AssemblyReference(metadataReader, assemblyReferenceHandle));
 				return loadedAssembly?.GetPEFileOrNull()?.Metadata;
 			}
+
+			public MetadataReader FindAssembly(string simpleName, string parentFile)
+			{
+				// This is called only for the composite R2R scenario, 
+				// So it will never be called before the feature is released.
+				throw new NotSupportedException("Composite R2R format is not currently supported");
+			}
 		}
 
 		private class ReadyToRunReaderCacheEntry

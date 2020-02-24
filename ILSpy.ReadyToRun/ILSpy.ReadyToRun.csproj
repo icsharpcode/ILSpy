@@ -57,7 +57,7 @@
 
   <ItemGroup>
     <PackageReference Include="Iced" Version="1.4.0" />
-    <PackageReference Include="ILCompiler.Reflection.ReadyToRun" Version="1.0.4-alpha" />
+    <PackageReference Include="ILCompiler.Reflection.ReadyToRun" Version="1.0.5-alpha" />
   </ItemGroup>
 
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
