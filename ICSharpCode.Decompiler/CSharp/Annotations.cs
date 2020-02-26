@@ -63,6 +63,24 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ExpressionWithILInstruction(expression);
 		}
 
+		internal static TranslatedStatement WithILInstruction(this Statement statement, ILInstruction instruction)
+		{
+			statement.AddAnnotation(instruction);
+			return new TranslatedStatement(statement);
+		}
+
+		internal static TranslatedStatement WithILInstruction(this Statement statement, IEnumerable<ILInstruction> instructions)
+		{
+			foreach (var inst in instructions)
+				statement.AddAnnotation(inst);
+			return new TranslatedStatement(statement);
+		}
+
+		internal static TranslatedStatement WithoutILInstruction(this Statement statement)
+		{
+			return new TranslatedStatement(statement);
+		}
+
 		internal static TranslatedExpression WithILInstruction(this ExpressionWithResolveResult expression, ILInstruction instruction)
 		{
 			expression.Expression.AddAnnotation(instruction);

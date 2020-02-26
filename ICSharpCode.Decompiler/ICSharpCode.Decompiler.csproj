@@ -63,6 +63,7 @@
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
     <Compile Include="CSharp\RequiredNamespaceCollector.cs" />
     <Compile Include="CSharp\SequencePointBuilder.cs" />
+    <Compile Include="CSharp\TranslatedStatement.cs" />
     <Compile Include="DebugInfo\KnownGuids.cs" />
     <Compile Include="Disassembler\DisassemblerSignatureTypeProvider.cs" />
     <Compile Include="Documentation\XmlDocumentationElement.cs" />

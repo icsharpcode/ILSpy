@@ -31,7 +31,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
-	sealed class StatementBuilder : ILVisitor<Statement>
+	sealed class StatementBuilder : ILVisitor<TranslatedStatement>
 	{
 		internal readonly ExpressionBuilder exprBuilder;
 		readonly ILFunction currentFunction;
@@ -64,16 +64,17 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public BlockStatement ConvertAsBlock(ILInstruction inst)
 		{
-			Statement stmt = Convert(inst);
+			Statement stmt = Convert(inst).WithILInstruction(inst);
 			return stmt as BlockStatement ?? new BlockStatement { stmt };
 		}
 
-		protected override Statement Default(ILInstruction inst)
+		protected override TranslatedStatement Default(ILInstruction inst)
 		{
-			return new ExpressionStatement(exprBuilder.Translate(inst));
+			return new ExpressionStatement(exprBuilder.Translate(inst))
+				.WithILInstruction(inst);
 		}
 
-		protected internal override Statement VisitIsInst(IsInst inst)
+		protected internal override TranslatedStatement VisitIsInst(IsInst inst)
 		{
 			// isinst on top-level (unused result) can be translated in general
 			// (even for value types) by using "is" instead of "as"
@@ -88,34 +89,35 @@ namespace ICSharpCode.Decompiler.CSharp
 				)
 				.WithRR(new ResolveResult(exprBuilder.compilation.FindType(KnownTypeCode.Boolean)))
 				.WithILInstruction(inst)
-			);
+			)
+			.WithILInstruction(inst);
 		}
 
-		protected internal override Statement VisitStLoc(StLoc inst)
+		protected internal override TranslatedStatement VisitStLoc(StLoc inst)
 		{
 			var expr = exprBuilder.Translate(inst);
 			// strip top-level ref on ref re-assignment
 			if (expr.Expression is DirectionExpression dirExpr) {
 				expr = expr.UnwrapChild(dirExpr.Expression);
 			}
-			return new ExpressionStatement(expr);
+			return new ExpressionStatement(expr).WithILInstruction(inst);
 		}
 
-		protected internal override Statement VisitNop(Nop inst)
+		protected internal override TranslatedStatement VisitNop(Nop inst)
 		{
 			var stmt = new EmptyStatement();
 			if (inst.Comment != null) {
 				stmt.AddChild(new Comment(inst.Comment), Roles.Comment);
 			}
-			return stmt;
+			return stmt.WithILInstruction(inst);
 		}
 
-		protected internal override Statement VisitIfInstruction(IfInstruction inst)
+		protected internal override TranslatedStatement VisitIfInstruction(IfInstruction inst)
 		{
 			var condition = exprBuilder.TranslateCondition(inst.Condition);
 			var trueStatement = Convert(inst.TrueInst);
 			var falseStatement = inst.FalseInst.OpCode == OpCode.Nop ? null : Convert(inst.FalseInst);
-			return new IfElseStatement(condition, trueStatement, falseStatement);
+			return new IfElseStatement(condition, trueStatement, falseStatement).WithILInstruction(inst);
 		}
 
 		IEnumerable<ConstantResolveResult> CreateTypedCaseLabel(long i, IType type, List<(string Key, int Value)> map = null)
@@ -150,9 +152,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			yield return new ConstantResolveResult(type, value);
 		}
 
-		protected internal override Statement VisitSwitchInstruction(SwitchInstruction inst)
+		protected internal override TranslatedStatement VisitSwitchInstruction(SwitchInstruction inst)
 		{
-			return TranslateSwitch(null, inst);
+			return TranslateSwitch(null, inst).WithILInstruction(inst);
 		}
 
 		SwitchStatement TranslateSwitch(BlockContainer switchContainer, SwitchInstruction inst)
@@ -283,18 +285,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>Maps blocks to cases.</summary>
 		Dictionary<Block, ConstantResolveResult> caseLabelMapping;
 
-		protected internal override Statement VisitBranch(Branch inst)
+		protected internal override TranslatedStatement VisitBranch(Branch inst)
 		{
 			if (inst.TargetBlock == continueTarget) {
 				continueCount++;
-				return new ContinueStatement();
+				return new ContinueStatement().WithILInstruction(inst);
 			}
 			if (caseLabelMapping != null && caseLabelMapping.TryGetValue(inst.TargetBlock, out var label)) {
 				if (label == null)
-					return new GotoDefaultStatement();
-				return new GotoCaseStatement() { LabelExpression = exprBuilder.ConvertConstantValue(label, allowImplicitConversion: true) };
+					return new GotoDefaultStatement().WithILInstruction(inst);
+				return new GotoCaseStatement() { LabelExpression = exprBuilder.ConvertConstantValue(label, allowImplicitConversion: true) }
+					.WithILInstruction(inst);
 			}
-			return new GotoStatement(inst.TargetLabel);
+			return new GotoStatement(inst.TargetLabel).WithILInstruction(inst);
 		}
 
 		/// <summary>Target container that a 'break;' statement would break out of</summary>
@@ -302,45 +305,45 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>Dictionary from BlockContainer to label name for 'goto of_container';</summary>
 		readonly Dictionary<BlockContainer, string> endContainerLabels = new Dictionary<BlockContainer, string>();
 
-		protected internal override Statement VisitLeave(Leave inst)
+		protected internal override TranslatedStatement VisitLeave(Leave inst)
 		{
 			if (inst.TargetContainer == breakTarget)
-				return new BreakStatement();
+				return new BreakStatement().WithILInstruction(inst);
 			if (inst.TargetContainer == currentReturnContainer) {
 				if (currentIsIterator)
-					return new YieldBreakStatement();
+					return new YieldBreakStatement().WithILInstruction(inst);
 				else if (!inst.Value.MatchNop()) {
 					var expr = exprBuilder.Translate(inst.Value, typeHint: currentResultType)
 						.ConvertTo(currentResultType, exprBuilder, allowImplicitConversion: true);
-					return new ReturnStatement(expr);
+					return new ReturnStatement(expr).WithILInstruction(inst);
 				} else
-					return new ReturnStatement();
+					return new ReturnStatement().WithILInstruction(inst);
 			}
 			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out string label)) {
 				label = "end_" + inst.TargetLabel;
 				endContainerLabels.Add(inst.TargetContainer, label);
 			}
-			return new GotoStatement(label);
+			return new GotoStatement(label).WithILInstruction(inst);
 		}
 
-		protected internal override Statement VisitThrow(Throw inst)
+		protected internal override TranslatedStatement VisitThrow(Throw inst)
 		{
-			return new ThrowStatement(exprBuilder.Translate(inst.Argument));
+			return new ThrowStatement(exprBuilder.Translate(inst.Argument)).WithILInstruction(inst);
 		}
 
-		protected internal override Statement VisitRethrow(Rethrow inst)
+		protected internal override TranslatedStatement VisitRethrow(Rethrow inst)
 		{
-			return new ThrowStatement();
+			return new ThrowStatement().WithILInstruction(inst);
 		}
 
-		protected internal override Statement VisitYieldReturn(YieldReturn inst)
+		protected internal override TranslatedStatement VisitYieldReturn(YieldReturn inst)
 		{
 			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem, true, out var isGeneric);
 			var expr = exprBuilder.Translate(inst.Value, typeHint: elementType)
 				.ConvertTo(elementType, exprBuilder, allowImplicitConversion: true);
 			return new YieldReturnStatement {
 				Expression = expr
-			};
+			}.WithILInstruction(inst);
 		}
 
 		TryCatchStatement MakeTryCatch(ILInstruction tryBlock)
@@ -354,7 +357,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return tryCatch;
 		}
 
-		protected internal override Statement VisitTryCatch(TryCatch inst)
+		protected internal override TranslatedStatement VisitTryCatch(TryCatch inst)
 		{
 			var tryCatch = new TryCatchStatement();
 			tryCatch.TryBlock = ConvertAsBlock(inst.TryBlock);
@@ -375,17 +378,17 @@ namespace ICSharpCode.Decompiler.CSharp
 				catchClause.Body = ConvertAsBlock(handler.Body);
 				tryCatch.CatchClauses.Add(catchClause);
 			}
-			return tryCatch;
+			return tryCatch.WithILInstruction(inst);
 		}
 
-		protected internal override Statement VisitTryFinally(TryFinally inst)
+		protected internal override TranslatedStatement VisitTryFinally(TryFinally inst)
 		{
 			var tryCatch = MakeTryCatch(inst.TryBlock);
 			tryCatch.FinallyBlock = ConvertAsBlock(inst.FinallyBlock);
-			return tryCatch;
+			return tryCatch.WithILInstruction(inst);
 		}
 
-		protected internal override Statement VisitTryFault(TryFault inst)
+		protected internal override TranslatedStatement VisitTryFault(TryFault inst)
 		{
 			var tryCatch = new TryCatchStatement();
 			tryCatch.TryBlock = ConvertAsBlock(inst.TryBlock);
@@ -393,27 +396,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			faultBlock.InsertChildAfter(null, new Comment("try-fault"), Roles.Comment);
 			faultBlock.Add(new ThrowStatement());
 			tryCatch.CatchClauses.Add(new CatchClause { Body = faultBlock });
-			return tryCatch;
+			return tryCatch.WithILInstruction(inst);
 		}
 
-		protected internal override Statement VisitLockInstruction(LockInstruction inst)
+		protected internal override TranslatedStatement VisitLockInstruction(LockInstruction inst)
 		{
 			return new LockStatement {
 				Expression = exprBuilder.Translate(inst.OnExpression),
 				EmbeddedStatement = ConvertAsBlock(inst.Body)
-			};
+			}.WithILInstruction(inst);
 		}
 
 		#region foreach construction
 		static readonly InvocationExpression getEnumeratorPattern = new InvocationExpression(new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetEnumerator"));
 		static readonly InvocationExpression moveNextConditionPattern = new InvocationExpression(new MemberReferenceExpression(new NamedNode("enumerator", new IdentifierExpression(Pattern.AnyString)), "MoveNext"));
 
-		protected internal override Statement VisitUsingInstruction(UsingInstruction inst)
+		protected internal override TranslatedStatement VisitUsingInstruction(UsingInstruction inst)
 		{
 			var resource = exprBuilder.Translate(inst.ResourceExpression).Expression;
 			var transformed = TransformToForeach(inst, resource);
 			if (transformed != null)
-				return transformed;
+				return transformed.WithILInstruction(inst);
 			AstNode usingInit = resource;
 			var var = inst.Variable;
 			KnownTypeCode knownTypeCode;
@@ -451,7 +454,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							}
 						}
 					},
-				};
+				}.WithILInstruction(inst);
 			} else {
 				if (var.LoadCount > 0 || var.AddressCount > 0) {
 					var type = settings.AnonymousTypes && var.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(var.Type);
@@ -463,7 +466,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					ResourceAcquisition = usingInit,
 					IsAsync = inst.IsAsync,
 					EmbeddedStatement = ConvertAsBlock(inst.Body)
-				};
+				}.WithILInstruction(inst);
 			}
 		}
 
@@ -814,7 +817,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 		#endregion
 
-		protected internal override Statement VisitPinnedRegion(PinnedRegion inst)
+		protected internal override TranslatedStatement VisitPinnedRegion(PinnedRegion inst)
 		{
 			var fixedStmt = new FixedStatement();
 			fixedStmt.Type = exprBuilder.ConvertType(inst.Variable.Type);
@@ -831,10 +834,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			fixedStmt.Variables.Add(new VariableInitializer(inst.Variable.Name, initExpr).WithILVariable(inst.Variable));
 			fixedStmt.EmbeddedStatement = Convert(inst.Body);
-			return fixedStmt;
+			return fixedStmt.WithILInstruction(inst);
 		}
 
-		protected internal override Statement VisitBlock(Block block)
+		protected internal override TranslatedStatement VisitBlock(Block block)
 		{
 			if (block.Kind != BlockKind.ControlFlow)
 				return Default(block);
@@ -845,10 +848,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (block.FinalInstruction.OpCode != OpCode.Nop)
 				blockStatement.Add(Convert(block.FinalInstruction));
-			return blockStatement;
+			return blockStatement.WithILInstruction(block);
 		}
 
-		protected internal override Statement VisitBlockContainer(BlockContainer container)
+		protected internal override TranslatedStatement VisitBlockContainer(BlockContainer container)
 		{
 			if (container.Kind != ContainerKind.Normal && container.EntryPoint.IncomingEdgeCount > 1) {
 				var oldContinueTarget = continueTarget;
@@ -859,13 +862,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				continueTarget = oldContinueTarget;
 				continueCount = oldContinueCount;
 				breakTarget = oldBreakTarget;
-				return loop;
+				return loop.WithILInstruction(container);
 			} else if (container.EntryPoint.Instructions.Count == 1 && container.EntryPoint.Instructions[0] is SwitchInstruction switchInst) {
-				return TranslateSwitch(container, switchInst);
+				return TranslateSwitch(container, switchInst).WithILInstruction(container);
 			} else {
 				var blockStmt = ConvertBlockContainer(container, false);
-				blockStmt.AddAnnotation(container);
-				return blockStmt;
+				return blockStmt.WithILInstruction(container);
 			}
 		}
 
@@ -1009,6 +1011,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					stmt.Modifiers |= Modifiers.Static;
 				}
 				stmt.AddAnnotation(new MemberResolveResult(null, function.ReducedMethod));
+				stmt.WithILInstruction(function);
 				return stmt;
 			}
 		}
@@ -1063,7 +1066,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				&& container == leave.TargetContainer;
 		}
 
-		protected internal override Statement VisitInitblk(Initblk inst)
+		protected internal override TranslatedStatement VisitInitblk(Initblk inst)
 		{
 			var stmt = new ExpressionStatement(
 				exprBuilder.CallUnsafeIntrinsic(
@@ -1078,10 +1081,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				)
 			);
 			stmt.InsertChildAfter(null, new Comment(" IL initblk instruction"), Roles.Comment);
-			return stmt;
+			return stmt.WithILInstruction(inst);
 		}
 
-		protected internal override Statement VisitCpblk(Cpblk inst)
+		protected internal override TranslatedStatement VisitCpblk(Cpblk inst)
 		{
 			var stmt = new ExpressionStatement(
 				exprBuilder.CallUnsafeIntrinsic(
@@ -1096,7 +1099,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				)
 			);
 			stmt.InsertChildAfter(null, new Comment(" IL cpblk instruction"), Roles.Comment);
-			return stmt;
+			return stmt.WithILInstruction(inst);
 		}
 	}
 }
