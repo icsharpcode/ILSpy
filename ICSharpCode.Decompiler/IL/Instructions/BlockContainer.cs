@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 			Debug.Assert(Blocks.Count > 0 && EntryPoint == Blocks[0]);
 			Debug.Assert(!IsConnected || EntryPoint?.IncomingEdgeCount >= 1);
-			Debug.Assert(EntryPoint == null || Parent is ILFunction || !HasILRange);
+			Debug.Assert(EntryPoint == null || Parent is ILFunction || !ILRangeIsEmpty);
 			Debug.Assert(Blocks.All(b => b.HasFlag(InstructionFlags.EndPointUnreachable)));
 			Debug.Assert(Blocks.All(b => b.Kind == BlockKind.ControlFlow)); // this also implies that the blocks don't use FinalInstruction
 			Debug.Assert(TopologicalSort(deleteUnreachableBlocks: true).Count == Blocks.Count, "Container should not have any unreachable blocks");

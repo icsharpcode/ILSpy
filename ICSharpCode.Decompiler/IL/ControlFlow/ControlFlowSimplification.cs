@@ -166,7 +166,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					context.Step("Replace branch to leave with leave", branch);
 					// Replace branches to 'leave' instruction with the leave instruction
 					var leave2 = leave.Clone();
-					if (!branch.HasILRange) // use the ILRange of the branch if possible
+					if (!branch.ILRangeIsEmpty) // use the ILRange of the branch if possible
 						leave2.AddILRange(branch);
 					branch.ReplaceWith(leave2);
 				}
@@ -221,7 +221,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				block.Instructions.RemoveRange(block.Instructions.Count - 3, 2);
 			}
 
-			if (block.HasILRange)
+			if (block.ILRangeIsEmpty)
 				block.AddILRange(targetBlock);
 
 			block.Instructions.Remove(br);

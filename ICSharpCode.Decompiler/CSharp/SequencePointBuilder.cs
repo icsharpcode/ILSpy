@@ -275,7 +275,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal static bool HasUsableILRange(ILInstruction inst)
 		{
-			if (inst.HasILRange)
+			if (inst.ILRangeIsEmpty)
 				return false;
 			return !(inst is BlockContainer || inst is Block);
 		}
