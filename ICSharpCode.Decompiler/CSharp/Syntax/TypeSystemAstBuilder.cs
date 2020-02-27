@@ -64,7 +64,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#region Properties
 		void InitProperties()
 		{
-			this.AlwaysUseBuiltinTypeNames = true;
+			this.UseKeywordsForBuiltinTypes = true;
+			this.UseNullableSpecifierForValueTypes = true;
 			this.ShowAccessibility = true;
 			this.ShowModifiers = true;
 			this.ShowBaseTypes = true;
@@ -78,82 +79,88 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		/// <summary>
 		/// Specifies whether the ast builder should add annotations to type references.
-		/// The default value is <c>false</c>.
+		/// The default value is <see langword="false" />.
 		/// </summary>
 		public bool AddTypeReferenceAnnotations { get; set; }
 		
 		/// <summary>
 		/// Specifies whether the ast builder should add ResolveResult annotations to AST nodes.
-		/// The default value is <c>false</c>.
+		/// The default value is <see langword="false" />.
 		/// </summary>
 		public bool AddResolveResultAnnotations { get; set; }
 		
 		/// <summary>
 		/// Controls the accessibility modifiers are shown.
-		/// The default value is <c>true</c>.
+		/// The default value is <see langword="true" />.
 		/// </summary>
 		public bool ShowAccessibility { get; set; }
 		
 		/// <summary>
 		/// Controls the non-accessibility modifiers are shown.
-		/// The default value is <c>true</c>.
+		/// The default value is <see langword="true" />.
 		/// </summary>
 		public bool ShowModifiers { get; set; }
 		
 		/// <summary>
 		/// Controls whether base type references are shown.
-		/// The default value is <c>true</c>.
+		/// The default value is <see langword="true" />.
 		/// </summary>
 		public bool ShowBaseTypes { get; set; }
 		
 		/// <summary>
 		/// Controls whether type parameter declarations are shown.
-		/// The default value is <c>true</c>.
+		/// The default value is <see langword="true" />.
 		/// </summary>
 		public bool ShowTypeParameters { get; set; }
 
 		/// <summary>
 		/// Controls whether type parameter names are shown for unbound types.
-		/// The default value is <c>false</c>.
+		/// The default value is <see langword="false" />.
 		/// </summary>
 		public bool ShowTypeParametersForUnboundTypes { get; set; }
 		
 		/// <summary>
 		/// Controls whether constraints on type parameter declarations are shown.
 		/// Has no effect if ShowTypeParameters is false.
-		/// The default value is <c>true</c>.
+		/// The default value is <see langword="true" />.
 		/// </summary>
 		public bool ShowTypeParameterConstraints { get; set; }
 		
 		/// <summary>
 		/// Controls whether the names of parameters are shown.
-		/// The default value is <c>true</c>.
+		/// The default value is <see langword="true" />.
 		/// </summary>
 		public bool ShowParameterNames { get; set; }
 		
 		/// <summary>
 		/// Controls whether to show default values of optional parameters, and the values of constant fields.
-		/// The default value is <c>true</c>.
+		/// The default value is <see langword="true" />.
 		/// </summary>
 		public bool ShowConstantValues { get; set; }
 		
 		/// <summary>
 		/// Controls whether to show attributes.
-		/// The default value is <c>false</c>.
+		/// The default value is <see langword="false" />.
 		/// </summary>
 		public bool ShowAttributes { get; set; }
 
 		/// <summary>
 		/// Controls whether to use fully-qualified type names or short type names.
-		/// The default value is <c>false</c>.
+		/// The default value is <see langword="false" />.
 		/// </summary>
 		public bool AlwaysUseShortTypeNames { get; set; }
 
 		/// <summary>
-		/// Controls whether to use fully-qualified type names or short type names.
-		/// The default value is <c>true</c>.
+		/// Controls whether to use keywords for builtin types.
+		/// The default value is <see langword="true" />.
 		/// </summary>
-		public bool AlwaysUseBuiltinTypeNames { get; set; }
+		public bool UseKeywordsForBuiltinTypes { get; set; }
+
+		/// <summary>
+		/// Controls whether to use <c>T?</c> or <c>Nullable&lt;T&gt;</c> for nullable value types.
+		/// The default value is <see langword="true" />.
+		/// </summary>
+		public bool UseNullableSpecifierForValueTypes { get; set; }
 
 		/// <summary>
 		/// Determines the name lookup mode for converting a type name.
@@ -165,37 +172,37 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		/// <summary>
 		/// Controls whether to generate a body that throws a <c>System.NotImplementedException</c>.
-		/// The default value is <c>false</c>.
+		/// The default value is <see langword="false" />.
 		/// </summary>
 		public bool GenerateBody { get; set; }
 		
 		/// <summary>
 		/// Controls whether to generate custom events.
-		/// The default value is <c>false</c>.
+		/// The default value is <see langword="false" />.
 		/// </summary>
 		public bool UseCustomEvents { get; set; }
 
 		/// <summary>
 		/// Controls whether unbound type argument names are inserted in the ast or not.
-		/// The default value is <c>false</c>.
+		/// The default value is <see langword="false" />.
 		/// </summary>
 		public bool ConvertUnboundTypeArguments { get; set;}
 
 		/// <summary>
 		/// Controls whether aliases should be used inside the type name or not.
-		/// The default value is <c>true</c>.
+		/// The default value is <see langword="true" />.
 		/// </summary>
 		public bool UseAliases { get; set; }
 
 		/// <summary>
 		/// Controls whether constants like <c>int.MaxValue</c> are converted to a <see cref="MemberReferenceExpression"/> or <see cref="PrimitiveExpression" />.
-		/// The default value is <c>true</c>.
+		/// The default value is <see langword="true" />.
 		/// </summary>
 		public bool UseSpecialConstants { get; set; }
 
 		/// <summary>
 		/// Controls whether integral constants should be printed in hexadecimal format.
-		/// The default value is <c>false</c>.
+		/// The default value is <see langword="false" />.
 		/// </summary>
 		public bool PrintIntegralValuesAsHex { get; set; }
 		#endregion
@@ -290,7 +297,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						}
 						break;
 					case ParameterizedType pt:
-						if (AlwaysUseBuiltinTypeNames && pt.IsKnownType(KnownTypeCode.NullableOfT)) {
+						if (UseNullableSpecifierForValueTypes && pt.IsKnownType(KnownTypeCode.NullableOfT)) {
 							return ConvertType(pt.TypeArguments[0]).MakeNullableType();
 						}
 						astType = ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
@@ -313,7 +320,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Debug.Assert(typeDef != null || genericType.Kind == TypeKind.Unknown);
 			Debug.Assert(typeArguments.Count >= genericType.TypeParameterCount);
 
-			if (AlwaysUseBuiltinTypeNames && typeDef != null) {
+			if (UseKeywordsForBuiltinTypes && typeDef != null) {
 				string keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
 				if (keyword != null) {
 					return new PrimitiveType(keyword);

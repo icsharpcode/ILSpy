@@ -92,12 +92,17 @@ namespace ICSharpCode.Decompiler.Output
 		/// Show default values of parameters.
 		/// </summary>
 		ShowParameterDefaultValues = 0x4000,
+		/// <summary>
+		/// Use <c>T?</c> instead of <c>Nullable&lt;T&gt;</c>.
+		/// </summary>
+		UseNullableSpecifierForValueTypes = 0x8000,
 
 		StandardConversionFlags = ShowParameterNames |
 			ShowAccessibility |
 			ShowParameterList |
 			ShowParameterModifiers |
 			ShowParameterDefaultValues |
+			UseNullableSpecifierForValueTypes |
 			ShowReturnType |
 			ShowModifiers |
 			ShowTypeParameterList |
