@@ -115,6 +115,22 @@ namespace ICSharpCode.ILSpy
 				MinimalCorlib.Instance);
 		}
 
+		ICompilation typeSystemWithOptions;
+		TypeSystemOptions currentTypeSystemOptions;
+
+		public ICompilation GetTypeSystemOrNull(TypeSystemOptions options)
+		{
+			if (typeSystemWithOptions != null && options == currentTypeSystemOptions)
+				return typeSystemWithOptions;
+			var module = GetPEFileOrNull();
+			if (module == null)
+				return null;
+			currentTypeSystemOptions = options;
+			return typeSystemWithOptions = new SimpleCompilation(
+				module.WithOptions(options | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
+				MinimalCorlib.Instance);
+		}
+
 		public AssemblyList AssemblyList => assemblyList;
 
 		public string FileName => fileName;

@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpy.Search
 		public override void Search(PEFile module, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			var typeSystem = module.GetTypeSystemOrNull();
+			var typeSystem = module.GetTypeSystemWithCurrentOptionsOrNull();
 			if (typeSystem == null) return;
 
 			var root = ((MetadataModule)typeSystem.MainModule).RootNamespace;

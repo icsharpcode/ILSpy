@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(propertyDef.Name):X} \"{Name}\"";
 
-			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemOrNull()?.MainModule).GetDefinition(handle);
+			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule).GetDefinition(handle);
 
 			[StringFormat("X")]
 			public int Signature => MetadataTokens.GetHeapOffset(propertyDef.Signature);

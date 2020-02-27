@@ -26,7 +26,7 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			if (searchTermToken.IsNil) return;
-			var typeSystem = module.GetTypeSystemOrNull();
+			var typeSystem = module.GetTypeSystemWithCurrentOptionsOrNull();
 			if (typeSystem == null) return;
 			var metadataModule = (MetadataModule)typeSystem.MainModule;
 			int row = module.Metadata.GetRowNumber(searchTermToken);

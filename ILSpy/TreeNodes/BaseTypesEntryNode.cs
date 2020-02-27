@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var t = typeSystem.MainModule.ResolveEntity(handle) as ITypeDefinition;
 			if (t != null) {
 				showExpander = t.DirectBaseTypes.Any();
-				var other = t.ParentModule.PEFile.GetTypeSystemOrNull();
+				var other = t.ParentModule.PEFile.GetTypeSystemWithCurrentOptionsOrNull();
 				Debug.Assert(other != null);
 				t = other.FindType(t.FullTypeName).GetDefinition();
 			} else {
