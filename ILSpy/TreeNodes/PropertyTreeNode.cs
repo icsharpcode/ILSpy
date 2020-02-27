@@ -93,5 +93,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		IEntity IMemberTreeNode.Member => PropertyDefinition;
+
+		public override string ToString()
+		{
+			int token = System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(PropertyDefinition.MetadataToken);
+			return "@" + token.ToString("X8");
+		}
 	}
 }

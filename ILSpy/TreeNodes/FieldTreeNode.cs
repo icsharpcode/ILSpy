@@ -87,5 +87,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		IEntity IMemberTreeNode.Member => FieldDefinition;
+
+		public override string ToString()
+		{
+			int token = System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(FieldDefinition.MetadataToken);
+			return "@" + token.ToString("X8");
+		}
 	}
 }

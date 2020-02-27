@@ -112,5 +112,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		IEntity IMemberTreeNode.Member => MethodDefinition;
+
+		public override string ToString()
+		{
+			int token = System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(MethodDefinition.MetadataToken);
+			return "@" + token.ToString("X8");
+		}
 	}
 }
