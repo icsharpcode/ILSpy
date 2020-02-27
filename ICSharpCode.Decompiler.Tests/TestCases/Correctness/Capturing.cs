@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
@@ -18,6 +19,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			InsideLoopOverArray2();
 			NotWhileDueToVariableInsideLoop();
 			NotDoWhileDueToVariableInsideLoop();
+			Issue1936();
 		}
 
 		static void TestCase1()
@@ -208,6 +210,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 			foreach (var f in functions) {
 				Console.WriteLine(f());
+			}
+		}
+
+		public static void Issue1936()
+		{
+			IEnumerable<object> outerCapture = null;
+			for (int i = 0; i < 10; i++) {
+				int innerCapture = 0;
+				Action a = (delegate {
+					List<object> list = new List<object>();
+					Console.WriteLine("before inc: " + innerCapture);
+					++innerCapture;
+					Console.WriteLine("after inc: " + innerCapture);
+					Console.WriteLine("before assign: " + outerCapture);
+					outerCapture = outerCapture == null ? list : outerCapture.Concat(list);
+					Console.WriteLine("after assign: " + outerCapture);
+				});
+				a.Invoke();
 			}
 		}
 	}

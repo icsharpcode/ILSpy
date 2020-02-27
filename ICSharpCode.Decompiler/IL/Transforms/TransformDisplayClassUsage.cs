@@ -309,9 +309,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			base.VisitStLoc(inst);
 
-			if (inst.Variable.Kind == VariableKind.Local && inst.Variable.IsSingleDefinition && inst.Variable.LoadCount == 0 && inst.Value is StLoc) {
-				context.Step($"Remove unused variable assignment {inst.Variable.Name}", inst);
-				inst.ReplaceWith(inst.Value);
+			if (inst.Parent is Block && inst.Variable.IsSingleDefinition) {
+				if (inst.Variable.Kind == VariableKind.Local && inst.Variable.LoadCount == 0 && inst.Value is StLoc) {
+					context.Step($"Remove unused variable assignment {inst.Variable.Name}", inst);
+					inst.ReplaceWith(inst.Value);
+					return;
+				}
+				if (inst.Value.MatchLdLoc(out var displayClassVariable) && displayClasses.TryGetValue(displayClassVariable, out var displayClass)) {
+					context.Step($"Found copy-assignment of display-class variable {displayClassVariable.Name}", inst);
+					displayClasses.Add(inst.Variable, displayClass);
+					instructionsToRemove.Add(inst);
+					return;
+				}
 			}
 		}
 
