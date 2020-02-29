@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpy
 	{
 		public override void Execute(object parameter)
 		{
-			using (MainWindow.Instance.treeView.LockUpdates())
+			using (MainWindow.Instance.AssemblyTreeView.LockUpdates())
 				MainWindow.Instance.CurrentAssemblyList.Sort(this);
 		}
 
@@ -45,8 +45,8 @@ namespace ICSharpCode.ILSpy
 	{
 		public override void Execute(object parameter)
 		{
-			using (MainWindow.Instance.treeView.LockUpdates())
-				CollapseChildren(MainWindow.Instance.treeView.Root);
+			using (MainWindow.Instance.AssemblyTreeView.LockUpdates())
+				CollapseChildren(MainWindow.Instance.AssemblyTreeView.Root);
 
 			void CollapseChildren(SharpTreeNode node)
 			{

@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.Commands
 		IEnumerable<ILSpyTreeNode> GetNodes(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes != null) {
-				if (context.TreeView != MainWindow.Instance.treeView) {
+				if (context.TreeView != MainWindow.Instance.AssemblyTreeView) {
 					return context.SelectedTreeNodes.OfType<IMemberTreeNode>().Select(FindTreeNode).Where(n => n != null);
 				} else {
 					return context.SelectedTreeNodes.OfType<ILSpyTreeNode>().Where(n => n != null);
