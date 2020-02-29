@@ -64,7 +64,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if ((context.Settings.AnonymousMethods || context.Settings.ExpressionTrees) && IsClosure(context, v, out ITypeDefinition closureType, out var inst)) {
 							if (!CanRemoveAllReferencesTo(context, v))
 								continue;
-							instructionsToRemove.Add(inst);
+							if (inst is StObj || inst is StLoc)
+								instructionsToRemove.Add(inst);
 							AddOrUpdateDisplayClass(f, v, closureType, inst, localFunctionClosureParameter: false);
 							continue;
 						}
