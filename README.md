@@ -45,6 +45,7 @@ Windows:
   - Workload "Visual Studio extension development" (ILSpy.sln contains a VS extension project)
   - Individual Component "MSVC v142 - VS 2019 C++ x64/x86 build tools (v14.23)" (or similar)
     - The VC++ toolset is optional; if present it is used for `editbin.exe` to modify the stack size used by ILSpy.exe from 1MB to 16MB, because the decompiler makes heavy use of recursion, where small stack sizes lead to problems in very complex methods.
+- Make sure [PowerShell](https://github.com/PowerShell/PowerShell) is installed (formerly known as PowerShell Core) - recommended way of installation via [choco install powershell-core](https://chocolatey.org/packages/powershell-core)
 - Check out the ILSpy repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Open ILSpy.sln in Visual Studio.
@@ -59,6 +60,7 @@ If this problem occurs, please manually install the .NET Core 3.1 SDK from [here
 Unix / Mac:
 - Make sure .NET Core 2.1 LTS Runtime is installed (you can get it here: https://get.dot.net).
 - Make sure [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download/dotnet-core/3.1) is installed.
+- Make sure [PowerShell](https://github.com/PowerShell/PowerShell) is installed (formerly known as PowerShell Core)
 - Check out the repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Use `dotnet build Frontends.sln` to build the non-Windows flavors of ILSpy (.NET Core Global Tool and PowerShell Core).
