@@ -625,7 +625,7 @@
 
   <Target Name="ILSpyUpdateAssemblyInfo" BeforeTargets="BeforeBuild">
     <PropertyGroup>
-      <UpdateAssemblyInfo>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/update-assemblyinfo.ps1 $(Configuration)</UpdateAssemblyInfo>
+      <UpdateAssemblyInfo>pwsh -NoProfile -ExecutionPolicy Bypass -File BuildTools/update-assemblyinfo.ps1 $(Configuration)</UpdateAssemblyInfo>
     </PropertyGroup>
     <Exec WorkingDirectory=".." Command="$(UpdateAssemblyInfo)" Timeout="60000" />
   </Target>
