@@ -16,18 +16,21 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Windows;
+
 namespace ICSharpCode.ILSpy.ViewModels
 {
+	[ExportToolPane(ContentId = PaneContentId)]
 	public class DebugStepsPaneModel : ToolPaneModel
 	{
 		public const string PaneContentId = "debugStepsPane";
-
-		public static DebugStepsPaneModel Instance { get; } = new DebugStepsPaneModel();
 
 		private DebugStepsPaneModel()
 		{
 			ContentId = PaneContentId;
 			Title = Properties.Resources.DebugSteps;
 		}
+
+		public override DataTemplate Template => (DataTemplate)MainWindow.Instance.FindResource("DebugStepsPaneTemplate");
 	}
 }

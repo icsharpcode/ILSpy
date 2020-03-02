@@ -30,7 +30,6 @@ namespace ICSharpCode.ILSpy
 		string ToolbarCategory { get; }
 		object Tag { get; }
 		double ToolbarOrder { get; }
-	 
 	}
 	
 	[MetadataAttribute]
@@ -83,6 +82,25 @@ namespace ICSharpCode.ILSpy
 			set { isEnabled = value; }
 		}
 		public double MenuOrder { get; set; }
+	}
+	#endregion
+
+	#region Tool Panes
+	public interface IToolPaneMetadata
+	{
+		string ContentId { get; }
+	}
+
+	[MetadataAttribute]
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+	public class ExportToolPaneAttribute : ExportAttribute, IToolPaneMetadata
+	{
+		public ExportToolPaneAttribute()
+			: base("ToolPane", typeof(ViewModels.ToolPaneModel))
+		{
+		}
+
+		public string ContentId { get; set; }
 	}
 	#endregion
 }

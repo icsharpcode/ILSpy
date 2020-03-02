@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Windows;
+
 namespace ICSharpCode.ILSpy.ViewModels
 {
 	public abstract class ToolPaneModel : PaneModel
@@ -25,5 +27,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			this.IsActive = true;
 			this.IsVisible = true;
 		}
+
+		public abstract DataTemplate Template { get; }
 	}
 }

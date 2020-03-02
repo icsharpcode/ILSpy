@@ -23,6 +23,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -40,7 +41,7 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Search pane
 	/// </summary>
-	public partial class SearchPane : UserControl, IPane
+	public partial class SearchPane : UserControl
 	{
 		const int MAX_RESULTS = 1000;
 		const int MAX_REFRESH_TIME_MS = 10; // More means quicker forward of data, less means better responsibility
@@ -105,7 +106,7 @@ namespace ICSharpCode.ILSpy
 		public void Show()
 		{
 			if (!IsVisible) {
-				SearchPaneModel.Instance.IsVisible = true;
+				DockWorkspace.Instance.ToolPanes.Single(p => p.ContentId == SearchPaneModel.PaneContentId).IsVisible = true;
 				if (runSearchOnNextShow) {
 					runSearchOnNextShow = false;
 					StartSearch(this.SearchTerm);
@@ -138,11 +139,6 @@ namespace ICSharpCode.ILSpy
 		{
 			MainWindow.Instance.SessionSettings.SelectedSearchMode = (SearchMode)searchModeComboBox.SelectedIndex;
 			StartSearch(this.SearchTerm);
-		}
-
-		void IPane.Closed()
-		{
-			this.SearchTerm = string.Empty;
 		}
 		
 		void ListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
