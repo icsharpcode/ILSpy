@@ -84,7 +84,8 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 				lock (metadata) {
 					var sourceBlob = WriteSourceToBlob(metadata, sourceText, out var sourceCheckSum);
-					var name = metadata.GetOrAddDocumentName(type.GetFullTypeName(reader).ReflectionName.Replace('.', Path.DirectorySeparatorChar) + ".cs");
+					var typeName = type.GetFullTypeName(reader).TopLevelTypeName;
+					var name = metadata.GetOrAddDocumentName(Path.Combine(WholeProjectDecompiler.CleanUpFileName(typeName.Namespace), WholeProjectDecompiler.CleanUpFileName(typeName.Name) + ".cs"));
 
 					// Create Document(Handle)
 					var document = metadata.AddDocument(name,
