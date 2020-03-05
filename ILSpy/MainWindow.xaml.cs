@@ -640,6 +640,7 @@ namespace ICSharpCode.ILSpy
 			//Only load a new list when it is a different one
 			if (list.ListName != CurrentAssemblyList.ListName) {
 				ShowAssemblyList(list);
+				SelectNode(AssemblyTreeView.Root);
 			}
 		}
 
