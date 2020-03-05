@@ -62,11 +62,15 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			var customMethodDebugInfo = new List<(MethodDefinitionHandle Parent, GuidHandle Guid, BlobHandle Blob)>();
 			var globalImportScope = metadata.AddImportScope(default, default);
 
-			foreach (var handle in reader.GetTopLevelTypeDefinitions()) {
-				var type = reader.GetTypeDefinition(handle);
+			string BuildFileNameFromTypeName(TypeDefinitionHandle handle)
+			{
+				var typeName = handle.GetFullTypeName(reader).TopLevelTypeName;
+				return Path.Combine(WholeProjectDecompiler.CleanUpFileName(typeName.Namespace), WholeProjectDecompiler.CleanUpFileName(typeName.Name) + ".cs");
+			}
 
+			foreach (var sourceFile in reader.GetTopLevelTypeDefinitions().GroupBy(BuildFileNameFromTypeName)) {
 				// Generate syntax tree
-				var syntaxTree = decompiler.DecompileTypes(new[] { handle });
+				var syntaxTree = decompiler.DecompileTypes(sourceFile);
 				if (!syntaxTree.HasChildren)
 					continue;
 
@@ -84,8 +88,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 				lock (metadata) {
 					var sourceBlob = WriteSourceToBlob(metadata, sourceText, out var sourceCheckSum);
-					var typeName = type.GetFullTypeName(reader).TopLevelTypeName;
-					var name = metadata.GetOrAddDocumentName(Path.Combine(WholeProjectDecompiler.CleanUpFileName(typeName.Namespace), WholeProjectDecompiler.CleanUpFileName(typeName.Name) + ".cs"));
+					var name = metadata.GetOrAddDocumentName(sourceFile.Key);
 
 					// Create Document(Handle)
 					var document = metadata.AddDocument(name,
