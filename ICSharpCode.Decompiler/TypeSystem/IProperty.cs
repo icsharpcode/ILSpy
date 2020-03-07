@@ -30,5 +30,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMethod Setter { get; }
 		
 		bool IsIndexer { get; }
+
+		/// <summary>
+		/// Gets whether the return type is 'ref readonly'.
+		/// </summary>
+		bool ReturnTypeIsRefReadOnly { get; }
 	}
 }

@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				w.WriteElementString("WarningLevel", "4");
 				w.WriteElementString("AllowUnsafeBlocks", "True");
-				
+
 				if (StrongNameKeyFile != null) {
 					w.WriteElementString("SignAssembly", "True");
 					w.WriteElementString("AssemblyOriginatorKeyFile", Path.GetFileName(StrongNameKeyFile));
@@ -463,7 +463,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				} catch (EndOfStreamException) {
 					// if the .resources can't be decoded, just save them as-is
 				}
-			} 
+			}
 			using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write)) {
 				entryStream.CopyTo(fs);
 			}
@@ -515,7 +515,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			string name = b.ToString();
 			if (IsReservedFileSystemName(name))
 				return name + "_";
-			return name;
+			else if (name == ".")
+				return "_";
+			else
+				return name;
 		}
 
 		static bool IsReservedFileSystemName(string name)

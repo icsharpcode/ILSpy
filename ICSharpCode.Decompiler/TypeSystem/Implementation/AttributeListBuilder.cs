@@ -208,6 +208,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 								case SymbolKind.Method:
 								case SymbolKind.Accessor:
 									return (options & TypeSystemOptions.ReadOnlyMethods) != 0;
+								case SymbolKind.ReturnType:
+								case SymbolKind.Property:
+								case SymbolKind.Indexer:
+									return true;  // "ref readonly" is currently always active
 								default:
 									return false;
 							}

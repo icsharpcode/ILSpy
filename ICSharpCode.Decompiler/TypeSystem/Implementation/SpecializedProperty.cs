@@ -65,5 +65,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsIndexer {
 			get { return propertyDefinition.IsIndexer; }
 		}
+
+		public bool ReturnTypeIsRefReadOnly => propertyDefinition.ReturnTypeIsRefReadOnly;
 	}
 }

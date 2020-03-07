@@ -62,6 +62,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public struct NormalStruct
 		{
 			private readonly int dummy;
+			private int[] arr;
 
 			public int Property {
 				get {
@@ -96,8 +97,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			}
 
+			public ref int RefProperty => ref arr[0];
+			public ref readonly int RefReadonlyProperty => ref arr[0];
+			public readonly ref int ReadonlyRefProperty => ref arr[0];
+			public readonly ref readonly int ReadonlyRefReadonlyProperty => ref arr[0];
+#endif
+
+			public ref readonly int this[in int index] => ref arr[index];
+
 			public event EventHandler NormalEvent;
 
+#if CS80
 			public readonly event EventHandler ReadOnlyEvent {
 				add {
 				}
