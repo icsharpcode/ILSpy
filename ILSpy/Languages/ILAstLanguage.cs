@@ -141,7 +141,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				(output as ISmartTextOutput)?.AddButton(Images.ViewCode, "Show Steps", delegate {
-					DebugStepsPaneModel.Instance.Show();
+					Docking.DockWorkspace.Instance.ShowToolPane(DebugStepsPaneModel.PaneContentId);
 				});
 				output.WriteLine();
 				il.WriteTo(output, DebugSteps.Options);

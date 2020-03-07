@@ -113,6 +113,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
+		public bool ReturnTypeIsRefReadOnly {
+			get {
+				var propertyDef = module.metadata.GetPropertyDefinition(propertyHandle);
+				return propertyDef.GetCustomAttributes().HasKnownAttribute(module.metadata, KnownAttribute.IsReadOnly);
+			}
+		}
+
 		private void DecodeSignature()
 		{
 			var propertyDef = module.metadata.GetPropertyDefinition(propertyHandle);

@@ -86,5 +86,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		IEntity IMemberTreeNode.Member => EventDefinition;
+
+		public override string ToString()
+		{
+			return EventDefinition.Name;
+		}
 	}
 }

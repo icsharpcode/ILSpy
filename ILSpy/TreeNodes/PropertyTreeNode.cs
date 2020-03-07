@@ -93,5 +93,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		IEntity IMemberTreeNode.Member => PropertyDefinition;
+
+		public override string ToString()
+		{
+			return Languages.ILLanguage.PropertyToString(PropertyDefinition, false, false, false);
+		}
 	}
 }

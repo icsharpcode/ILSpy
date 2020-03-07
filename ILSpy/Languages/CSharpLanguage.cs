@@ -457,6 +457,9 @@ namespace ICSharpCode.ILSpy
 			CSharpAmbience ambience = new CSharpAmbience();
 			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewTypeFlags, if this ever changes.
 			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList;
+			if (new DecompilationOptions().DecompilerSettings.LiftNullables) {
+				ambience.ConversionFlags |= ConversionFlags.UseNullableSpecifierForValueTypes;
+			}
 			return ambience;
 		}
 
@@ -635,7 +638,13 @@ namespace ICSharpCode.ILSpy
 			var output = new StringWriter();
 			var decoratedWriter = new TextWriterTokenWriter(output);
 			var writer = new CSharpHighlightingTokenWriter(TokenWriter.InsertRequiredSpaces(decoratedWriter), locatable: decoratedWriter);
-			new CSharpAmbience() { ConversionFlags = flags }.ConvertSymbol(entity, writer, new DecompilerSettings().CSharpFormattingOptions);
+			var settings = new DecompilationOptions().DecompilerSettings;
+			if (!settings.LiftNullables) {
+				flags &= ~ConversionFlags.UseNullableSpecifierForValueTypes;
+			}
+			new CSharpAmbience() {
+				ConversionFlags = flags,
+			}.ConvertSymbol(entity, writer, settings.CSharpFormattingOptions);
 			return new RichText(output.ToString(), writer.HighlightingModel);
 		}
 

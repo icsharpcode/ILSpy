@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// <summary>
 	/// Analyzer tree view.
 	/// </summary>
-	public class AnalyzerTreeView : SharpTreeView, IPane
+	public class AnalyzerTreeView : SharpTreeView
 	{
 		public AnalyzerTreeView()
 		{
@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public void Show()
 		{
-			AnalyzerPaneModel.Instance.Show();
+			DockWorkspace.Instance.ShowToolPane(AnalyzerPaneModel.PaneContentId);
 		}
 
 		public void Show(AnalyzerTreeNode node)
@@ -121,11 +121,6 @@ namespace ICSharpCode.ILSpy.Analyzers
 				default:
 					throw new ArgumentOutOfRangeException(nameof(entity), $"Entity {entity.GetType().FullName} is not supported.");
 			}
-		}
-
-		void IPane.Closed()
-		{
-			this.Root.Children.Clear();
 		}
 		
 		sealed class AnalyzerRootNode : AnalyzerTreeNode

@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				w.WriteElementString("WarningLevel", "4");
 				w.WriteElementString("AllowUnsafeBlocks", "True");
-				
+
 				if (StrongNameKeyFile != null) {
 					w.WriteElementString("SignAssembly", "True");
 					w.WriteElementString("AssemblyOriginatorKeyFile", Path.GetFileName(StrongNameKeyFile));
@@ -463,7 +463,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				} catch (EndOfStreamException) {
 					// if the .resources can't be decoded, just save them as-is
 				}
-			} 
+			}
 			using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write)) {
 				entryStream.CopyTo(fs);
 			}
@@ -512,7 +512,44 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (b.Length == 0)
 				b.Append('-');
-			return b.ToString();
+			string name = b.ToString();
+			if (IsReservedFileSystemName(name))
+				return name + "_";
+			else if (name == ".")
+				return "_";
+			else
+				return name;
+		}
+
+		static bool IsReservedFileSystemName(string name)
+		{
+			switch (name.ToUpperInvariant()) {
+				case "AUX":
+				case "COM1":
+				case "COM2":
+				case "COM3":
+				case "COM4":
+				case "COM5":
+				case "COM6":
+				case "COM7":
+				case "COM8":
+				case "COM9":
+				case "CON":
+				case "LPT1":
+				case "LPT2":
+				case "LPT3":
+				case "LPT4":
+				case "LPT5":
+				case "LPT6":
+				case "LPT7":
+				case "LPT8":
+				case "LPT9":
+				case "NUL":
+				case "PRN":
+					return true;
+				default:
+					return false;
+			}
 		}
 
 		public static string GetPlatformName(Metadata.PEFile module)

@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string Name => metadata.GetString(eventDef.Name);
 
-			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemOrNull()?.MainModule).GetDefinition(handle);
+			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule).GetDefinition(handle);
 
 			[StringFormat("X8")]
 			public int Type => MetadataTokens.GetToken(eventDef.Type);

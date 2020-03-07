@@ -154,5 +154,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		IEntity IMemberTreeNode.Member => TypeDefinition;
+
+		public override string ToString()
+		{
+			return TypeDefinition.ReflectionName;
+		}
 	}
 }

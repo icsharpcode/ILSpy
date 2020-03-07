@@ -87,5 +87,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		IEntity IMemberTreeNode.Member => FieldDefinition;
+
+		public override string ToString()
+		{
+			return FieldDefinition.Name;
+		}
 	}
 }

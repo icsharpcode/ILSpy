@@ -112,5 +112,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		IEntity IMemberTreeNode.Member => MethodDefinition;
+
+		public override string ToString()
+		{
+			return Languages.ILLanguage.MethodToString(MethodDefinition, false, false, false);
+		}
 	}
 }

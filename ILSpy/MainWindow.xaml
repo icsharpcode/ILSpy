@@ -16,7 +16,6 @@
 	MinHeight="200"
 	UseLayoutRounding="True"
 	TextOptions.TextFormattingMode="Display"
-	FocusManager.FocusedElement="{Binding ElementName=treeView}"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" d:DesignHeight="500" d:DesignWidth="500"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
 >
@@ -24,7 +23,7 @@
 		<controls:BoolToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 		<docking:ActiveTabPageConverter x:Key="ActiveTabPageConverter"/>
 
-		<tv:SharpTreeView x:Key="TreeView"
+		<tv:SharpTreeView x:Key="AssemblyTreeView"
 				AutomationProperties.Name="Assemblies and Classes"
 				SelectionChanged="TreeView_SelectionChanged"
 				ShowRoot="False"
@@ -33,7 +32,7 @@
 				BorderThickness="0,1,1,1" Visibility="Visible" />
 
 		<DataTemplate x:Key="AssemblyListPaneTemplate">
-			<ContentControl Content="{StaticResource TreeView}" />
+			<ContentControl Content="{StaticResource AssemblyTreeView}" />
 		</DataTemplate>
 
 		<local:DebugSteps x:Key="DebugSteps" />
@@ -169,7 +168,7 @@
 
 		<avalondock:DockingManager x:Name="DockManager"
 									DataContext="{Binding Workspace}"
-									AnchorablesSource="{Binding ToolPanes}" 
+									AnchorablesSource="{Binding ToolPanes}"
 									DocumentsSource="{Binding TabPages}"
 									ActiveContent="{Binding ActiveTabPage, Mode=TwoWay, Converter={StaticResource ActiveTabPageConverter}}"
 									AllowMixedOrientation="True">
@@ -184,18 +183,6 @@
 					</DataTemplate.Triggers>
 				</DataTemplate>
 			</avalondock:DockingManager.DocumentHeaderTemplate>
-
-			<avalondock:DockingManager.LayoutItemTemplateSelector>
-				<docking:PaneTemplateSelector>
-					<docking:PaneTemplateSelector.Mappings>
-						<docking:TemplateMapping Type="{x:Type viewmodels:AssemblyListPaneModel}" Template="{StaticResource AssemblyListPaneTemplate}" />
-						<docking:TemplateMapping Type="{x:Type viewmodels:SearchPaneModel}" Template="{StaticResource SearchPaneTemplate}" />
-						<docking:TemplateMapping Type="{x:Type viewmodels:DebugStepsPaneModel}" Template="{StaticResource DebugStepsPaneTemplate}" />
-						<docking:TemplateMapping Type="{x:Type viewmodels:AnalyzerPaneModel}" Template="{StaticResource AnalyzerPaneTemplate}" />
-						<docking:TemplateMapping Type="{x:Type viewmodels:TabPageModel}" Template="{StaticResource DefaultContentTemplate}" />
-					</docking:PaneTemplateSelector.Mappings>
-				</docking:PaneTemplateSelector>
-			</avalondock:DockingManager.LayoutItemTemplateSelector>
 
 			<avalondock:DockingManager.LayoutItemContainerStyleSelector>
 				<docking:PaneStyleSelector>

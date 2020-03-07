@@ -581,7 +581,7 @@ namespace ICSharpCode.ILSpy.TextView
 				this.nextDecompilationRun = null;
 			}
 			if (nodes != null && string.IsNullOrEmpty(textOutput.Title))
-				textOutput.Title = string.Join(", ", nodes.Select(n => n.ToString()));
+				textOutput.Title = string.Join(", ", nodes.Select(n => n.Text));
 			ShowOutput(textOutput, highlighting);
 			decompiledNodes = nodes;
 		}
@@ -772,7 +772,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			var nodes = context.TreeNodes;
 			if (textOutput is ISmartTextOutput smartTextOutput) {
-				smartTextOutput.Title = string.Join(", ", nodes.Select(n => n.ToString()));
+				smartTextOutput.Title = string.Join(", ", nodes.Select(n => n.Text));
 			}
 			for (int i = 0; i < nodes.Length; i++) {
 				if (i > 0)

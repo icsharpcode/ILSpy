@@ -401,12 +401,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new DecompilerTypeSystem(file, resolver);
 		}
 
-		static TypeSystemAstBuilder CreateAstBuilder(ITypeResolveContext decompilationContext)
+		static TypeSystemAstBuilder CreateAstBuilder(DecompilerSettings settings)
 		{
 			var typeSystemAstBuilder = new TypeSystemAstBuilder();
 			typeSystemAstBuilder.ShowAttributes = true;
 			typeSystemAstBuilder.AlwaysUseShortTypeNames = true;
 			typeSystemAstBuilder.AddResolveResultAnnotations = true;
+			typeSystemAstBuilder.UseNullableSpecifierForValueTypes = settings.LiftNullables;
 			return typeSystemAstBuilder;
 		}
 
@@ -421,7 +422,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void RunTransforms(AstNode rootNode, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
-			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+			var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 			var context = new TransformContext(typeSystem, decompileRun, decompilationContext, typeSystemAstBuilder);
 			foreach (var transform in astTransforms) {
 				CancellationToken.ThrowIfCancellationRequested();
@@ -466,13 +467,13 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			try {
 				foreach (var a in typeSystem.MainModule.GetAssemblyAttributes()) {
-					var astBuilder = CreateAstBuilder(decompilationContext);
+					var astBuilder = CreateAstBuilder(decompileRun.Settings);
 					var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 					attrSection.AttributeTarget = "assembly";
 					syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
 				}
 				foreach (var a in typeSystem.MainModule.GetModuleAttributes()) {
-					var astBuilder = CreateAstBuilder(decompilationContext);
+					var astBuilder = CreateAstBuilder(decompileRun.Settings);
 					var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 					attrSection.AttributeTarget = "module";
 					syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
@@ -1076,7 +1077,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(decompilationContext.CurrentTypeDefinition == typeDef);
 			try {
-				var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				var entityDecl = typeSystemAstBuilder.ConvertEntity(typeDef);
 				var typeDecl = entityDecl as TypeDeclaration;
 				if (typeDecl == null) {
@@ -1239,7 +1240,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(IMethod method, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == method);
-			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+			var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 			var methodDecl = typeSystemAstBuilder.ConvertEntity(method);
 			int lastDot = method.Name.LastIndexOf('.');
 			if (method.IsExplicitInterfaceImplementation && lastDot >= 0) {
@@ -1412,7 +1413,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(decompilationContext.CurrentMember == field);
 			try {
-				var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum && field.IsConst) {
 					var enumDec = new EnumMemberDeclaration { Name = field.Name };
 					object constantValue = field.GetConstantValue();
@@ -1483,7 +1484,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(decompilationContext.CurrentMember == property);
 			try {
-				var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				EntityDeclaration propertyDecl = typeSystemAstBuilder.ConvertEntity(property);
 				if (property.IsExplicitInterfaceImplementation && !property.IsIndexer) {
 					int lastDot = property.Name.LastIndexOf('.');
@@ -1518,7 +1519,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(decompilationContext.CurrentMember == ev);
 			try {
-				var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				typeSystemAstBuilder.UseCustomEvents = ev.DeclaringTypeDefinition.Kind != TypeKind.Interface;
 				var eventDecl = typeSystemAstBuilder.ConvertEntity(ev);
 				int lastDot = ev.Name.LastIndexOf('.');

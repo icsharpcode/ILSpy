@@ -400,7 +400,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var retParam = metadata.GetParameter(parameters.First());
 				if (retParam.SequenceNumber == 0) {
 					b.AddMarshalInfo(retParam.GetMarshallingDescriptor());
-					b.Add(retParam.GetCustomAttributes(), symbolKind);
+					b.Add(retParam.GetCustomAttributes(), SymbolKind.ReturnType);
 				}
 			}
 			return b.Build();

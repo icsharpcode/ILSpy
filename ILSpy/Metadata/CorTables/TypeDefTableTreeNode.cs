@@ -165,7 +165,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemOrNull()?.MainModule).GetDefinition(handle);
+			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule).GetDefinition(handle);
 
 			public TypeDefEntry(PEFile module, TypeDefinitionHandle handle)
 			{

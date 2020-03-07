@@ -139,7 +139,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				// if we crashed on loading, then we don't have any children
 				return;
 			}
-			typeSystem = LoadedAssembly.GetTypeSystemOrNull();
+			typeSystem = LoadedAssembly.GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(new DecompilationOptions().DecompilerSettings));
 			var assembly = (MetadataModule)typeSystem.MainModule;
 			var metadata = module.Metadata;
 			this.Children.Add(new Metadata.MetadataTreeNode(module, this));
