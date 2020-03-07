@@ -319,6 +319,152 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!context.Settings.NullPropagation)
 				return;
 			new NullPropagationTransform(context).RunStatements(block, pos);
+			if (TransformNullPropagationOnUnconstrainedGenericExpression(block, pos, out var target, out var value, out var rewrapPoint, out var endBlock)) {
+				context.Step("TransformNullPropagationOnUnconstrainedGenericExpression", block);
+				// A successful match was found:
+				// 1. The 'target' instruction, that is, the instruction where the actual 'null-propagating' call happens:
+				// <target>.Call() is replaced with <value>?.Call()
+				// 2. The 'value' instruction, that is, the instruction that produces the value:
+				// It is inlined at the location of 'target'.
+				// 3. The 'rewrapPoint' instruction is an ancestor of the call that is used as location for the NullableRewrap instruction,
+				// if the expression does not yet contain a NullableRewrap.
+				
+				// First try to find a NullableRewrap instruction
+				bool needsRewrap = true;
+				var tmp = target;
+				while (needsRewrap && tmp != null) {
+					if (tmp is NullableRewrap) {
+						needsRewrap = false;
+						break;
+					}
+					tmp = tmp.Parent;
+				}
+				// Remove the fallback conditions and blocks
+				block.Instructions.RemoveRange(pos, 3);
+				// inline value and wrap it in a NullableUnwrap instruction to produce 'value?'.
+				target.ReplaceWith(new NullableUnwrap(value.ResultType, value, refInput: true));
+				// if the ancestors do not yet have a NullableRewrap instruction
+				// insert it at the 'rewrapPoint'.
+				if (needsRewrap) {
+					var siblings = rewrapPoint.Parent.Children;
+					int index = rewrapPoint.ChildIndex;
+					siblings[index] = new NullableRewrap(rewrapPoint);
+				}
+				// If the endBlock is only reachable through the current block,
+				// combine both blocks.
+				if (endBlock.IncomingEdgeCount == 1) {
+					block.Instructions.AddRange(endBlock.Instructions);
+					block.Instructions.RemoveAt(pos + 1);
+					endBlock.Remove();
+				}
+			}
+		}
+
+		// stloc valueTemporary(valueExpression)
+		// stloc defaultTemporary(default.value type)
+		// if (logic.not(comp.o(box `0(ldloc defaultTemporary) != ldnull))) Block fallbackBlock {
+		// 	stloc defaultTemporary(ldobj type(ldloc valueTemporary))
+		// 	stloc valueTemporary(ldloca defaultTemporary)
+		// 	if (comp.o(ldloc defaultTemporary == ldnull)) Block fallbackBlock2 {
+		// 		stloc resultTemporary(ldnull)
+		// 		br endBlock
+		// 	}
+		// }
+		// stloc resultTemporary(constrained[type].call_instruction(ldloc valueTemporary, ...))
+		// br endBlock
+		// =>
+		// stloc resultTemporary(nullable.rewrap(constrained[type].call_instruction(nullable.unwrap(valueExpression), ...)))
+		private bool TransformNullPropagationOnUnconstrainedGenericExpression(Block block, int pos,
+			out ILInstruction target, out ILInstruction value, out ILInstruction rewrapPoint, out Block endBlock)
+		{
+			target = null;
+			value = null;
+			rewrapPoint = null;
+			endBlock = null;
+			if (pos + 4 >= block.Instructions.Count)
+				return false;
+			// stloc valueTemporary(valueExpression)
+			if (!(block.Instructions[pos].MatchStLoc(out var valueTemporary, out value)))
+				return false;
+			if (!(valueTemporary.Kind == VariableKind.StackSlot && valueTemporary.LoadCount == 2 && valueTemporary.StoreCount == 2))
+				return false;
+			// stloc defaultTemporary(default.value type)
+			if (!(block.Instructions[pos + 1].MatchStLoc(out var defaultTemporary, out var defaultExpression) && defaultExpression.MatchDefaultValue(out var type)))
+				return false;
+			// Some variables are reused by the compiler therefore we cannot check for absolute numbers. See for example ValueTuple`8.ToString
+			// LoadCount must be == StoreCount and LoadCount must be 2x AddressCount.
+			// Note: if successful, this transform removes exactly 2 store, 2 load and 1 addressof instruction.
+			if (!(defaultTemporary.Kind == VariableKind.Local && defaultTemporary.LoadCount == defaultTemporary.StoreCount && defaultTemporary.AddressCount * 2 == defaultTemporary.StoreCount))
+				return false;
+			// if (logic.not(comp.o(box `0(ldloc defaultTemporary) != ldnull))) Block fallbackBlock
+			if (!(block.Instructions[pos + 2].MatchIfInstruction(out var condition, out var fallbackBlock1) && condition.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(defaultTemporary)))
+				return false;
+			// stloc resultTemporary(constrained[type].call_instruction(ldloc valueTemporary, ...))
+			if (!(block.Instructions[pos + 3].MatchStLoc(out var resultTemporary, out rewrapPoint)))
+				return false;
+			var loadInCall = FindLoadInExpression(valueTemporary, rewrapPoint);
+			if (!(loadInCall != null && loadInCall.Ancestors.OfType<CallInstruction>().FirstOrDefault() is CallInstruction call))
+				return false;
+			if (!(call.Arguments.Count > 0 && loadInCall.IsDescendantOf(call.Arguments[0])))
+				return false;
+			// br IL_0035
+			if (!(block.Instructions[pos + 4].MatchBranch(out endBlock)))
+				return false;
+			// Analyze Block fallbackBlock
+			if (!(fallbackBlock1 is Block b && IsFallbackBlock(b, type, valueTemporary, defaultTemporary, resultTemporary, endBlock)))
+				return false;
+			target = call.Arguments[0];
+			return true;
+
+			ILInstruction FindLoadInExpression(ILVariable variable, ILInstruction expression)
+			{
+				foreach (var load in variable.LoadInstructions) {
+					if (load.IsDescendantOf(expression))
+						return load;
+				}
+				return null;
+			}
+		}
+
+		// Block fallbackBlock {
+		// 	stloc defaultTemporary(ldobj type(ldloc valueTemporary))
+		// 	stloc valueTemporary(ldloca defaultTemporary)
+		// 	if (comp.o(ldloc defaultTemporary == ldnull)) Block fallbackBlock {
+		// 		stloc resultTemporary(ldnull)
+		// 		br endBlock
+		// 	}
+		// }
+		private bool IsFallbackBlock(Block block, IType type, ILVariable valueTemporary, ILVariable defaultTemporary, ILVariable resultTemporary, Block endBlock)
+		{
+			if (!(block.Instructions.Count == 3))
+				return false;
+			// stloc defaultTemporary(ldobj type(ldloc valueTemporary))
+			if (!(block.Instructions[0].MatchStLoc(defaultTemporary, out var valueExpression)))
+				return false;
+			if (!(valueExpression.MatchLdObj(out var target, out var t) && type.Equals(t) && target.MatchLdLoc(valueTemporary)))
+				return false;
+			// stloc valueTemporary(ldloca defaultTemporary)
+			if (!(block.Instructions[1].MatchStLoc(valueTemporary, out var defaultAddress) && defaultAddress.MatchLdLoca(defaultTemporary)))
+				return false;
+			// if (comp.o(ldloc defaultTemporary == ldnull)) Block fallbackBlock
+			if (!(block.Instructions[2].MatchIfInstruction(out var condition, out var tmp) && tmp is Block fallbackBlock && condition.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(defaultTemporary)))
+				return false;
+			// Block fallbackBlock {
+			//   stloc resultTemporary(ldnull)
+			//   br endBlock
+			// }
+			if (!(fallbackBlock.Instructions.Count == 2))
+				return false;
+			if (!(fallbackBlock.Instructions[0].MatchStLoc(resultTemporary, out var defaultValue) && MatchDefaultValueOrLdNull(defaultValue)))
+				return false;
+			if (!fallbackBlock.Instructions[1].MatchBranch(endBlock))
+				return false;
+			return true;
+		}
+
+		private bool MatchDefaultValueOrLdNull(ILInstruction inst)
+		{
+			return inst.MatchLdNull() || inst.MatchDefaultValue(out _);
 		}
 	}
 }
