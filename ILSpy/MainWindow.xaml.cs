@@ -727,7 +727,17 @@ namespace ICSharpCode.ILSpy
 
 		#region Node Selection
 
-		public void SelectNode(SharpTreeNode obj, bool inNewTabPage = false)
+		public void SelectNode(SharpTreeNode obj)
+		{
+			SelectNode(obj, false);
+		}
+
+		public void SelectNode(SharpTreeNode obj, bool inNewTabPage)
+		{
+			SelectNode(obj, inNewTabPage, true);
+		}
+
+		public void SelectNode(SharpTreeNode obj, bool inNewTabPage, bool setFocus)
 		{
 			if (obj != null) {
 				if (!obj.AncestorsAndSelf().Any(node => node.IsHidden)) {
@@ -742,7 +752,11 @@ namespace ICSharpCode.ILSpy
 					}
 
 					// Set both the selection and focus to ensure that keyboard navigation works as expected.
-					AssemblyTreeView.FocusNode(obj);
+					if (setFocus) {
+						AssemblyTreeView.FocusNode(obj);
+					} else {
+						AssemblyTreeView.ScrollIntoView(obj);
+					}
 					AssemblyTreeView.SelectedItem = obj;
 				} else {
 					MessageBox.Show("Navigation failed because the target is hidden or a compiler-generated class.\n" +
@@ -753,7 +767,17 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public void SelectNodes(IEnumerable<SharpTreeNode> nodes, bool inNewTabPage = false)
+		public void SelectNodes(IEnumerable<SharpTreeNode> nodes)
+		{
+			SelectNodes(nodes, false);
+		}
+
+		public void SelectNodes(IEnumerable<SharpTreeNode> nodes, bool inNewTabPage)
+		{
+			SelectNodes(nodes, inNewTabPage, true);
+		}
+
+		public void SelectNodes(IEnumerable<SharpTreeNode> nodes, bool inNewTabPage, bool setFocus)
 		{
 			if (nodes.Any() && nodes.All(n => !n.AncestorsAndSelf().Any(a => a.IsHidden))) {
 				if (inNewTabPage) {
@@ -765,7 +789,11 @@ namespace ICSharpCode.ILSpy
 					DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
 				}
 
-				AssemblyTreeView.FocusNode(nodes.First());
+				if (setFocus) {
+					AssemblyTreeView.FocusNode(nodes.First());
+				} else {
+					AssemblyTreeView.ScrollIntoView(nodes.First());
+				}
 				AssemblyTreeView.SetSelectedNodes(nodes);
 			}
 		}
@@ -998,7 +1026,7 @@ namespace ICSharpCode.ILSpy
 				refreshInProgress = true;
 				var path = GetPathForNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
 				ShowAssemblyList(AssemblyListManager.LoadList(ILSpySettings.Load(), assemblyList.ListName));
-				SelectNode(FindNodeByPath(path, true));
+				SelectNode(FindNodeByPath(path, true), false, false);
 			} finally {
 				refreshInProgress = false;
 			}
