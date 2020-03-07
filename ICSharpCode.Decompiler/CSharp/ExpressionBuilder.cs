@@ -1178,7 +1178,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (countOffsetInst == byteOffsetInst) {
 				return EnsureIntegerType(byteOffsetExpr);
 			} else {
-				return EnsureIntegerType(Translate(countOffsetInst));
+				TranslatedExpression expr = Translate(countOffsetInst);
+				// Keep original ILInstruction as annotation
+				expr.Expression.RemoveAnnotations<ILInstruction>();
+				return EnsureIntegerType(expr.WithILInstruction(byteOffsetInst));
 			}
 		}
 
