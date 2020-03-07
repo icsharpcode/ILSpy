@@ -31,7 +31,6 @@ using System.Text;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -58,7 +57,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			var emptyList = new List<SequencePoint>();
 			var localScopes = new List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length, HashSet<ILVariable> Locals)>();
 			var stateMachineMethods = new List<(MethodDefinitionHandle MoveNextMethod, MethodDefinitionHandle KickoffMethod)>();
-			var customDocumentDebugInfo = new List<(DocumentHandle Parent, GuidHandle Guid, BlobHandle Blob)>();
+			var customDebugInfo = new List<(EntityHandle Parent, GuidHandle Guid, BlobHandle Blob)>();
 			var customMethodDebugInfo = new List<(MethodDefinitionHandle Parent, GuidHandle Guid, BlobHandle Blob)>();
 			var globalImportScope = metadata.AddImportScope(default, default);
 
@@ -93,7 +92,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 						language: metadata.GetOrAddGuid(KnownGuids.CSharpLanguageGuid));
 
 					// Add embedded source to the PDB
-					customDocumentDebugInfo.Add((document,
+					customDebugInfo.Add((document,
 						metadata.GetOrAddGuid(KnownGuids.EmbeddedSource),
 						sourceBlob));
 
@@ -110,6 +109,11 @@ namespace ICSharpCode.Decompiler.DebugInfo
 							stateMachineMethods.Add((
 								(MethodDefinitionHandle)function.MoveNextMethod.MetadataToken,
 								(MethodDefinitionHandle)function.Method.MetadataToken
+							));
+							customDebugInfo.Add((
+								function.MoveNextMethod.MetadataToken,
+								metadata.GetOrAddGuid(KnownGuids.StateMachineHoistedLocalScopes),
+								metadata.GetOrAddBlob(BuildStateMachineHoistedLocalScopes(function))
 							));
 						}
 						if (function.IsAsync) {
@@ -161,8 +165,8 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			foreach (var row in customMethodDebugInfo) {
 				metadata.AddCustomDebugInformation(row.Parent, row.Guid, row.Blob);
 			}
-			customDocumentDebugInfo.SortBy(row => MetadataTokens.GetRowNumber(row.Parent));
-			foreach (var row in customDocumentDebugInfo) {
+			customDebugInfo.SortBy(row => MetadataTokens.GetRowNumber(row.Parent));
+			foreach (var row in customDebugInfo) {
 				metadata.AddCustomDebugInformation(row.Parent, row.Guid, row.Blob);
 			}
 
@@ -192,6 +196,16 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				else
 					sequencePointBlobs.Add(method, (default, default));
 			}
+		}
+
+		static BlobBuilder BuildStateMachineHoistedLocalScopes(ILFunction function)
+		{
+			var builder = new BlobBuilder();
+			foreach (var variable in function.Variables.Where(v => v.StateMachineField != null).OrderBy(v => MetadataTokens.GetRowNumber(v.StateMachineField.MetadataToken))) {
+				builder.WriteUInt32(0);
+				builder.WriteUInt32((uint)function.CodeSize);
+			}
+			return builder;
 		}
 
 		static BlobHandle WriteSourceToBlob(MetadataBuilder metadata, string sourceText, out byte[] sourceCheckSum)
