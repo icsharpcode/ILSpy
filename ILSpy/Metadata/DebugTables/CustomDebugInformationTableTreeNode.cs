@@ -138,7 +138,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string ValueTooltip {
 				get {
-					return null;
+					if (debugInfo.Value.IsNil)
+						return "<nil>";
+					return metadata.GetBlobReader(debugInfo.Value).ToHexString();
 				}
 			}
 
