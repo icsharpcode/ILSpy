@@ -133,6 +133,16 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			HandleMethod(anonymousMethodExpression);
 		}
 
+		public override void VisitQuerySelectClause(QuerySelectClause querySelectClause)
+		{
+			HandleMethod(querySelectClause);
+		}
+
+		public override void VisitQueryWhereClause(QueryWhereClause queryWhereClause)
+		{
+			HandleMethod(queryWhereClause);
+		}
+
 		void HandleMethod(AstNode node)
 		{
 			// Look into method body, e.g. in order to find lambdas

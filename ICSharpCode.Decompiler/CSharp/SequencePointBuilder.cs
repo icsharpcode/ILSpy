@@ -160,6 +160,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			VisitAsSequencePoint(lambdaExpression.Body);
 		}
 
+		public override void VisitQuerySelectClause(QuerySelectClause querySelectClause)
+		{
+			AddToSequencePoint(querySelectClause);
+			VisitAsSequencePoint(querySelectClause.Expression);
+		}
+
+		public override void VisitQueryWhereClause(QueryWhereClause queryWhereClause)
+		{
+			AddToSequencePoint(queryWhereClause);
+			VisitAsSequencePoint(queryWhereClause.Condition);
+		}
+
 		public override void VisitUsingStatement(UsingStatement usingStatement)
 		{
 			StartSequencePoint(usingStatement);

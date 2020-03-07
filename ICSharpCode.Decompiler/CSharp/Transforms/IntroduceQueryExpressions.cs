@@ -97,10 +97,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							return null;
 						ParameterDeclaration parameter;
 						Expression body;
-						if (MatchSimpleLambda(invocation.Arguments.Single(), out parameter, out body)) {
+						Expression expr = invocation.Arguments.Single();
+						if (MatchSimpleLambda(expr, out parameter, out body)) {
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
-							query.Clauses.Add(new QuerySelectClause { Expression = WrapExpressionInParenthesesIfNecessary(body.Detach(), parameter.Name) });
+							query.Clauses.Add(new QuerySelectClause { Expression = WrapExpressionInParenthesesIfNecessary(body.Detach(), parameter.Name) }.CopyAnnotationsFrom(expr));
 							return query;
 						}
 						return null;
@@ -163,10 +164,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							return null;
 						ParameterDeclaration parameter;
 						Expression body;
-						if (MatchSimpleLambda(invocation.Arguments.Single(), out parameter, out body)) {
+						Expression expr = invocation.Arguments.Single();
+						if (MatchSimpleLambda(expr, out parameter, out body)) {
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
-							query.Clauses.Add(new QueryWhereClause { Condition = body.Detach() });
+							query.Clauses.Add(new QueryWhereClause { Condition = body.Detach() }.CopyAnnotationsFrom(expr));
 							return query;
 						}
 						return null;
@@ -244,7 +246,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 									joinClause.IntoIdentifier = p2.Name; // into p2.Name
 								}
 								query.Clauses.Add(joinClause);
-								query.Clauses.Add(new QuerySelectClause { Expression = ((Expression)lambda.Body).Detach() });
+								query.Clauses.Add(new QuerySelectClause { Expression = ((Expression)lambda.Body).Detach() }.CopyAnnotationsFrom(lambda));
 								return query;
 							}
 						}
