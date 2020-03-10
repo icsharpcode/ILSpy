@@ -84,7 +84,6 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public IEnumerable<ITypeDefinition> GetTypesInScope(CancellationToken ct)
 		{
 			if (IsLocal) {
-				var typeSystem = new DecompilerTypeSystem(TypeScope.ParentModule.PEFile, TypeScope.ParentModule.PEFile.GetAssemblyResolver());
 				foreach (var type in TreeTraversal.PreOrder(typeScope, t => t.NestedTypes)) {
 					yield return type;
 				}

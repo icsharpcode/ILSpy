@@ -489,9 +489,6 @@ namespace ICSharpCode.ILSpy
 
 		public virtual CodeMappingInfo GetCodeMappingInfo(PEFile module, SRM.EntityHandle member)
 		{
-			var parts = new Dictionary<SRM.MethodDefinitionHandle, SRM.MethodDefinitionHandle[]>();
-			var locations = new Dictionary<SRM.EntityHandle, SRM.MethodDefinitionHandle>();
-
 			var declaringType = member.GetDeclaringType(module.Metadata);
 
 			if (declaringType.IsNil && member.Kind == SRM.HandleKind.TypeDefinition) {
