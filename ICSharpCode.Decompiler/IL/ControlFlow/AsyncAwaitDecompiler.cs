@@ -819,6 +819,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			function.Body = mainTryCatch.TryBlock;
 			function.AsyncReturnType = underlyingReturnType;
 			function.MoveNextMethod = moveNextFunction.Method;
+			function.SequencePointCandidates = moveNextFunction.SequencePointCandidates;
 			function.CodeSize = moveNextFunction.CodeSize;
 			function.IsIterator = IsAsyncEnumerator;
 			moveNextFunction.Variables.Clear();
