@@ -141,7 +141,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			typeSystem = LoadedAssembly.GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(new DecompilationOptions().DecompilerSettings));
 			var assembly = (MetadataModule)typeSystem.MainModule;
-			var metadata = module.Metadata;
 			this.Children.Add(new Metadata.MetadataTreeNode(module, this));
 			Decompiler.DebugInfo.IDebugInfoProvider debugInfo = LoadedAssembly.GetDebugInfoOrNull();
 			if (debugInfo is Decompiler.PdbProvider.PortableDebugInfoProvider ppdb) {

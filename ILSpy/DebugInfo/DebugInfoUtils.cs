@@ -32,7 +32,6 @@ namespace ICSharpCode.Decompiler.PdbProvider
 		public static IDebugInfoProvider LoadSymbols(PEFile module)
 		{
 			try {
-				var reader = module.Reader;
 				// try to open portable pdb file/embedded pdb info:
 				if (TryOpenPortablePdb(module, out var provider, out var pdbFileName)) {
 					return new PortableDebugInfoProvider(pdbFileName, provider);
