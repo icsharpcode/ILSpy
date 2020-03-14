@@ -69,6 +69,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		private struct GenericStruct<T1, T2>
+		{
+			public T1 Field1;
+			public T2 Field2;
+
+			public override string ToString()
+			{
+				return "(" + Field1?.ToString() + ", " + Field2?.ToString() + ")";
+			}
+		}
+
 		public interface ITest
 		{
 			int Int();
@@ -243,12 +254,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return t?.Int();
 		}
 
-		// See also: https://github.com/icsharpcode/ILSpy/issues/1050
-		// The C# compiler generates pretty weird code in this case.
-		//private static int? GenericRefUnconstrainedInt<T>(ref T t) where T : ITest
-		//{
-		//	return t?.Int();
-		//}
+		private static int? GenericRefUnconstrainedInt<T>(ref T t) where T : ITest
+		{
+			return t?.Int();
+		}
 
 		private static int? GenericRefClassConstraintInt<T>(ref T t) where T : class, ITest
 		{
