@@ -45,9 +45,9 @@ jobs:
       version: '3.1.100'
       installationPath: $(Agent.ToolsDirectory)/dotnet
 
-  - powershell: .\BuildTools\pipelines-install.ps1
+  - script: pwsh .\BuildTools\pipelines-install.ps1
     displayName: Install
-
+    
   - task: MSBuild@1
     displayName: Restore ILSpy
     inputs:

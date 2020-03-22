@@ -8,7 +8,7 @@ image: Visual Studio 2019
 
 install:
 - git submodule update --init --recursive
-- ps: .\BuildTools\appveyor-install.ps1
+- pwsh .\BuildTools\appveyor-install.ps1
 
 nuget:
   account_feed: false
