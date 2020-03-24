@@ -336,6 +336,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					number += ".0";
 				}
 				textWriter.Write(number);
+				column += number.Length;
 				Length += number.Length;
 			} else if (value is IFormattable) {
 				StringBuilder b = new StringBuilder();
