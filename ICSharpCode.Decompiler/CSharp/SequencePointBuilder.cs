@@ -160,6 +160,48 @@ namespace ICSharpCode.Decompiler.CSharp
 			VisitAsSequencePoint(lambdaExpression.Body);
 		}
 
+		public override void VisitQueryContinuationClause(QueryContinuationClause queryContinuationClause)
+		{
+			AddToSequencePoint(queryContinuationClause);
+			VisitAsSequencePoint(queryContinuationClause.PrecedingQuery);
+		}
+
+		public override void VisitQueryFromClause(QueryFromClause queryFromClause)
+		{
+			if (queryFromClause.Parent.FirstChild != queryFromClause) {
+				AddToSequencePoint(queryFromClause);
+				VisitAsSequencePoint(queryFromClause.Expression);
+			} else {
+				base.VisitQueryFromClause(queryFromClause);
+			}
+		}
+
+		public override void VisitQueryGroupClause(QueryGroupClause queryGroupClause)
+		{
+			AddToSequencePoint(queryGroupClause);
+			VisitAsSequencePoint(queryGroupClause.Projection);
+			VisitAsSequencePoint(queryGroupClause.Key);
+		}
+
+		public override void VisitQueryJoinClause(QueryJoinClause queryJoinClause)
+		{
+			AddToSequencePoint(queryJoinClause);
+			VisitAsSequencePoint(queryJoinClause.OnExpression);
+			VisitAsSequencePoint(queryJoinClause.EqualsExpression);
+		}
+
+		public override void VisitQueryLetClause(QueryLetClause queryLetClause)
+		{
+			AddToSequencePoint(queryLetClause);
+			VisitAsSequencePoint(queryLetClause.Expression);
+		}
+
+		public override void VisitQueryOrdering(QueryOrdering queryOrdering)
+		{
+			AddToSequencePoint(queryOrdering);
+			VisitAsSequencePoint(queryOrdering.Expression);
+		}
+
 		public override void VisitQuerySelectClause(QuerySelectClause querySelectClause)
 		{
 			AddToSequencePoint(querySelectClause);

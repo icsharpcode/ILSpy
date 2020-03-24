@@ -289,4 +289,34 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.ConversionResolveResult = conversionResolveResult;
 		}
 	}
+
+	/// <summary>
+	/// Annotates a QueryGroupClause with the ILFunctions of each (implicit lambda) expression.
+	/// </summary>
+	public class QueryGroupClauseAnnotation
+	{
+		public readonly ILFunction KeyLambda;
+		public readonly ILFunction ProjectionLambda;
+
+		public QueryGroupClauseAnnotation(ILFunction key, ILFunction projection)
+		{
+			this.KeyLambda = key;
+			this.ProjectionLambda = projection;
+		}
+	}
+
+	/// <summary>
+	/// Annotates a QueryJoinClause with the ILFunctions of each (implicit lambda) expression.
+	/// </summary>
+	public class QueryJoinClauseAnnotation
+	{
+		public readonly ILFunction OnLambda;
+		public readonly ILFunction EqualsLambda;
+
+		public QueryJoinClauseAnnotation(ILFunction on, ILFunction equals)
+		{
+			this.OnLambda = on;
+			this.EqualsLambda = equals;
+		}
+	}
 }
