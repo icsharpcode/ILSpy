@@ -84,7 +84,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							containingBlock.Instructions.Remove(store);
 					}
 				}
-				RemoveDeadVariableInit.ResetHasInitialValueFlag(function, context);
+				foreach (var f in TreeTraversal.PostOrder(function, f => f.LocalFunctions))
+					RemoveDeadVariableInit.ResetHasInitialValueFlag(f, context);
 			} finally {
 				instructionsToRemove.Clear();
 				displayClasses.Clear();
