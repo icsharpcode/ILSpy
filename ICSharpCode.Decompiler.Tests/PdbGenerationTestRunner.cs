@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.Tests
 			string xmlContent = File.ReadAllText(xmlFile);
 			XDocument document = XDocument.Parse(xmlContent);
 			var files = document.Descendants("file").ToDictionary(f => f.Attribute("name").Value, f => f.Value);
-			Tester.CompileCSharpWithPdb(Path.Combine(TestCasePath, testName + ".expected"), files, options);
+			Tester.CompileCSharpWithPdb(Path.Combine(TestCasePath, testName + ".expected"), files);
 
 			string peFileName = Path.Combine(TestCasePath, testName + ".expected.dll");
 			string pdbFileName = Path.Combine(TestCasePath, testName + ".expected.pdb");

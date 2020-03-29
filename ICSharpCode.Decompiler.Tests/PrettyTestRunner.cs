@@ -284,7 +284,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void VariableNaming([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions);
+			RunForLibrary(cscOptions: cscOptions | CompilerOptions.GeneratePdb);
 		}
 
 		[Test]
