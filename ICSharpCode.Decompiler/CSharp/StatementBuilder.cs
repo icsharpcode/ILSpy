@@ -992,6 +992,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				stmt.Parameters.AddRange(exprBuilder.MakeParameters(function.Parameters, function));
 				stmt.ReturnType = exprBuilder.ConvertType(function.Method.ReturnType);
 				stmt.Body = nestedBuilder.ConvertAsBlock(function.Body);
+
+				Comment prev = null;
+				foreach (string warning in function.Warnings) {
+					stmt.Body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
+				}
+
 				if (function.Method.TypeParameters.Count > 0) {
 					var astBuilder = exprBuilder.astBuilder;
 					if (astBuilder.ShowTypeParameters) {
