@@ -74,6 +74,17 @@ namespace ICSharpCode.Decompiler.Tests.Pretty
 			{
 
 			}
+
+			public string ThisQualifierWithCast()
+			{
+				return ((object)this).ToString();
+			}
+
+			public override string ToString()
+			{
+				// decompiled as return ((ValueType)this).ToString();
+				return base.ToString();
+			}
 		}
 
 		internal class Parent

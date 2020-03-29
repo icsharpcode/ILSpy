@@ -1999,7 +1999,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// If references are missing member.IsStatic might not be set correctly.
 			// Additionally check target for null, in order to avoid a crash.
 			if (!memberStatic && target != null) {
-				if (nonVirtualInvocation && target.MatchLdThis() && memberDeclaringType.GetDefinition() != resolver.CurrentTypeDefinition) {
+				if (nonVirtualInvocation && MatchLdThis(target) && memberDeclaringType.GetDefinition() != resolver.CurrentTypeDefinition) {
 					return new BaseReferenceExpression()
 						.WithILInstruction(target)
 						.WithRR(new ThisResolveResult(memberDeclaringType, nonVirtualInvocation));
@@ -2033,6 +2033,24 @@ namespace ICSharpCode.Decompiler.CSharp
 				return new TypeReferenceExpression(ConvertType(memberDeclaringType))
 					.WithoutILInstruction()
 					.WithRR(new TypeResolveResult(memberDeclaringType));
+			}
+
+			bool MatchLdThis(ILInstruction inst)
+			{
+				// ldloc this
+				if (inst.MatchLdThis())
+					return true;
+				if (resolver.CurrentTypeDefinition.Kind == TypeKind.Struct) {
+					// box T(ldobj T(ldloc this))
+					if (!inst.MatchBox(out var arg, out var type))
+						return false;
+					if (!arg.MatchLdObj(out var arg2, out var type2))
+						return false;
+					if (!type.Equals(type2) || !type.Equals(resolver.CurrentTypeDefinition))
+						return false;
+					return arg2.MatchLdThis();
+				}
+				return false;
 			}
 		}
 
