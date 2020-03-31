@@ -29,6 +29,33 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Given a SyntaxTree that was output from the decompiler, constructs the list of sequence points.
 	/// </summary>
+	// Each statement / expression AST node is annotated with the ILInstruction(s) it was constructed from.
+	// Each ILInstruction has a list of IL offsets corresponding to the original IL range(s). Note that the ILAst
+	// instructions form a tree.
+	//
+	// This visitor constructs a list of sequence points from the syntax tree by visiting each node,
+	// calling
+	// 1. StartSequencePoint(AstNode)
+	// 2. AddToSequencePoint(AstNode) (possibly multiple times)
+	// 3. EndSequencePoint(TextLocation, TextLocation)
+	// on each node.
+	//
+	// The VisitAsSequencePoint(AstNode) method encapsulates the steps above.
+	//
+	// The state we record for each sequence point is decribed in StatePerSequencePoint:
+	// 1. primary AST node
+	// 2. IL range intervals
+	// 3. parent ILFunction (either a method or lambda)
+	//
+	// For each statement (at least) one sequence point is created and all expressions and their IL ranges
+	// are added to it. Currently the debugger seems not to support breakpoints at an expression level, so
+	// we stop at the statement level and add all sub-expressions to the same sequence point.
+	//
+	// LambdaExpression is one exception: we create new sequence points for the expression/statements of the lambda,
+	// note however, that these are added to a different ILFunction.
+	//
+	// AddToSequencePoint(AstNode) handles the list of ILInstructions and visits each ILInstruction and its descendants.
+	// We do not descend into nested ILFunctions as these create their own list of sequence points.
 	class SequencePointBuilder : DepthFirstAstVisitor
 	{
 		struct StatePerSequencePoint
@@ -94,7 +121,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public override void VisitForStatement(ForStatement forStatement)
 		{
-			// Every element of a for-statement is it's own sequence point.
+			// Every element of a for-statement is its own sequence point.
 			foreach (var init in forStatement.Initializers) {
 				VisitAsSequencePoint(init);
 			}
@@ -131,6 +158,60 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			AddToSequencePoint(lambdaExpression);
 			VisitAsSequencePoint(lambdaExpression.Body);
+		}
+
+		public override void VisitQueryContinuationClause(QueryContinuationClause queryContinuationClause)
+		{
+			AddToSequencePoint(queryContinuationClause);
+			VisitAsSequencePoint(queryContinuationClause.PrecedingQuery);
+		}
+
+		public override void VisitQueryFromClause(QueryFromClause queryFromClause)
+		{
+			if (queryFromClause.Parent.FirstChild != queryFromClause) {
+				AddToSequencePoint(queryFromClause);
+				VisitAsSequencePoint(queryFromClause.Expression);
+			} else {
+				base.VisitQueryFromClause(queryFromClause);
+			}
+		}
+
+		public override void VisitQueryGroupClause(QueryGroupClause queryGroupClause)
+		{
+			AddToSequencePoint(queryGroupClause);
+			VisitAsSequencePoint(queryGroupClause.Projection);
+			VisitAsSequencePoint(queryGroupClause.Key);
+		}
+
+		public override void VisitQueryJoinClause(QueryJoinClause queryJoinClause)
+		{
+			AddToSequencePoint(queryJoinClause);
+			VisitAsSequencePoint(queryJoinClause.OnExpression);
+			VisitAsSequencePoint(queryJoinClause.EqualsExpression);
+		}
+
+		public override void VisitQueryLetClause(QueryLetClause queryLetClause)
+		{
+			AddToSequencePoint(queryLetClause);
+			VisitAsSequencePoint(queryLetClause.Expression);
+		}
+
+		public override void VisitQueryOrdering(QueryOrdering queryOrdering)
+		{
+			AddToSequencePoint(queryOrdering);
+			VisitAsSequencePoint(queryOrdering.Expression);
+		}
+
+		public override void VisitQuerySelectClause(QuerySelectClause querySelectClause)
+		{
+			AddToSequencePoint(querySelectClause);
+			VisitAsSequencePoint(querySelectClause.Expression);
+		}
+
+		public override void VisitQueryWhereClause(QueryWhereClause queryWhereClause)
+		{
+			AddToSequencePoint(queryWhereClause);
+			VisitAsSequencePoint(queryWhereClause.Condition);
 		}
 
 		public override void VisitUsingStatement(UsingStatement usingStatement)
@@ -275,7 +356,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal static bool HasUsableILRange(ILInstruction inst)
 		{
-			if (inst.HasILRange)
+			if (inst.ILRangeIsEmpty)
 				return false;
 			return !(inst is BlockContainer || inst is Block);
 		}

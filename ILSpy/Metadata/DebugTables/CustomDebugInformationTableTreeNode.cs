@@ -120,7 +120,7 @@ namespace ICSharpCode.ILSpy.Metadata
 						return "Edit And Continue Lambda And Closure Map (C# / VB) [" + guid + "]";
 					}
 					if (KnownGuids.EmbeddedSource == guid) {
-						return "State Machine Hoisted Local Scopes (C# / VB) [" + guid + "]";
+						return "Embedded Source (C# / VB) [" + guid + "]";
 					}
 					if (KnownGuids.SourceLink == guid) {
 						return "Source Link (C# / VB) [" + guid + "]";
@@ -138,7 +138,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string ValueTooltip {
 				get {
-					return null;
+					if (debugInfo.Value.IsNil)
+						return "<nil>";
+					return metadata.GetBlobReader(debugInfo.Value).ToHexString();
 				}
 			}
 

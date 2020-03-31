@@ -63,6 +63,24 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ExpressionWithILInstruction(expression);
 		}
 
+		internal static TranslatedStatement WithILInstruction(this Statement statement, ILInstruction instruction)
+		{
+			statement.AddAnnotation(instruction);
+			return new TranslatedStatement(statement);
+		}
+
+		internal static TranslatedStatement WithILInstruction(this Statement statement, IEnumerable<ILInstruction> instructions)
+		{
+			foreach (var inst in instructions)
+				statement.AddAnnotation(inst);
+			return new TranslatedStatement(statement);
+		}
+
+		internal static TranslatedStatement WithoutILInstruction(this Statement statement)
+		{
+			return new TranslatedStatement(statement);
+		}
+
 		internal static TranslatedExpression WithILInstruction(this ExpressionWithResolveResult expression, ILInstruction instruction)
 		{
 			expression.Expression.AddAnnotation(instruction);
@@ -269,6 +287,36 @@ namespace ICSharpCode.Decompiler.CSharp
 		public ImplicitConversionAnnotation(ConversionResolveResult conversionResolveResult)
 		{
 			this.ConversionResolveResult = conversionResolveResult;
+		}
+	}
+
+	/// <summary>
+	/// Annotates a QueryGroupClause with the ILFunctions of each (implicit lambda) expression.
+	/// </summary>
+	public class QueryGroupClauseAnnotation
+	{
+		public readonly ILFunction KeyLambda;
+		public readonly ILFunction ProjectionLambda;
+
+		public QueryGroupClauseAnnotation(ILFunction key, ILFunction projection)
+		{
+			this.KeyLambda = key;
+			this.ProjectionLambda = projection;
+		}
+	}
+
+	/// <summary>
+	/// Annotates a QueryJoinClause with the ILFunctions of each (implicit lambda) expression.
+	/// </summary>
+	public class QueryJoinClauseAnnotation
+	{
+		public readonly ILFunction OnLambda;
+		public readonly ILFunction EqualsLambda;
+
+		public QueryJoinClauseAnnotation(ILFunction on, ILFunction equals)
+		{
+			this.OnLambda = on;
+			this.EqualsLambda = equals;
 		}
 	}
 }

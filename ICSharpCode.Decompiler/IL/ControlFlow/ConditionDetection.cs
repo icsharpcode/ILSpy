@@ -442,11 +442,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// some compilers merge the leave instructions for different arguments using stack variables
 			// these get split and inlined, but the ILRange of the value remains a better indicator of the actual location
 			if (inst is Leave leave && !leave.Value.MatchNop()) {
-				isEmpty = leave.Value.HasILRange;
+				isEmpty = leave.Value.ILRangeIsEmpty;
 				return leave.Value.StartILOffset;
 			}
 
-			isEmpty = inst.HasILRange;
+			isEmpty = inst.ILRangeIsEmpty;
 			return inst.StartILOffset;
 		}
 

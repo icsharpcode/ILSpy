@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public int EndILOffset => ILRange.End;
 
-		public bool HasILRange => ILRange.IsEmpty;
+		public bool ILRangeIsEmpty => ILRange.IsEmpty;
 
 		public IEnumerable<Interval> ILRanges => new[] { ILRange };
 

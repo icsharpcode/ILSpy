@@ -52,10 +52,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<StateMachineMethodEntry>();
 			StateMachineMethodEntry scrollTargetEntry = default;
 			var length = metadata.GetTableRowCount(TableIndex.StateMachineMethod);
-			byte* ptr = metadata.MetadataPointer;
+			var reader = new BlobReader(metadata.MetadataPointer, metadata.MetadataLength);
+			reader.Offset = +metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
 
 			for (int rid = 1; rid <= length; rid++) {
-				StateMachineMethodEntry entry = new StateMachineMethodEntry(module, ptr, isEmbedded, rid);
+				StateMachineMethodEntry entry = new StateMachineMethodEntry(module, ref reader, isEmbedded, rid);
 				if (scrollTarget == rid) {
 					scrollTargetEntry = entry;
 				}
@@ -73,54 +74,43 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		readonly struct StateMachineMethod
-		{
-			public readonly MethodDefinitionHandle MoveNextMethod;
-			public readonly MethodDefinitionHandle KickoffMethod;
-
-			public unsafe StateMachineMethod(byte* ptr, int methodDefSize)
-			{
-				MoveNextMethod = MetadataTokens.MethodDefinitionHandle(Helpers.GetValue(ptr, methodDefSize));
-				KickoffMethod = MetadataTokens.MethodDefinitionHandle(Helpers.GetValue(ptr + methodDefSize, methodDefSize));
-			}
-		}
-
-		unsafe struct StateMachineMethodEntry
+		struct StateMachineMethodEntry
 		{
 			readonly int? offset;
 			readonly PEFile module;
 			readonly MetadataReader metadata;
-			readonly StateMachineMethod stateMachineMethod;
+			readonly MethodDefinitionHandle moveNextMethod;
+			readonly MethodDefinitionHandle kickoffMethod;
 
 			public int RID { get; }
 
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
 			[StringFormat("X8")]
-			public int MoveNextMethod => MetadataTokens.GetToken(stateMachineMethod.MoveNextMethod);
+			public int MoveNextMethod => MetadataTokens.GetToken(moveNextMethod);
 
 			public string MoveNextMethodTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					var context = new GenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)stateMachineMethod.MoveNextMethod).WriteTo(module, output, context);
+					((EntityHandle)moveNextMethod).WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}
 
 			[StringFormat("X8")]
-			public int KickoffMethod => MetadataTokens.GetToken(stateMachineMethod.KickoffMethod);
+			public int KickoffMethod => MetadataTokens.GetToken(kickoffMethod);
 
 			public string KickoffMethodTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
 					var context = new GenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)stateMachineMethod.KickoffMethod).WriteTo(module, output, context);
+					((EntityHandle)kickoffMethod).WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}
 
-			public StateMachineMethodEntry(PEFile module, byte* ptr, bool isEmbedded, int row)
+			public StateMachineMethodEntry(PEFile module, ref BlobReader reader, bool isEmbedded, int row)
 			{
 				this.module = module;
 				this.metadata = module.Metadata;
@@ -128,7 +118,10 @@ namespace ICSharpCode.ILSpy.Metadata
 				int rowOffset = metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod)
 					+ metadata.GetTableRowSize(TableIndex.StateMachineMethod) * (row - 1);
 				this.offset = isEmbedded ? null : (int?)rowOffset;
-				this.stateMachineMethod = new StateMachineMethod(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.MethodDef) < ushort.MaxValue ? 2 : 4);
+
+				int methodDefSize = metadata.GetTableRowCount(TableIndex.MethodDef) < ushort.MaxValue ? 2 : 4;
+				this.moveNextMethod = MetadataTokens.MethodDefinitionHandle(methodDefSize == 2 ? reader.ReadInt16() : reader.ReadInt32());
+				this.kickoffMethod = MetadataTokens.MethodDefinitionHandle(methodDefSize == 2 ? reader.ReadInt16() : reader.ReadInt32());
 			}
 
 		}

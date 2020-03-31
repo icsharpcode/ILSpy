@@ -133,12 +133,67 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			HandleMethod(anonymousMethodExpression);
 		}
 
+		public override void VisitQueryFromClause(QueryFromClause queryFromClause)
+		{
+			if (queryFromClause.Parent.FirstChild != queryFromClause) {
+				HandleMethod(queryFromClause);
+			} else {
+				base.VisitQueryFromClause(queryFromClause);
+			}
+		}
+
+		public override void VisitQueryGroupClause(QueryGroupClause queryGroupClause)
+		{
+			var annotation = queryGroupClause.Annotation<QueryGroupClauseAnnotation>();
+			if (annotation == null) {
+				base.VisitQueryGroupClause(queryGroupClause);
+				return;
+			}
+			HandleMethod(queryGroupClause.Projection, annotation.ProjectionLambda);
+			HandleMethod(queryGroupClause.Key, annotation.KeyLambda);
+		}
+
+		public override void VisitQueryJoinClause(QueryJoinClause queryJoinClause)
+		{
+			var annotation = queryJoinClause.Annotation<QueryJoinClauseAnnotation>();
+			if (annotation == null) {
+				base.VisitQueryJoinClause(queryJoinClause);
+				return;
+			}
+			HandleMethod(queryJoinClause.OnExpression, annotation.OnLambda);
+			HandleMethod(queryJoinClause.EqualsExpression, annotation.EqualsLambda);
+		}
+
+		public override void VisitQueryLetClause(QueryLetClause queryLetClause)
+		{
+			HandleMethod(queryLetClause);
+		}
+
+		public override void VisitQueryOrdering(QueryOrdering queryOrdering)
+		{
+			HandleMethod(queryOrdering);
+		}
+
+		public override void VisitQuerySelectClause(QuerySelectClause querySelectClause)
+		{
+			HandleMethod(querySelectClause);
+		}
+
+		public override void VisitQueryWhereClause(QueryWhereClause queryWhereClause)
+		{
+			HandleMethod(queryWhereClause);
+		}
+
 		void HandleMethod(AstNode node)
+		{
+			HandleMethod(node, node.Annotation<ILFunction>());
+		}
+
+		void HandleMethod(AstNode node, ILFunction function)
 		{
 			// Look into method body, e.g. in order to find lambdas
 			VisitChildren(node);
 
-			var function = node.Annotation<ILFunction>();
 			if (function == null || function.Method == null || function.Method.MetadataToken.IsNil)
 				return;
 			this.functions.Add(function);

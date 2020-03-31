@@ -101,6 +101,18 @@ namespace ICSharpCode.Decompiler.Metadata
 			return sb.ToString();
 		}
 
+		public static string ToHexString(this BlobReader reader)
+		{
+			StringBuilder sb = new StringBuilder(reader.Length * 3);
+			for (int i = 0; i < reader.Length; i++) {
+				if (i == 0)
+					sb.AppendFormat("{0:X2}", reader.ReadByte());
+				else
+					sb.AppendFormat("-{0:X2}", reader.ReadByte());
+			}
+			return sb.ToString();
+		}
+
 		public static IEnumerable<TypeDefinitionHandle> GetTopLevelTypeDefinitions(this MetadataReader reader)
 		{
 			foreach (var handle in reader.TypeDefinitions) {
