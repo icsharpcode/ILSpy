@@ -297,7 +297,6 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		{
 			StringWriter w = new StringWriter();
 			TokenWriter tokenWriter = new TextWriterTokenWriter(w);
-			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 			tokenWriter = TokenWriter.WrapInWriterThatSetsLocationsInAST(tokenWriter);
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
 			return w.ToString();

@@ -276,5 +276,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return sizeof(T);
 		}
 #endif
+
+		public static void Issue1959(int a, int b, int? c)
+		{
+			// This line requires parentheses around `a < b` to avoid a grammar ambiguity.
+			Console.WriteLine("{}, {}", (a < b), a > (c ?? b));
+			// But here there's no ambiguity:
+			Console.WriteLine("{}, {}", a < b, a > b);
+			Console.WriteLine("{}, {}", a < Environment.GetLogicalDrives().Length, a > (c ?? b));
+		}
 	}
 }
