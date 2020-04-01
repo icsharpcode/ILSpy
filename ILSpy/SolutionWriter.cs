@@ -171,7 +171,7 @@ namespace ICSharpCode.ILSpy
 
 					var projectInfo = language.DecompileAssembly(loadedAssembly, projectFileOutput, options);
 					if (projectInfo != null) {
-						projects.Add(new ProjectItem(projectFileName, projectInfo.PlatformName, projectInfo.Guid));
+						projects.Add(new ProjectItem(projectFileName, projectInfo.PlatformName, projectInfo.Guid, projectInfo.TypeGuid));
 					}
 				}
 			} catch (Exception e) when (!(e is OperationCanceledException)) {
