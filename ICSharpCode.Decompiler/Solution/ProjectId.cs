@@ -32,24 +32,43 @@ namespace ICSharpCode.Decompiler.Solution
 		/// <param name="projectGuid">The project GUID.</param>
 		/// 
 		/// <exception cref="ArgumentException">Thrown when <paramref name="projectPlatform"/> is null or empty.</exception>
-		public ProjectId(string projectPlatform, Guid projectGuid)
+		public ProjectId(string projectPlatform, Guid projectGuid, Guid typeGuid)
 		{
 			if (string.IsNullOrWhiteSpace(projectPlatform)) {
 				throw new ArgumentException("The platform cannot be null or empty.", nameof(projectPlatform));
 			}
 
 			Guid = projectGuid;
+			TypeGuid = typeGuid;
 			PlatformName = projectPlatform;
 		}
 
 		/// <summary>
 		/// Gets the GUID of this project.
+		/// This is usually a newly generated GUID for each decompiled project.
 		/// </summary>
 		public Guid Guid { get; }
+
+		/// <summary>
+		/// Gets the primary type GUID of this project.
+		/// This is one of the GUIDs from <see cref="ProjectTypeGuids"/>.
+		/// </summary>
+		public Guid TypeGuid { get; }
 
 		/// <summary>
 		/// Gets the platform name of this project. Only single platform per project is supported.
 		/// </summary>
 		public string PlatformName { get; }
+	}
+
+	public static class ProjectTypeGuids
+	{
+		public static readonly Guid SolutionFolder = Guid.Parse("{2150E333-8FDC-42A3-9474-1A3956D46DE8}");
+
+		public static readonly Guid CSharpWindows = Guid.Parse("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}");
+		public static readonly Guid CSharpCore = Guid.Parse("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}");
+
+		public static readonly Guid Silverlight = Guid.Parse("{A1591282-1198-4647-A2B1-27E5FF5F6F3B}");
+		public static readonly Guid PortableLibrary = Guid.Parse("{786C830F-07A1-408B-BD7F-6EE04809D6DB}");
 	}
 }

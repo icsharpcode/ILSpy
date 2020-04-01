@@ -302,7 +302,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				w.WriteEndDocument();
 			}
 
-			return new ProjectId(platformName, guid);
+			return new ProjectId(platformName, guid, ProjectTypeGuids.CSharpWindows);
 		}
 
 		protected virtual bool IsGacAssembly(Metadata.IAssemblyReference r, Metadata.PEFile asm)
