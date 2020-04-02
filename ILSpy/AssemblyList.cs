@@ -146,6 +146,7 @@ namespace ICSharpCode.ILSpy
 		internal void ClearCache()
 		{
 			assemblyLookupCache.Clear();
+			moduleLookupCache.Clear();
 		}
 
 		public LoadedAssembly Open(string assemblyUri, bool isAutoLoaded = false)
