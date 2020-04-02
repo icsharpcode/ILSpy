@@ -1306,6 +1306,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Hide empty metadata tables from tree view.
+        /// </summary>
+        public static string HideEmptyMetadataTables {
+            get {
+                return ResourceManager.GetString("HideEmptyMetadataTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Highlight matching braces.
         /// </summary>
         public static string HighlightMatchingBraces {

@@ -829,4 +829,7 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.IntroduceStaticLocalFunctions" xml:space="preserve">
     <value>Introduce static local functions</value>
   </data>
+  <data name="HideEmptyMetadataTables" xml:space="preserve">
+    <value>Hide empty metadata tables from tree view</value>
+  </data>
 </root>

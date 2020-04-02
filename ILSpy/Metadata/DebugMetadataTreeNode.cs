@@ -18,8 +18,10 @@
 
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -61,14 +63,24 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		protected override void LoadChildren()
 		{
-			this.Children.Add(new DocumentTableTreeNode(this.module, this.provider, isEmbedded));
-			this.Children.Add(new MethodDebugInformationTableTreeNode(this.module, this.provider, isEmbedded));
-			this.Children.Add(new LocalScopeTableTreeNode(this.module, this.provider, isEmbedded));
-			this.Children.Add(new LocalVariableTableTreeNode(this.module, this.provider, isEmbedded));
-			this.Children.Add(new LocalConstantTableTreeNode(this.module, this.provider, isEmbedded));
-			this.Children.Add(new ImportScopeTableTreeNode(this.module, this.provider, isEmbedded));
-			this.Children.Add(new StateMachineMethodTableTreeNode(this.module, this.provider, isEmbedded));
-			this.Children.Add(new CustomDebugInformationTableTreeNode(this.module, this.provider, isEmbedded));
+			if (ShowTable(TableIndex.Document))
+				this.Children.Add(new DocumentTableTreeNode(this.module, this.provider, isEmbedded));
+			if (ShowTable(TableIndex.MethodDebugInformation))
+				this.Children.Add(new MethodDebugInformationTableTreeNode(this.module, this.provider, isEmbedded));
+			if (ShowTable(TableIndex.LocalScope))
+				this.Children.Add(new LocalScopeTableTreeNode(this.module, this.provider, isEmbedded));
+			if (ShowTable(TableIndex.LocalVariable))
+				this.Children.Add(new LocalVariableTableTreeNode(this.module, this.provider, isEmbedded));
+			if (ShowTable(TableIndex.LocalConstant))
+				this.Children.Add(new LocalConstantTableTreeNode(this.module, this.provider, isEmbedded));
+			if (ShowTable(TableIndex.ImportScope))
+				this.Children.Add(new ImportScopeTableTreeNode(this.module, this.provider, isEmbedded));
+			if (ShowTable(TableIndex.StateMachineMethod))
+				this.Children.Add(new StateMachineMethodTableTreeNode(this.module, this.provider, isEmbedded));
+			if (ShowTable(TableIndex.CustomDebugInformation))
+				this.Children.Add(new CustomDebugInformationTableTreeNode(this.module, this.provider, isEmbedded));
+
+			bool ShowTable(TableIndex table) => !DisplaySettingsPanel.CurrentDisplaySettings.HideEmptyMetadataTables || module.Metadata.GetTableRowCount(table) > 0;
 		}
 
 		public MetadataTableTreeNode FindNodeByHandleKind(HandleKind kind)
