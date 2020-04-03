@@ -97,6 +97,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		private bool CanRemoveAllReferencesTo(ILTransformContext context, ILVariable v)
 		{
 			foreach (var use in v.LoadInstructions) {
+				// we only accept stloc, stobj/ldobj and ld(s)flda instructions,
+				// as these are required by all patterns this transform understands.
+				if (!(use.Parent is StLoc || use.Parent is LdFlda || use.Parent is LdsFlda || use.Parent is StObj || use.Parent is LdObj)) {
+					return false;
+				}
 				if (use.Parent.MatchStLoc(out var targetVar) && !IsClosure(context, targetVar, out _, out _)) {
 					return false;
 				}
