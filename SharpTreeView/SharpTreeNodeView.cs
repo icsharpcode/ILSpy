@@ -147,7 +147,7 @@ namespace ICSharpCode.TreeView
 				result -= 19;
 			}
 			if (result < 0) {
-				Debug.WriteLine("SharpTreeNodeView.CalculateIndent() on node without correctly-set level");
+				Debug.WriteLine("Negative indent level detected for node " + Node);
 				return 0;
 			}
 			return result;

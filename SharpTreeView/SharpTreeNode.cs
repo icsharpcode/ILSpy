@@ -335,19 +335,14 @@ namespace ICSharpCode.TreeView
 		
 		public IEnumerable<SharpTreeNode> Ancestors()
 		{
-			var node = this;
-			while (node.Parent != null) {
-				yield return node.Parent;
-				node = node.Parent;
-			}
+			for (SharpTreeNode n = this.Parent; n != null; n = n.Parent)
+				yield return n;
 		}
 		
 		public IEnumerable<SharpTreeNode> AncestorsAndSelf()
 		{
-			yield return this;
-			foreach (var node in Ancestors()) {
-				yield return node;
-			}
+			for (SharpTreeNode n = this; n != null; n = n.Parent)
+				yield return n;
 		}
 		
 		#endregion

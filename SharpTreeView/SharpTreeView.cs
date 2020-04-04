@@ -178,7 +178,7 @@ namespace ICSharpCode.TreeView
 		{
 			if (updatesLocked) return;
 			SetSelectedItems(newSelection ?? Enumerable.Empty<SharpTreeNode>());
-			if (SelectedItem == null) {
+			if (SelectedItem == null && this.IsKeyboardFocusWithin) {
 				// if we removed all selected nodes, then move the focus to the node 
 				// preceding the first of the old selected nodes
 				SelectedIndex = topSelectedIndex;
@@ -265,9 +265,22 @@ namespace ICSharpCode.TreeView
 					}
 					break;
 				case Key.Return:
+					if (container != null && Keyboard.Modifiers == ModifierKeys.None && this.SelectedItems.Count == 1 && this.SelectedItem == container.Node) {
+						e.Handled = true;
+						container.Node.ActivateItem(e);
+					}
+					break;
 				case Key.Space:
 					if (container != null && Keyboard.Modifiers == ModifierKeys.None && this.SelectedItems.Count == 1 && this.SelectedItem == container.Node) {
-						container.Node.ActivateItem(e);
+						e.Handled = true;
+						if (container.Node.IsCheckable) {
+							if (container.Node.IsChecked == null) // If partially selected, we want to select everything
+								container.Node.IsChecked = true;
+							else
+								container.Node.IsChecked = !container.Node.IsChecked;
+						} else {
+							container.Node.ActivateItem(e);
+						}
 					}
 					break;
 				case Key.Add:
