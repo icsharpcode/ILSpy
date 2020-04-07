@@ -35,8 +35,8 @@ namespace ICSharpCode.Decompiler.Solution
 		/// 
 		/// <exception cref="ArgumentException">Thrown when <paramref name="projectFile"/> 
 		/// or <paramref name="projectPlatform"/> is null or empty.</exception>
-		public ProjectItem(string projectFile, string projectPlatform, Guid projectGuid)
-			: base(projectPlatform, projectGuid)
+		public ProjectItem(string projectFile, string projectPlatform, Guid projectGuid, Guid typeGuid)
+			: base(projectPlatform, projectGuid, typeGuid)
 		{
 			ProjectName = Path.GetFileNameWithoutExtension(projectFile);
 			FilePath = projectFile;

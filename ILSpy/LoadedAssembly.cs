@@ -141,12 +141,17 @@ namespace ICSharpCode.ILSpy
 			get {
 				if (IsLoaded && !HasLoadError) {
 					var metadata = GetPEFileOrNull()?.Metadata;
-					string version = null;
-					if (metadata != null && metadata.IsAssembly)
-						version = metadata.GetAssemblyDefinition().Version?.ToString();
-					if (version == null)
+					string versionOrInfo = null;
+					if (metadata != null) {
+						if (metadata.IsAssembly) {
+							versionOrInfo = metadata.GetAssemblyDefinition().Version?.ToString();
+						} else {
+							versionOrInfo = ".netmodule";
+						}
+					}
+					if (versionOrInfo == null)
 						return ShortName;
-					return String.Format("{0} ({1})", ShortName, version);
+					return string.Format("{0} ({1})", ShortName, versionOrInfo);
 				} else {
 					return ShortName;
 				}

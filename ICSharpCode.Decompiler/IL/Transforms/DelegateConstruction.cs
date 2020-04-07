@@ -31,32 +31,42 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		ILTransformContext context;
 		ITypeResolveContext decompilationContext;
+		readonly Stack<MethodDefinitionHandle> activeMethods = new Stack<MethodDefinitionHandle>();
 		
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
 			if (!context.Settings.AnonymousMethods)
 				return;
-			this.context = context;
-			this.decompilationContext = new SimpleTypeResolveContext(function.Method);
-			var cancellationToken = context.CancellationToken;
-			foreach (var inst in function.Descendants) {
-				cancellationToken.ThrowIfCancellationRequested();
-				if (inst is NewObj call) {
-					context.StepStartGroup($"TransformDelegateConstruction {call.StartILOffset}", call);
-					ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
-					if (f != null && target is IInstructionWithVariableOperand instWithVar) {
-						if (instWithVar.Variable.Kind == VariableKind.Local) {
-							instWithVar.Variable.Kind = VariableKind.DisplayClassLocal;
-						}
-						var displayClassTypeDef = instWithVar.Variable.Type.GetDefinition();
-						if (instWithVar.Variable.IsSingleDefinition && instWithVar.Variable.StoreInstructions.SingleOrDefault() is StLoc store) {
-							if (store.Value is NewObj newObj) {
-								instWithVar.Variable.CaptureScope = BlockContainer.FindClosestContainer(store);
+			var prevContext = this.context;
+			var prevDecompilationContext = this.decompilationContext;
+			try {
+				activeMethods.Push((MethodDefinitionHandle)function.Method.MetadataToken);
+				this.context = context;
+				this.decompilationContext = new SimpleTypeResolveContext(function.Method);
+				var cancellationToken = context.CancellationToken;
+				foreach (var inst in function.Descendants) {
+					cancellationToken.ThrowIfCancellationRequested();
+					if (inst is NewObj call) {
+						context.StepStartGroup($"TransformDelegateConstruction {call.StartILOffset}", call);
+						ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
+						if (f != null && target is IInstructionWithVariableOperand instWithVar) {
+							if (instWithVar.Variable.Kind == VariableKind.Local) {
+								instWithVar.Variable.Kind = VariableKind.DisplayClassLocal;
+							}
+							var displayClassTypeDef = instWithVar.Variable.Type.GetDefinition();
+							if (instWithVar.Variable.IsSingleDefinition && instWithVar.Variable.StoreInstructions.SingleOrDefault() is StLoc store) {
+								if (store.Value is NewObj newObj) {
+									instWithVar.Variable.CaptureScope = BlockContainer.FindClosestContainer(store);
+								}
 							}
 						}
+						context.StepEndGroup();
 					}
-					context.StepEndGroup();
 				}
+			} finally {
+				this.context = prevContext;
+				this.decompilationContext = prevDecompilationContext;
+				activeMethods.Pop();
 			}
 		}
 
@@ -131,6 +141,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (LocalFunctionDecompiler.IsLocalFunctionMethod(targetMethod, context))
 				return null;
 			target = value.Arguments[0];
+			var handle = (MethodDefinitionHandle)targetMethod.MetadataToken;
+			if (activeMethods.Contains(handle)) {
+				this.context.Function.Warnings.Add(" Found self-referencing delegate construction. Abort transformation to avoid stack overflow.");
+				return null;
+			}
 			var methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
 			if (!methodDefinition.HasBody())
 				return null;
@@ -157,7 +172,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
 			// handle nested lambdas
 			nestedContext.StepStartGroup("DelegateConstruction (nested lambdas)", function);
-			((IILTransform)new DelegateConstruction()).Run(function, nestedContext);
+			((IILTransform)this).Run(function, nestedContext);
 			nestedContext.StepEndGroup();
 			function.AddILRange(target);
 			function.AddILRange(value);

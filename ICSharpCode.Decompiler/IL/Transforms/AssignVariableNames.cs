@@ -20,12 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Humanizer;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
-using ICSharpCode.Decompiler.IL;
-using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
@@ -141,6 +137,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// remove unused variables before assigning names
 			function.Variables.RemoveDead();
 			int numDisplayClassLocals = 0;
+			Dictionary<int, string> assignedLocalSignatureIndices = new Dictionary<int, string>();
 			foreach (var v in function.Variables.OrderBy(v => v.Name)) {
 				switch (v.Kind) {
 					case VariableKind.Parameter: // ignore
@@ -151,16 +148,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case VariableKind.DisplayClassLocal:
 						v.Name = "CS$<>8__locals" + (numDisplayClassLocals++);
 						break;
-					default:
-						if (v.HasGeneratedName || !IsValidName(v.Name) || ConflictWithLocal(v)) {
-							// don't use the name from the debug symbols if it looks like a generated name
-							v.Name = null;
+					case VariableKind.Local when v.Index != null:
+						if (assignedLocalSignatureIndices.TryGetValue(v.Index.Value, out string name)) {
+							// make sure all local ILVariables that refer to the same slot in the locals signature
+							// are assigned the same name.
+							v.Name = name;
 						} else {
-							// use the name from the debug symbols
-							// (but ensure we don't use the same name for two variables)
-							v.Name = GetAlternativeName(v.Name);
+							AssignName();
+							// Remember the newly assigned name:
+							assignedLocalSignatureIndices.Add(v.Index.Value, v.Name);
 						}
 						break;
+					default:
+						AssignName();
+						break;
+				}
+
+				void AssignName()
+				{
+					if (v.HasGeneratedName || !IsValidName(v.Name) || ConflictWithLocal(v)) {
+						// don't use the name from the debug symbols if it looks like a generated name
+						v.Name = null;
+					} else {
+						// use the name from the debug symbols
+						// (but ensure we don't use the same name for two variables)
+						v.Name = GetAlternativeName(v.Name);
+					}
 				}
 			}
 			foreach (var localFunction in function.LocalFunctions) {

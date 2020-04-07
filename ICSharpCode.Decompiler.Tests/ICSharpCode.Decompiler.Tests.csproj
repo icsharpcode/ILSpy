@@ -49,6 +49,7 @@
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
     <PackageReference Include="NUnit" Version="3.12.0" />
     <PackageReference Include="System.Memory" Version="4.5.3" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.3" />
   </ItemGroup>
 
   <ItemGroup>
@@ -60,7 +61,10 @@
     <None Include="TestCases\Correctness\StackTests.il" />
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
+    <None Include="TestCases\ILPretty\Issue1454.il" />
+    <None Include="TestCases\ILPretty\Issue1681.il" />
     <None Include="TestCases\ILPretty\Issue1922.il" />
+    <None Include="TestCases\ILPretty\Issue1918.il" />
     <None Include="TestCases\ILPretty\WeirdEnums.il" />
     <None Include="TestCases\ILPretty\ConstantBlobs.il" />
     <None Include="TestCases\ILPretty\CS1xSwitch_Debug.il" />
@@ -80,8 +84,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\ICSharpCode.Decompiler.PdbProvider.Cecil\MonoCecilDebugInfoProvider.cs" Link="MonoCecilDebugInfoProvider.cs" />
+    <Compile Include="..\ILSpy\DebugInfo\DebugInfoUtils.cs" Link="DebugInfoUtils.cs" />
+    <Compile Include="..\ILSpy\DebugInfo\PortableDebugInfoProvider.cs" Link="PortableDebugInfoProvider.cs" />
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
+    <Compile Include="TestCases\ILPretty\Issue1681.cs" />
+    <None Include="TestCases\ILPretty\Issue1918.cs" />
     <Compile Include="TestCases\ILPretty\Issue1922.cs" />
     <Compile Include="TestCases\Ugly\NoLocalFunctions.cs" />
     <Compile Include="TestCases\VBPretty\Issue1906.cs" />

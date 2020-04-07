@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				node.ReplaceWith(query);
 			AstNode next;
 			for (AstNode child = (query ?? node).FirstChild; child != null; child = next) {
-				// store referece to next child before transformation
+				// store reference to next child before transformation
 				next = child.NextSibling;
 				DecompileQueries(child);
 			}
@@ -95,10 +95,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							return null;
 						if (!IsComplexQuery(mre))
 							return null;
-						ParameterDeclaration parameter;
-						Expression body;
 						Expression expr = invocation.Arguments.Single();
-						if (MatchSimpleLambda(expr, out parameter, out body)) {
+						if (MatchSimpleLambda(expr, out ParameterDeclaration parameter, out Expression body)) {
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
 							query.Clauses.Add(new QuerySelectClause { Expression = WrapExpressionInParenthesesIfNecessary(body.Detach(), parameter.Name) }.CopyAnnotationsFrom(expr));
@@ -109,21 +107,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case "GroupBy":
 					{
 						if (invocation.Arguments.Count == 2) {
-							ParameterDeclaration parameter1, parameter2;
-							Expression keySelector, elementSelector;
-							if (MatchSimpleLambda(invocation.Arguments.ElementAt(0), out parameter1, out keySelector)
-							    && MatchSimpleLambda(invocation.Arguments.ElementAt(1), out parameter2, out elementSelector)
-							    && parameter1.Name == parameter2.Name)
-							{
+							Expression keyLambda = invocation.Arguments.ElementAt(0);
+							Expression projectionLambda = invocation.Arguments.ElementAt(1);
+							if (MatchSimpleLambda(keyLambda, out ParameterDeclaration parameter1, out Expression keySelector)
+								&& MatchSimpleLambda(projectionLambda, out ParameterDeclaration parameter2, out Expression elementSelector)
+								&& parameter1.Name == parameter2.Name) {
 								QueryExpression query = new QueryExpression();
 								query.Clauses.Add(MakeFromClause(parameter1, mre.Target.Detach()));
-								query.Clauses.Add(new QueryGroupClause { Projection = elementSelector.Detach(), Key = keySelector.Detach() });
+								var queryGroupClause = new QueryGroupClause {
+									Projection = elementSelector.Detach(),
+									Key = keySelector.Detach()
+								};
+								queryGroupClause.AddAnnotation(new QueryGroupClauseAnnotation(keyLambda.Annotation<IL.ILFunction>(), projectionLambda.Annotation<IL.ILFunction>()));
+								query.Clauses.Add(queryGroupClause);
 								return query;
 							}
 						} else if (invocation.Arguments.Count == 1) {
-							ParameterDeclaration parameter;
-							Expression keySelector;
-							if (MatchSimpleLambda(invocation.Arguments.Single(), out parameter, out keySelector)) {
+							Expression lambda = invocation.Arguments.Single();
+							if (MatchSimpleLambda(lambda, out ParameterDeclaration parameter, out Expression keySelector)) {
 								QueryExpression query = new QueryExpression();
 								query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
 								query.Clauses.Add(new QueryGroupClause { Projection = new IdentifierExpression(parameter.Name).CopyAnnotationsFrom(parameter), Key = keySelector.Detach() });
@@ -136,9 +137,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						if (invocation.Arguments.Count != 2)
 							return null;
-						ParameterDeclaration parameter;
-						Expression collectionSelector;
-						if (!MatchSimpleLambda(invocation.Arguments.ElementAt(0), out parameter, out collectionSelector))
+						var fromExpressionLambda = invocation.Arguments.ElementAt(0);
+						if (!MatchSimpleLambda(fromExpressionLambda, out ParameterDeclaration parameter, out Expression collectionSelector))
 							return null;
 						if (IsNullConditional(collectionSelector))
 							return null;
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							if (p1.Name == parameter.Name) {
 								QueryExpression query = new QueryExpression();
 								query.Clauses.Add(MakeFromClause(p1, mre.Target.Detach()));
-								query.Clauses.Add(MakeFromClause(p2, collectionSelector.Detach()));
+								query.Clauses.Add(MakeFromClause(p2, collectionSelector.Detach()).CopyAnnotationsFrom(fromExpressionLambda));
 								query.Clauses.Add(new QuerySelectClause { Expression = WrapExpressionInParenthesesIfNecessary(((Expression)lambda.Body).Detach(), parameter.Name) });
 								return query;
 							}
@@ -162,10 +162,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							return null;
 						if (!IsComplexQuery(mre))
 							return null;
-						ParameterDeclaration parameter;
-						Expression body;
 						Expression expr = invocation.Arguments.Single();
-						if (MatchSimpleLambda(expr, out parameter, out body)) {
+						if (MatchSimpleLambda(expr, out ParameterDeclaration parameter, out Expression body)) {
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
 							query.Clauses.Add(new QueryWhereClause { Condition = body.Detach() }.CopyAnnotationsFrom(expr));
@@ -182,31 +180,30 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							return null;
 						if (!IsComplexQuery(mre))
 							return null;
-						ParameterDeclaration parameter;
-						Expression orderExpression;
-						if (MatchSimpleLambda(invocation.Arguments.Single(), out parameter, out orderExpression)) {
+						var lambda = invocation.Arguments.Single();
+						if (MatchSimpleLambda(lambda, out ParameterDeclaration parameter, out Expression orderExpression)) {
 							if (ValidateThenByChain(invocation, parameter.Name)) {
 								QueryOrderClause orderClause = new QueryOrderClause();
-								InvocationExpression tmp = invocation;
 								while (mre.MemberName == "ThenBy" || mre.MemberName == "ThenByDescending") {
 									// insert new ordering at beginning
 									orderClause.Orderings.InsertAfter(
 										null, new QueryOrdering {
 											Expression = orderExpression.Detach(),
 											Direction = (mre.MemberName == "ThenBy" ? QueryOrderingDirection.None : QueryOrderingDirection.Descending)
-										});
-									
-									tmp = (InvocationExpression)mre.Target;
+										}.CopyAnnotationsFrom(lambda));
+
+									InvocationExpression tmp = (InvocationExpression)mre.Target;
 									mre = (MemberReferenceExpression)tmp.Target;
-									MatchSimpleLambda(tmp.Arguments.Single(), out parameter, out orderExpression);
+									lambda = tmp.Arguments.Single();
+									MatchSimpleLambda(lambda, out parameter, out orderExpression);
 								}
 								// insert new ordering at beginning
 								orderClause.Orderings.InsertAfter(
 									null, new QueryOrdering {
 										Expression = orderExpression.Detach(),
 										Direction = (mre.MemberName == "OrderBy" ? QueryOrderingDirection.None : QueryOrderingDirection.Descending)
-									});
-								
+									}.CopyAnnotationsFrom(lambda));
+
 								QueryExpression query = new QueryExpression();
 								query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
 								query.Clauses.Add(orderClause);
@@ -224,11 +221,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						Expression source2 = invocation.Arguments.ElementAt(0);
 						if (IsNullConditional(source2))
 							return null;
-						ParameterDeclaration element1, element2;
-						Expression key1, key2;
-						if (!MatchSimpleLambda(invocation.Arguments.ElementAt(1), out element1, out key1))
+						Expression outerLambda = invocation.Arguments.ElementAt(1);
+						if (!MatchSimpleLambda(outerLambda, out ParameterDeclaration element1, out Expression key1))
 							return null;
-						if (!MatchSimpleLambda(invocation.Arguments.ElementAt(2), out element2, out key2))
+						Expression innerLambda = invocation.Arguments.ElementAt(2);
+						if (!MatchSimpleLambda(innerLambda, out ParameterDeclaration element2, out Expression key2))
 							return null;
 						LambdaExpression lambda = invocation.Arguments.ElementAt(3) as LambdaExpression;
 						if (lambda != null && lambda.Parameters.Count == 2 && lambda.Body is Expression) {
@@ -245,6 +242,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								if (mre.MemberName == "GroupJoin") {
 									joinClause.IntoIdentifier = p2.Name; // into p2.Name
 								}
+								joinClause.AddAnnotation(new QueryJoinClauseAnnotation(outerLambda.Annotation<IL.ILFunction>(), innerLambda.Annotation<IL.ILFunction>()));
 								query.Clauses.Add(joinClause);
 								query.Clauses.Add(new QuerySelectClause { Expression = ((Expression)lambda.Body).Detach() }.CopyAnnotationsFrom(lambda));
 								return query;
@@ -316,12 +314,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (invocation == null || invocation.Arguments.Count != 1)
 				return false;
-			MemberReferenceExpression mre = invocation.Target as MemberReferenceExpression;
-			if (mre == null)
+			if (!(invocation.Target is MemberReferenceExpression mre))
 				return false;
-			ParameterDeclaration parameter;
-			Expression body;
-			if (!MatchSimpleLambda(invocation.Arguments.Single(), out parameter, out body))
+			if (!MatchSimpleLambda(invocation.Arguments.Single(), out ParameterDeclaration parameter, out _))
 				return false;
 			if (parameter.Name != expectedParameterName)
 				return false;
@@ -337,8 +332,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>Matches simple lambdas of the form "a => b"</summary>
 		bool MatchSimpleLambda(Expression expr, out ParameterDeclaration parameter, out Expression body)
 		{
-			var lambda = expr as LambdaExpression;
-			if (lambda != null && lambda.Parameters.Count == 1 && lambda.Body is Expression) {
+			if (expr is LambdaExpression lambda && lambda.Parameters.Count == 1 && lambda.Body is Expression) {
 				ParameterDeclaration p = lambda.Parameters.Single();
 				if (p.ParameterModifier == ParameterModifier.None) {
 					parameter = p;

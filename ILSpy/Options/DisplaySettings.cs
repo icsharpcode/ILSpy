@@ -234,6 +234,18 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		bool hideEmptyMetadataTables = true;
+
+		public bool HideEmptyMetadataTables {
+			get { return hideEmptyMetadataTables; }
+			set {
+				if (hideEmptyMetadataTables != value) {
+					hideEmptyMetadataTables = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public void CopyValues(DisplaySettings s)
 		{
 			this.SelectedFont = s.selectedFont;
@@ -251,6 +263,7 @@ namespace ICSharpCode.ILSpy.Options
 			this.IndentationTabSize = s.indentationTabSize;
 			this.IndentationSize = s.indentationSize;
 			this.HighlightMatchingBraces = s.highlightMatchingBraces;
+			this.HideEmptyMetadataTables = s.HideEmptyMetadataTables;
 		}
 	}
 }

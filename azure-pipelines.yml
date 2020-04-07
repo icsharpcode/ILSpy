@@ -45,9 +45,9 @@ jobs:
       version: '3.1.100'
       installationPath: $(Agent.ToolsDirectory)/dotnet
 
-  - powershell: .\BuildTools\pipelines-install.ps1
+  - script: pwsh .\BuildTools\pipelines-install.ps1
     displayName: Install
-
+    
   - task: MSBuild@1
     displayName: Restore ILSpy
     inputs:
@@ -71,7 +71,7 @@ jobs:
       testAssemblyVer2: |
         ICSharpCode.Decompiler.Tests\bin\$(BuildConfiguration)\net472\ICSharpCode.Decompiler.Tests.exe
         ILSpy.Tests\bin\$(BuildConfiguration)\net472\ILSpy.Tests.exe
-        ILSpy.BamlDecompiler.Tests\bin\$(BuildConfiguration)\net472\ILSpy.BamlDecompiler.Tests.dll
+        ILSpy.BamlDecompiler.Tests\bin\$(BuildConfiguration)\net472\ILSpy.BamlDecompiler.Tests.exe
 
   - task: ArchiveFiles@1
     displayName: Create zip

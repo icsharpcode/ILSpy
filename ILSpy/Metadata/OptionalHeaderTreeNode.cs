@@ -65,8 +65,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			entries.Add(new Entry(reader.Offset, reader.ReadByte(), 1, "Major Linker Version", ""));
 			entries.Add(new Entry(reader.Offset, reader.ReadByte(), 1, "Minor Linker Version", ""));
 			entries.Add(new Entry(reader.Offset, reader.ReadInt32(), 4, "Code Size", "Size of the code (text) section, or the sum of all code sections if there are multiple sections."));
-			entries.Add(new Entry(reader.Offset, reader.ReadInt32(), 4, "Initialized Data Size", "Size of the initialized data section, or the sum of all code sections if there are multiple data sections."));
-			entries.Add(new Entry(reader.Offset, reader.ReadInt32(), 4, "Uninitialized Data Size", "Size of the uninitialized data section, or the sum of all code sections if there are multiple uninitialized data sections."));
+			entries.Add(new Entry(reader.Offset, reader.ReadInt32(), 4, "Initialized Data Size", "Size of the initialized data section, or the sum of all initialized data sections if there are multiple data sections."));
+			entries.Add(new Entry(reader.Offset, reader.ReadInt32(), 4, "Uninitialized Data Size", "Size of the uninitialized data section, or the sum of all uninitialized data sections if there are multiple uninitialized data sections."));
 			entries.Add(new Entry(reader.Offset, reader.ReadInt32(), 4, "Entry Point RVA", "RVA of entry point, needs to point to bytes 0xFF 0x25 followed by the RVA in a section marked execute / read for EXEs or 0 for DLLs"));
 			entries.Add(new Entry(reader.Offset, reader.ReadInt32(), 4, "Base Of Code", "RVA of the code section."));
 			entries.Add(new Entry(reader.Offset, header.Magic == PEMagic.PE32Plus ? reader.ReadUInt64() : reader.ReadUInt32(), header.Magic == PEMagic.PE32Plus ? 8 : 4, "Base Of Data", "RVA of the data section."));

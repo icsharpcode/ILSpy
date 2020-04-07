@@ -8,7 +8,7 @@ image: Visual Studio 2019
 
 install:
 - git submodule update --init --recursive
-- ps: .\BuildTools\appveyor-install.ps1
+- pwsh .\BuildTools\appveyor-install.ps1
 
 nuget:
   account_feed: false
@@ -24,11 +24,8 @@ build_script:
 after_build:
 - 7z a ILSpy_binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*.config %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*\ILSpy.resources.dll
 
-test:
-  assemblies:
-    - 'ICSharpCode.Decompiler.Tests\bin\%configuration%\net472\ICSharpCode.Decompiler.Tests.exe'
-    - 'ILSpy.Tests\bin\%configuration%\net472\ILSpy.Tests.exe'
-    - 'ILSpy.BamlDecompiler.Tests\bin\%configuration%\net472\ILSpy.BamlDecompiler.Tests.dll'
+test_script:
+- vstest.console.exe /logger:Appveyor /Parallel "ICSharpCode.Decompiler.Tests\bin\%configuration%\net472\ICSharpCode.Decompiler.Tests.exe" "ILSpy.Tests\bin\%configuration%\net472\ILSpy.Tests.exe" "ILSpy.BamlDecompiler.Tests\bin\%configuration%\net472\ILSpy.BamlDecompiler.Tests.exe"
 
 after_test:
 - python BuildTools\tidy.py

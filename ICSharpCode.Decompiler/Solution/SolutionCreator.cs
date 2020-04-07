@@ -88,13 +88,12 @@ namespace ICSharpCode.Decompiler.Solution
 
 		private static void WriteProjects(TextWriter writer, IEnumerable<ProjectItem> projects, string solutionFilePath)
 		{
-			var solutionGuid = Guid.NewGuid().ToString("B").ToUpperInvariant();
-
 			foreach (var project in projects) {
 				var projectRelativePath = GetRelativePath(solutionFilePath, project.FilePath);
+				var typeGuid = project.TypeGuid.ToString("B").ToUpperInvariant();
 				var projectGuid = project.Guid.ToString("B").ToUpperInvariant();
 
-				writer.WriteLine($"Project(\"{solutionGuid}\") = \"{project.ProjectName}\", \"{projectRelativePath}\", \"{projectGuid}\"");
+				writer.WriteLine($"Project(\"{typeGuid}\") = \"{project.ProjectName}\", \"{projectRelativePath}\", \"{projectGuid}\"");
 				writer.WriteLine("EndProject");
 			}
 		}

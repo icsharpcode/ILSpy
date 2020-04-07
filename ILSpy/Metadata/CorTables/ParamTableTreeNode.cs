@@ -43,7 +43,6 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
-			var metadata = module.Metadata;
 			
 			var list = new List<ParamEntry>();
 			ParamEntry scrollTargetEntry = default;

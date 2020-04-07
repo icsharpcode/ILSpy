@@ -208,6 +208,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if !(LEGACY_CSC && OPT)
+		// legacy csc manages to optimize out the pinned variable altogether in this case;
+		// leaving no pinned region we could detect.
+		public unsafe void FixedArrayNoPointerUse(int[] arr)
+		{
+			fixed (int* ptr = arr) {
+			}
+		}
+#endif
+
 		public unsafe void PutDoubleIntoLongArray1(long[] array, int index, double val)
 		{
 			fixed (long* ptr = array) {

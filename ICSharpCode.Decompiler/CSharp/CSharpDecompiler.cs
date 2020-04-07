@@ -428,7 +428,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(rootNode, context);
 			}
+			CancellationToken.ThrowIfCancellationRequested();
 			rootNode.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
+			CancellationToken.ThrowIfCancellationRequested();
+			GenericGrammarAmbiguityVisitor.ResolveAmbiguities(rootNode);
 		}
 
 		string SyntaxTreeToString(SyntaxTree syntaxTree)

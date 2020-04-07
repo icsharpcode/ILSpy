@@ -56,6 +56,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		UseMcs = 0x20,
 		ReferenceVisualBasic = 0x40,
 		ReferenceCore = 0x80,
+		GeneratePdb = 0x100,
 	}
 
 	[Flags]
@@ -272,7 +273,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					preprocessorSymbols: preprocessorSymbols.ToArray(),
 					languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.CSharp8
 				);
-				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
+				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f, encoding: Encoding.UTF8));
 				if (flags.HasFlag(CompilerOptions.ReferenceCore)) {
 					syntaxTrees = syntaxTrees.Concat(new[] { SyntaxFactory.ParseSyntaxTree(targetFrameworkAttributeSnippet) });
 				}
@@ -296,7 +297,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					));
 				CompilerResults results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
-				var emitResult = compilation.Emit(results.PathToAssembly);
+				string pdbName = null;
+				if (flags.HasFlag(CompilerOptions.GeneratePdb))
+					pdbName = Path.ChangeExtension(outputFileName, ".pdb");
+				var emitResult = compilation.Emit(results.PathToAssembly, pdbName);
 				if (!emitResult.Success) {
 					StringBuilder b = new StringBuilder("Compiler error:");
 					foreach (var diag in emitResult.Diagnostics) {
@@ -360,7 +364,12 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				CompilerParameters options = new CompilerParameters();
 				options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);
 				options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-");
-				options.CompilerOptions += (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "");
+				string debugOption = " /debug";
+				if (flags.HasFlag(CompilerOptions.GeneratePdb)) {
+					debugOption += ":full";
+					options.IncludeDebugInformation = true;
+				}
+				options.CompilerOptions += (flags.HasFlag(CompilerOptions.UseDebug) ? debugOption : "");
 				options.CompilerOptions += (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
 				if (preprocessorSymbols.Count > 0) {
 					options.CompilerOptions += " /d:" + string.Join(";", preprocessorSymbols);
@@ -368,7 +377,6 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				if (outputFileName != null) {
 					options.OutputAssembly = outputFileName;
 				}
-
 				options.ReferencedAssemblies.Add("System.dll");
 				options.ReferencedAssemblies.Add("System.Core.dll");
 				options.ReferencedAssemblies.Add("System.Xml.dll");
@@ -397,7 +405,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 		}
 
-		public static void CompileCSharpWithPdb(string assemblyName, Dictionary<string, string> sourceFiles, PdbToXmlOptions options)
+		public static void CompileCSharpWithPdb(string assemblyName, Dictionary<string, string> sourceFiles)
 		{
 			var parseOptions = new CSharpParseOptions(languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.Latest);
 
@@ -484,6 +492,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 				decompiler.AstTransforms.Insert(0, new RemoveNamespaceMy());
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+				var pdbFileName = Path.ChangeExtension(assemblyFileName, ".pdb");
+				if (File.Exists(pdbFileName))
+					decompiler.DebugInfoProvider = PdbProvider.DebugInfoUtils.FromFile(module, pdbFileName);
 				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile(sortTypes: true);
 
 				StringWriter output = new StringWriter();
