@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -174,6 +175,17 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(')');
 			output.Write(' ');
 			body.WriteTo(output, options);
+		}
+
+		/// <summary>
+		/// Gets the ILRange of the instructions at the start of the catch-block,
+		/// that take the exception object and store it in the exception variable slot.
+		/// </summary>
+		public Interval ExceptionSpecifierILRange { get; private set; }
+
+		public void AddExceptionSpecifierILRange(Interval newRange)
+		{
+			ExceptionSpecifierILRange = CombineILRange(ExceptionSpecifierILRange, newRange);
 		}
 	}
 	
