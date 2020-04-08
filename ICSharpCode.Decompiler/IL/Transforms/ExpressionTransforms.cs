@@ -17,10 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -711,6 +713,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		void TransformCatchVariable(TryCatchHandler handler, Block entryPoint, bool isCatchBlock)
 		{
+			List<Interval> ilOffsets = null;
 			if (!handler.Variable.IsSingleDefinition || handler.Variable.LoadCount != 1)
 				return; // handle.Variable already has non-trivial uses
 			if (!entryPoint.Instructions[0].MatchStLoc(out var exceptionVar, out var exceptionSlotLoad)) {
@@ -720,6 +723,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (inlinedUnboxAny.Type.Equals(handler.Variable.Type)) {
 						context.Step("TransformCatchVariable - remove inlined UnboxAny", inlinedUnboxAny);
 						inlinedUnboxAny.ReplaceWith(inlinedUnboxAny.Argument);
+						(ilOffsets ?? (ilOffsets = new List<Interval>())).AddRange(inlinedUnboxAny.ILRanges);
 					}
 				}
 				return;
@@ -746,6 +750,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			exceptionVar.Kind = VariableKind.ExceptionLocal;
 			exceptionVar.Type = handler.Variable.Type;
 			handler.Variable = exceptionVar;
+			if (isCatchBlock) {
+				(ilOffsets ?? (ilOffsets = new List<Interval>())).AddRange(entryPoint.Instructions[0].Descendants.SelectMany(o => o.ILRanges));
+				foreach (var offset in ilOffsets)
+					handler.AddExceptionSpecifierILRange(offset);
+			}
 			entryPoint.Instructions.RemoveAt(0);
 		}
 

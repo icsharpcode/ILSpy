@@ -113,7 +113,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			ILInstruction blockContainer = blockStatement.Annotations.OfType<ILInstruction>().FirstOrDefault();
 			if (blockContainer != null) {
 				StartSequencePoint(blockStatement.LBraceToken);
-				int intervalStart = blockContainer.ILRanges.First().Start;
+				int intervalStart;
+				if (blockContainer.Parent is TryCatchHandler handler && !handler.ExceptionSpecifierILRange.IsEmpty) {
+					// if this block container is part of a TryCatchHandler, do not steal the exception-specifier IL range
+					intervalStart = handler.ExceptionSpecifierILRange.End;
+				} else {
+					intervalStart = blockContainer.ILRanges.First().Start;
+				}
 				// The end will be set to the first sequence point candidate location before the first statement of the function when the seqeunce point is adjusted
 				int intervalEnd = intervalStart + 1; 
 
@@ -321,17 +327,20 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public override void VisitCatchClause(CatchClause catchClause)
 		{
+			StartSequencePoint(catchClause);
 			if (catchClause.Condition.IsNull) {
-				StartSequencePoint(catchClause.CatchToken);
-				var function = catchClause.Ancestors.OfType<ILFunction>().FirstOrDefault();
-				AddToSequencePointRaw(function, new[] { catchClause.Annotation<TryCatchHandler>().ExceptionSpecifierILRange });
-				EndSequencePoint(catchClause.CatchToken.StartLocation, catchClause.RParToken.IsNull ? catchClause.CatchToken.EndLocation : catchClause.RParToken.EndLocation);
+				var tryCatchHandler = catchClause.Annotation<TryCatchHandler>();
+				if (!tryCatchHandler.ExceptionSpecifierILRange.IsEmpty) {
+					StartSequencePoint(catchClause.CatchToken);
+					var function = tryCatchHandler.Ancestors.OfType<ILFunction>().FirstOrDefault();
+					AddToSequencePointRaw(function, new[] { tryCatchHandler.ExceptionSpecifierILRange });
+					EndSequencePoint(catchClause.CatchToken.StartLocation, catchClause.RParToken.IsNull ? catchClause.CatchToken.EndLocation : catchClause.RParToken.EndLocation);
+				}
 			} else {
 				StartSequencePoint(catchClause.WhenToken);
 				AddToSequencePoint(catchClause.Condition);
 				EndSequencePoint(catchClause.WhenToken.StartLocation, catchClause.CondRParToken.EndLocation);
 			}
-			StartSequencePoint(catchClause);
 			catchClause.Body.AcceptVisitor(this);
 			EndSequencePoint(catchClause.StartLocation, catchClause.EndLocation);
 		}
