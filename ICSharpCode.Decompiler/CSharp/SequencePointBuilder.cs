@@ -289,6 +289,32 @@ namespace ICSharpCode.Decompiler.CSharp
 			VisitAsSequencePoint(fixedStatement.EmbeddedStatement);
 		}
 
+		public override void VisitTryCatchStatement(TryCatchStatement tryCatchStatement)
+		{
+			VisitAsSequencePoint(tryCatchStatement.TryBlock);
+			foreach (var c in tryCatchStatement.CatchClauses) {
+				VisitAsSequencePoint(c);
+			}
+			VisitAsSequencePoint(tryCatchStatement.FinallyBlock);
+		}
+
+		public override void VisitCatchClause(CatchClause catchClause)
+		{
+			if (catchClause.Condition.IsNull) {
+				StartSequencePoint(catchClause.CatchToken);
+				var function = catchClause.Ancestors.OfType<ILFunction>().FirstOrDefault();
+				AddToSequencePointRaw(function, new[] { catchClause.Annotation<TryCatchHandler>().ExceptionSpecifierILRange });
+				EndSequencePoint(catchClause.CatchToken.StartLocation, catchClause.RParToken.IsNull ? catchClause.CatchToken.EndLocation : catchClause.RParToken.EndLocation);
+			} else {
+				StartSequencePoint(catchClause.WhenToken);
+				AddToSequencePoint(catchClause.Condition);
+				EndSequencePoint(catchClause.WhenToken.StartLocation, catchClause.CondRParToken.EndLocation);
+			}
+			StartSequencePoint(catchClause);
+			catchClause.Body.AcceptVisitor(this);
+			EndSequencePoint(catchClause.StartLocation, catchClause.EndLocation);
+		}
+
 		/// <summary>
 		/// Start a new C# statement = new sequence point.
 		/// </summary>
@@ -316,6 +342,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				}));
 			}
 			current = outerStates.Pop();
+		}
+
+		void AddToSequencePointRaw(ILFunction function, IEnumerable<Interval> ranges)
+		{
+			current.Intervals.AddRange(ranges);
+			Debug.Assert(current.Function == null || current.Function == function);
+			current.Function = function;
 		}
 
 		/// <summary>

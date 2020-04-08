@@ -692,7 +692,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				TransformCatchWhen(inst, filterContainer.EntryPoint);
 			}
 			if (inst.Body is BlockContainer catchContainer)
-				TransformCatchVariable(inst, catchContainer.EntryPoint);
+				TransformCatchVariable(inst, catchContainer.EntryPoint, isCatchBlock: true);
 		}
 
 		/// <summary>
@@ -709,7 +709,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	}
 		/// }
 		/// </summary>
-		void TransformCatchVariable(TryCatchHandler handler, Block entryPoint)
+		void TransformCatchVariable(TryCatchHandler handler, Block entryPoint, bool isCatchBlock)
 		{
 			if (!handler.Variable.IsSingleDefinition || handler.Variable.LoadCount != 1)
 				return; // handle.Variable already has non-trivial uses
@@ -754,7 +754,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		void TransformCatchWhen(TryCatchHandler handler, Block entryPoint)
 		{
-			TransformCatchVariable(handler, entryPoint);
+			TransformCatchVariable(handler, entryPoint, isCatchBlock: false);
 			if (entryPoint.Instructions.Count == 1 && entryPoint.Instructions[0].MatchLeave(out _, out var condition)) {
 				context.Step("TransformCatchWhen", entryPoint.Instructions[0]);
 				handler.Filter = condition;

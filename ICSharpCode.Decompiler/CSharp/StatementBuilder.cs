@@ -363,6 +363,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			tryCatch.TryBlock = ConvertAsBlock(inst.TryBlock);
 			foreach (var handler in inst.Handlers) {
 				var catchClause = new CatchClause();
+				catchClause.AddAnnotation(handler);
 				var v = handler.Variable;
 				if (v != null) {
 					catchClause.AddAnnotation(new ILVariableResolveResult(v, v.Type));
