@@ -18,9 +18,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Util;
 
@@ -108,6 +110,25 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public override void VisitBlockStatement(BlockStatement blockStatement)
 		{
+			ILInstruction blockContainer = blockStatement.Annotations.OfType<ILInstruction>().FirstOrDefault();
+			if (blockContainer != null) {
+				StartSequencePoint(blockStatement.LBraceToken);
+				int intervalStart = blockContainer.ILRanges.First().Start;
+				// The end will be set to the first sequence point candidate location before the first statement of the function when the seqeunce point is adjusted
+				int intervalEnd = intervalStart + 1; 
+
+				Interval interval = new Interval(intervalStart, intervalEnd);
+				List<Interval> intervals = new List<Interval>();
+				intervals.Add(interval);
+				current.Intervals.AddRange(intervals);
+				current.Function = blockContainer.Ancestors.OfType<ILFunction>().FirstOrDefault();
+				EndSequencePoint(blockStatement.LBraceToken.StartLocation, blockStatement.LBraceToken.EndLocation);
+			}
+			else {
+				// Ideally, we'd be able to address this case. Blocks that are not the top-level function block have no ILInstruction annotations. It isn't clear to me how to determine the il range.
+				// For now, do not add the opening brace sequence in this case.
+			}
+
 			foreach (var stmt in blockStatement.Statements) {
 				VisitAsSequencePoint(stmt);
 			}
@@ -406,11 +427,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				list.Add(sequencePoint);
 			}
+
 			foreach (var (function, list) in dict.ToList()) {
-				// For each function, sort sequence points and fix overlaps+gaps
+				// For each function, sort sequence points and fix overlaps
 				var newList = new List<DebugInfo.SequencePoint>();
 				int pos = 0;
-				foreach (var sequencePoint in list.OrderBy(sp => sp.Offset).ThenBy(sp => sp.EndOffset)) {
+				IOrderedEnumerable<DebugInfo.SequencePoint> currFunctionSequencePoints = list.OrderBy(sp => sp.Offset).ThenBy(sp => sp.EndOffset);
+				foreach (DebugInfo.SequencePoint sequencePoint in currFunctionSequencePoints) {
 					if (sequencePoint.Offset < pos) {
 						// overlapping sequence point?
 						// delete previous sequence points that are after sequencePoint.Offset
@@ -423,17 +446,12 @@ namespace ICSharpCode.Decompiler.CSharp
 								newList[newList.Count - 1] = last;
 							}
 						}
-					} else if (sequencePoint.Offset > pos) {
-						// insert hidden sequence point in the gap.
-						var hidden = new DebugInfo.SequencePoint();
-						hidden.Offset = pos;
-						hidden.EndOffset = sequencePoint.Offset;
-						hidden.SetHidden();
-						newList.Add(hidden);
 					}
+
 					newList.Add(sequencePoint);
 					pos = sequencePoint.EndOffset;
 				}
+				// Add a hidden sequence point to account for the epilog of the function
 				if (pos < function.CodeSize) {
 					var hidden = new DebugInfo.SequencePoint();
 					hidden.Offset = pos;
@@ -441,8 +459,48 @@ namespace ICSharpCode.Decompiler.CSharp
 					hidden.SetHidden();
 					newList.Add(hidden);
 				}
+
+
+				List<int> sequencePointCandidates = function.SequencePointCandidates;
+				int currSPCandidateIndex = 0;
+
+				for (int i = 0; i < newList.Count - 1; i++) {
+					DebugInfo.SequencePoint currSequencePoint = newList[i];
+					DebugInfo.SequencePoint nextSequencePoint = newList[i + 1];
+
+					// Adjust the end offset of the current sequence point to the closest sequence point candidate
+					// but do not create an overlapping sequence point. Moving the start of the current sequence
+					// point is not required as it is 0 for the first sequence point and is moved during the last 
+					// iteration for all others.
+					while (currSPCandidateIndex < sequencePointCandidates.Count &&
+						sequencePointCandidates[currSPCandidateIndex] < currSequencePoint.EndOffset) {
+						currSPCandidateIndex++;
+					}
+					if (currSPCandidateIndex < sequencePointCandidates.Count && sequencePointCandidates[currSPCandidateIndex] <= nextSequencePoint.Offset) {
+						currSequencePoint.EndOffset = sequencePointCandidates[currSPCandidateIndex];
+					}
+
+					// Adjust the start offset of the next sequence point to the closest previous sequence point candidate
+					// but do not create an overlapping sequence point. 
+					while (currSPCandidateIndex < sequencePointCandidates.Count &&
+						sequencePointCandidates[currSPCandidateIndex] < nextSequencePoint.Offset) {
+						currSPCandidateIndex++;
+					}
+					if (currSPCandidateIndex < sequencePointCandidates.Count && sequencePointCandidates[currSPCandidateIndex - 1] >= currSequencePoint.EndOffset) {
+						nextSequencePoint.Offset = sequencePointCandidates[currSPCandidateIndex - 1];
+						currSPCandidateIndex--;
+					}
+
+					// Fill in any gaps with a hidden sequence point
+					if (currSequencePoint.EndOffset != nextSequencePoint.Offset) {
+						SequencePoint newSP = new SequencePoint() { Offset = currSequencePoint.EndOffset, EndOffset = nextSequencePoint.Offset };
+						newSP.SetHidden();
+						newList.Insert(++i, newSP);
+					}
+				}
 				dict[function] = newList;
-			}
+			}			
+
 			return dict;
 		}
 	}

@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Collections.Immutable;
 
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -113,7 +114,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		internal TypeSystem.Implementation.LocalFunctionMethod ReducedMethod;
 
-		internal DebugInfo.AsyncDebugInfo AsyncDebugInfo;
+		public DebugInfo.AsyncDebugInfo AsyncDebugInfo;
 
 		int ctorCallStart = int.MinValue;
 
@@ -168,6 +169,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// Might be null, if this function was not created from metadata.
 		/// </summary>
 		public readonly IReadOnlyList<IParameter> Parameters;
+
+		/// <summary>
+		/// List of candidate locations for sequence points. Includes any offset
+		/// where the stack is empty, nop instructions, and the instruction following
+		/// a call instruction
+		/// </summary>
+		public List<int> SequencePointCandidates { get; set; }
 
 		/// <summary>
 		/// Constructs a new ILFunction from the given metadata and with the given ILAst body.

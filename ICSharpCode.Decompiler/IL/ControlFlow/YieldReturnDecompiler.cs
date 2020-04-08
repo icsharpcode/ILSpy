@@ -532,6 +532,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ILFunction moveNextFunction = CreateILAst(moveNextMethod, context);
 
 			function.MoveNextMethod = moveNextFunction.Method;
+			function.SequencePointCandidates = moveNextFunction.SequencePointCandidates;
 			function.CodeSize = moveNextFunction.CodeSize;
 
 			// Copy-propagate temporaries holding a copy of 'this'.

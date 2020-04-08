@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 	/// A sequence point read from a PDB file or produced by the decompiler.
 	/// </summary>
 	[DebuggerDisplay("SequencePoint IL_{Offset,h}-IL_{EndOffset,h}, {StartLine}:{StartColumn}-{EndLine}:{EndColumn}, IsHidden={IsHidden}")]
-	public struct SequencePoint
+	public class SequencePoint
 	{
 		/// <summary>
 		/// IL start offset.
