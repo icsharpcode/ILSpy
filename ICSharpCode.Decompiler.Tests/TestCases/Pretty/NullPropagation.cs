@@ -68,15 +68,41 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 			}
 		}
+		
+		private class Container<T1, T2>
+		{
+			public GenericStruct<T1, T2> Other;
+		}
 
 		private struct GenericStruct<T1, T2>
 		{
 			public T1 Field1;
 			public T2 Field2;
+			public Container<T1, T2> Other;
 
 			public override string ToString()
 			{
 				return "(" + Field1?.ToString() + ", " + Field2?.ToString() + ")";
+			}
+			
+			public int? GetTextLength()
+			{
+				return Field1?.ToString().Length + Field2?.ToString().Length + 4;
+			}
+
+			public string Chain1()
+			{
+				return Other?.Other.Other?.Other.Field1?.ToString();
+			}
+
+			public string Chain2()
+			{
+				return Other?.Other.Other?.Other.Field1?.ToString()?.GetType().Name;
+			}
+
+			public int? GetTextLengthNRE()
+			{
+				return (Field1?.ToString()).Length;
 			}
 		}
 
