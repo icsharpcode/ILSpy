@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
@@ -74,13 +75,16 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 					Debug.Assert(reader.Machine == Machine.I386);
 					bitness = 32;
 				}
-				foreach (List<ReadyToRunMethod> readyToRunMethodList in reader.Methods.Values) {
-					foreach (ReadyToRunMethod readyToRunMethod in readyToRunMethodList) {
-						if (readyToRunMethod.MethodHandle == method.MetadataToken) {
-							// TODO: Indexing
-							foreach (RuntimeFunction runtimeFunction in readyToRunMethod.RuntimeFunctions) {
-								Disassemble(output, reader, readyToRunMethod, runtimeFunction, bitness, (ulong)runtimeFunction.StartAddress);
-							}
+				if (cacheEntry.methodMap == null) {
+					cacheEntry.methodMap = reader.Methods.Values
+						.SelectMany(m => m)
+						.GroupBy(m => m.MethodHandle)
+						.ToDictionary(g => g.Key, g => g.ToArray());
+				}
+				if (cacheEntry.methodMap.TryGetValue(method.MetadataToken, out var methods)) {
+					foreach (var readyToRunMethod in methods) {
+						foreach (RuntimeFunction runtimeFunction in readyToRunMethod.RuntimeFunctions) {
+							Disassemble(output, reader, readyToRunMethod, runtimeFunction, bitness, (ulong)runtimeFunction.StartAddress);
 						}
 					}
 				}
@@ -191,6 +195,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		{
 			public ReadyToRunReader readyToRunReader;
 			public string failureReason;
+			public Dictionary<EntityHandle, ReadyToRunMethod[]> methodMap;
 		}
 	}
 }
