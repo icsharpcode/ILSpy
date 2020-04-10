@@ -120,6 +120,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				WriteStructureBody(new ILStructure(module, handle, genericContext, body), branchTargets, ref blob);
 			} else {
 				while (blob.RemainingBytes > 0) {
+					cancellationToken.ThrowIfCancellationRequested();
 					WriteInstruction(output, metadata, handle, ref blob);
 				}
 				WriteExceptionHandlers(module, handle, body);
@@ -252,6 +253,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			bool prevInstructionWasBranch = false;
 			int childIndex = 0;
 			while (body.RemainingBytes > 0 && body.Offset < s.EndOffset) {
+				cancellationToken.ThrowIfCancellationRequested();
 				int offset = body.Offset;
 				if (childIndex < s.Children.Count && s.Children[childIndex].StartOffset <= offset && offset < s.Children[childIndex].EndOffset) {
 					ILStructure child = s.Children[childIndex++];
