@@ -8,7 +8,6 @@
 |third-party-notices.txt|Binary inclusion in ILSpy for third party libraries and code used in ILSpy and its components|
 |copyright.txt|Copyright notice for ILSpy|
 |license.txt|MIT license for ILSpy|
-|lgpl.txt|LGPL license|
 |MS-PL.txt|MS-PL license|
 
 ## Other

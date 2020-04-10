@@ -454,9 +454,6 @@
     <Compile Include="Docking\DockWorkspace.cs" />
     <EmbeddedResource Include="..\doc\ILSpyAboutPage.txt" />
     <EmbeddedResource Include="..\doc\third-party-notices.txt" />
-    <EmbeddedResource Include="..\doc\LGPL.txt">
-      <Link>LGPL.txt</Link>
-    </EmbeddedResource>
     <EmbeddedResource Include="..\doc\license.txt">
       <Link>license.txt</Link>
     </EmbeddedResource>
