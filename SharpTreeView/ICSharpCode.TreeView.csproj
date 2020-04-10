@@ -64,9 +64,4 @@
     <Compile Include="TreeTraversal.cs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="copyright.txt" />
-    <None Include="license.txt" />
-  </ItemGroup>
-
 </Project>

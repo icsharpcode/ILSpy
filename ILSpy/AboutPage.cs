@@ -97,7 +97,6 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("MIT License", "resource:license.txt"));
-			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("LGPL", "resource:LGPL.txt"));
 			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("MS-PL", "resource:MS-PL.txt"));
 			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("third-party notices", "resource:third-party-notices.txt"));
 			textView.ShowText(output);
