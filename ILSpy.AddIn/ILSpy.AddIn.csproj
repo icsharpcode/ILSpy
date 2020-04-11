@@ -126,7 +126,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\doc\license.txt" Link="license.txt" />
+    <Content Include="..\doc\license.txt" Link="license.txt">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>\</VSIXSubPath>
+    </Content>
     <Content Include="@(AdditionalDependencies)">
       <IncludeInVSIX>true</IncludeInVSIX>
       <VSIXSubPath>\</VSIXSubPath>
