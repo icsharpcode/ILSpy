@@ -126,6 +126,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\doc\license.txt" Link="license.txt" />
     <Content Include="@(AdditionalDependencies)">
       <IncludeInVSIX>true</IncludeInVSIX>
       <VSIXSubPath>\</VSIXSubPath>
@@ -159,10 +160,6 @@
 
   <ItemGroup>
     <Content Include="ILSpy-Large.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
-    <Content Include="license.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
