@@ -23,7 +23,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 		[OneTimeSetUp]
 		public void Setup()
 		{
-			new Application();
+			Stub.SetupApplication();
 			Options.DecompilerSettingsPanel.TestSetup(new Decompiler.DecompilerSettings());
 			assemblyList = new AssemblyList("Test");
 			testAssembly = assemblyList.OpenAssembly(typeof(MethodUsesAnalyzerTests).Assembly.Location);

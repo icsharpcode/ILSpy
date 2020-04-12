@@ -16,12 +16,24 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Windows;
+
 namespace ICSharpCode.ILSpy.Tests
 {
-	class Stub
+	public static class Stub
 	{
 		static void Main(string[] args)
 		{
+		}
+
+		static readonly object sync = new object();
+
+		internal static void SetupApplication()
+		{
+			lock (sync) {
+				if (Application.Current == null)
+					new Application();
+			}
 		}
 	}
 }
