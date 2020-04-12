@@ -31,6 +31,7 @@ using NUnit.Framework;
 namespace ICSharpCode.ILSpy.Tests.Analyzers
 {
 	[TestFixture, Parallelizable(ParallelScope.All)]
+	[Ignore("Only one test case can be executed, the test setup is really hacky and the whole ILSpy UI should be refactored and made mockable/testable, remove singletons, dependencies on Application.Current.Dispatcher, etc.")]
 	public class TypeUsedByAnalyzerTests
 	{
 		AssemblyList assemblyList;
