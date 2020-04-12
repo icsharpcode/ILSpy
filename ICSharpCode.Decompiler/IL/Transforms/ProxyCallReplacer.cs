@@ -26,6 +26,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
+			if (!context.Settings.AsyncAwait)
+				return;
 			foreach (var inst in function.Descendants.OfType<CallInstruction>()) {
 				Run(inst, context);
 			}
