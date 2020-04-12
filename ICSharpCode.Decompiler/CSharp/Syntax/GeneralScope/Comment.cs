@@ -102,7 +102,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return endLocation;
 			}
 		}
-		
+
+		internal void SetStartLocation(TextLocation value)
+		{
+			ThrowIfFrozen();
+			this.startLocation = value;
+		}
+
+		internal void SetEndLocation(TextLocation value)
+		{
+			ThrowIfFrozen();
+			this.endLocation = value;
+		}
+
 		public Comment (string content, CommentType type = CommentType.SingleLine)
 		{
 			this.CommentType = type;
