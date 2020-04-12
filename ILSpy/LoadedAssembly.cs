@@ -207,15 +207,27 @@ namespace ICSharpCode.ILSpy
 		[ThreadStatic]
 		static int assemblyLoadDisableCount;
 
+		public static IDisposable DisableAssemblyLoad(AssemblyList assemblyList)
+		{
+			assemblyLoadDisableCount++;
+			return new DecrementAssemblyLoadDisableCount(assemblyList);
+		}
+
 		public static IDisposable DisableAssemblyLoad()
 		{
 			assemblyLoadDisableCount++;
-			return new DecrementAssemblyLoadDisableCount();
+			return new DecrementAssemblyLoadDisableCount(MainWindow.Instance.CurrentAssemblyList);
 		}
 
 		sealed class DecrementAssemblyLoadDisableCount : IDisposable
 		{
 			bool disposed;
+			AssemblyList assemblyList;
+
+			public DecrementAssemblyLoadDisableCount(AssemblyList assemblyList)
+			{
+				this.assemblyList = assemblyList;
+			}
 
 			public void Dispose()
 			{
@@ -223,7 +235,7 @@ namespace ICSharpCode.ILSpy
 					disposed = true;
 					assemblyLoadDisableCount--;
 					// clear the lookup cache since we might have stored the lookups failed due to DisableAssemblyLoad()
-					MainWindow.Instance.CurrentAssemblyList.ClearCache();
+					assemblyList.ClearCache();
 				}
 			}
 		}

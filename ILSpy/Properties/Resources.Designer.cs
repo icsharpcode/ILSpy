@@ -1477,6 +1477,16 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Navigation failed because the target is hidden or a compiler-generated class.\n
+        ///Please disable all filters that might hide the item (i.e. activate &quot;View &gt; Show internal types and members&quot;) and try again..
+        /// </summary>
+        public static string NavigationFailed {
+            get {
+                return ResourceManager.GetString("NavigationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Nuget Package Browser.
         /// </summary>
         public static string NugetPackageBrowser {

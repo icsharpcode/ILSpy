@@ -161,7 +161,7 @@ namespace ICSharpCode.ILSpy
 			var dis = CreateDisassembler(output, options);
 
 			// don't automatically load additional assemblies when an assembly node is selected in the tree view
-			using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
+			using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad(assembly.AssemblyList)) {
 				dis.AssemblyResolver = module.GetAssemblyResolver();
 				dis.DebugInfo = module.GetDebugInfoOrNull();
 				if (options.FullDecompilation)

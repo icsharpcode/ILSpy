@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="..\ICSharpCode.Decompiler.PdbProvider.Cecil\MonoCecilDebugInfoProvider.cs" Link="DebugInfo\MonoCecilDebugInfoProvider.cs" />
     <Compile Include="AboutPage.cs" />
+    <Compile Include="Analyzers\AnalyzerContext.cs" />
     <Compile Include="Analyzers\AnalyzerScope.cs" />
     <Compile Include="Analyzers\Builtin\AttributeAppliedToAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\EventImplementsInterfaceAnalyzer.cs" />

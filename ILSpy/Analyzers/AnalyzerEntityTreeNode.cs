@@ -17,7 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using ICSharpCode.Decompiler.Metadata;
+using System.Reflection.Metadata;
+using System.Windows;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.TreeView;
@@ -34,6 +35,10 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
 			e.Handled = true;
+			if (this.Member.MetadataToken.IsNil) {
+				MessageBox.Show(Properties.Resources.CannotAnalyzeMissingRef, "ILSpy");
+				return;
+			}
 			MainWindow.Instance.JumpToReference(this.Member);
 		}
 		

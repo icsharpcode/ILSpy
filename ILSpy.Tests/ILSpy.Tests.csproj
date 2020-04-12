@@ -14,12 +14,12 @@
     <EnableDefaultItems>false</EnableDefaultItems>
 
     <OutputType>Exe</OutputType>
+    <RootNamespace>ICSharpCode.ILSpy.Tests</RootNamespace>
     <StartupObject>ICSharpCode.ILSpy.Tests.Stub</StartupObject>
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
-    <RootNamespace>ICSharpCode.ILSpy.Tests</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -37,6 +37,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Analyzers\MethodUsesAnalyzerTests.cs" />
+    <Compile Include="Analyzers\TestCases\MainAssembly.cs" />
+    <Compile Include="Analyzers\TypeUsedByAnalyzerTests.cs" />
     <Compile Include="Stub.cs" />
   </ItemGroup>
 

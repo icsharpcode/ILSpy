@@ -362,7 +362,7 @@ namespace ICSharpCode.ILSpy
 				base.DecompileAssembly(assembly, output, options);
 
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
-				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
+				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad(assembly.AssemblyList)) {
 					IAssemblyResolver assemblyResolver = assembly.GetAssemblyResolver();
 					var typeSystem = new DecompilerTypeSystem(module, assemblyResolver, options.DecompilerSettings);
 					var globalType = typeSystem.MainModule.TypeDefinitions.FirstOrDefault();

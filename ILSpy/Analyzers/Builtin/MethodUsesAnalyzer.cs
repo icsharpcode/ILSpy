@@ -18,11 +18,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
@@ -41,16 +38,17 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		public IEnumerable<ISymbol> Analyze(ISymbol symbol, AnalyzerContext context)
 		{
 			if (symbol is IMethod method) {
+				var typeSystem = context.GetOrCreateTypeSystem(method.ParentModule.PEFile);
 				return context.Language.GetCodeMappingInfo(method.ParentModule.PEFile, method.MetadataToken)
 					.GetMethodParts((MethodDefinitionHandle)method.MetadataToken)
-					.SelectMany(h => ScanMethod(method, h, context)).Distinct();
+					.SelectMany(h => ScanMethod(h, typeSystem)).Distinct();
 			}
 			throw new InvalidOperationException("Should never happen.");
 		}
 
-		IEnumerable<IEntity> ScanMethod(IMethod analyzedMethod, MethodDefinitionHandle handle, AnalyzerContext context)
+		IEnumerable<IEntity> ScanMethod(MethodDefinitionHandle handle, DecompilerTypeSystem typeSystem)
 		{
-			var module = (MetadataModule)analyzedMethod.ParentModule;
+			var module = typeSystem.MainModule;
 			var md = module.PEFile.Metadata.GetMethodDefinition(handle);
 			if (!md.HasBody()) yield break;
 

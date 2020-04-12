@@ -759,10 +759,7 @@ namespace ICSharpCode.ILSpy
 					}
 					AssemblyTreeView.SelectedItem = obj;
 				} else {
-					MessageBox.Show("Navigation failed because the target is hidden or a compiler-generated class.\n" +
-						"Please disable all filters that might hide the item (i.e. activate " +
-						"\"View > Show internal types and members\") and try again.",
-						"ILSpy", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+					MessageBox.Show(Properties.Resources.NavigationFailed, "ILSpy", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 				}
 			}
 		}
@@ -888,10 +885,11 @@ namespace ICSharpCode.ILSpy
 					break;
 				case ValueTuple<string, PEFile, Handle> unresolvedEntity:
 					string protocol = unresolvedEntity.Item1 ?? "decompile";
+					PEFile file = unresolvedEntity.Item2;
 					if (protocol != "decompile") {
 						var protocolHandlers = App.ExportProvider.GetExports<IProtocolHandler>();
 						foreach (var handler in protocolHandlers) {
-							var node = handler.Value.Resolve(protocol, unresolvedEntity.Item2, unresolvedEntity.Item3, out bool newTabPage);
+							var node = handler.Value.Resolve(protocol, file, unresolvedEntity.Item3, out bool newTabPage);
 							if (node != null) {
 								SelectNode(node, newTabPage);
 								return decompilationTask;
@@ -899,8 +897,7 @@ namespace ICSharpCode.ILSpy
 						}
 					}
 					if (MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(unresolvedEntity.Item3)) != null) {
-						var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item2, unresolvedEntity.Item2.GetAssemblyResolver(),
-						TypeSystemOptions.Default | TypeSystemOptions.Uncached);
+						var typeSystem = new DecompilerTypeSystem(file, file.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
 						reference = typeSystem.MainModule.ResolveEntity((EntityHandle)unresolvedEntity.Item3);
 						goto default;
 					}
