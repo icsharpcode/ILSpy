@@ -80,7 +80,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			if (ShowTable(TableIndex.CustomDebugInformation))
 				this.Children.Add(new CustomDebugInformationTableTreeNode(this.module, this.provider, isEmbedded));
 
-			bool ShowTable(TableIndex table) => !DisplaySettingsPanel.CurrentDisplaySettings.HideEmptyMetadataTables || module.Metadata.GetTableRowCount(table) > 0;
+			bool ShowTable(TableIndex table) => !DisplaySettingsPanel.CurrentDisplaySettings.HideEmptyMetadataTables || this.provider.GetTableRowCount(table) > 0;
 		}
 
 		public MetadataTableTreeNode FindNodeByHandleKind(HandleKind kind)
