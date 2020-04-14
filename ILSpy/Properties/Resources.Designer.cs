@@ -286,6 +286,26 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Add shell integration.
+        /// </summary>
+        public static string AddShellIntegration {
+            get {
+                return ResourceManager.GetString("AddShellIntegration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This will add &quot;{0}&quot; to the registry at &quot;HKCU\dllfile\shell\Open with ILSpy\command\&quot; and &quot;HKCU\exefile\shell\Open with ILSpy\command&quot; to allow opening .dll and .exe files from the Windows Explorer context menu.
+        ///
+        ///Do you want to continue?.
+        /// </summary>
+        public static string AddShellIntegrationMessage {
+            get {
+                return ResourceManager.GetString("AddShellIntegrationMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to |All Files|*.*.
         /// </summary>
         public static string AllFiles {
@@ -1667,6 +1687,26 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Remove shell integration.
+        /// </summary>
+        public static string RemoveShellIntegration {
+            get {
+                return ResourceManager.GetString("RemoveShellIntegration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This will remove &quot;{0}&quot; from the registry at &quot;HKCU\dllfile\shell\Open with ILSpy\command\&quot; and &quot;HKCU\exefile\shell\Open with ILSpy\command&quot;.
+        ///
+        ///Do you want to continue?.
+        /// </summary>
+        public static string RemoveShellIntegrationMessage {
+            get {
+                return ResourceManager.GetString("RemoveShellIntegrationMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Reset to defaults.
         /// </summary>
         public static string ResetToDefaults {
@@ -1690,6 +1730,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string ResourcesFileFilter {
             get {
                 return ResourceManager.GetString("ResourcesFileFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please restart ILSpy.exe as administrator to execute this function!.
+        /// </summary>
+        public static string RestartElevatedMessage {
+            get {
+                return ResourceManager.GetString("RestartElevatedMessage", resourceCulture);
             }
         }
         
