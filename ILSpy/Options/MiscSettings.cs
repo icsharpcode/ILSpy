@@ -67,42 +67,32 @@ namespace ICSharpCode.ILSpy.Options
 
 		public ICommand AddRemoveShellIntegrationCommand { get; }
 
+		const string rootPath = @"Software\Classes\{0}\shell";
+		const string fullPath = @"Software\Classes\{0}\shell\Open with ILSpy\command";
+
 		private void AddRemoveShellIntegration(object obj)
 		{
-			if (!IsElevated()) {
-				MessageBox.Show(Properties.Resources.RestartElevatedMessage, "ILSpy", MessageBoxButton.OK, MessageBoxImage.Error);
-				return;
-			}
-			string commandLine = NativeMethods.ArgumentArrayToCommandLine(Assembly.GetEntryAssembly().Location, "%L");
+			string commandLine = NativeMethods.ArgumentArrayToCommandLine(Assembly.GetEntryAssembly().Location) + " \"%L\"";
 			if (RegistryEntriesExist()) {
 				if (MessageBox.Show(string.Format(Properties.Resources.RemoveShellIntegrationMessage, commandLine), "ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes) {
-					Registry.ClassesRoot.CreateSubKey(@"dllfile\shell").DeleteSubKeyTree("Open with ILSpy");
-					Registry.ClassesRoot.CreateSubKey(@"exefile\shell").DeleteSubKeyTree("Open with ILSpy");
+					Registry.CurrentUser.CreateSubKey(string.Format(rootPath, "dllfile")).DeleteSubKeyTree("Open with ILSpy");
+					Registry.CurrentUser.CreateSubKey(string.Format(rootPath, "exefile")).DeleteSubKeyTree("Open with ILSpy");
 				}
 			} else {
 				if (MessageBox.Show(string.Format(Properties.Resources.AddShellIntegrationMessage, commandLine), "ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes) {
-					Registry.ClassesRoot.CreateSubKey(@"dllfile\shell\Open with ILSpy\command")?
+					Registry.CurrentUser.CreateSubKey(string.Format(fullPath, "dllfile"))?
 						.SetValue("", commandLine);
-					Registry.ClassesRoot.CreateSubKey(@"exefile\shell\Open with ILSpy\command")?
+					Registry.CurrentUser.CreateSubKey(string.Format(fullPath, "exefile"))?
 						.SetValue("", commandLine);
 				}
 			}
 			OnPropertyChanged(nameof(AddRemoveShellIntegrationText));
-
-			bool IsElevated()
-			{
-				try {
-					return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
-				} catch (System.Security.SecurityException) {
-					return false;
-				}
-			}
 		}
 
 		private static bool RegistryEntriesExist()
 		{
-			return Registry.ClassesRoot.OpenSubKey(@"dllfile\shell\Open with ILSpy\command") != null
-				&& Registry.ClassesRoot.OpenSubKey(@"exefile\shell\Open with ILSpy\command") != null;
+			return Registry.CurrentUser.OpenSubKey(string.Format(fullPath, "dllfile")) != null
+				&& Registry.CurrentUser.OpenSubKey(string.Format(fullPath, "exefile")) != null;
 		}
 
 		public string AddRemoveShellIntegrationText {

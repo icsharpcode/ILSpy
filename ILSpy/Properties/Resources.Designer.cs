@@ -295,7 +295,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to This will add &quot;{0}&quot; to the registry at &quot;HKCU\dllfile\shell\Open with ILSpy\command\&quot; and &quot;HKCU\exefile\shell\Open with ILSpy\command&quot; to allow opening .dll and .exe files from the Windows Explorer context menu.
+        ///   Looks up a localized string similar to This will add &quot;{0}&quot; to the registry at &quot;HKCU\Software\Classes\dllfile\shell\Open with ILSpy\command&quot; and &quot;HKCU\Software\Classes\exefile\shell\Open with ILSpy\command&quot; to allow opening .dll and .exe files from the Windows Explorer context menu.
         ///
         ///Do you want to continue?.
         /// </summary>
@@ -1696,7 +1696,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to This will remove &quot;{0}&quot; from the registry at &quot;HKCU\dllfile\shell\Open with ILSpy\command\&quot; and &quot;HKCU\exefile\shell\Open with ILSpy\command&quot;.
+        ///   Looks up a localized string similar to This will remove &quot;{0}&quot; from the registry at &quot;HKCU\Software\Classes\dllfile\shell\Open with ILSpy\command&quot; and &quot;HKCU\Software\Classes\exefile\shell\Open with ILSpy\command&quot;.
         ///
         ///Do you want to continue?.
         /// </summary>
@@ -1730,15 +1730,6 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string ResourcesFileFilter {
             get {
                 return ResourceManager.GetString("ResourcesFileFilter", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Please restart ILSpy.exe as administrator to execute this function!.
-        /// </summary>
-        public static string RestartElevatedMessage {
-            get {
-                return ResourceManager.GetString("RestartElevatedMessage", resourceCulture);
             }
         }
         
