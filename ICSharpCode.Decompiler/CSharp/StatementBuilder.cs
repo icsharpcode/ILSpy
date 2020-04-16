@@ -1047,8 +1047,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					blockStatement.Add(Convert(block.FinalInstruction));
 				}
 			}
-			string label;
-			if (endContainerLabels.TryGetValue(container, out label)) {
+			if (endContainerLabels.TryGetValue(container, out string label)) {
 				if (isLoop && !(blockStatement.LastOrDefault() is ContinueStatement)) {
 					blockStatement.Add(new ContinueStatement());
 				}

@@ -21,8 +21,8 @@ namespace ILSpy.BamlDecompiler
 		
 		public ILSpyTreeNode CreateNode(string key, object data)
 		{
-			if (key.EndsWith(".baml", StringComparison.OrdinalIgnoreCase) && data is Stream)
-				return new BamlResourceEntryNode(key, (Stream)data);
+			if (key.EndsWith(".baml", StringComparison.OrdinalIgnoreCase) && data is Stream stream)
+				return new BamlResourceEntryNode(key, stream);
 			else
 				return null;
 		}

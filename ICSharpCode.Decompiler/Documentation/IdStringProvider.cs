@@ -296,8 +296,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			} else {
 				// not a type parameter reference: read the actual type name
 				List<ITypeReference> typeArguments = new List<ITypeReference>();
-				int typeParameterCount;
-				string typeNameWithoutSuffix = ReadTypeName(typeName, ref pos, true, out typeParameterCount, typeArguments);
+				string typeNameWithoutSuffix = ReadTypeName(typeName, ref pos, true, out int typeParameterCount, typeArguments);
 				result = new GetPotentiallyNestedClassTypeReference(typeNameWithoutSuffix, typeParameterCount);
 				while (pos < typeName.Length && typeName[pos] == '.') {
 					pos++;

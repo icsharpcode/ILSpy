@@ -199,8 +199,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			foreach (var methodGroup in GetExtensionMethods()) {
 				var outputGroup = new List<IMethod>();
 				foreach (var method in methodGroup) {
-					IType[] inferredTypes;
-					if (CSharpResolver.IsEligibleExtensionMethod(this.TargetType, method, true, out inferredTypes)) {
+					if (CSharpResolver.IsEligibleExtensionMethod(this.TargetType, method, true, out IType[] inferredTypes)) {
 						if (substituteInferredTypes && inferredTypes != null) {
 							outputGroup.Add(method.Specialize(new TypeParameterSubstitution(null, inferredTypes)));
 						} else {

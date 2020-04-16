@@ -235,9 +235,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			#if DEBUG
 			Debug.Assert(initialized, "Initialize() was not called");
-			
-			State previousState;
-			if (debugDict.TryGetValue(inst, out previousState)) {
+
+			if (debugDict.TryGetValue(inst, out State previousState)) {
 				Debug.Assert(previousState.LessThanOrEqual(state));
 				previousState.JoinWith(state);
 			} else {
@@ -246,7 +245,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					debugDict.Add(inst, state.Clone());
 				}
 			}
-			
+
 			// currentStateOnException should be all states within the try block joined together
 			// -> state should already have been joined into currentStateOnException.
 			Debug.Assert(state.LessThanOrEqual(currentStateOnException));
@@ -344,8 +343,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </remarks>
 		State GetBlockInputState(Block block)
 		{
-			State s;
-			if (stateOnBranch.TryGetValue(block, out s)) {
+			if (stateOnBranch.TryGetValue(block, out State s)) {
 				return s;
 			} else {
 				s = bottomState.Clone();
@@ -388,8 +386,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				state.ReplaceWith(stateOnBranch[block]);
 				block.AcceptVisitor(this);
 			}
-			State stateOnExit;
-			if (stateOnLeave.TryGetValue(container, out stateOnExit)) {
+			if (stateOnLeave.TryGetValue(container, out State stateOnExit)) {
 				state.ReplaceWith(stateOnExit);
 			} else {
 				MarkUnreachable();
@@ -476,14 +473,13 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		protected State HandleTryBlock(TryInstruction inst)
 		{
 			State oldStateOnException = currentStateOnException;
-			State newStateOnException;
-			if (stateOnException.TryGetValue(inst, out newStateOnException)) {
+			if (stateOnException.TryGetValue(inst, out State newStateOnException)) {
 				newStateOnException.JoinWith(state);
 			} else {
 				newStateOnException = state.Clone();
 				stateOnException.Add(inst, newStateOnException);
 			}
-			
+
 			currentStateOnException = newStateOnException;
 			inst.TryBlock.AcceptVisitor(this);
 			// swap back to the old object instance

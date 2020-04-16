@@ -522,8 +522,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!createCall.Arguments[0].MatchLdcI4(out var argumentInfoFlags))
 					return false;
-				string argumentName = null;
-				if (!createCall.Arguments[1].MatchLdStr(out argumentName))
+				if (!createCall.Arguments[1].MatchLdStr(out string argumentName))
 					if (!createCall.Arguments[1].MatchLdNull())
 						return false;
 				callSiteInfo.ArgumentInfos[i] = new CSharpArgumentInfo { Flags = (CSharpArgumentInfoFlags)argumentInfoFlags, Name = argumentName, CompileTimeType = compileTimeTypes[i + 1] };

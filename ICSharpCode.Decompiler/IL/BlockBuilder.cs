@@ -142,8 +142,7 @@ namespace ICSharpCode.Decompiler.IL
 						}
 					}
 					// Enter a handler if necessary
-					BlockContainer handlerContainer;
-					if (handlerContainers.TryGetValue(start, out handlerContainer)) {
+					if (handlerContainers.TryGetValue(start, out BlockContainer handlerContainer)) {
 						containerStack.Push(currentContainer);
 						currentContainer = handlerContainer;
 						currentBlock = handlerContainer.EntryPoint;

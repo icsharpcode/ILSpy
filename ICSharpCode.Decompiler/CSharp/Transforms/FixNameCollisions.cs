@@ -61,8 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			foreach (var node in rootNode.DescendantsAndSelf) {
 				if (node is IdentifierExpression || node is MemberReferenceExpression) {
 					ISymbol symbol = node.GetSymbol();
-					string newName;
-					if (symbol != null && renamedSymbols.TryGetValue(symbol, out newName)) {
+					if (symbol != null && renamedSymbols.TryGetValue(symbol, out string newName)) {
 						node.GetChildByRole(Roles.Identifier).Name = newName;
 					}
 				}

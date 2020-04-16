@@ -94,8 +94,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var block = container.Blocks[i];
 				for (int j = 0; j < block.Instructions.Count - 1; j++) {
 					var inst = block.Instructions[j];
-					ILVariable v;
-					if (inst.MatchStLoc(out v) && v.Kind == VariableKind.PinnedLocal) {
+					if (inst.MatchStLoc(out ILVariable v) && v.Kind == VariableKind.PinnedLocal) {
 						if (block.Instructions[j + 1].OpCode != OpCode.Branch) {
 							// split block after j:
 							context.Step("Split block after pinned local write", inst);
@@ -357,10 +356,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			//   stloc P(ldelema(ldloc V, ldc.i4 0, ...))
 			//   br B_target
 			// }
-			ILInstruction value;
 			if (block.Instructions.Count != 2)
 				return false;
-			if (!block.Instructions[0].MatchStLoc(out var p2, out value))
+			if (!block.Instructions[0].MatchStLoc(out var p2, out ILInstruction value))
 				return false;
 			if (p != p2) {
 				// If the pointer is unused, the variable P might have been split.

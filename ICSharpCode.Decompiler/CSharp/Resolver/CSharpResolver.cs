@@ -1740,8 +1740,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		void CheckForEnumerableInterface(ResolveResult expression, out IType collectionType, out IType enumeratorType, out IType elementType, out ResolveResult getEnumeratorInvocation)
 		{
-			bool? isGeneric;
-			elementType = expression.Type.GetElementTypeFromIEnumerable(compilation, false, out isGeneric);
+			elementType = expression.Type.GetElementTypeFromIEnumerable(compilation, false, out bool? isGeneric);
 			if (isGeneric == true) {
 				ITypeDefinition enumerableOfT = compilation.FindType(KnownTypeCode.IEnumerableOfT).GetDefinition();
 				if (enumerableOfT != null)
@@ -1886,8 +1885,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				TypeInference ti = new TypeInference(compilation, conversions);
 				ResolveResult[] arguments = { new ResolveResult(targetType) };
 				IType[] parameterTypes = { method.Parameters[0].Type };
-				bool success;
-				var inferredTypes = ti.InferTypeArguments(method.TypeParameters, arguments, parameterTypes, out success);
+				var inferredTypes = ti.InferTypeArguments(method.TypeParameters, arguments, parameterTypes, out _);
 				var substitution = new TypeParameterSubstitution(null, inferredTypes);
 				// Validate that the types that could be inferred (aren't unknown) satisfy the constraints:
 				bool hasInferredTypes = false;
@@ -2563,8 +2561,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				throw new ArgumentException("sizeArguments.Length must not be 0");
 			if (elementType == null) {
 				TypeInference typeInference = new TypeInference(compilation, conversions);
-				bool success;
-				elementType = typeInference.GetBestCommonType(initializerElements, out success);
+				elementType = typeInference.GetBestCommonType(initializerElements, out _);
 			}
 			IType arrayType = new ArrayType(compilation, elementType, dimensions);
 			

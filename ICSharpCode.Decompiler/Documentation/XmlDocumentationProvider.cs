@@ -266,10 +266,8 @@ namespace ICSharpCode.Decompiler.Documentation
 					int b = fs.ReadByte();
 					if (b < 0)
 						throw new EndOfStreamException();
-					int bytesUsed, charsUsed;
-					bool completed;
 					input[0] = (byte)b;
-					decoder.Convert(input, 0, 1, output, 0, 1, false, out bytesUsed, out charsUsed, out completed);
+					decoder.Convert(input, 0, 1, output, 0, 1, false, out int bytesUsed, out int charsUsed, out _);
 					Debug.Assert(bytesUsed == 1);
 					if (charsUsed == 1) {
 						if ((prevChar != '\r' && output[0] == '\n') || output[0] == '\r')
@@ -357,8 +355,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			
 			XmlDocumentationCache cache = this.cache;
 			lock (cache) {
-				string val;
-				if (!cache.TryGet(key, out val)) {
+				if (!cache.TryGet(key, out string val)) {
 					try {
 						// go through all items that have the correct hash
 						while (++m < index.Length && index[m].HashCode == hashcode) {

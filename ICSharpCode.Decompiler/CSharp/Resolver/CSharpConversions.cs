@@ -163,8 +163,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				throw new ArgumentNullException(nameof(toType));
 
 			TypePair pair = new TypePair(fromType, toType);
-			Conversion c;
-			if (implicitConversionCache.TryGetValue(pair, out c))
+			if (implicitConversionCache.TryGetValue(pair, out Conversion c))
 				return c;
 
 			c = ImplicitConversion(fromType, toType, allowUserDefined: true, allowTuple: true);

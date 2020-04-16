@@ -282,8 +282,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								}
 							}
 						}
-						VariableToDeclare v;
-						if (variableDict.TryGetValue(variable, out v)) {
+						if (variableDict.TryGetValue(variable, out VariableToDeclare v)) {
 							v.InsertionPoint = FindCommonParent(v.InsertionPoint, newPoint);
 						} else {
 							v = new VariableToDeclare(variable, variable.HasInitialValue,

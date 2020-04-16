@@ -155,8 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public static ILVariable GetILVariable(this IdentifierExpression expr)
 		{
-			var rr = expr.Annotation<ResolveResult>() as ILVariableResolveResult;
-			if (rr != null)
+			if (expr.Annotation<ResolveResult>() is ILVariableResolveResult rr)
 				return rr.Variable;
 			else
 				return null;
@@ -167,8 +166,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public static ILVariable GetILVariable(this VariableInitializer vi)
 		{
-			var rr = vi.Annotation<ResolveResult>() as ILVariableResolveResult;
-			if (rr != null)
+			if (vi.Annotation<ResolveResult>() is ILVariableResolveResult rr)
 				return rr.Variable;
 			else
 				return null;
@@ -179,8 +177,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public static ILVariable GetILVariable(this ForeachStatement loop)
 		{
-			var rr = loop.Annotation<ResolveResult>() as ILVariableResolveResult;
-			if (rr != null)
+			if (loop.Annotation<ResolveResult>() is ILVariableResolveResult rr)
 				return rr.Variable;
 			else
 				return null;
