@@ -458,9 +458,6 @@
     <EmbeddedResource Include="..\doc\license.txt">
       <Link>license.txt</Link>
     </EmbeddedResource>
-    <EmbeddedResource Include="..\doc\MS-PL.txt">
-      <Link>MS-PL.txt</Link>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
