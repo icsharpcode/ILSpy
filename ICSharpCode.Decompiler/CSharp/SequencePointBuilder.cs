@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// if this block container is part of a TryCatchHandler, do not steal the exception-specifier IL range
 					intervalStart = handler.ExceptionSpecifierILRange.End;
 				} else {
-					intervalStart = blockContainer.ILRanges.First().Start;
+					intervalStart = blockContainer.StartILOffset;
 				}
 				// The end will be set to the first sequence point candidate location before the first statement of the function when the seqeunce point is adjusted
 				int intervalEnd = intervalStart + 1; 
