@@ -75,6 +75,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return i;
 		}
+		public static Range[] SeveralRanges()
+		{
+			// Some of these are semantically identical, but we can still distinguish them in the IL code:
+			return new Range[14] {
+				..,
+				0..,
+				^0..,
+				GetInt(1)..,
+				^GetInt(2)..,
+				..0,
+				..^0,
+				..GetInt(3),
+				..^GetInt(4),
+				0..^0,
+				^0..0,
+				0..0,
+				GetInt(5)..GetInt(6),
+				0..(GetInt(7) + GetInt(8))
+			};
+		}
 
 		public static void UseIndex()
 		{
@@ -118,12 +138,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void UseRange()
 		{
 			Console.WriteLine(GetArray()[GetRange()]);
-#if TODO
 			//Console.WriteLine(GetList()[GetRange()]); // fails to compile
 			Console.WriteLine(GetSpan()[GetRange()].ToString());
 			Console.WriteLine(GetString()[GetRange()]);
 			Console.WriteLine(new CustomList()[GetRange()]);
-#endif
 			Console.WriteLine(new CustomList2()[GetRange()]);
 		}
 		public static void UseNewRangeFromIndex()
@@ -175,36 +193,64 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void UseNewRangeFromIntegers_OnlyEndPoint()
 		{
 			Console.WriteLine(GetArray()[..GetInt(2)]);
-#if TODO
 			//Console.WriteLine(GetList()[..GetInt()]);  // fails to compile
 			Console.WriteLine(GetSpan()[..GetInt(2)].ToString());
 			Console.WriteLine(GetString()[..GetInt(2)]);
 			Console.WriteLine(new CustomList()[..GetInt(2)]);
-#endif
 			Console.WriteLine(new CustomList2()[..GetInt(2)]);
+		}
+
+		public static void UseNewRangeFromIntegers_OnlyEndPoint_FromEnd()
+		{
+			Console.WriteLine(GetArray()[..^GetInt(2)]);
+			//Console.WriteLine(GetList()[..^GetInt()]);  // fails to compile
+			Console.WriteLine(GetSpan()[..^GetInt(2)].ToString());
+			Console.WriteLine(GetString()[..^GetInt(2)]);
+			Console.WriteLine(new CustomList()[..^GetInt(2)]);
+			Console.WriteLine(new CustomList2()[..^GetInt(2)]);
 		}
 
 		public static void UseNewRangeFromIntegers_OnlyStartPoint()
 		{
 			Console.WriteLine(GetArray()[GetInt(1)..]);
-#if TODO
 			//Console.WriteLine(GetList()[GetInt()..]); // fails to compile
 			Console.WriteLine(GetSpan()[GetInt(1)..].ToString());
 			Console.WriteLine(GetString()[GetInt(1)..]);
 			Console.WriteLine(new CustomList()[GetInt(1)..]);
-#endif
 			Console.WriteLine(new CustomList2()[GetInt(1)..]);
+		}
+
+		public static void UseNewRangeFromIntegers_OnlyStartPoint_FromEnd()
+		{
+			Console.WriteLine(GetArray()[^GetInt(1)..]);
+			//Console.WriteLine(GetList()[^GetInt()..]); // fails to compile
+			Console.WriteLine(GetSpan()[^GetInt(1)..].ToString());
+			Console.WriteLine(GetString()[^GetInt(1)..]);
+			Console.WriteLine(new CustomList()[^GetInt(1)..]);
+			Console.WriteLine(new CustomList2()[^GetInt(1)..]);
+		}
+
+		public static void UseConstantRange()
+		{
+			// Fortunately the C# compiler doesn't optimize
+			// "str.Length - 2 - 1" here, so the normal pattern applies.
+			Console.WriteLine(GetString()[1..2]);
+			Console.WriteLine(GetString()[1..^1]);
+			Console.WriteLine(GetString()[^2..^1]);
+			
+			Console.WriteLine(GetString()[..1]);
+			Console.WriteLine(GetString()[..^1]);
+			Console.WriteLine(GetString()[1..]);
+			Console.WriteLine(GetString()[^1..]);
 		}
 
 		public static void UseWholeRange()
 		{
 			Console.WriteLine(GetArray()[..]);
-#if TODO
 			//Console.WriteLine(GetList()[..]); // fails to compile
 			Console.WriteLine(GetSpan()[..].ToString());
 			Console.WriteLine(GetString()[..]);
 			Console.WriteLine(new CustomList()[..]);
-#endif
 			Console.WriteLine(new CustomList2()[..]);
 		}
 
