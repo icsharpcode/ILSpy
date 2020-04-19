@@ -16,11 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Diagnostics;
 using System.Linq;
-using ICSharpCode.Decompiler.CSharp.Resolver;
-using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
@@ -93,6 +90,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
+			if (!context.Settings.Ranges)
+				return;
 			int startPos = pos;
 			// The container length access may be a separate instruction, or it may be inline with the variable's use
 			if (MatchContainerLengthStore(block.Instructions[pos], out ILVariable containerLengthVar, out ILVariable containerVar)) {
