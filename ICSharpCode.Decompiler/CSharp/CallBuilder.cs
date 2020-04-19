@@ -1510,19 +1510,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (method.DeclaringType.IsKnownType(KnownTypeCode.Range)) {
 				if (callOpCode == OpCode.NewObj && argumentList.Length == 2) {
 					result = new BinaryOperatorExpression(argumentList.Arguments[0], BinaryOperatorType.Range, argumentList.Arguments[1])
-						.WithRR(new ResolveResult(method.DeclaringType));
+						.WithRR(new MemberResolveResult(null, method));
 					return true;
 				} else if (callOpCode == OpCode.Call && method.Name == "get_All" && argumentList.Length == 0) {
 					result = new BinaryOperatorExpression(Expression.Null, BinaryOperatorType.Range, Expression.Null)
-						.WithRR(new ResolveResult(method.DeclaringType));
+						.WithRR(new MemberResolveResult(null, method.AccessorOwner ?? method));
 					return true;
 				} else if (callOpCode == OpCode.Call && method.Name == "StartAt" && argumentList.Length == 1) {
 					result = new BinaryOperatorExpression(argumentList.Arguments[0], BinaryOperatorType.Range, Expression.Null)
-						.WithRR(new ResolveResult(method.DeclaringType));
+						.WithRR(new MemberResolveResult(null, method));
 					return true;
 				} else if (callOpCode == OpCode.Call && method.Name == "EndAt" && argumentList.Length == 1) {
 					result = new BinaryOperatorExpression(Expression.Null, BinaryOperatorType.Range, argumentList.Arguments[0])
-						.WithRR(new ResolveResult(method.DeclaringType));
+						.WithRR(new MemberResolveResult(null, method));
 					return true;
 				}
 			} else if (callOpCode == OpCode.NewObj && method.DeclaringType.IsKnownType(KnownTypeCode.Index)) {
@@ -1531,7 +1531,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (!(argumentList.Arguments[1].Expression is PrimitiveExpression pe && pe.Value is true))
 					return false;
 				result = new UnaryOperatorExpression(UnaryOperatorType.IndexFromEnd, argumentList.Arguments[0])
-					.WithRR(new ResolveResult(method.DeclaringType));
+					.WithRR(new MemberResolveResult(null, method));
 				return true;
 			}
 			return false;
