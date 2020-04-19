@@ -206,6 +206,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			base.VisitLdElema(inst);
 			CleanUpArrayIndices(inst.Indices);
+			if (IndexRangeTransform.HandleLdElema(inst, context))
+				return;
 		}
 
 		protected internal override void VisitNewArr(NewArr inst)

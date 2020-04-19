@@ -470,6 +470,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return true;
 					}
 					break;
+				case OpCode.LdElema:
+					if (((LdElema)parent).WithSystemIndex) {
+						return true;
+					}
+					break;
 			}
 			// decide based on the top-level target instruction into which we are inlining:
 			switch (next.OpCode) {

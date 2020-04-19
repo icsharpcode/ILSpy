@@ -29,20 +29,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 	internal class IndexRangeTest
 	{
-		public static string[] GetArray()
-        {
+		public static int[] GetArray()
+		{
 			throw null;
-        }
-		public static List<string> GetList()
-        {
+		}
+		public static List<int> GetList()
+		{
 			throw null;
 		}
 		public static Span<int> GetSpan()
-        {
+		{
 			throw null;
 		}
 		public static string GetString()
-        {
+		{
 			throw null;
 		}
 		public static Index GetIndex(int i = 0)
@@ -60,8 +60,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UseIndex()
 		{
-#if TODO
 			Console.WriteLine(GetArray()[GetIndex()]);
+#if TODO
 			Console.WriteLine(GetList()[GetIndex()]);
 			Console.WriteLine(GetSpan()[GetIndex()]);
 			Console.WriteLine(GetString()[GetIndex()]);
@@ -69,6 +69,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 			Console.WriteLine(new CustomList2()[GetIndex()]);
 		}
+
+		public static void UseIndexFromEnd()
+		{
+			Console.WriteLine(GetArray()[^GetInt()]);
+#if TODO
+			Console.WriteLine(GetList()[^GetInt()]);
+			Console.WriteLine(GetSpan()[^GetInt()]);
+			Console.WriteLine(GetString()[^GetInt()]);
+			Console.WriteLine(new CustomList()[^GetInt()]);
+#endif
+			Console.WriteLine(new CustomList2()[^GetInt()]);
+		}
+
+		public static void UseIndexForWrite()
+		{
+			GetArray()[GetIndex()] = GetInt();
+#if TODO
+			GetList()[GetIndex()] = GetInt();
+			GetSpan()[GetIndex()] = GetInt();
+#endif
+		}
+
+		private static void UseRef(ref int i)
+		{
+		}
+
+		public static void UseIndexForRef()
+		{
+			UseRef(ref GetArray()[GetIndex()]);
+			UseRef(ref GetArray()[^GetInt()]);
+		}
+
 		public static void UseRange()
 		{
 #if TODO
@@ -173,7 +205,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		public static void UseIndexForIntIndexerWhenIndexIndexerIsAvailable()
-        {
+		{
 			// Same code as the compiler emits for CustomList,
 			// but here we can't translate it back to `customList[GetIndex()]`
 			// because that would call a different overload.
@@ -184,7 +216,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		public static void UseSliceWhenRangeIndexerIsAvailable()
-        {
+		{
 			// Same code as the compiler emits for CustomList,
 			// but here we can't translate it back to `customList[GetIndex()]`
 			// because that would call a different overload.
