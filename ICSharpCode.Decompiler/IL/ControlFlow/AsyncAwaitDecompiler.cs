@@ -257,8 +257,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				pos--;
 			}
-			if (!loadBuilderExpr.MatchLdFld(out var loadStateMachineForBuilderExpr, out builderField))
+			if (loadBuilderExpr.MatchLdFld(out var loadStateMachineForBuilderExpr, out builderField)) {
+				// OK, calling Start on copy of stateMachine.<>t__builder
+			} else if (loadBuilderExpr.MatchLdFlda(out loadStateMachineForBuilderExpr, out builderField)) {
+				// OK, Roslyn 3.6 started directly calling Start without making a copy
+			} else {
 				return false;
+			}
 			builderField = (IField)builderField.MemberDefinition;
 			if (!(loadStateMachineForBuilderExpr.MatchLdLocRef(stateMachineVar) || loadStateMachineForBuilderExpr.MatchLdLoc(stateMachineVar)))
 				return false;
