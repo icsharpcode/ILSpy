@@ -65,7 +65,7 @@ namespace ICSharpCode.ILSpy
 		public async Task<string> GetTargetFrameworkIdAsync()
 		{
 			var assembly = await GetPEFileAsync().ConfigureAwait(false);
-			return assembly.Reader.DetectTargetFrameworkId() ?? string.Empty;
+			return assembly.DetectTargetFrameworkId() ?? string.Empty;
 		}
 
 		public ReferenceLoadInfo LoadedAssemblyReferencesInfo { get; } = new ReferenceLoadInfo();
@@ -140,11 +140,15 @@ namespace ICSharpCode.ILSpy
 		public string Text {
 			get {
 				if (IsLoaded && !HasLoadError) {
-					var metadata = GetPEFileOrNull()?.Metadata;
+					PEFile module = GetPEFileOrNull();
+					var metadata = module?.Metadata;
 					string versionOrInfo = null;
 					if (metadata != null) {
 						if (metadata.IsAssembly) {
 							versionOrInfo = metadata.GetAssemblyDefinition().Version?.ToString();
+							var tfId = GetTargetFrameworkIdAsync().Result;
+							if (!string.IsNullOrEmpty(tfId))
+								versionOrInfo += ", " + tfId.Replace("Version=", " ");
 						} else {
 							versionOrInfo = ".netmodule";
 						}
@@ -277,14 +281,15 @@ namespace ICSharpCode.ILSpy
 			return debugInfoProvider;
 		}
 
-		public LoadedAssembly LookupReferencedAssembly(Decompiler.Metadata.IAssemblyReference reference)
+		public LoadedAssembly LookupReferencedAssembly(IAssemblyReference reference)
 		{
 			if (reference == null)
 				throw new ArgumentNullException(nameof(reference));
+			var tfm = GetTargetFrameworkIdAsync().Result;
 			if (reference.IsWindowsRuntime) {
-				return assemblyList.assemblyLookupCache.GetOrAdd((reference.Name, true), key => LookupReferencedAssemblyInternal(reference, true));
+				return assemblyList.assemblyLookupCache.GetOrAdd((reference.Name, true, tfm), key => LookupReferencedAssemblyInternal(reference, true, tfm));
 			} else {
-				return assemblyList.assemblyLookupCache.GetOrAdd((reference.FullName, false), key => LookupReferencedAssemblyInternal(reference, false));
+				return assemblyList.assemblyLookupCache.GetOrAdd((reference.FullName, false, tfm), key => LookupReferencedAssemblyInternal(reference, false, tfm));
 			}
 		}
 
@@ -308,19 +313,20 @@ namespace ICSharpCode.ILSpy
 		static readonly Dictionary<string, LoadedAssembly> loadingAssemblies = new Dictionary<string, LoadedAssembly>();
 		MyUniversalResolver universalResolver;
 
-		LoadedAssembly LookupReferencedAssemblyInternal(Decompiler.Metadata.IAssemblyReference fullName, bool isWinRT)
+		LoadedAssembly LookupReferencedAssemblyInternal(IAssemblyReference fullName, bool isWinRT, string tfm)
 		{
-			string GetName(Decompiler.Metadata.IAssemblyReference name) => isWinRT ? name.Name : name.FullName;
+			string key = tfm + ";" + (isWinRT ? fullName.Name : fullName.FullName);
 
 			string file;
 			LoadedAssembly asm;
 			lock (loadingAssemblies) {
 				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
-					var reader = loaded.GetPEFileOrNull()?.Metadata;
+					var module = loaded.GetPEFileOrNull();
+					var reader = module?.Metadata;
 					if (reader == null || !reader.IsAssembly) continue;
 					var asmDef = reader.GetAssemblyDefinition();
-					var asmDefName = isWinRT ? reader.GetString(asmDef.Name) : reader.GetFullAssemblyName();
-					if (GetName(fullName).Equals(asmDefName, StringComparison.OrdinalIgnoreCase)) {
+					var asmDefName = loaded.GetTargetFrameworkIdAsync().Result + ";" + (isWinRT ? reader.GetString(asmDef.Name) : reader.GetFullAssemblyName());
+					if (key.Equals(asmDefName, StringComparison.OrdinalIgnoreCase)) {
 						LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.FullName, MessageKind.Info, "Success - Found in Assembly List");
 						return loaded;
 					}

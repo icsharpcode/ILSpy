@@ -30,7 +30,13 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		static readonly string RefPathPattern =
 			@"(Reference Assemblies[/\\]Microsoft[/\\]Framework[/\\](?<1>.NETFramework)[/\\]v(?<2>[^/\\]+)[/\\])" +
-			@"|(NuGetFallbackFolder[/\\](?<1>[^/\\]+)\\(?<2>[^/\\]+)([/\\].*)?[/\\]ref[/\\])";
+			@"|(NuGetFallbackFolder[/\\](?<1>[^/\\]+)\\(?<2>[^/\\]+)([/\\].*)?[/\\]ref[/\\])" +
+			@"|(shared[/\\](?<1>[^/\\]+)\\(?<2>[^/\\]+)([/\\].*)?[/\\])";
+
+		public static string DetectTargetFrameworkId(this PEFile assembly)
+		{
+			return DetectTargetFrameworkId(assembly.Reader, assembly.FileName);
+		}
 
 		public static string DetectTargetFrameworkId(this PEReader assembly, string assemblyPath = null)
 		{
@@ -67,9 +73,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 					if (type == ".NETFramework") {
 						return $".NETFramework,Version=v{version}";
-					} else if (type.Contains("netcore")) {
+					} else if (type.IndexOf("netcore", StringComparison.OrdinalIgnoreCase) >= 0) {
 						return $".NETCoreApp,Version=v{version}";
-					} else if (type.Contains("netstandard")) {
+					} else if (type.IndexOf("netstandard", StringComparison.OrdinalIgnoreCase) >= 0) {
 						return $".NETStandard,Version=v{version}";
 					}
 				}

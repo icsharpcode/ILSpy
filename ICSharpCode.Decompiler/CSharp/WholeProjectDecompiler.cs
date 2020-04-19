@@ -296,7 +296,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					break;
 			}
 
-			string targetFramework = module.Reader.DetectTargetFrameworkId();
+			string targetFramework = module.DetectTargetFrameworkId();
 			if (!string.IsNullOrEmpty(targetFramework)) {
 				string[] frameworkParts = targetFramework.Split(',');
 				result.TargetFrameworkIdentifier = frameworkParts.FirstOrDefault(a => !a.StartsWith("Version=", StringComparison.OrdinalIgnoreCase) && !a.StartsWith("Profile=", StringComparison.OrdinalIgnoreCase));
