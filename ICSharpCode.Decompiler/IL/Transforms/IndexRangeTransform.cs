@@ -16,6 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Linq;
+using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
@@ -24,7 +28,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Transform for the C# 8 System.Index / System.Range feature
 	/// </summary>
-	class IndexRangeTransform
+	class IndexRangeTransform : IStatementTransform
 	{
 		/// <summary>
 		/// Called by expression transforms.
@@ -84,6 +88,149 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			return null;
+		}
+
+		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
+		{
+			int startPos = pos;
+			if (!MatchContainerLengthStore(block.Instructions[pos], out ILVariable containerLengthVar, out ILVariable containerVar))
+				return;
+			pos++;
+			if (!MatchGetOffsetFromIndex(block.Instructions[pos], out ILVariable startOffsetVar, out ILInstruction startIndexLdloca, containerLengthVar))
+				return;
+			pos++;
+			if (startOffsetVar.LoadCount == 1) {
+				// complex_expr(call get_Item(ldloc container, ldloc offset))
+
+				// startOffsetVar might be used deep inside a complex statement, ensure we can inline up to that point:
+				for (int i = startPos; i < pos; i++) {
+					if (!ILInlining.CanInlineInto(block.Instructions[pos], startOffsetVar, block.Instructions[i]))
+						return;
+				}
+				if (!(startOffsetVar.LoadInstructions.Single().Parent is CallInstruction call))
+					return;
+				if (call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter && call.Arguments.Count == 2) {
+					if (call.Method.AccessorOwner?.SymbolKind != SymbolKind.Indexer)
+						return;
+					if (call.Method.Parameters.Count != 1)
+						return;
+				} else if (call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Setter && call.Arguments.Count == 3) {
+					if (call.Method.AccessorOwner?.SymbolKind != SymbolKind.Indexer)
+						return;
+					if (call.Method.Parameters.Count != 2)
+						return;
+				} else {
+					return;
+				}
+				if (!call.Method.Parameters[0].Type.IsKnownType(KnownTypeCode.Int32))
+					return;
+				if (!call.Arguments[0].MatchLdLoc(containerVar) && !call.Arguments[0].MatchLdLoca(containerVar))
+					return;
+				if (!call.Arguments[1].MatchLdLoc(startOffsetVar))
+					return;
+				var indexType = context.TypeSystem.FindType(KnownTypeCode.Index);
+				if (!CSharpWillGenerateIndexer(call.Method.DeclaringType, indexType, context))
+					return;
+
+				//  stloc length(call get_Length/ get_Count(ldloc container))
+				//  stloc offset(call GetOffset(..., ldloc length))
+				//  complex_expr(call get_Item(ldloc container, ldloc offset))
+				// -->
+				//  complex_expr(call get_Item(ldloc container, ...))
+				context.Step($"{call.Method.Name} indexed with System.Index", call);
+				var newMethod = new SyntheticRangeIndexAccessor(call.Method, indexType);
+				var newCall = CallInstruction.Create(call.OpCode, newMethod);
+				newCall.ConstrainedTo = call.ConstrainedTo;
+				newCall.ILStackWasEmpty = call.ILStackWasEmpty;
+				newCall.Arguments.Add(call.Arguments[0]);
+				newCall.Arguments.Add(new LdObj(startIndexLdloca, indexType));
+				newCall.Arguments.AddRange(call.Arguments.Skip(2));
+				newCall.AddILRange(call);
+				for (int i = startPos; i < pos; i++) {
+					newCall.AddILRange(block.Instructions[i]);
+				}
+				call.ReplaceWith(newCall);
+				block.Instructions.RemoveRange(startPos, pos - startPos);
+			}
+		}
+
+		/// <summary>
+		/// Gets whether the C# compiler will call `container[int]` when using `container[Index]`.
+		/// </summary>
+		private bool CSharpWillGenerateIndexer(IType declaringType, IType indexType, ILTransformContext context)
+		{
+			bool foundInt32Overload = false;
+			bool foundIndexOverload = false;
+			bool foundCountProperty = false;
+			foreach (var prop in declaringType.GetProperties(p => p.IsIndexer || (p.Name == "Length" || p.Name == "Count"))) {
+				if (prop.IsIndexer && prop.Parameters.Count == 1) {
+					var p = prop.Parameters[0];
+					if (p.Type.IsKnownType(KnownTypeCode.Int32)) {
+						foundInt32Overload = true;
+					} else if (p.Type.IsKnownType(KnownTypeCode.Index)) {
+						foundIndexOverload = true;
+					}
+				} else if (prop.Name == "Length" || prop.Name=="Count") {
+					foundCountProperty = true;
+				}
+			}
+			return foundInt32Overload && foundCountProperty && !foundIndexOverload;
+		}
+
+		/// <summary>
+		/// Matches the instruction:
+		///    stloc containerLengthVar(call get_Length/get_Count(ldloc containerVar))
+		/// </summary>
+		static bool MatchContainerLengthStore(ILInstruction inst, out ILVariable lengthVar, out ILVariable containerVar)
+		{
+			containerVar = null;
+			if (!inst.MatchStLoc(out lengthVar, out var init))
+				return false;
+			if (!(lengthVar.IsSingleDefinition && lengthVar.StackType == StackType.I4))
+				return false;
+			if (!(init is CallInstruction call))
+				return false;
+			if (!(call.Method.IsAccessor && call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter))
+				return false;
+			if (!(call.Method.AccessorOwner is IProperty lengthProp))
+				return false;
+			if (lengthProp.Name == "Length") {
+				// OK, Length is preferred
+			} else if (lengthProp.Name == "Count") {
+				// Also works, but only if the type doesn't have "Length"
+				if (lengthProp.DeclaringType.GetProperties(p => p.Name == "Length").Any())
+					return false;
+			}
+			if (!lengthProp.ReturnType.IsKnownType(KnownTypeCode.Int32))
+				return false;
+			if (lengthProp.IsVirtual && call.OpCode != OpCode.CallVirt)
+				return false;
+			if (call.Arguments.Count != 1)
+				return false;
+			return call.Arguments[0].MatchLdLoc(out containerVar) || call.Arguments[0].MatchLdLoca(out containerVar);
+		}
+
+		/// <summary>
+		/// Matches the instruction:
+		///    stloc offsetVar(call System.Index.GetOffset(indexLdloca, ldloc containerLengthVar))
+		/// </summary>
+		static bool MatchGetOffsetFromIndex(ILInstruction inst, out ILVariable offsetVar, out ILInstruction indexLdloca, ILVariable containerLengthVar)
+		{
+			indexLdloca = null;
+			if (!inst.MatchStLoc(out offsetVar, out var offsetValue))
+				return false;
+			if (!(offsetVar.IsSingleDefinition && offsetVar.StackType == StackType.I4))
+				return false;
+			if (!(offsetValue is CallInstruction call))
+				return false;
+			if (call.Method.Name != "GetOffset")
+				return false;
+			if (!call.Method.DeclaringType.IsKnownType(KnownTypeCode.Index))
+				return false;
+			if (call.Arguments.Count != 2)
+				return false;
+			indexLdloca = call.Arguments[0];
+			return call.Arguments[1].MatchLdLoc(containerLengthVar);
 		}
 	}
 }

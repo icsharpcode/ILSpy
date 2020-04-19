@@ -150,7 +150,8 @@ namespace ICSharpCode.Decompiler.CSharp
 							new TransformCollectionAndObjectInitializers(),
 							new TransformExpressionTrees(),
 							new NamedArgumentTransform(),
-							new UserDefinedLogicTransform()
+							new UserDefinedLogicTransform(),
+							new IndexRangeTransform()
 						),
 					}
 				},

@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -467,6 +468,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// Aggressive inline into property/indexer getter calls for compound assignment calls
 					// (The compiler generates locals for these because it doesn't want to evalute the args twice for getter+setter)
 					if (parent.SlotInfo == CompoundAssignmentInstruction.TargetSlot) {
+						return true;
+					}
+					if (((CallInstruction)parent).Method is SyntheticRangeIndexAccessor) {
 						return true;
 					}
 					break;
