@@ -103,8 +103,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UseRange()
 		{
-#if TODO
 			Console.WriteLine(GetArray()[GetRange()]);
+#if TODO
 			//Console.WriteLine(GetList()[GetRange()]); // fails to compile
 			Console.WriteLine(GetSpan()[GetRange()].ToString());
 			Console.WriteLine(GetString()[GetRange()]);
@@ -114,8 +114,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void UseNewRangeFromIndex()
 		{
-#if TODO
 			Console.WriteLine(GetArray()[GetIndex()..GetIndex()]);
+#if TODO
 			//Console.WriteLine(GetList()[GetIndex()..GetIndex()]); // fails to compile
 			Console.WriteLine(GetSpan()[GetIndex()..GetIndex()].ToString());
 			Console.WriteLine(GetString()[GetIndex()..GetIndex()]);
@@ -125,8 +125,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void UseNewRangeFromIntegers_BothFromStart()
 		{
-#if TODO
 			Console.WriteLine(GetArray()[GetInt(1)..GetInt(2)]);
+#if TODO
 			//Console.WriteLine(GetList()[GetInt()..GetInt()]); // fails to compile
 			Console.WriteLine(GetSpan()[GetInt(1)..GetInt(2)].ToString());
 			Console.WriteLine(GetString()[GetInt(1)..GetInt(2)]);
@@ -136,8 +136,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void UseNewRangeFromIntegers_BothFromEnd()
 		{
-#if TODO
 			Console.WriteLine(GetArray()[^GetInt(1)..^GetInt(2)]);
+#if TODO
 			//Console.WriteLine(GetList()[^GetInt()..^GetInt()]); // fails to compile
 			Console.WriteLine(GetSpan()[^GetInt(1)..^GetInt(2)].ToString());
 			Console.WriteLine(GetString()[^GetInt(1)..^GetInt(2)]);
@@ -158,8 +158,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void UseNewRangeFromIntegers_FromEndAndStart()
 		{
-#if TODO
 			Console.WriteLine(GetArray()[^GetInt(1)..GetInt(2)]);
+#if TODO
 			//Console.WriteLine(GetList()[^GetInt()..GetInt()]);  // fails to compile
 			Console.WriteLine(GetSpan()[^GetInt(1)..GetInt(2)].ToString());
 			Console.WriteLine(GetString()[^GetInt(1)..GetInt(2)]);
@@ -170,8 +170,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UseNewRangeFromIntegers_OnlyEndPoint()
 		{
-#if TODO
 			Console.WriteLine(GetArray()[..GetInt(2)]);
+#if TODO
 			//Console.WriteLine(GetList()[..GetInt()]);  // fails to compile
 			Console.WriteLine(GetSpan()[..GetInt(2)].ToString());
 			Console.WriteLine(GetString()[..GetInt(2)]);
@@ -182,8 +182,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UseNewRangeFromIntegers_OnlyStartPoint()
 		{
-#if TODO
 			Console.WriteLine(GetArray()[GetInt(1)..]);
+#if TODO
 			//Console.WriteLine(GetList()[GetInt()..]); // fails to compile
 			Console.WriteLine(GetSpan()[GetInt(1)..].ToString());
 			Console.WriteLine(GetString()[GetInt(1)..]);
@@ -194,8 +194,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UseWholeRange()
 		{
-#if TODO
 			Console.WriteLine(GetArray()[..]);
+#if TODO
 			//Console.WriteLine(GetList()[..]); // fails to compile
 			Console.WriteLine(GetSpan()[..].ToString());
 			Console.WriteLine(GetString()[..]);
