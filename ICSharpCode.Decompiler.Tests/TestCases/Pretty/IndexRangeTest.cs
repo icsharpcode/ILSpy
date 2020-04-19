@@ -1,4 +1,22 @@
-﻿using System;
+﻿// Copyright (c) 2020 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
@@ -110,57 +128,47 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void UseNewRangeFromIndex()
 		{
-			Console.WriteLine(GetArray()[GetIndex()..GetIndex()]);
-#if TODO
-			//Console.WriteLine(GetList()[GetIndex()..GetIndex()]); // fails to compile
-			Console.WriteLine(GetSpan()[GetIndex()..GetIndex()].ToString());
-			Console.WriteLine(GetString()[GetIndex()..GetIndex()]);
-			Console.WriteLine(new CustomList()[GetIndex()..GetIndex()]);
-#endif
-			Console.WriteLine(new CustomList2()[GetIndex()..GetIndex()]);
+			Console.WriteLine(GetArray()[GetIndex(1)..GetIndex(2)]);
+			//Console.WriteLine(GetList()[GetIndex(1)..GetIndex(2)]); // fails to compile
+			Console.WriteLine(GetSpan()[GetIndex(1)..GetIndex(2)].ToString());
+			Console.WriteLine(GetString()[GetIndex(1)..GetIndex(2)]);
+			Console.WriteLine(new CustomList()[GetIndex(1)..GetIndex(2)]);
+			Console.WriteLine(new CustomList2()[GetIndex(1)..GetIndex(2)]);
 		}
 		public static void UseNewRangeFromIntegers_BothFromStart()
 		{
 			Console.WriteLine(GetArray()[GetInt(1)..GetInt(2)]);
-#if TODO
 			//Console.WriteLine(GetList()[GetInt()..GetInt()]); // fails to compile
 			Console.WriteLine(GetSpan()[GetInt(1)..GetInt(2)].ToString());
 			Console.WriteLine(GetString()[GetInt(1)..GetInt(2)]);
 			Console.WriteLine(new CustomList()[GetInt(1)..GetInt(2)]);
-#endif
 			Console.WriteLine(new CustomList2()[GetInt(1)..GetInt(2)]);
 		}
 		public static void UseNewRangeFromIntegers_BothFromEnd()
 		{
 			Console.WriteLine(GetArray()[^GetInt(1)..^GetInt(2)]);
-#if TODO
 			//Console.WriteLine(GetList()[^GetInt()..^GetInt()]); // fails to compile
 			Console.WriteLine(GetSpan()[^GetInt(1)..^GetInt(2)].ToString());
 			Console.WriteLine(GetString()[^GetInt(1)..^GetInt(2)]);
 			Console.WriteLine(new CustomList()[^GetInt(1)..^GetInt(2)]);
-#endif
 			Console.WriteLine(new CustomList2()[^GetInt(1)..^GetInt(2)]);
 		}
 		public static void UseNewRangeFromIntegers_FromStartAndEnd()
 		{
-#if TODO
 			Console.WriteLine(GetArray()[GetInt(1)..^GetInt(2)]);
 			//Console.WriteLine(GetList()[GetInt()..^GetInt()]); // fails to compile
 			Console.WriteLine(GetSpan()[GetInt(1)..^GetInt(2)].ToString());
 			Console.WriteLine(GetString()[GetInt(1)..^GetInt(2)]);
 			Console.WriteLine(new CustomList()[GetInt(1)..^GetInt(2)]);
-#endif
 			Console.WriteLine(new CustomList2()[GetInt(1)..^GetInt(2)]);
 		}
 		public static void UseNewRangeFromIntegers_FromEndAndStart()
 		{
 			Console.WriteLine(GetArray()[^GetInt(1)..GetInt(2)]);
-#if TODO
 			//Console.WriteLine(GetList()[^GetInt()..GetInt()]);  // fails to compile
 			Console.WriteLine(GetSpan()[^GetInt(1)..GetInt(2)].ToString());
 			Console.WriteLine(GetString()[^GetInt(1)..GetInt(2)]);
 			Console.WriteLine(new CustomList()[^GetInt(1)..GetInt(2)]);
-#endif
 			Console.WriteLine(new CustomList2()[^GetInt(1)..GetInt(2)]);
 		}
 

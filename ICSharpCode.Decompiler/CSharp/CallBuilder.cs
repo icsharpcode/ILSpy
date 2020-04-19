@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			if (settings.Ranges) {
-				if (HandleRangeConstruction(out var result, callOpCode, method, argumentList)) {
+				if (HandleRangeConstruction(out var result, callOpCode, method, target, argumentList)) {
 					return result;
 				}
 			}
@@ -1501,7 +1501,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(call).WithILInstruction(block);
 		}
 
-		private bool HandleRangeConstruction(out ExpressionWithResolveResult result, OpCode callOpCode, IMethod method, ArgumentList argumentList)
+		private bool HandleRangeConstruction(out ExpressionWithResolveResult result, OpCode callOpCode, IMethod method, TranslatedExpression target, ArgumentList argumentList)
 		{
 			result = default;
 			if (argumentList.ArgumentNames != null) {
@@ -1532,6 +1532,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					return false;
 				result = new UnaryOperatorExpression(UnaryOperatorType.IndexFromEnd, argumentList.Arguments[0])
 					.WithRR(new MemberResolveResult(null, method));
+				return true;
+			} else if (method is SyntheticRangeIndexAccessor rangeIndexAccessor && rangeIndexAccessor.IsSlicing) {
+				// For slicing the method is called Slice()/Substring(), but we still need to output indexer notation.
+				// So special-case range-based slicing here.
+				result = new IndexerExpression(target, argumentList.Arguments.Select(a => a.Expression))
+					.WithRR(new MemberResolveResult(target.ResolveResult, method));
 				return true;
 			}
 			return false;

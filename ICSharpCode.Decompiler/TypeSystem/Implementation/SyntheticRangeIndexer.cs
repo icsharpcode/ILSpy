@@ -39,18 +39,26 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly IMethod underlyingMethod;
 		readonly IType indexOrRangeType;
 		readonly IReadOnlyList<IParameter> parameters;
+		readonly bool slicing;
 
-		public SyntheticRangeIndexAccessor(IMethod underlyingMethod, IType indexOrRangeType)
+		public SyntheticRangeIndexAccessor(IMethod underlyingMethod, IType indexOrRangeType, bool slicing)
 		{
 			Debug.Assert(underlyingMethod != null);
 			Debug.Assert(indexOrRangeType != null);
 			this.underlyingMethod = underlyingMethod;
 			this.indexOrRangeType = indexOrRangeType;
+			this.slicing = slicing;
 			var parameters = new List<IParameter>();
 			parameters.Add(new DefaultParameter(indexOrRangeType, ""));
-			parameters.AddRange(underlyingMethod.Parameters.Skip(1));
+			if (slicing) {
+				Debug.Assert(underlyingMethod.Parameters.Count == 2);
+			} else {
+				parameters.AddRange(underlyingMethod.Parameters.Skip(1));
+			}
 			this.parameters = parameters;
 		}
+
+		public bool IsSlicing => slicing;
 
 		bool IMethod.ReturnTypeIsRefReadOnly => underlyingMethod.ReturnTypeIsRefReadOnly;
 		bool IMethod.ThisIsRefReadOnly => underlyingMethod.ThisIsRefReadOnly;
@@ -96,7 +104,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			return obj is SyntheticRangeIndexAccessor g
 				&& this.underlyingMethod.Equals(g.underlyingMethod)
-				&& this.indexOrRangeType.Equals(g.indexOrRangeType);
+				&& this.indexOrRangeType.Equals(g.indexOrRangeType)
+				&& this.slicing == g.slicing;
 		}
 
 		public override int GetHashCode()
@@ -117,12 +126,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IMethod IMethod.Specialize(TypeParameterSubstitution substitution)
 		{
-			return new SyntheticRangeIndexAccessor(underlyingMethod.Specialize(substitution), indexOrRangeType);
+			return new SyntheticRangeIndexAccessor(underlyingMethod.Specialize(substitution), indexOrRangeType, slicing);
 		}
 
 		IMember IMember.Specialize(TypeParameterSubstitution substitution)
 		{
-			return new SyntheticRangeIndexAccessor(underlyingMethod.Specialize(substitution), indexOrRangeType);
+			return new SyntheticRangeIndexAccessor(underlyingMethod.Specialize(substitution), indexOrRangeType, slicing);
 		}
 	}
 }
