@@ -67,7 +67,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				this.AssemblyName = metadata.GetString(moddef.Name);
 				this.FullAssemblyName = this.AssemblyName;
 			}
-			this.NullableContext = metadata.GetModuleDefinition().GetCustomAttributes().GetNullableContext(metadata) ?? Nullability.Oblivious;
+			var customAttrs = metadata.GetModuleDefinition().GetCustomAttributes();
+			this.NullableContext = customAttrs.GetNullableContext(metadata) ?? Nullability.Oblivious;
+			this.minAccessibilityForNRT = FindMinimumAccessibilityForNRT(metadata, customAttrs);
 			this.rootNamespace = new MetadataNamespace(this, null, string.Empty, metadata.GetNamespaceDefinitionRoot());
 
 			if (!options.HasFlag(TypeSystemOptions.Uncached)) {
@@ -737,6 +739,52 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				|| att == MethodAttributes.Public
 				|| att == MethodAttributes.Family
 				|| att == MethodAttributes.FamORAssem;
+		}
+		#endregion
+
+		#region Nullability Reference Type Support
+		readonly Accessibility minAccessibilityForNRT;
+
+		static Accessibility FindMinimumAccessibilityForNRT(MetadataReader metadata, CustomAttributeHandleCollection customAttributes)
+		{
+			// Determine the minimum effective accessibility an entity must have, so that the metadata stores the nullability for its type.
+			foreach (var handle in customAttributes) {
+				var customAttribute = metadata.GetCustomAttribute(handle);
+				if (customAttribute.IsKnownAttribute(metadata, KnownAttribute.NullablePublicOnly)) {
+					CustomAttributeValue<IType> value;
+					try {
+						value = customAttribute.DecodeValue(Metadata.MetadataExtensions.MinimalAttributeTypeProvider);
+					} catch (BadImageFormatException) {
+						continue;
+					} catch (EnumUnderlyingTypeResolveException) {
+						continue;
+					}
+					if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is bool includesInternals) {
+						return includesInternals ? Accessibility.ProtectedAndInternal : Accessibility.Protected;
+					}
+				}
+			}
+			return Accessibility.None;
+		}
+
+		internal bool ShouldDecodeNullableAttributes(IEntity entity)
+		{
+			if ((options & TypeSystemOptions.NullabilityAnnotations) == 0)
+				return false;
+			if (minAccessibilityForNRT == Accessibility.None || entity == null)
+				return true;
+			return minAccessibilityForNRT.LessThanOrEqual(entity.EffectiveAccessibility());
+		}
+
+		internal TypeSystemOptions OptionsForEntity(IEntity entity)
+		{
+			var opt = this.options;
+			if ((opt & TypeSystemOptions.NullabilityAnnotations) != 0) {
+				if (!ShouldDecodeNullableAttributes(entity)) {
+					opt &= ~TypeSystemOptions.NullabilityAnnotations;
+				}
+			}
+			return opt;
 		}
 		#endregion
 	}

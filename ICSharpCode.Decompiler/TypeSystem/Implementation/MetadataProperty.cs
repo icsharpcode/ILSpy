@@ -129,23 +129,33 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			try {
 				var signature = propertyDef.DecodeSignature(module.TypeProvider, genericContext);
 				var accessors = propertyDef.GetAccessors();
+				var declTypeDef = this.DeclaringTypeDefinition;
 				ParameterHandleCollection? parameterHandles;
 				Nullability nullableContext;
 				if (!accessors.Getter.IsNil) {
 					var getter = module.metadata.GetMethodDefinition(accessors.Getter);
 					parameterHandles = getter.GetParameters();
 					nullableContext = getter.GetCustomAttributes().GetNullableContext(module.metadata)
-						?? DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious;
+						?? declTypeDef?.NullableContext ?? Nullability.Oblivious;
 				} else if (!accessors.Setter.IsNil) {
 					var setter = module.metadata.GetMethodDefinition(accessors.Setter);
 					parameterHandles = setter.GetParameters();
 					nullableContext = setter.GetCustomAttributes().GetNullableContext(module.metadata)
-						?? DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious;
+						?? declTypeDef?.NullableContext ?? Nullability.Oblivious;
 				} else {
 					parameterHandles = null;
-					nullableContext = DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious;
+					nullableContext = declTypeDef?.NullableContext ?? Nullability.Oblivious;
 				}
-				(returnType, parameters) = MetadataMethod.DecodeSignature(module, this, signature, parameterHandles, nullableContext);
+				// We call OptionsForEntity() for the declaring type, not the property itself,
+				// because the property's accessibilty isn't stored in metadata but computed.
+				// Otherwise we'd get infinite recursion, because computing the accessibility
+				// requires decoding the signature for the GetBaseMembers() call.
+				// Roslyn uses the same workaround (see the NullableTypeDecoder.TransformType
+				// call in PEPropertySymbol).
+				var typeOptions = module.OptionsForEntity(declTypeDef);
+				(returnType, parameters) = MetadataMethod.DecodeSignature(module, this, signature,
+					parameterHandles, nullableContext, typeOptions,
+					returnTypeAttributes: propertyDef.GetCustomAttributes());
 			} catch (BadImageFormatException) {
 				returnType = SpecialType.UnknownType;
 				parameters = Empty<IParameter>.Array;

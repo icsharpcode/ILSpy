@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					ty = mod.ElementType;
 				}
 				ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation,
-					fieldDef.GetCustomAttributes(), metadata, module.TypeSystemOptions,
+					fieldDef.GetCustomAttributes(), metadata, module.OptionsForEntity(this),
 					DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious);
 			} catch (BadImageFormatException) {
 				ty = SpecialType.UnknownType;

@@ -82,7 +82,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var declaringTypeDef = DeclaringTypeDefinition;
 				var context = new GenericContext(declaringTypeDef?.TypeParameters);
 				var nullableContext = declaringTypeDef?.NullableContext ?? Nullability.Oblivious;
-				returnType = module.ResolveType(ev.Type, context, ev.GetCustomAttributes(), nullableContext);
+				// The event does not have explicit accessibility in metadata, so use its
+				// containing type to determine whether nullability applies to this type.
+				var typeOptions = module.OptionsForEntity(declaringTypeDef);
+				returnType = module.ResolveType(ev.Type, context, typeOptions, ev.GetCustomAttributes(), nullableContext);
 				return LazyInit.GetOrSet(ref this.returnType, returnType);
 			}
 		}

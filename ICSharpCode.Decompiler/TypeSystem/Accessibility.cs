@@ -115,5 +115,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return b;
 			}
 		}
+
+		/// <summary>
+		/// Gets the effective accessibility of the entity.
+		/// For example, a public method in an internal class returns "internal".
+		/// </summary>
+		public static Accessibility EffectiveAccessibility(this IEntity entity)
+		{
+			Accessibility accessibility = entity.Accessibility;
+			for (ITypeDefinition typeDef = entity.DeclaringTypeDefinition; typeDef != null; typeDef = typeDef.DeclaringTypeDefinition) {
+				accessibility = Intersect(accessibility, typeDef.Accessibility);
+			}
+			return accessibility;
+		}
 	}
 }
