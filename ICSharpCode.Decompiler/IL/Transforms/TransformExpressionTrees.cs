@@ -714,7 +714,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var (falseInst, falseInstType) = ConvertInstruction(invocation.Arguments[2]);
 			if (falseInst == null)
 				return (null, SpecialType.UnknownType);
-			if (!trueInstType.Equals(falseInstType))
+			if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(trueInstType, falseInstType))
 				return (null, SpecialType.UnknownType);
 			return (() => new IfInstruction(condition(), trueInst(), falseInst()), trueInstType);
 		}
