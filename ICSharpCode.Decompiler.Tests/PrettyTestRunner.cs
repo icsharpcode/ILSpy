@@ -89,7 +89,13 @@ namespace ICSharpCode.Decompiler.Tests
 			RunForLibrary();
 			RunForLibrary(asmOptions: AssemblerOptions.UseDebug);
 		}
-		
+
+		[Test]
+		public void IndexRangeTest([ValueSource(nameof(dotnetCoreOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
 		[Test]
 		public void InlineAssignmentTest([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{

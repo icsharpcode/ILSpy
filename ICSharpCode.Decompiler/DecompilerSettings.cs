@@ -112,12 +112,13 @@ namespace ICSharpCode.Decompiler
 				asyncUsingAndForEachStatement = false;
 				asyncEnumerator = false;
 				staticLocalFunctions = false;
+				ranges = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement || staticLocalFunctions)
+			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement || staticLocalFunctions || ranges)
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers || patternBasedFixedStatement)
 				return CSharp.LanguageVersion.CSharp7_3;
@@ -1095,6 +1096,23 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (staticLocalFunctions != value) {
 					staticLocalFunctions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool ranges = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 8.0 static local functions should be transformed.
+		/// </summary>
+		[Category("C# 8.0 / VS 2019")]
+		[Description("DecompilerSettings.Ranges")]
+		public bool Ranges {
+			get { return ranges; }
+			set {
+				if (ranges != value) {
+					ranges = value;
 					OnPropertyChanged();
 				}
 			}

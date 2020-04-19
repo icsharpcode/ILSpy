@@ -852,4 +852,7 @@ Do you want to continue?</value>
 
 Do you want to continue?</value>
   </data>
+  <data name="DecompilerSettings.Ranges" xml:space="preserve">
+    <value>Ranges</value>
+  </data>
 </root>

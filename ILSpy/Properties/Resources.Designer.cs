@@ -921,6 +921,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Ranges.
+        /// </summary>
+        public static string DecompilerSettings_Ranges {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.Ranges", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Read-only methods.
         /// </summary>
         public static string DecompilerSettings_ReadOnlyMethods {
