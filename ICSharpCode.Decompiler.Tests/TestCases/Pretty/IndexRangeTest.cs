@@ -71,12 +71,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void UseIndexFromEnd()
 		{
 			Console.WriteLine(GetArray()[^GetInt()]);
-#if TODO
 			Console.WriteLine(GetList()[^GetInt()]);
 			Console.WriteLine(GetSpan()[^GetInt()]);
 			Console.WriteLine(GetString()[^GetInt()]);
 			Console.WriteLine(new CustomList()[^GetInt()]);
-#endif
 			Console.WriteLine(new CustomList2()[^GetInt()]);
 		}
 
@@ -96,9 +94,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			UseRef(ref GetArray()[GetIndex()]);
 			UseRef(ref GetArray()[^GetInt()]);
 			UseRef(ref GetSpan()[GetIndex()]);
-#if TODO
 			UseRef(ref GetSpan()[^GetInt()]);
-#endif
 		}
 
 		public static void UseRange()

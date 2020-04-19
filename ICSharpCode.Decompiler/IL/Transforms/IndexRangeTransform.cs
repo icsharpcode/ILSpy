@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
@@ -93,15 +94,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
 			int startPos = pos;
-			if (!MatchContainerLengthStore(block.Instructions[pos], out ILVariable containerLengthVar, out ILVariable containerVar))
-				return;
+			// The container length access may be a separate instruction, or it may be inline with the variable's use
+			if (MatchContainerLengthStore(block.Instructions[pos], out ILVariable containerLengthVar, out ILVariable containerVar)) {
+				pos++;
+			} else {
+				// Reset if MatchContainerLengthStore only had a partial match. MatchGetOffset() will then set `containerVar`.
+				containerLengthVar = null;
+				containerVar = null;
+			}
+			var startIndexKind = MatchGetOffset(block.Instructions[pos], out ILVariable startOffsetVar, out ILInstruction startIndexLoad, containerLengthVar, ref containerVar);
 			pos++;
-			if (!MatchGetOffsetFromIndex(block.Instructions[pos], out ILVariable startOffsetVar, out ILInstruction startIndexLdloca, containerLengthVar))
+			if (startIndexKind == IndexKind.None)
 				return;
-			pos++;
 			if (startOffsetVar.LoadCount == 1) {
-				// complex_expr(call get_Item(ldloc container, ldloc offset))
-
+				// complex_expr(call get_Item(ldloc container, ldloc startOffsetVar))
+				
 				// startOffsetVar might be used deep inside a complex statement, ensure we can inline up to that point:
 				for (int i = startPos; i < pos; i++) {
 					if (!ILInlining.CanInlineInto(block.Instructions[pos], startOffsetVar, block.Instructions[i]))
@@ -129,21 +136,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!call.Arguments[1].MatchLdLoc(startOffsetVar))
 					return;
 				var indexType = context.TypeSystem.FindType(KnownTypeCode.Index);
-				if (!CSharpWillGenerateIndexer(call.Method.DeclaringType, indexType, context))
+				var indexCtor = FindIndexConstructor(context.TypeSystem);
+				if (indexCtor == null)
+					return;
+				if (!CSharpWillGenerateIndexer(call.Method.DeclaringType))
 					return;
 
-				//  stloc length(call get_Length/ get_Count(ldloc container))
-				//  stloc offset(call GetOffset(..., ldloc length))
-				//  complex_expr(call get_Item(ldloc container, ldloc offset))
-				// -->
-				//  complex_expr(call get_Item(ldloc container, ...))
-				context.Step($"{call.Method.Name} indexed with System.Index", call);
+				context.Step($"{call.Method.Name} indexed with {startIndexKind}", call);
 				var newMethod = new SyntheticRangeIndexAccessor(call.Method, indexType);
 				var newCall = CallInstruction.Create(call.OpCode, newMethod);
 				newCall.ConstrainedTo = call.ConstrainedTo;
 				newCall.ILStackWasEmpty = call.ILStackWasEmpty;
 				newCall.Arguments.Add(call.Arguments[0]);
-				newCall.Arguments.Add(new LdObj(startIndexLdloca, indexType));
+				if (startIndexKind == IndexKind.RefSystemIndex) {
+					//  stloc length(call get_Length/get_Count(ldloc container))
+					//  stloc startOffsetVar(call GetOffset(startIndexLoad, ldloc length))
+					//  complex_expr(call get_Item(ldloc container, ldloc startOffsetVar))
+					// -->
+					//  complex_expr(call get_Item(ldloc container, ldobj startIndexLoad))
+					newCall.Arguments.Add(new LdObj(startIndexLoad, indexType));
+				} else {
+					//  stloc offsetVar(binary.sub.i4(ldloc containerLengthVar, startIndexLoad))
+					//  complex_expr(call get_Item(ldloc container, ldloc startOffsetVar))
+					// -->
+					//  complex_expr(call get_Item(ldloc container, newobj System.Index(startIndexLoad, fromEnd: true)))
+					Debug.Assert(startIndexKind == IndexKind.FromEnd);
+					newCall.Arguments.Add(new NewObj(indexCtor) { Arguments = { startIndexLoad, new LdcI4(1) } });
+				}
 				newCall.Arguments.AddRange(call.Arguments.Skip(2));
 				newCall.AddILRange(call);
 				for (int i = startPos; i < pos; i++) {
@@ -157,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Gets whether the C# compiler will call `container[int]` when using `container[Index]`.
 		/// </summary>
-		private bool CSharpWillGenerateIndexer(IType declaringType, IType indexType, ILTransformContext context)
+		private bool CSharpWillGenerateIndexer(IType declaringType)
 		{
 			bool foundInt32Overload = false;
 			bool foundIndexOverload = false;
@@ -188,7 +207,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(lengthVar.IsSingleDefinition && lengthVar.StackType == StackType.I4))
 				return false;
+			return MatchContainerLength(init, null, ref containerVar);
+		}
+
+		/// <summary>
+		/// If lengthVar is non-null, matches 'ldloc lengthVar'.
+		/// 
+		///	Otherwise, matches the instruction:
+		///		call get_Length/get_Count(ldloc containerVar)
+		/// </summary>
+		static bool MatchContainerLength(ILInstruction init, ILVariable lengthVar, ref ILVariable containerVar)
+		{
+			if (lengthVar != null) {
+				Debug.Assert(containerVar != null);
+				return init.MatchLdLoc(lengthVar);
+			}
 			if (!(init is CallInstruction call))
+				return false;
+			if (call.ResultType != StackType.I4)
 				return false;
 			if (!(call.Method.IsAccessor && call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter))
 				return false;
@@ -207,30 +243,63 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (call.Arguments.Count != 1)
 				return false;
-			return call.Arguments[0].MatchLdLoc(out containerVar) || call.Arguments[0].MatchLdLoca(out containerVar);
+			if (containerVar != null) {
+				return call.Arguments[0].MatchLdLoc(containerVar) || call.Arguments[0].MatchLdLoca(containerVar);
+			} else {
+				return call.Arguments[0].MatchLdLoc(out containerVar) || call.Arguments[0].MatchLdLoca(out containerVar);
+			}
+		}
+
+		enum IndexKind
+		{
+			None,
+			/// <summary>
+			/// indexLoad is loading the address of a System.Index struct
+			/// </summary>
+			RefSystemIndex,
+			/// <summary>
+			/// indexLoad is an integer, from the end of the container
+			/// </summary>
+			FromEnd
 		}
 
 		/// <summary>
-		/// Matches the instruction:
-		///    stloc offsetVar(call System.Index.GetOffset(indexLdloca, ldloc containerLengthVar))
+		/// Matches an instruction computing an offset:
+		///    stloc offsetVar(call System.Index.GetOffset(indexLoad, ldloc containerLengthVar))
+		/// or
+		///    stloc offsetVar(binary.sub.i4(ldloc containerLengthVar, indexLoad))
 		/// </summary>
-		static bool MatchGetOffsetFromIndex(ILInstruction inst, out ILVariable offsetVar, out ILInstruction indexLdloca, ILVariable containerLengthVar)
+		static IndexKind MatchGetOffset(ILInstruction inst, out ILVariable offsetVar, out ILInstruction indexLoad,
+			ILVariable containerLengthVar, ref ILVariable containerVar)
 		{
-			indexLdloca = null;
+			indexLoad = null;
 			if (!inst.MatchStLoc(out offsetVar, out var offsetValue))
-				return false;
+				return IndexKind.None;
 			if (!(offsetVar.IsSingleDefinition && offsetVar.StackType == StackType.I4))
-				return false;
-			if (!(offsetValue is CallInstruction call))
-				return false;
-			if (call.Method.Name != "GetOffset")
-				return false;
-			if (!call.Method.DeclaringType.IsKnownType(KnownTypeCode.Index))
-				return false;
-			if (call.Arguments.Count != 2)
-				return false;
-			indexLdloca = call.Arguments[0];
-			return call.Arguments[1].MatchLdLoc(containerLengthVar);
+				return IndexKind.None;
+			if (offsetValue is CallInstruction call) {
+				// call System.Index.GetOffset(indexLoad, ldloc containerLengthVar)
+				if (call.Method.Name != "GetOffset")
+					return IndexKind.None;
+				if (!call.Method.DeclaringType.IsKnownType(KnownTypeCode.Index))
+					return IndexKind.None;
+				if (call.Arguments.Count != 2)
+					return IndexKind.None;
+				if (!MatchContainerLength(call.Arguments[1], containerLengthVar, ref containerVar))
+					return IndexKind.None;
+				indexLoad = call.Arguments[0];
+				return IndexKind.RefSystemIndex;
+			} else if (offsetValue is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub) {
+				if (bni.CheckForOverflow || bni.ResultType != StackType.I4 || bni.IsLifted)
+					return IndexKind.None;
+				// binary.sub.i4(ldloc containerLengthVar, indexLoad)
+				if (!MatchContainerLength(bni.Left, containerLengthVar, ref containerVar))
+					return IndexKind.None;
+				indexLoad = bni.Right;
+				return IndexKind.FromEnd;
+			} else {
+				return IndexKind.None;
+			}
 		}
 	}
 }
