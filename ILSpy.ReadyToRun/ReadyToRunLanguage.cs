@@ -125,13 +125,24 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 			formatter.Options.DigitSeparator = "`";
 			formatter.Options.FirstOperandCharIndex = 10;
-			var tempOutput = new StringBuilderFormatterOutput();
+			var tempOutput = new StringOutput();
 			foreach (var instr in instructions) {
 				int byteBaseIndex = (int)(instr.IP - address);
+				foreach (var bound in runtimeFunction.DebugInfo.BoundsList) {
+					if (bound.NativeOffset == byteBaseIndex) {
+						if (bound.ILOffset == (uint)DebugInfoBoundsType.Prolog) {
+							WriteCommentLine(output, "Prolog");
+						} else if (bound.ILOffset == (uint)DebugInfoBoundsType.Epilog) {
+							WriteCommentLine(output, "Epilog");
+						} else {
+							WriteCommentLine(output, $"IL_{bound.ILOffset:x4}");
+						}
+					}
+				}
 				formatter.Format(instr, tempOutput);
 				output.Write(instr.IP.ToString("X16"));
 				output.Write(" ");
-				int instrLen = instr.ByteLength;
+				int instrLen = instr.Length;
 				for (int i = 0; i < instrLen; i++)
 					output.Write(codeBytes[byteBaseIndex + i].ToString("X2"));
 				int missingBytes = 10 - instrLen;
