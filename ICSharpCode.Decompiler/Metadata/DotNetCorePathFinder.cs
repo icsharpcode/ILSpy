@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		static string FindDotNetExeDirectory()
+		public static string FindDotNetExeDirectory()
 		{
 			string dotnetExeName = (Environment.OSVersion.Platform == PlatformID.Unix) ? "dotnet" : "dotnet.exe";
 			foreach (var item in Environment.GetEnvironmentVariable("PATH").Split(Path.PathSeparator)) {

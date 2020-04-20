@@ -17,6 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy
@@ -29,7 +31,15 @@ namespace ICSharpCode.ILSpy
 		public ManageAssemblyListsDialog()
 		{
 			InitializeComponent();
-			DataContext = new ManageAssemblyListsViewModel();
+			DataContext = new ManageAssemblyListsViewModel(this);
+		}
+
+		private void PreconfiguredAssemblyListsMenuClick(object sender, RoutedEventArgs e)
+		{
+			var menu = (ContextMenu)Resources["PreconfiguredAssemblyListsMenu"];
+			menu.PlacementTarget = (Button)sender;
+			menu.Placement = PlacementMode.Bottom;
+			menu.IsOpen = true;
 		}
 	}
 }

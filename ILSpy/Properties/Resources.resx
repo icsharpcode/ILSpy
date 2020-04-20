@@ -426,7 +426,7 @@
   <data name="Create" xml:space="preserve">
     <value>Create</value>
   </data>
-  <data name="List" xml:space="preserve">
+  <data name="NewList" xml:space="preserve">
     <value>New list</value>
   </data>
   <data name="SelectAssembliesOpen" xml:space="preserve">
@@ -851,5 +851,14 @@ Do you want to continue?</value>
     <value>This will remove "{0}" from the registry at "HKCU\Software\Classes\dllfile\shell\Open with ILSpy\command" and "HKCU\Software\Classes\exefile\shell\Open with ILSpy\command".
 
 Do you want to continue?</value>
+  </data>
+  <data name="AddPreconfiguredList" xml:space="preserve">
+    <value>Add preconfigured list...</value>
+  </data>
+  <data name="R_ename" xml:space="preserve">
+    <value>R_ename</value>
+  </data>
+  <data name="RenameList" xml:space="preserve">
+    <value>Rename list</value>
   </data>
 </root>

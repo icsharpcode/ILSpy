@@ -76,6 +76,13 @@ namespace ICSharpCode.ILSpy
 			return CreateList(newList);
 		}
 
+		public bool RenameList(string selectedAssemblyList, string newListName)
+		{
+			var list = DoLoadList(spySettings, selectedAssemblyList);
+			var newList = new AssemblyList(list, newListName);
+			return DeleteList(selectedAssemblyList) && CreateList(newList);
+		}
+
 		public const string DefaultListName = "(Default)";
 		
 		/// <summary>
