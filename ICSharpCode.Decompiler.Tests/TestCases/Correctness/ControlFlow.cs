@@ -41,6 +41,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			BreakUnlessContinue(true);
 			BreakUnlessContinue(false);
 			TestConditionals();
+			Console.WriteLine("Issue1946:\n" + Issue1946());
 			return 0;
 		}
 
@@ -148,6 +149,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			byte answer = (byte)(value == 128 ? 255 : 0);
 			return answer;
+		}
+
+		static string Issue1946()
+		{
+			string obj = "1";
+			try {
+				obj = "2";
+			} catch {
+				obj = "3";
+			} finally {
+				obj = "4";
+			}
+			return obj;
 		}
 	}
 }
