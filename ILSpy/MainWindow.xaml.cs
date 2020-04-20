@@ -118,6 +118,8 @@ namespace ICSharpCode.ILSpy
 				AssemblyListManager = AssemblyListManager
 			};
 
+			AssemblyListManager.CreateDefaultAssemblyLists();
+
 			DockWorkspace.Instance.LoadSettings(sessionSettings);
 			InitializeComponent();
 			InitToolPanes();

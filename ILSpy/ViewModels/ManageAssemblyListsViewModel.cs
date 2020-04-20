@@ -42,7 +42,6 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			this.manager = MainWindow.Instance.AssemblyListManager;
 			this.parent = parent;
-			CreateDefaultAssemblyLists();
 
 			NewCommand = new DelegateCommand(ExecuteNew);
 			CloneCommand = new DelegateCommand(ExecuteClone, CanExecuteClone);
@@ -162,7 +161,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				"ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, MessageBoxOptions.None) != MessageBoxResult.Yes)
 				return;
 			manager.ClearAll();
-			CreateDefaultAssemblyLists();
+			manager.CreateDefaultAssemblyLists();
 			MainWindow.Instance.SessionSettings.ActiveAssemblyList = manager.AssemblyLists[0];
 		}
 
@@ -188,8 +187,14 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			CreateListDialog dlg = new CreateListDialog(Resources.RenameList);
 			dlg.Owner = parent;
+			dlg.ListName = selectedAssemblyList;
+			dlg.ListNameBox.SelectAll();
 			dlg.Closing += (s, args) => {
 				if (dlg.DialogResult == true) {
+					if (dlg.ListName == selectedAssemblyList) {
+						args.Cancel = true;
+						return;
+					}
 					if (manager.AssemblyLists.Contains(dlg.ListName)) {
 						args.Cancel = true;
 						MessageBox.Show(Properties.Resources.ListExistsAlready, null, MessageBoxButton.OK);
@@ -201,7 +206,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			}
 		}
 
-		private AssemblyList CreateDefaultList(string name, string path = null, string newName = null)
+		internal static AssemblyList CreateDefaultList(string name, string path = null, string newName = null)
 		{
 			var list = new AssemblyList(newName ?? name);
 			switch (name) {
@@ -297,34 +302,12 @@ namespace ICSharpCode.ILSpy.ViewModels
 			}
 		}
 
-		private void CreateDefaultAssemblyLists()
-		{
-			if (!manager.AssemblyLists.Contains(DotNet4List)) {
-				AssemblyList dotnet4 = CreateDefaultList(DotNet4List);
-				if (dotnet4.assemblies.Count > 0) {
-					manager.CreateList(dotnet4);
-				}
-			}
-
-			if (!manager.AssemblyLists.Contains(DotNet35List)) {
-				AssemblyList dotnet35 = CreateDefaultList(DotNet35List);
-				if (dotnet35.assemblies.Count > 0) {
-					manager.CreateList(dotnet35);
-				}
-			}
-
-			if (!manager.AssemblyLists.Contains(ASPDotNetMVC3List)) {
-				AssemblyList mvc = CreateDefaultList(ASPDotNetMVC3List);
-				if (mvc.assemblies.Count > 0) {
-					manager.CreateList(mvc);
-				}
-			}
-		}
-
 		private void ExecuteCreatePreconfiguredAssemblyList(PreconfiguredAssemblyList config)
 		{
 			CreateListDialog dlg = new CreateListDialog(Resources.AddPreconfiguredList);
 			dlg.Owner = parent;
+			dlg.ListName = config.Name;
+			dlg.ListNameBox.SelectAll();
 			dlg.Closing += (s, args) => {
 				if (dlg.DialogResult == true) {
 					if (manager.AssemblyLists.Contains(dlg.ListName)) {
