@@ -201,7 +201,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!targetBlock.Instructions[0].MatchReturn(out var value))
 				return false;
-			if (!targetBlock.MatchLdLoc(out var returnVar))
+			if (!value.MatchLdLoc(out var returnVar))
 				return false;
 			var container = branch.TargetContainer;
 			for (ILInstruction inst = branch; inst != container; inst = inst.Parent) {
