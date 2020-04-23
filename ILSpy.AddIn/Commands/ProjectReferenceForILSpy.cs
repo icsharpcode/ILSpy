@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using EnvDTE;
+using ICSharpCode.Decompiler.Metadata;
 using Microsoft.VisualStudio.Shell;
 using Mono.Cecil;
 
@@ -74,7 +75,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			if (resolvedPath != null) {
 				return new ILSpyParameters(new[] { $"{resolvedPath}" });
 			} else if (!string.IsNullOrWhiteSpace(fusionName)) {
-				return new ILSpyParameters(new string[] { GacInterop.FindAssemblyInNetGac(Decompiler.Metadata.AssemblyNameReference.Parse(fusionName)) });
+				return new ILSpyParameters(new string[] { UniversalAssemblyResolver.GetAssemblyInGac(Decompiler.Metadata.AssemblyNameReference.Parse(fusionName)) });
 			}
 
 			return null;

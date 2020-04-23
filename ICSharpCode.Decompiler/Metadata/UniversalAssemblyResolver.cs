@@ -23,6 +23,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
@@ -63,7 +64,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		readonly string mainAssemblyFileName;
 		readonly string baseDirectory;
 		readonly List<string> directories = new List<string>();
-		readonly List<string> gac_paths = GetGacPaths();
+		static readonly List<string> gac_paths = GetGacPaths();
 		HashSet<string> targetFrameworkSearchPaths;
 		static readonly DecompilerRuntime decompilerRuntime;
 
@@ -465,7 +466,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return path;
 		}
 
-		static List<string> GetGacPaths()
+		public static List<string> GetGacPaths()
 		{
 			if (decompilerRuntime == DecompilerRuntime.Mono)
 				return GetDefaultMonoGacPaths();
@@ -512,7 +513,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				"gac");
 		}
 
-		string GetAssemblyInGac(IAssemblyReference reference)
+		public static string GetAssemblyInGac(IAssemblyReference reference)
 		{
 			if (reference.PublicKeyToken == null || reference.PublicKeyToken.Length == 0)
 				return null;
@@ -523,7 +524,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return GetAssemblyInNetGac(reference);
 		}
 
-		string GetAssemblyInMonoGac(IAssemblyReference reference)
+		static string GetAssemblyInMonoGac(IAssemblyReference reference)
 		{
 			for (int i = 0; i < gac_paths.Count; i++) {
 				var gac_path = gac_paths[i];
@@ -535,7 +536,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		string GetAssemblyInNetGac(IAssemblyReference reference)
+		static string GetAssemblyInNetGac(IAssemblyReference reference)
 		{
 			var gacs = new[] { "GAC_MSIL", "GAC_32", "GAC_64", "GAC" };
 			var prefixes = new[] { string.Empty, "v4.0_" };
@@ -566,6 +567,33 @@ namespace ICSharpCode.Decompiler.Metadata
 				Path.Combine(
 					Path.Combine(gac, reference.Name), gac_folder.ToString()),
 				reference.Name + ".dll");
+		}
+
+		/// <summary>
+		/// Gets the names of all assemblies in the GAC.
+		/// </summary>
+		public static IEnumerable<AssemblyNameReference> EnumerateGac()
+		{
+			var gacs = new[] { "GAC_MSIL", "GAC_32", "GAC_64", "GAC" };
+			foreach (var path in GetGacPaths()) {
+				foreach (var gac in gacs) {
+					string rootPath = Path.Combine(path, gac);
+					if (!Directory.Exists(rootPath))
+						continue;
+					foreach (var item in new DirectoryInfo(rootPath).EnumerateFiles("*.dll", SearchOption.AllDirectories)) {
+						string[] name = Path.GetDirectoryName(item.FullName).Substring(rootPath.Length + 1).Split(new[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
+						if (name.Length != 2)
+							continue;
+						var match = Regex.Match(name[1], $"(v4.0_)?(?<version>[^_]+)_(?<culture>[^_]+)?_(?<publicKey>[^_]+)");
+						if (!match.Success)
+							continue;
+						string culture = match.Groups["culture"].Value;
+						if (string.IsNullOrEmpty(culture))
+							culture = "neutral";
+						yield return AssemblyNameReference.Parse(name[0] + ", Version=" + match.Groups["version"].Value + ", Culture=" + culture + ", PublicKeyToken=" + match.Groups["publicKey"].Value);
+					}
+				}
+			}
 		}
 
 		#endregion

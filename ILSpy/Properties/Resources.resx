@@ -861,4 +861,7 @@ Do you want to continue?</value>
   <data name="RenameList" xml:space="preserve">
     <value>Rename list</value>
   </data>
+  <data name="CultureLabel" xml:space="preserve">
+    <value>Culture</value>
+  </data>
 </root>

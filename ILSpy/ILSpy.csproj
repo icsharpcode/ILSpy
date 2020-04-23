@@ -237,8 +237,6 @@
     <Compile Include="DecompilationOptions.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="FilterSettings.cs" />
-    <Compile Include="Fusion.cs" />
-    <Compile Include="GacInterop.cs" />
     <Compile Include="GuessFileType.cs" />
     <Compile Include="ContextMenuEntry.cs" />
     <Compile Include="Languages\CSharpBracketSearcher.cs" />

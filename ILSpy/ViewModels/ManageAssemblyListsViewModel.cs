@@ -275,7 +275,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			void AddToListFromGAC(string fullName)
 			{
 				AssemblyNameReference reference = AssemblyNameReference.Parse(fullName);
-				string file = GacInterop.FindAssemblyInNetGac(reference);
+				string file = UniversalAssemblyResolver.GetAssemblyInGac(reference);
 				if (file != null)
 					list.OpenAssembly(file);
 			}

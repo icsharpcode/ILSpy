@@ -514,6 +514,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Culture.
+        /// </summary>
+        public static string CultureLabel {
+            get {
+                return ResourceManager.GetString("CultureLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to DEBUG -- Decompile All.
         /// </summary>
         public static string DEBUGDecompile {
