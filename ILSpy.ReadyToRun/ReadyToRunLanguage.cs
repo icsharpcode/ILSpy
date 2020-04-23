@@ -149,7 +149,12 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				for (int i = 0; i < missingBytes; i++)
 					output.Write("  ");
 				output.Write(" ");
-				output.WriteLine(tempOutput.ToStringAndReset());
+				output.Write(tempOutput.ToStringAndReset());
+				if (instr.IsCallNearIndirect && reader.ImportCellNames.ContainsKey((int)instr.IPRelativeMemoryAddress)) {
+					WriteCommentLine(output, reader.ImportCellNames[(int)instr.IPRelativeMemoryAddress]);
+				} else {
+					output.WriteLine();
+				}
 			}
 			output.WriteLine();
 		}
