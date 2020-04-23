@@ -23,6 +23,7 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -365,7 +366,7 @@ namespace ICSharpCode.ILSpy.TextView
 			} else if (segment.Reference is EntityReference unresolvedEntity) {
 				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Module, unresolvedEntity.Module.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
 				try {
-					IEntity resolved = typeSystem.MainModule.ResolveEntity(unresolvedEntity.Handle);
+					IEntity resolved = typeSystem.MainModule.ResolveEntity((EntityHandle)unresolvedEntity.Handle);
 					if (resolved == null)
 						return null;
 					var document = CreateTooltipForEntity(resolved);
