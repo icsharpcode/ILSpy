@@ -138,6 +138,7 @@
     <Compile Include="Controls\SearchBox.cs" />
     <Compile Include="Controls\SortableGridViewColumn.cs" />
     <Compile Include="Controls\XamlResourceExtension.cs" />
+    <Compile Include="EntityReference.cs" />
     <Compile Include="Metadata\CorTables\FieldRVATableTreeNode.cs">
       <SubType>Code</SubType>
       <Generator>MSBuild:Compile</Generator>
