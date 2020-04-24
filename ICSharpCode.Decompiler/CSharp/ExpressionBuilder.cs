@@ -2027,7 +2027,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							.WithRR(new ResolveResult(NullableType.GetUnderlyingType(translatedTarget.Type)))
 							.WithoutILInstruction();
 					}
-					translatedTarget = EnsureTargetNotNullable(translatedTarget);
+					translatedTarget = EnsureTargetNotNullable(translatedTarget, target);
 					return translatedTarget;
 				}
 			} else {
@@ -2055,10 +2055,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		private TranslatedExpression EnsureTargetNotNullable(TranslatedExpression expr)
+		private TranslatedExpression EnsureTargetNotNullable(TranslatedExpression expr, ILInstruction inst)
 		{
+			// inst is the instruction that got translated into expr.
 			if (expr.Type.Nullability == Nullability.Nullable) {
 				if (expr.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.NullConditional) {
+					return expr;
+				}
+				if (inst.HasFlag(InstructionFlags.MayUnwrapNull)) {
+					// We can't use ! in the chain of operators after a NullConditional, due to
+					// https://github.com/dotnet/roslyn/issues/43659
 					return expr;
 				}
 				return new UnaryOperatorExpression(UnaryOperatorType.SuppressNullableWarning, expr)
@@ -2153,7 +2159,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (arrayExpr.Type.Kind != TypeKind.Array) {
 				arrayExpr = arrayExpr.ConvertTo(arrayType, this);
 			}
-			arrayExpr = EnsureTargetNotNullable(arrayExpr);
+			arrayExpr = EnsureTargetNotNullable(arrayExpr, inst.Array);
 			string memberName;
 			KnownTypeCode code;
 			if (inst.ResultType == StackType.I4) {
