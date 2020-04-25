@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				if (cacheEntry.methodMap.TryGetValue(method.MetadataToken, out var methods)) {
 					foreach (var readyToRunMethod in methods) {
 						foreach (RuntimeFunction runtimeFunction in readyToRunMethod.RuntimeFunctions) {
-							Disassemble(output, reader, readyToRunMethod, runtimeFunction, bitness, (ulong)runtimeFunction.StartAddress);
+							Disassemble(method, output, reader, readyToRunMethod, runtimeFunction, bitness, (ulong)runtimeFunction.StartAddress);
 						}
 					}
 				}
@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			output.WriteLine("; " + comment);
 		}
 
-		private void Disassemble(ITextOutput output, ReadyToRunReader reader, ReadyToRunMethod readyToRunMethod, RuntimeFunction runtimeFunction, int bitness, ulong address)
+		private void Disassemble(IMethod method, ITextOutput output, ReadyToRunReader reader, ReadyToRunMethod readyToRunMethod, RuntimeFunction runtimeFunction, int bitness, ulong address)
 		{
 			WriteCommentLine(output, readyToRunMethod.SignatureString);
 			byte[] codeBytes = new byte[runtimeFunction.Size];
@@ -151,7 +151,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				output.Write(" ");
 				output.Write(tempOutput.ToStringAndReset());
 				if (instr.IsCallNearIndirect && reader.ImportCellNames.ContainsKey((int)instr.IPRelativeMemoryAddress)) {
-					WriteCommentLine(output, reader.ImportCellNames[(int)instr.IPRelativeMemoryAddress]);
+					output.Write(" ;");
+					// TODO: Get the right PEFile
+					// TODO: Get the right method def token
+					output.WriteReference(method.ParentModule.PEFile, System.Reflection.Metadata.Ecma335.MetadataTokens.Handle(0x06001e24), reader.ImportCellNames[(int)instr.IPRelativeMemoryAddress]);
+					output.WriteLine();
 				} else {
 					output.WriteLine();
 				}
