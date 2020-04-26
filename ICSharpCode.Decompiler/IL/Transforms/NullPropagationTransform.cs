@@ -411,10 +411,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// stloc defaultTemporary(default.value type)
 			if (!(block.Instructions[pos + 1].MatchStLoc(out var defaultTemporary, out var defaultExpression) && defaultExpression.MatchDefaultValue(out var type)))
 				return false;
-			// Some variables are reused by the compiler therefore we cannot check for absolute numbers. See for example ValueTuple`8.ToString
-			// LoadCount must be == StoreCount and LoadCount must be 2x AddressCount.
-			// Note: if successful, this transform removes exactly 2 store, 2 load and 1 addressof instruction.
-			if (!(defaultTemporary.Kind == VariableKind.Local && defaultTemporary.LoadCount == defaultTemporary.StoreCount && defaultTemporary.AddressCount * 2 == defaultTemporary.StoreCount))
+			// In the above pattern the defaultTemporary variable is used two times in stloc and ldloc instructions and once in a ldloca instruction
+			if (!(defaultTemporary.Kind == VariableKind.Local && defaultTemporary.LoadCount == 2 && defaultTemporary.StoreCount == 2 && defaultTemporary.AddressCount == 1))
 				return false;
 			// if (logic.not(comp.o(box `0(ldloc defaultTemporary) != ldnull))) Block fallbackBlock
 			if (!(block.Instructions[pos + 2].MatchIfInstruction(out var condition, out var fallbackBlock1) && condition.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(defaultTemporary)))
