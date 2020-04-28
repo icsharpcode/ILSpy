@@ -180,7 +180,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new IntroduceUnsafeModifier(),
 				new AddCheckedBlocks(),
 				new DeclareVariables(), // should run after most transforms that modify statements
-				new ConvertConstructorCallIntoInitializer(), // must run after DeclareVariables
+				new TransformFieldAndConstructorInitializers(), // must run after DeclareVariables
 				new DecimalConstantTransform(),
 				new PrettifyAssignments(), // must run after DeclareVariables
 				new IntroduceUsingDeclarations(),
