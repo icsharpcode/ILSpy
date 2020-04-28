@@ -100,6 +100,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				return Other?.Other.Other?.Other.Field1?.ToString()?.GetType().Name;
 			}
 
+			public int? Test2()
+			{
+				return Field1?.ToString().Length ?? 42;
+			}
+
 			public int? GetTextLengthNRE()
 			{
 				return (Field1?.ToString()).Length;
