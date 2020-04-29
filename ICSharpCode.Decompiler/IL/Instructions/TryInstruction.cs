@@ -180,6 +180,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets the ILRange of the instructions at the start of the catch-block,
 		/// that take the exception object and store it in the exception variable slot.
+		/// Note: This range is empty, if Filter is not empty, i.e., ldloc 1.
 		/// </summary>
 		public Interval ExceptionSpecifierILRange { get; private set; }
 
