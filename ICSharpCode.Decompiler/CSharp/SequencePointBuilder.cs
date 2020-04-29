@@ -262,12 +262,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreachStatement.InExpression.AcceptVisitor(this);
 			AddToSequencePoint(foreachInfo.GetEnumeratorCall);
 			EndSequencePoint(foreachStatement.InExpression.StartLocation, foreachStatement.InExpression.EndLocation);
+
 			StartSequencePoint(foreachStatement);
 			AddToSequencePoint(foreachInfo.MoveNextCall);
 			EndSequencePoint(foreachStatement.InToken.StartLocation, foreachStatement.InToken.EndLocation);
+			
 			StartSequencePoint(foreachStatement);
 			AddToSequencePoint(foreachInfo.GetCurrentCall);
 			EndSequencePoint(foreachStatement.VariableType.StartLocation, foreachStatement.VariableNameToken.EndLocation);
+			
 			VisitAsSequencePoint(foreachStatement.EmbeddedStatement);
 		}
 
@@ -327,7 +330,6 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public override void VisitCatchClause(CatchClause catchClause)
 		{
-			StartSequencePoint(catchClause);
 			if (catchClause.Condition.IsNull) {
 				var tryCatchHandler = catchClause.Annotation<TryCatchHandler>();
 				if (!tryCatchHandler.ExceptionSpecifierILRange.IsEmpty) {
@@ -341,8 +343,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				AddToSequencePoint(catchClause.Condition);
 				EndSequencePoint(catchClause.WhenToken.StartLocation, catchClause.CondRParToken.EndLocation);
 			}
-			catchClause.Body.AcceptVisitor(this);
-			EndSequencePoint(catchClause.StartLocation, catchClause.EndLocation);
+			VisitAsSequencePoint(catchClause.Body);
 		}
 
 		/// <summary>
