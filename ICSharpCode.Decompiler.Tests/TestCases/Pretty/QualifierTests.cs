@@ -155,6 +155,49 @@ namespace ICSharpCode.Decompiler.Tests.Pretty
 			}
 		}
 
+		public class Root
+		{
+			private int prop;
+
+#if LEGACY_CSC
+			public int Prop {
+				get {
+					return prop;
+				}
+			}
+#else
+			public int Prop => prop;
+#endif
+			public void M<T>(T a)
+			{
+
+			}
+		}
+
+		public abstract class Base : Root
+		{
+			public new abstract int Prop { get; }
+
+			public new abstract void M<T>(T a);
+		}
+
+		public class Derived : Base
+		{
+#if LEGACY_CSC
+			public override int Prop {
+				get {
+					return ((Root)this).Prop;
+				}
+			}
+#else
+			public override int Prop => ((Root)this).Prop;
+#endif
+			public override void M<T>(T a)
+			{
+				((Root)this).M(a);
+			}
+		}
+
 		private int fieldConflict;
 		private int innerConflict;
 
