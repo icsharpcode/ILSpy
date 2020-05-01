@@ -323,6 +323,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInstruction replacement;
 			switch (mode) {
 				case Mode.ReferenceType:
+				case Mode.UnconstrainedType:
 					// Wrap varLoad in nullable.unwrap:
 					replacement = new NullableUnwrap(varLoad.ResultType, varLoad, refInput: varLoad.ResultType == StackType.Ref);
 					break;
@@ -339,10 +340,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						new LdLoc(testedVar).WithILRange(varLoad.Children[0]),
 						refInput: true
 					).WithILRange(varLoad);
-					break;
-				case Mode.UnconstrainedType:
-					// Wrap varLoad in nullable.unwrap:
-					replacement = new NullableUnwrap(varLoad.ResultType, varLoad, refInput: varLoad.ResultType == StackType.Ref);
 					break;
 				default:
 					throw new ArgumentOutOfRangeException(nameof(mode));
@@ -489,11 +486,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				nullInst = fallbackLeave.Value;
 			}
 			return true;
-		}
-
-		private bool MatchDefaultValueOrLdNull(ILInstruction inst)
-		{
-			return inst.MatchLdNull() || inst.MatchDefaultValue(out _);
 		}
 	}
 
