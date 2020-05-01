@@ -79,6 +79,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			set;
 		}
 		public event EventHandler? Event;
+
+		public static int? NullConditionalOperator(T02_EverythingIsNullableInHere? x)
+		{
+			// This code throws if `x != null && x.field1 == null`.
+			// But we can't decompile it to the warning-free "x?.field1!.Length",
+			// because of https://github.com/dotnet/roslyn/issues/43659
+			return x?.field1.Length;
+		}
 	}
 
 	public class T03_EverythingIsNotNullableInHere

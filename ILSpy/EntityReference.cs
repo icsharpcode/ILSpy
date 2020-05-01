@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2020 Siegfried Pammer
+﻿// Copyright (c) 2018 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,18 +16,30 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Windows;
+using System;
+using System.Diagnostics;
+using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Metadata;
 
-namespace ILSpy.BamlDecompiler.Tests.Cases
+namespace ICSharpCode.ILSpy
 {
-	/// <summary>
-	/// Interaction logic for SimpleNames.xaml
-	/// </summary>
-	public partial class SimpleNames : Window
+	[DebuggerDisplay("EntityReference Module={Module}, Handle={Handle}, Protocol={Protocol}")]
+	public class EntityReference
 	{
-		public SimpleNames()
+		public PEFile Module { get; }
+		public Handle Handle { get; }
+		public string Protocol { get; }
+
+		public EntityReference(PEFile module, Handle handle)
 		{
-			InitializeComponent();
+			this.Module = module ?? throw new ArgumentNullException(nameof(module));
+			this.Handle = handle;
+		}
+
+		public EntityReference(string protocol, PEFile module, Handle handle)
+			: this(module, handle)
+		{
+			this.Protocol = protocol ?? "decompile";
 		}
 	}
 }

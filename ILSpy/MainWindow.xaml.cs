@@ -118,6 +118,8 @@ namespace ICSharpCode.ILSpy
 				AssemblyListManager = AssemblyListManager
 			};
 
+			AssemblyListManager.CreateDefaultAssemblyLists();
+
 			DockWorkspace.Instance.LoadSettings(sessionSettings);
 			InitializeComponent();
 			InitToolPanes();
@@ -883,22 +885,22 @@ namespace ICSharpCode.ILSpy
 				case Decompiler.Disassembler.OpCodeInfo opCode:
 					OpenLink(opCode.Link);
 					break;
-				case ValueTuple<string, PEFile, Handle> unresolvedEntity:
-					string protocol = unresolvedEntity.Item1 ?? "decompile";
-					PEFile file = unresolvedEntity.Item2;
+				case EntityReference unresolvedEntity:
+					string protocol = unresolvedEntity.Protocol ?? "decompile";
+					PEFile file = unresolvedEntity.Module;
 					if (protocol != "decompile") {
 						var protocolHandlers = App.ExportProvider.GetExports<IProtocolHandler>();
 						foreach (var handler in protocolHandlers) {
-							var node = handler.Value.Resolve(protocol, file, unresolvedEntity.Item3, out bool newTabPage);
+							var node = handler.Value.Resolve(protocol, file, unresolvedEntity.Handle, out bool newTabPage);
 							if (node != null) {
 								SelectNode(node, newTabPage);
 								return decompilationTask;
 							}
 						}
 					}
-					if (MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(unresolvedEntity.Item3)) != null) {
+					if (MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(unresolvedEntity.Handle)) != null) {
 						var typeSystem = new DecompilerTypeSystem(file, file.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
-						reference = typeSystem.MainModule.ResolveEntity((EntityHandle)unresolvedEntity.Item3);
+						reference = typeSystem.MainModule.ResolveEntity((EntityHandle)unresolvedEntity.Handle);
 						goto default;
 					}
 					break;

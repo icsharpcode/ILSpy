@@ -272,7 +272,7 @@
     <Compile Include="CSharp\ExpressionBuilder.cs" />
     <Compile Include="CSharp\StatementBuilder.cs" />
     <Compile Include="CSharp\Transforms\AddCheckedBlocks.cs" />
-    <Compile Include="CSharp\Transforms\ConvertConstructorCallIntoInitializer.cs" />
+    <Compile Include="CSharp\Transforms\TransformFieldAndConstructorInitializers.cs" />
     <Compile Include="CSharp\Transforms\CustomPatterns.cs" />
     <Compile Include="CSharp\Transforms\IAstTransform.cs" />
     <Compile Include="CSharp\Transforms\IntroduceUnsafeModifier.cs" />

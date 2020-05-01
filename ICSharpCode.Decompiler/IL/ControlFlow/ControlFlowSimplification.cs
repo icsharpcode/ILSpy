@@ -197,9 +197,22 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		bool IsBranchToReturnBlock(Branch branch)
 		{
 			var targetBlock = branch.TargetBlock;
-			if (targetBlock.Instructions.Count != 1 || targetBlock.FinalInstruction.OpCode != OpCode.Nop)
+			if (targetBlock.Instructions.Count != 1)
 				return false;
-			return targetBlock.Instructions[0].MatchReturn(out var value) && value is LdLoc;
+			if (!targetBlock.Instructions[0].MatchReturn(out var value))
+				return false;
+			if (!value.MatchLdLoc(out var returnVar))
+				return false;
+			var container = branch.TargetContainer;
+			for (ILInstruction inst = branch; inst != container; inst = inst.Parent) {
+				if (inst.Parent is TryFinally tryFinally && inst.SlotInfo == TryFinally.TryBlockSlot) {
+					// The branch will trigger the finally block.
+					// Moving the return block into the try is only possible if the finally block doesn't touch the return variable.
+					if (returnVar.IsUsedWithin(tryFinally.FinallyBlock))
+						return false;
+				}
+			}
+			return true;
 		}
 		
 		static bool CombineBlockWithNextBlock(BlockContainer container, Block block, ILTransformContext context)

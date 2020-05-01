@@ -46,6 +46,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			} else if (node is Comment comment) {
 				comment.SetStartLocation(locationProvider.Location);
 			}
+			if (node is ErrorExpression error) {
+				error.Location = locationProvider.Location;
+			}
 			base.StartNode(node);
 		}
 		

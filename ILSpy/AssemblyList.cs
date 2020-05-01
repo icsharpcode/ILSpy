@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>Dirty flag, used to mark modifications so that the list is saved later</summary>
 		bool dirty;
 
-		internal readonly ConcurrentDictionary<(string assemblyName, bool isWinRT), LoadedAssembly> assemblyLookupCache = new ConcurrentDictionary<(string assemblyName, bool isWinRT), LoadedAssembly>();
+		internal readonly ConcurrentDictionary<(string assemblyName, bool isWinRT, string targetFrameworkIdentifier), LoadedAssembly> assemblyLookupCache = new ConcurrentDictionary<(string assemblyName, bool isWinRT, string targetFrameworkIdentifier), LoadedAssembly>();
 		internal readonly ConcurrentDictionary<string, LoadedAssembly> moduleLookupCache = new ConcurrentDictionary<string, LoadedAssembly>();
 
 		/// <summary>

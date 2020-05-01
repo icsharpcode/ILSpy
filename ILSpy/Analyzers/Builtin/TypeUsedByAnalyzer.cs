@@ -82,6 +82,10 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 					method.ReturnType.AcceptVisitor(visitor);
 
+					foreach (var t in method.TypeArguments) {
+						t.AcceptVisitor(visitor);
+					}
+
 					if (scanBodies && !visitor.Found)
 						ScanMethodBody(visitor, method, context.GetMethodBody(method), context);
 

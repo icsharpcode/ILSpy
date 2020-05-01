@@ -33,7 +33,7 @@
 				<GridView>
 					<controls:SortableGridViewColumn x:Name="nameColumn" Width="300" Header="{x:Static properties:Resources.ReferenceName}" DisplayMemberBinding="{Binding ShortName}" />
 					<controls:SortableGridViewColumn Width="75" Header="{x:Static properties:Resources.Version}" DisplayMemberBinding="{Binding Version}" />
-					<controls:SortableGridViewColumn Width="65" Header="{x:Static properties:Resources.Culture}" DisplayMemberBinding="{Binding Culture}" />
+					<controls:SortableGridViewColumn Width="65" Header="{x:Static properties:Resources.CultureLabel}" DisplayMemberBinding="{Binding Culture}" />
 					<controls:SortableGridViewColumn Width="115" Header="{x:Static properties:Resources.PublicToken}" DisplayMemberBinding="{Binding PublicKeyToken}" />
 					<controls:SortableGridViewColumn Width="1000" Header="{x:Static properties:Resources.Location}" DisplayMemberBinding="{Binding FileName}" />
 				</GridView>

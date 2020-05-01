@@ -426,7 +426,7 @@
   <data name="Create" xml:space="preserve">
     <value>Create</value>
   </data>
-  <data name="List" xml:space="preserve">
+  <data name="NewList" xml:space="preserve">
     <value>New list</value>
   </data>
   <data name="SelectAssembliesOpen" xml:space="preserve">
@@ -854,5 +854,17 @@ Do you want to continue?</value>
   </data>
   <data name="DecompilerSettings.Ranges" xml:space="preserve">
     <value>Ranges</value>
+  </data>
+  <data name="AddPreconfiguredList" xml:space="preserve">
+    <value>Add preconfigured list...</value>
+  </data>
+  <data name="R_ename" xml:space="preserve">
+    <value>R_ename</value>
+  </data>
+  <data name="RenameList" xml:space="preserve">
+    <value>Rename list</value>
+  </data>
+  <data name="CultureLabel" xml:space="preserve">
+    <value>Culture</value>
   </data>
 </root>

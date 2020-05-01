@@ -95,7 +95,11 @@ namespace ICSharpCode.ILSpy
 			}
 
 			public string Culture {
-				get { return r.Culture; }
+				get {
+					if (string.IsNullOrEmpty(r.Culture))
+						return "neutral";
+					return r.Culture;
+				}
 			}
 
 			public string PublicKeyToken {
@@ -116,21 +120,21 @@ namespace ICSharpCode.ILSpy
 		void FetchGacContents()
 		{
 			HashSet<string> fullNames = new HashSet<string>();
-			UpdateProgressBar(pg => { pg.Visibility = System.Windows.Visibility.Visible; pg.IsIndeterminate = true; });
-			var list = GacInterop.GetGacAssemblyFullNames().TakeWhile(_ => !cancelFetchThread).ToList();
+			UpdateProgressBar(pg => { pg.Visibility = Visibility.Visible; pg.IsIndeterminate = true; });
+			var list = UniversalAssemblyResolver.EnumerateGac().TakeWhile(_ => !cancelFetchThread).ToList();
 			UpdateProgressBar(pg => { pg.IsIndeterminate = false; pg.Maximum = list.Count; });
 			foreach (var r in list) {
 				if (cancelFetchThread)
 					break;
 				if (fullNames.Add(r.FullName)) { // filter duplicates
-					var file = GacInterop.FindAssemblyInNetGac(r);
+					var file = UniversalAssemblyResolver.GetAssemblyInGac(r);
 					if (file != null) {
 						var entry = new GacEntry(r, file);
-						UpdateProgressBar(pg => { pg.Value = pg.Value + 1; AddNewEntry(entry); });
+						UpdateProgressBar(pg => { pg.Value++; AddNewEntry(entry); });
 					}
 				}
 			}
-			UpdateProgressBar(pg => { pg.Visibility = System.Windows.Visibility.Hidden; });
+			UpdateProgressBar(pg => { pg.Visibility = Visibility.Hidden; });
 		}
 
 		void UpdateProgressBar(Action<ProgressBar> updateAction)

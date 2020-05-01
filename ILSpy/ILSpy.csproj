@@ -138,6 +138,7 @@
     <Compile Include="Controls\SearchBox.cs" />
     <Compile Include="Controls\SortableGridViewColumn.cs" />
     <Compile Include="Controls\XamlResourceExtension.cs" />
+    <Compile Include="EntityReference.cs" />
     <Compile Include="Metadata\CorTables\FieldRVATableTreeNode.cs">
       <SubType>Code</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -237,8 +238,6 @@
     <Compile Include="DecompilationOptions.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="FilterSettings.cs" />
-    <Compile Include="Fusion.cs" />
-    <Compile Include="GacInterop.cs" />
     <Compile Include="GuessFileType.cs" />
     <Compile Include="ContextMenuEntry.cs" />
     <Compile Include="Languages\CSharpBracketSearcher.cs" />

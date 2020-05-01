@@ -286,6 +286,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Add preconfigured list....
+        /// </summary>
+        public static string AddPreconfiguredList {
+            get {
+                return ResourceManager.GetString("AddPreconfiguredList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Add shell integration.
         /// </summary>
         public static string AddShellIntegration {
@@ -501,6 +510,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string Create {
             get {
                 return ResourceManager.GetString("Create", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Culture.
+        /// </summary>
+        public static string CultureLabel {
+            get {
+                return ResourceManager.GetString("CultureLabel", resourceCulture);
             }
         }
         
@@ -1398,15 +1416,6 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to New list.
-        /// </summary>
-        public static string List {
-            get {
-                return ResourceManager.GetString("List", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Are you sure that you want to delete the selected assembly list?.
         /// </summary>
         public static string ListDeleteConfirmation {
@@ -1512,6 +1521,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string NavigationFailed {
             get {
                 return ResourceManager.GetString("NavigationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New list.
+        /// </summary>
+        public static string NewList {
+            get {
+                return ResourceManager.GetString("NewList", resourceCulture);
             }
         }
         
@@ -1642,6 +1660,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to R_ename.
+        /// </summary>
+        public static string R_ename {
+            get {
+                return ResourceManager.GetString("R_ename", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Reference Name.
         /// </summary>
         public static string ReferenceName {
@@ -1712,6 +1739,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string RemoveShellIntegrationMessage {
             get {
                 return ResourceManager.GetString("RemoveShellIntegrationMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rename list.
+        /// </summary>
+        public static string RenameList {
+            get {
+                return ResourceManager.GetString("RenameList", resourceCulture);
             }
         }
         

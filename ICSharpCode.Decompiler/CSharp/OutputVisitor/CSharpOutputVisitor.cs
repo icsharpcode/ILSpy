@@ -1815,11 +1815,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				Space();
 				WriteKeyword(CatchClause.WhenKeywordRole);
 				Space(policy.SpaceBeforeIfParentheses);
-				LPar();
+				WriteToken(CatchClause.CondLPar);
 				Space(policy.SpacesWithinIfParentheses);
 				catchClause.Condition.AcceptVisitor(this);
 				Space(policy.SpacesWithinIfParentheses);
-				RPar();
+				WriteToken(CatchClause.CondRPar);
 			}
 			WriteBlock(catchClause.Body, policy.StatementBraceStyle);
 			EndNode(catchClause);

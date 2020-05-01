@@ -20,6 +20,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Xml.Linq;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy
 {
@@ -74,6 +75,13 @@ namespace ICSharpCode.ILSpy
 			var list = DoLoadList(spySettings, selectedAssemblyList);
 			var newList = new AssemblyList(list, newListName);
 			return CreateList(newList);
+		}
+
+		public bool RenameList(string selectedAssemblyList, string newListName)
+		{
+			var list = DoLoadList(spySettings, selectedAssemblyList);
+			var newList = new AssemblyList(list, newListName);
+			return DeleteList(selectedAssemblyList) && CreateList(newList);
 		}
 
 		public const string DefaultListName = "(Default)";
@@ -143,6 +151,33 @@ namespace ICSharpCode.ILSpy
 					}
 					doc.Remove();
 				});
+		}
+
+		public void CreateDefaultAssemblyLists()
+		{
+			if (AssemblyLists.Count > 0)
+				return;
+
+			if (!AssemblyLists.Contains(ManageAssemblyListsViewModel.DotNet4List)) {
+				AssemblyList dotnet4 = ManageAssemblyListsViewModel.CreateDefaultList(ManageAssemblyListsViewModel.DotNet4List);
+				if (dotnet4.assemblies.Count > 0) {
+					CreateList(dotnet4);
+				}
+			}
+
+			if (!AssemblyLists.Contains(ManageAssemblyListsViewModel.DotNet35List)) {
+				AssemblyList dotnet35 = ManageAssemblyListsViewModel.CreateDefaultList(ManageAssemblyListsViewModel.DotNet35List);
+				if (dotnet35.assemblies.Count > 0) {
+					CreateList(dotnet35);
+				}
+			}
+
+			if (!AssemblyLists.Contains(ManageAssemblyListsViewModel.ASPDotNetMVC3List)) {
+				AssemblyList mvc = ManageAssemblyListsViewModel.CreateDefaultList(ManageAssemblyListsViewModel.ASPDotNetMVC3List);
+				if (mvc.assemblies.Count > 0) {
+					CreateList(mvc);
+				}
+			}
 		}
 	}
 }

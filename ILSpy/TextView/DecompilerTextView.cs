@@ -23,6 +23,7 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -362,10 +363,10 @@ namespace ICSharpCode.ILSpy.TextView
 				if (document == null)
 					return null;
 				return new FlowDocumentTooltip(document);
-			} else if (segment.Reference is ValueTuple<PEFile, System.Reflection.Metadata.EntityHandle> unresolvedEntity) {
-				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
+			} else if (segment.Reference is EntityReference unresolvedEntity) {
+				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Module, unresolvedEntity.Module.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
 				try {
-					IEntity resolved = typeSystem.MainModule.ResolveEntity(unresolvedEntity.Item2);
+					IEntity resolved = typeSystem.MainModule.ResolveEntity((EntityHandle)unresolvedEntity.Handle);
 					if (resolved == null)
 						return null;
 					var document = CreateTooltipForEntity(resolved);
