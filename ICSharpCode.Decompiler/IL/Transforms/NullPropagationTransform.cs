@@ -347,48 +347,48 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			oldParentChildren[oldChildIndex] = replacement;
 		}
 
-		// stloc valueTemporary(valueExpression)
+		// stloc target(targetInst)
 		// stloc defaultTemporary(default.value type)
 		// if (logic.not(comp.o(box `0(ldloc defaultTemporary) != ldnull))) Block fallbackBlock {
-		// 	stloc defaultTemporary(ldobj type(ldloc valueTemporary))
-		// 	stloc valueTemporary(ldloca defaultTemporary)
+		// 	stloc defaultTemporary(ldobj type(ldloc target))
+		// 	stloc target(ldloca defaultTemporary)
 		// 	if (comp.o(ldloc defaultTemporary == ldnull)) Block fallbackBlock2 {
 		// 		stloc resultTemporary(nullInst)
 		// 		br endBlock
 		// 	}
 		// }
-		// stloc resultTemporary(constrained[type].call_instruction(ldloc valueTemporary, ...))
+		// stloc resultTemporary(constrained[type].call_instruction(ldloc target, ...))
 		// br endBlock
 		// =>
-		// stloc resultTemporary(nullable.rewrap(constrained[type].call_instruction(nullable.unwrap(valueExpression), ...)))
+		// stloc resultTemporary(nullable.rewrap(constrained[type].call_instruction(nullable.unwrap(targetInst), ...)))
 		//
 		// -or-
 		//
-		// stloc valueTemporary(valueExpression)
+		// stloc target(targetInst)
 		// stloc defaultTemporary(default.value type)
 		// if (logic.not(comp.o(box `0(ldloc defaultTemporary) != ldnull))) Block fallbackBlock {
-		// 	stloc defaultTemporary(ldobj type(ldloc valueTemporary))
-		// 	stloc valueTemporary(ldloca defaultTemporary)
+		// 	stloc defaultTemporary(ldobj type(ldloc target))
+		// 	stloc target(ldloca defaultTemporary)
 		// 	if (comp.o(ldloc defaultTemporary == ldnull)) Block fallbackBlock2 {
 		// 		leave(nullInst)
 		// 	}
 		// }
-		// leave (constrained[type].call_instruction(ldloc valueTemporary, ...))
+		// leave (constrained[type].call_instruction(ldloc target, ...))
 		// =>
-		// leave (nullable.rewrap(constrained[type].call_instruction(nullable.unwrap(valueExpression), ...)))
+		// leave (nullable.rewrap(constrained[type].call_instruction(nullable.unwrap(targetInst), ...)))
 		private bool TransformNullPropagationOnUnconstrainedGenericExpression(Block block, int pos,
-			out ILVariable valueTemporary, out ILInstruction nonNullInst, out ILInstruction nullInst, out Block endBlock)
+			out ILVariable target, out ILInstruction nonNullInst, out ILInstruction nullInst, out Block endBlock)
 		{
-			valueTemporary = null;
+			target = null;
 			nonNullInst = null;
 			nullInst = null;
 			endBlock = null;
 			if (pos + 3 >= block.Instructions.Count)
 				return false;
-			// stloc valueTemporary(valueExpression)
-			if (!block.Instructions[pos].MatchStLoc(out valueTemporary, out var value))
+			// stloc target(...)
+			if (!block.Instructions[pos].MatchStLoc(out target, out _))
 				return false;
-			if (!(valueTemporary.Kind == VariableKind.StackSlot && valueTemporary.LoadCount == 2 && valueTemporary.StoreCount == 2))
+			if (!(target.Kind == VariableKind.StackSlot && target.LoadCount == 2 && target.StoreCount == 2))
 				return false;
 			// stloc defaultTemporary(default.value type)
 			if (!(block.Instructions[pos + 1].MatchStLoc(out var defaultTemporary, out var defaultExpression) && defaultExpression.MatchDefaultValue(out var type)))
@@ -399,15 +399,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// if (logic.not(comp.o(box `0(ldloc defaultTemporary) != ldnull))) Block fallbackBlock
 			if (!(block.Instructions[pos + 2].MatchIfInstruction(out var condition, out var fallbackBlock1) && condition.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(defaultTemporary)))
 				return false;
-			if (!MatchStLocResultTemporary(block, pos, type, valueTemporary, defaultTemporary, fallbackBlock1, out nonNullInst, out nullInst, out endBlock)
-				&& !MatchLeaveResult(block, pos, type, valueTemporary, defaultTemporary, fallbackBlock1, out nonNullInst, out nullInst))
+			if (!MatchStLocResultTemporary(block, pos, type, target, defaultTemporary, fallbackBlock1, out nonNullInst, out nullInst, out endBlock)
+				&& !MatchLeaveResult(block, pos, type, target, defaultTemporary, fallbackBlock1, out nonNullInst, out nullInst))
 				return false;
 			return true;
 		}
 
-		// stloc resultTemporary(constrained[type].call_instruction(ldloc valueTemporary, ...))
+		// stloc resultTemporary(constrained[type].call_instruction(ldloc target, ...))
 		// br endBlock
-		private bool MatchStLocResultTemporary(Block block, int pos, IType type, ILVariable valueTemporary, ILVariable defaultTemporary, ILInstruction fallbackBlock, out ILInstruction nonNullInst, out ILInstruction nullInst, out Block endBlock)
+		private bool MatchStLocResultTemporary(Block block, int pos, IType type, ILVariable target, ILVariable defaultTemporary, ILInstruction fallbackBlock, out ILInstruction nonNullInst, out ILInstruction nullInst, out Block endBlock)
 		{
 			endBlock = null;
 			nonNullInst = null;
@@ -415,54 +415,54 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (pos + 4 >= block.Instructions.Count)
 				return false;
-			// stloc resultTemporary(constrained[type].call_instruction(ldloc valueTemporary, ...))
+			// stloc resultTemporary(constrained[type].call_instruction(ldloc target, ...))
 			if (!(block.Instructions[pos + 3].MatchStLoc(out var resultTemporary, out nonNullInst)))
 				return false;
 			// br endBlock
 			if (!(block.Instructions[pos + 4].MatchBranch(out endBlock)))
 				return false;
 			// Analyze Block fallbackBlock
-			if (!(fallbackBlock is Block b && IsFallbackBlock(b, type, valueTemporary, defaultTemporary, resultTemporary, endBlock, out nullInst)))
+			if (!(fallbackBlock is Block b && IsFallbackBlock(b, type, target, defaultTemporary, resultTemporary, endBlock, out nullInst)))
 				return false;
 
 			return true;
 		}
 
-		private bool MatchLeaveResult(Block block, int pos, IType type, ILVariable valueTemporary, ILVariable defaultTemporary, ILInstruction fallbackBlock, out ILInstruction nonNullInst, out ILInstruction nullInst)
+		private bool MatchLeaveResult(Block block, int pos, IType type, ILVariable target, ILVariable defaultTemporary, ILInstruction fallbackBlock, out ILInstruction nonNullInst, out ILInstruction nullInst)
 		{
 			nonNullInst = null;
 			nullInst = null;
 
-			// leave (constrained[type].call_instruction(ldloc valueTemporary, ...))
+			// leave (constrained[type].call_instruction(ldloc target, ...))
 			if (!(block.Instructions[pos + 3] is Leave leave && leave.IsLeavingFunction))
 				return false;
 			nonNullInst = leave.Value;
 			// Analyze Block fallbackBlock
-			if (!(fallbackBlock is Block b && IsFallbackBlock(b, type, valueTemporary, defaultTemporary, null, leave.TargetContainer, out nullInst)))
+			if (!(fallbackBlock is Block b && IsFallbackBlock(b, type, target, defaultTemporary, null, leave.TargetContainer, out nullInst)))
 				return false;
 			return true;
 		}
 
 		// Block fallbackBlock {
-		// 	stloc defaultTemporary(ldobj type(ldloc valueTemporary))
-		// 	stloc valueTemporary(ldloca defaultTemporary)
+		// 	stloc defaultTemporary(ldobj type(ldloc target))
+		// 	stloc target(ldloca defaultTemporary)
 		// 	if (comp.o(ldloc defaultTemporary == ldnull)) Block fallbackBlock {
 		// 		stloc resultTemporary(ldnull)
 		// 		br endBlock
 		// 	}
 		// }
-		private bool IsFallbackBlock(Block block, IType type, ILVariable valueTemporary, ILVariable defaultTemporary, ILVariable resultTemporary, ILInstruction endBlockOrLeaveContainer, out ILInstruction nullInst)
+		private bool IsFallbackBlock(Block block, IType type, ILVariable target, ILVariable defaultTemporary, ILVariable resultTemporary, ILInstruction endBlockOrLeaveContainer, out ILInstruction nullInst)
 		{
 			nullInst = null;
 			if (!(block.Instructions.Count == 3))
 				return false;
-			// stloc defaultTemporary(ldobj type(ldloc valueTemporary))
-			if (!(block.Instructions[0].MatchStLoc(defaultTemporary, out var valueExpression)))
+			// stloc defaultTemporary(ldobj type(ldloc target))
+			if (!(block.Instructions[0].MatchStLoc(defaultTemporary, out var value)))
 				return false;
-			if (!(valueExpression.MatchLdObj(out var target, out var t) && type.Equals(t) && target.MatchLdLoc(valueTemporary)))
+			if (!(value.MatchLdObj(out var inst, out var t) && type.Equals(t) && inst.MatchLdLoc(target)))
 				return false;
-			// stloc valueTemporary(ldloca defaultTemporary)
-			if (!(block.Instructions[1].MatchStLoc(valueTemporary, out var defaultAddress) && defaultAddress.MatchLdLoca(defaultTemporary)))
+			// stloc target(ldloca defaultTemporary)
+			if (!(block.Instructions[1].MatchStLoc(target, out var defaultAddress) && defaultAddress.MatchLdLoca(defaultTemporary)))
 				return false;
 			// if (comp.o(ldloc defaultTemporary == ldnull)) Block fallbackBlock
 			if (!(block.Instructions[2].MatchIfInstruction(out var condition, out var tmp) && condition.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(defaultTemporary)))
