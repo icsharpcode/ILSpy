@@ -252,6 +252,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				argumentList.ExpectedParameters = method.Parameters.ToArray();
 			}
 
+			if (settings.Ranges) {
+				if (HandleRangeConstruction(out var result, callOpCode, method, target, argumentList)) {
+					return result;
+				}
+			}
+
 			if (callOpCode == OpCode.NewObj) {
 				return HandleConstructorCall(expectedTargetDetails, target.ResolveResult, method, argumentList);
 			}
@@ -1493,6 +1499,48 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(pos == arguments.Length);
 			return Build(call.OpCode, call.Method, arguments, argumentToParameterMap, call.ConstrainedTo)
 				.WithILInstruction(call).WithILInstruction(block);
+		}
+
+		private bool HandleRangeConstruction(out ExpressionWithResolveResult result, OpCode callOpCode, IMethod method, TranslatedExpression target, ArgumentList argumentList)
+		{
+			result = default;
+			if (argumentList.ArgumentNames != null) {
+				return false; // range syntax doesn't support named arguments
+			}
+			if (method.DeclaringType.IsKnownType(KnownTypeCode.Range)) {
+				if (callOpCode == OpCode.NewObj && argumentList.Length == 2) {
+					result = new BinaryOperatorExpression(argumentList.Arguments[0], BinaryOperatorType.Range, argumentList.Arguments[1])
+						.WithRR(new MemberResolveResult(null, method));
+					return true;
+				} else if (callOpCode == OpCode.Call && method.Name == "get_All" && argumentList.Length == 0) {
+					result = new BinaryOperatorExpression(Expression.Null, BinaryOperatorType.Range, Expression.Null)
+						.WithRR(new MemberResolveResult(null, method.AccessorOwner ?? method));
+					return true;
+				} else if (callOpCode == OpCode.Call && method.Name == "StartAt" && argumentList.Length == 1) {
+					result = new BinaryOperatorExpression(argumentList.Arguments[0], BinaryOperatorType.Range, Expression.Null)
+						.WithRR(new MemberResolveResult(null, method));
+					return true;
+				} else if (callOpCode == OpCode.Call && method.Name == "EndAt" && argumentList.Length == 1) {
+					result = new BinaryOperatorExpression(Expression.Null, BinaryOperatorType.Range, argumentList.Arguments[0])
+						.WithRR(new MemberResolveResult(null, method));
+					return true;
+				}
+			} else if (callOpCode == OpCode.NewObj && method.DeclaringType.IsKnownType(KnownTypeCode.Index)) {
+				if (argumentList.Length != 2)
+					return false;
+				if (!(argumentList.Arguments[1].Expression is PrimitiveExpression pe && pe.Value is true))
+					return false;
+				result = new UnaryOperatorExpression(UnaryOperatorType.IndexFromEnd, argumentList.Arguments[0])
+					.WithRR(new MemberResolveResult(null, method));
+				return true;
+			} else if (method is SyntheticRangeIndexAccessor rangeIndexAccessor && rangeIndexAccessor.IsSlicing) {
+				// For slicing the method is called Slice()/Substring(), but we still need to output indexer notation.
+				// So special-case range-based slicing here.
+				result = new IndexerExpression(target, argumentList.Arguments.Select(a => a.Expression))
+					.WithRR(new MemberResolveResult(target.ResolveResult, method));
+				return true;
+			}
+			return false;
 		}
 	}
 }

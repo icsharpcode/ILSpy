@@ -4713,6 +4713,7 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Indices.AddRange(this.Indices.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
+		public bool WithSystemIndex;
 		public bool DelayExceptions; // NullReferenceException/IndexOutOfBoundsException only occurs when the reference is dereferenced
 		public override StackType ResultType { get { return StackType.Ref; } }
 		/// <summary>Gets whether the 'readonly' prefix was applied to this instruction.</summary>
@@ -4729,6 +4730,8 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
+			if (WithSystemIndex)
+				output.Write("withsystemindex.");
 			if (DelayExceptions)
 				output.Write("delayex.");
 			if (IsReadOnly)
@@ -4759,7 +4762,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdElema;
-			return o != null && type.Equals(o.type) && this.array.PerformMatch(o.array, ref match) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match) && DelayExceptions == o.DelayExceptions && IsReadOnly == o.IsReadOnly;
+			return o != null && type.Equals(o.type) && this.array.PerformMatch(o.array, ref match) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match) && this.WithSystemIndex == o.WithSystemIndex && DelayExceptions == o.DelayExceptions && IsReadOnly == o.IsReadOnly;
 		}
 	}
 }

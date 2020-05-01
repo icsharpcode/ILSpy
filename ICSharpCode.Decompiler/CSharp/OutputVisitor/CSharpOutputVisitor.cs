@@ -696,6 +696,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case BinaryOperatorType.NullCoalescing:
 					spacePolicy = true;
 					break;
+				case BinaryOperatorType.Range:
+					spacePolicy = false;
+					break;
 				default:
 					throw new NotSupportedException("Invalid value for BinaryOperatorType");
 			}

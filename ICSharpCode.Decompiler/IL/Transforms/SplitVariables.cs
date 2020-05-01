@@ -114,7 +114,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						value = ldFlda.Target;
 					}
 					if (value.OpCode != OpCode.LdLoca) {
-						// GroupStores.HandleLoad() only detects ref-locals when they are directly initialized with ldloca
+						// GroupStores only handles ref-locals correctly when they are supported by GetAddressLoadForRefLocalUse(),
+						// which only works for ldflda*(ldloca)
 						return AddressUse.Unknown;
 					}
 					foreach (var load in stloc.Variable.LoadInstructions) {
@@ -132,14 +133,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Address is passed to method.
 			// We'll assume the method only uses the address locally,
 			// unless we can see an address being returned from the method:
-			if (call is NewObj) {
-				if (call.Method.DeclaringType.IsByRefLike) {
+			IType returnType = (call is NewObj) ? call.Method.DeclaringType : call.Method.ReturnType;
+			if (returnType.IsByRefLike) {
+				// If the address is returned from the method, it check whether it's consumed immediately.
+				// This can still be fine, as long as we also check the consumer's other arguments for 'stloc targetVar'.
+				if (DetermineAddressUse(call, targetVar) != AddressUse.Immediate)
 					return AddressUse.Unknown;
-				}
-			} else {
-				if (call.Method.ReturnType.IsByRefLike) {
-					return AddressUse.Unknown;
-				}
 			}
 			foreach (var p in call.Method.Parameters) {
 				// catch "out Span<int>" and similar

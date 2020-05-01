@@ -125,6 +125,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						invocationExpression.ReplaceWith(new ObjectCreateExpression(context.TypeSystemAstBuilder.ConvertType(method.TypeArguments.First())));
 					}
 					break;
+				case "System.Runtime.CompilerServices.RuntimeHelpers.GetSubArray":
+					if (arguments.Length == 2 && context.Settings.Ranges) {
+						var slicing = new IndexerExpression(arguments[0].Detach(), arguments[1].Detach());
+						slicing.CopyAnnotationsFrom(invocationExpression);
+						invocationExpression.ReplaceWith(slicing);
+					}
+					break;
 			}
 
 			BinaryOperatorType? bop = GetBinaryOperatorTypeFromMetadataName(method.Name);

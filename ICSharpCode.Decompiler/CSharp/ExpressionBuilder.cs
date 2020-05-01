@@ -2244,14 +2244,23 @@ namespace ICSharpCode.Decompiler.CSharp
 				arrayType = new ArrayType(compilation, inst.Type, inst.Indices.Count);
 				arrayExpr = arrayExpr.ConvertTo(arrayType, this);
 			}
-			TranslatedExpression expr = new IndexerExpression(
-				arrayExpr, inst.Indices.Select(i => TranslateArrayIndex(i).Expression)
-			).WithILInstruction(inst).WithRR(new ResolveResult(arrayType.ElementType));
+			IndexerExpression indexerExpr;
+			if (inst.WithSystemIndex) {
+				var systemIndex = compilation.FindType(KnownTypeCode.Index);
+				indexerExpr = new IndexerExpression(
+					arrayExpr, inst.Indices.Select(i => Translate(i, typeHint: systemIndex).ConvertTo(systemIndex, this).Expression)
+				);
+			} else {
+				indexerExpr = new IndexerExpression(
+					arrayExpr, inst.Indices.Select(i => TranslateArrayIndex(i).Expression)
+				);
+			}
+			TranslatedExpression expr = indexerExpr.WithILInstruction(inst).WithRR(new ResolveResult(arrayType.ElementType));
 			return new DirectionExpression(FieldDirection.Ref, expr)
 				.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, ReferenceKind.Ref));
 		}
 		
-		TranslatedExpression TranslateArrayIndex(ILInstruction i)
+		TranslatedExpression TranslateArrayIndex(ILInstruction i, bool expectSystemIndex = false)
 		{
 			var input = Translate(i);
 			KnownTypeCode targetType;

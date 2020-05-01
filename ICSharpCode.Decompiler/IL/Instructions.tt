@@ -278,6 +278,7 @@
 			CustomClassName("LdLen"), CustomArguments(("array", new[] { "O" })), CustomConstructor, CustomWriteTo, MayThrow),
 		new OpCode("ldelema", "Load address of array element.",
 			CustomClassName("LdElema"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
+			BoolFlag("WithSystemIndex"),
 			MayThrowIfNotDelayed, ResultType("Ref"), SupportsReadonlyPrefix),
 		new OpCode("get.pinnable.reference", "Retrieves a pinnable reference for the input object." + Environment.NewLine
 				+ "The input must be an object reference (O)." + Environment.NewLine
@@ -1104,6 +1105,17 @@ protected override void Disconnected()
 		opCode.WriteOperand.Add("output.Write(' ');");
 		opCode.WriteOperand.Add("member.WriteTo(output);");
 	};
+	
+	// Adds a member of type bool to the instruction.
+	static Action<OpCode> BoolFlag(string flagName)
+	{
+		return opCode => {
+			opCode.PerformMatchConditions.Add($"this.{flagName} == o.{flagName}");
+			opCode.Members.Add($"public bool {flagName};");
+			opCode.GenerateWriteTo = true;
+			opCode.WriteOpCodePrefix.Add($"if ({flagName}){Environment.NewLine}\toutput.Write(\"{flagName.ToLowerInvariant()}.\");");
+		};
+	}
 	
 	// LoadConstant trait: the instruction loads a compile-time constant. Implies NoArguments.
 	static Action<OpCode> LoadConstant(string operandType)
