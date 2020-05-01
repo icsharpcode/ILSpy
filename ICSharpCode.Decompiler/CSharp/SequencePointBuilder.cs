@@ -113,7 +113,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			ILInstruction blockContainer = blockStatement.Annotations.OfType<ILInstruction>().FirstOrDefault();
 			if (blockContainer != null) {
 				StartSequencePoint(blockStatement.LBraceToken);
-				int intervalStart = blockContainer.ILRanges.First().Start;
+				int intervalStart;
+				if (blockContainer.Parent is TryCatchHandler handler && !handler.ExceptionSpecifierILRange.IsEmpty) {
+					// if this block container is part of a TryCatchHandler, do not steal the exception-specifier IL range
+					intervalStart = handler.ExceptionSpecifierILRange.End;
+				} else {
+					intervalStart = blockContainer.StartILOffset;
+				}
 				// The end will be set to the first sequence point candidate location before the first statement of the function when the seqeunce point is adjusted
 				int intervalEnd = intervalStart + 1; 
 
@@ -256,12 +262,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreachStatement.InExpression.AcceptVisitor(this);
 			AddToSequencePoint(foreachInfo.GetEnumeratorCall);
 			EndSequencePoint(foreachStatement.InExpression.StartLocation, foreachStatement.InExpression.EndLocation);
+
 			StartSequencePoint(foreachStatement);
 			AddToSequencePoint(foreachInfo.MoveNextCall);
 			EndSequencePoint(foreachStatement.InToken.StartLocation, foreachStatement.InToken.EndLocation);
+			
 			StartSequencePoint(foreachStatement);
 			AddToSequencePoint(foreachInfo.GetCurrentCall);
 			EndSequencePoint(foreachStatement.VariableType.StartLocation, foreachStatement.VariableNameToken.EndLocation);
+			
 			VisitAsSequencePoint(foreachStatement.EmbeddedStatement);
 		}
 
@@ -310,6 +319,33 @@ namespace ICSharpCode.Decompiler.CSharp
 			VisitAsSequencePoint(fixedStatement.EmbeddedStatement);
 		}
 
+		public override void VisitTryCatchStatement(TryCatchStatement tryCatchStatement)
+		{
+			VisitAsSequencePoint(tryCatchStatement.TryBlock);
+			foreach (var c in tryCatchStatement.CatchClauses) {
+				VisitAsSequencePoint(c);
+			}
+			VisitAsSequencePoint(tryCatchStatement.FinallyBlock);
+		}
+
+		public override void VisitCatchClause(CatchClause catchClause)
+		{
+			if (catchClause.Condition.IsNull) {
+				var tryCatchHandler = catchClause.Annotation<TryCatchHandler>();
+				if (!tryCatchHandler.ExceptionSpecifierILRange.IsEmpty) {
+					StartSequencePoint(catchClause.CatchToken);
+					var function = tryCatchHandler.Ancestors.OfType<ILFunction>().FirstOrDefault();
+					AddToSequencePointRaw(function, new[] { tryCatchHandler.ExceptionSpecifierILRange });
+					EndSequencePoint(catchClause.CatchToken.StartLocation, catchClause.RParToken.IsNull ? catchClause.CatchToken.EndLocation : catchClause.RParToken.EndLocation);
+				}
+			} else {
+				StartSequencePoint(catchClause.WhenToken);
+				AddToSequencePoint(catchClause.Condition);
+				EndSequencePoint(catchClause.WhenToken.StartLocation, catchClause.CondRParToken.EndLocation);
+			}
+			VisitAsSequencePoint(catchClause.Body);
+		}
+
 		/// <summary>
 		/// Start a new C# statement = new sequence point.
 		/// </summary>
@@ -337,6 +373,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				}));
 			}
 			current = outerStates.Pop();
+		}
+
+		void AddToSequencePointRaw(ILFunction function, IEnumerable<Interval> ranges)
+		{
+			current.Intervals.AddRange(ranges);
+			Debug.Assert(current.Function == null || current.Function == function);
+			current.Function = function;
 		}
 
 		/// <summary>
