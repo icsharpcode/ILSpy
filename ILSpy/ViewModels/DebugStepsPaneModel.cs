@@ -20,7 +20,9 @@ using System.Windows;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
+#if DEBUG
 	[ExportToolPane(ContentId = PaneContentId)]
+#endif
 	public class DebugStepsPaneModel : ToolPaneModel
 	{
 		public const string PaneContentId = "debugStepsPane";
