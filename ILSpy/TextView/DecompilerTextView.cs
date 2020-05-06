@@ -952,6 +952,7 @@ namespace ICSharpCode.ILSpy.TextView
 			Thread thread = new Thread(new ThreadStart(
 				delegate {
 					try {
+						context.Options.EscapeInvalidIdentifiers = true;
 						Stopwatch stopwatch = new Stopwatch();
 						stopwatch.Start();
 						using (StreamWriter w = new StreamWriter(fileName)) {

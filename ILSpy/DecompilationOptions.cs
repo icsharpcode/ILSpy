@@ -37,6 +37,12 @@ namespace ICSharpCode.ILSpy
 		/// Gets/Sets the directory into which the project is saved.
 		/// </summary>
 		public string SaveAsProjectDirectory { get; set; }
+
+		/// <summary>
+		/// Gets/sets whether invalid identifiers should be escaped (and therefore the code be made compilable).
+		/// This setting is ignored in case <see cref="SaveAsProjectDirectory"/> is set.
+		/// </summary>
+		public bool EscapeInvalidIdentifiers { get; set; }
 		
 		/// <summary>
 		/// Gets the cancellation token that is used to abort the decompiler.
