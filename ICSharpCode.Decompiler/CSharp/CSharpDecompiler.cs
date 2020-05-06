@@ -366,7 +366,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		static bool IsAnonymousMethodCacheField(SRM.FieldDefinition field, MetadataReader metadata)
 		{
 			var name = metadata.GetString(field.Name);
-			return name.StartsWith("CS$<>", StringComparison.Ordinal) || name.StartsWith("<>f__am", StringComparison.Ordinal);
+			return name.StartsWith("CS$<>", StringComparison.Ordinal) || name.StartsWith("<>f__am", StringComparison.Ordinal) || name.StartsWith("<>f__mg", StringComparison.Ordinal);
 		}
 
 		static bool IsClosureType(SRM.TypeDefinition type, MetadataReader metadata)
