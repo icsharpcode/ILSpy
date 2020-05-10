@@ -22,6 +22,7 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using Iced.Intel;
@@ -128,14 +129,16 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			var tempOutput = new StringOutput();
 			foreach (var instr in instructions) {
 				int byteBaseIndex = (int)(instr.IP - address);
-				foreach (var bound in runtimeFunction.DebugInfo.BoundsList) {
-					if (bound.NativeOffset == byteBaseIndex) {
-						if (bound.ILOffset == (uint)DebugInfoBoundsType.Prolog) {
-							WriteCommentLine(output, "Prolog");
-						} else if (bound.ILOffset == (uint)DebugInfoBoundsType.Epilog) {
-							WriteCommentLine(output, "Epilog");
-						} else {
-							WriteCommentLine(output, $"IL_{bound.ILOffset:x4}");
+				if (runtimeFunction.DebugInfo != null) {
+					foreach (var bound in runtimeFunction.DebugInfo.BoundsList) {
+						if (bound.NativeOffset == byteBaseIndex) {
+							if (bound.ILOffset == (uint)DebugInfoBoundsType.Prolog) {
+								WriteCommentLine(output, "Prolog");
+							} else if (bound.ILOffset == (uint)DebugInfoBoundsType.Epilog) {
+								WriteCommentLine(output, "Epilog");
+							} else {
+								WriteCommentLine(output, $"IL_{bound.ILOffset:x4}");
+							}
 						}
 					}
 				}
@@ -150,11 +153,22 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 					output.Write("  ");
 				output.Write(" ");
 				output.Write(tempOutput.ToStringAndReset());
-				if (instr.IsCallNearIndirect && reader.ImportCellNames.ContainsKey((int)instr.IPRelativeMemoryAddress)) {
+				int importCellAddress = (int)instr.IPRelativeMemoryAddress;
+				if (instr.IsCallNearIndirect && reader.ImportCellNames.ContainsKey(importCellAddress)) {
 					output.Write(" ;");
-					// TODO: Get the right PEFile
-					// TODO: Get the right method def token
-					output.WriteReference(method.ParentModule.PEFile, System.Reflection.Metadata.Ecma335.MetadataTokens.Handle(0x06001e24), reader.ImportCellNames[(int)instr.IPRelativeMemoryAddress]);
+					ReadyToRunSignature signature = reader.ImportSignatures[(int)instr.IPRelativeMemoryAddress];
+					string formattedSignatureString = reader.ImportCellNames[importCellAddress];
+					MethodDefEntrySignature methodDefSignature = signature as MethodDefEntrySignature;
+					MethodRefEntrySignature methodRefSignature = signature as MethodRefEntrySignature;
+					if (methodDefSignature != null) {
+						int methodDefToken = unchecked((int)methodDefSignature.MethodDefToken);
+						output.WriteReference(method.ParentModule.PEFile, MetadataTokens.Handle(methodDefToken), formattedSignatureString);
+					} else if (methodRefSignature != null) {
+						int methodRefToken = unchecked((int)methodRefSignature.MethodRefToken);
+						output.WriteReference(method.ParentModule.PEFile, MetadataTokens.Handle(methodRefToken), formattedSignatureString);
+					} else {
+						output.WriteLine(formattedSignatureString);
+					}
 					output.WriteLine();
 				} else {
 					output.WriteLine();
