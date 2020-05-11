@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var nestedContext = new ILTransformContext(context, function);
 			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)).Concat(GetTransforms()), nestedContext);
 			nestedContext.Step("DelegateConstruction (ReplaceDelegateTargetVisitor)", function);
-			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
+			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(VariableKindExtensions.IsThis)));
 			// handle nested lambdas
 			nestedContext.StepStartGroup("DelegateConstruction (nested lambdas)", function);
 			((IILTransform)this).Run(function, nestedContext);
