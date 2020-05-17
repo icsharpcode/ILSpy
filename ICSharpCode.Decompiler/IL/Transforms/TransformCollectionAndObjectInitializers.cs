@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 						// Do not try to transform display class usages or delegate construction.
 						// DelegateConstruction transform cannot deal with this.
-						if (TransformDisplayClassUsage.IsSimpleDisplayClass(newObjInst.Method.DeclaringType))
+						if (TransformDisplayClassUsage.AnalyzeVariable(v, context))
 							return false;
 						if (DelegateConstruction.IsDelegateConstruction(newObjInst) || TransformDisplayClassUsage.IsPotentialClosure(context, newObjInst))
 							return false;
