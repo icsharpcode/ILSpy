@@ -200,6 +200,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					int skipCount = localFunction.ReducedMethod.NumberOfCompilerGeneratedTypeParameters;
 					ide.TypeArguments.AddRange(method.TypeArguments.Skip(skipCount).Select(expressionBuilder.ConvertType));
 				}
+				ide.AddAnnotation(localFunction);
 				target = ide.WithoutILInstruction()
 					.WithRR(ToMethodGroup(method, localFunction));
 			} else {

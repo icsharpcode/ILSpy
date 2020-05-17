@@ -74,6 +74,12 @@ namespace ICSharpCode.Decompiler.IL
 		public BlockContainer DeclarationScope { get; internal set; }
 
 		/// <summary>
+		/// Gets the set of captured variables by this ILFunction.
+		/// </summary>
+		/// <remarks>This is populated by the <see cref="TransformDisplayClassUsage" /> step.</remarks>
+		public HashSet<ILVariable> CapturedVariables { get; } = new HashSet<ILVariable>(ILVariableEqualityComparer.Instance);
+
+		/// <summary>
 		/// List of warnings of ILReader.
 		/// </summary>
 		public List<string> Warnings { get; } = new List<string>();

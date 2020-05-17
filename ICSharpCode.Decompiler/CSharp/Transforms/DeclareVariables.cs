@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Semantics;
@@ -257,7 +256,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (node is IdentifierExpression identExpr) {
 					var rr = identExpr.GetResolveResult() as ILVariableResolveResult;
 					if (rr != null && VariableNeedsDeclaration(rr.Variable.Kind)) {
-						var variable = rr.Variable;
+						FindInsertionPointForVariable(rr.Variable);
+					} else if (identExpr.Annotation<ILFunction>() is ILFunction localFunction && localFunction.Kind == ILFunctionKind.LocalFunction) {
+						foreach (var v in localFunction.CapturedVariables) {
+							if (VariableNeedsDeclaration(v.Kind))
+								FindInsertionPointForVariable(v);
+						}
+					}
+
+					void FindInsertionPointForVariable(ILVariable variable)
+					{
 						InsertionPoint newPoint;
 						int startIndex = scopeTracking.Count - 1;
 						if (variable.CaptureScope != null && startIndex > 0 && variable.CaptureScope != scopeTracking[startIndex].Scope) {
@@ -287,7 +295,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						} else {
 							v = new VariableToDeclare(variable, variable.HasInitialValue,
 								newPoint, identExpr, sourceOrder: variableDict.Count);
-							variableDict.Add(rr.Variable, v);
+							variableDict.Add(variable, v);
 						}
 					}
 				}
