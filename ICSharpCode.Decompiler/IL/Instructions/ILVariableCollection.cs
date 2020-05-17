@@ -102,8 +102,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			for (int i = 0; i < list.Count;) {
 				var v = list[i];
-				int deadStoreCount = v.HasInitialValue ? 1 : 0;
-				if (v.StoreCount == deadStoreCount && v.LoadCount == 0 && v.AddressCount == 0 && v.Kind != VariableKind.DisplayClassLocal) {
+				if (v.IsDead && v.Kind != VariableKind.DisplayClassLocal) {
 					RemoveAt(i);
 				} else {
 					i++;

@@ -338,6 +338,17 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		/// <summary>
+		/// Gets whether the variable is dead - unused.
+		/// </summary>
+		public bool IsDead {
+			get {
+				return StoreCount == (HasInitialValue ? 1 : 0)
+					&& LoadCount == 0
+					&& AddressCount == 0;
+			}
+		}
+
+		/// <summary>
 		/// The field which was converted to a local variable.
 		/// Set when the variable is from a 'yield return' or 'async' state machine.
 		/// </summary>
