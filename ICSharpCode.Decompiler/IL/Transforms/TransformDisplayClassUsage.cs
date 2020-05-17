@@ -151,6 +151,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					var result = AnalyzeVariable(v);
 					if (result == null)
 						continue;
+					context.Step($"Detected display-class {v}", result.Initializer ?? f.Body);
 					displayClasses.Add(v, result);
 				}
 			}
@@ -266,38 +267,42 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private bool ValidateConstructor(IMethod method)
 		{
-			if (method.Parameters.Count != 0)
+			try {
+				if (method.Parameters.Count != 0)
+					return false;
+				var handle = (MethodDefinitionHandle)method.MetadataToken;
+				var module = (MetadataModule)method.ParentModule;
+				var file = module.PEFile;
+				if (handle.IsNil || file != context.PEFile)
+					return false;
+				var def = file.Metadata.GetMethodDefinition(handle);
+				if (def.RelativeVirtualAddress == 0)
+					return false;
+				var body = file.Reader.GetMethodBody(def.RelativeVirtualAddress);
+				if (!body.LocalSignature.IsNil || body.ExceptionRegions.Length != 0)
+					return false;
+				var reader = body.GetILReader();
+				if (reader.Length != 7)
+					return false;
+				// IL_0000: ldarg.0
+				// IL_0001: call instance void [mscorlib]System.Object::.ctor()
+				// IL_0006: ret
+				if (reader.DecodeOpCode() != ILOpCode.Ldarg_0)
+					return false;
+				if (reader.DecodeOpCode() != ILOpCode.Call)
+					return false;
+				var baseCtorHandle = MetadataTokenHelpers.EntityHandleOrNil(reader.ReadInt32());
+				if (baseCtorHandle.IsNil)
+					return false;
+				var objectCtor = module.ResolveMethod(baseCtorHandle, new TypeSystem.GenericContext());
+				if (!objectCtor.DeclaringType.IsKnownType(KnownTypeCode.Object))
+					return false;
+				if (!objectCtor.IsConstructor || objectCtor.Parameters.Count != 0)
+					return false;
+				return reader.DecodeOpCode() == ILOpCode.Ret;
+			} catch (BadImageFormatException) {
 				return false;
-			var handle = (MethodDefinitionHandle)method.MetadataToken;
-			var module = (MetadataModule)method.ParentModule;
-			var file = module.PEFile;
-			if (handle.IsNil || file == null)
-				return false;
-			var def = file.Metadata.GetMethodDefinition(handle);
-			if (def.RelativeVirtualAddress == 0)
-				return false;
-			var body = file.Reader.GetMethodBody(def.RelativeVirtualAddress);
-			if (!body.LocalSignature.IsNil)
-				return false;
-			var reader = body.GetILReader();
-			if (reader.Length != 7)
-				return false;
-			// IL_0000: ldarg.0
-			// IL_0001: call instance void [mscorlib]System.Object::.ctor()
-			// IL_0006: ret
-			if (reader.DecodeOpCode() != ILOpCode.Ldarg_0)
-				return false;
-			if (reader.DecodeOpCode() != ILOpCode.Call)
-				return false;
-			var baseCtorHandle = MetadataTokenHelpers.EntityHandleOrNil(reader.ReadInt32());
-			if (baseCtorHandle.IsNil)
-				return false;
-			var objectCtor = module.ResolveMethod(baseCtorHandle, new TypeSystem.GenericContext());
-			if (!objectCtor.DeclaringType.IsKnownType(KnownTypeCode.Object))
-				return false;
-			if (objectCtor.Parameters.Count != 0)
-				return false;
-			return reader.DecodeOpCode() == ILOpCode.Ret;
+			}
 		}
 
 		VariableToDeclare AddVariable(DisplayClass result, ILInstruction init, out IField field)
@@ -332,6 +337,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (displayClass.VariablesToDeclare.TryGetValue((IField)field.MemberDefinition, out var declaredVar))
 							return declaredVar.CanPropagate;
 					}
+					return true;
+				case StLoc stloc:
 					return true;
 				default:
 					return false;
