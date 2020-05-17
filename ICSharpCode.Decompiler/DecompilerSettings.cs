@@ -1311,6 +1311,20 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool aggressiveScalarReplacementOfAggregates = false;
+
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.AggressiveScalarReplacementOfAggregates")]
+		public bool AggressiveScalarReplacementOfAggregates {
+			get { return aggressiveScalarReplacementOfAggregates; }
+			set {
+				if (aggressiveScalarReplacementOfAggregates != value) {
+					aggressiveScalarReplacementOfAggregates = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		CSharpFormattingOptions csharpFormattingOptions;
 
 		[Browsable(false)]

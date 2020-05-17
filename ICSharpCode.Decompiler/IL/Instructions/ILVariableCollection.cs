@@ -102,6 +102,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			for (int i = 0; i < list.Count;) {
 				var v = list[i];
+				// Note: we cannot remove display-class locals from the collection,
+				// even if they are unused - which is always the case, if TDCU succeeds,
+				// because they are necessary for PDB generation to produce correct results.
 				if (v.IsDead && v.Kind != VariableKind.DisplayClassLocal) {
 					RemoveAt(i);
 				} else {

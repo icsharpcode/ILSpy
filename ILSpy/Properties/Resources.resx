@@ -864,4 +864,7 @@ Do you want to continue?</value>
   <data name="CultureLabel" xml:space="preserve">
     <value>Culture</value>
   </data>
+  <data name="DecompilerSettings.AggressiveScalarReplacementOfAggregates" xml:space="preserve">
+    <value>Aggressively perform Scalar Replacement Of Aggregates (SROA)</value>
+  </data>
 </root>

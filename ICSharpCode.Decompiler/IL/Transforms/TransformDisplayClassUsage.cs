@@ -20,6 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -197,8 +200,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				definition = null;
 			}
-			if (definition?.DeclaringTypeDefinition == null || definition.ParentModule.PEFile != context.PEFile)
+			if (definition == null)
 				return null;
+			if (!context.Settings.AggressiveScalarReplacementOfAggregates) {
+				if (definition.DeclaringTypeDefinition == null || definition.ParentModule.PEFile != context.PEFile)
+					return null;
+				if (!IsPotentialClosure(context, definition))
+					return null;
+			}
 			DisplayClass result;
 			switch (definition.Kind) {
 				case TypeKind.Class:
@@ -206,8 +215,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 					if (!(v.StoreInstructions[0] is StLoc stloc))
 						return null;
-					// TODO thoroughly validate ctor
-					if (!(stloc.Value is NewObj newObj && newObj.Method.Parameters.Count == 0))
+					if (!(stloc.Value is NewObj newObj && ValidateConstructor(newObj.Method)))
 						return null;
 					result = new DisplayClass(v, definition) {
 						CaptureScope = v.CaptureScope,
@@ -254,6 +262,42 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				result.CaptureScope = null;
 			}
 			return result;
+		}
+
+		private bool ValidateConstructor(IMethod method)
+		{
+			if (method.Parameters.Count != 0)
+				return false;
+			var handle = (MethodDefinitionHandle)method.MetadataToken;
+			var module = (MetadataModule)method.ParentModule;
+			var file = module.PEFile;
+			if (handle.IsNil || file == null)
+				return false;
+			var def = file.Metadata.GetMethodDefinition(handle);
+			if (def.RelativeVirtualAddress == 0)
+				return false;
+			var body = file.Reader.GetMethodBody(def.RelativeVirtualAddress);
+			if (!body.LocalSignature.IsNil)
+				return false;
+			var reader = body.GetILReader();
+			if (reader.Length != 7)
+				return false;
+			// IL_0000: ldarg.0
+			// IL_0001: call instance void [mscorlib]System.Object::.ctor()
+			// IL_0006: ret
+			if (reader.DecodeOpCode() != ILOpCode.Ldarg_0)
+				return false;
+			if (reader.DecodeOpCode() != ILOpCode.Call)
+				return false;
+			var baseCtorHandle = MetadataTokenHelpers.EntityHandleOrNil(reader.ReadInt32());
+			if (baseCtorHandle.IsNil)
+				return false;
+			var objectCtor = module.ResolveMethod(baseCtorHandle, new TypeSystem.GenericContext());
+			if (!objectCtor.DeclaringType.IsKnownType(KnownTypeCode.Object))
+				return false;
+			if (objectCtor.Parameters.Count != 0)
+				return false;
+			return reader.DecodeOpCode() == ILOpCode.Ret;
 		}
 
 		VariableToDeclare AddVariable(DisplayClass result, ILInstruction init, out IField field)
@@ -397,15 +441,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				return false;
 			}
-		}
-
-		internal static bool IsSimpleDisplayClass(IType type)
-		{
-			if (!type.HasGeneratedName() || (!type.Name.Contains("DisplayClass") && !type.Name.Contains("AnonStorey")))
-				return false;
-			if (type.DirectBaseTypes.Any(t => !t.IsKnownType(KnownTypeCode.Object)))
-				return false;
-			return true;
 		}
 
 		internal static bool IsPotentialClosure(ILTransformContext context, NewObj inst)
