@@ -156,6 +156,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
+			foreach (var (v, displayClass) in displayClasses.ToArray()) {
+				if (!ValidateDisplayClassUses(v, displayClass))
+					displayClasses.Remove(v);
+			}
+
 			foreach (var displayClass in displayClasses.Values) {
 				foreach (var v in displayClass.VariablesToDeclare.Values) {
 					if (v.CanPropagate) {
@@ -164,6 +169,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							v.Propagate(null);
 					}
 				}
+			}
+
+			bool ValidateDisplayClassUses(ILVariable v, DisplayClass displayClass)
+			{
+				foreach (var ldloc in v.LoadInstructions) {
+					if (!ValidateUse(displayClass, ldloc))
+						return false;
+				}
+				foreach (var ldloca in v.AddressInstructions) {
+					if (!ValidateUse(displayClass, ldloca))
+						return false;
+				}
+				return true;
 			}
 		}
 
@@ -177,7 +195,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case VariableKind.StackSlot:
 				case VariableKind.Local:
 				case VariableKind.DisplayClassLocal:
-					return HandleDisplayClass(v);
+					return DetectDisplayClass(v);
 				case VariableKind.PinnedLocal:
 				case VariableKind.UsingLocal:
 				case VariableKind.ForeachLocal:
@@ -191,7 +209,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		DisplayClass HandleDisplayClass(ILVariable v)
+		DisplayClass DetectDisplayClass(ILVariable v)
 		{
 			ITypeDefinition definition;
 			if (v.Kind != VariableKind.StackSlot) {
@@ -210,26 +228,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return null;
 			}
 			DisplayClass result;
+			Block initBlock;
+			int startIndex;
 			switch (definition.Kind) {
 				case TypeKind.Class:
 					if (!v.IsSingleDefinition)
 						return null;
 					if (!(v.StoreInstructions[0] is StLoc stloc))
 						return null;
-					if (!(stloc.Value is NewObj newObj && ValidateConstructor(newObj.Method)))
+					if (stloc.Value is NewObj newObj && ValidateConstructor(newObj.Method)) {
+						result = new DisplayClass(v, definition) {
+							CaptureScope = v.CaptureScope,
+							Initializer = stloc
+						};
+					} else {
 						return null;
-					result = new DisplayClass(v, definition) {
-						CaptureScope = v.CaptureScope,
-						Initializer = stloc
-					};
-					if (stloc.Parent is Block initBlock) {
-						for (int i = stloc.ChildIndex + 1; i < initBlock.Instructions.Count; i++) {
-							var variable = AddVariable(result, initBlock.Instructions[i], out var field);
-							if (variable == null)
-								break;
-							result.VariablesToDeclare[(IField)field.MemberDefinition] = variable;
-						}
 					}
+
+					initBlock = stloc.Parent as Block;
+					startIndex = stloc.ChildIndex + 1;
 					break;
 				case TypeKind.Struct:
 					if (!v.HasInitialValue)
@@ -237,28 +254,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (v.StoreCount != 1)
 						return null;
 					result = new DisplayClass(v, definition) { CaptureScope = v.CaptureScope };
-					if (v.Function.Body is BlockContainer b) {
-						var block = b.EntryPoint;
-						for (int i = 0; i < block.Instructions.Count; i++) {
-							var variable = AddVariable(result, block.Instructions[i], out var field);
-							if (variable == null)
-								break;
-							result.VariablesToDeclare[(IField)field.MemberDefinition] = variable;
-						}
-					}
+					initBlock = (v.Function.Body as BlockContainer)?.EntryPoint;
+					startIndex = 0;
 					break;
 				default:
 					return null;
 			}
 
-			foreach (var ldloc in v.LoadInstructions) {
-				if (!ValidateUse(result, ldloc))
-					return null;
+			if (initBlock != null) {
+				for (int i = startIndex; i < initBlock.Instructions.Count; i++) {
+					var init = initBlock.Instructions[i];
+					if (!init.MatchStFld(out var target, out var field, out var value))
+						break;
+					if (!target.MatchLdLocRef(result.Variable))
+						break;
+					if (result.VariablesToDeclare.ContainsKey((IField)field.MemberDefinition))
+						break;
+					var variable = AddVariable(result, (StObj)init, field);
+					result.VariablesToDeclare[(IField)field.MemberDefinition] = variable;
+				}
 			}
-			foreach (var ldloca in v.AddressInstructions) {
-				if (!ValidateUse(result, ldloca))
-					return null;
-			}
+
 			if (IsMonoNestedCaptureScope(definition)) {
 				result.CaptureScope = null;
 			}
@@ -282,14 +298,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!body.LocalSignature.IsNil || body.ExceptionRegions.Length != 0)
 					return false;
 				var reader = body.GetILReader();
-				if (reader.Length != 7)
+				if (reader.Length < 7)
 					return false;
 				// IL_0000: ldarg.0
 				// IL_0001: call instance void [mscorlib]System.Object::.ctor()
 				// IL_0006: ret
-				if (reader.DecodeOpCode() != ILOpCode.Ldarg_0)
+				if (DecodeOpCodeSkipNop(ref reader) != ILOpCode.Ldarg_0)
 					return false;
-				if (reader.DecodeOpCode() != ILOpCode.Call)
+				if (DecodeOpCodeSkipNop(ref reader) != ILOpCode.Call)
 					return false;
 				var baseCtorHandle = MetadataTokenHelpers.EntityHandleOrNil(reader.ReadInt32());
 				if (baseCtorHandle.IsNil)
@@ -299,24 +315,31 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!objectCtor.IsConstructor || objectCtor.Parameters.Count != 0)
 					return false;
-				return reader.DecodeOpCode() == ILOpCode.Ret;
+				return DecodeOpCodeSkipNop(ref reader) == ILOpCode.Ret;
 			} catch (BadImageFormatException) {
 				return false;
 			}
 		}
 
-		VariableToDeclare AddVariable(DisplayClass result, ILInstruction init, out IField field)
+		ILOpCode DecodeOpCodeSkipNop(ref BlobReader reader)
 		{
-			if (!init.MatchStFld(out var target, out field, out var value))
-				return null;
-			if (!target.MatchLdLocRef(result.Variable))
-				return null;
-			if (result.VariablesToDeclare.ContainsKey((IField)field.MemberDefinition))
-				return null;
+			ILOpCode code;
+			do {
+				code = reader.DecodeOpCode();
+			} while (code == ILOpCode.Nop);
+			return code;
+		}
+
+		VariableToDeclare AddVariable(DisplayClass result, StObj statement, IField field)
+		{
 			VariableToDeclare variable = new VariableToDeclare(result, field);
-			if (value.MatchLdLoc(out var variableToPropagate) && variableToPropagate.StateMachineField == null && (variableToPropagate.Kind == VariableKind.StackSlot || variableToPropagate.Type.Equals(field.Type))) {
+			if (statement != null
+				&& statement.Value.MatchLdLoc(out var variableToPropagate)
+				&& variableToPropagate.StateMachineField == null 
+				&& (variableToPropagate.Kind == VariableKind.StackSlot || variableToPropagate.Type.Equals(field.Type)))
+			{
 				variable.Propagate(variableToPropagate);
-				variable.Initializer = init;
+				variable.Initializer = statement;
 			}
 			return variable;
 		}
@@ -328,7 +351,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case LdFlda ldflda when ldflda.MatchLdFlda(out _, out field):
 					var keyField = (IField)field.MemberDefinition;
 					if (!container.VariablesToDeclare.TryGetValue(keyField, out VariableToDeclare variable) || variable == null) {
-						variable = new VariableToDeclare(container, field);
+						StObj stobj = ldflda.Parent as StObj;
+						if (!(stobj != null && stobj.Value.MatchLdLocRef(out var v) && displayClasses.ContainsKey(v))) {
+							stobj = null;
+						}
+						variable = AddVariable(container, stobj, field);
 					}
 					container.VariablesToDeclare[keyField] = variable;
 					return variable != null;
@@ -337,8 +364,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (displayClass.VariablesToDeclare.TryGetValue((IField)field.MemberDefinition, out var declaredVar))
 							return declaredVar.CanPropagate;
 					}
-					return true;
-				case StLoc stloc:
 					return true;
 				default:
 					return false;
@@ -524,6 +549,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (displayClasses.TryGetValue(inst.Variable, out _) && inst.Value is NewObj) {
 					instructionsToRemove.Add(inst);
 					return;
+				}
+				if (inst.Value.MatchLdLocRef(out var otherVariable) && displayClasses.TryGetValue(otherVariable, out var displayClass)) {
+					instructionsToRemove.Add(inst);
+					displayClasses.Add(inst.Variable, displayClass);
 				}
 			}
 		}
