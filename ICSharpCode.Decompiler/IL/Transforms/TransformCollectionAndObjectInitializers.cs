@@ -260,7 +260,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public override string ToString() => $"[{Member}, {Indices}]";
 
 		public static (AccessPathKind Kind, List<AccessPathElement> Path, List<ILInstruction> Values, ILVariable Target) GetAccessPath(
-			ILInstruction instruction, IType rootType, DecompilerSettings settings,
+			ILInstruction instruction, IType rootType, DecompilerSettings settings = null,
 			CSharpTypeResolveContext resolveContext = null,
 			Dictionary<ILVariable, (int Index, ILInstruction Value)> possibleIndexVariables = null)
 		{
@@ -282,7 +282,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							if (!CanBeUsedInInitializer(property, resolveContext, kind, path)) goto default;
 							var isGetter = method.Equals(property?.Getter);
 							var indices = call.Arguments.Skip(1).Take(call.Arguments.Count - (isGetter ? 1 : 2)).ToArray();
-							if (indices.Length > 0 && !settings.DictionaryInitializers) goto default;
+							if (indices.Length > 0 && settings?.DictionaryInitializers == false) goto default;
 							if (possibleIndexVariables != null) {
 								// Mark all index variables as used
 								foreach (var index in indices.OfType<IInstructionWithVariableOperand>()) {
@@ -373,7 +373,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!"Add".Equals(method.Name, StringComparison.Ordinal) || arguments.Count == 0)
 				return false;
 			if (method.IsExtensionMethod)
-				return settings.ExtensionMethodsInCollectionInitializers
+				return settings?.ExtensionMethodsInCollectionInitializers != false
 					&& CSharp.Transforms.IntroduceExtensionMethods.CanTransformToExtensionMethodCall(method, resolveContext, ignoreTypeArguments: true);
 			var targetType = GetReturnTypeFromInstruction(arguments[0]) ?? rootType;
 			if (targetType == null)
