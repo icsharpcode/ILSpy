@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (catchClause.Condition.IsNull) {
 				var tryCatchHandler = catchClause.Annotation<TryCatchHandler>();
-				if (!tryCatchHandler.ExceptionSpecifierILRange.IsEmpty) {
+				if (tryCatchHandler != null && !tryCatchHandler.ExceptionSpecifierILRange.IsEmpty) {
 					StartSequencePoint(catchClause.CatchToken);
 					var function = tryCatchHandler.Ancestors.OfType<ILFunction>().FirstOrDefault();
 					AddToSequencePointRaw(function, new[] { tryCatchHandler.ExceptionSpecifierILRange });
