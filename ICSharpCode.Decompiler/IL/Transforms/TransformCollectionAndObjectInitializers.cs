@@ -60,10 +60,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							// for the base ctor call) or a compiler-generated delegate method, which might be used in a query expression.
 							return false;
 						}
-						// Do not try to transform display class usages or delegate construction.
+						// Do not try to transform delegate construction.
 						// DelegateConstruction transform cannot deal with this.
-						if (TransformDisplayClassUsage.AnalyzeVariable(v, context))
-							return false;
 						if (DelegateConstruction.IsDelegateConstruction(newObjInst) || TransformDisplayClassUsage.IsPotentialClosure(context, newObjInst))
 							return false;
 						// Cannot build a collection/object initializer attached to an AnonymousTypeCreateExpression:s 

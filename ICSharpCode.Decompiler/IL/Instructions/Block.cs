@@ -134,11 +134,11 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case BlockKind.ArrayInitializer:
 					var final = finalInstruction as LdLoc;
-					Debug.Assert(final != null && final.Variable.Kind == VariableKind.InitializerTarget);
+					Debug.Assert(final != null && final.Variable.IsSingleDefinition && final.Variable.Kind == VariableKind.InitializerTarget);
 					IType type = null;
 					Debug.Assert(Instructions[0].MatchStLoc(final.Variable, out var init) && init.MatchNewArr(out type));
 					for (int i = 1; i < Instructions.Count; i++) {
-						Debug.Assert(Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out var t) && type != null && type.Equals(t));
+						Debug.Assert(Instructions[i].MatchStObj(out ILInstruction target, out _, out var t) && type != null && type.Equals(t));
 						Debug.Assert(target.MatchLdElema(out t, out ILInstruction array) && type.Equals(t));
 						Debug.Assert(array.MatchLdLoc(out ILVariable v) && v == final.Variable);
 					}
@@ -146,7 +146,9 @@ namespace ICSharpCode.Decompiler.IL
 				case BlockKind.CollectionInitializer:
 				case BlockKind.ObjectInitializer:
 					var final2 = finalInstruction as LdLoc;
-					Debug.Assert(final2 != null && final2.Variable.Kind == VariableKind.InitializerTarget);
+					Debug.Assert(final2 != null);
+					var initVar2 = final2.Variable;
+					Debug.Assert(initVar2.StoreCount == 1 && initVar2.Kind == VariableKind.InitializerTarget);
 					IType type2 = null;
 					Debug.Assert(Instructions[0].MatchStLoc(final2.Variable, out var init2));
 					Debug.Assert(init2 is NewObj || init2 is DefaultValue || (init2 is Block named && named.Kind == BlockKind.CallWithNamedArgs));
@@ -165,7 +167,7 @@ namespace ICSharpCode.Decompiler.IL
 							break;
 					}
 					for (int i = 1; i < Instructions.Count; i++) {
-						Debug.Assert(Instructions[i] is StLoc || IL.Transforms.AccessPathElement.GetAccessPath(Instructions[i], type2).Kind != IL.Transforms.AccessPathKind.Invalid);
+						Debug.Assert(Instructions[i] is StLoc || AccessPathElement.GetAccessPath(Instructions[i], type2).Kind != IL.Transforms.AccessPathKind.Invalid);
 					}
 					break;
 			}
