@@ -150,7 +150,8 @@ namespace ICSharpCode.Decompiler.IL
 					var initVar2 = final2.Variable;
 					Debug.Assert(initVar2.StoreCount == 1 && initVar2.Kind == VariableKind.InitializerTarget);
 					IType type2 = null;
-					Debug.Assert(Instructions[0].MatchStLoc(final2.Variable, out var init2));
+					bool condition = Instructions[0].MatchStLoc(final2.Variable, out var init2);
+					Debug.Assert(condition);
 					Debug.Assert(init2 is NewObj || init2 is DefaultValue || (init2 is Block named && named.Kind == BlockKind.CallWithNamedArgs));
 					switch (init2) {
 						case NewObj newObj:
