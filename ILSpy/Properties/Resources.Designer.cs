@@ -1615,21 +1615,6 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You are trying to open a single-file executable (app bundle). In order to work with this type of program, ILSpy will
-        ///
-        ///(i) show you a dialog to select a folder to extract the bundle to
-        ///(ii) extract the assemblies (might take a few seconds)
-        ///(iii) show you a dialog to select one or more of those extracted assemblies to decompile
-        ///
-        ///Do you want to proceed?.
-        /// </summary>
-        public static string OpenSelfContainedExecutableMessage {
-            get {
-                return ResourceManager.GetString("OpenSelfContainedExecutableMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Options.
         /// </summary>
         public static string Options {

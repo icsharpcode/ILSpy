@@ -56,8 +56,6 @@
     <PackageReference Include="Mono.Cecil" Version="0.10.3" />
     <PackageReference Include="OSVersionHelper" Version="1.0.11" />
     <PackageReference Include="DataGridExtensions" Version="2.1.1" />
-    <PackageReference Include="Microsoft.NET.HostModel" Version="3.1.4" />
-    <PackageReference Include="Ookii.Dialogs.Wpf" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>
