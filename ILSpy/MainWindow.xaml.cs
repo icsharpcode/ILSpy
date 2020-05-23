@@ -898,9 +898,10 @@ namespace ICSharpCode.ILSpy
 							}
 						}
 					}
-					if (MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(unresolvedEntity.Handle)) != null) {
+					var possibleToken = MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(unresolvedEntity.Handle));
+					if (possibleToken != null) {
 						var typeSystem = new DecompilerTypeSystem(file, file.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
-						reference = typeSystem.MainModule.ResolveEntity((EntityHandle)unresolvedEntity.Handle);
+						reference = typeSystem.MainModule.ResolveEntity(possibleToken.Value);
 						goto default;
 					}
 					break;
