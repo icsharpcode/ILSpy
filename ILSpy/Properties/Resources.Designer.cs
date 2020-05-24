@@ -1534,6 +1534,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to New Tab.
+        /// </summary>
+        public static string NewTab {
+            get {
+                return ResourceManager.GetString("NewTab", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Nuget Package Browser.
         /// </summary>
         public static string NugetPackageBrowser {

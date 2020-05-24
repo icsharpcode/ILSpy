@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public string IndentationString { get; set; } = "\t";
 
-		public string Title { get; set; }
+		public string Title { get; set; } = Properties.Resources.NewTab;
 
 		/// <summary>
 		/// Gets/sets the <see cref="Uri"/> that is displayed by this view.

@@ -876,4 +876,7 @@ Do you want to continue?</value>
 
 Do you want to proceed?</value>
   </data>
+  <data name="NewTab" xml:space="preserve">
+    <value>New Tab</value>
+  </data>
 </root>
