@@ -875,7 +875,12 @@ namespace ICSharpCode.ILSpy
 
 		public void JumpToReference(object reference)
 		{
-			JumpToReferenceAsync(reference).HandleExceptions();
+			JumpToReference(reference, inNewTabPage: false);
+		}
+
+		public void JumpToReference(object reference, bool inNewTabPage)
+		{
+			JumpToReferenceAsync(reference, inNewTabPage).HandleExceptions();
 		}
 
 		/// <summary>
@@ -886,6 +891,11 @@ namespace ICSharpCode.ILSpy
 		/// The task will be marked as canceled if the decompilation is canceled.
 		/// </returns>
 		public Task JumpToReferenceAsync(object reference)
+		{
+			return JumpToReferenceAsync(reference, inNewTabPage: false);
+		}
+
+		public Task JumpToReferenceAsync(object reference, bool inNewTabPage)
 		{
 			decompilationTask = TaskHelper.CompletedTask;
 			switch (reference) {
@@ -900,7 +910,7 @@ namespace ICSharpCode.ILSpy
 						foreach (var handler in protocolHandlers) {
 							var node = handler.Value.Resolve(protocol, file, unresolvedEntity.Handle, out bool newTabPage);
 							if (node != null) {
-								SelectNode(node, newTabPage);
+								SelectNode(node, newTabPage || inNewTabPage);
 								return decompilationTask;
 							}
 						}
@@ -915,7 +925,7 @@ namespace ICSharpCode.ILSpy
 				default:
 					ILSpyTreeNode treeNode = FindTreeNode(reference);
 					if (treeNode != null)
-						SelectNode(treeNode);
+						SelectNode(treeNode, inNewTabPage);
 					break;
 			}
 			return decompilationTask;

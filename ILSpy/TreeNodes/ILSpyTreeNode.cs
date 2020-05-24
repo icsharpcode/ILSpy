@@ -16,9 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using System.Windows;
+using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.TreeView;
 
@@ -67,6 +70,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public virtual bool View(ViewModels.TabPageModel tabPage)
 		{
 			return false;
+		}
+
+		public override void ActivateItemSecondary(RoutedEventArgs e)
+		{
+			MainWindow.Instance.SelectNode(this, inNewTabPage: true);
+			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);
 		}
 
 		/// <summary>

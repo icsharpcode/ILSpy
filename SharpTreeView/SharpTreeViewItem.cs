@@ -119,8 +119,17 @@ namespace ICSharpCode.TreeView
 			}
 		}
 
+		protected override void OnMouseUp(MouseButtonEventArgs e)
+		{
+			if (e.ChangedButton == MouseButton.Middle) {
+				Node.ActivateItemSecondary(e);
+			} else {
+				base.OnMouseUp(e);
+			}
+		}
+
 		#endregion
-		
+
 		#region Drag and Drop
 
 		protected override void OnDragEnter(DragEventArgs e)
