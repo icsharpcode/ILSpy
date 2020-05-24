@@ -17,10 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -206,6 +208,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			base.VisitLdElema(inst);
 			CleanUpArrayIndices(inst.Indices);
+			if (IndexRangeTransform.HandleLdElema(inst, context))
+				return;
 		}
 
 		protected internal override void VisitNewArr(NewArr inst)
@@ -692,7 +696,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				TransformCatchWhen(inst, filterContainer.EntryPoint);
 			}
 			if (inst.Body is BlockContainer catchContainer)
-				TransformCatchVariable(inst, catchContainer.EntryPoint);
+				TransformCatchVariable(inst, catchContainer.EntryPoint, isCatchBlock: true);
 		}
 
 		/// <summary>
@@ -709,7 +713,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	}
 		/// }
 		/// </summary>
-		void TransformCatchVariable(TryCatchHandler handler, Block entryPoint)
+		void TransformCatchVariable(TryCatchHandler handler, Block entryPoint, bool isCatchBlock)
 		{
 			if (!handler.Variable.IsSingleDefinition || handler.Variable.LoadCount != 1)
 				return; // handle.Variable already has non-trivial uses
@@ -720,6 +724,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (inlinedUnboxAny.Type.Equals(handler.Variable.Type)) {
 						context.Step("TransformCatchVariable - remove inlined UnboxAny", inlinedUnboxAny);
 						inlinedUnboxAny.ReplaceWith(inlinedUnboxAny.Argument);
+						foreach (var range in inlinedUnboxAny.ILRanges)
+							handler.AddExceptionSpecifierILRange(range);
 					}
 				}
 				return;
@@ -746,6 +752,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			exceptionVar.Kind = VariableKind.ExceptionLocal;
 			exceptionVar.Type = handler.Variable.Type;
 			handler.Variable = exceptionVar;
+			if (isCatchBlock) {
+				foreach (var offset in entryPoint.Instructions[0].Descendants.SelectMany(o => o.ILRanges))
+					handler.AddExceptionSpecifierILRange(offset);
+			}
 			entryPoint.Instructions.RemoveAt(0);
 		}
 
@@ -754,7 +764,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		void TransformCatchWhen(TryCatchHandler handler, Block entryPoint)
 		{
-			TransformCatchVariable(handler, entryPoint);
+			TransformCatchVariable(handler, entryPoint, isCatchBlock: false);
 			if (entryPoint.Instructions.Count == 1 && entryPoint.Instructions[0].MatchLeave(out _, out var condition)) {
 				context.Step("TransformCatchWhen", entryPoint.Instructions[0]);
 				handler.Filter = condition;

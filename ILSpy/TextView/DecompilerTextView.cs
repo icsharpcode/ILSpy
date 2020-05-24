@@ -116,7 +116,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 			InitializeComponent();
 
-			this.referenceElementGenerator = new ReferenceElementGenerator(this.JumpToReference, this.IsLink);
+			this.referenceElementGenerator = new ReferenceElementGenerator(this.IsLink);
 			textEditor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
 			this.uiElementGenerator = new UIElementGenerator();
 			this.bracketHighlightRenderer = new BracketHighlightRenderer(textEditor.TextArea.TextView);
@@ -820,7 +820,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// <summary>
 		/// Jumps to the definition referred to by the <see cref="ReferenceSegment"/>.
 		/// </summary>
-		internal void JumpToReference(ReferenceSegment referenceSegment)
+		internal void JumpToReference(ReferenceSegment referenceSegment, bool openInNewTab)
 		{
 			object reference = referenceSegment.Reference;
 			if (referenceSegment.IsLocal) {
@@ -849,7 +849,7 @@ namespace ICSharpCode.ILSpy.TextView
 					return;
 				}
 			}
-			MainWindow.Instance.JumpToReference(reference);
+			MainWindow.Instance.JumpToReference(reference, openInNewTab);
 		}
 
 		Point? mouseDownPos;
@@ -866,7 +866,7 @@ namespace ICSharpCode.ILSpy.TextView
 			Vector dragDistance = e.GetPosition(this) - mouseDownPos.Value;
 			if (Math.Abs(dragDistance.X) < SystemParameters.MinimumHorizontalDragDistance
 				&& Math.Abs(dragDistance.Y) < SystemParameters.MinimumVerticalDragDistance
-				&& e.ChangedButton == MouseButton.Left)
+				&& (e.ChangedButton == MouseButton.Left || e.ChangedButton == MouseButton.Middle))
 			{
 				// click without moving mouse
 				var referenceSegment = GetReferenceSegmentAtMousePosition();
@@ -878,7 +878,7 @@ namespace ICSharpCode.ILSpy.TextView
 					// cursor position and the mouse position.
 					textEditor.TextArea.MouseSelectionMode = MouseSelectionMode.None;
 
-					JumpToReference(referenceSegment);
+					JumpToReference(referenceSegment, e.ChangedButton == MouseButton.Middle || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift));
 				}
 			}
 		}
@@ -952,6 +952,7 @@ namespace ICSharpCode.ILSpy.TextView
 			Thread thread = new Thread(new ThreadStart(
 				delegate {
 					try {
+						context.Options.EscapeInvalidIdentifiers = true;
 						Stopwatch stopwatch = new Stopwatch();
 						stopwatch.Start();
 						using (StreamWriter w = new StreamWriter(fileName)) {

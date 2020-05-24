@@ -47,12 +47,17 @@ namespace ICSharpCode.ILSpy
 
 		protected override ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options)
 		{
-			return new ReflectionDisassembler(output, 
+			return new ReflectionDisassembler(output,
 				new MixedMethodBodyDisassembler(output, options) {
 					DetectControlStructure = detectControlStructure,
 					ShowSequencePoints = options.DecompilerSettings.ShowDebugInfo
 				},
-				options.CancellationToken);
+				options.CancellationToken)
+			{
+				ShowMetadataTokens = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens,
+				ShowMetadataTokensInBase10 = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10,
+				ExpandMemberDefinitions = options.DecompilerSettings.ExpandMemberDefinitions
+			};
 		}
 
 		static CSharpDecompiler CreateDecompiler(PEFile module, DecompilationOptions options)

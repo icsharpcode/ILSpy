@@ -24,6 +24,7 @@ using System.Windows;
 using System.ComponentModel;
 using System.Collections.Specialized;
 using System.Windows.Media;
+using System.Windows.Input;
 
 namespace ICSharpCode.TreeView
 {
@@ -680,7 +681,14 @@ namespace ICSharpCode.TreeView
 		public virtual void ActivateItem(RoutedEventArgs e)
 		{
 		}
-		
+
+		/// <summary>
+		/// Gets called when the item is clicked with the middle mouse button.
+		/// </summary>
+		public virtual void ActivateItemSecondary(RoutedEventArgs e)
+		{
+		}
+
 		public override string ToString()
 		{
 			// used for keyboard navigation

@@ -948,6 +948,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Ranges.
+        /// </summary>
+        public static string DecompilerSettings_Ranges {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.Ranges", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Read-only methods.
         /// </summary>
         public static string DecompilerSettings_ReadOnlyMethods {
@@ -1534,6 +1543,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to New Tab.
+        /// </summary>
+        public static string NewTab {
+            get {
+                return ResourceManager.GetString("NewTab", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Nuget Package Browser.
         /// </summary>
         public static string NugetPackageBrowser {
@@ -1602,6 +1620,21 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string OpenListDialog__Open {
             get {
                 return ResourceManager.GetString("OpenListDialog__Open", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You are trying to open a single-file executable (app bundle). In order to work with this type of program, ILSpy will
+        ///
+        ///(i) show you a dialog to select a folder to extract the bundle to
+        ///(ii) extract the assemblies (might take a few seconds)
+        ///(iii) show you a dialog to select one or more of those extracted assemblies to decompile
+        ///
+        ///Do you want to proceed?.
+        /// </summary>
+        public static string OpenSelfContainedExecutableMessage {
+            get {
+                return ResourceManager.GetString("OpenSelfContainedExecutableMessage", resourceCulture);
             }
         }
         

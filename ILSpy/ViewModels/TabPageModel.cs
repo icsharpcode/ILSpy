@@ -28,6 +28,11 @@ namespace ICSharpCode.ILSpy.ViewModels
 	{
 		private readonly Dictionary<Language, LanguageVersion> languageVersionHistory = new Dictionary<Language, LanguageVersion>();
 
+		public TabPageModel()
+		{
+			this.Title = Properties.Resources.NewTab;
+		}
+
 		private Language language;
 		public Language Language {
 			get => language;

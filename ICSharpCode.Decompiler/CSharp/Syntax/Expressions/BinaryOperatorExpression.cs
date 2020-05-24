@@ -54,6 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole ShiftLeftRole = new TokenRole ("<<");
 		public readonly static TokenRole ShiftRightRole = new TokenRole (">>");
 		public readonly static TokenRole NullCoalescingRole = new TokenRole ("??");
+		public readonly static TokenRole RangeRole = new TokenRole ("..");
 		
 		public readonly static Role<Expression> LeftRole = new Role<Expression>("Left", Expression.Null);
 		public readonly static Role<Expression> RightRole = new Role<Expression>("Right", Expression.Null);
@@ -151,6 +152,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return ShiftRightRole;
 				case BinaryOperatorType.NullCoalescing:
 					return NullCoalescingRole;
+				case BinaryOperatorType.Range:
+					return RangeRole;
 				default:
 					throw new NotSupportedException("Invalid value for BinaryOperatorType");
 			}
@@ -197,6 +200,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return ExpressionType.RightShift;
 				case BinaryOperatorType.NullCoalescing:
 					return ExpressionType.Coalesce;
+				case BinaryOperatorType.Range:
+					return ExpressionType.Extension;
 				default:
 					throw new NotSupportedException("Invalid value for BinaryOperatorType");
 			}
@@ -255,6 +260,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		ShiftRight,
 		
 		/// <summary>left ?? right</summary>
-		NullCoalescing
+		NullCoalescing,
+		/// <summary>left .. right</summary>
+		/// <remarks>left and right are optional = may be Expression.Null</remarks>
+		Range
 	}
 }

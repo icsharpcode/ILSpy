@@ -28,7 +28,6 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	sealed class ReferenceElementGenerator : VisualLineElementGenerator
 	{
-		readonly Action<ReferenceSegment> referenceClicked;
 		readonly Predicate<ReferenceSegment> isLink;
 		
 		/// <summary>
@@ -36,13 +35,10 @@ namespace ICSharpCode.ILSpy.TextView
 		/// </summary>
 		public TextSegmentCollection<ReferenceSegment> References { get; set; }
 		
-		public ReferenceElementGenerator(Action<ReferenceSegment> referenceClicked, Predicate<ReferenceSegment> isLink)
+		public ReferenceElementGenerator(Predicate<ReferenceSegment> isLink)
 		{
-			if (referenceClicked == null)
-				throw new ArgumentNullException(nameof(referenceClicked));
 			if (isLink == null)
 				throw new ArgumentNullException(nameof(isLink));
-			this.referenceClicked = referenceClicked;
 			this.isLink = isLink;
 		}
 		
@@ -71,11 +67,6 @@ namespace ICSharpCode.ILSpy.TextView
 				}
 			}
 			return null;
-		}
-		
-		internal void JumpToReference(ReferenceSegment referenceSegment)
-		{
-			referenceClicked(referenceSegment);
 		}
 	}
 	

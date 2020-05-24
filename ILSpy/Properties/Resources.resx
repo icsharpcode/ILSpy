@@ -852,6 +852,9 @@ Do you want to continue?</value>
 
 Do you want to continue?</value>
   </data>
+  <data name="DecompilerSettings.Ranges" xml:space="preserve">
+    <value>Ranges</value>
+  </data>
   <data name="AddPreconfiguredList" xml:space="preserve">
     <value>Add preconfigured list...</value>
   </data>
@@ -866,5 +869,17 @@ Do you want to continue?</value>
   </data>
   <data name="DecompilerSettings.AggressiveScalarReplacementOfAggregates" xml:space="preserve">
     <value>Aggressively perform Scalar Replacement Of Aggregates (SROA)</value>
+  </data>
+  <data name="OpenSelfContainedExecutableMessage" xml:space="preserve">
+    <value>You are trying to open a single-file executable (app bundle). In order to work with this type of program, ILSpy will
+
+(i) show you a dialog to select a folder to extract the bundle to
+(ii) extract the assemblies (might take a few seconds)
+(iii) show you a dialog to select one or more of those extracted assemblies to decompile
+
+Do you want to proceed?</value>
+  </data>
+  <data name="NewTab" xml:space="preserve">
+    <value>New Tab</value>
   </data>
 </root>

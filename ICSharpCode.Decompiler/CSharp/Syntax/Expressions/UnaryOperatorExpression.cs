@@ -45,6 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole AwaitRole = new TokenRole ("await");
 		public readonly static TokenRole NullConditionalRole = new TokenRole ("?");
 		public readonly static TokenRole SuppressNullableWarningRole = new TokenRole ("!");
+		public readonly static TokenRole IndexFromEndRole = new TokenRole ("^");
 
 		public UnaryOperatorExpression()
 		{
@@ -122,6 +123,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return null; // no syntax
 				case UnaryOperatorType.SuppressNullableWarning:
 					return SuppressNullableWarningRole;
+				case UnaryOperatorType.IndexFromEnd:
+					return IndexFromEndRole;
 				default:
 					throw new NotSupportedException("Invalid value for UnaryOperatorType");
 			}
@@ -150,6 +153,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case UnaryOperatorType.AddressOf:
 				case UnaryOperatorType.Await:
 				case UnaryOperatorType.SuppressNullableWarning:
+				case UnaryOperatorType.IndexFromEnd:
 					return ExpressionType.Extension;
 				default:
 					throw new NotSupportedException("Invalid value for UnaryOperatorType");
@@ -206,5 +210,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// C# 8 postfix ! operator (dammit operator)
 		/// </summary>
 		SuppressNullableWarning,
+		/// <summary>
+		/// C# 8 prefix ^ operator
+		/// </summary>
+		IndexFromEnd,
 	}
 }

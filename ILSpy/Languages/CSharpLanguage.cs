@@ -119,6 +119,9 @@ namespace ICSharpCode.ILSpy
 			decompiler.DebugInfoProvider = module.GetDebugInfoOrNull();
 			while (decompiler.AstTransforms.Count > transformCount)
 				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
+			if (options.EscapeInvalidIdentifiers) {
+				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+			}
 			return decompiler;
 		}
 
@@ -413,6 +416,9 @@ namespace ICSharpCode.ILSpy
 
 					CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings);
 					decompiler.CancellationToken = options.CancellationToken;
+					if (options.EscapeInvalidIdentifiers) {
+						decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+					}
 					SyntaxTree st;
 					if (options.FullDecompilation) {
 						st = decompiler.DecompileWholeModuleAsSingleFile();

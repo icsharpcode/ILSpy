@@ -35,6 +35,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Threading;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
@@ -46,7 +47,13 @@ using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.TreeView;
+
+using Microsoft.NET.HostModel.AppHost;
+using Microsoft.NET.HostModel.Bundle;
 using Microsoft.Win32;
+
+using Ookii.Dialogs.Wpf;
+
 using OSVersionHelper;
 using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
@@ -868,7 +875,12 @@ namespace ICSharpCode.ILSpy
 
 		public void JumpToReference(object reference)
 		{
-			JumpToReferenceAsync(reference).HandleExceptions();
+			JumpToReference(reference, inNewTabPage: false);
+		}
+
+		public void JumpToReference(object reference, bool inNewTabPage)
+		{
+			JumpToReferenceAsync(reference, inNewTabPage).HandleExceptions();
 		}
 
 		/// <summary>
@@ -879,6 +891,11 @@ namespace ICSharpCode.ILSpy
 		/// The task will be marked as canceled if the decompilation is canceled.
 		/// </returns>
 		public Task JumpToReferenceAsync(object reference)
+		{
+			return JumpToReferenceAsync(reference, inNewTabPage: false);
+		}
+
+		public Task JumpToReferenceAsync(object reference, bool inNewTabPage)
 		{
 			decompilationTask = TaskHelper.CompletedTask;
 			switch (reference) {
@@ -893,21 +910,22 @@ namespace ICSharpCode.ILSpy
 						foreach (var handler in protocolHandlers) {
 							var node = handler.Value.Resolve(protocol, file, unresolvedEntity.Handle, out bool newTabPage);
 							if (node != null) {
-								SelectNode(node, newTabPage);
+								SelectNode(node, newTabPage || inNewTabPage);
 								return decompilationTask;
 							}
 						}
 					}
-					if (MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(unresolvedEntity.Handle)) != null) {
+					var possibleToken = MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(unresolvedEntity.Handle));
+					if (possibleToken != null) {
 						var typeSystem = new DecompilerTypeSystem(file, file.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
-						reference = typeSystem.MainModule.ResolveEntity((EntityHandle)unresolvedEntity.Handle);
+						reference = typeSystem.MainModule.ResolveEntity(possibleToken.Value);
 						goto default;
 					}
 					break;
 				default:
 					ILSpyTreeNode treeNode = FindTreeNode(reference);
 					if (treeNode != null)
-						SelectNode(treeNode);
+						SelectNode(treeNode, inNewTabPage);
 					break;
 			}
 			return decompilationTask;
@@ -994,15 +1012,55 @@ namespace ICSharpCode.ILSpy
 						}
 						break;
 					default:
-						var asm = assemblyList.OpenAssembly(file);
-						if (asm != null) {
-							if (loadedAssemblies != null)
-								loadedAssemblies.Add(asm);
-							else {
-								var node = assemblyListTreeNode.FindAssemblyNode(asm);
-								if (node != null && focusNode) {
-									AssemblyTreeView.SelectedItems.Add(node);
-									lastNode = node;
+						if (IsAppBundle(file, out var headerOffset)) {
+							if (MessageBox.Show(this, Properties.Resources.OpenSelfContainedExecutableMessage, "ILSpy", MessageBoxButton.YesNo) == MessageBoxResult.No)
+								break;
+							var dialog = new VistaFolderBrowserDialog();
+							if (dialog.ShowDialog() != true)
+								break;
+							DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+								var output = new AvalonEditTextOutput { Title = "Extracting " + file };
+								Stopwatch w = Stopwatch.StartNew();
+								output.WriteLine($"Extracting {file} to {dialog.SelectedPath}...");
+								var extractor = new Extractor(file, dialog.SelectedPath);
+								extractor.ExtractFiles();
+								output.WriteLine($"Done in {w.Elapsed}.");
+								return output;
+							}, ct)).Then(output => {
+								DockWorkspace.Instance.ShowText(output);
+
+								OpenFileDialog dlg = new OpenFileDialog();
+								dlg.Filter = ".NET assemblies|*.dll;*.exe;*.winmd";
+								dlg.Multiselect = true;
+								dlg.InitialDirectory = dialog.SelectedPath;
+								if (dlg.ShowDialog() == true) {
+									foreach (var item in dlg.FileNames) {
+										var asm = assemblyList.OpenAssembly(item);
+										if (asm != null) {
+											if (loadedAssemblies != null)
+												loadedAssemblies.Add(asm);
+											else {
+												var node = assemblyListTreeNode.FindAssemblyNode(asm);
+												if (node != null && focusNode) {
+													AssemblyTreeView.SelectedItems.Add(node);
+													lastNode = node;
+												}
+											}
+										}
+									}
+								}
+							}).HandleExceptions();
+						} else {
+							var asm = assemblyList.OpenAssembly(file);
+							if (asm != null) {
+								if (loadedAssemblies != null)
+									loadedAssemblies.Add(asm);
+								else {
+									var node = assemblyListTreeNode.FindAssemblyNode(asm);
+									if (node != null && focusNode) {
+										AssemblyTreeView.SelectedItems.Add(node);
+										lastNode = node;
+									}
 								}
 							}
 						}
@@ -1011,6 +1069,16 @@ namespace ICSharpCode.ILSpy
 
 				if (lastNode != null && focusNode)
 					AssemblyTreeView.FocusNode(lastNode);
+			}
+
+			bool IsAppBundle(string filename, out long bundleHeaderOffset)
+			{
+				try {
+					return HostWriter.IsBundle(filename, out bundleHeaderOffset);
+				} catch (Exception) {
+					bundleHeaderOffset = -1;
+					return false;
+				}
 			}
 		}
 

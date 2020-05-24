@@ -214,24 +214,29 @@ namespace ICSharpCode.Decompiler.IL
 
 		public void AddILRange(Interval newRange)
 		{
-			if (this.ILRange.IsEmpty) {
-				this.ILRange = newRange;
-				return;
+			this.ILRange = CombineILRange(this.ILRange, newRange);
+		}
+
+		protected static Interval CombineILRange(Interval oldRange, Interval newRange)
+		{
+			if (oldRange.IsEmpty) {
+				return newRange;
 			}
 			if (newRange.IsEmpty) {
-				return;
+				return oldRange;
 			}
-			if (newRange.Start <= this.StartILOffset) {
-				if (newRange.End < this.StartILOffset) {
-					this.ILRange = newRange; // use the earlier range
+			if (newRange.Start <= oldRange.Start) {
+				if (newRange.End < oldRange.Start) {
+					return newRange; // use the earlier range
 				} else {
 					// join overlapping ranges
-					this.ILRange = new Interval(newRange.Start, Math.Max(newRange.End, this.ILRange.End));
+					return new Interval(newRange.Start, Math.Max(newRange.End, oldRange.End));
 				}
-			} else if (newRange.Start <= this.ILRange.End) {
+			} else if (newRange.Start <= oldRange.End) {
 				// join overlapping ranges
-				this.ILRange = new Interval(this.StartILOffset, Math.Max(newRange.End, this.ILRange.End));
+				return new Interval(oldRange.Start, Math.Max(newRange.End, oldRange.End));
 			}
+			return oldRange;
 		}
 
 		public void AddILRange(ILInstruction sourceInstruction)
