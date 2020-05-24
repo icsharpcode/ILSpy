@@ -83,10 +83,12 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						.GroupBy(m => m.MethodHandle)
 						.ToDictionary(g => g.Key, g => g.ToArray());
 				}
+				bool showMetadataTokens = ILSpy.Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens;
+				bool showMetadataTokensInBase10 = ILSpy.Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10;
 				if (cacheEntry.methodMap.TryGetValue(method.MetadataToken, out var methods)) {
 					foreach (var readyToRunMethod in methods) {
 						foreach (RuntimeFunction runtimeFunction in readyToRunMethod.RuntimeFunctions) {
-							Disassemble(method.ParentModule.PEFile, output, reader, readyToRunMethod, runtimeFunction, bitness, (ulong)runtimeFunction.StartAddress);
+							Disassemble(method.ParentModule.PEFile, output, reader, readyToRunMethod, runtimeFunction, bitness, (ulong)runtimeFunction.StartAddress, showMetadataTokens, showMetadataTokensInBase10);
 						}
 					}
 				}
@@ -98,7 +100,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			output.WriteLine("; " + comment);
 		}
 
-		private void Disassemble(PEFile currentFile, ITextOutput output, ReadyToRunReader reader, ReadyToRunMethod readyToRunMethod, RuntimeFunction runtimeFunction, int bitness, ulong address)
+		private void Disassemble(PEFile currentFile, ITextOutput output, ReadyToRunReader reader, ReadyToRunMethod readyToRunMethod, RuntimeFunction runtimeFunction, int bitness, ulong address, bool showMetadataTokens, bool showMetadataTokensInBase10)
 		{
 			WriteCommentLine(output, readyToRunMethod.SignatureString);
 			byte[] codeBytes = new byte[runtimeFunction.Size];
@@ -156,16 +158,30 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				output.Write(tempOutput.ToStringAndReset());
 				int importCellAddress = (int)instr.IPRelativeMemoryAddress;
 				if (instr.IsCallNearIndirect && reader.ImportCellNames.ContainsKey(importCellAddress)) {
-					output.Write(" ;");
+					output.Write(" ; ");
 					ReadyToRunSignature signature = reader.ImportSignatures[(int)instr.IPRelativeMemoryAddress];
 					switch(signature) {
 						case MethodDefEntrySignature methodDefSignature:
-							int methodDefToken = unchecked((int)methodDefSignature.MethodDefToken);
-							InstructionOutputExtensions.WriteTo((EntityHandle)MetadataTokens.Handle(methodDefToken), currentFile, output, null);
+							var methodDefToken = MetadataTokens.EntityHandle(unchecked((int)methodDefSignature.MethodDefToken));
+							if (showMetadataTokens) {
+								if (showMetadataTokensInBase10) {
+									output.WriteReference(currentFile, methodDefToken, $"({MetadataTokens.GetToken(methodDefToken)}) ", "metadata");
+								} else {
+									output.WriteReference(currentFile, methodDefToken, $"({MetadataTokens.GetToken(methodDefToken):X8}) ", "metadata");
+								}
+							}
+							methodDefToken.WriteTo(currentFile, output, Decompiler.Metadata.GenericContext.Empty);
 							break;
 						case MethodRefEntrySignature methodRefSignature:
-							int methodRefToken = unchecked((int)methodRefSignature.MethodRefToken);
-							InstructionOutputExtensions.WriteTo((EntityHandle)MetadataTokens.Handle(methodRefToken), currentFile, output, null);
+							var methodRefToken = MetadataTokens.EntityHandle(unchecked((int)methodRefSignature.MethodRefToken));
+							if (showMetadataTokens) {
+								if (showMetadataTokensInBase10) {
+									output.WriteReference(currentFile, methodRefToken, $"({MetadataTokens.GetToken(methodRefToken)}) ", "metadata");
+								} else {
+									output.WriteReference(currentFile, methodRefToken, $"({MetadataTokens.GetToken(methodRefToken):X8}) ", "metadata");
+								}
+							}
+							methodRefToken.WriteTo(currentFile, output, Decompiler.Metadata.GenericContext.Empty);
 							break;
 						default:
 							output.WriteLine(reader.ImportCellNames[importCellAddress]);
