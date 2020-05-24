@@ -116,7 +116,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 			InitializeComponent();
 
-			this.referenceElementGenerator = new ReferenceElementGenerator(this.JumpToReference, this.IsLink);
+			this.referenceElementGenerator = new ReferenceElementGenerator(this.IsLink);
 			textEditor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
 			this.uiElementGenerator = new UIElementGenerator();
 			this.bracketHighlightRenderer = new BracketHighlightRenderer(textEditor.TextArea.TextView);
