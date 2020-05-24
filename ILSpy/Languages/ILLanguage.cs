@@ -20,15 +20,14 @@ using System.Collections.Generic;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using System.ComponentModel.Composition;
-using System.Reflection.PortableExecutable;
 using System.Reflection.Metadata;
-using System.IO;
-using System.Reflection.Metadata.Ecma335;
 using System.Linq;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.Decompiler.Solution;
+using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy
 {
@@ -177,6 +176,39 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 			return null;
+		}
+
+		public override RichText GetRichTextTooltip(IEntity entity)
+		{
+			var output = new AvalonEditTextOutput() { IgnoreNewLineAndIndent = true };
+			var disasm = CreateDisassembler(output, new DecompilationOptions());
+			switch (entity.SymbolKind) {
+				case SymbolKind.TypeDefinition:
+					disasm.DisassembleTypeHeader(entity.ParentModule.PEFile, (TypeDefinitionHandle)entity.MetadataToken);
+					break;
+				case SymbolKind.Field:
+					disasm.DisassembleFieldHeader(entity.ParentModule.PEFile, (FieldDefinitionHandle)entity.MetadataToken);
+					break;
+				case SymbolKind.Property:
+				case SymbolKind.Indexer:
+					disasm.DisassemblePropertyHeader(entity.ParentModule.PEFile, (PropertyDefinitionHandle)entity.MetadataToken);
+					break;
+				case SymbolKind.Event:
+					disasm.DisassembleEventHeader(entity.ParentModule.PEFile, (EventDefinitionHandle)entity.MetadataToken);
+					break;
+				case SymbolKind.Method:
+				case SymbolKind.Operator:
+				case SymbolKind.Constructor:
+				case SymbolKind.Destructor:
+				case SymbolKind.Accessor:
+					disasm.DisassembleMethodHeader(entity.ParentModule.PEFile, (MethodDefinitionHandle)entity.MetadataToken);
+					break;
+				default:
+					output.Write(GetDisplayName(entity, true, true, true));
+					break;
+			}
+
+			return new DocumentHighlighter(output.GetDocument(), base.SyntaxHighlighting).HighlightLine(1).ToRichText();
 		}
 	}
 }

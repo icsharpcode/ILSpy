@@ -26,11 +26,14 @@ using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using Iced.Intel;
+
+using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.TextView;
 using ILCompiler.Reflection.ReadyToRun;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
@@ -193,6 +196,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				}
 			}
 			output.WriteLine();
+		}
+
+		public override RichText GetRichTextTooltip(IEntity entity)
+		{
+			return Languages.ILLanguage.GetRichTextTooltip(entity);
 		}
 
 		private ReadyToRunReaderCacheEntry GetReader(LoadedAssembly assembly, PEFile module)

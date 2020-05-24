@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(primitiveType.ToString().ToLowerInvariant());
 		}
 		
-		public static void WriteTo(this IType type, ITextOutput output, ILNameSyntax nameSyntax = ILNameSyntax.ShortTypeName)
+		public static void WriteTo(this IType type, ITextOutput output)
 		{
 			output.WriteReference(type, type.ReflectionName);
 		}
