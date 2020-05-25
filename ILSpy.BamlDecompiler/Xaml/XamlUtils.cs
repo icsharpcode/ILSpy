@@ -73,5 +73,27 @@ namespace ILSpy.BamlDecompiler.Xaml {
 			// (11700684 * 0.000001) != (11700684 / 1000000.0) => 11.700683999999999 != 11.700684
 			return reader.ReadInt32() / 1000000.0;
 		}
+
+		/// <summary>
+		/// Escape characters that cannot be used in XML.
+		/// </summary>
+		public static StringBuilder EscapeName(StringBuilder sb, string name)
+		{
+			foreach (char ch in name) {
+				if (char.IsWhiteSpace(ch) || char.IsControl(ch) || char.IsSurrogate(ch))
+					sb.AppendFormat("\\u{0:x4}", (int)ch);
+				else
+					sb.Append(ch);
+			}
+			return sb;
+		}
+
+		/// <summary>
+		/// Escape characters that cannot be displayed in the UI.
+		/// </summary>
+		public static string EscapeName(string name)
+		{
+			return EscapeName(new StringBuilder(name.Length), name).ToString();
+		}
 	}
 }

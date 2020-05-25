@@ -27,6 +27,8 @@ using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
+using ILSpy.BamlDecompiler.Xaml;
+
 namespace ILSpy.BamlDecompiler.Rewrite
 {
 	internal class ConnectionIdRewritePass : IRewritePass
@@ -128,7 +130,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			var events = new List<EventRegistration>();
 
 			switch (inst) {
-				case Block b:
+				case Block _:
 					foreach (var node in ((Block)inst).Instructions) {
 						FindEvents(node, events);
 					}
@@ -197,6 +199,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				if (ldftn.OpCode != OpCode.LdFtn && ldftn.OpCode != OpCode.LdVirtFtn)
 					return false;
 				handlerName = ((IInstructionWithMethodOperand)ldftn).Method.Name;
+				handlerName = XamlUtils.EscapeName(handlerName);
 				return true;
 			}
 
