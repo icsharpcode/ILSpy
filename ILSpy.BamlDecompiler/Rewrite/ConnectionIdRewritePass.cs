@@ -113,7 +113,8 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				}
 			} else {
 				foreach (var ifInst in function.Descendants.OfType<IfInstruction>()) {
-					var comp = ifInst.Condition as Comp;
+					if (!(ifInst.Condition is Comp comp))
+						continue;
 					if (comp.Kind != ComparisonKind.Inequality && comp.Kind != ComparisonKind.Equality)
 						continue;
 					if (!comp.Right.MatchLdcI4(out int id))
