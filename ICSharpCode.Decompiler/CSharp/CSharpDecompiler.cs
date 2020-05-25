@@ -616,6 +616,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			while (blob.RemainingBytes > 0) {
 				var code = blob.DecodeOpCode();
 				switch (code) {
+					case ILOpCode.Newobj:
 					case ILOpCode.Stfld:
 						// async and yield fsms:
 						var token = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
@@ -623,14 +624,16 @@ namespace ICSharpCode.Decompiler.CSharp
 							continue;
 						TypeDefinitionHandle fsmTypeDef;
 						switch (token.Kind) {
+							case HandleKind.MethodDefinition:
+								var fsmMethod = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)token);
+								fsmTypeDef = fsmMethod.GetDeclaringType();
+								break;
 							case HandleKind.FieldDefinition:
 								var fsmField = module.Metadata.GetFieldDefinition((FieldDefinitionHandle)token);
 								fsmTypeDef = fsmField.GetDeclaringType();
 								break;
 							case HandleKind.MemberReference:
 								var memberRef = module.Metadata.GetMemberReference((MemberReferenceHandle)token);
-								if (memberRef.GetKind() != MemberReferenceKind.Field)
-									continue;
 								fsmTypeDef = ExtractDeclaringType(memberRef);
 								break;
 							default:
