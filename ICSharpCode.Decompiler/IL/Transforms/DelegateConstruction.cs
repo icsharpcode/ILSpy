@@ -238,7 +238,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					child.AcceptVisitor(this);
 				}
 			}
-			
+
+			protected internal override void VisitILFunction(ILFunction function)
+			{
+				if (function == thisVariable?.Function) {
+					ILVariable v = null;
+					switch (target) {
+						case LdLoc l:
+							v = l.Variable;
+							break;
+						case LdObj lo:
+							ILInstruction inner = lo.Target;
+							while (inner is LdFlda ldf) {
+								inner = ldf.Target;
+							}
+							if (inner is LdLoc l2)
+								v = l2.Variable;
+							break;
+					}
+					if (v != null)
+						function.CapturedVariables.Add(v);
+				}
+				base.VisitILFunction(function);
+			}
+
 			protected internal override void VisitLdLoc(LdLoc inst)
 			{
 				if (inst.Variable == thisVariable) {

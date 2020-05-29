@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets the set of captured variables by this ILFunction.
 		/// </summary>
 		/// <remarks>This is populated by the <see cref="TransformDisplayClassUsage" /> step.</remarks>
-		public HashSet<ILVariable> CapturedVariables { get; } = new HashSet<ILVariable>(ILVariableEqualityComparer.Instance);
+		public HashSet<ILVariable> CapturedVariables { get; } = new HashSet<ILVariable>();
 
 		/// <summary>
 		/// List of warnings of ILReader.
