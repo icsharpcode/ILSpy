@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							if (otherDisplayClass.VariablesToDeclare.TryGetValue((IField)field.MemberDefinition, out var declaredVar))
 								return declaredVar.CanPropagate;
 						}
-						return true;
+						return false;
 					default:
 						return false;
 				}
@@ -259,7 +259,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case TypeKind.Class:
 					if (!v.IsSingleDefinition)
 						return null;
-					if (!(v.StoreInstructions[0] is StLoc stloc))
+					if (!(v.StoreInstructions.FirstOrDefault() is StLoc stloc))
 						return null;
 					if (stloc.Value is NewObj newObj && ValidateConstructor(newObj.Method)) {
 						result = new DisplayClass(v, definition) {
