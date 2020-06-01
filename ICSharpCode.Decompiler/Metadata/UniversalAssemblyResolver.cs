@@ -71,11 +71,13 @@ namespace ICSharpCode.Decompiler.Metadata
 		public void AddSearchDirectory(string directory)
 		{
 			directories.Add(directory);
+			dotNetCorePathFinder?.AddSearchDirectory(directory);
 		}
 
 		public void RemoveSearchDirectory(string directory)
 		{
 			directories.Remove(directory);
+			dotNetCorePathFinder?.RemoveSearchDirectory(directory);
 		}
 
 		public string[] GetSearchDirectories()
@@ -185,6 +187,9 @@ namespace ICSharpCode.Decompiler.Metadata
 						goto default;
 					if (dotNetCorePathFinder == null) {
 						dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, targetFrameworkIdentifier, targetFrameworkVersion);
+						foreach (var directory in directories) {
+							dotNetCorePathFinder.AddSearchDirectory(directory);
+						}
 					}
 					file = dotNetCorePathFinder.TryResolveDotNetCore(name);
 					if (file != null)
