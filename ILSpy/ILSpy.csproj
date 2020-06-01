@@ -80,6 +80,7 @@
     <Compile Include="Analyzers\Builtin\EventImplementedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\EventOverriddenByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodImplementedByAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\MemberImplementsInterfaceAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodOverriddenByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodVirtualUsedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodUsedByAnalyzer.cs" />
