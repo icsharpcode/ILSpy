@@ -77,14 +77,14 @@
     <Compile Include="Analyzers\AnalyzerContext.cs" />
     <Compile Include="Analyzers\AnalyzerScope.cs" />
     <Compile Include="Analyzers\Builtin\AttributeAppliedToAnalyzer.cs" />
-    <Compile Include="Analyzers\Builtin\EventImplementsInterfaceAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\EventImplementedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\EventOverriddenByAnalyzer.cs" />
-    <Compile Include="Analyzers\Builtin\MethodImplementsInterfaceAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\MethodImplementedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodOverriddenByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodVirtualUsedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodUsedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodUsesAnalyzer.cs" />
-    <Compile Include="Analyzers\Builtin\PropertyImplementsInterfaceAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\PropertyImplementedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\PropertyOverriddenByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\TypeExposedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\TypeInstantiatedByAnalyzer.cs" />
