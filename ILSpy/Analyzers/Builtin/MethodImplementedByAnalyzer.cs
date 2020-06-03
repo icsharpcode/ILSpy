@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// Shows methods that implement an interface method.
 	/// </summary>
 	[ExportAnalyzer(Header = "Implemented By", Order = 40)]
-	class MethodImplementsInterfaceAnalyzer : IAnalyzer
+	class MethodImplementedByAnalyzer : IAnalyzer
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
