@@ -721,7 +721,7 @@
     <value>Apply Windows Runtime projections on loaded assemblies</value>
   </data>
   <data name="SearchMSDN" xml:space="preserve">
-    <value>Search MSDN...</value>
+    <value>Search Microsoft Docs...</value>
   </data>
   <data name="CannotAnalyzeMissingRef" xml:space="preserve">
     <value>Entity could not be resolved. Cannot analyze entities from missing assembly references. Add the missing reference and try again.</value>

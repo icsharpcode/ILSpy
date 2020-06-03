@@ -1842,7 +1842,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Search MSDN....
+        ///   Looks up a localized string similar to Search Microsoft Docs....
         /// </summary>
         public static string SearchMSDN {
             get {
