@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		#region WriteProjectFile
-		ProjectId WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, Metadata.PEFile module)
+		ProjectId WriteProjectFile(TextWriter writer, IEnumerable<(string itemType, string fileName)> files, Metadata.PEFile module)
 		{
 			const string ns = "http://schemas.microsoft.com/developer/msbuild/2003";
 			string platformName = GetPlatformName(module);
@@ -238,7 +238,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				w.WriteEndElement(); // </ItemGroup> (References)
 
-				foreach (IGrouping<string, string> gr in (from f in files group f.Item2 by f.Item1 into g orderby g.Key select g)) {
+				foreach (IGrouping<string, string> gr in (from f in files group f.fileName by f.itemType into g orderby g.Key select g)) {
 					w.WriteStartElement("ItemGroup");
 					foreach (string file in gr.OrderBy(f => f, StringComparer.OrdinalIgnoreCase)) {
 						w.WriteStartElement(gr.Key);
@@ -340,7 +340,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return decompiler;
 		}
 
-		IEnumerable<Tuple<string, string>> WriteAssemblyInfo(DecompilerTypeSystem ts, CancellationToken cancellationToken)
+		IEnumerable<(string itemType, string fileName)> WriteAssemblyInfo(DecompilerTypeSystem ts, CancellationToken cancellationToken)
 		{
 			var decompiler = CreateDecompiler(ts);
 			decompiler.CancellationToken = cancellationToken;
@@ -354,10 +354,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, assemblyInfo))) {
 				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
 			}
-			return new Tuple<string, string>[] { Tuple.Create("Compile", assemblyInfo) };
+			return new[] { ("Compile", assemblyInfo) };
 		}
 
-		IEnumerable<Tuple<string, string>> WriteCodeFilesInProject(Metadata.PEFile module, CancellationToken cancellationToken)
+		IEnumerable<(string itemType, string fileName)> WriteCodeFilesInProject(Metadata.PEFile module, CancellationToken cancellationToken)
 		{
 			var metadata = module.Metadata;
 			var files = module.Metadata.GetTopLevelTypeDefinitions().Where(td => IncludeTypeWhenDecompilingProject(module, td)).GroupBy(
@@ -395,12 +395,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					progress?.Report(new DecompilationProgress(total, file.Key));
 				});
-			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
+			return files.Select(f => ("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
 		}
 		#endregion
 
 		#region WriteResourceFilesInProject
-		protected virtual IEnumerable<Tuple<string, string>> WriteResourceFilesInProject(Metadata.PEFile module)
+		protected virtual IEnumerable<(string itemType, string fileName)> WriteResourceFilesInProject(Metadata.PEFile module)
 		{
 			foreach (var r in module.Resources.Where(r => r.ResourceType == Metadata.ResourceType.Embedded)) {
 				Stream stream = r.TryOpenStream();
@@ -408,7 +408,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) {
 					bool decodedIntoIndividualFiles;
-					var individualResources = new List<Tuple<string, string>>();
+					var individualResources = new List<(string itemType, string fileName)>();
 					try {
 						var resourcesFile = new ResourcesFile(stream);
 						if (resourcesFile.AllEntriesAreStreams()) {
@@ -449,12 +449,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						stream.Position = 0;
 						stream.CopyTo(fs);
 					}
-					yield return Tuple.Create("EmbeddedResource", fileName);
+					yield return ("EmbeddedResource", fileName);
 				}
 			}
 		}
 
-		protected virtual IEnumerable<Tuple<string, string>> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
+		protected virtual IEnumerable<(string itemType, string fileName)> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 		{
 			if (fileName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) {
 				string resx = Path.ChangeExtension(fileName, ".resx");
@@ -465,7 +465,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							writer.AddResource(entry.Key, entry.Value);
 						}
 					}
-					return new[] { Tuple.Create("EmbeddedResource", resx) };
+					return new[] { ("EmbeddedResource", resx) };
 				} catch (BadImageFormatException) {
 					// if the .resources can't be decoded, just save them as-is
 				} catch (EndOfStreamException) {
@@ -475,7 +475,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write)) {
 				entryStream.CopyTo(fs);
 			}
-			return new[] { Tuple.Create("EmbeddedResource", fileName) };
+			return new[] { ("EmbeddedResource", fileName) };
 		}
 
 		string GetFileNameForResource(string fullName)

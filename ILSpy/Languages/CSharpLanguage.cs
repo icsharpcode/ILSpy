@@ -445,13 +445,13 @@ namespace ICSharpCode.ILSpy
 				base.DebugInfoProvider = assembly.GetDebugInfoOrNull();
 			}
 
-			protected override IEnumerable<Tuple<string, string>> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
+			protected override IEnumerable<(string itemType, string fileName)> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 			{
 				foreach (var handler in App.ExportProvider.GetExportedValues<IResourceFileHandler>()) {
 					if (handler.CanHandle(fileName, options)) {
 						entryStream.Position = 0;
 						fileName = handler.WriteResourceToFile(assembly, fileName, entryStream, options);
-						return new[] { Tuple.Create(handler.EntryType, fileName) };
+						return new[] { (handler.EntryType, fileName) };
 					}
 				}
 				return base.WriteResourceToFile(fileName, resourceName, entryStream);
