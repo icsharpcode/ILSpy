@@ -110,5 +110,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 				Console.WriteLine(field3);
 			}
 		}
+
+		public void Test6(int i)
+		{
+			int field1 = i;
+			string field2 = "Hello World!";
+			if (i < 0) {
+				i = -i;
+			}
+			Console.WriteLine("{0} {1}", field1, field2);
+		}
 	}
 }

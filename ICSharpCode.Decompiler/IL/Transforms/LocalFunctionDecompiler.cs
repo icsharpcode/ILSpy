@@ -46,6 +46,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public List<CallInstruction> UseSites;
 			public IMethod Method;
 			public ILFunction Definition;
+			/// <summary>
+			/// Used to store all synthesized call-site arguments grouped by the parameter index.
+			/// We use a dictionary instead of a simple array, because -1 is used for the this parameter
+			/// and there might be many non-synthesized arguments in between.
+			/// </summary>
 			public Dictionary<int, List<ILInstruction>> LocalFunctionArguments;
 		}
 
@@ -81,13 +86,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var localFunctions = new Dictionary<MethodDefinitionHandle, LocalFunctionInfo>();
 			// Find all local functions declared inside this method, including nested local functions or local functions declared in lambdas.
 			FindUseSites(function, context, localFunctions);
-			ReplaceReferencesToDisplayClassThis(function, localFunctions.Values, context);
-			DetermineCaptureAndDeclarationScopes(function, localFunctions.Values, context);
-			PropagateClosureParameterArguments(function, localFunctions, context);
-			TransformUseSites(localFunctions.Values, context);
+			ReplaceReferencesToDisplayClassThis(localFunctions.Values);
+			DetermineCaptureAndDeclarationScopes(localFunctions.Values);
+			PropagateClosureParameterArguments(localFunctions);
+			TransformUseSites(localFunctions.Values);
 		}
 
-		private void ReplaceReferencesToDisplayClassThis(ILFunction function, Dictionary<MethodDefinitionHandle, LocalFunctionInfo>.ValueCollection localFunctions, ILTransformContext context)
+		private void ReplaceReferencesToDisplayClassThis(Dictionary<MethodDefinitionHandle, LocalFunctionInfo>.ValueCollection localFunctions)
 		{
 			foreach (var info in localFunctions) {
 				var localFunction = info.Definition;
@@ -96,15 +101,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var thisVar = localFunction.Variables.SingleOrDefault(VariableKindExtensions.IsThis);
 				if (thisVar == null)
 					continue;
-				var compatibleArgument = FindCompatibleArgument(function, info, info.UseSites.SelectArray(u => u.Arguments[0]), ignoreStructure: true);
+				var compatibleArgument = FindCompatibleArgument(info, info.UseSites.SelectArray(u => u.Arguments[0]), ignoreStructure: true);
 				Debug.Assert(compatibleArgument != null);
 				context.Step($"Replace 'this' with {compatibleArgument}", localFunction);
 				localFunction.AcceptVisitor(new DelegateConstruction.ReplaceDelegateTargetVisitor(compatibleArgument, thisVar));
-				DetermineCaptureAndDeclarationScope(function, info, -1, compatibleArgument);
+				DetermineCaptureAndDeclarationScope(info, -1, compatibleArgument);
 			}
 		}
 
-		private void DetermineCaptureAndDeclarationScopes(ILFunction function, Dictionary<MethodDefinitionHandle, LocalFunctionInfo>.ValueCollection localFunctions, ILTransformContext context)
+		private void DetermineCaptureAndDeclarationScopes(Dictionary<MethodDefinitionHandle, LocalFunctionInfo>.ValueCollection localFunctions)
 		{
 			foreach (var info in localFunctions) {
 				context.CancellationToken.ThrowIfCancellationRequested();
@@ -118,28 +123,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					var localFunction = info.Definition;
 
 					foreach (var useSite in info.UseSites) {
-						DetermineCaptureAndDeclarationScope(function, info, useSite);
+						DetermineCaptureAndDeclarationScope(info, useSite);
 
-						if (function.Method.IsConstructor && localFunction.DeclarationScope == null) {
+						if (context.Function.Method.IsConstructor && localFunction.DeclarationScope == null) {
 							localFunction.DeclarationScope = BlockContainer.FindClosestContainer(useSite);
 						}
 					}
 
 					if (localFunction.DeclarationScope == null) {
-						localFunction.DeclarationScope = (BlockContainer)function.Body;
+						localFunction.DeclarationScope = (BlockContainer)context.Function.Body;
 					}
 
 					ILFunction declaringFunction = GetDeclaringFunction(localFunction);
-					if (declaringFunction != function) {
-						context.Step($"Move {localFunction.Name} from {function.Name} to {declaringFunction.Name}", localFunction);
-						function.LocalFunctions.Remove(localFunction);
+					if (declaringFunction != context.Function) {
+						context.Step($"Move {localFunction.Name} from {context.Function.Name} to {declaringFunction.Name}", localFunction);
+						context.Function.LocalFunctions.Remove(localFunction);
 						declaringFunction.LocalFunctions.Add(localFunction);
 					}
 
 					if (TryValidateSkipCount(info, out int skipCount) && skipCount != localFunction.ReducedMethod.NumberOfCompilerGeneratedTypeParameters) {
 						Debug.Assert(false);
-						function.Warnings.Add($"Could not decode local function '{info.Method}'");
-						if (declaringFunction != function) {
+						context.Function.Warnings.Add($"Could not decode local function '{info.Method}'");
+						if (declaringFunction != context.Function) {
 							declaringFunction.LocalFunctions.Remove(localFunction);
 						}
 					}
@@ -149,7 +154,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private void TransformUseSites(Dictionary<MethodDefinitionHandle, LocalFunctionInfo>.ValueCollection localFunctions, ILTransformContext context)
+		private void TransformUseSites(Dictionary<MethodDefinitionHandle, LocalFunctionInfo>.ValueCollection localFunctions)
 		{
 			foreach (var info in localFunctions) {
 				context.CancellationToken.ThrowIfCancellationRequested();
@@ -170,9 +175,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private void PropagateClosureParameterArguments(ILFunction function, Dictionary<MethodDefinitionHandle, LocalFunctionInfo> localFunctions, ILTransformContext context)
+		private void PropagateClosureParameterArguments(Dictionary<MethodDefinitionHandle, LocalFunctionInfo> localFunctions)
 		{
-			foreach (var localFunction in function.Descendants.OfType<ILFunction>()) {
+			foreach (var localFunction in context.Function.Descendants.OfType<ILFunction>()) {
 				if (localFunction.Kind != ILFunctionKind.LocalFunction)
 					continue;
 				context.CancellationToken.ThrowIfCancellationRequested();
@@ -202,7 +207,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						var targetVariable = info.Definition.Variables.SingleOrDefault(p => p.Kind == VariableKind.Parameter && p.Index == index);
 						if (targetVariable == null)
 							continue;
-						var compatibleArgument = FindCompatibleArgument(function, info, arguments);
+						var compatibleArgument = FindCompatibleArgument(info, arguments);
 						Debug.Assert(compatibleArgument != null);
 						context.Step($"Replace '{targetVariable}' with '{compatibleArgument}'", info.Definition);
 						info.Definition.AcceptVisitor(new DelegateConstruction.ReplaceDelegateTargetVisitor(compatibleArgument, targetVariable));
@@ -236,27 +241,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private ILInstruction FindCompatibleArgument(ILFunction function, LocalFunctionInfo info, IEnumerable<ILInstruction> arguments, bool ignoreStructure = false)
+		private ILInstruction FindCompatibleArgument(LocalFunctionInfo info, IList<ILInstruction> arguments, bool ignoreStructure = false)
 		{
 			foreach (var arg in arguments) {
 				if (arg is IInstructionWithVariableOperand ld2 && (ignoreStructure || info.Definition.IsDescendantOf(ld2.Variable.Function)))
 					return arg;
-				var v = ResolveAncestorScopeReference(function, arg);
+				var v = ResolveAncestorScopeReference(arg);
 				if (v != null)
 					return new LdLoc(v);
 			}
 			return null;
 		}
 
-		private ILVariable ResolveAncestorScopeReference(ILFunction function, ILInstruction inst)
+		private ILVariable ResolveAncestorScopeReference(ILInstruction inst)
 		{
 			if (!inst.MatchLdFld(out var target, out var field))
 				return null;
 			if (field.Type.Kind != TypeKind.Class)
 				return null;
-			if (!(TransformDisplayClassUsage.IsPotentialClosure(context, field.Type.GetDefinition()) || function.Method.DeclaringType.Equals(field.Type)))
+			if (!(TransformDisplayClassUsage.IsPotentialClosure(context, field.Type.GetDefinition()) || context.Function.Method.DeclaringType.Equals(field.Type)))
 				return null;
-			foreach (var v in function.Descendants.OfType<ILFunction>().SelectMany(f => f.Variables)) {
+			foreach (var v in context.Function.Descendants.OfType<ILFunction>().SelectMany(f => f.Variables)) {
 				if (v.Kind != VariableKind.Local && v.Kind != VariableKind.DisplayClassLocal && v.Kind != VariableKind.StackSlot) {
 					if (!(v.Kind == VariableKind.Parameter && v.Index == -1))
 						continue;
@@ -482,7 +487,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static void TransformToLocalFunctionReference(ILFunction function, CallInstruction useSite)
 		{
-			useSite.Arguments[0].ReplaceWith(new LdNull().WithILRange(useSite.Arguments[0]));
+			ILInstruction target = useSite.Arguments[0];
+			target.ReplaceWith(new LdNull().WithILRange(target));
+			if (target is IInstructionWithVariableOperand withVar && withVar.Variable.Kind == VariableKind.Local) {
+				withVar.Variable.Kind = VariableKind.DisplayClassLocal;
+			}
 			var fnptr = (IInstructionWithMethodOperand)useSite.Arguments[1];
 			var specializeMethod = function.ReducedMethod.Specialize(fnptr.Method.Substitution);
 			var replacement = new LdFtn(specializeMethod).WithILRange((ILInstruction)fnptr);
@@ -518,19 +527,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			useSite.ReplaceWith(replacement);
 		}
 
-		void DetermineCaptureAndDeclarationScope(ILFunction function, LocalFunctionInfo info, CallInstruction useSite)
+		void DetermineCaptureAndDeclarationScope(LocalFunctionInfo info, CallInstruction useSite)
 		{
 			int firstArgumentIndex = info.Definition.Method.IsStatic ? 0 : 1;
 			for (int i = useSite.Arguments.Count - 1; i >= firstArgumentIndex; i--) {
-				if (!DetermineCaptureAndDeclarationScope(function, info, i - firstArgumentIndex, useSite.Arguments[i]))
+				if (!DetermineCaptureAndDeclarationScope(info, i - firstArgumentIndex, useSite.Arguments[i]))
 					break;
 			}
 			if (firstArgumentIndex > 0) {
-				DetermineCaptureAndDeclarationScope(function, info, -1, useSite.Arguments[0]);
+				DetermineCaptureAndDeclarationScope(info, -1, useSite.Arguments[0]);
 			}
 		}
 
-		bool DetermineCaptureAndDeclarationScope(ILFunction root, LocalFunctionInfo info, int parameterIndex, ILInstruction arg)
+		bool DetermineCaptureAndDeclarationScope(LocalFunctionInfo info, int parameterIndex, ILInstruction arg)
 		{
 			ILFunction function = info.Definition;
 			ILVariable closureVar;
@@ -539,7 +548,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 			}
 			if (!(arg.MatchLdLoc(out closureVar) || arg.MatchLdLoca(out closureVar))) {
-				closureVar = ResolveAncestorScopeReference(root, arg);
+				closureVar = ResolveAncestorScopeReference(arg);
 				if (closureVar == null)
 					return false;
 			}
@@ -556,6 +565,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				BlockContainer combinedScope = FindCommonAncestorInstruction<BlockContainer>(closureVar.CaptureScope, additionalScope);
 				Debug.Assert(combinedScope != null);
 				closureVar.CaptureScope = combinedScope;
+			}
+			if (closureVar.Kind == VariableKind.Local) {
+				closureVar.Kind = VariableKind.DisplayClassLocal;
 			}
 			if (function.DeclarationScope == null)
 				function.DeclarationScope = closureVar.CaptureScope;

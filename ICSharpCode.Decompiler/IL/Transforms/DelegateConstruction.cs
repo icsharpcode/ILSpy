@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// if the delegate target is ldobj(ldsflda field).
 					if (ldobj.Target is LdsFlda)
 						return true;
-					// TODO : ldfld chains must be validate more thoroughly, i.e., we should make sure
+					// TODO : ldfld chains must be validated more thoroughly, i.e., we should make sure
 					// that the value of the field is never changed.
 					ILInstruction target = ldobj;
 					while (target is LdObj || target is LdFlda) {

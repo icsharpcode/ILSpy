@@ -114,5 +114,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 				}
 			}
 		}
+
+		public void Test6(int i)
+		{
+			DisplayClass displayClass = new DisplayClass {
+				field1 = i,
+				field2 = "Hello World!"
+			};
+			if (i < 0) {
+				i = -i;
+			}
+			Console.WriteLine("{0} {1}", displayClass.field1, displayClass.field2);
+		}
 	}
 }
