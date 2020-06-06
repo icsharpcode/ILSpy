@@ -721,7 +721,7 @@
     <value>Apply Windows Runtime projections on loaded assemblies</value>
   </data>
   <data name="SearchMSDN" xml:space="preserve">
-    <value>Search MSDN...</value>
+    <value>Search Microsoft Docs...</value>
   </data>
   <data name="CannotAnalyzeMissingRef" xml:space="preserve">
     <value>Entity could not be resolved. Cannot analyze entities from missing assembly references. Add the missing reference and try again.</value>
@@ -866,18 +866,6 @@ Do you want to continue?</value>
   </data>
   <data name="CultureLabel" xml:space="preserve">
     <value>Culture</value>
-  </data>
-  <data name="DecompilerSettings.AggressiveScalarReplacementOfAggregates" xml:space="preserve">
-    <value>Aggressively perform Scalar Replacement Of Aggregates (SROA)</value>
-  </data>
-  <data name="OpenSelfContainedExecutableMessage" xml:space="preserve">
-    <value>You are trying to open a single-file executable (app bundle). In order to work with this type of program, ILSpy will
-
-(i) show you a dialog to select a folder to extract the bundle to
-(ii) extract the assemblies (might take a few seconds)
-(iii) show you a dialog to select one or more of those extracted assemblies to decompile
-
-Do you want to proceed?</value>
   </data>
   <data name="NewTab" xml:space="preserve">
     <value>New Tab</value>

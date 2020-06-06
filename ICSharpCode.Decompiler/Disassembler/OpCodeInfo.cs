@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return unchecked(982451629 * Code.GetHashCode() + 982451653 * Name.GetHashCode());
 		}
 
-		public string Link => "http://msdn.microsoft.com/library/system.reflection.emit.opcodes." + EncodedName.ToLowerInvariant() + ".aspx";
+		public string Link => "https://docs.microsoft.com/dotnet/api/system.reflection.emit.opcodes." + EncodedName.ToLowerInvariant();
 		public string EncodedName {
 			get {
 				if (encodedName != null)

@@ -56,8 +56,6 @@
     <PackageReference Include="Mono.Cecil" Version="0.10.3" />
     <PackageReference Include="OSVersionHelper" Version="1.0.11" />
     <PackageReference Include="DataGridExtensions" Version="2.1.1" />
-    <PackageReference Include="Microsoft.NET.HostModel" Version="3.1.4" />
-    <PackageReference Include="Ookii.Dialogs.Wpf" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -79,14 +77,15 @@
     <Compile Include="Analyzers\AnalyzerContext.cs" />
     <Compile Include="Analyzers\AnalyzerScope.cs" />
     <Compile Include="Analyzers\Builtin\AttributeAppliedToAnalyzer.cs" />
-    <Compile Include="Analyzers\Builtin\EventImplementsInterfaceAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\EventImplementedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\EventOverriddenByAnalyzer.cs" />
-    <Compile Include="Analyzers\Builtin\MethodImplementsInterfaceAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\MethodImplementedByAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\MemberImplementsInterfaceAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodOverriddenByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodVirtualUsedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodUsedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodUsesAnalyzer.cs" />
-    <Compile Include="Analyzers\Builtin\PropertyImplementsInterfaceAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\PropertyImplementedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\PropertyOverriddenByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\TypeExposedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\TypeInstantiatedByAnalyzer.cs" />

@@ -83,24 +83,35 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 			}
 
+			packageBasePaths.Add(basePath);
+
 			var depsJsonFileName = Path.Combine(basePath, $"{assemblyName}.deps.json");
-			if (!File.Exists(depsJsonFileName)) {
-				loadInfo?.AddMessage(assemblyName, MessageKind.Warning, $"{assemblyName}.deps.json could not be found!");
-				return;
-			}
+			if (File.Exists(depsJsonFileName)) {
+				packages = LoadPackageInfos(depsJsonFileName, targetFrameworkIdString).ToArray();
 
-			packages = LoadPackageInfos(depsJsonFileName, targetFrameworkIdString).ToArray();
-
-			foreach (var path in LookupPaths) {
-				foreach (var p in packages) {
-					foreach (var item in p.RuntimeComponents) {
-						var itemPath = Path.GetDirectoryName(item);
-						var fullPath = Path.Combine(path, p.Name, p.Version, itemPath).ToLowerInvariant();
-						if (Directory.Exists(fullPath))
-							packageBasePaths.Add(fullPath);
+				foreach (var path in LookupPaths) {
+					foreach (var p in packages) {
+						foreach (var item in p.RuntimeComponents) {
+							var itemPath = Path.GetDirectoryName(item);
+							var fullPath = Path.Combine(path, p.Name, p.Version, itemPath).ToLowerInvariant();
+							if (Directory.Exists(fullPath))
+								packageBasePaths.Add(fullPath);
+						}
 					}
 				}
+			} else {
+				loadInfo?.AddMessage(assemblyName, MessageKind.Warning, $"{assemblyName}.deps.json could not be found!");
 			}
+		}
+
+		public void AddSearchDirectory(string path)
+		{
+			this.packageBasePaths.Add(path);
+		}
+
+		public void RemoveSearchDirectory(string path)
+		{
+			this.packageBasePaths.Remove(path);
 		}
 
 		public string TryResolveDotNetCore(IAssemblyReference name)
