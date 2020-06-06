@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			ProjectGuid = projectGuid;
 			AssemblyResolver = assemblyResolver ?? throw new ArgumentNullException(nameof(assemblyResolver));
 			DebugInfoProvider = debugInfoProvider;
-			projectWriter = ProjectFileWriterDefault.Create();
+			projectWriter = Settings.UseSdkStyleProjectFormat ? ProjectFileWriterSdkStyle.Create() : ProjectFileWriterDefault.Create();
 		}
 
 		// per-run members

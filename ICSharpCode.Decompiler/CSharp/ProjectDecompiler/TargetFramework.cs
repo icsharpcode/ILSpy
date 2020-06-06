@@ -42,7 +42,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			Identifier = identifier;
 			VersionNumber = version;
-			VersionString = "v" + GetVersionString(version);
+			VersionString = "v" + GetVersionString(version, withDots: true);
+			Moniker = GetTargetFrameworkMoniker(Identifier, version);
 			Profile = profile;
 			IsPortableClassLibrary = identifier == DotNetPortableIdentifier;
 		}
@@ -52,6 +53,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		public string Identifier { get; }
 		
+		/// <summary>
+		/// Gets the target framework moniker. Can be null if not supported.
+		/// </summary>
+		public string Moniker { get; }
+
 		/// <summary>
 		/// Gets the target framework version, e.g. "v4.5".
 		/// </summary>
@@ -72,19 +78,61 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		public bool IsPortableClassLibrary { get; }
 
-		static string GetVersionString(int version)
+		static string GetTargetFrameworkMoniker(string frameworkIdentifier, int version)
+		{
+			// Reference: https://docs.microsoft.com/en-us/dotnet/standard/frameworks
+			switch (frameworkIdentifier) {
+				case null:
+				case ".NETFramework":
+					return "net" + GetVersionString(version, withDots: false);
+
+				case ".NETCoreApp":
+					return "netcoreapp" + GetVersionString(version, withDots: true);
+
+				case ".NETStandard":
+					return "netstandard" + GetVersionString(version, withDots: true);
+
+				case "Silverlight":
+					return "sl" + version / 100;
+
+				case ".NETCore":
+					return "netcore" + GetVersionString(version, withDots: false);
+
+				case "WindowsPhone":
+					return "wp" + GetVersionString(version, withDots: false, omitMinorWhenZero: true);
+
+				case ".NETMicroFramework":
+					return "netmf";
+
+				default:
+					return null;
+			}
+		}
+
+		static string GetVersionString(int version, bool withDots, bool omitMinorWhenZero = false)
 		{
 			int major = version / 100;
 			int minor = version % 100 / 10;
 			int patch = version % 10;
 
+			if (omitMinorWhenZero && minor == 0 && patch == 0) {
+				return major.ToString();
+			}
+
 			var versionBuilder = new StringBuilder(8);
 			versionBuilder.Append(major);
-			versionBuilder.Append('.');
+
+			if (withDots) {
+				versionBuilder.Append('.');
+			}
+
 			versionBuilder.Append(minor);
 
 			if (patch != 0) {
-				versionBuilder.Append('.');
+				if (withDots) {
+					versionBuilder.Append('.');
+				}
+
 				versionBuilder.Append(patch);
 			}
 

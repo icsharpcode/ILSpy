@@ -64,6 +64,7 @@
     <Compile Include="CSharp\ProjectDecompiler\IProjectFileWriter.cs" />
     <Compile Include="CSharp\OutputVisitor\GenericGrammarAmbiguityVisitor.cs" />
     <Compile Include="CSharp\ProjectDecompiler\IProjectInfoProvider.cs" />
+    <Compile Include="CSharp\ProjectDecompiler\ProjectFileWriterSdkStyle.cs" />
     <Compile Include="CSharp\ProjectDecompiler\ProjectFileWriterDefault.cs" />
     <Compile Include="CSharp\RequiredNamespaceCollector.cs" />
     <Compile Include="CSharp\SequencePointBuilder.cs" />

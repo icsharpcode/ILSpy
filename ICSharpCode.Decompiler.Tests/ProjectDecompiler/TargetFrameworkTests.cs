@@ -88,5 +88,34 @@ namespace ICSharpCode.Decompiler.Tests
 			Assert.AreEqual(identifier, targetFramework.Identifier);
 			Assert.AreEqual(profile, targetFramework.Profile);
 		}
+
+		[TestCase(null, 350, "net35")]
+		[TestCase(".NETFramework", 350, "net35")]
+		[TestCase(".NETFramework", 400, "net40")]
+		[TestCase(".NETFramework", 451, "net451")]
+		[TestCase(".NETCoreApp", 200, "netcoreapp2.0")]
+		[TestCase(".NETCoreApp", 310, "netcoreapp3.1")]
+		[TestCase(".NETStandard", 130, "netstandard1.3")]
+		[TestCase(".NETStandard", 200, "netstandard2.0")]
+		[TestCase("Silverlight", 400, "sl4")]
+		[TestCase("Silverlight", 550, "sl5")]
+		[TestCase(".NETCore", 450, "netcore45")]
+		[TestCase(".NETCore", 451, "netcore451")]
+		[TestCase("WindowsPhone", 700, "wp7")]
+		[TestCase("WindowsPhone", 810, "wp81")]
+		[TestCase(".NETMicroFramework", 100, "netmf")]
+		[TestCase(".NETMicroFramework", 210, "netmf")]
+		[TestCase(".NETPortable", 100, null)]
+		[TestCase("Unsupported", 100, null)]
+		public void VerifyMoniker(string identifier, int version, string expectedMoniker)
+		{
+			// Arrange - nothing
+
+			// Act
+			var targetFramework = new TargetFramework(identifier, version, profile: null);
+
+			// Assert
+			Assert.AreEqual(expectedMoniker, targetFramework.Moniker);
+		}
 	}
 }
