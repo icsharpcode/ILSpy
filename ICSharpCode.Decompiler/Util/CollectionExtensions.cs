@@ -12,10 +12,12 @@ namespace ICSharpCode.Decompiler.Util
 			value = pair.Value;
 		}
 
+#if !NETCORE
 		public static IEnumerable<(A, B)> Zip<A, B>(this IEnumerable<A> input1, IEnumerable<B> input2)
 		{
 			return input1.Zip(input2, (a, b) => (a, b));
 		}
+#endif
 
 		public static IEnumerable<(A, B)> ZipLongest<A, B>(this IEnumerable<A> input1, IEnumerable<B> input2)
 		{
@@ -51,10 +53,12 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
+#if !NETCORE
 		public static HashSet<T> ToHashSet<T>(this IEnumerable<T> input)
 		{
 			return new HashSet<T>(input);
 		}
+#endif
 
 		public static IEnumerable<T> SkipLast<T>(this IReadOnlyCollection<T> input, int count)
 		{
@@ -323,7 +327,7 @@ namespace ICSharpCode.Decompiler.Util
 			return first;
 		}
 
-		#region Aliases/shortcuts for Enumerable extension methods
+#region Aliases/shortcuts for Enumerable extension methods
 		public static bool Any<T>(this ICollection<T> list) => list.Count > 0;
 		public static bool Any<T>(this T[] array, Predicate<T> match) => Array.Exists(array, match);
 		public static bool Any<T>(this List<T> list, Predicate<T> match) => list.Exists(match);
@@ -335,6 +339,6 @@ namespace ICSharpCode.Decompiler.Util
 		public static T FirstOrDefault<T>(this List<T> list, Predicate<T> predicate) => list.Find(predicate);
 
 		public static T Last<T>(this IList<T> list) => list[list.Count - 1];
-		#endregion
+#endregion
 	}
 }
