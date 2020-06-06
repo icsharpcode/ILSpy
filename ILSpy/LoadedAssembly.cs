@@ -253,6 +253,11 @@ namespace ICSharpCode.ILSpy
 				this.parent = parent;
 			}
 
+			public bool IsGacAssembly(IAssemblyReference reference)
+			{
+				return parent.universalResolver?.IsGacAssembly(reference) == true;
+			}
+
 			public PEFile Resolve(Decompiler.Metadata.IAssemblyReference reference)
 			{
 				return parent.LookupReferencedAssembly(reference)?.GetPEFileOrNull();

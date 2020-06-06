@@ -45,18 +45,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 	public class WholeProjectDecompiler
 	{
 		#region Settings
-		DecompilerSettings settings = new DecompilerSettings();
-
-		public DecompilerSettings Settings {
-			get {
-				return settings;
-			}
-			set {
-				if (value == null)
-					throw new ArgumentNullException();
-				settings = value;
-			}
-		}
+		/// <summary>
+		/// Gets the setting this instance uses for decompiling.
+		/// </summary>
+		public DecompilerSettings Settings { get; }
 
 		LanguageVersion? languageVersion;
 
@@ -71,15 +63,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		public IAssemblyResolver AssemblyResolver { get; set; }
+		public IAssemblyResolver AssemblyResolver { get; }
 
-		public IDebugInfoProvider DebugInfoProvider { get; set; }
+		public IDebugInfoProvider DebugInfoProvider { get; }
 
 		/// <summary>
 		/// The MSBuild ProjectGuid to use for the new project.
-		/// <c>null</c> to automatically generate a new GUID.
 		/// </summary>
-		public Guid? ProjectGuid { get; set; }
+		public Guid ProjectGuid { get; }
 
 		/// <summary>
 		/// Path to the snk file to use for signing.
@@ -91,6 +82,31 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		public IProgress<DecompilationProgress> ProgressIndicator { get; set; }
 		#endregion
+
+		public WholeProjectDecompiler(IAssemblyResolver assemblyResolver)
+			: this(new DecompilerSettings(), assemblyResolver, debugInfoProvider: null)
+		{
+		}
+
+		public WholeProjectDecompiler(
+			DecompilerSettings settings,
+			IAssemblyResolver assemblyResolver,
+			IDebugInfoProvider debugInfoProvider)
+			: this(settings, Guid.NewGuid(), assemblyResolver, debugInfoProvider)
+		{
+		}
+
+		protected WholeProjectDecompiler(
+			DecompilerSettings settings,
+			Guid projectGuid,
+			IAssemblyResolver assemblyResolver,
+			IDebugInfoProvider debugInfoProvider)
+		{
+			Settings = settings ?? throw new ArgumentNullException(nameof(settings));
+			ProjectGuid = projectGuid;
+			AssemblyResolver = assemblyResolver ?? throw new ArgumentNullException(nameof(assemblyResolver));
+			DebugInfoProvider = debugInfoProvider;
+		}
 
 		// per-run members
 		HashSet<string> directories = new HashSet<string>(Platform.FileNameComparer);
@@ -132,7 +148,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			const string ns = "http://schemas.microsoft.com/developer/msbuild/2003";
 			string platformName = GetPlatformName(module);
-			Guid guid = this.ProjectGuid ?? Guid.NewGuid();
+			Guid guid = this.ProjectGuid;
 			var targetFramework = DetectTargetFramework(module);
 
 			List<Guid> typeGuids = new List<Guid>();
@@ -228,7 +244,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						w.WriteStartElement("Reference");
 						w.WriteAttributeString("Include", r.Name);
 						var asm = AssemblyResolver.Resolve(r);
-						if (!IsGacAssembly(r, asm)) {
+						if (!AssemblyResolver.IsGacAssembly(r)) {
 							if (asm != null) {
 								w.WriteElementString("HintPath", asm.FileName);
 							}
@@ -313,18 +329,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			return result;
 		}
 
-		protected virtual bool IsGacAssembly(Metadata.IAssemblyReference r, Metadata.PEFile asm)
-		{
-			return false;
-		}
 		#endregion
 
 		#region WriteCodeFilesInProject
-		protected virtual bool IncludeTypeWhenDecompilingProject(Metadata.PEFile module, TypeDefinitionHandle type)
+		protected virtual bool IncludeTypeWhenDecompilingProject(PEFile module, TypeDefinitionHandle type)
 		{
 			var metadata = module.Metadata;
 			var typeDef = metadata.GetTypeDefinition(type);
-			if (metadata.GetString(typeDef.Name) == "<Module>" || CSharpDecompiler.MemberIsHidden(module, type, settings))
+			if (metadata.GetString(typeDef.Name) == "<Module>" || CSharpDecompiler.MemberIsHidden(module, type, Settings))
 				return false;
 			if (metadata.GetString(typeDef.Namespace) == "XamlGeneratedNamespace" && metadata.GetString(typeDef.Name) == "GeneratedInternalTypeHelper")
 				return false;
@@ -333,7 +345,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		CSharpDecompiler CreateDecompiler(DecompilerTypeSystem ts)
 		{
-			var decompiler = new CSharpDecompiler(ts, settings);
+			var decompiler = new CSharpDecompiler(ts, Settings);
 			decompiler.DebugInfoProvider = DebugInfoProvider;
 			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			decompiler.AstTransforms.Add(new RemoveCLSCompliantAttribute());
@@ -352,7 +364,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				Directory.CreateDirectory(Path.Combine(targetDirectory, prop));
 			string assemblyInfo = Path.Combine(prop, "AssemblyInfo.cs");
 			using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, assemblyInfo))) {
-				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
+				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
 			}
 			return new[] { ("Compile", assemblyInfo) };
 		}
@@ -374,8 +386,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					}
 				}, StringComparer.OrdinalIgnoreCase).ToList();
 			int total = files.Count;
-			var progress = this.ProgressIndicator;
-			DecompilerTypeSystem ts = new DecompilerTypeSystem(module, AssemblyResolver, settings);
+			var progress = ProgressIndicator;
+			DecompilerTypeSystem ts = new DecompilerTypeSystem(module, AssemblyResolver, Settings);
 			Parallel.ForEach(
 				files,
 				new ParallelOptions {
@@ -388,7 +400,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 							CSharpDecompiler decompiler = CreateDecompiler(ts);
 							decompiler.CancellationToken = cancellationToken;
 							var syntaxTree = decompiler.DecompileTypes(file.ToArray());
-							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
+							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
 						} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
 							throw new DecompilerException(module, $"Error decompiling for '{file.Key}'", innerException);
 						}

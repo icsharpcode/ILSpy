@@ -46,6 +46,7 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		PEFile Resolve(IAssemblyReference reference);
 		PEFile ResolveModule(PEFile mainModule, string moduleName);
+		bool IsGacAssembly(IAssemblyReference reference);
 	}
 
 	public interface IAssemblyReference

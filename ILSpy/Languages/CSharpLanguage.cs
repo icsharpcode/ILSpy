@@ -438,12 +438,10 @@ namespace ICSharpCode.ILSpy
 			readonly DecompilationOptions options;
 
 			public ILSpyWholeProjectDecompiler(LoadedAssembly assembly, DecompilationOptions options)
+				: base(options.DecompilerSettings, assembly.GetAssemblyResolver(), assembly.GetDebugInfoOrNull())
 			{
 				this.assembly = assembly;
 				this.options = options;
-				base.Settings = options.DecompilerSettings;
-				base.AssemblyResolver = assembly.GetAssemblyResolver();
-				base.DebugInfoProvider = assembly.GetDebugInfoOrNull();
 			}
 
 			protected override IEnumerable<(string itemType, string fileName)> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
