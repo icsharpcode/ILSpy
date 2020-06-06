@@ -24,6 +24,7 @@ using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 using System.Threading;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
 using Microsoft.Build.Locator;

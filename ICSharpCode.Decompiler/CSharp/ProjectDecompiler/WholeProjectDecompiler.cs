@@ -37,7 +37,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.DebugInfo;
 
-namespace ICSharpCode.Decompiler.CSharp
+namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 {
 	/// <summary>
 	/// Decompiles an assembly into a visual studio project file.

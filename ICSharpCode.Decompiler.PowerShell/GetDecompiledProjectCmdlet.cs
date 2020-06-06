@@ -5,6 +5,7 @@ using System.Management.Automation;
 using System.Threading;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.PowerShell

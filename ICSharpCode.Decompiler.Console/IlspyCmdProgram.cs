@@ -13,6 +13,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.PdbProvider;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 // ReSharper disable All
 
 namespace ICSharpCode.Decompiler.Console
