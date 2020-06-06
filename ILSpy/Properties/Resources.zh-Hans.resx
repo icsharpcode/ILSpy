@@ -727,7 +727,7 @@
     <value>在已加载的程序集上应用 Windows 运行时投影</value>
   </data>
   <data name="SearchMSDN" xml:space="preserve">
-    <value>搜索MSDN...</value>
+    <value>搜索Microsoft Docs...</value>
   </data>
   <data name="About" xml:space="preserve">
     <value>关于</value>
