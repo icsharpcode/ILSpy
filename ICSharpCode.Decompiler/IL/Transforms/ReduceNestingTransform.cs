@@ -364,13 +364,18 @@ namespace ICSharpCode.Decompiler.IL
 			ILInstruction leavingInst = leave.TargetContainer;
 			Debug.Assert(!leavingInst.HasFlag(InstructionFlags.EndPointUnreachable));
 			while (!(leavingInst.Parent is Block b) || leavingInst == b.Instructions.Last()) {
-				// cannot duplicate leaves from finally containers
-				if (leavingInst.Parent is TryFinally tryFinally && leavingInst.SlotInfo == TryFinally.FinallyBlockSlot) {
-					Debug.Assert(leave.TargetContainer == tryFinally.FinallyBlock); //finally cannot have control flow
-					return false;
-				}
-
 				leavingInst = leavingInst.Parent;
+
+				if (leavingInst is TryFinally tryFinally) { 
+					if (leavingInst.SlotInfo == TryFinally.FinallyBlockSlot) { // cannot duplicate leaves from finally containers
+						Debug.Assert(leave.TargetContainer == tryFinally.FinallyBlock); //finally cannot have control flow
+						return false;
+					}
+					if (leavingInst.HasFlag(InstructionFlags.EndPointUnreachable)) { // finally block changes return value/throws an exception? Yikes. Lets leave it alone
+						Debug.Assert(tryFinally.FinallyBlock.HasFlag(InstructionFlags.EndPointUnreachable));
+						return false;
+					}
+				}
 				Debug.Assert(!leavingInst.HasFlag(InstructionFlags.EndPointUnreachable));
 				Debug.Assert(!(leavingInst is ILFunction));
 			}
