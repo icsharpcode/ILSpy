@@ -1110,6 +1110,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use new SDK style format for generated project files (*.csproj).
+        /// </summary>
+        public static string DecompilerSettings_UseSdkStyleProjectFormat {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UseSdkStyleProjectFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use stackalloc initializer syntax.
         /// </summary>
         public static string DecompilerSettings_UseStackallocInitializerSyntax {

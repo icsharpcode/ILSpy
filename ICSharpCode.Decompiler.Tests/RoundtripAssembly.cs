@@ -24,6 +24,7 @@ using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 using System.Threading;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
 using Microsoft.Build.Locator;
@@ -54,7 +55,7 @@ namespace ICSharpCode.Decompiler.Tests
 		public void NewtonsoftJson_pcl_debug()
 		{
 			try {
-				RunWithTest("Newtonsoft.Json-pcl-debug", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
+				RunWithTest("Newtonsoft.Json-pcl-debug", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll", useOldProjectFormat: true);
 			} catch (CompilationFailedException) {
 				Assert.Ignore("Cannot yet re-compile PCL projects.");
 			}
@@ -102,9 +103,9 @@ namespace ICSharpCode.Decompiler.Tests
 			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe");
 		}
 
-		void RunWithTest(string dir, string fileToRoundtrip, string fileToTest, string keyFile = null)
+		void RunWithTest(string dir, string fileToRoundtrip, string fileToTest, string keyFile = null, bool useOldProjectFormat = false)
 		{
-			RunInternal(dir, fileToRoundtrip, outputDir => RunTest(outputDir, fileToTest), keyFile);
+			RunInternal(dir, fileToRoundtrip, outputDir => RunTest(outputDir, fileToTest), keyFile, useOldProjectFormat);
 		}
 
 		void RunWithOutput(string dir, string fileToRoundtrip)
@@ -119,7 +120,7 @@ namespace ICSharpCode.Decompiler.Tests
 			RunInternal(dir, fileToRoundtrip, outputDir => { });
 		}
 
-		void RunInternal(string dir, string fileToRoundtrip, Action<string> testAction, string snkFilePath = null)
+		void RunInternal(string dir, string fileToRoundtrip, Action<string> testAction, string snkFilePath = null, bool useOldProjectFormat = false)
 		{
 			if (!Directory.Exists(TestDir)) {
 				Assert.Ignore($"Assembly-roundtrip test ignored: test directory '{TestDir}' needs to be checked out separately." + Environment.NewLine +
@@ -147,16 +148,22 @@ namespace ICSharpCode.Decompiler.Tests
 					Stopwatch w = Stopwatch.StartNew();
 					using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read)) {
 						PEFile module = new PEFile(file, fileStream, PEStreamOptions.PrefetchEntireImage);
-						var resolver = new UniversalAssemblyResolver(file, false, module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
+						var resolver = new TestAssemblyResolver(file, inputDir, module.Reader.DetectTargetFrameworkId());
 						resolver.AddSearchDirectory(inputDir);
 						resolver.RemoveSearchDirectory(".");
-						var decompiler = new TestProjectDecompiler(inputDir);
-						decompiler.AssemblyResolver = resolver;
+
+						// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
+						var projectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
+
 						// Let's limit the roundtrip tests to C# 7.3 for now; because 8.0 is still in preview
 						// and the generated project doesn't build as-is.
-						decompiler.Settings = new DecompilerSettings(LanguageVersion.CSharp7_3);
-						// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
-						decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
+						var settings = new DecompilerSettings(LanguageVersion.CSharp7_3);
+						if (useOldProjectFormat) {
+							settings.UseSdkStyleProjectFormat = false;
+						}
+
+						var decompiler = new TestProjectDecompiler(projectGuid, resolver, settings);
+
 						if (snkFilePath != null) {
 							decompiler.StrongNameKeyFile = Path.Combine(inputDir, snkFilePath);
 						}
@@ -208,7 +215,7 @@ namespace ICSharpCode.Decompiler.Tests
 		static void Compile(string projectFile, string outputDir)
 		{
 			var info = new ProcessStartInfo(FindMSBuild());
-			info.Arguments = $"/nologo /v:minimal /p:OutputPath=\"{outputDir}\" \"{projectFile}\"";
+			info.Arguments = $"/nologo /v:minimal /restore /p:OutputPath=\"{outputDir}\" \"{projectFile}\"";
 			info.CreateNoWindow = true;
 			info.UseShellExecute = false;
 			info.RedirectStandardOutput = true;
@@ -259,18 +266,9 @@ namespace ICSharpCode.Decompiler.Tests
 
 		class TestProjectDecompiler : WholeProjectDecompiler
 		{
-			readonly string[] localAssemblies;
-
-			public TestProjectDecompiler(string baseDir)
+			public TestProjectDecompiler(Guid projecGuid, IAssemblyResolver resolver, DecompilerSettings settings)
+				: base(settings, projecGuid, resolver, debugInfoProvider: null)
 			{
-				localAssemblies = new DirectoryInfo(baseDir).EnumerateFiles("*.dll").Select(f => f.FullName).ToArray();
-			}
-
-			protected override bool IsGacAssembly(IAssemblyReference r, PEFile asm)
-			{
-				if (asm == null)
-					return false;
-				return !localAssemblies.Contains(asm.FileName);
 			}
 		}
 

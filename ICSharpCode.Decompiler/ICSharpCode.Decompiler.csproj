@@ -61,9 +61,15 @@
     <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\CallBuilder.cs" />
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
+    <Compile Include="CSharp\ProjectDecompiler\IProjectFileWriter.cs" />
     <Compile Include="CSharp\OutputVisitor\GenericGrammarAmbiguityVisitor.cs" />
+    <Compile Include="CSharp\ProjectDecompiler\IProjectInfoProvider.cs" />
+    <Compile Include="CSharp\ProjectDecompiler\ProjectFileWriterSdkStyle.cs" />
+    <Compile Include="CSharp\ProjectDecompiler\ProjectFileWriterDefault.cs" />
     <Compile Include="CSharp\RequiredNamespaceCollector.cs" />
     <Compile Include="CSharp\SequencePointBuilder.cs" />
+    <Compile Include="CSharp\ProjectDecompiler\TargetFramework.cs" />
+    <Compile Include="CSharp\ProjectDecompiler\TargetServices.cs" />
     <Compile Include="IL\Transforms\IndexRangeTransform.cs" />
     <Compile Include="CSharp\TranslatedStatement.cs" />
     <Compile Include="DebugInfo\KnownGuids.cs" />
@@ -277,7 +283,7 @@
     <Compile Include="CSharp\Transforms\IAstTransform.cs" />
     <Compile Include="CSharp\Transforms\IntroduceUnsafeModifier.cs" />
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
-    <Compile Include="CSharp\WholeProjectDecompiler.cs" />
+    <Compile Include="CSharp\ProjectDecompiler\WholeProjectDecompiler.cs" />
     <Compile Include="CSharp\Transforms\AddXmlDocumentationTransform.cs" />
     <Compile Include="DecompileRun.cs" />
     <Compile Include="Disassembler\ILParser.cs" />

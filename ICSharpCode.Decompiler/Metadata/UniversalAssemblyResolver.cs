@@ -173,6 +173,11 @@ namespace ICSharpCode.Decompiler.Metadata
 			return new PEFile(moduleFileName, new FileStream(moduleFileName, FileMode.Open, FileAccess.Read), streamOptions, metadataOptions);
 		}
 
+		public virtual bool IsGacAssembly(IAssemblyReference reference)
+		{
+			return GetAssemblyInGac(reference) != null;
+		}
+
 		public string FindAssemblyFile(IAssemblyReference name)
 		{
 			if (name.IsWindowsRuntime) {

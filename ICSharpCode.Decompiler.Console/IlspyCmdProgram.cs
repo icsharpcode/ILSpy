@@ -13,6 +13,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.PdbProvider;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 // ReSharper disable All
 
 namespace ICSharpCode.Decompiler.Console
@@ -175,14 +176,12 @@ Remarks:
 
 		int DecompileAsProject(string assemblyFileName, string outputDirectory)
 		{
-			var decompiler = new WholeProjectDecompiler() { Settings = GetSettings() };
 			var module = new PEFile(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Reader.DetectTargetFrameworkId());
 			foreach (var path in ReferencePaths) {
 				resolver.AddSearchDirectory(path);
 			}
-			decompiler.AssemblyResolver = resolver;
-			decompiler.DebugInfoProvider = TryLoadPDB(module);
+			var decompiler = new WholeProjectDecompiler(GetSettings(), resolver, TryLoadPDB(module));
 			decompiler.DecompileProject(module, outputDirectory);
 			return 0;
 		}

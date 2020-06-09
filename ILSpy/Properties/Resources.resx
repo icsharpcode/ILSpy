@@ -870,4 +870,7 @@ Do you want to continue?</value>
   <data name="NewTab" xml:space="preserve">
     <value>New Tab</value>
   </data>
+  <data name="DecompilerSettings.UseSdkStyleProjectFormat" xml:space="preserve">
+    <value>Use new SDK style format for generated project files (*.csproj)</value>
+  </data>
 </root>
