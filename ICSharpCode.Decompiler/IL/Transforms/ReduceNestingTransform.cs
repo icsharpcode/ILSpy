@@ -307,6 +307,16 @@ namespace ICSharpCode.Decompiler.IL
 
 			context.Step("Extract default case of switch", switchContainer);
 
+			// if the switch container is followed by an instruction, it must be a Leave from a try/pinned/etc or exitInst
+			// When it's a leave from a container, it's better to let the extracted default block 'fall through' rather than duplicating whatever
+			// instruction eventually follows the container
+			if (parentBlock.Instructions.SecondToLastOrDefault() == switchContainer) {
+				if (defaultBlock.Instructions.Last().MatchLeave(switchContainer))
+					defaultBlock.Instructions.Last().ReplaceWith(parentBlock.Instructions.Last());
+				
+				parentBlock.Instructions.RemoveLast();
+			}
+
 			// replace all break; statements with the exitInst
 			var leaveInstructions = switchContainer.Descendants.Where(inst => inst.MatchLeave(switchContainer));
 			foreach (var leaveInst in leaveInstructions.ToArray())
@@ -320,13 +330,6 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var block in defaultBlocks)
 				switchContainer.Blocks.Remove(block);
 
-			// replace the parent block exit with the default case instructions
-			if (parentBlock.Instructions.Last() == exitInst) {
-				parentBlock.Instructions.RemoveLast();
-			}
-			// Note: even though we don't check that the switchContainer is near the end of the block,
-			// we know this must be the case because we know "exitInst" is a leave/branch and directly
-			// follows the switchContainer.
 			Debug.Assert(parentBlock.Instructions.Last() == switchContainer);
 			parentBlock.Instructions.AddRange(defaultBlock.Instructions);
 

@@ -399,5 +399,69 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				throw new Exception();
 			}
 		}
+
+		public void SwitchInTry()
+		{
+			try {
+				switch (I(0)) {
+					case 1:
+						Console.WriteLine(1);
+						return;
+					case 2:
+						Console.WriteLine(2);
+						return;
+				}
+				Console.WriteLine(3);
+				for (int i = 0; i < 10; i++) {
+					Console.WriteLine(i);
+				}
+			} catch {
+				throw;
+			}
+		}
+
+		public void SwitchInTryInLoopReturn()
+		{
+			for (int i = 0; i < 10; i++) {
+				try {
+					switch (I(0)) {
+						case 1:
+							Console.WriteLine(1);
+							return;
+						case 2:
+							Console.WriteLine(2);
+							return;
+					}
+					Console.WriteLine(3);
+					for (int j = 0; j < 10; j++) {
+						Console.WriteLine(j);
+					}
+				} catch {
+					throw;
+				}
+			}
+		}
+
+		public void SwitchInTryInLoopContinue()
+		{
+			for (int i = 0; i < 10; i++) {
+				try {
+					switch (I(0)) {
+						case 1:
+							Console.WriteLine(1);
+							continue;
+						case 2:
+							Console.WriteLine(2);
+							continue;
+					}
+					Console.WriteLine(3);
+					for (int j = 0; j < 10; j++) {
+						Console.WriteLine(j);
+					}
+				} catch {
+					throw;
+				}
+			}
+		}
 	}
 }
