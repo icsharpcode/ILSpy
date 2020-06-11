@@ -1037,17 +1037,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public async Task Issue1524(string str)
 		{
 			await Task.Delay(100);
-			if (string.IsNullOrEmpty(str)) {
 #if CS70
-				if (int.TryParse(str, out int id)) {
+			if (string.IsNullOrEmpty(str) && int.TryParse(str, out int id)) {
 #else
-				int id;
-				if (int.TryParse(str, out id)) {
+			int id;
+			if (string.IsNullOrEmpty(str) && int.TryParse(str, out id)) {
 #endif
-					(from a in new List<int>().AsQueryable()
-						where a == id
-						select a).FirstOrDefault();
-				}
+				(from a in new List<int>().AsQueryable()
+				 where a == id
+				 select a).FirstOrDefault();
 			}
 		}
 

@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// This can lead to excessive indentation when the entire rest of the method/loop is included in the else block/default case.
 	/// When an If/SwitchInstruction is followed immediately by a keyword exit, the exit can be moved into the child blocks
 	/// allowing the else block or default case to be moved after the if/switch as all prior cases exit.
-	/// Most importantly, this transformatino does not change the IL order of any code.
+	/// Most importantly, this transformation does not change the IL order of any code.
 	///
 	/// ConditionDetection also has a block exit priority system to assist exit point reduction which in some cases ignores IL order.
 	/// After HighLevelLoopTransform has run, all structures have been detected and preference can be returned to maintaining IL ordering.
@@ -99,16 +99,16 @@ namespace ICSharpCode.Decompiler.IL
 
 						// reduce nesting in switch blocks
 						if (container.Kind == ContainerKind.Switch &&
-								CanDuplicateExit(NextInsn(), continueTarget) &&
-								ReduceSwitchNesting(block, container, NextInsn())) {
+								CanDuplicateExit(NextInsn(), continueTarget, out var keywordExit1) &&
+								ReduceSwitchNesting(block, container, keywordExit1)) {
 							RemoveRedundantExit(block, nextInstruction);
 						}
 						break;
 					case IfInstruction ifInst:
-						ImproveILOrdering(block, ifInst);
+						ImproveILOrdering(block, ifInst, continueTarget);
 						
 						// reduce nesting in if/else blocks
-						if (CanDuplicateExit(NextInsn(), continueTarget) && ReduceNesting(block, ifInst, NextInsn()))
+						if (CanDuplicateExit(NextInsn(), continueTarget, out var keywordExit2) && ReduceNesting(block, ifInst, keywordExit2))
 							RemoveRedundantExit(block, nextInstruction);
 						
 						// visit content blocks
@@ -124,7 +124,38 @@ namespace ICSharpCode.Decompiler.IL
 							Visit(falseBlock, continueTarget, NextInsn());
 						}
 						break;
+					default:
+						// blocks can only exit containers via leave instructions, not fallthrough, so the only relevant context is `continueTarget`
+						VisitContainers(inst, continueTarget);
+
+						// reducing nesting inside Try/Using/Lock etc, may make the endpoint unreachable. 
+						// This should only happen by replacing a Leave with the exit instruction we're about to delete, but I can't see a good way to assert this
+						// This would be better placed in ReduceNesting, but it's more difficult to find the affected instructions/blocks there than here
+						if (i == block.Instructions.Count - 2 && inst.HasFlag(InstructionFlags.EndPointUnreachable)) {
+							context.Step("Remove unreachable exit", block.Instructions.Last());
+							block.Instructions.RemoveLast();
+
+							// This would be the right place to check and fix the redundant continue; in TestCases.Pretty.ReduceNesting.BreakLockInLoop
+							// but doing so would require knowledge of what `inst` is, and how it works. (eg. to target the try block and not catch or finally blocks)
+						}
+						break;
 				}
+			}
+		}
+
+		// search for child containers to reduce nesting in
+		private void VisitContainers(ILInstruction inst, Block continueTarget)
+		{
+			switch (inst) {
+				case ILFunction _:
+					break; // assume inline ILFunctions are already transformed
+				case BlockContainer cont:
+					Visit(cont, continueTarget);
+					break;
+				default:
+					foreach (var child in inst.Children)
+						VisitContainers(child, continueTarget);
+					break;
 			}
 		}
 
@@ -132,19 +163,30 @@ namespace ICSharpCode.Decompiler.IL
 		/// For an if statement with an unreachable end point and no else block,
 		/// inverts to match IL order of the first statement of each branch
 		/// </summary>
-		private void ImproveILOrdering(Block block, IfInstruction ifInst)
+		private void ImproveILOrdering(Block block, IfInstruction ifInst, Block continueTarget)
 		{
 			if (!block.HasFlag(InstructionFlags.EndPointUnreachable)
-			    || !ifInst.TrueInst.HasFlag(InstructionFlags.EndPointUnreachable)
-			    || !ifInst.FalseInst.MatchNop())
+				|| !ifInst.TrueInst.HasFlag(InstructionFlags.EndPointUnreachable)
+				|| !ifInst.FalseInst.MatchNop())
 				return;
-			
+
 			Debug.Assert(ifInst != block.Instructions.Last());
 
 			var trueRangeStart = ConditionDetection.GetStartILOffset(ifInst.TrueInst, out bool trueRangeIsEmpty);
-			var falseRangeStart = ConditionDetection.GetStartILOffset(block.Instructions[block.Instructions.IndexOf(ifInst)+1], out bool falseRangeIsEmpty);
-			if (!trueRangeIsEmpty && !falseRangeIsEmpty && falseRangeStart < trueRangeStart)
-				ConditionDetection.InvertIf(block, ifInst, context);
+			var falseRangeStart = ConditionDetection.GetStartILOffset(block.Instructions[block.Instructions.IndexOf(ifInst) + 1], out bool falseRangeIsEmpty);
+			if (trueRangeIsEmpty || falseRangeIsEmpty || falseRangeStart >= trueRangeStart)
+				return;
+
+			if (block.Instructions.Last() is Leave leave && !leave.IsLeavingFunction && leave.TargetContainer.Kind == ContainerKind.Normal) {
+				// non-keyword leave. Can't move out of the last position in the block (fall-through) without introducing goto, unless it can be replaced with a keyword (return/continue)
+				if (!CanDuplicateExit(block.Instructions.Last(), continueTarget, out var keywordExit))
+					return;
+
+				context.Step("Replace leave with keyword exit", ifInst.TrueInst);
+				block.Instructions.Last().ReplaceWith(keywordExit.Clone());
+			}
+
+			ConditionDetection.InvertIf(block, ifInst, context);
 		}
 
 		/// <summary>
@@ -159,16 +201,27 @@ namespace ICSharpCode.Decompiler.IL
 
 			// if (cond) { ... } exit;
 			if (ifInst.FalseInst.MatchNop()) {
-				// a separate heuristic tp ShouldReduceNesting as there is visual balancing to be performed based on number of statments
+				// a separate heuristic to ShouldReduceNesting as there is visual balancing to be performed based on number of statments
 				if (maxDepth < 2)
 					return false;
 
 				//   ->
 				// if (!cond) exit;
 				// ...; exit;
-				EnsureEndPointUnreachable(ifInst.TrueInst, exitInst);
 				EnsureEndPointUnreachable(block, exitInst);
+				Debug.Assert(ifInst == block.Instructions.SecondToLastOrDefault());
+				
+				// use the same exit the block has. If the block already has one (such as a leave from a try), keep it in place
+				EnsureEndPointUnreachable(ifInst.TrueInst, block.Instructions.Last());
 				ConditionDetection.InvertIf(block, ifInst, context);
+
+				// ensure the exit inst of the if instruction is a keyword
+				Debug.Assert(!(ifInst.TrueInst is Block));
+				if (!ifInst.TrueInst.Match(exitInst).Success) {
+					Debug.Assert(ifInst.TrueInst is Leave);
+					context.Step("Replace leave with keyword exit", ifInst.TrueInst);
+					ifInst.TrueInst.ReplaceWith(exitInst.Clone());
+				}
 				return true;
 			}
 
@@ -254,6 +307,16 @@ namespace ICSharpCode.Decompiler.IL
 
 			context.Step("Extract default case of switch", switchContainer);
 
+			// if the switch container is followed by an instruction, it must be a Leave from a try/pinned/etc or exitInst
+			// When it's a leave from a container, it's better to let the extracted default block 'fall through' rather than duplicating whatever
+			// instruction eventually follows the container
+			if (parentBlock.Instructions.SecondToLastOrDefault() == switchContainer) {
+				if (defaultBlock.Instructions.Last().MatchLeave(switchContainer))
+					defaultBlock.Instructions.Last().ReplaceWith(parentBlock.Instructions.Last());
+				
+				parentBlock.Instructions.RemoveLast();
+			}
+
 			// replace all break; statements with the exitInst
 			var leaveInstructions = switchContainer.Descendants.Where(inst => inst.MatchLeave(switchContainer));
 			foreach (var leaveInst in leaveInstructions.ToArray())
@@ -267,13 +330,6 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var block in defaultBlocks)
 				switchContainer.Blocks.Remove(block);
 
-			// replace the parent block exit with the default case instructions
-			if (parentBlock.Instructions.Last() == exitInst) {
-				parentBlock.Instructions.RemoveLast();
-			}
-			// Note: even though we don't check that the switchContainer is near the end of the block,
-			// we know this must be the case because we know "exitInst" is a leave/branch and directly
-			// follows the switchContainer.
 			Debug.Assert(parentBlock.Instructions.Last() == switchContainer);
 			parentBlock.Instructions.AddRange(defaultBlock.Instructions);
 
@@ -292,8 +348,46 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Checks if an exit is a duplicable keyword exit (return; break; continue;)
 		/// </summary>
-		private bool CanDuplicateExit(ILInstruction exit, Block continueTarget) =>
-			exit != null && (exit is Leave leave && leave.Value.MatchNop() || exit.MatchBranch(continueTarget));
+		private bool CanDuplicateExit(ILInstruction exit, Block continueTarget, out ILInstruction keywordExit)
+		{
+			keywordExit = exit;
+			if (exit != null && exit.MatchBranch(continueTarget))
+				return true;  // keyword is continue
+
+			if (!(exit is Leave leave && leave.Value.MatchNop()))
+				return false; // don't duplicate valued returns
+
+			if (leave.IsLeavingFunction || leave.TargetContainer.Kind != ContainerKind.Normal)
+				return true; // keyword is return || break
+
+			// leave from a try/pinned/lock etc, check if the target (the instruction following the target container) is duplicable, if so, set keywordExit to that
+			ILInstruction leavingInst = leave.TargetContainer;
+			Debug.Assert(!leavingInst.HasFlag(InstructionFlags.EndPointUnreachable));
+			while (!(leavingInst.Parent is Block b) || leavingInst == b.Instructions.Last()) {
+				if (leavingInst.Parent is TryFinally tryFinally) { 
+					if (leavingInst.SlotInfo == TryFinally.FinallyBlockSlot) { // cannot duplicate leaves from finally containers
+						Debug.Assert(leave.TargetContainer == tryFinally.FinallyBlock); //finally cannot have control flow
+						return false;
+					}
+					if (tryFinally.HasFlag(InstructionFlags.EndPointUnreachable)) { // finally block changes return value/throws an exception? Yikes. Lets leave it alone
+						Debug.Assert(tryFinally.FinallyBlock.HasFlag(InstructionFlags.EndPointUnreachable));
+						return false;
+					}
+				}
+				else if (leavingInst.Parent is TryFault tryFault && leavingInst.SlotInfo == TryFault.FaultBlockSlot) { // cannot duplicate leaves from fault containers either
+					Debug.Assert(leave.TargetContainer == tryFault.FaultBlock);
+					return false;
+				}
+
+				leavingInst = leavingInst.Parent;
+				Debug.Assert(!leavingInst.HasFlag(InstructionFlags.EndPointUnreachable));
+				Debug.Assert(!(leavingInst is ILFunction));
+			}
+
+			var block = (Block)leavingInst.Parent;
+			var targetInst = block.Instructions[block.Instructions.IndexOf(leavingInst)+1];
+			return CanDuplicateExit(targetInst, continueTarget, out keywordExit);
+		}
 
 		/// <summary>
 		/// Ensures the end point of a block is unreachable by duplicating and appending the [exit] instruction following the end point
@@ -353,28 +447,54 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Recursively computes the number of statements and maximum nested depth of an instruction
 		/// </summary>
-		private void ComputeStats(ILInstruction inst, ref int numStatements, ref int maxDepth, int currentDepth)
+		private void ComputeStats(ILInstruction inst, ref int numStatements, ref int maxDepth, int currentDepth, bool isStatement = true)
 		{
+			if (isStatement)
+				numStatements++;
+
+			if (currentDepth > maxDepth) {
+				Debug.Assert(isStatement);
+				maxDepth = currentDepth;
+			}
+
+			// enumerate children statements and containers
 			switch (inst) {
 				case Block block:
-					foreach (var i in block.Instructions)
-						ComputeStats(i, ref numStatements, ref maxDepth, currentDepth);
+					if (isStatement)
+						numStatements--; // don't count blocks as statements
+
+					// add each child as a statement (unless we're a named block)
+					foreach (var child in block.Instructions)
+						ComputeStats(child, ref numStatements, ref maxDepth, currentDepth, block.Kind != BlockKind.CallWithNamedArgs && block.Kind != BlockKind.CallInlineAssign);
+
+					// final instruction as an expression
+					ComputeStats(block.FinalInstruction, ref numStatements, ref maxDepth, currentDepth, false);
 					break;
 				case BlockContainer container:
-					numStatements++; // one statement for the container head (switch/loop)
+					if (!isStatement)
+						numStatements++; //always add a statement for a container in an expression
 
 					var containerBody = container.EntryPoint;
 					if (container.Kind == ContainerKind.For || container.Kind == ContainerKind.While) {
+						Debug.Assert(isStatement);
+
 						if (!container.MatchConditionBlock(container.EntryPoint, out _, out containerBody))
 							throw new NotSupportedException("Invalid condition block in loop.");
 					}
 
+					// don't count implicit leave. Can't avoid counting for loop initializers but close enough, for loops can have an extra statement of visual weight
+					var lastInst = containerBody.Instructions.Last();
+					if ((container.Kind == ContainerKind.For || container.Kind == ContainerKind.DoWhile) && lastInst.MatchBranch(container.Blocks.Last()) ||
+						(container.Kind == ContainerKind.Loop || container.Kind == ContainerKind.While) && lastInst.MatchBranch(container.Blocks[0]) ||
+						 container.Kind == ContainerKind.Normal && lastInst.MatchLeave(container) ||
+						 container.Kind == ContainerKind.Switch) // SwitchInstructyion always counts as a statement anyway, so no need to count the container as well
+						numStatements--;
+					
 					// add the nested body
 					ComputeStats(containerBody, ref numStatements, ref maxDepth, currentDepth + 1);
 					break;
-				case IfInstruction ifInst:
-					numStatements++; // one statement for the if/condition itself
-
+				case IfInstruction ifInst when ifInst.ResultType == StackType.Void:
+					Debug.Assert(isStatement);
 					// nested then instruction
 					ComputeStats(ifInst.TrueInst, ref numStatements, ref maxDepth, currentDepth + 1);
 
@@ -389,21 +509,36 @@ namespace ICSharpCode.Decompiler.IL
 					// include all nested else instruction
 					ComputeStats(elseInst, ref numStatements, ref maxDepth, currentDepth + 1);
 					break;
-				case SwitchInstruction switchInst:
-					// one statement per case label
-					numStatements += switchInst.Sections.Count + 1;
+				case SwitchSection section:
+					Debug.Assert(!isStatement); // labels are just children of the SwitchInstruction
+					numStatements++; // add a statement for each case label
+
 					// add all the case blocks at the current depth
 					// most formatters indent switch blocks twice, but we don't want this heuristic to be based on formatting
 					// so we remain conservative and only include the increase in depth from the container and not the labels
-					foreach (var section in switchInst.Sections)
-						if (section.Body.MatchBranch(out var caseBlock) && caseBlock.Parent == switchInst.Parent.Parent)
-							ComputeStats(caseBlock, ref numStatements, ref maxDepth, currentDepth);
+					if (section.Body.MatchBranch(out var caseBlock) && caseBlock.Parent == section.Parent.Parent.Parent)
+						ComputeStats(caseBlock, ref numStatements, ref maxDepth, currentDepth);
+					break;
+				case ILFunction func:
+					Debug.Assert(!isStatement);
+
+					int bodyStatements = 0;
+					int bodyMaxDepth = maxDepth;
+					ComputeStats(func.Body, ref bodyStatements, ref bodyMaxDepth, currentDepth);
+					if (bodyStatements >= 2) { // don't count inline functions
+						numStatements += bodyStatements;
+						maxDepth = bodyMaxDepth;
+					}
 					break;
 				default:
-					// just a regular statement
-					numStatements++;
-					if (currentDepth > maxDepth)
-						maxDepth = currentDepth;
+					// search each child instruction. Containers will contain statements and contribute to stats
+					int subStatements = 0;
+					foreach (var child in inst.Children)
+						ComputeStats(child, ref subStatements, ref maxDepth, currentDepth, false);
+
+					numStatements += subStatements;
+					if (isStatement && subStatements > 0)
+						numStatements--; // don't count the first container, only its contents, because this statement is already counted
 					break;
 			}
 		}
