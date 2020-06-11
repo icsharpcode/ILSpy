@@ -5,6 +5,7 @@ using System.Management.Automation;
 using System.Threading;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.PowerShell
@@ -77,9 +78,9 @@ namespace ICSharpCode.Decompiler.PowerShell
 
 		private void DoDecompile(string path)
 		{
-			WholeProjectDecompiler decompiler = new WholeProjectDecompiler();
 			PEFile module = Decompiler.TypeSystem.MainModule.PEFile;
-			decompiler.AssemblyResolver = new UniversalAssemblyResolver(module.FileName, false, module.Reader.DetectTargetFrameworkId());
+			var assemblyResolver = new UniversalAssemblyResolver(module.FileName, false, module.Reader.DetectTargetFrameworkId());
+			WholeProjectDecompiler decompiler = new WholeProjectDecompiler(assemblyResolver);
 			decompiler.ProgressIndicator = this;
 			fileName = module.FileName;
 			completed = 0;

@@ -1329,6 +1329,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool useSdkStyleProjectFormat = true;
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the new SDK style format
+		/// shall be used for the generated project files.
+		/// </summary>
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.UseSdkStyleProjectFormat")]
+		public bool UseSdkStyleProjectFormat {
+			get { return useSdkStyleProjectFormat; }
+			set {
+				if (useSdkStyleProjectFormat != value) {
+					useSdkStyleProjectFormat = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool aggressiveScalarReplacementOfAggregates = false;
 
 		[Category("DecompilerSettings.Other")]

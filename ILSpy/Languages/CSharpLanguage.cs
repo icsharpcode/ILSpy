@@ -32,6 +32,7 @@ using ICSharpCode.AvalonEdit.Utils;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.Metadata;
@@ -437,21 +438,19 @@ namespace ICSharpCode.ILSpy
 			readonly DecompilationOptions options;
 
 			public ILSpyWholeProjectDecompiler(LoadedAssembly assembly, DecompilationOptions options)
+				: base(options.DecompilerSettings, assembly.GetAssemblyResolver(), assembly.GetDebugInfoOrNull())
 			{
 				this.assembly = assembly;
 				this.options = options;
-				base.Settings = options.DecompilerSettings;
-				base.AssemblyResolver = assembly.GetAssemblyResolver();
-				base.DebugInfoProvider = assembly.GetDebugInfoOrNull();
 			}
 
-			protected override IEnumerable<Tuple<string, string>> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
+			protected override IEnumerable<(string itemType, string fileName)> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 			{
 				foreach (var handler in App.ExportProvider.GetExportedValues<IResourceFileHandler>()) {
 					if (handler.CanHandle(fileName, options)) {
 						entryStream.Position = 0;
 						fileName = handler.WriteResourceToFile(assembly, fileName, entryStream, options);
-						return new[] { Tuple.Create(handler.EntryType, fileName) };
+						return new[] { (handler.EntryType, fileName) };
 					}
 				}
 				return base.WriteResourceToFile(fileName, resourceName, entryStream);

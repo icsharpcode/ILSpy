@@ -732,4 +732,7 @@
   <data name="About" xml:space="preserve">
     <value>关于</value>
   </data>
+  <data name="DecompilerSettings.UseSdkStyleProjectFormat" xml:space="preserve">
+    <value>使用新的 SDK 格式 (*.csproj) 生成项目文件</value>
+  </data>
 </root>

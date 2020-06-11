@@ -88,6 +88,8 @@
     <Compile Include="..\ILSpy\DebugInfo\DebugInfoUtils.cs" Link="DebugInfoUtils.cs" />
     <Compile Include="..\ILSpy\DebugInfo\PortableDebugInfoProvider.cs" Link="PortableDebugInfoProvider.cs" />
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
+    <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
+    <Compile Include="TestAssemblyResolver.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
     <Compile Include="TestCases\ILPretty\Issue1681.cs" />
     <Compile Include="TestCases\Ugly\AggressiveScalarReplacementOfAggregates.cs" />
