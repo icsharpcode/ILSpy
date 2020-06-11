@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -129,6 +130,45 @@ namespace ICSharpCode.Decompiler.IL
 						// special case: with instance calls, Instructions[0] must be for the this parameter
 						ILVariable v = ((StLoc)Instructions[0]).Variable;
 						Debug.Assert(call.Arguments[0].MatchLdLoc(v));
+					}
+					break;
+				case BlockKind.ArrayInitializer:
+					var final = finalInstruction as LdLoc;
+					Debug.Assert(final != null && final.Variable.IsSingleDefinition && final.Variable.Kind == VariableKind.InitializerTarget);
+					IType type = null;
+					Debug.Assert(Instructions[0].MatchStLoc(final.Variable, out var init) && init.MatchNewArr(out type));
+					for (int i = 1; i < Instructions.Count; i++) {
+						Debug.Assert(Instructions[i].MatchStObj(out ILInstruction target, out _, out var t) && type != null && type.Equals(t));
+						Debug.Assert(target.MatchLdElema(out t, out ILInstruction array) && type.Equals(t));
+						Debug.Assert(array.MatchLdLoc(out ILVariable v) && v == final.Variable);
+					}
+					break;
+				case BlockKind.CollectionInitializer:
+				case BlockKind.ObjectInitializer:
+					var final2 = finalInstruction as LdLoc;
+					Debug.Assert(final2 != null);
+					var initVar2 = final2.Variable;
+					Debug.Assert(initVar2.StoreCount == 1 && initVar2.Kind == VariableKind.InitializerTarget);
+					IType type2 = null;
+					bool condition = Instructions[0].MatchStLoc(final2.Variable, out var init2);
+					Debug.Assert(condition);
+					Debug.Assert(init2 is NewObj || init2 is DefaultValue || (init2 is Block named && named.Kind == BlockKind.CallWithNamedArgs));
+					switch (init2) {
+						case NewObj newObj:
+							type2 = newObj.Method.DeclaringType;
+							break;
+						case DefaultValue defaultValue:
+							type2 = defaultValue.Type;
+							break;
+						case Block callWithNamedArgs when callWithNamedArgs.Kind == BlockKind.CallWithNamedArgs:
+							type2 = ((CallInstruction)callWithNamedArgs.FinalInstruction).Method.ReturnType;
+							break;
+						default:
+							Debug.Assert(false);
+							break;
+					}
+					for (int i = 1; i < Instructions.Count; i++) {
+						Debug.Assert(Instructions[i] is StLoc || AccessPathElement.GetAccessPath(Instructions[i], type2).Kind != IL.Transforms.AccessPathKind.Invalid);
 					}
 					break;
 			}

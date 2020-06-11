@@ -53,9 +53,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							if (instWithVar.Variable.Kind == VariableKind.Local) {
 								instWithVar.Variable.Kind = VariableKind.DisplayClassLocal;
 							}
-							var displayClassTypeDef = instWithVar.Variable.Type.GetDefinition();
 							if (instWithVar.Variable.IsSingleDefinition && instWithVar.Variable.StoreInstructions.SingleOrDefault() is StLoc store) {
-								if (store.Value is NewObj newObj) {
+								if (store.Value is NewObj) {
 									instWithVar.Variable.CaptureScope = BlockContainer.FindClosestContainer(store);
 								}
 							}
@@ -141,6 +140,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (LocalFunctionDecompiler.IsLocalFunctionMethod(targetMethod, context))
 				return null;
 			target = value.Arguments[0];
+			if (!ValidateDelegateTarget(target))
+				return null;
 			var handle = (MethodDefinitionHandle)targetMethod.MetadataToken;
 			if (activeMethods.Contains(handle)) {
 				this.context.Function.Warnings.Add(" Found self-referencing delegate construction. Abort transformation to avoid stack overflow.");
@@ -169,7 +170,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var nestedContext = new ILTransformContext(context, function);
 			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)).Concat(GetTransforms()), nestedContext);
 			nestedContext.Step("DelegateConstruction (ReplaceDelegateTargetVisitor)", function);
-			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
+			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(VariableKindExtensions.IsThis)));
 			// handle nested lambdas
 			nestedContext.StepStartGroup("DelegateConstruction (nested lambdas)", function);
 			((IILTransform)this).Run(function, nestedContext);
@@ -178,6 +179,37 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			function.AddILRange(value);
 			function.AddILRange(value.Arguments[1]);
 			return function;
+		}
+
+		private static bool ValidateDelegateTarget(ILInstruction inst)
+		{
+			switch (inst) {
+				case LdNull _:
+					return true;
+				case LdLoc ldloc:
+					return ldloc.Variable.IsSingleDefinition;
+				case LdObj ldobj:
+					// TODO : should make sure that the display-class 'this' is unused,
+					// if the delegate target is ldobj(ldsflda field).
+					if (ldobj.Target is LdsFlda)
+						return true;
+					// TODO : ldfld chains must be validated more thoroughly, i.e., we should make sure
+					// that the value of the field is never changed.
+					ILInstruction target = ldobj;
+					while (target is LdObj || target is LdFlda) {
+						if (target is LdObj o) {
+							target = o.Target;
+							continue;
+						}
+						if (target is LdFlda f) {
+							target = f.Target;
+							continue;
+						}
+					}
+					return target is LdLoc;
+				default:
+					return false;
+			}
 		}
 
 		private IEnumerable<IILTransform> GetTransforms()
@@ -206,7 +238,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					child.AcceptVisitor(this);
 				}
 			}
-			
+
+			protected internal override void VisitILFunction(ILFunction function)
+			{
+				if (function == thisVariable?.Function) {
+					ILVariable v = null;
+					switch (target) {
+						case LdLoc l:
+							v = l.Variable;
+							break;
+						case LdObj lo:
+							ILInstruction inner = lo.Target;
+							while (inner is LdFlda ldf) {
+								inner = ldf.Target;
+							}
+							if (inner is LdLoc l2)
+								v = l2.Variable;
+							break;
+					}
+					if (v != null)
+						function.CapturedVariables.Add(v);
+				}
+				base.VisitILFunction(function);
+			}
+
 			protected internal override void VisitLdLoc(LdLoc inst)
 			{
 				if (inst.Variable == thisVariable) {

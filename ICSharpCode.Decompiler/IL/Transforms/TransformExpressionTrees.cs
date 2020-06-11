@@ -1229,6 +1229,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 						if (ldloc.Variable.CaptureScope == null) {
 							ldloc.Variable.CaptureScope = BlockContainer.FindClosestContainer(context);
+							var f = ldloc.Variable.CaptureScope.Ancestors.OfType<ILFunction>().FirstOrDefault();
+							if (f != null) {
+								f.CapturedVariables.Add(ldloc.Variable);
+							}
 						}
 						return ldloc;
 					} else {

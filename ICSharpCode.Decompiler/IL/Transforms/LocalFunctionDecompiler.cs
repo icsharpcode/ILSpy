@@ -46,6 +46,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public List<CallInstruction> UseSites;
 			public IMethod Method;
 			public ILFunction Definition;
+			/// <summary>
+			/// Used to store all synthesized call-site arguments grouped by the parameter index.
+			/// We use a dictionary instead of a simple array, because -1 is used for the this parameter
+			/// and there might be many non-synthesized arguments in between.
+			/// </summary>
+			public Dictionary<int, List<ILInstruction>> LocalFunctionArguments;
 		}
 
 		/// <summary>
@@ -78,75 +84,195 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			this.resolveContext = new SimpleTypeResolveContext(function.Method);
 			var localFunctions = new Dictionary<MethodDefinitionHandle, LocalFunctionInfo>();
-			var cancellationToken = context.CancellationToken;
 			// Find all local functions declared inside this method, including nested local functions or local functions declared in lambdas.
 			FindUseSites(function, context, localFunctions);
-			foreach (var (_, info) in localFunctions) {
-				cancellationToken.ThrowIfCancellationRequested();
+			ReplaceReferencesToDisplayClassThis(localFunctions.Values);
+			DetermineCaptureAndDeclarationScopes(localFunctions.Values);
+			PropagateClosureParameterArguments(localFunctions);
+			TransformUseSites(localFunctions.Values);
+		}
+
+		private void ReplaceReferencesToDisplayClassThis(Dictionary<MethodDefinitionHandle, LocalFunctionInfo>.ValueCollection localFunctions)
+		{
+			foreach (var info in localFunctions) {
+				var localFunction = info.Definition;
+				if (localFunction.Method.IsStatic)
+					continue;
+				var thisVar = localFunction.Variables.SingleOrDefault(VariableKindExtensions.IsThis);
+				if (thisVar == null)
+					continue;
+				var compatibleArgument = FindCompatibleArgument(info, info.UseSites.SelectArray(u => u.Arguments[0]), ignoreStructure: true);
+				Debug.Assert(compatibleArgument != null);
+				context.Step($"Replace 'this' with {compatibleArgument}", localFunction);
+				localFunction.AcceptVisitor(new DelegateConstruction.ReplaceDelegateTargetVisitor(compatibleArgument, thisVar));
+				DetermineCaptureAndDeclarationScope(info, -1, compatibleArgument);
+			}
+		}
+
+		private void DetermineCaptureAndDeclarationScopes(Dictionary<MethodDefinitionHandle, LocalFunctionInfo>.ValueCollection localFunctions)
+		{
+			foreach (var info in localFunctions) {
+				context.CancellationToken.ThrowIfCancellationRequested();
 				if (info.Definition == null) {
-					function.Warnings.Add($"Could not decode local function '{info.Method}'");
+					context.Function.Warnings.Add($"Could not decode local function '{info.Method}'");
 					continue;
 				}
 
-				context.StepStartGroup($"Transform " + info.Definition.Name, info.Definition);
+				context.StepStartGroup($"Determine and move to declaration scope of " + info.Definition.Name, info.Definition);
 				try {
 					var localFunction = info.Definition;
-					if (!localFunction.Method.IsStatic) {
-						var thisVar = localFunction.Variables.SingleOrDefault(VariableKindExtensions.IsThis);
-						var target = info.UseSites.Where(us => us.Arguments[0].MatchLdLoc(out _)).FirstOrDefault()?.Arguments[0];
-						if (target == null) {
-							target = info.UseSites[0].Arguments[0];
-							if (target.MatchLdFld(out var target1, out var field) && thisVar.Type.Equals(field.Type) && field.Type.Kind == TypeKind.Class && TransformDisplayClassUsage.IsPotentialClosure(context, field.Type.GetDefinition())) {
-								var variable = function.Descendants.OfType<ILFunction>().SelectMany(f => f.Variables).Where(v => !v.IsThis() && TransformDisplayClassUsage.IsClosure(context, v, out var varType, out _) && varType.Equals(field.Type)).OnlyOrDefault();
-								if (variable != null) {
-									target = new LdLoc(variable);
-									HandleArgument(localFunction, 1, 0, target);
-								}
-							}
-						}
-						context.Step($"Replace 'this' with {target}", localFunction);
-						localFunction.AcceptVisitor(new DelegateConstruction.ReplaceDelegateTargetVisitor(target, thisVar));
-					}
 
 					foreach (var useSite in info.UseSites) {
-						DetermineCaptureAndDeclarationScope(localFunction, useSite);
+						DetermineCaptureAndDeclarationScope(info, useSite);
 
-						if (function.Method.IsConstructor && localFunction.DeclarationScope == null) {
+						if (context.Function.Method.IsConstructor && localFunction.DeclarationScope == null) {
 							localFunction.DeclarationScope = BlockContainer.FindClosestContainer(useSite);
 						}
 					}
 
 					if (localFunction.DeclarationScope == null) {
-						localFunction.DeclarationScope = (BlockContainer)function.Body;
+						localFunction.DeclarationScope = (BlockContainer)context.Function.Body;
 					}
 
 					ILFunction declaringFunction = GetDeclaringFunction(localFunction);
-					if (declaringFunction != function) {
-						function.LocalFunctions.Remove(localFunction);
+					if (declaringFunction != context.Function) {
+						context.Step($"Move {localFunction.Name} from {context.Function.Name} to {declaringFunction.Name}", localFunction);
+						context.Function.LocalFunctions.Remove(localFunction);
 						declaringFunction.LocalFunctions.Add(localFunction);
 					}
 
 					if (TryValidateSkipCount(info, out int skipCount) && skipCount != localFunction.ReducedMethod.NumberOfCompilerGeneratedTypeParameters) {
 						Debug.Assert(false);
-						function.Warnings.Add($"Could not decode local function '{info.Method}'");
-						if (declaringFunction != function) {
+						context.Function.Warnings.Add($"Could not decode local function '{info.Method}'");
+						if (declaringFunction != context.Function) {
 							declaringFunction.LocalFunctions.Remove(localFunction);
 						}
-						continue;
 					}
+				} finally {
+					context.StepEndGroup(keepIfEmpty: true);
+				}
+			}
+		}
 
+		private void TransformUseSites(Dictionary<MethodDefinitionHandle, LocalFunctionInfo>.ValueCollection localFunctions)
+		{
+			foreach (var info in localFunctions) {
+				context.CancellationToken.ThrowIfCancellationRequested();
+				if (info.Definition == null) continue;
+				context.StepStartGroup($"TransformUseSites of " + info.Definition.Name, info.Definition);
+				try {
 					foreach (var useSite in info.UseSites) {
-						context.Step($"Transform use site at IL_{useSite.StartILOffset:x4}", useSite);
+						context.Step($"Transform use-site at IL_{useSite.StartILOffset:x4}", useSite);
 						if (useSite.OpCode == OpCode.NewObj) {
-							TransformToLocalFunctionReference(localFunction, useSite);
+							TransformToLocalFunctionReference(info.Definition, useSite);
 						} else {
-							TransformToLocalFunctionInvocation(localFunction.ReducedMethod, useSite);
+							TransformToLocalFunctionInvocation(info.Definition.ReducedMethod, useSite);
 						}
 					}
 				} finally {
 					context.StepEndGroup();
 				}
 			}
+		}
+
+		private void PropagateClosureParameterArguments(Dictionary<MethodDefinitionHandle, LocalFunctionInfo> localFunctions)
+		{
+			foreach (var localFunction in context.Function.Descendants.OfType<ILFunction>()) {
+				if (localFunction.Kind != ILFunctionKind.LocalFunction)
+					continue;
+				context.CancellationToken.ThrowIfCancellationRequested();
+				var token = (MethodDefinitionHandle)localFunction.Method.MetadataToken;
+				var info = localFunctions[token];
+
+				foreach (var useSite in info.UseSites) {
+					if (useSite is NewObj) {
+						AddAsArgument(-1, useSite.Arguments[0]);
+					} else {
+						int firstArgumentIndex;
+						if (info.Method.IsStatic) {
+							firstArgumentIndex = 0;
+						} else {
+							firstArgumentIndex = 1;
+							AddAsArgument(-1, useSite.Arguments[0]);
+						}
+						for (int i = useSite.Arguments.Count - 1; i >= firstArgumentIndex; i--) {
+							AddAsArgument(i - firstArgumentIndex, useSite.Arguments[i]);
+						}
+					}
+				}
+
+				context.StepStartGroup($"PropagateClosureParameterArguments of " + info.Definition.Name, info.Definition);
+				try {
+					foreach (var (index, arguments) in info.LocalFunctionArguments) {
+						var targetVariable = info.Definition.Variables.SingleOrDefault(p => p.Kind == VariableKind.Parameter && p.Index == index);
+						if (targetVariable == null)
+							continue;
+						var compatibleArgument = FindCompatibleArgument(info, arguments);
+						Debug.Assert(compatibleArgument != null);
+						context.Step($"Replace '{targetVariable}' with '{compatibleArgument}'", info.Definition);
+						info.Definition.AcceptVisitor(new DelegateConstruction.ReplaceDelegateTargetVisitor(compatibleArgument, targetVariable));
+					}
+				} finally {
+					context.StepEndGroup(keepIfEmpty: true);
+				}
+
+				void AddAsArgument(int index, ILInstruction argument)
+				{
+					switch (argument) {
+						case LdLoc _:
+						case LdLoca _:
+						case LdFlda _:
+						case LdObj _:
+							if (index >= 0 && !IsClosureParameter(info.Method.Parameters[index], resolveContext))
+								return;
+							break;
+						default:
+							if (index >= 0 && IsClosureParameter(info.Method.Parameters[index], resolveContext))
+								info.Definition.Warnings.Add("Could not transform parameter " + index + ": unsupported argument pattern");
+							return;
+					}
+
+					if (!info.LocalFunctionArguments.TryGetValue(index, out var arguments)) {
+						arguments = new List<ILInstruction>();
+						info.LocalFunctionArguments.Add(index, arguments);
+					}
+					arguments.Add(argument);
+				}
+			}
+		}
+
+		private ILInstruction FindCompatibleArgument(LocalFunctionInfo info, IList<ILInstruction> arguments, bool ignoreStructure = false)
+		{
+			foreach (var arg in arguments) {
+				if (arg is IInstructionWithVariableOperand ld2 && (ignoreStructure || info.Definition.IsDescendantOf(ld2.Variable.Function)))
+					return arg;
+				var v = ResolveAncestorScopeReference(arg);
+				if (v != null)
+					return new LdLoc(v);
+			}
+			return null;
+		}
+
+		private ILVariable ResolveAncestorScopeReference(ILInstruction inst)
+		{
+			if (!inst.MatchLdFld(out var target, out var field))
+				return null;
+			if (field.Type.Kind != TypeKind.Class)
+				return null;
+			if (!(TransformDisplayClassUsage.IsPotentialClosure(context, field.Type.GetDefinition()) || context.Function.Method.DeclaringType.Equals(field.Type)))
+				return null;
+			foreach (var v in context.Function.Descendants.OfType<ILFunction>().SelectMany(f => f.Variables)) {
+				if (v.Kind != VariableKind.Local && v.Kind != VariableKind.DisplayClassLocal && v.Kind != VariableKind.StackSlot) {
+					if (!(v.Kind == VariableKind.Parameter && v.Index == -1))
+						continue;
+					if (v.Type.Equals(field.Type))
+						return v;
+				}
+				if (!(TransformDisplayClassUsage.IsClosure(context, v, out var varType, out _) && varType.Equals(field.Type)))
+					continue;
+				return v;
+			}
+			return null;
 		}
 
 		private ILFunction GetDeclaringFunction(ILFunction localFunction)
@@ -217,6 +343,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					context.StepStartGroup($"Read local function '{targetMethod.Name}'", inst);
 					info = new LocalFunctionInfo() {
 						UseSites = new List<CallInstruction>() { inst },
+						LocalFunctionArguments = new Dictionary<int, List<ILInstruction>>(),
 						Method = (IMethod)targetMethod.MemberDefinition,
 					};
 					var rootFunction = context.Function;
@@ -347,7 +474,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return inst;
 		}
 
-		LocalFunctionMethod ReduceToLocalFunction(IMethod method, int skipCount)
+		LocalFunctionMethod ReduceToLocalFunction(IMethod method, int typeParametersToRemove)
 		{
 			int parametersToRemove = 0;
 			for (int i = method.Parameters.Count - 1; i >= 0; i--) {
@@ -355,12 +482,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				parametersToRemove++;
 			}
-			return new LocalFunctionMethod(method, parametersToRemove, skipCount);
+			return new LocalFunctionMethod(method, parametersToRemove, typeParametersToRemove);
 		}
 
 		static void TransformToLocalFunctionReference(ILFunction function, CallInstruction useSite)
 		{
-			useSite.Arguments[0].ReplaceWith(new LdNull().WithILRange(useSite.Arguments[0]));
+			ILInstruction target = useSite.Arguments[0];
+			target.ReplaceWith(new LdNull().WithILRange(target));
+			if (target is IInstructionWithVariableOperand withVar && withVar.Variable.Kind == VariableKind.Local) {
+				withVar.Variable.Kind = VariableKind.DisplayClassLocal;
+			}
 			var fnptr = (IInstructionWithMethodOperand)useSite.Arguments[1];
 			var specializeMethod = function.ReducedMethod.Specialize(fnptr.Method.Substitution);
 			var replacement = new LdFtn(specializeMethod).WithILRange((ILInstruction)fnptr);
@@ -396,41 +527,66 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			useSite.ReplaceWith(replacement);
 		}
 
-		void DetermineCaptureAndDeclarationScope(ILFunction function, CallInstruction useSite)
+		void DetermineCaptureAndDeclarationScope(LocalFunctionInfo info, CallInstruction useSite)
 		{
-			int firstArgumentIndex = function.Method.IsStatic ? 0 : 1;
+			int firstArgumentIndex = info.Definition.Method.IsStatic ? 0 : 1;
 			for (int i = useSite.Arguments.Count - 1; i >= firstArgumentIndex; i--) {
-				if (!HandleArgument(function, firstArgumentIndex, i, useSite.Arguments[i]))
+				if (!DetermineCaptureAndDeclarationScope(info, i - firstArgumentIndex, useSite.Arguments[i]))
 					break;
 			}
 			if (firstArgumentIndex > 0) {
-				HandleArgument(function, firstArgumentIndex, 0, useSite.Arguments[0]);
+				DetermineCaptureAndDeclarationScope(info, -1, useSite.Arguments[0]);
 			}
 		}
 
-		bool HandleArgument(ILFunction function, int firstArgumentIndex, int i, ILInstruction arg)
+		bool DetermineCaptureAndDeclarationScope(LocalFunctionInfo info, int parameterIndex, ILInstruction arg)
 		{
+			ILFunction function = info.Definition;
 			ILVariable closureVar;
-			if (!(arg.MatchLdLoc(out closureVar) || arg.MatchLdLoca(out closureVar)))
-				return false;
+			if (parameterIndex >= 0) {
+				if (!(parameterIndex < function.Method.Parameters.Count && IsClosureParameter(function.Method.Parameters[parameterIndex], resolveContext)))
+					return false;
+			}
+			if (!(arg.MatchLdLoc(out closureVar) || arg.MatchLdLoca(out closureVar))) {
+				closureVar = ResolveAncestorScopeReference(arg);
+				if (closureVar == null)
+					return false;
+			}
 			if (closureVar.Kind == VariableKind.NamedArgument)
 				return false;
-			if (!TransformDisplayClassUsage.IsClosure(context, closureVar, out _, out var initializer))
+			var initializer = GetClosureInitializer(closureVar);
+			if (initializer == null)
 				return false;
-			if (i - firstArgumentIndex >= 0) {
-				Debug.Assert(i - firstArgumentIndex < function.Method.Parameters.Count && IsClosureParameter(function.Method.Parameters[i - firstArgumentIndex], resolveContext));
-			}
 			// determine the capture scope of closureVar and the declaration scope of the function 
 			var additionalScope = BlockContainer.FindClosestContainer(initializer);
 			if (closureVar.CaptureScope == null)
 				closureVar.CaptureScope = additionalScope;
-			else
-				closureVar.CaptureScope = FindCommonAncestorInstruction<BlockContainer>(closureVar.CaptureScope, additionalScope);
+			else {
+				BlockContainer combinedScope = FindCommonAncestorInstruction<BlockContainer>(closureVar.CaptureScope, additionalScope);
+				Debug.Assert(combinedScope != null);
+				closureVar.CaptureScope = combinedScope;
+			}
+			if (closureVar.Kind == VariableKind.Local) {
+				closureVar.Kind = VariableKind.DisplayClassLocal;
+			}
 			if (function.DeclarationScope == null)
 				function.DeclarationScope = closureVar.CaptureScope;
 			else if (!IsInNestedLocalFunction(function.DeclarationScope, closureVar.CaptureScope.Ancestors.OfType<ILFunction>().First()))
 				function.DeclarationScope = FindCommonAncestorInstruction<BlockContainer>(function.DeclarationScope, closureVar.CaptureScope);
 			return true;
+
+			ILInstruction GetClosureInitializer(ILVariable variable)
+			{
+				var type = UnwrapByRef(variable.Type).GetDefinition();
+				if (type == null)
+					return null;
+				if (variable.Kind == VariableKind.Parameter)
+					return null;
+				if (type.Kind == TypeKind.Struct)
+					return GetStatement(variable.AddressInstructions.OrderBy(i => i.StartILOffset).First());
+				else
+					return (StLoc)variable.StoreInstructions[0];
+			}
 		}
 
 		bool IsInNestedLocalFunction(BlockContainer declarationScope, ILFunction function)

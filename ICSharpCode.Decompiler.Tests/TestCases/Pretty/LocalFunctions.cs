@@ -719,5 +719,91 @@ namespace LocalFunctions
 				}
 			}
 		}
+
+		public int Issue1798_NestedCapture2()
+		{
+			return Method();
+#if CS80
+			static int Method()
+#else
+			int Method()
+#endif
+			{
+				int t0 = 0;
+				return ZZZ_0();
+				int ZZZ_0()
+				{
+					t0 = 0;
+					int t2 = t0;
+					return ((Func<int>)delegate {
+						t0 = 0;
+						t2 = 0;
+						return ZZZ_1();
+					})();
+				}
+				int ZZZ_1()
+				{
+					t0 = 0;
+					int t1 = t0;
+#if !OPT
+					Func<int> func = delegate {
+#else
+					return ((Func<int>)delegate {
+#endif
+						t0 = 0;
+						t1 = 0;
+						return 0;
+#if !OPT
+					};
+					return func();
+#else
+					})();
+#endif
+				}
+			}
+		}
+
+		public int Issue1798_NestedCapture2b()
+		{
+			return Method();
+#if CS80
+			static int Method()
+#else
+			int Method()
+#endif
+			{
+				int t0 = 0;
+				return ZZZ_0() + ZZZ_1();
+				int ZZZ_0()
+				{
+					t0 = 0;
+					int t2 = t0;
+					return ((Func<int>)delegate {
+						t0 = 0;
+						t2 = 0;
+						return ZZZ_1();
+					})();
+				}
+				int ZZZ_1()
+				{
+					t0 = 0;
+					int t1 = t0;
+#if !OPT
+					Func<int> func = delegate {
+#else
+					return ((Func<int>)delegate {
+#endif
+						t0 = 0;
+						t1 = 0;
+						return 0;
+#if !OPT
+					};
+					return func();
+#else
+					})();
+#endif
+				}
+			}
+		}
 	}
 }

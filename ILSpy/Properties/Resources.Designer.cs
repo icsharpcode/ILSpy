@@ -577,6 +577,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Aggressively perform Scalar Replacement Of Aggregates (SROA).
+        /// </summary>
+        public static string DecompilerSettings_AggressiveScalarReplacementOfAggregates {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.AggressiveScalarReplacementOfAggregates", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Allow extension &apos;Add&apos; methods in collection initializer expressions.
         /// </summary>
         public static string DecompilerSettings_AllowExtensionAddMethodsInCollectionInitializerExpressions {
