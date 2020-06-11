@@ -447,9 +447,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			switch (value) {
 				case LdLoc load when load.Variable.StateMachineField == null:
 					v = load.Variable;
-					// If the variable is a parameter and it is used elsewhere, we cannot propagate it.
-					if (v.Kind == VariableKind.Parameter && v.Index >= 0 && v.LoadCount != 1)
+					if (v.Kind == VariableKind.Parameter) {
+						if (v.LoadCount != 1 && !v.IsThis()) {
+							// If the variable is a parameter and it is used elsewhere, we cannot propagate it.
+							// "dc.field = v; dc.field.mutate(); use(v);" cannot turn to "v.mutate(); use(v)"
+							return null;
+						}
+					} else {
+						// Non-parameter propagation will later be checked, and will only be allowed for display classes
+						if (v.Type.IsReferenceType != true) {
+							// don't allow propagation for display structs (as used with local functions)
+							return null;
+						}
+					}
+					if (!v.IsSingleDefinition) {
+						// "dc.field = v; v = 42; use(dc.field)" cannot turn to "v = 42; use(v);"
 						return null;
+					}
 					if (!(expectedType == null || v.Kind == VariableKind.StackSlot || v.Type.Equals(expectedType)))
 						return null;
 					return v;

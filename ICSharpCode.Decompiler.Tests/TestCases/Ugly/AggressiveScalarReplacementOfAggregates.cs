@@ -126,5 +126,59 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 			}
 			Console.WriteLine("{0} {1}", displayClass.field1, displayClass.field2);
 		}
+		
+		public void Test6b(int i)
+		{
+			int num = i;
+			DisplayClass displayClass = new DisplayClass {
+				field1 = num,
+				field2 = "Hello World!"
+			};
+			if (num < 0) {
+				num = -num;
+			}
+			Console.WriteLine("{0} {1}", displayClass.field1, displayClass.field2);
+		}
+
+		public void Test7(int i)
+		{
+			DisplayClass displayClass = new DisplayClass {
+				field1 = i,
+				field2 = "Hello World!"
+			};
+			Console.WriteLine("{0} {1} {2}", displayClass.field1++, displayClass.field2, i);
+		}
+
+		public void Test8(int i)
+		{
+			DisplayClass displayClass = new DisplayClass {
+				field1 = i,
+				field2 = "Hello World!"
+			};
+			i = 42;
+			Console.WriteLine("{0} {1}", displayClass.field1, displayClass.field2);
+		}
+
+		public void Test8b(int i)
+		{
+			int num = i;
+			DisplayClass displayClass = new DisplayClass {
+				field1 = num,
+				field2 = "Hello World!"
+			};
+			num = 42;
+			Console.WriteLine("{0} {1}", displayClass.field1, displayClass.field2);
+		}
+
+		public void Test9()
+		{
+			DisplayClass displayClass = new DisplayClass {
+				thisField = this,
+				field1 = 1,
+				field2 = "Hello World!"
+			};
+			displayClass.thisField = new Program();
+			Console.WriteLine("{0} {1}", this, displayClass.thisField);
+		}
 	}
 }
