@@ -1333,6 +1333,10 @@ namespace ICSharpCode.Decompiler
 
 		[Category("DecompilerSettings.Other")]
 		[Description("DecompilerSettings.AggressiveScalarReplacementOfAggregates")]
+		// TODO : Remove once https://github.com/icsharpcode/ILSpy/issues/2032 is fixed.
+#if !DEBUG
+		[Browsable(false)]
+#endif
 		public bool AggressiveScalarReplacementOfAggregates {
 			get { return aggressiveScalarReplacementOfAggregates; }
 			set {

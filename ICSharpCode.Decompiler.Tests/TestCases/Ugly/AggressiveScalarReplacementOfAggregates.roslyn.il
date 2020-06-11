@@ -558,38 +558,6 @@
     IL_003a:  ret
   } // end of method Program::Test8b
 
-  .method public hidebysig instance void 
-          Test9() cil managed
-  {
-    // Code size       62 (0x3e)
-    .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Ugly.DisplayClass V_0)
-    IL_0000:  nop
-    IL_0001:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Ugly.DisplayClass::.ctor()
-    IL_0006:  dup
-    IL_0007:  ldarg.0
-    IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Ugly.Program ICSharpCode.Decompiler.Tests.TestCases.Ugly.DisplayClass::thisField
-    IL_000d:  dup
-    IL_000e:  ldc.i4.1
-    IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Ugly.DisplayClass::field1
-    IL_0014:  dup
-    IL_0015:  ldstr      "Hello World!"
-    IL_001a:  stfld      string ICSharpCode.Decompiler.Tests.TestCases.Ugly.DisplayClass::field2
-    IL_001f:  stloc.0
-    IL_0020:  ldloc.0
-    IL_0021:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Ugly.Program::.ctor()
-    IL_0026:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Ugly.Program ICSharpCode.Decompiler.Tests.TestCases.Ugly.DisplayClass::thisField
-    IL_002b:  ldstr      "{0} {1}"
-    IL_0030:  ldarg.0
-    IL_0031:  ldloc.0
-    IL_0032:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Ugly.Program ICSharpCode.Decompiler.Tests.TestCases.Ugly.DisplayClass::thisField
-    IL_0037:  call       void [mscorlib]System.Console::WriteLine(string,
-                                                                  object,
-                                                                  object)
-    IL_003c:  nop
-    IL_003d:  ret
-  } // end of method Program::Test9
-
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
