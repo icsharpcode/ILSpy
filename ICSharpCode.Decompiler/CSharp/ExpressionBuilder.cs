@@ -256,20 +256,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool targetCasted = false;
 			var targetResolveResult = requireTarget ? target.ResolveResult : null;
 
-			bool IsUnambiguousAccess(out MemberResolveResult result)
+			bool IsAmbiguousAccess(out MemberResolveResult result)
 			{
 				if (targetResolveResult == null) {
 					result = resolver.ResolveSimpleName(field.Name, EmptyList<IType>.Instance, isInvocationTarget: false) as MemberResolveResult;
-					return !(result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure));
 				} else {
 					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
-					result = lookup.Lookup(target.ResolveResult, field.Name, EmptyList<IType>.Instance, false) as MemberResolveResult;
-					return !(result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure));
+					result = lookup.Lookup(target.ResolveResult, field.Name, EmptyList<IType>.Instance, isInvocation: false) as MemberResolveResult;
 				}
+				return result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure);
 			}
 
 			MemberResolveResult mrr;
-			while (!IsUnambiguousAccess(out mrr)) {
+			while (IsAmbiguousAccess(out mrr)) {
 				if (!requireTarget) {
 					requireTarget = true;
 					targetResolveResult = target.ResolveResult;
@@ -281,6 +280,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					break;
 				}
 			}
+
 			if (mrr == null) {
 				mrr = new MemberResolveResult(target.ResolveResult, field);
 			}
