@@ -58,6 +58,38 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 			}
 
+			foreach (var h in reader.AssemblyReferences) {
+				var r = reader.GetAssemblyReference(h);
+				if (r.PublicKeyOrToken.IsNil)
+					continue;
+				string version;
+				switch (reader.GetString(r.Name)) {
+					case "netstandard":
+						version = r.Version.ToString(3);
+						return $".NETStandard,Version=v{version}";
+					case "System.Runtime":
+						// System.Runtime.dll uses the following scheme:
+						// 4.2.0 => .NET Core 2.0
+						// 4.2.1 => .NET Core 2.1 / 3.0
+						// 4.2.2 => .NET Core 3.1
+						if (r.Version >= new Version(4, 2, 0)) {
+							version = "2.0";
+							if (r.Version >= new Version(4, 2, 1)) {
+								version = "3.0";
+							}
+							if (r.Version >= new Version(4, 2, 2)) {
+								version = "3.1";
+							}
+							return $".NETCoreApp,Version=v{version}";
+						} else {
+							continue;
+						}
+					case "mscorlib":
+						version = r.Version.ToString(2);
+						return $".NETFramework,Version=v{version}";
+				}
+			}
+
 			// Optionally try to detect target version through assembly path as a fallback (use case: reference assemblies)
 			if (assemblyPath != null) {
 				/*
@@ -67,7 +99,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				 * - .NETCore      -> C:\Program Files\dotnet\sdk\NuGetFallbackFolder\microsoft.netcore.app\2.1.0\ref\netcoreapp2.1\System.Console.dll
 				 * - .NETStandard  -> C:\Program Files\dotnet\sdk\NuGetFallbackFolder\netstandard.library\2.0.3\build\netstandard2.0\ref\netstandard.dll
 				 */
-				var pathMatch = Regex.Match(assemblyPath, RefPathPattern, 
+				var pathMatch = Regex.Match(assemblyPath, RefPathPattern,
 					RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 				if (pathMatch.Success) {
 					var type = pathMatch.Groups["type"].Value;
