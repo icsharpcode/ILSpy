@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Release'">
-    <PackageReference Include="ICSharpCode.Decompiler" Version="6.0.0.5671-preview3" />
+    <PackageReference Include="ICSharpCode.Decompiler" Version="6.0.0.5800-preview4" />
   </ItemGroup>
 
   <ItemGroup>
