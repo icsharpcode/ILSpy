@@ -3,8 +3,15 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 	<StackPanel>
 		<StackPanel Orientation="Horizontal">
-			<TextBlock>Disassembly Format</TextBlock>
-			<ComboBox ItemsSource="{Binding DisassemblyFormats}" SelectedItem="{Binding DisassemblyFormat}"/>
+			<StackPanel Orientation="Vertical">
+				<TextBlock>Disassembly Format</TextBlock>
+				<TextBlock>Show Unwind Info</TextBlock>
+			</StackPanel>
+			<StackPanel Orientation="Vertical">
+				<ComboBox ItemsSource="{Binding DisassemblyFormats}" SelectedItem="{Binding DisassemblyFormat}"/>
+				<CheckBox IsChecked="{Binding IsChecked}"></CheckBox>
+
+			</StackPanel>
 		</StackPanel>
 	</StackPanel>
 </UserControl>

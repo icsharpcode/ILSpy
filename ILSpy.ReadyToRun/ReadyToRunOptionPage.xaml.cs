@@ -35,6 +35,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		{
 			Options s = new Options();
 			s.DisassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(settings);
+			s.IsChecked = ReadyToRunOptions.GetIsChecked(settings);
+
 			this.DataContext = s;
 		}
 
@@ -46,7 +48,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		public void Save(XElement root)
 		{
 			Options s = (Options)this.DataContext;
-			ReadyToRunOptions.SetDisassemblyFormat(root, s.DisassemblyFormat);
+			ReadyToRunOptions.SetDisassemblyOptions(root, s.DisassemblyFormat, s.IsChecked);
 		}
 	}
 
@@ -55,6 +57,17 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		public string[] DisassemblyFormats {
 			get {
 				return ReadyToRunOptions.disassemblyFormats;
+			}
+		}
+
+		private bool isChecked;
+		public bool IsChecked {
+			get {
+				return isChecked;
+			}
+			set {
+				isChecked = value;
+				OnPropertyChanged(nameof(IsChecked));
 			}
 		}
 

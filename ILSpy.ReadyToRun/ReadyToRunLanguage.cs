@@ -103,9 +103,47 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			output.WriteLine("; " + comment);
 		}
 
+		private Dictionary<ulong, ILCompiler.Reflection.ReadyToRun.Amd64.UnwindCode> WriteUnwindInfo(ReadyToRunMethod readyToRunMethod, ITextOutput output)
+		{
+			IReadOnlyList<RuntimeFunction> runTimeList = readyToRunMethod.RuntimeFunctions;
+			Dictionary<ulong, ILCompiler.Reflection.ReadyToRun.Amd64.UnwindCode> unwindCodes = new Dictionary<ulong, ILCompiler.Reflection.ReadyToRun.Amd64.UnwindCode>();
+			foreach (RuntimeFunction i in runTimeList) {
+				if (i.UnwindInfo is ILCompiler.Reflection.ReadyToRun.Amd64.UnwindInfo amd64UnwindInfo) {
+					string parsedFlags = "";
+					if ((amd64UnwindInfo.Flags & (int)ILCompiler.Reflection.ReadyToRun.Amd64.UnwindFlags.UNW_FLAG_EHANDLER) != 0) {
+						parsedFlags += " EHANDLER";
+					}
+					if ((amd64UnwindInfo.Flags & (int)ILCompiler.Reflection.ReadyToRun.Amd64.UnwindFlags.UNW_FLAG_UHANDLER) != 0) {
+						parsedFlags += " UHANDLER";
+					}
+					if ((amd64UnwindInfo.Flags & (int)ILCompiler.Reflection.ReadyToRun.Amd64.UnwindFlags.UNW_FLAG_CHAININFO) != 0) {
+						parsedFlags += " CHAININFO";
+					}
+					if (parsedFlags.Length == 0) {
+						parsedFlags = " NHANDLER";
+					}
+					WriteCommentLine(output, $"UnwindInfo:");
+					WriteCommentLine(output, $"Version:            {amd64UnwindInfo.Version}");
+					WriteCommentLine(output, $"Flags:              0x{amd64UnwindInfo.Flags:X2}{parsedFlags}");
+					WriteCommentLine(output, $"FrameRegister:      {((amd64UnwindInfo.FrameRegister == 0) ? "none" : amd64UnwindInfo.FrameRegister.ToString())}");
+					for (int unwindCodeIndex = 0; unwindCodeIndex < amd64UnwindInfo.CountOfUnwindCodes; unwindCodeIndex++) {
+						unwindCodes.Add(amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex].CodeOffset, amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex]);
+						
+					}
+				}
+			}
+			return unwindCodes;
+		}
+
 		private void Disassemble(PEFile currentFile, ITextOutput output, ReadyToRunReader reader, ReadyToRunMethod readyToRunMethod, RuntimeFunction runtimeFunction, int bitness, ulong address, bool showMetadataTokens, bool showMetadataTokensInBase10)
 		{
 			WriteCommentLine(output, readyToRunMethod.SignatureString);
+			Dictionary<ulong, ILCompiler.Reflection.ReadyToRun.Amd64.UnwindCode> unwindInfo = null;
+			if (ReadyToRunOptions.GetIsChecked(null)) {
+				unwindInfo = WriteUnwindInfo(readyToRunMethod, output);
+				WriteCommentLine(output, unwindInfo.ToString());
+			}
+			
 			byte[] codeBytes = new byte[runtimeFunction.Size];
 			for (int i = 0; i < runtimeFunction.Size; i++) {
 				codeBytes[i] = reader.Image[reader.GetOffset(runtimeFunction.StartAddress) + i];
@@ -133,6 +171,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			formatter.Options.DigitSeparator = "`";
 			formatter.Options.FirstOperandCharIndex = 10;
 			var tempOutput = new StringOutput();
+			ulong baseInstrIP = instructions[0].IP;
 			foreach (var instr in instructions) {
 				int byteBaseIndex = (int)(instr.IP - address);
 				if (runtimeFunction.DebugInfo != null) {
@@ -160,6 +199,10 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				output.Write(" ");
 				output.Write(tempOutput.ToStringAndReset());
 				int importCellAddress = (int)instr.IPRelativeMemoryAddress;
+				if (unwindInfo!= null && unwindInfo.ContainsKey(instr.IP - baseInstrIP)) {
+					ILCompiler.Reflection.ReadyToRun.Amd64.UnwindCode unwindCode = unwindInfo[instr.IP - baseInstrIP];
+					output.Write($" ; UnwindCode: OpCode: {unwindCode.UnwindOp} Op: {unwindCode.OpInfoStr}");
+				}
 				if (instr.IsCallNearIndirect && reader.ImportCellNames.ContainsKey(importCellAddress)) {
 					output.Write(" ; ");
 					ReadyToRunSignature signature = reader.ImportSignatures[(int)instr.IPRelativeMemoryAddress];
@@ -190,6 +233,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 							output.WriteLine(reader.ImportCellNames[importCellAddress]);
 							break;
 					}
+
 					output.WriteLine();
 				} else {
 					output.WriteLine();
