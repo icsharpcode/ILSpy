@@ -2,16 +2,19 @@
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 	<StackPanel>
-		<StackPanel Orientation="Horizontal">
-			<StackPanel Orientation="Vertical">
-				<TextBlock>Disassembly Format</TextBlock>
-				<TextBlock>Show Unwind Info</TextBlock>
-			</StackPanel>
-			<StackPanel Orientation="Vertical">
-				<ComboBox ItemsSource="{Binding DisassemblyFormats}" SelectedItem="{Binding DisassemblyFormat}"/>
-				<CheckBox IsChecked="{Binding IsChecked}"></CheckBox>
-
-			</StackPanel>
-		</StackPanel>
+		<Grid ShowGridLines="False">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition></ColumnDefinition>
+				<ColumnDefinition></ColumnDefinition>
+			</Grid.ColumnDefinitions>
+			<Grid.RowDefinitions>
+				<RowDefinition></RowDefinition>
+				<RowDefinition></RowDefinition>
+			</Grid.RowDefinitions>
+			<TextBlock Grid.Row="0" Grid.Column="0">Disassembly Format</TextBlock>
+			<ComboBox  Grid.Row="0" Grid.Column="1" ItemsSource="{Binding DisassemblyFormats}" SelectedItem="{Binding DisassemblyFormat}"/>
+			<TextBlock Grid.Row="1" Grid.Column="0">Show Unwind Info</TextBlock>
+			<CheckBox  Grid.Row="1" Grid.Column="1" IsChecked="{Binding IsShowUnwindInfo}"></CheckBox>
+		</Grid>
 	</StackPanel>
 </UserControl>
