@@ -1290,19 +1290,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(arg is CallInstruction call && call.Method.FullName == "System.Reflection.MethodBase.GetMethodFromHandle"))
 				return false;
-			switch (call.Arguments.Count) {
-				case 1:
-					if (!call.Arguments[0].MatchLdMemberToken(out member))
-						return false;
-					break;
-				case 2:
-					if (!call.Arguments[0].MatchLdMemberToken(out member))
-						return false;
-					if (!call.Arguments[1].MatchLdTypeToken(out var genericType))
-						return false;
-					break;
-			}
-			return true;
+			return MatchFromHandleParameterList(call, out member);
 		}
 
 		bool MatchGetConstructorFromHandle(ILInstruction inst, out IMember member)
@@ -1315,19 +1303,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(arg is CallInstruction call && call.Method.FullName == "System.Reflection.MethodBase.GetMethodFromHandle"))
 				return false;
-			switch (call.Arguments.Count) {
-				case 1:
-					if (!call.Arguments[0].MatchLdMemberToken(out member))
-						return false;
-					break;
-				case 2:
-					if (!call.Arguments[0].MatchLdMemberToken(out member))
-						return false;
-					if (!call.Arguments[1].MatchLdTypeToken(out var genericType))
-						return false;
-					break;
-			}
-			return true;
+			return MatchFromHandleParameterList(call, out member);
 		}
 
 		bool MatchGetFieldFromHandle(ILInstruction inst, out IMember member)
@@ -1335,6 +1311,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			member = null;
 			if (!(inst is CallInstruction call && call.Method.FullName == "System.Reflection.FieldInfo.GetFieldFromHandle"))
 				return false;
+			return MatchFromHandleParameterList(call, out member);
+		}
+
+		static bool MatchFromHandleParameterList(CallInstruction call, out IMember member)
+		{
+			member = null;
 			switch (call.Arguments.Count) {
 				case 1:
 					if (!call.Arguments[0].MatchLdMemberToken(out member))
@@ -1343,9 +1325,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case 2:
 					if (!call.Arguments[0].MatchLdMemberToken(out member))
 						return false;
-					if (!call.Arguments[1].MatchLdTypeToken(out var genericType))
+					if (!call.Arguments[1].MatchLdTypeToken(out _))
 						return false;
 					break;
+				default:
+					return false;
 			}
 			return true;
 		}
