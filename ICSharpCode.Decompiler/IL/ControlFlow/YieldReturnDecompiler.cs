@@ -1002,9 +1002,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			void CreateTryBlock(Block block, int state)
 			{
 				var finallyMethod = FindFinallyMethod(state);
-				Debug.Assert(finallyMethod != null);
-				// remove the method so that it doesn't cause ambiguity when processing nested try-finally blocks
-				finallyMethodToStateRange.Remove(finallyMethod);
+				if (finallyMethod != null) {
+					// remove the method so that it doesn't cause ambiguity when processing nested try-finally blocks
+					finallyMethodToStateRange.Remove(finallyMethod);
+				}
 
 				var tryBlock = new Block();
 				tryBlock.AddILRange(block);
@@ -1015,7 +1016,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				stateToContainer.Add(state, tryBlockContainer);
 
 				ILInstruction finallyBlock;
-				if (decompiledFinallyMethods.TryGetValue(finallyMethod, out var decompiledMethod)) {
+				if (finallyMethod == null) {
+					finallyBlock = new InvalidBranch($"Could not find finallyMethod for state={state}.\n" +
+						$"Possibly this method is affected by a C# compiler bug that causes the finally body\n" +
+						$"not to run in case of an exception or early 'break;' out of a loop consuming this iterable.");
+				} else if (decompiledFinallyMethods.TryGetValue(finallyMethod, out var decompiledMethod)) {
 					finallyBlock = decompiledMethod.function.Body;
 					var vars = decompiledMethod.function.Variables.ToArray();
 					decompiledMethod.function.Variables.Clear();
