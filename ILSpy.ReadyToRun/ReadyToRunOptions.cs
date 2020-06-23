@@ -42,13 +42,13 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		public static bool GetIsChecked(ILSpySettings settings)
+		public static bool GetIsShowUnwindInfo(ILSpySettings settings)
 		{
 			if (settings == null) {
 				settings = ILSpySettings.Load();
 			}
 			XElement e = settings[ns + "ReadyToRunOptions"];
-			XAttribute a = e.Attribute("IsChecked");
+			XAttribute a = e.Attribute("IsShowUnwindInfo");
 			if (a == null) {
 				return false;
 			} else {
@@ -56,11 +56,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		public static void SetDisassemblyOptions(XElement root, string disassemblyFormat, bool isChecked)
+		public static void SetDisassemblyOptions(XElement root, string disassemblyFormat, bool IsShowUnwindInfo)
 		{
 			XElement section = new XElement(ns + "ReadyToRunOptions");
 			section.SetAttributeValue("DisassemblyFormat", disassemblyFormat);
-			section.SetAttributeValue("IsChecked", isChecked);
+			section.SetAttributeValue("IsShowUnwindInfo", IsShowUnwindInfo);
 
 			XElement existingElement = root.Element(ns + "ReadyToRunOptions");
 			if (existingElement != null) {

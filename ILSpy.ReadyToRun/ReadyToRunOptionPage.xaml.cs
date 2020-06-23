@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		{
 			Options s = new Options();
 			s.DisassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(settings);
-			s.IsChecked = ReadyToRunOptions.GetIsChecked(settings);
+			s.IsShowUnwindInfo = ReadyToRunOptions.GetIsShowUnwindInfo(settings);
 
 			this.DataContext = s;
 		}
@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		public void Save(XElement root)
 		{
 			Options s = (Options)this.DataContext;
-			ReadyToRunOptions.SetDisassemblyOptions(root, s.DisassemblyFormat, s.IsChecked);
+			ReadyToRunOptions.SetDisassemblyOptions(root, s.DisassemblyFormat, s.IsShowUnwindInfo);
 		}
 	}
 
@@ -60,14 +60,14 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		private bool isChecked;
-		public bool IsChecked {
+		private bool isShowUnwindInfo;
+		public bool IsShowUnwindInfo {
 			get {
-				return isChecked;
+				return isShowUnwindInfo;
 			}
 			set {
-				isChecked = value;
-				OnPropertyChanged(nameof(IsChecked));
+				isShowUnwindInfo = value;
+				OnPropertyChanged(nameof(IsShowUnwindInfo));
 			}
 		}
 

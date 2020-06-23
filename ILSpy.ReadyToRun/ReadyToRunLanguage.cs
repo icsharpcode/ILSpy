@@ -33,8 +33,8 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.TextView;
 using ILCompiler.Reflection.ReadyToRun;
+using ILCompiler.Reflection.ReadyToRun.Amd64;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
@@ -103,20 +103,20 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			output.WriteLine("; " + comment);
 		}
 
-		private Dictionary<ulong, ILCompiler.Reflection.ReadyToRun.Amd64.UnwindCode> WriteUnwindInfo(ReadyToRunMethod readyToRunMethod, ITextOutput output)
+		private Dictionary<ulong, UnwindCode> WriteUnwindInfo(ReadyToRunMethod readyToRunMethod, ITextOutput output)
 		{
 			IReadOnlyList<RuntimeFunction> runTimeList = readyToRunMethod.RuntimeFunctions;
-			Dictionary<ulong, ILCompiler.Reflection.ReadyToRun.Amd64.UnwindCode> unwindCodes = new Dictionary<ulong, ILCompiler.Reflection.ReadyToRun.Amd64.UnwindCode>();
+			Dictionary<ulong, UnwindCode> unwindCodes = new Dictionary<ulong, UnwindCode>();
 			foreach (RuntimeFunction i in runTimeList) {
-				if (i.UnwindInfo is ILCompiler.Reflection.ReadyToRun.Amd64.UnwindInfo amd64UnwindInfo) {
+				if (i.UnwindInfo is UnwindInfo amd64UnwindInfo) {
 					string parsedFlags = "";
-					if ((amd64UnwindInfo.Flags & (int)ILCompiler.Reflection.ReadyToRun.Amd64.UnwindFlags.UNW_FLAG_EHANDLER) != 0) {
+					if ((amd64UnwindInfo.Flags & (int)UnwindFlags.UNW_FLAG_EHANDLER) != 0) {
 						parsedFlags += " EHANDLER";
 					}
-					if ((amd64UnwindInfo.Flags & (int)ILCompiler.Reflection.ReadyToRun.Amd64.UnwindFlags.UNW_FLAG_UHANDLER) != 0) {
+					if ((amd64UnwindInfo.Flags & (int)UnwindFlags.UNW_FLAG_UHANDLER) != 0) {
 						parsedFlags += " UHANDLER";
 					}
-					if ((amd64UnwindInfo.Flags & (int)ILCompiler.Reflection.ReadyToRun.Amd64.UnwindFlags.UNW_FLAG_CHAININFO) != 0) {
+					if ((amd64UnwindInfo.Flags & (int)UnwindFlags.UNW_FLAG_CHAININFO) != 0) {
 						parsedFlags += " CHAININFO";
 					}
 					if (parsedFlags.Length == 0) {
@@ -128,7 +128,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 					WriteCommentLine(output, $"FrameRegister:      {((amd64UnwindInfo.FrameRegister == 0) ? "none" : amd64UnwindInfo.FrameRegister.ToString())}");
 					for (int unwindCodeIndex = 0; unwindCodeIndex < amd64UnwindInfo.CountOfUnwindCodes; unwindCodeIndex++) {
 						unwindCodes.Add(amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex].CodeOffset, amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex]);
-						
+
 					}
 				}
 			}
@@ -138,18 +138,17 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		private void Disassemble(PEFile currentFile, ITextOutput output, ReadyToRunReader reader, ReadyToRunMethod readyToRunMethod, RuntimeFunction runtimeFunction, int bitness, ulong address, bool showMetadataTokens, bool showMetadataTokensInBase10)
 		{
 			WriteCommentLine(output, readyToRunMethod.SignatureString);
-			Dictionary<ulong, ILCompiler.Reflection.ReadyToRun.Amd64.UnwindCode> unwindInfo = null;
-			if (ReadyToRunOptions.GetIsChecked(null)) {
+			Dictionary<ulong, UnwindCode> unwindInfo = null;
+			if (ReadyToRunOptions.GetIsShowUnwindInfo(null) && bitness == 64) {
 				unwindInfo = WriteUnwindInfo(readyToRunMethod, output);
-				WriteCommentLine(output, unwindInfo.ToString());
 			}
-			
+
 			byte[] codeBytes = new byte[runtimeFunction.Size];
 			for (int i = 0; i < runtimeFunction.Size; i++) {
 				codeBytes[i] = reader.Image[reader.GetOffset(runtimeFunction.StartAddress) + i];
 			}
 
-			// TODO: Decorate the disassembly with Unwind, GC and debug info
+			// TODO: Decorate the disassembly with GC and debug info
 			var codeReader = new ByteArrayCodeReader(codeBytes);
 			var decoder = Decoder.Create(bitness, codeReader);
 			decoder.IP = address;
@@ -198,48 +197,59 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 					output.Write("  ");
 				output.Write(" ");
 				output.Write(tempOutput.ToStringAndReset());
-				int importCellAddress = (int)instr.IPRelativeMemoryAddress;
-				if (unwindInfo!= null && unwindInfo.ContainsKey(instr.IP - baseInstrIP)) {
-					ILCompiler.Reflection.ReadyToRun.Amd64.UnwindCode unwindCode = unwindInfo[instr.IP - baseInstrIP];
-					output.Write($" ; UnwindCode: OpCode: {unwindCode.UnwindOp} Op: {unwindCode.OpInfoStr}");
-				}
-				if (instr.IsCallNearIndirect && reader.ImportCellNames.ContainsKey(importCellAddress)) {
-					output.Write(" ; ");
-					ReadyToRunSignature signature = reader.ImportSignatures[(int)instr.IPRelativeMemoryAddress];
-					switch(signature) {
-						case MethodDefEntrySignature methodDefSignature:
-							var methodDefToken = MetadataTokens.EntityHandle(unchecked((int)methodDefSignature.MethodDefToken));
-							if (showMetadataTokens) {
-								if (showMetadataTokensInBase10) {
-									output.WriteReference(currentFile, methodDefToken, $"({MetadataTokens.GetToken(methodDefToken)}) ", "metadata");
-								} else {
-									output.WriteReference(currentFile, methodDefToken, $"({MetadataTokens.GetToken(methodDefToken):X8}) ", "metadata");
-								}
-							}
-							methodDefToken.WriteTo(currentFile, output, Decompiler.Metadata.GenericContext.Empty);
-							break;
-						case MethodRefEntrySignature methodRefSignature:
-							var methodRefToken = MetadataTokens.EntityHandle(unchecked((int)methodRefSignature.MethodRefToken));
-							if (showMetadataTokens) {
-								if (showMetadataTokensInBase10) {
-									output.WriteReference(currentFile, methodRefToken, $"({MetadataTokens.GetToken(methodRefToken)}) ", "metadata");
-								} else {
-									output.WriteReference(currentFile, methodRefToken, $"({MetadataTokens.GetToken(methodRefToken):X8}) ", "metadata");
-								}
-							}
-							methodRefToken.WriteTo(currentFile, output, Decompiler.Metadata.GenericContext.Empty);
-							break;
-						default:
-							output.WriteLine(reader.ImportCellNames[importCellAddress]);
-							break;
-					}
-
-					output.WriteLine();
-				} else {
-					output.WriteLine();
-				}
+				DecorateUnwindInfo(output, unwindInfo, baseInstrIP, instr);
+				DecorateCallSite(currentFile, output, reader, showMetadataTokens, showMetadataTokensInBase10, instr);
 			}
 			output.WriteLine();
+		}
+
+		private static void DecorateUnwindInfo(ITextOutput output, Dictionary<ulong, UnwindCode> unwindInfo, ulong baseInstrIP, Instruction instr)
+		{
+			ulong nextInstructionOffset = instr.IP + (ulong)instr.Length - baseInstrIP;
+			if (unwindInfo != null && unwindInfo.ContainsKey(nextInstructionOffset)) {
+				UnwindCode unwindCode = unwindInfo[nextInstructionOffset];
+				output.Write($" ; {unwindCode.UnwindOp}({unwindCode.OpInfoStr})");
+			}
+		}
+
+		private static void DecorateCallSite(PEFile currentFile, ITextOutput output, ReadyToRunReader reader, bool showMetadataTokens, bool showMetadataTokensInBase10, Instruction instr)
+		{
+			int importCellAddress = (int)instr.IPRelativeMemoryAddress;
+			if (instr.IsCallNearIndirect && reader.ImportCellNames.ContainsKey(importCellAddress)) {
+				output.Write(" ; ");
+				ReadyToRunSignature signature = reader.ImportSignatures[(int)instr.IPRelativeMemoryAddress];
+				switch (signature) {
+					case MethodDefEntrySignature methodDefSignature:
+						var methodDefToken = MetadataTokens.EntityHandle(unchecked((int)methodDefSignature.MethodDefToken));
+						if (showMetadataTokens) {
+							if (showMetadataTokensInBase10) {
+								output.WriteReference(currentFile, methodDefToken, $"({MetadataTokens.GetToken(methodDefToken)}) ", "metadata");
+							} else {
+								output.WriteReference(currentFile, methodDefToken, $"({MetadataTokens.GetToken(methodDefToken):X8}) ", "metadata");
+							}
+						}
+						methodDefToken.WriteTo(currentFile, output, Decompiler.Metadata.GenericContext.Empty);
+						break;
+					case MethodRefEntrySignature methodRefSignature:
+						var methodRefToken = MetadataTokens.EntityHandle(unchecked((int)methodRefSignature.MethodRefToken));
+						if (showMetadataTokens) {
+							if (showMetadataTokensInBase10) {
+								output.WriteReference(currentFile, methodRefToken, $"({MetadataTokens.GetToken(methodRefToken)}) ", "metadata");
+							} else {
+								output.WriteReference(currentFile, methodRefToken, $"({MetadataTokens.GetToken(methodRefToken):X8}) ", "metadata");
+							}
+						}
+						methodRefToken.WriteTo(currentFile, output, Decompiler.Metadata.GenericContext.Empty);
+						break;
+					default:
+						output.WriteLine(reader.ImportCellNames[importCellAddress]);
+						break;
+				}
+
+				output.WriteLine();
+			} else {
+				output.WriteLine();
+			}
 		}
 
 		public override RichText GetRichTextTooltip(IEntity entity)
