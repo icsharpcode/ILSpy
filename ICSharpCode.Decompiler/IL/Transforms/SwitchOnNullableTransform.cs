@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 				if (!changed) continue;
-				SwitchDetection.SimplifySwitchInstruction(block);
+				SwitchDetection.SimplifySwitchInstruction(block, context);
 				if (block.Parent is BlockContainer container)
 					changedContainers.Add(container);
 			}

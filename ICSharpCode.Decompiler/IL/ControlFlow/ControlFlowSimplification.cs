@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				InlineVariableInReturnBlock(block, context);
 				// 1st pass SimplifySwitchInstruction before SimplifyBranchChains()
 				// starts duplicating return instructions.
-				SwitchDetection.SimplifySwitchInstruction(block);
+				SwitchDetection.SimplifySwitchInstruction(block, context);
 			}
 			SimplifyBranchChains(function, context);
 			CleanUpEmptyBlocks(function, context);

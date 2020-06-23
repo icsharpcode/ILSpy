@@ -24,6 +24,7 @@ using System.Diagnostics;
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -198,11 +199,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			} else {
 				// 2nd pass of SimplifySwitchInstruction (after duplicating return blocks),
 				// (1st pass was in ControlFlowSimplification)
-				SimplifySwitchInstruction(block);
+				SimplifySwitchInstruction(block, context);
 			}
 		}
 
-		internal static void SimplifySwitchInstruction(Block block)
+		internal static void SimplifySwitchInstruction(Block block, ILTransformContext context)
 		{
 			// due to our of of basic blocks at this point,
 			// switch instructions can only appear as last insturction
@@ -228,7 +229,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 					return false;
 				});
-			AdjustLabels(sw);
+			AdjustLabels(sw, context);
 			SortSwitchSections(sw);
 		}
 
@@ -237,10 +238,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			sw.Sections.ReplaceList(sw.Sections.OrderBy(s => (s.Body as Branch)?.TargetILOffset).ThenBy(s => s.Labels.Values.FirstOrDefault()));
 		}
 
-		static void AdjustLabels(SwitchInstruction sw)
+		static void AdjustLabels(SwitchInstruction sw, ILTransformContext context)
 		{
 			if (sw.Value is BinaryNumericInstruction bop && !bop.CheckForOverflow && bop.Right.MatchLdcI(out long val)) {
 				// Move offset into labels:
+				context.Step("Move offset into switch labels", bop);
 				long offset;
 				switch (bop.Operator) {
 					case BinaryNumericOperator.Add:
