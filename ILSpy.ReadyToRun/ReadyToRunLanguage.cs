@@ -103,7 +103,88 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			output.WriteLine("; " + comment);
 		}
 
+		private void WriteDebugInfo(ReadyToRunMethod readyToRunMethod, ITextOutput output)
+		{
+			IReadOnlyList<RuntimeFunction> runTimeList = readyToRunMethod.RuntimeFunctions;
+			foreach (RuntimeFunction runtimeFunction in runTimeList) {
+				DebugInfo debugInfo = runtimeFunction.DebugInfo;
+				if (debugInfo.BoundsList.Count > 0)
+					output.WriteLine("Debug Info");
+
+				output.WriteLine("    Bounds:");
+				for (int i = 0; i < debugInfo.BoundsList.Count; ++i) {
+					output.Write("    ");
+					output.Write($"Native Offset: 0x{debugInfo.BoundsList[i].NativeOffset:X}, ");
+					if (debugInfo.BoundsList[i].ILOffset == (uint)DebugInfoBoundsType.NoMapping) {
+						output.Write("NoMapping");
+					} else if (debugInfo.BoundsList[i].ILOffset == (uint)DebugInfoBoundsType.Prolog) {
+						output.Write("Prolog");
+					} else if (debugInfo.BoundsList[i].ILOffset == (uint)DebugInfoBoundsType.Epilog) {
+						output.Write("Epilog");
+					} else {
+						output.WriteLine($"IL Offset: 0x{debugInfo.BoundsList[i].ILOffset:x4}");
+					}
+					output.Write($", Srouce Types: {debugInfo.BoundsList[i].SourceTypes}");
+					output.WriteLine();
+				}
+				output.WriteLine("");
+
+				if (debugInfo.VariablesList.Count > 0)
+					output.WriteLine("    Variable Locations:");
+
+				for (int i = 0; i < debugInfo.VariablesList.Count; ++i) {
+					var varLoc = debugInfo.VariablesList[i];
+					output.WriteLine($"    Variable Number: {varLoc.VariableNumber}");
+					output.WriteLine($"    Start Offset: 0x{varLoc.StartOffset:X}");
+					output.WriteLine($"    End Offset: 0x{varLoc.EndOffset:X}");
+					output.WriteLine($"    Loc Type: {varLoc.VariableLocation.VarLocType}");
+
+					switch (varLoc.VariableLocation.VarLocType) {
+						case VarLocType.VLT_REG:
+						case VarLocType.VLT_REG_FP:
+						case VarLocType.VLT_REG_BYREF:
+							output.WriteLine($"    Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+							break;
+						case VarLocType.VLT_STK:
+						case VarLocType.VLT_STK_BYREF:
+							output.WriteLine($"    Base Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+							output.WriteLine($"    Stack Offset: {varLoc.VariableLocation.Data2}");
+							break;
+						case VarLocType.VLT_REG_REG:
+							output.WriteLine($"    Register 1: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+							output.WriteLine($"    Register 2: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data2)}");
+							break;
+						case VarLocType.VLT_REG_STK:
+							output.WriteLine($"    Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+							output.WriteLine($"    Base Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data2)}");
+							output.WriteLine($"    Stack Offset: {varLoc.VariableLocation.Data3}");
+							break;
+						case VarLocType.VLT_STK_REG:
+							output.WriteLine($"    Stack Offset: {varLoc.VariableLocation.Data1}");
+							output.WriteLine($"    Base Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data2)}");
+							output.WriteLine($"    Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data3)}");
+							break;
+						case VarLocType.VLT_STK2:
+							output.WriteLine($"    Base Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+							output.WriteLine($"    Stack Offset: {varLoc.VariableLocation.Data2}");
+							break;
+						case VarLocType.VLT_FPSTK:
+							output.WriteLine($"    Offset: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+							break;
+						case VarLocType.VLT_FIXED_VA:
+							output.WriteLine($"    Offset: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+							break;
+						default:
+							throw new BadImageFormatException("Unexpected var loc type");
+					}
+
+					output.WriteLine("");
+				}
+			}
+		}
+
 		private Dictionary<ulong, UnwindCode> WriteUnwindInfo(ReadyToRunMethod readyToRunMethod, ITextOutput output)
+
 		{
 			IReadOnlyList<RuntimeFunction> runTimeList = readyToRunMethod.RuntimeFunctions;
 			Dictionary<ulong, UnwindCode> unwindCodes = new Dictionary<ulong, UnwindCode>();
@@ -143,6 +224,9 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				unwindInfo = WriteUnwindInfo(readyToRunMethod, output);
 			}
 
+			if (ReadyToRunOptions.GetIsShowDebugInfo(null)) {
+				WriteDebugInfo(readyToRunMethod, output);
+			}
 			byte[] codeBytes = new byte[runtimeFunction.Size];
 			for (int i = 0; i < runtimeFunction.Size; i++) {
 				codeBytes[i] = reader.Image[reader.GetOffset(runtimeFunction.StartAddress) + i];

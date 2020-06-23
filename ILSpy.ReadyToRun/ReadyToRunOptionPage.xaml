@@ -10,11 +10,14 @@
 			<Grid.RowDefinitions>
 				<RowDefinition></RowDefinition>
 				<RowDefinition></RowDefinition>
+				<RowDefinition></RowDefinition>
 			</Grid.RowDefinitions>
 			<TextBlock Grid.Row="0" Grid.Column="0">Disassembly Format</TextBlock>
 			<ComboBox  Grid.Row="0" Grid.Column="1" ItemsSource="{Binding DisassemblyFormats}" SelectedItem="{Binding DisassemblyFormat}"/>
 			<TextBlock Grid.Row="1" Grid.Column="0">Show Unwind Info</TextBlock>
 			<CheckBox  Grid.Row="1" Grid.Column="1" IsChecked="{Binding IsShowUnwindInfo}"></CheckBox>
-		</Grid>
+			<TextBlock Grid.Row="2" Grid.Column="0">Show Debug Info</TextBlock>
+			<CheckBox Grid.Row="2" Grid.Column="1" IsChecked="{Binding DebugIsChecked}"></CheckBox>
+			</Grid>
 	</StackPanel>
 </UserControl>

@@ -43,12 +43,14 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		}
 
 		public static bool GetIsShowUnwindInfo(ILSpySettings settings)
+
 		{
 			if (settings == null) {
 				settings = ILSpySettings.Load();
 			}
 			XElement e = settings[ns + "ReadyToRunOptions"];
 			XAttribute a = e.Attribute("IsShowUnwindInfo");
+
 			if (a == null) {
 				return false;
 			} else {
@@ -56,12 +58,12 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		public static void SetDisassemblyOptions(XElement root, string disassemblyFormat, bool IsShowUnwindInfo)
+		public static void SetDisassemblyOptions(XElement root, string disassemblyFormat, bool IsShowUnwindInfo, bool IsShowDebugInfo)
 		{
 			XElement section = new XElement(ns + "ReadyToRunOptions");
 			section.SetAttributeValue("DisassemblyFormat", disassemblyFormat);
 			section.SetAttributeValue("IsShowUnwindInfo", IsShowUnwindInfo);
-
+			section.SetAttributeValue("IsShowDebugInfo", IsShowDebugInfo);
 			XElement existingElement = root.Element(ns + "ReadyToRunOptions");
 			if (existingElement != null) {
 				existingElement.ReplaceWith(section);
@@ -70,5 +72,20 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
+		public static bool GetIsShowDebugInfo(ILSpySettings settings)
+		{
+			if (settings == null) {
+				settings = ILSpySettings.Load();
+			}
+			XElement e = settings[ns + "ReadyToRunOptions"];
+			XAttribute a = e.Attribute("IsShowDebugInfo");
+			if (a == null) {
+				return false;
+			} else {
+				return (bool)a;
+			}
+		}
+
 	}
+
 }
