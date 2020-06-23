@@ -889,8 +889,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (nullValueCaseBlock != null && exitOrDefaultBlock != nullValueCaseBlock) {
 				stringValues.Add((null, nullValueCaseBlock));
 			}
+			// In newer Roslyn versions (>=3.7) the null check appears in the default case, not prior to the switch.
+			if (!stringValues.Any(pair => pair.Value == null) && IsNullCheckInDefaultBlock(ref exitOrDefaultBlock, switchValueLoad.Variable, out nullValueCaseBlock)) {
+				stringValues.Add((null, nullValueCaseBlock));
+			}
 
 			context.Step(nameof(MatchRoslynSwitchOnString), switchValueLoad);
+			((Branch)defaultSection.Body).TargetBlock = exitOrDefaultBlock;
 			ILInstruction switchValueInst = switchValueLoad;
 			if (instructions == switchBlockInstructions) {
 				// stloc switchValueLoadVariable(switchValue)
@@ -957,6 +962,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				instructions[offset].ReplaceWith(newSwitch);
 				return newSwitch;
 			}
+		}
+
+		/// <summary>
+		/// Matches:
+		/// Block oldDefaultBlock (incoming: 1) {
+		///     if (comp.o(ldloc switchVar == ldnull)) br nullValueCaseBlock
+		///	    br newDefaultBlock
+		/// }
+		/// </summary>
+		private bool IsNullCheckInDefaultBlock(ref Block exitOrDefaultBlock, ILVariable switchVar, out Block nullValueCaseBlock)
+		{
+			nullValueCaseBlock = null;
+			if (!exitOrDefaultBlock.Instructions[0].MatchIfInstruction(out var condition, out var thenBranch))
+				return false;
+			if (!(condition.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(switchVar)))
+				return false;
+			if (!thenBranch.MatchBranch(out nullValueCaseBlock))
+				return false;
+			if (nullValueCaseBlock.Parent != exitOrDefaultBlock.Parent)
+				return false;
+			if (!exitOrDefaultBlock.Instructions[1].MatchBranch(out var elseBlock))
+				return false;
+			if (elseBlock.Parent != exitOrDefaultBlock.Parent)
+				return false;
+			exitOrDefaultBlock = elseBlock;
+			return true;
 		}
 
 		/// <summary>
