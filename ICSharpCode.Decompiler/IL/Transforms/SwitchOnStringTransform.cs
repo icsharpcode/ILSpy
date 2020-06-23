@@ -860,7 +860,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			var stringValues = new List<(string Value, ILInstruction TargetBlockOrLeave)>();
 			SwitchSection defaultSection = switchInst.Sections.MaxBy(s => s.Labels.Count());
-			if (!defaultSection.Body.MatchBranch(out Block exitOrDefaultBlock))
+			if (!(defaultSection.Body.MatchBranch(out Block exitOrDefaultBlock) || defaultSection.Body.MatchLeave(out _)))
 				return false;
 			foreach (var section in switchInst.Sections) {
 				if (section == defaultSection) continue;
@@ -895,7 +895,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			context.Step(nameof(MatchRoslynSwitchOnString), switchValueLoad);
-			((Branch)defaultSection.Body).TargetBlock = exitOrDefaultBlock;
+			if (exitOrDefaultBlock != null) {
+				// change TargetBlock in case it was modified by IsNullCheckInDefaultBlock()
+				((Branch)defaultSection.Body).TargetBlock = exitOrDefaultBlock;
+			}
 			ILInstruction switchValueInst = switchValueLoad;
 			if (instructions == switchBlockInstructions) {
 				// stloc switchValueLoadVariable(switchValue)
@@ -974,6 +977,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		private bool IsNullCheckInDefaultBlock(ref Block exitOrDefaultBlock, ILVariable switchVar, out Block nullValueCaseBlock)
 		{
 			nullValueCaseBlock = null;
+			if (exitOrDefaultBlock == null)
+				return false;
 			if (!exitOrDefaultBlock.Instructions[0].MatchIfInstruction(out var condition, out var thenBranch))
 				return false;
 			if (!(condition.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(switchVar)))
