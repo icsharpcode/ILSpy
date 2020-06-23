@@ -453,24 +453,32 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 				}
 			}
-			
+
 			// Validate that all uses of a block consistently are inside or outside the pinned region.
 			// (we cannot do this anymore after we start moving blocks around)
+			bool cloneBlocks = false;
 			for (int i = 0; i < sourceContainer.Blocks.Count; i++) {
 				if (reachedEdgesPerBlock[i] != 0 && reachedEdgesPerBlock[i] != sourceContainer.Blocks[i].IncomingEdgeCount) {
-					return false;
+					// Don't abort in this case, we still need to somehow represent the pinned variable with a fixed statement.
+					// We'll duplicate the code so that it can be both inside and outside the pinned region.
+					cloneBlocks = true;
+					break;
 				}
 			}
 
 			context.Step("CreatePinnedRegion", block);
 			BlockContainer body = new BlockContainer();
+			Block[] clonedBlocks = cloneBlocks ? new Block[sourceContainer.Blocks.Count] : null;
 			for (int i = 0; i < sourceContainer.Blocks.Count; i++) {
 				if (reachedEdgesPerBlock[i] > 0) {
 					var innerBlock = sourceContainer.Blocks[i];
+					if (cloneBlocks) {
+						innerBlock = (Block)innerBlock.Clone();
+						clonedBlocks[i] = innerBlock;
+					}
 					Branch br = innerBlock.Instructions.LastOrDefault() as Branch;
-					if (br != null && br.TargetBlock.IncomingEdgeCount == 1 
-						&& br.TargetContainer == sourceContainer && reachedEdgesPerBlock[br.TargetBlock.ChildIndex] == 0)
-					{
+					if (br != null && br.TargetBlock.IncomingEdgeCount == 1
+						&& br.TargetContainer == sourceContainer && reachedEdgesPerBlock[br.TargetBlock.ChildIndex] == 0) {
 						// branch that leaves body.
 						// The target block should have an instruction that resets the pin; delete that instruction:
 						StLoc unpin = br.TargetBlock.Instructions.First() as StLoc;
@@ -478,11 +486,34 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							br.TargetBlock.Instructions.RemoveAt(0);
 						}
 					}
-					
+
 					body.Blocks.Add(innerBlock); // move block into body
-					sourceContainer.Blocks[i] = new Block(); // replace with dummy block
-					// we'll delete the dummy block later
+					if (!cloneBlocks) {
+						sourceContainer.Blocks[i] = new Block(); // replace with dummy block
+						// we'll delete the dummy block later
+					}
 				}
+			}
+			if (cloneBlocks) {
+				// Adjust branches between cloned blocks.
+				foreach (var branch in body.Descendants.OfType<Branch>()) {
+					if (branch.TargetContainer == sourceContainer) {
+						int i = branch.TargetBlock.ChildIndex;
+						if (clonedBlocks[i] != null) {
+							branch.TargetBlock = clonedBlocks[i];
+						}
+					}
+				}
+				// Replace unreachable blocks in sourceContainer with dummy blocks:
+				bool[] isAlive = new bool[sourceContainer.Blocks.Count];
+				foreach (var remainingBlock in sourceContainer.TopologicalSort(deleteUnreachableBlocks: true)) {
+					isAlive[remainingBlock.ChildIndex] = true;
+				}
+				for (int i = 0; i < isAlive.Length; i++) {
+					if (!isAlive[i])
+						sourceContainer.Blocks[i] = new Block();
+				}
+				// we'll delete the dummy blocks later
 			}
 			if (body.Blocks.Count == 0) {
 				// empty body, the entryBlock itself doesn't belong into the pinned region
@@ -618,7 +649,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ReplacePinnedVar(oldVar, newVar, child);
 			}
 		}
-		
+
 		private bool IsSlotAcceptingBothManagedAndUnmanagedPointers(SlotInfo slotInfo)
 		{
 			return slotInfo == Block.InstructionSlot || slotInfo == LdObj.TargetSlot || slotInfo == StObj.TargetSlot;
@@ -634,7 +665,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				&& left.MatchLdLoc(nativeVar) && IsNullOrZero(right)
 				&& trueInst.MatchBranch(out targetBlock);
 		}
-		
+
 		void HandleStringToPointer(PinnedRegion pinnedRegion)
 		{
 			Debug.Assert(pinnedRegion.Variable.Type.IsKnownType(KnownTypeCode.String));
