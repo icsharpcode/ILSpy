@@ -388,6 +388,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				return pointerExpr.ConvertTo(targetType, expressionBuilder);
 			}
 			if (targetType.Kind == TypeKind.ByReference) {
+				if (NormalizeTypeVisitor.TypeErasure.EquivalentTypes(targetType, this.Type)) {
+					return this;
+				}
 				var elementType = ((ByReferenceType)targetType).ElementType;
 				if (this.Expression is DirectionExpression thisDir && this.ILInstructions.Any(i => i.OpCode == OpCode.AddressOf)
 					&& thisDir.Expression.GetResolveResult()?.Type.GetStackType() == elementType.GetStackType()) {
@@ -397,6 +400,14 @@ namespace ICSharpCode.Decompiler.CSharp
 					return new DirectionExpression(FieldDirection.Ref, convertedTemp)
 						.WithILInstruction(this.ILInstructions)
 						.WithRR(new ByReferenceResolveResult(convertedTemp.ResolveResult, ReferenceKind.Ref));
+				}
+				if (this.Type.Kind == TypeKind.ByReference && !IsFixedVariable()) {
+					// Convert between managed reference types.
+					// We can't do this by going through a pointer type because that would temporarily stop GC tracking.
+					// Instead, emit `ref Unsafe.As<T>(ref expr)`
+					return expressionBuilder.CallUnsafeIntrinsic("As", new[] { this.Expression },
+						typeArguments: new IType[] { ((ByReferenceType)this.Type).ElementType, elementType },
+						returnType: targetType);
 				}
 				// Convert from integer/pointer to reference.
 				// First, convert to the corresponding pointer type:
@@ -472,7 +483,33 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return castExpr.WithoutILInstruction().WithRR(rr);
 		}
-		
+
+		bool IsFixedVariable()
+		{
+			if (this.Expression is DirectionExpression dirExpr) {
+				var inst = dirExpr.Expression.Annotation<ILInstruction>();
+				return inst != null && IsFixedVariable(inst);
+			} else {
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Returns true if <c>inst</c> computes the address of a fixed variable; false if it computes the address of a moveable variable.
+		/// (see "Fixed and moveable variables" in the C# specification)
+		/// </summary>
+		static bool IsFixedVariable(ILInstruction inst)
+		{
+			switch (inst) {
+				case LdLoca ldloca:
+					return ldloca.Variable.CaptureScope == null; // locals are fixed if uncaptured
+				case LdFlda ldflda:
+					return IsFixedVariable(ldflda.Target);
+				default:
+					return inst.ResultType == StackType.I;
+			}
+		}
+
 		/// <summary>
 		/// Gets whether an implicit conversion from 'inputType' to 'newTargetType'
 		/// would have the same semantics as the existing cast from 'inputType' to 'oldTargetType'.

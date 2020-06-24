@@ -151,9 +151,9 @@ namespace System.Runtime.CompilerServices
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static ref TTo As<TFrom, TTo>(ref TFrom source)
+		public static ref TTo As<TFrom, TTo>(ref TFrom source)
 		{
-			return ref *(TTo*)(&source);
+			return ref Unsafe.As<TFrom, TTo>(ref source);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

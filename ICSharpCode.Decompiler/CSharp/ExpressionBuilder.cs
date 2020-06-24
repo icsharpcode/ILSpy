@@ -1138,13 +1138,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			return null;
 		}
 
-		internal TranslatedExpression CallUnsafeIntrinsic(string name, Expression[] arguments, IType returnType, ILInstruction inst)
+		internal TranslatedExpression CallUnsafeIntrinsic(string name, Expression[] arguments, IType returnType, ILInstruction inst = null, IEnumerable<IType> typeArguments = null)
 		{
 			var target = new MemberReferenceExpression {
 				Target = new TypeReferenceExpression(astBuilder.ConvertType(compilation.FindType(KnownTypeCode.Unsafe))),
 				MemberName = name
 			};
-			var invocation = new InvocationExpression(target, arguments).WithILInstruction(inst);
+			if (typeArguments != null) {
+				target.TypeArguments.AddRange(typeArguments.Select(astBuilder.ConvertType));
+			}
+			var invocationExpr = new InvocationExpression(target, arguments);
+			var invocation = inst != null ? invocationExpr.WithILInstruction(inst) : invocationExpr.WithoutILInstruction(); 
 			if (returnType is ByReferenceType brt) {
 				return WrapInRef(invocation.WithRR(new ResolveResult(brt.ElementType)), brt);
 			} else {
