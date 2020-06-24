@@ -488,25 +488,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (this.Expression is DirectionExpression dirExpr) {
 				var inst = dirExpr.Expression.Annotation<ILInstruction>();
-				return inst != null && IsFixedVariable(inst);
+				return inst != null && PointerArithmeticOffset.IsFixedVariable(inst);
 			} else {
 				return false;
-			}
-		}
-
-		/// <summary>
-		/// Returns true if <c>inst</c> computes the address of a fixed variable; false if it computes the address of a moveable variable.
-		/// (see "Fixed and moveable variables" in the C# specification)
-		/// </summary>
-		static bool IsFixedVariable(ILInstruction inst)
-		{
-			switch (inst) {
-				case LdLoca ldloca:
-					return ldloca.Variable.CaptureScope == null; // locals are fixed if uncaptured
-				case LdFlda ldflda:
-					return IsFixedVariable(ldflda.Target);
-				default:
-					return inst.ResultType == StackType.I;
 			}
 		}
 

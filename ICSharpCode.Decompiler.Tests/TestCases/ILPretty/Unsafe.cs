@@ -20,6 +20,11 @@ internal sealed class ExtraUnsafeTests
 		fixed (ushort* ptr = &Unsafe.As<uint, ushort>(ref managedPtr)) {
 		}
 	}
+
+	public unsafe static uint* RefToPointerWithoutPinning(ref uint managedPtr)
+	{
+		return (uint*)Unsafe.AsPointer(ref managedPtr);
+	}
 }
 
 namespace System.Runtime.CompilerServices
@@ -77,7 +82,7 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static void* AsPointer<T>(ref T value)
 		{
-			return &value;
+			return Unsafe.AsPointer(ref value);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

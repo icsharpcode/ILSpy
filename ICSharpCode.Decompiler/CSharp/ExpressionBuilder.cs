@@ -1676,9 +1676,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					return arg;
 				case ConversionKind.StopGCTracking:
 					if (inputType.Kind == TypeKind.ByReference) {
-						// cast to corresponding pointer type:
-						var pointerType = new PointerType(((ByReferenceType)inputType).ElementType);
-						return arg.ConvertTo(pointerType, this).WithILInstruction(inst);
+						if (PointerArithmeticOffset.IsFixedVariable(inst.Argument)) {
+							// cast to corresponding pointer type:
+							var pointerType = new PointerType(((ByReferenceType)inputType).ElementType);
+							return arg.ConvertTo(pointerType, this).WithILInstruction(inst);
+						} else {
+							// emit Unsafe.AsPointer() intrinsic:
+							return CallUnsafeIntrinsic("AsPointer",
+								arguments: new Expression[] { arg },
+								returnType: new PointerType(compilation.FindType(KnownTypeCode.Void)),
+								inst: inst);
+						}
 					} else if (arg.Type.GetStackType().IsIntegerType()) {
 						// ConversionKind.StopGCTracking should only be used with managed references,
 						// but it's possible that we're supposed to stop tracking something we just started to track.

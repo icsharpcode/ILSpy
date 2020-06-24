@@ -82,5 +82,22 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return null;
 		}
+
+
+		/// <summary>
+		/// Returns true if <c>inst</c> computes the address of a fixed variable; false if it computes the address of a moveable variable.
+		/// (see "Fixed and moveable variables" in the C# specification)
+		/// </summary>
+		internal static bool IsFixedVariable(ILInstruction inst)
+		{
+			switch (inst) {
+				case LdLoca ldloca:
+					return ldloca.Variable.CaptureScope == null; // locals are fixed if uncaptured
+				case LdFlda ldflda:
+					return IsFixedVariable(ldflda.Target);
+				default:
+					return inst.ResultType == StackType.I;
+			}
+		}
 	}
 }

@@ -466,4 +466,12 @@
 
     ret
   }
+
+  .method public hidebysig static uint32* RefToPointerWithoutPinning(uint32& managedPtr)
+  {
+    .maxstack 8
+
+    ldarg.0
+    ret
+  }
 }
