@@ -206,7 +206,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		private static void DecorateUnwindInfo(ITextOutput output, Dictionary<ulong, UnwindCode> unwindInfo, ulong baseInstrIP, Instruction instr)
 		{
-			ulong nextInstructionOffset = instr.NextIP;
+			ulong nextInstructionOffset = instr.NextIP - baseInstrIP;
 			if (unwindInfo != null && unwindInfo.ContainsKey(nextInstructionOffset)) {
 				UnwindCode unwindCode = unwindInfo[nextInstructionOffset];
 				output.Write($" ; {unwindCode.UnwindOp}({unwindCode.OpInfoStr})");
