@@ -832,7 +832,19 @@ namespace ICSharpCode.Decompiler.CSharp
 					initExpr = exprBuilder.Translate(gpr.Argument);
 				}
 			} else {
-				initExpr = exprBuilder.Translate(inst.Init, typeHint: inst.Variable.Type).ConvertTo(inst.Variable.Type, exprBuilder);
+				IType refType = inst.Variable.Type;
+				if (refType is PointerType pointerType) {
+					refType = new ByReferenceType(pointerType.ElementType);
+				}
+				initExpr = exprBuilder.Translate(inst.Init, typeHint: refType).ConvertTo(refType, exprBuilder);
+				if (initExpr is DirectionExpression dirExpr) {
+					if (dirExpr.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.Dereference) {
+						initExpr = uoe.Expression.Detach();
+					} else {
+						initExpr = new UnaryOperatorExpression(UnaryOperatorType.AddressOf, dirExpr.Expression.Detach())
+							.WithRR(new ResolveResult(inst.Variable.Type));
+					}
+				}
 			}
 			fixedStmt.Variables.Add(new VariableInitializer(inst.Variable.Name, initExpr).WithILVariable(inst.Variable));
 			fixedStmt.EmbeddedStatement = Convert(inst.Body);

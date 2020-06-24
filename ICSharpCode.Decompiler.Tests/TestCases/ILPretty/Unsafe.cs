@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 [assembly: AssemblyFileVersion("4.0.0.0")]
 [assembly: AssemblyInformationalVersion("4.0.0.0")]
@@ -11,6 +12,15 @@ using System.Reflection;
 [assembly: AssemblyCompany("Microsoft Corporation")]
 [assembly: AssemblyProduct("Microsoft® .NET Framework")]
 [assembly: CLSCompliant(false)]
+
+internal sealed class ExtraUnsafeTests
+{
+	public unsafe static void PinWithTypeMismatch(ref uint managedPtr)
+	{
+		fixed (ushort* ptr = &Unsafe.As<uint, ushort>(ref managedPtr)) {
+		}
+	}
+}
 
 namespace System.Runtime.CompilerServices
 {
