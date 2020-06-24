@@ -42,11 +42,27 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		public static void SetDisassemblyFormat(XElement root, string disassemblyFormat)
+		public static bool GetIsShowUnwindInfo(ILSpySettings settings)
+
+		{
+			if (settings == null) {
+				settings = ILSpySettings.Load();
+			}
+			XElement e = settings[ns + "ReadyToRunOptions"];
+			XAttribute a = e.Attribute("IsShowUnwindInfo");
+
+			if (a == null) {
+				return false;
+			} else {
+				return (bool)a;
+			}
+		}
+
+		public static void SetDisassemblyOptions(XElement root, string disassemblyFormat, bool IsShowUnwindInfo)
 		{
 			XElement section = new XElement(ns + "ReadyToRunOptions");
 			section.SetAttributeValue("DisassemblyFormat", disassemblyFormat);
-
+			section.SetAttributeValue("IsShowUnwindInfo", IsShowUnwindInfo);
 			XElement existingElement = root.Element(ns + "ReadyToRunOptions");
 			if (existingElement != null) {
 				existingElement.ReplaceWith(section);
@@ -54,5 +70,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				root.Add(section);
 			}
 		}
+
+
 	}
+
 }

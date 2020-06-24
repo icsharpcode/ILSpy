@@ -1,10 +1,21 @@
 ﻿<UserControl x:Class="ICSharpCode.ILSpy.ReadyToRun.ReadyToRunOptionPage"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-	<StackPanel>
-		<StackPanel Orientation="Horizontal">
-			<TextBlock>Disassembly Format</TextBlock>
-			<ComboBox ItemsSource="{Binding DisassemblyFormats}" SelectedItem="{Binding DisassemblyFormat}"/>
-		</StackPanel>
-	</StackPanel>
+	<Grid>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition />
+			<ColumnDefinition />
+		</Grid.ColumnDefinitions>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+		<TextBlock Margin="3">Disassembly Format</TextBlock>
+		<ComboBox Grid.Column="1" Margin="3" ItemsSource="{Binding DisassemblyFormats}" SelectedItem="{Binding DisassemblyFormat}" />
+		<TextBlock Grid.Row="1" Margin="3">Show Unwind Info</TextBlock>
+		<CheckBox Grid.Row="1" Grid.Column="1" Margin="3" IsChecked="{Binding IsShowUnwindInfo}" />
+		<TextBlock Grid.Row="2" Margin="3">Show Debug Info</TextBlock>
+		<CheckBox Grid.Row="2" Grid.Column="1" Margin="3" IsChecked="{Binding DebugIsChecked}" />
+	</Grid>
 </UserControl>
