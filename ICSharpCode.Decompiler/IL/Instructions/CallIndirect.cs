@@ -27,11 +27,13 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class CallIndirect
 	{
-		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true, isCollection: true);
+		// Note: while in IL the arguments come first and the function pointer last;
+		// in the ILAst we're handling it as in C#: the function pointer is evaluated first, the arguments later.
 		public static readonly SlotInfo FunctionPointerSlot = new SlotInfo("FunctionPointer", canInlineInto: true);
+		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true, isCollection: true);
 
-		public readonly InstructionCollection<ILInstruction> Arguments;
 		ILInstruction functionPointer;
+		public readonly InstructionCollection<ILInstruction> Arguments;
 		public bool IsInstance { get; }
 		public bool HasExplicitThis { get; }
 		public System.Reflection.Metadata.SignatureCallingConvention CallingConvention { get; }
@@ -51,34 +53,27 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			set {
 				ValidateChild(value);
-				SetChildInstruction(ref functionPointer, value, Arguments.Count);
+				SetChildInstruction(ref functionPointer, value, 0);
 			}
 		}
 
-		protected internal override void InstructionCollectionUpdateComplete()
-		{
-			base.InstructionCollectionUpdateComplete();
-			if (functionPointer?.Parent == this)
-				functionPointer.ChildIndex = Arguments.Count;
-		}
-
 		public CallIndirect(bool isInstance, bool hasExplicitThis, System.Reflection.Metadata.SignatureCallingConvention callingConvention, IType returnType, ImmutableArray<IType> parameterTypes,
-			IEnumerable<ILInstruction> arguments, ILInstruction functionPointer) : base(OpCode.CallIndirect)
+			ILInstruction functionPointer, IEnumerable<ILInstruction> arguments) : base(OpCode.CallIndirect)
 		{
 			this.IsInstance = isInstance;
 			this.HasExplicitThis = hasExplicitThis;
 			this.CallingConvention = callingConvention;
 			this.ReturnType = returnType ?? throw new ArgumentNullException(nameof(returnType));
 			this.ParameterTypes = parameterTypes.ToImmutableArray();
-			this.Arguments = new InstructionCollection<ILInstruction>(this, 0);
-			this.Arguments.AddRange(arguments);
 			this.FunctionPointer = functionPointer;
+			this.Arguments = new InstructionCollection<ILInstruction>(this, 1);
+			this.Arguments.AddRange(arguments);
 		}
 
 		public override ILInstruction Clone()
 		{
 			return new CallIndirect(IsInstance, HasExplicitThis, CallingConvention, ReturnType, ParameterTypes,
-				this.Arguments.Select(inst => inst.Clone()), functionPointer.Clone()
+				functionPointer.Clone(), this.Arguments.Select(inst => inst.Clone())
 			).WithILRange(this);
 		}
 
@@ -96,24 +91,19 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write("call.indirect ");
 			ReturnType.WriteTo(output);
 			output.Write('(');
-			bool first = true;
+			functionPointer.WriteTo(output, options);
 			int firstArgument = IsInstance ? 1 : 0;
 			if (firstArgument == 1) {
+				output.Write(", ");
 				Arguments[0].WriteTo(output, options);
-				first = false;
 			}
-			foreach (var (inst, type) in Arguments.Skip(firstArgument).Zip(ParameterTypes, (a,b) => (a,b))) {
-				if (first)
-					first = false;
-				else
-					output.Write(", ");
+			foreach (var (inst, type) in Arguments.Zip(ParameterTypes, (a,b) => (a,b))) {
+				output.Write(", ");
 				inst.WriteTo(output, options);
 				output.Write(" : ");
 				type.WriteTo(output);
 			}
 			if (Arguments.Count > 0)
-				output.Write(", ");
-			functionPointer.WriteTo(output, options);
 			output.Write(')');
 		}
 
@@ -124,22 +114,22 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override ILInstruction GetChild(int index)
 		{
-			if (index == Arguments.Count)
+			if (index == 0)
 				return functionPointer;
-			return Arguments[index];
+			return Arguments[index - 1];
 		}
 
 		protected override void SetChild(int index, ILInstruction value)
 		{
-			if (index == Arguments.Count)
+			if (index == 0)
 				FunctionPointer = value;
 			else
-				Arguments[index] = value;
+				Arguments[index - 1] = value;
 		}
 
 		protected override SlotInfo GetChildSlot(int index)
 		{
-			if (index == Arguments.Count)
+			if (index == 0)
 				return FunctionPointerSlot;
 			else
 				return ArgumentSlot;
@@ -148,10 +138,10 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = this.DirectFlags;
+			flags |= functionPointer.Flags;
 			foreach (var inst in Arguments) {
 				flags |= inst.Flags;
 			}
-			flags |= functionPointer.Flags;
 			return flags;
 		}
 

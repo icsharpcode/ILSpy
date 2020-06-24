@@ -1456,8 +1456,8 @@ namespace ICSharpCode.Decompiler.IL
 				signature.Header.CallingConvention,
 				signature.ReturnType,
 				signature.ParameterTypes,
-				arguments,
-				functionPointer
+				functionPointer,
+				arguments
 			);
 			if (call.ResultType != StackType.Void)
 				return Push(call);

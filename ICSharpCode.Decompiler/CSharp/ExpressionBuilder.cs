@@ -3244,6 +3244,27 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst);
 		}
 
+		protected internal override TranslatedExpression VisitCallIndirect(CallIndirect inst, TranslationContext context)
+		{
+			if (inst.IsInstance) {
+				return ErrorExpression("calli with instance method signature not supportd");
+			}
+			var ty = new FunctionPointerType();
+			if (inst.CallingConvention != System.Reflection.Metadata.SignatureCallingConvention.Default) {
+				ty.CallingConvention = inst.CallingConvention.ToString().ToLowerInvariant();
+			}
+			foreach (var parameterType in inst.ParameterTypes) {
+				ty.TypeArguments.Add(astBuilder.ConvertType(parameterType));
+			}
+			ty.TypeArguments.Add(astBuilder.ConvertType(inst.ReturnType));
+			var functionPointer = Translate(inst.FunctionPointer);
+			var invocation = new InvocationExpression(new CastExpression(ty, functionPointer));
+			foreach (var (arg, paramType) in inst.Arguments.Zip(inst.ParameterTypes)) {
+				invocation.Arguments.Add(Translate(arg, typeHint: paramType).ConvertTo(paramType, this, allowImplicitConversion: true));
+			}
+			return invocation.WithRR(new ResolveResult(inst.ReturnType)).WithILInstruction(inst);
+		}
+
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)
 		{
 			string message = "Error";

@@ -73,7 +73,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			else
 				return base.VisitComposedType(composedType);
 		}
-		
+
+		public override bool VisitFunctionPointerType(FunctionPointerType functionPointerType)
+		{
+			return true;
+		}
+
 		public override bool VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression)
 		{
 			bool result = base.VisitUnaryOperatorExpression(unaryOperatorExpression);
