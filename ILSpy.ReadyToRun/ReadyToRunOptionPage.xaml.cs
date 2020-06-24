@@ -36,7 +36,6 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			Options s = new Options();
 			s.DisassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(settings);
 			s.IsShowUnwindInfo = ReadyToRunOptions.GetIsShowUnwindInfo(settings);
-			s.IsShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(settings);
 
 			this.DataContext = s;
 		}
@@ -49,7 +48,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		public void Save(XElement root)
 		{
 			Options s = (Options)this.DataContext;
-			ReadyToRunOptions.SetDisassemblyOptions(root, s.DisassemblyFormat, s.IsShowUnwindInfo, s.IsShowDebugInfo);
+			ReadyToRunOptions.SetDisassemblyOptions(root, s.DisassemblyFormat, s.IsShowUnwindInfo);
 		}
 	}
 
@@ -72,17 +71,6 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-
-		private bool isShowDebugInfo;
-		public bool IsShowDebugInfo {
-			get {
-				return isShowDebugInfo;
-			}
-			set {
-				isShowDebugInfo = value;
-				OnPropertyChanged(nameof(isShowDebugInfo));
-			}
-		}
 
 		private string disassemblyFormat;
 
