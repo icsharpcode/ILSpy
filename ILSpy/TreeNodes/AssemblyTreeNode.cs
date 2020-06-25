@@ -122,13 +122,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		void OnAssemblyLoaded(Task<PEFile> moduleTask)
 		{
 			// change from "Loading" icon to final icon
-			RaisePropertyChanged("Icon");
-			RaisePropertyChanged("ExpandedIcon");
-			RaisePropertyChanged("Tooltip");
+			RaisePropertyChanged(nameof(Icon));
+			RaisePropertyChanged(nameof(ExpandedIcon));
+			RaisePropertyChanged(nameof(ToolTip));
 			if (moduleTask.IsFaulted) {
-				RaisePropertyChanged("ShowExpander"); // cannot expand assemblies with load error
+				RaisePropertyChanged(nameof(ShowExpander)); // cannot expand assemblies with load error
 			} else {
-				RaisePropertyChanged("Text"); // shortname might have changed
+				RaisePropertyChanged(nameof(Text)); // shortname might have changed
 			}
 		}
 
@@ -431,7 +431,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				var loadedAssm = ((AssemblyTreeNode)node).LoadedAssembly;
 				if (!loadedAssm.HasLoadError && !loadedAssm.FileName.StartsWith("nupkg://")) {
 					loadedAssm.IsAutoLoaded = false;
-					node.RaisePropertyChanged("Foreground");
+					node.RaisePropertyChanged(nameof(Foreground));
 				}
 			}
 			MainWindow.Instance.CurrentAssemblyList.RefreshSave();

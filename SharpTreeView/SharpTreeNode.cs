@@ -148,9 +148,9 @@ namespace ICSharpCode.TreeView
 					isHidden = value;
 					if (modelParent != null)
 						UpdateIsVisible(modelParent.isVisible && modelParent.isExpanded, true);
-					RaisePropertyChanged("IsHidden");
+					RaisePropertyChanged(nameof(IsHidden));
 					if (Parent != null)
-						Parent.RaisePropertyChanged("ShowExpander");
+						Parent.RaisePropertyChanged(nameof(ShowExpander));
 				}
 			}
 		}
@@ -169,7 +169,7 @@ namespace ICSharpCode.TreeView
 			set {
 				if (isSelected != value) {
 					isSelected = value;
-					RaisePropertyChanged("IsSelected");
+					RaisePropertyChanged(nameof(IsSelected));
 				}
 			}
 		}
@@ -233,7 +233,7 @@ namespace ICSharpCode.TreeView
 				}
 			}
 			
-			RaisePropertyChanged("ShowExpander");
+			RaisePropertyChanged(nameof(ShowExpander));
 			RaiseIsLastChangedIfNeeded(e);
 		}
 		#endregion
@@ -266,7 +266,7 @@ namespace ICSharpCode.TreeView
 						OnCollapsing();
 					}
 					UpdateChildIsVisible(true);
-					RaisePropertyChanged("IsExpanded");
+					RaisePropertyChanged(nameof(IsExpanded));
 				}
 			}
 		}
@@ -286,11 +286,11 @@ namespace ICSharpCode.TreeView
 					IsExpanded = false;
 					if (canExpandRecursively) {
 						canExpandRecursively = false;
-						RaisePropertyChanged("CanExpandRecursively");
+						RaisePropertyChanged(nameof(CanExpandRecursively));
 					}
 				}
-				RaisePropertyChanged("LazyLoading");
-				RaisePropertyChanged("ShowExpander");
+				RaisePropertyChanged(nameof(LazyLoading));
+				RaisePropertyChanged(nameof(ShowExpander));
 			}
 		}
 		
@@ -379,7 +379,7 @@ namespace ICSharpCode.TreeView
 			{
 				if (isEditing != value) {
 					isEditing = value;
-					RaisePropertyChanged("IsEditing");
+					RaisePropertyChanged(nameof(IsEditing));
 				}
 			}
 		}
@@ -436,7 +436,7 @@ namespace ICSharpCode.TreeView
 					}
 				}
 				
-				RaisePropertyChanged("IsChecked");
+				RaisePropertyChanged(nameof(IsChecked));
 			}
 		}
 		
@@ -645,15 +645,15 @@ namespace ICSharpCode.TreeView
 				case NotifyCollectionChangedAction.Add:
 					if (e.NewStartingIndex == Children.Count - 1) {
 						if (Children.Count > 1) {
-							Children[Children.Count - 2].RaisePropertyChanged("IsLast");
+							Children[Children.Count - 2].RaisePropertyChanged(nameof(IsLast));
 						}
-						Children[Children.Count - 1].RaisePropertyChanged("IsLast");
+						Children[Children.Count - 1].RaisePropertyChanged(nameof(IsLast));
 					}
 					break;
 				case NotifyCollectionChangedAction.Remove:
 					if (e.OldStartingIndex == Children.Count) {
 						if (Children.Count > 0) {
-							Children[Children.Count - 1].RaisePropertyChanged("IsLast");
+							Children[Children.Count - 1].RaisePropertyChanged(nameof(IsLast));
 						}
 					}
 					break;

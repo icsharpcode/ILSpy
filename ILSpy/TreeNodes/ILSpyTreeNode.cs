@@ -144,7 +144,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected virtual void OnFilterSettingsChanged()
 		{
-			RaisePropertyChanged("Text");
+			RaisePropertyChanged(nameof(Text));
 			if (IsVisible) {
 				foreach (ILSpyTreeNode node in this.Children.OfType<ILSpyTreeNode>())
 					ApplyFilterToChild(node);

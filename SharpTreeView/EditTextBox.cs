@@ -75,7 +75,7 @@ namespace ICSharpCode.TreeView
 				if (!Node.SaveEditText(Text)) {
 					Item.Focus();
 				}
-				Node.RaisePropertyChanged("Text");
+				Node.RaisePropertyChanged(nameof(Text));
 
 				//if (Node.SaveEditText(Text)) {
 				//    Node.IsEditing = false;
