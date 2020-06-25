@@ -437,3 +437,41 @@
 
 } // end of class System.Runtime.CompilerServices.IsReadOnlyAttribute
 #endif
+
+.class private auto ansi sealed beforefieldinit ExtraUnsafeTests
+  extends [CORE_ASSEMBLY]System.Object
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void .ctor () cil managed 
+  {
+        .maxstack 1
+        ldarg.0
+        call instance void [CORE_ASSEMBLY]System.Object::.ctor()
+        ret
+  } // end of method ExtraUnsafeTests::.ctor
+
+  .method public hidebysig static void PinWithTypeMismatch(uint32& managedPtr)
+  {
+    .maxstack 8
+    .locals (
+      [0] uint16& pinned
+    )
+    // Pin:
+    ldarg.0
+    stloc.0
+
+    // Unpin:
+    ldc.i4 0
+    stloc.0
+
+    ret
+  }
+
+  .method public hidebysig static uint32* RefToPointerWithoutPinning(uint32& managedPtr)
+  {
+    .maxstack 8
+
+    ldarg.0
+    ret
+  }
+}

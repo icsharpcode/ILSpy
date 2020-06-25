@@ -70,6 +70,7 @@
     <Compile Include="CSharp\SequencePointBuilder.cs" />
     <Compile Include="CSharp\ProjectDecompiler\TargetFramework.cs" />
     <Compile Include="CSharp\ProjectDecompiler\TargetServices.cs" />
+    <Compile Include="CSharp\Syntax\FunctionPointerType.cs" />
     <Compile Include="IL\Transforms\IndexRangeTransform.cs" />
     <Compile Include="CSharp\TranslatedStatement.cs" />
     <Compile Include="DebugInfo\KnownGuids.cs" />

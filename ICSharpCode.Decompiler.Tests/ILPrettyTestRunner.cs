@@ -197,6 +197,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void CallIndirect()
+		{
+			Run();
+		}
+
+		[Test]
 		public void FSharpLoops_Debug()
 		{
 			CopyFSharpCoreDll();

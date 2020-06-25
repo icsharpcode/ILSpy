@@ -2335,6 +2335,19 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			EndNode(tupleTypeElement);
 		}
 
+		public virtual void VisitFunctionPointerType(FunctionPointerType functionPointerType)
+		{
+			StartNode(functionPointerType);
+			WriteKeyword(Roles.DelegateKeyword);
+			WriteToken(FunctionPointerType.PointerRole);
+			if (!functionPointerType.CallingConventionIdentifier.IsNull) {
+				Space();
+				WriteIdentifier(functionPointerType.CallingConventionIdentifier);
+			}
+			WriteTypeArguments(functionPointerType.TypeArguments);
+			EndNode(functionPointerType);
+		}
+
 		public virtual void VisitComposedType(ComposedType composedType)
 		{
 			StartNode(composedType);

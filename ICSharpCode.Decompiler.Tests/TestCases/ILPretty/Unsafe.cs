@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 [assembly: AssemblyFileVersion("4.0.0.0")]
 [assembly: AssemblyInformationalVersion("4.0.0.0")]
@@ -11,6 +12,20 @@ using System.Reflection;
 [assembly: AssemblyCompany("Microsoft Corporation")]
 [assembly: AssemblyProduct("Microsoft® .NET Framework")]
 [assembly: CLSCompliant(false)]
+
+internal sealed class ExtraUnsafeTests
+{
+	public unsafe static void PinWithTypeMismatch(ref uint managedPtr)
+	{
+		fixed (ushort* ptr = &Unsafe.As<uint, ushort>(ref managedPtr)) {
+		}
+	}
+
+	public unsafe static uint* RefToPointerWithoutPinning(ref uint managedPtr)
+	{
+		return (uint*)Unsafe.AsPointer(ref managedPtr);
+	}
+}
 
 namespace System.Runtime.CompilerServices
 {
@@ -67,7 +82,7 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static void* AsPointer<T>(ref T value)
 		{
-			return &value;
+			return Unsafe.AsPointer(ref value);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -151,9 +166,9 @@ namespace System.Runtime.CompilerServices
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static ref TTo As<TFrom, TTo>(ref TFrom source)
+		public static ref TTo As<TFrom, TTo>(ref TFrom source)
 		{
-			return ref *(TTo*)(&source);
+			return ref Unsafe.As<TFrom, TTo>(ref source);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

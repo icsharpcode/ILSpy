@@ -1138,13 +1138,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			return null;
 		}
 
-		internal TranslatedExpression CallUnsafeIntrinsic(string name, Expression[] arguments, IType returnType, ILInstruction inst)
+		internal TranslatedExpression CallUnsafeIntrinsic(string name, Expression[] arguments, IType returnType, ILInstruction inst = null, IEnumerable<IType> typeArguments = null)
 		{
 			var target = new MemberReferenceExpression {
 				Target = new TypeReferenceExpression(astBuilder.ConvertType(compilation.FindType(KnownTypeCode.Unsafe))),
 				MemberName = name
 			};
-			var invocation = new InvocationExpression(target, arguments).WithILInstruction(inst);
+			if (typeArguments != null) {
+				target.TypeArguments.AddRange(typeArguments.Select(astBuilder.ConvertType));
+			}
+			var invocationExpr = new InvocationExpression(target, arguments);
+			var invocation = inst != null ? invocationExpr.WithILInstruction(inst) : invocationExpr.WithoutILInstruction(); 
 			if (returnType is ByReferenceType brt) {
 				return WrapInRef(invocation.WithRR(new ResolveResult(brt.ElementType)), brt);
 			} else {
@@ -1672,9 +1676,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					return arg;
 				case ConversionKind.StopGCTracking:
 					if (inputType.Kind == TypeKind.ByReference) {
-						// cast to corresponding pointer type:
-						var pointerType = new PointerType(((ByReferenceType)inputType).ElementType);
-						return arg.ConvertTo(pointerType, this).WithILInstruction(inst);
+						if (PointerArithmeticOffset.IsFixedVariable(inst.Argument)) {
+							// cast to corresponding pointer type:
+							var pointerType = new PointerType(((ByReferenceType)inputType).ElementType);
+							return arg.ConvertTo(pointerType, this).WithILInstruction(inst);
+						} else {
+							// emit Unsafe.AsPointer() intrinsic:
+							return CallUnsafeIntrinsic("AsPointer",
+								arguments: new Expression[] { arg },
+								returnType: new PointerType(compilation.FindType(KnownTypeCode.Void)),
+								inst: inst);
+						}
 					} else if (arg.Type.GetStackType().IsIntegerType()) {
 						// ConversionKind.StopGCTracking should only be used with managed references,
 						// but it's possible that we're supposed to stop tracking something we just started to track.
@@ -3242,6 +3254,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new InvocationExpression(new IdentifierExpression("__ldvirtftn"), delegateRef)
 				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.IntPtr)))
 				.WithILInstruction(inst);
+		}
+
+		protected internal override TranslatedExpression VisitCallIndirect(CallIndirect inst, TranslationContext context)
+		{
+			if (inst.IsInstance) {
+				return ErrorExpression("calli with instance method signature not supportd");
+			}
+			var ty = new FunctionPointerType();
+			if (inst.CallingConvention != System.Reflection.Metadata.SignatureCallingConvention.Default) {
+				ty.CallingConvention = inst.CallingConvention.ToString().ToLowerInvariant();
+			}
+			foreach (var parameterType in inst.ParameterTypes) {
+				ty.TypeArguments.Add(astBuilder.ConvertType(parameterType));
+			}
+			ty.TypeArguments.Add(astBuilder.ConvertType(inst.ReturnType));
+			var functionPointer = Translate(inst.FunctionPointer);
+			var invocation = new InvocationExpression(new CastExpression(ty, functionPointer));
+			foreach (var (arg, paramType) in inst.Arguments.Zip(inst.ParameterTypes)) {
+				invocation.Arguments.Add(Translate(arg, typeHint: paramType).ConvertTo(paramType, this, allowImplicitConversion: true));
+			}
+			return invocation.WithRR(new ResolveResult(inst.ReturnType)).WithILInstruction(inst);
 		}
 
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)

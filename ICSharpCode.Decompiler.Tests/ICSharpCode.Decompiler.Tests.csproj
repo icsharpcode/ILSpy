@@ -61,6 +61,7 @@
     <None Include="TestCases\Correctness\StackTests.il" />
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
+    <None Include="TestCases\ILPretty\CallIndirect.il" />
     <None Include="TestCases\ILPretty\Issue1454.il" />
     <None Include="TestCases\ILPretty\Issue1681.il" />
     <None Include="TestCases\ILPretty\Issue1922.il" />
@@ -91,6 +92,7 @@
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
     <Compile Include="TestAssemblyResolver.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
+    <None Include="TestCases\ILPretty\CallIndirect.cs" />
     <Compile Include="TestCases\ILPretty\Issue1681.cs" />
     <Compile Include="TestCases\Ugly\AggressiveScalarReplacementOfAggregates.cs" />
     <None Include="TestCases\Ugly\AggressiveScalarReplacementOfAggregates.Expected.cs" />
