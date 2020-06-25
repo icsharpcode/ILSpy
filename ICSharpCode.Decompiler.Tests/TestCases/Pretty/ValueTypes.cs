@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 
-#if ROSLYN && OPT
+#if ROSLYN
 		// Roslyn optimizes out the explicit default-initialization
 		private static readonly S ReadOnlyS;
 		private static S MutableS;
