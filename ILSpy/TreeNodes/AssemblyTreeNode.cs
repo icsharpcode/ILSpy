@@ -431,7 +431,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				var loadedAssm = ((AssemblyTreeNode)node).LoadedAssembly;
 				if (!loadedAssm.HasLoadError && !loadedAssm.FileName.StartsWith("nupkg://")) {
 					loadedAssm.IsAutoLoaded = false;
-					node.RaisePropertyChanged(nameof(Foreground));
+					node.RaisePropertyChanged(nameof(node.Foreground));
 				}
 			}
 			MainWindow.Instance.CurrentAssemblyList.RefreshSave();
