@@ -19,7 +19,15 @@
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
     <NoWarn>1701;1702;1591;1573</NoWarn>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
   
   <!-- HACK: Disable package generation on Unix due to tooling issues. -->
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
