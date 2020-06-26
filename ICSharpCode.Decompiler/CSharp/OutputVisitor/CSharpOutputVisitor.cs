@@ -2274,8 +2274,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		void MaybeNewLinesAfterUsings(AstNode node)
 		{
 			var nextSibling = node.NextSibling;
-			while (nextSibling is WhitespaceNode || nextSibling is NewLineNode)
-				nextSibling = nextSibling.NextSibling;
 
 			if ((node is UsingDeclaration || node is UsingAliasDeclaration) && !(nextSibling is UsingDeclaration || nextSibling is UsingAliasDeclaration)) {
 				for (int i = 0; i < policy.MinimumBlankLinesAfterUsings; i++)
@@ -2398,23 +2396,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			writer.StartNode(comment);
 			writer.WriteComment(comment.CommentType, comment.Content);
 			writer.EndNode(comment);
-		}
-
-		public virtual void VisitNewLine(NewLineNode newLineNode)
-		{
-			//			formatter.StartNode(newLineNode);
-			//			formatter.NewLine();
-			//			formatter.EndNode(newLineNode);
-		}
-
-		public virtual void VisitWhitespace(WhitespaceNode whitespaceNode)
-		{
-			// unused
-		}
-
-		public virtual void VisitText(TextNode textNode)
-		{
-			// unused
 		}
 
 		public virtual void VisitPreProcessorDirective(PreProcessorDirective preProcessorDirective)

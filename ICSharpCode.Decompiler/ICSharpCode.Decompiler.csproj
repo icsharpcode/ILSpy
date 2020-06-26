@@ -89,7 +89,6 @@
     <Compile Include="CSharp\Syntax\CSharpUtil.cs" />
     <Compile Include="CSharp\Syntax\DepthFirstAstVisitor.cs" />
     <Compile Include="CSharp\Syntax\DocumentationReference.cs" />
-    <Compile Include="CSharp\Syntax\ErrorNode.cs" />
     <Compile Include="CSharp\Syntax\Expressions\AnonymousMethodExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\AnonymousTypeCreateExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\ArrayCreateExpression.cs" />
@@ -138,14 +137,11 @@
     <Compile Include="CSharp\Syntax\GeneralScope\DelegateDeclaration.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\ExternAliasDeclaration.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\NamespaceDeclaration.cs" />
-    <Compile Include="CSharp\Syntax\GeneralScope\NewLineNode.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\PreProcessorDirective.cs" />
-    <Compile Include="CSharp\Syntax\GeneralScope\TextNode.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\TypeDeclaration.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\TypeParameterDeclaration.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\UsingAliasDeclaration.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\UsingDeclaration.cs" />
-    <Compile Include="CSharp\Syntax\GeneralScope\WhitespaceNode.cs" />
     <Compile Include="CSharp\Syntax\IAstVisitor.cs" />
     <Compile Include="CSharp\Syntax\Identifier.cs" />
     <Compile Include="CSharp\Syntax\IdentifierExpressionBackreference.cs" />
