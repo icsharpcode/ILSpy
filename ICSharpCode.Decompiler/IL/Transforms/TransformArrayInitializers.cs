@@ -670,7 +670,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (type.GetStackType() != value.ResultType) {
 				value = new Conv(value, type.ToPrimitiveType(), false, Sign.None); 
 			}
-			return new StObj(new LdElema(type, array, indices), value, type);
+			return new StObj(new LdElema(type, array, indices) { DelayExceptions = true }, value, type);
 		}
 
 		internal static ILInstruction GetNullExpression(IType elementType)

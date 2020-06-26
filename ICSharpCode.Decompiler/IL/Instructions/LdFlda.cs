@@ -43,4 +43,25 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 	}
+
+	public sealed partial class StObj
+	{
+		/// <summary>
+		/// For a store to a field or array element, C# will only throw NullReferenceException/IndexOfBoundsException
+		/// after the value-to-be-stored has been computed.
+		/// This means a LdFlda/LdElema used as target for StObj must have DelayExceptions==true to allow a translation to C#
+		/// without changing the program semantics. See https://github.com/icsharpcode/ILSpy/issues/2050
+		/// </summary>
+		/// <remarks>This is part of the StObj invariant.</remarks>
+		public static bool IsValidTarget(ILInstruction inst)
+		{
+			switch (inst.OpCode) {
+				case OpCode.LdElema:
+				case OpCode.LdFlda:
+					return !inst.HasDirectFlag(InstructionFlags.MayThrow);
+				default:
+					return true;
+			}
+		}
+	}
 }

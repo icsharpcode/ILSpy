@@ -26,6 +26,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			AvoidLifting();
 			BitNot();
+			FieldAccessOrderOfEvaluation(null);
 		}
 
 		static void AvoidLifting()
@@ -81,6 +82,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			if (!b)
 				throw new InvalidOperationException();
+		}
+
+
+		static int GetInt()
+		{
+			Console.WriteLine("got int");
+			return 42;
+		}
+
+		int intField;
+
+		static void FieldAccessOrderOfEvaluation(NullableTests c)
+		{
+			Console.WriteLine("GetInt, then NRE:");
+			try {
+				c.intField = GetInt();
+			} catch (Exception ex) {
+				Console.WriteLine(ex.Message);
+			}
+			Console.WriteLine("NRE before GetInt:");
+			try {
+#if CS60
+				ref int i = ref c.intField;
+				i = GetInt();
+#endif
+			} catch (Exception ex) {
+				Console.WriteLine(ex.Message);
+			}
 		}
 	}
 }

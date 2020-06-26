@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+﻿// Copyright (c) 2014-2020 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -253,7 +253,8 @@
 		new OpCode("stobj", "Indirect store (store to ref/pointer)." + Environment.NewLine
 				+ "Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value, sign/zero extended back to I4 based on type.GetSign())",
 			CustomClassName("StObj"), CustomArguments(("target", new[] { "Ref", "I" }), ("value", new[] { "type.GetStackType()" })), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
-			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
+			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()"),
+			CustomInvariant("Debug.Assert(IsValidTarget(target));")),
 
 		new OpCode("box", "Boxes a value.",
 			Unary, HasTypeOperand, MemoryAccess, MayThrow, ResultType("O")),
@@ -1158,6 +1159,13 @@ protected override void Disconnected()
 		opCode.WriteOpCodePrefix.Add("if (IsReadOnly)" + Environment.NewLine + "\toutput.Write(\"readonly.\");");
 		opCode.PerformMatchConditions.Add("IsReadOnly == o.IsReadOnly");
 	};
+	
+	static Action<OpCode> CustomInvariant(string code)
+	{
+		return opCode => {
+			opCode.Invariants.Add(code);
+		};
+	}
 
 	static Action<OpCode> Pattern = opCode => {
 		BaseClass("PatternInstruction")(opCode);
