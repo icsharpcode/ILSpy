@@ -441,7 +441,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 					toBeConverted[i] = converted;
 				}
-				return new LdObj(new LdElema(type.ElementType, array(), toBeConverted.SelectArray(f => f())), type.ElementType);
+				return new LdObj(new LdElema(type.ElementType, array(), toBeConverted.SelectArray(f => f())) { DelayExceptions = true }, type.ElementType);
 			}
 			return (Convert, type.ElementType);
 		}
@@ -514,7 +514,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case IMethod method:
 					return (targetVariable => new Call(method) { Arguments = { new LdLoc(targetVariable), value() } }, method.ReturnType);
 				case IField field:
-					return (targetVariable => new StObj(new LdFlda(new LdLoc(targetVariable), (IField)member), value(), member.ReturnType), field.ReturnType);
+					return (targetVariable => new StObj(new LdFlda(new LdLoc(targetVariable), (IField)member) { DelayExceptions = true }, value(), member.ReturnType), field.ReturnType);
 			}
 			return (null, SpecialType.UnknownType);
 		}
@@ -782,9 +782,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				} else {
 					var target = targetConverter();
 					if (member.DeclaringType.IsReferenceType == true) {
-						inst = new LdFlda(target, (IField)member);
+						inst = new LdFlda(target, (IField)member) { DelayExceptions = true };
 					} else {
-						inst = new LdFlda(new AddressOf(target, member.DeclaringType), (IField)member);
+						inst = new LdFlda(new AddressOf(target, member.DeclaringType), (IField)member) { DelayExceptions = true };
 					}
 				}
 				if (!(typeHint.SkipModifiers() is ByReferenceType && !member.ReturnType.IsByRefLike)) {
@@ -997,7 +997,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				Block initializer = new Block(BlockKind.ArrayInitializer);
 				initializer.Instructions.Add(new StLoc(variable, new NewArr(type, new LdcI4(convertedArguments.Length))));
 				for (int i = 0; i < convertedArguments.Length; i++) {
-					initializer.Instructions.Add(new StObj(new LdElema(type, new LdLoc(variable), new LdcI4(i)), convertedArguments[i](), type));
+					initializer.Instructions.Add(new StObj(new LdElema(type, new LdLoc(variable), new LdcI4(i)) { DelayExceptions = true }, convertedArguments[i](), type));
 				}
 				initializer.FinalInstruction = new LdLoc(variable);
 				return initializer;
