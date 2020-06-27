@@ -338,9 +338,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Handle simple case where RuntimeHelpers.InitializeArray is not used.
 		/// </summary>
-		internal static bool HandleSimpleArrayInitializer(ILFunction function, Block block, int pos, ILVariable store, IType elementType, int[] arrayLength, out (ILInstruction[] Indices, ILInstruction Value)[] values, out int elementCount)
+		internal static bool HandleSimpleArrayInitializer(ILFunction function, Block block, int pos, ILVariable store, IType elementType, int[] arrayLength, out (ILInstruction[] Indices, ILInstruction Value)[] values, out int instructionsToRemove)
 		{
-			elementCount = 0;
+			instructionsToRemove = 0;
+			int elementCount = 0;
 			var length = arrayLength.Aggregate(1, (t, l) => t * l);
 			values = new (ILInstruction[] Indices, ILInstruction Value)[length];
 
@@ -388,15 +389,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			int j = 0;
 			int i = pos;
-			for (; i < block.Instructions.Count; i++) {
-				if (!block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType type))
+			int step;
+			while (i < block.Instructions.Count) {
+				InstructionCollection<ILInstruction> indices;
+				// stobj elementType(ldelema elementType(ldloc store, indices), value)
+				if (block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType type)) {
+					if (!(target is LdElema ldelem && ldelem.Array.MatchLdLoc(store)))
+						break;
+					indices = ldelem.Indices;
+					step = 1;
+					// stloc s(ldelema elementType(ldloc store, indices))
+					// stobj elementType(ldloc s, value)
+				} else if (block.Instructions[i].MatchStLoc(out var addressTemporary, out var addressValue)) {
+					if (!(addressTemporary.IsSingleDefinition && addressTemporary.LoadCount == 1))
+						break;
+					if (!(addressValue is LdElema ldelem && ldelem.Array.MatchLdLoc(store)))
+						break;
+					if (!(i + 1 < block.Instructions.Count))
+						break;
+					if (!block.Instructions[i + 1].MatchStObj(out target, out value, out type))
+						break;
+					if (!(target.MatchLdLoc(addressTemporary) && ldelem.Array.MatchLdLoc(store)))
+						break;
+					indices = ldelem.Indices;
+					step = 2;
+				} else {
 					break;
+				}
 				if (value.Descendants.OfType<IInstructionWithVariableOperand>().Any(inst => inst.Variable == store))
 					break;
-				if (!(target is LdElema ldelem && ldelem.Array.MatchLdLoc(store)))
-					break;
-				var indices = ldelem.Indices;
-
 				if (indices.Count != arrayLength.Length)
 					break;
 				bool exact;
@@ -409,11 +430,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (exact) {
 						values[j] = (nextIndices, value);
 						elementCount++;
+						instructionsToRemove += step;
 					} else {
 						values[j] = (nextIndices, null);
 					}
 					j++;
 				} while (j < values.Length && !exact);
+				i += step;
 			}
 			if (i < block.Instructions.Count) {
 				if (block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType type)) {
@@ -430,7 +453,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				values[j] = (nextIndices, null);
 				j++;
 			}
-			if (pos + elementCount >= block.Instructions.Count)
+			if (pos + instructionsToRemove >= block.Instructions.Count)
 				return false;
 			return ShouldTransformToInitializer(function, block, pos, elementCount, length);
 		}
