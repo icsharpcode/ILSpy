@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
@@ -46,6 +48,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				await Task.Yield();
 				Console.WriteLine("end finally");
 			}
+		}
+
+		public static async IAsyncEnumerable<int> SimpleCancellation([EnumeratorCancellation] CancellationToken cancellationToken)
+		{
+			yield return 1;
+			await Task.Delay(100, cancellationToken);
+			yield return 2;
 		}
 	}
 

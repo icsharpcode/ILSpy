@@ -364,9 +364,7 @@ namespace ICSharpCode.Decompiler.IL
 				falseInst = Instructions.Last();
 				while (condition.MatchLogicNot(out var arg)) {
 					condition = arg;
-					ILInstruction tmp = trueInst;
-					trueInst = falseInst;
-					falseInst = tmp;
+					(trueInst, falseInst) = (falseInst, trueInst);
 				}
 				return true;
 			}

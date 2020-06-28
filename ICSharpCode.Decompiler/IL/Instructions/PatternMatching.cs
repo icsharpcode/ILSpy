@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.IL
 			var inst = this as LdLoc;
 			return inst != null && inst.Variable == variable;
 		}
-		
+
 		public bool MatchLdLoca(ILVariable variable)
 		{
 			var inst = this as LdLoca;
@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.IL
 			var inst = this as LdLoc;
 			return inst != null && inst.Variable.Kind == VariableKind.Parameter && inst.Variable.Index < 0;
 		}
-		
+
 		public bool MatchStLoc(out ILVariable variable)
 		{
 			var inst = this as StLoc;
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.IL
 			variable = null;
 			return false;
 		}
-		
+
 		public bool MatchStLoc(ILVariable variable, out ILInstruction value)
 		{
 			var inst = this as StLoc;
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.IL
 			value = null;
 			return false;
 		}
-		
+
 		public bool MatchLdLen(StackType type, out ILInstruction array)
 		{
 			var inst = this as LdLen;
@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.IL
 			targetBlock = null;
 			return false;
 		}
-		
+
 		public bool MatchBranch(Block targetBlock)
 		{
 			var inst = this as Branch;
@@ -206,13 +206,13 @@ namespace ICSharpCode.Decompiler.IL
 			targetContainer = null;
 			return false;
 		}
-		
+
 		public bool MatchLeave(BlockContainer targetContainer)
 		{
 			var inst = this as Leave;
 			return inst != null && inst.TargetContainer == targetContainer && inst.Value.MatchNop();
 		}
-		
+
 		public bool MatchIfInstruction(out ILInstruction condition, out ILInstruction trueInst, out ILInstruction falseInst)
 		{
 			var inst = this as IfInstruction;
@@ -302,8 +302,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (this is Comp comp && comp.Kind == ComparisonKind.Equality
 				&& comp.LiftingKind == ComparisonLiftingKind.None
-				&& comp.Right.MatchLdcI4(0))
-			{
+				&& comp.Right.MatchLdcI4(0)) {
 				arg = comp.Left;
 				return true;
 			}
@@ -321,7 +320,7 @@ namespace ICSharpCode.Decompiler.IL
 			variable = null;
 			return false;
 		}
-		
+
 		/// <summary>
 		/// Matches comp(left == right) or logic.not(comp(left != right)).
 		/// </summary>
