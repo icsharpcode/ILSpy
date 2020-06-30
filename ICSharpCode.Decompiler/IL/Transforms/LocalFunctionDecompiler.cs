@@ -102,7 +102,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (thisVar == null)
 					continue;
 				var compatibleArgument = FindCompatibleArgument(info, info.UseSites.SelectArray(u => u.Arguments[0]), ignoreStructure: true);
-				Debug.Assert(compatibleArgument != null);
+				if (compatibleArgument == null)
+					continue;
 				context.Step($"Replace 'this' with {compatibleArgument}", localFunction);
 				localFunction.AcceptVisitor(new DelegateConstruction.ReplaceDelegateTargetVisitor(compatibleArgument, thisVar));
 				DetermineCaptureAndDeclarationScope(info, -1, compatibleArgument);
@@ -208,7 +209,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (targetVariable == null)
 							continue;
 						var compatibleArgument = FindCompatibleArgument(info, arguments);
-						Debug.Assert(compatibleArgument != null);
+						if (compatibleArgument == null)
+							continue;
 						context.Step($"Replace '{targetVariable}' with '{compatibleArgument}'", info.Definition);
 						info.Definition.AcceptVisitor(new DelegateConstruction.ReplaceDelegateTargetVisitor(compatibleArgument, targetVariable));
 					}
