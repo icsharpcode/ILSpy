@@ -45,6 +45,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <remarks>
 		/// Instructions prior to block.Instructions[pos] must not be modified.
 		/// It is valid to read such instructions, but not recommended as those have not been transformed yet.
+		/// 
+		/// This function is only called on control-flow blocks with unreachable end-point.
+		/// Thus, the last instruction in the block always must have the EndPointUnreachable flag.
+		/// ==> Instructions with reachable end can't be last. Some transforms use this to save some bounds checks.
 		/// </remarks>
 		void Run(Block block, int pos, StatementTransformContext context);
 	}
@@ -122,6 +126,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					ctx.rerunPosition = null;
 				}
 				foreach (var transform in children) {
+					Debug.Assert(block.HasFlag(InstructionFlags.EndPointUnreachable));
 					transform.Run(block, pos, ctx);
 #if DEBUG
 					block.Instructions[pos].CheckInvariant(ILPhase.Normal);

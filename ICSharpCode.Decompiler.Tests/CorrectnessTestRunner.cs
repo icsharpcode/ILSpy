@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void NullableTests([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			RunCS(options: options);
+			RunCS(options: options, forceRoslynRecompile: true);
 		}
 
 		[Test]
@@ -301,7 +301,7 @@ namespace ICSharpCode.Decompiler.Tests
 			RunCS(options: options);
 		}
 
-		void RunCS([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug)
+		void RunCS([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug, bool forceRoslynRecompile = false)
 		{
 			string testFileName = testName + ".cs";
 			string testOutputFileName = testName + Tester.GetSuffix(options) + ".exe";
@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.Tests
 				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options,
 					outputFileName: Path.Combine(TestCasePath, testOutputFileName));
 				string decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options));
-				if (options.HasFlag(CompilerOptions.UseMcs)) {
+				if (forceRoslynRecompile || options.HasFlag(CompilerOptions.UseMcs)) {
 					// For second pass, use roslyn instead of mcs.
 					// mcs has some compiler bugs that cause it to not accept ILSpy-generated code,
 					// for example when there's unreachable code due to other compiler bugs in the first mcs run.

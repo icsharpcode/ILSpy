@@ -581,7 +581,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return FindResult.Stop;
 			if (expr.MatchLdLoc(v) || expr.MatchLdLoca(v)) {
 				// Match found, we can inline
-				if (expr.SlotInfo == StObj.TargetSlot && !StObj.IsValidTarget(expressionBeingMoved)) {
+				if (expr.SlotInfo == StObj.TargetSlot && !((StObj)expr.Parent).CanInlineIntoTargetSlot(expressionBeingMoved)) {
 					// special case: the StObj.TargetSlot does not accept some kinds of expressions
 					return FindResult.Stop;
 				}

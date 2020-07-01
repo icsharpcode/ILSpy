@@ -4117,7 +4117,6 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 			Debug.Assert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
 			Debug.Assert(value.ResultType == type.GetStackType());
-			Debug.Assert(IsValidTarget(target));
 		}
 	}
 }

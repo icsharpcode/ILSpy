@@ -149,6 +149,7 @@
 			<Word>newarr</Word>
 			<Word>ldlen</Word>
 			<Word>ldelema</Word>
+			<Word>ldelem</Word>
 			<Word>ldelem.i1</Word>
 			<Word>ldelem.u1</Word>
 			<Word>ldelem.i2</Word>
@@ -160,6 +161,7 @@
 			<Word>ldelem.r4</Word>
 			<Word>ldelem.r8</Word>
 			<Word>ldelem.ref</Word>
+			<Word>stelem</Word>
 			<Word>stelem.i</Word>
 			<Word>stelem.i1</Word>
 			<Word>stelem.i2</Word>
