@@ -2,7 +2,7 @@
 name: Wrong decompilation
 about: Decompiled code doesn't compile, or behaves differently to the original IL
 title: ''
-labels: Bug Decompiler
+labels: Bug, Decompiler
 assignees: ''
 
 ---
@@ -17,11 +17,7 @@ If uploading a complete assembly, please mention which method failed to decompil
 If relevant, the incorrectly decompiled output, or an exception with stack trace.
 ```
 If the output fails to re-compile, provide the compiler error message.
-
-### Expected output
-```c#
-If relevant, the output you expected, or a description of what you expected.
-```
+If the output has the wrong behavior, explain how it differs from the expected behavior.
 
 ### Details
 * Product in use: e.g. ILSpy / ICSharpCode.Decompiler nuget package / VS extension
