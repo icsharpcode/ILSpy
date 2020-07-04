@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public abstract class VariableDesignation : AstNode
 	{
-		public static Role<VariableDesignation> Role = new Role<VariableDesignation>("VariableDesignation");
+		public static Role<VariableDesignation> VariableDesignationRole = new Role<VariableDesignation>("VariableDesignation");
 	}
 
 	/// <summary>
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public AstNodeCollection<VariableDesignation> VariableDesignations {
-			get { return GetChildrenByRole(VariableDesignation.Role); }
+			get { return GetChildrenByRole(VariableDesignation.VariableDesignationRole); }
 		}
 
 		public CSharpTokenNode RParToken {

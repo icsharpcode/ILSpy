@@ -334,6 +334,13 @@
 		new OpCode("dynamic.isevent", "ILAst representation of a call to the Binder.IsEvent method inside a dynamic expression.",
 			CustomClassName("DynamicIsEventInstruction"), Dynamic, CustomArguments(("argument", new[] { "O" })), CustomWriteTo),
 
+		new OpCode("match", "ILAst representation of C# patterns",
+			CustomClassName("MatchInstruction"), HasVariableOperand("Store"), HasMethodOperand,
+			BoolFlag("Deconstruct"), BoolFlag("MatchType"), BoolFlag("MatchesNull"),
+			CustomChildren(new []{
+				new ChildInfo("testedOperand") { CanInlineInto = true, ExpectedTypes = new[] { "O" } },
+				new ChildInfo("subPatterns") { IsCollection = true }
+			}), ResultType("I4"), CustomWriteTo, SideEffect, MayThrow, ControlFlow, CustomInvariant("AdditionalInvariants();")),
 
 		new OpCode("mkrefany", "Push a typed reference of type class onto the stack.",
 			CustomClassName("MakeRefAny"), Unary, HasTypeOperand, ResultType("O")),
@@ -350,6 +357,11 @@
 		new OpCode("await", "C# await operator.",
 			SideEffect, // other code can run with arbitrary side effects while we're waiting
 			CustomArguments(("value", null)), ResultType("GetResultMethod?.ReturnType.GetStackType() ?? StackType.Unknown")),
+
+		new OpCode("deconstruct", "Deconstruction statement",
+			CustomClassName("DeconstructInstruction"), CustomConstructor, ResultType("O"), CustomWriteTo),
+		new OpCode("deconstruct.result", "Represents a deconstructed value",
+			CustomClassName("DeconstructResultInstruction"), CustomConstructor, Unary, HasTypeOperand, ResultType("type.GetStackType()"), CustomWriteTo),
 
 		// patterns
 		new OpCode("AnyNode", "Matches any node", Pattern, CustomArguments(), CustomConstructor),
@@ -1160,6 +1172,13 @@ protected override void Disconnected()
 		opCode.PerformMatchConditions.Add("IsReadOnly == o.IsReadOnly");
 	};
 	
+	static Action<OpCode> CustomInvariant(string code)
+	{
+		return opCode => {
+			opCode.Invariants.Add(code);
+		};
+	}
+
 	static Action<OpCode> CustomInvariant(string code)
 	{
 		return opCode => {

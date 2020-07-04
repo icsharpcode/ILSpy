@@ -632,9 +632,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="childPointer">Reference to the field holding the child</param>
 		/// <param name="newValue">New child</param>
 		/// <param name="index">Index of the field in the Children collection</param>
-		protected internal void SetChildInstruction(ref ILInstruction childPointer, ILInstruction newValue, int index)
+		protected internal void SetChildInstruction<T>(ref T childPointer, T newValue, int index)
+			where T : ILInstruction
 		{
-			ILInstruction oldValue = childPointer;
+			T oldValue = childPointer;
 			Debug.Assert(oldValue == GetChild(index));
 			if (oldValue == newValue && newValue?.parent == this && newValue.ChildIndex == index)
 				return;

@@ -16,43 +16,29 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-
-namespace ICSharpCode.Decompiler.CSharp.Syntax
+namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>
-	/// TypeName VariableDesignation
-	/// </summary>
-	public class DeclarationExpression : Expression
+	partial class DeconstructResultInstruction
 	{
-		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		public int Index { get; set; }
 
-		public VariableDesignation Designation {
-			get { return GetChildByRole(VariableDesignation.VariableDesignationRole); }
-			set { SetChildByRole(VariableDesignation.VariableDesignationRole, value); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
+		public DeconstructResultInstruction(int index, ILInstruction argument)
+			: base(OpCode.DeconstructResultInstruction, argument)
 		{
-			visitor.VisitDeclarationExpression(this);
+			Index = index;
 		}
 
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			return visitor.VisitDeclarationExpression(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitDeclarationExpression(this, data);
-		}
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			return other is DeclarationExpression o && Designation.DoMatch(o.Designation, match);
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			output.Write(' ');
+			type.WriteTo(output);
+			output.Write(' ');
+			output.Write(Index.ToString());
+			output.Write('(');
+			this.Argument.WriteTo(output, options);
+			output.Write(')');
 		}
 	}
 }
