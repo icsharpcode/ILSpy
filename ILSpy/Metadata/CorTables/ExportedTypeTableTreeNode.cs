@@ -83,9 +83,19 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableMetadataOffset(TableIndex.ExportedType)
 				+ metadata.GetTableRowSize(TableIndex.ExportedType) * (RID-1);
 
+			[StringFormat("X8")]
 			public TypeAttributes Attributes => type.Attributes;
 
-			public object AttributesTooltip => new FlagsTooltip((int)type.Attributes, typeof(TypeAttributes));
+			const TypeAttributes otherFlagsMask = ~(TypeAttributes.VisibilityMask | TypeAttributes.LayoutMask | TypeAttributes.ClassSemanticsMask | TypeAttributes.StringFormatMask | TypeAttributes.CustomFormatMask);
+
+			public object AttributesTooltip => new FlagsTooltip {
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Visibility: ", (int)TypeAttributes.VisibilityMask, (int)(type.Attributes & TypeAttributes.VisibilityMask), new Flag("NotPublic (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Class layout: ", (int)TypeAttributes.LayoutMask, (int)(type.Attributes & TypeAttributes.LayoutMask), new Flag("AutoLayout (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Class semantics: ", (int)TypeAttributes.ClassSemanticsMask, (int)(type.Attributes & TypeAttributes.ClassSemanticsMask), new Flag("Class (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "String format: ", (int)TypeAttributes.StringFormatMask, (int)(type.Attributes & TypeAttributes.StringFormatMask), new Flag("AnsiClass (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Custom format: ", (int)TypeAttributes.CustomFormatMask, (int)(type.Attributes & TypeAttributes.CustomFormatMask), new Flag("Value0 (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateMultipleChoiceGroup(typeof(TypeAttributes), "Flags:", (int)otherFlagsMask, (int)(type.Attributes & otherFlagsMask), includeAll: false),
+			};
 
 			public int TypeDefId => type.GetTypeDefinitionId();
 
@@ -93,9 +103,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string TypeName => metadata.GetString(type.Name);
 
-			public string TypeNamespaceTooltip => $"{MetadataTokens.GetHeapOffset(type.Name):X} \"{TypeNamespace}\"";
+			public string TypeNamespaceTooltip => $"{MetadataTokens.GetHeapOffset(type.Namespace):X} \"{TypeNamespace}\"";
 
-			public string TypeNamespace => metadata.GetString(type.Name);
+			public string TypeNamespace => metadata.GetString(type.Namespace);
 
 			[StringFormat("X8")]
 			public int Implementation => MetadataTokens.GetToken(type.Implementation);
