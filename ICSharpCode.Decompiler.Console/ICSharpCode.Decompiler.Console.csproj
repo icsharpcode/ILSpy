@@ -8,7 +8,7 @@
     <PackAsTool>true</PackAsTool>
     <AssemblyName>ilspycmd</AssemblyName>
     <ToolCommandName>ilspycmd</ToolCommandName>
-    <Version>6.0.0.5830-rc1</Version>
+    <Version>6.0.0.5836</Version>
     <Description>Command-line decompiler using the ILSpy decompilation engine</Description>
     <Copyright>Copyright 2011-2020 AlphaSierraPapa</Copyright>
     <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
@@ -42,7 +42,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Release'">
-    <PackageReference Include="ICSharpCode.Decompiler" Version="6.0.0.5830-rc1" />
+    <PackageReference Include="ICSharpCode.Decompiler" Version="6.0.0.5836" />
   </ItemGroup>
 
   <ItemGroup>
