@@ -664,6 +664,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Gets whether arg can be un-inlined out of stmt.
 		/// </summary>
+		/// <seealso cref="ILInstruction.Extract"/>
 		internal static bool CanUninline(ILInstruction arg, ILInstruction stmt)
 		{
 			Debug.Assert(arg.IsDescendantOf(stmt));
