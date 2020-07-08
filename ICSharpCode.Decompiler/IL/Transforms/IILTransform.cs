@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public Metadata.PEFile PEFile => TypeSystem.MainModule.PEFile;
 
 		internal DecompileRun DecompileRun { get; set; }
-		internal ResolvedUsingScope UsingScope => DecompileRun.UsingScope.Resolve(TypeSystem);
+		internal ResolvedUsingScope UsingScope => DecompileRun?.UsingScope.Resolve(TypeSystem);
 
 		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, IDebugInfoProvider debugInfo, DecompilerSettings settings = null)
 		{
