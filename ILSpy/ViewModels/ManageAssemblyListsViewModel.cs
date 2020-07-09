@@ -49,6 +49,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			ResetCommand = new DelegateCommand(ExecuteReset);
 			DeleteCommand = new DelegateCommand(ExecuteDelete, CanExecuteDelete);
 			CreatePreconfiguredAssemblyListCommand = new DelegateCommand<PreconfiguredAssemblyList>(ExecuteCreatePreconfiguredAssemblyList);
+			SelectAssemblyListCommand = new DelegateCommand(ExecuteSelectAssemblyList, CanExecuteSelectAssemblyList);
 
 			PreconfiguredAssemblyLists = new List<PreconfiguredAssemblyList>(ResolvePreconfiguredAssemblyLists());
 		}
@@ -115,6 +116,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public ICommand RenameCommand { get; }
 		public ICommand DeleteCommand { get; }
 		public ICommand CreatePreconfiguredAssemblyListCommand { get; }
+		public ICommand SelectAssemblyListCommand { get; }
 
 		private void ExecuteNew()
 		{
@@ -322,6 +324,17 @@ namespace ICSharpCode.ILSpy.ViewModels
 					manager.CreateList(list);
 				}
 			}
+		}
+
+		private bool CanExecuteSelectAssemblyList()
+		{
+			return SelectedAssemblyList != null;
+		}
+
+		private void ExecuteSelectAssemblyList()
+		{
+			MainWindow.Instance.sessionSettings.ActiveAssemblyList = SelectedAssemblyList;
+			this.parent.Close();
 		}
 	}
 
