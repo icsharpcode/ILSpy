@@ -36,7 +36,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// A reflection class used to represent <c>dynamic</c>.
 		/// </summary>
 		public sealed class Dynamic {}
-		
+
+		/// <summary>
+		/// A reflection class used to represent <c>nint</c>.
+		/// </summary>
+		public sealed class NInt { }
+
+		/// <summary>
+		/// A reflection class used to represent <c>nuint</c>.
+		/// </summary>
+		public sealed class NUInt { }
+
 		/// <summary>
 		/// A reflection class used to represent an unbound type argument.
 		/// </summary>
@@ -101,6 +111,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			} else if (type.DeclaringType != null) {
 				if (type == typeof(Dynamic))
 					return SpecialType.Dynamic;
+				else if (type == typeof(NInt))
+					return SpecialType.NInt;
+				else if (type == typeof(NUInt))
+					return SpecialType.NUInt;
 				else if (type == typeof(Null))
 					return SpecialType.NullType;
 				else if (type == typeof(UnboundTypeArgument))

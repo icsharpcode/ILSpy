@@ -32,6 +32,8 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 	// assign short names to the fake reflection types
 	using Null = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Null;
 	using dynamic = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Dynamic;
+	using nuint = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.NUInt;
+	using nint = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.NInt;
 	using C = Conversion;
 
 	[TestFixture, Parallelizable(ParallelScope.All)]
@@ -54,6 +56,13 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			IType from2 = compilation.FindType(from);
 			IType to2 = compilation.FindType(to);
 			return conversions.ImplicitConversion(from2, to2);
+		}
+
+		Conversion ExplicitConversion(Type from, Type to)
+		{
+			IType from2 = compilation.FindType(from);
+			IType to2 = compilation.FindType(to);
+			return conversions.ExplicitConversion(from2, to2);
 		}
 
 		[Test]
@@ -283,6 +292,126 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		{
 			Assert.AreEqual(C.None, ImplicitConversion(typeof(int*), typeof(object)));
 			Assert.AreEqual(C.None, ImplicitConversion(typeof(int*), typeof(dynamic)));
+		}
+
+		[Test]
+		public void ConversionToNInt()
+		{
+			// Test based on the table in https://github.com/dotnet/csharplang/blob/master/proposals/native-integers.md
+			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(object), typeof(nint)));
+			Assert.AreEqual(C.ExplicitPointerConversion, ExplicitConversion(typeof(void*), typeof(nint)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(sbyte), typeof(nint)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(byte), typeof(nint)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(short), typeof(nint)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(ushort), typeof(nint)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(int), typeof(nint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(uint), typeof(nint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(long), typeof(nint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(ulong), typeof(nint)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(char), typeof(nint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(float), typeof(nint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(double), typeof(nint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(decimal), typeof(nint)));
+			Assert.AreEqual(C.IdentityConversion, ExplicitConversion(typeof(IntPtr), typeof(nint)));
+			Assert.AreEqual(C.None, ExplicitConversion(typeof(UIntPtr), typeof(nint)));
+		}
+
+		[Test]
+		public void ConversionToNUInt()
+		{
+			// Test based on the table in https://github.com/dotnet/csharplang/blob/master/proposals/native-integers.md
+			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(object), typeof(nuint)));
+			Assert.AreEqual(C.ExplicitPointerConversion, ExplicitConversion(typeof(void*), typeof(nuint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(sbyte), typeof(nuint)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(byte), typeof(nuint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(short), typeof(nuint)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(ushort), typeof(nuint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(int), typeof(nuint)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(uint), typeof(nuint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(long), typeof(nuint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(ulong), typeof(nuint)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(char), typeof(nuint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(float), typeof(nuint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(double), typeof(nuint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(decimal), typeof(nuint)));
+			Assert.AreEqual(C.None, ExplicitConversion(typeof(IntPtr), typeof(nuint)));
+			Assert.AreEqual(C.IdentityConversion, ExplicitConversion(typeof(UIntPtr), typeof(nuint)));
+		}
+
+		[Test]
+		public void ConversionFromNInt()
+		{
+			// Test based on the table in https://github.com/dotnet/csharplang/blob/master/proposals/native-integers.md
+			Assert.AreEqual(C.BoxingConversion, ExplicitConversion(typeof(nint), typeof(object)));
+			Assert.AreEqual(C.ExplicitPointerConversion, ExplicitConversion(typeof(nint), typeof(void*)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nint), typeof(nuint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nint), typeof(sbyte)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nint), typeof(byte)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nint), typeof(short)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nint), typeof(ushort)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nint), typeof(int)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nint), typeof(uint)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(nint), typeof(long)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nint), typeof(ulong)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nint), typeof(char)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(nint), typeof(float)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(nint), typeof(double)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(nint), typeof(decimal)));
+			Assert.AreEqual(C.IdentityConversion, ExplicitConversion(typeof(nint), typeof(IntPtr)));
+			Assert.AreEqual(C.None, ExplicitConversion(typeof(nint), typeof(UIntPtr)));
+		}
+
+		[Test]
+		public void ConversionFromNUInt()
+		{
+			// Test based on the table in https://github.com/dotnet/csharplang/blob/master/proposals/native-integers.md
+			Assert.AreEqual(C.BoxingConversion, ExplicitConversion(typeof(nuint), typeof(object)));
+			Assert.AreEqual(C.ExplicitPointerConversion, ExplicitConversion(typeof(nuint), typeof(void*)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nuint), typeof(nint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nuint), typeof(sbyte)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nuint), typeof(byte)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nuint), typeof(short)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nuint), typeof(ushort)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nuint), typeof(int)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nuint), typeof(uint)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nuint), typeof(long)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(nuint), typeof(ulong)));
+			Assert.AreEqual(C.ExplicitNumericConversion, ExplicitConversion(typeof(nuint), typeof(char)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(nuint), typeof(float)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(nuint), typeof(double)));
+			Assert.AreEqual(C.ImplicitNumericConversion, ExplicitConversion(typeof(nuint), typeof(decimal)));
+			Assert.AreEqual(C.None, ExplicitConversion(typeof(nuint), typeof(IntPtr)));
+			Assert.AreEqual(C.IdentityConversion, ExplicitConversion(typeof(nuint), typeof(UIntPtr)));
+		}
+
+
+		[Test]
+		public void NIntEnumConversion()
+		{
+			var explicitEnumConversion = C.EnumerationConversion(isImplicit: false, isLifted: false);
+			Assert.AreEqual(explicitEnumConversion, ExplicitConversion(typeof(nint), typeof(StringComparison)));
+			Assert.AreEqual(explicitEnumConversion, ExplicitConversion(typeof(nuint), typeof(StringComparison)));
+			Assert.AreEqual(explicitEnumConversion, ExplicitConversion(typeof(StringComparison), typeof(nint)));
+			Assert.AreEqual(explicitEnumConversion, ExplicitConversion(typeof(StringComparison), typeof(nuint)));
+		}
+
+		[Test]
+		public void IntegerLiteralToNIntConversions()
+		{
+			Assert.IsTrue(IntegerLiteralConversion(0, typeof(nint)));
+			Assert.IsTrue(IntegerLiteralConversion(-1, typeof(nint)));
+			Assert.IsFalse(IntegerLiteralConversion(uint.MaxValue, typeof(nint)));
+			Assert.IsFalse(IntegerLiteralConversion(long.MaxValue, typeof(nint)));
+		}
+
+
+		[Test]
+		public void IntegerLiteralToNUIntConversions()
+		{
+			Assert.IsTrue(IntegerLiteralConversion(0, typeof(nuint)));
+			Assert.IsFalse(IntegerLiteralConversion(-1, typeof(nuint)));
+			Assert.IsTrue(IntegerLiteralConversion(uint.MaxValue, typeof(nuint)));
+			Assert.IsFalse(IntegerLiteralConversion(long.MaxValue, typeof(nuint)));
 		}
 
 		[Test]

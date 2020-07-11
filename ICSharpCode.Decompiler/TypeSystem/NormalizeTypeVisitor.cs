@@ -15,6 +15,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ReplaceClassTypeParametersWithDummy = false,
 			ReplaceMethodTypeParametersWithDummy = false,
 			DynamicAndObject = true,
+			IntPtrToNInt = true,
 			TupleToUnderlyingType = true,
 			RemoveModOpt = true,
 			RemoveModReq = true,
@@ -33,6 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public bool ReplaceClassTypeParametersWithDummy = true;
 		public bool ReplaceMethodTypeParametersWithDummy = true;
 		public bool DynamicAndObject = true;
+		public bool IntPtrToNInt = true;
 		public bool TupleToUnderlyingType = true;
 		public bool RemoveNullability = true;
 
@@ -51,13 +53,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override IType VisitTypeDefinition(ITypeDefinition type)
 		{
-			if (DynamicAndObject && type.KnownTypeCode == KnownTypeCode.Object) {
-				// Instead of normalizing dynamic->object,
-				// we do this the opposite direction, so that we don't need a compilation to find the object type.
-				if (RemoveNullability)
-					return SpecialType.Dynamic;
-				else
-					return SpecialType.Dynamic.ChangeNullability(type.Nullability);
+			switch (type.KnownTypeCode) {
+				case KnownTypeCode.Object when DynamicAndObject:
+					// Instead of normalizing dynamic->object,
+					// we do this the opposite direction, so that we don't need a compilation to find the object type.
+					if (RemoveNullability)
+						return SpecialType.Dynamic;
+					else
+						return SpecialType.Dynamic.ChangeNullability(type.Nullability);
+				case KnownTypeCode.IntPtr when IntPtrToNInt:
+					return SpecialType.NInt;
+				case KnownTypeCode.UIntPtr when IntPtrToNInt:
+					return SpecialType.NUInt;
 			}
 			return base.VisitTypeDefinition(type);
 		}
