@@ -26,6 +26,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			AvoidLifting();
 			BitNot();
+			FieldAccessOrderOfEvaluation(null);
+			ArrayAccessOrderOfEvaluation();
 		}
 
 		static void AvoidLifting()
@@ -81,6 +83,74 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			if (!b)
 				throw new InvalidOperationException();
+		}
+
+
+		static T GetValue<T>()
+		{
+			Console.WriteLine("GetValue");
+			return default(T);
+		}
+
+		int intField;
+
+		static void FieldAccessOrderOfEvaluation(NullableTests c)
+		{
+			Console.WriteLine("GetInt, then NRE:");
+			try {
+				c.intField = GetValue<int>();
+			} catch (Exception ex) {
+				Console.WriteLine(ex.Message);
+			}
+			Console.WriteLine("NRE before GetInt:");
+			try {
+#if CS60
+				ref int i = ref c.intField;
+				i = GetValue<int>();
+#endif
+			} catch (Exception ex) {
+				Console.WriteLine(ex.Message);
+			}
+		}
+
+		static T[] GetArray<T>()
+		{
+			Console.WriteLine("GetArray");
+			return null;
+		}
+
+		static int GetIndex()
+		{
+			Console.WriteLine("GetIndex");
+			return 0;
+		}
+
+		static void ArrayAccessOrderOfEvaluation()
+		{
+			Console.WriteLine("GetArray direct:");
+			try {
+				GetArray<int>()[GetIndex()] = GetValue<int>();
+			} catch (Exception ex) {
+				Console.WriteLine(ex.Message);
+			}
+			Console.WriteLine("GetArray with ref:");
+			try {
+#if CS60
+				ref int elem = ref GetArray<int>()[GetIndex()];
+				elem = GetValue<int>();
+#endif
+			} catch (Exception ex) {
+				Console.WriteLine(ex.Message);
+			}
+			Console.WriteLine("GetArray direct with value-type:");
+			try {
+				// This line is mis-compiled by legacy csc:
+				// with the legacy compiler the NRE is thrown before the GetValue call;
+				// with Roslyn the NRE is thrown after the GetValue call.
+				GetArray<TimeSpan>()[GetIndex()] = GetValue<TimeSpan>();
+			} catch (Exception ex) {
+				Console.WriteLine(ex.Message);
+			}
 		}
 	}
 }

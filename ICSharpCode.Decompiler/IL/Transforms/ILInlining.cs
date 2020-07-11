@@ -581,6 +581,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return FindResult.Stop;
 			if (expr.MatchLdLoc(v) || expr.MatchLdLoca(v)) {
 				// Match found, we can inline
+				if (expr.SlotInfo == StObj.TargetSlot && !((StObj)expr.Parent).CanInlineIntoTargetSlot(expressionBeingMoved)) {
+					// special case: the StObj.TargetSlot does not accept some kinds of expressions
+					return FindResult.Stop;
+				}
 				return FindResult.Found(expr);
 			} else if (expr is Block block) {
 				// Inlining into inline-blocks?
