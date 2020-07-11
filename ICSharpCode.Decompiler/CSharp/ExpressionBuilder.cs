@@ -310,7 +310,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// isinst with a value type results in an expression of "boxed value type",
 				// which is not supported in C#.
 				// Note that several other instructions special-case isinst arguments:
-				//  unbox.any T(isinst T(expr)) ==> "expr as T" for nullable value types
+				//  unbox.any T(isinst T(expr)) ==> "expr as T" for nullable value types and class-constrained generic types
 				//  comp(isinst T(expr) != null) ==> "expr is T"
 				//  on block level (StatementBuilder.VisitIsInst) => "expr is T"
 				if (SemanticHelper.IsPure(inst.Argument.Flags)) {
@@ -2287,10 +2287,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			return input.ConvertTo(compilation.FindType(targetType), this);
 		}
 		
+		internal static bool IsUnboxAnyWithIsInst(UnboxAny unboxAny, IsInst isInst)
+		{
+			return unboxAny.Type.Equals(isInst.Type)
+				&& (unboxAny.Type.IsKnownType(KnownTypeCode.NullableOfT) || isInst.Type.IsReferenceType == true);
+		}
+
 		protected internal override TranslatedExpression VisitUnboxAny(UnboxAny inst, TranslationContext context)
 		{
 			TranslatedExpression arg;
-			if (inst.Argument is IsInst isInst && inst.Type.Equals(isInst.Type)) {
+			if (inst.Argument is IsInst isInst && IsUnboxAnyWithIsInst(inst, isInst)) {
 				// unbox.any T(isinst T(expr)) ==> expr as T
 				// This is used for generic types and nullable value types
 				arg = UnwrapBoxingConversion(Translate(isInst.Argument));
