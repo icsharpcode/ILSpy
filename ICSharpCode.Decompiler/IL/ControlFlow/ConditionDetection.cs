@@ -347,7 +347,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 
 		/// Assumes ifInst does not have an else block
 		/// </summary>
-		internal static void InvertIf(Block block, IfInstruction ifInst, ILTransformContext context, bool forceBlock = true)
+		internal static void InvertIf(Block block, IfInstruction ifInst, ILTransformContext context)
 		{
 			Debug.Assert(ifInst.Parent == block);
 			
@@ -362,7 +362,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			//save a copy
 			var thenInst = ifInst.TrueInst;
 
-			if (ifInst != block.Instructions.SecondToLastOrDefault() || forceBlock) {
+			if (ifInst != block.Instructions.SecondToLastOrDefault()) {
 				// extract "else...; exit".
 				// Note that this will only extract instructions that were previously inlined from another block
 				// (via InlineExitBranch), so the instructions are already fully-transformed.

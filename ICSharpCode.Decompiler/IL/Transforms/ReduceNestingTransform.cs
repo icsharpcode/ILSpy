@@ -213,7 +213,7 @@ namespace ICSharpCode.Decompiler.IL
 				
 				// use the same exit the block has. If the block already has one (such as a leave from a try), keep it in place
 				EnsureEndPointUnreachable(ifInst.TrueInst, block.Instructions.Last());
-				ConditionDetection.InvertIf(block, ifInst, context, forceBlock: false);
+				ConditionDetection.InvertIf(block, ifInst, context);
 
 				// ensure the exit inst of the if instruction is a keyword
 				Debug.Assert(!(ifInst.TrueInst is Block));
