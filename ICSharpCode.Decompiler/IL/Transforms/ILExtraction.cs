@@ -97,6 +97,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ctx.FlagsBeingMoved = instToExtract.Flags;
 			ILInstruction inst = instToExtract;
 			while (inst != null) {
+				if (inst.Parent is IfInstruction ifInst && inst.SlotInfo != IfInstruction.ConditionSlot) {
+					// this context doesn't support extraction, but maybe we can create a block here?
+					if (ifInst.ResultType == StackType.Void) {
+						Block newBlock = new Block();
+						inst.ReplaceWith(newBlock);
+						newBlock.Instructions.Add(inst);
+					}
+				}
 				if (inst.Parent is Block block && block.Kind == BlockKind.ControlFlow) {
 					// We've reached the target block, and extraction is possible all the way.
 					int insertIndex = inst.ChildIndex;

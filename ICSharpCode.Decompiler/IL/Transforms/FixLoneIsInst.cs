@@ -46,6 +46,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (isInst.Parent.MatchCompEqualsNull(out _) || isInst.Parent.MatchCompNotEqualsNull(out _)) {
 					continue; // supported pattern "expr is T"
 				}
+				if (isInst.Parent is Block { Kind: BlockKind.ControlFlow }) {
+					continue; // supported via StatementBuilder.VisitIsInst
+				}
 				instructionsToFix.Add(isInst);
 			}
 			// Need to delay fixing until we're done with iteration, because Extract() modifies parents
