@@ -68,5 +68,20 @@ namespace ICSharpCode.Decompiler.IL
 					return true;
 			}
 		}
+
+		/// <summary>
+		/// called as part of CheckInvariant()
+		/// </summary>
+		void CheckTargetSlot()
+		{
+			switch (this.Target.OpCode) {
+				case OpCode.LdElema:
+				case OpCode.LdFlda:
+					if (this.Target.HasDirectFlag(InstructionFlags.MayThrow)) {
+						Debug.Assert(SemanticHelper.IsPure(this.Value.Flags));
+					}
+					break;
+			}
+		}
 	}
 }
