@@ -362,16 +362,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			//save a copy
 			var thenInst = ifInst.TrueInst;
 			
-			if (ifInst != block.Instructions.SecondToLastOrDefault()) {
-				// extract "else...; exit".
-				// Note that this will only extract instructions that were previously inlined from another block
-				// (via InlineExitBranch), so the instructions are already fully-transformed.
-				// So it's OK to move them into a nested block again (which hides them from the following block transforms).
-				ifInst.TrueInst = ExtractBlock(block, block.Instructions.IndexOf(ifInst) + 1, block.Instructions.Count);
-			} else {
-				block.Instructions.RemoveAt(block.Instructions.Count - 1);
-				ifInst.TrueInst = exitInst;
-			}
+			// extract "else...; exit".
+			// Note that this will only extract instructions that were previously inlined from another block
+			// (via InlineExitBranch), so the instructions are already fully-transformed.
+			// So it's OK to move them into a nested block again (which hides them from the following block transforms).
+			ifInst.TrueInst = ExtractBlock(block, block.Instructions.IndexOf(ifInst) + 1, block.Instructions.Count);
 
 			if (thenInst is Block thenBlock) {
 				block.Instructions.AddRange(thenBlock.Instructions);
