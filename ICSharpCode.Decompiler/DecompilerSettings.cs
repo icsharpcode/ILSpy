@@ -114,10 +114,15 @@ namespace ICSharpCode.Decompiler
 				staticLocalFunctions = false;
 				ranges = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp9_0) {
+				nativeIntegers = false;
+			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
+			if (nativeIntegers)
+				return CSharp.LanguageVersion.CSharp9_0;
 			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement || staticLocalFunctions || ranges)
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers || patternBasedFixedStatement)
@@ -139,6 +144,23 @@ namespace ICSharpCode.Decompiler
 			if (anonymousMethods || liftNullables || yieldReturn || useImplicitMethodGroupConversion)
 				return CSharp.LanguageVersion.CSharp2;
 			return CSharp.LanguageVersion.CSharp1;
+		}
+
+		bool nativeIntegers = true;
+
+		/// <summary>
+		/// Use C# 9 <c>nint</c>/<c>nuint</c> types.
+		/// </summary>
+		[Category("C# 9.0 (experimental)")]
+		[Description("DecompilerSettings.NativeIntegers")]
+		public bool NativeIntegers {
+			get { return nativeIntegers; }
+			set {
+				if (nativeIntegers != value) {
+					nativeIntegers = value;
+					OnPropertyChanged();
+				}
+			}
 		}
 
 		bool anonymousMethods = true;

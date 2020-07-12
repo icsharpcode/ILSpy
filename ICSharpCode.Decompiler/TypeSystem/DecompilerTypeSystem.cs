@@ -110,10 +110,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		ReadOnlyMethods = 0x800,
 		/// <summary>
+		/// [NativeIntegerAttribute] is used to replace 'IntPtr' types with the 'nint' type.
+		/// </summary>
+		NativeIntegers = 0x1000,
+		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# languages features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters
 			| RefStructs | UnmanagedConstraints | NullabilityAnnotations | ReadOnlyMethods
+			| NativeIntegers
 	}
 
 	/// <summary>
@@ -145,6 +150,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.NullabilityAnnotations;
 			if (settings.ReadOnlyMethods)
 				typeSystemOptions |= TypeSystemOptions.ReadOnlyMethods;
+			if (settings.NativeIntegers)
+				typeSystemOptions |= TypeSystemOptions.NativeIntegers;
 			return typeSystemOptions;
 		}
 

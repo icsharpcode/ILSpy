@@ -248,6 +248,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		AstType ConvertTypeHelper(IType type)
 		{
+			switch (type.Kind) {
+				case TypeKind.Dynamic:
+				case TypeKind.NInt:
+				case TypeKind.NUInt:
+					return new PrimitiveType(type.Name);
+			}
 			if (type is TypeWithElementType typeWithElementType) {
 				if (typeWithElementType is PointerType) {
 					return ConvertType(typeWithElementType.ElementType).MakePointerType();
