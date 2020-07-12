@@ -1650,8 +1650,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			IType GetType(KnownTypeCode typeCode)
 			{
 				IType type = compilation.FindType(typeCode);
-				if (inst.IsLifted)
+				// Prefer n(u)int over (U)IntPtr
+				if (typeCode == KnownTypeCode.IntPtr && settings.NativeIntegers && !type.Equals(context.TypeHint)) {
+					type = SpecialType.NInt;
+				} else if (typeCode == KnownTypeCode.UIntPtr && settings.NativeIntegers && !type.Equals(context.TypeHint)) {
+					type = SpecialType.NUInt;
+				}
+				if (inst.IsLifted) {
 					type = NullableType.Create(compilation, type);
+				}
 				return type;
 			}
 

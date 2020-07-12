@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler
 				staticLocalFunctions = false;
 				ranges = false;
 			}
-			if (languageVersion < CSharp.LanguageVersion.CSharp9_0) {
+			if (languageVersion < CSharp.LanguageVersion.Preview) {
 				nativeIntegers = false;
 			}
 		}
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
 			if (nativeIntegers)
-				return CSharp.LanguageVersion.CSharp9_0;
+				return CSharp.LanguageVersion.Preview;
 			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement || staticLocalFunctions || ranges)
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers || patternBasedFixedStatement)
