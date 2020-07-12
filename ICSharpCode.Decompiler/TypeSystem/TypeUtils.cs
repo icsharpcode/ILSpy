@@ -134,6 +134,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		/// <summary>
+		/// Gets whether the type is a C# 9 native integer type: nint or nuint.
+		/// 
+		/// Returns false for (U)IntPtr.
+		/// </summary>
+		public static bool IsCSharpNativeIntegerType(this IType type)
+		{
+			switch (type.Kind) {
+				case TypeKind.NInt:
+				case TypeKind.NUInt:
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
 		/// Gets whether the type is a C# primitive integer type: byte, sbyte, short, ushort, int, uint, long and ulong.
 		/// 
 		/// Unlike the ILAst, C# does not consider bool, enums, pointers or IntPtr to be integers.

@@ -186,7 +186,7 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static void* Add<T>(void* source, int elementOffset)
 		{
-			return (byte*)source + (long)elementOffset * (long)sizeof(T);
+			return (byte*)source + (nint)elementOffset * (nint)sizeof(T);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -210,7 +210,7 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static void* Subtract<T>(void* source, int elementOffset)
 		{
-			return (byte*)source - (long)elementOffset * (long)sizeof(T);
+			return (byte*)source - (nint)elementOffset * (nint)sizeof(T);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

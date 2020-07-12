@@ -73,5 +73,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			u64 = (uint)i;
 			i = (nint)u64;
 		}
+
+		public void Arithmetic()
+		{
+			Console.WriteLine((nint)intptr * 2);
+			Console.WriteLine(i * 2);
+
+			Console.WriteLine(i + (nint)u);
+			Console.WriteLine((nuint)i + u);
+		}
+
+		public object[] Boxing()
+		{
+			return new object[10] {
+				1,
+				(nint)2,
+				3L,
+				4u,
+				(nuint)5u,
+				6uL,
+				int.MaxValue,
+				(nint)int.MaxValue,
+				i64,
+				(nint)i64
+			};
+		}
 	}
 }

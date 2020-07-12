@@ -774,6 +774,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							return HandleEnumComparison(op, rhsType, isNullable, lhs, rhs);
 						} else if (lhsType is PointerType && rhsType is PointerType) {
 							return BinaryOperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), lhs, op, rhs);
+						} else if (lhsType.IsCSharpNativeIntegerType() || rhsType.IsCSharpNativeIntegerType()) {
+							if (lhsType.Equals(rhsType))
+								return BinaryOperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), lhs, op, rhs, isLifted: isNullable);
+							else
+								return new ErrorResolveResult(compilation.FindType(KnownTypeCode.Boolean));
 						}
 						if (op == BinaryOperatorType.Equality || op == BinaryOperatorType.InEquality) {
 							if (lhsType.IsReferenceType == true && rhsType.IsReferenceType == true) {
@@ -854,6 +859,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					break;
 				default:
 					throw new InvalidOperationException();
+			}
+			if (lhsType.IsCSharpNativeIntegerType() || rhsType.IsCSharpNativeIntegerType()) {
+				if (lhsType.Equals(rhsType)) {
+					return BinaryOperatorResolveResult(
+						isNullable ? NullableType.Create(compilation, lhsType) : lhsType,
+						lhs, op, rhs, isLifted: isNullable);
+				}
+				// mixing nint/nuint is not allowed
+				return new ErrorResolveResult(lhsType);
 			}
 			OverloadResolution builtinOperatorOR = CreateOverloadResolution(new[] { lhs, rhs });
 			foreach (var candidate in methodGroup) {
@@ -1000,8 +1014,22 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		bool BinaryNumericPromotion(bool isNullable, ref ResolveResult lhs, ref ResolveResult rhs, bool allowNullableConstants)
 		{
 			// C# 4.0 spec: §7.3.6.2
-			TypeCode lhsCode = ReflectionHelper.GetTypeCode(NullableType.GetUnderlyingType(lhs.Type));
-			TypeCode rhsCode = ReflectionHelper.GetTypeCode(NullableType.GetUnderlyingType(rhs.Type));
+			var lhsUType = NullableType.GetUnderlyingType(lhs.Type);
+			var rhsUType = NullableType.GetUnderlyingType(rhs.Type);
+			TypeCode lhsCode = ReflectionHelper.GetTypeCode(lhsUType);
+			TypeCode rhsCode = ReflectionHelper.GetTypeCode(rhsUType);
+			// Treat C# 9 native integers as falling between int and long.
+			// However they don't have a TypeCode, so we hack around that here:
+			if (lhsUType.Kind == TypeKind.NInt) {
+				lhsCode = TypeCode.Int32;
+			} else if (lhsUType.Kind == TypeKind.NUInt) {
+				lhsCode = TypeCode.UInt32;
+			}
+			if (rhsUType.Kind == TypeKind.NInt) {
+				rhsCode = TypeCode.Int32;
+			} else if (rhsUType.Kind == TypeKind.NUInt) {
+				rhsCode = TypeCode.UInt32;
+			}
 			// if one of the inputs is the null literal, promote that to the type of the other operand
 			if (isNullable && lhs.Type.Kind == TypeKind.Null && rhsCode >= TypeCode.Boolean && rhsCode <= TypeCode.Decimal) {
 				lhs = CastTo(rhsCode, isNullable, lhs, allowNullableConstants);
@@ -1018,7 +1046,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (lhsCode == TypeCode.Decimal || rhsCode == TypeCode.Decimal) {
 					targetType = TypeCode.Decimal;
 					bindingError = (lhsCode == TypeCode.Single || lhsCode == TypeCode.Double
-					                || rhsCode == TypeCode.Single || rhsCode == TypeCode.Double);
+									|| rhsCode == TypeCode.Single || rhsCode == TypeCode.Double);
 				} else if (lhsCode == TypeCode.Double || rhsCode == TypeCode.Double) {
 					targetType = TypeCode.Double;
 				} else if (lhsCode == TypeCode.Single || rhsCode == TypeCode.Single) {
@@ -1026,10 +1054,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				} else if (lhsCode == TypeCode.UInt64 || rhsCode == TypeCode.UInt64) {
 					targetType = TypeCode.UInt64;
 					bindingError = IsSigned(lhsCode, lhs) || IsSigned(rhsCode, rhs);
-				} else if (lhsCode == TypeCode.Int64 || rhsCode == TypeCode.Int64) {
-					targetType = TypeCode.Int64;
+				} else if (lhsUType.Kind == TypeKind.NUInt || rhsUType.Kind == TypeKind.NUInt) {
+					bindingError = IsSigned(lhsCode, lhs) || IsSigned(rhsCode, rhs);
+					lhs = CastTo(SpecialType.NUInt, isNullable, lhs, allowNullableConstants);
+					rhs = CastTo(SpecialType.NUInt, isNullable, rhs, allowNullableConstants);
+					return !bindingError;
 				} else if (lhsCode == TypeCode.UInt32 || rhsCode == TypeCode.UInt32) {
 					targetType = (IsSigned(lhsCode, lhs) || IsSigned(rhsCode, rhs)) ? TypeCode.Int64 : TypeCode.UInt32;
+				} else if (lhsCode == TypeCode.Int64 || rhsCode == TypeCode.Int64) {
+					targetType = TypeCode.Int64;
+				} else if (lhsUType.Kind == TypeKind.NInt || rhsUType.Kind == TypeKind.NInt) {
+					lhs = CastTo(SpecialType.NInt, isNullable, lhs, allowNullableConstants);
+					rhs = CastTo(SpecialType.NInt, isNullable, rhs, allowNullableConstants);
+					return !bindingError;
 				} else {
 					targetType = TypeCode.Int32;
 				}
@@ -1063,17 +1100,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return false;
 			}
 		}
-		
+
 		ResolveResult CastTo(TypeCode targetType, bool isNullable, ResolveResult expression, bool allowNullableConstants)
 		{
-			IType elementType = compilation.FindType(targetType);
-			IType nullableType = MakeNullable(elementType, isNullable);
+			return CastTo(compilation.FindType(targetType), isNullable, expression, allowNullableConstants);
+		}
+
+		ResolveResult CastTo(IType targetType, bool isNullable, ResolveResult expression, bool allowNullableConstants)
+		{
+			IType nullableType = MakeNullable(targetType, isNullable);
 			if (nullableType.Equals(expression.Type))
 				return expression;
 			if (allowNullableConstants && expression.IsCompileTimeConstant) {
 				if (expression.ConstantValue == null)
 					return new ConstantResolveResult(nullableType, null);
-				ResolveResult rr = ResolveCast(elementType, expression);
+				ResolveResult rr = ResolveCast(targetType, expression);
 				if (rr.IsError)
 					return rr;
 				Debug.Assert(rr.IsCompileTimeConstant);
@@ -1262,7 +1303,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// C# 4.0 spec: §7.7.6 Cast expressions
 			Conversion c = conversions.ExplicitConversion(expression, targetType);
 			if (expression.IsCompileTimeConstant && !c.IsUserDefined) {
-				TypeCode code = ReflectionHelper.GetTypeCode(targetType);
+				IType underlyingType = targetType.GetEnumUnderlyingType();
+				TypeCode code = ReflectionHelper.GetTypeCode(underlyingType);
 				if (code >= TypeCode.Boolean && code <= TypeCode.Decimal && expression.ConstantValue != null) {
 					try {
 						return new ConstantResolveResult(targetType, CSharpPrimitiveCast(code, expression.ConstantValue));
@@ -1276,16 +1318,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						return new ConstantResolveResult(targetType, expression.ConstantValue);
 					else
 						return new ErrorResolveResult(targetType);
-				} else if (targetType.Kind == TypeKind.Enum) {
-					code = ReflectionHelper.GetTypeCode(GetEnumUnderlyingType(targetType));
-					if (code >= TypeCode.SByte && code <= TypeCode.UInt64 && expression.ConstantValue != null) {
-						try {
-							return new ConstantResolveResult(targetType, CSharpPrimitiveCast(code, expression.ConstantValue));
-						} catch (OverflowException) {
-							return new ErrorResolveResult(targetType);
-						} catch (InvalidCastException) {
-							return new ErrorResolveResult(targetType);
-						}
+				} else if ((underlyingType.Kind == TypeKind.NInt || underlyingType.Kind == TypeKind.NUInt) && expression.ConstantValue != null) {
+					code = (underlyingType.Kind == TypeKind.NInt ? TypeCode.Int32 : TypeCode.UInt32);
+					try {
+						return new ConstantResolveResult(targetType, Util.CSharpPrimitiveCast.Cast(code, expression.ConstantValue, checkForOverflow: true));
+					} catch (OverflowException) {
+						// If constant value doesn't fit into 32-bits, the conversion is not a compile-time constant
+						return new ConversionResolveResult(targetType, expression, c, checkForOverflow);
+					} catch (InvalidCastException) {
+						return new ErrorResolveResult(targetType);
 					}
 				}
 			}

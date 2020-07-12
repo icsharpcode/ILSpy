@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.IL
 						case BinaryNumericOperator.BitXor:
 							var left = bni.Left.InferType(compilation);
 							var right = bni.Right.InferType(compilation);
-							if (left.Equals(right) && (left.IsCSharpPrimitiveIntegerType() || left.IsKnownType(KnownTypeCode.Boolean)))
+							if (left.Equals(right) && (left.IsCSharpPrimitiveIntegerType() || left.IsCSharpNativeIntegerType() || left.IsKnownType(KnownTypeCode.Boolean)))
 								return left;
 							else
 								return SpecialType.UnknownType;
