@@ -305,22 +305,28 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Direct cast only works correctly for IntPtr -> long.
 				// IntPtr -> int works correctly only in checked context.
 				// Everything else can be worked around by casting via long.
-				if (!(targetType.IsKnownType(KnownTypeCode.Int64) || checkForOverflow && targetType.IsKnownType(KnownTypeCode.Int32))) {
-					return this.ConvertTo(compilation.FindType(KnownTypeCode.Int64), expressionBuilder, checkForOverflow)
-						.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+				if (!(targetType.IsKnownType(KnownTypeCode.Int64) || targetType.Kind == TypeKind.NInt || checkForOverflow && targetType.IsKnownType(KnownTypeCode.Int32))) {
+					var convertVia = expressionBuilder.settings.NativeIntegers ? SpecialType.NInt : compilation.FindType(KnownTypeCode.Int64);
+					return this.ConvertTo(convertVia, expressionBuilder, checkForOverflow)
+						.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 				}
 			} else if (type.IsKnownType(KnownTypeCode.UIntPtr)) { // Conversion from UIntPtr
 				// Direct cast only works correctly for UIntPtr -> ulong.
 				// UIntPtr -> uint works correctly only in checked context.
 				// Everything else can be worked around by casting via ulong.
-				if (!(targetType.IsKnownType(KnownTypeCode.UInt64) || checkForOverflow && targetType.IsKnownType(KnownTypeCode.UInt32))) {
-					return this.ConvertTo(compilation.FindType(KnownTypeCode.UInt64), expressionBuilder, checkForOverflow)
-						.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+				if (!(targetType.IsKnownType(KnownTypeCode.UInt64) || targetType.Kind == TypeKind.NUInt || checkForOverflow && targetType.IsKnownType(KnownTypeCode.UInt32))) {
+					var convertVia = expressionBuilder.settings.NativeIntegers ? SpecialType.NUInt : compilation.FindType(KnownTypeCode.UInt64);
+					return this.ConvertTo(convertVia, expressionBuilder, checkForOverflow)
+						.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 				}
 			}
 			if (targetUType.IsKnownType(KnownTypeCode.IntPtr)) { // Conversion to IntPtr
-				if (type.IsKnownType(KnownTypeCode.Int32)) {
-					// normal casts work for int (both in checked and unchecked context)
+				if (type.IsKnownType(KnownTypeCode.Int32) || type.Kind == TypeKind.Pointer || type.Kind == TypeKind.NInt) {
+					// normal casts work for int/nint and pointers (both in checked and unchecked context)
+				} else if (expressionBuilder.settings.NativeIntegers) {
+					// if native integer types are available, prefer using those
+					return this.ConvertTo(SpecialType.NInt, expressionBuilder, checkForOverflow)
+						.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 				} else if (checkForOverflow) {
 					// if overflow-checking is enabled, we can simply cast via long:
 					// (and long itself works directly in checked context)
@@ -331,14 +337,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				} else {
 					// If overflow-checking is disabled, the only way to truncate to native size
 					// without throwing an exception in 32-bit mode is to use a pointer type.
-					if (type.Kind != TypeKind.Pointer) {
-						return this.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), expressionBuilder, checkForOverflow)
-							.ConvertTo(targetType, expressionBuilder, checkForOverflow);
-					}
+					return this.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), expressionBuilder, checkForOverflow)
+						.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 				}
 			} else if (targetUType.IsKnownType(KnownTypeCode.UIntPtr)) { // Conversion to UIntPtr
-				if (type.IsKnownType(KnownTypeCode.UInt32) || type.Kind == TypeKind.Pointer) {
-					// normal casts work for uint and pointers (both in checked and unchecked context)
+				if (type.IsKnownType(KnownTypeCode.UInt32) || type.Kind == TypeKind.Pointer || type.Kind == TypeKind.NUInt) {
+					// normal casts work for uint/nuint and pointers (both in checked and unchecked context)
+				} else if (expressionBuilder.settings.NativeIntegers) {
+					// if native integer types are available, prefer using those
+					return this.ConvertTo(SpecialType.NUInt, expressionBuilder, checkForOverflow)
+						.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 				} else if (checkForOverflow) {
 					// if overflow-checking is enabled, we can simply cast via ulong:
 					// (and ulong itself works directly in checked context)
@@ -471,7 +479,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return this;
 				}
 			} else {
-				if (targetType.Kind != TypeKind.Dynamic && type.Kind != TypeKind.Dynamic && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(type, targetType)) {
+				if (NormalizeTypeVisitor.IgnoreNullabilityAndTuples.EquivalentTypes(type, targetType)) {
 					// avoid an explicit cast when types differ only in nullability of reference types
 					return this;
 				}

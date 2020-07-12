@@ -248,12 +248,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		AstType ConvertTypeHelper(IType type)
 		{
-			switch (type.Kind) {
-				case TypeKind.Dynamic:
-				case TypeKind.NInt:
-				case TypeKind.NUInt:
-					return new PrimitiveType(type.Name);
-			}
 			if (type is TypeWithElementType typeWithElementType) {
 				if (typeWithElementType is PointerType) {
 					return ConvertType(typeWithElementType.ElementType).MakePointerType();
@@ -309,7 +303,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						astType = ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
 						break;
 					default:
-						astType = MakeSimpleType(type.Name);
+						switch (type.Kind) {
+							case TypeKind.Dynamic:
+							case TypeKind.NInt:
+							case TypeKind.NUInt:
+								astType = new PrimitiveType(type.Name);
+								break;
+							default:
+								astType = MakeSimpleType(type.Name);
+								break;
+						}
 						break;
 				}
 				if (type.Nullability == Nullability.Nullable) {
