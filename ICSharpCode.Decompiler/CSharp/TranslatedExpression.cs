@@ -321,8 +321,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 			if (targetUType.IsKnownType(KnownTypeCode.IntPtr)) { // Conversion to IntPtr
-				if (type.IsKnownType(KnownTypeCode.Int32) || type.Kind == TypeKind.Pointer || type.Kind == TypeKind.NInt) {
-					// normal casts work for int/nint and pointers (both in checked and unchecked context)
+				if (type.IsKnownType(KnownTypeCode.Int32) || type.Kind == TypeKind.NInt) {
+					// normal casts work for int/nint (both in checked and unchecked context)
+					// note that pointers only allow normal casts in unchecked contexts
 				} else if (expressionBuilder.settings.NativeIntegers) {
 					// if native integer types are available, prefer using those
 					return this.ConvertTo(SpecialType.NInt, expressionBuilder, checkForOverflow)
@@ -334,7 +335,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						return this.ConvertTo(compilation.FindType(KnownTypeCode.Int64), expressionBuilder, checkForOverflow)
 							.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 					}
-				} else {
+				} else if (type.Kind != TypeKind.Pointer) {
 					// If overflow-checking is disabled, the only way to truncate to native size
 					// without throwing an exception in 32-bit mode is to use a pointer type.
 					return this.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), expressionBuilder, checkForOverflow)
@@ -511,6 +512,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (!conversion.IsImplicit) {
 				// If the cast was required for the old conversion, avoid making it implicit.
+				return false;
+			}
+			if (oldTargetType.Kind == TypeKind.NInt || oldTargetType.Kind == TypeKind.NUInt
+				|| newTargetType.Kind == TypeKind.NInt || newTargetType.Kind == TypeKind.NUInt) {
+				// nint has identity conversion with IntPtr, but the two have different implicit conversions
 				return false;
 			}
 			if (conversion.IsBoxingConversion) {
