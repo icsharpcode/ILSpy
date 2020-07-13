@@ -83,6 +83,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine((nuint)i + u);
 		}
 
+		public void Shifts()
+		{
+			Console.WriteLine(i << i32);
+			Console.WriteLine(i >> i32);
+			Console.WriteLine(u >> i32);
+			Console.WriteLine(u << i32);
+		}
+
+		public void Comparisons()
+		{
+			Console.WriteLine(i < i32);
+			Console.WriteLine(i <= i32);
+			Console.WriteLine(i > i32);
+			Console.WriteLine(i >= i32);
+			Console.WriteLine(i == (nint)u);
+			Console.WriteLine(i < (nint)u);
+			Console.WriteLine((nuint)i < u);
+		}
+
 		public object[] Boxing()
 		{
 			return new object[10] {

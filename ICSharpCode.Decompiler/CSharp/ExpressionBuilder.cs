@@ -795,7 +795,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					} else if (rightUType.GetStackType() == inst.InputType && !rightUType.IsSmallIntegerType()) {
 						targetType = rightUType;
 					} else {
-						targetType = compilation.FindType(inst.InputType.ToKnownTypeCode(leftUType.GetSign()));
+						targetType = FindType(inst.InputType, leftUType.GetSign());
 					}
 				}
 				if (inst.IsLifted) {
@@ -1316,6 +1316,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			return resultExpr;
 		}
 
+		/// <summary>
+		/// Gets a type matching the stack type and sign.
+		/// </summary>
 		IType FindType(StackType stackType, Sign sign)
 		{
 			if (stackType == StackType.I && settings.NativeIntegers) {
@@ -1325,6 +1328,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		/// <summary>
+		/// Gets a type used for performing arithmetic with the stack type and sign.
+		/// 
+		/// This may result in a larger type than requested when the selected C# version
+		/// doesn't support native integers.
+		/// Should only be used after a call to PrepareArithmeticArgument()
+		/// to ensure that we're not preserving extra bits from an oversized TranslatedExpression.
+		/// </summary>
 		IType FindArithmeticType(StackType stackType, Sign sign)
 		{
 			if (stackType == StackType.I) {
@@ -1396,6 +1407,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
 
+			left = PrepareArithmeticArgument(left, inst.LeftInputType, inst.Sign, inst.IsLifted);
+
 			Sign sign = inst.Sign;
 			var leftUType = NullableType.GetUnderlyingType(left.Type);
 			if (leftUType.IsCSharpSmallIntegerType() && sign != Sign.Unsigned && inst.UnderlyingResultType == StackType.I4) {
@@ -1407,12 +1420,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// if we don't need a specific sign, prefer keeping that of the input:
 					sign = leftUType.GetSign();
 				}
-				IType targetType;
-				if (inst.UnderlyingResultType == StackType.I4) {
-					targetType = compilation.FindType(sign == Sign.Unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32);
-				} else {
-					targetType = compilation.FindType(sign == Sign.Unsigned ? KnownTypeCode.UInt64 : KnownTypeCode.Int64);
-				}
+				IType targetType = FindArithmeticType(inst.UnderlyingResultType, sign);
 				if (NullableType.IsNullable(left.Type)) {
 					targetType = NullableType.Create(compilation, targetType);
 				}
