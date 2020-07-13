@@ -109,6 +109,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(-i);
 		}
 
+		public unsafe int* PtrArithmetic(int* ptr)
+		{
+			return ptr + i;
+		}
+
+		public unsafe nint* PtrArithmetic(nint* ptr)
+		{
+			return ptr + u;
+		}
+
 		public object[] Boxing()
 		{
 			return new object[10] {

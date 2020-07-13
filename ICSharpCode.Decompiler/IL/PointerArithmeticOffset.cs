@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL
 				if (mul.CheckForOverflow != checkForOverflow)
 					return null;
 				if (elementSize > 0 && mul.Right.MatchLdcI(elementSize.Value)
-					|| mul.Right.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerElementType)) {
+					|| mul.Right.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(sizeOf.Type, pointerElementType)) {
 					var countOffsetInst = mul.Left;
 					if (unwrapZeroExtension) {
 						countOffsetInst = countOffsetInst.UnwrapConv(ConversionKind.ZeroExtend);

@@ -1143,10 +1143,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (!expr.Type.IsCSharpPrimitiveIntegerType() && !expr.Type.IsCSharpNativeIntegerType()) {
 				// pointer arithmetic accepts all primitive integer types, but no enums etc.
-				StackType targetType = expr.Type.GetStackType() == StackType.I4 ? StackType.I4 : StackType.I8;
-				expr = expr.ConvertTo(
-					compilation.FindType(targetType.ToKnownTypeCode(expr.Type.GetSign())),
-					this);
+				expr = expr.ConvertTo(FindArithmeticType(expr.Type.GetStackType(), expr.Type.GetSign()), this); 
 			}
 			return expr;
 		}
