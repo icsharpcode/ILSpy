@@ -32,6 +32,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			UnsignedShiftRightStaticProperty();
 			DivideByBigValue();
 			Overflow();
+			IntPtr_CompoundAssign();
 		}
 
 		static void Test(int a, int b)
@@ -104,6 +105,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
+		IntPtr intPtrField = new IntPtr(IntPtr.Size == 8 ? long.MaxValue : int.MaxValue);
+
+		public IntPtr IntPtrProperty {
+			get {
+				Console.WriteLine("In {0}.get_IntPtrProperty", instanceNumber);
+				return intPtrField;
+			}
+			set {
+				Console.WriteLine("In {0}.set_IntPtrProperty, value={1}", instanceNumber, value);
+				intPtrField = value;
+			}
+		}
+
 		public static Dictionary<string, int> GetDict()
 		{
 			Console.WriteLine("In GetDict()");
@@ -112,8 +126,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static CompoundAssignment GetObject()
 		{
-			Console.WriteLine("In GetObject() (instance #)");
-			return new CompoundAssignment();
+			var obj = new CompoundAssignment();
+			Console.WriteLine("In GetObject() (instance #{0})", obj.instanceNumber);
+			return obj;
 		}
 
 		static string GetString()
@@ -207,6 +222,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static T Id<T>(T val)
 		{
 			return val;
+		}
+
+		static void IntPtr_CompoundAssign()
+		{
+			Console.WriteLine("IntPtr_CompoundAssign:");
+#if !MCS
+			GetObject().IntPtrProperty -= 2;
+			GetObject().IntPtrProperty += 2;
+#endif
 		}
 	}
 }

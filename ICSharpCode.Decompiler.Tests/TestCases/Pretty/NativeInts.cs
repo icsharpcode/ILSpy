@@ -134,5 +134,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				(nint)i64
 			};
 		}
+
+		public NativeInts GetInstance(int i)
+		{
+			return this;
+		}
+
+		public void CompoundAssign()
+		{
+			GetInstance(0).i += i32;
+			checked {
+				GetInstance(1).i += i32;
+			}
+			GetInstance(2).u *= 2u;
+			checked {
+				GetInstance(3).u *= 2u;
+			}
+			GetInstance(4).intptr += (nint)i32;
+			checked {
+				// Note: the cast is necessary here, without it we'd call IntPtr.op_Addition
+				// but that is always unchecked.
+				GetInstance(5).intptr += (nint)i32;
+			}
+			// multiplication results in compiler-error without the cast
+			GetInstance(6).intptr *= (nint)2;
+
+			GetInstance(7).i <<= i32;
+		}
 	}
 }

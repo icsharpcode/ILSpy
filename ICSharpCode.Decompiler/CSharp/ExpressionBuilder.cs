@@ -1577,10 +1577,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							}
 						} else {
 							IType targetType = NullableType.GetUnderlyingType(target.Type).GetEnumUnderlyingType();
-							if (NullableType.IsNullable(value.Type)) {
-								targetType = NullableType.Create(compilation, targetType);
-							}
-							value = value.ConvertTo(targetType, this, inst.CheckForOverflow, allowImplicitConversion: true);
+							value = ConvertValue(value, targetType);
 						}
 						break;
 					case AssignmentOperatorType.Multiply:
@@ -1590,10 +1587,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					case AssignmentOperatorType.BitwiseOr:
 					case AssignmentOperatorType.ExclusiveOr: {
 							IType targetType = NullableType.GetUnderlyingType(target.Type);
-							if (NullableType.IsNullable(value.Type)) {
-								targetType = NullableType.Create(compilation, targetType);
-							}
-							value = value.ConvertTo(targetType, this, inst.CheckForOverflow, allowImplicitConversion: true);
+							value = ConvertValue(value, targetType);
 							break;
 						}
 				}
@@ -1605,6 +1599,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				resultExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
 			}
 			return resultExpr;
+
+			TranslatedExpression ConvertValue(TranslatedExpression value, IType targetType)
+			{
+				bool allowImplicitConversion = true;
+				if (targetType.GetStackType() == StackType.I) {
+					// Force explicit cast for (U)IntPtr, keep allowing implicit conversion only for n(u)int
+					allowImplicitConversion = targetType.IsCSharpNativeIntegerType();
+					targetType = targetType.GetSign() == Sign.Unsigned ? SpecialType.NUInt : SpecialType.NInt;
+				}
+				if (NullableType.IsNullable(value.Type)) {
+					targetType = NullableType.Create(compilation, targetType);
+				}
+				return value.ConvertTo(targetType, this, inst.CheckForOverflow, allowImplicitConversion);
+			}
 		}
 		
 		TranslatedExpression HandleCompoundShift(NumericCompoundAssign inst, AssignmentOperatorType op)
