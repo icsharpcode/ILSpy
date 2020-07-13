@@ -449,14 +449,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					// C# 4.0 spec: §7.6.9 Postfix increment and decrement operators
 					// C# 4.0 spec: §7.7.5 Prefix increment and decrement operators
 					TypeCode code = ReflectionHelper.GetTypeCode(type);
-					if ((code >= TypeCode.Char && code <= TypeCode.Decimal) || type.Kind == TypeKind.Enum || type.Kind == TypeKind.Pointer)
+					if ((code >= TypeCode.Char && code <= TypeCode.Decimal) || type.Kind == TypeKind.Enum || type.Kind == TypeKind.Pointer || type.IsCSharpNativeIntegerType())
 						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
 					else
 						return new ErrorResolveResult(expression.Type);
 				case UnaryOperatorType.Plus:
+					if (type.IsCSharpNativeIntegerType()) {
+						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
+					}
 					methodGroup = operators.UnaryPlusOperators;
 					break;
 				case UnaryOperatorType.Minus:
+					if (type.IsCSharpNativeIntegerType()) {
+						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
+					}
 					methodGroup = CheckForOverflow ? operators.CheckedUnaryMinusOperators : operators.UncheckedUnaryMinusOperators;
 					break;
 				case UnaryOperatorType.Not:
@@ -472,7 +478,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							rr = WithCheckForOverflow(false).ResolveCast(type, rr);
 							if (rr.IsCompileTimeConstant)
 								return rr;
-						} 
+						}
+						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
+					} else if (type.IsCSharpNativeIntegerType()) {
 						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
 					} else {
 						methodGroup = operators.BitwiseComplementOperators;

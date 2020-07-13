@@ -567,7 +567,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			if (argUType.GetStackType().GetSize() < inst.UnderlyingResultType.GetSize()
 				|| argUType.Kind == TypeKind.Enum && argUType.IsSmallIntegerType()
-				|| argUType.GetStackType() == StackType.I
+				|| (argUType.GetStackType() == StackType.I && !argUType.IsCSharpNativeIntegerType())
 				|| argUType.IsKnownType(KnownTypeCode.Boolean)
 				|| argUType.IsKnownType(KnownTypeCode.Char))
 			{
@@ -576,13 +576,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Same if the argument is an enum based on a small integer type
 				// (those don't undergo numeric promotion in C# the way non-enum small integer types do).
 				// Same if the type is one that does not support ~ (IntPtr, bool and char).
-				StackType targetStackType = inst.UnderlyingResultType;
-				if (targetStackType == StackType.I) {
-					// IntPtr doesn't support operator ~.
-					// Note that it's OK to use a type that's larger than necessary.
-					targetStackType = StackType.I8;
+				Sign sign = context.TypeHint.GetSign();
+				if (sign == Sign.None) {
+					sign = argUType.GetSign();
 				}
-				IType targetType = compilation.FindType(targetStackType.ToKnownTypeCode(argUType.GetSign()));
+				IType targetType = FindArithmeticType(inst.UnderlyingResultType, sign);
 				if (inst.IsLifted) {
 					targetType = NullableType.Create(compilation, targetType);
 				}
@@ -1261,11 +1259,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			if (op == BinaryOperatorType.Subtract && inst.Left.MatchLdcI(0)) {
 				IType rightUType = NullableType.GetUnderlyingType(right.Type);
-				if (rightUType.IsKnownType(KnownTypeCode.Int32) || rightUType.IsKnownType(KnownTypeCode.Int64) || rightUType.IsCSharpSmallIntegerType()) {
+				if (rightUType.IsKnownType(KnownTypeCode.Int32) || rightUType.IsKnownType(KnownTypeCode.Int64) 
+					|| rightUType.IsCSharpSmallIntegerType() || rightUType.IsCSharpNativeIntegerType()) {
 					// unary minus is supported on signed int and long, and on the small integer types (since they promote to int)
 					var uoe = new UnaryOperatorExpression(UnaryOperatorType.Minus, right.Expression);
 					uoe.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
-					var resultType = rightUType.IsKnownType(KnownTypeCode.Int64) ? rightUType : compilation.FindType(KnownTypeCode.Int32);
+					var resultType = FindArithmeticType(inst.RightInputType, Sign.Signed);
 					if (inst.IsLifted)
 						resultType = NullableType.Create(compilation, resultType);
 					return uoe.WithILInstruction(inst).WithRR(new OperatorResolveResult(

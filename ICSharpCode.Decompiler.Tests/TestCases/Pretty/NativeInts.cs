@@ -102,6 +102,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine((nuint)i < u);
 		}
 
+		public void Unary()
+		{
+			Console.WriteLine(~i);
+			Console.WriteLine(~u);
+			Console.WriteLine(-i);
+		}
+
 		public object[] Boxing()
 		{
 			return new object[10] {
