@@ -2301,19 +2301,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, ReferenceKind.Ref));
 		}
 		
-		TranslatedExpression TranslateArrayIndex(ILInstruction i, bool expectSystemIndex = false)
+		TranslatedExpression TranslateArrayIndex(ILInstruction i)
 		{
 			var input = Translate(i);
-			KnownTypeCode targetType;
-			if (i.ResultType == StackType.I4) {
-				if (input.Type.IsSmallIntegerType() && input.Type.Kind != TypeKind.Enum) {
-					return input; // we don't need a cast, just let small integers be promoted to int
-				}
-				targetType = input.Type.GetSign() == Sign.Unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32;
-			} else {
-				targetType = input.Type.GetSign() == Sign.Unsigned ? KnownTypeCode.UInt64 : KnownTypeCode.Int64;
+			if (i.ResultType == StackType.I4 && input.Type.IsSmallIntegerType() && input.Type.Kind != TypeKind.Enum) {
+				return input; // we don't need a cast, just let small integers be promoted to int
 			}
-			return input.ConvertTo(compilation.FindType(targetType), this);
+			IType targetType = FindArithmeticType(i.ResultType, input.Type.GetSign());
+			return input.ConvertTo(targetType, this);
 		}
 		
 		internal static bool IsUnboxAnyWithIsInst(UnboxAny unboxAny, IsInst isInst)
