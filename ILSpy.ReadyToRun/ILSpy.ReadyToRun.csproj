@@ -44,11 +44,26 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="ReadyToRunLanguage.cs" />
     <Compile Include="ReadyToRunOptionPage.xaml.cs">
       <DependentUpon>ReadyToRunOptionPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="ReadyToRunOptions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.zh-Hans.resx">
+      <Generator></Generator>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

@@ -550,6 +550,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 DEBUG -- Dump PDB as XML 的本地化字符串。
+        /// </summary>
+        public static string DEBUGDumpPDBAsXML {
+            get {
+                return ResourceManager.GetString("DEBUGDumpPDBAsXML", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Debug Steps 的本地化字符串。
         /// </summary>
         public static string DebugSteps {
@@ -1376,6 +1385,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string HighlightMatchingBraces {
             get {
                 return ResourceManager.GetString("HighlightMatchingBraces", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 ILSpyAboutPage.txt 的本地化字符串。
+        /// </summary>
+        public static string ILSpyAboutPageTxt {
+            get {
+                return ResourceManager.GetString("ILSpyAboutPageTxt", resourceCulture);
             }
         }
         

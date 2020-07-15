@@ -1,0 +1,13 @@
+ILSpy 是开源的.NET程序集浏览器和反编译器.
+
+网站: https://ilspy.net/
+反馈BUG: https://github.com/icsharpcode/ILSpy/issues/new/choose
+中文翻译反馈:https://github.com/maikebing/ILSpy/issues
+
+Copyright 2011-2020 AlphaSierraPapa for the ILSpy team
+当前和过去的贡献者: https://github.com/icsharpcode/ILSpy/graphs/contributors
+
+ILSpy 基于 MIT License 发行.
+
+ILSpy 使用了其他开源库才能魔术般的实现， 于此同时我们想感谢他们为那些组件付出的人们！
+它们各自的许可和版权信息请查看third-party注意事项.

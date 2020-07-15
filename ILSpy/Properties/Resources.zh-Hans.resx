@@ -481,16 +481,16 @@
     <value>调试步骤</value>
   </data>
   <data name="UseFieldSugar" xml:space="preserve">
-    <value>UseFieldSugar</value>
+    <value>使用变量语法糖</value>
   </data>
   <data name="UseLogicOperationSugar" xml:space="preserve">
-    <value>UseLogicOperationSugar</value>
+    <value>使用逻辑操作符语法糖</value>
   </data>
   <data name="ShowILRanges" xml:space="preserve">
-    <value>ShowILRanges</value>
+    <value>显示IL范围</value>
   </data>
   <data name="ShowChildIndexInBlock" xml:space="preserve">
-    <value>ShowChildIndexInBlock</value>
+    <value>在块中显示子索引</value>
   </data>
   <data name="ShowStateBeforeThisStep" xml:space="preserve">
     <value>在此步骤之前显示状态</value>
@@ -817,7 +817,7 @@
     <value>仅显示public类型和成员</value>
   </data>
   <data name="Show_publiconlyTypesMembers" xml:space="preserve">
-    <value>仅显示 _public 类型和成员</value>
+    <value>仅显示公共类型和成员(_P)</value>
   </data>
   <data name="SelectVersionDropdownTooltip" xml:space="preserve">
     <value>选择输出的语言版本</value>
@@ -872,5 +872,11 @@
   </data>
   <data name="ListsResetConfirmation" xml:space="preserve">
     <value>你确定要删除所有程序集列表并且重新创建默认的程序集列表?</value>
+  </data>
+  <data name="ILSpyAboutPageTxt" xml:space="preserve">
+    <value>ILSpyAboutPage.zh-Hans.txt</value>
+  </data>
+  <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
+    <value>DEBUG --转存PDB为XML</value>
   </data>
 </root>
