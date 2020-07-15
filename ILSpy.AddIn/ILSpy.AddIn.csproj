@@ -89,6 +89,7 @@
       <MergeWithCTO>true</MergeWithCTO>
       <ManifestResourceName>VSPackage</ManifestResourceName>
     </EmbeddedResource>
+    <EmbeddedResource Include="VSPackage.zh-Hans.resx" />
   </ItemGroup>
 
   <!--
