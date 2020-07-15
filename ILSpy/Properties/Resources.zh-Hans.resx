@@ -874,7 +874,7 @@
     <value>你确定要删除所有程序集列表并且重新创建默认的程序集列表?</value>
   </data>
   <data name="ILSpyAboutPageTxt" xml:space="preserve">
-    <value>ILSpyAboutPage.zh-Hans.txt</value>
+    <value>ILSpyAboutPage_zh_Hans.txt</value>
   </data>
   <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
     <value>DEBUG --转存PDB为XML</value>
