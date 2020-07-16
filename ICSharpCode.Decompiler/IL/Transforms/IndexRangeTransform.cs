@@ -123,6 +123,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					this.RangeGetAll = p.Getter;
 				}
 			}
+
+			public static bool IsRangeCtor(IMethod method)
+			{
+				return method.SymbolKind == SymbolKind.Constructor
+					&& method.Parameters.Count == 2
+					&& method.DeclaringType.IsKnownType(KnownTypeCode.Range)
+					&& method.Parameters.All(p => p.Type.IsKnownType(KnownTypeCode.Index));
+			}
 		}
 
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
@@ -147,9 +155,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				rangeVar = null;
 				rangeVarInit = null;
 			}
+
 			// stloc startOffsetVar(call GetOffset(startIndexLoad, ldloc length))
-			if (!block.Instructions[pos].MatchStLoc(out ILVariable startOffsetVar, out ILInstruction startOffsetVarInit))
+			if (!block.Instructions[pos].MatchStLoc(out ILVariable startOffsetVar, out ILInstruction startOffsetVarInit)) {
+				// Not our primary indexing/slicing pattern.
+				// However, we might be dealing with a partially-transformed pattern that needs to be extended.
+				ExtendSlicing();
 				return;
+			}
 			if (!(startOffsetVar.IsSingleDefinition && startOffsetVar.StackType == StackType.I4))
 				return;
 			var startIndexKind = MatchGetOffset(startOffsetVarInit, out ILInstruction startIndexLoad, containerLengthVar, ref containerVar);
@@ -283,25 +296,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				if (!CSharpWillGenerateIndexer(call.Method.DeclaringType, slicing: true))
 					return;
-				if (startIndexKind == IndexKind.FromStart && endIndexKind == IndexKind.FromStart) {
-					// It's possible we actually have a startIndex/endIndex that involves the container length,
-					// but we couldn't detect it yet because the statement initializing the containerLengthVar is
-					// not yet part of the region to be transformed.
-					// If we transform now, we'd end up with:
-					//  	int length = span.Length;
-					//      Console.WriteLine(span[(length - GetInt(1))..(length - GetInt(2))].ToString());
-					// which is correct but unnecessarily complex.
-					// So we peek ahead at the next instruction to be transformed:
-					if (startPos > 0 && MatchContainerLengthStore(block.Instructions[startPos - 1], out _, ref containerVar)) {
-						// Looks like the transform would be able do to a better job including that previous instruction,
-						// so let's avoid transforming just yet.
-						return;
-					}
-					// Something similar happens with the rangeVar:
-					if (startPos > 0 && block.Instructions[startPos - 1] is StLoc stloc && stloc.Variable.Type.IsKnownType(KnownTypeCode.Range)) {
-						return;
-					}
-				}
 				var specialMethods = new IndexMethods(context.TypeSystem);
 				if (!specialMethods.IsValid)
 					return;
@@ -312,24 +306,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				newCall.ConstrainedTo = call.ConstrainedTo;
 				newCall.ILStackWasEmpty = call.ILStackWasEmpty;
 				newCall.Arguments.Add(call.Arguments[0]);
-				if (rangeVar != null) {
-					newCall.Arguments.Add(rangeVarInit);
-				} else if (startIndexKind == IndexKind.TheStart && endIndexKind == IndexKind.TheEnd && specialMethods.RangeGetAll != null) {
-					newCall.Arguments.Add(new Call(specialMethods.RangeGetAll));
-				} else if (startIndexKind == IndexKind.TheStart && specialMethods.RangeEndAt != null) {
-					var rangeCtorCall = new Call(specialMethods.RangeEndAt);
-					rangeCtorCall.Arguments.Add(MakeIndex(endIndexKind, endIndexLoad, specialMethods));
-					newCall.Arguments.Add(rangeCtorCall);
-				} else if (endIndexKind == IndexKind.TheEnd && specialMethods.RangeStartAt != null) {
-					var rangeCtorCall = new Call(specialMethods.RangeStartAt);
-					rangeCtorCall.Arguments.Add(MakeIndex(startIndexKind, startIndexLoad, specialMethods));
-					newCall.Arguments.Add(rangeCtorCall);
-				} else {
-					var rangeCtorCall = new NewObj(specialMethods.RangeCtor);
-					rangeCtorCall.Arguments.Add(MakeIndex(startIndexKind, startIndexLoad, specialMethods));
-					rangeCtorCall.Arguments.Add(MakeIndex(endIndexKind, endIndexLoad, specialMethods));
-					newCall.Arguments.Add(rangeCtorCall);
-				}
+				newCall.Arguments.Add(MakeRange(startIndexKind, startIndexLoad, endIndexKind, endIndexLoad, specialMethods));
 				newCall.AddILRange(call);
 				for (int i = startPos; i < pos; i++) {
 					newCall.AddILRange(block.Instructions[i]);
@@ -337,6 +314,106 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				call.ReplaceWith(newCall);
 				block.Instructions.RemoveRange(startPos, pos - startPos);
 			}
+
+			ILInstruction MakeRange(IndexKind startIndexKind, ILInstruction startIndexLoad, IndexKind endIndexKind, ILInstruction endIndexLoad, IndexMethods specialMethods)
+			{
+				if (rangeVar != null) {
+					return rangeVarInit;
+				} else if (startIndexKind == IndexKind.TheStart && endIndexKind == IndexKind.TheEnd && specialMethods.RangeGetAll != null) {
+					return new Call(specialMethods.RangeGetAll);
+				} else if (startIndexKind == IndexKind.TheStart && specialMethods.RangeEndAt != null) {
+					var rangeCtorCall = new Call(specialMethods.RangeEndAt);
+					rangeCtorCall.Arguments.Add(MakeIndex(endIndexKind, endIndexLoad, specialMethods));
+					return rangeCtorCall;
+				} else if (endIndexKind == IndexKind.TheEnd && specialMethods.RangeStartAt != null) {
+					var rangeCtorCall = new Call(specialMethods.RangeStartAt);
+					rangeCtorCall.Arguments.Add(MakeIndex(startIndexKind, startIndexLoad, specialMethods));
+					return rangeCtorCall;
+				} else {
+					var rangeCtorCall = new NewObj(specialMethods.RangeCtor);
+					rangeCtorCall.Arguments.Add(MakeIndex(startIndexKind, startIndexLoad, specialMethods));
+					rangeCtorCall.Arguments.Add(MakeIndex(endIndexKind, endIndexLoad, specialMethods));
+					return rangeCtorCall;
+				}
+			}
+
+			void ExtendSlicing()
+			{
+				// We might be dealing with a situation where we executed TransformSlicing() in a previous run of this transform
+				// that only looked at a part of the instructions making up the slicing pattern.
+				// The first run would have mis-detected slicing from end as slicing from start.
+				// This results in code like:
+				//   int length = span.Length;
+				//   Console.WriteLine(span[GetIndex(1).GetOffset(length)..GetIndex(2).GetOffset(length)].ToString());
+				// or:
+				//   int length = span.Length;
+				//   Range range = GetRange();
+				//   Console.WriteLine(span[range.Start.GetOffset(length)..range.End.GetOffset(length)].ToString());
+				if (containerLengthVar == null) {
+					return; // need a container length to extend with
+				}
+				Debug.Assert(containerLengthVar.IsSingleDefinition);
+				Debug.Assert(containerLengthVar.LoadCount == 1 || containerLengthVar.LoadCount == 2);
+				NewObj rangeCtorCall = null;
+				foreach (var inst in containerLengthVar.LoadInstructions[0].Ancestors) {
+					if (inst is NewObj newobj && IndexMethods.IsRangeCtor(newobj.Method)) {
+						rangeCtorCall = newobj;
+						break;
+					}
+					if (inst == block)
+						break;
+				}
+				if (rangeCtorCall == null)
+					return;
+				// Now match the pattern that TransformSlicing() generated in the IndexKind.FromStart case
+				if (!(rangeCtorCall.Parent is CallInstruction { Method: SyntheticRangeIndexAccessor _ } slicingCall))
+					return;
+				if (!MatchContainerVar(slicingCall.Arguments[0], ref containerVar))
+					return;
+				if (!slicingCall.IsDescendantOf(block.Instructions[pos]))
+					return;
+				Debug.Assert(rangeCtorCall.Arguments.Count == 2);
+				if (!MatchIndexImplicitConv(rangeCtorCall.Arguments[0], out var startOffsetInst))
+					return;
+				if (!MatchIndexImplicitConv(rangeCtorCall.Arguments[1], out var endOffsetInst))
+					return;
+				var startIndexKind = MatchGetOffset(startOffsetInst, out var startIndexLoad, containerLengthVar, ref containerVar);
+				var endIndexKind = MatchGetOffset(endOffsetInst, out var endIndexLoad, containerLengthVar, ref containerVar);
+				if (!CheckContainerLengthVariableUseCount(containerLengthVar, startIndexKind, endIndexKind)) {
+					return;
+				}
+				// holds because we've used containerLengthVar at least once
+				Debug.Assert(startIndexKind != IndexKind.FromStart || endIndexKind != IndexKind.FromStart);
+				if (rangeVar != null) {
+					if (!MatchIndexFromRange(startIndexKind, startIndexLoad, rangeVar, "get_Start"))
+						return;
+					if (!MatchIndexFromRange(endIndexKind, endIndexLoad, rangeVar, "get_End"))
+						return;
+				}
+				context.Step("Merge containerLengthVar into slicing", slicingCall);
+				var specialMethods = new IndexMethods(context.TypeSystem);
+				rangeCtorCall.ReplaceWith(MakeRange(startIndexKind, startIndexLoad, endIndexKind, endIndexLoad, specialMethods));
+				for (int i = startPos; i < pos; i++) {
+					slicingCall.AddILRange(block.Instructions[i]);
+				}
+				block.Instructions.RemoveRange(startPos, pos - startPos);
+			}
+		}
+
+		private bool MatchIndexImplicitConv(ILInstruction inst, out ILInstruction offsetInst)
+		{
+			offsetInst = null;
+			if (!(inst is CallInstruction call))
+				return false;
+			if (!(call.Method.IsOperator && call.Method.Name == "op_Implicit"))
+				return false;
+			var op = call.Method;
+			if (!(op.Parameters.Count == 1 && op.Parameters[0].Type.IsKnownType(KnownTypeCode.Int32)))
+				return false;
+			if (!op.DeclaringType.IsKnownType(KnownTypeCode.Index))
+				return false;
+			offsetInst = call.Arguments.Single();
+			return true;
 		}
 
 		static bool IsSlicingMethod(IMethod method)
@@ -450,6 +527,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!inst.MatchStLoc(out lengthVar, out var init))
 				return false;
 			if (!(lengthVar.IsSingleDefinition && lengthVar.StackType == StackType.I4))
+				return false;
+			if (lengthVar.LoadCount == 0 || lengthVar.LoadCount > 2)
 				return false;
 			return MatchContainerLength(init, null, ref containerVar);
 		}
