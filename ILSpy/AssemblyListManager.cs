@@ -119,10 +119,8 @@ namespace ICSharpCode.ILSpy
 
 		public bool DeleteList(string Name)
 		{
-			if (AssemblyLists.Contains(Name))
+			if (AssemblyLists.Remove(Name))
 			{
-				AssemblyLists.Remove(Name);
-
 				ILSpySettings.Update(
 					delegate(XElement root)
 					{

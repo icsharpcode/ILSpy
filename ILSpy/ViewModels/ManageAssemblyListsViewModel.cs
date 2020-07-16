@@ -126,7 +126,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				if (dlg.DialogResult == true) {
 					if (manager.AssemblyLists.Contains(dlg.ListName)) {
 						args.Cancel = true;
-						MessageBox.Show(Properties.Resources.ListExistsAlready, null, MessageBoxButton.OK);
+						MessageBox.Show(Resources.ListExistsAlready, null, MessageBoxButton.OK);
 					}
 				}
 			};
@@ -148,7 +148,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				if (dlg.DialogResult == true) {
 					if (manager.AssemblyLists.Contains(dlg.ListName)) {
 						args.Cancel = true;
-						MessageBox.Show(Properties.Resources.ListExistsAlready, null, MessageBoxButton.OK);
+						MessageBox.Show(Resources.ListExistsAlready, null, MessageBoxButton.OK);
 					}
 				}
 			};
@@ -159,7 +159,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		private void ExecuteReset()
 		{
-			if (MessageBox.Show(parent, Properties.Resources.ListsResetConfirmation,
+			if (MessageBox.Show(parent, Resources.ListsResetConfirmation,
 				"ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, MessageBoxOptions.None) != MessageBoxResult.Yes)
 				return;
 			manager.ClearAll();
@@ -169,10 +169,19 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		private void ExecuteDelete()
 		{
-			if (MessageBox.Show(parent, Properties.Resources.ListDeleteConfirmation,
+			if (MessageBox.Show(parent, Resources.ListDeleteConfirmation,
 "ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, MessageBoxOptions.None) != MessageBoxResult.Yes)
 				return;
-			manager.DeleteList(SelectedAssemblyList);
+			string assemblyList = SelectedAssemblyList;
+			SelectedAssemblyList = null;
+			int index = manager.AssemblyLists.IndexOf(assemblyList);
+			manager.DeleteList(assemblyList);
+			if (manager.AssemblyLists.Count > 0) {
+				SelectedAssemblyList = manager.AssemblyLists[Math.Max(0, index - 1)];
+				if (MainWindow.Instance.sessionSettings.ActiveAssemblyList == assemblyList) {
+					MainWindow.Instance.sessionSettings.ActiveAssemblyList = SelectedAssemblyList;
+				}
+			}
 		}
 
 		private bool CanExecuteDelete()
@@ -199,12 +208,17 @@ namespace ICSharpCode.ILSpy.ViewModels
 					}
 					if (manager.AssemblyLists.Contains(dlg.ListName)) {
 						args.Cancel = true;
-						MessageBox.Show(Properties.Resources.ListExistsAlready, null, MessageBoxButton.OK);
+						MessageBox.Show(Resources.ListExistsAlready, null, MessageBoxButton.OK);
 					}
 				}
 			};
 			if (dlg.ShowDialog() == true) {
-				manager.RenameList(selectedAssemblyList, dlg.ListName);
+				string assemblyList = SelectedAssemblyList;
+				SelectedAssemblyList = dlg.ListName;
+				manager.RenameList(assemblyList, dlg.ListName);
+				if (MainWindow.Instance.sessionSettings.ActiveAssemblyList == assemblyList) {
+					MainWindow.Instance.sessionSettings.ActiveAssemblyList = manager.AssemblyLists[manager.AssemblyLists.Count - 1];
+				}
 			}
 		}
 

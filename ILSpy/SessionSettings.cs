@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpy
 		public string ActiveAssemblyList {
 			get => activeAssemblyList;
 			set {
-				if (value != activeAssemblyList) {
+				if (value != null && value != activeAssemblyList) {
 					activeAssemblyList = value;
 					OnPropertyChanged();
 				}

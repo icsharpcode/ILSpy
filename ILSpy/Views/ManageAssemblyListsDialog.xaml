@@ -41,6 +41,12 @@
 				<b:EventTrigger EventName="MouseDoubleClick">
 					<b:InvokeCommandAction Command="{Binding SelectAssemblyListCommand}" />
 				</b:EventTrigger>
+				<b:KeyTrigger Key="Return" FiredOn="KeyDown">
+					<b:InvokeCommandAction Command="{Binding SelectAssemblyListCommand}" />
+				</b:KeyTrigger>
+				<b:KeyTrigger Key="Delete" FiredOn="KeyDown">
+					<b:InvokeCommandAction Command="{Binding DeleteCommand}" CommandParameter="{Binding ., RelativeSource={RelativeSource AncestorType=Window}}" />
+				</b:KeyTrigger>
 			</b:Interaction.Triggers>
 		</ListBox>
 
