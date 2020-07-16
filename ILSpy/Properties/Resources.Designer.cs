@@ -921,6 +921,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use nint/nuint types.
+        /// </summary>
+        public static string DecompilerSettings_NativeIntegers {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.NativeIntegers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Nullable reference types.
         /// </summary>
         public static string DecompilerSettings_NullableReferenceTypes {

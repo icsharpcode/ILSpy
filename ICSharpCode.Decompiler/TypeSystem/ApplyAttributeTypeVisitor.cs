@@ -42,6 +42,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			bool hasDynamicAttribute = false;
 			bool[] dynamicAttributeData = null;
+			bool hasNativeIntegersAttribute = false;
+			bool[] nativeIntegersAttributeData = null;
 			string[] tupleElementNames = null;
 			Nullability nullability;
 			Nullability[] nullableAttributeData = null;
@@ -50,7 +52,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			} else {
 				nullability = Nullability.Oblivious;
 			}
-			const TypeSystemOptions relevantOptions = TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple | TypeSystemOptions.NullabilityAnnotations;
+			const TypeSystemOptions relevantOptions = TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple | TypeSystemOptions.NullabilityAnnotations | TypeSystemOptions.NativeIntegers;
 			if (attributes != null && (options & relevantOptions) != 0) {
 				foreach (var attrHandle in attributes.Value) {
 					var attr = metadata.GetCustomAttribute(attrHandle);
@@ -63,6 +65,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
 								&& values.All(v => v.Value is bool)) {
 								dynamicAttributeData = values.SelectArray(v => (bool)v.Value);
+							}
+						}
+					} else if ((options & TypeSystemOptions.NativeIntegers) != 0 && attrType.IsKnownType(metadata, KnownAttribute.NativeInteger)) {
+						hasNativeIntegersAttribute = true;
+						var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
+						if (ctor.FixedArguments.Length == 1) {
+							var arg = ctor.FixedArguments[0];
+							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
+								&& values.All(v => v.Value is bool)) {
+								nativeIntegersAttributeData = values.SelectArray(v => (bool)v.Value);
 							}
 						}
 					} else if ((options & TypeSystemOptions.Tuple) != 0 && attrType.IsKnownType(metadata, KnownAttribute.TupleElementNames)) {
@@ -88,11 +100,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					}
 				}
 			}
-			if (hasDynamicAttribute || nullability != Nullability.Oblivious || nullableAttributeData != null 
+			if (hasDynamicAttribute || hasNativeIntegersAttribute || nullability != Nullability.Oblivious || nullableAttributeData != null 
 				|| (options & (TypeSystemOptions.Tuple | TypeSystemOptions.KeepModifiers)) != TypeSystemOptions.KeepModifiers)
 			{
 				var visitor = new ApplyAttributeTypeVisitor(
 					compilation, hasDynamicAttribute, dynamicAttributeData,
+					hasNativeIntegersAttribute, nativeIntegersAttributeData,
 					options, tupleElementNames,
 					nullability, nullableAttributeData
 				);
@@ -109,6 +122,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly ICompilation compilation;
 		readonly bool hasDynamicAttribute;
 		readonly bool[] dynamicAttributeData;
+		readonly bool hasNativeIntegersAttribute;
+		readonly bool[] nativeIntegersAttributeData;
 		readonly TypeSystemOptions options;
 		readonly string[] tupleElementNames;
 		readonly Nullability defaultNullability;
@@ -117,12 +132,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		int tupleTypeIndex = 0;
 		int nullabilityTypeIndex = 0;
 
-		private ApplyAttributeTypeVisitor(ICompilation compilation, bool hasDynamicAttribute, bool[] dynamicAttributeData, TypeSystemOptions options, string[] tupleElementNames,
+		private ApplyAttributeTypeVisitor(ICompilation compilation, 
+			bool hasDynamicAttribute, bool[] dynamicAttributeData,
+			bool hasNativeIntegersAttribute, bool[] nativeIntegersAttributeData,
+			TypeSystemOptions options, string[] tupleElementNames,
 			Nullability defaultNullability, Nullability[] nullableAttributeData)
 		{
 			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
 			this.hasDynamicAttribute = hasDynamicAttribute;
 			this.dynamicAttributeData = dynamicAttributeData;
+			this.hasNativeIntegersAttribute = hasNativeIntegersAttribute;
+			this.nativeIntegersAttributeData = nativeIntegersAttributeData;
 			this.options = options;
 			this.tupleElementNames = tupleElementNames;
 			this.defaultNullability = defaultNullability;
@@ -247,11 +267,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override IType VisitTypeDefinition(ITypeDefinition type)
 		{
 			IType newType = type;
-			if (type.KnownTypeCode == KnownTypeCode.Object && hasDynamicAttribute) {
+			var ktc = type.KnownTypeCode;
+			if (ktc == KnownTypeCode.Object && hasDynamicAttribute) {
 				if (dynamicAttributeData == null || dynamicTypeIndex >= dynamicAttributeData.Length)
 					newType = SpecialType.Dynamic;
 				else if (dynamicAttributeData[dynamicTypeIndex])
 					newType = SpecialType.Dynamic;
+			} else if ((ktc == KnownTypeCode.IntPtr || ktc == KnownTypeCode.UIntPtr) && hasNativeIntegersAttribute) {
+				// native integers use the same indexing logic as 'dynamic'
+				if (nativeIntegersAttributeData == null || dynamicTypeIndex > nativeIntegersAttributeData.Length)
+					newType = (ktc == KnownTypeCode.IntPtr ? SpecialType.NInt : SpecialType.NUInt);
+				else if (nativeIntegersAttributeData[dynamicTypeIndex])
+					newType = (ktc == KnownTypeCode.IntPtr ? SpecialType.NInt : SpecialType.NUInt);
 			}
 			if (type.IsReferenceType == true) {
 				Nullability nullability = GetNullability();

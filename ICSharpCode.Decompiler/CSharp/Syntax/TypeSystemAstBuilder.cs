@@ -303,7 +303,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						astType = ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
 						break;
 					default:
-						astType = MakeSimpleType(type.Name);
+						switch (type.Kind) {
+							case TypeKind.Dynamic:
+							case TypeKind.NInt:
+							case TypeKind.NUInt:
+								astType = new PrimitiveType(type.Name);
+								break;
+							default:
+								astType = MakeSimpleType(type.Name);
+								break;
+						}
 						break;
 				}
 				if (type.Nullability == Nullability.Nullable) {
@@ -713,7 +722,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return ace;
 			} else if (rr.IsCompileTimeConstant) {
 				var expr = ConvertConstantValue(rr.Type, rr.ConstantValue);
-				if (isBoxing && rr.Type.IsCSharpSmallIntegerType()) {
+				if (isBoxing && (rr.Type.IsCSharpSmallIntegerType() || rr.Type.IsCSharpNativeIntegerType())) {
 					// C# does not have small integer literal types.
 					// We need to add a cast so that the integer literal gets boxed as the correct type.
 					expr = new CastExpression(ConvertType(rr.Type), expr);
@@ -784,21 +793,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (type.IsKnownType(KnownTypeCode.Double) || type.IsKnownType(KnownTypeCode.Single))
 					return ConvertFloatingPointLiteral(type, constantValue);
 				IType literalType = type;
-				bool smallInteger = type.IsCSharpSmallIntegerType();
-				if (smallInteger) { 
+				bool integerTypeMismatch = type.IsCSharpSmallIntegerType() || type.IsCSharpNativeIntegerType();
+				if (integerTypeMismatch) {
 					// C# does not have integer literals of small integer types,
 					// use `int` literal instead.
-					constantValue = CSharpPrimitiveCast.Cast(TypeCode.Int32, constantValue, false);
-					literalType = type.GetDefinition().Compilation.FindType(KnownTypeCode.Int32);
+					// It also doesn't have native integer literals, those also use `int` (or `uint` for `nuint`).
+					bool unsigned = type.Kind == TypeKind.NUInt;
+					constantValue = CSharpPrimitiveCast.Cast(unsigned ? TypeCode.UInt32 : TypeCode.Int32, constantValue, false);
+					var compilation = resolver?.Compilation ?? expectedType.GetDefinition()?.Compilation;
+					literalType = compilation?.FindType(unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32);
 				}
 				LiteralFormat format = LiteralFormat.None;
 				if (PrintIntegralValuesAsHex) {
 					format = LiteralFormat.HexadecimalNumber;
 				}
 				expr = new PrimitiveExpression(constantValue, format);
-				if (AddResolveResultAnnotations)
+				if (AddResolveResultAnnotations && literalType != null)
 					expr.AddAnnotation(new ConstantResolveResult(literalType, constantValue));
-				if (smallInteger && !type.Equals(expectedType)) {
+				if (integerTypeMismatch && !type.Equals(expectedType)) {
 					expr = new CastExpression(ConvertType(type), expr);
 				}
 				return expr;
@@ -813,7 +825,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			// find IType of constant in compilation.
 			var constantType = expectedType;
 			if (!expectedType.IsKnownType(info.Type)) {
-				var compilation = expectedType.GetDefinition().Compilation;
+				var compilation = resolver?.Compilation ?? expectedType.GetDefinition()?.Compilation;
+				if (compilation == null)
+					return false;
 				constantType = compilation.FindType(info.Type);
 			}
 			// if the field definition cannot be found, do not generate a reference to the field.

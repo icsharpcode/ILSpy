@@ -298,12 +298,15 @@ namespace ICSharpCode.ILSpy
 				case "ushort":
 				case "ulong":
 				case "unmanaged":
+				case "nint":
+				case "nuint":
 					color = valueTypeKeywordsColor;
 					break;
 				case "class":
 				case "object":
 				case "string":
 				case "void":
+				case "dynamic":
 					color = referenceTypeKeywordsColor;
 					break;
 			}
@@ -327,7 +330,7 @@ namespace ICSharpCode.ILSpy
 			{
 				color = valueKeywordColor;
 			}
-			if ((identifier.Name == "dynamic" || identifier.Name == "var") && identifier.Parent is AstType)
+			if (identifier.Name == "var" && identifier.Parent is AstType)
 				color = queryKeywordsColor;
 			switch (GetCurrentDefinition()) {
 				case ITypeDefinition t:

@@ -46,7 +46,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Type representing the C# 'dynamic' type.
 		/// </summary>
 		public readonly static SpecialType Dynamic = new SpecialType(TypeKind.Dynamic, "dynamic", isReferenceType: true);
-		
+
+		/// <summary>
+		/// Type representing the C# 9 'nint' type.
+		/// </summary>
+		public readonly static SpecialType NInt = new SpecialType(TypeKind.NInt, "nint", isReferenceType: false);
+
+		/// <summary>
+		/// Type representing the C# 9 'nuint' type.
+		/// </summary>
+		public readonly static SpecialType NUInt = new SpecialType(TypeKind.NUInt, "nuint", isReferenceType: false);
+
 		/// <summary>
 		/// Type representing the result of the C# '__arglist()' expression.
 		/// </summary>

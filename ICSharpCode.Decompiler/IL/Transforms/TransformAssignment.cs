@@ -198,9 +198,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		static bool ValidateCompoundAssign(BinaryNumericInstruction binary, Conv conv, IType targetType)
+		static bool ValidateCompoundAssign(BinaryNumericInstruction binary, Conv conv, IType targetType, DecompilerSettings settings)
 		{
-			if (!NumericCompoundAssign.IsBinaryCompatibleWithType(binary, targetType))
+			if (!NumericCompoundAssign.IsBinaryCompatibleWithType(binary, targetType, settings))
 				return false;
 			if (conv != null && !(conv.TargetType == targetType.ToPrimitiveType() && conv.CheckForOverflow == binary.CheckForOverflow))
 				return false; // conv does not match binary operation
@@ -305,7 +305,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				if (!IsMatchingCompoundLoad(binary.Left, compoundStore, out var target, out var targetKind, out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
 					return false;
-				if (!ValidateCompoundAssign(binary, smallIntConv, targetType))
+				if (!ValidateCompoundAssign(binary, smallIntConv, targetType, context.Settings))
 					return false;
 				context.Step($"Compound assignment (binary.numeric)", compoundStore);
 				finalizeMatch?.Invoke(context);
@@ -656,7 +656,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary != null && (binary.Right.MatchLdcI(1) || binary.Right.MatchLdcF4(1) || binary.Right.MatchLdcF8(1))) {
 				if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
 					return false;
-				if (!ValidateCompoundAssign(binary, conv, targetType))
+				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
 					return false;
 				stloc = binary.Left as StLoc;
 			} else if (value is Call operatorCall && operatorCall.Method.IsOperator && operatorCall.Arguments.Count == 1) {
@@ -731,7 +731,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
 					return false;
-				if (!ValidateCompoundAssign(binary, conv, targetType))
+				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
 					return false;
 				context.Step("TransformPostIncDecOperator (builtin)", inst);
 				finalizeMatch?.Invoke(context);

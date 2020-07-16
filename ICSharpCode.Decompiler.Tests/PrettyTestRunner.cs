@@ -338,6 +338,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void NativeInts([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
+		}
+
+		[Test]
 		public void NullPropagation([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);

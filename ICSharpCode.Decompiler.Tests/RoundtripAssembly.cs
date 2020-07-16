@@ -88,39 +88,65 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void ExplicitConversions()
 		{
-			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe");
+			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe", LanguageVersion.CSharp8_0);
 		}
 
 		[Test]
 		public void ExplicitConversions_32()
 		{
-			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe");
+			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe", LanguageVersion.CSharp8_0);
+		}
+
+		[Test]
+		[Ignore("Waiting for https://github.com/dotnet/roslyn/issues/45929")]
+		public void ExplicitConversions_With_NativeInts()
+		{
+			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe", LanguageVersion.Preview);
+		}
+
+		[Test]
+		[Ignore("Waiting for https://github.com/dotnet/roslyn/issues/45929")]
+		public void ExplicitConversions_32_With_NativeInts()
+		{
+			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe", LanguageVersion.Preview);
 		}
 
 		[Test]
 		public void Random_TestCase_1()
 		{
-			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe");
+			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", LanguageVersion.CSharp8_0);
 		}
 
-		void RunWithTest(string dir, string fileToRoundtrip, string fileToTest, string keyFile = null, bool useOldProjectFormat = false)
+		[Test]
+		[Ignore("Waiting for https://github.com/dotnet/roslyn/issues/45929")]
+		public void Random_TestCase_1_With_NativeInts()
 		{
-			RunInternal(dir, fileToRoundtrip, outputDir => RunTest(outputDir, fileToTest), keyFile, useOldProjectFormat);
+			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", LanguageVersion.Preview);
 		}
 
-		void RunWithOutput(string dir, string fileToRoundtrip)
+		// Let's limit the roundtrip tests to C# 8.0 for now; because 9.0 is still in preview
+		// and the generated project doesn't build as-is.
+		const LanguageVersion defaultLanguageVersion = LanguageVersion.CSharp8_0;
+
+		void RunWithTest(string dir, string fileToRoundtrip, string fileToTest, LanguageVersion languageVersion = defaultLanguageVersion, string keyFile = null, bool useOldProjectFormat = false)
+		{
+			RunInternal(dir, fileToRoundtrip, outputDir => RunTest(outputDir, fileToTest), languageVersion, snkFilePath: keyFile, useOldProjectFormat: useOldProjectFormat);
+		}
+
+		void RunWithOutput(string dir, string fileToRoundtrip, LanguageVersion languageVersion = defaultLanguageVersion)
 		{
 			string inputDir = Path.Combine(TestDir, dir);
 			RunInternal(dir, fileToRoundtrip,
-				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)));
+				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)),
+				languageVersion);
 		}
 
-		void RunOnly(string dir, string fileToRoundtrip)
+		void RunOnly(string dir, string fileToRoundtrip, LanguageVersion languageVersion = defaultLanguageVersion)
 		{
-			RunInternal(dir, fileToRoundtrip, outputDir => { });
+			RunInternal(dir, fileToRoundtrip, outputDir => { }, languageVersion);
 		}
 
-		void RunInternal(string dir, string fileToRoundtrip, Action<string> testAction, string snkFilePath = null, bool useOldProjectFormat = false)
+		void RunInternal(string dir, string fileToRoundtrip, Action<string> testAction, LanguageVersion languageVersion, string snkFilePath = null, bool useOldProjectFormat = false)
 		{
 			if (!Directory.Exists(TestDir)) {
 				Assert.Ignore($"Assembly-roundtrip test ignored: test directory '{TestDir}' needs to be checked out separately." + Environment.NewLine +
@@ -131,8 +157,8 @@ namespace ICSharpCode.Decompiler.Tests
 			string outputDir = inputDir + "-output";
 			if (inputDir.EndsWith("TestCases")) {
 				// make sure output dir names are unique so that we don't get trouble due to parallel test execution
-				decompiledDir += Path.GetFileNameWithoutExtension(fileToRoundtrip);
-				outputDir += Path.GetFileNameWithoutExtension(fileToRoundtrip);
+				decompiledDir += Path.GetFileNameWithoutExtension(fileToRoundtrip) + "_" + languageVersion.ToString();
+				outputDir += Path.GetFileNameWithoutExtension(fileToRoundtrip) + "_" + languageVersion.ToString();
 			}
 			ClearDirectory(decompiledDir);
 			ClearDirectory(outputDir);
@@ -155,9 +181,7 @@ namespace ICSharpCode.Decompiler.Tests
 						// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
 						var projectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
 
-						// Let's limit the roundtrip tests to C# 7.3 for now; because 8.0 is still in preview
-						// and the generated project doesn't build as-is.
-						var settings = new DecompilerSettings(LanguageVersion.CSharp7_3);
+						var settings = new DecompilerSettings(languageVersion);
 						if (useOldProjectFormat) {
 							settings.UseSdkStyleProjectFormat = false;
 						}

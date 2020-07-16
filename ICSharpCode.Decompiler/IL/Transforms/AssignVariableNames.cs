@@ -417,19 +417,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				type = NullableType.GetUnderlyingType(((TypeWithElementType)type).ElementType);
 			}
 
-			string name;
-			if (type is ArrayType) {
-				name = "array";
-			} else if (type is PointerType) {
-				name = "ptr";
-			} else if (type.Kind == TypeKind.TypeParameter || type.Kind == TypeKind.Unknown || type.Kind == TypeKind.Dynamic) {
-				name = "val";
-			} else if (type.Kind == TypeKind.ByReference) {
-				name = "reference";
-			} else if (type.IsAnonymousType()) {
+			string name = type.Kind switch
+			{
+				TypeKind.Array => "array",
+				TypeKind.Pointer => "ptr",
+				TypeKind.TypeParameter => "val",
+				TypeKind.Unknown => "val",
+				TypeKind.Dynamic => "val",
+				TypeKind.ByReference => "reference",
+				TypeKind.Tuple => "tuple",
+				TypeKind.NInt => "num",
+				TypeKind.NUInt => "num",
+				_ => null
+			};
+			if (name != null) {
+				return name;
+			}
+			if (type.IsAnonymousType()) {
 				name = "anon";
 			} else if (type.Name.EndsWith("Exception", StringComparison.Ordinal)) {
 				name = "ex";
+			} else if (type.IsCSharpNativeIntegerType()) {
+				name = "num";
 			} else if (!typeNameToVariableNameDict.TryGetValue(type.FullName, out name)) {
 				name = type.Name;
 				// remove the 'I' for interfaces
