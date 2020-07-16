@@ -161,5 +161,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			GetInstance(7).i <<= i32;
 		}
+
+		public void LocalTypeFromStore()
+		{
+			nint num = 42;
+			IntPtr zero = IntPtr.Zero;
+			nint zero2 = IntPtr.Zero;
+			nuint num2 = 43u;
+			nint num3 = i;
+			IntPtr intPtr = intptr;
+
+			Console.WriteLine();
+			zero2 = 1;
+			Console.WriteLine();
+
+			intptr = num;
+			intptr = zero;
+			intptr = zero2;
+			uintptr = num2;
+			intptr = num3;
+			intptr = intPtr;
+		}
+
+
+		public void LocalTypeFromUse()
+		{
+			IntPtr intPtr = intptr;
+			nint num = intptr;
+
+			Console.WriteLine();
+
+			intptr = intPtr;
+			i = num + 1;
+		}
 	}
 }

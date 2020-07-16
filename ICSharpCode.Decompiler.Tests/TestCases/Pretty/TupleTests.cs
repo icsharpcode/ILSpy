@@ -146,9 +146,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void LocalVariables((int, int) a)
 		{
-			(int, int) valueTuple = (a.Item1 + a.Item2, a.Item1 * a.Item2);
-			Console.WriteLine(valueTuple.ToString());
-			Console.WriteLine(valueTuple.GetType().FullName);
+			(int, int) tuple = (a.Item1 + a.Item2, a.Item1 * a.Item2);
+			Console.WriteLine(tuple.ToString());
+			Console.WriteLine(tuple.GetType().FullName);
 		}
 
 		public void Foreach(IEnumerable<(int, string)> input)
