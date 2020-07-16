@@ -406,6 +406,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Base Types.
+        /// </summary>
+        public static string BaseTypes {
+            get {
+                return ResourceManager.GetString("BaseTypes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to C_lone.
         /// </summary>
         public static string C_lone {
@@ -573,15 +582,6 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string Decompiler {
             get {
                 return ResourceManager.GetString("Decompiler", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Aggressively perform Scalar Replacement Of Aggregates (SROA).
-        /// </summary>
-        public static string DecompilerSettings_AggressiveScalarReplacementOfAggregates {
-            get {
-                return ResourceManager.GetString("DecompilerSettings.AggressiveScalarReplacementOfAggregates", resourceCulture);
             }
         }
         
