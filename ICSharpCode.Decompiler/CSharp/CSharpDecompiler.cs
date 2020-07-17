@@ -120,18 +120,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				new DetectExitPoints(canIntroduceExitForReturn: true),
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
-						//new UseExitPoints(),
 						new ConditionDetection(),
 						new LockTransform(),
 						new UsingTransform(),
 						// CachedDelegateInitialization must run after ConditionDetection and before/in LoopingBlockTransform
 						// and must run before NullCoalescingTransform
 						new CachedDelegateInitialization(),
-						// Run the assignment transform both before and after copy propagation.
-						// Before is necessary because inline assignments of constants are otherwise
-						// copy-propated (turned into two separate assignments of the constant).
-						// After is necessary because the assigned value might involve null coalescing/etc.
-						new StatementTransform(new ILInlining(), new TransformAssignment()),
 						new StatementTransform(
 							// per-block transforms that depend on each other, and thus need to
 							// run interleaved (statement by statement).

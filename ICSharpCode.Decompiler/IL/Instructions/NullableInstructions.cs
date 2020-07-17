@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool RefOutput { get => ResultType == StackType.Ref; }
 
-		public NullableUnwrap(StackType unwrappedType, ILInstruction argument, bool refInput=false)
+		public NullableUnwrap(StackType unwrappedType, ILInstruction argument, bool refInput = false)
 			: base(OpCode.NullableUnwrap, argument)
 		{
 			this.ResultType = unwrappedType;
@@ -131,6 +131,14 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.PrepareExtract(childIndex, ctx)
 				&& (ctx.FlagsBeingMoved & InstructionFlags.MayUnwrapNull) == 0;
+		}
+
+		internal override bool CanInlineIntoSlot(int childIndex, ILInstruction expressionBeingMoved)
+		{
+			// Inlining into nullable.rewrap is OK unless the expression being inlined
+			// contains a nullable.wrap that isn't being re-wrapped within the expression being inlined.
+			return base.CanInlineIntoSlot(childIndex, expressionBeingMoved)
+				&& !expressionBeingMoved.HasFlag(InstructionFlags.MayUnwrapNull);
 		}
 	}
 }

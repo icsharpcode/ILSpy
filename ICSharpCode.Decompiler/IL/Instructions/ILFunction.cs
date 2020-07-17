@@ -358,7 +358,16 @@ namespace ICSharpCode.Decompiler.IL
 				return InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
 			}
 		}
-		
+
+		internal override bool CanInlineIntoSlot(int childIndex, ILInstruction expressionBeingMoved)
+		{
+			// With expression trees, we occasionally need to inline constants into an existing expression tree.
+			// Only allow this for completely pure constants; a MayReadLocals effect would already be problematic
+			// because we're essentially delaying evaluation of the expression until the ILFunction is called.
+			Debug.Assert(childIndex == 0);
+			return kind == ILFunctionKind.ExpressionTree && expressionBeingMoved.Flags == InstructionFlags.None;
+		}
+
 		/// <summary>
 		/// Apply a list of transforms to this function.
 		/// </summary>
