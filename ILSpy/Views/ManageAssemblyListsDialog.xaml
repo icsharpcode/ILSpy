@@ -3,6 +3,7 @@
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
 	xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
+	xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
 	Title="{x:Static properties:Resources.ManageAssemblyLists}"
 	Style="{DynamicResource DialogWindow}"
 	WindowStartupLocation="CenterOwner"
@@ -35,7 +36,19 @@
 			<ColumnDefinition Width="Auto" />
 		</Grid.ColumnDefinitions>
 		<ListBox Name="listView" Margin="0 8" Grid.ColumnSpan="4" SelectedItem="{Binding SelectedAssemblyList}"
-				 SelectionMode="Single" ItemsSource="{Binding AssemblyLists}" />
+				 SelectionMode="Single" ItemsSource="{Binding AssemblyLists}">
+			<b:Interaction.Triggers>
+				<b:EventTrigger EventName="MouseDoubleClick">
+					<b:InvokeCommandAction Command="{Binding SelectAssemblyListCommand}" />
+				</b:EventTrigger>
+				<b:KeyTrigger Key="Return" FiredOn="KeyDown">
+					<b:InvokeCommandAction Command="{Binding SelectAssemblyListCommand}" />
+				</b:KeyTrigger>
+				<b:KeyTrigger Key="Delete" FiredOn="KeyDown">
+					<b:InvokeCommandAction Command="{Binding DeleteCommand}" CommandParameter="{Binding ., RelativeSource={RelativeSource AncestorType=Window}}" />
+				</b:KeyTrigger>
+			</b:Interaction.Triggers>
+		</ListBox>
 
 		<StackPanel Grid.Column="5" Grid.RowSpan="2" Margin="4, 8">
 			<Button Margin="2 2 2 10" Command="{Binding NewCommand}" CommandParameter="{Binding ., RelativeSource={RelativeSource AncestorType=Window}}" Content="{x:Static properties:Resources._New}"/>

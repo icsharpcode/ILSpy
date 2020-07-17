@@ -326,10 +326,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			/* char   */ { false, true , true , true , true , true  },
 			/* sbyte  */ { true , false, true , false, true , false },
 			/* byte   */ { true , true , true , true , true , true  },
-			/* short  */ { false, false, true , false, true , false },
-			/* ushort */ { false, false, true , true , true , true  },
-			/* int    */ { false, false, false, false, true , false },
-			/* uint   */ { false, false, false, false, true , true  },
+			/* short  */ { true , false, true , false, true , false },
+			/* ushort */ { false, true , true , true , true , true  },
+			/* int    */ { false, false, true , false, true , false },
+			/* uint   */ { false, false, false, true , true , true  },
+			/* long   */ { false, false, false, false, true , false },
+			/* ulong  */ { false, false, false, false, false, true  },
 		};
 
 		bool ImplicitNumericConversion(IType fromType, IType toType)
@@ -337,7 +339,29 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// C# 4.0 spec: §6.1.2
 
 			TypeCode from = ReflectionHelper.GetTypeCode(fromType);
+			if (from == TypeCode.Empty) {
+				// When converting from a native-sized integer, treat it as 64-bits
+				switch (fromType.Kind) {
+					case TypeKind.NInt:
+						from = TypeCode.Int64;
+						break;
+					case TypeKind.NUInt:
+						from = TypeCode.UInt64;
+						break;
+				}
+			}
 			TypeCode to = ReflectionHelper.GetTypeCode(toType);
+			if (to == TypeCode.Empty) {
+				// When converting to a native-sized integer, only 32-bits can be stored safely
+				switch (toType.Kind) {
+					case TypeKind.NInt:
+						to = TypeCode.Int32;
+						break;
+					case TypeKind.NUInt:
+						to = TypeCode.UInt32;
+						break;
+				}
+			}
 			if (to >= TypeCode.Single && to <= TypeCode.Decimal) {
 				// Conversions to float/double/decimal exist from all integral types,
 				// and there's a conversion from float to double.
@@ -345,7 +369,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					|| from == TypeCode.Single && to == TypeCode.Double;
 			} else {
 				// Conversions to integral types: look at the table
-				return from >= TypeCode.Char && from <= TypeCode.UInt32
+				return from >= TypeCode.Char && from <= TypeCode.UInt64
 					&& to >= TypeCode.Int16 && to <= TypeCode.UInt64
 					&& implicitNumericConversionLookup[from - TypeCode.Char, to - TypeCode.Int16];
 			}
@@ -353,6 +377,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		bool IsNumericType(IType type)
 		{
+			switch (type.Kind) {
+				case TypeKind.NInt:
+				case TypeKind.NUInt:
+					return true;
+			}
 			TypeCode c = ReflectionHelper.GetTypeCode(type);
 			return c >= TypeCode.Char && c <= TypeCode.Decimal;
 		}
@@ -693,7 +722,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return false;
 			// C# 4.0 spec: §6.1.9
 			TypeCode fromTypeCode = ReflectionHelper.GetTypeCode(rr.Type);
-			TypeCode toTypeCode = ReflectionHelper.GetTypeCode(NullableType.GetUnderlyingType(toType));
+			toType = NullableType.GetUnderlyingType(toType);
+			TypeCode toTypeCode = ReflectionHelper.GetTypeCode(toType);
+			if (toType.Kind == TypeKind.NUInt) {
+				toTypeCode = TypeCode.UInt32;
+			}
 			if (fromTypeCode == TypeCode.Int64) {
 				long val = (long)rr.ConstantValue;
 				return val >= 0 && toTypeCode == TypeCode.UInt64;
@@ -772,6 +805,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		bool IsIntegerType(IType type)
 		{
+			switch (type.Kind) {
+				case TypeKind.NInt:
+				case TypeKind.NUInt:
+					return true;
+			}
 			TypeCode c = ReflectionHelper.GetTypeCode(type);
 			return c >= TypeCode.SByte && c <= TypeCode.UInt64;
 		}

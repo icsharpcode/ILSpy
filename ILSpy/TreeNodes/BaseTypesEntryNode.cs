@@ -16,12 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Diagnostics;
 using System.Linq;
-using System.Reflection.Metadata;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.TreeView;
 
@@ -29,61 +25,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 {
 	sealed class BaseTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		readonly PEFile module;
-		readonly EntityHandle handle;
-		readonly IType type;
-		readonly bool isInterface;
-		bool showExpander;
+		readonly ITypeDefinition type;
 
-		public BaseTypesEntryNode(PEFile module, EntityHandle handle, IType type, bool isInterface)
+		public BaseTypesEntryNode(ITypeDefinition type)
 		{
-			if (handle.IsNil)
-				throw new ArgumentNullException(nameof(handle));
-			this.module = module ?? throw new ArgumentNullException(nameof(module));
-			this.handle = handle;
 			this.type = type;
-			this.isInterface = isInterface;
-			this.LazyLoading = true;
-			TryResolve(module, handle, type);
 		}
 
-		ITypeDefinition TryResolve(PEFile module, EntityHandle handle, IType type, bool mayRetry = true)
-		{
-			DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver(),
-				TypeSystemOptions.Default | TypeSystemOptions.Uncached);
-			var t = typeSystem.MainModule.ResolveEntity(handle) as ITypeDefinition;
-			if (t != null) {
-				showExpander = t.DirectBaseTypes.Any();
-				var other = t.ParentModule.PEFile.GetTypeSystemWithCurrentOptionsOrNull();
-				Debug.Assert(other != null);
-				t = other.FindType(t.FullTypeName).GetDefinition();
-			} else {
-				showExpander = mayRetry;
-			}
-			RaisePropertyChanged(nameof(Text));
-			RaisePropertyChanged(nameof(ShowExpander));
-			return t;
-		}
+		public override object Text => this.Language.TypeToString(type, includeNamespace: true);
 
-		public override bool ShowExpander => showExpander && base.ShowExpander;
-
-		public override object Text => this.Language.TypeToString(type, includeNamespace: true) + handle.ToSuffixString();
-
-		public override object Icon => 
-			isInterface ? Images.Interface : Images.Class;
-
-		protected override void LoadChildren()
-		{
-			var t = TryResolve(module, handle, type, false);
-			if (t != null) {
-				BaseTypesTreeNode.AddBaseTypes(this.Children, t.ParentModule.PEFile, t);
-			}
-		}
+		public override object Icon => type.Kind == TypeKind.Interface ? Images.Interface : Images.Class;
 
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
-			var t = TryResolve(module, handle, type, false);
-			e.Handled = ActivateItem(this, t);
+			e.Handled = ActivateItem(this, type);
 		}
 
 		internal static bool ActivateItem(SharpTreeNode node, ITypeDefinition def)
@@ -103,10 +58,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.WriteCommentLine(output, language.TypeToString(type, includeNamespace: true));
 		}
 
-		IEntity IMemberTreeNode.Member {
-			get {
-				return TryResolve(module, handle, type, false);
-			}
-		}
+		IEntity IMemberTreeNode.Member => type;
 	}
 }

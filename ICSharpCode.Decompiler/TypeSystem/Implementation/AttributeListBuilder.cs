@@ -194,6 +194,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					switch (attributeType.Name) {
 						case "DynamicAttribute":
 							return (options & TypeSystemOptions.Dynamic) != 0;
+						case "NativeIntegerAttribute":
+							return (options & TypeSystemOptions.NativeIntegers) != 0;
 						case "TupleElementNamesAttribute":
 							return (options & TypeSystemOptions.Tuple) != 0;
 						case "ExtensionAttribute":

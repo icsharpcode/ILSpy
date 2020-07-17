@@ -20,6 +20,9 @@ using System;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Windows.Threading;
+
+using Humanizer.Localisation;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -42,7 +45,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.LazyLoading = true;
 		}
 
-		public override object Text => "Base Types";
+		public override object Text => Properties.Resources.BaseTypes;
 
 		public override object Icon => Images.SuperTypes;
 
@@ -53,19 +56,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		internal static void AddBaseTypes(SharpTreeNodeCollection children, PEFile module, ITypeDefinition typeDefinition)
 		{
-			var typeDef = module.Metadata.GetTypeDefinition((TypeDefinitionHandle)typeDefinition.MetadataToken);
-			var baseTypes = typeDefinition.DirectBaseTypes.ToArray();
-			int i = 0;
-			if (typeDefinition.Kind == TypeKind.Interface) {
-				i++;
-			} else if (!typeDef.BaseType.IsNil) {
-				children.Add(new BaseTypesEntryNode(module, typeDef.BaseType, baseTypes[i], false));
-				i++;
-			}
-			foreach (var h in typeDef.GetInterfaceImplementations()) {
-				var impl = module.Metadata.GetInterfaceImplementation(h);
-				children.Add(new BaseTypesEntryNode(module, impl.Interface, baseTypes[i], true));
-				i++;
+			TypeDefinitionHandle handle = (TypeDefinitionHandle)typeDefinition.MetadataToken;
+			DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver(),
+				TypeSystemOptions.Default | TypeSystemOptions.Uncached);
+			var t = typeSystem.MainModule.ResolveEntity(handle) as ITypeDefinition;
+			foreach (var td in t.GetAllBaseTypeDefinitions().Reverse().Skip(1)) {
+				if (t.Kind != TypeKind.Interface || t.Kind == td.Kind)
+					children.Add(new BaseTypesEntryNode(td));
 			}
 		}
 

@@ -406,6 +406,16 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Base Types.
+        /// </summary>
+        public static string BaseTypes {
+            get {
+                return ResourceManager.GetString("BaseTypes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to C_lone.
         ///   查找类似 C_lone 的本地化字符串。
         /// </summary>
         public static string C_lone {
@@ -586,7 +596,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   查找类似 Allow extension &apos;Add&apos; methods in collection initializer expressions 的本地化字符串。
+        ///   Looks up a localized string similar to Allow extension &apos;Add&apos; methods in collection initializer expressions.
         /// </summary>
         public static string DecompilerSettings_AllowExtensionAddMethodsInCollectionInitializerExpressions {
             get {
@@ -921,6 +931,16 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use nint/nuint types.
+        /// </summary>
+        public static string DecompilerSettings_NativeIntegers {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.NativeIntegers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nullable reference types.
         ///   查找类似 Nullable reference types 的本地化字符串。
         /// </summary>
         public static string DecompilerSettings_NullableReferenceTypes {

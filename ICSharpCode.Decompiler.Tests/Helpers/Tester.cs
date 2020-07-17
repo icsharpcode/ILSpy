@@ -57,6 +57,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		ReferenceVisualBasic = 0x40,
 		ReferenceCore = 0x80,
 		GeneratePdb = 0x100,
+		Preview = 0x200
 	}
 
 	[Flags]
@@ -271,7 +272,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
 				var parseOptions = new CSharpParseOptions(
 					preprocessorSymbols: preprocessorSymbols.ToArray(),
-					languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.CSharp8
+					languageVersion: flags.HasFlag(CompilerOptions.Preview) ? Microsoft.CodeAnalysis.CSharp.LanguageVersion.Preview : Microsoft.CodeAnalysis.CSharp.LanguageVersion.CSharp8
 				);
 				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f, encoding: Encoding.UTF8));
 				if (flags.HasFlag(CompilerOptions.ReferenceCore)) {
@@ -399,7 +400,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		internal static DecompilerSettings GetSettings(CompilerOptions cscOptions)
 		{
 			if (cscOptions.HasFlag(CompilerOptions.UseRoslyn)) {
-				return new DecompilerSettings(CSharp.LanguageVersion.Latest);
+				if (cscOptions.HasFlag(CompilerOptions.Preview)) {
+					return new DecompilerSettings(CSharp.LanguageVersion.Latest);
+				} else {
+					return new DecompilerSettings(CSharp.LanguageVersion.CSharp8_0);
+				}
 			} else {
 				return new DecompilerSettings(CSharp.LanguageVersion.CSharp5);
 			}

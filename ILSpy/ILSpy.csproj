@@ -58,6 +58,7 @@
     <PackageReference Include="DataGridExtensions" Version="2.1.1" />
     <PackageReference Include="System.Reflection.Metadata" Version="1.8.1" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.19" />
   </ItemGroup>
 
   <ItemGroup>

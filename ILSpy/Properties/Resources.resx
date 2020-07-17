@@ -873,6 +873,12 @@ Do you want to continue?</value>
   <data name="DecompilerSettings.UseSdkStyleProjectFormat" xml:space="preserve">
     <value>Use new SDK style format for generated project files (*.csproj)</value>
   </data>
+  <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
+    <value>Use nint/nuint types</value>
+  </data>
+  <data name="BaseTypes" xml:space="preserve">
+    <value>Base Types</value>
+  </data>
   <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
     <value>DEBUG -- Dump PDB as XML</value>
   </data>

@@ -94,5 +94,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Modified type, with required modifier.
 		/// </summary>
 		ModReq,
+
+		/// <summary>
+		/// C# 9 <c>nint</c>
+		/// </summary>
+		NInt,
+		/// <summary>
+		/// C# 9 <c>nuint</c>
+		/// </summary>
+		NUInt,
 	}
 }

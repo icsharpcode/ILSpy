@@ -39,6 +39,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			"System.Runtime.CompilerServices.IsUnmanagedAttribute",
 			"System.Runtime.CompilerServices.NullableAttribute",
 			"System.Runtime.CompilerServices.NullableContextAttribute",
+			"System.Runtime.CompilerServices.NativeIntegerAttribute",
 			"Microsoft.CodeAnalysis.EmbeddedAttribute",
 		};
 
