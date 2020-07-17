@@ -113,6 +113,7 @@
     <AdditionalDependencies Include="$(ILSpyBuildPath)System.Reflection.Metadata.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.VisualStudio.Composition.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.VisualStudio.Validation.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.Xaml.Behaviors.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)Mono.Cecil.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)Mono.Cecil.Pdb.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)ILSpy.BamlDecompiler.Plugin.dll" />
