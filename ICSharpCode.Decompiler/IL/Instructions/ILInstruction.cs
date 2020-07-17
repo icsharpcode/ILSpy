@@ -802,6 +802,15 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return true;
 		}
+
+		/// <summary>
+		/// Gets whether the specified instruction may be inlined into the specified slot.
+		/// Note: this does not check whether reordering with the previous slots is valid; only wheter the target slot supports inlining at all!
+		/// </summary>
+		internal virtual bool CanInlineIntoSlot(int childIndex, ILInstruction expressionBeingMoved)
+		{
+			return GetChildSlot(childIndex).CanInlineInto;
+		}
 	}
 	
 	public interface IInstructionWithTypeOperand
