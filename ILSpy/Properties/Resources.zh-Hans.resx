@@ -139,7 +139,7 @@
     <value>打开</value>
   </data>
   <data name="DEBUGDisassemble" xml:space="preserve">
-    <value>DEBUG -- 反编译全部</value>
+    <value>DEBUG -- 全部反汇编</value>
   </data>
   <data name="E_xit" xml:space="preserve">
     <value>退出(_X)</value>
@@ -877,7 +877,7 @@
     <value>ILSpyAboutPage_zh_Hans.txt</value>
   </data>
   <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
-    <value>DEBUG --转存PDB为XML</value>
+    <value>DEBUG -- 转存PDB为XML</value>
   </data>
   <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
     <value>使用 nint/nuint 类型</value>
