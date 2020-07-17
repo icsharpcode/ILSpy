@@ -666,24 +666,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <summary>
-		/// Gets whether arg can be un-inlined out of stmt.
+		/// Gets whether 'expressionBeingMoved' can be moved from somewhere before 'stmt' to become the replacement of 'targetLoad'.
 		/// </summary>
-		/// <seealso cref="ILInstruction.Extract"/>
-		internal static bool CanUninline(ILInstruction arg, ILInstruction stmt)
+		public static bool CanMoveInto(ILInstruction expressionBeingMoved, ILInstruction stmt, ILInstruction targetLoad)
 		{
-			Debug.Assert(arg.IsDescendantOf(stmt));
-			for (ILInstruction inst = arg; inst != stmt; inst = inst.Parent) {
+			Debug.Assert(targetLoad.IsDescendantOf(stmt));
+			for (ILInstruction inst = targetLoad; inst != stmt; inst = inst.Parent) {
 				if (!inst.SlotInfo.CanInlineInto)
 					return false;
 				// Check whether re-ordering with predecessors is valid:
 				int childIndex = inst.ChildIndex;
 				for (int i = 0; i < childIndex; ++i) {
 					ILInstruction predecessor = inst.Parent.Children[i];
-					if (!SemanticHelper.MayReorder(arg, predecessor))
+					if (!IsSafeForInlineOver(predecessor, expressionBeingMoved))
 						return false;
 				}
 			}
 			return true;
+		}
+
+		/// <summary>
+		/// Gets whether arg can be un-inlined out of stmt.
+		/// </summary>
+		/// <seealso cref="ILInstruction.Extract"/>
+		internal static bool CanUninline(ILInstruction arg, ILInstruction stmt)
+		{
+			// moving into and moving out-of are equivalent
+			return CanMoveInto(arg, stmt, arg);
 		}
 	}
 }
