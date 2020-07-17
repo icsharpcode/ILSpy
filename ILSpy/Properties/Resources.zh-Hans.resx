@@ -879,4 +879,10 @@
   <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
     <value>DEBUG --转存PDB为XML</value>
   </data>
+  <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
+    <value>使用 nint/nuint 类型</value>
+  </data>
+  <data name="BaseTypes" xml:space="preserve">
+    <value>基础类型</value>
+  </data>
 </root>
