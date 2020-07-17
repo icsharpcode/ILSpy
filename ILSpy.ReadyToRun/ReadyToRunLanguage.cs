@@ -86,6 +86,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						.GroupBy(m => m.MethodHandle)
 						.ToDictionary(g => g.Key, g => g.ToArray());
 				}
+		
+				
 				bool showMetadataTokens = ILSpy.Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens;
 				bool showMetadataTokensInBase10 = ILSpy.Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10;
 				if (cacheEntry.methodMap.TryGetValue(method.MetadataToken, out var methods)) {
@@ -103,12 +105,92 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			output.WriteLine("; " + comment);
 		}
 
+		private Dictionary<VarLocType, HashSet<Tuple<DebugInfo, NativeVarInfo>>> WriteDebugInfo(ReadyToRunMethod readyToRunMethod, ITextOutput output)
+		{
+			Dictionary<VarLocType, HashSet<Tuple<DebugInfo, NativeVarInfo>>> debugInfoDict = new Dictionary<VarLocType, HashSet<Tuple<DebugInfo, NativeVarInfo>>>();
+			IReadOnlyList<RuntimeFunction> runTimeList = readyToRunMethod.RuntimeFunctions;
+			foreach (RuntimeFunction runtimeFunction in runTimeList) {
+				DebugInfo debugInfo = runtimeFunction.DebugInfo;
+				if (debugInfo != null && debugInfo.BoundsList.Count > 0) {
+					for (int i = 0; i < debugInfo.VariablesList.Count; ++i) {
+						var varLoc = debugInfo.VariablesList[i];
+						try {
+							HashSet <Tuple<DebugInfo, NativeVarInfo>> typeSet = new HashSet<Tuple<DebugInfo, NativeVarInfo>>();
+							bool found = debugInfoDict.TryGetValue(varLoc.VariableLocation.VarLocType, out typeSet);
+							if (found) {
+								typeSet.Add(new Tuple<DebugInfo, NativeVarInfo>(debugInfo, varLoc));
+							} else {
+								typeSet = new HashSet<Tuple<DebugInfo, NativeVarInfo>>();
+								debugInfoDict.Add(varLoc.VariableLocation.VarLocType, typeSet);
+								typeSet.Add(new Tuple<DebugInfo, NativeVarInfo>(debugInfo, varLoc));
+							}
+							
+						} catch (ArgumentNullException) {
+							output.WriteLine("Failed to find hash set of Debug info type");
+						}
+
+						if (varLoc.VariableLocation.VarLocType != VarLocType.VLT_REG && varLoc.VariableLocation.VarLocType != VarLocType.VLT_STK
+							&& varLoc.VariableLocation.VarLocType != VarLocType.VLT_STK_BYREF) {
+							//debugInfoDict.Add(varLoc.VariableLocation.VarLocType, )
+							output.WriteLine($"    Variable Number: {varLoc.VariableNumber}");
+							output.WriteLine($"    Start Offset: 0x{varLoc.StartOffset:X}");
+							output.WriteLine($"    End Offset: 0x{varLoc.EndOffset:X}");
+							output.WriteLine($"    Loc Type: {varLoc.VariableLocation.VarLocType}");
+							switch (varLoc.VariableLocation.VarLocType) {
+								case VarLocType.VLT_REG:
+								case VarLocType.VLT_REG_FP:
+								case VarLocType.VLT_REG_BYREF:
+									output.WriteLine($"    Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+									break;
+
+								case VarLocType.VLT_STK:
+								case VarLocType.VLT_STK_BYREF:
+									output.WriteLine($"    Base Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+									output.WriteLine($"    Stack Offset: {varLoc.VariableLocation.Data2}");
+									break;
+								case VarLocType.VLT_REG_REG:
+									output.WriteLine($"    Register 1: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+									output.WriteLine($"    Register 2: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data2)}");
+									break;
+								case VarLocType.VLT_REG_STK:
+									output.WriteLine($"    Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+									output.WriteLine($"    Base Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data2)}");
+									output.WriteLine($"    Stack Offset: {varLoc.VariableLocation.Data3}");
+									break;
+								case VarLocType.VLT_STK_REG:
+									output.WriteLine($"    Stack Offset: {varLoc.VariableLocation.Data1}");
+									output.WriteLine($"    Base Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data2)}");
+									output.WriteLine($"    Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data3)}");
+									break;
+								case VarLocType.VLT_STK2:
+									output.WriteLine($"    Base Register: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+									output.WriteLine($"    Stack Offset: {varLoc.VariableLocation.Data2}");
+									break;
+								case VarLocType.VLT_FPSTK:
+									output.WriteLine($"    Offset: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+									break;
+								case VarLocType.VLT_FIXED_VA:
+									output.WriteLine($"    Offset: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
+									break;
+
+								default:
+									throw new BadImageFormatException("Unexpected var loc type");
+							}
+
+							output.WriteLine("");
+						}
+					}
+
+				}
+			}
+			return debugInfoDict;
+		}
 
 
-		private Dictionary<ulong, UnwindCode> WriteUnwindInfo(RuntimeFunction runtimeFunction, ITextOutput output)
+		private Dictionary<ulong, HashSet<UnwindCode>> WriteUnwindInfo(RuntimeFunction runtimeFunction, ITextOutput output)
 
 		{
-			Dictionary<ulong, UnwindCode> unwindCodes = new Dictionary<ulong, UnwindCode>();
+			Dictionary<ulong, HashSet<UnwindCode>> unwindCodes = new Dictionary<ulong, HashSet<UnwindCode>>();
 			if (runtimeFunction.UnwindInfo is UnwindInfo amd64UnwindInfo) {
 				string parsedFlags = "";
 				if ((amd64UnwindInfo.Flags & (int)UnwindFlags.UNW_FLAG_EHANDLER) != 0) {
@@ -128,8 +210,13 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				WriteCommentLine(output, $"Flags:              0x{amd64UnwindInfo.Flags:X2}{parsedFlags}");
 				WriteCommentLine(output, $"FrameRegister:      {((amd64UnwindInfo.FrameRegister == 0) ? "none" : amd64UnwindInfo.FrameRegister.ToString())}");
 				for (int unwindCodeIndex = 0; unwindCodeIndex < amd64UnwindInfo.CountOfUnwindCodes; unwindCodeIndex++) {
-					unwindCodes.Add((ulong)(amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex].CodeOffset), amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex]);
-
+					if (unwindCodes.ContainsKey((ulong)(amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex].CodeOffset))) {
+						unwindCodes[(ulong)(amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex].CodeOffset)].Add(amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex]);
+					} else {
+						HashSet<UnwindCode> codeSet = new HashSet<UnwindCode>();
+						codeSet.Add(amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex]);
+						unwindCodes.Add((ulong)(amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex].CodeOffset), codeSet);
+					}
 				}
 			}
 			return unwindCodes;
@@ -137,19 +224,19 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		private void Disassemble(PEFile currentFile, ITextOutput output, ReadyToRunReader reader, ReadyToRunMethod readyToRunMethod, RuntimeFunction runtimeFunction, int bitness, ulong address, bool showMetadataTokens, bool showMetadataTokensInBase10)
 		{
+
 			WriteCommentLine(output, readyToRunMethod.SignatureString);
-			Dictionary<ulong, UnwindCode> unwindInfo = null;
+			Dictionary<ulong, HashSet<UnwindCode>> unwindInfo = null;
 			if (ReadyToRunOptions.GetIsShowUnwindInfo(null) && bitness == 64) {
 				unwindInfo = WriteUnwindInfo(runtimeFunction, output);
 			}
-
-
+			Dictionary<VarLocType, HashSet<Tuple<DebugInfo, NativeVarInfo>>> debugInfo = WriteDebugInfo(readyToRunMethod, output);
 			byte[] codeBytes = new byte[runtimeFunction.Size];
 			for (int i = 0; i < runtimeFunction.Size; i++) {
 				codeBytes[i] = reader.Image[reader.GetOffset(runtimeFunction.StartAddress) + i];
 			}
 
-			// TODO: Decorate the disassembly with GC and debug info
+			// TODO: Decorate the disassembly with GC
 			var codeReader = new ByteArrayCodeReader(codeBytes);
 			var decoder = Decoder.Create(bitness, codeReader);
 			decoder.IP = address;
@@ -172,7 +259,10 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			formatter.Options.FirstOperandCharIndex = 10;
 			var tempOutput = new StringOutput();
 			ulong baseInstrIP = instructions[0].IP;
+			int counter = -1;
 			foreach (var instr in instructions) {
+				counter++;
+
 				int byteBaseIndex = (int)(instr.IP - address);
 				if (runtimeFunction.DebugInfo != null) {
 					foreach (var bound in runtimeFunction.DebugInfo.BoundsList) {
@@ -187,32 +277,98 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						}
 					}
 				}
+			
 				formatter.Format(instr, tempOutput);
 				output.Write(instr.IP.ToString("X16"));
 				output.Write(" ");
 				int instrLen = instr.Length;
-				for (int i = 0; i < instrLen; i++)
+				for (int i = 0; i < instrLen; i++) {
 					output.Write(codeBytes[byteBaseIndex + i].ToString("X2"));
+				}
 				int missingBytes = 10 - instrLen;
 				for (int i = 0; i < missingBytes; i++)
 					output.Write("  ");
 				output.Write(" ");
 				output.Write(tempOutput.ToStringAndReset());
 				DecorateUnwindInfo(output, unwindInfo, baseInstrIP, instr);
+				DecorateDebugInfo(output, instr, debugInfo, baseInstrIP);
 				DecorateCallSite(currentFile, output, reader, showMetadataTokens, showMetadataTokensInBase10, instr);
 			}
 			output.WriteLine();
 		}
 
-		private static void DecorateUnwindInfo(ITextOutput output, Dictionary<ulong, UnwindCode> unwindInfo, ulong baseInstrIP, Instruction instr)
+		private static void DecorateUnwindInfo(ITextOutput output, Dictionary<ulong, HashSet<UnwindCode>> unwindInfo, ulong baseInstrIP, Instruction instr)
 		{
 			ulong nextInstructionOffset = instr.NextIP - baseInstrIP;
 			if (unwindInfo != null && unwindInfo.ContainsKey(nextInstructionOffset)) {
-				UnwindCode unwindCode = unwindInfo[nextInstructionOffset];
-				output.Write($" ; {unwindCode.UnwindOp}({unwindCode.OpInfoStr})");
+				foreach (var unwindCode in unwindInfo[nextInstructionOffset]) {
+					output.Write($" ; {unwindCode.UnwindOp}({unwindCode.OpInfoStr})");
+				}
 			}
 		}
 
+		private static void DecorateDebugInfo(ITextOutput output, Instruction instr, Dictionary<VarLocType, HashSet<Tuple<DebugInfo, NativeVarInfo>>> debugInfoDict, ulong baseInstrIP)
+		{
+			if (debugInfoDict != null) {
+				InstructionInfoFactory factory = new InstructionInfoFactory();
+				InstructionInfo info = factory.GetInfo(instr);
+				HashSet<Tuple<DebugInfo, NativeVarInfo>> stkSet = new HashSet<Tuple<DebugInfo, NativeVarInfo>>();
+				if (debugInfoDict.ContainsKey(VarLocType.VLT_STK)) {
+					stkSet.UnionWith(debugInfoDict[VarLocType.VLT_STK]);
+				}
+				if (debugInfoDict.ContainsKey(VarLocType.VLT_STK_BYREF)) {
+					stkSet.UnionWith(debugInfoDict[VarLocType.VLT_STK_BYREF]);
+				}
+				if (stkSet != null) {
+					foreach (UsedMemory usedMemInfo in info.GetUsedMemory()) { //for each time a [register +- value] is used
+						foreach (Tuple<DebugInfo, NativeVarInfo> tuple in stkSet) { //for each VLT_STK variable
+							var debugInfo = tuple.Item1;
+							var varInfo = tuple.Item2;
+							int stackOffset = varInfo.VariableLocation.Data2;
+							ulong adjOffset;
+							bool negativeOffset;
+							if (stackOffset < 0) {
+								int absValue = -1 * stackOffset;
+								adjOffset = ulong.MaxValue - (ulong)absValue + 1;
+								negativeOffset = true;
+							} else {
+								adjOffset = (ulong)stackOffset;
+								negativeOffset = false;
+							}
+							if (varInfo.StartOffset < instr.IP - baseInstrIP && varInfo.EndOffset > instr.IP - baseInstrIP &&
+								DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varInfo.VariableLocation.Data1) == usedMemInfo.Base.ToString() &&
+								adjOffset == usedMemInfo.Displacement) {
+
+								output.Write($"; [{usedMemInfo.Base.ToString()}{(negativeOffset ? '-' : '+')}{Math.Abs(stackOffset)}] = {varInfo.Variable.Type} {varInfo.Variable.Index}");
+							}
+						}
+					}
+				}
+				HashSet<Tuple<DebugInfo, NativeVarInfo>> regSet = new HashSet<Tuple<DebugInfo, NativeVarInfo>>();
+				if (debugInfoDict.ContainsKey(VarLocType.VLT_REG)) {
+					regSet.UnionWith(debugInfoDict[VarLocType.VLT_REG]);
+				}
+				if (debugInfoDict.ContainsKey(VarLocType.VLT_REG_BYREF)) {
+					regSet.UnionWith(debugInfoDict[VarLocType.VLT_REG_BYREF]);
+				}
+				if (debugInfoDict.ContainsKey(VarLocType.VLT_REG_FP)) {
+					regSet.UnionWith(debugInfoDict[VarLocType.VLT_REG_FP]);
+				}
+				if (regSet != null) {
+					foreach (UsedRegister usedMemInfo in info.GetUsedRegisters()) {
+						foreach (Tuple<DebugInfo, NativeVarInfo> tuple in regSet) {
+							var debugInfo = tuple.Item1;
+							var varInfo = tuple.Item2;
+							if (varInfo.StartOffset < instr.IP - baseInstrIP && varInfo.EndOffset > instr.IP - baseInstrIP &&
+								DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varInfo.VariableLocation.Data1) == usedMemInfo.Register.ToString()) {
+
+								output.Write($"; {usedMemInfo.Register.ToString()} = {varInfo.Variable.Type} {varInfo.Variable.Index}");
+							}
+						}
+					}
+				}
+			}
+		}
 		private static void DecorateCallSite(PEFile currentFile, ITextOutput output, ReadyToRunReader reader, bool showMetadataTokens, bool showMetadataTokensInBase10, Instruction instr)
 		{
 			int importCellAddress = (int)instr.IPRelativeMemoryAddress;

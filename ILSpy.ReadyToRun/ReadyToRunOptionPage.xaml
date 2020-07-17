@@ -15,7 +15,5 @@
 		<ComboBox Grid.Column="1" Margin="3" ItemsSource="{Binding DisassemblyFormats}" SelectedItem="{Binding DisassemblyFormat}" />
 		<TextBlock Grid.Row="1" Margin="3">Show Unwind Info</TextBlock>
 		<CheckBox Grid.Row="1" Grid.Column="1" Margin="3" IsChecked="{Binding IsShowUnwindInfo}" />
-		<TextBlock Grid.Row="2" Margin="3">Show Debug Info</TextBlock>
-		<CheckBox Grid.Row="2" Grid.Column="1" Margin="3" IsChecked="{Binding DebugIsChecked}" />
 	</Grid>
 </UserControl>
