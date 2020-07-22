@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Detects switch-on-string patterns employed by the C# compiler and transforms them to an ILAst-switch-instruction.
 	/// </summary>
-	class SwitchOnStringTransform : IILTransform
+	public class SwitchOnStringTransform : IILTransform
 	{
 		ILTransformContext context;
 

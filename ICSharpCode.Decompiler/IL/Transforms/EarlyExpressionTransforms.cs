@@ -25,7 +25,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	class EarlyExpressionTransforms : ILVisitor, IILTransform
+	public class EarlyExpressionTransforms : ILVisitor, IILTransform
 	{
 		ILTransformContext context;
 

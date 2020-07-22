@@ -26,7 +26,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	class UserDefinedLogicTransform : IStatementTransform
+	public class UserDefinedLogicTransform : IStatementTransform
 	{
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{

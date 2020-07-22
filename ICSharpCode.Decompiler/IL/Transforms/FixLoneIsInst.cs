@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// This transform un-inlines the argument of `isinst` instructions that can't be directly translated to C#,
 	/// thus allowing the emulation via "expr is T ? (T)expr : null".
 	/// </summary>
-	class FixLoneIsInst : IILTransform
+	public class FixLoneIsInst : IILTransform
 	{
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{

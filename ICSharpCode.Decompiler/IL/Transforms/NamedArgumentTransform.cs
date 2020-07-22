@@ -10,9 +10,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	using FindResult = ILInlining.FindResult;
 	using FindResultType = ILInlining.FindResultType;
 
-	class NamedArgumentTransform : IStatementTransform
+	public class NamedArgumentTransform : IStatementTransform
 	{
-		public static FindResult CanIntroduceNamedArgument(CallInstruction call, ILInstruction child, ILVariable v, ILInstruction expressionBeingMoved)
+		internal static FindResult CanIntroduceNamedArgument(CallInstruction call, ILInstruction child, ILVariable v, ILInstruction expressionBeingMoved)
 		{
 			Debug.Assert(child.Parent == call);
 			if (call.IsInstanceCall && child.ChildIndex == 0)

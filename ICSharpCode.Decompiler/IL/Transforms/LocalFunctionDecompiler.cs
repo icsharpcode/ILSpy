@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Decompiler step for C# 7.0 local functions
 	/// </summary>
-	class LocalFunctionDecompiler : IILTransform
+	public class LocalFunctionDecompiler : IILTransform
 	{
 		ILTransformContext context;
 		ITypeResolveContext resolveContext;
