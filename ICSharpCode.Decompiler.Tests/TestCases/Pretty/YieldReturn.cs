@@ -356,5 +356,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine("normal exit");
 		}
+
+		internal IEnumerable<int> ForLoopWithYieldReturn(int end, int evil)
+		{
+			// This loop needs to pick the implicit "yield break;" as exit point
+			// in order to produce pretty code; not the "throw" which would
+			// be a less-pretty option.
+			for (int i = 0; i < end; i++) {
+				if (i == evil) {
+					throw new InvalidOperationException("Found evil number");
+				}
+				yield return i;
+			}
+		}
 	}
 }

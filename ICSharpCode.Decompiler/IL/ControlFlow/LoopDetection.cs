@@ -315,6 +315,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				ControlFlowNode exitPoint = null;
 				int exitPointILOffset = -1;
+				ConsiderReturnAsExitPoint((Block)loopHead.UserData, ref exitPoint, ref exitPointILOffset);
 				foreach (var node in loopHead.DominatorTreeChildren) {
 					PickExitPoint(node, ref exitPoint, ref exitPointILOffset);
 				}
@@ -457,10 +458,29 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				exitPoint = node;
 				exitPointILOffset = block.StartILOffset;
 				return; // don't visit children, they are likely to have even later IL offsets and we'd end up
-				// moving almost all of the code into the loop.
+						// moving almost all of the code into the loop.
 			}
+			ConsiderReturnAsExitPoint(block, ref exitPoint, ref exitPointILOffset);
 			foreach (var child in node.DominatorTreeChildren) {
 				PickExitPoint(child, ref exitPoint, ref exitPointILOffset);
+			}
+		}
+		
+		private static void ConsiderReturnAsExitPoint(Block block, ref ControlFlowNode exitPoint, ref int exitPointILOffset)
+		{
+			// It's possible that the real exit point of the loop is a "return;" that has been combined (by ControlFlowSimplification)
+			// with the condition block.
+			if (!block.MatchIfAtEndOfBlock(out _, out var trueInst, out var falseInst))
+				return;
+			if (trueInst.StartILOffset > exitPointILOffset && trueInst is Leave { IsLeavingFunction: true, Value: Nop _ }) {
+				// By using NoExitPoint, everything (including the "return;") becomes part of the loop body
+				// Then DetectExitPoint will move the "return;" out of the loop body.
+				exitPoint = NoExitPoint;
+				exitPointILOffset = trueInst.StartILOffset;
+			}
+			if (falseInst.StartILOffset > exitPointILOffset && falseInst is Leave { IsLeavingFunction: true, Value: Nop _ }) {
+				exitPoint = NoExitPoint;
+				exitPointILOffset = falseInst.StartILOffset;
 			}
 		}
 
