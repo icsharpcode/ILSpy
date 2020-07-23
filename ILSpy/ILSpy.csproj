@@ -457,7 +457,7 @@
     <Compile Include="Analyzers\Builtin\TypeExtensionMethodsAnalyzer.cs" />
     <Compile Include="Docking\DockWorkspace.cs" />
     <EmbeddedResource Include="..\doc\ILSpyAboutPage.txt" />
-    <EmbeddedResource Include="D:\GitHub\ILSpy\doc\ILSpyAboutPage_zh_Hans.txt" Link="ILSpyAboutPage_zh_Hans.txt" />
+    <EmbeddedResource Include="..\doc\ILSpyAboutPage_zh_Hans.txt" />
     <EmbeddedResource Include="..\doc\third-party-notices.txt" />
     <EmbeddedResource Include="..\doc\license.txt">
       <Link>license.txt</Link>
