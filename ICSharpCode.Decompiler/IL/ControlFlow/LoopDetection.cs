@@ -200,11 +200,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		///  * use only a single exit point if at all possible
 		///  * minimize the amount of code in the in-loop partition
 		///    (thus: maximize the amount of code in the out-of-loop partition)
-		///   "amount of code" could be measured as:
-		///     * number of basic blocks
-		///     * number of instructions directly in those basic blocks (~= number of statements)
-		///     * number of instructions in those basic blocks (~= number of expressions)
-		///       (we currently use the number of statements)
 		/// 
 		/// Observations:
 		///  * If a node is in-loop, so are all its ancestors in the dominator tree (up to the loop entry point)
