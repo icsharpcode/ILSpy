@@ -327,9 +327,13 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (assembly != null)
 				return assembly;
 
-			assembly = SearchDirectory(name, framework_dirs);
-			if (assembly != null)
-				return assembly;
+			// when decompiling assemblies that target frameworks prior to 4.0, we can fall back to the 4.0 assemblies in case the target framework is not installed.
+			// but when looking for Microsoft.Build.Framework, Version=15.0.0.0 we should not use the version 4.0 assembly here so that the LoadedAssembly logic can instead fall back to version 15.1.0.0
+			if (name.Version <= new Version(4, 0, 0, 0)) {
+				assembly = SearchDirectory(name, framework_dirs);
+				if (assembly != null)
+					return assembly;
+			}
 
 			if (throwOnError)
 				throw new AssemblyResolutionException(name);

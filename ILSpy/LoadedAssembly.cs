@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
@@ -31,6 +32,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.PdbProvider;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Options;
 
 namespace ICSharpCode.ILSpy
@@ -318,6 +320,17 @@ namespace ICSharpCode.ILSpy
 		static readonly Dictionary<string, LoadedAssembly> loadingAssemblies = new Dictionary<string, LoadedAssembly>();
 		MyUniversalResolver universalResolver;
 
+		/// <summary>
+		/// 1) try to find exact match by tfm + full asm name in loaded assemblies
+		/// 2) try to find match in search paths
+		/// 3) if a.deps.json is found: search %USERPROFILE%/.nuget/packages/* as well
+		/// 4) look in /dotnet/shared/{runtime-pack}/{closest-version}
+		/// 5) if the version is retargetable or all zeros or ones, search C:\Windows\Microsoft.NET\Framework64\v4.0.30319
+		/// 6) For "mscorlib.dll" we use the exact same assembly with which ILSpy runs
+		/// 7) Search the GAC
+		/// 8) search C:\Windows\Microsoft.NET\Framework64\v4.0.30319
+		/// 9) try to find match by asm name (no tfm/version) in loaded assemblies
+		/// </summary>
 		LoadedAssembly LookupReferencedAssemblyInternal(IAssemblyReference fullName, bool isWinRT, string tfm)
 		{
 			string key = tfm + ";" + (isWinRT ? fullName.Name : fullName.FullName);
@@ -359,8 +372,29 @@ namespace ICSharpCode.ILSpy
 					LoadedAssemblyReferencesInfo.AddMessage(fullName.ToString(), MessageKind.Info, "Success - Loading from: " + file);
 					asm = new LoadedAssembly(assemblyList, file) { IsAutoLoaded = true };
 				} else {
-					LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.ToString(), MessageKind.Error, "Could not find reference: " + fullName);
-					return null;
+					var candidates = new List<(LoadedAssembly assembly, Version version)>();
+
+					foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
+						var module = loaded.GetPEFileOrNull();
+						var reader = module?.Metadata;
+						if (reader == null || !reader.IsAssembly) continue;
+						var asmDef = reader.GetAssemblyDefinition();
+						var asmDefName = reader.GetString(asmDef.Name);
+						if (fullName.Name.Equals(asmDefName, StringComparison.OrdinalIgnoreCase)) {
+							candidates.Add((loaded, asmDef.Version));
+						}
+					}
+
+					if (candidates.Count == 0) {
+						LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.ToString(), MessageKind.Error, "Could not find reference: " + fullName);
+						return null;
+					}
+
+					candidates.SortBy(c => c.version);
+
+					var bestCandidate = candidates.FirstOrDefault(c => c.version >= fullName.Version).assembly ?? candidates.Last().assembly;
+					LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.ToString(), MessageKind.Info, "Success - Found in Assembly List with different TFM or version: " + bestCandidate.fileName);
+					return bestCandidate;
 				}
 				loadingAssemblies.Add(file, asm);
 			}
