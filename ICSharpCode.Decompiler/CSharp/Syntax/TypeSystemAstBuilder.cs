@@ -1799,6 +1799,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return !member.IsStatic;
 				case SymbolKind.Destructor:
 					return false;
+				case SymbolKind.Method:
+					return !((IMethod)member).IsLocalFunction;
 				default:
 					return true;
 			}
@@ -1811,7 +1813,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				m |= ModifierFromAccessibility (member.Accessibility);
 			}
 			if (this.ShowModifiers) {
-				if (member.IsStatic) {
+				if (member is LocalFunctionMethod localFunction) {
+					if (localFunction.IsStaticLocalFunction) {
+						m |= Modifiers.Static;
+					}
+				} else if (member.IsStatic) {
 					m |= Modifiers.Static;
 				} else {
 					var declaringType = member.DeclaringType;

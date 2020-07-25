@@ -55,56 +55,56 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override TResult VisitMethodDeclaration(MethodDeclaration methodDeclaration)
 		{
-			Debug.Assert(currentMethod == null);
+			var oldMethod = currentMethod;
 			try {
 				currentMethod = methodDeclaration.GetSymbol() as IMethod;
 				return base.VisitMethodDeclaration(methodDeclaration);
 			} finally {
-				currentMethod = null;
+				currentMethod = oldMethod;
 			}
 		}
 		
 		public override TResult VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
 		{
-			Debug.Assert(currentMethod == null);
+			var oldMethod = currentMethod;
 			try {
 				currentMethod = constructorDeclaration.GetSymbol() as IMethod;
 				return base.VisitConstructorDeclaration(constructorDeclaration);
 			} finally {
-				currentMethod = null;
+				currentMethod = oldMethod;
 			}
 		}
 		
 		public override TResult VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration)
 		{
-			Debug.Assert(currentMethod == null);
+			var oldMethod = currentMethod;
 			try {
 				currentMethod = destructorDeclaration.GetSymbol() as IMethod;
 				return base.VisitDestructorDeclaration(destructorDeclaration);
 			} finally {
-				currentMethod = null;
+				currentMethod = oldMethod;
 			}
 		}
 		
 		public override TResult VisitOperatorDeclaration(OperatorDeclaration operatorDeclaration)
 		{
-			Debug.Assert(currentMethod == null);
+			var oldMethod = currentMethod;
 			try {
 				currentMethod = operatorDeclaration.GetSymbol() as IMethod;
 				return base.VisitOperatorDeclaration(operatorDeclaration);
 			} finally {
-				currentMethod = null;
+				currentMethod = oldMethod;
 			}
 		}
 		
 		public override TResult VisitAccessor(Accessor accessor)
 		{
-			Debug.Assert(currentMethod == null);
+			var oldMethod = currentMethod;
 			try {
 				currentMethod = accessor.GetSymbol() as IMethod;
 				return base.VisitAccessor(accessor);
 			} finally {
-				currentMethod = null;
+				currentMethod = oldMethod;
 			}
 		}
 	}
