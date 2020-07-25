@@ -336,7 +336,7 @@
 
 		new OpCode("match", "ILAst representation of C# patterns",
 			CustomClassName("MatchInstruction"), HasVariableOperand("Store"), HasMethodOperand,
-			BoolFlag("Deconstruct"), BoolFlag("MatchType"), BoolFlag("MatchesNull"),
+			BoolFlag("Deconstruct"), BoolFlag("CheckType"), BoolFlag("CheckNotNull"),
 			CustomChildren(new []{
 				new ChildInfo("testedOperand") { CanInlineInto = true, ExpectedTypes = new[] { "O" } },
 				new ChildInfo("subPatterns") { IsCollection = true }
@@ -361,7 +361,8 @@
 		new OpCode("deconstruct", "Deconstruction statement",
 			CustomClassName("DeconstructInstruction"), CustomConstructor, ResultType("O"), CustomWriteTo),
 		new OpCode("deconstruct.result", "Represents a deconstructed value",
-			CustomClassName("DeconstructResultInstruction"), CustomConstructor, Unary, HasTypeOperand, ResultType("type.GetStackType()"), CustomWriteTo),
+			CustomClassName("DeconstructResultInstruction"), CustomConstructor, CustomInvariant("AdditionalInvariants();"),
+			Unary, HasTypeOperand, ResultType("type.GetStackType()"), CustomWriteTo),
 
 		// patterns
 		new OpCode("AnyNode", "Matches any node", Pattern, CustomArguments(), CustomConstructor),
@@ -1172,13 +1173,6 @@ protected override void Disconnected()
 		opCode.PerformMatchConditions.Add("IsReadOnly == o.IsReadOnly");
 	};
 	
-	static Action<OpCode> CustomInvariant(string code)
-	{
-		return opCode => {
-			opCode.Invariants.Add(code);
-		};
-	}
-
 	static Action<OpCode> CustomInvariant(string code)
 	{
 		return opCode => {

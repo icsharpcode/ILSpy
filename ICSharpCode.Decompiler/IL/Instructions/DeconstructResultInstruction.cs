@@ -16,6 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Diagnostics;
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	partial class DeconstructResultInstruction
@@ -39,6 +42,27 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write('(');
 			this.Argument.WriteTo(output, options);
 			output.Write(')');
+		}
+
+		MatchInstruction FindMatch()
+		{
+			for (ILInstruction inst = this; inst != null; inst = inst.Parent) {
+				if (inst.Parent is MatchInstruction match && inst != match.TestedOperand)
+					return match;
+			}
+			return null;
+		}
+
+		void AdditionalInvariants()
+		{
+			var matchInst = FindMatch();
+			Debug.Assert(matchInst != null && matchInst.Deconstruct);
+			Debug.Assert(Argument.MatchLdLoc(matchInst.Variable));
+			var outParamType = matchInst.GetDeconstructResult(this.Index).Type;
+			if (outParamType is ByReferenceType brt)
+				Debug.Assert(brt.ElementType.Equals(this.Type));
+			else
+				Debug.Fail("deconstruct out param must be by reference");
 		}
 	}
 }

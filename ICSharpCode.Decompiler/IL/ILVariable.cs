@@ -71,6 +71,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// Local variable that holds the display class used for lambdas within this function.
 		/// </summary>
 		DisplayClassLocal,
+		/// <summary>
+		/// Local variable declared within a pattern match.
+		/// </summary>
+		PatternLocal,
 	}
 
 	static class VariableKindExtensions
