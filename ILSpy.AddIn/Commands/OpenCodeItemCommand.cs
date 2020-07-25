@@ -38,10 +38,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 				var document = owner.DTE.ActiveDocument;
 				menuItem.Visible =
-					(document != null) &&
-					(document.ProjectItem != null) &&
-					(document.ProjectItem.ContainingProject != null) &&
-					(document.ProjectItem.ContainingProject.ConfigurationManager != null) &&
+					(document?.ProjectItem?.ContainingProject?.ConfigurationManager != null) &&
 					!string.IsNullOrEmpty(document.ProjectItem.ContainingProject.FileName);
 			}
 		}
