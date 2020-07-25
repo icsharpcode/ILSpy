@@ -648,6 +648,9 @@ namespace ICSharpCode.ILSpy
 			if (!settings.LiftNullables) {
 				flags &= ~ConversionFlags.UseNullableSpecifierForValueTypes;
 			}
+			if (entity is IMethod m && m.IsLocalFunction) {
+				writer.WriteIdentifier(Identifier.Create("(local)"));
+			}
 			new CSharpAmbience() {
 				ConversionFlags = flags,
 			}.ConvertSymbol(entity, writer, settings.CSharpFormattingOptions);
