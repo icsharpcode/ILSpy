@@ -73,6 +73,7 @@
     <Compile Include="CSharp\Syntax\Expressions\DeclarationExpression.cs" />
     <Compile Include="CSharp\Syntax\FunctionPointerType.cs" />
     <Compile Include="CSharp\Syntax\VariableDesignation.cs" />
+    <Compile Include="IL\Transforms\DeconstructionTransform.cs" />
     <Compile Include="IL\Transforms\FixLoneIsInst.cs" />
     <Compile Include="IL\Instructions\DeconstructInstruction.cs" />
     <Compile Include="IL\Instructions\DeconstructResultInstruction.cs" />
