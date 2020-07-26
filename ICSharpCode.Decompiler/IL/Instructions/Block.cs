@@ -171,6 +171,12 @@ namespace ICSharpCode.Decompiler.IL
 						Debug.Assert(Instructions[i] is StLoc || AccessPathElement.GetAccessPath(Instructions[i], type2).Kind != IL.Transforms.AccessPathKind.Invalid);
 					}
 					break;
+				case BlockKind.DeconstructionConversions:
+					Debug.Assert(this.SlotInfo == DeconstructInstruction.ConversionsSlot);
+					break;
+				case BlockKind.DeconstructionAssignments:
+					Debug.Assert(this.SlotInfo == DeconstructInstruction.AssignmentsSlot);
+					break;
 			}
 		}
 
@@ -420,5 +426,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// }
 		/// </example>
 		CallWithNamedArgs,
+		/// <summary>
+		/// <see cref="DeconstructInstruction"/>
+		/// </summary>
+		DeconstructionConversions,
+		/// <summary>
+		/// <see cref="DeconstructInstruction"/>
+		/// </summary>
+		DeconstructionAssignments,
 	}
 }

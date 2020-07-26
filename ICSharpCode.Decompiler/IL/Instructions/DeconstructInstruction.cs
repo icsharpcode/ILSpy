@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.IL
 	partial class DeconstructInstruction
 	{
 		public static readonly SlotInfo InitSlot = new SlotInfo("Init", canInlineInto: true, isCollection: true);
-		public static readonly SlotInfo DeconstructSlot = new SlotInfo("Deconstruct", canInlineInto: true);
+		public static readonly SlotInfo PatternSlot = new SlotInfo("Pattern", canInlineInto: true);
 		public static readonly SlotInfo ConversionsSlot = new SlotInfo("Conversions");
 		public static readonly SlotInfo AssignmentsSlot = new SlotInfo("Assignments");
 
@@ -38,12 +38,12 @@ namespace ICSharpCode.Decompiler.IL
 
 		public readonly InstructionCollection<StLoc> Init;
 
-		MatchInstruction deconstruct;
-		public MatchInstruction Deconstruct {
-			get { return this.deconstruct; }
+		MatchInstruction pattern;
+		public MatchInstruction Pattern {
+			get { return this.pattern; }
 			set {
 				ValidateChild(value);
-				SetChildInstruction(ref this.deconstruct, value, Init.Count);
+				SetChildInstruction(ref this.pattern, value, Init.Count);
 			}
 		}
 
@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index - Init.Count) {
 				case 0:
-					return this.deconstruct;
+					return this.pattern;
 				case 1:
 					return this.conversions;
 				case 2:
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index - Init.Count) {
 				case 0:
-					this.Deconstruct = (MatchInstruction)value;
+					this.Pattern = (MatchInstruction)value;
 					break;
 				case 1:
 					this.Conversions = (Block)value;
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index - Init.Count) {
 				case 0:
-					return DeconstructSlot;
+					return PatternSlot;
 				case 1:
 					return ConversionsSlot;
 				case 2:
@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = new DeconstructInstruction();
 			clone.Init.AddRange(this.Init.Select(inst => (StLoc)inst.Clone()));
-			clone.Deconstruct = (MatchInstruction)this.deconstruct.Clone();
+			clone.Pattern = (MatchInstruction)this.pattern.Clone();
 			clone.Conversions = (Block)this.conversions.Clone();
 			clone.Assignments = (Block)this.assignments.Clone();
 			return clone;
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var inst in Init) {
 				flags |= inst.Flags;
 			}
-			flags |= deconstruct.Flags | conversions.Flags | assignments.Flags;
+			flags |= pattern.Flags | conversions.Flags | assignments.Flags;
 			return flags;
 		}
 
@@ -145,8 +145,8 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override void InstructionCollectionUpdateComplete()
 		{
 			base.InstructionCollectionUpdateComplete();
-			if (deconstruct.Parent == this)
-				deconstruct.ChildIndex = Init.Count;
+			if (pattern.Parent == this)
+				pattern.ChildIndex = Init.Count;
 			if (conversions.Parent == this)
 				conversions.ChildIndex = Init.Count + 1;
 			if (assignments.Parent == this)
@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
-			output.Write("deconstruct");
+			output.Write("deconstruct ");
 			output.MarkFoldStart("{...}");
 			output.WriteLine("{");
 			output.Indent();
@@ -167,15 +167,18 @@ namespace ICSharpCode.Decompiler.IL
 				output.WriteLine();
 			}
 			output.Unindent();
-			output.WriteLine("deconstruct:");
+			output.WriteLine("pattern:");
 			output.Indent();
-			deconstruct.WriteTo(output, options);
+			pattern.WriteTo(output, options);
 			output.Unindent();
+			output.WriteLine();
 			output.Write("conversions:");
 			conversions.WriteTo(output, options);
+			output.WriteLine();
 			output.Write("assignments: ");
 			assignments.WriteTo(output, options);
 			output.Unindent();
+			output.WriteLine();
 			output.Write('}');
 			output.MarkFoldEnd();
 		}
@@ -230,7 +233,7 @@ namespace ICSharpCode.Decompiler.IL
 				Debug.Assert(init.Variable.LoadInstructions[0].IsDescendantOf(assignments));
 			}
 
-			ValidatePattern(deconstruct);
+			ValidatePattern(pattern);
 
 			foreach (var inst in this.conversions.Instructions) {
 				if (!IsConversionStLoc(inst, out var variable, out var inputVariable))
@@ -244,7 +247,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			foreach (var inst in assignments.Instructions) {
 				if (!IsAssignment(inst, out var inputVariable))
-					Debug.Fail("inst is not a assigment!");
+					Debug.Fail("inst is not a assignment!");
 				Debug.Assert(patternVariables.Contains(inputVariable) || conversionVariables.Contains(inputVariable));
 			}
 			Debug.Assert(this.assignments.FinalInstruction is Nop);

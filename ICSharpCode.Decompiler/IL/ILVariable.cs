@@ -428,6 +428,9 @@ namespace ICSharpCode.Decompiler.IL
 				case VariableKind.DisplayClassLocal:
 					output.Write("display_class local ");
 					break;
+				case VariableKind.PatternLocal:
+					output.Write("pattern local ");
+					break;
 				default:
 					throw new ArgumentOutOfRangeException();
 			}

@@ -359,10 +359,10 @@
 			CustomArguments(("value", null)), ResultType("GetResultMethod?.ReturnType.GetStackType() ?? StackType.Unknown")),
 
 		new OpCode("deconstruct", "Deconstruction statement",
-			CustomClassName("DeconstructInstruction"), CustomConstructor, ResultType("O"), CustomWriteTo),
+			CustomClassName("DeconstructInstruction"), CustomConstructor, ResultType("Void"), CustomWriteTo),
 		new OpCode("deconstruct.result", "Represents a deconstructed value",
 			CustomClassName("DeconstructResultInstruction"), CustomConstructor, CustomInvariant("AdditionalInvariants();"),
-			Unary, HasTypeOperand, ResultType("type.GetStackType()"), CustomWriteTo),
+			Unary, CustomWriteTo),
 
 		// patterns
 		new OpCode("AnyNode", "Matches any node", Pattern, CustomArguments(), CustomConstructor),

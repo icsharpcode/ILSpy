@@ -23,20 +23,22 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class DeconstructResultInstruction
 	{
-		public int Index { get; set; }
+		public int Index { get; }
 
-		public DeconstructResultInstruction(int index, ILInstruction argument)
+		public override StackType ResultType { get; }
+
+		public DeconstructResultInstruction(int index, StackType resultType, ILInstruction argument)
 			: base(OpCode.DeconstructResultInstruction, argument)
 		{
+			Debug.Assert(index >= 0);
 			Index = index;
+			ResultType = resultType;
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
 			output.Write(' ');
 			output.Write(Index.ToString());
 			output.Write('(');
@@ -60,7 +62,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(Argument.MatchLdLoc(matchInst.Variable));
 			var outParamType = matchInst.GetDeconstructResult(this.Index).Type;
 			if (outParamType is ByReferenceType brt)
-				Debug.Assert(brt.ElementType.Equals(this.Type));
+				Debug.Assert(brt.ElementType.GetStackType() == ResultType);
 			else
 				Debug.Fail("deconstruct out param must be by reference");
 		}

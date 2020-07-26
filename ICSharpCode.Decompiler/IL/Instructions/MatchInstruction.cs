@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.IL
 					return false;
 				if (this.CheckType && !(value is this.Variable.Type))
 					return false;
-				if (this.Deconstruct) {
+				if (this.IsDeconstructCall) {
 					deconstructResult = new[numArgs];
 					EvalCall(this.Method, value, out deconstructResult[0], .., out deconstructResult[numArgs-1]);
 					// any occurrences of 'deconstruct.result' in the subPatterns will refer
@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.IL
 				match(x = expr)
 
 			expr is {} x:
-				match.notnull(x = expr
+				match.notnull(x = expr)
 
 			expr is T x:
 				match.type[T](x = expr)
@@ -72,17 +72,17 @@ namespace ICSharpCode.Decompiler.IL
 
 			expr is C(var x, var y, <4):
 				match.type[C].deconstruct[C.Deconstruct](tmp1 = expr) {
-					match(x = deconstruct.result0(tmp1)),
-					match(y = deconstruct.result1(tmp1)),
-					comp(deconstruct.result2(tmp1) < 4),
+					match(x = deconstruct.result1(tmp1)),
+					match(y = deconstruct.result2(tmp1)),
+					comp(deconstruct.result3(tmp1) < 4),
 				}
 			
 			expr is C(1, D(2, 3)):
 				match.type[C].deconstruct(c = expr) {
-					comp(deconstruct.result0(c) == 1),
-					match.type[D].deconstruct(d = deconstruct.result1(c)) {
-						comp(deconstruct.result0(d) == 2),
+					comp(deconstruct.result1(c) == 1),
+					match.type[D].deconstruct(d = deconstruct.result2(c)) {
 						comp(deconstruct.result1(d) == 2),
+						comp(deconstruct.result2(d) == 2),
 					}
 				}
 		 */
@@ -90,6 +90,20 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVar => !CheckType && !CheckNotNull && !IsDeconstructCall && SubPatterns.Count == 0;
 
 		public bool HasDesignator => Variable.LoadCount + Variable.AddressCount > SubPatterns.Count;
+
+		public int NumPositionalPatterns {
+			get {
+				if (IsDeconstructCall)
+					return method.Parameters.Count - (method.IsStatic ? 1 : 0);
+				else
+					return 0;
+			}
+		}
+
+		public MatchInstruction(ILVariable variable, ILInstruction testedOperand)
+			: this(variable, method: null, testedOperand)
+		{
+		}
 
 		/// <summary>
 		/// Checks whether the input instruction can represent a pattern matching operation.
@@ -142,25 +156,55 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Debug.Assert(variable.Kind == VariableKind.PatternLocal);
 			if (this.IsDeconstructCall) {
-				Debug.Assert(method.Name == "Deconstruct");
-				int firstOutParam = (method.IsStatic ? 1 : 0);
-				Debug.Assert(method.Parameters.Count >= firstOutParam);
-				Debug.Assert(method.Parameters.Skip(firstOutParam).All(p => p.IsOut));
+				Debug.Assert(IsDeconstructMethod(method));
+				Debug.Assert(SubPatterns.Count >= NumPositionalPatterns);
 			}
 			foreach (var subPattern in SubPatterns) {
 				if (!IsPatternMatch(subPattern, out ILInstruction operand))
 					Debug.Fail("Sub-Pattern must be a valid pattern");
-				if (operand.MatchLdFld(out var target, out _)) {
+				// the first child is TestedOperand
+				int subPatternIndex = subPattern.ChildIndex - 1;
+				if (subPatternIndex < NumPositionalPatterns) {
+					// positional pattern
+					Debug.Assert(operand is DeconstructResultInstruction  result && result.Index == subPatternIndex);
+				} else if (operand.MatchLdFld(out var target, out _)) {
 					Debug.Assert(target.MatchLdLoc(variable));
 				} else if (operand is CallInstruction call) {
 					Debug.Assert(call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter);
 					Debug.Assert(call.Arguments[0].MatchLdLoc(variable));
-				} else if (operand is DeconstructResultInstruction resultInstruction) {
-					Debug.Assert(this.IsDeconstructCall);
 				} else {
 					Debug.Fail("Tested operand of sub-pattern is invalid.");
 				}
 			}
+		}
+
+		internal static bool IsDeconstructMethod(IMethod method)
+		{
+			if (method.Name != "Deconstruct")
+				return false;
+			if (method.ReturnType.Kind != TypeKind.Void)
+				return false;
+			int firstOutParam = (method.IsStatic ? 1 : 0);
+			if (method.IsStatic) {
+				if (!method.IsExtensionMethod)
+					return false;
+				// TODO : check whether all type arguments can be inferred from the first argument
+			} else {
+				if (method.TypeParameters.Count != 0)
+					return false;
+			}
+
+			// TODO : check whether the method is ambigious
+
+			if (method.Parameters.Count < firstOutParam)
+				return false;
+
+			for (int i = firstOutParam; i < method.Parameters.Count; i++) {
+				if (!method.Parameters[i].IsOut)
+					return false;
+			}
+
+			return true;
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
@@ -186,6 +230,18 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(" = ");
 			TestedOperand.WriteTo(output, options);
 			output.Write(')');
+			if (SubPatterns.Count > 0) {
+				output.MarkFoldStart("{...}");
+				output.WriteLine("{");
+				output.Indent();
+				foreach (var pattern in SubPatterns) {
+					pattern.WriteTo(output, options);
+					output.WriteLine();
+				}
+				output.Unindent();
+				output.Write('}');
+				output.MarkFoldEnd();
+			}
 		}
 	}
 }

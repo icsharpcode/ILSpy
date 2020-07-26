@@ -6548,7 +6548,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Deconstruction statement</summary>
 	public sealed partial class DeconstructInstruction : ILInstruction
 	{
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType { get { return StackType.Void; } }
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDeconstructInstruction(this);
@@ -6573,13 +6573,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Represents a deconstructed value</summary>
 	public sealed partial class DeconstructResultInstruction : UnaryInstruction
 	{
-		IType type;
-		/// <summary>Returns the type operand.</summary>
-		public IType Type {
-			get { return type; }
-			set { type = value; InvalidateFlags(); }
-		}
-		public override StackType ResultType { get { return type.GetStackType(); } }
+
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDeconstructResultInstruction(this);
@@ -6595,7 +6589,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as DeconstructResultInstruction;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
