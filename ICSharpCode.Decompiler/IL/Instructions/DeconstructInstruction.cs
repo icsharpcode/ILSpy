@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
@@ -36,8 +38,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public readonly InstructionCollection<StLoc> Init;
 
-		ILInstruction deconstruct;
-		public ILInstruction Deconstruct {
+		MatchInstruction deconstruct;
+		public MatchInstruction Deconstruct {
 			get { return this.deconstruct; }
 			set {
 				ValidateChild(value);
@@ -86,7 +88,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index - Init.Count) {
 				case 0:
-					this.Deconstruct = value;
+					this.Deconstruct = (MatchInstruction)value;
 					break;
 				case 1:
 					this.Conversions = (Block)value;
@@ -118,7 +120,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = new DeconstructInstruction();
 			clone.Init.AddRange(this.Init.Select(inst => (StLoc)inst.Clone()));
-			clone.Deconstruct = this.deconstruct.Clone();
+			clone.Deconstruct = (MatchInstruction)this.deconstruct.Clone();
 			clone.Conversions = (Block)this.conversions.Clone();
 			clone.Assignments = (Block)this.assignments.Clone();
 			return clone;
@@ -178,12 +180,89 @@ namespace ICSharpCode.Decompiler.IL
 			output.MarkFoldEnd();
 		}
 
+		internal static bool IsConversionStLoc(ILInstruction inst, out ILVariable variable, out ILVariable inputVariable)
+		{
+			inputVariable = null;
+			if (!inst.MatchStLoc(out variable, out var value))
+				return false;
+			ILInstruction input;
+			switch (value) {
+				case Conv conv:
+					input = conv.Argument;
+					break;
+				case Call { Method: { IsOperator: true, Name: "op_Implicit" }, Arguments: { Count: 1 } } call:
+					input = call.Arguments[0];
+					break;
+				default:
+					return false;
+			}
+			return input.MatchLdLoc(out inputVariable) || input.MatchLdLoca(out inputVariable);
+		}
+
+		internal static bool IsAssignment(ILInstruction inst, out ILVariable inputVariable)
+		{
+			inputVariable = null;
+			ILInstruction value;
+			switch (inst) {
+				case CallInstruction call:
+					// TODO
+					return false;
+				case StLoc stloc:
+					value = stloc.Value;
+					break;
+				case StObj stobj:
+					// TODO
+					return false;
+				default:
+					return false;
+			}
+			return value.MatchLdLoc(out inputVariable);
+		}
+
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			foreach (var init in this.Init) {
+			var patternVariables = new HashSet<ILVariable>();
+			var conversionVariables = new HashSet<ILVariable>();
+
+			foreach (StLoc init in this.Init) {
 				Debug.Assert(init.Variable.IsSingleDefinition && init.Variable.LoadCount == 1);
 				Debug.Assert(init.Variable.LoadInstructions[0].IsDescendantOf(assignments));
+			}
+
+			ValidatePattern(deconstruct);
+
+			foreach (var inst in this.conversions.Instructions) {
+				if (!IsConversionStLoc(inst, out var variable, out var inputVariable))
+					Debug.Fail("inst is not a conversion stloc!");
+				Debug.Assert(variable.IsSingleDefinition && variable.LoadCount == 1);
+				Debug.Assert(variable.LoadInstructions[0].IsDescendantOf(assignments));
+				Debug.Assert(patternVariables.Contains(inputVariable));
+				conversionVariables.Add(variable);
+			}
+			Debug.Assert(this.conversions.FinalInstruction is Nop);
+
+			foreach (var inst in assignments.Instructions) {
+				if (!IsAssignment(inst, out var inputVariable))
+					Debug.Fail("inst is not a assigment!");
+				Debug.Assert(patternVariables.Contains(inputVariable) || conversionVariables.Contains(inputVariable));
+			}
+			Debug.Assert(this.assignments.FinalInstruction is Nop);
+
+			void ValidatePattern(MatchInstruction inst)
+			{
+				Debug.Assert(inst.IsDeconstructCall);
+				Debug.Assert(!inst.CheckNotNull && !inst.CheckType);
+				Debug.Assert(!inst.HasDesignator);
+				foreach (var subPattern in inst.SubPatterns.Cast<MatchInstruction>()) {
+					if (subPattern.IsVar) {
+						Debug.Assert(subPattern.Variable.IsSingleDefinition && subPattern.Variable.LoadCount == 1);
+						Debug.Assert(subPattern.Variable.LoadInstructions[0].IsDescendantOf(this));
+						patternVariables.Add(subPattern.Variable);
+					} else {
+						ValidatePattern(subPattern);
+					}
+				}
 			}
 		}
 	}

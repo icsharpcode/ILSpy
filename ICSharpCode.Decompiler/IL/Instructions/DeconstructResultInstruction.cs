@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.IL
 		void AdditionalInvariants()
 		{
 			var matchInst = FindMatch();
-			Debug.Assert(matchInst != null && matchInst.Deconstruct);
+			Debug.Assert(matchInst != null && matchInst.IsDeconstructCall);
 			Debug.Assert(Argument.MatchLdLoc(matchInst.Variable));
 			var outParamType = matchInst.GetDeconstructResult(this.Index).Type;
 			if (outParamType is ByReferenceType brt)

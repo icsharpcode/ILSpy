@@ -87,6 +87,10 @@ namespace ICSharpCode.Decompiler.IL
 				}
 		 */
 
+		public bool IsVar => !CheckType && !CheckNotNull && !IsDeconstructCall && SubPatterns.Count == 0;
+
+		public bool HasDesignator => Variable.LoadCount + Variable.AddressCount > SubPatterns.Count;
+
 		/// <summary>
 		/// Checks whether the input instruction can represent a pattern matching operation.
 		/// 
@@ -129,7 +133,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		internal IParameter GetDeconstructResult(int index)
 		{
-			Debug.Assert(this.Deconstruct);
+			Debug.Assert(this.IsDeconstructCall);
 			int firstOutParam = (method.IsStatic ? 1 : 0);
 			return this.Method.Parameters[firstOutParam + index];
 		}
@@ -137,7 +141,7 @@ namespace ICSharpCode.Decompiler.IL
 		void AdditionalInvariants()
 		{
 			Debug.Assert(variable.Kind == VariableKind.PatternLocal);
-			if (this.Deconstruct) {
+			if (this.IsDeconstructCall) {
 				Debug.Assert(method.Name == "Deconstruct");
 				int firstOutParam = (method.IsStatic ? 1 : 0);
 				Debug.Assert(method.Parameters.Count >= firstOutParam);
@@ -152,7 +156,7 @@ namespace ICSharpCode.Decompiler.IL
 					Debug.Assert(call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter);
 					Debug.Assert(call.Arguments[0].MatchLdLoc(variable));
 				} else if (operand is DeconstructResultInstruction resultInstruction) {
-					Debug.Assert(this.Deconstruct);
+					Debug.Assert(this.IsDeconstructCall);
 				} else {
 					Debug.Fail("Tested operand of sub-pattern is invalid.");
 				}
@@ -171,7 +175,7 @@ namespace ICSharpCode.Decompiler.IL
 				variable.Type.WriteTo(output);
 				output.Write(']');
 			}
-			if (Deconstruct) {
+			if (IsDeconstructCall) {
 				output.Write(".deconstruct[");
 				method.WriteTo(output);
 				output.Write(']');

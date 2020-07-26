@@ -336,7 +336,7 @@
 
 		new OpCode("match", "ILAst representation of C# patterns",
 			CustomClassName("MatchInstruction"), HasVariableOperand("Store"), HasMethodOperand,
-			BoolFlag("Deconstruct"), BoolFlag("CheckType"), BoolFlag("CheckNotNull"),
+			BoolFlag("IsDeconstructCall"), BoolFlag("CheckType"), BoolFlag("CheckNotNull"),
 			CustomChildren(new []{
 				new ChildInfo("testedOperand") { CanInlineInto = true, ExpectedTypes = new[] { "O" } },
 				new ChildInfo("subPatterns") { IsCollection = true }

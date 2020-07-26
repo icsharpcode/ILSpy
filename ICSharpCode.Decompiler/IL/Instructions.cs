@@ -6138,7 +6138,7 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IMethod method;
 		/// <summary>Returns the method operand.</summary>
 		public IMethod Method { get { return method; } }
-		public bool Deconstruct;
+		public bool IsDeconstructCall;
 		public bool CheckType;
 		public bool CheckNotNull;
 		public static readonly SlotInfo TestedOperandSlot = new SlotInfo("TestedOperand", canInlineInto: true);
@@ -6218,7 +6218,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as MatchInstruction;
-			return o != null && variable == o.variable && object.Equals(method, o.method) && this.Deconstruct == o.Deconstruct && this.CheckType == o.CheckType && this.CheckNotNull == o.CheckNotNull && this.testedOperand.PerformMatch(o.testedOperand, ref match) && Patterns.ListMatch.DoMatch(this.SubPatterns, o.SubPatterns, ref match);
+			return o != null && variable == o.variable && object.Equals(method, o.method) && this.IsDeconstructCall == o.IsDeconstructCall && this.CheckType == o.CheckType && this.CheckNotNull == o.CheckNotNull && this.testedOperand.PerformMatch(o.testedOperand, ref match) && Patterns.ListMatch.DoMatch(this.SubPatterns, o.SubPatterns, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
