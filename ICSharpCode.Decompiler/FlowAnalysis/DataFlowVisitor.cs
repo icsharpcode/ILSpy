@@ -646,12 +646,53 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				} else {
 					return (state, bottomState.Clone());
 				}
+			} else if (inst is MatchInstruction match) {
+				return EvaluateMatch(match);
 			} else {
 				// other kind of condition
 				inst.AcceptVisitor(this);
 				return (state, state.Clone());
 			}
 		}
+
+		protected internal override void VisitMatchInstruction(MatchInstruction inst)
+		{
+			var (onTrue, onFalse) = EvaluateMatch(inst);
+			state = onTrue;
+			state.JoinWith(onFalse);
+		}
+
+		/// <summary>
+		/// Evaluates a match instruction.
+		/// </summary>
+		/// <returns>
+		/// A pair of:
+		///  * The state after the pattern matches
+		///  * The state after the pattern fails to match
+		/// </returns>
+		/// <remarks>
+		/// <c>this.state</c> is invalid after this function was called, and must be overwritten
+		/// with one of the return values.
+		/// </remarks>
+		(State OnTrue, State OnFalse) EvaluateMatch(MatchInstruction inst)
+		{
+			DebugStartPoint(inst);
+			inst.TestedOperand.AcceptVisitor(this);
+			State onFalse = state.Clone();
+			if (!inst.CheckNotNull && !inst.CheckType) {
+				onFalse.ReplaceWithBottom();
+			}
+			HandleMatchStore(inst);
+			foreach (var subPattern in inst.SubPatterns) {
+				var (subTrue, subFalse) = EvaluateCondition(subPattern);
+				onFalse.JoinWith(subFalse);
+				state = subTrue;
+			}
+			DebugEndPoint(inst);
+			return (state, onFalse);
+		}
+
+		protected abstract void HandleMatchStore(MatchInstruction inst);
 
 		protected internal override void VisitNullCoalescingInstruction(NullCoalescingInstruction inst)
 		{

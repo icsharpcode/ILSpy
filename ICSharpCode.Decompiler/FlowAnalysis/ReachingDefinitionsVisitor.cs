@@ -380,7 +380,12 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			inst.Value.AcceptVisitor(this);
 			HandleStore(inst, inst.Variable);
 		}
-		
+
+		protected override void HandleMatchStore(MatchInstruction inst)
+		{
+			HandleStore(inst, inst.Variable);
+		}
+
 		protected override void BeginTryCatchHandler(TryCatchHandler inst)
 		{
 			base.BeginTryCatchHandler(inst);
