@@ -766,6 +766,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Detect deconstruction assignments.
+        /// </summary>
+        public static string DecompilerSettings_Deconstruction {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.Deconstruction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Detect awaited using and foreach statements.
         /// </summary>
         public static string DecompilerSettings_DetectAsyncUsingAndForeachStatements {

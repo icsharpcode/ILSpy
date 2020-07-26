@@ -879,4 +879,7 @@ Do you want to continue?</value>
   <data name="BaseTypes" xml:space="preserve">
     <value>Base Types</value>
   </data>
+  <data name="DecompilerSettings.Deconstruction" xml:space="preserve">
+    <value>Detect deconstruction assignments</value>
+  </data>
 </root>

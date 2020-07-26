@@ -18,12 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -62,8 +56,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		 * */
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
-			//if (!context.Settings.Deconstruction)
-			//	return;
+			if (!context.Settings.Deconstruction)
+				return;
 
 			try {
 				this.context = context;
