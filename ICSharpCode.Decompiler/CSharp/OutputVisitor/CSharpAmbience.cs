@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 			if (symbol is ITypeDefinition)
 				WriteTypeDeclarationName((ITypeDefinition)symbol, writer, formattingPolicy);
-			else if (symbol is IMember && !(symbol is LocalFunctionMethod))
+			else if (symbol is IMember)
 				WriteMemberDeclarationName((IMember)symbol, writer, formattingPolicy);
 			else
 				writer.WriteIdentifier(Identifier.Create(symbol.Name));
@@ -223,7 +223,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			EntityDeclaration node = astBuilder.ConvertEntity(member);
-			if ((ConversionFlags & ConversionFlags.ShowDeclaringType) == ConversionFlags.ShowDeclaringType && member.DeclaringType != null) {
+			if ((ConversionFlags & ConversionFlags.ShowDeclaringType) == ConversionFlags.ShowDeclaringType && member.DeclaringType != null && !(member is LocalFunctionMethod)) {
 				ConvertType(member.DeclaringType, writer, formattingPolicy);
 				writer.WriteToken(Roles.Dot, ".");
 			}

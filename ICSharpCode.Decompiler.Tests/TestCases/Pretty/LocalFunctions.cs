@@ -41,7 +41,7 @@ namespace LocalFunctions
 #if CS90
 					[My]
 					[return: My]
-					int NonStaticMethod6<T3>([My] int unused)
+					int NonStaticMethod6<[My] T3>([My] int unused)
 #else
 					int NonStaticMethod6<T3>(int unused)
 #endif
