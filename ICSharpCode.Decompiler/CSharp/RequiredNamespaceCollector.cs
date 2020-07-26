@@ -93,17 +93,18 @@ namespace ICSharpCode.Decompiler.CSharp
 					CollectNamespacesForTypeReference(field.ReturnType);
 					break;
 				case IMethod method:
-					HandleAttributes(method.GetAttributes());
-					HandleAttributes(method.GetReturnTypeAttributes());
-					CollectNamespacesForTypeReference(method.ReturnType);
-					foreach (var param in method.Parameters) {
-						HandleAttributes(param.GetAttributes());
-						CollectNamespacesForTypeReference(param.Type);
-					}
-					HandleTypeParameters(method.TypeParameters);
 					var reader = module.PEFile.Reader;
 					var parts = mappingInfo.GetMethodParts((MethodDefinitionHandle)method.MetadataToken).ToList();
 					foreach (var part in parts) {
+						var partMethod = module.ResolveMethod(part, genericContext);
+						HandleAttributes(partMethod.GetAttributes());
+						HandleAttributes(partMethod.GetReturnTypeAttributes());
+						CollectNamespacesForTypeReference(partMethod.ReturnType);
+						foreach (var param in partMethod.Parameters) {
+							HandleAttributes(param.GetAttributes());
+							CollectNamespacesForTypeReference(param.Type);
+						}
+						HandleTypeParameters(partMethod.TypeParameters);
 						HandleOverrides(part.GetMethodImplementations(module.metadata), module);
 						var methodDef = module.metadata.GetMethodDefinition(part);
 						if (method.HasBody) {

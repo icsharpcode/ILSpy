@@ -31,11 +31,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly IMethod baseMethod;
 
-		public LocalFunctionMethod(IMethod baseMethod, int numberOfCompilerGeneratedParameters, int numberOfCompilerGeneratedTypeParameters)
+		public LocalFunctionMethod(IMethod baseMethod, string name, int numberOfCompilerGeneratedParameters, int numberOfCompilerGeneratedTypeParameters)
 		{
 			if (baseMethod == null)
 				throw new ArgumentNullException(nameof(baseMethod));
 			this.baseMethod = baseMethod;
+			this.Name = name;
 			this.NumberOfCompilerGeneratedParameters = numberOfCompilerGeneratedParameters;
 			this.NumberOfCompilerGeneratedTypeParameters = numberOfCompilerGeneratedTypeParameters;
 		}
@@ -65,7 +66,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override string ToString()
 		{
-			return string.Format("[LocalFunctionMethod: ReducedFrom={0}, NumberOfGeneratedParameters={1}, NumberOfCompilerGeneratedTypeParameters={2}]", ReducedFrom, NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedTypeParameters);
+			return string.Format("[LocalFunctionMethod: ReducedFrom={0}, Name={1}, NumberOfGeneratedParameters={2}, NumberOfCompilerGeneratedTypeParameters={3}]", ReducedFrom, Name, NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedTypeParameters);
 		}
 
 		internal int NumberOfCompilerGeneratedParameters { get; }
@@ -88,7 +89,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			return new LocalFunctionMethod(
 				baseMethod.Specialize(substitution),
-				NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedTypeParameters);
+				Name, NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedTypeParameters);
 		}
 		
 		IMember IMember.Specialize(TypeParameterSubstitution substitution)
@@ -96,7 +97,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return Specialize(substitution);
 		}
 
-		public IReadOnlyList<ITypeParameter> TypeParameters => baseMethod.TypeParameters;
 		public bool IsExtensionMethod => baseMethod.IsExtensionMethod;
 		public bool IsLocalFunction => true;
 		public bool IsConstructor => baseMethod.IsConstructor;
@@ -107,7 +107,24 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IMember AccessorOwner => baseMethod.AccessorOwner;
 		public MethodSemanticsAttributes AccessorKind => baseMethod.AccessorKind;
 		public IMethod ReducedFrom => baseMethod;
-		public IReadOnlyList<IType> TypeArguments => baseMethod.TypeArguments;
+
+		List<ITypeParameter> typeParameters;
+		public IReadOnlyList<ITypeParameter> TypeParameters {
+			get {
+				if (typeParameters == null)
+					typeParameters = new List<ITypeParameter>(baseMethod.TypeParameters.Skip(NumberOfCompilerGeneratedTypeParameters));
+				return typeParameters;
+			}
+		}
+
+		List<IType> typeArguments;
+		public IReadOnlyList<IType> TypeArguments {
+			get {
+				if (typeArguments == null)
+					typeArguments = new List<IType>(baseMethod.TypeArguments.Skip(NumberOfCompilerGeneratedTypeParameters));
+				return typeArguments;
+			}
+		}
 
 		List<IParameter> parameters;
 		public IReadOnlyList<IParameter> Parameters {
@@ -137,8 +154,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public Accessibility Accessibility => baseMethod.Accessibility;
 
-		public string FullName => baseMethod.FullName;
-		public string Name => baseMethod.Name;
+		public string FullName => Name;
+		public string Name { get; set; }
 		public string ReflectionName => baseMethod.ReflectionName;
 		public string Namespace => baseMethod.Namespace;
 

@@ -484,7 +484,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				parametersToRemove++;
 			}
-			return new LocalFunctionMethod(method, parametersToRemove, typeParametersToRemove);
+			return new LocalFunctionMethod(method, method.Name, parametersToRemove, typeParametersToRemove);
 		}
 
 		static void TransformToLocalFunctionReference(ILFunction function, CallInstruction useSite)

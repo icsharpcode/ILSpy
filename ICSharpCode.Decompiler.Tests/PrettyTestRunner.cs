@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void LocalFunctions([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions);
+			RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
 		}
 
 		[Test]
