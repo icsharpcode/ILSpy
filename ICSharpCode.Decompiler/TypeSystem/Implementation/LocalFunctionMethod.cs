@@ -31,12 +31,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly IMethod baseMethod;
 
-		public LocalFunctionMethod(IMethod baseMethod, string name, int numberOfCompilerGeneratedParameters, int numberOfCompilerGeneratedTypeParameters)
+		public LocalFunctionMethod(IMethod baseMethod, string name, bool isStaticLocalFunction, int numberOfCompilerGeneratedParameters, int numberOfCompilerGeneratedTypeParameters)
 		{
 			if (baseMethod == null)
 				throw new ArgumentNullException(nameof(baseMethod));
 			this.baseMethod = baseMethod;
 			this.Name = name;
+			this.IsStaticLocalFunction = isStaticLocalFunction;
 			this.NumberOfCompilerGeneratedParameters = numberOfCompilerGeneratedParameters;
 			this.NumberOfCompilerGeneratedTypeParameters = numberOfCompilerGeneratedTypeParameters;
 		}
@@ -47,7 +48,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return false;
 			return baseMethod.Equals(other.baseMethod, typeNormalization)
 				&& NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters
-				&& NumberOfCompilerGeneratedTypeParameters == other.NumberOfCompilerGeneratedTypeParameters;
+				&& NumberOfCompilerGeneratedTypeParameters == other.NumberOfCompilerGeneratedTypeParameters
+				&& IsStaticLocalFunction == other.IsStaticLocalFunction;
 		}
 
 		public override bool Equals(object obj)
@@ -56,7 +58,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return false;
 			return baseMethod.Equals(other.baseMethod)
 				&& NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters
-				&& NumberOfCompilerGeneratedTypeParameters == other.NumberOfCompilerGeneratedTypeParameters;
+				&& NumberOfCompilerGeneratedTypeParameters == other.NumberOfCompilerGeneratedTypeParameters
+				&& IsStaticLocalFunction == other.IsStaticLocalFunction;
 		}
 		
 		public override int GetHashCode()
@@ -66,14 +69,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override string ToString()
 		{
-			return string.Format("[LocalFunctionMethod: ReducedFrom={0}, Name={1}, NumberOfGeneratedParameters={2}, NumberOfCompilerGeneratedTypeParameters={3}]", ReducedFrom, Name, NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedTypeParameters);
+			return string.Format("[LocalFunctionMethod: ReducedFrom={0}, Name={1}, NumberOfGeneratedParameters={2}, NumberOfCompilerGeneratedTypeParameters={3}, IsStaticLocalFunction={4}]", ReducedFrom, Name, NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedTypeParameters, IsStaticLocalFunction);
 		}
 
 		internal int NumberOfCompilerGeneratedParameters { get; }
 
 		internal int NumberOfCompilerGeneratedTypeParameters { get; }
 
-		internal bool IsStaticLocalFunction => NumberOfCompilerGeneratedParameters == 0 && (baseMethod.IsStatic || (baseMethod.DeclaringTypeDefinition.IsCompilerGenerated() && !baseMethod.DeclaringType.GetFields(f => !f.IsStatic).Any()));
+		internal bool IsStaticLocalFunction { get; }
 
 		public IMember MemberDefinition => this;
 
@@ -89,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			return new LocalFunctionMethod(
 				baseMethod.Specialize(substitution),
-				Name, NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedTypeParameters);
+				Name, IsStaticLocalFunction, NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedTypeParameters);
 		}
 		
 		IMember IMember.Specialize(TypeParameterSubstitution substitution)
