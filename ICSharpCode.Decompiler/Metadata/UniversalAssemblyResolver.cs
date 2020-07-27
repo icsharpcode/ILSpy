@@ -92,16 +92,19 @@ namespace ICSharpCode.Decompiler.Metadata
 		public UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, string targetFramework,
 			PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 		{
+			this.mainAssemblyFileName = mainAssemblyFileName;
+			this.throwOnError = throwOnError;
 			this.streamOptions = streamOptions;
 			this.metadataOptions = metadataOptions;
 			this.targetFramework = targetFramework ?? string.Empty;
 			(targetFrameworkIdentifier, targetFrameworkVersion) = ParseTargetFramework(this.targetFramework);
-			this.mainAssemblyFileName = mainAssemblyFileName;
-			this.baseDirectory = Path.GetDirectoryName(mainAssemblyFileName);
-			this.throwOnError = throwOnError;
-			if (string.IsNullOrWhiteSpace(this.baseDirectory))
-				this.baseDirectory = Environment.CurrentDirectory;
-			AddSearchDirectory(baseDirectory);
+
+			if (mainAssemblyFileName != null) {
+				string baseDirectory = Path.GetDirectoryName(mainAssemblyFileName);
+				if (string.IsNullOrWhiteSpace(this.baseDirectory))
+					this.baseDirectory = Environment.CurrentDirectory;
+				AddSearchDirectory(baseDirectory);
+			}
 		}
 
 		internal static (TargetFrameworkIdentifier, Version) ParseTargetFramework(string targetFramework)
@@ -191,7 +194,10 @@ namespace ICSharpCode.Decompiler.Metadata
 					if (IsZeroOrAllOnes(targetFrameworkVersion))
 						goto default;
 					if (dotNetCorePathFinder == null) {
-						dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, targetFrameworkIdentifier, targetFrameworkVersion);
+						if (mainAssemblyFileName == null)
+							dotNetCorePathFinder = new DotNetCorePathFinder(targetFrameworkIdentifier, targetFrameworkVersion);
+						else
+							dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, targetFrameworkIdentifier, targetFrameworkVersion);
 						foreach (var directory in directories) {
 							dotNetCorePathFinder.AddSearchDirectory(directory);
 						}

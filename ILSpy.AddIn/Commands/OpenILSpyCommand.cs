@@ -80,8 +80,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
 					string assemblyName = assemblyDef.Name.Name;
 					string resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
-					dict.Add(assemblyName,
-						new DetectedReference(assemblyName, resolvedAssemblyFile, false));
+					dict.Add(assemblyName, new DetectedReference(assemblyName, resolvedAssemblyFile, false));
 				}
 			}
 			foreach (var projectReference in parentProject.ProjectReferences) {

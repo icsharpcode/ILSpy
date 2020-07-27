@@ -66,15 +66,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		readonly Version targetFrameworkVersion;
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
 
-		public DotNetCorePathFinder(Version targetFrameworkVersion)
+		public DotNetCorePathFinder(TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion)
 		{
-			this.targetFrameworkVersion = targetFrameworkVersion;
-		}
-
-		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkIdString, TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion, ReferenceLoadInfo loadInfo = null)
-		{
-			string assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
-			string basePath = Path.GetDirectoryName(parentAssemblyFileName);
 			this.targetFrameworkVersion = targetFrameworkVersion;
 
 			if (targetFramework == TargetFrameworkIdentifier.NETStandard) {
@@ -83,6 +76,13 @@ namespace ICSharpCode.Decompiler.Metadata
 					this.targetFrameworkVersion = new Version(3, 0, 0);
 				}
 			}
+		}
+
+		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkIdString, TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion, ReferenceLoadInfo loadInfo = null)
+			: this(targetFramework, targetFrameworkVersion)
+		{
+			string assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
+			string basePath = Path.GetDirectoryName(parentAssemblyFileName);
 
 			searchPaths.Add(basePath);
 

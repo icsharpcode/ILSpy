@@ -27,6 +27,8 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Threading;
+
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.PdbProvider;
@@ -405,7 +407,7 @@ namespace ICSharpCode.ILSpy
 				lock (loadingAssemblies) {
 					loadingAssemblies.Remove(file);
 				}
-			});
+			}, DispatcherPriority.Normal);
 			return asm;
 		}
 

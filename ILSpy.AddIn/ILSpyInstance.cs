@@ -12,11 +12,11 @@ namespace ICSharpCode.ILSpy.AddIn
 	{
 		public ILSpyParameters(IEnumerable<string> assemblyFileNames, params string[] arguments)
 		{
-			this.AssemblyFileNames = assemblyFileNames;
+			this.AssemblyFileNames = assemblyFileNames.ToArray();
 			this.Arguments = arguments;
 		}
 
-		public IEnumerable<string> AssemblyFileNames { get; private set; }
+		public string[] AssemblyFileNames { get; private set; }
 		public string[] Arguments { get; private set; }
 	}
 

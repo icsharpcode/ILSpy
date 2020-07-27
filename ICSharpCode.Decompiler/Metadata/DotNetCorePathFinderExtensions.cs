@@ -20,20 +20,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
 	public static class DotNetCorePathFinderExtensions
 	{
-		static readonly string RefPathPattern =
+		static readonly string PathPattern =
 			@"(Reference Assemblies[/\\]Microsoft[/\\]Framework[/\\](?<type>.NETFramework)[/\\]v(?<version>[^/\\]+)[/\\])" +
 			@"|((?<type>Microsoft\.NET)[/\\]assembly[/\\]GAC_(MSIL|32|64)[/\\])" +
 			@"|((?<type>Microsoft\.NET)[/\\]Framework(64)?[/\\](?<version>[^/\\]+)[/\\])" +
 			@"|(NuGetFallbackFolder[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)([/\\].*)?[/\\]ref[/\\])" +
-			@"|(shared[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)([/\\].*)?[/\\])";
+			@"|(shared[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)([/\\].*)?[/\\])" +
+			@"|(packs[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)\\ref([/\\].*)?[/\\])";
+		
+		static readonly string RefPathPattern =
+			@"(Reference Assemblies[/\\]Microsoft[/\\]Framework[/\\](?<type>.NETFramework)[/\\]v(?<version>[^/\\]+)[/\\])" +
+			@"|(NuGetFallbackFolder[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)([/\\].*)?[/\\]ref[/\\])" +
+			@"|(packs[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)\\ref([/\\].*)?[/\\])";
 
 		public static string DetectTargetFrameworkId(this PEFile assembly)
 		{
@@ -99,7 +105,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				 * - .NETCore      -> C:\Program Files\dotnet\sdk\NuGetFallbackFolder\microsoft.netcore.app\2.1.0\ref\netcoreapp2.1\System.Console.dll
 				 * - .NETStandard  -> C:\Program Files\dotnet\sdk\NuGetFallbackFolder\netstandard.library\2.0.3\build\netstandard2.0\ref\netstandard.dll
 				 */
-				var pathMatch = Regex.Match(assemblyPath, RefPathPattern,
+				var pathMatch = Regex.Match(assemblyPath, PathPattern,
 					RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 				if (pathMatch.Success) {
 					var type = pathMatch.Groups["type"].Value;
@@ -120,6 +126,25 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 
 			return string.Empty;
+		}
+
+		public static bool IsReferenceAssembly(this PEFile assembly)
+		{
+			return IsReferenceAssembly(assembly.Reader, assembly.FileName);
+		}
+
+		public static bool IsReferenceAssembly(this PEReader assembly, string assemblyPath)
+		{
+			if (assembly == null)
+				throw new ArgumentNullException(nameof(assembly));
+
+			var metadata = assembly.GetMetadataReader();
+			if (metadata.GetCustomAttributes(Handle.AssemblyDefinition).HasKnownAttribute(metadata, KnownAttribute.ReferenceAssembly))
+				return true;
+
+			// Try to detect reference assembly through specific path pattern
+			var refPathMatch = Regex.Match(assemblyPath, RefPathPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+			return refPathMatch.Success;
 		}
 	}
 
