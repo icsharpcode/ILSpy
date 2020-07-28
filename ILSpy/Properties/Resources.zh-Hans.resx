@@ -406,7 +406,7 @@
     <value>打开资源管理器</value>
   </data>
   <data name="AllFiles" xml:space="preserve">
-    <value>|所有文件 |*.*</value>
+    <value>|所有文件|*.*</value>
   </data>
   <data name="SaveCode" xml:space="preserve">
     <value>保存代码</value>
@@ -478,19 +478,19 @@
     <value>大小：</value>
   </data>
   <data name="DebugSteps" xml:space="preserve">
-    <value>调试步骤</value>
+    <value>调试步</value>
   </data>
   <data name="UseFieldSugar" xml:space="preserve">
-    <value>UseFieldSugar</value>
+    <value>使用 fld 语法糖</value>
   </data>
   <data name="UseLogicOperationSugar" xml:space="preserve">
-    <value>UseLogicOperationSugar</value>
+    <value>使用 logic 语法糖</value>
   </data>
   <data name="ShowILRanges" xml:space="preserve">
-    <value>ShowILRanges</value>
+    <value>显示 IL 范围</value>
   </data>
   <data name="ShowChildIndexInBlock" xml:space="preserve">
-    <value>ShowChildIndexInBlock</value>
+    <value>显示块中的子序号</value>
   </data>
   <data name="ShowStateBeforeThisStep" xml:space="preserve">
     <value>在此步骤之前显示状态</value>
@@ -499,7 +499,7 @@
     <value>在此步骤之后显示状态</value>
   </data>
   <data name="DebugThisStep" xml:space="preserve">
-    <value>调试此步骤</value>
+    <value>调试此步</value>
   </data>
   <data name="WarningAsmMarkedRef" xml:space="preserve">
     <value>警告：此程序集被标记为“引用程序集”，这意味着它只包含元数据，没有可执行代码。</value>
