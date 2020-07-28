@@ -139,7 +139,7 @@
     <value>打开</value>
   </data>
   <data name="DEBUGDisassemble" xml:space="preserve">
-    <value>调试 -- 反汇编全部</value>
+    <value>调试 -- 全部反编译到 IL</value>
   </data>
   <data name="E_xit" xml:space="preserve">
     <value>退出(_X)</value>
@@ -160,10 +160,10 @@
     <value>重新加载全部程序集</value>
   </data>
   <data name="DEBUGDecompile" xml:space="preserve">
-    <value>调试 -- 反编译全部</value>
+    <value>调试 -- 全部反编译到 C#</value>
   </data>
   <data name="DEBUGDecompile100x" xml:space="preserve">
-    <value>调试 -- 反编译100x</value>
+    <value>调试 -- 反编译100次</value>
   </data>
   <data name="GeneratePortable" xml:space="preserve">
     <value>生成可携带 PDB</value>
