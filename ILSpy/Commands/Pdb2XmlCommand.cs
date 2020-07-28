@@ -24,13 +24,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using Microsoft.DiaSymReader.Tools;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_File", Header = "DEBUG -- Dump PDB as XML", MenuCategory = "Open", MenuOrder = 2.6)]
+	[ExportMainMenuCommand(Menu = "_File", Header = nameof(Resources.DEBUGDumpPdb2Xml), MenuCategory = "Open", MenuOrder = 2.6)]
 	sealed class Pdb2XmlCommand : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
@@ -64,7 +65,7 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportContextMenuEntry(Header = "DEBUG -- Dump PDB as XML")]
+	[ExportContextMenuEntry(Header = nameof(Resources.DEBUGDumpPdb2Xml))]
 	class Pdb2XmlCommandContextMenuEntry : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)
