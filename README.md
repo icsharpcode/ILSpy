@@ -72,6 +72,16 @@ How to contribute
 
 Current and past [contributors](https://github.com/icsharpcode/ILSpy/graphs/contributors).
 
+How to support contributors
+-----------------
+
+If you are not actively contributing and instead wish to support active [contributors](https://github.com/icsharpcode/ILSpy/graphs/contributors), you can do so by sponsoring them.
+
+The following top contributors currently accept sponsoring:
+- [siegfriedpammer](https://github.com/sponsors/siegfriedpammer)
+- [jbevain](https://github.com/sponsors/jbevain)
+
+
 Privacy Policy for ILSpy
 ------------------------
 
