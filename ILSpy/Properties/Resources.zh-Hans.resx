@@ -208,7 +208,7 @@
     <value>名称</value>
   </data>
   <data name="ValueString" xml:space="preserve">
-    <value>值（以字符串形式）</value>
+    <value>值(以字符串形式)</value>
   </data>
   <data name="Type" xml:space="preserve">
     <value>类型</value>
@@ -310,10 +310,10 @@
     <value>复制错误信息</value>
   </data>
   <data name="VariableNamesFromDebugSymbolsAvailable" xml:space="preserve">
-    <value>使用调试符号中的变量名称（如果可用）</value>
+    <value>使用调试符号中的变量名称(如果可用)</value>
   </data>
   <data name="ShowInfoFromDebugSymbolsAvailable" xml:space="preserve">
-    <value>显示调试符号的信息（如果可用）</value>
+    <value>显示调试符号的信息(如果可用)</value>
   </data>
   <data name="ShowDocumentationDecompiledCode" xml:space="preserve">
     <value>在反编译代码中显示 XML 文档</value>
@@ -418,7 +418,7 @@
     <value>搜索...</value>
   </data>
   <data name="SearchAbortedMoreThan1000ResultsFound" xml:space="preserve">
-    <value>搜索已中止, 发现超过1000个结果。</value>
+    <value>搜索已中止，发现超过1000个结果。</value>
   </data>
   <data name="Searching" xml:space="preserve">
     <value>搜索...</value>
@@ -454,7 +454,7 @@
     <value>每周自动检查更新</value>
   </data>
   <data name="WatermarkText" xml:space="preserve">
-    <value>搜索 t:TypeName、m:Member 或 c:Constant；使用完全匹配 (=term), '不应包含' (-term) 或 '必须包含' (+term); 使用 /reg(ular)?Ex(pressions)?/或两者 - t:/Type(Name)?/...</value>
+    <value>搜索 t:类型、m:成员 或 c:常量；使用完全匹配(=term)、不应包含(-term)或必须包含(+term)；使用 /正(则)?表达(式)?/；或同时使用二者 - t:/类(型)?/...</value>
   </data>
   <data name="Options" xml:space="preserve">
     <value>选项</value>
@@ -538,7 +538,7 @@
     <value>Tab 长度：</value>
   </data>
   <data name="SearchCtrlShiftFOrCtrlE" xml:space="preserve">
-    <value>搜索（Ctrl + Shift + F 或 Ctrl + E）</value>
+    <value>搜索(Ctrl + Shift + F 或 Ctrl + E)</value>
   </data>
   <data name="ShowAllTypesAndMembers" xml:space="preserve">
     <value>显示所有类型和成员</value>
@@ -553,7 +553,7 @@
     <value>下面选择的设置将与语言下拉列表中的选择一起应用于反编译程序输出。在下拉列表中选择较低的语言版本将停用较高版本的所有选定选项。请注意, 某些设置隐式依赖于彼此, 例如: 如果不首先将静态调用转换为扩展方法调用, 则无法引入 LINQ 表达式。</value>
   </data>
   <data name="DecompilerSettings.DecompileEnumeratorsYieldReturn" xml:space="preserve">
-    <value>反编译枚举器（yield return）</value>
+    <value>反编译枚举器(yield return)</value>
   </data>
   <data name="DecompilerSettings.DecompileAnonymousMethodsLambdas" xml:space="preserve">
     <value>反编译匿名方法或 lambda</value>
@@ -628,7 +628,7 @@
     <value>始终强制转换显式接口实现调用的目标</value>
   </data>
   <data name="DecompilerSettings.UseVariableNamesFromDebugSymbolsIfAvailable" xml:space="preserve">
-    <value>使用调试符号中的变量名（如果可用）</value>
+    <value>使用调试符号中的变量名(如果可用)</value>
   </data>
   <data name="DecompilerSettings.ArrayInitializerExpressions" xml:space="preserve">
     <value>数组初始化器表达式</value>
@@ -688,13 +688,13 @@
     <value>如果可能，删除可选参数</value>
   </data>
   <data name="DecompilerSettings.IntroduceLocalFunctions" xml:space="preserve">
-    <value>引入局部函数（local functions）</value>
+    <value>引入局部函数(local functions)</value>
   </data>
   <data name="DecompilerSettings.NullableReferenceTypes" xml:space="preserve">
     <value>可空引用类型</value>
   </data>
   <data name="DecompilerSettings.ShowInfoFromDebugSymbolsIfAvailable" xml:space="preserve">
-    <value>显示调试符号中的信息 (如果可用)</value>
+    <value>显示调试符号中的信息(如果可用)</value>
   </data>
   <data name="DecompilerSettings.VBSpecificOptions" xml:space="preserve">
     <value>VB 特定选项</value>
@@ -703,7 +703,7 @@
     <value>F# 特定选项</value>
   </data>
   <data name="DecompilerSettings.RemoveDeadAndSideEffectFreeCodeUseWithCaution" xml:space="preserve">
-    <value>删除死代码和无副作用的代码（请谨慎使用）</value>
+    <value>删除死代码和无副作用的代码(请谨慎使用)</value>
   </data>
   <data name="DecompilerSettings.ApplyWindowsRuntimeProjectionsOnLoadedAssemblies" xml:space="preserve">
     <value>在已加载的程序集上应用 Windows 运行时投影</value>
@@ -715,7 +715,7 @@
     <value>关于</value>
   </data>
   <data name="DecompilerSettings.UseSdkStyleProjectFormat" xml:space="preserve">
-    <value>使用新的 SDK 格式（*.csproj）生成项目文件</value>
+    <value>使用新的 SDK 格式(*.csproj)生成项目文件</value>
   </data>
   <data name="_New" xml:space="preserve">
     <value>新建(_N)</value>
@@ -781,19 +781,19 @@
     <value>如果可能，转换到 for 块</value>
   </data>
   <data name="DecompilerSettings.IntroduceStaticLocalFunctions" xml:space="preserve">
-    <value>引入静态局部函数（static local functions）</value>
+    <value>引入静态局部函数(static local functions)</value>
   </data>
   <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
     <value>使用 nint/nuint 类型</value>
   </data>
   <data name="DecompilerSettings.Ranges" xml:space="preserve">
-    <value>范围（ranges）</value>
+    <value>范围(ranges)</value>
   </data>
   <data name="DecompilerSettings.ReadOnlyMethods" xml:space="preserve">
     <value>只读方法</value>
   </data>
   <data name="DecompilerSettings.RemoveDeadStores" xml:space="preserve">
-    <value>删除死值（请谨慎使用）</value>
+    <value>删除死值(请谨慎使用)</value>
   </data>
   <data name="DecompilerSettings.SeparateLocalVariableDeclarations" xml:space="preserve">
     <value>如果可能，分离局部变量的声明与初始化（int x = 5; -&gt; int x; x = 5;）</value>
@@ -830,7 +830,7 @@
   </data>
   <data name="NavigationFailed" xml:space="preserve">
     <value>导航失败，因为目标是隐藏的或编译器生成的类。\n
-请禁用所有的、可能隐藏它们的筛选器（例如，启用“视图 &gt; 显示内部类型和成员”），并重试。</value>
+请禁用所有的、可能隐藏它们的筛选器(例如，启用“视图 &gt; 显示内部类型和成员”)，并重试。</value>
   </data>
   <data name="NewList" xml:space="preserve">
     <value>新建列表</value>
