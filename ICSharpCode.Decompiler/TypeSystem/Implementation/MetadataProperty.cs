@@ -153,7 +153,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// Roslyn uses the same workaround (see the NullableTypeDecoder.TransformType
 				// call in PEPropertySymbol).
 				var typeOptions = module.OptionsForEntity(declTypeDef);
-				(returnType, parameters) = MetadataMethod.DecodeSignature(module, this, signature,
+				(returnType, parameters, _) = MetadataMethod.DecodeSignature(
+					module, this, signature,
 					parameterHandles, nullableContext, typeOptions,
 					returnTypeAttributes: propertyDef.GetCustomAttributes());
 			} catch (BadImageFormatException) {

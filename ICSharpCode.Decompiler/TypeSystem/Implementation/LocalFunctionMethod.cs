@@ -147,6 +147,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => baseMethod.GetReturnTypeAttributes();
 		bool IMethod.ReturnTypeIsRefReadOnly => baseMethod.ReturnTypeIsRefReadOnly;
 		bool IMethod.ThisIsRefReadOnly => baseMethod.ThisIsRefReadOnly;
+		bool IMethod.IsInitOnly => baseMethod.IsInitOnly;
 		/// <summary>
 		/// We consider local functions as always static, because they do not have a "this parameter".
 		/// Even local functions in instance methods capture this.
