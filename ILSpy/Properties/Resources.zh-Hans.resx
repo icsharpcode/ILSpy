@@ -747,9 +747,6 @@
   <data name="AssemblySaveCodeDirectoryNotEmptyTitle" xml:space="preserve">
     <value>项目目录非空</value>
   </data>
-  <data name="BaseTypes" xml:space="preserve">
-    <value>基类型</value>
-  </data>
   <data name="C_lone" xml:space="preserve">
     <value>克隆(_L)</value>
   </data>
@@ -783,9 +780,6 @@
   <data name="DecompilerSettings.IntroduceStaticLocalFunctions" xml:space="preserve">
     <value>引入静态局部函数(static local functions)</value>
   </data>
-  <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
-    <value>使用 nint/nuint 类型</value>
-  </data>
   <data name="DecompilerSettings.Ranges" xml:space="preserve">
     <value>范围(ranges)</value>
   </data>
@@ -813,11 +807,62 @@
   <data name="HighlightMatchingBraces" xml:space="preserve">
     <value>高亮配对的大括号</value>
   </data>
+  <data name="Window_ResetLayout" xml:space="preserve">
+    <value>重置布局(_R)</value>
+  </data>
+  <data name="Window_CloseAllDocuments" xml:space="preserve">
+    <value>关闭所有文档(_C)</value>
+  </data>
+  <data name="ShowPublicOnlyTypesMembers" xml:space="preserve">
+    <value>只显示公有类型和成员</value>
+  </data>
+  <data name="Show_publiconlyTypesMembers" xml:space="preserve">
+    <value>只显示公有类型和成员(_P)</value>
+  </data>
+  <data name="SelectVersionDropdownTooltip" xml:space="preserve">
+    <value>选择输出语言的版本</value>
+  </data>
+  <data name="SelectAssemblyListDropdownTooltip" xml:space="preserve">
+    <value>选择一个程序集列表</value>
+  </data>
+  <data name="SelectLanguageDropdownTooltip" xml:space="preserve">
+    <value>选择一个反编译目标语言</value>
+  </data>
+  <data name="RenameList" xml:space="preserve">
+    <value>重命名列表</value>
+  </data>
+  <data name="ResetToDefaults" xml:space="preserve">
+    <value>还原到默认值</value>
+  </data>
+  <data name="RemoveShellIntegrationMessage" xml:space="preserve">
+    <value>这会在注册表的“HKCU\Software\Classes\dllfile\shell\Open with ILSpy\command”与“HKCU\Software\Classes\exefile\shell\Open with ILSpy\command”中移除“{0}”。
+
+确定继续？</value>
+  </data>
+  <data name="RemoveShellIntegration" xml:space="preserve">
+    <value>移除文件资源管理器集成</value>
+  </data>
+  <data name="ResetToDefaultsConfirmationMessage" xml:space="preserve">
+    <value>是否为活动页面加载默认值？</value>
+  </data>
+  <data name="R_ename" xml:space="preserve">
+    <value>重命名(_E)</value>
+  </data>
+  <data name="NewList" xml:space="preserve">
+    <value>新建列表</value>
+  </data>
+  <data name="NewTab" xml:space="preserve">
+    <value>新选项卡</value>
+  </data>
   <data name="ManageAssembly_Lists" xml:space="preserve">
     <value>管理程序集列表(_L)...</value>
   </data>
   <data name="ManageAssemblyLists" xml:space="preserve">
     <value>管理程序集列表</value>
+  </data>
+  <data name="NavigationFailed" xml:space="preserve">
+    <value>导航失败，因为目标是隐藏的或编译器生成的类。\n
+请禁用所有的、可能隐藏它们的筛选器(例如，启用“视图 &gt; 显示内部类型和成员”)，并重试。</value>
   </data>
   <data name="ListDeleteConfirmation" xml:space="preserve">
     <value>是否删除选中的程序集列表？</value>
@@ -828,58 +873,16 @@
   <data name="ListsResetConfirmation" xml:space="preserve">
     <value>是否删除所有程序集列表，并重建默认程序集列表？</value>
   </data>
-  <data name="NavigationFailed" xml:space="preserve">
-    <value>导航失败，因为目标是隐藏的或编译器生成的类。\n
-请禁用所有的、可能隐藏它们的筛选器(例如，启用“视图 &gt; 显示内部类型和成员”)，并重试。</value>
-  </data>
-  <data name="NewList" xml:space="preserve">
-    <value>新建列表</value>
-  </data>
-  <data name="NewTab" xml:space="preserve">
-    <value>新选项卡</value>
-  </data>
-  <data name="R_ename" xml:space="preserve">
-    <value>重命名(_E)</value>
-  </data>
-  <data name="RemoveShellIntegration" xml:space="preserve">
-    <value>移除文件资源管理器集成</value>
-  </data>
-  <data name="RemoveShellIntegrationMessage" xml:space="preserve">
-    <value>这会在注册表的“HKCU\Software\Classes\dllfile\shell\Open with ILSpy\command”与“HKCU\Software\Classes\exefile\shell\Open with ILSpy\command”中移除“{0}”。
-
-确定继续？</value>
-  </data>
-  <data name="RenameList" xml:space="preserve">
-    <value>重命名列表</value>
-  </data>
-  <data name="ResetToDefaults" xml:space="preserve">
-    <value>还原到默认值</value>
-  </data>
-  <data name="ResetToDefaultsConfirmationMessage" xml:space="preserve">
-    <value>是否为活动页面加载默认值？</value>
-  </data>
-  <data name="SelectAssemblyListDropdownTooltip" xml:space="preserve">
-    <value>选择一个程序集列表</value>
-  </data>
-  <data name="SelectLanguageDropdownTooltip" xml:space="preserve">
-    <value>选择一个反编译目标语言</value>
-  </data>
-  <data name="SelectVersionDropdownTooltip" xml:space="preserve">
-    <value>选择输出语言的版本</value>
-  </data>
-  <data name="Show_publiconlyTypesMembers" xml:space="preserve">
-    <value>只显示公有类型和成员(_P)</value>
-  </data>
-  <data name="ShowPublicOnlyTypesMembers" xml:space="preserve">
-    <value>只显示公有类型和成员</value>
-  </data>
-  <data name="Window_CloseAllDocuments" xml:space="preserve">
-    <value>关闭所有文档(_C)</value>
-  </data>
-  <data name="Window_ResetLayout" xml:space="preserve">
-    <value>重置布局(_R)</value>
+  <data name="ILSpyAboutPageTxt" xml:space="preserve">
+    <value>ILSpyAboutPage_zh_Hans.txt</value>
   </data>
   <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
     <value>调试 -- PDB 转储为 XML</value>
+  </data>
+  <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
+    <value>使用 nint/nuint 类型</value>
+  </data>
+  <data name="BaseTypes" xml:space="preserve">
+    <value>基类型</value>
   </data>
 </root>
