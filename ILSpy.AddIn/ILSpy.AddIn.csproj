@@ -122,22 +122,35 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="ILSpyAddIn.vsct" />
+    <Content Include="$(ILSpyBuildPath)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPath)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>\ILSpy\zh-Hans\</VSIXSubPath>
+    </Content>
+  </ItemGroup>
+  
+  <ItemGroup>
+ 	<None Include="ILSpyAddIn.vsct" />
+	<None Include="ILSpyAddIn.en-US.vsct" />
+	<None Include="ILSpyAddIn.zh-Hans.vsct" />
     <None Include="source.extension.vsixmanifest.template" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Key.snk" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <VSCTCompile Include="ILSpyAddIn.vsct">
+ <ItemGroup>
+    <VSCTCompile Include="ILSpyAddIn.en-US.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
       <SubType>Designer</SubType>
     </VSCTCompile>
+  </ItemGroup>
+ <ItemGroup>
+    <VSCTCompile Include="ILSpyAddIn.zh-Hans.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+      <SubType>Designer</SubType>
+    </VSCTCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Key.snk" />
   </ItemGroup>
 
   <ItemGroup>

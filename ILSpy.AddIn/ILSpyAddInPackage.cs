@@ -37,6 +37,7 @@ namespace ICSharpCode.ILSpy.AddIn
 	[ProvideMenuResource("Menus.ctmenu", 1)]
 	[Guid(GuidList.guidILSpyAddInPkgString)]
 	[ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
+	[ProvideBindingPath]
 	public sealed class ILSpyAddInPackage : AsyncPackage
 	{
 		/// <summary>
