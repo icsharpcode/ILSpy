@@ -20,9 +20,6 @@
   <!--This header contains the command ids for the menus provided by the shell. -->
   <Extern href="vsshlids.h"/>
 
-
-
-
   <!--The Commands section is where we the commands, menus and menu groups are defined.
       This section uses a Guid to identify the package that provides the command defined inside it. -->
   <Commands package="guidILSpyAddInPkg">
@@ -34,7 +31,7 @@
     group; your package should define its own command set in order to avoid collisions  
     with command ids defined by other packages. -->
 
-    
+
     <!-- In this section you can define new menu groups. A menu group is a container for 
          other menus or buttons (commands); from a visual point of view you can see the 
          group as the part of a menu contained between two lines. The parent of a group 
@@ -56,59 +53,7 @@
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_REFERENCE"/>
       </Group>
     </Groups>
-    
-    <!--Buttons section. -->
-    <!--This section defines the elements the user can interact with, like a menu command or a button 
-        or combo box in a toolbar. -->
-    <Buttons>
-      <!--To define a menu group you have to specify its ID, the parent menu and its display priority. 
-          The command is visible and enabled by default. If you need to change the visibility, status, etc, you can use
-          the CommandFlag node.
-          You can add more than one CommandFlag node e.g.:
-              <CommandFlag>DefaultInvisible</CommandFlag>
-              <CommandFlag>DynamicVisibility</CommandFlag>
-          If you do not want an image next to your command, remove the Icon node /> -->
 
-      <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenReferenceInILSpy" priority="0x0600" type="Button">
-        <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyRefGroup" />
-        <Icon guid="guidImages" id="bmpLogo" />
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <CommandFlag>DefaultInvisible</CommandFlag>
-        <Strings>
-          <ButtonText>Open in ILSpy</ButtonText>
-        </Strings>
-      </Button>
-
-      <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenProjectOutputInILSpy" priority="0x0600" type="Button">
-        <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyProjGroup" />
-        <Icon guid="guidImages" id="bmpLogo" />
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <CommandFlag>DefaultInvisible</CommandFlag>
-        <Strings>
-          <ButtonText>Open output in ILSpy</ButtonText>
-        </Strings>
-      </Button>
-
-      <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenCodeItemInILSpy" priority="0x0600" type="Button">
-        <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyCodeItemGroup" />
-        <Icon guid="guidImages" id="bmpLogo" />
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <CommandFlag>DefaultInvisible</CommandFlag>
-        <Strings>
-          <ButtonText>Open code in ILSpy</ButtonText>
-        </Strings>
-      </Button>
-
-      <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenILSpy" priority="0x0600" type="Button">
-        <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyGroup" />
-        <Icon guid="guidImages" id="bmpLogo" />
-        <Strings>
-          <ButtonText>ILSpy</ButtonText>
-        </Strings>
-      </Button>
- 
-    </Buttons>
-   
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
     <Bitmaps>
       <!--  The bitmap id is defined in a way that is a little bit different from the others: 
@@ -119,11 +64,10 @@
       <Bitmap guid="guidImages" href="Resources\Images.png" usedList="bmpLogo, bmpPic1, bmpPic2, bmpPicX, bmpPicArrows"/>
     </Bitmaps>
   </Commands>
-
   <Symbols>
     <!-- This is the package guid. -->
     <GuidSymbol name="guidILSpyAddInPkg" value="{a9120dbe-164a-4891-842f-fb7829273838}" />
-    
+
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="guidILSpyAddInCmdSet" value="{85ddb8ca-a842-4b1c-ba1a-94141fdf19d0}">
 
@@ -136,7 +80,7 @@
       <IDSymbol name="cmdidOpenProjectOutputInILSpy" value="0x0300" />
       <IDSymbol name="cmdidOpenCodeItemInILSpy" value="0x0400" />
     </GuidSymbol>
-     
+
     <GuidSymbol name="guidImages" value="{2f654db9-4641-4638-9937-27c6202b2a6a}" >
       <IDSymbol name="bmpLogo" value="1" />
       <IDSymbol name="bmpPic1" value="2" />
