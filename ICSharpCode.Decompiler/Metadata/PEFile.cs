@@ -75,8 +75,12 @@ namespace ICSharpCode.Decompiler.Metadata
 		public TargetRuntime GetRuntime()
 		{
 			string version = Metadata.MetadataVersion;
+			if (version == null || version.Length <= 1)
+				return TargetRuntime.Unknown;
 			switch (version[1]) {
 				case '1':
+					if (version.Length <= 3)
+						return TargetRuntime.Unknown;
 					if (version[3] == 1)
 						return TargetRuntime.Net_1_0;
 					else

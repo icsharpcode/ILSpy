@@ -33,9 +33,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// <summary>
 	/// Decompiler step for C# 5 async/await.
 	/// </summary>
-	class AsyncAwaitDecompiler : IILTransform
+	public class AsyncAwaitDecompiler : IILTransform
 	{
-		public static bool IsCompilerGeneratedStateMachine(TypeDefinitionHandle type, MetadataReader metadata)
+		internal static bool IsCompilerGeneratedStateMachine(TypeDefinitionHandle type, MetadataReader metadata)
 		{
 			TypeDefinition td;
 			if (type.IsNil || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return false;
 		}
 
-		public static bool IsCompilerGeneratedMainMethod(Metadata.PEFile module, MethodDefinitionHandle method)
+		internal static bool IsCompilerGeneratedMainMethod(Metadata.PEFile module, MethodDefinitionHandle method)
 		{
 			var metadata = module.Metadata;
 			var definition = metadata.GetMethodDefinition(method);

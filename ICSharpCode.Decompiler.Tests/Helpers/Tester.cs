@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return Regex.Replace(il, @"'<PrivateImplementationDetails>\{[0-9A-F-]+\}'", "'<PrivateImplementationDetails>'");
 		}
 
-		static readonly string coreRefAsmPath = new DotNetCorePathFinder(new Version(3, 1)).GetReferenceAssemblyPath(".NETCoreApp, Version = v3.1");
+		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NETCoreApp, new Version(3, 1)).GetReferenceAssemblyPath(".NETCoreApp, Version = v3.1");
 		
 		static readonly string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
 			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
@@ -256,6 +256,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			} else {
 				preprocessorSymbols.Add("LEGACY_CSC");
 				preprocessorSymbols.Add("LEGACY_VBC");
+			}
+			if (flags.HasFlag(CompilerOptions.Preview)) {
+				preprocessorSymbols.Add("CS90");
 			}
 			return preprocessorSymbols;
 		}

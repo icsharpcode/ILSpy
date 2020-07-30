@@ -1,32 +1,29 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
 	public class AssemblyFileFinder
 	{
-		public static string FindAssemblyFile(AssemblyDefinition assemblyDefinition, string assemblyFile)
+		public static string FindAssemblyFile(Mono.Cecil.AssemblyDefinition assemblyDefinition, string assemblyFile)
 		{
-			var assemblyResolver = new UniversalAssemblyResolver(assemblyFile, false,
-				DetectTargetFrameworkId(assemblyDefinition, assemblyFile));
+			string tfi = DetectTargetFrameworkId(assemblyDefinition, assemblyFile);
+			UniversalAssemblyResolver assemblyResolver;
 			if (IsReferenceAssembly(assemblyDefinition, assemblyFile)) {
-				assemblyResolver.RemoveSearchDirectory(Path.GetDirectoryName(assemblyFile));
+				assemblyResolver = new UniversalAssemblyResolver(null, throwOnError: false, tfi);
+			} else {
+				assemblyResolver = new UniversalAssemblyResolver(assemblyFile, throwOnError: false, tfi);
 			}
-			return assemblyResolver.FindAssemblyFile(
-				ICSharpCode.Decompiler.Metadata.AssemblyNameReference.Parse(assemblyDefinition.Name.FullName));
+
+			return assemblyResolver.FindAssemblyFile(AssemblyNameReference.Parse(assemblyDefinition.Name.FullName));
 		}
 
 		static readonly string RefPathPattern = @"NuGetFallbackFolder[/\\][^/\\]+[/\\][^/\\]+[/\\]ref[/\\]";
 
-		public static bool IsReferenceAssembly(AssemblyDefinition assemblyDef, string assemblyFile)
+		public static bool IsReferenceAssembly(Mono.Cecil.AssemblyDefinition assemblyDef, string assemblyFile)
 		{
 			if (assemblyDef.CustomAttributes.Any(ca => ca.AttributeType.FullName == "System.Runtime.CompilerServices.ReferenceAssemblyAttribute"))
 				return true;
@@ -40,7 +37,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			@"(Reference Assemblies[/\\]Microsoft[/\\]Framework[/\\](?<1>.NETFramework)[/\\]v(?<2>[^/\\]+)[/\\])" +
 			@"|((NuGetFallbackFolder|packs)[/\\](?<1>[^/\\]+)\\(?<2>[^/\\]+)([/\\].*)?[/\\]ref[/\\])";
 
-		public static string DetectTargetFrameworkId(AssemblyDefinition assembly, string assemblyPath = null)
+		public static string DetectTargetFrameworkId(Mono.Cecil.AssemblyDefinition assembly, string assemblyPath = null)
 		{
 			if (assembly == null)
 				throw new ArgumentNullException(nameof(assembly));

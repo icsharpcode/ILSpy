@@ -408,6 +408,9 @@ namespace ICSharpCode.ILSpy
 					found = true;
 				} else {
 					IEntity mr = await Task.Run(() => FindEntityInRelevantAssemblies(navigateTo, relevantAssemblies));
+					// Make sure we wait for assemblies being loaded...
+					// BeginInvoke in LoadedAssembly.LookupReferencedAssemblyInternal
+					await Dispatcher.InvokeAsync(delegate { }, DispatcherPriority.Normal);
 					if (mr != null && mr.ParentModule.PEFile != null) {
 						found = true;
 						if (AssemblyTreeView.SelectedItem == initialSelection) {
@@ -479,6 +482,12 @@ namespace ICSharpCode.ILSpy
 		static bool CanResolveTypeInPEFile(PEFile module, ITypeReference typeRef, out EntityHandle typeHandle)
 		{
 			if (module == null) {
+				typeHandle = default;
+				return false;
+			}
+
+			// We intentionally ignore reference assemblies, so that the loop continues looking for another assembly that might have a usable definition.
+			if (module.IsReferenceAssembly()) {
 				typeHandle = default;
 				return false;
 			}

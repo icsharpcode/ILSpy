@@ -120,18 +120,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				new DetectExitPoints(canIntroduceExitForReturn: true),
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
-						//new UseExitPoints(),
 						new ConditionDetection(),
 						new LockTransform(),
 						new UsingTransform(),
 						// CachedDelegateInitialization must run after ConditionDetection and before/in LoopingBlockTransform
 						// and must run before NullCoalescingTransform
 						new CachedDelegateInitialization(),
-						// Run the assignment transform both before and after copy propagation.
-						// Before is necessary because inline assignments of constants are otherwise
-						// copy-propated (turned into two separate assignments of the constant).
-						// After is necessary because the assigned value might involve null coalescing/etc.
-						new StatementTransform(new ILInlining(), new TransformAssignment()),
 						new StatementTransform(
 							// per-block transforms that depend on each other, and thus need to
 							// run interleaved (statement by statement).
@@ -411,6 +405,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			typeSystemAstBuilder.AlwaysUseShortTypeNames = true;
 			typeSystemAstBuilder.AddResolveResultAnnotations = true;
 			typeSystemAstBuilder.UseNullableSpecifierForValueTypes = settings.LiftNullables;
+			typeSystemAstBuilder.SupportInitAccessors = settings.InitAccessors;
 			return typeSystemAstBuilder;
 		}
 
@@ -1351,30 +1346,35 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				entityDecl.AddAnnotation(function);
 
-				if (function.IsIterator) {
-					if (localSettings.DecompileMemberBodies && !body.Descendants.Any(d => d is YieldReturnStatement || d is YieldBreakStatement)) {
-						body.Add(new YieldBreakStatement());
-					}
-					if (function.IsAsync) {
-						RemoveAttribute(entityDecl, KnownAttribute.AsyncIteratorStateMachine);
-					} else {
-						RemoveAttribute(entityDecl, KnownAttribute.IteratorStateMachine);
-					}
-					if (function.StateMachineCompiledWithMono) {
-						RemoveAttribute(entityDecl, KnownAttribute.DebuggerHidden);
-					}
-				}
-				if (function.IsAsync) {
-					entityDecl.Modifiers |= Modifiers.Async;
-					RemoveAttribute(entityDecl, KnownAttribute.AsyncStateMachine);
-					RemoveAttribute(entityDecl, KnownAttribute.DebuggerStepThrough);
-				}
+				CleanUpMethodDeclaration(entityDecl, body, function, localSettings.DecompileMemberBodies);
 			} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
 				throw new DecompilerException(module, method, innerException);
 			}
 		}
 
-		bool RemoveAttribute(EntityDeclaration entityDecl, KnownAttribute attributeType)
+		internal static void CleanUpMethodDeclaration(EntityDeclaration entityDecl, BlockStatement body, ILFunction function, bool decompileBody = true)
+		{
+			if (function.IsIterator) {
+				if (decompileBody && !body.Descendants.Any(d => d is YieldReturnStatement || d is YieldBreakStatement)) {
+					body.Add(new YieldBreakStatement());
+				}
+				if (function.IsAsync) {
+					RemoveAttribute(entityDecl, KnownAttribute.AsyncIteratorStateMachine);
+				} else {
+					RemoveAttribute(entityDecl, KnownAttribute.IteratorStateMachine);
+				}
+				if (function.StateMachineCompiledWithMono) {
+					RemoveAttribute(entityDecl, KnownAttribute.DebuggerHidden);
+				}
+			}
+			if (function.IsAsync) {
+				entityDecl.Modifiers |= Modifiers.Async;
+				RemoveAttribute(entityDecl, KnownAttribute.AsyncStateMachine);
+				RemoveAttribute(entityDecl, KnownAttribute.DebuggerStepThrough);
+			}
+		}
+
+		internal static bool RemoveAttribute(EntityDeclaration entityDecl, KnownAttribute attributeType)
 		{
 			bool found = false;
 			foreach (var section in entityDecl.Attributes) {

@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
@@ -237,6 +238,19 @@ namespace ICSharpCode.Decompiler.IL
 			get {
 				return InstructionFlags.ControlFlow;
 			}
+		}
+
+		internal override bool CanInlineIntoSlot(int childIndex, ILInstruction expressionBeingMoved)
+		{
+			// Inlining into the entry-point is allowed as long as we're not moving code into a loop.
+			// This is used to inline into the switch expression.
+			return childIndex == 0 && this.EntryPoint.IncomingEdgeCount == 1;
+		}
+
+		internal override bool PrepareExtract(int childIndex, ExtractionContext ctx)
+		{
+			// Un-inlining from the entry-point is allowed as long as we're not moving code out of a loop
+			return childIndex == 0 && this.EntryPoint.IncomingEdgeCount == 1;
 		}
 
 		/// <summary>

@@ -205,6 +205,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!CheckContainerLengthVariableUseCount(containerLengthVar, startIndexKind)) {
 					return;
 				}
+				if (!call.IsDescendantOf(block.Instructions[pos]))
+					return;
 				// startOffsetVar might be used deep inside a complex statement, ensure we can inline up to that point:
 				for (int i = startPos; i < pos; i++) {
 					if (!ILInlining.CanInlineInto(block.Instructions[pos], startOffsetVar, block.Instructions[i]))
@@ -271,12 +273,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				}
 				if (rangeVar != null) {
-					if (!MatchIndexFromRange(startIndexKind, startIndexLoad, rangeVar, "get_Start"))
-						return;
-					if (!MatchIndexFromRange(endIndexKind, endIndexLoad, rangeVar, "get_End"))
-						return;
+					return; // this should only ever happen in the second step (ExtendSlicing)
 				}
 				if (!(sliceLengthVar.LoadInstructions.Single().Parent is CallInstruction call))
+					return;
+				if (!call.IsDescendantOf(block.Instructions[pos]))
 					return;
 				if (!IsSlicingMethod(call.Method))
 					return;
@@ -291,8 +292,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				} else {
 					if (!call.Arguments[1].MatchLdLoc(startOffsetVar))
 						return;
+					if (!ILInlining.CanMoveInto(startOffsetVarInit, block.Instructions[pos], call.Arguments[1]))
+						return;
 				}
 				if (!call.Arguments[2].MatchLdLoc(sliceLengthVar))
+					return;
+				if (!ILInlining.CanMoveInto(sliceLengthVarInit, block.Instructions[pos], call.Arguments[2]))
 					return;
 				if (!CSharpWillGenerateIndexer(call.Method.DeclaringType, slicing: true))
 					return;
@@ -385,13 +390,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// holds because we've used containerLengthVar at least once
 				Debug.Assert(startIndexKind != IndexKind.FromStart || endIndexKind != IndexKind.FromStart);
 				if (rangeVar != null) {
+					if (!ILInlining.CanMoveInto(rangeVarInit, block.Instructions[pos], startIndexLoad))
+						return;
 					if (!MatchIndexFromRange(startIndexKind, startIndexLoad, rangeVar, "get_Start"))
 						return;
 					if (!MatchIndexFromRange(endIndexKind, endIndexLoad, rangeVar, "get_End"))
 						return;
 				}
-				context.Step("Merge containerLengthVar into slicing", slicingCall);
 				var specialMethods = new IndexMethods(context.TypeSystem);
+				if (!specialMethods.IsValid)
+					return;
+				context.Step("Merge containerLengthVar into slicing", slicingCall);
 				rangeCtorCall.ReplaceWith(MakeRange(startIndexKind, startIndexLoad, endIndexKind, endIndexLoad, specialMethods));
 				for (int i = startPos; i < pos; i++) {
 					slicingCall.AddILRange(block.Instructions[i]);

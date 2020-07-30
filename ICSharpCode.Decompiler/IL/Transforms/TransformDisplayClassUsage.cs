@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// Note that 2) and 3) apply because declarations and uses of lambdas and local functions
 	/// are already transformed by the time this transform is applied.
 	/// </summary>
-	class TransformDisplayClassUsage : ILVisitor, IILTransform
+	public class TransformDisplayClassUsage : ILVisitor, IILTransform
 	{
 		class VariableToDeclare
 		{

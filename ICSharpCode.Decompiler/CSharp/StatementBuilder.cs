@@ -1002,34 +1002,19 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			LocalFunctionDeclarationStatement TranslateFunction(ILFunction function)
 			{
-				var stmt = new LocalFunctionDeclarationStatement();
 				var nestedBuilder = new StatementBuilder(typeSystem, exprBuilder.decompilationContext, function, settings, cancellationToken);
-				stmt.Name = function.Name;
-				stmt.Parameters.AddRange(exprBuilder.MakeParameters(function.Parameters, function));
-				stmt.ReturnType = exprBuilder.ConvertType(function.Method.ReturnType);
-				stmt.Body = nestedBuilder.ConvertAsBlock(function.Body);
+				var astBuilder = exprBuilder.astBuilder;
+				var method = (MethodDeclaration)astBuilder.ConvertEntity(function.ReducedMethod);
+				method.Body = nestedBuilder.ConvertAsBlock(function.Body);
 
 				Comment prev = null;
 				foreach (string warning in function.Warnings) {
-					stmt.Body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
+					method.Body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
 				}
 
-				if (function.Method.TypeParameters.Count > 0) {
-					var astBuilder = exprBuilder.astBuilder;
-					if (astBuilder.ShowTypeParameters) {
-						int skipCount = function.ReducedMethod.NumberOfCompilerGeneratedTypeParameters;
-						stmt.TypeParameters.AddRange(function.Method.TypeParameters.Skip(skipCount).Select(t => astBuilder.ConvertTypeParameter(t)));
-						if (astBuilder.ShowTypeParameterConstraints) {
-							stmt.Constraints.AddRange(function.Method.TypeParameters.Skip(skipCount).Select(t => astBuilder.ConvertTypeParameterConstraint(t)).Where(c => c != null));
-						}
-					}
-				}
-				if (function.IsAsync) {
-					stmt.Modifiers |= Modifiers.Async;
-				}
-				if (settings.StaticLocalFunctions && function.ReducedMethod.IsStaticLocalFunction) {
-					stmt.Modifiers |= Modifiers.Static;
-				}
+				CSharpDecompiler.CleanUpMethodDeclaration(method, method.Body, function);
+				CSharpDecompiler.RemoveAttribute(method, KnownAttribute.CompilerGenerated);
+				var stmt = new LocalFunctionDeclarationStatement(method);
 				stmt.AddAnnotation(new MemberResolveResult(null, function.ReducedMethod));
 				stmt.WithILInstruction(function);
 				return stmt;

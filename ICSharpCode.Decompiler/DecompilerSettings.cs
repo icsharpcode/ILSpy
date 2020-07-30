@@ -116,12 +116,13 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.Preview) {
 				nativeIntegers = false;
+				initAccessors = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (nativeIntegers)
+			if (nativeIntegers || initAccessors)
 				return CSharp.LanguageVersion.Preview;
 			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement || staticLocalFunctions || ranges)
 				return CSharp.LanguageVersion.CSharp8_0;
@@ -158,6 +159,23 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (nativeIntegers != value) {
 					nativeIntegers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool initAccessors = true;
+
+		/// <summary>
+		/// Use C# 9 <c>init;</c> property accessors.
+		/// </summary>
+		[Category("C# 9.0 (experimental)")]
+		[Description("DecompilerSettings.InitAccessors")]
+		public bool InitAccessors {
+			get { return initAccessors; }
+			set {
+				if (initAccessors != value) {
+					initAccessors = value;
 					OnPropertyChanged();
 				}
 			}

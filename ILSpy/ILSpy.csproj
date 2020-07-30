@@ -128,9 +128,7 @@
     <Compile Include="Commands\ShowDebugSteps.cs" />
     <Compile Include="Commands\SortAssemblyListCommand.cs" />
     <Compile Include="Controls\BoolToVisibilityConverter.cs" />
-    <Compile Include="Controls\CustomDialog.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Include="Controls\CustomDialog.cs" />
     <Compile Include="Controls\GridViewColumnAutoSize.cs" />
     <Compile Include="Controls\MarkupExtensions.cs" />
     <Compile Include="Controls\ResourceObjectTable.xaml.cs">

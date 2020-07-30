@@ -33,6 +33,7 @@ using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.DebugInfo;
+using System.Collections.Concurrent;
 
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 {
@@ -205,7 +206,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			var progress = ProgressIndicator;
 			DecompilerTypeSystem ts = new DecompilerTypeSystem(module, AssemblyResolver, Settings);
 			Parallel.ForEach(
-				files,
+				Partitioner.Create(files, loadBalance: true),
 				new ParallelOptions {
 					MaxDegreeOfParallelism = this.MaxDegreeOfParallelism,
 					CancellationToken = cancellationToken

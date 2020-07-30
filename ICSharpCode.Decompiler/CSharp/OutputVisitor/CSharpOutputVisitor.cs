@@ -1876,19 +1876,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitLocalFunctionDeclarationStatement(LocalFunctionDeclarationStatement localFunctionDeclarationStatement)
 		{
 			StartNode(localFunctionDeclarationStatement);
-
-			WriteModifiers(localFunctionDeclarationStatement.ModifierTokens);
-			localFunctionDeclarationStatement.ReturnType.AcceptVisitor(this);
-			Space();
-			WriteIdentifier(localFunctionDeclarationStatement.NameToken);
-			WriteTypeParameters(localFunctionDeclarationStatement.TypeParameters);
-			Space(policy.SpaceBeforeMethodDeclarationParentheses);
-			WriteCommaSeparatedListInParenthesis(localFunctionDeclarationStatement.Parameters, policy.SpaceWithinMethodDeclarationParentheses);
-			foreach (Constraint constraint in localFunctionDeclarationStatement.Constraints) {
-				constraint.AcceptVisitor(this);
-			}
-			WriteMethodBody(localFunctionDeclarationStatement.Body, policy.MethodBraceStyle);
-
+			localFunctionDeclarationStatement.Declaration.AcceptVisitor(this);
 			EndNode(localFunctionDeclarationStatement);
 		}
 
@@ -1939,7 +1927,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				WriteKeyword("get", PropertyDeclaration.GetKeywordRole);
 				style = policy.PropertyGetBraceStyle;
 			} else if (accessor.Role == PropertyDeclaration.SetterRole) {
-				WriteKeyword("set", PropertyDeclaration.SetKeywordRole);
+				if (accessor.Keyword.Role == PropertyDeclaration.InitKeywordRole) {
+					WriteKeyword("init", PropertyDeclaration.InitKeywordRole);
+				} else {
+					WriteKeyword("set", PropertyDeclaration.SetKeywordRole);
+				}
 				style = policy.PropertySetBraceStyle;
 			} else if (accessor.Role == CustomEventDeclaration.AddAccessorRole) {
 				WriteKeyword("add", CustomEventDeclaration.AddKeywordRole);

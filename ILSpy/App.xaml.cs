@@ -165,6 +165,9 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
+		[ThreadStatic]
+		static bool showingError;
+
 		static void UnhandledException(Exception exception)
 		{
 			Debug.WriteLine(exception.ToString());
@@ -176,7 +179,17 @@ namespace ICSharpCode.ILSpy
 					break;
 				}
 			}
-			MessageBox.Show(exception.ToString(), "Sorry, we crashed");
+			if (showingError) {
+				// Ignore re-entrant calls
+				// We run the risk of opening an infinite number of exception dialogs.
+				return;
+			}
+			showingError = true;
+			try {
+				MessageBox.Show(exception.ToString(), "Sorry, we crashed");
+			} finally {
+				showingError = false;
+			}
 		}
 		#endregion
 

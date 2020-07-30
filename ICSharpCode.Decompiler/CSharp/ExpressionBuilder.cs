@@ -92,6 +92,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.astBuilder = new TypeSystemAstBuilder(resolver);
 			this.astBuilder.AlwaysUseShortTypeNames = true;
 			this.astBuilder.AddResolveResultAnnotations = true;
+			this.astBuilder.ShowAttributes = true;
 			this.astBuilder.UseNullableSpecifierForValueTypes = settings.LiftNullables;
 			this.typeInference = new TypeInference(compilation) { Algorithm = TypeInferenceAlgorithm.Improved };
 		}
@@ -1983,7 +1984,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return SpecialType.UnknownType;
 		}
 
-		internal IEnumerable<ParameterDeclaration> MakeParameters(IReadOnlyList<IParameter> parameters, ILFunction function)
+		IEnumerable<ParameterDeclaration> MakeParameters(IReadOnlyList<IParameter> parameters, ILFunction function)
 		{
 			var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
 			int i = 0;
@@ -1992,9 +1993,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (string.IsNullOrEmpty(pd.Name) && !pd.Type.IsArgList()) {
 					// needs to be consistent with logic in ILReader.CreateILVarable(ParameterDefinition)
 					pd.Name = "P_" + i;
-					// if this is a local function, we have to skip the parameters for closure references
-					if (settings.LocalFunctions && function.Kind == ILFunctionKind.LocalFunction && IL.Transforms.LocalFunctionDecompiler.IsClosureParameter(parameter, decompilationContext))
-						break;
 				}
 				if (settings.AnonymousTypes && parameter.Type.ContainsAnonymousType())
 					pd.Type = null;

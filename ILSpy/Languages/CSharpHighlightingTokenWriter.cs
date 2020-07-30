@@ -184,8 +184,10 @@ namespace ICSharpCode.ILSpy
 				case "set":
 				case "add":
 				case "remove":
+				case "init":
 					if (role == PropertyDeclaration.GetKeywordRole ||
 						role == PropertyDeclaration.SetKeywordRole ||
+						role == PropertyDeclaration.InitKeywordRole ||
 						role == CustomEventDeclaration.AddKeywordRole ||
 						role == CustomEventDeclaration.RemoveKeywordRole)
 						color = accessorKeywordsColor;

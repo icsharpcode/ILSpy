@@ -489,7 +489,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 	}
 
-	class NullPropagationStatementTransform : IStatementTransform
+	public class NullPropagationStatementTransform : IStatementTransform
 	{
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
