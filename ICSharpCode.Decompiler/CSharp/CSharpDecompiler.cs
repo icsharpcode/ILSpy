@@ -405,6 +405,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			typeSystemAstBuilder.AlwaysUseShortTypeNames = true;
 			typeSystemAstBuilder.AddResolveResultAnnotations = true;
 			typeSystemAstBuilder.UseNullableSpecifierForValueTypes = settings.LiftNullables;
+			typeSystemAstBuilder.SupportInitAccessors = settings.InitAccessors;
 			return typeSystemAstBuilder;
 		}
 

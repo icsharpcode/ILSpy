@@ -490,7 +490,7 @@
     <value>显示 IL 范围</value>
   </data>
   <data name="ShowChildIndexInBlock" xml:space="preserve">
-    <value>显示块中的子序号</value>
+    <value>在块中显示子索引</value>
   </data>
   <data name="ShowStateBeforeThisStep" xml:space="preserve">
     <value>在此步骤之前显示状态</value>
@@ -879,7 +879,7 @@
   <data name="Window_ResetLayout" xml:space="preserve">
     <value>重置布局(_R)</value>
   </data>
-  <data name="DEBUGDumpPdb2Xml" xml:space="preserve">
+  <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
     <value>调试 -- PDB 转储为 XML</value>
   </data>
 </root>

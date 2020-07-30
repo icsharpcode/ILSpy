@@ -561,9 +561,9 @@ namespace ICSharpCode.ILSpy.Properties {
         /// <summary>
         ///   查找类似 DEBUG -- Dump PDB as XML 的本地化字符串。
         /// </summary>
-        public static string DEBUGDumpPdb2Xml {
+        public static string DEBUGDumpPDBAsXML {
             get {
-                return ResourceManager.GetString("DEBUGDumpPdb2Xml", resourceCulture);
+                return ResourceManager.GetString("DEBUGDumpPDBAsXML", resourceCulture);
             }
         }
         
@@ -838,7 +838,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   查找类似 Transform to do-while, if possible 的本地化字符串。
+        ///   查找类似 Transform to do-while, if possible. 的本地化字符串。
         /// </summary>
         public static string DecompilerSettings_DoWhileStatement {
             get {
@@ -847,7 +847,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   查找类似 Transform to for, if possible 的本地化字符串。
+        ///   查找类似 Transform to for, if possible. 的本地化字符串。
         /// </summary>
         public static string DecompilerSettings_ForStatement {
             get {
@@ -1011,7 +1011,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   查找类似 Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible 的本地化字符串。
+        ///   查找类似 Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible. 的本地化字符串。
         /// </summary>
         public static string DecompilerSettings_SeparateLocalVariableDeclarations {
             get {
@@ -1403,6 +1403,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string HighlightMatchingBraces {
             get {
                 return ResourceManager.GetString("HighlightMatchingBraces", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 ILSpyAboutPage.txt 的本地化字符串。
+        /// </summary>
+        public static string ILSpyAboutPageTxt {
+            get {
+                return ResourceManager.GetString("ILSpyAboutPageTxt", resourceCulture);
             }
         }
         
@@ -2328,7 +2337,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   查找类似 _Close all documents 的本地化字符串。
+        ///   查找类似 Close all documents 的本地化字符串。
         /// </summary>
         public static string Window_CloseAllDocuments {
             get {
@@ -2337,7 +2346,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   查找类似 _Reset layout 的本地化字符串。
+        ///   查找类似 Reset layout 的本地化字符串。
         /// </summary>
         public static string Window_ResetLayout {
             get {
