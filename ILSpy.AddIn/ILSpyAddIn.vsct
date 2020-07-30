@@ -19,11 +19,55 @@
 
   <!--This header contains the command ids for the menus provided by the shell. -->
   <Extern href="vsshlids.h"/>
-  
+
+  <!--The Commands section is where we the commands, menus and menu groups are defined.
+      This section uses a Guid to identify the package that provides the command defined inside it. -->
+  <Commands package="guidILSpyAddInPkg">
+    <!-- Inside this section we have different sub-sections: one for the menus, another  
+    for the menu groups, one for the buttons (the actual commands), one for the combos 
+    and the last one for the bitmaps used. Each element is identified by a command id that  
+    is a unique pair of guid and numeric identifier; the guid part of the identifier is usually  
+    called "command set" and is used to group different command inside a logically related  
+    group; your package should define its own command set in order to avoid collisions  
+    with command ids defined by other packages. -->
+
+
+    <!-- In this section you can define new menu groups. A menu group is a container for 
+         other menus or buttons (commands); from a visual point of view you can see the 
+         group as the part of a menu contained between two lines. The parent of a group 
+         must be a menu. -->
+    <Groups>
+      <Group guid="guidILSpyAddInCmdSet" id="OpenILSpyGroup" priority="0x0200">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS"/>
+      </Group>
+
+      <Group guid="guidILSpyAddInCmdSet" id="OpenILSpyProjGroup" priority="0x0200">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>
+      </Group>
+
+      <Group guid="guidILSpyAddInCmdSet" id="OpenILSpyCodeItemGroup" priority="0x0200">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
+      </Group>
+
+      <Group guid="guidILSpyAddInCmdSet" id="OpenILSpyRefGroup" priority="0x0200">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_REFERENCE"/>
+      </Group>
+    </Groups>
+
+    <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
+    <Bitmaps>
+      <!--  The bitmap id is defined in a way that is a little bit different from the others: 
+            the declaration starts with a guid for the bitmap strip, then there is the resource id of the 
+            bitmap strip containing the bitmaps and then there are the numeric ids of the elements used 
+            inside a button definition. An important aspect of this declaration is that the element id 
+            must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
+      <Bitmap guid="guidImages" href="Resources\Images.png" usedList="bmpLogo, bmpPic1, bmpPic2, bmpPicX, bmpPicArrows"/>
+    </Bitmaps>
+  </Commands>
   <Symbols>
     <!-- This is the package guid. -->
     <GuidSymbol name="guidILSpyAddInPkg" value="{a9120dbe-164a-4891-842f-fb7829273838}" />
-    
+
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="guidILSpyAddInCmdSet" value="{85ddb8ca-a842-4b1c-ba1a-94141fdf19d0}">
 
@@ -36,7 +80,7 @@
       <IDSymbol name="cmdidOpenProjectOutputInILSpy" value="0x0300" />
       <IDSymbol name="cmdidOpenCodeItemInILSpy" value="0x0400" />
     </GuidSymbol>
-     
+
     <GuidSymbol name="guidImages" value="{2f654db9-4641-4638-9937-27c6202b2a6a}" >
       <IDSymbol name="bmpLogo" value="1" />
       <IDSymbol name="bmpPic1" value="2" />
