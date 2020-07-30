@@ -478,7 +478,7 @@
     <value>大小：</value>
   </data>
   <data name="DebugSteps" xml:space="preserve">
-    <value>调试步</value>
+    <value>调试步骤</value>
   </data>
   <data name="UseFieldSugar" xml:space="preserve">
     <value>使用 fld 语法糖</value>
@@ -499,7 +499,7 @@
     <value>在此步骤之后显示状态</value>
   </data>
   <data name="DebugThisStep" xml:space="preserve">
-    <value>调试此步</value>
+    <value>调试此步骤</value>
   </data>
   <data name="WarningAsmMarkedRef" xml:space="preserve">
     <value>警告：此程序集被标记为“引用程序集”，这意味着它只包含元数据，没有可执行代码。</value>
