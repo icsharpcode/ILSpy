@@ -844,7 +844,14 @@
   </PropertyGroup>
 
   <Import Project="$(VCToolsVersionPropsFile)" Condition="Exists('$(VCToolsVersionPropsFile)')" />
-  
+
+  <Target Name="SortResX" BeforeTargets="BeforeBuild">
+    <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
+      <SortResX>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/sort-resx.ps1</SortResX>
+    </PropertyGroup>
+    <Exec WorkingDirectory=".." Command="$(SortResX)" Timeout="60000" />
+  </Target>
+
   <Target Name="ApplyStackExtension" AfterTargets="PostBuildEvent">
     <Exec Condition="'$(VCToolsVersion)'!=''" Command="&quot;$(VCBasePath)Tools\MSVC\$(VCToolsVersion)\bin\Hostx64\x64\editbin.exe&quot; /stack:16777216 &quot;$(TargetPath)&quot;&#xD;&#xA;EXIT 0" />
     <Exec Command="&quot;$(TargetFrameworkSDKToolsDirectory)sn.exe&quot; -R &quot;$(TargetPath)&quot; &quot;$(SolutionDir)\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk&quot;" />
