@@ -121,6 +121,6 @@
     <value>ILSpy.AddIn</value>
   </data>
   <data name="112" xml:space="preserve">
-    <value>Integration of the ILSpy Decompiler into Visual Studio.</value>
+    <value>可以在 Visual Studio 中直接打开反编译工具 ILSpy 。</value>
   </data>
 </root>

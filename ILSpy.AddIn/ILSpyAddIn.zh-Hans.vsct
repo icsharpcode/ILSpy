@@ -53,7 +53,7 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
-          <ButtonText>用ILSpy打开</ButtonText>
+          <ButtonText>用 ILSpy 打开</ButtonText>
         </Strings>
       </Button>
 
@@ -63,7 +63,7 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
-          <ButtonText>用ILSpy打开输出</ButtonText>
+          <ButtonText>用 ILSpy 打开输出</ButtonText>
         </Strings>
       </Button>
 
@@ -73,7 +73,7 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
-          <ButtonText>用ILSpy打开代码</ButtonText>
+          <ButtonText>用 ILSpy 打开代码</ButtonText>
         </Strings>
       </Button>
 

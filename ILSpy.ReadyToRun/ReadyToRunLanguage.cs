@@ -27,7 +27,6 @@ using System.Reflection.PortableExecutable;
 using System.Resources;
 using System.Runtime.CompilerServices;
 using Iced.Intel;
-
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
@@ -36,7 +35,7 @@ using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ILCompiler.Reflection.ReadyToRun;
 using ILCompiler.Reflection.ReadyToRun.Amd64;
-[assembly: NeutralResourcesLanguage("en-US")]
+
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
 	[Export(typeof(Language))]
