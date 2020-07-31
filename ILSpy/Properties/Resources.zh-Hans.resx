@@ -904,9 +904,9 @@
     <value>选择 PDB...</value>
   </data>
   <data name="GenerationWasCancelled" xml:space="preserve">
-    <value>生成已取消。</value>
+    <value>已取消生成。</value>
   </data>
   <data name="GenerationCompleteInSeconds" xml:space="preserve">
-    <value>生成完成，耗时 {0} 秒.</value>
+    <value>生成完成，耗时 {0} 秒。</value>
   </data>
 </root>
