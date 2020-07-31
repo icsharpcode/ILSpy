@@ -117,16 +117,16 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ReadyToRun" xml:space="preserve">
-    <value>ReadyToRun</value>
-  </data>
   <data name="DisassemblyFormat" xml:space="preserve">
     <value>Disassembly Format</value>
   </data>
-  <data name="ShowUnwindInfo" xml:space="preserve">
-    <value>Show Unwind Info</value>
+  <data name="ReadyToRun" xml:space="preserve">
+    <value>ReadyToRun</value>
   </data>
   <data name="ShowDebugInfo" xml:space="preserve">
     <value>Show Debug Info</value>
+  </data>
+  <data name="ShowUnwindInfo" xml:space="preserve">
+    <value>Show Unwind Info</value>
   </data>
 </root>
