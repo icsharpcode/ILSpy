@@ -32,7 +32,7 @@ using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportContextMenuEntry(Header = "Generate portable PDB")]
+	[ExportContextMenuEntry(Header = nameof(Resources.GeneratePortable))]
 	class GeneratePdbContextMenuEntry : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)
@@ -55,12 +55,12 @@ namespace ICSharpCode.ILSpy
 		{
 			var file = assembly.GetPEFileOrNull();
 			if (!PortablePdbWriter.HasCodeViewDebugDirectoryEntry(file)) {
-				MessageBox.Show($"Cannot create PDB file for {Path.GetFileName(assembly.FileName)}, because it does not contain a PE Debug Directory Entry of type 'CodeView'.");
+				MessageBox.Show(string.Format(Resources.CannotCreatePDBFile, Path.GetFileName(assembly.FileName)));
 				return;
 			}
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = DecompilerTextView.CleanUpName(assembly.ShortName) + ".pdb";
-			dlg.Filter = "Portable PDB|*.pdb|All files|*.*";
+			dlg.Filter = Resources.PortablePDBPdbAllFiles;
 			dlg.InitialDirectory = Path.GetDirectoryName(assembly.FileName);
 			if (dlg.ShowDialog() != true) return;
 			DecompilationOptions options = new DecompilationOptions();
@@ -81,14 +81,14 @@ namespace ICSharpCode.ILSpy
 				stopwatch.Stop();
 				output.WriteLine("Generation complete in " + stopwatch.Elapsed.TotalSeconds.ToString("F1") + " seconds.");
 				output.WriteLine();
-				output.AddButton(null, "Open Explorer", delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
+				output.AddButton(null, Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
 				output.WriteLine();
 				return output;
 			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowText(output)).HandleExceptions();
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources.GeneratePortable),  MenuCategory = "Save")]
+	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources.GeneratePortable),  MenuCategory = Resources.Save)]
 	class GeneratePdbMainMenuEntry : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)

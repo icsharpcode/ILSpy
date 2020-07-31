@@ -24,11 +24,12 @@ using System.Windows.Controls;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Commands
 {
-	[ExportContextMenuEntry(Header = "Decompile", Order = 10)]
+	[ExportContextMenuEntry(Header = nameof(Resources.Decompile), Order = 10)]
 	class DecompileCommand : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -68,7 +69,7 @@ namespace ICSharpCode.ILSpy.Commands
 		}
 	}
 
-	[ExportContextMenuEntry(Header = "Go to token", Order = 10)]
+	[ExportContextMenuEntry(Header = nameof(Resources.GoToToken), Order = 10)]
 	class GoToToken : IContextMenuEntry
 	{
 		public void Execute(TextViewContext context)

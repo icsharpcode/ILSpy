@@ -442,6 +442,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Cannot create PDB file for {0}, because it does not contain a PE Debug Directory Entry of type &apos;CodeView&apos;. 的本地化字符串。
+        /// </summary>
+        public static string CannotCreatePDBFile {
+            get {
+                return ResourceManager.GetString("CannotCreatePDBFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Check again 的本地化字符串。
         /// </summary>
         public static string CheckAgain {
@@ -582,6 +591,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DebugThisStep {
             get {
                 return ResourceManager.GetString("DebugThisStep", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Decompile 的本地化字符串。
+        /// </summary>
+        public static string Decompile {
+            get {
+                return ResourceManager.GetString("Decompile", resourceCulture);
             }
         }
         
@@ -838,7 +856,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   查找类似 Transform to do-while, if possible. 的本地化字符串。
+        ///   查找类似 Transform to do-while, if possible 的本地化字符串。
         /// </summary>
         public static string DecompilerSettings_DoWhileStatement {
             get {
@@ -847,7 +865,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   查找类似 Transform to for, if possible. 的本地化字符串。
+        ///   查找类似 Transform to for, if possible 的本地化字符串。
         /// </summary>
         public static string DecompilerSettings_ForStatement {
             get {
@@ -1011,7 +1029,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   查找类似 Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible. 的本地化字符串。
+        ///   查找类似 Separate local variable declarations and initializers (int x = 5; -&gt; int x; x = 5;), if possible 的本地化字符串。
         /// </summary>
         public static string DecompilerSettings_SeparateLocalVariableDeclarations {
             get {
@@ -1389,6 +1407,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Go to token 的本地化字符串。
+        /// </summary>
+        public static string GoToToken {
+            get {
+                return ResourceManager.GetString("GoToToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Hide empty metadata tables from tree view 的本地化字符串。
         /// </summary>
         public static string HideEmptyMetadataTables {
@@ -1696,6 +1723,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Portable PDB|*.pdb|All files|*.* 的本地化字符串。
+        /// </summary>
+        public static string PortablePDBPdbAllFiles {
+            get {
+                return ResourceManager.GetString("PortablePDBPdbAllFiles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 for ex. property getter/setter access. To get optimal decompilation results, please manually add the missing references to the list of loaded assemblies. 的本地化字符串。
         /// </summary>
         public static string PropertyManuallyMissingReferencesListLoadedAssemblies {
@@ -1946,6 +1982,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string SelectList {
             get {
                 return ResourceManager.GetString("SelectList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Select PDB... 的本地化字符串。
+        /// </summary>
+        public static string SelectPDB {
+            get {
+                return ResourceManager.GetString("SelectPDB", resourceCulture);
             }
         }
         
@@ -2310,6 +2355,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Visual Studio Solution file|*.sln|All files|*.* 的本地化字符串。
+        /// </summary>
+        public static string VisualStudioSolutionFileSlnAllFiles {
+            get {
+                return ResourceManager.GetString("VisualStudioSolutionFileSlnAllFiles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Warning: This assembly is marked as &apos;reference assembly&apos;, which means that it only contains metadata and no executable code. 的本地化字符串。
         /// </summary>
         public static string WarningAsmMarkedRef {
@@ -2337,7 +2391,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   查找类似 Close all documents 的本地化字符串。
+        ///   查找类似 _Close all documents 的本地化字符串。
         /// </summary>
         public static string Window_CloseAllDocuments {
             get {
@@ -2346,7 +2400,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   查找类似 Reset layout 的本地化字符串。
+        ///   查找类似 _Reset layout 的本地化字符串。
         /// </summary>
         public static string Window_ResetLayout {
             get {

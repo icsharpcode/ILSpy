@@ -885,4 +885,22 @@
   <data name="BaseTypes" xml:space="preserve">
     <value>基类型</value>
   </data>
+  <data name="CannotCreatePDBFile" xml:space="preserve">
+    <value>无法创建为{0}创建PDB文件,因为它不包含PE调试目录类型 'CodeView'.</value>
+  </data>
+  <data name="VisualStudioSolutionFileSlnAllFiles" xml:space="preserve">
+    <value>Visual Studio 解决方案文件(*.sln)|*.sln|所有文件(*.*)|*.*</value>
+  </data>
+  <data name="GoToToken" xml:space="preserve">
+    <value>转至令牌</value>
+  </data>
+  <data name="Decompile" xml:space="preserve">
+    <value>反编译</value>
+  </data>
+  <data name="PortablePDBPdbAllFiles" xml:space="preserve">
+    <value>可携带 PDB(*.pdb)|*.pdb|所有文件(*.*)|*.*</value>
+  </data>
+  <data name="SelectPDB" xml:space="preserve">
+    <value>选择 PDB...</value>
+  </data>
 </root>

@@ -885,4 +885,22 @@ Do you want to continue?</value>
   <data name="ILSpyAboutPageTxt" xml:space="preserve">
     <value>ILSpyAboutPage.txt</value>
   </data>
+  <data name="SelectPDB" xml:space="preserve">
+    <value>Select PDB...</value>
+  </data>
+  <data name="PortablePDBPdbAllFiles" xml:space="preserve">
+    <value>Portable PDB|*.pdb|All files|*.*</value>
+  </data>
+  <data name="Decompile" xml:space="preserve">
+    <value>Decompile</value>
+  </data>
+  <data name="GoToToken" xml:space="preserve">
+    <value>Go to token</value>
+  </data>
+  <data name="CannotCreatePDBFile" xml:space="preserve">
+    <value>Cannot create PDB file for {0}, because it does not contain a PE Debug Directory Entry of type 'CodeView'.</value>
+  </data>
+  <data name="VisualStudioSolutionFileSlnAllFiles" xml:space="preserve">
+    <value>Visual Studio Solution file|*.sln|All files|*.*</value>
+  </data>
 </root>
