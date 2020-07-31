@@ -74,12 +74,12 @@ namespace ICSharpCode.ILSpy
 						PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream);
 					} catch (OperationCanceledException) {
 						output.WriteLine();
-						output.WriteLine("Generation was cancelled.");
+						output.WriteLine(Resources.GenerationWasCancelled);
 						throw;
 					}
 				}
 				stopwatch.Stop();
-				output.WriteLine("Generation complete in " + stopwatch.Elapsed.TotalSeconds.ToString("F1") + " seconds.");
+				output.WriteLine(string.Format(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1")));
 				output.WriteLine();
 				output.AddButton(null, Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
 				output.WriteLine();
@@ -88,7 +88,7 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources.GeneratePortable),  MenuCategory = Resources.Save)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources.GeneratePortable),  MenuCategory = nameof(Resources.Save))]
 	class GeneratePdbMainMenuEntry : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)

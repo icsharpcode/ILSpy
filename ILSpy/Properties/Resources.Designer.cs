@@ -1407,6 +1407,24 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Generation complete in {0} seconds. 的本地化字符串。
+        /// </summary>
+        public static string GenerationCompleteInSeconds {
+            get {
+                return ResourceManager.GetString("GenerationCompleteInSeconds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Generation was cancelled. 的本地化字符串。
+        /// </summary>
+        public static string GenerationWasCancelled {
+            get {
+                return ResourceManager.GetString("GenerationWasCancelled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Go to token 的本地化字符串。
         /// </summary>
         public static string GoToToken {

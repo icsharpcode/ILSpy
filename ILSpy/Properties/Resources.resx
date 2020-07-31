@@ -903,4 +903,10 @@ Do you want to continue?</value>
   <data name="VisualStudioSolutionFileSlnAllFiles" xml:space="preserve">
     <value>Visual Studio Solution file|*.sln|All files|*.*</value>
   </data>
+  <data name="GenerationCompleteInSeconds" xml:space="preserve">
+    <value>Generation complete in {0} seconds.</value>
+  </data>
+  <data name="GenerationWasCancelled" xml:space="preserve">
+    <value>Generation was cancelled.</value>
+  </data>
 </root>
