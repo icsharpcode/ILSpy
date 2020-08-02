@@ -38,10 +38,10 @@ namespace ICSharpCode.ILSpy.AddIn
 		public void Start()
 		{
 			var commandLineArguments = parameters?.AssemblyFileNames?.Concat(parameters.Arguments);
-
+			string ilSpyExe = GetILSpyPath();
 			var process = new Process() {
 				StartInfo = new ProcessStartInfo() {
-					FileName = GetILSpyPath(),
+					FileName = ilSpyExe,
 					UseShellExecute = false,
 					Arguments = "/navigateTo:none"
 				}
@@ -50,13 +50,14 @@ namespace ICSharpCode.ILSpy.AddIn
 
 			if ((commandLineArguments != null) && commandLineArguments.Any()) {
 				// Only need a message to started process if there are any parameters to pass
-				SendMessage(process, "ILSpy:\r\n" + string.Join(Environment.NewLine, commandLineArguments), true);
+				SendMessage(ilSpyExe, "ILSpy:\r\n" + string.Join(Environment.NewLine, commandLineArguments), true);
 			}
 		}
 
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "VSTHRD110:Observe result of async calls", Justification = "<Pending>")]
-		void SendMessage(Process ilspyProcess, string message, bool activate)
+		void SendMessage(string ilSpyExe, string message, bool activate)
 		{
+			string expectedProcessName = Path.GetFileNameWithoutExtension(ilSpyExe);
 			// We wait asynchronously until target window can be found and try to find it multiple times
 			Task.Run(async () => {
 				bool success = false;
@@ -66,14 +67,17 @@ namespace ICSharpCode.ILSpy.AddIn
 						(hWnd, lParam) => {
 							string windowTitle = NativeMethods.GetWindowText(hWnd, 100);
 							if (windowTitle.StartsWith("ILSpy", StringComparison.Ordinal)) {
-								Debug.WriteLine("Found {0:x4}: {1}", hWnd, windowTitle);
-								IntPtr result = Send(hWnd, message);
-								Debug.WriteLine("WM_COPYDATA result: {0:x8}", result);
-								if (result == (IntPtr)1) {
-									if (activate)
-										NativeMethods.SetForegroundWindow(hWnd);
-									success = true;
-									return false; // stop enumeration
+								string processName = NativeMethods.GetProcessNameFromWindow(hWnd);
+								Debug.WriteLine("Found {0:x4}: '{1}' in '{2}'", hWnd, windowTitle, processName);
+								if (string.Equals(processName, expectedProcessName, StringComparison.OrdinalIgnoreCase)) {
+									IntPtr result = Send(hWnd, message);
+									Debug.WriteLine("WM_COPYDATA result: {0:x8}", result);
+									if (result == (IntPtr)1) {
+										if (activate)
+											NativeMethods.SetForegroundWindow(hWnd);
+										success = true;
+										return false; // stop enumeration
+									}
 								}
 							}
 							return true; // continue enumeration
