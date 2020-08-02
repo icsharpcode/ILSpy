@@ -75,9 +75,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public static string SwitchOverNullableInt(int? i)
+		public static string SwitchOverNullableInt(int? i, int? j)
 		{
-			return i switch {
+			return (i + j) switch {
 				null => "null",
 				0 => "zero",
 				5 => "five",
