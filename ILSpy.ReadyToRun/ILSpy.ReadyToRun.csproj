@@ -37,9 +37,6 @@
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj">
       <Private>False</Private>
     </ProjectReference>
-    <Reference Include="ILCompiler.Reflection.ReadyToRun">
-      <HintPath>..\..\..\Desktop\r2r\ILCompiler.Reflection.ReadyToRun\bin\Debug\netstandard2.0\ILCompiler.Reflection.ReadyToRun.dll</HintPath>
-    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System.Xaml" />
@@ -60,6 +57,7 @@
 
   <ItemGroup>
     <PackageReference Include="Iced" Version="1.6.0" />
+    <PackageReference Include="ILCompiler.Reflection.ReadyToRun" Version="1.0.9-alpha" />
   </ItemGroup>
 
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
