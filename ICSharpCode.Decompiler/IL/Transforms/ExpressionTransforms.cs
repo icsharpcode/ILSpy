@@ -65,8 +65,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (container.Kind == ContainerKind.Switch) {
 				// Special case for switch: Only visit the switch condition block.
-				var switchInst =  (SwitchInstruction)container.EntryPoint.Instructions[0];
+				var switchInst = (SwitchInstruction)container.EntryPoint.Instructions[0];
 				switchInst.Value.AcceptVisitor(this);
+
+				HandleSwitchExpression(container, switchInst);
 			}
 			// No need to call base.VisitBlockContainer, see comment in VisitBlock.
 		}
@@ -121,12 +123,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst.Kind = ComparisonKind.Equality;
 				}
 			}
-			
+
 			var rightWithoutConv = inst.Right.UnwrapConv(ConversionKind.SignExtend).UnwrapConv(ConversionKind.ZeroExtend);
 			if (rightWithoutConv.MatchLdcI4(0)
-			    && inst.Sign == Sign.Unsigned
-			    && (inst.Kind == ComparisonKind.GreaterThan || inst.Kind == ComparisonKind.LessThanOrEqual))
-			{
+				&& inst.Sign == Sign.Unsigned
+				&& (inst.Kind == ComparisonKind.GreaterThan || inst.Kind == ComparisonKind.LessThanOrEqual)) {
 				if (inst.Kind == ComparisonKind.GreaterThan) {
 					context.Step("comp.unsigned(left > ldc.i4 0) => comp(left != ldc.i4 0)", inst);
 					inst.Kind = ComparisonKind.Inequality;
@@ -169,21 +170,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 		}
-		
+
 		protected internal override void VisitConv(Conv inst)
 		{
 			inst.Argument.AcceptVisitor(this);
 			if (inst.Argument.MatchLdLen(StackType.I, out ILInstruction array) && inst.TargetType.IsIntegerType()
-				&& (!inst.CheckForOverflow || context.Settings.AssumeArrayLengthFitsIntoInt32))
-			{
+				&& (!inst.CheckForOverflow || context.Settings.AssumeArrayLengthFitsIntoInt32)) {
 				context.Step("conv.i4(ldlen array) => ldlen.i4(array)", inst);
 				inst.AddILRange(inst.Argument);
 				inst.ReplaceWith(new LdLen(inst.TargetType.GetStackType(), array).WithILRange(inst));
 				return;
 			}
-			if (inst.TargetType.IsFloatType() && inst.Argument is Conv conv 
-				&& conv.Kind == ConversionKind.IntToFloat && conv.TargetType == PrimitiveType.R)
-			{
+			if (inst.TargetType.IsFloatType() && inst.Argument is Conv conv
+				&& conv.Kind == ConversionKind.IntToFloat && conv.TargetType == PrimitiveType.R) {
 				// IL conv.r.un does not indicate whether to convert the target type to R4 or R8,
 				// so the C# compiler usually follows it with an explicit conv.r4 or conv.r8.
 				// To avoid emitting '(float)(double)val', we combine these two conversions:
@@ -270,7 +269,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				arg.AcceptVisitor(this);
 			}
 		}
-		
+
 		protected internal override void VisitCall(Call inst)
 		{
 			var expr = EarlyExpressionTransforms.HandleCall(inst, context);
@@ -430,9 +429,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else if (args.Count == 5) {
 				int lo, mid, hi, isNegative, scale;
 				if (args[0].MatchLdcI4(out lo) && args[1].MatchLdcI4(out mid) &&
-				    args[2].MatchLdcI4(out hi) && args[3].MatchLdcI4(out isNegative) &&
-				    args[4].MatchLdcI4(out scale))
-				{
+					args[2].MatchLdcI4(out hi) && args[3].MatchLdcI4(out isNegative) &&
+					args[4].MatchLdcI4(out scale)) {
 					result = new LdcDecimal(new decimal(lo, mid, hi, isNegative != 0, (byte)scale));
 					return true;
 				}
@@ -501,8 +499,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Be careful: when both LHS and RHS are the constant 1, we must not
 			// swap the arguments as it would lead to an infinite transform loop.
 			if (inst.TrueInst.MatchLdcI4(0) && !inst.FalseInst.MatchLdcI4(0)
-				|| inst.FalseInst.MatchLdcI4(1) && !inst.TrueInst.MatchLdcI4(1))
-			{
+				|| inst.FalseInst.MatchLdcI4(1) && !inst.TrueInst.MatchLdcI4(1)) {
 				context.Step("canonicalize logic and/or", inst);
 				var t = inst.TrueInst;
 				inst.TrueInst = inst.FalseInst;
@@ -529,6 +526,112 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				}
 			}
+		}
+
+		IfInstruction HandleConditionalOperator(IfInstruction inst)
+		{
+			// if (cond) stloc (A, V1) else stloc (A, V2) --> stloc (A, if (cond) V1 else V2)
+			Block trueInst = inst.TrueInst as Block;
+			if (trueInst == null || trueInst.Instructions.Count != 1)
+				return inst;
+			Block falseInst = inst.FalseInst as Block;
+			if (falseInst == null || falseInst.Instructions.Count != 1)
+				return inst;
+			ILVariable v;
+			ILInstruction value1, value2;
+			if (trueInst.Instructions[0].MatchStLoc(out v, out value1) && falseInst.Instructions[0].MatchStLoc(v, out value2)) {
+				context.Step("conditional operator", inst);
+				var newIf = new IfInstruction(Comp.LogicNot(inst.Condition), value2, value1);
+				newIf.AddILRange(inst);
+				inst.ReplaceWith(new StLoc(v, newIf));
+				context.RequestRerun();  // trigger potential inlining of the newly created StLoc
+				return newIf;
+			}
+			return inst;
+		}
+
+		private void HandleSwitchExpression(BlockContainer container, SwitchInstruction switchInst)
+		{
+			if (!context.Settings.SwitchExpressions)
+				return;
+			Debug.Assert(container.Kind == ContainerKind.Switch);
+			Debug.Assert(container.ResultType == StackType.Void);
+			var defaultSection = switchInst.GetDefaultSection();
+			StackType resultType = StackType.Void;
+			BlockContainer leaveTarget = null;
+			ILVariable resultVariable = null;
+			foreach (var section in switchInst.Sections) {
+				if (section != defaultSection) {
+					// every section except for the default must have exactly 1 label
+					if (section.Labels.Count() != (section.HasNullLabel ? 0u : 1u))
+						return;
+				}
+				if (!section.Body.MatchBranch(out var sectionBlock))
+					return;
+				if (sectionBlock.IncomingEdgeCount != 1)
+					return;
+				if (sectionBlock.Parent != container)
+					return;
+				if (sectionBlock.Instructions.Count == 1) {
+					if (sectionBlock.Instructions[0] is Throw) {
+						// OK
+					} else if (sectionBlock.Instructions[0] is Leave leave) {
+						if (!leave.IsLeavingFunction)
+							return;
+						leaveTarget ??= leave.TargetContainer;
+						Debug.Assert(leaveTarget == leave.TargetContainer);
+						resultType = leave.Value.ResultType;
+					} else {
+						return;
+					}
+				} else if (sectionBlock.Instructions.Count == 2) {
+					if (!sectionBlock.Instructions[0].MatchStLoc(out var v, out _))
+						return;
+					if (!sectionBlock.Instructions[1].MatchLeave(container))
+						return;
+					resultVariable ??= v;
+					if (resultVariable != v)
+						return;
+					resultType = resultVariable.StackType;
+				} else {
+					return;
+				}
+			}
+			// Exactly one of resultVariable/leaveTarget must be null
+			if ((resultVariable == null) == (leaveTarget == null))
+				return;
+			if (switchInst.Value is StringToInt str2int) {
+				// validate that each integer is used for exactly one value
+				var integersUsed = new HashSet<int>();
+				foreach ((string key, int val) in str2int.Map) {
+					if (!integersUsed.Add(val))
+						return;
+				}
+			}
+
+			context.Step("Switch Expression", switchInst);
+			switchInst.SetResultType(resultType);
+			foreach (var section in switchInst.Sections) {
+				var block = ((Branch)section.Body).TargetBlock;
+				if (block.Instructions.Count == 1) {
+					if (block.Instructions[0] is Throw t) {
+						t.resultType = resultType;
+						section.Body = t;
+					} else if (block.Instructions[0] is Leave leave) {
+						section.Body = leave.Value;
+					} else {
+						throw new InvalidOperationException();
+					}
+				} else {
+					section.Body = ((StLoc)block.Instructions[0]).Value;
+				}
+			}
+			if (resultVariable != null) {
+				container.ReplaceWith(new StLoc(resultVariable, switchInst));
+			} else {
+				container.ReplaceWith(new Leave(leaveTarget, switchInst));
+			}
+			context.RequestRerun(); // new StLoc might trigger inlining
 		}
 
 		/// <summary>
@@ -641,28 +744,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			inst.ReplaceWith(new DynamicCompoundAssign(binaryOp.Operation, binaryOp.BinderFlags, binaryOp.Left, binaryOp.LeftArgumentInfo, binaryOp.Right, binaryOp.RightArgumentInfo));
 		}
 
-		IfInstruction HandleConditionalOperator(IfInstruction inst)
-		{
-			// if (cond) stloc (A, V1) else stloc (A, V2) --> stloc (A, if (cond) V1 else V2)
-			Block trueInst = inst.TrueInst as Block;
-			if (trueInst == null || trueInst.Instructions.Count != 1)
-				return inst;
-			Block falseInst = inst.FalseInst as Block;
-			if (falseInst == null || falseInst.Instructions.Count != 1)
-				return inst;
-			ILVariable v;
-			ILInstruction value1, value2;
-			if (trueInst.Instructions[0].MatchStLoc(out v, out value1) && falseInst.Instructions[0].MatchStLoc(v, out value2)) {
-				context.Step("conditional operator", inst);
-				var newIf = new IfInstruction(Comp.LogicNot(inst.Condition), value2, value1);
-				newIf.AddILRange(inst);
-				inst.ReplaceWith(new StLoc(v, newIf));
-				context.RequestRerun();  // trigger potential inlining of the newly created StLoc
-				return newIf;
-			}
-			return inst;
-		}
-
 		protected internal override void VisitBinaryNumericInstruction(BinaryNumericInstruction inst)
 		{
 			base.VisitBinaryNumericInstruction(inst);
@@ -670,8 +751,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case BinaryNumericOperator.ShiftLeft:
 				case BinaryNumericOperator.ShiftRight:
 					if (inst.Right.MatchBinaryNumericInstruction(BinaryNumericOperator.BitAnd, out var lhs, out var rhs)
-						&& rhs.MatchLdcI4(inst.ResultType == StackType.I8 ? 63 : 31))
-					{
+						&& rhs.MatchLdcI4(inst.ResultType == StackType.I8 ? 63 : 31)) {
 						// a << (b & 31) => a << b
 						context.Step("Combine bit.and into shift", inst);
 						inst.Right = lhs;
@@ -679,8 +759,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				case BinaryNumericOperator.BitAnd:
 					if (inst.Left.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean)
-						&& inst.Right.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean))
-					{
+						&& inst.Right.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean)) {
 						if (new NullableLiftingTransform(context).Run(inst)) {
 							// e.g. "(a.GetValueOrDefault() == b.GetValueOrDefault()) & (a.HasValue & b.HasValue)"
 						}
@@ -688,7 +767,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 			}
 		}
-		
+
 		protected internal override void VisitTryCatchHandler(TryCatchHandler inst)
 		{
 			base.VisitTryCatchHandler(inst);

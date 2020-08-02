@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new IfElseStatement(condition, trueStatement, falseStatement).WithILInstruction(inst);
 		}
 
-		IEnumerable<ConstantResolveResult> CreateTypedCaseLabel(long i, IType type, List<(string Key, int Value)> map = null)
+		internal IEnumerable<ConstantResolveResult> CreateTypedCaseLabel(long i, IType type, List<(string Key, int Value)> map = null)
 		{
 			object value;
 			// unpack nullable type, if necessary:
@@ -165,20 +165,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			caseLabelMapping = new Dictionary<Block, ConstantResolveResult>();
 
 			TranslatedExpression value;
-			var strToInt = inst.Value as StringToInt;
-			if (strToInt != null) {
+			if (inst.Value is StringToInt strToInt) {
 				value = exprBuilder.Translate(strToInt.Argument);
 			} else {
+				strToInt = null;
 				value = exprBuilder.Translate(inst.Value);
 			}
 
-			// Pick the section with the most labels as default section.
-			IL.SwitchSection defaultSection = inst.Sections.First();
-			foreach (var section in inst.Sections) {
-				if (section.Labels.Count() > defaultSection.Labels.Count()) {
-					defaultSection = section;
-				}
-			}
+			IL.SwitchSection defaultSection = inst.GetDefaultSection();
 
 			var stmt = new SwitchStatement() { Expression = value };
 			Dictionary<IL.SwitchSection, Syntax.SwitchSection> translationDictionary = new Dictionary<IL.SwitchSection, Syntax.SwitchSection>();

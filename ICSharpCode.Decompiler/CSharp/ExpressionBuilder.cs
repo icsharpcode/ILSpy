@@ -2920,6 +2920,56 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		protected internal override TranslatedExpression VisitSwitchInstruction(SwitchInstruction inst, TranslationContext context)
+		{
+			TranslatedExpression value;
+			if (inst.Value is StringToInt strToInt) {
+				value = Translate(strToInt.Argument);
+			} else {
+				strToInt = null;
+				value = Translate(inst.Value);
+			}
+
+			IL.SwitchSection defaultSection = inst.GetDefaultSection();
+			SwitchExpression switchExpr = new SwitchExpression();
+			switchExpr.Expression = value;
+			IType resultType;
+			if (context.TypeHint.Kind != TypeKind.Unknown && context.TypeHint.GetStackType() == inst.ResultType) {
+				resultType = context.TypeHint;
+			} else {
+				resultType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+			}
+			
+			foreach (var section in inst.Sections) {
+				if (section == defaultSection)
+					continue;
+				var ses = new SwitchExpressionSection();
+				if (section.HasNullLabel) {
+					Debug.Assert(section.Labels.IsEmpty);
+					ses.Pattern = new NullReferenceExpression();
+				} else {
+					long val = section.Labels.Values.Single();
+					var rr = statementBuilder.CreateTypedCaseLabel(val, value.Type, strToInt?.Map).Single();
+					ses.Pattern = astBuilder.ConvertConstantValue(rr);
+				}
+				ses.Body = TranslateSectionBody(section);
+				switchExpr.SwitchSections.Add(ses);
+			}
+
+			var defaultSES = new SwitchExpressionSection();
+			defaultSES.Pattern = new IdentifierExpression("_");
+			defaultSES.Body = TranslateSectionBody(defaultSection);
+			switchExpr.SwitchSections.Add(defaultSES);
+
+			return switchExpr.WithILInstruction(inst).WithRR(new ResolveResult(resultType));
+
+			Expression TranslateSectionBody(IL.SwitchSection section)
+			{
+				var body = Translate(section.Body, resultType);
+				return body.ConvertTo(resultType, this, allowImplicitConversion: true);
+			}
+		}
+
 		protected internal override TranslatedExpression VisitAddressOf(AddressOf inst, TranslationContext context)
 		{
 			// HACK: this is only correct if the argument is an R-value; otherwise we're missing the copy to the temporary

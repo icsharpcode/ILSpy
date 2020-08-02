@@ -1497,7 +1497,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Switch statement</summary>
 	public sealed partial class SwitchInstruction : ILInstruction
 	{
-		public override StackType ResultType { get { return StackType.Void; } }
+
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitSwitchInstruction(this);

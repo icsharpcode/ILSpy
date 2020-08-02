@@ -103,6 +103,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		void VisitSwitchStatement(SwitchStatement switchStatement);
 		void VisitSwitchSection(SwitchSection switchSection);
 		void VisitCaseLabel(CaseLabel caseLabel);
+		void VisitSwitchExpression(SwitchExpression switchExpression);
+		void VisitSwitchExpressionSection(SwitchExpressionSection switchExpressionSection);
 		void VisitThrowStatement(ThrowStatement throwStatement);
 		void VisitTryCatchStatement(TryCatchStatement tryCatchStatement);
 		void VisitCatchClause(CatchClause catchClause);
@@ -243,6 +245,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitSwitchStatement(SwitchStatement switchStatement);
 		S VisitSwitchSection(SwitchSection switchSection);
 		S VisitCaseLabel(CaseLabel caseLabel);
+		S VisitSwitchExpression(SwitchExpression switchExpression);
+		S VisitSwitchExpressionSection(SwitchExpressionSection switchExpressionSection);
 		S VisitThrowStatement(ThrowStatement throwStatement);
 		S VisitTryCatchStatement(TryCatchStatement tryCatchStatement);
 		S VisitCatchClause(CatchClause catchClause);
@@ -383,6 +387,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitSwitchStatement(SwitchStatement switchStatement, T data);
 		S VisitSwitchSection(SwitchSection switchSection, T data);
 		S VisitCaseLabel(CaseLabel caseLabel, T data);
+		S VisitSwitchExpression(SwitchExpression switchExpression, T data);
+		S VisitSwitchExpressionSection(SwitchExpressionSection switchExpressionSection, T data);
 		S VisitThrowStatement(ThrowStatement throwStatement, T data);
 		S VisitTryCatchStatement(TryCatchStatement tryCatchStatement, T data);
 		S VisitCatchClause(CatchClause catchClause, T data);

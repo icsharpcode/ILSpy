@@ -1759,6 +1759,33 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			EndNode(caseLabel);
 		}
 
+		public virtual void VisitSwitchExpression(SwitchExpression switchExpression)
+		{
+			StartNode(switchExpression);
+			switchExpression.Expression.AcceptVisitor(this);
+			Space();
+			WriteKeyword(SwitchExpression.SwitchKeywordRole);
+			OpenBrace(BraceStyle.EndOfLine);
+			foreach (AstNode node in switchExpression.SwitchSections) {
+				node.AcceptVisitor(this);
+				Comma(node);
+				NewLine();
+			}
+			CloseBrace(BraceStyle.EndOfLine);
+			EndNode(switchExpression);
+		}
+
+		public virtual void VisitSwitchExpressionSection(SwitchExpressionSection switchExpressionSection)
+		{
+			StartNode(switchExpressionSection);
+			switchExpressionSection.Pattern.AcceptVisitor(this);
+			Space();
+			WriteToken(Roles.Arrow);
+			Space();
+			switchExpressionSection.Body.AcceptVisitor(this);
+			EndNode(switchExpressionSection);
+		}
+
 		public virtual void VisitThrowStatement(ThrowStatement throwStatement)
 		{
 			StartNode(throwStatement);

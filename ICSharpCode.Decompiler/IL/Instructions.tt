@@ -116,7 +116,7 @@
 				new ChildInfo("fallbackInst"),
 			}), CustomConstructor, CustomComputeFlags, CustomWriteTo),
 		new OpCode("switch", "Switch statement",
-			CustomClassName("SwitchInstruction"), CustomConstructor, CustomComputeFlags, CustomWriteTo, ResultType("Void"),
+			CustomClassName("SwitchInstruction"), CustomConstructor, CustomComputeFlags, CustomWriteTo,
 			MatchCondition("IsLifted == o.IsLifted && Value.PerformMatch(o.Value, ref match) && Patterns.ListMatch.DoMatch(this.Sections, o.Sections, ref match)")),
 		new OpCode("switch.section", "Switch section within a switch statement",
 			CustomClassName("SwitchSection"), CustomChildren(new [] { new ChildInfo("body") }),

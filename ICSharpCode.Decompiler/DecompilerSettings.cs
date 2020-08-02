@@ -113,6 +113,7 @@ namespace ICSharpCode.Decompiler
 				asyncEnumerator = false;
 				staticLocalFunctions = false;
 				ranges = false;
+				switchExpressions = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.Preview) {
 				nativeIntegers = false;
@@ -124,7 +125,7 @@ namespace ICSharpCode.Decompiler
 		{
 			if (nativeIntegers || initAccessors)
 				return CSharp.LanguageVersion.Preview;
-			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement || staticLocalFunctions || ranges)
+			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement || staticLocalFunctions || ranges || switchExpressions)
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers || patternBasedFixedStatement)
 				return CSharp.LanguageVersion.CSharp7_3;
@@ -176,6 +177,23 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (initAccessors != value) {
 					initAccessors = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool switchExpressions = true;
+
+		/// <summary>
+		/// Use C# 8 switch expressions.
+		/// </summary>
+		[Category("C# 8.0 / VS 2019")]
+		[Description("DecompilerSettings.SwitchExpressions")]
+		public bool SwitchExpressions {
+			get { return switchExpressions; }
+			set {
+				if (switchExpressions != value) {
+					switchExpressions = value;
 					OnPropertyChanged();
 				}
 			}
