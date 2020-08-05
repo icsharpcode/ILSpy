@@ -103,9 +103,9 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			output.WriteLine("; " + comment);
 		}
 
-		private Dictionary<VarLocType, HashSet<Tuple<DebugInfo, NativeVarInfo>>> WriteDebugInfo(ReadyToRunMethod readyToRunMethod, ITextOutput output)
+		private Dictionary<VarLocType, HashSet<(DebugInfo debugInfo, NativeVarInfo varLoc)>> WriteDebugInfo(ReadyToRunMethod readyToRunMethod, ITextOutput output)
 		{
-			Dictionary<VarLocType, HashSet<Tuple<DebugInfo, NativeVarInfo>>> debugInfoDict = new Dictionary<VarLocType, HashSet<Tuple<DebugInfo, NativeVarInfo>>>();
+			Dictionary<VarLocType, HashSet<(DebugInfo debugInfo, NativeVarInfo varLoc)>> debugInfoDict = new Dictionary<VarLocType, HashSet<(DebugInfo debugInfo, NativeVarInfo varLoc)>>();
 			IReadOnlyList<RuntimeFunction> runTimeList = readyToRunMethod.RuntimeFunctions;
 			foreach (RuntimeFunction runtimeFunction in runTimeList) {
 				DebugInfo debugInfo = runtimeFunction.DebugInfo;
@@ -113,14 +113,16 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 					for (int i = 0; i < debugInfo.VariablesList.Count; ++i) {
 						var varLoc = debugInfo.VariablesList[i];
 						try {
-							HashSet<Tuple<DebugInfo, NativeVarInfo>> typeSet = new HashSet<Tuple<DebugInfo, NativeVarInfo>>();
+							var typeSet = new HashSet<ValueTuple<DebugInfo, NativeVarInfo>>();
 							bool found = debugInfoDict.TryGetValue(varLoc.VariableLocation.VarLocType, out typeSet);
 							if (found) {
-								typeSet.Add(new Tuple<DebugInfo, NativeVarInfo>(debugInfo, varLoc));
+								(DebugInfo debugInfo, NativeVarInfo varLoc) newTuple = (debugInfo, varLoc);
+								typeSet.Add(newTuple);
 							} else {
-								typeSet = new HashSet<Tuple<DebugInfo, NativeVarInfo>>();
+								typeSet = new HashSet<ValueTuple<DebugInfo, NativeVarInfo>>();
 								debugInfoDict.Add(varLoc.VariableLocation.VarLocType, typeSet);
-								typeSet.Add(new Tuple<DebugInfo, NativeVarInfo>(debugInfo, varLoc));
+								(DebugInfo debugInfo, NativeVarInfo varLoc) newTuple = (debugInfo, varLoc);
+								typeSet.Add(newTuple);
 							}
 						} catch (ArgumentNullException) {
 							output.WriteLine("Failed to find hash set of Debug info type");
@@ -168,7 +170,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 									output.WriteLine($"    Offset: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
 									break;
 								default:
-									throw new BadImageFormatException("Unexpected var loc type");
+									throw new BadImageFormatException("Unexpected variable type");
 							}
 							output.WriteLine("");
 						}
@@ -216,7 +218,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 
 			bool isShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(null);
-			Dictionary<VarLocType, HashSet<Tuple<DebugInfo, NativeVarInfo>>> debugInfo = null;
+			Dictionary<VarLocType, HashSet<ValueTuple<DebugInfo, NativeVarInfo>>> debugInfo = null;
 			if (isShowDebugInfo) {
 				debugInfo = WriteDebugInfo(readyToRunMethod, output);
 			}
@@ -293,12 +295,12 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		private static void DecorateDebugInfo(ITextOutput output, Instruction instr, Dictionary<VarLocType, HashSet<Tuple<DebugInfo, NativeVarInfo>>> debugInfoDict, ulong baseInstrIP)
+		private static void DecorateDebugInfo(ITextOutput output, Instruction instr, Dictionary<VarLocType, HashSet<(DebugInfo debugInfo, NativeVarInfo varLoc)>> debugInfoDict, ulong baseInstrIP)
 		{
 			if (debugInfoDict != null) {
 				InstructionInfoFactory factory = new InstructionInfoFactory();
 				InstructionInfo info = factory.GetInfo(instr);
-				HashSet<Tuple<DebugInfo, NativeVarInfo>> stkSet = new HashSet<Tuple<DebugInfo, NativeVarInfo>>();
+				HashSet<ValueTuple<DebugInfo, NativeVarInfo>> stkSet = new HashSet<ValueTuple<DebugInfo, NativeVarInfo>>();
 				if (debugInfoDict.ContainsKey(VarLocType.VLT_STK)) {
 					stkSet.UnionWith(debugInfoDict[VarLocType.VLT_STK]);
 				}
@@ -307,9 +309,9 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				}
 				if (stkSet != null) {
 					foreach (UsedMemory usedMemInfo in info.GetUsedMemory()) { //for each time a [register +- value] is used
-						foreach (Tuple<DebugInfo, NativeVarInfo> tuple in stkSet) { //for each VLT_STK variable
-							var debugInfo = tuple.Item1;
-							var varInfo = tuple.Item2;
+						foreach ((DebugInfo debugInfo, NativeVarInfo varLoc) tuple in stkSet) { //for each VLT_STK variable
+							var debugInfo = tuple.debugInfo;
+							var varInfo = tuple.varLoc;
 							int stackOffset = varInfo.VariableLocation.Data2;
 							ulong adjOffset;
 							bool negativeOffset;
@@ -329,7 +331,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						}
 					}
 				}
-				HashSet<Tuple<DebugInfo, NativeVarInfo>> regSet = new HashSet<Tuple<DebugInfo, NativeVarInfo>>();
+				HashSet<ValueTuple<DebugInfo, NativeVarInfo>> regSet = new HashSet<ValueTuple<DebugInfo, NativeVarInfo>>();
 				if (debugInfoDict.ContainsKey(VarLocType.VLT_REG)) {
 					regSet.UnionWith(debugInfoDict[VarLocType.VLT_REG]);
 				}
@@ -341,9 +343,9 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				}
 				if (regSet != null) {
 					foreach (UsedRegister usedMemInfo in info.GetUsedRegisters()) {
-						foreach (Tuple<DebugInfo, NativeVarInfo> tuple in regSet) {
-							var debugInfo = tuple.Item1;
-							var varInfo = tuple.Item2;
+						foreach ((DebugInfo debugInfo, NativeVarInfo varLoc) tuple in regSet) {
+							var debugInfo = tuple.debugInfo;
+							var varInfo = tuple.varLoc;
 							if (varInfo.StartOffset < instr.IP - baseInstrIP && varInfo.EndOffset > instr.IP - baseInstrIP &&
 								DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varInfo.VariableLocation.Data1) == usedMemInfo.Register.ToString()) {
 								output.Write($"; {usedMemInfo.Register.ToString()} = {varInfo.Variable.Type} {varInfo.Variable.Index}");
