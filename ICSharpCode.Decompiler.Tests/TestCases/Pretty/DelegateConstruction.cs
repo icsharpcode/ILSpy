@@ -428,6 +428,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return () => valueTuple.RenamedString;
 		}
 #endif
+
+		public static Func<T, T> Identity<T>()
+		{
+			return (T _) => _;
+		}
+
+#if CS90
+		public static Func<int, int, int, int> LambdaParameterDiscard()
+		{
+			return (int _, int _, int _) => 0;
+		}
+#endif
 	}
 
 	public class Issue1867

@@ -251,14 +251,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				preprocessorSymbols.Add("VB11");
 				preprocessorSymbols.Add("VB14");
 				preprocessorSymbols.Add("VB15");
+
+				if (flags.HasFlag(CompilerOptions.Preview)) {
+					preprocessorSymbols.Add("CS90");
+				}
 			} else if (flags.HasFlag(CompilerOptions.UseMcs)) {
 				preprocessorSymbols.Add("MCS");
 			} else {
 				preprocessorSymbols.Add("LEGACY_CSC");
 				preprocessorSymbols.Add("LEGACY_VBC");
-			}
-			if (flags.HasFlag(CompilerOptions.Preview)) {
-				preprocessorSymbols.Add("CS90");
 			}
 			return preprocessorSymbols;
 		}
