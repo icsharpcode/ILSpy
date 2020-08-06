@@ -84,9 +84,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public FullTypeName FullTypeName { get { return fullTypeName; } }
 		
-		IType ResolveInAllAssemblies(ITypeResolveContext context)
+		internal static IType ResolveInAllAssemblies(ICompilation compilation, in FullTypeName fullTypeName)
 		{
-			var compilation = context.Compilation;
 			foreach (var asm in compilation.Modules) {
 				IType type = asm.GetTypeDefinition(fullTypeName);
 				if (type != null)
@@ -107,7 +106,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					type = context.CurrentModule.GetTypeDefinition(fullTypeName);
 				}
 				if (type == null) {
-					type = ResolveInAllAssemblies(context);
+					type = ResolveInAllAssemblies(context.Compilation, in fullTypeName);
 				}
 			} else {
 				// Assembly specified: only look in the specified assembly.
@@ -118,7 +117,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (asm != null) {
 					type = asm.GetTypeDefinition(fullTypeName);
 				} else {
-					type = ResolveInAllAssemblies(context);
+					type = ResolveInAllAssemblies(context.Compilation, in fullTypeName);
 				}
 			}
 			return type ?? new UnknownType(fullTypeName, isReferenceType);
