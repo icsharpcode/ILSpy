@@ -210,6 +210,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		private void Disassemble(PEFile currentFile, ITextOutput output, ReadyToRunReader reader, ReadyToRunMethod readyToRunMethod, RuntimeFunction runtimeFunction, int bitness, ulong address, bool showMetadataTokens, bool showMetadataTokensInBase10)
 		{
+			// TODO: Decorate the disassembly with GCInfo
 			WriteCommentLine(output, readyToRunMethod.SignatureString);
 			
 			Dictionary<ulong, UnwindCode> unwindInfo = null;
@@ -228,7 +229,6 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				codeBytes[i] = reader.Image[reader.GetOffset(runtimeFunction.StartAddress) + i];
 			}
 
-			// TODO: Decorate the disassembly with GCInfo
 			var codeReader = new ByteArrayCodeReader(codeBytes);
 			var decoder = Decoder.Create(bitness, codeReader);
 			decoder.IP = address;
