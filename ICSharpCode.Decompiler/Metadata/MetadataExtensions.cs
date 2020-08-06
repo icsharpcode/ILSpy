@@ -147,6 +147,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return Disassembler.DisassemblerHelpers.Escape(name);
 		}
 
+		[Obsolete("Use MetadataModule.GetDeclaringModule() instead")]
 		public static IModuleReference GetDeclaringModule(this TypeReferenceHandle handle, MetadataReader reader)
 		{
 			var tr = reader.GetTypeReference(handle);
