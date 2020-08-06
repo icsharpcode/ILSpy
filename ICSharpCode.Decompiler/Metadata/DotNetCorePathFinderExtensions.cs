@@ -55,44 +55,52 @@ namespace ICSharpCode.Decompiler.Metadata
 			var reader = assembly.GetMetadataReader();
 
 			foreach (var h in reader.GetCustomAttributes(Handle.AssemblyDefinition)) {
-				var attribute = reader.GetCustomAttribute(h);
-				if (attribute.GetAttributeType(reader).GetFullTypeName(reader).ToString() != TargetFrameworkAttributeName)
-					continue;
-				var blobReader = reader.GetBlobReader(attribute.Value);
-				if (blobReader.ReadUInt16() == 0x0001) {
-					return blobReader.ReadSerializedString();
+				try {
+					var attribute = reader.GetCustomAttribute(h);
+					if (attribute.GetAttributeType(reader).GetFullTypeName(reader).ToString() != TargetFrameworkAttributeName)
+						continue;
+					var blobReader = reader.GetBlobReader(attribute.Value);
+					if (blobReader.ReadUInt16() == 0x0001) {
+						return blobReader.ReadSerializedString();
+					}
+				} catch (BadImageFormatException) {
+					// ignore malformed attributes
 				}
 			}
 
 			foreach (var h in reader.AssemblyReferences) {
-				var r = reader.GetAssemblyReference(h);
-				if (r.PublicKeyOrToken.IsNil)
-					continue;
-				string version;
-				switch (reader.GetString(r.Name)) {
-					case "netstandard":
-						version = r.Version.ToString(3);
-						return $".NETStandard,Version=v{version}";
-					case "System.Runtime":
-						// System.Runtime.dll uses the following scheme:
-						// 4.2.0 => .NET Core 2.0
-						// 4.2.1 => .NET Core 2.1 / 3.0
-						// 4.2.2 => .NET Core 3.1
-						if (r.Version >= new Version(4, 2, 0)) {
-							version = "2.0";
-							if (r.Version >= new Version(4, 2, 1)) {
-								version = "3.0";
+				try {
+					var r = reader.GetAssemblyReference(h);
+					if (r.PublicKeyOrToken.IsNil)
+						continue;
+					string version;
+					switch (reader.GetString(r.Name)) {
+						case "netstandard":
+							version = r.Version.ToString(3);
+							return $".NETStandard,Version=v{version}";
+						case "System.Runtime":
+							// System.Runtime.dll uses the following scheme:
+							// 4.2.0 => .NET Core 2.0
+							// 4.2.1 => .NET Core 2.1 / 3.0
+							// 4.2.2 => .NET Core 3.1
+							if (r.Version >= new Version(4, 2, 0)) {
+								version = "2.0";
+								if (r.Version >= new Version(4, 2, 1)) {
+									version = "3.0";
+								}
+								if (r.Version >= new Version(4, 2, 2)) {
+									version = "3.1";
+								}
+								return $".NETCoreApp,Version=v{version}";
+							} else {
+								continue;
 							}
-							if (r.Version >= new Version(4, 2, 2)) {
-								version = "3.1";
-							}
-							return $".NETCoreApp,Version=v{version}";
-						} else {
-							continue;
-						}
-					case "mscorlib":
-						version = r.Version.ToString(2);
-						return $".NETFramework,Version=v{version}";
+						case "mscorlib":
+							version = r.Version.ToString(2);
+							return $".NETFramework,Version=v{version}";
+					}
+				} catch (BadImageFormatException) {
+					// ignore malformed references
 				}
 			}
 
