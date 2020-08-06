@@ -1793,6 +1793,15 @@ namespace ICSharpCode.Decompiler.CSharp
 						// Case 4 (left-over extension from implicit conversion) can also be handled by our caller.
 						return arg.WithILInstruction(inst);
 					}
+				case ConversionKind.Invalid:
+					if (inst.InputType == StackType.Unknown && inst.TargetType == IL.PrimitiveType.None && arg.Type.Kind == TypeKind.Unknown) {
+						// Unknown -> O conversion.
+						// Our post-condition allows us to also use expressions with unknown type where O is expected,
+						// so avoid introducing an `(object)` cast because we're likely to cast back to the same unknown type,
+						// just in a signature context where we know that it's a class type.
+						return arg.WithILInstruction(inst);
+					}
+					goto default;
 				default: {
 						// We need to convert to inst.TargetType, or to an equivalent type.
 						IType targetType;
