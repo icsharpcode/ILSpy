@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -235,6 +236,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return knownTypeReferences[(int)typeCode];
 		}
 		
+		public static IEnumerable<KnownTypeReference> AllKnownTypes {
+			get {
+				for (int i = 0; i < KnownTypeCodeCount; i++) {
+					var ktr = Get((KnownTypeCode)i);
+					if (ktr == null)
+						continue;
+					yield return ktr;
+				}
+			}
+		}
+
 		readonly KnownTypeCode knownTypeCode;
 		readonly string namespaceName;
 		readonly string name;
