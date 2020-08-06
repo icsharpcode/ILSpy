@@ -166,13 +166,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		/// <summary>
 		/// Return type of this function.
-		/// Might be null, if this function was not created from metadata.
 		/// </summary>
 		public readonly IType ReturnType;
 
 		/// <summary>
 		/// List of parameters of this function.
-		/// Might be null, if this function was not created from metadata.
 		/// </summary>
 		public readonly IReadOnlyList<IParameter> Parameters;
 
@@ -188,17 +186,16 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		/// <remarks>
 		/// Use <see cref="ILReader"/> to create ILAst.
-		/// <paramref name="method"/> may be null.
 		/// </remarks>
 		public ILFunction(IMethod method, int codeSize, GenericContext genericContext, ILInstruction body, ILFunctionKind kind = ILFunctionKind.TopLevelFunction) : base(OpCode.ILFunction)
 		{
 			this.Method = method;
-			this.Name = Method?.Name;
+			this.Name = method.Name;
 			this.CodeSize = codeSize;
 			this.GenericContext = genericContext;
 			this.Body = body;
-			this.ReturnType = Method?.ReturnType;
-			this.Parameters = Method?.Parameters;
+			this.ReturnType = method.ReturnType;
+			this.Parameters = method.Parameters;
 			this.Variables = new ILVariableCollection(this);
 			this.LocalFunctions = new InstructionCollection<ILFunction>(this, 1);
 			this.kind = kind;
@@ -207,15 +204,15 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// This constructor is only to be used by the TransformExpressionTrees step.
 		/// </summary>
-		internal ILFunction(IType returnType, IReadOnlyList<IParameter> parameters, GenericContext genericContext, ILInstruction body) : base(OpCode.ILFunction)
+		internal ILFunction(IType returnType, IReadOnlyList<IParameter> parameters, GenericContext genericContext, ILInstruction body, ILFunctionKind kind = ILFunctionKind.TopLevelFunction) : base(OpCode.ILFunction)
 		{
 			this.GenericContext = genericContext;
 			this.Body = body;
-			this.ReturnType = returnType;
-			this.Parameters = parameters;
+			this.ReturnType = returnType ?? throw new ArgumentNullException(nameof(returnType));
+			this.Parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
 			this.Variables = new ILVariableCollection(this);
 			this.LocalFunctions = new InstructionCollection<ILFunction>(this, 1);
-			this.kind = ILFunctionKind.ExpressionTree;
+			this.kind = kind;
 		}
 
 		internal override void CheckInvariant(ILPhase phase)
