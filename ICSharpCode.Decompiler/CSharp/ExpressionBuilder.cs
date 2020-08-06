@@ -1076,7 +1076,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				return null;
 			if (inst.Operator == BinaryNumericOperator.Sub && inst.LeftInputType == StackType.Ref && inst.RightInputType == StackType.Ref) {
 				// ref - ref => i
-				return CallUnsafeIntrinsic("ByteOffset", new[] { left.Expression, right.Expression }, compilation.FindType(KnownTypeCode.IntPtr), inst);
+				return CallUnsafeIntrinsic("ByteOffset", new[] { 
+					// ByteOffset() expects the parameters the wrong way around, so order using named arguments
+					new NamedArgumentExpression("target", left.Expression), 
+					new NamedArgumentExpression("origin", right.Expression) 
+				}, compilation.FindType(KnownTypeCode.IntPtr), inst);
 			}
 			if (inst.LeftInputType == StackType.Ref && inst.RightInputType.IsIntegerType()
 				&& left.Type is ByReferenceType brt) {
