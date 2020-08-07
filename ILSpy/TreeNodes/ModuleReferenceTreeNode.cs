@@ -17,8 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -27,26 +27,55 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	sealed class ModuleReferenceTreeNode : ILSpyTreeNode
 	{
-		readonly ModuleReference r;
+		readonly AssemblyTreeNode parentAssembly;
+		readonly MetadataReader metadata;
+		readonly ModuleReferenceHandle handle;
+		readonly ModuleReference reference;
+		readonly AssemblyFileHandle fileHandle;
+		readonly AssemblyFile file;
+		readonly string moduleName;
+		readonly bool containsMetadata;
 		
-		public ModuleReferenceTreeNode(ModuleReference r)
+		public ModuleReferenceTreeNode(AssemblyTreeNode parentAssembly, ModuleReferenceHandle r, MetadataReader module)
 		{
-			if (r == null)
-				throw new ArgumentNullException("r");
-			this.r = r;
+			this.parentAssembly = parentAssembly ?? throw new ArgumentNullException(nameof(parentAssembly));
+			if (r.IsNil)
+				throw new ArgumentNullException(nameof(r));
+			this.metadata = module;
+			this.handle = r;
+			this.reference = module.GetModuleReference(r);
+			this.moduleName = metadata.GetString(reference.Name);
+
+			foreach (var h in module.AssemblyFiles) {
+				var file = module.GetAssemblyFile(h);
+				if (module.StringComparer.Equals(file.Name, moduleName)) {
+					this.file = file;
+					this.fileHandle = h;
+					this.containsMetadata = file.ContainsMetadata;
+					break;
+				}
+			}
 		}
 		
 		public override object Text {
-			get { return r.Name + r.MetadataToken.ToSuffixString(); }
+			get { return moduleName + ((EntityHandle)handle).ToSuffixString(); }
 		}
-		
-		public override object Icon {
-			get { return Images.Library; }
+
+		public override object Icon => Images.Library;
+
+		public override void ActivateItem(System.Windows.RoutedEventArgs e)
+		{
+			var assemblyListNode = parentAssembly.Parent as AssemblyListTreeNode;
+			if (assemblyListNode != null && containsMetadata) {
+				assemblyListNode.Select(assemblyListNode.FindAssemblyNode(parentAssembly.LoadedAssembly.LookupReferencedModule(parentAssembly.LoadedAssembly.GetPEFileOrNull(), metadata.GetString(reference.Name))));
+				e.Handled = true;
+			}
 		}
-		
+
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, r.Name);
+			language.WriteCommentLine(output, moduleName);
+			language.WriteCommentLine(output, containsMetadata ? "contains metadata" : "contains no metadata");
 		}
 	}
 }

@@ -1,15 +1,13 @@
 ﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
-using System;
 using System.ComponentModel.Composition;
-using System.Linq;
+using System.Reflection.Metadata;
 using System.Windows.Controls;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Ast;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy;
-using ICSharpCode.NRefactory.CSharp;
-using Mono.Cecil;
 
 namespace TestPlugin
 {
@@ -31,13 +29,15 @@ namespace TestPlugin
 				return ".txt";
 			}
 		}
-		
+
 		// There are several methods available to override; in this sample, we deal with methods only
-		
-		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
-			if (method.Body != null) {
-				output.WriteLine("Size of method: {0} bytes", method.Body.CodeSize);
+			var module = ((MetadataModule)method.ParentModule).PEFile;
+			var methodDef = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
+			if (methodDef.HasBody()) {
+				var methodBody = module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+				output.WriteLine("Size of method: {0} bytes", methodBody.GetCodeSize());
 				
 				ISmartTextOutput smartOutput = output as ISmartTextOutput;
 				if (smartOutput != null) {
@@ -45,15 +45,18 @@ namespace TestPlugin
 					smartOutput.AddButton(null, "Click me!", (sender, e) => (sender as Button).Content = "I was clicked!");
 					smartOutput.WriteLine();
 				}
-				
-				// ICSharpCode.Decompiler.Ast.AstBuilder can be used to decompile to C#
-				AstBuilder b = new AstBuilder(new DecompilerContext(method.Module) {
-				                              	Settings = options.DecompilerSettings,
-				                              	CurrentType = method.DeclaringType
-				                              });
-				b.AddMethod(method);
-				b.RunTransformations();
-				output.WriteLine("Decompiled AST has {0} nodes", b.SyntaxTree.DescendantsAndSelf.Count());
+
+				// ICSharpCode.Decompiler.CSharp.CSharpDecompiler can be used to decompile to C#.
+				/*
+					ModuleDefinition module = LoadModule(assemblyFileName);
+					var typeSystem = new DecompilerTypeSystem(module);
+					CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, new DecompilerSettings());
+
+					decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+					SyntaxTree syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
+					var visitor = new CSharpOutputVisitor(output, FormattingOptionsFactory.CreateSharpDevelop());
+					syntaxTree.AcceptVisitor(visitor);
+				*/
 			}
 		}
 	}

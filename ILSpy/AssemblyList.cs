@@ -23,6 +23,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.Xml.Linq;
 
@@ -37,10 +38,10 @@ namespace ICSharpCode.ILSpy
 		
 		/// <summary>Dirty flag, used to mark modifications so that the list is saved later</summary>
 		bool dirty;
-		
-		internal readonly ConcurrentDictionary<string, LoadedAssembly> assemblyLookupCache = new ConcurrentDictionary<string, LoadedAssembly>();
-		internal readonly ConcurrentDictionary<string, LoadedAssembly> winRTMetadataLookupCache = new ConcurrentDictionary<string, LoadedAssembly>();
-		
+
+		internal readonly ConcurrentDictionary<(string assemblyName, bool isWinRT, string targetFrameworkIdentifier), LoadedAssembly> assemblyLookupCache = new ConcurrentDictionary<(string assemblyName, bool isWinRT, string targetFrameworkIdentifier), LoadedAssembly>();
+		internal readonly ConcurrentDictionary<string, LoadedAssembly> moduleLookupCache = new ConcurrentDictionary<string, LoadedAssembly>();
+
 		/// <summary>
 		/// The assemblies in this list.
 		/// Needs locking for multi-threaded access!
@@ -68,6 +69,15 @@ namespace ICSharpCode.ILSpy
 				OpenAssembly((string)asm);
 			}
 			this.dirty = false; // OpenAssembly() sets dirty, so reset it afterwards
+		}
+
+		/// <summary>
+		/// Creates a copy of an assembly list.
+		/// </summary>
+		public AssemblyList(AssemblyList list, string newName)
+			: this(newName)
+		{
+			this.assemblies.AddRange(list.assemblies);
 		}
 		
 		/// <summary>
@@ -136,14 +146,35 @@ namespace ICSharpCode.ILSpy
 		internal void ClearCache()
 		{
 			assemblyLookupCache.Clear();
-			winRTMetadataLookupCache.Clear();
+			moduleLookupCache.Clear();
 		}
-		
+
+		public LoadedAssembly Open(string assemblyUri, bool isAutoLoaded = false)
+		{
+			if (assemblyUri.StartsWith("nupkg://", StringComparison.OrdinalIgnoreCase)) {
+				string fileName = assemblyUri.Substring("nupkg://".Length);
+				int separator = fileName.LastIndexOf(';');
+				string componentName = null;
+				if (separator > -1) {
+					componentName = fileName.Substring(separator + 1);
+					fileName = fileName.Substring(0, separator);
+					LoadedNugetPackage package = new LoadedNugetPackage(fileName);
+					var entry = package.Entries.FirstOrDefault(e => e.Name == componentName);
+					if (entry != null) {
+						return OpenAssembly(assemblyUri, entry.Stream, true);
+					}
+				}
+				return null;
+			} else {
+				return OpenAssembly(assemblyUri, isAutoLoaded);
+			}
+		}
+
 		/// <summary>
 		/// Opens an assembly from disk.
 		/// Returns the existing assembly node if it is already loaded.
 		/// </summary>
-		public LoadedAssembly OpenAssembly(string file, bool isAutoLoaded=false)
+		public LoadedAssembly OpenAssembly(string file, bool isAutoLoaded = false)
 		{
 			App.Current.Dispatcher.VerifyAccess();
 			
@@ -155,6 +186,26 @@ namespace ICSharpCode.ILSpy
 			}
 			
 			var newAsm = new LoadedAssembly(this, file);
+			newAsm.IsAutoLoaded = isAutoLoaded;
+			lock (assemblies) {
+				this.assemblies.Add(newAsm);
+			}
+			return newAsm;
+		}
+
+		/// <summary>
+		/// Opens an assembly from a stream.
+		/// </summary>
+		public LoadedAssembly OpenAssembly(string file, Stream stream, bool isAutoLoaded = false)
+		{
+			App.Current.Dispatcher.VerifyAccess();
+
+			foreach (LoadedAssembly asm in this.assemblies) {
+				if (file.Equals(asm.FileName, StringComparison.OrdinalIgnoreCase))
+					return asm;
+			}
+
+			var newAsm = new LoadedAssembly(this, file, stream);
 			newAsm.IsAutoLoaded = isAutoLoaded;
 			lock (assemblies) {
 				this.assemblies.Add(newAsm);
@@ -194,16 +245,22 @@ namespace ICSharpCode.ILSpy
 			if (target == null)
 				return null;
 
+			return ReloadAssembly(target);
+		}
+
+		public LoadedAssembly ReloadAssembly(LoadedAssembly target)
+		{
 			var index = this.assemblies.IndexOf(target);
-			var newAsm = new LoadedAssembly(this, file);
+			var newAsm = new LoadedAssembly(this, target.FileName);
 			newAsm.IsAutoLoaded = target.IsAutoLoaded;
+			newAsm.PdbFileOverride = target.PdbFileOverride;
 			lock (assemblies) {
 				this.assemblies.Remove(target);
 				this.assemblies.Insert(index, newAsm);
 			}
 			return newAsm;
 		}
-		
+
 		public void Unload(LoadedAssembly assembly)
 		{
 			App.Current.Dispatcher.VerifyAccess();

@@ -1,13 +1,49 @@
-version: 1.0.{build}
-configuration: Debug
 platform: Any CPU
+
+configuration:
+- Debug
+- Release
+
+image: Visual Studio 2019
+
 install:
 - git submodule update --init --recursive
+- pwsh .\BuildTools\appveyor-install.ps1
+
+nuget:
+  account_feed: false
+  project_feed: true
+  disable_publish_on_pr: true
+
 before_build:
 - nuget restore ILSpy.sln
-build:
-  project: ILSpy.sln
-  parallel: true
-  verbosity: minimal
+
+build_script:
+- msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+
+after_build:
+- 7z a ILSpy_binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*.config %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*\ILSpy.resources.dll
+
+test_script:
+- vstest.console.exe /logger:Appveyor /Parallel "ICSharpCode.Decompiler.Tests\bin\%configuration%\net472\ICSharpCode.Decompiler.Tests.exe" "ILSpy.Tests\bin\%configuration%\net472\ILSpy.Tests.exe" "ILSpy.BamlDecompiler.Tests\bin\%configuration%\net472\ILSpy.BamlDecompiler.Tests.exe"
+
 after_test:
 - python BuildTools\tidy.py
+
+for:
+- branches:
+    except:
+      - master
+  artifacts:
+    #nothing
+- branches:
+    only:
+      - master
+      - 5.0.x
+  artifacts:
+    - path: ILSpy_binaries.zip
+      name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% binaries
+    - path: '**\*.vsix'
+      name: ILSpy AddIn for Visual Studio
+    - path: '**\*.nupkg'
+      name: ICSharpCode.Decompiler %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% NuGet

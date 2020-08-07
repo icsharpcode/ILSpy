@@ -149,6 +149,7 @@
 			<Word>newarr</Word>
 			<Word>ldlen</Word>
 			<Word>ldelema</Word>
+			<Word>ldelem</Word>
 			<Word>ldelem.i1</Word>
 			<Word>ldelem.u1</Word>
 			<Word>ldelem.i2</Word>
@@ -160,6 +161,7 @@
 			<Word>ldelem.r4</Word>
 			<Word>ldelem.r8</Word>
 			<Word>ldelem.ref</Word>
+			<Word>stelem</Word>
 			<Word>stelem.i</Word>
 			<Word>stelem.i1</Word>
 			<Word>stelem.i2</Word>
@@ -252,6 +254,10 @@
 			<Word>int16</Word>
 			<Word>int32</Word>
 			<Word>int64</Word>
+			<Word>uint8</Word>
+			<Word>uint16</Word>
+			<Word>uint32</Word>
+			<Word>uint64</Word>
 			<Word>float</Word>
 			<Word>float32</Word>
 			<Word>float64</Word>
@@ -332,6 +338,7 @@
 			<Word>forwardref</Word>
 			<Word>internalcall</Word>
 			<Word>noinlining</Word>
+			<Word>aggressiveinlining</Word>
 			<Word>nomangle</Word>
 			<Word>lasterr</Word>
 			<Word>winapi</Word>
@@ -494,11 +501,16 @@
 			<!-- Header flags keywords  -->
 			<Word>.subsystem</Word>
 			<Word>.corflags</Word>
+			<Word>.stackreserve</Word>
 			<Word>alignment</Word>
 			<Word>.imagebase</Word>
 		</Keywords>
 		<Span color="Comment" ruleSet="CommentMarkerSet">
 			<Begin>//</Begin>
+		</Span>
+		<Span color="Comment" ruleSet="CommentMarkerSet">
+			<Begin>/\*</Begin>
+			<End>\*/</End>
 		</Span>
 		<Span color="String">
 			<Begin>"</Begin>

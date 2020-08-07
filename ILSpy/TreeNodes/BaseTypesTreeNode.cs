@@ -17,10 +17,16 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
+using System.Reflection.Metadata;
 using System.Windows.Threading;
+
+using Humanizer.Localisation;
+
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.TreeView;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -29,35 +35,34 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	sealed class BaseTypesTreeNode : ILSpyTreeNode
 	{
-		readonly TypeDefinition type;
+		readonly PEFile module;
+		readonly ITypeDefinition type;
 
-		public BaseTypesTreeNode(TypeDefinition type)
+		public BaseTypesTreeNode(PEFile module, ITypeDefinition type)
 		{
+			this.module = module;
 			this.type = type;
 			this.LazyLoading = true;
 		}
 
-		public override object Text
-		{
-			get { return "Base Types"; }
-		}
+		public override object Text => Properties.Resources.BaseTypes;
 
-		public override object Icon
-		{
-			get { return Images.SuperTypes; }
-		}
+		public override object Icon => Images.SuperTypes;
 
 		protected override void LoadChildren()
 		{
-			AddBaseTypes(this.Children, type);
+			AddBaseTypes(this.Children, module, type);
 		}
 
-		internal static void AddBaseTypes(SharpTreeNodeCollection children, TypeDefinition type)
+		internal static void AddBaseTypes(SharpTreeNodeCollection children, PEFile module, ITypeDefinition typeDefinition)
 		{
-			if (type.BaseType != null)
-				children.Add(new BaseTypesEntryNode(type.BaseType, false));
-			foreach (TypeReference i in type.Interfaces) {
-				children.Add(new BaseTypesEntryNode(i, true));
+			TypeDefinitionHandle handle = (TypeDefinitionHandle)typeDefinition.MetadataToken;
+			DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver(),
+				TypeSystemOptions.Default | TypeSystemOptions.Uncached);
+			var t = typeSystem.MainModule.ResolveEntity(handle) as ITypeDefinition;
+			foreach (var td in t.GetAllBaseTypeDefinitions().Reverse().Skip(1)) {
+				if (t.Kind != TypeKind.Interface || t.Kind == td.Kind)
+					children.Add(new BaseTypesEntryNode(td));
 			}
 		}
 

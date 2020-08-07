@@ -3,14 +3,17 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.ComponentModel.Design;
-using Microsoft.Win32;
+using System.Threading;
+using Microsoft;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
-using System.Reflection;
-using System.IO;
-using Mono.Cecil;
+using ICSharpCode.ILSpy.AddIn.Commands;
+using Microsoft.VisualStudio.ComponentModelHost;
+using Microsoft.VisualStudio.LanguageServices;
+using EnvDTE;
+using System.Collections.Generic;
+using Task = System.Threading.Tasks.Task;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
@@ -26,15 +29,15 @@ namespace ICSharpCode.ILSpy.AddIn
 	/// </summary>
 	// This attribute tells the PkgDef creation utility (CreatePkgDef.exe) that this class is
 	// a package.
-	[PackageRegistration(UseManagedResourcesOnly = true)]
+	[PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
 	// This attribute is used to register the information needed to show this package
 	// in the Help/About dialog of Visual Studio.
 	[InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
 	// This attribute is needed to let the shell know that this package exposes some menus.
 	[ProvideMenuResource("Menus.ctmenu", 1)]
 	[Guid(GuidList.guidILSpyAddInPkgString)]
-	[ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string)]
-	public sealed class ILSpyAddInPackage : Package
+	[ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
+	public sealed class ILSpyAddInPackage : AsyncPackage
 	{
 		/// <summary>
 		/// Default constructor of the package.
@@ -48,6 +51,13 @@ namespace ICSharpCode.ILSpy.AddIn
 			Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
 		}
 
+		OleMenuCommandService menuService;
+		public OleMenuCommandService MenuService => menuService;
+
+		VisualStudioWorkspace workspace;
+		public VisualStudioWorkspace Workspace => workspace;
+
+		public EnvDTE80.DTE2 DTE => (EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE));
 
 
 		/////////////////////////////////////////////////////////////////////////////
@@ -58,219 +68,87 @@ namespace ICSharpCode.ILSpy.AddIn
 		/// Initialization of the package; this method is called right after the package is sited, so this is the place
 		/// where you can put all the initialization code that rely on services provided by VisualStudio.
 		/// </summary>
-		protected override void Initialize()
+		protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
 		{
-			Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
-			base.Initialize();
+			Debug.WriteLine($"Entering {nameof(InitializeAsync)}() of: {this}");
+
+			await base.InitializeAsync(cancellationToken, progress);
+
+			await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+			cancellationToken.ThrowIfCancellationRequested();
+
+			var componentModel = (IComponentModel)await GetServiceAsync(typeof(SComponentModel));
+			Assumes.Present(componentModel);
 
 			// Add our command handlers for menu (commands must exist in the .vsct file)
-			OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-			if (null != mcs) {
-				// Create the command for the References context menu.
-				CommandID menuCommandID = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenReferenceInILSpy);
-				MenuCommand menuItem = new MenuCommand(OpenReferenceInILSpyCallback, menuCommandID);
-				mcs.AddCommand(menuItem);
+			this.menuService = (OleMenuCommandService)await GetServiceAsync(typeof(IMenuCommandService));
+			Assumes.Present(menuService);
 
-				// Create the command for the Project context menu, to open the output assembly.
-				CommandID menuCommandID2 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenProjectOutputInILSpy);
-				MenuCommand menuItem2 = new MenuCommand(OpenProjectOutputInILSpyCallback, menuCommandID2);
-				mcs.AddCommand(menuItem2);
+			this.workspace = componentModel.GetService<VisualStudioWorkspace>();
+			Assumes.Present(workspace);
 
-				// Create the command for the code window context menu.
-				CommandID menuCommandID3 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenCodeItemInILSpy);
-				OleMenuCommand menuItem3 = new OleMenuCommand(OpenCodeItemInILSpyCallback, menuCommandID3);
-				menuItem3.BeforeQueryStatus += OpenCodeItemInILSpyCallback_BeforeQueryStatus;
-				mcs.AddCommand(menuItem3);
-
-				// Create the command for the Tools menu item.
-				CommandID menuCommandID4 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenILSpy);
-				MenuCommand menuItem4 = new MenuCommand(OpenILSpyCallback, menuCommandID4);
-				mcs.AddCommand(menuItem4);
-			}
+			OpenILSpyCommand.Register(this);
+			OpenProjectOutputCommand.Register(this);
+			OpenReferenceCommand.Register(this);
+			OpenCodeItemCommand.Register(this);
 		}
 		#endregion
 
-		/// <summary>
-		/// This function is the callback used to execute a command when the a menu item is clicked.
-		/// See the Initialize method to see how the menu item is associated to this function using
-		/// the OleMenuCommandService service and the MenuCommand class.
-		/// </summary>
-		private void OpenReferenceInILSpyCallback(object sender, EventArgs e)
+		public void ShowMessage(string format, params object[] items)
 		{
-			var explorer = ((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).ToolWindows.SolutionExplorer;
-			var items = (object[])explorer.SelectedItems;
+			ThreadHelper.ThrowIfNotOnUIThread();
 
-			foreach (EnvDTE.UIHierarchyItem item in items) {
-				var reference = GetReference(item.Object);
-				string path = null;
-				if (!string.IsNullOrEmpty(reference.PublicKeyToken)) {
-					var token = Utils.HexStringToBytes(reference.PublicKeyToken);
-					path = GacInterop.FindAssemblyInNetGac(new AssemblyNameReference(reference.Name, reference.Version) { PublicKeyToken = token });
-				}
-				if (path == null)
-					path = reference.Path;
-				OpenAssemblyInILSpy(path);
-			}
+			ShowMessage(OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_INFO, format, items);
 		}
 
-		class ReferenceInfo
+		public void ShowMessage(OLEMSGICON icon, string format, params object[] items)
 		{
-			public string Name { get; set; }
-			public string PublicKeyToken { get; set; }
-			public string Path { get; set; }
-			public Version Version { get; set; }
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			ShowMessage(OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, icon, format, items);
 		}
 
-		private ReferenceInfo GetReference(object o)
+		public int ShowMessage(OLEMSGBUTTON buttons, OLEMSGDEFBUTTON defaultButton, OLEMSGICON icon, string format, params object[] items)
 		{
-			dynamic obj = o;
-			string referenceType = o.GetType().FullName;
+			ThreadHelper.ThrowIfNotOnUIThread();
 
-			// C++
-			if (referenceType.StartsWith("Microsoft.VisualStudio.PlatformUI", StringComparison.Ordinal)) {
-				return new ReferenceInfo { Path = obj.Name };
-			}
-
-			// F#
-			if (referenceType.StartsWith("Microsoft.VisualStudio.FSharp", StringComparison.Ordinal)) {
-				obj = obj.Object;
-			}
-
-			// C# and VB
-			return new ReferenceInfo {
-				Name = obj.Identity,
-				PublicKeyToken = obj.PublicKeyToken,
-				Path = obj.Path,
-				Version = new Version(obj.Version)
-			};
-		}
-
-		private void OpenProjectOutputInILSpyCallback(object sender, EventArgs e)
-		{
-			var explorer = ((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).ToolWindows.SolutionExplorer;
-			var items = (object[])explorer.SelectedItems;
-
-			foreach (EnvDTE.UIHierarchyItem item in items) {
-				EnvDTE.Project project = (EnvDTE.Project)item.Object;
-				OpenProjectInILSpy(project);
-			}
-		}
-
-		// Called when the menu is popped, determines whether "Open code in ILSpy" option is available.
-		private void OpenCodeItemInILSpyCallback_BeforeQueryStatus(object sender, EventArgs e)
-		{
-			OleMenuCommand menuItem = sender as OleMenuCommand;
-			if (menuItem != null) {
-				var document = (EnvDTE.Document)(((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).ActiveDocument);
-				menuItem.Enabled =
-					(document != null) &&
-					(document.ProjectItem != null) &&
-					(document.ProjectItem.ContainingProject != null) &&
-					(document.ProjectItem.ContainingProject.ConfigurationManager != null) &&
-					!string.IsNullOrEmpty(document.ProjectItem.ContainingProject.FileName);
-			}
-		}
-
-		private void OpenCodeItemInILSpyCallback(object sender, EventArgs e)
-		{
-			var document = (EnvDTE.Document)(((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).ActiveDocument);
-			var selection = (EnvDTE.TextPoint)((EnvDTE.TextSelection)document.Selection).ActivePoint;
-
-			// Search code elements in desired order, working from innermost to outermost.
-			// Should eventually find something, and if not we'll just open the assembly itself.
-			var codeElement = GetSelectedCodeElement(selection,
-				EnvDTE.vsCMElement.vsCMElementFunction,
-				EnvDTE.vsCMElement.vsCMElementEvent,
-				EnvDTE.vsCMElement.vsCMElementVariable,		// There is no vsCMElementField, fields are just variables outside of function scope.
-				EnvDTE.vsCMElement.vsCMElementProperty,
-				EnvDTE.vsCMElement.vsCMElementDelegate,
-				EnvDTE.vsCMElement.vsCMElementEnum,
-				EnvDTE.vsCMElement.vsCMElementInterface,
-				EnvDTE.vsCMElement.vsCMElementStruct,
-				EnvDTE.vsCMElement.vsCMElementClass,
-				EnvDTE.vsCMElement.vsCMElementNamespace);
-
-			if (codeElement != null) {
-				OpenCodeItemInILSpy(codeElement);
-			}
-			else {
-				OpenProjectInILSpy(document.ProjectItem.ContainingProject);
-			}
-		}
-
-		private EnvDTE.CodeElement GetSelectedCodeElement(EnvDTE.TextPoint selection, params EnvDTE.vsCMElement[] elementTypes)
-		{
-			foreach (var elementType in elementTypes) {
-				var codeElement = selection.CodeElement[elementType];
-				if (codeElement != null) {
-					return codeElement;
-				}
-			}
-
-			return null;
-		}
-
-		private void OpenCodeItemInILSpy(EnvDTE.CodeElement codeElement)
-		{
-			string codeElementKey = CodeElementXmlDocKeyProvider.GetKey(codeElement);
-			OpenProjectInILSpy(codeElement.ProjectItem.ContainingProject, "/navigateTo:" + codeElementKey);
-		}
-
-		private void OpenILSpyCallback(object sender, EventArgs e)
-		{
-			Process.Start(GetILSpyPath());
-		}
-
-		private string GetILSpyPath()
-		{
-			var basePath = Path.GetDirectoryName(typeof(ILSpyAddInPackage).Assembly.Location);
-			return Path.Combine(basePath, "ILSpy.exe");
-		}
-
-		private void OpenProjectInILSpy(EnvDTE.Project project, params string[] arguments)
-		{
-			EnvDTE.Configuration config = project.ConfigurationManager.ActiveConfiguration;
-			string projectPath = Path.GetDirectoryName(project.FileName);
-			string outputPath = config.Properties.Item("OutputPath").Value.ToString();
-			string assemblyFileName = project.Properties.Item("OutputFileName").Value.ToString();
-			OpenAssemblyInILSpy(Path.Combine(projectPath, outputPath, assemblyFileName), arguments);
-		}
-
-		private void OpenAssemblyInILSpy(string assemblyFileName, params string[] arguments)
-		{
-			if (!File.Exists(assemblyFileName)) {
-				ShowMessage("Could not find assembly '{0}', please ensure the project and all references were built correctly!", assemblyFileName);
-				return;
-			}
-
-			string commandLineArguments = Utils.ArgumentArrayToCommandLine(assemblyFileName);
-			if (arguments != null) {
-				commandLineArguments = string.Concat(commandLineArguments, " ", Utils.ArgumentArrayToCommandLine(arguments));
-			}
-
-			Process.Start(GetILSpyPath(), commandLineArguments);
-		}
-
-		private void ShowMessage(string format, params object[] items)
-		{
 			IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
+			if (uiShell == null) {
+				return 0;
+			}
+
 			Guid clsid = Guid.Empty;
 			int result;
 			Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(
 				uiShell.ShowMessageBox(
 					0,
 					ref clsid,
-					"ILSpy.AddIn",
+					"ILSpy AddIn",
 					string.Format(CultureInfo.CurrentCulture, format, items),
 					string.Empty,
 					0,
-					OLEMSGBUTTON.OLEMSGBUTTON_OK,
-					OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST,
-					OLEMSGICON.OLEMSGICON_INFO,
+					buttons,
+					defaultButton,
+					icon,
 					0,        // false
 					out result
 				)
 			);
+
+			return result;
+		}
+
+		public IEnumerable<T> GetSelectedItemsData<T>()
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			if (DTE.ToolWindows.SolutionExplorer.SelectedItems is IEnumerable<UIHierarchyItem> hierarchyItems) {
+				foreach (var item in hierarchyItems) {
+					if (item.Object is T typedItem) {
+						yield return typedItem;
+					}
+				}
+			}
 		}
 	}
 }

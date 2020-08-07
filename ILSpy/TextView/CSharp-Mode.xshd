@@ -1,0 +1,149 @@
+﻿<?xml version="1.0"?>
+<SyntaxDefinition name="C#" extensions=".cs" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+	<!-- This is a variant of the AvalonEdit C# highlighting that has several constructs disabled.
+	     The disabled constructs (e.g. contextual keywords) are highlighted using the CSharpLanguage.HighlightingTokenWriter instead.
+	-->
+	
+	<!-- The named colors 'Comment' and 'String' are used in SharpDevelop to detect if a line is inside a multiline string/comment -->
+	<Color name="Comment" foreground="Green" exampleText="// comment" />
+	<Color name="String" foreground="Blue" exampleText="string text = &quot;Hello, World!&quot;"/>
+	<Color name="StringInterpolation" foreground="Black" exampleText="string text = $&quot;Hello, {name}!&quot;"/>
+	<Color name="Char" foreground="Magenta" exampleText="char linefeed = '\n';"/>
+	<Color name="Preprocessor" foreground="Green" exampleText="#region Title" />
+	<Color name="Punctuation" exampleText="a(b.c);" />
+	<Color name="ValueTypeKeywords" fontWeight="bold" foreground="Red" exampleText="bool b = true;" />
+	<Color name="ReferenceTypeKeywords" foreground="Red" exampleText="object o;" />
+	<Color name="NumberLiteral" foreground="DarkBlue" exampleText="3.1415f"/>
+	<Color name="ThisOrBaseReference" fontWeight="bold" exampleText="this.Do(); base.Do();"/>
+	<Color name="NullOrValueKeywords" fontWeight="bold" exampleText="if (value == null)"/>
+	<Color name="Keywords" fontWeight="bold" foreground="Blue" exampleText="if (a) {} else {}"/>
+	<Color name="GotoKeywords" foreground="Navy" exampleText="continue; return null;"/>
+	<Color name="QueryKeywords" foreground="Navy" exampleText="from x in y select z;"/>
+	<Color name="ExceptionKeywords" fontWeight="bold" foreground="Teal" exampleText="try {} catch {} finally {}"/>
+	<Color name="CheckedKeyword" fontWeight="bold" foreground="DarkGray" exampleText="checked {}"/>
+	<Color name="UnsafeKeywords" foreground="Olive" exampleText="unsafe { fixed (..) {} }"/>
+	<Color name="OperatorKeywords" fontWeight="bold" foreground="Pink" exampleText="public static implicit operator..."/>
+	<Color name="ParameterModifiers" fontWeight="bold" foreground="DeepPink" exampleText="(ref int a, params int[] b)"/>
+	<Color name="Modifiers" foreground="Brown" exampleText="static readonly int a;"/>
+	<Color name="Visibility" fontWeight="bold" foreground="Blue" exampleText="public override void ToString();"/>
+	<Color name="NamespaceKeywords" fontWeight="bold" foreground="Green" exampleText="namespace A.B { using System; }"/>
+	<Color name="GetSetAddRemove" foreground="SaddleBrown" exampleText="int Prop { get; set; }"/>
+	<Color name="TrueFalse" fontWeight="bold" foreground="DarkCyan" exampleText="b = false; a = true;" />
+	<Color name="TypeKeywords" fontWeight="bold" foreground="DarkCyan" exampleText="if (x is int) { a = x as int; type = typeof(int); size = sizeof(int); c = new object(); }"/>
+	<Color name="AttributeKeywords" foreground="Navy" exampleText="[assembly: AssemblyVersion(&quot;1.0.0.*&quot;)]" />
+	
+	<!-- Colors used for semantic highlighting -->
+	<Color name="ReferenceTypes" foreground="#004085" exampleText="System.#{#Uri#}# uri;"/>
+	<Color name="InterfaceTypes" foreground="#004085" exampleText="System.#{#IDisposable#}# obj;"/>
+	<Color name="TypeParameters" foreground="#004085" exampleText="class MyList&lt;#{#T#}#&gt; { }"/>
+	<Color name="DelegateTypes" foreground="#004085" exampleText="System.#{#Action#}#; action;"/>
+	<Color name="ValueTypes" fontWeight="bold" foreground="#004085" exampleText="System.#{#DateTime#}# date;"/>
+	<Color name="EnumTypes" fontWeight="bold" foreground="#004085" exampleText="System.#{#ConsoleKey#}# key;"/>
+	<Color name="MethodCall" foreground="MidnightBlue" fontWeight="bold" exampleText="o.#{#ToString#}#();"/>
+	<Color name="FieldAccess" fontStyle="italic" exampleText="return this.#{#name#}#;"/>
+	<Color name="InactiveCode" foreground="Gray" exampleText="#{#Deactivated by #if#}#"/>
+	<Color name="SemanticError" foreground="DarkRed" exampleText="o.#{#MissingMethod#}#()"/>
+	
+	<Property name="DocCommentMarker" value="///" />
+	
+	<RuleSet name="CommentMarkerSet">
+		<Keywords fontWeight="bold" foreground="Red">
+			<Word>TODO</Word>
+			<Word>FIXME</Word>
+		</Keywords>
+		<Keywords fontWeight="bold" foreground="#E0E000">
+			<Word>HACK</Word>
+			<Word>UNDONE</Word>
+		</Keywords>
+	</RuleSet>
+	
+	<!-- This is the main ruleset. -->
+	<RuleSet>
+		<Span color="Preprocessor">
+			<Begin>\#</Begin>
+			<RuleSet name="PreprocessorSet">
+				<Span> <!-- preprocessor directives that allow comments -->
+					<Begin fontWeight="bold">
+						(define|undef|if|elif|else|endif|line)\b
+					</Begin>
+					<RuleSet>
+						<Span color="Comment" ruleSet="CommentMarkerSet">
+							<Begin>//</Begin>
+						</Span>
+					</RuleSet>
+				</Span>
+				<Span> <!-- preprocessor directives that don't allow comments -->
+					<Begin fontWeight="bold">
+						(region|endregion|error|warning|pragma)\b
+					</Begin>
+				</Span>
+			</RuleSet>
+		</Span>
+		
+		<Span color="Comment">
+			<Begin color="XmlDoc/DocComment">///(?!/)</Begin>
+			<RuleSet>
+				<Import ruleSet="XmlDoc/DocCommentSet"/>
+				<Import ruleSet="CommentMarkerSet"/>
+			</RuleSet>
+		</Span>
+		
+		<Span color="Comment" ruleSet="CommentMarkerSet">
+			<Begin>//</Begin>
+		</Span>
+		
+		<Span color="Comment" ruleSet="CommentMarkerSet" multiline="true">
+			<Begin>/\*</Begin>
+			<End>\*/</End>
+		</Span>
+		
+		<Span color="String">
+			<Begin>"</Begin>
+			<End>"</End>
+			<RuleSet>
+				<!-- span for escape sequences -->
+				<Span begin="\\" end="."/>
+			</RuleSet>
+		</Span>
+		
+		<Span color="Char">
+			<Begin>'</Begin>
+			<End>'</End>
+			<RuleSet>
+				<!-- span for escape sequences -->
+				<Span begin="\\" end="."/>
+			</RuleSet>
+		</Span>
+		
+		<Span color="String" multiline="true">
+			<Begin color="String">@"</Begin>
+			<End>"</End>
+			<RuleSet>
+				<!-- span for escape sequences -->
+				<Span begin='""' end=""/>
+			</RuleSet>
+		</Span>
+		
+		<Span color="String">
+			<Begin>\$"</Begin>
+			<End>"</End>
+			<RuleSet>
+				<!-- span for escape sequences -->
+				<Span begin="\\" end="."/>
+				<Span begin="\{\{" end=""/>
+				<!-- string interpolation -->
+				<Span begin="{" end="}" color="StringInterpolation" ruleSet=""/>
+			</RuleSet>
+		</Span>
+
+		<!-- Digits -->
+		<Rule color="NumberLiteral">
+			\b0[xX][0-9a-fA-F]+  # hex number
+			|
+			(	\b\d+(\.[0-9]+)?   #number with optional floating point
+			|	\.[0-9]+           #or just starting with floating point
+			)
+			([eE][+-]?[0-9]+)? # optional exponent
+		</Rule>
+	</RuleSet>
+</SyntaxDefinition>

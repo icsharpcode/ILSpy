@@ -16,16 +16,27 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
+
+using ICSharpCode.ILSpy.Properties;
+using OSVersionHelper;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_Help", Header = "_Check for Updates", MenuOrder = 5000)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._Help),  Header = nameof(Resources._CheckUpdates),   MenuOrder = 5000)]
 	sealed class CheckForUpdatesCommand : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override bool CanExecute(object parameter)
 		{
-			MainWindow.Instance.ShowMessageIfUpdatesAvailableAsync(ILSpySettings.Load(), forceCheck: true);
+			if(WindowsVersionHelper.HasPackageIdentity) {
+				return false;
+			}
+
+			return base.CanExecute(parameter);
+		}
+
+		public override async void Execute(object parameter)
+		{
+			await MainWindow.Instance.ShowMessageIfUpdatesAvailableAsync(ILSpySettings.Load(), forceCheck: true);
 		}
 	}
 }

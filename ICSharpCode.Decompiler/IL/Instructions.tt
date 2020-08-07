@@ -1,0 +1,1179 @@
+﻿// Copyright (c) 2014-2020 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#
+	OpCode[] baseClasses = {
+		new OpCode("SimpleInstruction", "Instruction without any arguments",
+			AbstractBaseClass, CustomArguments(), CustomWriteTo, HasFlag("InstructionFlags.None")),
+		new OpCode("UnaryInstruction", "Instruction with a single argument",
+			AbstractBaseClass, CustomArguments(("argument", null)), HasFlag("InstructionFlags.None")),
+		new OpCode("BinaryInstruction", "Instruction with two arguments: Left and Right",
+			AbstractBaseClass, CustomArguments(("left", null), ("right", null)), HasFlag("InstructionFlags.None")),
+		new OpCode("CallInstruction", "Instruction with a list of arguments.",
+			AbstractBaseClass, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}),
+			CustomWriteTo, MayThrow, SideEffect),
+		new OpCode("PatternInstruction", "Base class for pattern matching in ILAst.", AbstractBaseClass, ResultType("Unknown")) { Namespace = "ICSharpCode.Decompiler.IL.Patterns" },
+		new OpCode("CompoundAssignmentInstruction", "Common instruction for compound assignments.",
+			AbstractBaseClass, CustomConstructor, CustomArguments(("target", null), ("value", null))),
+		new OpCode("DynamicInstruction", "Instruction representing a dynamic call site.",
+			AbstractBaseClass, CustomWriteTo, MayThrow, SideEffect)
+	};
+	
+	OpCode[] opCodes = {
+		new OpCode("invalid.branch", "Represents invalid IL. Semantically, this instruction is considered to throw some kind of exception.",
+			CustomClassName("InvalidBranch"), NoArguments, MayThrow, SideEffect, HasFlag("InstructionFlags.EndPointUnreachable")),
+		new OpCode("invalid.expr", "Represents invalid IL. Semantically, this instruction is considered to produce some kind of value.",
+			CustomClassName("InvalidExpression"), NoArguments, MayThrow, SideEffect),
+		new OpCode("nop", "No operation. Takes 0 arguments and returns void.",
+			VoidResult, NoArguments, CustomWriteTo),
+		new OpCode("ILFunction", "A container of IL blocks.",
+			CustomChildren(new [] {
+				new ChildInfo("body"),
+				new ChildInfo("localFunctions") { IsCollection = true, Type = "ILFunction" }
+			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("DelegateType?.GetStackType() ?? StackType.O")
+		),
+		new OpCode("BlockContainer", "A container of IL blocks.",
+			ResultType("this.ExpectedResultType"), CustomConstructor, CustomVariableName("container"),
+			MatchCondition("Patterns.ListMatch.DoMatch(this.Blocks, o.Blocks, ref match)")),
+		new OpCode("Block", "A block of IL instructions.",
+			CustomConstructor, CustomVariableName("block"),
+			MatchCondition("this.Kind == o.Kind"),
+			MatchCondition("Patterns.ListMatch.DoMatch(this.Instructions, o.Instructions, ref match)"),
+			MatchCondition("this.FinalInstruction.PerformMatch(o.FinalInstruction, ref match)")),
+		new OpCode("PinnedRegion", "A region where a pinned variable is used (initial representation of future fixed statement).",
+			ResultType("Void"),
+			HasVariableOperand("Store"),
+			CustomChildren(new []{
+				new ChildInfo("init") { CanInlineInto = true },
+				new ChildInfo("body")
+			})),
+		new OpCode("binary", "Common instruction for add, sub, mul, div, rem, bit.and, bit.or, bit.xor, shl and shr.",
+			CustomClassName("BinaryNumericInstruction"), Binary, CustomWriteTo, CustomConstructor, CustomComputeFlags,
+			MatchCondition("CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && IsLifted == o.IsLifted")),
+		new OpCode("numeric.compound", "Common instruction for numeric compound assignments.",
+			CustomClassName("NumericCompoundAssign"), BaseClass("CompoundAssignmentInstruction"), CustomConstructor, CustomComputeFlags,
+			MayThrow, HasTypeOperand, ResultType("type.GetStackType()"), CustomWriteTo,
+			MatchCondition("CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator"),
+			MatchCondition("this.EvalMode == o.EvalMode"),
+			MatchCondition("this.TargetKind == o.TargetKind"),
+			MatchCondition("Target.PerformMatch(o.Target, ref match)"),
+			MatchCondition("Value.PerformMatch(o.Value, ref match)")),
+		new OpCode("user.compound", "Common instruction for user-defined compound assignments.",
+			CustomClassName("UserDefinedCompoundAssign"), BaseClass("CompoundAssignmentInstruction"), CustomConstructor,
+			MayThrow, SideEffect, CustomWriteTo,
+			MatchCondition("this.Method.Equals(o.Method)"),
+			MatchCondition("this.EvalMode == o.EvalMode"),
+			MatchCondition("this.TargetKind == o.TargetKind"),
+			MatchCondition("Target.PerformMatch(o.Target, ref match)"),
+			MatchCondition("Value.PerformMatch(o.Value, ref match)")),
+		new OpCode("dynamic.compound", "Common instruction for dynamic compound assignments.",
+			CustomClassName("DynamicCompoundAssign"), BaseClass("CompoundAssignmentInstruction"),
+			MayThrow, SideEffect, CustomWriteTo, CustomConstructor, ResultType("O"),
+			MatchCondition("this.EvalMode == o.EvalMode"),
+			MatchCondition("this.TargetKind == o.TargetKind"),
+			MatchCondition("Target.PerformMatch(o.Target, ref match)"),
+			MatchCondition("Value.PerformMatch(o.Value, ref match)")),
+		new OpCode("bit.not", "Bitwise NOT", Unary, CustomConstructor, MatchCondition("IsLifted == o.IsLifted && UnderlyingResultType == o.UnderlyingResultType")),
+		new OpCode("arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
+		new OpCode("br", "Unconditional branch. <c>goto target;</c>",
+			CustomClassName("Branch"), NoArguments, CustomConstructor, UnconditionalBranch, MayBranch,
+			MatchCondition("this.TargetBlock == o.TargetBlock")),
+		new OpCode("leave", "Unconditional branch to end of block container. Return is represented using IsLeavingFunction and an (optional) return value. The block container evaluates to the value produced by the argument of the leave instruction.",
+			CustomConstructor, CustomArguments(("value", null)), UnconditionalBranch, MayBranch, CustomWriteTo, CustomComputeFlags,
+			MatchCondition("this.TargetContainer == o.TargetContainer")),
+		new OpCode("if", "If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c>",
+			CustomClassName("IfInstruction"),
+			CustomChildren(new []{
+				new ArgumentInfo("condition"),
+				new ChildInfo("trueInst"),
+				new ChildInfo("falseInst"),
+			}), CustomConstructor, CustomComputeFlags, CustomWriteTo),
+		new OpCode("if.notnull", "Null coalescing operator expression. <c>if.notnull(valueInst, fallbackInst)</c>",
+			CustomClassName("NullCoalescingInstruction"),
+			CustomChildren(new []{
+				new ChildInfo("valueInst") { CanInlineInto = true },
+				new ChildInfo("fallbackInst"),
+			}), CustomConstructor, CustomComputeFlags, CustomWriteTo),
+		new OpCode("switch", "Switch statement",
+			CustomClassName("SwitchInstruction"), CustomConstructor, CustomComputeFlags, CustomWriteTo,
+			MatchCondition("IsLifted == o.IsLifted && Value.PerformMatch(o.Value, ref match) && Patterns.ListMatch.DoMatch(this.Sections, o.Sections, ref match)")),
+		new OpCode("switch.section", "Switch section within a switch statement",
+			CustomClassName("SwitchSection"), CustomChildren(new [] { new ChildInfo("body") }),
+			CustomConstructor, CustomComputeFlags, CustomWriteTo, ResultType("Void"),
+			MatchCondition("this.Labels.SetEquals(o.Labels) && this.HasNullLabel == o.HasNullLabel")),
+		new OpCode("try.catch", "Try-catch statement.",
+			BaseClass("TryInstruction"), CustomConstructor, CustomComputeFlags, CustomWriteTo,
+			MatchCondition("TryBlock.PerformMatch(o.TryBlock, ref match)"),
+			MatchCondition("Patterns.ListMatch.DoMatch(Handlers, o.Handlers, ref match)")),
+		new OpCode("try.catch.handler", "Catch handler within a try-catch statement.",
+			CustomChildren(new [] {
+				new ChildInfo("filter"),
+				new ChildInfo("body"),
+			}), HasVariableOperand("Store", generateCheckInvariant: false), CustomWriteTo, CustomComputeFlags),
+		new OpCode("try.finally", "Try-finally statement",
+			BaseClass("TryInstruction"), CustomConstructor, CustomWriteTo, CustomComputeFlags,
+			MatchCondition("TryBlock.PerformMatch(o.TryBlock, ref match) && finallyBlock.PerformMatch(o.finallyBlock, ref match)")),
+		new OpCode("try.fault", "Try-fault statement",
+			BaseClass("TryInstruction"), CustomConstructor, CustomWriteTo, CustomComputeFlags,
+			MatchCondition("TryBlock.PerformMatch(o.TryBlock, ref match)"),
+			MatchCondition("faultBlock.PerformMatch(o.faultBlock, ref match)")),
+		new OpCode("lock", "Lock statement", CustomClassName("LockInstruction"),
+			CustomChildren(new [] {
+				new ArgumentInfo("onExpression") { ExpectedTypes = new[] { "O" }},
+				new ChildInfo("body")
+			}), CustomWriteTo, ControlFlow, SideEffect, ResultType("Void")),
+		new OpCode("using", "Using statement", CustomClassName("UsingInstruction"), HasVariableOperand("Store"),
+			CustomChildren(new [] {
+				new ArgumentInfo("resourceExpression") { ExpectedTypes = new[] { "O" }},
+				new ChildInfo("body")
+			}), CustomWriteTo, ControlFlow, SideEffect, ResultType("Void")),
+		new OpCode("debug.break", "Breakpoint instruction",
+			NoArguments, VoidResult, SideEffect),
+		new OpCode("comp", "Comparison. The inputs must be both integers; or both floats; or both object references. "
+			+ "Object references can only be compared for equality or inequality. "
+			+ "Floating-point comparisons evaluate to 0 (false) when an input is NaN, except for 'NaN != NaN' which "
+			+ "evaluates to 1 (true).",
+			Binary, CustomConstructor, CustomWriteTo,
+			MatchCondition("this.Kind == o.Kind && this.Sign == o.Sign && this.LiftingKind == o.LiftingKind")),
+		new OpCode("call", "Non-virtual method call.", Call),
+		new OpCode("callvirt", "Virtual method call.", 
+			CustomClassName("CallVirt"), Call),
+		new OpCode("calli", "Unsafe function pointer call.",
+			CustomClassName("CallIndirect"),
+			CustomConstructor, CustomWriteTo,
+			MatchCondition("EqualSignature(o)"),
+			MatchCondition("Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match)"),
+			MatchCondition("this.FunctionPointer.PerformMatch(o.FunctionPointer, ref match)")),
+		new OpCode("ckfinite", "Checks that the input float is not NaN or infinite.",
+			Unary, MayThrow, VoidResult),
+		new OpCode("conv", "Numeric cast.",
+			Unary, CustomConstructor,
+			MatchCondition("CheckForOverflow == o.CheckForOverflow && Kind == o.Kind && InputSign == o.InputSign && TargetType == o.TargetType && IsLifted == o.IsLifted")),
+		new OpCode("ldloc", "Loads the value of a local variable. (ldarg/ldloc)",
+			CustomClassName("LdLoc"), NoArguments, HasVariableOperand("Load"), ResultType("variable.StackType")),
+		new OpCode("ldloca", "Loads the address of a local variable. (ldarga/ldloca)",
+			CustomClassName("LdLoca"), NoArguments, ResultType("Ref"), HasVariableOperand("Address")),
+		new OpCode("stloc", "Stores a value into a local variable. (IL: starg/stloc)" + Environment.NewLine
+				+ "Evaluates to the value that was stored (for byte/short variables: evaluates to the truncated value, sign/zero extended back to I4 based on variable.Type.GetSign())",
+			CustomClassName("StLoc"), HasVariableOperand("Store", generateCheckInvariant: false), CustomArguments(("value", null)),
+			ResultType("variable.StackType")),
+		new OpCode("addressof", "Stores the value into an anonymous temporary variable, and returns the address of that variable.",
+			CustomClassName("AddressOf"), CustomArguments(("value", null)), ResultType("Ref"), HasTypeOperand),
+		new OpCode("3vl.bool.and", "Three valued logic and. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.and(), does not have short-circuiting behavior.",
+			CustomClassName("ThreeValuedBoolAnd"), Binary, ResultType("O")),
+		new OpCode("3vl.bool.or", "Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.",
+			CustomClassName("ThreeValuedBoolOr"), Binary, ResultType("O")),
+		new OpCode("nullable.unwrap", "The input operand must be one of:" + Environment.NewLine
+				+ "  1. a nullable value type" + Environment.NewLine
+				+ "  2. a reference type" + Environment.NewLine
+				+ "  3. a managed reference to a type parameter." + Environment.NewLine
+				+ "If the input is non-null, evaluates to the (unwrapped) input." + Environment.NewLine
+				+ "If the input is null, jumps to the innermost nullable.rewrap instruction that contains this instruction." + Environment.NewLine
+				+ "In case 3 (managed reference), the dereferenced value is the input being tested, and the nullable.unwrap instruction "
+				+ "returns the managed reference unmodified (if the value is non-null).",
+			Unary, CustomConstructor, CustomWriteTo, HasFlag("InstructionFlags.MayUnwrapNull")),
+		new OpCode("nullable.rewrap", "Serves as jump target for the nullable.unwrap instruction." + Environment.NewLine
+				+ "If the input evaluates normally, evaluates to the input value (wrapped in Nullable&lt;T&gt; if the input is a non-nullable value type)."
+				+ "If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,"
+				+ "the nullable.rewrap instruction evaluates to null.",
+			Unary, CustomComputeFlags),
+
+		new OpCode("ldstr", "Loads a constant string.",
+			CustomClassName("LdStr"), LoadConstant("string"), ResultType("O")),
+		new OpCode("ldc.i4", "Loads a constant 32-bit integer.",
+			LoadConstant("int"), ResultType("I4")),
+		new OpCode("ldc.i8", "Loads a constant 64-bit integer.",
+			LoadConstant("long"), ResultType("I8")),
+		new OpCode("ldc.f4", "Loads a constant 32-bit floating-point number.",
+			LoadConstant("float"), ResultType("F4")),
+		new OpCode("ldc.f8", "Loads a constant 64-bit floating-point number.",
+			LoadConstant("double"), ResultType("F8")),
+		new OpCode("ldc.decimal", "Loads a constant decimal.",
+			LoadConstant("decimal"), ResultType("O")),
+		new OpCode("ldnull", "Loads the null reference.",
+			CustomClassName("LdNull"), NoArguments, ResultType("O")),
+		new OpCode("ldftn", "Load method pointer",
+			CustomClassName("LdFtn"), NoArguments, HasMethodOperand, ResultType("I")),
+		new OpCode("ldvirtftn", "Load method pointer",
+			CustomClassName("LdVirtFtn"), Unary, HasMethodOperand, MayThrow, ResultType("I")),
+		new OpCode("ldvirtdelegate", "Virtual delegate construction",
+			CustomClassName("LdVirtDelegate"), Unary, HasTypeOperand, HasMethodOperand,
+			MayThrow, ResultType("O")),
+		new OpCode("ldtypetoken", "Loads runtime representation of metadata token",
+			CustomClassName("LdTypeToken"), NoArguments, HasTypeOperand, ResultType("O")),
+		new OpCode("ldmembertoken", "Loads runtime representation of metadata token",
+			CustomClassName("LdMemberToken"), NoArguments, HasMemberOperand, ResultType("O")),
+		new OpCode("localloc", "Allocates space in the stack frame",
+			CustomClassName("LocAlloc"), Unary, ResultType("I"), MayThrow),
+		new OpCode("localloc.span", "Allocates space in the stack frame and wraps it in a Span",
+			CustomClassName("LocAllocSpan"), Unary, HasTypeOperand, ResultType("O"), MayThrow),
+		new OpCode("cpblk", "memcpy(destAddress, sourceAddress, size);",
+			CustomArguments(("destAddress", new[] { "I", "Ref" }), ("sourceAddress", new[] { "I", "Ref" }), ("size", new[] { "I4" })),
+			MayThrow, MemoryAccess,
+			SupportsVolatilePrefix, SupportsUnalignedPrefix, ResultType("Void")),
+		new OpCode("initblk", "memset(address, value, size)",
+			CustomArguments(("address", new[] { "I", "Ref" }), ("value", new[] { "I4" }), ("size", new[] { "I4" })),
+			MayThrow, MemoryAccess,
+			SupportsVolatilePrefix, SupportsUnalignedPrefix, ResultType("Void")),
+
+		new OpCode("ldflda", "Load address of instance field",
+			CustomClassName("LdFlda"), CustomArguments(("target", null)), MayThrowIfNotDelayed, HasFieldOperand,
+			ResultType("target.ResultType.IsIntegerType() ? StackType.I : StackType.Ref")),
+		new OpCode("ldsflda", "Load static field address",
+			CustomClassName("LdsFlda"), NoArguments, ResultType("Ref"), HasFieldOperand),
+			
+		new OpCode("castclass", "Casts an object to a class.",
+			CustomClassName("CastClass"), Unary, HasTypeOperand, MayThrow, ResultType("type.GetStackType()")),
+		new OpCode("isinst", "Test if object is instance of class or interface.",
+			CustomClassName("IsInst"), Unary, HasTypeOperand, ResultType("O")),
+		new OpCode("ldobj", "Indirect load (ref/pointer dereference).",
+			CustomClassName("LdObj"), CustomArguments(("target", new[] { "Ref", "I" })), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
+			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
+		new OpCode("stobj", "Indirect store (store to ref/pointer)." + Environment.NewLine
+				+ "Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value, sign/zero extended back to I4 based on type.GetSign())",
+			CustomClassName("StObj"), CustomArguments(("target", new[] { "Ref", "I" }), ("value", new[] { "type.GetStackType()" })), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
+			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()"),
+			CustomInvariant("CheckTargetSlot();")),
+
+		new OpCode("box", "Boxes a value.",
+			Unary, HasTypeOperand, MemoryAccess, MayThrow, ResultType("O")),
+		new OpCode("unbox", "Compute address inside box.",
+			Unary, HasTypeOperand, MayThrow, ResultType("Ref")),
+		new OpCode("unbox.any", "Unbox a value.",
+			Unary, HasTypeOperand, MemoryAccess, MayThrow, ResultType("type.GetStackType()")),
+		new OpCode("newobj", "Creates an object instance and calls the constructor.",
+			CustomClassName("NewObj"), Call, ResultType("Method.DeclaringType.GetStackType()")),
+		new OpCode("newarr", "Creates an array instance.",
+			CustomClassName("NewArr"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("indices") { IsCollection = true } }, true), MayThrow, ResultType("O")),
+		new OpCode("default.value", "Returns the default value for a type.",
+			NoArguments, HasTypeOperand, ResultType("type.GetStackType()")),
+		new OpCode("throw", "Throws an exception.",
+			Unary, MayThrow, HasFlag("InstructionFlags.EndPointUnreachable"), ResultType("this.resultType")),
+		new OpCode("rethrow", "Rethrows the current exception.",
+			NoArguments, MayThrow, UnconditionalBranch),
+		new OpCode("sizeof", "Gets the size of a type in bytes.",
+			CustomClassName("SizeOf"), NoArguments, HasTypeOperand, ResultType("I4")),
+		
+		new OpCode("ldlen", "Returns the length of an array as 'native unsigned int'.",
+			CustomClassName("LdLen"), CustomArguments(("array", new[] { "O" })), CustomConstructor, CustomWriteTo, MayThrow),
+		new OpCode("ldelema", "Load address of array element.",
+			CustomClassName("LdElema"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
+			BoolFlag("WithSystemIndex"),
+			MayThrowIfNotDelayed, ResultType("Ref"), SupportsReadonlyPrefix),
+		new OpCode("get.pinnable.reference", "Retrieves a pinnable reference for the input object." + Environment.NewLine
+				+ "The input must be an object reference (O)." + Environment.NewLine
+				+ "If the input is an array/string, evaluates to a reference to the first element/character, or to a null reference if the array is null or empty." + Environment.NewLine
+				+ "Otherwise, uses the GetPinnableReference method to get the reference, or evaluates to a null reference if the input is null." + Environment.NewLine,
+			CustomArguments(("argument", new[] { "O" })), ResultType("Ref"), HasMethodOperand),
+		new OpCode("string.to.int", "Maps a string value to an integer. This is used in switch(string).",
+			CustomArguments(("argument", new[] { "O" })), CustomConstructor, CustomWriteTo, ResultType("I4")),
+
+		new OpCode("expression.tree.cast", "ILAst representation of Expression.Convert.",
+			CustomClassName("ExpressionTreeCast"), Unary, HasTypeOperand, MayThrow, CustomConstructor, CustomWriteTo, ResultType("type.GetStackType()"),
+			MatchCondition("this.IsChecked == o.IsChecked")),
+
+		new OpCode("user.logic.operator", "Use of user-defined &amp;&amp; or || operator.",
+			CustomClassName("UserDefinedLogicOperator"),
+			HasMethodOperand, ResultType("O"),
+			CustomChildren(new []{
+				new ChildInfo("left") { CanInlineInto = true },
+				new ChildInfo("right") { CanInlineInto = false } // only executed depending on value of left
+			}),
+			CustomComputeFlags // MayThrow, SideEffect, ControlFlow
+		),
+
+		new OpCode("dynamic.logic.operator", "ILAst representation of a short-circuiting binary operator inside a dynamic expression.",
+			CustomClassName("DynamicLogicOperatorInstruction"), Dynamic, CustomComputeFlags,
+			CustomChildren(new []{
+				new ChildInfo("left") { CanInlineInto = true },
+				new ChildInfo("right") { CanInlineInto = false } // only executed depending on value of left
+			}), CustomWriteTo
+		),
+		
+		new OpCode("dynamic.binary.operator", "ILAst representation of a binary operator inside a dynamic expression (maps to Binder.BinaryOperation).",
+			CustomClassName("DynamicBinaryOperatorInstruction"), Dynamic, CustomArguments(("left", null), ("right", null)), CustomWriteTo),
+		new OpCode("dynamic.unary.operator", "ILAst representation of a unary operator inside a dynamic expression (maps to Binder.UnaryOperation).",
+			CustomClassName("DynamicUnaryOperatorInstruction"), Dynamic, CustomArguments(("operand", null)), CustomWriteTo),
+		new OpCode("dynamic.convert", "ILAst representation of a cast inside a dynamic expression (maps to Binder.Convert).",
+			CustomClassName("DynamicConvertInstruction"), Dynamic, HasTypeOperand, CustomArguments(("argument", new[] { "O" })), CustomWriteTo),
+		new OpCode("dynamic.getmember", "ILAst representation of a property get method call inside a dynamic expression (maps to Binder.GetMember).",
+			CustomClassName("DynamicGetMemberInstruction"), Dynamic, CustomArguments(("target", new[] { "O" })), CustomConstructor, CustomWriteTo),
+		new OpCode("dynamic.setmember", "ILAst representation of a property set method call inside a dynamic expression (maps to Binder.SetMember).",
+			CustomClassName("DynamicSetMemberInstruction"), Dynamic, CustomArguments(("target", new[] { "O" }), ("value", null)), CustomWriteTo),
+		new OpCode("dynamic.getindex", "ILAst representation of an indexer get method call inside a dynamic expression (maps to Binder.GetIndex).",
+			CustomClassName("DynamicGetIndexInstruction"), Dynamic, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomWriteTo),
+		new OpCode("dynamic.setindex", "ILAst representation of an indexer set method call inside a dynamic expression (maps to Binder.SetIndex).",
+			CustomClassName("DynamicSetIndexInstruction"), Dynamic, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomWriteTo),
+		new OpCode("dynamic.invokemember", "ILAst representation of a method call inside a dynamic expression (maps to Binder.InvokeMember).",
+			CustomClassName("DynamicInvokeMemberInstruction"), Dynamic, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomWriteTo),
+		new OpCode("dynamic.invokeconstructor", "ILAst representation of a constuctor invocation inside a dynamic expression (maps to Binder.InvokeConstructor).",
+			CustomClassName("DynamicInvokeConstructorInstruction"), Dynamic, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomWriteTo),
+		new OpCode("dynamic.invoke", "ILAst representation of a delegate invocation inside a dynamic expression (maps to Binder.Invoke).",
+			CustomClassName("DynamicInvokeInstruction"), Dynamic, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomWriteTo),
+		new OpCode("dynamic.isevent", "ILAst representation of a call to the Binder.IsEvent method inside a dynamic expression.",
+			CustomClassName("DynamicIsEventInstruction"), Dynamic, CustomArguments(("argument", new[] { "O" })), CustomWriteTo),
+
+
+		new OpCode("mkrefany", "Push a typed reference of type class onto the stack.",
+			CustomClassName("MakeRefAny"), Unary, HasTypeOperand, ResultType("O")),
+		new OpCode("refanytype", "Push the type token stored in a typed reference.",
+			CustomClassName("RefAnyType"), Unary, ResultType("O")),
+		new OpCode("refanyval", "Push the address stored in a typed reference.",
+			CustomClassName("RefAnyValue"), Unary, HasTypeOperand, MayThrow, ResultType("Ref")),
+
+		new OpCode("yield.return", "Yield an element from an iterator.",
+			MayBranch, // yield return may end up returning if the consumer disposes the iterator
+			SideEffect, // consumer can have arbitrary side effects while we're yielding
+			CustomArguments(("value", null)), VoidResult),
+		// note: "yield break" is always represented using a "leave" instruction
+		new OpCode("await", "C# await operator.",
+			SideEffect, // other code can run with arbitrary side effects while we're waiting
+			CustomArguments(("value", null)), ResultType("GetResultMethod?.ReturnType.GetStackType() ?? StackType.Unknown")),
+
+		// patterns
+		new OpCode("AnyNode", "Matches any node", Pattern, CustomArguments(), CustomConstructor),
+	};
+#>
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using ICSharpCode.Decompiler.TypeSystem;
+
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>
+	/// Enum representing the type of an <see cref="ILInstruction"/>.
+	/// </summary>
+	public enum OpCode : byte
+	{
+<#	foreach (OpCode opCode in opCodes) { #>
+		/// <summary><#=opCode.Description.Replace("\n", "\n\t\t/// ")#></summary>
+		<#=opCode.Name#>,
+<#  } #>
+	}
+}
+
+<#	foreach (OpCode opCode in baseClasses.Concat(opCodes)) { #>
+namespace <#=opCode.Namespace#>
+{
+	/// <summary><#=opCode.Description.Replace("\n", "\n\t/// ")#></summary>
+	<#=opCode.ClassModifiers#> partial class <#=opCode.Name#> : <#=string.Join(", ", new[]{opCode.BaseClass}.Concat(opCode.Interfaces))#>
+	{
+<#	if (opCode.GenerateConstructor) { #>
+		<#=opCode.ConstructorModifier#> <#=opCode.Name#>(<#=string.Join(", ", opCode.ConstructorParameters)#>) : base(<#=string.Join(", ", opCode.BaseConstructorArguments)#>)
+		{<#=Body(opCode.ConstructorBody)#>}
+<#	} #>
+<#=string.Join(Environment.NewLine, opCode.Members.Select(m => "\t\t" + m.Replace("\n", "\n\t\t")))#>
+<#	if (opCode.GenerateComputeFlags && opCode.Flags.Any(f => f != "base.ComputeFlags()")) { #>
+		protected override InstructionFlags ComputeFlags()
+		{
+			return <#=string.Join(" | ", opCode.Flags)#>;
+		}
+<#	} #>
+<#	if (opCode.GenerateComputeFlags && opCode.Flags.Any(f => f != "base.ComputeFlags()")) { #>
+		public override InstructionFlags DirectFlags {
+			get {
+				return <#=opCode.DirectFlags.Count > 0 ? string.Join(" | ", opCode.DirectFlags) : "InstructionFlags.None"#>;
+			}
+		}
+<#	} #>
+<#	if (opCode.GenerateWriteTo) { #>
+<#      if (opCode.CustomWriteToButKeepOriginal) { #>
+		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
+<#      } else { #>
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+<#      } #>
+		{<#=Body(opCode.WriteToBody)#>}
+<#	} #>
+<#	if (opCode.GenerateAcceptVisitor) { #>
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.Visit<#=opCode.Name#>(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.Visit<#=opCode.Name#>(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.Visit<#=opCode.Name#>(this, context);
+		}
+<#	} #>
+<#		if (opCode.GeneratePerformMatch) { #>
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as <#=opCode.Name#>;
+			return <#=string.Join(" && ", opCode.PerformMatchConditions)#>;
+		}
+<#		} #>
+<#		if (opCode.Invariants.Count > 0) { #>
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+<#			foreach (var invariant in opCode.Invariants) {#>
+			<#=invariant#>
+<#			} #>
+		}
+<#		} #>
+	}
+}
+<#	} #>
+
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>
+	/// Base class for visitor pattern.
+	/// </summary>
+	public abstract class ILVisitor
+	{
+		/// <summary>Called by Visit*() methods that were not overridden</summary>
+		protected abstract void Default(ILInstruction inst);
+		
+<#	foreach (OpCode opCode in opCodes.Where(o => o.GenerateAcceptVisitor)) { #>
+		protected internal virtual void Visit<#=opCode.Name#>(<#=opCode.Name#> <#=opCode.VariableName#>)
+		{
+			Default(<#=opCode.VariableName#>);
+		}
+<#	} #>
+	}
+	
+	/// <summary>
+	/// Base class for visitor pattern.
+	/// </summary>
+	public abstract class ILVisitor<T>
+	{
+		/// <summary>Called by Visit*() methods that were not overridden</summary>
+		protected abstract T Default(ILInstruction inst);
+		
+<#	foreach (OpCode opCode in opCodes.Where(o => o.GenerateAcceptVisitor)) { #>
+		protected internal virtual T Visit<#=opCode.Name#>(<#=opCode.Name#> <#=opCode.VariableName#>)
+		{
+			return Default(<#=opCode.VariableName#>);
+		}
+<#	} #>
+	}
+
+	/// <summary>
+	/// Base class for visitor pattern.
+	/// </summary>
+	public abstract class ILVisitor<C, T>
+	{
+		/// <summary>Called by Visit*() methods that were not overridden</summary>
+		protected abstract T Default(ILInstruction inst, C context);
+		
+<#	foreach (OpCode opCode in opCodes.Where(o => o.GenerateAcceptVisitor)) { #>
+		protected internal virtual T Visit<#=opCode.Name#>(<#=opCode.Name#> <#=opCode.VariableName#>, C context)
+		{
+			return Default(<#=opCode.VariableName#>, context);
+		}
+<#	} #>
+	}
+	
+	partial class InstructionOutputExtensions
+	{
+		static readonly string[] originalOpCodeNames = {
+<#	foreach (OpCode opCode in opCodes) { #>
+			"<#=opCode.OriginalName#>",
+<#	} #>
+		};
+	}
+	
+	partial class ILInstruction
+	{
+<#	foreach (OpCode opCode in opCodes) { #>
+<#		if (opCode.GenerateMatch) { #>
+		public bool Match<#=opCode.Name#>(<#=string.Join(", ", opCode.MatchParameters)#>)
+		{
+			var inst = this as <#=opCode.Name#>;
+			if (inst != null) {
+<#			foreach (var parameter in opCode.MatchParameters) {#>
+				<#=parameter.Name#> = inst.<#=parameter.FieldName#>;
+<#			}#>
+				return true;
+			}
+<#			foreach (var parameter in opCode.MatchParameters) {#>
+			<#=parameter.Name#> = default(<#=parameter.TypeName#>);
+<#			}#>
+			return false;
+		}
+<#		}
+	} #>
+	}
+}
+
+<#+
+	static string Body(IEnumerable<string> statements)
+	{
+		StringBuilder b = new StringBuilder();
+		foreach (var st in statements) {
+			b.AppendLine();
+			b.Append("\t\t\t");
+			b.Append(st.Replace("\n", "\n\t\t\t"));
+		}
+		b.AppendLine();
+		b.Append("\t\t");
+		return b.ToString();
+	}
+	
+	static string MakeName(string originalName)
+	{
+		StringBuilder name = new StringBuilder();
+		bool nextUpper = true;
+		foreach (char c in originalName) {
+			if (c == '.')
+				nextUpper = true;
+			else if (nextUpper) {
+				name.Append(char.ToUpper(c));
+				nextUpper = false;
+			} else
+				name.Append(c);
+		}
+		return name.ToString();
+	}
+
+	class OpCode
+	{
+		public readonly string OriginalName;
+		public string Name;
+		public string Namespace = "ICSharpCode.Decompiler.IL";
+		public readonly string Description;
+		public string VariableName = "inst";
+
+		public OpCode(string originalName, string description, params Action<OpCode>[] traits)
+		{
+			this.OriginalName = originalName;
+			this.Name = MakeName(originalName);
+			this.Description = description;
+			foreach (var trait in traits)
+				trait(this);
+			if (this.BaseConstructorArguments.FirstOrDefault() != "opCode")
+				this.BaseConstructorArguments.Insert(0, "OpCode." + this.Name);
+		}
+
+		public string ClassModifiers = "public sealed";
+		
+		public bool GenerateConstructor = true;
+		public string ConstructorModifier = "public";
+		public List<string> ConstructorParameters = new List<string>();
+		public List<string> ConstructorBody = new List<string>();
+		
+		public bool GenerateMatch = true;
+		public bool GeneratePerformMatch = true;
+		public List<MatchParamInfo> MatchParameters = new List<MatchParamInfo>();
+		public List<string> PerformMatchConditions = new List<string>() { "o != null" };
+		public List<string> Invariants = new List<string>();
+
+		public string BaseClass = "ILInstruction";
+		public List<string> Interfaces = new List<string>();
+		public List<string> BaseConstructorArguments = new List<string>();
+		public List<string> Members = new List<string>();
+		
+		public List<string> Flags = new List<string>();
+		public List<string> DirectFlags = new List<string>();
+		public bool GenerateComputeFlags = true;
+
+
+		public bool GenerateAcceptVisitor = true;
+		
+		
+		public bool GenerateWriteTo = false;
+		public bool CustomWriteToButKeepOriginal = false;
+		public List<string> WriteOpCodePrefix = new List<string>();
+		public List<string> WriteOpCodeSuffix = new List<string>();
+		public List<string> WriteOperand = new List<string>();
+		public List<string> WriteArguments = new List<string>();
+		
+		public IEnumerable<string> WriteToBody {
+			get {
+				yield return "WriteILRange(output, options);";
+				foreach (string line in WriteOpCodePrefix)
+					yield return line;
+				yield return "output.Write(OpCode);";
+				foreach (string line in WriteOpCodeSuffix.Concat(WriteOperand).Concat(WriteArguments))
+					yield return line;
+			}
+		}
+	}
+	
+	class MatchParamInfo
+	{
+		public string TypeName;
+		public string Name;
+		public string FieldName;
+		
+		public override string ToString()
+		{
+			return "out " + TypeName + " " + Name;
+		}
+	}
+	
+	static Action<OpCode> CustomClassName(string name)
+	{
+		return opCode => {
+			opCode.Name = name;
+		};
+	}
+	
+	static Action<OpCode> CustomVariableName(string name)
+	{
+		return opCode => {
+			opCode.VariableName = name;
+		};
+	}
+	
+	static Action<OpCode> CustomConstructor = opCode => {
+		opCode.GenerateConstructor = false;
+		opCode.GenerateMatch = false;
+	};
+	
+	static Action<OpCode> CustomWriteTo = opCode => {
+		opCode.GenerateWriteTo = false;
+	};
+
+	static Action<OpCode> CustomWriteToButKeepOriginal = opCode => {
+		opCode.CustomWriteToButKeepOriginal = true;
+	};
+	
+	static Action<OpCode> CustomComputeFlags = opCode => {
+		opCode.GenerateComputeFlags = false;
+	};
+	
+	// Call trait: the instruction performs a method call
+	static Action<OpCode> MatchCondition(string name)
+	{
+		return opCode => {
+			opCode.PerformMatchConditions.Add(name);
+		};
+	}
+	
+	static Action<OpCode> HasFlag(string name)
+	{
+		return opCode => {
+			opCode.Flags.Add(name);
+			opCode.DirectFlags.Add(name);
+		};
+	}
+
+	static Action<OpCode> AdditionalMember(string declaration)
+	{
+		return opCode => {
+			opCode.Members.Add(declaration);
+		};
+	}
+
+	// ResultType trait: the instruction has the specified result type.
+	static Action<OpCode> ResultType(string type)
+	{
+		if (!type.Contains("."))
+			type = "StackType." + type;
+		return opCode => {
+			opCode.Members.Add("public override StackType ResultType { get { return " + type + "; } }");
+		};
+	}
+	
+	// VoidResult trait: the instruction has no result and is not usable as an argument
+	static Action<OpCode> VoidResult = ResultType("Void");
+
+	// ResultTypeParam trait: the instruction takes its result type as ctor parameter
+	static Action<OpCode> ResultTypeParam = opCode => {
+		opCode.ConstructorParameters.Add("StackType resultType");
+		opCode.ConstructorBody.Add("this.resultType = resultType;");
+		opCode.Members.Add("StackType resultType;");
+		opCode.Members.Add("public override StackType ResultType { get { return resultType; } }");
+	};
+
+	// MayThrow trait: the instruction may throw exceptions
+	static Action<OpCode> MayThrow = HasFlag("InstructionFlags.MayThrow");
+	
+	// MayBranch trait: the instruction may cause control flow to branch (e.g. branch, conditionalbranch, return)
+	static Action<OpCode> MayBranch = HasFlag("InstructionFlags.MayBranch");
+	
+	// UnconditionalBranch trait: the instruction does not produce a result normally; it always branches or throws an exception. Implies VoidResult.
+	// UnconditionalBranch should be paired with either MayBranch or MayThrow (or both).
+	static Action<OpCode> UnconditionalBranch = VoidResult + HasFlag("InstructionFlags.EndPointUnreachable");
+	
+	// ControlFlow trait: the instruction involves some form of internal control flow
+	// Instructions without this trait must evaluate all arguments left-to-right before having any effect of their own.
+	static Action<OpCode> ControlFlow = HasFlag("InstructionFlags.ControlFlow");
+	
+	static Action<OpCode> MayThrowIfNotDelayed = HasFlag("(DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow)") + (opCode => {
+		opCode.Members.Add("public bool DelayExceptions; // NullReferenceException/IndexOutOfBoundsException only occurs when the reference is dereferenced");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOpCodePrefix.Add("if (DelayExceptions)" + Environment.NewLine + "\toutput.Write(\"delayex.\");");
+		opCode.PerformMatchConditions.Add("DelayExceptions == o.DelayExceptions");
+	});
+	
+	static Action<OpCode> BaseClass(string name)
+	{
+		return opCode => {
+			opCode.BaseClass = name;
+			opCode.Flags.Add("base.ComputeFlags()");
+			opCode.DirectFlags.Add("base.DirectFlags");
+		};
+	}
+	
+	// NoArguments trait: the instruction no arguments
+	static Action<OpCode> NoArguments = opCode => {
+		opCode.BaseClass = "SimpleInstruction";
+	};
+	
+	// Unary trait: the instruction has a single argument
+	static Action<OpCode> Unary = opCode => {
+		BaseClass("UnaryInstruction")(opCode);
+		opCode.ConstructorParameters.Add("ILInstruction argument");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILInstruction", Name = "argument", FieldName = "Argument" });
+		opCode.PerformMatchConditions.Add("this.Argument.PerformMatch(o.Argument, ref match)");
+		opCode.BaseConstructorArguments.Add("argument");
+		opCode.WriteArguments.Add("output.Write('(');");
+		opCode.WriteArguments.Add("Argument.WriteTo(output, options);");
+		opCode.WriteArguments.Add("output.Write(')');");
+	};
+	
+	// Binary trait: the instruction has two arguments named 'Left' and 'Right'
+	static Action<OpCode> Binary = opCode => {
+		BaseClass("BinaryInstruction")(opCode);
+		opCode.ConstructorParameters.Add("ILInstruction left");
+		opCode.ConstructorParameters.Add("ILInstruction right");
+		opCode.BaseConstructorArguments.Add("left");
+		opCode.BaseConstructorArguments.Add("right");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILInstruction", Name = "left", FieldName = "Left" });
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILInstruction", Name = "right", FieldName = "Right" });
+		opCode.PerformMatchConditions.Add("this.Left.PerformMatch(o.Left, ref match)");
+		opCode.PerformMatchConditions.Add("this.Right.PerformMatch(o.Right, ref match)");
+		opCode.WriteArguments.Add("output.Write('(');");
+		opCode.WriteArguments.Add("Left.WriteTo(output, options);");
+		opCode.WriteArguments.Add("output.Write(\", \");");
+		opCode.WriteArguments.Add("Right.WriteTo(output, options);");
+		opCode.WriteArguments.Add("output.Write(')');");
+	};
+	
+	static Action<OpCode> CustomArguments(params (string name, string[] expectedTypes)[] arguments)
+	{
+		return CustomChildren(arguments.Select(arg => new ArgumentInfo(arg.name) { ExpectedTypes = arg.expectedTypes }).ToArray(), generateInline: true);
+	}
+	
+	class ChildInfo
+	{
+		public readonly string PropertyName;
+		public readonly string Name;
+		public readonly string SlotName;
+		
+		public bool IsCollection;
+		public string Type = "ILInstruction";
+		public bool CanInlineInto;
+		public string[] ExpectedTypes;
+		
+		public ChildInfo(string name)
+		{
+			this.Name = name;
+			this.PropertyName = MakeName(name);
+			this.SlotName = this.PropertyName + "Slot";
+		}
+		
+		public string GetSlotInit()
+		{
+			StringBuilder b = new StringBuilder();
+			b.Append("new SlotInfo(\"" + PropertyName + "\"");
+			if (CanInlineInto)
+				b.Append(", canInlineInto: true");
+			b.Append(")");
+			return b.ToString();
+		}
+	}
+	
+	class ArgumentInfo : ChildInfo
+	{
+		public ArgumentInfo(string name) : base(name)
+		{
+			this.CanInlineInto = true;
+		}
+	}
+	
+	static Action<OpCode> CustomChildren(ChildInfo[] children, bool generateInline = false)
+	{
+		return opCode => {
+			opCode.GenerateWriteTo = true;
+			opCode.WriteArguments.Add("output.Write('(');");
+			StringBuilder transformChildren = new StringBuilder();
+			ChildInfo collection = null;
+			int childCount = children.Length;
+			for (int i = 0; i < children.Length; i++) {
+				string arg = children[i].Name;
+				string argProp = children[i].PropertyName;
+				if (children[i].IsCollection && i + 1 == children.Length) {
+					collection = children[i];
+					childCount = children.Length - 1;
+					opCode.Flags.Add(argProp + ".Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags)");
+					opCode.ConstructorParameters.Add("params ILInstruction[] " + arg);
+					opCode.ConstructorBody.Add("this." + argProp + " = new InstructionCollection<" + children[i].Type + ">(this, " + i + ");");
+					opCode.ConstructorBody.Add("this." + argProp + ".AddRange(" + arg + ");");
+					opCode.PerformMatchConditions.Add("Patterns.ListMatch.DoMatch(this." + argProp + ", o." + argProp + ", ref match)");
+					if (i == 0)
+						opCode.WriteArguments.Add("bool first = true;");
+					opCode.WriteArguments.Add("foreach (var " + arg + " in " + argProp + ") {");
+					if (i > 0)
+						opCode.WriteArguments.Add("\toutput.Write(\", \");");
+					else
+						opCode.WriteArguments.Add("\tif (!first) output.Write(\", \"); else first = false;");
+					opCode.WriteArguments.Add("\t" + arg + ".WriteTo(output, options);");
+					opCode.WriteArguments.Add("}");
+					opCode.Members.Add("public static readonly SlotInfo " + children[i].SlotName + " = " + children[i].GetSlotInit() + ";");
+					opCode.Members.Add("public InstructionCollection<" + children[i].Type + "> " + argProp + " { get; private set; }");
+				} else {
+					opCode.Flags.Add(arg + ".Flags");
+					opCode.ConstructorParameters.Add("ILInstruction " + arg);
+					opCode.ConstructorBody.Add("this." + argProp + " = " + arg + ";");
+					opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILInstruction", Name = arg, FieldName = argProp });
+					opCode.PerformMatchConditions.Add("this." + arg + ".PerformMatch(o." + arg + ", ref match)");
+					if (i > 0)
+						opCode.WriteArguments.Add("output.Write(\", \");");
+					opCode.WriteArguments.Add("this." + arg + ".WriteTo(output, options);");
+					opCode.Members.Add("public static readonly SlotInfo " + children[i].SlotName + " = " + children[i].GetSlotInit() + ";");
+					opCode.Members.Add("ILInstruction " + arg + ";");
+					opCode.Members.Add("public ILInstruction " + argProp + " {" + Environment.NewLine
+						+ "\tget { return this." + arg + "; }" + Environment.NewLine
+						+ "\tset {" + Environment.NewLine
+						+ "\t\tValidateChild(value);" + Environment.NewLine
+						+ "\t\tSetChildInstruction(ref this." + arg + ", value, " + i + ");" + Environment.NewLine
+						+ "\t}" + Environment.NewLine
+						+ "}");
+				}
+				if (children[i].ExpectedTypes?.Length > 0) {
+					string checkString = null;
+					foreach (var expectedType in children[i].ExpectedTypes) {
+						var expectedTypeCode = expectedType;
+						if (!expectedType.Contains("."))
+							expectedTypeCode = "StackType." + expectedTypeCode;
+						if (checkString != null)
+							checkString += " || ";
+						checkString += arg + ".ResultType == " + expectedTypeCode;
+					}
+					opCode.Invariants.Add("Debug.Assert(" + checkString + ");");
+				}
+			}
+			opCode.WriteArguments.Add("output.Write(')');");
+			StringBuilder b;
+			b = new StringBuilder();
+			b.AppendLine("protected sealed override int GetChildCount()");
+			b.AppendLine("{");
+			b.Append("\treturn ");
+			if (childCount > 0 || collection == null)
+				b.Append(childCount);
+			if (collection != null) {
+				if (childCount > 0) b.Append(" + ");
+				b.Append(collection.PropertyName + ".Count");
+			}
+			b.AppendLine(";");
+			b.Append("}");
+			opCode.Members.Add(b.ToString());
+			
+			b = new StringBuilder();
+			b.AppendLine("protected sealed override ILInstruction GetChild(int index)");
+			b.AppendLine("{");
+			b.AppendLine("\tswitch (index) {");
+			for (int i = 0; i < childCount; i++) {
+				b.AppendLine("\t\tcase " + i + ":");
+				b.AppendLine("\t\t\treturn this." + children[i].Name + ";");
+			}
+			b.AppendLine("\t\tdefault:");
+			if (collection == null)
+				b.AppendLine("\t\t\tthrow new IndexOutOfRangeException();");
+			else
+				b.AppendLine("\t\t\treturn this." + collection.PropertyName + "[index - " + childCount + "];");
+			b.AppendLine("\t}");
+			b.Append("}");
+			opCode.Members.Add(b.ToString());
+			
+			b = new StringBuilder();
+			b.AppendLine("protected sealed override void SetChild(int index, ILInstruction value)");
+			b.AppendLine("{");
+			b.AppendLine("\tswitch (index) {");
+			for (int i = 0; i < childCount; i++) {
+				b.AppendLine("\t\tcase " + i + ":");
+				b.AppendLine("\t\t\tthis." + children[i].PropertyName + " = value;");
+				b.AppendLine("\t\t\tbreak;");
+			}
+			b.AppendLine("\t\tdefault:");
+			if (collection == null)
+				b.AppendLine("\t\t\tthrow new IndexOutOfRangeException();");
+			else {
+				b.AppendLine("\t\t\tthis." + collection.PropertyName + "[index - " + childCount + "] = (" + collection.Type + ")value;");
+				b.AppendLine("\t\t\tbreak;");
+			}
+			b.AppendLine("\t}");
+			b.Append("}");
+			opCode.Members.Add(b.ToString());
+			
+			b = new StringBuilder();
+			b.AppendLine("protected sealed override SlotInfo GetChildSlot(int index)");
+			b.AppendLine("{");
+			b.AppendLine("\tswitch (index) {");
+			for (int i = 0; i < childCount; i++) {
+				b.AppendLine("\t\tcase " + i + ":");
+				b.AppendLine("\t\t\treturn " + children[i].SlotName + ";");
+			}
+			b.AppendLine("\t\tdefault:");
+			if (collection == null)
+				b.AppendLine("\t\t\tthrow new IndexOutOfRangeException();");
+			else
+				b.AppendLine("\t\t\treturn " + collection.SlotName + ";");
+			b.AppendLine("\t}");
+			b.Append("}");
+			opCode.Members.Add(b.ToString());
+			
+			b = new StringBuilder();
+			b.AppendLine("public sealed override ILInstruction Clone()");
+			b.AppendLine("{");
+			b.AppendLine("\tvar clone = (" + opCode.Name + ")ShallowClone();");
+			for (int i = 0; i < children.Length; i++) {
+				if (children[i].IsCollection) {
+					b.AppendLine("\tclone." + children[i].PropertyName + " = new InstructionCollection<" + children[i].Type + ">(clone, " + i + ");");
+					b.AppendLine("\tclone." + children[i].PropertyName + ".AddRange(this." + children[i].PropertyName + ".Select(arg => (" + children[i].Type + ")arg.Clone()));");
+				} else {
+					b.AppendLine("\tclone." + children[i].PropertyName + " = this." + children[i].Name + ".Clone();");
+				}
+			}
+			if (opCode.Name == "ILFunction") {
+				b.AppendLine("\tclone.CloneVariables();");
+			}
+			b.AppendLine("\treturn clone;");
+			b.Append("}");
+			opCode.Members.Add(b.ToString());
+		};
+	}
+
+	static Action<OpCode> AbstractBaseClass = opCode => {
+		opCode.GenerateAcceptVisitor = false;
+		opCode.ClassModifiers = "public abstract";
+		opCode.ConstructorModifier = "protected";
+		opCode.ConstructorParameters.Add("OpCode opCode");
+		opCode.BaseConstructorArguments.Add("opCode");
+		opCode.GenerateMatch = false;
+		opCode.GeneratePerformMatch = false;
+	};
+
+	// SideEffect trait: the instruction has a non-local side effect
+	static Action<OpCode> SideEffect = HasFlag("InstructionFlags.SideEffect");
+	static Action<OpCode> MemoryAccess = SideEffect;
+	
+	// Call trait: the instruction performs a method call
+	static Action<OpCode> Call = opCode => {
+		opCode.BaseClass = "CallInstruction";
+		opCode.ConstructorParameters.Add("IMethod method");
+		opCode.BaseConstructorArguments.Add("method");
+		opCode.GenerateMatch = false;
+		opCode.GeneratePerformMatch = false;
+	};
+
+	// HasVariableOperand trait: the instruction refers to a local variable
+	static Action<OpCode> HasVariableOperand(string accessType, bool generateCheckInvariant = true)
+	{
+		Action<OpCode> action = opCode => {
+			opCode.ConstructorParameters.Add("ILVariable variable");
+			opCode.Members.Add("ILVariable variable;");
+			opCode.ConstructorBody.Add("Debug.Assert(variable != null);");
+			opCode.ConstructorBody.Add("this.variable = variable;");
+			opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILVariable", Name = "variable", FieldName = "Variable" });
+			opCode.PerformMatchConditions.Add("variable == o.variable");
+			opCode.GenerateWriteTo = true;
+			opCode.WriteOperand.Add("output.Write(' ');");
+			opCode.WriteOperand.Add("variable.WriteTo(output);");
+			opCode.Interfaces.Add("I" + accessType + "Instruction");
+			opCode.Members.Add(@"public ILVariable Variable {
+	get { return variable; }
+	set {
+		Debug.Assert(value != null);
+		if (IsConnected)
+			variable.RemoveAccessInstruction(this);
+		variable = value;
+		if (IsConnected)
+			variable.AddAccessInstruction(this);
+	}
+}
+
+public int IndexInAccessInstructionList { get; set; } = -1;
+
+int IInstructionWithVariableOperand.IndexInVariableInstructionMapping {
+	get { return ((IAccessInstruction)this).IndexInAccessInstructionList; }
+	set { ((IAccessInstruction)this).IndexInAccessInstructionList = value; }
+}
+
+protected override void Connected()
+{
+	base.Connected();
+	variable.AddAccessInstruction(this);
+}
+
+protected override void Disconnected()
+{
+	variable.RemoveAccessInstruction(this);
+	base.Disconnected();
+}
+".Replace("Access", accessType));
+			if (generateCheckInvariant) {
+				opCode.Invariants.Add("Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));");
+				opCode.Invariants.Add("Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);");
+			}
+		};
+		if (accessType == "Load") {
+			action += HasFlag("InstructionFlags.MayReadLocals");
+		} else if (accessType == "Store") {
+			action += HasFlag("InstructionFlags.MayWriteLocals");
+		} else {
+			if (accessType != "Address")
+				throw new ArgumentException();
+		} 
+		return action;
+	}
+	
+	static Action<OpCode> HasFieldOperand = opCode => {
+		opCode.ConstructorParameters.Add("IField field");
+		opCode.Members.Add("readonly IField field;");
+		opCode.ConstructorBody.Add("this.field = field;");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IField", Name = "field", FieldName = "Field" });
+		opCode.PerformMatchConditions.Add("field.Equals(o.field)");
+		opCode.Members.Add("/// <summary>Returns the field operand.</summary>" + Environment.NewLine
+						+ "public IField Field { get { return field; } }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOperand.Add("output.Write(' ');");
+		opCode.WriteOperand.Add("field.WriteTo(output);");
+		opCode.Interfaces.Add("IInstructionWithFieldOperand");
+	};
+
+	static Action<OpCode> HasTypeOperand = opCode => {
+		opCode.ConstructorParameters.Add("IType type");
+		opCode.Members.Add("IType type;");
+		opCode.ConstructorBody.Add("this.type = type;");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IType", Name = "type", FieldName = "Type" });
+		opCode.PerformMatchConditions.Add("type.Equals(o.type)");
+		opCode.Members.Add("/// <summary>Returns the type operand.</summary>" + Environment.NewLine
+						+ "public IType Type {" + Environment.NewLine
+						+ "\tget { return type; }" + Environment.NewLine
+						+ "\tset { type = value; InvalidateFlags(); }" + Environment.NewLine
+						+ "}");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOperand.Add("output.Write(' ');");
+		opCode.WriteOperand.Add("type.WriteTo(output);");
+	};
+
+	static Action<OpCode> HasMethodOperand = opCode => {
+		opCode.ConstructorParameters.Add("IMethod method");
+		opCode.Members.Add("readonly IMethod method;");
+		opCode.ConstructorBody.Add("this.method = method;");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IMethod", Name = "method", FieldName = "Method" });
+		opCode.PerformMatchConditions.Add("object.Equals(method, o.method)");
+		opCode.Members.Add("/// <summary>Returns the method operand.</summary>" + Environment.NewLine
+						+ "public IMethod Method { get { return method; } }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOperand.Add("if (method != null) {");
+		opCode.WriteOperand.Add("\toutput.Write(' ');");
+		opCode.WriteOperand.Add("\tmethod.WriteTo(output);");
+		opCode.WriteOperand.Add("}");
+		opCode.Interfaces.Add("IInstructionWithMethodOperand");
+	};
+	
+	static Action<OpCode> HasMemberOperand = opCode => {
+		opCode.ConstructorParameters.Add("IMember member");
+		opCode.Members.Add("readonly IMember member;");
+		opCode.ConstructorBody.Add("this.member = member;");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IMember", Name = "member", FieldName = "Member" });
+		opCode.PerformMatchConditions.Add("member.Equals(o.member)");
+		opCode.Members.Add("/// <summary>Returns the token operand.</summary>" + Environment.NewLine
+						+ "public IMember Member { get { return member; } }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOperand.Add("output.Write(' ');");
+		opCode.WriteOperand.Add("member.WriteTo(output);");
+	};
+	
+	// Adds a member of type bool to the instruction.
+	static Action<OpCode> BoolFlag(string flagName)
+	{
+		return opCode => {
+			opCode.PerformMatchConditions.Add($"this.{flagName} == o.{flagName}");
+			opCode.Members.Add($"public bool {flagName};");
+			opCode.GenerateWriteTo = true;
+			opCode.WriteOpCodePrefix.Add($"if ({flagName}){Environment.NewLine}\toutput.Write(\"{flagName.ToLowerInvariant()}.\");");
+		};
+	}
+	
+	// LoadConstant trait: the instruction loads a compile-time constant. Implies NoArguments.
+	static Action<OpCode> LoadConstant(string operandType)
+	{
+		return opCode => {
+			NoArguments(opCode);
+			opCode.ConstructorParameters.Add(operandType + " value");
+			opCode.MatchParameters.Add(new MatchParamInfo { TypeName = operandType, Name = "value", FieldName = "Value" });
+			opCode.PerformMatchConditions.Add("this.Value == o.Value");
+			opCode.Members.Add("public readonly " + operandType + " Value;");
+			opCode.ConstructorBody.Add("this.Value = value;");
+			opCode.GenerateWriteTo = true;
+			opCode.WriteOperand.Add("output.Write(' ');");
+			opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, Value);");
+		};
+	}
+	
+	static Action<OpCode> SupportsVolatilePrefix = opCode => {
+		opCode.Interfaces.Add("ISupportsVolatilePrefix");
+		opCode.Members.Add("/// <summary>Gets/Sets whether the memory access is volatile.</summary>" + Environment.NewLine
+						+ "public bool IsVolatile { get; set; }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOpCodePrefix.Add("if (IsVolatile)" + Environment.NewLine + "\toutput.Write(\"volatile.\");");
+		opCode.PerformMatchConditions.Add("IsVolatile == o.IsVolatile");
+	};
+	
+	static Action<OpCode> SupportsUnalignedPrefix = opCode => {
+		opCode.Interfaces.Add("ISupportsUnalignedPrefix");
+		opCode.Members.Add("/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>" + Environment.NewLine
+						+ "public byte UnalignedPrefix { get; set; }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOpCodePrefix.Add("if (UnalignedPrefix > 0)" + Environment.NewLine + "\toutput.Write(\"unaligned(\" + UnalignedPrefix + \").\");");
+		opCode.PerformMatchConditions.Add("UnalignedPrefix == o.UnalignedPrefix");
+	};
+	
+	static Action<OpCode> SupportsReadonlyPrefix = opCode => {
+		opCode.Members.Add("/// <summary>Gets whether the 'readonly' prefix was applied to this instruction.</summary>" + Environment.NewLine
+						+ "public bool IsReadOnly { get; set; }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOpCodePrefix.Add("if (IsReadOnly)" + Environment.NewLine + "\toutput.Write(\"readonly.\");");
+		opCode.PerformMatchConditions.Add("IsReadOnly == o.IsReadOnly");
+	};
+	
+	static Action<OpCode> CustomInvariant(string code)
+	{
+		return opCode => {
+			opCode.Invariants.Add(code);
+		};
+	}
+
+	static Action<OpCode> Pattern = opCode => {
+		BaseClass("PatternInstruction")(opCode);
+		opCode.Namespace = "ICSharpCode.Decompiler.IL.Patterns";
+		opCode.GenerateAcceptVisitor = false;
+		opCode.GenerateMatch = false;
+		opCode.GeneratePerformMatch = false;
+	};
+
+	static Action<OpCode> Dynamic = BaseClass("DynamicInstruction") + MayThrow + SideEffect + CustomConstructor;
+#>

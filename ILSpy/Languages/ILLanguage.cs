@@ -16,11 +16,18 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
-using Mono.Cecil;
+using System.ComponentModel.Composition;
+using System.Reflection.Metadata;
+using System.Linq;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.Decompiler.Solution;
+using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy
 {
@@ -31,14 +38,10 @@ namespace ICSharpCode.ILSpy
 	/// Currently comes in two versions:
 	/// flat IL (detectControlStructure=false) and structured IL (detectControlStructure=true).
 	/// </remarks>
+	[Export(typeof(Language))]
 	public class ILLanguage : Language
 	{
-		private readonly bool detectControlStructure;
-		
-		public ILLanguage(bool detectControlStructure)
-		{
-			this.detectControlStructure = detectControlStructure;
-		}
+		protected bool detectControlStructure = true;
 		
 		public override string Name {
 			get { return "IL"; }
@@ -48,89 +51,164 @@ namespace ICSharpCode.ILSpy
 			get { return ".il"; }
 		}
 		
-		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+		protected virtual ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options)
 		{
-			var dis = new ReflectionDisassembler(output, detectControlStructure, options.CancellationToken);
-			dis.DisassembleMethod(method);
+			output.IndentationString = options.DecompilerSettings.CSharpFormattingOptions.IndentationString;
+			return new ReflectionDisassembler(output, options.CancellationToken) {
+				DetectControlStructure = detectControlStructure,
+				ShowSequencePoints = options.DecompilerSettings.ShowDebugInfo,
+				ShowMetadataTokens = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens,
+				ShowMetadataTokensInBase10 = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10,
+				ExpandMemberDefinitions = options.DecompilerSettings.ExpandMemberDefinitions
+			};
+		}
+
+		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
+		{
+			var dis = CreateDisassembler(output, options);
+			PEFile module = method.ParentModule.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DebugInfo = module.GetDebugInfoOrNull();
+			dis.DisassembleMethod(module, (MethodDefinitionHandle)method.MetadataToken);
 		}
 		
-		public override void DecompileField(FieldDefinition field, ITextOutput output, DecompilationOptions options)
+		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
-			var dis = new ReflectionDisassembler(output, detectControlStructure, options.CancellationToken);
-			dis.DisassembleField(field);
+			var dis = CreateDisassembler(output, options);
+			PEFile module = field.ParentModule.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DebugInfo = module.GetDebugInfoOrNull();
+			dis.DisassembleField(module, (FieldDefinitionHandle)field.MetadataToken);
 		}
 		
-		public override void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
+		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
-			ReflectionDisassembler rd = new ReflectionDisassembler(output, detectControlStructure, options.CancellationToken);
-			rd.DisassembleProperty(property);
-			if (property.GetMethod != null) {
+			var dis = CreateDisassembler(output, options);
+			PEFile module = property.ParentModule.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DebugInfo = module.GetDebugInfoOrNull();
+			dis.DisassembleProperty(module, (PropertyDefinitionHandle)property.MetadataToken);
+			var pd = module.Metadata.GetPropertyDefinition((PropertyDefinitionHandle)property.MetadataToken);
+			var accessors = pd.GetAccessors();
+
+			if (!accessors.Getter.IsNil) {
 				output.WriteLine();
-				rd.DisassembleMethod(property.GetMethod);
+				dis.DisassembleMethod(module, accessors.Getter);
 			}
-			if (property.SetMethod != null) {
+			if (!accessors.Setter.IsNil) {
 				output.WriteLine();
-				rd.DisassembleMethod(property.SetMethod);
+				dis.DisassembleMethod(module, accessors.Setter);
 			}
-			foreach (var m in property.OtherMethods) {
+			/*foreach (var m in property.OtherMethods) {
 				output.WriteLine();
-				rd.DisassembleMethod(m);
-			}
+				dis.DisassembleMethod(m);
+			}*/
 		}
 		
-		public override void DecompileEvent(EventDefinition ev, ITextOutput output, DecompilationOptions options)
+		public override void DecompileEvent(IEvent ev, ITextOutput output, DecompilationOptions options)
 		{
-			ReflectionDisassembler rd = new ReflectionDisassembler(output, detectControlStructure, options.CancellationToken);
-			rd.DisassembleEvent(ev);
-			if (ev.AddMethod != null) {
+			var dis = CreateDisassembler(output, options);
+			PEFile module = ev.ParentModule.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DebugInfo = module.GetDebugInfoOrNull();
+			dis.DisassembleEvent(module, (EventDefinitionHandle)ev.MetadataToken);
+
+			var ed = ((MetadataReader)module.Metadata).GetEventDefinition((EventDefinitionHandle)ev.MetadataToken);
+			var accessors = ed.GetAccessors();
+			if (!accessors.Adder.IsNil) {
 				output.WriteLine();
-				rd.DisassembleMethod(ev.AddMethod);
+				dis.DisassembleMethod(module, accessors.Adder);
 			}
-			if (ev.RemoveMethod != null) {
+			if (!accessors.Remover.IsNil) {
 				output.WriteLine();
-				rd.DisassembleMethod(ev.RemoveMethod);
+				dis.DisassembleMethod(module, accessors.Remover);
 			}
-			foreach (var m in ev.OtherMethods) {
+			if (!accessors.Raiser.IsNil) {
 				output.WriteLine();
-				rd.DisassembleMethod(m);
+				dis.DisassembleMethod(module, accessors.Raiser);
 			}
+			/*foreach (var m in ev.OtherMethods) {
+				output.WriteLine();
+				dis.DisassembleMethod(m);
+			}*/
 		}
 		
-		public override void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
+		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			var dis = new ReflectionDisassembler(output, detectControlStructure, options.CancellationToken);
-			dis.DisassembleType(type);
+			var dis = CreateDisassembler(output, options);
+			PEFile module = type.ParentModule.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DebugInfo = module.GetDebugInfoOrNull();
+			dis.DisassembleType(module, (TypeDefinitionHandle)type.MetadataToken);
+		}
+
+		public override void DecompileNamespace(string nameSpace, IEnumerable<ITypeDefinition> types, ITextOutput output, DecompilationOptions options)
+		{
+			var dis = CreateDisassembler(output, options);
+			PEFile module = types.FirstOrDefault()?.ParentModule.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DebugInfo = module.GetDebugInfoOrNull();
+			dis.DisassembleNamespace(nameSpace, module, types.Select(t => (TypeDefinitionHandle)t.MetadataToken));
 		}
 		
-		public override void DecompileNamespace(string nameSpace, IEnumerable<TypeDefinition> types, ITextOutput output, DecompilationOptions options)
-		{
-			new ReflectionDisassembler(output, detectControlStructure, options.CancellationToken).DisassembleNamespace(nameSpace, types);
-		}
-		
-		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			output.WriteLine("// " + assembly.FileName);
 			output.WriteLine();
-			
-			ReflectionDisassembler rd = new ReflectionDisassembler(output, detectControlStructure, options.CancellationToken);
-			if (options.FullDecompilation)
-				rd.WriteAssemblyReferences(assembly.ModuleDefinition);
-			if (assembly.AssemblyDefinition != null)
-				rd.WriteAssemblyHeader(assembly.AssemblyDefinition);
-			output.WriteLine();
-			rd.WriteModuleHeader(assembly.ModuleDefinition);
-			if (options.FullDecompilation) {
+			var module = assembly.GetPEFileOrNull();
+			var metadata = module.Metadata;
+			var dis = CreateDisassembler(output, options);
+
+			// don't automatically load additional assemblies when an assembly node is selected in the tree view
+			using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad(assembly.AssemblyList)) {
+				dis.AssemblyResolver = module.GetAssemblyResolver();
+				dis.DebugInfo = module.GetDebugInfoOrNull();
+				if (options.FullDecompilation)
+					dis.WriteAssemblyReferences(metadata);
+				if (metadata.IsAssembly)
+					dis.WriteAssemblyHeader(module);
 				output.WriteLine();
-				output.WriteLine();
-				rd.WriteModuleContents(assembly.ModuleDefinition);
+				dis.WriteModuleHeader(module);
+				if (options.FullDecompilation) {
+					output.WriteLine();
+					output.WriteLine();
+					dis.WriteModuleContents(module);
+				}
 			}
+			return null;
 		}
-		
-		public override string TypeToString(TypeReference t, bool includeNamespace, ICustomAttributeProvider attributeProvider = null)
+
+		public override RichText GetRichTextTooltip(IEntity entity)
 		{
-			PlainTextOutput output = new PlainTextOutput();
-			t.WriteTo(output, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
-			return output.ToString();
+			var output = new AvalonEditTextOutput() { IgnoreNewLineAndIndent = true };
+			var disasm = CreateDisassembler(output, new DecompilationOptions());
+			switch (entity.SymbolKind) {
+				case SymbolKind.TypeDefinition:
+					disasm.DisassembleTypeHeader(entity.ParentModule.PEFile, (TypeDefinitionHandle)entity.MetadataToken);
+					break;
+				case SymbolKind.Field:
+					disasm.DisassembleFieldHeader(entity.ParentModule.PEFile, (FieldDefinitionHandle)entity.MetadataToken);
+					break;
+				case SymbolKind.Property:
+				case SymbolKind.Indexer:
+					disasm.DisassemblePropertyHeader(entity.ParentModule.PEFile, (PropertyDefinitionHandle)entity.MetadataToken);
+					break;
+				case SymbolKind.Event:
+					disasm.DisassembleEventHeader(entity.ParentModule.PEFile, (EventDefinitionHandle)entity.MetadataToken);
+					break;
+				case SymbolKind.Method:
+				case SymbolKind.Operator:
+				case SymbolKind.Constructor:
+				case SymbolKind.Destructor:
+				case SymbolKind.Accessor:
+					disasm.DisassembleMethodHeader(entity.ParentModule.PEFile, (MethodDefinitionHandle)entity.MetadataToken);
+					break;
+				default:
+					output.Write(GetDisplayName(entity, true, true, true));
+					break;
+			}
+
+			return new DocumentHighlighter(output.GetDocument(), base.SyntaxHighlighting).HighlightLine(1).ToRichText();
 		}
 	}
 }

@@ -1,0 +1,17 @@
+The first step ICSharpCode.Decompiler performs to decompile a method is to
+translate the IL code into the 'ILAst'.
+
+An ILAst node (ILInstruction in the code) usually has other nodes as arguments,
+and performs a computation with the result of those arguments.
+
+The evaluation of a node results in either:
+ * a value
+ * void (which is invalid as an argument, but nodes in blocks may produce void results)
+ * a thrown exception (which stops further evaluation until a matching catch block)
+ * the execution of a branch instruction (which also stops evaluation until we reach the block container that contains the branch target)
+
+The main differences between IL and ILAst are:
+ * ILAst instructions may form trees
+ * Types are explicit, not implicit
+ * There is no evaluation stack
+   * Instead, "stack slot" variables are introduced

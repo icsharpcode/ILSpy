@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="MSBuild.Sdk.Extras">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>ILSpy.ReadyToRun.Plugin</AssemblyName>
+    <LangVersion>8.0</LangVersion>
+
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <UseWpf>true</UseWpf>
+    <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
+    <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <OutputPath>..\ILSpy\bin\$(Configuration)\</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj">
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\ILSpy\ILSpy.csproj">
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj">
+      <Private>False</Private>
+    </ProjectReference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="ReadyToRunLanguage.cs" />
+    <Compile Include="ReadyToRunOptionPage.xaml.cs">
+      <DependentUpon>ReadyToRunOptionPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ReadyToRunOptions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="ReadyToRunOptionPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Iced" Version="1.6.0" />
+    <PackageReference Include="ILCompiler.Reflection.ReadyToRun" Version="1.0.8-alpha" />
+  </ItemGroup>
+
+  <Target Name="RemoveTransitiveProjectReferences" AfterTargets="IncludeTransitiveProjectReferences">
+    <ItemGroup>
+      <ProjectReference Remove="@(_TransitiveProjectReferences)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

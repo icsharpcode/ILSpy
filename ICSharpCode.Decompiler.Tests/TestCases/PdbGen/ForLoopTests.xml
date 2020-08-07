@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="ICSharpCode.Decompiler.Tests.TestCases.PdbGen\ForLoopTests.cs" language="C#" checksumAlgorithm="SHA256"><![CDATA[using System;
+
+namespace ICSharpCode.Decompiler.Tests.TestCases.PdbGen
+{
+	public class ForLoopTests
+	{
+		public static void SimplePrintLoop(string[] args)
+		{
+			for (int i = 0; i < args.Length; i++)
+			{
+				Console.WriteLine(args[i]);
+			}
+		}
+
+		public static void SimplePrintLoopWithCondition(string[] args)
+		{
+			for (int i = 0; i < args.Length; i++)
+			{
+				if (i % 2 != 0)
+				{
+					Console.WriteLine(args[i]);
+				}
+			}
+		}
+	}
+}
+]]></file>
+  </files>
+  <methods>
+    <method containingType="ICSharpCode.Decompiler.Tests.TestCases.PdbGen.ForLoopTests" name="SimplePrintLoop" parameterNames="args" token="0x6000001">
+      <sequencePoints>
+        <entry offset="0x0" startLine="9" startColumn="9" endLine="9" endColumn="18" document="1" />
+        <entry offset="0x2" hidden="true" document="1" />
+        <entry offset="0x4" startLine="11" startColumn="5" endLine="11" endColumn="32" document="1" />
+        <entry offset="0xc" startLine="9" startColumn="37" endLine="9" endColumn="40" document="1" />
+        <entry offset="0x10" startLine="9" startColumn="20" endLine="9" endColumn="35" document="1" />
+        <entry offset="0x16" startLine="13" startColumn="3" endLine="13" endColumn="4" document="1" />
+      </sequencePoints>
+      <scope startOffset="0x0" endOffset="0x17">
+        <scope startOffset="0x0" endOffset="0x16">
+          <local name="i" il_index="0" il_start="0x0" il_end="0x16" attributes="0" />
+        </scope>
+      </scope>
+    </method>
+    <method containingType="ICSharpCode.Decompiler.Tests.TestCases.PdbGen.ForLoopTests" name="SimplePrintLoopWithCondition" parameterNames="args" token="0x6000002">
+      <sequencePoints>
+        <entry offset="0x0" startLine="17" startColumn="9" endLine="17" endColumn="18" document="1" />
+        <entry offset="0x2" hidden="true" document="1" />
+        <entry offset="0x4" startLine="19" startColumn="5" endLine="19" endColumn="20" document="1" />
+        <entry offset="0x9" startLine="21" startColumn="6" endLine="21" endColumn="33" document="1" />
+        <entry offset="0x11" startLine="17" startColumn="37" endLine="17" endColumn="40" document="1" />
+        <entry offset="0x15" startLine="17" startColumn="20" endLine="17" endColumn="35" document="1" />
+        <entry offset="0x1b" startLine="24" startColumn="3" endLine="24" endColumn="4" document="1" />
+      </sequencePoints>
+      <scope startOffset="0x0" endOffset="0x1c">
+        <scope startOffset="0x0" endOffset="0x1b">
+          <local name="i" il_index="0" il_start="0x0" il_end="0x1b" attributes="0" />
+        </scope>
+      </scope>
+    </method>
+  </methods>
+  <method-spans>
+    <method declaringType="ICSharpCode.Decompiler.Tests.TestCases.PdbGen.ForLoopTests" methodName="SimplePrintLoop" parameterNames="args" token="0x6000001">
+      <document startLine="9" endLine="13" />
+    </method>
+    <method declaringType="ICSharpCode.Decompiler.Tests.TestCases.PdbGen.ForLoopTests" methodName="SimplePrintLoopWithCondition" parameterNames="args" token="0x6000002">
+      <document startLine="17" endLine="24" />
+    </method>
+  </method-spans>
+</symbols>

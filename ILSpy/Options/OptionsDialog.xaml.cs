@@ -22,6 +22,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Xml.Linq;
+using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.Options
 {
@@ -30,17 +31,21 @@ namespace ICSharpCode.ILSpy.Options
 	/// </summary>
 	public partial class OptionsDialog : Window
 	{
-		[ImportMany("OptionPages", typeof(UIElement), RequiredCreationPolicy = CreationPolicy.NonShared)]
-		Lazy<UIElement, IOptionsMetadata>[] optionPages = null;
+		
+		readonly Lazy<UIElement, IOptionsMetadata>[] optionPages;
 		
 		public OptionsDialog()
 		{
 			InitializeComponent();
-			App.CompositionContainer.ComposeParts(this);
+			// These used to have [ImportMany(..., RequiredCreationPolicy = CreationPolicy.NonShared)], so they use their own
+			// ExportProvider instance.
+			// FIXME: Ideally, the export provider should be disposed when it's no longer needed.
+			var ep = App.ExportProviderFactory.CreateExportProvider();
+			this.optionPages = ep.GetExports<UIElement, IOptionsMetadata>("OptionPages").ToArray();
 			ILSpySettings settings = ILSpySettings.Load();
 			foreach (var optionPage in optionPages.OrderBy(p => p.Metadata.Order)) {
 				TabItem tabItem = new TabItem();
-				tabItem.Header = optionPage.Metadata.Title;
+				tabItem.Header = MainWindow.GetResourceString( optionPage.Metadata.Title);
 				tabItem.Content = optionPage.Value;
 				tabControl.Items.Add(tabItem);
 				
@@ -63,8 +68,17 @@ namespace ICSharpCode.ILSpy.Options
 			this.DialogResult = true;
 			Close();
 		}
+
+		private void DefaultsButton_Click(object sender, RoutedEventArgs e)
+		{
+			if (MessageBox.Show(Properties.Resources.ResetToDefaultsConfirmationMessage, "ILSpy", MessageBoxButton.YesNo) == MessageBoxResult.Yes) {
+				var page = ((TabItem)tabControl.SelectedItem).Content as IOptionPage;
+				if (page != null)
+					page.LoadDefaults();
+			}
+		}
 	}
-	
+
 	public interface IOptionsMetadata
 	{
 		string Title { get; }
@@ -75,6 +89,7 @@ namespace ICSharpCode.ILSpy.Options
 	{
 		void Load(ILSpySettings settings);
 		void Save(XElement root);
+		void LoadDefaults();
 	}
 	
 	[MetadataAttribute]
@@ -89,7 +104,7 @@ namespace ICSharpCode.ILSpy.Options
 		public int Order { get; set; }
 	}
 	
-	[ExportMainMenuCommand(Menu = "_View", Header = "_Options...", MenuCategory = "Options", MenuOrder = 999)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._View), Header = nameof(Resources._Options),  MenuCategory = nameof(Resources.Options) ,MenuOrder = 999)]
 	sealed class ShowOptionsCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)

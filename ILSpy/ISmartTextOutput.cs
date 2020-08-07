@@ -21,7 +21,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-
+using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
 
 namespace ICSharpCode.ILSpy
@@ -35,8 +35,16 @@ namespace ICSharpCode.ILSpy
 		/// Inserts an interactive UI element at the current position in the text output.
 		/// </summary>
 		void AddUIElement(Func<UIElement> element);
+
+		void BeginSpan(HighlightingColor highlightingColor);
+		void EndSpan();
+
+		/// <summary>
+		/// Gets/sets the title displayed in the document tab's header.
+		/// </summary>
+		string Title { get; set; }
 	}
-	
+
 	public static class SmartTextOutputExtensions
 	{
 		/// <summary>

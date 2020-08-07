@@ -21,8 +21,10 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
-using Mono.Cecil;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -31,11 +33,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		public ILSpyTreeNode CreateNode(Resource resource)
 		{
-			EmbeddedResource er = resource as EmbeddedResource;
-			if (er != null) {
-				return CreateNode(er.Name, er.GetResourceStream());
-			}
-			return null;
+			Stream stream = resource.TryOpenStream();
+			if (stream == null)
+				return null;
+			return CreateNode(resource.Name, stream);
 		}
 
 		public ILSpyTreeNode CreateNode(string key, object data)
@@ -58,12 +59,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 		}
 
-		public override object Icon
-		{
-			get { return Images.ResourceImage; }
-		}
+		public override object Icon => Images.ResourceImage;
 
-		public override bool View(DecompilerTextView textView)
+		public override bool View(TabPageModel tabPage)
 		{
 			try {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
@@ -74,10 +72,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					AddIcon(output, frame);
 					output.WriteLine();
 				}
-				output.AddButton(Images.Save, "Save", delegate {
+				output.AddButton(Images.Save, Resources.Save, delegate {
 					Save(null);
 				});
-				textView.ShowNode(output, this);
+				tabPage.ShowTextView(textView => textView.ShowNode(output, this));
+				tabPage.SupportsLanguageSwitching = false;
 				return true;
 			} catch (Exception) {
 				return false;

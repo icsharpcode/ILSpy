@@ -1,6 +1,5 @@
 ﻿// PkgCmdID.cs
 // MUST match PkgCmdID.h
-using System;
 
 namespace ICSharpCode.ILSpy.AddIn
 {

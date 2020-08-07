@@ -20,10 +20,12 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Xml.Linq;
+using ICSharpCode.ILSpy.Docking;
 
 namespace ICSharpCode.ILSpy
 {
@@ -36,51 +38,64 @@ namespace ICSharpCode.ILSpy
 		public SessionSettings(ILSpySettings spySettings)
 		{
 			XElement doc = spySettings["SessionSettings"];
-			
+
 			XElement filterSettings = doc.Element("FilterSettings");
 			if (filterSettings == null) filterSettings = new XElement("FilterSettings");
-			
+
 			this.FilterSettings = new FilterSettings(filterSettings);
-			
+
 			this.ActiveAssemblyList = (string)doc.Element("ActiveAssemblyList");
-			
+
 			XElement activeTreeViewPath = doc.Element("ActiveTreeViewPath");
 			if (activeTreeViewPath != null) {
 				this.ActiveTreeViewPath = activeTreeViewPath.Elements().Select(e => Unescape((string)e)).ToArray();
 			}
 			this.ActiveAutoLoadedAssembly = (string)doc.Element("ActiveAutoLoadedAssembly");
-			
+
 			this.WindowState = FromString((string)doc.Element("WindowState"), WindowState.Normal);
 			this.WindowBounds = FromString((string)doc.Element("WindowBounds"), DefaultWindowBounds);
 			this.SplitterPosition = FromString((string)doc.Element("SplitterPosition"), 0.4);
 			this.TopPaneSplitterPosition = FromString((string)doc.Element("TopPaneSplitterPosition"), 0.3);
 			this.BottomPaneSplitterPosition = FromString((string)doc.Element("BottomPaneSplitterPosition"), 0.3);
+			this.SelectedSearchMode = FromString((string)doc.Element("SelectedSearchMode"), SearchMode.TypeAndMember);
+
+			this.DockLayout = new DockLayoutSettings(doc.Element("DockLayout"));
 		}
-		
+
 		public event PropertyChangedEventHandler PropertyChanged;
-		
-		void OnPropertyChanged(string propertyName)
+
+		void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
-			if (PropertyChanged != null)
-				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
-		
+
 		public FilterSettings FilterSettings { get; private set; }
-		
+		public SearchMode SelectedSearchMode { get; set; }
+
 		public string[] ActiveTreeViewPath;
 		public string ActiveAutoLoadedAssembly;
-		
-		public string ActiveAssemblyList;
-		
+
+		public string ActiveAssemblyList {
+			get => activeAssemblyList;
+			set {
+				if (value != null && value != activeAssemblyList) {
+					activeAssemblyList = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public WindowState WindowState = WindowState.Normal;
 		public Rect WindowBounds;
-		internal static Rect DefaultWindowBounds =  new Rect(10, 10, 750, 550);
+		internal static Rect DefaultWindowBounds = new Rect(10, 10, 750, 550);
 		/// <summary>
 		/// position of the left/right splitter
 		/// </summary>
 		public double SplitterPosition;
 		public double TopPaneSplitterPosition, BottomPaneSplitterPosition;
-		
+
+		public DockLayoutSettings DockLayout { get; private set; }
+
 		public void Save()
 		{
 			XElement doc = new XElement("SessionSettings");
@@ -99,12 +114,20 @@ namespace ICSharpCode.ILSpy
 			doc.Add(new XElement("SplitterPosition", ToString(this.SplitterPosition)));
 			doc.Add(new XElement("TopPaneSplitterPosition", ToString(this.TopPaneSplitterPosition)));
 			doc.Add(new XElement("BottomPaneSplitterPosition", ToString(this.BottomPaneSplitterPosition)));
-			
+			doc.Add(new XElement("SelectedSearchMode", ToString(this.SelectedSearchMode)));
+
+			var dockLayoutElement = new XElement("DockLayout");
+			if (DockLayout.Valid) {
+				dockLayoutElement.Add(DockLayout.SaveAsXml());
+			}
+			doc.Add(dockLayoutElement);
+
 			ILSpySettings.SaveSettings(doc);
 		}
-		
+
 		static Regex regex = new Regex("\\\\x(?<num>[0-9A-f]{4})");
-		
+		private string activeAssemblyList;
+
 		static string Escape(string p)
 		{
 			StringBuilder sb = new StringBuilder();
@@ -116,12 +139,12 @@ namespace ICSharpCode.ILSpy
 			}
 			return sb.ToString();
 		}
-		
+
 		static string Unescape(string p)
 		{
 			return regex.Replace(p, m => ((char)int.Parse(m.Groups["num"].Value, NumberStyles.HexNumber)).ToString());
 		}
-		
+
 		static T FromString<T>(string s, T defaultValue)
 		{
 			if (s == null)
@@ -133,7 +156,7 @@ namespace ICSharpCode.ILSpy
 				return defaultValue;
 			}
 		}
-		
+
 		static string ToString<T>(T obj)
 		{
 			TypeConverter c = TypeDescriptor.GetConverter(typeof(T));

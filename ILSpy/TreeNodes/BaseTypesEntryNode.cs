@@ -16,70 +16,32 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Linq;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.TreeView;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	sealed class BaseTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		private readonly TypeReference tr;
-		private TypeDefinition def;
-		private readonly bool isInterface;
+		readonly ITypeDefinition type;
 
-		public BaseTypesEntryNode(TypeReference tr, bool isInterface)
+		public BaseTypesEntryNode(ITypeDefinition type)
 		{
-			if (tr == null)
-				throw new ArgumentNullException("tr");
-			this.tr = tr;
-			this.def = tr.Resolve();
-			this.isInterface = isInterface;
-			this.LazyLoading = true;
+			this.type = type;
 		}
 
-		public override bool ShowExpander
-		{
-			get { return def != null && (def.BaseType != null || def.HasInterfaces); }
-		}
+		public override object Text => this.Language.TypeToString(type, includeNamespace: true);
 
-		public override object Text
-		{
-			get { return this.Language.TypeToString(tr, true) + tr.MetadataToken.ToSuffixString(); }
-		}
-
-		public override object Icon
-		{
-			get
-			{
-				if (def != null)
-					return TypeTreeNode.GetIcon(def);
-				else
-					return isInterface ? Images.Interface : Images.Class;
-			}
-		}
-
-		protected override void LoadChildren()
-		{
-			if (def != null)
-				BaseTypesTreeNode.AddBaseTypes(this.Children, def);
-		}
+		public override object Icon => type.Kind == TypeKind.Interface ? Images.Interface : Images.Class;
 
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
-			// on item activation, try to resolve once again (maybe the user loaded the assembly in the meantime)
-			if (def == null) {
-				def = tr.Resolve();
-				if (def != null)
-					this.LazyLoading = true;
-				// re-load children
-			}
-			e.Handled = ActivateItem(this, def);
+			e.Handled = ActivateItem(this, type);
 		}
 
-		internal static bool ActivateItem(SharpTreeNode node, TypeDefinition def)
+		internal static bool ActivateItem(SharpTreeNode node, ITypeDefinition def)
 		{
 			if (def != null) {
 				var assemblyListNode = node.Ancestors().OfType<AssemblyListTreeNode>().FirstOrDefault();
@@ -93,12 +55,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, language.TypeToString(tr, true));
+			language.WriteCommentLine(output, language.TypeToString(type, includeNamespace: true));
 		}
 
-		MemberReference IMemberTreeNode.Member
-		{
-			get { return tr; }
-		}
+		IEntity IMemberTreeNode.Member => type;
 	}
 }

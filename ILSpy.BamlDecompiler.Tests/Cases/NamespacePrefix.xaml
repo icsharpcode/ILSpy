@@ -1,0 +1,12 @@
+﻿<Grid xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:cc="clr-namespace:ILSpy.BamlDecompiler.Tests.Cases" xmlns:unk="clr-namespace:A;assembly=Unknown">
+	<cc:CustomControl Grid.Row="0" Tag="{}{}{Test}" CustomName="Custom1">
+		<FrameworkElement.Style>
+			<Style />
+		</FrameworkElement.Style>
+	</cc:CustomControl>
+	<Label ToolTip="{DynamicResource cc:CustomControl.SimpleProperty}" Grid.Row="0" cc:CustomControl.CustomName="Label1">
+		<FrameworkElement.Style>
+			<Style />
+		</FrameworkElement.Style>
+	</Label>
+</Grid>

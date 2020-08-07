@@ -145,10 +145,17 @@ namespace ICSharpCode.ILSpy.Controls
 			GridViewColumnHeader headerClicked = e.OriginalSource as GridViewColumnHeader;
 			if (grid != null && headerClicked != null && headerClicked.Role != GridViewColumnHeaderRole.Padding) {
 				if (headerClicked.Column == GetCurrentSortColumn(grid)) {
-					if (GetSortDirection(grid) == ColumnSortDirection.Ascending)
-						SetSortDirection(grid, ColumnSortDirection.Descending);
-					else
-						SetSortDirection(grid, ColumnSortDirection.Ascending);
+					switch (GetSortDirection(grid)) {
+						case ColumnSortDirection.None:
+							SetSortDirection(grid, ColumnSortDirection.Ascending);
+							break;
+						case ColumnSortDirection.Ascending:
+							SetSortDirection(grid, ColumnSortDirection.Descending);
+							break;
+						case ColumnSortDirection.Descending:
+							SetSortDirection(grid, ColumnSortDirection.None);
+							break;
+					}
 				} else {
 					SetSortDirection(grid, ColumnSortDirection.Ascending);
 					SetCurrentSortColumn(grid, headerClicked.Column as SortableGridViewColumn);
@@ -161,9 +168,11 @@ namespace ICSharpCode.ILSpy.Controls
 		{
 			ColumnSortDirection currentDirection = GetSortDirection(grid);
 			SortableGridViewColumn column = GetCurrentSortColumn(grid);
+			ICollectionView dataView = CollectionViewSource.GetDefaultView(grid.ItemsSource);
+
+			if (dataView == null) return;
+
 			if (column != null && GetSortMode(grid) == ListViewSortMode.Automatic && currentDirection != ColumnSortDirection.None) {
-				ICollectionView dataView = CollectionViewSource.GetDefaultView(grid.ItemsSource);
-				
 				string sortBy = column.SortBy;
 				if (sortBy == null) {
 					Binding binding = column.DisplayMemberBinding as Binding;
@@ -171,7 +180,7 @@ namespace ICSharpCode.ILSpy.Controls
 						sortBy = binding.Path.Path;
 					}
 				}
-				
+
 				dataView.SortDescriptions.Clear();
 				if (sortBy != null) {
 					ListSortDirection direction;
@@ -181,8 +190,11 @@ namespace ICSharpCode.ILSpy.Controls
 						direction = ListSortDirection.Ascending;
 					dataView.SortDescriptions.Add(new SortDescription(sortBy, direction));
 				}
-				dataView.Refresh();
+			} else {
+				dataView.SortDescriptions.Clear();
 			}
+
+			dataView.Refresh();
 		}
 	}
 	

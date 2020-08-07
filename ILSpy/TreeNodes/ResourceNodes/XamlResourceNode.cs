@@ -22,15 +22,17 @@ using System.IO;
 using System.Threading.Tasks;
 
 using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Xaml
 {
 	[Export(typeof(IResourceNodeFactory))]
 	sealed class XamlResourceNodeFactory : IResourceNodeFactory
 	{
-		public ILSpyTreeNode CreateNode(Mono.Cecil.Resource resource)
+		public ILSpyTreeNode CreateNode(Resource resource)
 		{
 			return null;
 		}
@@ -52,12 +54,12 @@ namespace ICSharpCode.ILSpy.Xaml
 		{
 		}
 		
-		public override bool View(DecompilerTextView textView)
+		public override bool View(TabPageModel tabPage)
 		{
 			AvalonEditTextOutput output = new AvalonEditTextOutput();
 			IHighlightingDefinition highlighting = null;
-			
-			textView.RunWithCancellation(
+
+			tabPage.ShowTextView(textView => textView.RunWithCancellation(
 				token => Task.Factory.StartNew(
 					() => {
 						try {
@@ -74,7 +76,8 @@ namespace ICSharpCode.ILSpy.Xaml
 						}
 						return output;
 					}, token)
-			).Then(t => textView.ShowNode(t, this, highlighting)).HandleExceptions();
+			).Then(t => textView.ShowNode(t, this, highlighting)).HandleExceptions());
+			tabPage.SupportsLanguageSwitching = false;
 			return true;
 		}
 	}

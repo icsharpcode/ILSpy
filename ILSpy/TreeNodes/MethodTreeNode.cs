@@ -17,11 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Text;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -30,112 +29,70 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class MethodTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		readonly MethodDefinition method;
+		public IMethod MethodDefinition { get; }
 
-		public MethodDefinition MethodDefinition
+		public MethodTreeNode(IMethod method)
 		{
-			get { return method; }
+			this.MethodDefinition = method ?? throw new ArgumentNullException(nameof(method));
 		}
 
-		public MethodTreeNode(MethodDefinition method)
+		public override object Text => GetText(MethodDefinition, Language) + MethodDefinition.MetadataToken.ToSuffixString();
+
+		public static object GetText(IMethod method, Language language)
 		{
-			if (method == null)
-				throw new ArgumentNullException("method");
-			this.method = method;
+			return language.MethodToString(method, false, false, false);
 		}
 
-		public override object Text
+		public override object Icon => GetIcon(MethodDefinition);
+
+		public static ImageSource GetIcon(IMethod method)
 		{
-			get
-			{
-				return GetText(method, Language);
-			}
+			if (method.IsOperator)
+				return Images.GetIcon(MemberIcon.Operator, GetOverlayIcon(method.Accessibility), false);
+
+			if (method.IsExtensionMethod)
+				return Images.GetIcon(MemberIcon.ExtensionMethod, GetOverlayIcon(method.Accessibility), false);
+
+			if (method.IsConstructor)
+				return Images.GetIcon(MemberIcon.Constructor, GetOverlayIcon(method.Accessibility), method.IsStatic);
+
+			if (!method.HasBody && method.HasAttribute(KnownAttribute.DllImport))
+				return Images.GetIcon(MemberIcon.PInvokeMethod, GetOverlayIcon(method.Accessibility), true);
+
+			return Images.GetIcon(method.IsVirtual ? MemberIcon.VirtualMethod : MemberIcon.Method,
+				GetOverlayIcon(method.Accessibility), method.IsStatic);
 		}
 
-		public static object GetText(MethodDefinition method, Language language)
+		internal static AccessOverlayIcon GetOverlayIcon(Accessibility accessibility)
 		{
-			StringBuilder b = new StringBuilder();
-			b.Append('(');
-			for (int i = 0; i < method.Parameters.Count; i++) {
-				if (i > 0)
-					b.Append(", ");
-				b.Append(language.TypeToString(method.Parameters[i].ParameterType, false, method.Parameters[i]));
-			}
-			if (method.CallingConvention == MethodCallingConvention.VarArg) {
-				if (method.HasParameters)
-					b.Append(", ");
-				b.Append("...");
-			}
-			b.Append(") : ");
-			b.Append(language.TypeToString(method.ReturnType, false, method.MethodReturnType));
-			b.Append(method.MetadataToken.ToSuffixString());
-			return HighlightSearchMatch(language.FormatMethodName(method), b.ToString());
-		}
-
-		public override object Icon
-		{
-			get { return GetIcon(method); }
-		}
-
-		public static ImageSource GetIcon(MethodDefinition method)
-		{
-			if (method.IsSpecialName && method.Name.StartsWith("op_", StringComparison.Ordinal)) {
-				return Images.GetIcon(MemberIcon.Operator, GetOverlayIcon(method.Attributes), false);
-			}
-
-			if (method.IsStatic && method.HasCustomAttributes) {
-				foreach (var ca in method.CustomAttributes) {
-					if (ca.AttributeType.FullName == "System.Runtime.CompilerServices.ExtensionAttribute") {
-						return Images.GetIcon(MemberIcon.ExtensionMethod, GetOverlayIcon(method.Attributes), false);
-					}
-				}
-			}
-
-			if (method.IsSpecialName &&
-				(method.Name == ".ctor" || method.Name == ".cctor")) {
-				return Images.GetIcon(MemberIcon.Constructor, GetOverlayIcon(method.Attributes), method.IsStatic);
-			}
-
-			if (method.HasPInvokeInfo)
-				return Images.GetIcon(MemberIcon.PInvokeMethod, GetOverlayIcon(method.Attributes), true);
-
-			bool showAsVirtual = method.IsVirtual && !(method.IsNewSlot && method.IsFinal) && !method.DeclaringType.IsInterface;
-
-			return Images.GetIcon(
-				showAsVirtual ? MemberIcon.VirtualMethod : MemberIcon.Method,
-				GetOverlayIcon(method.Attributes),
-				method.IsStatic);
-		}
-
-		private static AccessOverlayIcon GetOverlayIcon(MethodAttributes methodAttributes)
-		{
-			switch (methodAttributes & MethodAttributes.MemberAccessMask) {
-				case MethodAttributes.Public:
+			switch (accessibility) {
+				case Accessibility.Public:
 					return AccessOverlayIcon.Public;
-				case MethodAttributes.Assembly:
-				case MethodAttributes.FamANDAssem:
+				case Accessibility.Internal:
 					return AccessOverlayIcon.Internal;
-				case MethodAttributes.Family:
+				case Accessibility.ProtectedAndInternal:
+					return AccessOverlayIcon.PrivateProtected;
+				case Accessibility.Protected:
 					return AccessOverlayIcon.Protected;
-				case MethodAttributes.FamORAssem:
+				case Accessibility.ProtectedOrInternal:
 					return AccessOverlayIcon.ProtectedInternal;
-				case MethodAttributes.Private:
+				case Accessibility.Private:
 					return AccessOverlayIcon.Private;
-				case MethodAttributes.CompilerControlled:
-					return AccessOverlayIcon.CompilerControlled;
 				default:
-					throw new NotSupportedException();
+					return AccessOverlayIcon.CompilerControlled;
 			}
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.DecompileMethod(method, output, options);
+			language.DecompileMethod(MethodDefinition, output, options);
 		}
 
 		public override FilterResult Filter(FilterSettings settings)
 		{
-			if (settings.SearchTermMatches(method.Name) && settings.Language.ShowMember(method))
+			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
+				return FilterResult.Hidden;
+			if (settings.SearchTermMatches(MethodDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || settings.Language.ShowMember(MethodDefinition)))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -143,13 +100,22 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool IsPublicAPI {
 			get {
-				return method.IsPublic || method.IsFamily || method.IsFamilyOrAssembly;
+				switch (MethodDefinition.Accessibility) {
+					case Accessibility.Public:
+					case Accessibility.Protected:
+					case Accessibility.ProtectedOrInternal:
+						return true;
+					default:
+						return false;
+				}
 			}
 		}
-		
-		MemberReference IMemberTreeNode.Member
+
+		IEntity IMemberTreeNode.Member => MethodDefinition;
+
+		public override string ToString()
 		{
-			get { return method; }
+			return Languages.ILLanguage.MethodToString(MethodDefinition, false, false, false);
 		}
 	}
 }

@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "ILSpy": {
+      "commandName": "Executable",
+      "executablePath": ".\\ILSpy.exe",
+      "commandLineArgs": "/separate"
+    }
+  }
+}

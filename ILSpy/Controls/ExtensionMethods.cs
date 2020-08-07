@@ -37,11 +37,11 @@ namespace ICSharpCode.ILSpy.Controls
 			// This method was copied from ICSharpCode.Core.Presentation (with permission to switch license to X11)
 			
 			if (targetObject == null)
-				throw new ArgumentNullException("targetObject");
+				throw new ArgumentNullException(nameof(targetObject));
 			if (property == null)
-				throw new ArgumentNullException("property");
+				throw new ArgumentNullException(nameof(property));
 			if (markupExtension == null)
-				throw new ArgumentNullException("markupExtension");
+				throw new ArgumentNullException(nameof(markupExtension));
 			
 			var serviceProvider = new SetValueToExtensionServiceProvider(targetObject, property);
 			targetObject.SetValue(property, markupExtension.ProvideValue(serviceProvider));

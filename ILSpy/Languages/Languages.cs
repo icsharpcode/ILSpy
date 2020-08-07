@@ -16,17 +16,21 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel.Composition.Hosting;
 using System.Linq;
+
+using Microsoft.VisualStudio.Composition;
 
 namespace ICSharpCode.ILSpy
 {
 	public static class Languages
 	{
-		private static ReadOnlyCollection<Language> allLanguages;
+		// Start with a dummy list with an IL entry so that crashes
+		// in Initialize() (e.g. due to invalid plugins) don't lead to
+		// confusing follow-up errors in GetLanguage().
+		private static ReadOnlyCollection<Language> allLanguages = new ReadOnlyCollection<Language>(
+			new Language[] { new ILLanguage() });
 
 		/// <summary>
 		/// A list of all languages.
@@ -36,11 +40,11 @@ namespace ICSharpCode.ILSpy
 			get { return allLanguages; }
 		}
 
-		internal static void Initialize(CompositionContainer composition)
+		internal static void Initialize(ExportProvider ep)
 		{
 			List<Language> languages = new List<Language>();
-			languages.AddRange(composition.GetExportedValues<Language>());
-			languages.Add(new ILLanguage(true));
+			languages.AddRange(ep.GetExportedValues<Language>());
+			languages.Sort((a, b) => a.Name.CompareTo(b.Name));
 			#if DEBUG
 			languages.AddRange(ILAstLanguage.GetDebugLanguages());
 			languages.AddRange(CSharpLanguage.GetDebugLanguages());
@@ -55,6 +59,16 @@ namespace ICSharpCode.ILSpy
 		public static Language GetLanguage(string name)
 		{
 			return AllLanguages.FirstOrDefault(l => l.Name == name) ?? AllLanguages.First();
+		}
+
+		static ILLanguage ilLanguage;
+		public static ILLanguage ILLanguage {
+			get {
+				if (ilLanguage == null) {
+					ilLanguage = (ILLanguage)GetLanguage("IL");
+				}
+				return ilLanguage;
+			}
 		}
 	}
 }

@@ -1,19 +1,31 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under the GNU LGPL (for details please see \doc\license.txt)
+﻿// Copyright (c) 2020 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace ICSharpCode.TreeView
@@ -181,7 +193,7 @@ namespace ICSharpCode.TreeView
 		{
 			if (updatesLocked) return;
 			SetSelectedItems(newSelection ?? Enumerable.Empty<SharpTreeNode>());
-			if (SelectedItem == null) {
+			if (SelectedItem == null && this.IsKeyboardFocusWithin) {
 				// if we removed all selected nodes, then move the focus to the node 
 				// preceding the first of the old selected nodes
 				SelectedIndex = topSelectedIndex;
@@ -268,9 +280,22 @@ namespace ICSharpCode.TreeView
 					}
 					break;
 				case Key.Return:
+					if (container != null && Keyboard.Modifiers == ModifierKeys.None && this.SelectedItems.Count == 1 && this.SelectedItem == container.Node) {
+						e.Handled = true;
+						container.Node.ActivateItem(e);
+					}
+					break;
 				case Key.Space:
 					if (container != null && Keyboard.Modifiers == ModifierKeys.None && this.SelectedItems.Count == 1 && this.SelectedItem == container.Node) {
-						container.Node.ActivateItem(e);
+						e.Handled = true;
+						if (container.Node.IsCheckable) {
+							if (container.Node.IsChecked == null) // If partially selected, we want to select everything
+								container.Node.IsChecked = true;
+							else
+								container.Node.IsChecked = !container.Node.IsChecked;
+						} else {
+							container.Node.ActivateItem(e);
+						}
 					}
 					break;
 				case Key.Add:
@@ -292,11 +317,33 @@ namespace ICSharpCode.TreeView
 						e.Handled = true;
 					}
 					break;
+				case Key.Back:
+					if (IsTextSearchEnabled) {
+						var instance = SharpTreeViewTextSearch.GetInstance(this);
+						if (instance != null) {
+							instance.RevertLastCharacter();
+							e.Handled = true;
+						}
+					}
+					break;
 			}
 			if (!e.Handled)
 				base.OnKeyDown(e);
 		}
-		
+
+		protected override void OnTextInput(TextCompositionEventArgs e)
+		{
+			if (!string.IsNullOrEmpty(e.Text) && IsTextSearchEnabled && (e.OriginalSource == this || ItemsControl.ItemsControlFromItemContainer(e.OriginalSource as DependencyObject) == this)) {
+				var instance = SharpTreeViewTextSearch.GetInstance(this);
+				if (instance != null) {
+					instance.Search(e.Text);
+					e.Handled = true;
+				}
+			}
+			if (!e.Handled)
+				base.OnTextInput(e);
+		}
+
 		void ExpandRecursively(SharpTreeNode node)
 		{
 			if (node.CanExpandRecursively) {

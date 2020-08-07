@@ -19,7 +19,7 @@
 using System;
 using System.Windows.Media;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -28,91 +28,41 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class FieldTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		readonly FieldDefinition field;
+		public IField FieldDefinition { get; }
 
-		public FieldDefinition FieldDefinition
+		public FieldTreeNode(IField field)
 		{
-			get { return field; }
+			this.FieldDefinition = field ?? throw new ArgumentNullException(nameof(field));
 		}
 
-		public FieldTreeNode(FieldDefinition field)
+		public override object Text => GetText(FieldDefinition, Language) + FieldDefinition.MetadataToken.ToSuffixString();
+
+		public static object GetText(IField field, Language language)
 		{
-			if (field == null)
-				throw new ArgumentNullException("field");
-			this.field = field;
+			return language.FieldToString(field, includeDeclaringTypeName: false, includeNamespace: false, includeNamespaceOfDeclaringTypeName: false);
 		}
 
-		public override object Text
-		{
-			get {
-				return HighlightSearchMatch(
-					field.Name,
-					" : " + this.Language.TypeToString(field.FieldType, false, field) + field.MetadataToken.ToSuffixString()
-				);
-			}
-		}
+		public override object Icon => GetIcon(FieldDefinition);
 
-		public override object Icon
+		public static ImageSource GetIcon(IField field)
 		{
-			get { return GetIcon(field); }
-		}
+			if (field.DeclaringType.Kind == TypeKind.Enum && field.ReturnType.Kind == TypeKind.Enum)
+				return Images.GetIcon(MemberIcon.EnumValue, MethodTreeNode.GetOverlayIcon(field.Accessibility), false);
 
-		public static ImageSource GetIcon(FieldDefinition field)
-		{
-			if (field.DeclaringType.IsEnum && !field.Attributes.HasFlag(FieldAttributes.SpecialName))
-				return Images.GetIcon(MemberIcon.EnumValue, GetOverlayIcon(field.Attributes), false);
+			if (field.IsConst)
+				return Images.GetIcon(MemberIcon.Literal, MethodTreeNode.GetOverlayIcon(field.Accessibility), false);
 
-			if (field.IsLiteral)
-				return Images.GetIcon(MemberIcon.Literal, GetOverlayIcon(field.Attributes), false);
-			else if (field.IsInitOnly) {
-				if (IsDecimalConstant(field))
-					return Images.GetIcon(MemberIcon.Literal, GetOverlayIcon(field.Attributes), false);
-				else
-					return Images.GetIcon(MemberIcon.FieldReadOnly, GetOverlayIcon(field.Attributes), field.IsStatic);
-			} else
-				return Images.GetIcon(MemberIcon.Field, GetOverlayIcon(field.Attributes), field.IsStatic);
-		}
+			if (field.IsReadOnly)
+				return Images.GetIcon(MemberIcon.FieldReadOnly, MethodTreeNode.GetOverlayIcon(field.Accessibility), field.IsStatic);
 
-		private static bool IsDecimalConstant(FieldDefinition field)
-		{
-			var fieldType = field.FieldType;
-			if (fieldType.Name == "Decimal" && fieldType.Namespace == "System") {
-				if (field.HasCustomAttributes) {
-					var attrs = field.CustomAttributes;
-					for (int i = 0; i < attrs.Count; i++) {
-						var attrType = attrs[i].AttributeType;
-						if (attrType.Name == "DecimalConstantAttribute" && attrType.Namespace == "System.Runtime.CompilerServices")
-							return true;
-					}
-				}
-			}
-			return false;
-		}
-
-		private static AccessOverlayIcon GetOverlayIcon(FieldAttributes fieldAttributes)
-		{
-			switch (fieldAttributes & FieldAttributes.FieldAccessMask) {
-				case FieldAttributes.Public:
-					return AccessOverlayIcon.Public;
-				case FieldAttributes.Assembly:
-				case FieldAttributes.FamANDAssem:
-					return AccessOverlayIcon.Internal;
-				case FieldAttributes.Family:
-					return AccessOverlayIcon.Protected;
-				case FieldAttributes.FamORAssem:
-					return AccessOverlayIcon.ProtectedInternal;
-				case FieldAttributes.Private:
-					return AccessOverlayIcon.Private;
-				case FieldAttributes.CompilerControlled:
-					return AccessOverlayIcon.CompilerControlled;
-				default:
-					throw new NotSupportedException();
-			}
+			return Images.GetIcon(MemberIcon.Field, MethodTreeNode.GetOverlayIcon(field.Accessibility), field.IsStatic);
 		}
 
 		public override FilterResult Filter(FilterSettings settings)
 		{
-			if (settings.SearchTermMatches(field.Name) && settings.Language.ShowMember(field))
+			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
+				return FilterResult.Hidden;
+			if (settings.SearchTermMatches(FieldDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || settings.Language.ShowMember(FieldDefinition)))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -120,18 +70,27 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.DecompileField(field, output, options);
+			language.DecompileField(FieldDefinition, output, options);
 		}
 		
 		public override bool IsPublicAPI {
 			get {
-				return field.IsPublic || field.IsFamily || field.IsFamilyOrAssembly;
+				switch (FieldDefinition.Accessibility) {
+					case Accessibility.Public:
+					case Accessibility.Protected:
+					case Accessibility.ProtectedOrInternal:
+						return true;
+					default:
+						return false;
+				}
 			}
 		}
 
-		MemberReference IMemberTreeNode.Member
+		IEntity IMemberTreeNode.Member => FieldDefinition;
+
+		public override string ToString()
 		{
-			get { return field; }
+			return FieldDefinition.Name;
 		}
 	}
 }

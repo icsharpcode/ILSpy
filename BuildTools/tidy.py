@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os, sys
 
 def check(filename):
@@ -13,14 +15,14 @@ def main():
 	root_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
 	dirs_to_check = (
 		os.path.join(root_dir, subdir)
-		for subdir in ('ICSharpCode.Decompiler', 'ILSpy', 'ILSpy.BamlDecompiler'))
+		for subdir in ('ICSharpCode.Decompiler', 'ICSharpCode.Decompiler.Tests', 'ILSpy', 'ILSpy.BamlDecompiler'))
 	ok = True
 	for dir in dirs_to_check:
 		for root, dirs, files in os.walk(dir):
 			if '\\obj\\' in root:
 				continue
 			for filename in files:
-				if filename.lower().endswith('.cs'):
+				if filename.lower().endswith('.cs') and not filename.lower().endswith('resources.designer.cs'):
 					if not check(os.path.join(root, filename)):
 						ok = False
 	print('Tidy check: {}'.format('successful' if ok else 'failed'))

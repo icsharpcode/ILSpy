@@ -20,6 +20,8 @@ using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using System.Windows;
+using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.TreeView;
 
@@ -58,12 +60,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Hidden;
 		}
 
-		protected static object HighlightSearchMatch(string text, string suffix = null)
-		{
-			// TODO: implement highlighting the search match
-			return text + suffix;
-		}
-
 		public abstract void Decompile(Language language, ITextOutput output, DecompilationOptions options);
 
 		/// <summary>
@@ -71,9 +67,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// This method is called on the main thread when only a single item is selected.
 		/// If it returns false, normal decompilation is used to view the item.
 		/// </summary>
-		public virtual bool View(TextView.DecompilerTextView textView)
+		public virtual bool View(ViewModels.TabPageModel tabPage)
 		{
 			return false;
+		}
+
+		public override void ActivateItemSecondary(RoutedEventArgs e)
+		{
+			MainWindow.Instance.SelectNode(this, inNewTabPage: true);
+			MainWindow.Instance.Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)MainWindow.Instance.RefreshDecompiledView);
 		}
 
 		/// <summary>
@@ -81,7 +83,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// This method is called on the main thread when only a single item is selected.
 		/// If it returns false, normal decompilation is used to save the item.
 		/// </summary>
-		public virtual bool Save(TextView.DecompilerTextView textView)
+		public virtual bool Save(ViewModels.TabPageModel tabPage)
 		{
 			return false;
 		}
@@ -142,7 +144,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected virtual void OnFilterSettingsChanged()
 		{
-			RaisePropertyChanged("Text");
+			RaisePropertyChanged(nameof(Text));
 			if (IsVisible) {
 				foreach (ILSpyTreeNode node in this.Children.OfType<ILSpyTreeNode>())
 					ApplyFilterToChild(node);
@@ -151,13 +153,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		protected override void OnIsVisibleChanged()
+		/*protected override void OnIsVisibleChanged()
 		{
 			base.OnIsVisibleChanged();
 			EnsureChildrenFiltered();
-		}
+		}*/
 
-		void EnsureChildrenFiltered()
+		internal void EnsureChildrenFiltered()
 		{
 			EnsureLazyChildren();
 			if (childrenNeedFiltering) {

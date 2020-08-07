@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
@@ -40,7 +39,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 		public TextMarkerService(TextView textView)
 		{
 			if (textView == null)
-				throw new ArgumentNullException("textView");
+				throw new ArgumentNullException(nameof(textView));
 			this.textView = textView;
 			textView.DocumentChanged += OnDocumentChanged;
 			OnDocumentChanged(null, null);
@@ -62,9 +61,9 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			
 			int textLength = textView.Document.TextLength;
 			if (startOffset < 0 || startOffset > textLength)
-				throw new ArgumentOutOfRangeException("startOffset", startOffset, "Value must be between 0 and " + textLength);
+				throw new ArgumentOutOfRangeException(nameof(startOffset), startOffset, "Value must be between 0 and " + textLength);
 			if (length < 0 || startOffset + length > textLength)
-				throw new ArgumentOutOfRangeException("length", length, "length must not be negative and startOffset+length must not be after the end of the document");
+				throw new ArgumentOutOfRangeException(nameof(length), length, "length must not be negative and startOffset+length must not be after the end of the document");
 			
 			TextMarker m = new TextMarker(this, startOffset, length);
 			markers.Add(m);
@@ -87,7 +86,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 		public void RemoveAll(Predicate<ITextMarker> predicate)
 		{
 			if (predicate == null)
-				throw new ArgumentNullException("predicate");
+				throw new ArgumentNullException(nameof(predicate));
 			if (markers != null) {
 				foreach (TextMarker m in markers.ToArray()) {
 					if (predicate(m))
@@ -99,7 +98,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 		public void Remove(ITextMarker marker)
 		{
 			if (marker == null)
-				throw new ArgumentNullException("marker");
+				throw new ArgumentNullException(nameof(marker));
 			TextMarker m = marker as TextMarker;
 			if (markers != null && markers.Remove(m)) {
 				Redraw(m);
@@ -164,9 +163,9 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 		public void Draw(ICSharpCode.AvalonEdit.Rendering.TextView textView, DrawingContext drawingContext)
 		{
 			if (textView == null)
-				throw new ArgumentNullException("textView");
+				throw new ArgumentNullException(nameof(textView));
 			if (drawingContext == null)
-				throw new ArgumentNullException("drawingContext");
+				throw new ArgumentNullException(nameof(drawingContext));
 			if (markers == null || !textView.VisualLinesValid)
 				return;
 			var visualLines = textView.VisualLines;
@@ -245,7 +244,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 		public TextMarker(TextMarkerService service, int startOffset, int length)
 		{
 			if (service == null)
-				throw new ArgumentNullException("service");
+				throw new ArgumentNullException(nameof(service));
 			this.service = service;
 			this.StartOffset = startOffset;
 			this.Length = length;

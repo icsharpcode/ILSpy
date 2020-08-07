@@ -16,23 +16,18 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	[Export(typeof(IResourceNodeFactory))]
 	sealed class ImageListResourceEntryNodeFactory : IResourceNodeFactory
 	{
-		#region IResourceNodeFactory Members
-
-		public ILSpyTreeNode CreateNode(Mono.Cecil.Resource resource)
+		public ILSpyTreeNode CreateNode(Resource resource)
 		{
 			return null;
 		}
@@ -43,8 +38,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return new ImageListResourceEntryNode(key, (ImageListStreamer)data);
 			return null;
 		}
-
-		#endregion
 	}
 
 	sealed class ImageListResourceEntryNode : ILSpyTreeNode
@@ -65,10 +58,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return key; }
 		}
 
-		public override object Icon
-		{
-			get { return Images.ResourceImage; }
-		}
+		public override object Icon => Images.ResourceImage;
 
 		protected override void LoadChildren()
 		{

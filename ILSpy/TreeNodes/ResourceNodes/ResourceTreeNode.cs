@@ -18,13 +18,16 @@
 
 using System;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Utils;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
 using Microsoft.Win32;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -34,95 +37,83 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public class ResourceTreeNode : ILSpyTreeNode
 	{
-		readonly Resource r;
-		
 		public ResourceTreeNode(Resource r)
 		{
-			if (r == null)
-				throw new ArgumentNullException("r");
-			this.r = r;
+			if (r.IsNil)
+				throw new ArgumentNullException(nameof(r));
+			this.Resource = r;
 		}
-		
-		public Resource Resource {
-			get { return r; }
-		}
-		
-		public override object Text {
-			get { return r.Name; }
-		}
-		
-		public override object Icon {
-			get { return Images.Resource; }
-		}
-		
+
+		public Resource Resource { get; }
+
+		public override object Text => Resource.Name;
+
+		public override object Icon => Images.Resource;
+
 		public override FilterResult Filter(FilterSettings settings)
 		{
-			if (!settings.ShowInternalApi && (r.Attributes & ManifestResourceAttributes.VisibilityMask) == ManifestResourceAttributes.Private)
+			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && (Resource.Attributes & ManifestResourceAttributes.VisibilityMask) == ManifestResourceAttributes.Private)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(r.Name))
+			if (settings.SearchTermMatches(Resource.Name))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
 		}
-		
+
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, string.Format("{0} ({1}, {2})", r.Name, r.ResourceType, r.Attributes));
-			
+			language.WriteCommentLine(output, string.Format("{0} ({1}, {2})", Resource.Name, Resource.ResourceType, Resource.Attributes));
+
 			ISmartTextOutput smartOutput = output as ISmartTextOutput;
-			if (smartOutput != null && r is EmbeddedResource) {
-				smartOutput.AddButton(Images.Save, "Save", delegate { Save(null); });
+			if (smartOutput != null) {
+				smartOutput.AddButton(Images.Save, Resources.Save, delegate { Save(Docking.DockWorkspace.Instance.ActiveTabPage); });
 				output.WriteLine();
 			}
 		}
-		
-		public override bool View(DecompilerTextView textView)
+
+		public override bool View(TabPageModel tabPage)
 		{
-			EmbeddedResource er = r as EmbeddedResource;
-			if (er != null) {
-				Stream s = er.GetResourceStream();
-				if (s != null && s.Length < DecompilerTextView.DefaultOutputLengthLimit) {
+			Stream s = Resource.TryOpenStream();
+			if (s != null && s.Length < DecompilerTextView.DefaultOutputLengthLimit) {
+				s.Position = 0;
+				FileType type = GuessFileType.DetectFileType(s);
+				if (type != FileType.Binary) {
 					s.Position = 0;
-					FileType type = GuessFileType.DetectFileType(s);
-					if (type != FileType.Binary) {
-						s.Position = 0;
-						AvalonEditTextOutput output = new AvalonEditTextOutput();
-						output.Write(FileReader.OpenStream(s, Encoding.UTF8).ReadToEnd());
-						string ext;
-						if (type == FileType.Xml)
-							ext = ".xml";
-						else
-							ext = Path.GetExtension(DecompilerTextView.CleanUpName(er.Name));
-						textView.ShowNode(output, this, HighlightingManager.Instance.GetDefinitionByExtension(ext));
-						return true;
-					}
+					AvalonEditTextOutput output = new AvalonEditTextOutput();
+					output.Write(FileReader.OpenStream(s, Encoding.UTF8).ReadToEnd());
+					string ext;
+					if (type == FileType.Xml)
+						ext = ".xml";
+					else
+						ext = Path.GetExtension(DecompilerTextView.CleanUpName(Resource.Name));
+					tabPage.ShowTextView(textView => textView.ShowNode(output, this, HighlightingManager.Instance.GetDefinitionByExtension(ext)));
+					tabPage.SupportsLanguageSwitching = false;
+					return true;
 				}
 			}
 			return false;
 		}
-		
-		public override bool Save(DecompilerTextView textView)
+
+		public override bool Save(TabPageModel tabPage)
 		{
-			EmbeddedResource er = r as EmbeddedResource;
-			if (er != null) {
-				SaveFileDialog dlg = new SaveFileDialog();
-				dlg.FileName = DecompilerTextView.CleanUpName(er.Name);
-				if (dlg.ShowDialog() == true) {
-					Stream s = er.GetResourceStream();
-					s.Position = 0;
-					using (var fs = dlg.OpenFile()) {
-						s.CopyTo(fs);
-					}
+			Stream s = Resource.TryOpenStream();
+			if (s == null)
+				return false;
+			SaveFileDialog dlg = new SaveFileDialog();
+			dlg.FileName = DecompilerTextView.CleanUpName(Resource.Name);
+			if (dlg.ShowDialog() == true) {
+				s.Position = 0;
+				using (var fs = dlg.OpenFile()) {
+					s.CopyTo(fs);
 				}
-				return true;
 			}
-			return false;
+			return true;
 		}
-		
+
 		public static ILSpyTreeNode Create(Resource resource)
 		{
 			ILSpyTreeNode result = null;
-			foreach (var factory in App.CompositionContainer.GetExportedValues<IResourceNodeFactory>()) {
+			foreach (var factory in App.ExportProvider.GetExportedValues<IResourceNodeFactory>()) {
 				result = factory.CreateNode(resource);
 				if (result != null)
 					break;

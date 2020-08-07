@@ -31,13 +31,16 @@ namespace ICSharpCode.ILSpy.Options
 	/// <summary>
 	/// Interaction logic for DisplaySettingsPanel.xaml
 	/// </summary>
-	[ExportOptionPage(Title = "Display", Order = 1)]
+	[ExportOptionPage(Title = nameof(Properties.Resources.Display), Order = 20)]
 	public partial class DisplaySettingsPanel : UserControl, IOptionPage
 	{
 		public DisplaySettingsPanel()
 		{
 			InitializeComponent();
-			
+
+			DataObject.AddPastingHandler(tabSizeTextBox, OnPaste);
+			DataObject.AddPastingHandler(indentSizeTextBox, OnPaste);
+
 			Task<FontFamily[]> task = new Task<FontFamily[]>(FontLoader);
 			task.Start();
 			task.ContinueWith(
@@ -57,7 +60,7 @@ namespace ICSharpCode.ILSpy.Options
 				}
 			);
 		}
-		
+
 		public void Load(ILSpySettings settings)
 		{
 			this.DataContext = LoadDisplaySettings(settings);
@@ -87,52 +90,96 @@ namespace ICSharpCode.ILSpy.Options
 		
 		static FontFamily[] FontLoader()
 		{
-			return Fonts.SystemFontFamilies
-				.Where(ff => !IsSymbolFont(ff))
-				.OrderBy(ff => ff.Source)
-				.ToArray();
+			return (from ff in Fonts.SystemFontFamilies
+					where !IsSymbolFont(ff)
+					orderby ff.Source
+					select ff).ToArray();
 		}
 		
 		public static DisplaySettings LoadDisplaySettings(ILSpySettings settings)
 		{
 			XElement e = settings["DisplaySettings"];
-			DisplaySettings s = new DisplaySettings();
+			var s = new DisplaySettings();
 			s.SelectedFont = new FontFamily((string)e.Attribute("Font") ?? "Consolas");
 			s.SelectedFontSize = (double?)e.Attribute("FontSize") ?? 10.0 * 4 / 3;
 			s.ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false;
-			s.ShowMetadataTokens = (bool?) e.Attribute("ShowMetadataTokens") ?? false;
-		    s.EnableWordWrap = (bool?)e.Attribute("EnableWordWrap") ?? false;
-			
+			s.ShowMetadataTokens = (bool?)e.Attribute("ShowMetadataTokens") ?? false;
+			s.ShowMetadataTokensInBase10 = (bool?)e.Attribute("ShowMetadataTokensInBase10") ?? false;
+			s.ShowDebugInfo = (bool?)e.Attribute("ShowDebugInfo") ?? false;
+			s.EnableWordWrap = (bool?)e.Attribute("EnableWordWrap") ?? false;
+			s.SortResults = (bool?)e.Attribute("SortResults") ?? true;
+			s.FoldBraces = (bool?)e.Attribute("FoldBraces") ?? false;
+			s.ExpandMemberDefinitions = (bool?)e.Attribute("ExpandMemberDefinitions") ?? false;
+			s.ExpandUsingDeclarations = (bool?)e.Attribute("ExpandUsingDeclarations") ?? false;
+			s.IndentationUseTabs = (bool?)e.Attribute("IndentationUseTabs") ?? true;
+			s.IndentationSize = (int?)e.Attribute("IndentationSize") ?? 4;
+			s.IndentationTabSize = (int?)e.Attribute("IndentationTabSize") ?? 4;
+			s.HighlightMatchingBraces = (bool?)e.Attribute("HighlightMatchingBraces") ?? true;
+			s.HideEmptyMetadataTables = (bool?)e.Attribute("HideEmptyMetadataTables") ?? true;
+
 			return s;
 		}
 		
 		public void Save(XElement root)
 		{
-			DisplaySettings s = (DisplaySettings)this.DataContext;
+			var s = (DisplaySettings)this.DataContext;
 			
-			currentDisplaySettings.CopyValues(s);
-			
-			XElement section = new XElement("DisplaySettings");
+			var section = new XElement("DisplaySettings");
 			section.SetAttributeValue("Font", s.SelectedFont.Source);
 			section.SetAttributeValue("FontSize", s.SelectedFontSize);
 			section.SetAttributeValue("ShowLineNumbers", s.ShowLineNumbers);
 			section.SetAttributeValue("ShowMetadataTokens", s.ShowMetadataTokens);
+			section.SetAttributeValue("ShowMetadataTokensInBase10", s.ShowMetadataTokensInBase10);
+			section.SetAttributeValue("ShowDebugInfo", s.ShowDebugInfo);
 			section.SetAttributeValue("EnableWordWrap", s.EnableWordWrap);
-			
+			section.SetAttributeValue("SortResults", s.SortResults);
+			section.SetAttributeValue("FoldBraces", s.FoldBraces);
+			section.SetAttributeValue("ExpandMemberDefinitions", s.ExpandMemberDefinitions);
+			section.SetAttributeValue("ExpandUsingDeclarations", s.ExpandUsingDeclarations);
+			section.SetAttributeValue("IndentationUseTabs", s.IndentationUseTabs);
+			section.SetAttributeValue("IndentationSize", s.IndentationSize);
+			section.SetAttributeValue("IndentationTabSize", s.IndentationTabSize);
+			section.SetAttributeValue("HighlightMatchingBraces", s.HighlightMatchingBraces);
+			section.SetAttributeValue("HideEmptyMetadataTables", s.HideEmptyMetadataTables);
+
 			XElement existingElement = root.Element("DisplaySettings");
 			if (existingElement != null)
 				existingElement.ReplaceWith(section);
 			else
 				root.Add(section);
+
+			if (currentDisplaySettings != null)
+				currentDisplaySettings.CopyValues(s);
+		}
+
+		private void TextBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+		{
+			if (!e.Text.All(char.IsDigit))
+				e.Handled = true;
+		}
+
+		private void OnPaste(object sender, DataObjectPastingEventArgs e)
+		{
+			if (!e.SourceDataObject.GetDataPresent(DataFormats.UnicodeText, true))
+				return;
+			var text = (string)e.SourceDataObject.GetData(DataFormats.UnicodeText, true) ?? string.Empty;
+			if (!text.All(char.IsDigit))
+				e.CancelCommand();
+		}
+
+		public void LoadDefaults()
+		{
+			currentDisplaySettings = new DisplaySettings();
+			this.DataContext = currentDisplaySettings;
 		}
 	}
-	
+
 	public class FontSizeConverter : IValueConverter
 	{
 		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			if (value is double) {
-				return Math.Round((double)value / 4 * 3);
+			if (value is double d) {
+				return Math.Round(d / 4 * 3);
 			}
 			
 			throw new NotImplementedException();
@@ -140,11 +187,10 @@ namespace ICSharpCode.ILSpy.Options
 		
 		public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			if (value is string) {
-				double d;
-				if (double.TryParse((string)value, out d))
+			if (value is string s) {
+				if (double.TryParse(s, out double d))
 					return d * 4 / 3;
-				return 11 * 4 / 3;
+				return 11.0 * 4 / 3;
 			}
 			
 			throw new NotImplementedException();

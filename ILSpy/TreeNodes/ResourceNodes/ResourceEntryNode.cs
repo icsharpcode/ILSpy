@@ -32,28 +32,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		private readonly string key;
 		private readonly Stream data;
 
-		public override object Text
-		{
-			get { return this.key; }
-		}
+		public override object Text => this.key;
 
-		public override object Icon
-		{
-			get { return Images.Resource; }
-		}
+		public override object Icon => Images.Resource;
 
-		protected Stream Data
-		{
-			get { return data; }
-		}
-
+		protected Stream Data => data;
 
 		public ResourceEntryNode(string key, Stream data)
 		{
 			if (key == null)
-				throw new ArgumentNullException("key");
+				throw new ArgumentNullException(nameof(key));
 			if (data == null)
-				throw new ArgumentNullException("data");
+				throw new ArgumentNullException(nameof(data));
 			this.key = key;
 			this.data = data;
 		}
@@ -61,7 +51,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public static ILSpyTreeNode Create(string key, object data)
 		{
 			ILSpyTreeNode result = null;
-			foreach (var factory in App.CompositionContainer.GetExportedValues<IResourceNodeFactory>()) {
+			foreach (var factory in App.ExportProvider.GetExportedValues<IResourceNodeFactory>()) {
 				result = factory.CreateNode(key, data);
 				if (result != null)
 					return result;
@@ -78,7 +68,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.WriteCommentLine(output, string.Format("{0} = {1}", key, data));
 		}
 
-		public override bool Save(DecompilerTextView textView)
+		public override bool Save(ViewModels.TabPageModel tabPage)
 		{
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = Path.GetFileName(DecompilerTextView.CleanUpName(key));

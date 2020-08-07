@@ -16,12 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Windows.Input;
+using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_File", Header = "_Save Code...", MenuIcon = "Images/SaveFile.png", MenuCategory = "Save", MenuOrder = 0)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources._SaveCode),  MenuIcon = "Images/Save", MenuCategory = nameof(Resources.Save),  MenuOrder = 0)]
 	sealed class SaveCommand : CommandWrapper
 	{
 		public SaveCommand()

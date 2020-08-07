@@ -1,0 +1,5 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:MyNamespace="clr-namespace:ILSpy.BamlDecompiler.Tests.Cases">
+	<Style x:Key="style1">
+		<Setter Property="MyNamespace:CustomControl.CustomName" Value="Test" />
+	</Style>
+</ResourceDictionary>

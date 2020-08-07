@@ -18,7 +18,6 @@
 
 using System;
 using System.IO;
-using System.Text;
 using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
@@ -115,6 +114,8 @@ namespace ICSharpCode.ILSpy
 		
 		static string GetConfigFile()
 		{
+			if (App.CommandLineArguments.ConfigFile != null)
+				return App.CommandLineArguments.ConfigFile;
 			string localPath = Path.Combine(Path.GetDirectoryName(typeof(MainWindow).Assembly.Location), "ILSpy.xml");
 			if (File.Exists(localPath))
 				return localPath;

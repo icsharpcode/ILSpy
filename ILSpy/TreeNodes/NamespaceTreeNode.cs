@@ -36,12 +36,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public NamespaceTreeNode(string name)
 		{
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			this.name = name;
 		}
 		
 		public override object Text {
-			get { return HighlightSearchMatch(name.Length == 0 ? "-" : name); }
+			get { return name.Length == 0 ? "-" : name; }
 		}
 		
 		public override object Icon {

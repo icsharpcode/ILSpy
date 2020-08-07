@@ -18,6 +18,8 @@
 
 using System;
 using System.ComponentModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
 namespace ICSharpCode.ILSpy
@@ -34,16 +36,20 @@ namespace ICSharpCode.ILSpy
 	{
 		public FilterSettings(XElement element)
 		{
-			this.ShowInternalApi = (bool?)element.Element("ShowInternalAPI") ?? true;
+			this.ShowApiLevel = (ApiVisibility?)(int?)element.Element("ShowAPILevel") ?? ApiVisibility.PublicAndInternal;
 			this.Language = Languages.GetLanguage((string)element.Element("Language"));
+			this.LanguageVersion = Language.LanguageVersions.FirstOrDefault(v => v.Version == (string)element.Element("LanguageVersion"));
+			if (this.LanguageVersion == default(LanguageVersion))
+				this.LanguageVersion = language.LanguageVersions.LastOrDefault();
 		}
 		
 		public XElement SaveAsXml()
 		{
 			return new XElement(
 				"FilterSettings",
-				new XElement("ShowInternalAPI", this.ShowInternalApi),
-				new XElement("Language", this.Language.Name)
+				new XElement("ShowAPILevel", (int)this.ShowApiLevel),
+				new XElement("Language", this.Language.Name),
+				new XElement("LanguageVersion", this.LanguageVersion?.Version)
 			);
 		}
 		
@@ -58,7 +64,7 @@ namespace ICSharpCode.ILSpy
 			set {
 				if (searchTerm != value) {
 					searchTerm = value;
-					OnPropertyChanged("SearchTerm");
+					OnPropertyChanged(nameof(SearchTerm));
 				}
 			}
 		}
@@ -72,22 +78,55 @@ namespace ICSharpCode.ILSpy
 				return true;
 			return text.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0;
 		}
-		
-		bool showInternalApi;
-		
+
+		ApiVisibility showApiLevel;
+
 		/// <summary>
-		/// Gets/Sets whether internal API members should be shown.
+		/// Gets/Sets whether public, internal or all API members should be shown.
 		/// </summary>
-		public bool ShowInternalApi {
-			get { return showInternalApi; }
+		public ApiVisibility ShowApiLevel {
+			get { return showApiLevel; }
 			set {
-				if (showInternalApi != value) {
-					showInternalApi = value;
-					OnPropertyChanged("ShowInternalAPI");
+				if (showApiLevel != value) {
+					showApiLevel = value;
+					OnPropertyChanged(nameof(ShowApiLevel));
 				}
 			}
 		}
-		
+
+		public bool ApiVisPublicOnly {
+			get { return showApiLevel == ApiVisibility.PublicOnly; }
+			set {
+				if (value == (showApiLevel == ApiVisibility.PublicOnly)) return;
+				ShowApiLevel = ApiVisibility.PublicOnly;
+				OnPropertyChanged(nameof(ApiVisPublicOnly));
+				OnPropertyChanged(nameof(ApiVisPublicAndInternal));
+				OnPropertyChanged(nameof(ApiVisAll));
+			}
+		}
+
+		public bool ApiVisPublicAndInternal {
+			get { return showApiLevel == ApiVisibility.PublicAndInternal; }
+			set {
+				if (value == (showApiLevel == ApiVisibility.PublicAndInternal)) return;
+				ShowApiLevel = ApiVisibility.PublicAndInternal;
+				OnPropertyChanged(nameof(ApiVisPublicOnly));
+				OnPropertyChanged(nameof(ApiVisPublicAndInternal));
+				OnPropertyChanged(nameof(ApiVisAll));
+			}
+		}
+
+		public bool ApiVisAll {
+			get { return showApiLevel == ApiVisibility.All; }
+			set {
+				if (value == (showApiLevel == ApiVisibility.All)) return;
+				ShowApiLevel = ApiVisibility.All;
+				OnPropertyChanged(nameof(ApiVisPublicOnly));
+				OnPropertyChanged(nameof(ApiVisPublicAndInternal));
+				OnPropertyChanged(nameof(ApiVisAll));
+			}
+		}
+
 		Language language;
 		
 		/// <summary>
@@ -102,14 +141,33 @@ namespace ICSharpCode.ILSpy
 			set {
 				if (language != value) {
 					language = value;
-					OnPropertyChanged("Language");
+					OnPropertyChanged();
 				}
 			}
 		}
-		
+
+		LanguageVersion languageVersion;
+
+		/// <summary>
+		/// Gets/Sets the current language version.
+		/// </summary>
+		/// <remarks>
+		/// While this isn't related to filtering, having it as part of the FilterSettings
+		/// makes it easy to pass it down into all tree nodes.
+		/// </remarks>
+		public LanguageVersion LanguageVersion {
+			get { return languageVersion; }
+			set {
+				if (languageVersion != value) {
+					languageVersion = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public event PropertyChangedEventHandler PropertyChanged;
 		
-		protected virtual void OnPropertyChanged(string propertyName)
+		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			if (PropertyChanged != null) {
 				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
@@ -122,5 +180,12 @@ namespace ICSharpCode.ILSpy
 			f.PropertyChanged = null;
 			return f;
 		}
+	}
+
+	public enum ApiVisibility
+	{
+		PublicOnly,
+		PublicAndInternal,
+		All
 	}
 }

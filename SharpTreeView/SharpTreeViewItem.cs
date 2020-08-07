@@ -1,15 +1,26 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under the GNU LGPL (for details please see \doc\license.txt)
+﻿// Copyright (c) 2020 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Windows.Controls;
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Input;
-using System.Diagnostics;
 
 namespace ICSharpCode.TreeView
 {
@@ -33,13 +44,16 @@ namespace ICSharpCode.TreeView
 		{
 			switch (e.Key) {
 				case Key.F2:
-//					if (SharpTreeNode.ActiveNodes.Count == 1 && Node.IsEditable) {
-//						Node.IsEditing = true;
-//						e.Handled = true;
-//					}
+					if (Node.IsEditable && ParentTreeView != null && ParentTreeView.SelectedItems.Count == 1 && ParentTreeView.SelectedItems[0] == Node) {
+						Node.IsEditing = true;
+						e.Handled = true;
+					}
 					break;
 				case Key.Escape:
-					Node.IsEditing = false;
+					if (Node.IsEditing) {
+						Node.IsEditing = false;
+						e.Handled = true;
+					}
 					break;
 			}
 		}
@@ -105,8 +119,17 @@ namespace ICSharpCode.TreeView
 			}
 		}
 
+		protected override void OnMouseUp(MouseButtonEventArgs e)
+		{
+			if (e.ChangedButton == MouseButton.Middle) {
+				Node.ActivateItemSecondary(e);
+			} else {
+				base.OnMouseUp(e);
+			}
+		}
+
 		#endregion
-		
+
 		#region Drag and Drop
 
 		protected override void OnDragEnter(DragEventArgs e)

@@ -28,7 +28,6 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	sealed class ReferenceElementGenerator : VisualLineElementGenerator
 	{
-		readonly Action<ReferenceSegment> referenceClicked;
 		readonly Predicate<ReferenceSegment> isLink;
 		
 		/// <summary>
@@ -36,13 +35,10 @@ namespace ICSharpCode.ILSpy.TextView
 		/// </summary>
 		public TextSegmentCollection<ReferenceSegment> References { get; set; }
 		
-		public ReferenceElementGenerator(Action<ReferenceSegment> referenceClicked, Predicate<ReferenceSegment> isLink)
+		public ReferenceElementGenerator(Predicate<ReferenceSegment> isLink)
 		{
-			if (referenceClicked == null)
-				throw new ArgumentNullException("referenceClicked");
 			if (isLink == null)
-				throw new ArgumentNullException("isLink");
-			this.referenceClicked = referenceClicked;
+				throw new ArgumentNullException(nameof(isLink));
 			this.isLink = isLink;
 		}
 		
@@ -72,11 +68,6 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			return null;
 		}
-		
-		internal void JumpToReference(ReferenceSegment referenceSegment)
-		{
-			referenceClicked(referenceSegment);
-		}
 	}
 	
 	/// <summary>
@@ -103,16 +94,6 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			e.Handled = true;
 			e.Cursor = referenceSegment.IsLocal ? Cursors.Arrow : Cursors.Hand;
-		}
-		
-		/// <inheritdoc/>
-		protected override void OnMouseDown(MouseButtonEventArgs e)
-		{
-			if (e.ChangedButton == MouseButton.Left && !e.Handled) {
-				parent.JumpToReference(referenceSegment);
-				if(!referenceSegment.IsLocal)
-					e.Handled = true;
-			}
 		}
 		
 		/// <inheritdoc/>

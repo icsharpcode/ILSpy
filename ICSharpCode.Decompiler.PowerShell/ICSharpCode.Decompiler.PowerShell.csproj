@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <RootNamespace>ICSharpCode.Decompiler.PowerShell</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PowerShellStandard.Library" Version="5.1.0" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.3" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <PackageReference Include="ICSharpCode.Decompiler" Version="6.1.0.5902" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\ICSharpCode.Decompiler.PdbProvider.Cecil\MonoCecilDebugInfoProvider.cs" Link="MonoCecilDebugInfoProvider.cs" />
+    <Compile Include="..\ILSpy\DebugInfo\PortableDebugInfoProvider.cs" Link="PortableDebugInfoProvider.cs" />
+    <Compile Include="..\ILSpy\DebugInfo\DebugInfoUtils.cs" Link="DebugInfoUtils.cs" />
+  </ItemGroup>
+
+</Project>
