@@ -398,6 +398,9 @@ namespace ICSharpCode.Decompiler.Metadata
 					return typeof(object).Module.FullyQualifiedName;
 			}
 
+			if (reference.PublicKeyToken == null)
+				return null;
+
 			string path;
 			if (decompilerRuntime == DecompilerRuntime.Mono) {
 				path = GetMonoMscorlibBasePath(version);

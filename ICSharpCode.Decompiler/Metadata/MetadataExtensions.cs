@@ -95,6 +95,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static string ToHexString(this IEnumerable<byte> bytes, int estimatedLength)
 		{
+			if (bytes == null)
+				throw new ArgumentNullException(nameof(bytes));
+
 			StringBuilder sb = new StringBuilder(estimatedLength * 2);
 			foreach (var b in bytes)
 				sb.AppendFormat("{0:x2}", b);
