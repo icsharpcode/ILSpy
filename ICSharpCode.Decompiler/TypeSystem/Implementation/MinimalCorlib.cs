@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				get {
 					var baseType = KnownTypeReference.Get(typeCode).baseType;
 					if (baseType != KnownTypeCode.None)
-						return new[] { corlib.typeDefinitions[(int)baseType] };
+						return new[] { corlib.Compilation.FindType(baseType) };
 					else
 						return EmptyList<IType>.Instance;
 				}
