@@ -53,15 +53,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			InlineOneIfPossible(block, pos, OptionsForBlock(block, pos), context: context);
+			InlineOneIfPossible(block, pos, OptionsForBlock(block, pos, context), context: context);
 		}
 
-		internal static InliningOptions OptionsForBlock(Block block, int pos)
+		internal static InliningOptions OptionsForBlock(Block block, int pos, ILTransformContext context)
 		{
 			InliningOptions options = InliningOptions.None;
-			if (IsCatchWhenBlock(block))
+			if (context.Settings.AggressiveInlining || IsCatchWhenBlock(block)) {
 				options |= InliningOptions.Aggressive;
-			else {
+			} else {
 				var function = block.Ancestors.OfType<ILFunction>().FirstOrDefault();
 				var inst = block.Instructions[pos];
 				if (IsInConstructorInitializer(function, inst))
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			for (int i = instructions.Count - 1; i >= 0; i--) {
 				if (instructions[i] is StLoc inst) {
 					InliningOptions options = InliningOptions.None;
-					if (IsCatchWhenBlock(block) || IsInConstructorInitializer(function, inst))
+					if (context.Settings.AggressiveInlining || IsCatchWhenBlock(block) || IsInConstructorInitializer(function, inst))
 						options = InliningOptions.Aggressive;
 					if (InlineOneIfPossible(block, i, options, context)) {
 						modified = true;

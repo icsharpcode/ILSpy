@@ -1423,6 +1423,25 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool aggressiveInlining = false;
+
+		/// <summary>
+		/// If set to false (the default), the decompiler will inline local variables only when they occur
+		/// in a context where the C# compiler is known to emit compiler-generated locals.
+		/// If set to true, the decompiler will inline local variables whenever possible.
+		/// </summary>
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.AggressiveInlining")]
+		public bool AggressiveInlining {
+			get { return aggressiveInlining; }
+			set {
+				if (aggressiveInlining != value) {
+					aggressiveInlining = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		CSharpFormattingOptions csharpFormattingOptions;
 
 		[Browsable(false)]

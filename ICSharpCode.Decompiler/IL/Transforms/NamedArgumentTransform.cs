@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!context.Settings.NamedArguments)
 				return;
-			var options = ILInlining.OptionsForBlock(block, pos);
+			var options = ILInlining.OptionsForBlock(block, pos, context);
 			options |= InliningOptions.IntroduceNamedArguments;
 			ILInlining.InlineOneIfPossible(block, pos, options, context: context);
 		}
