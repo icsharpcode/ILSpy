@@ -93,7 +93,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = "Solution.sln";
-			dlg.Filter = "Visual Studio Solution file|*.sln|All files|*.*";
+			dlg.Filter = Resources.VisualStudioSolutionFileSlnAllFiles;
 
 			if (dlg.ShowDialog() != true) {
 				return null;

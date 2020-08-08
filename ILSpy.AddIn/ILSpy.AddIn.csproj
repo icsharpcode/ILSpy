@@ -12,7 +12,6 @@
 
     <Company>IC#Code</Company>
     <Description>ILSpy</Description>
-    <NeutralLanguage>en-US</NeutralLanguage>
     <Version>1.7.1.0</Version>
     <FileVersion>1.7.1.0</FileVersion>
 
@@ -90,9 +89,19 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="VSPackage.en-US.resx">
+      <MergeWithCTO>true</MergeWithCTO>
+      <LogicalName>VSPackage.en-US.resources</LogicalName>
+      <DependentUpon>VSPackage.resx</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="VSPackage.resx">
       <MergeWithCTO>true</MergeWithCTO>
       <ManifestResourceName>VSPackage</ManifestResourceName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="VSPackage.zh-Hans.resx">
+      <MergeWithCTO>true</MergeWithCTO>
+      <LogicalName>VSPackage.zh-Hans.resources</LogicalName>
+      <DependentUpon>VSPackage.resx</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
 
@@ -121,22 +130,39 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="ILSpyAddIn.vsct" />
+    <Content Include="$(ILSpyBuildPath)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPath)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll;">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>\ILSpy\zh-Hans\</VSIXSubPath>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="source.extension.vsixmanifest.template" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Key.snk" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <VSCTCompile Include="ILSpyAddIn.vsct">
+ <ItemGroup>
+   <None Include="ILSpyAddIn.vsct">
+     <SubType>Designer</SubType>
+   </None>
+   <Content Include="zh-Hans\extension.vsixlangpack">
+     <IncludeInVSIX>true</IncludeInVSIX>
+     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+   </Content>
+    <VSCTCompile Include="ILSpyAddIn.en-US.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
       <SubType>Designer</SubType>
+      <DependentUpon>ILSpyAddIn.vsct</DependentUpon>
     </VSCTCompile>
+    <VSCTCompile Include="ILSpyAddIn.zh-Hans.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+      <SubType>Designer</SubType>
+      <DependentUpon>ILSpyAddIn.vsct</DependentUpon>
+    </VSCTCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Key.snk" />
   </ItemGroup>
 
   <ItemGroup>
