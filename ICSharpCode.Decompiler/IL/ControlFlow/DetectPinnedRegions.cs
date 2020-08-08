@@ -494,6 +494,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 				}
 			}
+			if (body.Blocks.Count == 0) {
+				// empty body, the entryBlock itself doesn't belong into the pinned region
+				Debug.Assert(reachedEdgesPerBlock[entryBlock.ChildIndex] == 0);
+				var bodyBlock = new Block();
+				bodyBlock.SetILRange(stLoc);
+				bodyBlock.Instructions.Add(new Branch(entryBlock));
+				body.Blocks.Add(bodyBlock);
+			}
+
+			var pinnedRegion = new PinnedRegion(stLoc.Variable, stLoc.Value, body).WithILRange(stLoc);
+			stLoc.ReplaceWith(pinnedRegion);
+			block.Instructions.RemoveAt(block.Instructions.Count - 1); // remove branch into body
+
 			if (cloneBlocks) {
 				// Adjust branches between cloned blocks.
 				foreach (var branch in body.Descendants.OfType<Branch>()) {
@@ -525,18 +538,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					+ $" are reachable both inside and outside the pinned region starting at IL_{stLoc.StartILOffset:x4}."
 					+ " ILSpy has duplicated these blocks in order to place them both within and outside the `fixed` statement.");
 			}
-			if (body.Blocks.Count == 0) {
-				// empty body, the entryBlock itself doesn't belong into the pinned region
-				Debug.Assert(reachedEdgesPerBlock[entryBlock.ChildIndex] == 0);
-				var bodyBlock = new Block();
-				bodyBlock.SetILRange(stLoc);
-				bodyBlock.Instructions.Add(new Branch(entryBlock));
-				body.Blocks.Add(bodyBlock);
-			}
 
-			var pinnedRegion = new PinnedRegion(stLoc.Variable, stLoc.Value, body).WithILRange(stLoc);
-			stLoc.ReplaceWith(pinnedRegion);
-			block.Instructions.RemoveAt(block.Instructions.Count - 1); // remove branch into body
 			ProcessPinnedRegion(pinnedRegion);
 			return true;
 		}
