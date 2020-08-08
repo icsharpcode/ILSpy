@@ -234,6 +234,9 @@ Are you sure you want to continue?</value>
   <data name="Decompiler" xml:space="preserve">
     <value>Decompiler</value>
   </data>
+  <data name="DecompilerSettings.AggressiveInlining" xml:space="preserve">
+    <value>Always inline local variables if possible</value>
+  </data>
   <data name="DecompilerSettings.AllowExtensionAddMethodsInCollectionInitializerExpressions" xml:space="preserve">
     <value>Allow extension 'Add' methods in collection initializer expressions</value>
   </data>
@@ -327,6 +330,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.IncludeXMLDocumentationCommentsInTheDecompiledCode" xml:space="preserve">
     <value>Include XML documentation comments in the decompiled code</value>
   </data>
+  <data name="DecompilerSettings.InitAccessors" xml:space="preserve">
+    <value>Allow init; accessors</value>
+  </data>
   <data name="DecompilerSettings.InsertUsingDeclarations" xml:space="preserve">
     <value>Insert using declarations</value>
   </data>
@@ -377,6 +383,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DecompilerSettings.ShowInfoFromDebugSymbolsIfAvailable" xml:space="preserve">
     <value>Show info from debug symbols, if available</value>
+  </data>
+  <data name="DecompilerSettings.SwitchExpressions" xml:space="preserve">
+    <value>Switch expressions</value>
   </data>
   <data name="DecompilerSettings.UseDiscards" xml:space="preserve">
     <value>Use discards</value>
