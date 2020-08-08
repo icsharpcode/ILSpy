@@ -475,6 +475,32 @@
     ret
   }
 
+  .method public hidebysig static uint64& RefAssignTypeMismatch(uint32& a, uint32& b)
+  {
+    .maxstack 8
+    .locals (
+      [0] uint16&
+    )
+
+    ldarg.0
+    stloc.0
+    
+    ldarg.0
+    ldind.i4
+    brfalse lbl
+
+    ldarg.1
+    stloc.0
+
+lbl:
+    ldloc.0
+    ldind.i2
+    call       void [mscorlib]System.Console::WriteLine(uint16)
+
+    ldloc.0
+    ret
+  }
+
   .method public hidebysig static 
 	  uint8[] Issue1292 (
 		  int32 val,

@@ -640,6 +640,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (lhs.Expression is DirectionExpression dirExpr && lhs.ResolveResult is ByReferenceResolveResult lhsRefRR) {
 				// ref (re-)assignment, emit "ref (a = ref b)".
 				lhs = lhs.UnwrapChild(dirExpr.Expression);
+				translatedValue = translatedValue.ConvertTo(lhsRefRR.Type, this, allowImplicitConversion: true);
 				var assign = new AssignmentExpression(lhs.Expression, translatedValue.Expression)
 					.WithRR(new OperatorResolveResult(lhs.Type, ExpressionType.Assign, lhsRefRR, translatedValue.ResolveResult));
 				return new DirectionExpression(FieldDirection.Ref, assign)

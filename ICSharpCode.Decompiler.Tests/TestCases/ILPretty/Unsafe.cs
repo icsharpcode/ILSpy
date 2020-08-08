@@ -26,6 +26,16 @@ internal sealed class ExtraUnsafeTests
 		return (uint*)Unsafe.AsPointer(ref managedPtr);
 	}
 
+	public static ref ulong RefAssignTypeMismatch(ref uint a, ref uint b)
+	{
+		ref ushort reference = ref Unsafe.As<uint, ushort>(ref a);
+		if (a != 0) {
+			reference = ref Unsafe.As<uint, ushort>(ref b);
+		}
+		Console.WriteLine(reference);
+		return ref Unsafe.As<ushort, ulong>(ref reference);
+	}
+
 	public unsafe static byte[] Issue1292(int val, byte[] arr)
 	{
 		//The blocks IL_0019 are reachable both inside and outside the pinned region starting at IL_0013. ILSpy has duplicated these blocks in order to place them both within and outside the `fixed` statement.
