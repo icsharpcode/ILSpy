@@ -75,7 +75,7 @@
 
   <ItemGroup>
     <PackageReference Include="Iced" Version="1.6.0" />
-    <PackageReference Include="ILCompiler.Reflection.ReadyToRun" Version="1.0.8-alpha" />
+    <PackageReference Include="ILCompiler.Reflection.ReadyToRun" Version="1.0.9-alpha" />
   </ItemGroup>
 
   <Target Name="RemoveTransitiveProjectReferences" AfterTargets="IncludeTransitiveProjectReferences">

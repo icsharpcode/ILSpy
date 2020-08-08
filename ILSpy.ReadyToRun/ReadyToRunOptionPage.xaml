@@ -17,6 +17,6 @@
 		<TextBlock Grid.Row="1" Margin="3" Text="{x:Static properties:Resources.ShowUnwindInfo}"/>
 		<CheckBox Grid.Row="1" Grid.Column="1" Margin="3" IsChecked="{Binding IsShowUnwindInfo}" />
 		<TextBlock Grid.Row="2" Margin="3" Text="{x:Static properties:Resources.ShowDebugInfo}"/>
-		<CheckBox Grid.Row="2" Grid.Column="1" Margin="3" IsChecked="{Binding DebugIsChecked}" />
+		<CheckBox Grid.Row="2" Grid.Column="1" Margin="3" IsChecked="{Binding IsShowDebugInfo}" />
 	</Grid>
 </UserControl>
