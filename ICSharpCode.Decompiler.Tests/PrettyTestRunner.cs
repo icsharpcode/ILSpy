@@ -289,7 +289,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void ValueTypes([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		public void ValueTypes([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}

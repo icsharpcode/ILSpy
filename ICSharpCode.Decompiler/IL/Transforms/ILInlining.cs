@@ -250,21 +250,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Thus, we have to ensure we're operating on an r-value.
 			// Additionally, we cannot inline in cases where the C# compiler prohibits the direct use
 			// of the rvalue (e.g. M(ref (MyStruct)obj); is invalid).
-			if (!IsUsedAsThisPointerInCall(loadInst, out var method))
+			if (IsUsedAsThisPointerInCall(loadInst, out var method)) {
+				switch (ClassifyExpression(inlinedExpression)) {
+					case ExpressionClassification.RValue:
+						// For struct method calls on rvalues, the C# compiler always generates temporaries.
+						return true;
+					case ExpressionClassification.MutableLValue:
+						// For struct method calls on mutable lvalues, the C# compiler never generates temporaries.
+						return false;
+					case ExpressionClassification.ReadonlyLValue:
+						// For struct method calls on readonly lvalues, the C# compiler
+						// only generates a temporary if it isn't a "readonly struct"
+						return MethodRequiresCopyForReadonlyLValue(method);
+					default:
+						throw new InvalidOperationException("invalid expression classification");
+				}
+			} else if (IsUsedAsThisPointerInFieldRead(loadInst)) {
+				// mcs generated temporaries for field reads on rvalues (#1555)
+				return ClassifyExpression(inlinedExpression) == ExpressionClassification.RValue;
+			} else {
 				return false;
-			switch (ClassifyExpression(inlinedExpression)) {
-				case ExpressionClassification.RValue:
-					// For struct method calls on rvalues, the C# compiler always generates temporaries.
-					return true;
-				case ExpressionClassification.MutableLValue:
-					// For struct method calls on mutable lvalues, the C# compiler never generates temporaries.
-					return false;
-				case ExpressionClassification.ReadonlyLValue:
-					// For struct method calls on readonly lvalues, the C# compiler
-					// only generates a temporary if it isn't a "readonly struct"
-					return MethodRequiresCopyForReadonlyLValue(method);
-				default:
-					throw new InvalidOperationException("invalid expression classification");
 			}
 		}
 
@@ -288,14 +293,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static bool IsUsedAsThisPointerInCall(LdLoca ldloca, out IMethod method)
 		{
 			method = null;
-			if (ldloca.ChildIndex != 0)
-				return false;
 			if (ldloca.Variable.Type.IsReferenceType ?? false)
 				return false;
 			ILInstruction inst = ldloca;
 			while (inst.Parent is LdFlda ldflda) {
 				inst = ldflda;
 			}
+			if (inst.ChildIndex != 0)
+				return false;
 			switch (inst.Parent.OpCode) {
 				case OpCode.Call:
 				case OpCode.CallVirt:
@@ -321,7 +326,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 			}
 		}
-		
+
+		static bool IsUsedAsThisPointerInFieldRead(LdLoca ldloca)
+		{
+			if (ldloca.Variable.Type.IsReferenceType ?? false)
+				return false;
+			ILInstruction inst = ldloca;
+			while (inst.Parent is LdFlda ldflda) {
+				inst = ldflda;
+			}
+			return inst != ldloca && inst.Parent is LdObj;
+		}
+
 		internal enum ExpressionClassification
 		{
 			RValue,
