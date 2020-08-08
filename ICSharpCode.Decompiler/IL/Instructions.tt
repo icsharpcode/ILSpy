@@ -67,7 +67,8 @@
 			CustomChildren(new []{
 				new ChildInfo("init") { CanInlineInto = true },
 				new ChildInfo("body")
-			})),
+			}),
+			CustomInvariant("Debug.Assert(Variable.Kind == VariableKind.PinnedRegionLocal);")),
 		new OpCode("binary", "Common instruction for add, sub, mul, div, rem, bit.and, bit.or, bit.xor, shl and shr.",
 			CustomClassName("BinaryNumericInstruction"), Binary, CustomWriteTo, CustomConstructor, CustomComputeFlags,
 			MatchCondition("CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && IsLifted == o.IsLifted")),

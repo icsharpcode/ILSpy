@@ -592,6 +592,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				DetectPinnedRegion(block);
 			body.Blocks.RemoveAll(b => b.Instructions.Count == 0); // remove dummy blocks
 			body.SetILRange(body.EntryPoint);
+			if (pinnedRegion.Variable.Kind != VariableKind.PinnedRegionLocal) {
+				Debug.Assert(pinnedRegion.Variable.Kind == VariableKind.PinnedLocal);
+				pinnedRegion.Variable.Kind = VariableKind.PinnedRegionLocal;
+			}
 		}
 
 		private void MoveArrayToPointerToPinnedRegionInit(PinnedRegion pinnedRegion)

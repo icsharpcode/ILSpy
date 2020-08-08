@@ -1013,6 +1013,7 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
 			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
+			Debug.Assert(Variable.Kind == VariableKind.PinnedRegionLocal);
 		}
 	}
 }
