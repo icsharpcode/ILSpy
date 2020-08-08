@@ -68,7 +68,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			public void Propagate(ILVariable variable)
 			{
-				Debug.Assert(declaredVariable == null || (variable == null && declaredVariable.StateMachineField == null));
 				this.declaredVariable = variable;
 				this.CanPropagate = variable != null;
 			}
@@ -456,7 +455,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			ILVariable v;
 			switch (value) {
-				case LdLoc load when load.Variable.StateMachineField == null:
+				case LdLoc load:
 					v = load.Variable;
 					if (v.Kind == VariableKind.Parameter) {
 						if (v.LoadCount != 1 && !v.IsThis()) {
