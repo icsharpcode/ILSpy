@@ -62,6 +62,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool IMethod.ReturnTypeIsRefReadOnly => underlyingMethod.ReturnTypeIsRefReadOnly;
 		bool IMethod.ThisIsRefReadOnly => underlyingMethod.ThisIsRefReadOnly;
+		bool IMethod.IsInitOnly => underlyingMethod.IsInitOnly;
 
 		IReadOnlyList<ITypeParameter> IMethod.TypeParameters => EmptyList<ITypeParameter>.Instance;
 		IReadOnlyList<IType> IMethod.TypeArguments => EmptyList<IType>.Instance;

@@ -99,7 +99,12 @@ namespace ICSharpCode.ILSpy
 			Stopwatch stopwatch = Stopwatch.StartNew();
 
 			try {
-				await Task.Run(() => Parallel.ForEach(assemblies, n => WriteProject(n, language, solutionDirectory, ct)))
+				// Explicitly create an enumerable partitioner here to avoid Parallel.ForEach's special cases for lists,
+				// as those seem to use static partitioning which is inefficient if assemblies take differently
+				// long to decompile.
+				await Task.Run(() => Parallel.ForEach(Partitioner.Create(assemblies),
+					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
+					n => WriteProject(n, language, solutionDirectory, ct)))
 					.ConfigureAwait(false);
 
 				await Task.Run(() => SolutionCreator.WriteSolutionFile(solutionFilePath, projects))

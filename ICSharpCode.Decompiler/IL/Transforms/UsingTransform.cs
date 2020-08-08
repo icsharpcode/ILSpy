@@ -25,7 +25,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	class UsingTransform : IBlockTransform
+	public class UsingTransform : IBlockTransform
 	{
 		BlockTransformContext context;
 

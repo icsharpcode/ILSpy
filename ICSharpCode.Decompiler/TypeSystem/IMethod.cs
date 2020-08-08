@@ -41,6 +41,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool ReturnTypeIsRefReadOnly { get; }
 
 		/// <summary>
+		/// Gets whether this method may only be called on fresh instances.
+		/// Used with C# 9 `init;` property setters.
+		/// </summary>
+		bool IsInitOnly { get; }
+
+		/// <summary>
 		/// Gets whether the method accepts the 'this' reference as ref readonly.
 		/// This can be either because the method is C# 8.0 'readonly', or because it is within a C# 7.2 'readonly struct'
 		/// </summary>

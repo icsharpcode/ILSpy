@@ -50,6 +50,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IType returnType;
 		byte returnTypeIsRefReadonly = ThreeState.Unknown;
 		byte thisIsRefReadonly = ThreeState.Unknown;
+		bool isInitOnly;
 
 		internal MetadataMethod(MetadataModule module, MethodDefinitionHandle handle)
 		{
@@ -150,6 +151,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
+		public bool IsInitOnly {
+			get {
+				var returnType = LazyInit.VolatileRead(ref this.returnType);
+				if (returnType == null)
+					DecodeSignature();
+				return this.isInitOnly;
+			}
+		}
+
 		internal Nullability NullableContext {
 			get {
 				var methodDef = module.metadata.GetMethodDefinition(handle);
@@ -163,19 +173,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var genericContext = new GenericContext(DeclaringType.TypeParameters, this.TypeParameters);
 			IType returnType;
 			IParameter[] parameters;
+			ModifiedType mod;
 			try {
 				var nullableContext = methodDef.GetCustomAttributes().GetNullableContext(module.metadata) ?? DeclaringTypeDefinition.NullableContext;
 				var signature = methodDef.DecodeSignature(module.TypeProvider, genericContext);
-				(returnType, parameters) = DecodeSignature(module, this, signature, methodDef.GetParameters(), nullableContext, module.OptionsForEntity(this));
+				(returnType, parameters, mod) = DecodeSignature(module, this, signature, methodDef.GetParameters(), nullableContext, module.OptionsForEntity(this));
 			} catch (BadImageFormatException) {
 				returnType = SpecialType.UnknownType;
 				parameters = Empty<IParameter>.Array;
+				mod = null;
 			}
+			this.isInitOnly = mod is { Modifier: { Name: "IsExternalInit", Namespace: "System.Runtime.CompilerServices" } };
 			LazyInit.GetOrSet(ref this.returnType, returnType);
 			LazyInit.GetOrSet(ref this.parameters, parameters);
 		}
 
-		internal static (IType, IParameter[]) DecodeSignature(MetadataModule module, IParameterizedMember owner,
+		internal static (IType returnType, IParameter[] parameters, ModifiedType returnTypeModifier) DecodeSignature(
+			MetadataModule module, IParameterizedMember owner,
 			MethodSignature<IType> signature, ParameterHandleCollection? parameterHandles,
 			Nullability nullableContext, TypeSystemOptions typeSystemOptions,
 			CustomAttributeHandleCollection? returnTypeAttributes = null)
@@ -231,7 +245,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			Debug.Assert(i == parameters.Length);
 			var returnType = ApplyAttributeTypeVisitor.ApplyAttributesToType(signature.ReturnType,
 				module.Compilation, returnTypeAttributes, metadata, typeSystemOptions, nullableContext);
-			return (returnType, parameters);
+			return (returnType, parameters, signature.ReturnType as ModifiedType);
 		}
 		#endregion
 
@@ -453,7 +467,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		public Accessibility Accessibility => GetAccessibility(attributes);
-		
+
 		internal static Accessibility GetAccessibility(MethodAttributes attr)
 		{
 			switch (attr & MethodAttributes.MemberAccessMask) {

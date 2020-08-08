@@ -135,8 +135,15 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				// legacy csc generates a dead store in debug builds
-				RemoveDeadStores = (cscOptions == CompilerOptions.None)
+				RemoveDeadStores = (cscOptions == CompilerOptions.None),
+				SwitchExpressions = false,
 			});
+		}
+
+		[Test]
+		public void SwitchExpressions([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
@@ -148,7 +155,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void DelegateConstruction([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions);
+			RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
 		}
 
 		[Test]
@@ -199,7 +206,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void LocalFunctions([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions);
+			RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
 		}
 
 		[Test]

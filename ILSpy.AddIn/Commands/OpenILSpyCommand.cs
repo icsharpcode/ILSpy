@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		protected string GetILSpyPath()
 		{
 			var basePath = Path.GetDirectoryName(typeof(ILSpyAddInPackage).Assembly.Location);
-			return Path.Combine(basePath, "ILSpy.exe");
+			return Path.Combine(basePath, "ILSpy", "ILSpy.exe");
 		}
 
 		protected void OpenAssembliesInILSpy(ILSpyParameters parameters)
@@ -80,8 +80,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
 					string assemblyName = assemblyDef.Name.Name;
 					string resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
-					dict.Add(assemblyName,
-						new DetectedReference(assemblyName, resolvedAssemblyFile, false));
+					dict.Add(assemblyName, new DetectedReference(assemblyName, resolvedAssemblyFile, false));
 				}
 			}
 			foreach (var projectReference in parentProject.ProjectReferences) {

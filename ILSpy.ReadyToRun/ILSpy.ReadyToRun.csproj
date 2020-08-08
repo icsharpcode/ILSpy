@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project>
-  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
+<Project Sdk="MSBuild.Sdk.Extras">
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
@@ -8,8 +7,11 @@
     <LangVersion>8.0</LangVersion>
 
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
-
+    <NeutralResourcesLanguage>en-US</NeutralResourcesLanguage>
     <EnableDefaultItems>false</EnableDefaultItems>
+    <UseWpf>true</UseWpf>
+    <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
+    <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -44,11 +46,27 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="ReadyToRunLanguage.cs" />
     <Compile Include="ReadyToRunOptionPage.xaml.cs">
       <DependentUpon>ReadyToRunOptionPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="ReadyToRunOptions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.zh-Hans.resx">
+      <Generator></Generator>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
@@ -59,8 +77,6 @@
     <PackageReference Include="Iced" Version="1.6.0" />
     <PackageReference Include="ILCompiler.Reflection.ReadyToRun" Version="1.0.9-alpha" />
   </ItemGroup>
-
-  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
 
   <Target Name="RemoveTransitiveProjectReferences" AfterTargets="IncludeTransitiveProjectReferences">
     <ItemGroup>

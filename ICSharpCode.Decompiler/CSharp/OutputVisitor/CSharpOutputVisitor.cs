@@ -1759,6 +1759,33 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			EndNode(caseLabel);
 		}
 
+		public virtual void VisitSwitchExpression(SwitchExpression switchExpression)
+		{
+			StartNode(switchExpression);
+			switchExpression.Expression.AcceptVisitor(this);
+			Space();
+			WriteKeyword(SwitchExpression.SwitchKeywordRole);
+			OpenBrace(BraceStyle.EndOfLine);
+			foreach (AstNode node in switchExpression.SwitchSections) {
+				node.AcceptVisitor(this);
+				Comma(node);
+				NewLine();
+			}
+			CloseBrace(BraceStyle.EndOfLine);
+			EndNode(switchExpression);
+		}
+
+		public virtual void VisitSwitchExpressionSection(SwitchExpressionSection switchExpressionSection)
+		{
+			StartNode(switchExpressionSection);
+			switchExpressionSection.Pattern.AcceptVisitor(this);
+			Space();
+			WriteToken(Roles.Arrow);
+			Space();
+			switchExpressionSection.Body.AcceptVisitor(this);
+			EndNode(switchExpressionSection);
+		}
+
 		public virtual void VisitThrowStatement(ThrowStatement throwStatement)
 		{
 			StartNode(throwStatement);
@@ -1876,19 +1903,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitLocalFunctionDeclarationStatement(LocalFunctionDeclarationStatement localFunctionDeclarationStatement)
 		{
 			StartNode(localFunctionDeclarationStatement);
-
-			WriteModifiers(localFunctionDeclarationStatement.ModifierTokens);
-			localFunctionDeclarationStatement.ReturnType.AcceptVisitor(this);
-			Space();
-			WriteIdentifier(localFunctionDeclarationStatement.NameToken);
-			WriteTypeParameters(localFunctionDeclarationStatement.TypeParameters);
-			Space(policy.SpaceBeforeMethodDeclarationParentheses);
-			WriteCommaSeparatedListInParenthesis(localFunctionDeclarationStatement.Parameters, policy.SpaceWithinMethodDeclarationParentheses);
-			foreach (Constraint constraint in localFunctionDeclarationStatement.Constraints) {
-				constraint.AcceptVisitor(this);
-			}
-			WriteMethodBody(localFunctionDeclarationStatement.Body, policy.MethodBraceStyle);
-
+			localFunctionDeclarationStatement.Declaration.AcceptVisitor(this);
 			EndNode(localFunctionDeclarationStatement);
 		}
 
@@ -1939,7 +1954,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				WriteKeyword("get", PropertyDeclaration.GetKeywordRole);
 				style = policy.PropertyGetBraceStyle;
 			} else if (accessor.Role == PropertyDeclaration.SetterRole) {
-				WriteKeyword("set", PropertyDeclaration.SetKeywordRole);
+				if (accessor.Keyword.Role == PropertyDeclaration.InitKeywordRole) {
+					WriteKeyword("init", PropertyDeclaration.InitKeywordRole);
+				} else {
+					WriteKeyword("set", PropertyDeclaration.SetKeywordRole);
+				}
 				style = policy.PropertySetBraceStyle;
 			} else if (accessor.Role == CustomEventDeclaration.AddAccessorRole) {
 				WriteKeyword("add", CustomEventDeclaration.AddKeywordRole);

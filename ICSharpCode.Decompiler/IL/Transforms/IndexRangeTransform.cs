@@ -205,6 +205,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!CheckContainerLengthVariableUseCount(containerLengthVar, startIndexKind)) {
 					return;
 				}
+				if (!call.IsDescendantOf(block.Instructions[pos]))
+					return;
 				// startOffsetVar might be used deep inside a complex statement, ensure we can inline up to that point:
 				for (int i = startPos; i < pos; i++) {
 					if (!ILInlining.CanInlineInto(block.Instructions[pos], startOffsetVar, block.Instructions[i]))
@@ -274,6 +276,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return; // this should only ever happen in the second step (ExtendSlicing)
 				}
 				if (!(sliceLengthVar.LoadInstructions.Single().Parent is CallInstruction call))
+					return;
+				if (!call.IsDescendantOf(block.Instructions[pos]))
 					return;
 				if (!IsSlicingMethod(call.Method))
 					return;

@@ -20,10 +20,10 @@ using System.ComponentModel;
 using System.Windows.Controls;
 using System.Xml.Linq;
 using ICSharpCode.ILSpy.Options;
-
+using ILSpy.ReadyToRun;
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
-	[ExportOptionPage(Title = "ReadyToRun", Order = 40)]
+	[ExportOptionPage(Title = nameof(global::ILSpy.ReadyToRun.Properties.Resources.ReadyToRun),   Order = 40)]
 	partial class ReadyToRunOptionPage : UserControl, IOptionPage
 	{
 		public ReadyToRunOptionPage()

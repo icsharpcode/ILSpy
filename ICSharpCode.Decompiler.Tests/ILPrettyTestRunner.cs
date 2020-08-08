@@ -127,13 +127,13 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void CS1xSwitch_Debug()
 		{
-			Run();
+			Run(settings: new DecompilerSettings { SwitchExpressions = false });
 		}
 
 		[Test]
 		public void CS1xSwitch_Release()
 		{
-			Run();
+			Run(settings: new DecompilerSettings { SwitchExpressions = false });
 		}
 
 		[Test]

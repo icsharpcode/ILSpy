@@ -20,20 +20,24 @@ using System;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.ComponentModel;
+using System.Diagnostics;
 
 namespace ICSharpCode.ILSpy
 {
 	static class NativeMethods
 	{
 		public const uint WM_COPYDATA = 0x4a;
-		
+
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
 		[return: MarshalAs(UnmanagedType.Bool)]
 		internal static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
-		
+
+		[DllImport("user32.dll", CharSet = CharSet.Auto)]
+		internal static extern unsafe int GetWindowThreadProcessId(IntPtr hWnd, int* lpdwProcessId);
+
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
 		static extern int GetWindowText(IntPtr hWnd, [Out] StringBuilder title, int size);
-		
+
 		public static string GetWindowText(IntPtr hWnd, int maxLength)
 		{
 			StringBuilder b = new StringBuilder(maxLength + 1);
@@ -42,12 +46,12 @@ namespace ICSharpCode.ILSpy
 			else
 				return string.Empty;
 		}
-		
+
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
 		internal static extern IntPtr SendMessageTimeout(
 			IntPtr hWnd, uint msg, IntPtr wParam, ref CopyDataStruct lParam,
 			uint flags, uint timeout, out IntPtr result);
-		
+
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
 		[return: MarshalAs(UnmanagedType.Bool)]
 		internal static extern bool SetForegroundWindow(IntPtr hWnd);
@@ -145,11 +149,31 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 		#endregion
+
+		public unsafe static string GetProcessNameFromWindow(IntPtr hWnd)
+		{
+			int processId;
+			GetWindowThreadProcessId(hWnd, &processId);
+			try {
+				using (var p = Process.GetProcessById(processId)) {
+					return p.ProcessName;
+				}
+			} catch (ArgumentException ex) {
+				Debug.WriteLine(ex.Message);
+				return null;
+			} catch (InvalidOperationException ex) {
+				Debug.WriteLine(ex.Message);
+				return null;
+			} catch (Win32Exception ex) {
+				Debug.WriteLine(ex.Message);
+				return null;
+			}
+		}
 	}
 
 	[return: MarshalAs(UnmanagedType.Bool)]
 	delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
-	
+
 	[StructLayout(LayoutKind.Sequential)]
 	struct CopyDataStruct
 	{

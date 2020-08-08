@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Decompiler step for C# 7.0 local functions
 	/// </summary>
-	class LocalFunctionDecompiler : IILTransform
+	public class LocalFunctionDecompiler : IILTransform
 	{
 		ILTransformContext context;
 		ITypeResolveContext resolveContext;
@@ -484,7 +484,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				parametersToRemove++;
 			}
-			return new LocalFunctionMethod(method, parametersToRemove, typeParametersToRemove);
+			return new LocalFunctionMethod(method, method.Name, CanBeStaticLocalFunction(), parametersToRemove, typeParametersToRemove);
+
+			bool CanBeStaticLocalFunction()
+			{
+				if (!context.Settings.StaticLocalFunctions)
+					return false;
+				// Cannot be static because there are closure parameters that will be removed
+				if (parametersToRemove > 0)
+					return false;
+				// no closure parameters, but static:
+				// we can safely assume, this local function can be declared static
+				if (method.IsStatic)
+					return true;
+				// the local function is used in conjunction with a lambda, which means,
+				// it is defined inside the display-class type
+				var declaringType = method.DeclaringTypeDefinition;
+				if (!declaringType.IsCompilerGenerated())
+					return false;
+				// if there are no instance fields, we can make it a static local function
+				return !declaringType.GetFields(f => !f.IsStatic).Any();
+			}
 		}
 
 		static void TransformToLocalFunctionReference(ILFunction function, CallInstruction useSite)

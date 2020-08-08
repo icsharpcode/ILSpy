@@ -31,22 +31,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public sealed class MinimalCorlib : IModule
 	{
-		public static readonly IModuleReference Instance = new CorlibModuleReference();
+		/// <summary>
+		/// Minimal corlib instance containing all known types.
+		/// </summary>
+		public static readonly IModuleReference Instance = new CorlibModuleReference(KnownTypeReference.AllKnownTypes);
+
+		public static IModuleReference CreateWithTypes(IEnumerable<KnownTypeReference> types)
+		{
+			return new CorlibModuleReference(types);
+		}
 
 		public ICompilation Compilation { get; }
 		CorlibTypeDefinition[] typeDefinitions;
 		readonly CorlibNamespace rootNamespace;
 
-		private MinimalCorlib(ICompilation compilation)
+		private MinimalCorlib(ICompilation compilation, IEnumerable<KnownTypeReference> types)
 		{
 			this.Compilation = compilation;
-			this.typeDefinitions = new CorlibTypeDefinition[KnownTypeReference.KnownTypeCodeCount];
+			this.typeDefinitions = types.Select(ktr => new CorlibTypeDefinition(this, ktr.KnownTypeCode)).ToArray();
 			this.rootNamespace = new CorlibNamespace(this, null, string.Empty, string.Empty);
-			for (int i = 0; i < KnownTypeReference.KnownTypeCodeCount; i++) {
-				if (KnownTypeReference.Get((KnownTypeCode)i) != null) {
-					typeDefinitions[i] = new CorlibTypeDefinition(this, (KnownTypeCode)i);
-				}
-			}
 		}
 
 		bool IModule.IsMainModule => Compilation.MainModule == this;
@@ -65,7 +68,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public ITypeDefinition GetTypeDefinition(TopLevelTypeName topLevelTypeName)
 		{
 			foreach (var typeDef in typeDefinitions) {
-				if (typeDef != null && typeDef.FullTypeName == topLevelTypeName)
+				if (typeDef.FullTypeName == topLevelTypeName)
 					return typeDef;
 			}
 			return null;
@@ -81,9 +84,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		sealed class CorlibModuleReference : IModuleReference
 		{
+			readonly IEnumerable<KnownTypeReference> types;
+
+			public CorlibModuleReference(IEnumerable<KnownTypeReference> types)
+			{
+				this.types = types;
+			}
+
 			IModule IModuleReference.Resolve(ITypeResolveContext context)
 			{
-				return new MinimalCorlib(context.Compilation);
+				return new MinimalCorlib(context.Compilation, types);
 			}
 		}
 
@@ -196,7 +206,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				get {
 					var baseType = KnownTypeReference.Get(typeCode).baseType;
 					if (baseType != KnownTypeCode.None)
-						return new[] { corlib.typeDefinitions[(int)baseType] };
+						return new[] { corlib.Compilation.FindType(baseType) };
 					else
 						return EmptyList<IType>.Instance;
 				}

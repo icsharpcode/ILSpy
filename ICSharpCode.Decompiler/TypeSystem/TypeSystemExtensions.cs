@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			collector.CollectBaseTypes(type);
 			return collector;
 		}
-		
+
 		/// <summary>
 		/// Gets all non-interface base types.
 		/// </summary>
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return collector;
 		}
 		#endregion
-		
+
 		#region GetAllBaseTypeDefinitions
 		/// <summary>
 		/// Gets all base type definitions.
@@ -82,10 +82,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
-			
+
 			return type.GetAllBaseTypes().Select(t => t.GetDefinition()).Where(d => d != null).Distinct();
 		}
-		
+
 		/// <summary>
 		/// Gets whether this type definition is derived from the base type definition.
 		/// </summary>
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return type.GetAllBaseTypeDefinitions().Contains(baseType);
 		}
-		
+
 		/// <summary>
 		/// Gets whether this type definition is derived from a given known type.
 		/// </summary>
@@ -138,7 +138,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			internal bool isOpen;
 			internal IEntity typeParameterOwner;
 			int typeParameterOwnerNestingLevel;
-			
+
 			public override IType VisitTypeParameter(ITypeParameter type)
 			{
 				isOpen = true;
@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 				return base.VisitTypeParameter(type);
 			}
-			
+
 			static int GetNestingLevel(IEntity entity)
 			{
 				int level = 0;
@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return level;
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets whether the type is an open type (contains type parameters).
 		/// </summary>
@@ -184,7 +184,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			type.AcceptVisitor(v);
 			return v.isOpen;
 		}
-		
+
 		/// <summary>
 		/// Gets the entity that owns the type parameters occurring in the specified type.
 		/// If both class and method type parameters are present, the method is returned.
@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			type.AcceptVisitor(v);
 			return v.typeParameterOwner;
 		}
-		
+
 		/// <summary>
 		/// Gets whether the type is unbound (is a generic type, but no type arguments were provided).
 		/// </summary>
@@ -214,7 +214,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentNullException(nameof(type));
 			return (type is ITypeDefinition || type is UnknownType) && type.TypeParameterCount > 0;
 		}
-		
+
 		/// <summary>
 		/// Gets whether the type is the specified known type.
 		/// For generic known types, this returns true for any parameterization of the type (and also for the definition itself).
@@ -273,7 +273,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return null;
 		}
 		#endregion
-		
+
 		public static IType SkipModifiers(this IType ty)
 		{
 			while (ty is ModifiedType mt) {
@@ -292,7 +292,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets all type definitions in the compilation.
 		/// This may include types from referenced assemblies that are not accessible in the main assembly.
 		/// </summary>
-		public static IEnumerable<ITypeDefinition> GetAllTypeDefinitions (this ICompilation compilation)
+		public static IEnumerable<ITypeDefinition> GetAllTypeDefinitions(this ICompilation compilation)
 		{
 			return compilation.Modules.SelectMany(a => a.TypeDefinitions);
 		}
@@ -301,12 +301,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets all top level type definitions in the compilation.
 		/// This may include types from referenced assemblies that are not accessible in the main assembly.
 		/// </summary>
-		public static IEnumerable<ITypeDefinition> GetTopLevelTypeDefinitions (this ICompilation compilation)
+		public static IEnumerable<ITypeDefinition> GetTopLevelTypeDefinitions(this ICompilation compilation)
 		{
 			return compilation.Modules.SelectMany(a => a.TopLevelTypeDefinitions);
 		}
 		#endregion
-		
+
 		#region Resolve on collections
 		public static IReadOnlyList<IType> Resolve(this IList<ITypeReference> typeReferences, ITypeResolveContext context)
 		{
@@ -317,11 +317,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			else
 				return new ProjectedList<ITypeResolveContext, ITypeReference, IType>(context, typeReferences, (c, t) => t.Resolve(c));
 		}
-		
+
 		// There is intentionally no Resolve() overload for IList<IMemberReference>: the resulting IList<Member> would
 		// contains nulls when there are resolve errors.
 		#endregion
-		
+
 		#region IAssembly.GetTypeDefinition()
 		/// <summary>
 		/// Retrieves the specified type in this compilation.
@@ -345,7 +345,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return new UnknownType(fullTypeName);
 		}
-		
+
 		/// <summary>
 		/// Gets the type definition for the specified unresolved type.
 		/// Returns null if the unresolved type does not belong to this assembly.
@@ -368,7 +368,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return typeDef;
 		}
-		
+
 		static ITypeDefinition FindNestedType(ITypeDefinition typeDef, string name, int typeParameterCount)
 		{
 			foreach (var nestedType in typeDef.NestedTypes) {
@@ -378,7 +378,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return null;
 		}
 		#endregion
-		
+
 		#region IEntity.GetAttribute
 		/// <summary>
 		/// Gets whether the entity has an attribute of the specified attribute type (or derived attribute types).
@@ -390,7 +390,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// (if the given <paramref name="entity"/> in an <c>override</c>)
 		/// should be returned.
 		/// </param>
-		public static bool HasAttribute(this IEntity entity, KnownAttribute attributeType, bool inherit=false)
+		public static bool HasAttribute(this IEntity entity, KnownAttribute attributeType, bool inherit = false)
 		{
 			return GetAttribute(entity, attributeType, inherit) != null;
 		}
@@ -410,7 +410,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// If inherit is true, an from the entity itself will be returned if possible;
 		/// and the base entity will only be searched if none exists.
 		/// </returns>
-		public static IAttribute GetAttribute(this IEntity entity, KnownAttribute attributeType, bool inherit=false)
+		public static IAttribute GetAttribute(this IEntity entity, KnownAttribute attributeType, bool inherit = false)
 		{
 			return GetAttributes(entity, inherit).FirstOrDefault(a => a.AttributeType.IsKnownType(attributeType));
 		}
@@ -478,11 +478,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static ITypeDefinition GetTypeDefinition(this IModule module, string namespaceName, string name, int typeParameterCount = 0)
 		{
 			if (module == null)
-				throw new ArgumentNullException ("assembly");
-			return module.GetTypeDefinition (new TopLevelTypeName (namespaceName, name, typeParameterCount));
+				throw new ArgumentNullException("assembly");
+			return module.GetTypeDefinition(new TopLevelTypeName(namespaceName, name, typeParameterCount));
 		}
 		#endregion
-		
+
 		#region ResolveResult
 		public static ISymbol GetSymbol(this ResolveResult rr)
 		{
@@ -495,7 +495,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			} else if (rr is ConversionResolveResult) {
 				return ((ConversionResolveResult)rr).Input.GetSymbol();
 			}
-			
+
 			return null;
 		}
 		#endregion
@@ -560,7 +560,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IModule FindModuleByReference(this ICompilation compilation, IAssemblyReference assemblyName)
 		{
 			foreach (var module in compilation.Modules) {
-				if (module.FullAssemblyName == assemblyName.FullName) {
+				if (string.Equals(module.FullAssemblyName, assemblyName.FullName, StringComparison.OrdinalIgnoreCase)) {
+					return module;
+				}
+			}
+			foreach (var module in compilation.Modules) {
+				if (string.Equals(module.Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase)) {
 					return module;
 				}
 			}

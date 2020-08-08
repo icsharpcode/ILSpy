@@ -72,13 +72,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		
 		/// <summary>
-		/// Gets the 'get'/'set'/'add'/'remove' keyword
+		/// Gets the 'get'/'set'/'init'/'add'/'remove' keyword
 		/// </summary>
 		public CSharpTokenNode Keyword {
 			get {
 				for (AstNode child = this.FirstChild; child != null; child = child.NextSibling) {
 					if (child.Role == PropertyDeclaration.GetKeywordRole || child.Role == PropertyDeclaration.SetKeywordRole
-					    || child.Role == CustomEventDeclaration.AddKeywordRole || child.Role == CustomEventDeclaration.RemoveKeywordRole)
+						|| child.Role == PropertyDeclaration.InitKeywordRole
+						|| child.Role == CustomEventDeclaration.AddKeywordRole || child.Role == CustomEventDeclaration.RemoveKeywordRole)
 					{
 						return (CSharpTokenNode)child;
 					}

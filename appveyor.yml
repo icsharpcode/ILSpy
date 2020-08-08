@@ -22,7 +22,7 @@ build_script:
 - msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 after_build:
-- 7z a ILSpy_binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*.config %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*\ILSpy.resources.dll
+- 7z a ILSpy_binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*.config %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*\ILSpy.resources.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net472\*\ILSpy.ReadyToRun.Plugin.resources.dll
 
 test_script:
 - vstest.console.exe /logger:Appveyor /Parallel "ICSharpCode.Decompiler.Tests\bin\%configuration%\net472\ICSharpCode.Decompiler.Tests.exe" "ILSpy.Tests\bin\%configuration%\net472\ILSpy.Tests.exe" "ILSpy.BamlDecompiler.Tests\bin\%configuration%\net472\ILSpy.BamlDecompiler.Tests.exe"

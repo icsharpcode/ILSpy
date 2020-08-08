@@ -24,9 +24,9 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
+using System.Resources;
 using System.Runtime.CompilerServices;
 using Iced.Intel;
-
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;

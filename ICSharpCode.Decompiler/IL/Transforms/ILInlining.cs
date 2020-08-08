@@ -53,15 +53,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			InlineOneIfPossible(block, pos, OptionsForBlock(block, pos), context: context);
+			InlineOneIfPossible(block, pos, OptionsForBlock(block, pos, context), context: context);
 		}
 
-		internal static InliningOptions OptionsForBlock(Block block, int pos)
+		internal static InliningOptions OptionsForBlock(Block block, int pos, ILTransformContext context)
 		{
 			InliningOptions options = InliningOptions.None;
-			if (IsCatchWhenBlock(block))
+			if (context.Settings.AggressiveInlining || IsCatchWhenBlock(block)) {
 				options |= InliningOptions.Aggressive;
-			else {
+			} else {
 				var function = block.Ancestors.OfType<ILFunction>().FirstOrDefault();
 				var inst = block.Instructions[pos];
 				if (IsInConstructorInitializer(function, inst))
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			for (int i = instructions.Count - 1; i >= 0; i--) {
 				if (instructions[i] is StLoc inst) {
 					InliningOptions options = InliningOptions.None;
-					if (IsCatchWhenBlock(block) || IsInConstructorInitializer(function, inst))
+					if (context.Settings.AggressiveInlining || IsCatchWhenBlock(block) || IsInConstructorInitializer(function, inst))
 						options = InliningOptions.Aggressive;
 					if (InlineOneIfPossible(block, i, options, context)) {
 						modified = true;
@@ -418,6 +418,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case OpCode.NumericCompoundAssign:
 				case OpCode.UserDefinedCompoundAssign:
 				case OpCode.Await:
+				case OpCode.SwitchInstruction:
 					return true;
 				case OpCode.LdLoc:
 					if (v.StateMachineField == null && ((LdLoc)inlinedExpression).Variable.StateMachineField != null) {
@@ -479,32 +480,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return true;
 					}
 					break;
+				case OpCode.Leave:
+				case OpCode.YieldReturn:
+					return true;
+				case OpCode.SwitchInstruction:
+				//case OpCode.BinaryNumericInstruction when parent.SlotInfo == SwitchInstruction.ValueSlot:
+				case OpCode.StringToInt when parent.SlotInfo == SwitchInstruction.ValueSlot:
+					return true;
 			}
 			// decide based on the top-level target instruction into which we are inlining:
 			switch (next.OpCode) {
-				case OpCode.Leave:
-				case OpCode.YieldReturn:
-					return parent == next;
 				case OpCode.IfInstruction:
 					while (parent.MatchLogicNot(out _)) {
 						parent = parent.Parent;
 					}
 					return parent == next;
-				case OpCode.BlockContainer:
-					if (((BlockContainer)next).EntryPoint.Instructions[0] is SwitchInstruction switchInst) {
-						next = switchInst;
-						goto case OpCode.SwitchInstruction;
-					} else {
-						return false;
-					}
-				case OpCode.SwitchInstruction:
-					if (parent == next)
-						return true;
-					if (parent.MatchBinaryNumericInstruction(BinaryNumericOperator.Sub) && parent.Parent == next)
-						return true;
-					if (parent is StringToInt stringToInt && stringToInt.Parent == next)
-						return true;
-					return false;
 				default:
 					return false;
 			}

@@ -113,17 +113,19 @@ namespace ICSharpCode.Decompiler
 				asyncEnumerator = false;
 				staticLocalFunctions = false;
 				ranges = false;
+				switchExpressions = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.Preview) {
 				nativeIntegers = false;
+				initAccessors = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (nativeIntegers)
+			if (nativeIntegers || initAccessors)
 				return CSharp.LanguageVersion.Preview;
-			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement || staticLocalFunctions || ranges)
+			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement || staticLocalFunctions || ranges || switchExpressions)
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers || patternBasedFixedStatement)
 				return CSharp.LanguageVersion.CSharp7_3;
@@ -158,6 +160,40 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (nativeIntegers != value) {
 					nativeIntegers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool initAccessors = true;
+
+		/// <summary>
+		/// Use C# 9 <c>init;</c> property accessors.
+		/// </summary>
+		[Category("C# 9.0 (experimental)")]
+		[Description("DecompilerSettings.InitAccessors")]
+		public bool InitAccessors {
+			get { return initAccessors; }
+			set {
+				if (initAccessors != value) {
+					initAccessors = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool switchExpressions = true;
+
+		/// <summary>
+		/// Use C# 8 switch expressions.
+		/// </summary>
+		[Category("C# 8.0 / VS 2019")]
+		[Description("DecompilerSettings.SwitchExpressions")]
+		public bool SwitchExpressions {
+			get { return switchExpressions; }
+			set {
+				if (switchExpressions != value) {
+					switchExpressions = value;
 					OnPropertyChanged();
 				}
 			}
@@ -1382,6 +1418,25 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (aggressiveScalarReplacementOfAggregates != value) {
 					aggressiveScalarReplacementOfAggregates = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool aggressiveInlining = false;
+
+		/// <summary>
+		/// If set to false (the default), the decompiler will inline local variables only when they occur
+		/// in a context where the C# compiler is known to emit compiler-generated locals.
+		/// If set to true, the decompiler will inline local variables whenever possible.
+		/// </summary>
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.AggressiveInlining")]
+		public bool AggressiveInlining {
+			get { return aggressiveInlining; }
+			set {
+				if (aggressiveInlining != value) {
+					aggressiveInlining = value;
 					OnPropertyChanged();
 				}
 			}
