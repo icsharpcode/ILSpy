@@ -31,9 +31,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		Local,
 		/// <summary>
-		/// A pinned local variable
+		/// A pinned local variable (not associated with a pinned region)
 		/// </summary>
 		PinnedLocal,
+		/// <summary>
+		/// A pinned local variable (associated with a pinned region)
+		/// </summary>
+		PinnedRegionLocal,
 		/// <summary>
 		/// A local variable used as using-resource variable.
 		/// </summary>
@@ -88,6 +92,7 @@ namespace ICSharpCode.Decompiler.IL
 				case VariableKind.ForeachLocal:
 				case VariableKind.UsingLocal:
 				case VariableKind.PinnedLocal:
+				case VariableKind.PinnedRegionLocal:
 				case VariableKind.DisplayClassLocal:
 					return true;
 				default:
@@ -157,6 +162,7 @@ namespace ICSharpCode.Decompiler.IL
 				case VariableKind.Local:
 				case VariableKind.ForeachLocal:
 				case VariableKind.PinnedLocal:
+				case VariableKind.PinnedRegionLocal:
 				case VariableKind.UsingLocal:
 				case VariableKind.ExceptionLocal:
 				case VariableKind.DisplayClassLocal:
@@ -397,6 +403,9 @@ namespace ICSharpCode.Decompiler.IL
 				case VariableKind.PinnedLocal:
 					output.Write("pinned local ");
 					break;
+				case VariableKind.PinnedRegionLocal:
+					output.Write("PinnedRegion local ");
+					break;
 				case VariableKind.Parameter:
 					output.Write("param ");
 					break;
@@ -431,7 +440,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(" : ");
 			Type.WriteTo(output);
 			output.Write('(');
-			if (Kind == VariableKind.Parameter || Kind == VariableKind.Local || Kind == VariableKind.PinnedLocal) {
+			if (Kind == VariableKind.Parameter || Kind == VariableKind.Local || Kind == VariableKind.PinnedLocal || Kind == VariableKind.PinnedRegionLocal) {
 				output.Write("Index={0}, ", Index);
 			}
 			output.Write("LoadCount={0}, AddressCount={1}, StoreCount={2})", LoadCount, AddressCount, StoreCount);

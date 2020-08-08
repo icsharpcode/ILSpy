@@ -474,4 +474,50 @@
     ldarg.0
     ret
   }
+
+  .method public hidebysig static 
+	  uint8[] Issue1292 (
+		  int32 val,
+		  uint8[] arr
+	  ) cil managed 
+  {
+	  .maxstack 2
+	  .locals init (
+		  [0] uint8[],
+		  [1] uint8[],
+		  [2] uint8& pinned
+	  )
+
+	  IL_0000: ldarg.1
+	  IL_0001: stloc.0
+	  IL_0002: ldloc.0
+	  IL_0003: dup
+	  IL_0004: stloc.1
+	  IL_0005: brfalse.s IL_0016
+
+	  IL_0007: ldloc.1
+	  IL_0008: ldlen
+	  IL_0009: conv.i4
+	  IL_000a: brfalse.s IL_0016
+
+	  IL_000c: ldloc.1
+	  IL_000d: ldc.i4.0
+	  IL_000e: ldelema [mscorlib]System.Byte
+	  IL_0013: stloc.2
+	  IL_0014: br.s IL_0019
+
+	  IL_0016: ldc.i4.0
+	  IL_0017: conv.u
+	  IL_0018: stloc.2
+
+	  IL_0019: ldloc.2
+	  IL_001a: conv.i
+	  IL_001b: ldarg.0
+	  IL_001c: stind.i4
+	  IL_001d: ldc.i4.0
+	  IL_001e: conv.u
+	  IL_001f: stloc.2
+	  IL_0020: ldloc.0
+	  IL_0021: ret
+  } // end of method Issue1292
 }

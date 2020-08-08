@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			this.context = null;
 		}
-		
+
 		/// <summary>
 		/// Ensures that every write to a pinned local is followed by a branch instruction.
 		/// This ensures the 'pinning region' does not involve any half blocks, which makes it easier to extract.
@@ -349,7 +349,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			return block.Instructions[1].MatchBranch(nullOrEmptyBlock);
 		}
-		
+
 		bool IsNullSafeArrayToPointerNotNullAndNotEmptyBlock(Block block, ILVariable v, ILVariable p, Block targetBlock)
 		{
 			// Block B_not_null_and_not_empty {
@@ -380,7 +380,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			return block.Instructions[1].MatchBranch(targetBlock);
 		}
-		
+
 		bool IsNullSafeArrayToPointerNullOrEmptyBlock(Block block, out ILVariable p, out Block targetBlock)
 		{
 			p = null;
@@ -490,7 +490,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					body.Blocks.Add(innerBlock); // move block into body
 					if (!cloneBlocks) {
 						sourceContainer.Blocks[i] = new Block(); // replace with dummy block
-						// we'll delete the dummy block later
+																 // we'll delete the dummy block later
 					}
 				}
 			}
@@ -506,14 +506,24 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				// Replace unreachable blocks in sourceContainer with dummy blocks:
 				bool[] isAlive = new bool[sourceContainer.Blocks.Count];
+				List<int> duplicatedBlockStartOffsets = new List<int>();
 				foreach (var remainingBlock in sourceContainer.TopologicalSort(deleteUnreachableBlocks: true)) {
 					isAlive[remainingBlock.ChildIndex] = true;
+					if (clonedBlocks[remainingBlock.ChildIndex] != null) {
+						duplicatedBlockStartOffsets.Add(remainingBlock.StartILOffset);
+					}
 				}
 				for (int i = 0; i < isAlive.Length; i++) {
 					if (!isAlive[i])
 						sourceContainer.Blocks[i] = new Block();
 				}
 				// we'll delete the dummy blocks later
+				Debug.Assert(duplicatedBlockStartOffsets.Count > 0);
+				duplicatedBlockStartOffsets.Sort();
+				context.Function.Warnings.Add("The blocks "
+					+ string.Join(", ", duplicatedBlockStartOffsets.Select(o => $"IL_{o:x4}"))
+					+ $" are reachable both inside and outside the pinned region starting at IL_{stLoc.StartILOffset:x4}."
+					+ " ILSpy has duplicated these blocks in order to place them both within and outside the `fixed` statement.");
 			}
 			if (body.Blocks.Count == 0) {
 				// empty body, the entryBlock itself doesn't belong into the pinned region
@@ -539,7 +549,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return inst.MatchLdcI4(0) || inst.MatchLdNull();
 		}
 		#endregion
-		
+
 		#region ProcessPinnedRegion
 		/// <summary>
 		/// After a pinned region was detected; process its body; replacing the pin variable
@@ -553,15 +563,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ILVariable oldVar = pinnedRegion.Variable;
 				IType elementType = ((ByReferenceType)oldVar.Type).ElementType;
 				if (elementType.Kind == TypeKind.Pointer && pinnedRegion.Init.MatchLdFlda(out _, out var field)
-					&& ((PointerType)elementType).ElementType.Equals(field.Type))
-				{
+					&& ((PointerType)elementType).ElementType.Equals(field.Type)) {
 					// Roslyn 2.6 (C# 7.2) uses type "int*&" for the pinned local referring to a
 					// fixed field of type "int".
 					// Remove the extra level of indirection.
 					elementType = ((PointerType)elementType).ElementType;
 				}
 				ILVariable newVar = new ILVariable(
-					VariableKind.PinnedLocal,
+					VariableKind.PinnedRegionLocal,
 					new PointerType(elementType),
 					oldVar.Index);
 				newVar.Name = oldVar.Name;
@@ -610,7 +619,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Debug.Assert(arrayToPointer.IsDescendantOf(pinnedRegion));
 			ILVariable oldVar = pinnedRegion.Variable;
 			ILVariable newVar = new ILVariable(
-				VariableKind.PinnedLocal,
+				VariableKind.PinnedRegionLocal,
 				new PointerType(((ArrayType)oldVar.Type).ElementType),
 				oldVar.Index);
 			newVar.Name = oldVar.Name;
@@ -680,7 +689,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// potentially a special case with legacy csc and an unused pinned variable:
 				if (pinnedRegion.Variable.AddressCount == 0 && pinnedRegion.Variable.LoadCount == 0) {
 					var charPtr = new PointerType(context.TypeSystem.FindType(KnownTypeCode.Char));
-					newVar = new ILVariable(VariableKind.PinnedLocal, charPtr, pinnedRegion.Variable.Index);
+					newVar = new ILVariable(VariableKind.PinnedRegionLocal, charPtr, pinnedRegion.Variable.Index);
 					newVar.Name = pinnedRegion.Variable.Name;
 					newVar.HasGeneratedName = pinnedRegion.Variable.HasGeneratedName;
 					pinnedRegion.Variable.Function.Variables.Add(newVar);
@@ -732,7 +741,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				nativeVar = otherVar;
 			}
 			if (nativeVar.Kind == VariableKind.Local) {
-				newVar = new ILVariable(VariableKind.PinnedLocal, nativeVar.Type, nativeVar.Index);
+				newVar = new ILVariable(VariableKind.PinnedRegionLocal, nativeVar.Type, nativeVar.Index);
 				newVar.Name = nativeVar.Name;
 				newVar.HasGeneratedName = nativeVar.HasGeneratedName;
 				nativeVar.Function.Variables.Add(newVar);
@@ -801,7 +810,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (v.Kind != VariableKind.Local)
 				return;
 			// replace V_1 with V_0
-			v.Kind = VariableKind.PinnedLocal;
+			v.Kind = VariableKind.PinnedRegionLocal;
 			pinnedRegion.Variable = v;
 			body.EntryPoint.Instructions.RemoveAt(0);
 		}

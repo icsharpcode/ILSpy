@@ -308,7 +308,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		internal static bool VariableNeedsDeclaration(VariableKind kind)
 		{
 			switch (kind) {
-				case VariableKind.PinnedLocal:
+				case VariableKind.PinnedRegionLocal:
 				case VariableKind.Parameter:
 				case VariableKind.ExceptionLocal:
 				case VariableKind.ExceptionStackSlot:
@@ -467,6 +467,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					if (v.ILVariable.IsRefReadOnly && type is ComposedType composedType && composedType.HasRefSpecifier) {
 						composedType.HasReadOnlySpecifier = true;
+					}
+					if (v.ILVariable.Kind == VariableKind.PinnedLocal) {
+						type.InsertChildAfter(null, new Comment("pinned", CommentType.MultiLine), Roles.Comment);
 					}
 					var vds = new VariableDeclarationStatement(type, v.Name, assignment.Right.Detach());
 					var init = vds.Variables.Single();
