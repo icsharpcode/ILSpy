@@ -170,7 +170,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 									output.WriteLine($"    Offset: {DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varLoc.VariableLocation.Data1)}");
 									break;
 								default:
-									throw new BadImageFormatException("Unexpected variable type");
+									output.WriteLine("WRN: Unexpected variable location type");
 							}
 							output.WriteLine("");
 						}
