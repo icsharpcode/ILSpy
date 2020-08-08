@@ -171,6 +171,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 									break;
 								default:
 									output.WriteLine("WRN: Unexpected variable location type");
+									break;
 							}
 							output.WriteLine("");
 						}
