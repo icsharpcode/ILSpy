@@ -41,11 +41,12 @@ namespace ILSpy.BamlDecompiler.Xaml {
 
 		public static string ToString(this XamlContext ctx, XElement elem, XName name) {
 			var sb = new StringBuilder();
-			if (name.Namespace != elem.GetDefaultNamespace() &&
-			    name.Namespace != elem.Name.Namespace &&
-			    !string.IsNullOrEmpty(name.Namespace.NamespaceName)) {
-				sb.Append(elem.GetPrefixOfNamespace(name.Namespace));
-				sb.Append(':');
+			if (name.Namespace != elem.GetDefaultNamespace()) {
+				var prefix = elem.GetPrefixOfNamespace(name.Namespace);
+				if (!string.IsNullOrEmpty(prefix)) {
+					sb.Append(prefix);
+					sb.Append(':');
+				}
 			}
 			sb.Append(name.LocalName);
 			return sb.ToString();

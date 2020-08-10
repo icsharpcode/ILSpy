@@ -82,9 +82,7 @@ namespace ILSpy.BamlDecompiler.Xaml {
 				name = XmlConvert.EncodeLocalName(PropertyName);
 			else {
 				name = typeName.LocalName + "." + XmlConvert.EncodeLocalName(PropertyName);
-
-				if (parent == null || (parent.GetDefaultNamespace() != typeName.Namespace
-					                && parent.Name.Namespace != typeName.Namespace))
+				if (parent == null || parent.GetDefaultNamespace() != typeName.Namespace)
 					name = typeName.Namespace + name.LocalName;
 			}
 
