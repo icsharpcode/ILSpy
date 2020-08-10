@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var block = container.Blocks[i];
 				for (int j = 0; j < block.Instructions.Count - 1; j++) {
 					var inst = block.Instructions[j];
-					if (inst.MatchStLoc(out ILVariable v) && v.Kind == VariableKind.PinnedLocal) {
+					if (inst.MatchStLoc(out ILVariable v, out var value) && v.Kind == VariableKind.PinnedLocal) {
 						if (block.Instructions[j + 1].OpCode != OpCode.Branch) {
 							// split block after j:
 							context.Step("Split block after pinned local write", inst);
@@ -106,6 +106,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							block.Instructions.RemoveRange(j + 1, newBlock.Instructions.Count);
 							block.Instructions.Add(new Branch(newBlock));
 							container.Blocks.Insert(i + 1, newBlock);
+						}
+						// in case of re-pinning (e.g. C++/CLI assignment to pin_ptr variable),
+						// it's possible for the new value to be dependent on the old.
+						if (v.IsUsedWithin(value)) {
+							// In this case, we need to un-inline the uses of the pinned local
+							// so that they are split off into the block prior to the pinned local write
+							var temp = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
+							block.Instructions.Insert(j++, new StLoc(temp, new LdLoc(v)));
+							foreach (var descendant in value.Descendants) {
+								if (descendant.MatchLdLoc(v)) {
+									descendant.ReplaceWith(new LdLoc(temp).WithILRange(descendant));
+								}
+							}
 						}
 						if (j > 0) {
 							// split block before j:

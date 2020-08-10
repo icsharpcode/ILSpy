@@ -546,4 +546,51 @@ lbl:
 	  IL_0020: ldloc.0
 	  IL_0021: ret
   } // end of method Issue1292
+
+.method /* 06000066 */ public hidebysig 
+	instance void pin_ptr_test (
+		int32[] a,
+		int32[] b
+	) cil managed 
+{
+	/* From C++/CLI:
+      void pin_ptr_test(array<int>^ a, array<int>^ b)
+        {
+            pin_ptr<int> p = &a[0];
+            if (*p > 0)
+            {
+                p = &b[*p];
+            }
+            p[0] = 1;
+        }
+   */
+	.maxstack 3
+	.locals /* 11000004 */ (
+		[0] int32& pinned modopt([mscorlib]System.Runtime.CompilerServices.IsExplicitlyDereferenced) p
+	)
+
+	IL_0000: ldarg.1
+	IL_0001: ldc.i4.0
+	IL_0002: ldelema [mscorlib]System.Int32 /* 01000016 */
+	IL_0007: stloc.0
+	IL_0008: ldloc.0
+	IL_0009: ldind.i4
+	IL_000a: ldc.i4.0
+	IL_000b: ble.s IL_0016
+
+	IL_000d: ldarg.2
+	IL_000e: ldloc.0
+	IL_000f: ldind.i4
+	IL_0010: ldelema [mscorlib]System.Int32 /* 01000016 */
+	IL_0015: stloc.0
+
+	IL_0016: ldloc.0
+	IL_0017: ldc.i4.4
+	IL_0018: ldc.i4.0
+	IL_0019: mul
+	IL_001a: add
+	IL_001b: ldc.i4.1
+	IL_001c: stind.i4
+	IL_001d: ret
+} // end of method pin_ptr_test
 }

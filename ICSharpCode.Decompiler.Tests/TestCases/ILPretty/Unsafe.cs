@@ -50,6 +50,22 @@ internal sealed class ExtraUnsafeTests
 		}
 		return arr;
 	}
+
+	public unsafe void pin_ptr_test(int[] a, int[] b)
+	{
+		//The blocks IL_0016 are reachable both inside and outside the pinned region starting at IL_0007. ILSpy has duplicated these blocks in order to place them both within and outside the `fixed` statement.
+		ref int reference;
+		fixed (int* ptr = &a[0]) {
+			if (*ptr <= 0) {
+				ptr[4 * 0] = 1;
+				return;
+			}
+			reference = ref *ptr;
+		}
+		fixed (int* ptr = &b[reference]) {
+			ptr[4 * 0] = 1;
+		}
+	}
 }
 
 namespace System.Runtime.CompilerServices
