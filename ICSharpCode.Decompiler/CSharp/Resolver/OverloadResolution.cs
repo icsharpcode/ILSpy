@@ -424,7 +424,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			} else {
 				TypeInference ti = new TypeInference(compilation, conversions);
 				bool success;
-				candidate.InferredTypes = ti.InferTypeArguments(candidate.TypeParameters, arguments, candidate.ParameterTypes, out success, classTypeArguments);
+				candidate.InferredTypes = ti.InferTypeArguments(candidate.TypeParameters, arguments, candidate.ArgumentToParameterMap.SelectReadOnlyArray(parameterIndex => candidate.ParameterTypes[parameterIndex]), out success, classTypeArguments);
 				if (!success)
 					candidate.AddError(OverloadResolutionErrors.TypeInferenceFailed);
 			}
