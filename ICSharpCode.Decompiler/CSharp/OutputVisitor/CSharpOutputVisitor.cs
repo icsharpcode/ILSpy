@@ -2588,7 +2588,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			} else if (childNode is Repeat) {
 				VisitRepeat((Repeat)childNode);
 			} else {
-				TextWriterTokenWriter.PrintPrimitiveValue(childNode);
+				writer.WritePrimitiveValue(childNode);
 			}
 		}
 		#endregion
