@@ -423,8 +423,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			} else {
 				TypeInference ti = new TypeInference(compilation, conversions);
+				IType[] parameterTypes = candidate.ArgumentToParameterMap
+					.SelectReadOnlyArray(parameterIndex => parameterIndex >= 0 ? candidate.ParameterTypes[parameterIndex] : SpecialType.UnknownType);
 				bool success;
-				candidate.InferredTypes = ti.InferTypeArguments(candidate.TypeParameters, arguments, candidate.ArgumentToParameterMap.SelectReadOnlyArray(parameterIndex => candidate.ParameterTypes[parameterIndex]), out success, classTypeArguments);
+				candidate.InferredTypes = ti.InferTypeArguments(candidate.TypeParameters, arguments, parameterTypes, out success, classTypeArguments);
 				if (!success)
 					candidate.AddError(OverloadResolutionErrors.TypeInferenceFailed);
 			}
