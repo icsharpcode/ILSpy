@@ -1019,6 +1019,7 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
 			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
+			Debug.Assert(Variable.Kind == VariableKind.PinnedRegionLocal);
 		}
 	}
 }
@@ -1503,7 +1504,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Switch statement</summary>
 	public sealed partial class SwitchInstruction : ILInstruction
 	{
-		public override StackType ResultType { get { return StackType.Void; } }
+
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitSwitchInstruction(this);

@@ -113,6 +113,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			};
 			switch (e.PropertyName) {
 				case "RID":
+				case "Meaning":
 					e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["DefaultFilter"]);
 					((DataGridCustomTextColumn)e.Column).ToolTipBinding = null;
 					break;

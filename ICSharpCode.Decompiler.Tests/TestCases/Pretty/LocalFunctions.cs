@@ -23,6 +23,12 @@ namespace LocalFunctions
 {
 	internal class LocalFunctions
 	{
+		[AttributeUsage(AttributeTargets.All)]
+		internal class MyAttribute : Attribute
+		{
+
+		}
+
 		public class Generic<T1> where T1 : struct, ICloneable, IConvertible
 		{
 			public int MixedLocalFunction<T2>() where T2 : ICloneable, IConvertible
@@ -31,15 +37,21 @@ namespace LocalFunctions
 				object z = this;
 				for (int j = 0; j < 10; j++) {
 					int i = 0;
-					i += NonStaticMethod6<object>();
-					int NonStaticMethod6<T3>()
+					i += NonStaticMethod6<object>(0);
+#if CS90
+					[My]
+					[return: My]
+					int NonStaticMethod6<[My] T3>([My] int unused)
+#else
+					int NonStaticMethod6<T3>(int unused)
+#endif
 					{
 						t2 = default(T2);
 						int l = 0;
 						return NonStaticMethod6_1<T1>() + NonStaticMethod6_1<T2>() + z.GetHashCode();
 						int NonStaticMethod6_1<T4>()
 						{
-							return i + l + NonStaticMethod6<T4>() + StaticMethod1<decimal>();
+							return i + l + NonStaticMethod6<T4>(0) + StaticMethod1<decimal>();
 						}
 					}
 				}

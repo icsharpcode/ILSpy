@@ -52,6 +52,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Shift,          // << >>
 			Additive,       // binary + -
 			Multiplicative, // * / %
+			Switch,         // C# 8 switch expression
 			Range,          // ..
 			Unary,
 			QueryOrLambda,
@@ -145,6 +146,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				return PrecedenceLevel.Conditional;
 			if (expr is AssignmentExpression || expr is LambdaExpression)
 				return PrecedenceLevel.Assignment;
+			if (expr is SwitchExpression)
+				return PrecedenceLevel.Switch;
 			// anything else: primary expression
 			return PrecedenceLevel.Primary;
 		}
@@ -413,6 +416,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				ParenthesizeIfRequired(namedExpression.Expression, PrecedenceLevel.RelationalAndTypeTesting + 1);
 			}
 			base.VisitNamedExpression (namedExpression);
+		}
+
+		public override void VisitSwitchExpression(SwitchExpression switchExpression)
+		{
+			ParenthesizeIfRequired(switchExpression.Expression, PrecedenceLevel.Switch + 1);
+			base.VisitSwitchExpression(switchExpression);
 		}
 	}
 }

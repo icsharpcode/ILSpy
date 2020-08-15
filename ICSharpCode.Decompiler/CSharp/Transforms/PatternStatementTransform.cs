@@ -755,6 +755,37 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
+		static readonly Accessor automaticEventPatternV4AggressivelyInlined = new Accessor {
+			Attributes = { new Repeat(new AnyNode()) },
+			Body = new BlockStatement {
+				new AssignmentExpression {
+					Left = new NamedNode("var1", new IdentifierExpression(Pattern.AnyString)),
+					Operator = AssignmentOperatorType.Assign,
+					Right = new NamedNode("field", fieldReferencePattern)
+				},
+				new DoWhileStatement {
+					EmbeddedStatement = new BlockStatement {
+						new AssignmentExpression(new NamedNode("var2", new IdentifierExpression(Pattern.AnyString)), new IdentifierExpressionBackreference("var1")),
+						new AssignmentExpression {
+							Left = new IdentifierExpressionBackreference("var1"),
+							Right = new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Interlocked)).ToType()),
+								"CompareExchange"),
+								new Expression[] { // arguments
+									new NamedArgumentExpression("value", new CastExpression(new AnyNode("type"), new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new IdentifierExpressionBackreference("var2"), new IdentifierExpression("value")))),
+									new NamedArgumentExpression("location1", new DirectionExpression { FieldDirection = FieldDirection.Ref, Expression = new Backreference("field") }),
+									new NamedArgumentExpression("comparand", new IdentifierExpressionBackreference("var2"))
+								}
+							)}
+					},
+					Condition = new BinaryOperatorExpression {
+						Left = new CastExpression(new TypePattern(typeof(object)), new IdentifierExpressionBackreference("var1")),
+						Operator = BinaryOperatorType.InEquality,
+						Right = new IdentifierExpressionBackreference("var2")
+					},
+				}
+			}
+		};
+
 		static readonly Accessor automaticEventPatternV4MCS = new Accessor {
 			Attributes = { new Repeat(new AnyNode()) },
 			Body = new BlockStatement {
@@ -837,10 +868,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		bool CheckAutomaticEventV4(CustomEventDeclaration ev)
 		{
 			Match addMatch = automaticEventPatternV4.Match(ev.AddAccessor);
-			if (!CheckAutomaticEventMatch(addMatch, ev, true))
+			if (!CheckAutomaticEventMatch(addMatch, ev, isAddAccessor: true))
 				return false;
 			Match removeMatch = automaticEventPatternV4.Match(ev.RemoveAccessor);
-			if (!CheckAutomaticEventMatch(removeMatch, ev, false))
+			if (!CheckAutomaticEventMatch(removeMatch, ev, isAddAccessor: false))
+				return false;
+			return true;
+		}
+
+		bool CheckAutomaticEventV4AggressivelyInlined(CustomEventDeclaration ev)
+		{
+			if (!context.Settings.AggressiveInlining)
+				return false;
+			Match addMatch = automaticEventPatternV4AggressivelyInlined.Match(ev.AddAccessor);
+			if (!CheckAutomaticEventMatch(addMatch, ev, isAddAccessor: true))
+				return false;
+			Match removeMatch = automaticEventPatternV4AggressivelyInlined.Match(ev.RemoveAccessor);
+			if (!CheckAutomaticEventMatch(removeMatch, ev, isAddAccessor: false))
 				return false;
 			return true;
 		}
@@ -848,10 +892,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		bool CheckAutomaticEventV2(CustomEventDeclaration ev)
 		{
 			Match addMatch = automaticEventPatternV2.Match(ev.AddAccessor);
-			if (!CheckAutomaticEventMatch(addMatch, ev, true))
+			if (!CheckAutomaticEventMatch(addMatch, ev, isAddAccessor: true))
 				return false;
 			Match removeMatch = automaticEventPatternV2.Match(ev.RemoveAccessor);
-			if (!CheckAutomaticEventMatch(removeMatch, ev, false))
+			if (!CheckAutomaticEventMatch(removeMatch, ev, isAddAccessor: false))
 				return false;
 			return true;
 		}
@@ -872,7 +916,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!ev.PrivateImplementationType.IsNull)
 				return null;
 			if (!ev.Modifiers.HasFlag(Modifiers.Abstract)) {
-				if (!CheckAutomaticEventV4(ev) && !CheckAutomaticEventV2(ev) && !CheckAutomaticEventV4MCS(ev))
+				if (!CheckAutomaticEventV4AggressivelyInlined(ev) && !CheckAutomaticEventV4(ev) && !CheckAutomaticEventV2(ev) && !CheckAutomaticEventV4MCS(ev))
 					return null;
 			}
 			RemoveCompilerGeneratedAttribute(ev.AddAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);

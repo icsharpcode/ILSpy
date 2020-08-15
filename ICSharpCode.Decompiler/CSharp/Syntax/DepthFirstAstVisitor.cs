@@ -345,7 +345,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			VisitChildren (caseLabel);
 		}
-		
+
+		public virtual void VisitSwitchExpression(SwitchExpression switchExpression)
+		{
+			VisitChildren(switchExpression);
+		}
+
+		public virtual void VisitSwitchExpressionSection(SwitchExpressionSection switchExpressionSection)
+		{
+			VisitChildren(switchExpressionSection);
+		}
+
 		public virtual void VisitThrowStatement (ThrowStatement throwStatement)
 		{
 			VisitChildren (throwStatement);
@@ -1002,7 +1012,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren (caseLabel);
 		}
-		
+
+		public virtual T VisitSwitchExpression(SwitchExpression switchExpression)
+		{
+			return VisitChildren(switchExpression);
+		}
+
+		public virtual T VisitSwitchExpressionSection(SwitchExpressionSection switchExpressionSection)
+		{
+			return VisitChildren(switchExpressionSection);
+		}
+
 		public virtual T VisitThrowStatement (ThrowStatement throwStatement)
 		{
 			return VisitChildren (throwStatement);
@@ -1659,7 +1679,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren (caseLabel, data);
 		}
-		
+
+		public virtual S VisitSwitchExpression(SwitchExpression switchExpression, T data)
+		{
+			return VisitChildren(switchExpression, data);
+		}
+
+		public virtual S VisitSwitchExpressionSection(SwitchExpressionSection switchExpressionSection, T data)
+		{
+			return VisitChildren(switchExpressionSection, data);
+		}
+
 		public virtual S VisitThrowStatement (ThrowStatement throwStatement, T data)
 		{
 			return VisitChildren (throwStatement, data);

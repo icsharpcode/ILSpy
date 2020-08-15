@@ -16,69 +16,22 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class LocalFunctionDeclarationStatement : Statement
 	{
-		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
-			get { return GetChildrenByRole(Roles.TypeParameter); }
+		public static readonly Role<MethodDeclaration> MethodDeclarationRole = new Role<MethodDeclaration>("Method");
+
+		public MethodDeclaration Declaration {
+			get { return GetChildByRole(MethodDeclarationRole); }
+			set { SetChildByRole(MethodDeclarationRole, value); }
 		}
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public AstNodeCollection<Constraint> Constraints {
-			get { return GetChildrenByRole(Roles.Constraint); }
-		}
-
-		public BlockStatement Body {
-			get { return GetChildByRole(Roles.Body); }
-			set { SetChildByRole(Roles.Body, value); }
-		}
-
-		public Modifiers Modifiers {
-			get { return EntityDeclaration.GetModifiers(this); }
-			set { EntityDeclaration.SetModifiers(this, value); }
-		}
-
-		public bool HasModifier(Modifiers mod)
+		public LocalFunctionDeclarationStatement(MethodDeclaration methodDeclaration)
 		{
-			return (Modifiers & mod) == mod;
-		}
-
-		public IEnumerable<CSharpModifierToken> ModifierTokens {
-			get { return GetChildrenByRole(EntityDeclaration.ModifierRole); }
-		}
-
-		public virtual string Name {
-			get {
-				return GetChildByRole(Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole(Roles.Identifier, Identifier.Create(value, TextLocation.Empty));
-			}
-		}
-
-		public virtual Identifier NameToken {
-			get { return GetChildByRole(Roles.Identifier); }
-			set { SetChildByRole(Roles.Identifier, value); }
-		}
-
-		public virtual AstType ReturnType {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			AddChild(methodDeclaration, MethodDeclarationRole);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -98,13 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
-			LocalFunctionDeclarationStatement o = other as LocalFunctionDeclarationStatement;
-			return o != null && MatchString(this.Name, o.Name)
-				&& (this.Modifiers == Modifiers.Any || this.Modifiers == o.Modifiers)
-				&& this.ReturnType.DoMatch(o.ReturnType, match)
-				&& this.TypeParameters.DoMatch(o.TypeParameters, match)
-				&& this.Parameters.DoMatch(o.Parameters, match) && this.Constraints.DoMatch(o.Constraints, match)
-				&& this.Body.DoMatch(o.Body, match);
+			return other is LocalFunctionDeclarationStatement o && Declaration.DoMatch(o.Declaration, match);
 		}
 	}
 }

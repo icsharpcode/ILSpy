@@ -61,29 +61,30 @@ namespace ICSharpCode.Decompiler.Metadata
 		};
 
 		readonly DotNetCorePackageInfo[] packages;
-		ISet<string> packageBasePaths = new HashSet<string>(StringComparer.Ordinal);
-		readonly Version version;
+		readonly List<string> searchPaths = new List<string>();
+		readonly List<string> packageBasePaths = new List<string>();
+		readonly Version targetFrameworkVersion;
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
 
-		public DotNetCorePathFinder(Version version)
+		public DotNetCorePathFinder(TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion)
 		{
-			this.version = version;
-		}
-
-		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkIdString, TargetFrameworkIdentifier targetFramework, Version version, ReferenceLoadInfo loadInfo = null)
-		{
-			string assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
-			string basePath = Path.GetDirectoryName(parentAssemblyFileName);
-			this.version = version;
+			this.targetFrameworkVersion = targetFrameworkVersion;
 
 			if (targetFramework == TargetFrameworkIdentifier.NETStandard) {
 				// .NET Standard 2.1 is implemented by .NET Core 3.0 or higher
-				if (version.Major == 2 && version.Minor == 1) {
-					this.version = new Version(3, 0, 0);
+				if (targetFrameworkVersion.Major == 2 && targetFrameworkVersion.Minor == 1) {
+					this.targetFrameworkVersion = new Version(3, 0, 0);
 				}
 			}
+		}
 
-			packageBasePaths.Add(basePath);
+		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkIdString, TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion, ReferenceLoadInfo loadInfo = null)
+			: this(targetFramework, targetFrameworkVersion)
+		{
+			string assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
+			string basePath = Path.GetDirectoryName(parentAssemblyFileName);
+
+			searchPaths.Add(basePath);
 
 			var depsJsonFileName = Path.Combine(basePath, $"{assemblyName}.deps.json");
 			if (File.Exists(depsJsonFileName)) {
@@ -106,17 +107,17 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public void AddSearchDirectory(string path)
 		{
-			this.packageBasePaths.Add(path);
+			this.searchPaths.Add(path);
 		}
 
 		public void RemoveSearchDirectory(string path)
 		{
-			this.packageBasePaths.Remove(path);
+			this.searchPaths.Remove(path);
 		}
 
 		public string TryResolveDotNetCore(IAssemblyReference name)
 		{
-			foreach (var basePath in packageBasePaths) {
+			foreach (var basePath in searchPaths.Concat(packageBasePaths)) {
 				if (File.Exists(Path.Combine(basePath, name.Name + ".dll"))) {
 					return Path.Combine(basePath, name.Name + ".dll");
 				} else if (File.Exists(Path.Combine(basePath, name.Name + ".exe"))) {
@@ -124,7 +125,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 			}
 
-			return FallbackToDotNetSharedDirectory(name, version);
+			return FallbackToDotNetSharedDirectory(name);
 		}
 
 		internal string GetReferenceAssemblyPath(string targetFramework)
@@ -169,7 +170,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		string FallbackToDotNetSharedDirectory(IAssemblyReference name, Version version)
+		string FallbackToDotNetSharedDirectory(IAssemblyReference name)
 		{
 			if (dotnetBasePath == null)
 				return null;
@@ -177,7 +178,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			foreach (var basePath in basePaths) {
 				if (!Directory.Exists(basePath))
 					continue;
-				var closestVersion = GetClosestVersionFolder(basePath, version);
+				var closestVersion = GetClosestVersionFolder(basePath, targetFrameworkVersion);
 				if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".dll"))) {
 					return Path.Combine(basePath, closestVersion, name.Name + ".dll");
 				} else if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".exe"))) {
@@ -189,15 +190,17 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		static string GetClosestVersionFolder(string basePath, Version version)
 		{
-			string result = null;
-			foreach (var folder in new DirectoryInfo(basePath).GetDirectories().Select(d => ConvertToVersion(d.Name)).Where(v => v.Item1 != null).OrderByDescending(v => v.Item1)) {
-				if (folder.Item1 >= version)
-					result = folder.Item2;
+			var foundVersions = new DirectoryInfo(basePath).GetDirectories()
+				.Select(d => ConvertToVersion(d.Name))
+				.Where(v => v.version != null);
+			foreach (var folder in foundVersions.OrderBy(v => v.Item1)) {
+				if (folder.version >= version)
+					return folder.directoryName;
 			}
-			return result ?? version.ToString();
+			return version.ToString();
 		}
 
-		internal static (Version, string) ConvertToVersion(string name)
+		internal static (Version version, string directoryName) ConvertToVersion(string name)
 		{
 			string RemoveTrailingVersionInfo()
 			{

@@ -130,7 +130,16 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Sections.AddRange(this.Sections.Select(h => (SwitchSection)h.Clone()));
 			return clone;
 		}
-		
+
+		StackType resultType = StackType.Void;
+
+		public override StackType ResultType => resultType;
+
+		public void SetResultType(StackType resultType)
+		{
+			this.resultType = resultType;
+		}
+
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
@@ -143,11 +152,24 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				Debug.Assert(!section.Labels.IsEmpty || section.HasNullLabel);
 				Debug.Assert(!section.Labels.Overlaps(sets));
+				Debug.Assert(section.Body.ResultType == this.ResultType);
 				sets = sets.UnionWith(section.Labels);
 			}
 			Debug.Assert(sets.SetEquals(LongSet.Universe), "switch does not handle all possible cases");
 			Debug.Assert(!expectNullSection, "Lifted switch is missing 'case null'");
 			Debug.Assert(this.IsLifted ? (value.ResultType == StackType.O) : (value.ResultType == StackType.I4 || value.ResultType == StackType.I8));
+		}
+
+		public SwitchSection GetDefaultSection()
+		{
+			// Pick the section with the most labels as default section.
+			IL.SwitchSection defaultSection = Sections.First();
+			foreach (var section in Sections) {
+				if (section.Labels.Count() > defaultSection.Labels.Count()) {
+					defaultSection = section;
+				}
+			}
+			return defaultSection;
 		}
 	}
 	

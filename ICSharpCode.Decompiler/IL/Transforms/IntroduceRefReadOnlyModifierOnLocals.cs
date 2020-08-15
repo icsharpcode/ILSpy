@@ -25,7 +25,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	class IntroduceRefReadOnlyModifierOnLocals : IILTransform
+	public class IntroduceRefReadOnlyModifierOnLocals : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{

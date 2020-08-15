@@ -131,9 +131,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle, byte rawTypeKind)
 		{
-			bool? isReferenceType = IsReferenceType(reader, handle, rawTypeKind);
-			var gctr = new GetClassTypeReference(handle.GetFullTypeName(reader), handle.GetDeclaringModule(reader), isReferenceType);
-			return gctr.Resolve(module != null ? new SimpleTypeResolveContext(module) : new SimpleTypeResolveContext(compilation));
+			IModule resolvedModule = module.GetDeclaringModule(handle);
+			var fullTypeName = handle.GetFullTypeName(reader);
+			IType type;
+			if (resolvedModule != null) {
+				type = resolvedModule.GetTypeDefinition(fullTypeName);
+			} else {
+				type = GetClassTypeReference.ResolveInAllAssemblies(compilation, in fullTypeName);
+			}
+			return type ?? new UnknownType(fullTypeName, IsReferenceType(reader, handle, rawTypeKind));
 		}
 
 		public IType GetTypeFromSerializedName(string name)

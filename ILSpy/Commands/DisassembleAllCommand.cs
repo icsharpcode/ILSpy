@@ -23,6 +23,8 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Properties;
+using System.Collections.Concurrent;
+
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources.DEBUGDisassemble),  MenuCategory = nameof(Resources.Open),  MenuOrder = 2.5)]
@@ -37,8 +39,11 @@ namespace ICSharpCode.ILSpy
 		{
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
-				Parallel.ForEach(MainWindow.Instance.CurrentAssemblyList.GetAssemblies(), new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct }, delegate(LoadedAssembly asm) {
-					if (!asm.HasLoadError) {
+				Parallel.ForEach(
+					Partitioner.Create(MainWindow.Instance.CurrentAssemblyList.GetAssemblies(), loadBalance: true),
+					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
+					delegate (LoadedAssembly asm) {
+						if (!asm.HasLoadError) {
 						Stopwatch w = Stopwatch.StartNew();
 						Exception exception = null;
 						using (var writer = new System.IO.StreamWriter("c:\\temp\\disassembled\\" + asm.Text.Replace("(", "").Replace(")", "").Replace(' ', '_') + ".il")) {

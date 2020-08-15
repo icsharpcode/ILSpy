@@ -134,6 +134,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => EmptyList<IAttribute>.Instance;
 		bool IMethod.ReturnTypeIsRefReadOnly => false;
 		bool IMethod.ThisIsRefReadOnly => false;
+		bool IMethod.IsInitOnly => false;
 
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; set; } = EmptyList<ITypeParameter>.Instance;
 

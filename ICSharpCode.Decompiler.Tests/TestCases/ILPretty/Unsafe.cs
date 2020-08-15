@@ -25,6 +25,47 @@ internal sealed class ExtraUnsafeTests
 	{
 		return (uint*)Unsafe.AsPointer(ref managedPtr);
 	}
+
+	public static ref ulong RefAssignTypeMismatch(ref uint a, ref uint b)
+	{
+		ref ushort reference = ref Unsafe.As<uint, ushort>(ref a);
+		if (a != 0) {
+			reference = ref Unsafe.As<uint, ushort>(ref b);
+		}
+		Console.WriteLine(reference);
+		return ref Unsafe.As<ushort, ulong>(ref reference);
+	}
+
+	public unsafe static byte[] Issue1292(int val, byte[] arr)
+	{
+		//The blocks IL_0019 are reachable both inside and outside the pinned region starting at IL_0013. ILSpy has duplicated these blocks in order to place them both within and outside the `fixed` statement.
+		byte[] array;
+		if ((array = arr) != null && array.Length != 0) {
+			fixed (byte* ptr = &array[0]) {
+				*(int*)ptr = val;
+			}
+		} else {
+			/*pinned*/ref byte reference = ref *(byte*)null;
+			*(int*)Unsafe.AsPointer(ref reference) = val;
+		}
+		return arr;
+	}
+
+	public unsafe void pin_ptr_test(int[] a, int[] b)
+	{
+		//The blocks IL_0016 are reachable both inside and outside the pinned region starting at IL_0007. ILSpy has duplicated these blocks in order to place them both within and outside the `fixed` statement.
+		ref int reference;
+		fixed (int* ptr = &a[0]) {
+			if (*ptr <= 0) {
+				ptr[4 * 0] = 1;
+				return;
+			}
+			reference = ref *ptr;
+		}
+		fixed (int* ptr = &b[reference]) {
+			ptr[4 * 0] = 1;
+		}
+	}
 }
 
 namespace System.Runtime.CompilerServices
@@ -228,7 +269,7 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static IntPtr ByteOffset<T>(ref T origin, ref T target)
 		{
-			return Unsafe.ByteOffset(ref target, ref origin);
+			return Unsafe.ByteOffset(target: ref target, origin: ref origin);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

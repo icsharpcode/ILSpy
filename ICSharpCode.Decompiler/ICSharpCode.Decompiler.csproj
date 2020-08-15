@@ -71,6 +71,7 @@
     <Compile Include="CSharp\ProjectDecompiler\TargetFramework.cs" />
     <Compile Include="CSharp\ProjectDecompiler\TargetServices.cs" />
     <Compile Include="CSharp\Syntax\Expressions\DeclarationExpression.cs" />
+    <Compile Include="CSharp\Syntax\Expressions\SwitchExpression.cs" />
     <Compile Include="CSharp\Syntax\FunctionPointerType.cs" />
     <Compile Include="CSharp\Syntax\VariableDesignation.cs" />
     <Compile Include="IL\Transforms\DeconstructionTransform.cs" />

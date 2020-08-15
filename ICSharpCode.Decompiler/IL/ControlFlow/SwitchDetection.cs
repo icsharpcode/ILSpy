@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// Detect sequences of conditional branches that all test a single integer value,
 	/// and simplify them into a ILAst switch instruction (which like C# does not require contiguous values).
 	/// </summary>
-	class SwitchDetection : IILTransform
+	public class SwitchDetection : IILTransform
 	{
 		private readonly SwitchAnalysis analysis = new SwitchAnalysis();
 

@@ -48,6 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly MetadataMethod[] methodDefs;
 		readonly MetadataProperty[] propertyDefs;
 		readonly MetadataEvent[] eventDefs;
+		readonly IModule[] referencedAssemblies;
 
 		internal MetadataModule(ICompilation compilation, Metadata.PEFile peFile, TypeSystemOptions options)
 		{
@@ -79,6 +80,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				this.methodDefs = new MetadataMethod[metadata.MethodDefinitions.Count + 1];
 				this.propertyDefs = new MetadataProperty[metadata.PropertyDefinitions.Count + 1];
 				this.eventDefs = new MetadataEvent[metadata.EventDefinitions.Count + 1];
+				this.referencedAssemblies = new IModule[metadata.AssemblyReferences.Count + 1];
 			}
 		}
 
@@ -267,6 +269,64 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		void HandleOutOfRange(EntityHandle handle)
 		{
 			throw new BadImageFormatException("Handle with invalid row number.");
+		}
+		#endregion
+
+		#region Resolve Module
+
+		public IModule ResolveModule(AssemblyReferenceHandle handle)
+		{
+			if (handle.IsNil)
+				return null;
+
+			if (referencedAssemblies == null)
+				return ResolveModuleUncached(handle);
+			int row = MetadataTokens.GetRowNumber(handle);
+			Debug.Assert(row != 0);
+			if (row >= referencedAssemblies.Length)
+				HandleOutOfRange(handle);
+			var module = LazyInit.VolatileRead(ref referencedAssemblies[row]);
+			if (module != null)
+				return module;
+			module = ResolveModuleUncached(handle);
+			return LazyInit.GetOrSet(ref referencedAssemblies[row], module);
+		}
+
+		IModule ResolveModuleUncached(AssemblyReferenceHandle handle)
+		{
+			var asmRef = new Metadata.AssemblyReference(metadata, handle);
+			return Compilation.FindModuleByReference(asmRef);
+		}
+
+		public IModule ResolveModule(ModuleReferenceHandle handle)
+		{
+			if (handle.IsNil)
+				return null;
+			var modRef = metadata.GetModuleReference(handle);
+			string name = metadata.GetString(modRef.Name);
+			foreach (var mod in Compilation.Modules) {
+				if (mod.Name == name) {
+					return mod;
+				}
+			}
+			return null;
+		}
+
+		public IModule GetDeclaringModule(TypeReferenceHandle handle)
+		{
+			if (handle.IsNil)
+				return null;
+			var tr = metadata.GetTypeReference(handle);
+			switch (tr.ResolutionScope.Kind) {
+				case HandleKind.TypeReference:
+					return GetDeclaringModule((TypeReferenceHandle)tr.ResolutionScope);
+				case HandleKind.AssemblyReference:
+					return ResolveModule((AssemblyReferenceHandle)tr.ResolutionScope);
+				case HandleKind.ModuleReference:
+					return ResolveModule((ModuleReferenceHandle)tr.ResolutionScope);
+				default:
+					return this;
+			}
 		}
 		#endregion
 

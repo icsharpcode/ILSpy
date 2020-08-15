@@ -474,4 +474,123 @@
     ldarg.0
     ret
   }
+
+  .method public hidebysig static uint64& RefAssignTypeMismatch(uint32& a, uint32& b)
+  {
+    .maxstack 8
+    .locals (
+      [0] uint16&
+    )
+
+    ldarg.0
+    stloc.0
+    
+    ldarg.0
+    ldind.i4
+    brfalse lbl
+
+    ldarg.1
+    stloc.0
+
+lbl:
+    ldloc.0
+    ldind.i2
+    call       void [mscorlib]System.Console::WriteLine(uint16)
+
+    ldloc.0
+    ret
+  }
+
+  .method public hidebysig static 
+	  uint8[] Issue1292 (
+		  int32 val,
+		  uint8[] arr
+	  ) cil managed 
+  {
+	  .maxstack 2
+	  .locals init (
+		  [0] uint8[],
+		  [1] uint8[],
+		  [2] uint8& pinned
+	  )
+
+	  IL_0000: ldarg.1
+	  IL_0001: stloc.0
+	  IL_0002: ldloc.0
+	  IL_0003: dup
+	  IL_0004: stloc.1
+	  IL_0005: brfalse.s IL_0016
+
+	  IL_0007: ldloc.1
+	  IL_0008: ldlen
+	  IL_0009: conv.i4
+	  IL_000a: brfalse.s IL_0016
+
+	  IL_000c: ldloc.1
+	  IL_000d: ldc.i4.0
+	  IL_000e: ldelema [mscorlib]System.Byte
+	  IL_0013: stloc.2
+	  IL_0014: br.s IL_0019
+
+	  IL_0016: ldc.i4.0
+	  IL_0017: conv.u
+	  IL_0018: stloc.2
+
+	  IL_0019: ldloc.2
+	  IL_001a: conv.i
+	  IL_001b: ldarg.0
+	  IL_001c: stind.i4
+	  IL_001d: ldc.i4.0
+	  IL_001e: conv.u
+	  IL_001f: stloc.2
+	  IL_0020: ldloc.0
+	  IL_0021: ret
+  } // end of method Issue1292
+
+.method /* 06000066 */ public hidebysig 
+	instance void pin_ptr_test (
+		int32[] a,
+		int32[] b
+	) cil managed 
+{
+	/* From C++/CLI:
+      void pin_ptr_test(array<int>^ a, array<int>^ b)
+        {
+            pin_ptr<int> p = &a[0];
+            if (*p > 0)
+            {
+                p = &b[*p];
+            }
+            p[0] = 1;
+        }
+   */
+	.maxstack 3
+	.locals /* 11000004 */ (
+		[0] int32& pinned modopt([mscorlib]System.Runtime.CompilerServices.IsExplicitlyDereferenced) p
+	)
+
+	IL_0000: ldarg.1
+	IL_0001: ldc.i4.0
+	IL_0002: ldelema [mscorlib]System.Int32 /* 01000016 */
+	IL_0007: stloc.0
+	IL_0008: ldloc.0
+	IL_0009: ldind.i4
+	IL_000a: ldc.i4.0
+	IL_000b: ble.s IL_0016
+
+	IL_000d: ldarg.2
+	IL_000e: ldloc.0
+	IL_000f: ldind.i4
+	IL_0010: ldelema [mscorlib]System.Int32 /* 01000016 */
+	IL_0015: stloc.0
+
+	IL_0016: ldloc.0
+	IL_0017: ldc.i4.4
+	IL_0018: ldc.i4.0
+	IL_0019: mul
+	IL_001a: add
+	IL_001b: ldc.i4.1
+	IL_001c: stind.i4
+	IL_001d: ret
+} // end of method pin_ptr_test
 }

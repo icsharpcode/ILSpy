@@ -12,7 +12,6 @@
 
     <Company>IC#Code</Company>
     <Description>ILSpy</Description>
-    <NeutralLanguage>en-US</NeutralLanguage>
     <Version>1.7.1.0</Version>
     <FileVersion>1.7.1.0</FileVersion>
 
@@ -51,10 +50,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ILSpy\ILSpy.csproj" />
+    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+    <ProjectReference Include="..\ILSpy\ILSpy.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <Private>false</Private>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\ILSpy\NativeMethods.cs" Link="NativeMethods.cs" />
     <Compile Include="Commands\AssemblyReferenceForILSpy.cs" />
     <Compile Include="Commands\NuGetReferenceForILSpy.cs" />
     <Compile Include="Commands\ProjectItemForILSpy.cs" />
@@ -85,9 +89,19 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="VSPackage.en-US.resx">
+      <MergeWithCTO>true</MergeWithCTO>
+      <LogicalName>VSPackage.en-US.resources</LogicalName>
+      <DependentUpon>VSPackage.resx</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="VSPackage.resx">
       <MergeWithCTO>true</MergeWithCTO>
       <ManifestResourceName>VSPackage</ManifestResourceName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="VSPackage.zh-Hans.resx">
+      <MergeWithCTO>true</MergeWithCTO>
+      <LogicalName>VSPackage.zh-Hans.resources</LogicalName>
+      <DependentUpon>VSPackage.resx</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
 
@@ -101,33 +115,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Collections.Immutable.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Composition.AttributedModel.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Composition.Convention.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Composition.Hosting.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Composition.Runtime.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Composition.TypedParts.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Threading.Tasks.Dataflow.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)ICSharpCode.AvalonEdit.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)Humanizer.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Reflection.Metadata.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.VisualStudio.Composition.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.VisualStudio.Validation.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.Xaml.Behaviors.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)Mono.Cecil.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)Mono.Cecil.Pdb.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)ILSpy.BamlDecompiler.Plugin.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.DiaSymReader*.dll" />
-  	<AdditionalDependencies Include="$(ILSpyBuildPath)OSVersionHelper.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)Xceed.Wpf.AvalonDock.dll" />
-    <AdditionalDependencies Include="$(ILSpyBuildPath)DataGridExtensions.dll" />  
-    <AdditionalDependencies Include="$(ILSpyBuildPath)Iced.dll" />  
-    <AdditionalDependencies Include="$(ILSpyBuildPath)ILCompiler.Reflection.ReadyToRun.dll" />  
-    <AdditionalDependencies Include="$(ILSpyBuildPath)ILSpy.ReadyToRun.Plugin.dll" />  
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="@(AdditionalDependencies)">
+    <Content Include="$(OutputPath)Mono.Cecil.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
       <VSIXSubPath>\</VSIXSubPath>
     </Content>
@@ -135,22 +123,46 @@
   <!-- END WORKAROUND -->
 
   <ItemGroup>
-    <None Include="ILSpyAddIn.vsct" />
+    <Content Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)ILSpy.exe.config">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>\ILSpy</VSIXSubPath>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="$(ILSpyBuildPath)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPath)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll;">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>\ILSpy\zh-Hans\</VSIXSubPath>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="source.extension.vsixmanifest.template" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Key.snk" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <VSCTCompile Include="ILSpyAddIn.vsct">
+ <ItemGroup>
+   <None Include="ILSpyAddIn.vsct">
+     <SubType>Designer</SubType>
+   </None>
+   <Content Include="zh-Hans\extension.vsixlangpack">
+     <IncludeInVSIX>true</IncludeInVSIX>
+     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+   </Content>
+    <VSCTCompile Include="ILSpyAddIn.en-US.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
       <SubType>Designer</SubType>
+      <DependentUpon>ILSpyAddIn.vsct</DependentUpon>
     </VSCTCompile>
+    <VSCTCompile Include="ILSpyAddIn.zh-Hans.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+      <SubType>Designer</SubType>
+      <DependentUpon>ILSpyAddIn.vsct</DependentUpon>
+    </VSCTCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Key.snk" />
   </ItemGroup>
 
   <ItemGroup>

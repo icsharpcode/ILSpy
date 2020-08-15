@@ -86,7 +86,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override string ReflectionName {
 			get { return namespaceKnown ? fullTypeName.ReflectionName : "?"; }
 		}
-		
+
+		public FullTypeName FullTypeName => fullTypeName;
+
 		public override int TypeParameterCount => fullTypeName.TypeParameterCount;
 		public override IReadOnlyList<ITypeParameter> TypeParameters => DummyTypeParameter.GetClassTypeParameterList(TypeParameterCount);
 		public override IReadOnlyList<IType> TypeArguments => TypeParameters;

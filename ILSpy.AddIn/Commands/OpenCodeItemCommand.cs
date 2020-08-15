@@ -38,10 +38,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 				var document = owner.DTE.ActiveDocument;
 				menuItem.Visible =
-					(document != null) &&
-					(document.ProjectItem != null) &&
-					(document.ProjectItem.ContainingProject != null) &&
-					(document.ProjectItem.ContainingProject.ConfigurationManager != null) &&
+					(document?.ProjectItem?.ContainingProject?.ConfigurationManager != null) &&
 					!string.IsNullOrEmpty(document.ProjectItem.ContainingProject.FileName);
 			}
 		}
@@ -51,20 +48,11 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			var document = owner.DTE.ActiveDocument;
-			var selection = (EnvDTE.TextPoint)((EnvDTE.TextSelection)document.Selection).ActivePoint;
 			var id = owner.Workspace.CurrentSolution.GetDocumentIdsWithFilePath(document.FullName).FirstOrDefault();
 			if (id == null)
 				return null;
 
 			return owner.Workspace.CurrentSolution.GetDocument(id);
-		}
-
-		EnvDTE.TextPoint GetEditorSelection()
-		{
-			ThreadHelper.ThrowIfNotOnUIThread();
-
-			var document = owner.DTE.ActiveDocument;
-			return ((EnvDTE.TextSelection)document.Selection).ActivePoint;
 		}
 
 		protected override async void OnExecute(object sender, EventArgs e)

@@ -197,8 +197,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else if (localFunction != null) {
 				var ide = new IdentifierExpression(localFunction.Name);
 				if (method.TypeArguments.Count > 0) {
-					int skipCount = localFunction.ReducedMethod.NumberOfCompilerGeneratedTypeParameters;
-					ide.TypeArguments.AddRange(method.TypeArguments.Skip(skipCount).Select(expressionBuilder.ConvertType));
+					ide.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 				}
 				ide.AddAnnotation(localFunction);
 				target = ide.WithoutILInstruction()
@@ -812,7 +811,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// that are no longer required once we add the type arguments.
 				// We lend overload resolution a hand by detecting such cases beforehand and requiring type arguments,
 				// if necessary.
-				if (!CanInferTypeArgumentsFromParameters(method, argumentList.Arguments.SelectArray(a => a.ResolveResult), expressionBuilder.typeInference)) {
+				if (!CanInferTypeArgumentsFromArguments(method, argumentList, expressionBuilder.typeInference)) {
 					requireTypeArguments = true;
 					typeArguments = method.TypeArguments.ToArray();
 					appliedRequireTypeArgumentsShortcut = true;
@@ -896,14 +895,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			return method.IsExtensionMethod && arguments.Count > 0 && arguments[0].Expression is NullReferenceExpression;
 		}
 
-		public static bool CanInferTypeArgumentsFromParameters(IMethod method, IReadOnlyList<ResolveResult> arguments,
-			TypeInference typeInference)
+		static bool CanInferTypeArgumentsFromArguments(IMethod method, ArgumentList argumentList, TypeInference typeInference)
 		{
 			if (method.TypeParameters.Count == 0)
 				return true;
 			// always use unspecialized member, otherwise type inference fails
 			method = (IMethod)method.MemberDefinition;
-			typeInference.InferTypeArguments(method.TypeParameters, arguments, method.Parameters.SelectReadOnlyArray(p => p.Type),
+			var parametersInArgumentOrder = argumentList.ArgumentToParameterMap == null ? method.Parameters : argumentList.ArgumentToParameterMap.SelectReadOnlyArray(index => method.Parameters[index]);
+			typeInference.InferTypeArguments(method.TypeParameters, argumentList.Arguments.SelectReadOnlyArray(a => a.ResolveResult), parametersInArgumentOrder.SelectReadOnlyArray(p => p.Type),
 				out bool success);
 			return success;
 		}
@@ -1327,7 +1326,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				target = default;
 				targetType = default;
 				methodName = localFunction.Name;
-				// TODO : think about how to handle generic local functions
 			} else if (method.IsExtensionMethod && invokeMethod != null && method.Parameters.Count - 1 == invokeMethod.Parameters.Count) {
 				step = 5;
 				targetType = method.Parameters[0].Type;
@@ -1406,11 +1404,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				var ide = new IdentifierExpression(methodName);
 				if ((step & 2) != 0) {
-					int skipCount = 0;
-					if (localFunction != null && method.TypeArguments.Count > 0) {
-						skipCount = localFunction.ReducedMethod.NumberOfCompilerGeneratedTypeParameters;
-					}
-					ide.TypeArguments.AddRange(method.TypeArguments.Skip(skipCount).Select(expressionBuilder.ConvertType));
+					ide.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 				}
 				targetExpression = ide.WithRR(result);
 			}
@@ -1469,7 +1463,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						method.DeclaringType,
 						new IParameterizedMember[] { method }
 					)
-				}, method.TypeArguments.Skip(localFunction.ReducedMethod.NumberOfCompilerGeneratedTypeParameters).ToArray()
+				}, method.TypeArguments
 			);
 		}
 

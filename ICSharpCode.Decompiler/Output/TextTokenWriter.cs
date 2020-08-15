@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -26,6 +27,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler
 {
@@ -39,7 +41,7 @@ namespace ICSharpCode.Decompiler
 		bool inDocumentationComment = false;
 		bool firstUsingDeclaration;
 		bool lastUsingDeclaration;
-		
+
 		public TextTokenWriter(ITextOutput output, DecompilerSettings settings, IDecompilerTypeSystem typeSystem)
 		{
 			if (output == null)
@@ -52,13 +54,13 @@ namespace ICSharpCode.Decompiler
 			this.settings = settings;
 			this.typeSystem = typeSystem;
 		}
-		
+
 		public override void WriteIdentifier(Identifier identifier)
 		{
 			if (identifier.IsVerbatim || CSharpOutputVisitor.IsKeyword(identifier.Name, identifier)) {
 				output.Write('@');
 			}
-			
+
 			var definition = GetCurrentDefinition();
 			string name = TextWriterTokenWriter.EscapeIdentifier(identifier.Name);
 			switch (definition) {
@@ -69,7 +71,7 @@ namespace ICSharpCode.Decompiler
 					output.WriteReference(m, name, true);
 					return;
 			}
-			
+
 			var member = GetCurrentMemberReference();
 			switch (member) {
 				case IType t:
@@ -110,6 +112,7 @@ namespace ICSharpCode.Decompiler
 			if (symbol != null && node.Role == Roles.Type && node.Parent is ObjectCreateExpression) {
 				symbol = node.Parent.GetSymbol();
 			}
+
 			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member) {
 				var declaringType = member.DeclaringType;
 				if (declaringType != null && declaringType.Kind == TypeKind.Delegate)
@@ -123,10 +126,8 @@ namespace ICSharpCode.Decompiler
 			if (symbol == null)
 				return null;
 
-			//if (settings.AutomaticEvents && member is FieldDefinition) {
-			//	var field = (FieldDefinition)member;
-			//	return field.DeclaringType.Events.FirstOrDefault(ev => ev.Name == field.Name) ?? member;
-			//}
+			if (symbol is LocalFunctionMethod)
+				return null;
 
 			return symbol;
 		}
@@ -142,12 +143,16 @@ namespace ICSharpCode.Decompiler
 			if (letClauseVariable != null)
 				return letClauseVariable;
 
-			var gotoStatement = node as GotoStatement;
-			if (gotoStatement != null)
-			{
+			if (node is GotoStatement gotoStatement) {
 				var method = nodeStack.Select(nd => nd.GetSymbol() as IMethod).FirstOrDefault(mr => mr != null);
 				if (method != null)
 					return method + gotoStatement.Label;
+			}
+
+			if (node.Role == Roles.TargetExpression && node.Parent is InvocationExpression) {
+				var symbol = node.Parent.GetSymbol();
+				if (symbol is LocalFunctionMethod)
+					return symbol;
 			}
 
 			return null;
@@ -177,29 +182,29 @@ namespace ICSharpCode.Decompiler
 					return method + label.Label;
 			}
 
-			if (node is LocalFunctionDeclarationStatement) {
-				var localFunction = node.GetResolveResult() as MemberResolveResult;
+			if (node is MethodDeclaration && node.Parent is LocalFunctionDeclarationStatement) {
+				var localFunction = node.Parent.GetResolveResult() as MemberResolveResult;
 				if (localFunction != null)
 					return localFunction.Member;
 			}
 
 			return null;
 		}
-		
+
 		ISymbol GetCurrentDefinition()
 		{
 			if (nodeStack == null || nodeStack.Count == 0)
 				return null;
-			
+
 			var node = nodeStack.Peek();
 			if (node is Identifier)
 				node = node.Parent;
 			if (IsDefinition(ref node))
 				return node.GetSymbol();
-			
+
 			return null;
 		}
-		
+
 		public override void WriteKeyword(Role role, string keyword)
 		{
 			//To make reference for 'this' and 'base' keywords in the ClassName():this() expression
@@ -211,7 +216,7 @@ namespace ICSharpCode.Decompiler
 			}
 			output.Write(keyword);
 		}
-		
+
 		public override void WriteToken(Role role, string token)
 		{
 			switch (token) {
@@ -253,22 +258,22 @@ namespace ICSharpCode.Decompiler
 					break;
 			}
 		}
-		
+
 		public override void Space()
 		{
 			output.Write(' ');
 		}
-		
+
 		public override void Indent()
 		{
 			output.Indent();
 		}
-		
+
 		public override void Unindent()
 		{
 			output.Unindent();
 		}
-		
+
 		public override void NewLine()
 		{
 			if (!firstUsingDeclaration && lastUsingDeclaration) {
@@ -277,7 +282,7 @@ namespace ICSharpCode.Decompiler
 			}
 			output.WriteLine();
 		}
-		
+
 		public override void WriteComment(CommentType commentType, string content)
 		{
 			switch (commentType) {
@@ -309,7 +314,7 @@ namespace ICSharpCode.Decompiler
 					break;
 			}
 		}
-		
+
 		public override void WritePreProcessorDirective(PreProcessorDirectiveType type, string argument)
 		{
 			// pre-processor directive must start on its own line
@@ -321,7 +326,7 @@ namespace ICSharpCode.Decompiler
 			}
 			output.WriteLine();
 		}
-		
+
 		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
 		{
 			new TextWriterTokenWriter(new TextOutputWriter(output)).WritePrimitiveValue(value, format);
@@ -376,7 +381,7 @@ namespace ICSharpCode.Decompiler
 					break;
 			}
 		}
-		
+
 		public override void StartNode(AstNode node)
 		{
 			if (nodeStack.Count == 0) {
@@ -390,7 +395,7 @@ namespace ICSharpCode.Decompiler
 			}
 			nodeStack.Push(node);
 		}
-		
+
 		private bool IsUsingDeclaration(AstNode node)
 		{
 			return node is UsingDeclaration || node is UsingAliasDeclaration;
@@ -401,10 +406,10 @@ namespace ICSharpCode.Decompiler
 			if (nodeStack.Pop() != node)
 				throw new InvalidOperationException();
 		}
-		
+
 		public static bool IsDefinition(ref AstNode node)
 		{
-			if (node is EntityDeclaration)
+			if (node is EntityDeclaration && !(node.Parent is LocalFunctionDeclarationStatement))
 				return true;
 			if (node is VariableInitializer && node.Parent is FieldDeclaration) {
 				node = node.Parent;
