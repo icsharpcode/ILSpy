@@ -845,11 +845,19 @@
 
   <Import Project="$(VCToolsVersionPropsFile)" Condition="Exists('$(VCToolsVersionPropsFile)')" />
 
-  <Target Name="SortResX" BeforeTargets="BeforeBuild">
+  <ItemGroup>
+    <SortResXInput Include="Properties\*.resx" />
+    <SortResXInput Include="..\ILSpy.AddIn\*.resx" />
+    <SortResXInput Include="..\ILSpy.ReadyToRun\Properties\*.resx" />
+    <SortResXStamp Include="obj\sort-resx.stamp" />
+  </ItemGroup>
+
+  <Target Name="SortResX" BeforeTargets="BeforeBuild" Inputs="@(SortResXInput)" Outputs="@(SortResXStamp)">
     <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
       <SortResX>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/sort-resx.ps1</SortResX>
     </PropertyGroup>
     <Exec WorkingDirectory=".." Command="$(SortResX)" Timeout="60000" />
+    <Touch Files="@(SortResXStamp)" AlwaysCreate="true" />
   </Target>
 
   <Target Name="ApplyStackExtension" AfterTargets="PostBuildEvent">
