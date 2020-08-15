@@ -172,7 +172,7 @@ namespace ICSharpCode.Decompiler.IL
 			pattern.WriteTo(output, options);
 			output.Unindent();
 			output.WriteLine();
-			output.Write("conversions:");
+			output.Write("conversions: ");
 			conversions.WriteTo(output, options);
 			output.WriteLine();
 			output.Write("assignments: ");
@@ -202,24 +202,33 @@ namespace ICSharpCode.Decompiler.IL
 			return input.MatchLdLoc(out inputVariable) || input.MatchLdLoca(out inputVariable);
 		}
 
-		internal static bool IsAssignment(ILInstruction inst, out ILVariable inputVariable)
+		internal static bool IsAssignment(ILInstruction inst, out ILInstruction value)
 		{
-			inputVariable = null;
-			ILInstruction value;
+			value = null;
 			switch (inst) {
 				case CallInstruction call:
-					// TODO
-					return false;
+					if (call.Method.AccessorKind != System.Reflection.MethodSemanticsAttributes.Setter)
+						return false;
+					for (int i = 0; i < call.Arguments.Count - 1; i++) {
+						ILInstruction arg = call.Arguments[i];
+						if (arg.Flags == InstructionFlags.None) {
+							// OK - we accept integer literals, etc.
+						} else if (arg.MatchLdLoc(out var v)) {
+						} else {
+							return false;
+						}
+					}
+					value = call.Arguments.Last();
+					return true;
 				case StLoc stloc:
 					value = stloc.Value;
-					break;
+					return true;
 				case StObj stobj:
 					// TODO
 					return false;
 				default:
 					return false;
 			}
-			return value.MatchLdLoc(out inputVariable);
 		}
 
 		internal override void CheckInvariant(ILPhase phase)
@@ -246,8 +255,8 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(this.conversions.FinalInstruction is Nop);
 
 			foreach (var inst in assignments.Instructions) {
-				if (!IsAssignment(inst, out var inputVariable))
-					Debug.Fail("inst is not a assignment!");
+				if (!(IsAssignment(inst, out var value) && value.MatchLdLoc(out var inputVariable)))
+					throw new InvalidOperationException("inst is not an assignment!");
 				Debug.Assert(patternVariables.Contains(inputVariable) || conversionVariables.Contains(inputVariable));
 			}
 			Debug.Assert(this.assignments.FinalInstruction is Nop);

@@ -98,6 +98,86 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return false;
 		}
+
+		public ILInstruction GetCommonParent(ILInstruction other)
+		{
+			if (other == null)
+				throw new ArgumentNullException(nameof(other));
+
+			ILInstruction a = this;
+			ILInstruction b = other;
+
+			int levelA = a.CountAncestors();
+			int levelB = b.CountAncestors();
+
+			while (levelA > levelB) {
+				a = a.Parent;
+				levelA--;
+			}
+
+			while (levelB > levelA) {
+				b = b.Parent;
+				levelB--;
+			}
+
+			while (a != b) {
+				a = a.Parent;
+				b = b.Parent;
+			}
+
+			return a;
+		}
+
+		/// <summary>
+		/// Returns whether this appears before other in a post-order walk of the whole tree.
+		/// </summary>
+		public bool IsBefore(ILInstruction other)
+		{
+			if (other == null)
+				throw new ArgumentNullException(nameof(other));
+
+			ILInstruction a = this;
+			ILInstruction b = other;
+
+			int levelA = a.CountAncestors();
+			int levelB = b.CountAncestors();
+
+			int originalLevelA = levelA;
+			int originalLevelB = levelB;
+
+			while (levelA > levelB) {
+				a = a.Parent;
+				levelA--;
+			}
+
+			while (levelB > levelA) {
+				b = b.Parent;
+				levelB--;
+			}
+
+			if (a == b) {
+				// a or b is a descendant of the other,
+				// whichever node has the higher level comes first in post-order walk.
+				return originalLevelA > originalLevelB;
+			}
+
+			while (a.Parent != b.Parent) {
+				a = a.Parent;
+				b = b.Parent;
+			}
+
+			// now a and b have the same parent or are both root nodes
+			return a.ChildIndex < b.ChildIndex;
+		}
+
+		private int CountAncestors()
+		{
+			int level = 0;
+			for (ILInstruction ancestor = this; ancestor != null; ancestor = ancestor.Parent) {
+				level++;
+			}
+			return level;
+		}
 		
 		/// <summary>
 		/// Gets the stack type of the value produced by this instruction.

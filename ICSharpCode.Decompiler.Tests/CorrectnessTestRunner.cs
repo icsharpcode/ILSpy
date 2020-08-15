@@ -203,6 +203,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void DeconstructionTests([ValueSource("roslynOnlyOptions")] CompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
+		[Test]
 		public void BitNot([Values(false, true)] bool force32Bit)
 		{
 			CompilerOptions compiler = CompilerOptions.UseDebug;

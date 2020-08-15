@@ -3390,6 +3390,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			rhs = rhs.ConvertTo(rhsType, this); // TODO allowImplicitConversion
 			var assignments = inst.Assignments.Instructions;
 			int assignmentPos = 0;
+			var inits = inst.Init;
+			int initPos = 0;
 			var lhs = ConstructTuple(inst.Pattern);
 			return new AssignmentExpression(lhs, rhs)
 				.WithILInstruction(inst)
@@ -3417,6 +3419,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				switch (assignment) {
 					case StLoc stloc:
 						Debug.Assert(stloc.Value.MatchLdLoc(value));
+						break;
+					case CallInstruction call:
+						for (int i = 0; i < call.Arguments.Count - 1; i++) {
+							if (call.Arguments[i].MatchLdLoc(out var v)
+								&& v.Kind == VariableKind.DeconstructionInitTemporary) 
+							{
+								Debug.Assert(inits[initPos].Variable == v);
+								call.Arguments[i] = inits[initPos].Value;
+								initPos++;
+							}
+						}
+						Debug.Assert(call.Arguments.Last().MatchLdLoc(value));
 						break;
 					default:
 						throw new NotSupportedException();

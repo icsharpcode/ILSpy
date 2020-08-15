@@ -67,6 +67,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				set;
 			}
 
+			public static MyInt StaticMy {
+				get;
+				set;
+			}
+
+			public static MyInt? StaticNMy {
+				get;
+				set;
+			}
+
 			public void Deconstruct(out MyInt? x, out MyInt y)
 			{
 				x = null;
@@ -88,7 +98,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				throw new NotImplementedException();
 			}
 
-			public void Test7()
+			public void LocalVariable_NoConversion()
 			{
 				MyInt? myInt3;
 				MyInt x;
@@ -96,6 +106,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine(myInt3);
 				Console.WriteLine(x);
 			}
+
+			public void LocalVariable_NoConversion_ComplexValue()
+			{
+				MyInt? myInt3;
+				MyInt x;
+				(myInt3, x) = new CustomDeconstructionAndConversion {
+					My = 3
+				};
+				Console.WriteLine(myInt3);
+				Console.WriteLine(x);
+			}
+
+			public void Property_NoConversion()
+			{
+				(Get(0).NMy, Get(1).My) = GetValue();
+			}
+
+
 		}
 	}
 }
