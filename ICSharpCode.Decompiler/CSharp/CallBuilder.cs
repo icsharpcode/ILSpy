@@ -811,7 +811,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// that are no longer required once we add the type arguments.
 				// We lend overload resolution a hand by detecting such cases beforehand and requiring type arguments,
 				// if necessary.
-				if (!CanInferTypeArgumentsFromParameters(method, argumentList.Arguments.SelectArray(a => a.ResolveResult), expressionBuilder.typeInference)) {
+				if (!CanInferTypeArgumentsFromArguments(method, argumentList, expressionBuilder.typeInference)) {
 					requireTypeArguments = true;
 					typeArguments = method.TypeArguments.ToArray();
 					appliedRequireTypeArgumentsShortcut = true;
@@ -895,14 +895,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			return method.IsExtensionMethod && arguments.Count > 0 && arguments[0].Expression is NullReferenceExpression;
 		}
 
-		public static bool CanInferTypeArgumentsFromParameters(IMethod method, IReadOnlyList<ResolveResult> arguments,
-			TypeInference typeInference)
+		static bool CanInferTypeArgumentsFromArguments(IMethod method, ArgumentList argumentList, TypeInference typeInference)
 		{
 			if (method.TypeParameters.Count == 0)
 				return true;
 			// always use unspecialized member, otherwise type inference fails
 			method = (IMethod)method.MemberDefinition;
-			typeInference.InferTypeArguments(method.TypeParameters, arguments, method.Parameters.SelectReadOnlyArray(p => p.Type),
+			var parametersInArgumentOrder = argumentList.ArgumentToParameterMap == null ? method.Parameters : argumentList.ArgumentToParameterMap.SelectReadOnlyArray(index => method.Parameters[index]);
+			typeInference.InferTypeArguments(method.TypeParameters, argumentList.Arguments.SelectReadOnlyArray(a => a.ResolveResult), parametersInArgumentOrder.SelectReadOnlyArray(p => p.Type),
 				out bool success);
 			return success;
 		}

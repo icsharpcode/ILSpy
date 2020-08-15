@@ -378,9 +378,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!targetType.GetAllBaseTypes().Any(i => i.IsKnownType(KnownTypeCode.IEnumerable) || i.IsKnownType(KnownTypeCode.IEnumerableOfT)))
 				return false;
-			return CSharp.CallBuilder.CanInferTypeArgumentsFromParameters(
-				method, method.Parameters.SelectReadOnlyArray(p => new ResolveResult(p.Type)),
-				new TypeInference(resolveContext.Compilation));
+			return CanInferTypeArgumentsFromParameters(method);
+
+			bool CanInferTypeArgumentsFromParameters(IMethod method)
+			{
+				if (method.TypeParameters.Count == 0)
+					return true;
+				// always use unspecialized member, otherwise type inference fails
+				method = (IMethod)method.MemberDefinition;
+				new TypeInference(resolveContext.Compilation)
+					.InferTypeArguments(
+						method.TypeParameters,
+						// TODO : this is not entirely correct... we need argument type information to resolve Add methods properly
+						method.Parameters.SelectReadOnlyArray(p => new ResolveResult(p.Type)),
+						method.Parameters.SelectReadOnlyArray(p => p.Type),
+						out bool success
+					);
+				return success;
+			}
 		}
 
 		static IType GetReturnTypeFromInstruction(ILInstruction instruction)
