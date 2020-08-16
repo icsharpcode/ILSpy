@@ -3440,7 +3440,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						Debug.Assert(call.Arguments.Last().MatchLdLoc(value));
 						break;
 					case StObj stobj:
-						ReplaceAssignmentTarget(stobj.Target);
+						var target = stobj.Target;
+						while (target.MatchLdFlda(out var nestedTarget, out _))
+							target = nestedTarget;
+						ReplaceAssignmentTarget(target);
 						Debug.Assert(stobj.Value.MatchLdLoc(value));
 						break;
 					default:

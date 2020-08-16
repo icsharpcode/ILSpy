@@ -230,13 +230,15 @@ namespace ICSharpCode.Decompiler.IL
 					return true;
 				case StObj stobj:
 					var target = stobj.Target;
+					while (target.MatchLdFlda(out var nestedTarget, out _))
+						target = nestedTarget;
 					if (target.Flags == InstructionFlags.None) {
 						// OK - we accept integer literals, etc.
 					} else if (target.MatchLdLoc(out var v)) {
 					} else {
 						return false;
 					}
-					if (target.InferType(typeSystem) is ByReferenceType brt)
+					if (stobj.Target.InferType(typeSystem) is ByReferenceType brt)
 						expectedType = brt.ElementType;
 					else
 						expectedType = SpecialType.UnknownType;

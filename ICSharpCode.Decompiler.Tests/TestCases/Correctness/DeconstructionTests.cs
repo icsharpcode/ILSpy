@@ -134,6 +134,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			NoDeconstruction_NotUsingConver_Tuple();
 			NullReferenceException_Field_Deconstruction(out _);
 			NullReferenceException_RefLocalReferencesField_Deconstruction(out _);
+			NullReferenceException_RefLocalReferencesArrayElement_Deconstruction(out _, null);
 		}
 
 		public void Property_NoDeconstruction_SwappedAssignments()
@@ -205,6 +206,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			try {
 				AssignmentTargets t0 = null;
 				ref int i = ref t0.IntField;
+				(i, a) = GetSource<int, int>();
+			} catch (Exception ex) {
+				a = 0;
+				Console.WriteLine(ex.GetType().FullName);
+			}
+		}
+
+		public void NullReferenceException_RefLocalReferencesArrayElement_Deconstruction(out int a, int[] arr)
+		{
+			try {
+				ref int i = ref arr[0];
 				(i, a) = GetSource<int, int>();
 			} catch (Exception ex) {
 				a = 0;

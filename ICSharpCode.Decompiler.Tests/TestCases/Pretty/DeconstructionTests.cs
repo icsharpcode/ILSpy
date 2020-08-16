@@ -231,5 +231,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			(a, GetRef<double>()) = GetSource<double, float>();
 		}
+
+		//public void ArrayAssign_FloatToDoubleConversion(double[] arr)
+		//{
+		//	(arr[0], arr[1], arr[2]) = GetSource<double, float, double>();
+		//}
+
+		public void Field_NoConversion()
+		{
+			(Get(0).IntField, Get(1).IntField) = GetSource<int, int>();
+		}
 	}
 }
