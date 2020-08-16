@@ -28,15 +28,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 
-		public void ParameterHiddenByLocal(@_ _)
-		{
-			GetOut(out int _);
-		}
+		// out _ is currently not supported: the test cases below are not useful
+		//public void ParameterHiddenByLocal(@_ _)
+		//{
+		//	GetOut(out int value);
+		//}
 
-		public void DiscardedOutVsLambdaParameter()
-		{
-			GetOut(out int _);
-			MakeValue((@_ _) => 5);
-		}
+		//public void DiscardedOutVsLambdaParameter()
+		//{
+		//	GetOut(out int value);
+		//	MakeValue((@_ _) => 5);
+		//}
 	}
 }
