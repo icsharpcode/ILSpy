@@ -209,8 +209,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				IsDeconstructTuple = this.tupleType != null
 			};
 			int index = 0;
-			foreach (ILVariable result in deconstructionResults) {
-				result.Kind = VariableKind.PatternLocal;
+			foreach (ILVariable v in deconstructionResults) {
+				var result = v;
+				if (result == null) {
+					var freshVar = new ILVariable(VariableKind.PatternLocal, this.tupleType.ElementTypes[index]) { Name = "E_" + index };
+					context.Function.Variables.Add(freshVar);
+					result = freshVar;
+				} else {
+					result.Kind = VariableKind.PatternLocal;
+				}
 				replacement.Pattern.SubPatterns.Add(
 					new MatchInstruction(
 						result,

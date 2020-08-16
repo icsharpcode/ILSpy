@@ -216,5 +216,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			(Get(0).NMy, Get(1).My) = GetTuple<MyInt?, MyInt>();
 		}
+
+		public void Tuple_Property_NoConversion_DiscardLast()
+		{
+			(Get(0).NMy, Get(1).My, _) = GetTuple<MyInt?, MyInt, int>();
+		}
 	}
 }
