@@ -17,10 +17,20 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	public static class DeconstructionExt
+	{
+		public static void Deconstruct<K, V>(this KeyValuePair<K, V> pair, out K key, out V value)
+		{
+			key = pair.Key;
+			value = pair.Value;
+		}
+	}
+
 	internal class DeconstructionTests
 	{
 		[StructLayout(LayoutKind.Sequential, Size = 1)]
@@ -240,6 +250,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void Field_NoConversion()
 		{
 			(Get(0).IntField, Get(1).IntField) = GetSource<int, int>();
+		}
+
+		public void DeconstructDictionaryForEach(Dictionary<string, int> dictionary)
+		{
+			foreach (var (str, num2) in dictionary) {
+				Console.WriteLine(str + ": " + num2);
+			}
+		}
+
+		public void DeconstructTupleListForEach(List<(string, int)> tuples)
+		{
+			foreach (var (str, num) in tuples) {
+				Console.WriteLine(str + ": " + num);
+			}
 		}
 	}
 }

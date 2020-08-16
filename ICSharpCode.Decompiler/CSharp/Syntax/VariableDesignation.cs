@@ -16,19 +16,47 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-using ICSharpCode.Decompiler.DebugInfo;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public abstract class VariableDesignation : AstNode
 	{
-		public static Role<VariableDesignation> VariableDesignationRole = new Role<VariableDesignation>("VariableDesignation");
+		public override NodeType NodeType => NodeType.Unknown;
+
+		#region Null
+		public new static readonly VariableDesignation Null = new NullVariableDesignation();
+
+		sealed class NullVariableDesignation : VariableDesignation
+		{
+			public override bool IsNull {
+				get {
+					return true;
+				}
+			}
+
+			public override void AcceptVisitor(IAstVisitor visitor)
+			{
+				visitor.VisitNullNode(this);
+			}
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+			{
+				return visitor.VisitNullNode(this);
+			}
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+			{
+				return visitor.VisitNullNode(this, data);
+			}
+
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			{
+				return other == null || other.IsNull;
+			}
+		}
+		#endregion
+
 	}
 
 	/// <summary>
@@ -36,7 +64,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class SingleVariableDesignation : VariableDesignation
 	{
-		public override NodeType NodeType => NodeType.Unknown;
 
 		public string Identifier {
 			get { return GetChildByRole(Roles.Identifier).Name; }
@@ -80,14 +107,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public AstNodeCollection<VariableDesignation> VariableDesignations {
-			get { return GetChildrenByRole(VariableDesignation.VariableDesignationRole); }
+			get { return GetChildrenByRole(Roles.VariableDesignationRole); }
 		}
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
 		}
-
-		public override NodeType NodeType => NodeType.Unknown;
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{

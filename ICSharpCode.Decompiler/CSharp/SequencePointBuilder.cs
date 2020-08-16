@@ -269,7 +269,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			
 			StartSequencePoint(foreachStatement);
 			AddToSequencePoint(foreachInfo.GetCurrentCall);
-			EndSequencePoint(foreachStatement.VariableType.StartLocation, foreachStatement.VariableNameToken.EndLocation);
+			EndSequencePoint(foreachStatement.VariableType.StartLocation, foreachStatement.VariableDesignation.EndLocation);
 			
 			VisitAsSequencePoint(foreachStatement.EmbeddedStatement);
 		}

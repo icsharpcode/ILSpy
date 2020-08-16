@@ -337,14 +337,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				body.Statements.Add(statement.Detach());
 			var foreachStmt = new ForeachStatement {
 				VariableType = context.Settings.AnonymousTypes && itemVariable.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(itemVariable.Type),
-				VariableName = itemVariable.Name,
+				VariableDesignation = new SingleVariableDesignation { Identifier = itemVariable.Name },
 				InExpression = m.Get<IdentifierExpression>("arrayVariable").Single().Detach(),
 				EmbeddedStatement = body
 			};
 			foreachStmt.CopyAnnotationsFrom(forStatement);
 			itemVariable.Kind = IL.VariableKind.ForeachLocal;
 			// Add the variable annotation for highlighting (TokenTextWriter expects it directly on the ForeachStatement).
-			foreachStmt.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
+			foreachStmt.VariableDesignation.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
 			// TODO : add ForeachAnnotation
 			forStatement.ReplaceWith(foreachStmt);
 			return foreachStmt;
@@ -495,7 +495,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				body.Statements.Add(statement.Detach());
 			var foreachStmt = new ForeachStatement {
 				VariableType = context.Settings.AnonymousTypes && itemVariable.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(itemVariable.Type),
-				VariableName = itemVariable.Name,
+				VariableDesignation = new SingleVariableDesignation { Identifier = itemVariable.Name },
 				InExpression = m.Get<IdentifierExpression>("collection").Single().Detach(),
 				EmbeddedStatement = body
 			};
@@ -504,7 +504,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			//foreachStmt.CopyAnnotationsFrom(forStatement);
 			itemVariable.Kind = IL.VariableKind.ForeachLocal;
 			// Add the variable annotation for highlighting (TokenTextWriter expects it directly on the ForeachStatement).
-			foreachStmt.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
+			foreachStmt.VariableDesignation.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
 			// TODO : add ForeachAnnotation
 			expressionStatement.ReplaceWith(foreachStmt);
 			return foreachStmt;

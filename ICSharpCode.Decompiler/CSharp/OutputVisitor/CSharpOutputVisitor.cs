@@ -1562,7 +1562,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Space(policy.SpacesWithinForeachParentheses);
 			foreachStatement.VariableType.AcceptVisitor(this);
 			Space();
-			WriteIdentifier(foreachStatement.VariableNameToken);
+			foreachStatement.VariableDesignation.AcceptVisitor(this);
+			Space();
 			WriteKeyword(ForeachStatement.InKeywordRole);
 			Space();
 			foreachStatement.InExpression.AcceptVisitor(this);

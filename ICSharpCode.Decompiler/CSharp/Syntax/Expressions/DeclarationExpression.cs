@@ -31,8 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public VariableDesignation Designation {
-			get { return GetChildByRole(VariableDesignation.VariableDesignationRole); }
-			set { SetChildByRole(VariableDesignation.VariableDesignationRole, value); }
+			get { return GetChildByRole(Roles.VariableDesignationRole); }
+			set { SetChildByRole(Roles.VariableDesignationRole, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

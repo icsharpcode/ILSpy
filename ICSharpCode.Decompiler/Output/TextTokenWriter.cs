@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler
 			if (node is Identifier && node.Parent != null)
 				node = node.Parent;
 
-			if (node is ParameterDeclaration || node is VariableInitializer || node is CatchClause || node is ForeachStatement) {
+			if (node is ParameterDeclaration || node is VariableInitializer || node is CatchClause || node is VariableDesignation) {
 				var variable = node.Annotation<ILVariableResolveResult>()?.Variable;
 				if (variable != null)
 					return variable;
