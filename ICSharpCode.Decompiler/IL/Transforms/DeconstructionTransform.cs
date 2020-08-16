@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Resources;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -188,7 +189,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				// TODO v.LoadCount may be 2 if the deconstruction is assigned to a tuple variable
 				// or 0? because of discards
-				if (!(v.StoreCount == 0 && v.AddressCount == 1 && v.LoadCount == 1))
+				if (!(v.StoreCount == 0 && v.AddressCount == 1 && v.LoadCount <= 1))
 					return false;
 				deconstructionResultsLookup.Add(v, i - 1);
 				deconstructionResults.Add(v);
@@ -311,7 +312,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool MatchAssignment(ILInstruction inst, out IType targetType, out ILInstruction valueInst, out Action<DeconstructInstruction> addAssignment)
 		{
+			targetType = null;
+			valueInst = null;
 			addAssignment = null;
+			if (inst == null)
+				return false;
 			if (inst.MatchStLoc(out var v, out var value)
 				&& value is Block block && block.MatchInlineAssignBlock(out var call, out valueInst)) {
 				if (!DeconstructInstruction.IsAssignment(call, out targetType, out _))

@@ -273,8 +273,9 @@ namespace ICSharpCode.Decompiler.IL
 				Debug.Assert(!inst.HasDesignator);
 				foreach (var subPattern in inst.SubPatterns.Cast<MatchInstruction>()) {
 					if (subPattern.IsVar) {
-						Debug.Assert(subPattern.Variable.IsSingleDefinition && subPattern.Variable.LoadCount == 1);
-						Debug.Assert(subPattern.Variable.LoadInstructions[0].IsDescendantOf(this));
+						Debug.Assert(subPattern.Variable.IsSingleDefinition && subPattern.Variable.LoadCount <= 1);
+						if (subPattern.Variable.LoadCount == 1)
+							Debug.Assert(subPattern.Variable.LoadInstructions[0].IsDescendantOf(this));
 						patternVariables.Add(subPattern.Variable);
 					} else {
 						ValidatePattern(subPattern);

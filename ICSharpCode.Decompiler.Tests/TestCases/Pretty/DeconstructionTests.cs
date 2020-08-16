@@ -51,6 +51,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		private class DeconstructionSource<T, T2, T3>
+		{
+			public int Dummy {
+				get;
+				set;
+			}
+
+			public void Deconstruct(out T a, out T2 b, out T3 c)
+			{
+				a = default(T);
+				b = default(T2);
+				c = default(T3);
+			}
+		}
+
 		private class AssignmentTargets
 		{
 			public int IntField;
@@ -97,6 +112,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return null;
 		}
 
+		private DeconstructionSource<T, T2, T3> GetSource<T, T2, T3>()
+		{
+			return null;
+		}
+
 		private AssignmentTargets Get(int i)
 		{
 			return null;
@@ -109,6 +129,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			(myInt3, x) = GetSource<MyInt?, MyInt>();
 			Console.WriteLine(myInt3);
 			Console.WriteLine(x);
+		}
+
+		public void LocalVariable_NoConversion_DiscardFirst()
+		{
+			MyInt x;
+			int value;
+			(_, x, value) = GetSource<MyInt?, MyInt, int>();
+			Console.WriteLine(x);
+			Console.WriteLine(value);
+		}
+
+		public void LocalVariable_NoConversion_DiscardLast()
+		{
+			MyInt? myInt3;
+			MyInt x;
+			(myInt3, x, _) = GetSource<MyInt?, MyInt, int>();
+			Console.WriteLine(myInt3);
+			Console.WriteLine(x);
+		}
+
+		public void LocalVariable_NoConversion_DiscardSecond()
+		{
+			MyInt? myInt3;
+			int value;
+			(myInt3, _, value) = GetSource<MyInt?, MyInt, int>();
+			Console.WriteLine(myInt3);
+			Console.WriteLine(value);
 		}
 
 		public void LocalVariable_NoConversion_ReferenceTypes()
@@ -143,6 +190,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void Property_NoConversion()
 		{
 			(Get(0).NMy, Get(1).My) = GetSource<MyInt?, MyInt>();
+		}
+
+		public void Property_NoConversion_DiscardFirst()
+		{
+			(_, Get(1).My) = GetSource<MyInt?, MyInt>();
+		}
+
+		public void Property_NoConversion_DiscardLast()
+		{
+			(Get(0).NMy, _) = GetSource<MyInt?, MyInt>();
 		}
 	}
 }
