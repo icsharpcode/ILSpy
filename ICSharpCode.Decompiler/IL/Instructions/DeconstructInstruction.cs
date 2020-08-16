@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	partial class DeconstructInstruction
@@ -193,17 +195,18 @@ namespace ICSharpCode.Decompiler.IL
 				case Conv conv:
 					input = conv.Argument;
 					break;
-				case Call { Method: { IsOperator: true, Name: "op_Implicit" }, Arguments: { Count: 1 } } call:
-					input = call.Arguments[0];
-					break;
+				//case Call { Method: { IsOperator: true, Name: "op_Implicit" }, Arguments: { Count: 1 } } call:
+				//	input = call.Arguments[0];
+				//	break;
 				default:
 					return false;
 			}
 			return input.MatchLdLoc(out inputVariable) || input.MatchLdLoca(out inputVariable);
 		}
 
-		internal static bool IsAssignment(ILInstruction inst, out ILInstruction value)
+		internal static bool IsAssignment(ILInstruction inst, out IType expectedType, out ILInstruction value)
 		{
+			expectedType = null;
 			value = null;
 			switch (inst) {
 				case CallInstruction call:
@@ -218,9 +221,11 @@ namespace ICSharpCode.Decompiler.IL
 							return false;
 						}
 					}
+					expectedType = call.Method.Parameters.Last().Type;
 					value = call.Arguments.Last();
 					return true;
 				case StLoc stloc:
+					expectedType = stloc.Variable.Type;
 					value = stloc.Value;
 					return true;
 				case StObj stobj:
@@ -255,7 +260,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(this.conversions.FinalInstruction is Nop);
 
 			foreach (var inst in assignments.Instructions) {
-				if (!(IsAssignment(inst, out var value) && value.MatchLdLoc(out var inputVariable)))
+				if (!(IsAssignment(inst, out _, out var value) && value.MatchLdLoc(out var inputVariable)))
 					throw new InvalidOperationException("inst is not an assignment!");
 				Debug.Assert(patternVariables.Contains(inputVariable) || conversionVariables.Contains(inputVariable));
 			}

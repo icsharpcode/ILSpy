@@ -23,22 +23,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class DeconstructionTests
 	{
-		private class CustomDeconstructionAndConversion
+		[StructLayout(LayoutKind.Sequential, Size = 1)]
+		public struct MyInt
 		{
-			[StructLayout(LayoutKind.Sequential, Size = 1)]
-			public struct MyInt
+			public static implicit operator int(MyInt x)
 			{
-				public static implicit operator int(MyInt x)
-				{
-					return 0;
-				}
-
-				public static implicit operator MyInt(int x)
-				{
-					return default(MyInt);
-				}
+				return 0;
 			}
 
+			public static implicit operator MyInt(int x)
+			{
+				return default(MyInt);
+			}
+		}
+
+		private class DeconstructionSource<T, T2>
+		{
+			public int Dummy {
+				get;
+				set;
+			}
+
+			public void Deconstruct(out T a, out T2 b)
+			{
+				a = default(T);
+				b = default(T2);
+			}
+		}
+
+		private class AssignmentTargets
+		{
 			public int IntField;
 
 			public int? NullableIntField;
@@ -76,54 +90,59 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				get;
 				set;
 			}
+		}
 
-			public void Deconstruct(out MyInt? x, out MyInt y)
-			{
-				x = null;
-				y = default(MyInt);
-			}
+		private DeconstructionSource<T, T2> GetSource<T, T2>()
+		{
+			return null;
+		}
 
-			public CustomDeconstructionAndConversion GetValue()
-			{
-				return null;
-			}
+		private AssignmentTargets Get(int i)
+		{
+			return null;
+		}
 
-			public CustomDeconstructionAndConversion Get(int i)
-			{
-				return null;
-			}
+		public void LocalVariable_NoConversion()
+		{
+			MyInt? myInt3;
+			MyInt x;
+			(myInt3, x) = GetSource<MyInt?, MyInt>();
+			Console.WriteLine(myInt3);
+			Console.WriteLine(x);
+		}
 
-			private MyInt? GetNullableMyInt()
-			{
-				throw new NotImplementedException();
-			}
+		public void LocalVariable_NoConversion_ReferenceTypes()
+		{
+			string value;
+			string value2;
+			(value, value2) = GetSource<string, string>();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+		}
 
-			public void LocalVariable_NoConversion()
-			{
-				MyInt? myInt3;
-				MyInt x;
-				(myInt3, x) = GetValue();
-				Console.WriteLine(myInt3);
-				Console.WriteLine(x);
-			}
+		public void LocalVariable_IntToLongConversion()
+		{
+			int value;
+			long value2;
+			(value, value2) = GetSource<int, int>();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+		}
 
-			public void LocalVariable_NoConversion_ComplexValue()
-			{
-				MyInt? myInt3;
-				MyInt x;
-				(myInt3, x) = new CustomDeconstructionAndConversion {
-					My = 3
-				};
-				Console.WriteLine(myInt3);
-				Console.WriteLine(x);
-			}
+		public void LocalVariable_NoConversion_ComplexValue()
+		{
+			MyInt? myInt3;
+			MyInt x;
+			(myInt3, x) = new DeconstructionSource<MyInt?, MyInt> {
+				Dummy = 3
+			};
+			Console.WriteLine(myInt3);
+			Console.WriteLine(x);
+		}
 
-			public void Property_NoConversion()
-			{
-				(Get(0).NMy, Get(1).My) = GetValue();
-			}
-
-
+		public void Property_NoConversion()
+		{
+			(Get(0).NMy, Get(1).My) = GetSource<MyInt?, MyInt>();
 		}
 	}
 }

@@ -3392,6 +3392,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			int assignmentPos = 0;
 			var inits = inst.Init;
 			int initPos = 0;
+
+			Dictionary<ILVariable, ILVariable> conversionMapping = new Dictionary<ILVariable, ILVariable>();
+
+			foreach (var conv in inst.Conversions.Instructions) {
+				if (!DeconstructInstruction.IsConversionStLoc(conv, out var outputVariable, out var inputVariable))
+					continue;
+				conversionMapping.Add(inputVariable, outputVariable);
+			}
+
+
 			var lhs = ConstructTuple(inst.Pattern);
 			return new AssignmentExpression(lhs, rhs)
 				.WithILInstruction(inst)
@@ -3403,7 +3413,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				foreach (var subPattern in matchInstruction.SubPatterns.Cast<MatchInstruction>()) {
 					if (subPattern.IsVar) {
 						if (subPattern.HasDesignator) {
-							expr.Elements.Add(ConstructAssignmentTarget(assignments[assignmentPos], subPattern.Variable));
+							if (!conversionMapping.TryGetValue(subPattern.Variable, out ILVariable value)) {
+								value = subPattern.Variable;
+							}
+							expr.Elements.Add(ConstructAssignmentTarget(assignments[assignmentPos], value));
 							assignmentPos++;
 						} else
 							expr.Elements.Add(new IdentifierExpression("_"));

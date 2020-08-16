@@ -339,7 +339,7 @@
 			CustomClassName("MatchInstruction"), HasVariableOperand("Store"), HasMethodOperand,
 			BoolFlag("IsDeconstructCall"), BoolFlag("CheckType"), BoolFlag("CheckNotNull"),
 			CustomChildren(new []{
-				new ChildInfo("testedOperand") { CanInlineInto = true, ExpectedTypes = new[] { "O" } },
+				new ChildInfo("testedOperand") { CanInlineInto = true },
 				new ChildInfo("subPatterns") { IsCollection = true }
 			}), ResultType("I4"), CustomWriteTo, SideEffect, MayThrow, ControlFlow, CustomInvariant("AdditionalInvariants();")),
 

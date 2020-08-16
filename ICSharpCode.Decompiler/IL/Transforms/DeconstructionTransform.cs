@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -31,7 +32,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	class DeconstructionTransform : IStatementTransform
 	{
 		StatementTransformContext context;
-		readonly Dictionary<ILVariable, int> deconstructionResultsLookup = new Dictionary<ILVariable, int>();
 
 		/*
 			stloc tuple(call MakeIntIntTuple(ldloc this))
@@ -64,7 +64,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			try {
 				this.context = context;
-				this.deconstructionResultsLookup.Clear();
 
 				if (TransformDeconstruction(block, pos))
 					return;
@@ -72,8 +71,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 			} finally {
 				this.context = null;
-				this.deconstructionResultsLookup.Clear();
 			}
+		}
+
+		struct ConversionInfo
+		{
+			public IType inputType;
+			public Conv conv;
 		}
 
 		/// <summary>
@@ -112,11 +116,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool TransformDeconstruction(Block block, int pos)
 		{
 			int startPos = pos;
-			if (!MatchDeconstruction(block, ref pos, out var deconstructMethod, out var rootTestedOperand, out var deconstructionResults))
+			Action<DeconstructInstruction> delayedActions = null;
+			if (MatchDeconstruction(block.Instructions[pos], out var deconstructMethod,
+				out var rootTestedOperand, out var deconstructionResults,
+				out var deconstructionResultsLookup))
+			{
+				pos++;
+			}
+			else {
 				return false;
-			if (!MatchConversion(block, ref pos))
+			}
+			if (!MatchConversions(block, ref pos, deconstructionResultsLookup, out var conversions, out var conversionStLocs))
 				return false;
-			if (!MatchAssignments(block, ref pos, out var assignments))
+
+			if (!MatchAssignments(block, ref pos, deconstructionResultsLookup, conversions, conversionStLocs, ref delayedActions))
 				return false;
 			context.Step("Deconstruction", block.Instructions[startPos]);
 			DeconstructInstruction replacement = new DeconstructInstruction();
@@ -133,24 +146,34 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int index = 0;
 			foreach (var result in deconstructionResults) {
 				result.Kind = VariableKind.PatternLocal;
-				replacement.Pattern.SubPatterns.Add(new MatchInstruction(result, new DeconstructResultInstruction(index, result.StackType, new LdLoc(rootTempVariable))));
+				replacement.Pattern.SubPatterns.Add(
+					new MatchInstruction(
+						result,
+						new DeconstructResultInstruction(index, result.StackType, new LdLoc(rootTempVariable))
+					)
+				);
 				index++;
 			}
 			replacement.Conversions = new Block(BlockKind.DeconstructionConversions);
-			TransformAssignments(replacement, assignments);
+			foreach (var convInst in conversionStLocs) {
+				replacement.Conversions.Instructions.Add(convInst);
+			}
+			replacement.Assignments = new Block(BlockKind.DeconstructionAssignments);
+			delayedActions?.Invoke(replacement);
 			block.Instructions[startPos] = replacement;
 			block.Instructions.RemoveRange(startPos + 1, pos - startPos - 1);
 			return true;
 		}
 
-		bool MatchDeconstruction(Block block, ref int pos, out IMethod deconstructMethod,
-			out ILInstruction testedOperand, out List<ILVariable> deconstructionResults)
+		bool MatchDeconstruction(ILInstruction inst, out IMethod deconstructMethod,
+			out ILInstruction testedOperand, out List<ILVariable> deconstructionResults,
+			out Dictionary<ILVariable, int> deconstructionResultsLookup)
 		{
 			testedOperand = null;
 			deconstructMethod = null;
 			deconstructionResults = null;
-			// TODO nested deconstruction / tuple deconstruction
-			if (!(block.Instructions[pos] is CallInstruction call))
+			deconstructionResultsLookup = null;
+			if (!(inst is CallInstruction call))
 				return false;
 			if (!MatchInstruction.IsDeconstructMethod(call.Method))
 				return false;
@@ -159,6 +182,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (call.Arguments.Count < 3)
 				return false;
 			deconstructionResults = new List<ILVariable>();
+			deconstructionResultsLookup = new Dictionary<ILVariable, int>();
 			for (int i = 1; i < call.Arguments.Count; i++) {
 				if (!call.Arguments[i].MatchLdLoca(out var v))
 					return false;
@@ -171,65 +195,172 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			testedOperand = call.Arguments[0];
 			deconstructMethod = call.Method;
-			pos++;
 			return true;
 		}
 
-		bool MatchConversion(Block block, ref int pos)
+		bool MatchConversions(Block block, ref int pos,
+			Dictionary<ILVariable, int> deconstructionResultsLookup,
+			out Dictionary<ILVariable, ConversionInfo> conversions,
+			out List<StLoc> conversionStLocs)
 		{
-			// TODO
+			conversions = new Dictionary<ILVariable, ConversionInfo>();
+			conversionStLocs = new List<StLoc>();
+			int previousIndex = -1;
+			while (MatchConversion(
+				block.Instructions.ElementAtOrDefault(pos), out var inputInstruction,
+				out var outputVariable, out var info))
+			{
+				if (!inputInstruction.MatchLdLoc(out var inputVariable))
+					return false;
+				if (!deconstructionResultsLookup.TryGetValue(inputVariable, out int index))
+					return false;
+				if (index <= previousIndex)
+					return false;
+				if (!(outputVariable.IsSingleDefinition && outputVariable.LoadCount == 1))
+					return false;
+				deconstructionResultsLookup.Remove(inputVariable);
+				deconstructionResultsLookup.Add(outputVariable, index);
+				conversions.Add(outputVariable, info);
+				conversionStLocs.Add((StLoc)block.Instructions[pos]);
+				pos++;
+				previousIndex = index;
+			}
 			return true;
 		}
 
-		bool MatchAssignments(Block block, ref int pos, out List<ILInstruction> assignments)
+		bool MatchConversion(ILInstruction inst, out ILInstruction inputInstruction,
+			out ILVariable outputVariable, out ConversionInfo info)
 		{
-			assignments = new List<ILInstruction>();
-			int expectedIndex = 0;
-			while (MatchAssignment(block.Instructions.ElementAtOrDefault(pos), out var resultVariable)) {
+			info = default;
+			inputInstruction = null;
+			if (!inst.MatchStLoc(out outputVariable, out var value))
+				return false;
+			if (!(value is Conv conv))
+				return false;
+			info = new ConversionInfo {
+				inputType = conv.Argument.InferType(context.TypeSystem),
+				conv = conv
+			};
+			inputInstruction = conv.Argument;
+			return true;
+		}
+
+		bool MatchAssignments(Block block, ref int pos,
+			Dictionary<ILVariable, int> deconstructionResultsLookup,
+			Dictionary<ILVariable, ConversionInfo> conversions,
+			List<StLoc> conversionStLocs,
+			ref Action<DeconstructInstruction> delayedActions)
+		{
+			int previousIndex = -1;
+			int conversionStLocIndex = 0;
+			int startPos = pos;
+			while (MatchAssignment(block.Instructions.ElementAtOrDefault(pos), out var targetType, out var valueInst, out var addAssignment)) {
+				if (!valueInst.MatchLdLoc(out var resultVariable))
+					return false;
 				if (!deconstructionResultsLookup.TryGetValue(resultVariable, out int index))
 					return false;
-				if (index != expectedIndex)
+				if (index <= previousIndex)
 					return false;
-				assignments.Add(block.Instructions[pos]);
+				AddMissingAssignmentsForConversions(index, ref delayedActions);
+				if (!conversions.TryGetValue(resultVariable, out var conversionInfo)) {
+					conversionInfo = new ConversionInfo {
+						inputType = resultVariable.Type
+					};
+				}
+				if (block.Instructions[pos].MatchStLoc(out var assignmentTarget, out _)
+					&& assignmentTarget.Kind == VariableKind.StackSlot
+					&& assignmentTarget.IsSingleDefinition
+					&& conversionInfo.conv == null)
+				{
+					delayedActions += _ => {
+						assignmentTarget.Type = conversionInfo.inputType;
+					};
+				}
+				else
+				{
+					if (!IsCompatibleImplicitConversion(targetType, conversionInfo))
+						return false;
+				}
+				delayedActions += addAssignment;
 				pos++;
-				expectedIndex++;
+				previousIndex = index;
 			}
-			return assignments.Count > 0;
+			AddMissingAssignmentsForConversions(int.MaxValue, ref delayedActions);
+			return startPos != pos;
+
+			void AddMissingAssignmentsForConversions(int index, ref Action<DeconstructInstruction> delayedActions)
+			{
+				while (conversionStLocIndex < conversionStLocs.Count) {
+					var stLoc = conversionStLocs[conversionStLocIndex];
+					int conversionResultIndex = deconstructionResultsLookup[stLoc.Variable];
+
+					if (conversionResultIndex >= index)
+						break;
+					if (conversionResultIndex > previousIndex) {
+						delayedActions += (DeconstructInstruction deconstructInst) => {
+							var freshVar = context.Function.RegisterVariable(VariableKind.StackSlot, stLoc.Variable.Type);
+							deconstructInst.Assignments.Instructions.Add(new StLoc(stLoc.Variable, new LdLoc(freshVar)));
+							stLoc.Variable = freshVar;
+						};
+						
+					}
+					conversionStLocIndex++;
+				}
+			}
 		}
 
-		bool MatchAssignment(ILInstruction inst, out ILVariable resultVariable)
+		bool MatchAssignment(ILInstruction inst, out IType targetType, out ILInstruction valueInst, out Action<DeconstructInstruction> addAssignment)
 		{
-			resultVariable = null;
+			addAssignment = null;
 			if (inst.MatchStLoc(out var v, out var value)
-				&& value is Block block && block.MatchInlineAssignBlock(out var call, out var valueInst)) {
-				if (!DeconstructInstruction.IsAssignment(call, out _))
+				&& value is Block block && block.MatchInlineAssignBlock(out var call, out valueInst)) {
+				if (!DeconstructInstruction.IsAssignment(call, out targetType, out _))
 					return false;
 				if (!(v.IsSingleDefinition && v.LoadCount == 0))
 					return false;
-			} else if (DeconstructInstruction.IsAssignment(inst, out valueInst)) {
+				var valueInstCopy = valueInst;
+				addAssignment = (DeconstructInstruction deconstructInst) => {
+					call.Arguments[call.Arguments.Count - 1] = valueInstCopy;
+					deconstructInst.Assignments.Instructions.Add(call);
+				};
+				return true;
+			} else if (DeconstructInstruction.IsAssignment(inst, out targetType, out valueInst)) {
 				// OK - use the assignment as is
+				addAssignment = (DeconstructInstruction deconstructInst) => {
+					deconstructInst.Assignments.Instructions.Add(inst);
+				};
+				return true;
 			} else {
 				return false;
 			}
-			if (!valueInst.MatchLdLoc(out resultVariable))
-				return false;
-			return true;
 		}
 
-		void TransformAssignments(DeconstructInstruction replacement, List<ILInstruction> assignments)
+		bool IsCompatibleImplicitConversion(IType targetType, ConversionInfo conversionInfo)
 		{
-			replacement.Assignments = new Block(BlockKind.DeconstructionAssignments);
-			foreach (var assignment in assignments) {
-				var transformed = assignment;
-				if (transformed.MatchStLoc(out _, out var value)
-					&& value is Block block
-					&& block.MatchInlineAssignBlock(out var call, out value)) {
-					call.Arguments[call.Arguments.Count - 1] = value;
-					transformed = call;
-				}
-				
-				replacement.Assignments.Instructions.Add(transformed);
+			var c = CSharpConversions.Get(context.TypeSystem)
+				.ImplicitConversion(conversionInfo.inputType, targetType);
+			if (!c.IsValid)
+				return false;
+			var inputType = conversionInfo.inputType;
+			var conv = conversionInfo.conv;
+			if (c.IsIdentityConversion) {
+				return conv == null || conv.Kind == ConversionKind.Nop;
 			}
+			if (c.IsNumericConversion) {
+				switch (conv.Kind) {
+					case ConversionKind.IntToFloat:
+						return inputType.GetSign() == conv.InputSign;
+					case ConversionKind.FloatPrecisionChange:
+						return true;
+					case ConversionKind.SignExtend:
+						return inputType.GetSign() == Sign.Signed;
+					case ConversionKind.ZeroExtend:
+						return inputType.GetSign() == Sign.Unsigned;
+					default:
+						return false;
+				}
+			}
+			return false;
 		}
 	}
 }
