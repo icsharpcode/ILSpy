@@ -407,7 +407,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			var inputType = conversionInfo.inputType;
 			var conv = conversionInfo.conv;
-			if (c.IsIdentityConversion) {
+			if (c.IsIdentityConversion || c.IsReferenceConversion) {
 				return conv == null || conv.Kind == ConversionKind.Nop;
 			}
 			if (c.IsNumericConversion) {
