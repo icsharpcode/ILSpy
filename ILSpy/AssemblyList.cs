@@ -112,6 +112,26 @@ namespace ICSharpCode.ILSpy
 		void Assemblies_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			ClearCache();
+			if (CollectionChangeHasEffectOnSave(e)) {
+				RefreshSave();
+			}
+		}
+
+		static bool CollectionChangeHasEffectOnSave(NotifyCollectionChangedEventArgs e )
+		{
+			// Auto-loading dependent assemblies shouldn't trigger saving the assembly list
+			switch (e.Action) {
+				case NotifyCollectionChangedAction.Add:
+					return e.NewItems.Cast<LoadedAssembly>().Any(asm => !asm.IsAutoLoaded);
+				case NotifyCollectionChangedAction.Remove:
+					return e.OldItems.Cast<LoadedAssembly>().Any(asm => !asm.IsAutoLoaded);
+				default:
+					return true;
+			}
+		}
+
+		internal void RefreshSave()
+		{
 			// Whenever the assembly list is modified, mark it as dirty
 			// and enqueue a task that saves it once the UI has finished modifying the assembly list.
 			if (!dirty) {
@@ -120,24 +140,10 @@ namespace ICSharpCode.ILSpy
 					DispatcherPriority.Background,
 					new Action(
 						delegate {
-							dirty = false;
-							AssemblyListManager.SaveList(this);
-							ClearCache();
-						})
-				);
-			}
-		}
-
-		internal void RefreshSave()
-		{
-			if (!dirty) {
-				dirty = true;
-				App.Current.Dispatcher.BeginInvoke(
-					DispatcherPriority.Background,
-					new Action(
-						delegate {
-							dirty = false;
-							AssemblyListManager.SaveList(this);
+							if (dirty) {
+								dirty = false;
+								AssemblyListManager.SaveList(this);
+							}
 						})
 				);
 			}
