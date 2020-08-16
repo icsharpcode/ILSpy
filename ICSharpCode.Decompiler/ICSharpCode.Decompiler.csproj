@@ -640,13 +640,25 @@
   </ItemGroup>
 
   <Target Name="ILSpyUpdateAssemblyInfo" BeforeTargets="BeforeBuild">
+    <ItemGroup>
+      <UpdateAssemblyInfoStamp Include="obj\update-assemblyinfo-last-commit-hash.txt" />
+    </ItemGroup>
     <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
       <UpdateAssemblyInfo>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/update-assemblyinfo.ps1 $(Configuration)</UpdateAssemblyInfo>
+      <GitRevParse>git rev-parse HEAD^^{commit}</GitRevParse>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
       <UpdateAssemblyInfo>pwsh -NoProfile -ExecutionPolicy Bypass -File BuildTools/update-assemblyinfo.ps1 $(Configuration)</UpdateAssemblyInfo>
+      <GitRevParse>git rev-parse HEAD^{commit}</GitRevParse>
     </PropertyGroup>
-    <Exec WorkingDirectory=".." Command="$(UpdateAssemblyInfo)" Timeout="60000" />
+    <ReadLinesFromFile ContinueOnError="true" File="@(UpdateAssemblyInfoStamp)">
+      <Output TaskParameter="Lines" PropertyName="LastCommitHash" />
+    </ReadLinesFromFile>
+    <Exec ContinueOnError="true" WorkingDirectory=".." Command="$(GitRevParse)" ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="CommitHash" />
+    </Exec>
+    <Exec WorkingDirectory=".." Command="$(UpdateAssemblyInfo)" Timeout="60000" Condition="'$(CommitHash)'!='$(LastCommitHash)'" />
+    <WriteLinesToFile Lines="$(CommitHash)" File="@(UpdateAssemblyInfoStamp)" Overwrite="true" Condition="'$(CommitHash)'!='$(LastCommitHash)'" />
   </Target>
   
 </Project>

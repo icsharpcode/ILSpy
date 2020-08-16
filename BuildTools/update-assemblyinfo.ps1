@@ -53,7 +53,7 @@ function gitCommitHash() {
     if (No-Git) {
         return "0000000000000000000000000000000000000000";
     }
-    return (git rev-list "$baseCommit..HEAD") | Select -First 1;
+    return (git rev-list --max-count 1 HEAD);
 }
 
 function gitBranch() {
@@ -150,7 +150,7 @@ try {
         $out = $out.Replace('$INSERTVERSIONNAMEPOSTFIX$', $postfixVersionName);
         $out = $out.Replace('$INSERTBUILDCONFIG$', $buildConfig);
 
-        if (((Get-Content $file.Input) -Join [System.Environment]::NewLine) -ne $out) {
+        if (((Get-Content $file.Output) -Join [System.Environment]::NewLine) -ne $out) {
             $out | Out-File -Encoding utf8 $file.Output;
         }
     }
@@ -174,7 +174,7 @@ try {
 			$out = $out.Replace('$INSERTVERSIONNAMEPOSTFIX$', $postfixVersionName);
 			$out = $out.Replace('$INSERTBUILDCONFIG$', $buildConfig);
 
-			if (((Get-Content $file.Input) -Join [System.Environment]::NewLine) -ne $out) {
+			if (((Get-Content $file.Output) -Join [System.Environment]::NewLine) -ne $out) {
 				$out | Out-File -Encoding utf8 $file.Output;
 			}
 		}
