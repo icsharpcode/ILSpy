@@ -150,7 +150,7 @@ try {
         $out = $out.Replace('$INSERTVERSIONNAMEPOSTFIX$', $postfixVersionName);
         $out = $out.Replace('$INSERTBUILDCONFIG$', $buildConfig);
 
-        if (((Get-Content $file.Output) -Join [System.Environment]::NewLine) -ne $out) {
+        if ((-not (Test-File $file.Output)) -or (((Get-Content $file.Output) -Join [System.Environment]::NewLine) -ne $out)) {
             $out | Out-File -Encoding utf8 $file.Output;
         }
     }
@@ -174,7 +174,7 @@ try {
 			$out = $out.Replace('$INSERTVERSIONNAMEPOSTFIX$', $postfixVersionName);
 			$out = $out.Replace('$INSERTBUILDCONFIG$', $buildConfig);
 
-			if (((Get-Content $file.Output) -Join [System.Environment]::NewLine) -ne $out) {
+			if ((-not (Test-File $file.Output)) -or (((Get-Content $file.Output) -Join [System.Environment]::NewLine) -ne $out)) {
 				$out | Out-File -Encoding utf8 $file.Output;
 			}
 		}
