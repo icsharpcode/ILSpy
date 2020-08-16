@@ -132,6 +132,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Property_IntToUIntConversion();
 			NoDeconstruction_NotUsingConver();
 			NoDeconstruction_NotUsingConver_Tuple();
+			NullReferenceException_Field_Deconstruction(out _);
+			NullReferenceException_RefLocalReferencesField_Deconstruction(out _);
 		}
 
 		public void Property_NoDeconstruction_SwappedAssignments()
@@ -185,6 +187,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			t0.IntProperty = t.Item1;
 			t0.UIntProperty = t.Item2;
 			Console.WriteLine(c);
+		}
+
+		public void NullReferenceException_Field_Deconstruction(out int a)
+		{
+			try {
+				AssignmentTargets t0 = null;
+				(t0.IntField, a) = GetSource<int, int>();
+			} catch (Exception ex) {
+				a = 0;
+				Console.WriteLine(ex.GetType().FullName);
+			}
+		}
+
+		public void NullReferenceException_RefLocalReferencesField_Deconstruction(out int a)
+		{
+			try {
+				AssignmentTargets t0 = null;
+				ref int i = ref t0.IntField;
+				(i, a) = GetSource<int, int>();
+			} catch (Exception ex) {
+				a = 0;
+				Console.WriteLine(ex.GetType().FullName);
+			}
 		}
 	}
 }

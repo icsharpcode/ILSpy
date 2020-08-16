@@ -204,7 +204,7 @@ namespace ICSharpCode.Decompiler.IL
 			return input.MatchLdLoc(out inputVariable) || input.MatchLdLoca(out inputVariable);
 		}
 
-		internal static bool IsAssignment(ILInstruction inst, out IType expectedType, out ILInstruction value)
+		internal static bool IsAssignment(ILInstruction inst, ICompilation typeSystem, out IType expectedType, out ILInstruction value)
 		{
 			expectedType = null;
 			value = null;
@@ -229,8 +229,19 @@ namespace ICSharpCode.Decompiler.IL
 					value = stloc.Value;
 					return true;
 				case StObj stobj:
-					// TODO
-					return false;
+					var target = stobj.Target;
+					if (target.Flags == InstructionFlags.None) {
+						// OK - we accept integer literals, etc.
+					} else if (target.MatchLdLoc(out var v)) {
+					} else {
+						return false;
+					}
+					if (target.InferType(typeSystem) is ByReferenceType brt)
+						expectedType = brt.ElementType;
+					else
+						expectedType = SpecialType.UnknownType;
+					value = stobj.Value;
+					return true;
 				default:
 					return false;
 			}
@@ -260,7 +271,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(this.conversions.FinalInstruction is Nop);
 
 			foreach (var inst in assignments.Instructions) {
-				if (!(IsAssignment(inst, out _, out var value) && value.MatchLdLoc(out var inputVariable)))
+				if (!(IsAssignment(inst, typeSystem: null, out _, out var value) && value.MatchLdLoc(out var inputVariable)))
 					throw new InvalidOperationException("inst is not an assignment!");
 				Debug.Assert(patternVariables.Contains(inputVariable) || conversionVariables.Contains(inputVariable));
 			}

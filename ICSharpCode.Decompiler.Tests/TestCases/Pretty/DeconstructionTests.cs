@@ -117,6 +117,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return null;
 		}
 
+		private ref T GetRef<T>()
+		{
+			throw new NotImplementedException();
+		}
+
 		private (T, T2) GetTuple<T, T2>()
 		{
 			return default((T, T2));
@@ -220,6 +225,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void Tuple_Property_NoConversion_DiscardLast()
 		{
 			(Get(0).NMy, Get(1).My, _) = GetTuple<MyInt?, MyInt, int>();
+		}
+
+		public void RefLocal_FloatToDoubleConversion(out double a)
+		{
+			(a, GetRef<double>()) = GetSource<double, float>();
 		}
 	}
 }

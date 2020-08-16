@@ -140,10 +140,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <summary>
-		/// stloc v(lhs)
+		/// stloc v(value)
 		/// expr(..., deconstruct { ... }, ...)
 		/// =>
-		/// expr(..., deconstruct { init: stloc v(lhs) ... }, ...)
+		/// expr(..., deconstruct { init: stloc v(value) ... }, ...)
 		/// </summary>
 		bool InlineDeconstructionInitializer(Block block, int pos)
 		{
@@ -157,8 +157,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (result.Type != ILInlining.FindResultType.Deconstruction)
 				return false;
 			var deconstruction = (DeconstructInstruction)result.LoadInst;
-			if (!v.LoadInstructions[0].IsDescendantOf(deconstruction.Assignments))
+			LdLoc loadInst = v.LoadInstructions[0];
+			if (!loadInst.IsDescendantOf(deconstruction.Assignments))
 				return false;
+			if (loadInst.SlotInfo == StObj.TargetSlot) {
+				if (value.OpCode == OpCode.LdFlda || value.OpCode == OpCode.LdElema)
+					return false;
+			}
 			if (deconstruction.Init.Count > 0) {
 				var a = deconstruction.Init[0].Variable.LoadInstructions.Single();
 				var b = v.LoadInstructions.Single();
@@ -378,7 +383,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (inst.MatchStLoc(out var v, out var value)
 				&& value is Block block && block.MatchInlineAssignBlock(out var call, out valueInst)) {
-				if (!DeconstructInstruction.IsAssignment(call, out targetType, out _))
+				if (!DeconstructInstruction.IsAssignment(call, context.TypeSystem, out targetType, out _))
 					return false;
 				if (!(v.IsSingleDefinition && v.LoadCount == 0))
 					return false;
@@ -388,7 +393,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					deconstructInst.Assignments.Instructions.Add(call);
 				};
 				return true;
-			} else if (DeconstructInstruction.IsAssignment(inst, out targetType, out valueInst)) {
+			} else if (DeconstructInstruction.IsAssignment(inst, context.TypeSystem, out targetType, out valueInst)) {
 				// OK - use the assignment as is
 				addAssignment = (DeconstructInstruction deconstructInst) => {
 					deconstructInst.Assignments.Instructions.Add(inst);

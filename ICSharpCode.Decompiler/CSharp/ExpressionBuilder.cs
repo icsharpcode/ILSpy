@@ -3435,21 +3435,30 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 					case CallInstruction call:
 						for (int i = 0; i < call.Arguments.Count - 1; i++) {
-							if (call.Arguments[i].MatchLdLoc(out var v)
-								&& v.Kind == VariableKind.DeconstructionInitTemporary) 
-							{
-								Debug.Assert(inits[initPos].Variable == v);
-								call.Arguments[i] = inits[initPos].Value;
-								initPos++;
-							}
+							ReplaceAssignmentTarget(call.Arguments[i]);
 						}
 						Debug.Assert(call.Arguments.Last().MatchLdLoc(value));
+						break;
+					case StObj stobj:
+						ReplaceAssignmentTarget(stobj.Target);
+						Debug.Assert(stobj.Value.MatchLdLoc(value));
 						break;
 					default:
 						throw new NotSupportedException();
 				}
 				var expr = Translate(assignment);
 				return expr.UnwrapChild(((AssignmentExpression)expr).Left);
+			}
+
+			void ReplaceAssignmentTarget(ILInstruction target)
+			{
+				if (target.MatchLdLoc(out var v)
+					&& v.Kind == VariableKind.DeconstructionInitTemporary)
+				{
+					Debug.Assert(inits[initPos].Variable == v);
+					target.ReplaceWith(inits[initPos].Value);
+					initPos++;
+				}
 			}
 		}
 
