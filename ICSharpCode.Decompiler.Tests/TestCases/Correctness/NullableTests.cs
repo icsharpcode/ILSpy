@@ -27,7 +27,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			AvoidLifting();
 			BitNot();
 			FieldAccessOrderOfEvaluation(null);
+			FieldAccessOrderOfEvaluationWithStruct(null);
 			ArrayAccessOrderOfEvaluation();
+		}
+
+		struct SomeStruct
+		{
+			public int IntField;
 		}
 
 		static void AvoidLifting()
@@ -107,6 +113,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 #if CS60
 				ref int i = ref c.intField;
 				i = GetValue<int>();
+#endif
+			} catch (Exception ex) {
+				Console.WriteLine(ex.Message);
+			}
+		}
+
+		SomeStruct structField;
+
+		static void FieldAccessOrderOfEvaluationWithStruct(NullableTests c)
+		{
+			Console.WriteLine("GetInt, then NRE (with struct):");
+			try {
+				c.structField.IntField = GetValue<int>();
+			} catch (Exception ex) {
+				Console.WriteLine(ex.Message);
+			}
+			Console.WriteLine("NRE before GetInt (with struct):");
+			try {
+#if CS60
+				ref SomeStruct s = ref c.structField;
+				s.IntField = GetValue<int>();
 #endif
 			} catch (Exception ex) {
 				Console.WriteLine(ex.Message);
