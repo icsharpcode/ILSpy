@@ -504,6 +504,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				//case OpCode.BinaryNumericInstruction when parent.SlotInfo == SwitchInstruction.ValueSlot:
 				case OpCode.StringToInt when parent.SlotInfo == SwitchInstruction.ValueSlot:
 					return true;
+				case OpCode.MatchInstruction when ((MatchInstruction)parent).IsDeconstructTuple:
+					return true;
 			}
 			// decide based on the top-level target instruction into which we are inlining:
 			switch (next.OpCode) {

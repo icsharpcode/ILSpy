@@ -268,7 +268,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			void ValidatePattern(MatchInstruction inst)
 			{
-				Debug.Assert(inst.IsDeconstructCall);
+				Debug.Assert(inst.IsDeconstructCall || inst.IsDeconstructTuple);
 				Debug.Assert(!inst.CheckNotNull && !inst.CheckType);
 				Debug.Assert(!inst.HasDesignator);
 				foreach (var subPattern in inst.SubPatterns.Cast<MatchInstruction>()) {

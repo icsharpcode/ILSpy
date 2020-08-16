@@ -45,6 +45,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public ImmutableArray<IType> ElementTypes { get; }
 
 		/// <summary>
+		/// Gets the cardinality of the tuple.
+		/// </summary>
+		public int Cardinality => ElementTypes.Length;
+
+		/// <summary>
 		/// Gets the names of the tuple elements.
 		/// </summary>
 		public ImmutableArray<string> ElementNames { get; }

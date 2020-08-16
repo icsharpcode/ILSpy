@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -87,7 +88,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 		 */
 
-		public bool IsVar => !CheckType && !CheckNotNull && !IsDeconstructCall && SubPatterns.Count == 0;
+		public bool IsVar => !CheckType && !CheckNotNull && !IsDeconstructCall && !IsDeconstructTuple && SubPatterns.Count == 0;
 
 		public bool HasDesignator => Variable.LoadCount + Variable.AddressCount > SubPatterns.Count;
 
@@ -95,6 +96,8 @@ namespace ICSharpCode.Decompiler.IL
 			get {
 				if (IsDeconstructCall)
 					return method.Parameters.Count - (method.IsStatic ? 1 : 0);
+				else if (IsDeconstructTuple)
+					return TupleType.GetTupleElementTypes(variable.Type).Length;
 				else
 					return 0;
 			}
@@ -145,11 +148,20 @@ namespace ICSharpCode.Decompiler.IL
 			};
 		}
 
-		internal IParameter GetDeconstructResult(int index)
+		internal IType GetDeconstructResultType(int index)
 		{
-			Debug.Assert(this.IsDeconstructCall);
-			int firstOutParam = (method.IsStatic ? 1 : 0);
-			return this.Method.Parameters[firstOutParam + index];
+			if (this.IsDeconstructCall) {
+				int firstOutParam = (method.IsStatic ? 1 : 0);
+				var outParamType = this.Method.Parameters[firstOutParam + index].Type;
+				if (!(outParamType is ByReferenceType brt))
+					throw new InvalidOperationException("deconstruct out param must be by reference");
+				return brt.ElementType;
+			}
+			if (this.IsDeconstructTuple) {
+				var elementTypes = TupleType.GetTupleElementTypes(this.variable.Type);
+				return elementTypes[index];
+			}
+			throw new InvalidOperationException("GetDeconstructResultType requires a deconstruct pattern");
 		}
 
 		void AdditionalInvariants()
@@ -157,8 +169,13 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(variable.Kind == VariableKind.PatternLocal);
 			if (this.IsDeconstructCall) {
 				Debug.Assert(IsDeconstructMethod(method));
-				Debug.Assert(SubPatterns.Count >= NumPositionalPatterns);
+			} else {
+				Debug.Assert(method == null);
 			}
+			if (this.IsDeconstructTuple) {
+				Debug.Assert(variable.Type.Kind == TypeKind.Tuple);
+			}
+			Debug.Assert(SubPatterns.Count >= NumPositionalPatterns);
 			foreach (var subPattern in SubPatterns) {
 				if (!IsPatternMatch(subPattern, out ILInstruction operand))
 					Debug.Fail("Sub-Pattern must be a valid pattern");
@@ -223,6 +240,9 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(".deconstruct[");
 				method.WriteTo(output);
 				output.Write(']');
+			}
+			if (IsDeconstructTuple) {
+				output.Write(".tuple");
 			}
 			output.Write(' ');
 			output.Write('(');

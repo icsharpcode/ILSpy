@@ -58,13 +58,10 @@ namespace ICSharpCode.Decompiler.IL
 		void AdditionalInvariants()
 		{
 			var matchInst = FindMatch();
-			Debug.Assert(matchInst != null && matchInst.IsDeconstructCall);
+			Debug.Assert(matchInst != null && (matchInst.IsDeconstructCall || matchInst.IsDeconstructTuple));
 			Debug.Assert(Argument.MatchLdLoc(matchInst.Variable));
-			var outParamType = matchInst.GetDeconstructResult(this.Index).Type;
-			if (outParamType is ByReferenceType brt)
-				Debug.Assert(brt.ElementType.GetStackType() == ResultType);
-			else
-				Debug.Fail("deconstruct out param must be by reference");
+			var outParamType = matchInst.GetDeconstructResultType(this.Index);
+			Debug.Assert(outParamType.GetStackType() == ResultType);
 		}
 	}
 }

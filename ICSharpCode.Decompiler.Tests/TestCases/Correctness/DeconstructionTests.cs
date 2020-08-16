@@ -107,6 +107,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			return new DeconstructionSource<T, T2>();
 		}
 
+		private (T, T2) GetTuple<T, T2>()
+		{
+			Console.WriteLine("GetTuple<T, T2>()");
+			return default(ValueTuple<T, T2>);
+		}
+
+		private (T, T2, T3) GetTuple<T, T2, T3>()
+		{
+			Console.WriteLine("GetTuple<T, T2, T3>()");
+			return default(ValueTuple<T, T2, T3>);
+		}
+
 		private AssignmentTargets Get(int i)
 		{
 			Console.WriteLine($"Get({i})");
@@ -118,6 +130,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Property_NoDeconstruction_SwappedAssignments();
 			Property_NoDeconstruction_SwappedInits();
 			Property_IntToUIntConversion();
+			NoDeconstruction_NotUsingConver();
+			NoDeconstruction_NotUsingConver_Tuple();
 		}
 
 		public void Property_NoDeconstruction_SwappedAssignments()
@@ -147,6 +161,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			GetSource<int, uint>().Deconstruct(out a, out b);
 			t0.UIntProperty = (uint)a;
 			t1.IntProperty = (int)b;
+		}
+
+		public void NoDeconstruction_NotUsingConver()
+		{
+			Console.WriteLine("NoDeconstruction_NotUsingConver:");
+			AssignmentTargets t0 = Get(0);
+			int a;
+			uint b;
+			GetSource<int, uint>().Deconstruct(out a, out b);
+			long c = a;
+			t0.IntProperty = a;
+			t0.UIntProperty = b;
+			Console.WriteLine(c);
+		}
+
+		public void NoDeconstruction_NotUsingConver_Tuple()
+		{
+			Console.WriteLine("NoDeconstruction_NotUsingConver_Tuple:");
+			AssignmentTargets t0 = Get(0);
+			var t = GetTuple<int, uint>();
+			long c = t.Item1;
+			t0.IntProperty = t.Item1;
+			t0.UIntProperty = t.Item2;
+			Console.WriteLine(c);
 		}
 	}
 }

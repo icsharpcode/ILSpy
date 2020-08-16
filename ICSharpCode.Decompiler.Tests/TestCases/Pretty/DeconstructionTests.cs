@@ -117,6 +117,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return null;
 		}
 
+		private (T, T2) GetTuple<T, T2>()
+		{
+			return default((T, T2));
+		}
+
+		private (T, T2, T3) GetTuple<T, T2, T3>()
+		{
+			return default((T, T2, T3));
+		}
+
 		private AssignmentTargets Get(int i)
 		{
 			return null;
@@ -200,6 +210,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void Property_NoConversion_DiscardLast()
 		{
 			(Get(0).NMy, _) = GetSource<MyInt?, MyInt>();
+		}
+
+		public void Tuple_Property_NoConversion()
+		{
+			(Get(0).NMy, Get(1).My) = GetTuple<MyInt?, MyInt>();
 		}
 	}
 }
