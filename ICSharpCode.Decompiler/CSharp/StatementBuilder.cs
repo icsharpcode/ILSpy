@@ -426,7 +426,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				disposeType = exprBuilder.compilation.FindType(KnownTypeCode.IDisposable);
 				disposeTypeMethodName = "Dispose";
 			}
-			if (!inst.ResourceExpression.MatchLdNull() && !NullableType.GetUnderlyingType(var.Type).GetAllBaseTypes().Any(b => b.IsKnownType(knownTypeCode))) {
+			if (!IsValidInCSharp(inst, knownTypeCode)) {
 				Debug.Assert(var.Kind == VariableKind.UsingLocal);
 				var.Kind = VariableKind.Local;
 				var disposeVariable = currentFunction.RegisterVariable(
@@ -462,6 +462,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					IsAsync = inst.IsAsync,
 					EmbeddedStatement = ConvertAsBlock(inst.Body)
 				}.WithILInstruction(inst);
+			}
+
+			bool IsValidInCSharp(UsingInstruction inst, KnownTypeCode code)
+			{
+				if (inst.ResourceExpression.MatchLdNull())
+					return true;
+				if (inst.IsRefStruct)
+					return true;
+				return NullableType.GetUnderlyingType(var.Type).GetAllBaseTypes().Any(b => b.IsKnownType(code));
 			}
 		}
 

@@ -39,6 +39,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if CS80
+		[StructLayout(LayoutKind.Sequential, Size = 1)]
+		public ref struct UsingRefStruct
+		{
+			public int i;
+
+			public UsingRefStruct(int i)
+			{
+				this.i = i;
+				Console.WriteLine(i);
+			}
+
+			public void Dispose()
+			{
+				throw new NotImplementedException();
+			}
+		}
+#endif
+
 #if LEGACY_CSC
 		// roslyn optimizes out the try-finally; mcs has a compiler bug on using(null-literal)
 		public void SimpleUsingNullStatement()
@@ -121,5 +140,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine(t);
 			}
 		}
+
+#if CS80
+		public void UsingRefStruct1(UsingRefStruct s)
+		{
+			using (s) {
+				Console.WriteLine(s.i);
+			}
+		}
+#endif
 	}
 }
