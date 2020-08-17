@@ -23,6 +23,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			set;
 		} = 4;
 
+		public string value {
+			get;
+			set;
+		}
+
 		[Obsolete("Property")]
 		[field: Obsolete("Field")]
 		public int PropertyWithAttributeOnBackingField {

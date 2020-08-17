@@ -244,7 +244,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			// in PatternStatementTransform, then we have to do the "requires qualifier"-check based on the property instead of the field.
 			// It is easier to solve this special case here than in PatternStatementTransform, because here we perform all resolver checks.
 			// It feels a bit hacky, though.
-			if (settings.AutomaticProperties && PatternStatementTransform.IsBackingFieldOfAutomaticProperty(field, out var property)) {
+			if (settings.AutomaticProperties
+				&& PatternStatementTransform.IsBackingFieldOfAutomaticProperty(field, out var property)
+				&& !(this.decompilationContext.CurrentMember == property))
+			{
 				requireTarget = RequiresQualifier(property, target);
 			} else {
 				requireTarget = RequiresQualifier(field, target);
