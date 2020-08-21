@@ -649,6 +649,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Always qualify member references.
+        /// </summary>
+        public static string DecompilerSettings_AlwaysQualifyMemberReferences {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.AlwaysQualifyMemberReferences", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Always show enum member values.
         /// </summary>
         public static string DecompilerSettings_AlwaysShowEnumMemberValues {
