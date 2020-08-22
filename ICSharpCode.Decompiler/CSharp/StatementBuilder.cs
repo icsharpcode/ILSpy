@@ -810,6 +810,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var expectedType = deconstruction.Pattern.Variable.Type;
 			if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(operandType, expectedType))
 				return false;
+			var usedVariables = new HashSet<ILVariable>(ILVariableEqualityComparer.Instance);
 			foreach (var item in deconstruction.Assignments.Instructions) {
 				if (!item.MatchStLoc(out var v, out var value))
 					return false;
@@ -821,6 +822,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (!VariableIsOnlyUsedInBlock((StLoc)item, usingContainer, loopContainer))
 					return false;
 				if (!(v.CaptureScope == null || v.CaptureScope == usingContainer))
+					return false;
+				if (!usedVariables.Add(v))
 					return false;
 			}
 			return true;

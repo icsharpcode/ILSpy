@@ -450,7 +450,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					if (!inst.MatchStLoc(out var v, out var value))
 						return false;
-					if (!g.Any(vd => vd.ILVariable == v))
+					if (!g.Any(vd => vd.ILVariable == v && !vd.RemovedDueToCollision))
 						return false;
 					if (!usedVariables.Add(v))
 						return false;
