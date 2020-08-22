@@ -420,9 +420,81 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			(a, GetRef<double>()) = GetSource<double, float>();
 		}
 
+		public void RefLocal_FloatToDoubleConversion_Custom2(out double a)
+		{
+			(a, GetRef<double>()) = GetSource<float, float>();
+		}
+
 		public void RefLocal_FloatToDoubleConversion_Tuple(out double a)
 		{
 			(a, GetRef<double>()) = GetTuple<double, float>();
+		}
+
+		public void RefLocal_NoConversion_Custom(out MyInt? a)
+		{
+			(a, GetRef<MyInt>()) = GetSource<MyInt?, MyInt>();
+		}
+
+		public void RefLocal_IntToLongConversion_Custom(out long a)
+		{
+			(a, GetRef<long>()) = GetSource<int, int>();
+		}
+
+		// dynamic conversion is not supported
+		//public void RefLocal_ImplicitReferenceConversion_Custom(out object a)
+		//{
+		//	(a, GetRef<dynamic>()) = GetSource<string, string>();
+		//}
+
+		public void RefLocal_NoConversion_Custom_DiscardFirst()
+		{
+			(_, GetRef<MyInt>()) = GetSource<MyInt?, MyInt>();
+		}
+
+		public void RefLocal_NoConversion_Custom_DiscardLast(out MyInt? a)
+		{
+			(a, _) = GetSource<MyInt?, MyInt>();
+		}
+
+		public void RefLocal_NoConversion_Tuple(out MyInt? a)
+		{
+			(a, GetRef<MyInt>()) = GetTuple<MyInt?, MyInt>();
+		}
+
+		public void RefLocal_NoConversion_Tuple_DiscardLast(out MyInt? a)
+		{
+			(a, GetRef<MyInt>(), _) = GetTuple<MyInt?, MyInt, int>();
+		}
+
+		// currently we detect deconstruction, iff the first element is not discarded
+		//public void RefLocal_NoConversion_Tuple_DiscardFirst(out var a)
+		//{
+		//	(_, GetRef<var>(), GetRef<var>()) = GetTuple<MyInt?, MyInt, int>();
+		//}
+
+		public void RefLocal_NoConversion_Custom_DiscardSecond(out MyInt? a)
+		{
+			(a, _, GetRef<int>()) = GetSource<MyInt?, MyInt, int>();
+		}
+
+		public void RefLocal_NoConversion_Tuple_DiscardSecond(out MyInt? a)
+		{
+			(a, _, GetRef<int>()) = GetTuple<MyInt?, MyInt, int>();
+		}
+
+		public void RefLocal_NoConversion_Custom_ReferenceTypes(out string a)
+		{
+			(a, GetRef<string>()) = GetSource<string, string>();
+		}
+
+		public void RefLocal_NoConversion_Tuple_ReferenceTypes(out string a)
+		{
+			(a, GetRef<string>()) = GetTuple<string, string>();
+		}
+
+		public void RefLocal_IntToLongConversion_Tuple(out long a)
+		{
+			(a, GetRef<long>()) = GetTuple<int, int>();
 		}
 
 		//public void ArrayAssign_FloatToDoubleConversion_Custom(double[] arr)
