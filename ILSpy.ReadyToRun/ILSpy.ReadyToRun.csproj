@@ -74,7 +74,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Iced" Version="1.6.0" />
+    <PackageReference Include="Iced" Version="1.8.0" />
     <PackageReference Include="ILCompiler.Reflection.ReadyToRun" Version="1.0.9-alpha" />
   </ItemGroup>
 

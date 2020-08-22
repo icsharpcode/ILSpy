@@ -201,7 +201,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				WriteCommentLine(output, $"UnwindInfo:");
 				WriteCommentLine(output, $"Version:            {amd64UnwindInfo.Version}");
 				WriteCommentLine(output, $"Flags:              0x{amd64UnwindInfo.Flags:X2}{parsedFlags}");
-				WriteCommentLine(output, $"FrameRegister:      {((amd64UnwindInfo.FrameRegister == 0) ? "none" : amd64UnwindInfo.FrameRegister.ToString())}");
+				WriteCommentLine(output, $"FrameRegister:      {((amd64UnwindInfo.FrameRegister == 0) ? "none" : amd64UnwindInfo.FrameRegister.ToString().ToLower())}");
 				for (int unwindCodeIndex = 0; unwindCodeIndex < amd64UnwindInfo.CountOfUnwindCodes; unwindCodeIndex++) {
 					unwindCodes.Add((ulong)(amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex].CodeOffset), amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex]);
 				}
@@ -213,7 +213,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		{
 			// TODO: Decorate the disassembly with GCInfo
 			WriteCommentLine(output, readyToRunMethod.SignatureString);
-			
+
 			Dictionary<ulong, UnwindCode> unwindInfo = null;
 			if (ReadyToRunOptions.GetIsShowUnwindInfo(null) && bitness == 64) {
 				unwindInfo = WriteUnwindInfo(runtimeFunction, output);
@@ -327,7 +327,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 							if (varInfo.StartOffset < instr.IP - baseInstrIP && varInfo.EndOffset > instr.IP - baseInstrIP &&
 								DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varInfo.VariableLocation.Data1) == usedMemInfo.Base.ToString() &&
 								adjOffset == usedMemInfo.Displacement) {
-								output.Write($"; [{usedMemInfo.Base.ToString()}{(negativeOffset ? '-' : '+')}{Math.Abs(stackOffset)}] = {varInfo.Variable.Type} {varInfo.Variable.Index}");
+								output.Write($"; [{usedMemInfo.Base.ToString().ToLower()}{(negativeOffset ? '-' : '+')}{Math.Abs(stackOffset):X}h] = {varInfo.Variable.Type} {varInfo.Variable.Index}");
 							}
 						}
 					}
@@ -347,15 +347,16 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						foreach ((DebugInfo debugInfo, NativeVarInfo varLoc) tuple in regSet) {
 							var debugInfo = tuple.debugInfo;
 							var varInfo = tuple.varLoc;
-							if (varInfo.StartOffset < instr.IP - baseInstrIP && varInfo.EndOffset > instr.IP - baseInstrIP &&
+							if (varInfo.StartOffset <= (instr.IP - baseInstrIP) && (instr.IP - baseInstrIP) < varInfo.EndOffset &&
 								DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varInfo.VariableLocation.Data1) == usedMemInfo.Register.ToString()) {
-								output.Write($"; {usedMemInfo.Register.ToString()} = {varInfo.Variable.Type} {varInfo.Variable.Index}");
+								output.Write($"; {usedMemInfo.Register.ToString().ToLower()} = {varInfo.Variable.Type} {varInfo.Variable.Index}");
 							}
 						}
 					}
 				}
 			}
 		}
+
 		private static void DecorateCallSite(PEFile currentFile, ITextOutput output, ReadyToRunReader reader, bool showMetadataTokens, bool showMetadataTokensInBase10, Instruction instr)
 		{
 			int importCellAddress = (int)instr.IPRelativeMemoryAddress;
