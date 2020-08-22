@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		bool RequiresQualifier(IMember member, TranslatedExpression target)
 		{
-			if (HidesVariableWithName(member.Name))
+			if (settings.AlwaysQualifyMemberReferences || HidesVariableWithName(member.Name))
 				return true;
 			if (member.IsStatic)
 				return !IsCurrentOrContainingType(member.DeclaringTypeDefinition);

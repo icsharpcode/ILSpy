@@ -777,7 +777,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool requireTarget;
 			ResolveResult targetResolveResult;
 			if ((allowedTransforms & CallTransformation.RequireTarget) != 0) {
-				if (expressionBuilder.HidesVariableWithName(method.Name)) {
+				if (settings.AlwaysQualifyMemberReferences || expressionBuilder.HidesVariableWithName(method.Name)) {
 					requireTarget = true;
 				} else {
 					if (method.IsLocalFunction)
@@ -1099,7 +1099,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			TranslatedExpression target, List<TranslatedExpression> arguments, string[] argumentNames)
 		{
 			bool requireTarget;
-			if (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || expressionBuilder.HidesVariableWithName(method.AccessorOwner.Name))
+			if (settings.AlwaysQualifyMemberReferences || method.AccessorOwner.SymbolKind == SymbolKind.Indexer || expressionBuilder.HidesVariableWithName(method.AccessorOwner.Name))
 				requireTarget = true;
 			else if (method.IsStatic)
 				requireTarget = !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition);

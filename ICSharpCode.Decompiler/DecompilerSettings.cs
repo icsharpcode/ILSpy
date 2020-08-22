@@ -619,6 +619,26 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool alwaysQualifyMemberReferences = false;
+
+		/// <summary>
+		/// Gets/Sets whether to always qualify member references.
+		/// true: <c>this.DoSomething();</c>
+		/// false: <c>DoSomething();</c>
+		/// default: false
+		/// </summary>
+		[Category("Other")]
+		[Description("DecompilerSettings.AlwaysQualifyMemberReferences")]
+		public bool AlwaysQualifyMemberReferences {
+			get { return alwaysQualifyMemberReferences; }
+			set {
+				if (alwaysQualifyMemberReferences != value) {
+					alwaysQualifyMemberReferences = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool alwaysShowEnumMemberValues = false;
 
 		/// <summary>

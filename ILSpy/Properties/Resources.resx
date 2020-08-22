@@ -246,6 +246,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls" xml:space="preserve">
     <value>Always cast targets of explicit interface implementation calls</value>
   </data>
+  <data name="DecompilerSettings.AlwaysQualifyMemberReferences" xml:space="preserve">
+    <value>Always qualify member references</value>
+  </data>
   <data name="DecompilerSettings.AlwaysShowEnumMemberValues" xml:space="preserve">
     <value>Always show enum member values</value>
   </data>
