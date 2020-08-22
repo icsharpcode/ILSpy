@@ -227,17 +227,34 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!dest.MatchLdLoc(v) || !src.MatchLdsFlda(out var field) || !size.MatchLdcI4((int)length))
 				return false;
+			if (!(v.IsSingleDefinition && v.LoadCount == 2))
+				return false;
 			if (field.MetadataToken.IsNil)
 				return false;
-			if (!block.Instructions[pos + 1].MatchStLoc(out var finalStore, out var value))
-				return false;
-			if (!value.MatchLdLoc(v))
-				return false;
+			if (!block.Instructions[pos + 1].MatchStLoc(out var finalStore, out var value)) {
+				var otherLoadOfV = v.LoadInstructions.FirstOrDefault(l => !(l.Parent is Cpblk));
+				if (otherLoadOfV == null)
+					return false;
+				finalStore = otherLoadOfV.Parent.Extract();
+				value = ((StLoc)finalStore.StoreInstructions[0]).Value;
+				if (finalStore == null)
+					return false;
+			}
 			var fd = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
 			if (!fd.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
 				return false;
+			if (value.MatchLdLoc(v)) {
+				elementType = ((PointerType)finalStore.Type).ElementType;
+			} else if (value is NewObj { Arguments: { Count: 2 } } newObj
+					&& newObj.Method.DeclaringType.IsKnownType(KnownTypeCode.SpanOfT)
+					&& newObj.Arguments[0].MatchLdLoc(v)
+					&& newObj.Arguments[1].MatchLdcI4((int)length))
+			{
+				elementType = ((ParameterizedType)newObj.Method.DeclaringType).TypeArguments[0];
+			} else {
+				return false;
+			}
 			blob = fd.GetInitialValue(context.PEFile.Reader, context.TypeSystem);
-			elementType = ((PointerType)finalStore.Type).ElementType;
 			return true;
 		}
 

@@ -396,6 +396,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return UseSpan(span);
 		}
 
+		public void Issue2103a()
+		{
+			Span<byte> span = stackalloc byte[3] {
+				1,
+				2,
+				3
+			};
+			Console.WriteLine(span[2] + span[0]);
+		}
+
+		public void Issue2103b()
+		{
+			Span<byte> span = stackalloc byte[3];
+			Console.WriteLine(span[0] + span[1]);
+		}
+
+		public void Issue2103c()
+		{
+			Console.WriteLine((stackalloc byte[3] {
+				1,
+				2,
+				3
+			})[2]);
+		}
+
+		public void Issue2103d()
+		{
+			Console.WriteLine((stackalloc byte[3])[1]);
+		}
+
 		public string UseSpan(Span<int> span)
 		{
 			throw new NotImplementedException();

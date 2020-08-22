@@ -408,7 +408,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var pointerType = new PointerType(elementType);
 			var elementCountInstr = PointerArithmeticOffset.Detect(sizeInBytesInstr, pointerType.ElementType, checkForOverflow: true, unwrapZeroExtension: true);
-			if (elementCountInstr == null || !elementCountInstr.Match(elementCountInstr2).Success)
+			if (elementCountInstr == null || !elementCountInstr.UnwrapConv(ConversionKind.ZeroExtend).Match(elementCountInstr2).Success)
 				return false;
 			return true;
 		}

@@ -189,10 +189,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void VisitIndexerExpression(IndexerExpression indexerExpression)
 		{
 			ParenthesizeIfRequired(indexerExpression.Target, PrecedenceLevel.Primary);
-			ArrayCreateExpression ace = indexerExpression.Target as ArrayCreateExpression;
-			if (ace != null && (InsertParenthesesForReadability || ace.Initializer.IsNull)) {
-				// require parentheses for "(new int[1])[0]"
-				Parenthesize(indexerExpression.Target);
+			switch (indexerExpression.Target) {
+				case ArrayCreateExpression ace when InsertParenthesesForReadability || ace.Initializer.IsNull:
+					// require parentheses for "(new int[1])[0]"
+					Parenthesize(indexerExpression.Target);
+					break;
+				case StackAllocExpression sae when InsertParenthesesForReadability || sae.Initializer.IsNull:
+					// require parentheses for "(stackalloc int[1])[0]"
+					Parenthesize(indexerExpression.Target);
+					break;
 			}
 			base.VisitIndexerExpression(indexerExpression);
 		}
