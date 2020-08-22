@@ -149,63 +149,49 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void LocalVariable_NoConversion()
 		{
-			MyInt? myInt3;
-			MyInt x;
-			(myInt3, x) = GetSource<MyInt?, MyInt>();
+			var (myInt3, x) = GetSource<MyInt?, MyInt>();
 			Console.WriteLine(myInt3);
 			Console.WriteLine(x);
 		}
 
 		public void LocalVariable_NoConversion_DiscardFirst()
 		{
-			MyInt x;
-			int value;
-			(_, x, value) = GetSource<MyInt?, MyInt, int>();
+			var (_, x, value) = GetSource<MyInt?, MyInt, int>();
 			Console.WriteLine(x);
 			Console.WriteLine(value);
 		}
 
 		public void LocalVariable_NoConversion_DiscardLast()
 		{
-			MyInt? myInt3;
-			MyInt x;
-			(myInt3, x, _) = GetSource<MyInt?, MyInt, int>();
+			var (myInt3, x, _) = GetSource<MyInt?, MyInt, int>();
 			Console.WriteLine(myInt3);
 			Console.WriteLine(x);
 		}
 
 		public void LocalVariable_NoConversion_DiscardSecond()
 		{
-			MyInt? myInt3;
-			int value;
-			(myInt3, _, value) = GetSource<MyInt?, MyInt, int>();
+			var (myInt3, _, value) = GetSource<MyInt?, MyInt, int>();
 			Console.WriteLine(myInt3);
 			Console.WriteLine(value);
 		}
 
 		public void LocalVariable_NoConversion_ReferenceTypes()
 		{
-			string value;
-			string value2;
-			(value, value2) = GetSource<string, string>();
+			var (value, value2) = GetSource<string, string>();
 			Console.WriteLine(value);
 			Console.WriteLine(value2);
 		}
 
 		public void LocalVariable_IntToLongConversion()
 		{
-			int value;
-			long value2;
-			(value, value2) = GetSource<int, int>();
+			var (value, value2) = GetSource<int, int>();
 			Console.WriteLine(value);
 			Console.WriteLine(value2);
 		}
 
 		public void LocalVariable_NoConversion_ComplexValue()
 		{
-			MyInt? myInt3;
-			MyInt x;
-			(myInt3, x) = new DeconstructionSource<MyInt?, MyInt> {
+			var (myInt3, x) = new DeconstructionSource<MyInt?, MyInt> {
 				Dummy = 3
 			};
 			Console.WriteLine(myInt3);

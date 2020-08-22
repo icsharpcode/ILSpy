@@ -567,7 +567,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					break;
 				case RequiredGetCurrentTransformation.Deconstruction:
 					useVar = true;
-					designation = TranslateForeachDeconstructionDesignation((DeconstructInstruction)body.Instructions[0]);
+					designation = TranslateDeconstructionDesignation((DeconstructInstruction)body.Instructions[0], isForeach: true);
 					break;
 			}
 
@@ -614,7 +614,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return foreachStmt;
 		}
 
-		VariableDesignation TranslateForeachDeconstructionDesignation(DeconstructInstruction inst)
+		internal static VariableDesignation TranslateDeconstructionDesignation(DeconstructInstruction inst, bool isForeach)
 		{
 			var assignments = inst.Assignments.Instructions;
 			int assignmentPos = 0;
@@ -629,7 +629,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						var designation = new SingleVariableDesignation();
 						if (subPattern.HasDesignator) {
 							ILVariable v = ((StLoc)assignments[assignmentPos]).Variable;
-							v.Kind = VariableKind.ForeachLocal;
+							if (isForeach)
+								v.Kind = VariableKind.ForeachLocal;
 							designation.Identifier = v.Name;
 							designation.AddAnnotation(new ILVariableResolveResult(v));
 							assignmentPos++;
