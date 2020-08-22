@@ -135,6 +135,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			NullReferenceException_Field_Deconstruction(out _);
 			NullReferenceException_RefLocalReferencesField_Deconstruction(out _);
 			NullReferenceException_RefLocalReferencesArrayElement_Deconstruction(out _, null);
+			DeconstructTupleSameVar(("a", "b"));
+			DeconstructTupleListForEachSameVar(new List<(string, string)> { ("a", "b") });
 		}
 
 		public void Property_NoDeconstruction_SwappedAssignments()
@@ -221,6 +223,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			} catch (Exception ex) {
 				a = 0;
 				Console.WriteLine(ex.GetType().FullName);
+			}
+		}
+
+		public void DeconstructTupleSameVar((string, string) tuple)
+		{
+			Console.WriteLine("DeconstructTupleSameVar:");
+			string a;
+			a = tuple.Item1;
+			a = tuple.Item2;
+			Console.WriteLine(a);
+		}
+
+		public void DeconstructTupleListForEachSameVar(List<(string, string)> tuples)
+		{
+			Console.WriteLine("DeconstructTupleListForEachSameVar:");
+			foreach (var tuple in tuples) {
+				string a;
+				a = tuple.Item1;
+				a = tuple.Item2;
+				Console.WriteLine(a);
 			}
 		}
 	}
