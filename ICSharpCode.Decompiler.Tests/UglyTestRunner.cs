@@ -95,7 +95,8 @@ namespace ICSharpCode.Decompiler.Tests
 		public void NoForEachStatement([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
-				ForEachStatement = false
+				ForEachStatement = false,
+				UseEnhancedUsing = false,
 			});
 		}
 
