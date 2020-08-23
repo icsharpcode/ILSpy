@@ -512,7 +512,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			switch (member) {
 				case IMethod method:
-					return (targetVariable => new Call(method) { Arguments = { new LdLoc(targetVariable), value() } }, method.ReturnType);
+					if (method.IsStatic)
+						return (targetVariable => new Call(method) { Arguments = { new LdLoc(targetVariable), value() } }, method.ReturnType);
+					else	
+						return (targetVariable => new CallVirt(method) { Arguments = { new LdLoc(targetVariable), value() } }, method.ReturnType);
 				case IField field:
 					return (targetVariable => new StObj(new LdFlda(new LdLoc(targetVariable), (IField)member) { DelayExceptions = true }, value(), member.ReturnType), field.ReturnType);
 			}
@@ -560,10 +563,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			CallInstruction BuildCall()
 			{
 				CallInstruction call;
-				if (method.IsAbstract || method.IsVirtual || method.IsOverride) {
-					call = new CallVirt(method);
-				} else {
+				if (method.IsStatic) {
 					call = new Call(method);
+				} else {
+					call = new CallVirt(method);
 				}
 				if (targetConverter != null) {
 					call.Arguments.Add(PrepareCallTarget(method.DeclaringType, targetConverter(), targetType));
@@ -749,7 +752,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			ILInstruction BuildCall()
 			{
-				CallInstruction call = new Call((IMethod)member);
+				CallInstruction call = member.IsStatic
+					? (CallInstruction)new Call((IMethod)member)
+					: new CallVirt((IMethod)member);
 				call.Arguments.AddRange(args.Select(f => f()));
 				return call;
 			}
@@ -1123,10 +1128,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInstruction BuildProperty()
 			{
 				CallInstruction call;
-				if (member.IsAbstract || member.IsVirtual || member.IsOverride) {
-					call = new CallVirt((IMethod)member);
-				} else {
+				if (member.IsStatic) {
 					call = new Call((IMethod)member);
+				} else {
+					call = new CallVirt((IMethod)member);
 				}
 				if (targetConverter != null) {
 					call.Arguments.Add(PrepareCallTarget(member.DeclaringType, targetConverter(), targetType));
