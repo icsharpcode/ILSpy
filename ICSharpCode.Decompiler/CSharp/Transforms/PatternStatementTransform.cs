@@ -650,8 +650,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitIdentifier(identifier);
 		}
 
-
-
 		internal static bool IsBackingFieldOfAutomaticProperty(IField field, out IProperty property)
 		{
 			property = null;
@@ -673,7 +671,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </list>
 		/// </summary>
 		static readonly System.Text.RegularExpressions.Regex automaticPropertyBackingFieldNameRegex
-			= new System.Text.RegularExpressions.Regex(@"^(<(?<name>\w+)>k__BackingField|_(?<name>\w+))$");
+			= new System.Text.RegularExpressions.Regex(@"^(<(?<name>.+)>k__BackingField|_(?<name>.+))$");
 
 		static bool NameCouldBeBackingFieldOfAutomaticProperty(string name, out string propertyName)
 		{
