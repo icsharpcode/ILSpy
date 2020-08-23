@@ -179,6 +179,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Issue2104()
+		{
+			Run();
+		}
+
+		[Test]
 		public void ConstantBlobs()
 		{
 			Run();

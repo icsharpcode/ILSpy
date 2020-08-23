@@ -586,7 +586,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					field = m2.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
 				}
 			}
-			if (field == null)
+			if (field == null || !(field.Name.StartsWith("<") && field.Name.EndsWith(">k__BackingField")))
 				return null;
 			if (propertyDeclaration.Setter.HasModifier(Modifiers.Readonly))
 				return null;
