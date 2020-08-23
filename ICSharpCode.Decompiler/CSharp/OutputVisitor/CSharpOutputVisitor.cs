@@ -1556,6 +1556,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitForeachStatement(ForeachStatement foreachStatement)
 		{
 			StartNode(foreachStatement);
+			if (foreachStatement.IsAsync)
+				WriteKeyword(ForeachStatement.AwaitRole);
 			WriteKeyword(ForeachStatement.ForeachKeywordRole);
 			Space(policy.SpaceBeforeForeachParentheses);
 			LPar();

@@ -315,6 +315,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void AsyncForeach([ValueSource(nameof(dotnetCoreOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void AsyncMain([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);

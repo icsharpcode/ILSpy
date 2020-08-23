@@ -403,8 +403,16 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		#region foreach construction
-		static readonly InvocationExpression getEnumeratorPattern = new InvocationExpression(new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetEnumerator"));
-		static readonly InvocationExpression moveNextConditionPattern = new InvocationExpression(new MemberReferenceExpression(new NamedNode("enumerator", new IdentifierExpression(Pattern.AnyString)), "MoveNext"));
+		static readonly InvocationExpression getEnumeratorPattern = new InvocationExpression(
+			new Choice {
+				new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetEnumerator"),
+				new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetAsyncEnumerator")
+			}
+		);
+		static readonly Expression moveNextConditionPattern = new Choice {
+			new InvocationExpression(new MemberReferenceExpression(new NamedNode("enumerator", new IdentifierExpression(Pattern.AnyString)), "MoveNext")),
+			new UnaryOperatorExpression(UnaryOperatorType.Await, new InvocationExpression(new MemberReferenceExpression(new NamedNode("enumerator", new IdentifierExpression(Pattern.AnyString)), "MoveNextAsync")))
+		};
 
 		protected internal override TranslatedStatement VisitUsingInstruction(UsingInstruction inst)
 		{
@@ -484,6 +492,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			// The using body must be a BlockContainer.
 			if (!(inst.Body is BlockContainer container) || !m.Success)
 				return null;
+			bool isAsync = ((MemberReferenceExpression)((InvocationExpression)resource).Target).MemberName == "GetAsyncEnumerator";
+			if (isAsync != inst.IsAsync)
+				return null;
 			// The using-variable is the enumerator.
 			var enumeratorVar = inst.Variable;
 			// If there's another BlockContainer nested in this container and it only has one child block, unwrap it.
@@ -498,6 +509,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			var condition = exprBuilder.TranslateCondition(conditionInst);
 			var m2 = moveNextConditionPattern.Match(condition.Expression);
 			if (!m2.Success)
+				return null;
+			if (condition.Expression is UnaryOperatorExpression { Operator: UnaryOperatorType.Await } != isAsync)
 				return null;
 			// Check enumerator variable references.
 			var enumeratorVar2 = m2.Get<IdentifierExpression>("enumerator").Single().GetILVariable();
@@ -604,6 +617,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			// Construct the foreach loop.
 			var foreachStmt = new ForeachStatement {
+				IsAsync = isAsync,
 				VariableType = useVar ? new SimpleType("var") : exprBuilder.ConvertType(foreachVariable.Type),
 				VariableDesignation = designation,
 				InExpression = collectionExpr.Detach(),

@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (!UnwrapAwait(ref checkInst))
 							return false;
 					}
-					if (!(checkInst is CallVirt cv))
+					if (!(checkInst is CallInstruction cv))
 						return false;
 					target = cv.Arguments.FirstOrDefault();
 					if (target == null)
@@ -345,7 +345,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (i < 1 || !context.Settings.AsyncUsingAndForEachStatement) return false;
 			if (!(block.Instructions[i] is TryFinally tryFinally) || !(block.Instructions[i - 1] is StLoc storeInst))
 				return false;
-			if (!CheckAsyncResourceType(storeInst.Variable.Type))
+			if (!CheckAsyncResourceType(storeInst.Variable.Type, out string disposeMethodFullName))
 				return false;
 			if (storeInst.Variable.Kind != VariableKind.Local)
 				return false;
@@ -355,7 +355,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (storeInst.Variable.StoreInstructions.Count > 1)
 				return false;
-			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, usingNull: false, "System.IAsyncDisposable.DisposeAsync", KnownTypeCode.IAsyncDisposable))
+			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, usingNull: false, disposeMethodFullName, KnownTypeCode.IAsyncDisposable))
 				return false;
 			context.Step("AsyncUsingTransform", tryFinally);
 			storeInst.Variable.Kind = VariableKind.UsingLocal;
@@ -365,10 +365,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool CheckAsyncResourceType(IType type)
+		bool CheckAsyncResourceType(IType type, out string disposeMethodFullName)
 		{
-			if (NullableType.GetUnderlyingType(type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IAsyncDisposable)))
+			disposeMethodFullName = null;
+			IType t = NullableType.GetUnderlyingType(type);
+			if (t.GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IAsyncDisposable))) {
+				disposeMethodFullName = "System.IAsyncDisposable.DisposeAsync";
 				return true;
+			}
+
+			IMethod disposeMethod = t
+				.GetMethods(m => m.Parameters.Count == 0 && m.TypeParameters.Count == 0 && m.Name == "DisposeAsync")
+				.SingleOrDefault();
+			if (disposeMethod != null) {
+				disposeMethodFullName = disposeMethod.FullName;
+				return true;
+			}
+
 			return false;
 		}
 
@@ -380,8 +393,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!arg.MatchAddressOf(out awaitInstruction, out var type))
 				return false;
-			if (!type.IsKnownType(KnownTypeCode.ValueTask))
-				return false;
+			// TODO check type: does it match the structural 'Awaitable' pattern?
 			return true;
 		}
 	}
