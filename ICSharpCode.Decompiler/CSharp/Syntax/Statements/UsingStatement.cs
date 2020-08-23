@@ -53,6 +53,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
+		public bool IsEnhanced { get; set; }
+
 		/// <summary>
 		/// Either a VariableDeclarationStatement, or an Expression.
 		/// </summary>

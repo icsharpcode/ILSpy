@@ -179,6 +179,15 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Using([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
+			RunForLibrary(
+				cscOptions: cscOptions,
+				decompilerSettings: new DecompilerSettings { UseEnhancedUsing = false }
+			);
+		}
+
+		[Test]
+		public void UsingVariables([ValueSource(nameof(dotnetCoreOnlyOptions))] CompilerOptions cscOptions)
+		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
@@ -335,7 +344,10 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void AsyncUsing([ValueSource(nameof(dotnetCoreOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions);
+			RunForLibrary(
+				cscOptions: cscOptions,
+				decompilerSettings: new DecompilerSettings { UseEnhancedUsing = false }
+			);
 		}
 
 		[Test]

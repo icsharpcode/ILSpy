@@ -1889,16 +1889,36 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				WriteKeyword(UsingStatement.AwaitRole);
 			}
 			WriteKeyword(UsingStatement.UsingKeywordRole);
-			Space(policy.SpaceBeforeUsingParentheses);
-			LPar();
-			Space(policy.SpacesWithinUsingParentheses);
+			if (usingStatement.IsEnhanced) {
+				Space();
+			} else {
+				Space(policy.SpaceBeforeUsingParentheses);
+				LPar();
+				Space(policy.SpacesWithinUsingParentheses);
+			}
 
 			usingStatement.ResourceAcquisition.AcceptVisitor(this);
 
-			Space(policy.SpacesWithinUsingParentheses);
-			RPar();
+			if (usingStatement.IsEnhanced) {
+				Semicolon();
+			} else {
+				Space(policy.SpacesWithinUsingParentheses);
+				RPar();
+			}
 
-			WriteEmbeddedStatement(usingStatement.EmbeddedStatement);
+			if (usingStatement.IsEnhanced) {
+				if (usingStatement.EmbeddedStatement is BlockStatement blockStatement) {
+					StartNode(blockStatement);
+					foreach (var node in blockStatement.Statements) {
+						node.AcceptVisitor(this);
+					}
+					EndNode(blockStatement);
+				} else {
+					usingStatement.EmbeddedStatement.AcceptVisitor(this);
+				}
+			} else {
+				WriteEmbeddedStatement(usingStatement.EmbeddedStatement);
+			}
 
 			EndNode(usingStatement);
 		}

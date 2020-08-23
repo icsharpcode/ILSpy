@@ -112,6 +112,7 @@ namespace ICSharpCode.Decompiler
 				readOnlyMethods = false;
 				asyncUsingAndForEachStatement = false;
 				asyncEnumerator = false;
+				useEnhancedUsing = false;
 				staticLocalFunctions = false;
 				ranges = false;
 				switchExpressions = false;
@@ -469,6 +470,23 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (usingStatement != value) {
 					usingStatement = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool useEnhancedUsing = true;
+
+		/// <summary>
+		/// Use enhanced using statements.
+		/// </summary>
+		[Category("C# 8.0 / VS 2019")]
+		[Description("DecompilerSettings.UseEnhancedUsing")]
+		public bool UseEnhancedUsing {
+			get { return useEnhancedUsing; }
+			set {
+				if (useEnhancedUsing != value) {
+					useEnhancedUsing = value;
 					OnPropertyChanged();
 				}
 			}

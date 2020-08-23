@@ -396,6 +396,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.UseDiscards" xml:space="preserve">
     <value>Use discards</value>
   </data>
+  <data name="DecompilerSettings.UseEnhancedUsing" xml:space="preserve">
+    <value>Use enhanced using variable declarations</value>
+  </data>
   <data name="DecompilerSettings.UseExpressionBodiedMemberSyntaxForGetOnlyProperties" xml:space="preserve">
     <value>Use expression-bodied member syntax for get-only properties</value>
   </data>

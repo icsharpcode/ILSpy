@@ -1101,6 +1101,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use enhanced using variable declarations.
+        /// </summary>
+        public static string DecompilerSettings_UseEnhancedUsing {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UseEnhancedUsing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use expression-bodied member syntax for get-only properties.
         /// </summary>
         public static string DecompilerSettings_UseExpressionBodiedMemberSyntaxForGetOnlyProperties {

@@ -109,13 +109,13 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void FSharpUsing_Debug()
 		{
-			Run(settings: new DecompilerSettings { RemoveDeadStores = true });
+			Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false });
 		}
 
 		[Test]
 		public void FSharpUsing_Release()
 		{
-			Run(settings: new DecompilerSettings { RemoveDeadStores = true });
+			Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false });
 		}
 
 		[Test]

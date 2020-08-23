@@ -1123,5 +1123,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitFixedStatement(fixedStatement);
 		}
 		#endregion
+
+		#region C# 8.0 Using variables
+		public override AstNode VisitUsingStatement(UsingStatement usingStatement)
+		{
+			usingStatement = (UsingStatement)base.VisitUsingStatement(usingStatement);
+			if (!context.Settings.UseEnhancedUsing)
+				return usingStatement;
+
+			if (usingStatement.GetNextStatement() != null || !(usingStatement.Parent is BlockStatement))
+				return usingStatement;
+
+			if (!(usingStatement.ResourceAcquisition is VariableDeclarationStatement))
+				return usingStatement;
+
+			usingStatement.IsEnhanced = true;
+			return usingStatement;
+		}
+		#endregion
 	}
 }
