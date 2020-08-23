@@ -31,6 +31,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		None = 0,
 		Aggressive = 1,
 		IntroduceNamedArguments = 2,
+		FindDeconstruction = 4,
 	}
 
 	/// <summary>
@@ -503,6 +504,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				//case OpCode.BinaryNumericInstruction when parent.SlotInfo == SwitchInstruction.ValueSlot:
 				case OpCode.StringToInt when parent.SlotInfo == SwitchInstruction.ValueSlot:
 					return true;
+				case OpCode.MatchInstruction when ((MatchInstruction)parent).IsDeconstructTuple:
+					return true;
 			}
 			// decide based on the top-level target instruction into which we are inlining:
 			switch (next.OpCode) {
@@ -543,8 +546,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			/// Found a load in call, but re-ordering not possible with regards to the
 			/// other call arguments.
 			/// Inlining is not possible, but we might convert the call to named arguments.
+			/// Only used with <see cref="InliningOptions.IntroduceNamedArguments"/>.
 			/// </summary>
 			NamedArgument,
+			/// <summary>
+			/// Found a deconstruction.
+			/// Only used with <see cref="InliningOptions.FindDeconstruction"/>.
+			/// </summary>
+			Deconstruction,
 		}
 
 		internal readonly struct FindResult
@@ -574,6 +583,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				Debug.Assert(loadInst.OpCode == OpCode.LdLoc || loadInst.OpCode == OpCode.LdLoca);
 				Debug.Assert(callArg.Parent is CallInstruction);
 				return new FindResult(FindResultType.NamedArgument, loadInst, callArg);
+			}
+
+			public static FindResult Deconstruction(DeconstructInstruction deconstruction)
+			{
+				return new FindResult(FindResultType.Deconstruction, deconstruction, null);
 			}
 		}
 
@@ -611,6 +625,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					default:
 						return FindResult.Stop;
 				}
+			} else if (options.HasFlag(InliningOptions.FindDeconstruction) && expr is DeconstructInstruction di) {
+				return FindResult.Deconstruction(di);
 			}
 			foreach (var child in expr.Children) {
 				if (!expr.CanInlineIntoSlot(child.ChildIndex, expressionBeingMoved))

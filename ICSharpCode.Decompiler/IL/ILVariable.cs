@@ -75,6 +75,14 @@ namespace ICSharpCode.Decompiler.IL
 		/// Local variable that holds the display class used for lambdas within this function.
 		/// </summary>
 		DisplayClassLocal,
+		/// <summary>
+		/// Local variable declared within a pattern match.
+		/// </summary>
+		PatternLocal,
+		/// <summary>
+		/// Temporary variable declared in a deconstruction init section.
+		/// </summary>
+		DeconstructionInitTemporary,
 	}
 
 	static class VariableKindExtensions
@@ -432,6 +440,12 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case VariableKind.DisplayClassLocal:
 					output.Write("display_class local ");
+					break;
+				case VariableKind.PatternLocal:
+					output.Write("pattern local ");
+					break;
+				case VariableKind.DeconstructionInitTemporary:
+					output.Write("deconstruction init temporary ");
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();

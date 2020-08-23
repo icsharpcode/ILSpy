@@ -35,6 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		void VisitCastExpression(CastExpression castExpression);
 		void VisitCheckedExpression(CheckedExpression checkedExpression);
 		void VisitConditionalExpression(ConditionalExpression conditionalExpression);
+		void VisitDeclarationExpression(DeclarationExpression declarationExpression);
 		void VisitDefaultValueExpression(DefaultValueExpression defaultValueExpression);
 		void VisitDirectionExpression(DirectionExpression directionExpression);
 		void VisitIdentifierExpression(IdentifierExpression identifierExpression);
@@ -155,7 +156,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		void VisitInterpolation(Interpolation interpolation);
 		void VisitInterpolatedStringText(InterpolatedStringText interpolatedStringText);
-		
+
+		void VisitSingleVariableDesignation(SingleVariableDesignation singleVariableDesignation);
+		void VisitParenthesizedVariableDesignation(ParenthesizedVariableDesignation parenthesizedVariableDesignation);
+
 		void VisitNullNode(AstNode nullNode);
 		void VisitErrorNode(AstNode errorNode);
 		void VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern);
@@ -177,6 +181,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitCastExpression(CastExpression castExpression);
 		S VisitCheckedExpression(CheckedExpression checkedExpression);
 		S VisitConditionalExpression(ConditionalExpression conditionalExpression);
+		S VisitDeclarationExpression(DeclarationExpression declarationExpression);
 		S VisitDefaultValueExpression(DefaultValueExpression defaultValueExpression);
 		S VisitDirectionExpression(DirectionExpression directionExpression);
 		S VisitIdentifierExpression(IdentifierExpression identifierExpression);
@@ -298,6 +303,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitInterpolation(Interpolation interpolation);
 		S VisitInterpolatedStringText(InterpolatedStringText interpolatedStringText);
 
+		S VisitSingleVariableDesignation(SingleVariableDesignation singleVariableDesignation);
+		S VisitParenthesizedVariableDesignation(ParenthesizedVariableDesignation parenthesizedVariableDesignation);
+
 		S VisitNullNode(AstNode nullNode);
 		S VisitErrorNode(AstNode errorNode);
 		S VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern);
@@ -319,6 +327,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitCastExpression(CastExpression castExpression, T data);
 		S VisitCheckedExpression(CheckedExpression checkedExpression, T data);
 		S VisitConditionalExpression(ConditionalExpression conditionalExpression, T data);
+		S VisitDeclarationExpression(DeclarationExpression declarationExpression, T data);
 		S VisitDefaultValueExpression(DefaultValueExpression defaultValueExpression, T data);
 		S VisitDirectionExpression(DirectionExpression directionExpression, T data);
 		S VisitIdentifierExpression(IdentifierExpression identifierExpression, T data);
@@ -439,6 +448,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		S VisitInterpolation(Interpolation interpolation, T data);
 		S VisitInterpolatedStringText(InterpolatedStringText interpolatedStringText, T data);
+
+		S VisitSingleVariableDesignation(SingleVariableDesignation singleVariableDesignation, T data);
+		S VisitParenthesizedVariableDesignation(ParenthesizedVariableDesignation parenthesizedVariableDesignation, T data);
 
 		S VisitNullNode(AstNode nullNode, T data);
 		S VisitErrorNode(AstNode errorNode, T data);

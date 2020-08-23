@@ -501,9 +501,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			VisitChildren (objectCreateExpression);
 		}
 
-		public virtual void VisitOutVarDeclarationExpression (OutVarDeclarationExpression outVarDeclarationExpression)
+		public virtual void VisitDeclarationExpression(DeclarationExpression declarationExpression)
 		{
-			VisitChildren (outVarDeclarationExpression);
+			VisitChildren(declarationExpression);
+		}
+
+		public virtual void VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression)
+		{
+			VisitChildren(outVarDeclarationExpression);
 		}
 
 		public virtual void VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression)
@@ -664,6 +669,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual void VisitNamedExpression (NamedExpression namedExpression)
 		{
 			VisitChildren (namedExpression);
+		}
+
+		public virtual void VisitSingleVariableDesignation(SingleVariableDesignation singleVariableDesignation)
+		{
+			VisitChildren(singleVariableDesignation);
+		}
+
+		public virtual void VisitParenthesizedVariableDesignation(ParenthesizedVariableDesignation parenthesizedVariableDesignation)
+		{
+			VisitChildren(parenthesizedVariableDesignation);
 		}
 
 		public virtual void VisitErrorNode(AstNode errorNode)
@@ -1153,7 +1168,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren (objectCreateExpression);
 		}
 
-		public virtual T VisitOutVarDeclarationExpression (OutVarDeclarationExpression outVarDeclarationExpression)
+		public virtual T VisitDeclarationExpression(DeclarationExpression declarationExpression)
+		{
+			return VisitChildren(declarationExpression);
+		}
+
+		public virtual T VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression)
 		{
 			return VisitChildren(outVarDeclarationExpression);
 		}
@@ -1316,6 +1336,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual T VisitNamedExpression (NamedExpression namedExpression)
 		{
 			return VisitChildren (namedExpression);
+		}
+
+		public virtual T VisitSingleVariableDesignation(SingleVariableDesignation singleVariableDesignation)
+		{
+			return VisitChildren(singleVariableDesignation);
+		}
+
+		public virtual T VisitParenthesizedVariableDesignation(ParenthesizedVariableDesignation parenthesizedVariableDesignation)
+		{
+			return VisitChildren(parenthesizedVariableDesignation);
 		}
 
 		public virtual T VisitErrorNode(AstNode errorNode)
@@ -1805,9 +1835,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren (objectCreateExpression, data);
 		}
 
+		public virtual S VisitDeclarationExpression(DeclarationExpression declarationExpression, T data)
+		{
+			return VisitChildren(declarationExpression, data);
+		}
+
 		public virtual S VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression, T data)
 		{
-			return VisitChildren (outVarDeclarationExpression, data);
+			return VisitChildren(outVarDeclarationExpression, data);
 		}
 
 		public virtual S VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression, T data)
@@ -1968,6 +2003,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual S VisitNamedExpression (NamedExpression namedExpression, T data)
 		{
 			return VisitChildren (namedExpression, data);
+		}
+
+		public virtual S VisitSingleVariableDesignation(SingleVariableDesignation singleVariableDesignation, T data)
+		{
+			return VisitChildren(singleVariableDesignation, data);
+		}
+
+		public virtual S VisitParenthesizedVariableDesignation(ParenthesizedVariableDesignation parenthesizedVariableDesignation, T data)
+		{
+			return VisitChildren(parenthesizedVariableDesignation, data);
 		}
 
 		public virtual S VisitErrorNode(AstNode errorNode, T data)

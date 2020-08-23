@@ -300,6 +300,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.DecompileUseOfTheDynamicType" xml:space="preserve">
     <value>Decompile use of the 'dynamic' type</value>
   </data>
+  <data name="DecompilerSettings.Deconstruction" xml:space="preserve">
+    <value>Detect deconstruction assignments</value>
+  </data>
   <data name="DecompilerSettings.DetectAsyncUsingAndForeachStatements" xml:space="preserve">
     <value>Detect awaited using and foreach statements</value>
   </data>

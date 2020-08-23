@@ -220,6 +220,8 @@ namespace ICSharpCode.Decompiler.IL
 		DynamicInvokeInstruction,
 		/// <summary>ILAst representation of a call to the Binder.IsEvent method inside a dynamic expression.</summary>
 		DynamicIsEventInstruction,
+		/// <summary>ILAst representation of C# patterns</summary>
+		MatchInstruction,
 		/// <summary>Push a typed reference of type class onto the stack.</summary>
 		MakeRefAny,
 		/// <summary>Push the type token stored in a typed reference.</summary>
@@ -230,6 +232,10 @@ namespace ICSharpCode.Decompiler.IL
 		YieldReturn,
 		/// <summary>C# await operator.</summary>
 		Await,
+		/// <summary>Deconstruction statement</summary>
+		DeconstructInstruction,
+		/// <summary>Represents a deconstructed value</summary>
+		DeconstructResultInstruction,
 		/// <summary>Matches any node</summary>
 		AnyNode,
 	}
@@ -6086,6 +6092,147 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>ILAst representation of C# patterns</summary>
+	public sealed partial class MatchInstruction : ILInstruction, IStoreInstruction, IInstructionWithMethodOperand
+	{
+		public MatchInstruction(ILVariable variable, IMethod method, ILInstruction testedOperand, params ILInstruction[] subPatterns) : base(OpCode.MatchInstruction)
+		{
+			Debug.Assert(variable != null);
+			this.variable = variable;
+			this.method = method;
+			this.TestedOperand = testedOperand;
+			this.SubPatterns = new InstructionCollection<ILInstruction>(this, 1);
+			this.SubPatterns.AddRange(subPatterns);
+		}
+		ILVariable variable;
+		public ILVariable Variable {
+			get { return variable; }
+			set {
+				Debug.Assert(value != null);
+				if (IsConnected)
+					variable.RemoveStoreInstruction(this);
+				variable = value;
+				if (IsConnected)
+					variable.AddStoreInstruction(this);
+			}
+		}
+		
+		public int IndexInStoreInstructionList { get; set; } = -1;
+		
+		int IInstructionWithVariableOperand.IndexInVariableInstructionMapping {
+			get { return ((IStoreInstruction)this).IndexInStoreInstructionList; }
+			set { ((IStoreInstruction)this).IndexInStoreInstructionList = value; }
+		}
+		
+		protected override void Connected()
+		{
+			base.Connected();
+			variable.AddStoreInstruction(this);
+		}
+		
+		protected override void Disconnected()
+		{
+			variable.RemoveStoreInstruction(this);
+			base.Disconnected();
+		}
+		
+		readonly IMethod method;
+		/// <summary>Returns the method operand.</summary>
+		public IMethod Method { get { return method; } }
+		public bool IsDeconstructCall;
+		public bool IsDeconstructTuple;
+		public bool CheckType;
+		public bool CheckNotNull;
+		public static readonly SlotInfo TestedOperandSlot = new SlotInfo("TestedOperand", canInlineInto: true);
+		ILInstruction testedOperand;
+		public ILInstruction TestedOperand {
+			get { return this.testedOperand; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.testedOperand, value, 0);
+			}
+		}
+		public static readonly SlotInfo SubPatternsSlot = new SlotInfo("SubPatterns");
+		public InstructionCollection<ILInstruction> SubPatterns { get; private set; }
+		protected sealed override int GetChildCount()
+		{
+			return 1 + SubPatterns.Count;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.testedOperand;
+				default:
+					return this.SubPatterns[index - 1];
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.TestedOperand = value;
+					break;
+				default:
+					this.SubPatterns[index - 1] = (ILInstruction)value;
+					break;
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return TestedOperandSlot;
+				default:
+					return SubPatternsSlot;
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (MatchInstruction)ShallowClone();
+			clone.TestedOperand = this.testedOperand.Clone();
+			clone.SubPatterns = new InstructionCollection<ILInstruction>(clone, 1);
+			clone.SubPatterns.AddRange(this.SubPatterns.Select(arg => (ILInstruction)arg.Clone()));
+			return clone;
+		}
+		public override StackType ResultType { get { return StackType.I4; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.MayWriteLocals | testedOperand.Flags | SubPatterns.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.SideEffect | InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayWriteLocals | InstructionFlags.SideEffect | InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitMatchInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitMatchInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitMatchInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as MatchInstruction;
+			return o != null && variable == o.variable && object.Equals(method, o.method) && this.IsDeconstructCall == o.IsDeconstructCall && this.IsDeconstructTuple == o.IsDeconstructTuple && this.CheckType == o.CheckType && this.CheckNotNull == o.CheckNotNull && this.testedOperand.PerformMatch(o.testedOperand, ref match) && Patterns.ListMatch.DoMatch(this.SubPatterns, o.SubPatterns, ref match);
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
+			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
+			AdditionalInvariants();
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Push a typed reference of type class onto the stack.</summary>
 	public sealed partial class MakeRefAny : UnaryInstruction
 	{
@@ -6394,6 +6541,61 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as Await;
 			return o != null && this.value.PerformMatch(o.value, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Deconstruction statement</summary>
+	public sealed partial class DeconstructInstruction : ILInstruction
+	{
+		public override StackType ResultType { get { return StackType.Void; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDeconstructInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDeconstructInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDeconstructInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DeconstructInstruction;
+			return o != null;
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Represents a deconstructed value</summary>
+	public sealed partial class DeconstructResultInstruction : UnaryInstruction
+	{
+
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDeconstructResultInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDeconstructResultInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDeconstructResultInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DeconstructResultInstruction;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			AdditionalInvariants();
 		}
 	}
 }
@@ -6808,6 +7010,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitMatchInstruction(MatchInstruction inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitMakeRefAny(MakeRefAny inst)
 		{
 			Default(inst);
@@ -6825,6 +7031,14 @@ namespace ICSharpCode.Decompiler.IL
 			Default(inst);
 		}
 		protected internal virtual void VisitAwait(Await inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDeconstructInstruction(DeconstructInstruction inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDeconstructResultInstruction(DeconstructResultInstruction inst)
 		{
 			Default(inst);
 		}
@@ -7194,6 +7408,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitMatchInstruction(MatchInstruction inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitMakeRefAny(MakeRefAny inst)
 		{
 			return Default(inst);
@@ -7211,6 +7429,14 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitAwait(Await inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDeconstructInstruction(DeconstructInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDeconstructResultInstruction(DeconstructResultInstruction inst)
 		{
 			return Default(inst);
 		}
@@ -7580,6 +7806,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitMatchInstruction(MatchInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitMakeRefAny(MakeRefAny inst, C context)
 		{
 			return Default(inst, context);
@@ -7597,6 +7827,14 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst, context);
 		}
 		protected internal virtual T VisitAwait(Await inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDeconstructInstruction(DeconstructInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDeconstructResultInstruction(DeconstructResultInstruction inst, C context)
 		{
 			return Default(inst, context);
 		}
@@ -7694,11 +7932,14 @@ namespace ICSharpCode.Decompiler.IL
 			"dynamic.invokeconstructor",
 			"dynamic.invoke",
 			"dynamic.isevent",
+			"match",
 			"mkrefany",
 			"refanytype",
 			"refanyval",
 			"yield.return",
 			"await",
+			"deconstruct",
+			"deconstruct.result",
 			"AnyNode",
 		};
 	}
@@ -8253,6 +8494,20 @@ namespace ICSharpCode.Decompiler.IL
 			method = default(IMethod);
 			left = default(ILInstruction);
 			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchMatchInstruction(out ILVariable variable, out IMethod method, out ILInstruction testedOperand)
+		{
+			var inst = this as MatchInstruction;
+			if (inst != null) {
+				variable = inst.Variable;
+				method = inst.Method;
+				testedOperand = inst.TestedOperand;
+				return true;
+			}
+			variable = default(ILVariable);
+			method = default(IMethod);
+			testedOperand = default(ILInstruction);
 			return false;
 		}
 		public bool MatchMakeRefAny(out ILInstruction argument, out IType type)

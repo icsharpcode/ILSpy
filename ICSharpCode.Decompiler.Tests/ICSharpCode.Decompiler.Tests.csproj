@@ -91,7 +91,9 @@
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
     <Compile Include="TestAssemblyResolver.cs" />
+    <Compile Include="TestCases\Correctness\DeconstructionTests.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
+    <Compile Include="TestCases\Pretty\DeconstructionTests.cs" />
     <Compile Include="TestCases\Pretty\SwitchExpressions.cs" />
     <None Include="TestCases\Pretty\NativeInts.cs" />
     <None Include="TestCases\ILPretty\CallIndirect.cs" />

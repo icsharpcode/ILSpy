@@ -168,7 +168,12 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			inst.Value.AcceptVisitor(this);
 			HandleStore(inst.Variable);
 		}
-		
+
+		protected override void HandleMatchStore(MatchInstruction inst)
+		{
+			HandleStore(inst.Variable);
+		}
+
 		protected override void BeginTryCatchHandler(TryCatchHandler inst)
 		{
 			HandleStore(inst.Variable);

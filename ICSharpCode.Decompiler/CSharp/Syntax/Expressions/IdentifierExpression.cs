@@ -42,10 +42,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create (identifier, location));
 		}
 		
-//		public Identifier IdentifierToken {
-//			get { return GetChildByRole (Roles.Identifier); }
-//		}
-		
 		public string Identifier {
 			get {
 				return GetChildByRole (Roles.Identifier).Name;

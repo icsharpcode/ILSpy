@@ -102,6 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public VariableToDeclare ReplacementDueToCollision;
 			public bool InvolvedInCollision;
 			public bool RemovedDueToCollision => ReplacementDueToCollision != null;
+			public bool DeclaredInDeconstruction;
 
 			public VariableToDeclare(ILVariable variable, bool defaultInitialization, InsertionPoint insertionPoint, IdentifierExpression firstUse, int sourceOrder)
 			{
@@ -126,6 +127,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				EnsureExpressionStatementsAreValid(rootNode);
 				FindInsertionPoints(rootNode, 0);
 				ResolveCollisions();
+				InsertDeconstructionVariableDeclarations();
 				InsertVariableDeclarations(context);
 				UpdateAnnotations(rootNode);
 			} finally {
@@ -133,7 +135,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				variableDict.Clear();
 			}
 		}
-
 		/// <summary>
 		/// Analyze the input AST (containing undeclared variables)
 		/// for where those variables would be declared by this transform.
@@ -425,6 +426,44 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
+		private void InsertDeconstructionVariableDeclarations()
+		{
+			var usedVariables = new HashSet<ILVariable>();
+			foreach (var g in variableDict.Values.GroupBy(v => v.InsertionPoint.nextNode)) {
+				if (!(g.Key is ExpressionStatement { Expression: AssignmentExpression { Left: TupleExpression left, Operator: AssignmentOperatorType.Assign } assignment }))
+					continue;
+				usedVariables.Clear();
+				var deconstruct = assignment.Annotation<DeconstructInstruction>();
+				if (deconstruct == null || deconstruct.Init.Count > 0 || deconstruct.Conversions.Instructions.Count > 0)
+					continue;
+				if (!deconstruct.Assignments.Instructions.All(IsDeclarableVariable))
+					continue;
+
+				var designation = StatementBuilder.TranslateDeconstructionDesignation(deconstruct, isForeach: false);
+				left.ReplaceWith(new DeclarationExpression { Type = new SimpleType("var"), Designation = designation });
+
+				foreach (var v in usedVariables) {
+					variableDict[v].DeclaredInDeconstruction = true;
+				}
+
+				bool IsDeclarableVariable(ILInstruction inst)
+				{
+					if (!inst.MatchStLoc(out var v, out var value))
+						return false;
+					if (!g.Any(vd => vd.ILVariable == v && !vd.RemovedDueToCollision))
+						return false;
+					if (!usedVariables.Add(v))
+						return false;
+					var expectedType = ((LdLoc)value).Variable.Type;
+					if (!v.Type.Equals(expectedType))
+						return false;
+					if (!(v.Kind == VariableKind.StackSlot || v.Kind == VariableKind.Local))
+						return false;
+					return true;
+				}
+			}
+		}
+
 		bool IsMatchingAssignment(VariableToDeclare v, out AssignmentExpression assignment)
 		{
 			assignment = v.InsertionPoint.nextNode as AssignmentExpression;
@@ -454,7 +493,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			var replacements = new List<(AstNode, AstNode)>();
 			foreach (var (ilVariable, v) in variableDict) {
-				if (v.RemovedDueToCollision)
+				if (v.RemovedDueToCollision || v.DeclaredInDeconstruction)
 					continue;
 
 				if (CombineDeclarationAndInitializer(v, context) && IsMatchingAssignment(v, out AssignmentExpression assignment)) {
