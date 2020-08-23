@@ -586,7 +586,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					field = m2.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
 				}
 			}
-			if (field == null || !(field.Name.StartsWith("<") && field.Name.EndsWith(">k__BackingField")))
+			if (field == null || !NameCouldBeBackingFieldOfAutomaticProperty(field.Name, out _))
 				return null;
 			if (propertyDeclaration.Setter.HasModifier(Modifiers.Readonly))
 				return null;
@@ -650,22 +650,44 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitIdentifier(identifier);
 		}
 
+
+
 		internal static bool IsBackingFieldOfAutomaticProperty(IField field, out IProperty property)
 		{
 			property = null;
-			if (!(field.Name.StartsWith("<") && field.Name.EndsWith(">k__BackingField")))
+			if (!NameCouldBeBackingFieldOfAutomaticProperty(field.Name, out string propertyName))
 				return false;
 			if (!field.IsCompilerGenerated())
 				return false;
-			var propertyName = field.Name.Substring(1, field.Name.Length - 1 - ">k__BackingField".Length);
 			property = field.DeclaringTypeDefinition
-				.GetProperties(p => p.Name == propertyName, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
+				.GetProperties(p => p.Name == propertyName, GetMemberOptions.IgnoreInheritedMembers)
+				.FirstOrDefault();
 			return property != null;
+		}
+
+		/// <summary>
+		/// This matches the following patterns
+		/// <list type="bullet">
+		///		<item>&lt;Property&gt;k__BackingField (used by C#)</item>
+		///		<item>_Property (used by VB)</item>
+		/// </list>
+		/// </summary>
+		static readonly System.Text.RegularExpressions.Regex automaticPropertyBackingFieldNameRegex
+			= new System.Text.RegularExpressions.Regex(@"^(<(?<name>\w+)>k__BackingField|_(?<name>\w+))$");
+
+		static bool NameCouldBeBackingFieldOfAutomaticProperty(string name, out string propertyName)
+		{
+			propertyName = null;
+			var m = automaticPropertyBackingFieldNameRegex.Match(name);
+			if (!m.Success)
+				return false;
+			propertyName = m.Groups["name"].Value;
+			return true;
 		}
 
 		Identifier ReplaceBackingFieldUsage(Identifier identifier)
 		{
-			if (identifier.Name.StartsWith("<") && identifier.Name.EndsWith(">k__BackingField")) {
+			if (NameCouldBeBackingFieldOfAutomaticProperty(identifier.Name, out _)) {
 				var parent = identifier.Parent;
 				var mrr = parent.Annotation<MemberResolveResult>();
 				var field = mrr?.Member as IField;
