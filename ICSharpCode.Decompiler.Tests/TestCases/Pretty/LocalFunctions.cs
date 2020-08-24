@@ -33,6 +33,7 @@ namespace LocalFunctions
 		{
 			public int MixedLocalFunction<T2>() where T2 : ICloneable, IConvertible
 			{
+#pragma warning disable CS0219
 				T2 t2 = default(T2);
 				object z = this;
 				for (int j = 0; j < 10; j++) {
@@ -107,6 +108,7 @@ namespace LocalFunctions
 						return k;
 					}
 				}
+#pragma warning restore CS0219
 			}
 
 			public int MixedLocalFunction2Delegate<T2>() where T2 : ICloneable, IConvertible
@@ -199,6 +201,7 @@ namespace LocalFunctions
 
 			public static void Test_CaptureT<T2>()
 			{
+#pragma warning disable CS0219
 				T2 t2 = default(T2);
 				Method1<int>();
 				void Method1<T3>()
@@ -214,6 +217,7 @@ namespace LocalFunctions
 						t3 = default(T3);
 					}
 				}
+#pragma warning restore CS0219
 			}
 
 			public void TestGenericArgs<T2>() where T2 : List<T2>

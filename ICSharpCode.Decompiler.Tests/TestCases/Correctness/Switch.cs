@@ -169,7 +169,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				case false:
 					return bool.FalseString;
 				default:
+#pragma warning disable CS0162
 					return null;
+#pragma warning restore CS0162
 			}
 		}
 
