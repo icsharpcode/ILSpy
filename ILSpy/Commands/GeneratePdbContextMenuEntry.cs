@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				stopwatch.Stop();
-				output.WriteLine(string.Format(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1")));
+				output.WriteLine(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1"));
 				output.WriteLine();
 				output.AddButton(null, Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
 				output.WriteLine();

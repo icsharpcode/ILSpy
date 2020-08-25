@@ -965,8 +965,20 @@ namespace ICSharpCode.ILSpy.TextView
 							}
 						}
 						stopwatch.Stop();
-						AvalonEditTextOutput output = new AvalonEditTextOutput();
-						output.WriteLine("Decompilation complete in " + stopwatch.Elapsed.TotalSeconds.ToString("F1") + " seconds.");
+						AvalonEditTextOutput output = new AvalonEditTextOutput {
+							EnableHyperlinks = true,
+							Title = string.Join(", ", context.TreeNodes.Select(n => n.Text))
+						};
+
+						output.WriteLine(Properties.Resources.DecompilationCompleteInF1Seconds, stopwatch.Elapsed.TotalSeconds);
+						if (context.Options.SaveAsProjectDirectory != null) {
+							output.WriteLine();
+							if (context.Options.DecompilerSettings.UseSdkStyleProjectFormat)
+								output.WriteLine(Properties.Resources.ProjectExportFormatSDKHint);
+							else
+								output.WriteLine(Properties.Resources.ProjectExportFormatNonSDKHint);
+							output.WriteLine(Properties.Resources.ProjectExportFormatChangeSettingHint);
+						}
 						output.WriteLine();
 						output.AddButton(null, Properties.Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
 						output.WriteLine();
