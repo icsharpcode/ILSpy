@@ -23,6 +23,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class OptionalArguments : List<int>
 	{
+		public enum MyEnum
+		{
+			A,
+			B
+		}
+
 		public OptionalArguments(string name, int a = 5)
 		{
 
@@ -170,5 +176,57 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			throw null;
 		}
+
+		public static void Definition_Enum(MyEnum p = MyEnum.A)
+		{
+
+		}
+
+		public static void Definition_Enum_OutOfRangeDefault(MyEnum p = (MyEnum)(-1))
+		{
+
+		}
+
+		public static void Definition_NullableEnum(MyEnum? p = MyEnum.A)
+		{
+
+		}
+
+		public static void Definition_NullableEnum_OutOfRangeDefault(MyEnum? p = (MyEnum)(-1))
+		{
+
+		}
+
+		public static void Definition_Int(int p = 0)
+		{
+
+		}
+
+		public static void Definition_NullableInt(int? p = 0)
+		{
+
+		}
+
+		public static void Definition_Int100(int p = 100)
+		{
+
+		}
+
+		public static void Definition_NullableInt100(int? p = 100)
+		{
+
+		}
+
+#if CS90
+		public static void Definition_NInt(nint p = 100)
+		{
+
+		}
+
+		public static void Definition_NullableNInt(nint? p = 100)
+		{
+
+		}
+#endif
 	}
 }

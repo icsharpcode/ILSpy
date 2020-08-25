@@ -792,35 +792,38 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				expr.Initializer = new ArrayInitializerExpression(arr.Select(e => ConvertConstantValue(elementType, e.Type, e.Value)));
 				return expr;
-			} else if (type.Kind == TypeKind.Enum) {
-				return ConvertEnumValue(type, (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false));
 			} else {
-				if (IsSpecialConstant(type, constantValue, out var expr))
+				IType underlyingType = NullableType.GetUnderlyingType(type);
+				if (underlyingType.Kind == TypeKind.Enum) {
+					return ConvertEnumValue(underlyingType, (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false));
+				} else {
+					if (IsSpecialConstant(underlyingType, constantValue, out var expr))
+						return expr;
+					if (underlyingType.IsKnownType(KnownTypeCode.Double) || underlyingType.IsKnownType(KnownTypeCode.Single))
+						return ConvertFloatingPointLiteral(underlyingType, constantValue);
+					IType literalType = underlyingType;
+					bool integerTypeMismatch = underlyingType.IsCSharpSmallIntegerType() || underlyingType.IsCSharpNativeIntegerType();
+					if (integerTypeMismatch) {
+						// C# does not have integer literals of small integer types,
+						// use `int` literal instead.
+						// It also doesn't have native integer literals, those also use `int` (or `uint` for `nuint`).
+						bool unsigned = underlyingType.Kind == TypeKind.NUInt;
+						constantValue = CSharpPrimitiveCast.Cast(unsigned ? TypeCode.UInt32 : TypeCode.Int32, constantValue, false);
+						var compilation = resolver?.Compilation ?? expectedType.GetDefinition()?.Compilation;
+						literalType = compilation?.FindType(unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32);
+					}
+					LiteralFormat format = LiteralFormat.None;
+					if (PrintIntegralValuesAsHex) {
+						format = LiteralFormat.HexadecimalNumber;
+					}
+					expr = new PrimitiveExpression(constantValue, format);
+					if (AddResolveResultAnnotations && literalType != null)
+						expr.AddAnnotation(new ConstantResolveResult(literalType, constantValue));
+					if (integerTypeMismatch && !type.Equals(expectedType)) {
+						expr = new CastExpression(ConvertType(type), expr);
+					}
 					return expr;
-				if (type.IsKnownType(KnownTypeCode.Double) || type.IsKnownType(KnownTypeCode.Single))
-					return ConvertFloatingPointLiteral(type, constantValue);
-				IType literalType = type;
-				bool integerTypeMismatch = type.IsCSharpSmallIntegerType() || type.IsCSharpNativeIntegerType();
-				if (integerTypeMismatch) {
-					// C# does not have integer literals of small integer types,
-					// use `int` literal instead.
-					// It also doesn't have native integer literals, those also use `int` (or `uint` for `nuint`).
-					bool unsigned = type.Kind == TypeKind.NUInt;
-					constantValue = CSharpPrimitiveCast.Cast(unsigned ? TypeCode.UInt32 : TypeCode.Int32, constantValue, false);
-					var compilation = resolver?.Compilation ?? expectedType.GetDefinition()?.Compilation;
-					literalType = compilation?.FindType(unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32);
 				}
-				LiteralFormat format = LiteralFormat.None;
-				if (PrintIntegralValuesAsHex) {
-					format = LiteralFormat.HexadecimalNumber;
-				}
-				expr = new PrimitiveExpression(constantValue, format);
-				if (AddResolveResultAnnotations && literalType != null)
-					expr.AddAnnotation(new ConstantResolveResult(literalType, constantValue));
-				if (integerTypeMismatch && !type.Equals(expectedType)) {
-					expr = new CastExpression(ConvertType(type), expr);
-				}
-				return expr;
 			}
 		}
 
