@@ -203,7 +203,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				WriteCommentLine(output, $"Flags:              0x{amd64UnwindInfo.Flags:X2}{parsedFlags}");
 				WriteCommentLine(output, $"FrameRegister:      {((amd64UnwindInfo.FrameRegister == 0) ? "none" : amd64UnwindInfo.FrameRegister.ToString().ToLower())}");
 				for (int unwindCodeIndex = 0; unwindCodeIndex < amd64UnwindInfo.CountOfUnwindCodes; unwindCodeIndex++) {
-					unwindCodes.Add((ulong)(amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex].CodeOffset), amd64UnwindInfo.UnwindCodeArray[unwindCodeIndex]);
+					unwindCodes.Add((ulong)(amd64UnwindInfo.UnwindCodes[unwindCodeIndex].CodeOffset), amd64UnwindInfo.UnwindCodes[unwindCodeIndex]);
 				}
 			}
 			return unwindCodes;
@@ -408,7 +408,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				if (!readyToRunReaders.TryGetValue(module, out result)) {
 					result = new ReadyToRunReaderCacheEntry();
 					try {
-						result.readyToRunReader = new ReadyToRunReader(new ReadyToRunAssemblyResolver(assembly), module.Metadata, module.Reader, module.FileName);
+						result.readyToRunReader = new ReadyToRunReader(new ReadyToRunAssemblyResolver(assembly), new StandaloneAssemblyMetadata(module.Reader), module.Reader, module.FileName);
 						if (result.readyToRunReader.Machine != Machine.Amd64 && result.readyToRunReader.Machine != Machine.I386) {
 							result.failureReason = $"Architecture {result.readyToRunReader.Machine} is not currently supported.";
 							result.readyToRunReader = null;
@@ -435,13 +435,14 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 			public bool InlineSignatureBinary => false;
 
-			public MetadataReader FindAssembly(MetadataReader metadataReader, AssemblyReferenceHandle assemblyReferenceHandle, string parentFile)
+			public IAssemblyMetadata FindAssembly(MetadataReader metadataReader, AssemblyReferenceHandle assemblyReferenceHandle, string parentFile)
 			{
 				LoadedAssembly loadedAssembly = this.loadedAssembly.LookupReferencedAssembly(new Decompiler.Metadata.AssemblyReference(metadataReader, assemblyReferenceHandle));
-				return loadedAssembly?.GetPEFileOrNull()?.Metadata;
+				PEReader reader = loadedAssembly?.GetPEFileOrNull()?.Reader;
+				return reader == null ? null : new StandaloneAssemblyMetadata(reader);
 			}
 
-			public MetadataReader FindAssembly(string simpleName, string parentFile)
+			public IAssemblyMetadata FindAssembly(string simpleName, string parentFile)
 			{
 				// This is called only for the composite R2R scenario, 
 				// So it will never be called before the feature is released.
