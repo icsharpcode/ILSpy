@@ -235,7 +235,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		static void SortSwitchSections(SwitchInstruction sw)
 		{
-			sw.Sections.ReplaceList(sw.Sections.OrderBy(s => (s.Body as Branch)?.TargetILOffset).ThenBy(s => s.Labels.Values.FirstOrDefault()));
+			sw.Sections.ReplaceList(sw.Sections.OrderBy(s => s.Body switch {
+				Branch b => b.TargetILOffset,
+				Leave l => l.StartILOffset,
+				_ => (int?)null
+			}).ThenBy(s => s.Labels.Values.FirstOrDefault()));
 		}
 
 		static void AdjustLabels(SwitchInstruction sw, ILTransformContext context)

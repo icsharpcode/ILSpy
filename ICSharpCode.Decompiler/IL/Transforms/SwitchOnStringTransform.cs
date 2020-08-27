@@ -188,11 +188,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			var values = new List<(string, ILInstruction)>();
 			var uniqueValues = new HashSet<string>();
+			int numberOfUniqueMatchesWithCurrentVariable = 0;
 
 			bool AddSwitchSection(string value, ILInstruction inst)
 			{
 				if (!uniqueValues.Add(value))
 					return false;
+				numberOfUniqueMatchesWithCurrentVariable++;
 				values.Add((value, inst));
 				return true;
 			}
@@ -228,6 +230,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// if (call op_Equality(ldloc otherSwitchValueVar, ldstr value)) br firstBlock
 					var otherSwitchValueVar = switchValueVar;
 					switchValueVar = stloc.Variable;
+					numberOfUniqueMatchesWithCurrentVariable = 0;
 					if (i >= 2 && instructions[i - 2].MatchStLoc(otherSwitchValueVar, out switchValue)
 						&& otherSwitchValueVar.IsSingleDefinition && otherSwitchValueVar.LoadCount == 2) {
 						removeExtraLoad = true;
@@ -249,7 +252,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			// extract all cases and add them to the values list.
 			ILInstruction nextCaseBlock;
-			while ((nextCaseBlock = MatchCaseBlock(currentCaseBlock, switchValueVar, out string value, out bool emptyStringEqualsNull, out Block block)) != null) {
+			while ((nextCaseBlock = MatchCaseBlock(currentCaseBlock, switchValueVar, out string value, out bool emptyStringEqualsNull, out ILInstruction block)) != null) {
 				if (emptyStringEqualsNull && string.IsNullOrEmpty(value)) {
 					if (!AddSwitchSection(null, block))
 						return false;
@@ -267,15 +270,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// We didn't find enough cases, exit
 			if (values.Count < 3)
 				return false;
+			context.Step(nameof(SimplifyCascadingIfStatements), instructions[i]);
 			// if the switchValueVar is used in other places as well, do not eliminate the store.
-			if (switchValueVar.LoadCount > values.Count) {
+			if (switchValueVar.LoadCount > numberOfUniqueMatchesWithCurrentVariable) {
 				keepAssignmentBefore = true;
 				removeExtraLoad = false; // prevent loads from being deleted after detecting that
 										 // we have to keep the assignment before the switch statement
 				switchValue = new LdLoc(switchValueVar);
 			}
 			int offset = firstBlock == null ? 1 : 0;
-			var sections = new List<SwitchSection>(values.Skip(offset).SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = new Branch((Block)b.Item2) }));
+			var sections = new List<SwitchSection>(values.Skip(offset).SelectWithIndex((index, s) => new SwitchSection { Labels = new LongSet(index), Body = s.Item2 is Block b ? new Branch(b) : s.Item2.Clone() }));
 			sections.Add(new SwitchSection { Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(), Body = currentCaseBlock != null ? (ILInstruction)new Branch(currentCaseBlock) : new Leave((BlockContainer)nextCaseBlock) });
 			var stringToInt = new StringToInt(switchValue, values.Skip(offset).Select(item => item.Item1).ToArray());
 			var inst = new SwitchInstruction(stringToInt);
@@ -358,6 +362,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (values.Count != switchValueVarCopy.LoadCount)
 				return false;
+			context.Step(nameof(SimplifyCSharp1CascadingIfStatements), instructions[i]);
 
 			// switch contains case null: 
 			if (currentCaseBlock != defaultOrNullBlock) {
@@ -407,10 +412,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// The <paramref name="switchVariable"/> is updated if the value gets copied to a different variable.
 		/// See comments below for more info.
 		/// </summary>
-		ILInstruction MatchCaseBlock(Block currentBlock, ILVariable switchVariable, out string value, out bool emptyStringEqualsNull, out Block caseBlock)
+		ILInstruction MatchCaseBlock(Block currentBlock, ILVariable switchVariable, out string value, out bool emptyStringEqualsNull, out ILInstruction caseBlockOrLeave)
 		{
 			value = null;
-			caseBlock = null;
+			caseBlockOrLeave = null;
 			emptyStringEqualsNull = false;
 
 			if (currentBlock.IncomingEdgeCount != 1 || currentBlock.Instructions.Count != 2)
@@ -424,8 +429,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ExtensionMethods.Swap(ref caseBlockBranch, ref nextBlockBranch);
 				emptyStringEqualsNull = true;
 			}
-			if (!caseBlockBranch.MatchBranch(out caseBlock))
+			if (caseBlockBranch.MatchBranch(out var caseBlock)) {
+				caseBlockOrLeave = caseBlock;
+			} else if (caseBlockBranch.MatchLeave(out _)) {
+				caseBlockOrLeave = caseBlockBranch;
+			} else {
 				return null;
+			}
 			if (nextBlockBranch.MatchBranch(out Block nextBlock)) {
 				// success
 				return nextBlock;
@@ -552,6 +562,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				}
 			}
+			context.Step(nameof(MatchLegacySwitchOnStringWithDict), instructions[i]);
 			bool keepAssignmentBefore = false;
 			if (switchValueVar.LoadCount > 2 || switchValue == null) {
 				switchValue = new LdLoc(switchValueVar);
@@ -787,6 +798,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				}
 			}
+			context.Step(nameof(MatchLegacySwitchOnStringWithHashtable), block.Instructions[i]);
 			var stringToInt = new StringToInt(switchValue, stringValues);
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
