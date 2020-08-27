@@ -4,6 +4,7 @@ root = true
 [*]
 indent_style = tab
 indent_size = 4
+guidelines = 110
 
 [*.il]
 indent_style = space
@@ -29,10 +30,10 @@ indent_size = 2
 
 [*.cs]
 # New line preferences
-csharp_new_line_before_open_brace = methods, types
-csharp_new_line_before_else = false
-csharp_new_line_before_catch = false
-csharp_new_line_before_finally = false
+csharp_new_line_before_open_brace = methods, types, control_blocks, local_functions
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
 csharp_new_line_before_members_in_object_initializers = false
 csharp_new_line_before_members_in_anonymous_types = false
 csharp_new_line_within_query_expression_clauses = false
@@ -41,6 +42,7 @@ csharp_new_line_within_query_expression_clauses = false
 csharp_indent_block_contents = true
 csharp_indent_braces = false
 csharp_indent_case_contents = true
+csharp_indent_case_contents_when_block = false
 csharp_indent_switch_labels = true
 csharp_indent_labels = one_less
 
@@ -61,10 +63,11 @@ dotnet_style_predefined_type_for_member_access = true:silent
 
 # Using directives
 dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
 
 # Wrapping
 csharp_preserve_single_line_blocks = true
-csharp_preserve_single_line_statements = true
+csharp_preserve_single_line_statements = false
 
 # Code style
 csharp_prefer_braces = true:silent
