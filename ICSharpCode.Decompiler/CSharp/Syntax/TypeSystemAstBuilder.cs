@@ -954,12 +954,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			ITypeDefinition enumDefinition = type.GetDefinition();
 			TypeCode enumBaseTypeCode = ReflectionHelper.GetTypeCode(enumDefinition.EnumUnderlyingType);
-			foreach (IField field in enumDefinition.Fields.Where(fld => fld.IsConst)) {
-				object constantValue = field.GetConstantValue();
-				if (constantValue == null)
-					continue;
-				if (object.Equals(CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false), val)) {
-					MemberReferenceExpression mre = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+			var fields = enumDefinition.Fields
+				.Select(PrepareConstant)
+				.Where(f => f.field != null)
+				.ToArray();
+			foreach (var (value, field) in fields) {
+				if (value == val) {
+					var mre = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
 					if (AddResolveResultAnnotations)
 						mre.AddAnnotation(new MemberResolveResult(mre.Target.GetResolveResult(), field));
 					return mre;
@@ -985,9 +986,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						break;
 				}
 				Expression negatedExpr = null;
-				foreach (IField field in enumDefinition.Fields.Where(fld => fld.IsConst)) {
-					object constantValue = field.GetConstantValue();
-					long fieldValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
+				foreach (var (fieldValue, field) in fields.OrderByDescending(f => CalculateHammingWeight(unchecked((ulong)f.value)))) {
 					if (fieldValue == 0)
 						continue;	// skip None enum value
 
@@ -1020,6 +1019,29 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 			}
 			return new CastExpression(ConvertType(type), new PrimitiveExpression(CSharpPrimitiveCast.Cast(enumBaseTypeCode, val, false)));
+
+			(long value, IField field) PrepareConstant(IField field)
+			{
+				if (!field.IsConst)
+					return (-1, null);
+				object constantValue = field.GetConstantValue();
+				if (constantValue == null)
+					return (-1, null);
+				return ((long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, checkForOverflow: false), field);
+			}
+
+			// see https://en.wikipedia.org/wiki/Hamming_weight
+			int CalculateHammingWeight(ulong value)
+			{
+				const ulong m1 = 0x5555555555555555; //binary: 0101...
+				const ulong m2 = 0x3333333333333333; //binary: 00110011..
+				const ulong m4 = 0x0f0f0f0f0f0f0f0f; //binary:  4 zeros,  4 ones ...
+				const ulong h01 = 0x0101010101010101; //the sum of 256 to the power of 0,1,2,3...
+				ulong x = value - ((value >> 1) & m1); //put count of each 2 bits into those 2 bits
+				x = (x & m2) + ((x >> 2) & m2); //put count of each 4 bits into those 4 bits 
+				x = (x + (x >> 4)) & m4;        //put count of each 8 bits into those 8 bits 
+				return unchecked((int)((x * h01) >> 56));  //returns left 8 bits of x + (x<<8) + (x<<16) + (x<<24) + ... 
+			}
 		}
 
 		static bool IsValidFraction(long num, long den)
