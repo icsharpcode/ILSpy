@@ -252,7 +252,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			// extract all cases and add them to the values list.
 			ILInstruction nextCaseBlock;
-			while ((nextCaseBlock = MatchCaseBlock(currentCaseBlock, switchValueVar, out string value, out bool emptyStringEqualsNull, out ILInstruction block)) != null) {
+			do {
+				nextCaseBlock = MatchCaseBlock(currentCaseBlock, switchValueVar, out string value, out bool emptyStringEqualsNull, out ILInstruction block);
+				if (nextCaseBlock == null)
+					break;
 				if (emptyStringEqualsNull && string.IsNullOrEmpty(value)) {
 					if (!AddSwitchSection(null, block))
 						return false;
@@ -263,9 +266,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 				}
 				currentCaseBlock = nextCaseBlock as Block;
-				if (currentCaseBlock == null)
-					break;
-			}
+			} while (currentCaseBlock != null);
 
 			// We didn't find enough cases, exit
 			if (values.Count < 3)
