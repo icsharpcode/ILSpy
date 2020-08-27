@@ -19,8 +19,10 @@
 using System;
 using System.Collections.Immutable;
 using System.Reflection.Metadata.Ecma335;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+
 using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -110,7 +112,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		bool? IsReferenceType(SRM.MetadataReader reader, SRM.EntityHandle handle, byte rawTypeKind)
 		{
-			switch (reader.ResolveSignatureTypeKind(handle, rawTypeKind)) {
+			switch (reader.ResolveSignatureTypeKind(handle, rawTypeKind))
+			{
 				case SRM.SignatureTypeKind.ValueType:
 					return false;
 				case SRM.SignatureTypeKind.Class:
@@ -134,9 +137,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IModule resolvedModule = module.GetDeclaringModule(handle);
 			var fullTypeName = handle.GetFullTypeName(reader);
 			IType type;
-			if (resolvedModule != null) {
+			if (resolvedModule != null)
+			{
 				type = resolvedModule.GetTypeDefinition(fullTypeName);
-			} else {
+			}
+			else
+			{
 				type = GetClassTypeReference.ResolveInAllAssemblies(compilation, in fullTypeName);
 			}
 			return type ?? new UnknownType(fullTypeName, IsReferenceType(reader, handle, rawTypeKind));
@@ -144,17 +150,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType GetTypeFromSerializedName(string name)
 		{
-			if (name == null) {
+			if (name == null)
+			{
 				return null;
 			}
-			try {
+			try
+			{
 				return ReflectionHelper.ParseReflectionName(name)
 					.Resolve(module != null ? new SimpleTypeResolveContext(module) : new SimpleTypeResolveContext(compilation));
-			} catch (ReflectionNameParseException ex) {
+			}
+			catch (ReflectionNameParseException ex)
+			{
 				throw new BadImageFormatException($"Invalid type name: \"{name}\": {ex.Message}");
 			}
 		}
-		
+
 		public IType GetTypeFromSpecification(SRM.MetadataReader reader, GenericContext genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)
 		{
 			return reader.GetTypeSpecification(handle).DecodeSignature<IType, GenericContext>(this, genericContext);

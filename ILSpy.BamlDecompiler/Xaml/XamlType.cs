@@ -22,9 +22,11 @@
 
 using System.Xml;
 using System.Xml.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.BamlDecompiler.Xaml {
+namespace ILSpy.BamlDecompiler.Xaml
+{
 	internal class XamlType
 	{
 		/// <summary>
@@ -39,10 +41,12 @@ namespace ILSpy.BamlDecompiler.Xaml {
 		public IType ResolvedType { get; set; }
 
 		public XamlType(IModule assembly, string fullAssemblyName, string ns, string name)
-			: this(assembly, fullAssemblyName, ns, name, null) {
+			: this(assembly, fullAssemblyName, ns, name, null)
+		{
 		}
 
-		public XamlType(IModule assembly, string fullAssemblyName, string ns, string name, XNamespace xmlns) {
+		public XamlType(IModule assembly, string fullAssemblyName, string ns, string name, XNamespace xmlns)
+		{
 			Assembly = assembly;
 			FullAssemblyName = fullAssemblyName;
 			TypeNamespace = ns;
@@ -50,7 +54,8 @@ namespace ILSpy.BamlDecompiler.Xaml {
 			Namespace = xmlns;
 		}
 
-		public void ResolveNamespace(XElement elem, XamlContext ctx) {
+		public void ResolveNamespace(XElement elem, XamlContext ctx)
+		{
 			if (Namespace != null)
 				return;
 
@@ -66,17 +71,20 @@ namespace ILSpy.BamlDecompiler.Xaml {
 			if (xmlNs == null)
 				xmlNs = ctx.TryGetXmlNamespace(Assembly, TypeNamespace);
 
-			if (xmlNs == null) {
+			if (xmlNs == null)
+			{
 				if (FullAssemblyName == ctx.TypeSystem.MainModule.FullAssemblyName)
 					xmlNs = $"clr-namespace:{TypeNamespace}";
-				else {
+				else
+				{
 					var name = ICSharpCode.Decompiler.Metadata.AssemblyNameReference.Parse(FullAssemblyName);
 					xmlNs = $"clr-namespace:{TypeNamespace};assembly={name.Name}";
 				}
 
-				var nsSeg = TypeNamespace.Split('.');	
+				var nsSeg = TypeNamespace.Split('.');
 				var prefix = nsSeg[nsSeg.Length - 1].ToLowerInvariant();
-				if (string.IsNullOrEmpty(prefix)) {
+				if (string.IsNullOrEmpty(prefix))
+				{
 					if (string.IsNullOrEmpty(TypeNamespace))
 						prefix = "global";
 					else
@@ -85,12 +93,14 @@ namespace ILSpy.BamlDecompiler.Xaml {
 				int count = 0;
 				var truePrefix = prefix;
 				XNamespace prefixNs, ns = ctx.GetXmlNamespace(xmlNs);
-				while ((prefixNs = elem.GetNamespaceOfPrefix(truePrefix)) != null && prefixNs != ns) {
+				while ((prefixNs = elem.GetNamespaceOfPrefix(truePrefix)) != null && prefixNs != ns)
+				{
 					count++;
 					truePrefix = prefix + count;
 				}
 
-				if (prefixNs == null) {
+				if (prefixNs == null)
+				{
 					elem.Add(new XAttribute(XNamespace.Xmlns + XmlConvert.EncodeLocalName(truePrefix), ns));
 					if (string.IsNullOrEmpty(TypeNamespace))
 						elem.AddBeforeSelf(new XComment(string.Format("'{0}' is prefix for the global namespace", truePrefix)));
@@ -99,7 +109,8 @@ namespace ILSpy.BamlDecompiler.Xaml {
 			Namespace = ctx.GetXmlNamespace(xmlNs);
 		}
 
-		public XName ToXName(XamlContext ctx) {
+		public XName ToXName(XamlContext ctx)
+		{
 			if (Namespace == null)
 				return XmlConvert.EncodeLocalName(TypeName);
 			return Namespace + XmlConvert.EncodeLocalName(TypeName);

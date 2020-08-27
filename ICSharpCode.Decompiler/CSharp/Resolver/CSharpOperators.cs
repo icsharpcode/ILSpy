@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -30,13 +31,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	sealed class CSharpOperators
 	{
 		readonly ICompilation compilation;
-		
+
 		private CSharpOperators(ICompilation compilation)
 		{
 			this.compilation = compilation;
 			InitParameterArrays();
 		}
-		
+
 		/// <summary>
 		/// Gets the CSharpOperators instance for the specified <see cref="ICompilation"/>.
 		/// This will make use of the context's cache manager (if available) to reuse the CSharpOperators instance.
@@ -45,72 +46,77 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			CacheManager cache = compilation.CacheManager;
 			CSharpOperators operators = (CSharpOperators)cache.GetShared(typeof(CSharpOperators));
-			if (operators == null) {
+			if (operators == null)
+			{
 				operators = (CSharpOperators)cache.GetOrAddShared(typeof(CSharpOperators), new CSharpOperators(compilation));
 			}
 			return operators;
 		}
-		
+
 		#region class OperatorMethod
 		OperatorMethod[] Lift(params OperatorMethod[] methods)
 		{
 			List<OperatorMethod> result = new List<OperatorMethod>(methods);
-			foreach (OperatorMethod method in methods) {
+			foreach (OperatorMethod method in methods)
+			{
 				OperatorMethod lifted = method.Lift(this);
 				if (lifted != null)
 					result.Add(lifted);
 			}
 			return result.ToArray();
 		}
-		
+
 		IParameter[] normalParameters = new IParameter[(int)(TypeCode.String + 1 - TypeCode.Object)];
 		IParameter[] nullableParameters = new IParameter[(int)(TypeCode.Decimal + 1 - TypeCode.Boolean)];
-		
+
 		void InitParameterArrays()
 		{
-			for (TypeCode i = TypeCode.Object; i <= TypeCode.String; i++) {
+			for (TypeCode i = TypeCode.Object; i <= TypeCode.String; i++)
+			{
 				normalParameters[i - TypeCode.Object] = new DefaultParameter(compilation.FindType(i), string.Empty);
 			}
-			for (TypeCode i = TypeCode.Boolean; i <= TypeCode.Decimal; i++) {
+			for (TypeCode i = TypeCode.Boolean; i <= TypeCode.Decimal; i++)
+			{
 				IType type = NullableType.Create(compilation, compilation.FindType(i));
 				nullableParameters[i - TypeCode.Boolean] = new DefaultParameter(type, string.Empty);
 			}
 		}
-		
+
 		IParameter MakeParameter(TypeCode code)
 		{
 			return normalParameters[code - TypeCode.Object];
 		}
-		
+
 		IParameter MakeNullableParameter(IParameter normalParameter)
 		{
-			for (TypeCode i = TypeCode.Boolean; i <= TypeCode.Decimal; i++) {
+			for (TypeCode i = TypeCode.Boolean; i <= TypeCode.Decimal; i++)
+			{
 				if (normalParameter == normalParameters[i - TypeCode.Object])
 					return nullableParameters[i - TypeCode.Boolean];
 			}
 			throw new ArgumentException();
 		}
-		
+
 		internal class OperatorMethod : IParameterizedMember
 		{
 			readonly ICompilation compilation;
 			internal readonly List<IParameter> parameters = new List<IParameter>();
-			
+
 			protected OperatorMethod(ICompilation compilation)
 			{
 				this.compilation = compilation;
 			}
-			
+
 			public IReadOnlyList<IParameter> Parameters {
 				get { return parameters; }
 			}
-			
+
 			public IType ReturnType { get; internal set; }
-			
+
 			public ICompilation Compilation {
 				get { return compilation; }
 			}
-			
+
 			public virtual OperatorMethod Lift(CSharpOperators operators)
 			{
 				return null;
@@ -121,11 +127,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			ITypeDefinition IEntity.DeclaringTypeDefinition {
 				get { return null; }
 			}
-			
+
 			IType IEntity.DeclaringType {
 				get { return null; }
 			}
-			
+
 			IMember IMember.MemberDefinition {
 				get { return this; }
 			}
@@ -133,52 +139,52 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			IEnumerable<IMember> IMember.ExplicitlyImplementedInterfaceMembers {
 				get { return EmptyList<IMember>.Instance; }
 			}
-			
+
 			bool IMember.IsVirtual {
 				get { return false; }
 			}
-			
+
 			bool IMember.IsOverride {
 				get { return false; }
 			}
-			
+
 			bool IMember.IsOverridable {
 				get { return false; }
 			}
-			
+
 			SymbolKind ISymbol.SymbolKind {
 				get { return SymbolKind.Operator; }
 			}
-			
+
 			IEnumerable<IAttribute> IEntity.GetAttributes()
 			{
 				return EmptyList<IAttribute>.Instance;
 			}
-			
+
 			Accessibility IEntity.Accessibility {
 				get { return Accessibility.Public; }
 			}
-			
+
 			bool IEntity.IsStatic {
 				get { return true; }
 			}
-			
+
 			bool IEntity.IsAbstract {
 				get { return false; }
 			}
-			
+
 			bool IEntity.IsSealed {
 				get { return false; }
 			}
-			
+
 			bool IMember.IsExplicitInterfaceImplementation {
 				get { return false; }
 			}
-			
+
 			IModule IEntity.ParentModule {
 				get { return compilation.MainModule; }
 			}
-			
+
 			TypeParameterSubstitution IMember.Substitution {
 				get {
 					return TypeParameterSubstitution.Identity;
@@ -195,24 +201,25 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			string INamedElement.FullName {
 				get { return "operator"; }
 			}
-			
+
 			public string Name {
 				get { return "operator"; }
 			}
-			
+
 			string INamedElement.Namespace {
 				get { return string.Empty; }
 			}
-			
+
 			string INamedElement.ReflectionName {
 				get { return "operator"; }
 			}
-			
+
 			public override string ToString()
 			{
 				StringBuilder b = new StringBuilder();
 				b.Append(ReturnType + " operator(");
-				for (int i = 0; i < parameters.Count; i++) {
+				for (int i = 0; i < parameters.Count; i++)
+				{
 					if (i > 0)
 						b.Append(", ");
 					b.Append(parameters[i].Type);
@@ -227,26 +234,26 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 		#endregion
-		
+
 		#region Unary operator class definitions
 		internal class UnaryOperatorMethod : OperatorMethod
 		{
 			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
-			
+
 			public virtual object Invoke(CSharpResolver resolver, object input)
 			{
 				throw new NotSupportedException();
 			}
-			
+
 			public UnaryOperatorMethod(ICompilation compilation) : base(compilation)
 			{
 			}
 		}
-		
+
 		sealed class LambdaUnaryOperatorMethod<T> : UnaryOperatorMethod
 		{
 			readonly Func<T, T> func;
-			
+
 			public LambdaUnaryOperatorMethod(CSharpOperators operators, Func<T, T> func)
 				: base(operators.compilation)
 			{
@@ -255,28 +262,28 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				parameters.Add(operators.MakeParameter(typeCode));
 				this.func = func;
 			}
-			
+
 			public override bool CanEvaluateAtCompileTime {
 				get { return true; }
 			}
-			
+
 			public override object Invoke(CSharpResolver resolver, object input)
 			{
 				if (input == null)
 					return null;
 				return func((T)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T)), input));
 			}
-			
+
 			public override OperatorMethod Lift(CSharpOperators operators)
 			{
 				return new LiftedUnaryOperatorMethod(operators, this);
 			}
 		}
-		
+
 		sealed class LiftedUnaryOperatorMethod : UnaryOperatorMethod, ILiftedOperator
 		{
 			UnaryOperatorMethod baseMethod;
-			
+
 			public LiftedUnaryOperatorMethod(CSharpOperators operators, UnaryOperatorMethod baseMethod) : base(operators.compilation)
 			{
 				this.baseMethod = baseMethod;
@@ -288,126 +295,142 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public IType NonLiftedReturnType => baseMethod.ReturnType;
 		}
 		#endregion
-		
+
 		#region Unary operator definitions
 		// C# 4.0 spec: §7.7.1 Unary plus operator
 		OperatorMethod[] unaryPlusOperators;
-		
+
 		public OperatorMethod[] UnaryPlusOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref unaryPlusOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref unaryPlusOperators, Lift(
-						new LambdaUnaryOperatorMethod<int>    (this, i => +i),
-						new LambdaUnaryOperatorMethod<uint>   (this, i => +i),
-						new LambdaUnaryOperatorMethod<long>   (this, i => +i),
-						new LambdaUnaryOperatorMethod<ulong>  (this, i => +i),
-						new LambdaUnaryOperatorMethod<float>  (this, i => +i),
-						new LambdaUnaryOperatorMethod<double> (this, i => +i),
+						new LambdaUnaryOperatorMethod<int>(this, i => +i),
+						new LambdaUnaryOperatorMethod<uint>(this, i => +i),
+						new LambdaUnaryOperatorMethod<long>(this, i => +i),
+						new LambdaUnaryOperatorMethod<ulong>(this, i => +i),
+						new LambdaUnaryOperatorMethod<float>(this, i => +i),
+						new LambdaUnaryOperatorMethod<double>(this, i => +i),
 						new LambdaUnaryOperatorMethod<decimal>(this, i => +i)
 					));
 				}
 			}
 		}
-		
+
 		// C# 4.0 spec: §7.7.2 Unary minus operator
 		OperatorMethod[] uncheckedUnaryMinusOperators;
-		
+
 		public OperatorMethod[] UncheckedUnaryMinusOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref uncheckedUnaryMinusOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref uncheckedUnaryMinusOperators, Lift(
-						new LambdaUnaryOperatorMethod<int>    (this, i => unchecked(-i)),
-						new LambdaUnaryOperatorMethod<long>   (this, i => unchecked(-i)),
-						new LambdaUnaryOperatorMethod<float>  (this, i => unchecked(-i)),
-						new LambdaUnaryOperatorMethod<double> (this, i => unchecked(-i)),
+						new LambdaUnaryOperatorMethod<int>(this, i => unchecked(-i)),
+						new LambdaUnaryOperatorMethod<long>(this, i => unchecked(-i)),
+						new LambdaUnaryOperatorMethod<float>(this, i => unchecked(-i)),
+						new LambdaUnaryOperatorMethod<double>(this, i => unchecked(-i)),
 						new LambdaUnaryOperatorMethod<decimal>(this, i => unchecked(-i))
 					));
 				}
 			}
 		}
-		
+
 		OperatorMethod[] checkedUnaryMinusOperators;
-		
+
 		public OperatorMethod[] CheckedUnaryMinusOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref checkedUnaryMinusOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref checkedUnaryMinusOperators, Lift(
-						new LambdaUnaryOperatorMethod<int>    (this, i => checked(-i)),
-						new LambdaUnaryOperatorMethod<long>   (this, i => checked(-i)),
-						new LambdaUnaryOperatorMethod<float>  (this, i => checked(-i)),
-						new LambdaUnaryOperatorMethod<double> (this, i => checked(-i)),
+						new LambdaUnaryOperatorMethod<int>(this, i => checked(-i)),
+						new LambdaUnaryOperatorMethod<long>(this, i => checked(-i)),
+						new LambdaUnaryOperatorMethod<float>(this, i => checked(-i)),
+						new LambdaUnaryOperatorMethod<double>(this, i => checked(-i)),
 						new LambdaUnaryOperatorMethod<decimal>(this, i => checked(-i))
 					));
 				}
 			}
 		}
-		
+
 		// C# 4.0 spec: §7.7.3 Logical negation operator
 		OperatorMethod[] logicalNegationOperators;
-		
+
 		public OperatorMethod[] LogicalNegationOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref logicalNegationOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref logicalNegationOperators, Lift(
 						new LambdaUnaryOperatorMethod<bool>(this, b => !b)
 					));
 				}
 			}
 		}
-		
+
 		// C# 4.0 spec: §7.7.4 Bitwise complement operator
 		OperatorMethod[] bitwiseComplementOperators;
-		
+
 		public OperatorMethod[] BitwiseComplementOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref bitwiseComplementOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref bitwiseComplementOperators, Lift(
-						new LambdaUnaryOperatorMethod<int>  (this, i => ~i),
-						new LambdaUnaryOperatorMethod<uint> (this, i => ~i),
-						new LambdaUnaryOperatorMethod<long> (this, i => ~i),
+						new LambdaUnaryOperatorMethod<int>(this, i => ~i),
+						new LambdaUnaryOperatorMethod<uint>(this, i => ~i),
+						new LambdaUnaryOperatorMethod<long>(this, i => ~i),
 						new LambdaUnaryOperatorMethod<ulong>(this, i => ~i)
 					));
 				}
 			}
 		}
 		#endregion
-		
+
 		#region Binary operator class definitions
 		internal class BinaryOperatorMethod : OperatorMethod
 		{
 			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
-			public virtual object Invoke(CSharpResolver resolver, object lhs, object rhs) {
+			public virtual object Invoke(CSharpResolver resolver, object lhs, object rhs)
+			{
 				throw new NotSupportedException();
 			}
-			
-			public BinaryOperatorMethod(ICompilation compilation) : base(compilation) {}
+
+			public BinaryOperatorMethod(ICompilation compilation) : base(compilation) { }
 		}
-		
+
 		sealed class LambdaBinaryOperatorMethod<T1, T2> : BinaryOperatorMethod
 		{
 			readonly Func<T1, T2, T1> checkedFunc;
 			readonly Func<T1, T2, T1> uncheckedFunc;
-			
+
 			public LambdaBinaryOperatorMethod(CSharpOperators operators, Func<T1, T2, T1> func)
 				: this(operators, func, func)
 			{
 			}
-			
+
 			public LambdaBinaryOperatorMethod(CSharpOperators operators, Func<T1, T2, T1> checkedFunc, Func<T1, T2, T1> uncheckedFunc)
 				: base(operators.compilation)
 			{
@@ -418,30 +441,30 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.checkedFunc = checkedFunc;
 				this.uncheckedFunc = uncheckedFunc;
 			}
-			
+
 			public override bool CanEvaluateAtCompileTime {
 				get { return true; }
 			}
-			
+
 			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
 			{
 				if (lhs == null || rhs == null)
 					return null;
 				Func<T1, T2, T1> func = resolver.CheckForOverflow ? checkedFunc : uncheckedFunc;
 				return func((T1)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T1)), lhs),
-				            (T2)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T2)), rhs));
+							(T2)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T2)), rhs));
 			}
-			
+
 			public override OperatorMethod Lift(CSharpOperators operators)
 			{
 				return new LiftedBinaryOperatorMethod(operators, this);
 			}
 		}
-		
+
 		sealed class LiftedBinaryOperatorMethod : BinaryOperatorMethod, ILiftedOperator
 		{
 			readonly BinaryOperatorMethod baseMethod;
-			
+
 			public LiftedBinaryOperatorMethod(CSharpOperators operators, BinaryOperatorMethod baseMethod)
 				: base(operators.compilation)
 			{
@@ -455,91 +478,103 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public IType NonLiftedReturnType => baseMethod.ReturnType;
 		}
 		#endregion
-		
+
 		#region Arithmetic operators
 		// C# 4.0 spec: §7.8.1 Multiplication operator
-		
+
 		OperatorMethod[] multiplicationOperators;
-		
+
 		public OperatorMethod[] MultiplicationOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref multiplicationOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref multiplicationOperators, Lift(
-						new LambdaBinaryOperatorMethod<int,     int>    (this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<uint,    uint>   (this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<long,    long>   (this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<ulong,   ulong>  (this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<float,   float>  (this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<double,  double> (this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
+						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
 						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b))
 					));
 				}
 			}
 		}
-		
+
 		// C# 4.0 spec: §7.8.2 Division operator
 		OperatorMethod[] divisionOperators;
-		
+
 		public OperatorMethod[] DivisionOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref divisionOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref divisionOperators, Lift(
-						new LambdaBinaryOperatorMethod<int,     int>    (this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<uint,    uint>   (this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<long,    long>   (this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<ulong,   ulong>  (this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<float,   float>  (this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<double,  double> (this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
+						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
 						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b))
 					));
 				}
 			}
 		}
-		
+
 		// C# 4.0 spec: §7.8.3 Remainder operator
 		OperatorMethod[] remainderOperators;
-		
+
 		public OperatorMethod[] RemainderOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref remainderOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref remainderOperators, Lift(
-						new LambdaBinaryOperatorMethod<int,     int>    (this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<uint,    uint>   (this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<long,    long>   (this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<ulong,   ulong>  (this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<float,   float>  (this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<double,  double> (this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
+						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
 						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b))
 					));
 				}
 			}
 		}
-		
+
 		// C# 4.0 spec: §7.8.3 Addition operator
 		OperatorMethod[] additionOperators;
-		
+
 		public OperatorMethod[] AdditionOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref additionOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref additionOperators, Lift(
-						new LambdaBinaryOperatorMethod<int,     int>    (this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<uint,    uint>   (this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<long,    long>   (this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<ulong,   ulong>  (this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<float,   float>  (this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<double,  double> (this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
 						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
 						new StringConcatenation(this, TypeCode.String, TypeCode.String),
 						new StringConcatenation(this, TypeCode.String, TypeCode.Object),
@@ -548,12 +583,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 		}
-		
+
 		// not in this list, but handled manually: enum addition, delegate combination
 		sealed class StringConcatenation : BinaryOperatorMethod
 		{
 			bool canEvaluateAtCompileTime;
-			
+
 			public StringConcatenation(CSharpOperators operators, TypeCode p1, TypeCode p2)
 				: base(operators.compilation)
 			{
@@ -562,83 +597,92 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				parameters.Add(operators.MakeParameter(p1));
 				parameters.Add(operators.MakeParameter(p2));
 			}
-			
+
 			public override bool CanEvaluateAtCompileTime {
 				get { return canEvaluateAtCompileTime; }
 			}
-			
+
 			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
 			{
 				return string.Concat(lhs, rhs);
 			}
 		}
-		
+
 		// C# 4.0 spec: §7.8.4 Subtraction operator
 		OperatorMethod[] subtractionOperators;
-		
+
 		public OperatorMethod[] SubtractionOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref subtractionOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref subtractionOperators, Lift(
-						new LambdaBinaryOperatorMethod<int,     int>    (this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<uint,    uint>   (this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<long,    long>   (this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<ulong,   ulong>  (this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<float,   float>  (this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<double,  double> (this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
+						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
 						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b))
 					));
 				}
 			}
 		}
-		
+
 		// C# 4.0 spec: §7.8.5 Shift operators
 		OperatorMethod[] shiftLeftOperators;
-		
+
 		public OperatorMethod[] ShiftLeftOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref shiftLeftOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref shiftLeftOperators, Lift(
-						new LambdaBinaryOperatorMethod<int,   int>(this, (a, b) => a << b),
-						new LambdaBinaryOperatorMethod<uint,  int>(this, (a, b) => a << b),
-						new LambdaBinaryOperatorMethod<long,  int>(this, (a, b) => a << b),
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => a << b),
+						new LambdaBinaryOperatorMethod<uint, int>(this, (a, b) => a << b),
+						new LambdaBinaryOperatorMethod<long, int>(this, (a, b) => a << b),
 						new LambdaBinaryOperatorMethod<ulong, int>(this, (a, b) => a << b)
 					));
 				}
 			}
 		}
-		
+
 		OperatorMethod[] shiftRightOperators;
-		
+
 		public OperatorMethod[] ShiftRightOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref shiftRightOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref shiftRightOperators, Lift(
-						new LambdaBinaryOperatorMethod<int,   int>(this, (a, b) => a >> b),
-						new LambdaBinaryOperatorMethod<uint,  int>(this, (a, b) => a >> b),
-						new LambdaBinaryOperatorMethod<long,  int>(this, (a, b) => a >> b),
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => a >> b),
+						new LambdaBinaryOperatorMethod<uint, int>(this, (a, b) => a >> b),
+						new LambdaBinaryOperatorMethod<long, int>(this, (a, b) => a >> b),
 						new LambdaBinaryOperatorMethod<ulong, int>(this, (a, b) => a >> b)
 					));
 				}
 			}
 		}
 		#endregion
-		
+
 		#region Equality operators
 		sealed class EqualityOperatorMethod : BinaryOperatorMethod
 		{
 			public readonly TypeCode Type;
 			public readonly bool Negate;
-			
+
 			public EqualityOperatorMethod(CSharpOperators operators, TypeCode type, bool negate)
 				: base(operators.compilation)
 			{
@@ -648,11 +692,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				parameters.Add(operators.MakeParameter(type));
 				parameters.Add(operators.MakeParameter(type));
 			}
-			
+
 			public override bool CanEvaluateAtCompileTime {
 				get { return Type != TypeCode.Object; }
 			}
-			
+
 			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
 			{
 				if (lhs == null && rhs == null)
@@ -662,16 +706,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				lhs = resolver.CSharpPrimitiveCast(Type, lhs);
 				rhs = resolver.CSharpPrimitiveCast(Type, rhs);
 				bool equal;
-				if (Type == TypeCode.Single) {
+				if (Type == TypeCode.Single)
+				{
 					equal = (float)lhs == (float)rhs;
-				} else if (Type == TypeCode.Double) {
+				}
+				else if (Type == TypeCode.Double)
+				{
 					equal = (double)lhs == (double)rhs;
-				} else {
+				}
+				else
+				{
 					equal = object.Equals(lhs, rhs);
 				}
 				return equal ^ Negate;
 			}
-			
+
 			public override OperatorMethod Lift(CSharpOperators operators)
 			{
 				if (Type == TypeCode.Object || Type == TypeCode.String)
@@ -680,11 +729,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return new LiftedEqualityOperatorMethod(operators, this);
 			}
 		}
-		
+
 		sealed class LiftedEqualityOperatorMethod : BinaryOperatorMethod, ILiftedOperator
 		{
 			readonly EqualityOperatorMethod baseMethod;
-			
+
 			public LiftedEqualityOperatorMethod(CSharpOperators operators, EqualityOperatorMethod baseMethod)
 				: base(operators.compilation)
 			{
@@ -694,11 +743,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				parameters.Add(p);
 				parameters.Add(p);
 			}
-			
+
 			public override bool CanEvaluateAtCompileTime {
 				get { return baseMethod.CanEvaluateAtCompileTime; }
 			}
-			
+
 			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
 			{
 				return baseMethod.Invoke(resolver, lhs, rhs);
@@ -707,7 +756,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public IReadOnlyList<IParameter> NonLiftedParameters => baseMethod.Parameters;
 			public IType NonLiftedReturnType => baseMethod.ReturnType;
 		}
-		
+
 		// C# 4.0 spec: §7.10 Relational and type-testing operators
 		static readonly TypeCode[] valueEqualityOperatorsFor = {
 			TypeCode.Int32, TypeCode.UInt32,
@@ -716,45 +765,54 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			TypeCode.Decimal,
 			TypeCode.Boolean
 		};
-		
+
 		OperatorMethod[] valueEqualityOperators;
-		
+
 		public OperatorMethod[] ValueEqualityOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref valueEqualityOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref valueEqualityOperators, Lift(
 						valueEqualityOperatorsFor.Select(c => new EqualityOperatorMethod(this, c, false)).ToArray()
 					));
 				}
 			}
 		}
-		
+
 		OperatorMethod[] valueInequalityOperators;
-		
+
 		public OperatorMethod[] ValueInequalityOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref valueInequalityOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref valueInequalityOperators, Lift(
 						valueEqualityOperatorsFor.Select(c => new EqualityOperatorMethod(this, c, true)).ToArray()
 					));
 				}
 			}
 		}
-		
+
 		OperatorMethod[] referenceEqualityOperators;
-		
+
 		public OperatorMethod[] ReferenceEqualityOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref referenceEqualityOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref referenceEqualityOperators, Lift(
 						new EqualityOperatorMethod(this, TypeCode.Object, false),
 						new EqualityOperatorMethod(this, TypeCode.String, false)
@@ -762,15 +820,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 		}
-		
+
 		OperatorMethod[] referenceInequalityOperators;
-		
+
 		public OperatorMethod[] ReferenceInequalityOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref referenceInequalityOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref referenceInequalityOperators, Lift(
 						new EqualityOperatorMethod(this, TypeCode.Object, true),
 						new EqualityOperatorMethod(this, TypeCode.String, true)
@@ -779,12 +840,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 		#endregion
-		
+
 		#region Relational Operators
 		sealed class RelationalOperatorMethod<T1, T2> : BinaryOperatorMethod
 		{
 			readonly Func<T1, T2, bool> func;
-			
+
 			public RelationalOperatorMethod(CSharpOperators operators, Func<T1, T2, bool> func)
 				: base(operators.compilation)
 			{
@@ -793,19 +854,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				parameters.Add(operators.MakeParameter(Type.GetTypeCode(typeof(T2))));
 				this.func = func;
 			}
-			
+
 			public override bool CanEvaluateAtCompileTime {
 				get { return true; }
 			}
-			
+
 			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
 			{
 				if (lhs == null || rhs == null)
 					return null;
 				return func((T1)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T1)), lhs),
-				            (T2)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T2)), rhs));
+							(T2)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T2)), rhs));
 			}
-			
+
 			public override OperatorMethod Lift(CSharpOperators operators)
 			{
 				var lifted = new LiftedBinaryOperatorMethod(operators, this);
@@ -813,181 +874,208 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return lifted;
 			}
 		}
-		
+
 		OperatorMethod[] lessThanOperators;
-		
+
 		public OperatorMethod[] LessThanOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref lessThanOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref lessThanOperators, Lift(
-						new RelationalOperatorMethod<int, int>        (this, (a, b) => a < b),
-						new RelationalOperatorMethod<uint, uint>      (this, (a, b) => a < b),
-						new RelationalOperatorMethod<long, long>      (this, (a, b) => a < b),
-						new RelationalOperatorMethod<ulong, ulong>    (this, (a, b) => a < b),
-						new RelationalOperatorMethod<float, float>    (this, (a, b) => a < b),
-						new RelationalOperatorMethod<double, double>  (this, (a, b) => a < b),
+						new RelationalOperatorMethod<int, int>(this, (a, b) => a < b),
+						new RelationalOperatorMethod<uint, uint>(this, (a, b) => a < b),
+						new RelationalOperatorMethod<long, long>(this, (a, b) => a < b),
+						new RelationalOperatorMethod<ulong, ulong>(this, (a, b) => a < b),
+						new RelationalOperatorMethod<float, float>(this, (a, b) => a < b),
+						new RelationalOperatorMethod<double, double>(this, (a, b) => a < b),
 						new RelationalOperatorMethod<decimal, decimal>(this, (a, b) => a < b)
 					));
 				}
 			}
 		}
-		
+
 		OperatorMethod[] lessThanOrEqualOperators;
-		
+
 		public OperatorMethod[] LessThanOrEqualOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref lessThanOrEqualOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref lessThanOrEqualOperators, Lift(
-						new RelationalOperatorMethod<int, int>        (this, (a, b) => a <= b),
-						new RelationalOperatorMethod<uint, uint>      (this, (a, b) => a <= b),
-						new RelationalOperatorMethod<long, long>      (this, (a, b) => a <= b),
-						new RelationalOperatorMethod<ulong, ulong>    (this, (a, b) => a <= b),
-						new RelationalOperatorMethod<float, float>    (this, (a, b) => a <= b),
-						new RelationalOperatorMethod<double, double>  (this, (a, b) => a <= b),
+						new RelationalOperatorMethod<int, int>(this, (a, b) => a <= b),
+						new RelationalOperatorMethod<uint, uint>(this, (a, b) => a <= b),
+						new RelationalOperatorMethod<long, long>(this, (a, b) => a <= b),
+						new RelationalOperatorMethod<ulong, ulong>(this, (a, b) => a <= b),
+						new RelationalOperatorMethod<float, float>(this, (a, b) => a <= b),
+						new RelationalOperatorMethod<double, double>(this, (a, b) => a <= b),
 						new RelationalOperatorMethod<decimal, decimal>(this, (a, b) => a <= b)
 					));
 				}
 			}
 		}
-		
+
 		OperatorMethod[] greaterThanOperators;
-		
+
 		public OperatorMethod[] GreaterThanOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref greaterThanOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref greaterThanOperators, Lift(
-						new RelationalOperatorMethod<int, int>        (this, (a, b) => a > b),
-						new RelationalOperatorMethod<uint, uint>      (this, (a, b) => a > b),
-						new RelationalOperatorMethod<long, long>      (this, (a, b) => a > b),
-						new RelationalOperatorMethod<ulong, ulong>    (this, (a, b) => a > b),
-						new RelationalOperatorMethod<float, float>    (this, (a, b) => a > b),
-						new RelationalOperatorMethod<double, double>  (this, (a, b) => a > b),
+						new RelationalOperatorMethod<int, int>(this, (a, b) => a > b),
+						new RelationalOperatorMethod<uint, uint>(this, (a, b) => a > b),
+						new RelationalOperatorMethod<long, long>(this, (a, b) => a > b),
+						new RelationalOperatorMethod<ulong, ulong>(this, (a, b) => a > b),
+						new RelationalOperatorMethod<float, float>(this, (a, b) => a > b),
+						new RelationalOperatorMethod<double, double>(this, (a, b) => a > b),
 						new RelationalOperatorMethod<decimal, decimal>(this, (a, b) => a > b)
 					));
 				}
 			}
 		}
-		
+
 		OperatorMethod[] greaterThanOrEqualOperators;
-		
+
 		public OperatorMethod[] GreaterThanOrEqualOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref greaterThanOrEqualOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref greaterThanOrEqualOperators, Lift(
-						new RelationalOperatorMethod<int, int>        (this, (a, b) => a >= b),
-						new RelationalOperatorMethod<uint, uint>      (this, (a, b) => a >= b),
-						new RelationalOperatorMethod<long, long>      (this, (a, b) => a >= b),
-						new RelationalOperatorMethod<ulong, ulong>    (this, (a, b) => a >= b),
-						new RelationalOperatorMethod<float, float>    (this, (a, b) => a >= b),
-						new RelationalOperatorMethod<double, double>  (this, (a, b) => a >= b),
+						new RelationalOperatorMethod<int, int>(this, (a, b) => a >= b),
+						new RelationalOperatorMethod<uint, uint>(this, (a, b) => a >= b),
+						new RelationalOperatorMethod<long, long>(this, (a, b) => a >= b),
+						new RelationalOperatorMethod<ulong, ulong>(this, (a, b) => a >= b),
+						new RelationalOperatorMethod<float, float>(this, (a, b) => a >= b),
+						new RelationalOperatorMethod<double, double>(this, (a, b) => a >= b),
 						new RelationalOperatorMethod<decimal, decimal>(this, (a, b) => a >= b)
 					));
 				}
 			}
 		}
 		#endregion
-		
+
 		#region Bitwise operators
 		OperatorMethod[] logicalAndOperators;
-		
+
 		public OperatorMethod[] LogicalAndOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref logicalAndOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref logicalAndOperators, new OperatorMethod[] {
-					                         	new LambdaBinaryOperatorMethod<bool, bool>(this, (a, b) => a & b)
-					                         });
+												 new LambdaBinaryOperatorMethod<bool, bool>(this, (a, b) => a & b)
+											 });
 				}
 			}
 		}
-		
-		
+
+
 		OperatorMethod[] bitwiseAndOperators;
-		
+
 		public OperatorMethod[] BitwiseAndOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref bitwiseAndOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref bitwiseAndOperators, Lift(
-						new LambdaBinaryOperatorMethod<int, int>    (this, (a, b) => a & b),
-						new LambdaBinaryOperatorMethod<uint, uint>  (this, (a, b) => a & b),
-						new LambdaBinaryOperatorMethod<long, long>  (this, (a, b) => a & b),
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => a & b),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => a & b),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => a & b),
 						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => a & b),
 						this.LogicalAndOperators[0]
 					));
 				}
 			}
 		}
-		
-		
+
+
 		OperatorMethod[] logicalOrOperators;
-		
+
 		public OperatorMethod[] LogicalOrOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref logicalOrOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref logicalOrOperators, new OperatorMethod[] {
-					                         	new LambdaBinaryOperatorMethod<bool, bool>(this, (a, b) => a | b)
-					                         });
+												 new LambdaBinaryOperatorMethod<bool, bool>(this, (a, b) => a | b)
+											 });
 				}
 			}
 		}
-		
+
 		OperatorMethod[] bitwiseOrOperators;
-		
+
 		public OperatorMethod[] BitwiseOrOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref bitwiseOrOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref bitwiseOrOperators, Lift(
-						new LambdaBinaryOperatorMethod<int, int>    (this, (a, b) => a | b),
-						new LambdaBinaryOperatorMethod<uint, uint>  (this, (a, b) => a | b),
-						new LambdaBinaryOperatorMethod<long, long>  (this, (a, b) => a | b),
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => a | b),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => a | b),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => a | b),
 						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => a | b),
 						this.LogicalOrOperators[0]
 					));
 				}
 			}
 		}
-		
+
 		// Note: the logic for the lifted bool? bitwise operators is wrong;
 		// we produce "true | null" = "null" when it should be true. However, this is irrelevant
 		// because bool? cannot be a compile-time type.
-		
+
 		OperatorMethod[] bitwiseXorOperators;
 
 		public OperatorMethod[] BitwiseXorOperators {
 			get {
 				OperatorMethod[] ops = LazyInit.VolatileRead(ref bitwiseXorOperators);
-				if (ops != null) {
+				if (ops != null)
+				{
 					return ops;
-				} else {
+				}
+				else
+				{
 					return LazyInit.GetOrSet(ref bitwiseXorOperators, Lift(
-						new LambdaBinaryOperatorMethod<int, int>    (this, (a, b) => a ^ b),
-						new LambdaBinaryOperatorMethod<uint, uint>  (this, (a, b) => a ^ b),
-						new LambdaBinaryOperatorMethod<long, long>  (this, (a, b) => a ^ b),
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => a ^ b),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => a ^ b),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => a ^ b),
 						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => a ^ b),
-						new LambdaBinaryOperatorMethod<bool, bool>  (this, (a, b) => a ^ b)
+						new LambdaBinaryOperatorMethod<bool, bool>(this, (a, b) => a ^ b)
 					));
 				}
 			}
@@ -997,14 +1085,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region User-defined operators
 		public static IMethod LiftUserDefinedOperator(IMethod m)
 		{
-			if (IsComparisonOperator(m)) {
+			if (IsComparisonOperator(m))
+			{
 				if (!m.ReturnType.IsKnownType(KnownTypeCode.Boolean))
 					return null; // cannot lift this operator
-			} else {
+			}
+			else
+			{
 				if (!NullableType.IsNonNullableValueType(m.ReturnType))
 					return null; // cannot lift this operator
 			}
-			for (int i = 0; i < m.Parameters.Count; i++) {
+			for (int i = 0; i < m.Parameters.Count; i++)
+			{
 				if (!NullableType.IsNonNullableValueType(m.Parameters[i].Type))
 					return null; // cannot lift this operator
 			}

@@ -34,55 +34,57 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class IndexerExpression : Expression
 	{
 		public Expression Target {
-			get { return GetChildByRole (Roles.TargetExpression); }
+			get { return GetChildByRole(Roles.TargetExpression); }
 			set { SetChildByRole(Roles.TargetExpression, value); }
 		}
-		
+
 		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole (Roles.LBracket); }
+			get { return GetChildByRole(Roles.LBracket); }
 		}
-		
+
 		public AstNodeCollection<Expression> Arguments {
 			get { return GetChildrenByRole<Expression>(Roles.Argument); }
 		}
-		
+
 		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole (Roles.RBracket); }
+			get { return GetChildByRole(Roles.RBracket); }
 		}
-		
-		public IndexerExpression ()
+
+		public IndexerExpression()
 		{
 		}
-		
-		public IndexerExpression (Expression target, IEnumerable<Expression> arguments)
+
+		public IndexerExpression(Expression target, IEnumerable<Expression> arguments)
 		{
-			AddChild (target, Roles.TargetExpression);
-			if (arguments != null) {
-				foreach (var arg in arguments) {
-					AddChild (arg, Roles.Argument);
+			AddChild(target, Roles.TargetExpression);
+			if (arguments != null)
+			{
+				foreach (var arg in arguments)
+				{
+					AddChild(arg, Roles.Argument);
 				}
 			}
 		}
-		
-		public IndexerExpression (Expression target, params Expression[] arguments) : this (target, (IEnumerable<Expression>)arguments)
+
+		public IndexerExpression(Expression target, params Expression[] arguments) : this(target, (IEnumerable<Expression>)arguments)
 		{
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitIndexerExpression (this);
+			visitor.VisitIndexerExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitIndexerExpression (this);
+			return visitor.VisitIndexerExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitIndexerExpression (this, data);
+			return visitor.VisitIndexerExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			IndexerExpression o = other as IndexerExpression;

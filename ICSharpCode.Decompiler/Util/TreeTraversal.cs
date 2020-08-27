@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			return PreOrder(new T[] { root }, recursion);
 		}
-		
+
 		/// <summary>
 		/// Converts a tree data structure into a flat list by traversing it in pre-order.
 		/// </summary>
@@ -46,26 +46,33 @@ namespace ICSharpCode.Decompiler.Util
 		public static IEnumerable<T> PreOrder<T>(IEnumerable<T> input, Func<T, IEnumerable<T>> recursion)
 		{
 			Stack<IEnumerator<T>> stack = new Stack<IEnumerator<T>>();
-			try {
+			try
+			{
 				stack.Push(input.GetEnumerator());
-				while (stack.Count > 0) {
-					while (stack.Peek().MoveNext()) {
+				while (stack.Count > 0)
+				{
+					while (stack.Peek().MoveNext())
+					{
 						T element = stack.Peek().Current;
 						yield return element;
 						IEnumerable<T> children = recursion(element);
-						if (children != null) {
+						if (children != null)
+						{
 							stack.Push(children.GetEnumerator());
 						}
 					}
 					stack.Pop().Dispose();
 				}
-			} finally {
-				while (stack.Count > 0) {
+			}
+			finally
+			{
+				while (stack.Count > 0)
+				{
 					stack.Pop().Dispose();
 				}
 			}
 		}
-		
+
 		/// <summary>
 		/// Converts a tree data structure into a flat list by traversing it in post-order.
 		/// </summary>
@@ -76,7 +83,7 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			return PostOrder(new T[] { root }, recursion);
 		}
-		
+
 		/// <summary>
 		/// Converts a tree data structure into a flat list by traversing it in post-order.
 		/// </summary>
@@ -86,15 +93,21 @@ namespace ICSharpCode.Decompiler.Util
 		public static IEnumerable<T> PostOrder<T>(IEnumerable<T> input, Func<T, IEnumerable<T>> recursion)
 		{
 			Stack<IEnumerator<T>> stack = new Stack<IEnumerator<T>>();
-			try {
+			try
+			{
 				stack.Push(input.GetEnumerator());
-				while (stack.Count > 0) {
-					while (stack.Peek().MoveNext()) {
+				while (stack.Count > 0)
+				{
+					while (stack.Peek().MoveNext())
+					{
 						T element = stack.Peek().Current;
 						IEnumerable<T> children = recursion(element);
-						if (children != null) {
+						if (children != null)
+						{
 							stack.Push(children.GetEnumerator());
-						} else {
+						}
+						else
+						{
 							yield return element;
 						}
 					}
@@ -102,8 +115,11 @@ namespace ICSharpCode.Decompiler.Util
 					if (stack.Count > 0)
 						yield return stack.Peek().Current;
 				}
-			} finally {
-				while (stack.Count > 0) {
+			}
+			finally
+			{
+				while (stack.Count > 0)
+				{
 					stack.Pop().Dispose();
 				}
 			}

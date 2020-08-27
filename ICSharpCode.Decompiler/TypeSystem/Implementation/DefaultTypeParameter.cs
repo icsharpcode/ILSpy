@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -78,15 +79,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			var result = new List<TypeConstraint>();
 			bool hasNonInterfaceConstraint = false;
-			if (constraints != null) {
-				foreach (IType c in constraints) {
+			if (constraints != null)
+			{
+				foreach (IType c in constraints)
+				{
 					result.Add(new TypeConstraint(c));
 					if (c.Kind != TypeKind.Interface)
 						hasNonInterfaceConstraint = true;
 				}
 			}
 			// Do not add the 'System.Object' constraint if there is another constraint with a base class.
-			if (this.HasValueTypeConstraint || !hasNonInterfaceConstraint) {
+			if (this.HasValueTypeConstraint || !hasNonInterfaceConstraint)
+			{
 				result.Add(new TypeConstraint(this.Compilation.FindType(this.HasValueTypeConstraint ? KnownTypeCode.ValueType : KnownTypeCode.Object)));
 			}
 			return result;

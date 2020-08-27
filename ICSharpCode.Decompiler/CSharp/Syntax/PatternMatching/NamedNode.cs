@@ -27,15 +27,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	{
 		readonly string groupName;
 		readonly INode childNode;
-		
+
 		public string GroupName {
 			get { return groupName; }
 		}
-		
+
 		public INode ChildNode {
 			get { return childNode; }
 		}
-		
+
 		public NamedNode(string groupName, INode childNode)
 		{
 			if (childNode == null)
@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			this.groupName = groupName;
 			this.childNode = childNode;
 		}
-		
+
 		public override bool DoMatch(INode other, Match match)
 		{
 			match.Add(this.groupName, other);

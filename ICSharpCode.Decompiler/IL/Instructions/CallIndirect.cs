@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -93,18 +94,20 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write('(');
 			functionPointer.WriteTo(output, options);
 			int firstArgument = IsInstance ? 1 : 0;
-			if (firstArgument == 1) {
+			if (firstArgument == 1)
+			{
 				output.Write(", ");
 				Arguments[0].WriteTo(output, options);
 			}
-			foreach (var (inst, type) in Arguments.Zip(ParameterTypes, (a,b) => (a,b))) {
+			foreach (var (inst, type) in Arguments.Zip(ParameterTypes, (a, b) => (a, b)))
+			{
 				output.Write(", ");
 				inst.WriteTo(output, options);
 				output.Write(" : ");
 				type.WriteTo(output);
 			}
 			if (Arguments.Count > 0)
-			output.Write(')');
+				output.Write(')');
 		}
 
 		protected override int GetChildCount()
@@ -139,7 +142,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var flags = this.DirectFlags;
 			flags |= functionPointer.Flags;
-			foreach (var inst in Arguments) {
+			foreach (var inst in Arguments)
+			{
 				flags |= inst.Flags;
 			}
 			return flags;
@@ -161,7 +165,8 @@ namespace ICSharpCode.Decompiler.IL
 				return false;
 			if (ParameterTypes.Length != other.ParameterTypes.Length)
 				return false;
-			for (int i = 0; i < ParameterTypes.Length; i++) {
+			for (int i = 0; i < ParameterTypes.Length; i++)
+			{
 				if (!ParameterTypes[i].Equals(other.ParameterTypes[i]))
 					return false;
 			}

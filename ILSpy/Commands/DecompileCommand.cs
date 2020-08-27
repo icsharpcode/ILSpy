@@ -21,6 +21,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 using System.Windows.Controls;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Metadata;
@@ -43,7 +44,8 @@ namespace ICSharpCode.ILSpy.Commands
 		{
 			if (context.SelectedTreeNodes == null)
 				return context.Reference?.Reference is IEntity;
-			foreach (IMemberTreeNode node in context.SelectedTreeNodes) {
+			foreach (IMemberTreeNode node in context.SelectedTreeNodes)
+			{
 				if (!IsValidReference(node.Member))
 					return false;
 			}
@@ -59,9 +61,12 @@ namespace ICSharpCode.ILSpy.Commands
 		public void Execute(TextViewContext context)
 		{
 			IEntity selection = null;
-			if (context.SelectedTreeNodes?[0] is IMemberTreeNode node) {
+			if (context.SelectedTreeNodes?[0] is IMemberTreeNode node)
+			{
 				selection = node.Member;
-			} else if (context.Reference?.Reference is IEntity entity) {
+			}
+			else if (context.Reference?.Reference is IEntity entity)
+			{
 				selection = entity;
 			}
 			if (selection != null)

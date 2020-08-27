@@ -39,33 +39,42 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return InvertConditionInternal(condition);
 		}
-		
+
 		static Expression InvertConditionInternal(Expression condition)
 		{
-			if (condition is ParenthesizedExpression) {
+			if (condition is ParenthesizedExpression)
+			{
 				return new ParenthesizedExpression(InvertCondition(((ParenthesizedExpression)condition).Expression));
 			}
-			
-			if (condition is UnaryOperatorExpression) {
+
+			if (condition is UnaryOperatorExpression)
+			{
 				var uOp = (UnaryOperatorExpression)condition;
-				if (uOp.Operator == UnaryOperatorType.Not) {
+				if (uOp.Operator == UnaryOperatorType.Not)
+				{
 					if (!(uOp.Parent is Expression))
 						return GetInnerMostExpression(uOp.Expression).Clone();
 					return uOp.Expression.Clone();
 				}
 				return new UnaryOperatorExpression(UnaryOperatorType.Not, uOp.Clone());
 			}
-			
-			if (condition is BinaryOperatorExpression) {
+
+			if (condition is BinaryOperatorExpression)
+			{
 				var bOp = (BinaryOperatorExpression)condition;
 
-				if ((bOp.Operator == BinaryOperatorType.ConditionalAnd) || (bOp.Operator == BinaryOperatorType.ConditionalOr)) {
+				if ((bOp.Operator == BinaryOperatorType.ConditionalAnd) || (bOp.Operator == BinaryOperatorType.ConditionalOr))
+				{
 					return new BinaryOperatorExpression(InvertCondition(bOp.Left), NegateConditionOperator(bOp.Operator), InvertCondition(bOp.Right));
-				} else if ((bOp.Operator == BinaryOperatorType.Equality) || (bOp.Operator == BinaryOperatorType.InEquality) || (bOp.Operator == BinaryOperatorType.GreaterThan)
-					|| (bOp.Operator == BinaryOperatorType.GreaterThanOrEqual) || (bOp.Operator == BinaryOperatorType.LessThan) || 
-					(bOp.Operator == BinaryOperatorType.LessThanOrEqual)) {
+				}
+				else if ((bOp.Operator == BinaryOperatorType.Equality) || (bOp.Operator == BinaryOperatorType.InEquality) || (bOp.Operator == BinaryOperatorType.GreaterThan)
+				  || (bOp.Operator == BinaryOperatorType.GreaterThanOrEqual) || (bOp.Operator == BinaryOperatorType.LessThan) ||
+				  (bOp.Operator == BinaryOperatorType.LessThanOrEqual))
+				{
 					return new BinaryOperatorExpression(bOp.Left.Clone(), NegateRelationalOperator(bOp.Operator), bOp.Right.Clone());
-				} else {
+				}
+				else
+				{
 					var negatedOp = NegateRelationalOperator(bOp.Operator);
 					if (negatedOp == BinaryOperatorType.Any)
 						return new UnaryOperatorExpression(UnaryOperatorType.Not, new ParenthesizedExpression(condition.Clone()));
@@ -74,18 +83,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return bOp;
 				}
 			}
-			if (condition is ConditionalExpression) {
+			if (condition is ConditionalExpression)
+			{
 				var cEx = condition.Clone() as ConditionalExpression;
 				cEx.Condition = InvertCondition(cEx.Condition);
 				return cEx;
 			}
-			if (condition is PrimitiveExpression) {
+			if (condition is PrimitiveExpression)
+			{
 				var pex = condition as PrimitiveExpression;
-				if (pex.Value is bool) {
-					return new PrimitiveExpression(!((bool)pex.Value)); 
+				if (pex.Value is bool)
+				{
+					return new PrimitiveExpression(!((bool)pex.Value));
 				}
 			}
-			
+
 			return new UnaryOperatorExpression(UnaryOperatorType.Not, AddParensForUnaryExpressionIfRequired(condition.Clone()));
 		}
 
@@ -96,12 +108,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		internal static Expression AddParensForUnaryExpressionIfRequired(Expression expression)
 		{
 			if ((expression is BinaryOperatorExpression) ||
-			    (expression is AssignmentExpression) ||
-			    (expression is CastExpression) ||
-			    (expression is AsExpression) ||
-			    (expression is IsExpression) ||
-			    (expression is LambdaExpression) ||
-			    (expression is ConditionalExpression)) {
+				(expression is AssignmentExpression) ||
+				(expression is CastExpression) ||
+				(expression is AsExpression) ||
+				(expression is IsExpression) ||
+				(expression is LambdaExpression) ||
+				(expression is ConditionalExpression))
+			{
 				return new ParenthesizedExpression(expression);
 			}
 
@@ -116,7 +129,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </returns>
 		public static BinaryOperatorType NegateRelationalOperator(BinaryOperatorType op)
 		{
-			switch (op) {
+			switch (op)
+			{
 				case BinaryOperatorType.GreaterThan:
 					return BinaryOperatorType.LessThanOrEqual;
 				case BinaryOperatorType.GreaterThanOrEqual:
@@ -153,7 +167,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </returns>
 		public static BinaryOperatorType NegateConditionOperator(BinaryOperatorType op)
 		{
-			switch (op) {
+			switch (op)
+			{
 				case BinaryOperatorType.ConditionalOr:
 					return BinaryOperatorType.ConditionalAnd;
 				case BinaryOperatorType.ConditionalAnd:

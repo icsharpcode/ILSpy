@@ -50,11 +50,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static int instanceCount;
 		int instanceNumber = ++instanceCount;
-		
+
 		int instanceField;
 
-		public int InstanceProperty
-		{
+		public int InstanceProperty {
 			get {
 				Console.WriteLine("In {0}.get_InstanceProperty", instanceNumber);
 				return instanceField;
@@ -67,8 +66,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static int staticField;
 
-		public static int StaticProperty
-		{
+		public static int StaticProperty {
 			get {
 				Console.WriteLine("In get_StaticProperty");
 				return staticField;
@@ -203,18 +201,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("Overflow:");
 			ByteProperty = 0;
 			ByteProperty = (byte)checked(ByteProperty + 300);
-			try {
+			try
+			{
 				ByteProperty = checked((byte)(ByteProperty + 300));
-			} catch (OverflowException) {
+			}
+			catch (OverflowException)
+			{
 				Console.WriteLine("Overflow OK");
 			}
 
 			ByteProperty = 200;
 			ByteProperty = (byte)checked(ByteProperty + 100);
 			ByteProperty = 201;
-			try {
+			try
+			{
 				ByteProperty = checked((byte)(ByteProperty + 100));
-			} catch (OverflowException) {
+			}
+			catch (OverflowException)
+			{
 				Console.WriteLine("Overflow OK");
 			}
 		}

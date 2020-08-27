@@ -27,7 +27,7 @@ namespace AvalonDock
 		{
 		}
 	}
-	
+
 	public class Resizer : Thumb
 	{
 		static Resizer()
@@ -42,7 +42,7 @@ namespace AvalonDock
 		}
 
 	}
-	
+
 	public enum AvalonDockBrushes
 	{
 		DefaultBackgroundBrush,
@@ -73,7 +73,7 @@ namespace AvalonDock
 		NavigatorWindowSelectionBorderbrush,
 		NavigatorWindowBottomBackground
 	}
-	
+
 	public enum ContextMenuElement
 	{
 		DockablePane,

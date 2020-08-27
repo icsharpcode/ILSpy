@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -35,7 +36,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly bool isParams, isOptional;
 		readonly object defaultValue;
 		readonly IParameterizedMember owner;
-		
+
 		public DefaultParameter(IType type, string name)
 		{
 			if (type == null)
@@ -46,9 +47,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.name = name;
 			this.attributes = EmptyList<IAttribute>.Instance;
 		}
-		
+
 		public DefaultParameter(IType type, string name, IParameterizedMember owner = null, IReadOnlyList<IAttribute> attributes = null,
-		                        ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false, object defaultValue = null)
+								ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false, object defaultValue = null)
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
@@ -63,15 +64,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.isOptional = isOptional;
 			this.defaultValue = defaultValue;
 		}
-		
+
 		SymbolKind ISymbol.SymbolKind {
 			get { return SymbolKind.Parameter; }
 		}
-		
+
 		public IParameterizedMember Owner {
 			get { return owner; }
 		}
-		
+
 		public IEnumerable<IAttribute> GetAttributes() => attributes;
 
 		public ReferenceKind ReferenceKind => referenceKind;
@@ -86,29 +87,29 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string Name {
 			get { return name; }
 		}
-		
+
 		public IType Type {
 			get { return type; }
 		}
-		
+
 		bool IVariable.IsConst {
 			get { return false; }
 		}
-		
+
 		public bool HasConstantValueInSignature {
 			get { return IsOptional; }
 		}
-		
+
 		public object GetConstantValue(bool throwOnInvalidMetadata)
 		{
 			return defaultValue;
 		}
-		
+
 		public override string ToString()
 		{
 			return ToString(this);
 		}
-		
+
 		public static string ToString(IParameter parameter)
 		{
 			StringBuilder b = new StringBuilder();
@@ -123,7 +124,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			b.Append(parameter.Name);
 			b.Append(':');
 			b.Append(parameter.Type.ReflectionName);
-			if (parameter.IsOptional && parameter.HasConstantValueInSignature) {
+			if (parameter.IsOptional && parameter.HasConstantValueInSignature)
+			{
 				b.Append(" = ");
 				object val = parameter.GetConstantValue(throwOnInvalidMetadata: false);
 				if (val != null)

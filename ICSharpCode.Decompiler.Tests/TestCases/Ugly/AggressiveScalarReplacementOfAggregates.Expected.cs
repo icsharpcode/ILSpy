@@ -58,9 +58,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 			int field1 = 4711;
 			string field2 = "ILSpy";
 			DisplayClass field3;
-			if (displayClass.field1 > 100) {
+			if (displayClass.field1 > 100)
+			{
 				field3 = displayClass;
-			} else {
+			}
+			else
+			{
 				field3 = null;
 			}
 			Console.WriteLine("{0} {1}", displayClass, field3);
@@ -76,9 +79,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 			int field1 = 4711;
 			string field2 = "ILSpy";
 			DisplayClass field3;
-			if (displayClass.field1 > 100) {
+			if (displayClass.field1 > 100)
+			{
 				field3 = displayClass;
-			} else {
+			}
+			else
+			{
 				field3 = null;
 			}
 			Console.WriteLine("{0} {1}", field2 + field1, field3);
@@ -93,8 +99,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 			int field1 = default(int);
 			string field2 = default(string);
 			DisplayClass field3 = default(DisplayClass);
-			while (true) {
-				switch (Rand()) {
+			while (true)
+			{
+				switch (Rand())
+				{
 					case 1:
 						field1 = Rand();
 						continue;
@@ -115,7 +123,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 		{
 			int field1 = i;
 			string field2 = "Hello World!";
-			if (i < 0) {
+			if (i < 0)
+			{
 				i = -i;
 			}
 			Console.WriteLine("{0} {1}", field1, field2);
@@ -126,7 +135,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 			int num = i;
 			int field1 = num;
 			string field2 = "Hello World!";
-			if (num < 0) {
+			if (num < 0)
+			{
 				num = -num;
 			}
 			Console.WriteLine("{0} {1}", field1, field2);

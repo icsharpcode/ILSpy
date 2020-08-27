@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
@@ -27,7 +28,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	public class TypeOfResolveResult : ResolveResult
 	{
 		readonly IType referencedType;
-		
+
 		public TypeOfResolveResult(IType systemType, IType referencedType)
 			: base(systemType)
 		{
@@ -35,7 +36,7 @@ namespace ICSharpCode.Decompiler.Semantics
 				throw new ArgumentNullException(nameof(referencedType));
 			this.referencedType = referencedType;
 		}
-		
+
 		/// <summary>
 		/// The type referenced by the 'typeof'.
 		/// </summary>

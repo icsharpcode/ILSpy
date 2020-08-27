@@ -22,14 +22,17 @@
 
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class TypeInfoHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class TypeInfoHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.TypeInfo;
 
 		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) => null;
 	}
 
-	internal class TypeSerializerInfoHandler : IHandler {
+	internal class TypeSerializerInfoHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.TypeSerializerInfo;
 
 		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) => null;

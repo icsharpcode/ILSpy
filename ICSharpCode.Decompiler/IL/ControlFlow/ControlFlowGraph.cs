@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.Util;
 
@@ -65,7 +66,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.container = container;
 			this.cfg = new ControlFlowNode[container.Blocks.Count];
 			this.nodeHasDirectExitOutOfContainer = new BitSet(cfg.Length);
-			for (int i = 0; i < cfg.Length; i++) {
+			for (int i = 0; i < cfg.Length; i++)
+			{
 				Block block = container.Blocks[i];
 				cfg[i] = new ControlFlowNode { UserIndex = i, UserData = block };
 				dict.Add(block, cfg[i]);
@@ -79,30 +81,41 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void CreateEdges(CancellationToken cancellationToken)
 		{
-			for (int i = 0; i < container.Blocks.Count; i++) {
+			for (int i = 0; i < container.Blocks.Count; i++)
+			{
 				cancellationToken.ThrowIfCancellationRequested();
 				var block = container.Blocks[i];
 				var sourceNode = cfg[i];
-				foreach (var node in block.Descendants) {
-					if (node is Branch branch) {
-						if (branch.TargetBlock.Parent == container) {
+				foreach (var node in block.Descendants)
+				{
+					if (node is Branch branch)
+					{
+						if (branch.TargetBlock.Parent == container)
+						{
 							sourceNode.AddEdgeTo(cfg[container.Blocks.IndexOf(branch.TargetBlock)]);
-						} else if (branch.TargetBlock.IsDescendantOf(container)) {
+						}
+						else if (branch.TargetBlock.IsDescendantOf(container))
+						{
 							// Internal control flow within a nested container.
-						} else {
+						}
+						else
+						{
 							// Branch out of this container into a parent container.
 							// Like return statements and exceptional exits,
 							// we ignore this for the CFG and the dominance calculation.
 							// However, it's relevant for HasReachableExit().
 							nodeHasDirectExitOutOfContainer.Set(i);
 						}
-					} else if (node is Leave leave && !leave.TargetContainer.IsDescendantOf(block)) {
+					}
+					else if (node is Leave leave && !leave.TargetContainer.IsDescendantOf(block))
+					{
 						// Leave instructions (like other exits out of the container)
 						// are ignored for the CFG and dominance,
 						// but is relevant for HasReachableExit().
 						// However, a 'leave' that exits the whole function represents a return,
 						// and is not considered a reachable exit.
-						if (!leave.IsLeavingFunction) {
+						if (!leave.IsLeavingFunction)
+						{
 							nodeHasDirectExitOutOfContainer.Set(i);
 						}
 					}
@@ -115,12 +128,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Also mark the nodes that exit the block container altogether.
 			// Invariant: leaving[n.UserIndex] == true implies leaving[n.ImmediateDominator.UserIndex] == true
 			var leaving = new BitSet(cfg.Length);
-			foreach (var node in cfg) {
+			foreach (var node in cfg)
+			{
 				if (leaving[node.UserIndex])
 					continue;
-				if (nodeHasDirectExitOutOfContainer[node.UserIndex]) {
-					for (ControlFlowNode p = node; p != null; p = p.ImmediateDominator) {
-						if (leaving[p.UserIndex]) {
+				if (nodeHasDirectExitOutOfContainer[node.UserIndex])
+				{
+					for (ControlFlowNode p = node; p != null; p = p.ImmediateDominator)
+					{
+						if (leaving[p.UserIndex])
+						{
 							// we can stop marking when we've reached an already-marked node
 							break;
 						}

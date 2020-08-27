@@ -25,6 +25,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Xml.Linq;
+
 using ICSharpCode.ILSpy.Docking;
 
 namespace ICSharpCode.ILSpy
@@ -40,14 +41,16 @@ namespace ICSharpCode.ILSpy
 			XElement doc = spySettings["SessionSettings"];
 
 			XElement filterSettings = doc.Element("FilterSettings");
-			if (filterSettings == null) filterSettings = new XElement("FilterSettings");
+			if (filterSettings == null)
+				filterSettings = new XElement("FilterSettings");
 
 			this.FilterSettings = new FilterSettings(filterSettings);
 
 			this.ActiveAssemblyList = (string)doc.Element("ActiveAssemblyList");
 
 			XElement activeTreeViewPath = doc.Element("ActiveTreeViewPath");
-			if (activeTreeViewPath != null) {
+			if (activeTreeViewPath != null)
+			{
 				this.ActiveTreeViewPath = activeTreeViewPath.Elements().Select(e => Unescape((string)e)).ToArray();
 			}
 			this.ActiveAutoLoadedAssembly = (string)doc.Element("ActiveAutoLoadedAssembly");
@@ -78,7 +81,8 @@ namespace ICSharpCode.ILSpy
 		public string ActiveAssemblyList {
 			get => activeAssemblyList;
 			set {
-				if (value != null && value != activeAssemblyList) {
+				if (value != null && value != activeAssemblyList)
+				{
 					activeAssemblyList = value;
 					OnPropertyChanged();
 				}
@@ -100,13 +104,16 @@ namespace ICSharpCode.ILSpy
 		{
 			XElement doc = new XElement("SessionSettings");
 			doc.Add(this.FilterSettings.SaveAsXml());
-			if (this.ActiveAssemblyList != null) {
+			if (this.ActiveAssemblyList != null)
+			{
 				doc.Add(new XElement("ActiveAssemblyList", this.ActiveAssemblyList));
 			}
-			if (this.ActiveTreeViewPath != null) {
+			if (this.ActiveTreeViewPath != null)
+			{
 				doc.Add(new XElement("ActiveTreeViewPath", ActiveTreeViewPath.Select(p => new XElement("Node", Escape(p)))));
 			}
-			if (this.ActiveAutoLoadedAssembly != null) {
+			if (this.ActiveAutoLoadedAssembly != null)
+			{
 				doc.Add(new XElement("ActiveAutoLoadedAssembly", this.ActiveAutoLoadedAssembly));
 			}
 			doc.Add(new XElement("WindowState", ToString(this.WindowState)));
@@ -117,7 +124,8 @@ namespace ICSharpCode.ILSpy
 			doc.Add(new XElement("SelectedSearchMode", ToString(this.SelectedSearchMode)));
 
 			var dockLayoutElement = new XElement("DockLayout");
-			if (DockLayout.Valid) {
+			if (DockLayout.Valid)
+			{
 				dockLayoutElement.Add(DockLayout.SaveAsXml());
 			}
 			doc.Add(dockLayoutElement);
@@ -131,7 +139,8 @@ namespace ICSharpCode.ILSpy
 		static string Escape(string p)
 		{
 			StringBuilder sb = new StringBuilder();
-			foreach (char ch in p) {
+			foreach (char ch in p)
+			{
 				if (char.IsLetterOrDigit(ch))
 					sb.Append(ch);
 				else
@@ -149,10 +158,13 @@ namespace ICSharpCode.ILSpy
 		{
 			if (s == null)
 				return defaultValue;
-			try {
+			try
+			{
 				TypeConverter c = TypeDescriptor.GetConverter(typeof(T));
 				return (T)c.ConvertFromInvariantString(s);
-			} catch (FormatException) {
+			}
+			catch (FormatException)
+			{
 				return defaultValue;
 			}
 		}

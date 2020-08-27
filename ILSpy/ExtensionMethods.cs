@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+
 using ICSharpCode.ILSpy.Options;
 
 namespace ICSharpCode.ILSpy
@@ -53,7 +54,8 @@ namespace ICSharpCode.ILSpy
 			if (count < 0 || count > list.Count - start)
 				throw new ArgumentOutOfRangeException(nameof(count), count, "Value must be between 0 and " + (list.Count - start));
 			int end = start + count - 1;
-			while (start <= end) {
+			while (start <= end)
+			{
 				int pivot = (start + end) / 2;
 				int result = comparer.Compare(item, list[pivot]);
 				if (result == 0)
@@ -77,7 +79,8 @@ namespace ICSharpCode.ILSpy
 			int start = 0;
 			int end = instance.Count - 1;
 
-			while (start <= end) {
+			while (start <= end)
+			{
 				int m = (start + end) / 2;
 				TKey key = keySelector(instance[m]);
 				int result = key.CompareTo(itemKey);
@@ -159,7 +162,8 @@ namespace ICSharpCode.ILSpy
 		{
 			U[] result = new U[collection.Count];
 			int index = 0;
-			foreach (var element in collection) {
+			foreach (var element in collection)
+			{
 				result[index++] = func(element);
 			}
 			return result;
@@ -205,15 +209,19 @@ namespace ICSharpCode.ILSpy
 
 		public static T FindVisualChild<T>(this DependencyObject depObj) where T : DependencyObject
 		{
-			if (depObj != null) {
-				for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++) {
+			if (depObj != null)
+			{
+				for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
+				{
 					DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
-					if (child != null && child is T) {
+					if (child != null && child is T)
+					{
 						return (T)child;
 					}
 
 					T childItem = FindVisualChild<T>(child);
-					if (childItem != null) return childItem;
+					if (childItem != null)
+						return childItem;
 				}
 			}
 			return null;
@@ -223,7 +231,8 @@ namespace ICSharpCode.ILSpy
 		{
 			if (depObj == null)
 				return null;
-			while (!(depObj is T)) {
+			while (!(depObj is T))
+			{
 				var parent = VisualTreeHelper.GetParent(depObj);
 				if (parent == null)
 					return null;

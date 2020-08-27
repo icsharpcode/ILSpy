@@ -32,49 +32,49 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class DefaultValueExpression : Expression
 	{
-		public readonly static TokenRole DefaultKeywordRole = new TokenRole ("default");
+		public readonly static TokenRole DefaultKeywordRole = new TokenRole("default");
 
 		public CSharpTokenNode DefaultToken {
-			get { return GetChildByRole (DefaultKeywordRole); }
+			get { return GetChildByRole(DefaultKeywordRole); }
 		}
-		
+
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
-		
+
 		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
+			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
-		
+
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
-		
-		public DefaultValueExpression ()
+
+		public DefaultValueExpression()
 		{
 		}
-		
-		public DefaultValueExpression (AstType type)
+
+		public DefaultValueExpression(AstType type)
 		{
-			AddChild (type, Roles.Type);
+			AddChild(type, Roles.Type);
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitDefaultValueExpression (this);
+			visitor.VisitDefaultValueExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitDefaultValueExpression (this);
+			return visitor.VisitDefaultValueExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitDefaultValueExpression (this, data);
+			return visitor.VisitDefaultValueExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			DefaultValueExpression o = other as DefaultValueExpression;

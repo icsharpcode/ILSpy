@@ -37,51 +37,54 @@ namespace ICSharpCode.ILSpy.Options
 			this.indentationTabSize = 4;
 			this.highlightMatchingBraces = true;
 		}
-		
+
 		#region INotifyPropertyChanged implementation
 		public event PropertyChangedEventHandler PropertyChanged;
-		
+
 		protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
 		{
 			PropertyChanged?.Invoke(this, e);
 		}
-		
+
 		protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
 		}
 		#endregion
-		
+
 		FontFamily selectedFont;
-		
+
 		public FontFamily SelectedFont {
 			get { return selectedFont; }
 			set {
-				if (selectedFont != value) {
+				if (selectedFont != value)
+				{
 					selectedFont = value;
 					OnPropertyChanged();
 				}
 			}
 		}
-		
+
 		double selectedFontSize;
-		
+
 		public double SelectedFontSize {
 			get { return selectedFontSize; }
 			set {
-				if (selectedFontSize != value) {
+				if (selectedFontSize != value)
+				{
 					selectedFontSize = value;
 					OnPropertyChanged();
 				}
 			}
 		}
-		
+
 		bool showLineNumbers;
-		
+
 		public bool ShowLineNumbers {
 			get { return showLineNumbers; }
 			set {
-				if (showLineNumbers != value) {
+				if (showLineNumbers != value)
+				{
 					showLineNumbers = value;
 					OnPropertyChanged();
 				}
@@ -93,7 +96,8 @@ namespace ICSharpCode.ILSpy.Options
 		public bool ShowMetadataTokens {
 			get { return showMetadataTokens; }
 			set {
-				if (showMetadataTokens != value) {
+				if (showMetadataTokens != value)
+				{
 					showMetadataTokens = value;
 					OnPropertyChanged();
 				}
@@ -105,7 +109,8 @@ namespace ICSharpCode.ILSpy.Options
 		public bool ShowMetadataTokensInBase10 {
 			get { return showMetadataTokensInBase10; }
 			set {
-				if (showMetadataTokensInBase10 != value) {
+				if (showMetadataTokensInBase10 != value)
+				{
 					showMetadataTokensInBase10 = value;
 					OnPropertyChanged();
 				}
@@ -114,12 +119,11 @@ namespace ICSharpCode.ILSpy.Options
 
 		bool enableWordWrap;
 
-		public bool EnableWordWrap
-		{
+		public bool EnableWordWrap {
 			get { return enableWordWrap; }
-			set
-			{
-				if (enableWordWrap != value) {
+			set {
+				if (enableWordWrap != value)
+				{
 					enableWordWrap = value;
 					OnPropertyChanged();
 				}
@@ -131,7 +135,8 @@ namespace ICSharpCode.ILSpy.Options
 		public bool SortResults {
 			get { return sortResults; }
 			set {
-				if (sortResults != value) {
+				if (sortResults != value)
+				{
 					sortResults = value;
 					OnPropertyChanged();
 				}
@@ -143,7 +148,8 @@ namespace ICSharpCode.ILSpy.Options
 		public bool FoldBraces {
 			get { return foldBraces; }
 			set {
-				if (foldBraces != value) {
+				if (foldBraces != value)
+				{
 					foldBraces = value;
 					OnPropertyChanged();
 				}
@@ -155,7 +161,8 @@ namespace ICSharpCode.ILSpy.Options
 		public bool ExpandMemberDefinitions {
 			get { return expandMemberDefinitions; }
 			set {
-				if (expandMemberDefinitions != value) {
+				if (expandMemberDefinitions != value)
+				{
 					expandMemberDefinitions = value;
 					OnPropertyChanged();
 				}
@@ -167,7 +174,8 @@ namespace ICSharpCode.ILSpy.Options
 		public bool ExpandUsingDeclarations {
 			get { return expandUsingDeclarations; }
 			set {
-				if (expandUsingDeclarations != value) {
+				if (expandUsingDeclarations != value)
+				{
 					expandUsingDeclarations = value;
 					OnPropertyChanged();
 				}
@@ -179,7 +187,8 @@ namespace ICSharpCode.ILSpy.Options
 		public bool ShowDebugInfo {
 			get { return showDebugInfo; }
 			set {
-				if (showDebugInfo != value) {
+				if (showDebugInfo != value)
+				{
 					showDebugInfo = value;
 					OnPropertyChanged();
 				}
@@ -191,7 +200,8 @@ namespace ICSharpCode.ILSpy.Options
 		public bool IndentationUseTabs {
 			get { return indentationUseTabs; }
 			set {
-				if (indentationUseTabs != value) {
+				if (indentationUseTabs != value)
+				{
 					indentationUseTabs = value;
 					OnPropertyChanged();
 				}
@@ -203,7 +213,8 @@ namespace ICSharpCode.ILSpy.Options
 		public int IndentationTabSize {
 			get { return indentationTabSize; }
 			set {
-				if (indentationTabSize != value) {
+				if (indentationTabSize != value)
+				{
 					indentationTabSize = value;
 					OnPropertyChanged();
 				}
@@ -215,7 +226,8 @@ namespace ICSharpCode.ILSpy.Options
 		public int IndentationSize {
 			get { return indentationSize; }
 			set {
-				if (indentationSize != value) {
+				if (indentationSize != value)
+				{
 					indentationSize = value;
 					OnPropertyChanged();
 				}
@@ -227,7 +239,8 @@ namespace ICSharpCode.ILSpy.Options
 		public bool HighlightMatchingBraces {
 			get { return highlightMatchingBraces; }
 			set {
-				if (highlightMatchingBraces != value) {
+				if (highlightMatchingBraces != value)
+				{
 					highlightMatchingBraces = value;
 					OnPropertyChanged();
 				}
@@ -239,7 +252,8 @@ namespace ICSharpCode.ILSpy.Options
 		public bool HideEmptyMetadataTables {
 			get { return hideEmptyMetadataTables; }
 			set {
-				if (hideEmptyMetadataTables != value) {
+				if (hideEmptyMetadataTables != value)
+				{
 					hideEmptyMetadataTables = value;
 					OnPropertyChanged();
 				}

@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Diagnostics;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -48,7 +49,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		MatchInstruction FindMatch()
 		{
-			for (ILInstruction inst = this; inst != null; inst = inst.Parent) {
+			for (ILInstruction inst = this; inst != null; inst = inst.Parent)
+			{
 				if (inst.Parent is MatchInstruction match && inst != match.TestedOperand)
 					return match;
 			}

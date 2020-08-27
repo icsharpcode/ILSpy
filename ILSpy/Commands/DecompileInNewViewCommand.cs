@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Threading;
+
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
@@ -48,14 +49,21 @@ namespace ICSharpCode.ILSpy.Commands
 
 		IEnumerable<ILSpyTreeNode> GetNodes(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes != null) {
-				if (context.TreeView != MainWindow.Instance.AssemblyTreeView) {
+			if (context.SelectedTreeNodes != null)
+			{
+				if (context.TreeView != MainWindow.Instance.AssemblyTreeView)
+				{
 					return context.SelectedTreeNodes.OfType<IMemberTreeNode>().Select(FindTreeNode).Where(n => n != null);
-				} else {
+				}
+				else
+				{
 					return context.SelectedTreeNodes.OfType<ILSpyTreeNode>().Where(n => n != null);
 				}
-			} else if (context.Reference?.Reference is IEntity entity) {
-				if (MainWindow.Instance.FindTreeNode(entity) is ILSpyTreeNode node) {
+			}
+			else if (context.Reference?.Reference is IEntity entity)
+			{
+				if (MainWindow.Instance.FindTreeNode(entity) is ILSpyTreeNode node)
+				{
 					return new[] { node };
 				}
 			}

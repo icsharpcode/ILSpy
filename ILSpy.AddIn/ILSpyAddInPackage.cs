@@ -1,18 +1,22 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System.ComponentModel.Design;
 using System.Threading;
+
+using EnvDTE;
+
+using ICSharpCode.ILSpy.AddIn.Commands;
+
 using Microsoft;
 using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.Shell;
-using ICSharpCode.ILSpy.AddIn.Commands;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.LanguageServices;
-using EnvDTE;
-using System.Collections.Generic;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+
 using Task = System.Threading.Tasks.Task;
 
 namespace ICSharpCode.ILSpy.AddIn
@@ -114,7 +118,8 @@ namespace ICSharpCode.ILSpy.AddIn
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
-			if (uiShell == null) {
+			if (uiShell == null)
+			{
 				return 0;
 			}
 
@@ -143,9 +148,12 @@ namespace ICSharpCode.ILSpy.AddIn
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			if (DTE.ToolWindows.SolutionExplorer.SelectedItems is IEnumerable<UIHierarchyItem> hierarchyItems) {
-				foreach (var item in hierarchyItems) {
-					if (item.Object is T typedItem) {
+			if (DTE.ToolWindows.SolutionExplorer.SelectedItems is IEnumerable<UIHierarchyItem> hierarchyItems)
+			{
+				foreach (var item in hierarchyItems)
+				{
+					if (item.Object is T typedItem)
+					{
 						yield return typedItem;
 					}
 				}

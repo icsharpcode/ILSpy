@@ -41,11 +41,11 @@ namespace ICSharpCode.ILSpy.Xaml
 				return null;
 			return CreateNode(resource.Name, stream);
 		}
-		
+
 		public ILSpyTreeNode CreateNode(string key, object data)
 		{
 			if (!(data is Stream))
-			    return null;
+				return null;
 			foreach (string fileExt in xmlFileExtensions)
 			{
 				if (key.EndsWith(fileExt, StringComparison.OrdinalIgnoreCase))
@@ -54,20 +54,18 @@ namespace ICSharpCode.ILSpy.Xaml
 			return null;
 		}
 	}
-	
+
 	sealed class XmlResourceEntryNode : ResourceEntryNode
 	{
 		string xml;
-		
+
 		public XmlResourceEntryNode(string key, Stream data)
 			: base(key, data)
 		{
 		}
-		
-		public override object Icon
-		{
-			get
-			{
+
+		public override object Icon {
+			get {
 				string text = (string)Text;
 				if (text.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
 					return Images.ResourceXml;
@@ -88,17 +86,21 @@ namespace ICSharpCode.ILSpy.Xaml
 			tabPage.ShowTextView(textView => textView.RunWithCancellation(
 				token => Task.Factory.StartNew(
 					() => {
-						try {
+						try
+						{
 							// cache read XAML because stream will be closed after first read
-							if (xml == null) {
-								using (var reader = new StreamReader(Data)) {
+							if (xml == null)
+							{
+								using (var reader = new StreamReader(Data))
+								{
 									xml = reader.ReadToEnd();
 								}
 							}
 							output.Write(xml);
 							highlighting = HighlightingManager.Instance.GetDefinitionByExtension(".xml");
 						}
-						catch (Exception ex) {
+						catch (Exception ex)
+						{
 							output.Write(ex.ToString());
 						}
 						return output;

@@ -25,6 +25,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Text.RegularExpressions;
+
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -94,7 +95,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private void ReplaceReferencesToDisplayClassThis(Dictionary<MethodDefinitionHandle, LocalFunctionInfo>.ValueCollection localFunctions)
 		{
-			foreach (var info in localFunctions) {
+			foreach (var info in localFunctions)
+			{
 				var localFunction = info.Definition;
 				if (localFunction.Method.IsStatic)
 					continue;
@@ -112,44 +114,55 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private void DetermineCaptureAndDeclarationScopes(Dictionary<MethodDefinitionHandle, LocalFunctionInfo>.ValueCollection localFunctions)
 		{
-			foreach (var info in localFunctions) {
+			foreach (var info in localFunctions)
+			{
 				context.CancellationToken.ThrowIfCancellationRequested();
-				if (info.Definition == null) {
+				if (info.Definition == null)
+				{
 					context.Function.Warnings.Add($"Could not decode local function '{info.Method}'");
 					continue;
 				}
 
 				context.StepStartGroup($"Determine and move to declaration scope of " + info.Definition.Name, info.Definition);
-				try {
+				try
+				{
 					var localFunction = info.Definition;
 
-					foreach (var useSite in info.UseSites) {
+					foreach (var useSite in info.UseSites)
+					{
 						DetermineCaptureAndDeclarationScope(info, useSite);
 
-						if (context.Function.Method.IsConstructor && localFunction.DeclarationScope == null) {
+						if (context.Function.Method.IsConstructor && localFunction.DeclarationScope == null)
+						{
 							localFunction.DeclarationScope = BlockContainer.FindClosestContainer(useSite);
 						}
 					}
 
-					if (localFunction.DeclarationScope == null) {
+					if (localFunction.DeclarationScope == null)
+					{
 						localFunction.DeclarationScope = (BlockContainer)context.Function.Body;
 					}
 
 					ILFunction declaringFunction = GetDeclaringFunction(localFunction);
-					if (declaringFunction != context.Function) {
+					if (declaringFunction != context.Function)
+					{
 						context.Step($"Move {localFunction.Name} from {context.Function.Name} to {declaringFunction.Name}", localFunction);
 						context.Function.LocalFunctions.Remove(localFunction);
 						declaringFunction.LocalFunctions.Add(localFunction);
 					}
 
-					if (TryValidateSkipCount(info, out int skipCount) && skipCount != localFunction.ReducedMethod.NumberOfCompilerGeneratedTypeParameters) {
+					if (TryValidateSkipCount(info, out int skipCount) && skipCount != localFunction.ReducedMethod.NumberOfCompilerGeneratedTypeParameters)
+					{
 						Debug.Assert(false);
 						context.Function.Warnings.Add($"Could not decode local function '{info.Method}'");
-						if (declaringFunction != context.Function) {
+						if (declaringFunction != context.Function)
+						{
 							declaringFunction.LocalFunctions.Remove(localFunction);
 						}
 					}
-				} finally {
+				}
+				finally
+				{
 					context.StepEndGroup(keepIfEmpty: true);
 				}
 			}
@@ -157,20 +170,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private void TransformUseSites(Dictionary<MethodDefinitionHandle, LocalFunctionInfo>.ValueCollection localFunctions)
 		{
-			foreach (var info in localFunctions) {
+			foreach (var info in localFunctions)
+			{
 				context.CancellationToken.ThrowIfCancellationRequested();
-				if (info.Definition == null) continue;
+				if (info.Definition == null)
+					continue;
 				context.StepStartGroup($"TransformUseSites of " + info.Definition.Name, info.Definition);
-				try {
-					foreach (var useSite in info.UseSites) {
+				try
+				{
+					foreach (var useSite in info.UseSites)
+					{
 						context.Step($"Transform use-site at IL_{useSite.StartILOffset:x4}", useSite);
-						if (useSite.OpCode == OpCode.NewObj) {
+						if (useSite.OpCode == OpCode.NewObj)
+						{
 							TransformToLocalFunctionReference(info.Definition, useSite);
-						} else {
+						}
+						else
+						{
 							TransformToLocalFunctionInvocation(info.Definition.ReducedMethod, useSite);
 						}
 					}
-				} finally {
+				}
+				finally
+				{
 					context.StepEndGroup();
 				}
 			}
@@ -178,33 +200,44 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private void PropagateClosureParameterArguments(Dictionary<MethodDefinitionHandle, LocalFunctionInfo> localFunctions)
 		{
-			foreach (var localFunction in context.Function.Descendants.OfType<ILFunction>()) {
+			foreach (var localFunction in context.Function.Descendants.OfType<ILFunction>())
+			{
 				if (localFunction.Kind != ILFunctionKind.LocalFunction)
 					continue;
 				context.CancellationToken.ThrowIfCancellationRequested();
 				var token = (MethodDefinitionHandle)localFunction.Method.MetadataToken;
 				var info = localFunctions[token];
 
-				foreach (var useSite in info.UseSites) {
-					if (useSite is NewObj) {
+				foreach (var useSite in info.UseSites)
+				{
+					if (useSite is NewObj)
+					{
 						AddAsArgument(-1, useSite.Arguments[0]);
-					} else {
+					}
+					else
+					{
 						int firstArgumentIndex;
-						if (info.Method.IsStatic) {
+						if (info.Method.IsStatic)
+						{
 							firstArgumentIndex = 0;
-						} else {
+						}
+						else
+						{
 							firstArgumentIndex = 1;
 							AddAsArgument(-1, useSite.Arguments[0]);
 						}
-						for (int i = useSite.Arguments.Count - 1; i >= firstArgumentIndex; i--) {
+						for (int i = useSite.Arguments.Count - 1; i >= firstArgumentIndex; i--)
+						{
 							AddAsArgument(i - firstArgumentIndex, useSite.Arguments[i]);
 						}
 					}
 				}
 
 				context.StepStartGroup($"PropagateClosureParameterArguments of " + info.Definition.Name, info.Definition);
-				try {
-					foreach (var (index, arguments) in info.LocalFunctionArguments) {
+				try
+				{
+					foreach (var (index, arguments) in info.LocalFunctionArguments)
+					{
 						var targetVariable = info.Definition.Variables.SingleOrDefault(p => p.Kind == VariableKind.Parameter && p.Index == index);
 						if (targetVariable == null)
 							continue;
@@ -214,13 +247,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						context.Step($"Replace '{targetVariable}' with '{compatibleArgument}'", info.Definition);
 						info.Definition.AcceptVisitor(new DelegateConstruction.ReplaceDelegateTargetVisitor(compatibleArgument, targetVariable));
 					}
-				} finally {
+				}
+				finally
+				{
 					context.StepEndGroup(keepIfEmpty: true);
 				}
 
 				void AddAsArgument(int index, ILInstruction argument)
 				{
-					switch (argument) {
+					switch (argument)
+					{
 						case LdLoc _:
 						case LdLoca _:
 						case LdFlda _:
@@ -234,7 +270,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return;
 					}
 
-					if (!info.LocalFunctionArguments.TryGetValue(index, out var arguments)) {
+					if (!info.LocalFunctionArguments.TryGetValue(index, out var arguments))
+					{
 						arguments = new List<ILInstruction>();
 						info.LocalFunctionArguments.Add(index, arguments);
 					}
@@ -245,7 +282,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private ILInstruction FindCompatibleArgument(LocalFunctionInfo info, IList<ILInstruction> arguments, bool ignoreStructure = false)
 		{
-			foreach (var arg in arguments) {
+			foreach (var arg in arguments)
+			{
 				if (arg is IInstructionWithVariableOperand ld2 && (ignoreStructure || info.Definition.IsDescendantOf(ld2.Variable.Function)))
 					return arg;
 				var v = ResolveAncestorScopeReference(arg);
@@ -263,8 +301,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (!(TransformDisplayClassUsage.IsPotentialClosure(context, field.Type.GetDefinition()) || context.Function.Method.DeclaringType.Equals(field.Type)))
 				return null;
-			foreach (var v in context.Function.Descendants.OfType<ILFunction>().SelectMany(f => f.Variables)) {
-				if (v.Kind != VariableKind.Local && v.Kind != VariableKind.DisplayClassLocal && v.Kind != VariableKind.StackSlot) {
+			foreach (var v in context.Function.Descendants.OfType<ILFunction>().SelectMany(f => f.Variables))
+			{
+				if (v.Kind != VariableKind.Local && v.Kind != VariableKind.DisplayClassLocal && v.Kind != VariableKind.StackSlot)
+				{
 					if (!(v.Kind == VariableKind.Parameter && v.Index == -1))
 						continue;
 					if (v.Type.Equals(field.Type))
@@ -282,7 +322,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (localFunction.DeclarationScope == null)
 				return null;
 			ILInstruction inst = localFunction.DeclarationScope;
-			while (inst != null) {
+			while (inst != null)
+			{
 				if (inst is ILFunction declaringFunction)
 					return declaringFunction;
 				inst = inst.Parent;
@@ -306,15 +347,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (skipCount < 0 || skipCount > method.TypeArguments.Count)
 				return false;
 
-			if (skipCount > 0) {
+			if (skipCount > 0)
+			{
 #if DEBUG
-				foreach (var useSite in info.UseSites) {
+				foreach (var useSite in info.UseSites)
+				{
 					var callerMethod = useSite.Ancestors.OfType<ILFunction>().First().Method;
 					callerMethod = callerMethod.ReducedFrom ?? callerMethod;
 					IMethod method0;
-					if (useSite.OpCode == OpCode.NewObj) {
+					if (useSite.OpCode == OpCode.NewObj)
+					{
 						method0 = ((LdFtn)useSite.Arguments[1]).Method;
-					} else {
+					}
+					else
+					{
 						method0 = useSite.Method;
 					}
 					var totalSkipCount = skipCount + method0.DeclaringType.TypeParameterCount;
@@ -330,18 +376,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void FindUseSites(ILFunction function, ILTransformContext context, Dictionary<MethodDefinitionHandle, LocalFunctionInfo> localFunctions)
 		{
-			foreach (var inst in function.Body.Descendants) {
+			foreach (var inst in function.Body.Descendants)
+			{
 				context.CancellationToken.ThrowIfCancellationRequested();
-				if (inst is CallInstruction call && !call.Method.IsLocalFunction && IsLocalFunctionMethod(call.Method, context)) {
+				if (inst is CallInstruction call && !call.Method.IsLocalFunction && IsLocalFunctionMethod(call.Method, context))
+				{
 					HandleUseSite(call.Method, call);
-				} else if (inst is LdFtn ldftn && !ldftn.Method.IsLocalFunction && ldftn.Parent is NewObj newObj && IsLocalFunctionMethod(ldftn.Method, context) && DelegateConstruction.IsDelegateConstruction(newObj)) {
+				}
+				else if (inst is LdFtn ldftn && !ldftn.Method.IsLocalFunction && ldftn.Parent is NewObj newObj && IsLocalFunctionMethod(ldftn.Method, context) && DelegateConstruction.IsDelegateConstruction(newObj))
+				{
 					HandleUseSite(ldftn.Method, newObj);
 				}
 			}
 
 			void HandleUseSite(IMethod targetMethod, CallInstruction inst)
 			{
-				if (!localFunctions.TryGetValue((MethodDefinitionHandle)targetMethod.MetadataToken, out var info)) {
+				if (!localFunctions.TryGetValue((MethodDefinitionHandle)targetMethod.MetadataToken, out var info))
+				{
 					context.StepStartGroup($"Read local function '{targetMethod.Name}'", inst);
 					info = new LocalFunctionInfo() {
 						UseSites = new List<CallInstruction>() { inst },
@@ -352,11 +403,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					int skipCount = GetSkipCount(rootFunction, targetMethod);
 					info.Definition = ReadLocalFunctionDefinition(rootFunction, targetMethod, skipCount);
 					localFunctions.Add((MethodDefinitionHandle)targetMethod.MetadataToken, info);
-					if (info.Definition != null) {
+					if (info.Definition != null)
+					{
 						FindUseSites(info.Definition, context, localFunctions);
 					}
 					context.StepEndGroup();
-				} else {
+				}
+				else
+				{
 					info.UseSites.Add(inst);
 				}
 			}
@@ -389,10 +443,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			targetMethod = (IMethod)targetMethod.MemberDefinition;
 			var skipCount = rootFunction.Method.DeclaringType.TypeParameters.Count + rootFunction.Method.TypeParameters.Count - targetMethod.DeclaringType.TypeParameters.Count;
-			if (skipCount < 0) {
+			if (skipCount < 0)
+			{
 				skipCount = 0;
 			}
-			if (targetMethod.TypeParameters.Count > 0) {
+			if (targetMethod.TypeParameters.Count > 0)
+			{
 				var lastParams = targetMethod.Parameters.Where(p => IsClosureParameter(p, this.resolveContext)).SelectMany(p => UnwrapByRef(p.Type).TypeArguments)
 					.Select(pt => (int?)targetMethod.TypeParameters.IndexOf(pt)).DefaultIfEmpty().Max();
 				if (lastParams != null && lastParams.GetValueOrDefault() + 1 > skipCount)
@@ -403,7 +459,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static TypeSystem.GenericContext? GenericContextFromTypeArguments(IMethod targetMethod, int skipCount)
 		{
-			if (skipCount < 0 || skipCount > targetMethod.TypeParameters.Count) {
+			if (skipCount < 0 || skipCount > targetMethod.TypeParameters.Count)
+			{
 				Debug.Assert(false);
 				return null;
 			}
@@ -415,15 +472,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var methodTypeParameters = new List<ITypeParameter>(targetMethod.TypeParameters);
 			var skippedTypeArguments = targetMethod.DeclaringType.TypeArguments.Concat(targetMethod.TypeArguments).Take(total);
 			int idx = 0;
-			foreach (var skippedTA in skippedTypeArguments) {
+			foreach (var skippedTA in skippedTypeArguments)
+			{
 				int curIdx;
 				List<ITypeParameter> curParameters;
 				IReadOnlyList<IType> curArgs;
-				if (idx < classTypeParameters.Count) {
+				if (idx < classTypeParameters.Count)
+				{
 					curIdx = idx;
 					curParameters = classTypeParameters;
 					curArgs = targetMethod.DeclaringType.TypeArguments;
-				} else {
+				}
+				else
+				{
 					curIdx = idx - classTypeParameters.Count;
 					curParameters = methodTypeParameters;
 					curArgs = targetMethod.TypeArguments;
@@ -433,7 +494,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				curParameters[curIdx] = (ITypeParameter)skippedTA;
 				idx++;
 			}
-			if (idx != total) {
+			if (idx != total)
+			{
 				Debug.Assert(false);
 				return null;
 			}
@@ -460,7 +522,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static IType UnwrapByRef(IType type)
 		{
-			if (type is ByReferenceType byRef) {
+			if (type is ByReferenceType byRef)
+			{
 				type = byRef.ElementType;
 			}
 			return type;
@@ -468,7 +531,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal static ILInstruction GetStatement(ILInstruction inst)
 		{
-			while (inst.Parent != null) {
+			while (inst.Parent != null)
+			{
 				if (inst.Parent is Block b && b.Kind == BlockKind.ControlFlow)
 					return inst;
 				inst = inst.Parent;
@@ -479,7 +543,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		LocalFunctionMethod ReduceToLocalFunction(IMethod method, int typeParametersToRemove)
 		{
 			int parametersToRemove = 0;
-			for (int i = method.Parameters.Count - 1; i >= 0; i--) {
+			for (int i = method.Parameters.Count - 1; i >= 0; i--)
+			{
 				if (!IsClosureParameter(method.Parameters[i], resolveContext))
 					break;
 				parametersToRemove++;
@@ -511,7 +576,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			ILInstruction target = useSite.Arguments[0];
 			target.ReplaceWith(new LdNull().WithILRange(target));
-			if (target is IInstructionWithVariableOperand withVar && withVar.Variable.Kind == VariableKind.Local) {
+			if (target is IInstructionWithVariableOperand withVar && withVar.Variable.Kind == VariableKind.Local)
+			{
 				withVar.Variable.Kind = VariableKind.DisplayClassLocal;
 			}
 			var fnptr = (IInstructionWithMethodOperand)useSite.Arguments[1];
@@ -535,15 +601,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			replacement.IsTail = useSite.IsTail;
 			// copy IL ranges
 			replacement.AddILRange(useSite);
-			if (wasInstanceCall) {
+			if (wasInstanceCall)
+			{
 				replacement.AddILRange(useSite.Arguments[0]);
-				if (useSite.Arguments[0].MatchLdLocRef(out var variable) && variable.Kind == VariableKind.NamedArgument) {
+				if (useSite.Arguments[0].MatchLdLocRef(out var variable) && variable.Kind == VariableKind.NamedArgument)
+				{
 					// remove the store instruction of the simple load, if it is a named argument.
 					var storeInst = (ILInstruction)variable.StoreInstructions[0];
 					((Block)storeInst.Parent).Instructions.RemoveAt(storeInst.ChildIndex);
 				}
 			}
-			for (int i = 0; i < reducedMethod.NumberOfCompilerGeneratedParameters; i++) {
+			for (int i = 0; i < reducedMethod.NumberOfCompilerGeneratedParameters; i++)
+			{
 				replacement.AddILRange(useSite.Arguments[argumentCount - i - 1]);
 			}
 			useSite.ReplaceWith(replacement);
@@ -552,11 +621,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		void DetermineCaptureAndDeclarationScope(LocalFunctionInfo info, CallInstruction useSite)
 		{
 			int firstArgumentIndex = info.Definition.Method.IsStatic ? 0 : 1;
-			for (int i = useSite.Arguments.Count - 1; i >= firstArgumentIndex; i--) {
+			for (int i = useSite.Arguments.Count - 1; i >= firstArgumentIndex; i--)
+			{
 				if (!DetermineCaptureAndDeclarationScope(info, i - firstArgumentIndex, useSite.Arguments[i]))
 					break;
 			}
-			if (firstArgumentIndex > 0) {
+			if (firstArgumentIndex > 0)
+			{
 				DetermineCaptureAndDeclarationScope(info, -1, useSite.Arguments[0]);
 			}
 		}
@@ -565,11 +636,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			ILFunction function = info.Definition;
 			ILVariable closureVar;
-			if (parameterIndex >= 0) {
+			if (parameterIndex >= 0)
+			{
 				if (!(parameterIndex < function.Method.Parameters.Count && IsClosureParameter(function.Method.Parameters[parameterIndex], resolveContext)))
 					return false;
 			}
-			if (!(arg.MatchLdLoc(out closureVar) || arg.MatchLdLoca(out closureVar))) {
+			if (!(arg.MatchLdLoc(out closureVar) || arg.MatchLdLoca(out closureVar)))
+			{
 				closureVar = ResolveAncestorScopeReference(arg);
 				if (closureVar == null)
 					return false;
@@ -583,12 +656,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var additionalScope = BlockContainer.FindClosestContainer(initializer);
 			if (closureVar.CaptureScope == null)
 				closureVar.CaptureScope = additionalScope;
-			else {
+			else
+			{
 				BlockContainer combinedScope = FindCommonAncestorInstruction<BlockContainer>(closureVar.CaptureScope, additionalScope);
 				Debug.Assert(combinedScope != null);
 				closureVar.CaptureScope = combinedScope;
 			}
-			if (closureVar.Kind == VariableKind.Local) {
+			if (closureVar.Kind == VariableKind.Local)
+			{
 				closureVar.Kind = VariableKind.DisplayClassLocal;
 			}
 			if (function.DeclarationScope == null)
@@ -662,7 +737,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			FindRefStructParameters visitor = new FindRefStructParameters();
 			method.DecodeSignature(visitor, default);
 
-			foreach (var h in visitor.RefStructTypes) {
+			foreach (var h in visitor.RefStructTypes)
+			{
 				var td = metadata.GetTypeDefinition(h);
 				if (td.IsCompilerGenerated(metadata) && td.IsValueType(metadata))
 					return true;
@@ -687,7 +763,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var declaringTypeHandle = type.GetDeclaringType();
 			var declaringType = metadata.GetTypeDefinition(declaringTypeHandle);
 
-			foreach (var method in declaringType.GetMethods()) {
+			foreach (var method in declaringType.GetMethods())
+			{
 				if (!IsLocalFunctionMethod(module, method, context))
 					continue;
 				var md = metadata.GetMethodDefinition(method);

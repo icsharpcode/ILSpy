@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// This field is only used in ILReader and BlockBuilder, and should be ignored by ILAst transforms.
 		/// </summary>
 		internal bool IsStackAdjustment;
-		
+
 		/// <summary>
 		/// Gets whether the IL stack was empty after this store.
 		/// Only set for store instructions from the IL; not for stores to the stack

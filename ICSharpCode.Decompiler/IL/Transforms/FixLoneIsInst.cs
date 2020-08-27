@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -33,26 +34,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
 			var instructionsToFix = new List<IsInst>();
-			foreach (var isInst in function.Descendants.OfType<IsInst>()) {
-				if (isInst.Type.IsReferenceType == true) {
+			foreach (var isInst in function.Descendants.OfType<IsInst>())
+			{
+				if (isInst.Type.IsReferenceType == true)
+				{
 					continue;  // reference-type isinst is always supported
 				}
-				if (SemanticHelper.IsPure(isInst.Argument.Flags)) {
+				if (SemanticHelper.IsPure(isInst.Argument.Flags))
+				{
 					continue; // emulated via "expr is T ? (T)expr : null"
 				}
-				if (isInst.Parent is UnboxAny unboxAny && ExpressionBuilder.IsUnboxAnyWithIsInst(unboxAny, isInst)) {
+				if (isInst.Parent is UnboxAny unboxAny && ExpressionBuilder.IsUnboxAnyWithIsInst(unboxAny, isInst))
+				{
 					continue; // supported pattern "expr as T?"
 				}
-				if (isInst.Parent.MatchCompEqualsNull(out _) || isInst.Parent.MatchCompNotEqualsNull(out _)) {
+				if (isInst.Parent.MatchCompEqualsNull(out _) || isInst.Parent.MatchCompNotEqualsNull(out _))
+				{
 					continue; // supported pattern "expr is T"
 				}
-				if (isInst.Parent is Block { Kind: BlockKind.ControlFlow }) {
+				if (isInst.Parent is Block { Kind: BlockKind.ControlFlow })
+				{
 					continue; // supported via StatementBuilder.VisitIsInst
 				}
 				instructionsToFix.Add(isInst);
 			}
 			// Need to delay fixing until we're done with iteration, because Extract() modifies parents
-			foreach (var isInst in instructionsToFix) {
+			foreach (var isInst in instructionsToFix)
+			{
 				// Use extraction to turn isInst.Argument into a pure instruction, thus making the emulation possible
 				context.Step("FixLoneIsInst", isInst);
 				isInst.Argument.Extract();

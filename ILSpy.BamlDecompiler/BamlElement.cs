@@ -22,16 +22,21 @@
 
 using System.Collections.Generic;
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler {
-	internal readonly struct XamlNode {
-		XamlNode(XElement value) {
+namespace ILSpy.BamlDecompiler
+{
+	internal readonly struct XamlNode
+	{
+		XamlNode(XElement value)
+		{
 			Element = value;
 			String = null;
 		}
 
-		XamlNode(string value) {
+		XamlNode(string value)
+		{
 			Element = null;
 			String = value;
 		}
@@ -45,14 +50,16 @@ namespace ILSpy.BamlDecompiler {
 		public static implicit operator string(XamlNode node) => node.String;
 	}
 
-	internal class BamlElement {
+	internal class BamlElement
+	{
 		public BamlNode Node { get; }
 		public XamlNode Xaml { get; set; }
 
 		public BamlElement Parent { get; set; }
 		public IList<BamlElement> Children { get; }
 
-		public BamlElement(BamlNode node) {
+		public BamlElement(BamlNode node)
+		{
 			Node = node;
 			Children = new List<BamlElement>();
 		}

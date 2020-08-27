@@ -1,17 +1,19 @@
 ﻿using System;
-using ICSharpCode.Decompiler.Util;
-using ICSharpCode.Decompiler.Disassembler;
-using SRM = System.Reflection.Metadata;
-using ILOpCode = System.Reflection.Metadata.ILOpCode;
-using ICSharpCode.Decompiler;
-
-using static System.Reflection.Metadata.PEReaderExtensions;
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Metadata;
+using System.Collections.Concurrent;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading;
-using System.Collections.Concurrent;
+
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
+
+using static System.Reflection.Metadata.PEReaderExtensions;
+
+using ILOpCode = System.Reflection.Metadata.ILOpCode;
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.Search
 {
@@ -23,13 +25,16 @@ namespace ICSharpCode.ILSpy.Search
 		public LiteralSearchStrategy(Language language, ApiVisibility apiVisibility, IProducerConsumerCollection<SearchResult> resultQueue, params string[] terms)
 			: base(language, apiVisibility, resultQueue, terms)
 		{
-			if (terms.Length == 1) {
+			if (terms.Length == 1)
+			{
 				var lexer = new Lexer(new LATextReader(new System.IO.StringReader(terms[0])));
 				var value = lexer.NextToken();
 
-				if (value != null && value.LiteralValue != null) {
+				if (value != null && value.LiteralValue != null)
+				{
 					TypeCode valueType = Type.GetTypeCode(value.LiteralValue.GetType());
-					switch (valueType) {
+					switch (valueType)
+					{
 						case TypeCode.Byte:
 						case TypeCode.SByte:
 						case TypeCode.Int16:
@@ -57,18 +62,23 @@ namespace ICSharpCode.ILSpy.Search
 			cancellationToken.ThrowIfCancellationRequested();
 			var metadata = module.Metadata;
 			var typeSystem = module.GetTypeSystemWithCurrentOptionsOrNull();
-			if (typeSystem == null) return;
+			if (typeSystem == null)
+				return;
 
-			foreach (var handle in metadata.MethodDefinitions) {
+			foreach (var handle in metadata.MethodDefinitions)
+			{
 				cancellationToken.ThrowIfCancellationRequested();
 				var md = metadata.GetMethodDefinition(handle);
-				if (!md.HasBody() || !MethodIsLiteralMatch(module, md)) continue;
+				if (!md.HasBody() || !MethodIsLiteralMatch(module, md))
+					continue;
 				var method = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-				if (!CheckVisibility(method)) continue;
+				if (!CheckVisibility(method))
+					continue;
 				OnFoundResult(method);
 			}
 
-			foreach (var handle in metadata.FieldDefinitions) {
+			foreach (var handle in metadata.FieldDefinitions)
+			{
 				cancellationToken.ThrowIfCancellationRequested();
 				var fd = metadata.GetFieldDefinition(handle);
 				if (!fd.HasFlag(System.Reflection.FieldAttributes.Literal))
@@ -81,7 +91,8 @@ namespace ICSharpCode.ILSpy.Search
 				if (!IsLiteralMatch(metadata, blob.ReadConstant(constant.TypeCode)))
 					continue;
 				IField field = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-				if (!CheckVisibility(field)) continue;
+				if (!CheckVisibility(field))
+					continue;
 				OnFoundResult(field);
 			}
 		}
@@ -90,7 +101,8 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			if (val == null)
 				return false;
-			switch (searchTermLiteralType) {
+			switch (searchTermLiteralType)
+			{
 				case TypeCode.Int64:
 					TypeCode tc = Type.GetTypeCode(val.GetType());
 					if (tc >= TypeCode.SByte && tc <= TypeCode.UInt64)
@@ -110,11 +122,14 @@ namespace ICSharpCode.ILSpy.Search
 		bool MethodIsLiteralMatch(PEFile module, MethodDefinition methodDefinition)
 		{
 			var blob = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress).GetILReader();
-			if (searchTermLiteralType == TypeCode.Int64) {
+			if (searchTermLiteralType == TypeCode.Int64)
+			{
 				long val = (long)searchTermLiteralValue;
-				while (blob.RemainingBytes > 0) {
+				while (blob.RemainingBytes > 0)
+				{
 					ILOpCode code;
-					switch (code = ILParser.DecodeOpCode(ref blob)) {
+					switch (code = ILParser.DecodeOpCode(ref blob))
+					{
 						case ILOpCode.Ldc_i8:
 							if (val == blob.ReadInt64())
 								return true;
@@ -172,9 +187,12 @@ namespace ICSharpCode.ILSpy.Search
 							break;
 					}
 				}
-			} else if (searchTermLiteralType != TypeCode.Empty) {
+			}
+			else if (searchTermLiteralType != TypeCode.Empty)
+			{
 				ILOpCode expectedCode;
-				switch (searchTermLiteralType) {
+				switch (searchTermLiteralType)
+				{
 					case TypeCode.Single:
 						expectedCode = ILOpCode.Ldc_r4;
 						break;
@@ -187,13 +205,16 @@ namespace ICSharpCode.ILSpy.Search
 					default:
 						throw new InvalidOperationException();
 				}
-				while (blob.RemainingBytes > 0) {
+				while (blob.RemainingBytes > 0)
+				{
 					var code = ILParser.DecodeOpCode(ref blob);
-					if (code != expectedCode) {
+					if (code != expectedCode)
+					{
 						ILParser.SkipOperand(ref blob, code);
 						continue;
 					}
-					switch (code) {
+					switch (code)
+					{
 						case ILOpCode.Ldc_r4:
 							if ((float)searchTermLiteralValue == blob.ReadSingle())
 								return true;
@@ -208,10 +229,14 @@ namespace ICSharpCode.ILSpy.Search
 							break;
 					}
 				}
-			} else {
-				while (blob.RemainingBytes > 0) {
+			}
+			else
+			{
+				while (blob.RemainingBytes > 0)
+				{
 					var code = ILParser.DecodeOpCode(ref blob);
-					if (code != ILOpCode.Ldstr) {
+					if (code != ILOpCode.Ldstr)
+					{
 						ILParser.SkipOperand(ref blob, code);
 						continue;
 					}

@@ -32,45 +32,45 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ThrowStatement : Statement
 	{
-		public static readonly TokenRole ThrowKeywordRole = new TokenRole ("throw");
-		
+		public static readonly TokenRole ThrowKeywordRole = new TokenRole("throw");
+
 		public CSharpTokenNode ThrowToken {
-			get { return GetChildByRole (ThrowKeywordRole); }
+			get { return GetChildByRole(ThrowKeywordRole); }
 		}
-		
+
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get { return GetChildByRole(Roles.Expression); }
+			set { SetChildByRole(Roles.Expression, value); }
 		}
-		
+
 		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
+			get { return GetChildByRole(Roles.Semicolon); }
 		}
-		
-		public ThrowStatement ()
+
+		public ThrowStatement()
 		{
 		}
-		
-		public ThrowStatement (Expression expression)
+
+		public ThrowStatement(Expression expression)
 		{
-			AddChild (expression, Roles.Expression);
+			AddChild(expression, Roles.Expression);
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitThrowStatement (this);
+			visitor.VisitThrowStatement(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitThrowStatement (this);
+			return visitor.VisitThrowStatement(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitThrowStatement (this, data);
+			return visitor.VisitThrowStatement(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ThrowStatement o = other as ThrowStatement;

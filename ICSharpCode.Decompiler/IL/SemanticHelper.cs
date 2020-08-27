@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
@@ -29,7 +30,7 @@ namespace ICSharpCode.Decompiler.IL
 			const InstructionFlags combineWithAnd = InstructionFlags.EndPointUnreachable;
 			return (trueFlags & falseFlags) | ((trueFlags | falseFlags) & ~combineWithAnd);
 		}
-		
+
 		/// <summary>
 		/// Gets whether instruction is pure:
 		/// * must not have side effects
@@ -43,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL
 			const InstructionFlags pureFlags = InstructionFlags.MayReadLocals | InstructionFlags.ControlFlow;
 			return (inst & ~pureFlags) == 0;
 		}
-		
+
 		/// <summary>
 		/// Gets whether the instruction sequence 'inst1; inst2;' may be ordered to 'inst2; inst1;'
 		/// </summary>
@@ -63,19 +64,24 @@ namespace ICSharpCode.Decompiler.IL
 
 		static bool Inst2MightWriteToVariableReadByInst1(ILInstruction inst1, ILInstruction inst2)
 		{
-			if (!inst1.HasFlag(InstructionFlags.MayReadLocals)) {
+			if (!inst1.HasFlag(InstructionFlags.MayReadLocals))
+			{
 				// quick exit if inst1 doesn't read any variables
 				return false;
 			}
 			var variables = inst1.Descendants.OfType<LdLoc>().Select(load => load.Variable).ToHashSet();
-			if (inst2.HasFlag(InstructionFlags.SideEffect) && variables.Any(v => v.AddressCount > 0)) {
+			if (inst2.HasFlag(InstructionFlags.SideEffect) && variables.Any(v => v.AddressCount > 0))
+			{
 				// If inst2 might have indirect writes, we cannot reorder with any loads of variables that have their address taken.
 				return true;
 			}
-			foreach (var inst in inst2.Descendants) {
-				if (inst.HasDirectFlag(InstructionFlags.MayWriteLocals)) {
+			foreach (var inst in inst2.Descendants)
+			{
+				if (inst.HasDirectFlag(InstructionFlags.MayWriteLocals))
+				{
 					ILVariable v = ((IInstructionWithVariableOperand)inst).Variable;
-					if (variables.Contains(v)) {
+					if (variables.Contains(v))
+					{
 						return true;
 					}
 				}

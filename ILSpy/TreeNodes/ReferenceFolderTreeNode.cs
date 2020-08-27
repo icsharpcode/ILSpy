@@ -19,6 +19,7 @@
 using System;
 using System.Linq;
 using System.Windows.Threading;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
@@ -32,7 +33,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		readonly PEFile module;
 		readonly AssemblyTreeNode parentAssembly;
-		
+
 		public ReferenceFolderTreeNode(PEFile module, AssemblyTreeNode parentAssembly)
 		{
 			this.module = module;
@@ -52,7 +53,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (var r in metadata.GetModuleReferences().OrderBy(r => metadata.GetString(metadata.GetModuleReference(r).Name)))
 				this.Children.Add(new ModuleReferenceTreeNode(parentAssembly, r, metadata));
 		}
-		
+
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, $"Detected Target-Framework-Id: {parentAssembly.LoadedAssembly.GetTargetFrameworkIdAsync().Result}");
@@ -68,10 +69,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			// Show full assembly load log:
 			language.WriteCommentLine(output, "Assembly load log including transitive references:");
 			var info = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo;
-			foreach (var asm in info.Entries) {
+			foreach (var asm in info.Entries)
+			{
 				language.WriteCommentLine(output, asm.FullName);
 				output.Indent();
-				foreach (var item in asm.Messages) {
+				foreach (var item in asm.Messages)
+				{
 					language.WriteCommentLine(output, $"{item.Item1}: {item.Item2}");
 				}
 				output.Unindent();

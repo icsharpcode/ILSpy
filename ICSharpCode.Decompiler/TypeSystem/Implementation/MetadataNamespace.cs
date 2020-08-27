@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.Metadata;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -51,12 +52,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IEnumerable<INamespace> ChildNamespaces {
 			get {
 				var children = LazyInit.VolatileRead(ref childNamespaces);
-				if (children != null) {
+				if (children != null)
+				{
 					return children;
 				}
 				var nsDefs = ns.NamespaceDefinitions;
 				children = new INamespace[nsDefs.Length];
-				for (int i = 0; i < children.Length; i++) {
+				for (int i = 0; i < children.Length; i++)
+				{
 					var nsHandle = nsDefs[i];
 					string fullName = module.metadata.GetString(nsHandle);
 					children[i] = new MetadataNamespace(module, this, fullName,
@@ -68,7 +71,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IEnumerable<ITypeDefinition> INamespace.Types {
 			get {
-				foreach (var typeHandle in ns.TypeDefinitions) {
+				foreach (var typeHandle in ns.TypeDefinitions)
+				{
 					var def = module.GetDefinition(typeHandle);
 					if (def != null)
 						yield return def;
@@ -84,7 +88,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		INamespace INamespace.GetChildNamespace(string name)
 		{
-			foreach (var ns in ChildNamespaces) {
+			foreach (var ns in ChildNamespaces)
+			{
 				if (ns.Name == name)
 					return ns;
 			}

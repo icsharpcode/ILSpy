@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -31,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the type representing resolve errors.
 		/// </summary>
 		public readonly static SpecialType UnknownType = new SpecialType(TypeKind.Unknown, "?", isReferenceType: null);
-		
+
 		/// <summary>
 		/// The null type is used as type of the null literal. It is a reference type without any members; and it is a subtype of all reference types.
 		/// </summary>
@@ -61,44 +62,44 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Type representing the result of the C# '__arglist()' expression.
 		/// </summary>
 		public readonly static SpecialType ArgList = new SpecialType(TypeKind.ArgList, "__arglist", isReferenceType: null);
-		
+
 		/// <summary>
 		/// A type used for unbound type arguments in partially parameterized types.
 		/// </summary>
 		/// <see cref="IType.GetNestedTypes(Predicate{ITypeDefinition}, GetMemberOptions)"/>
 		public readonly static SpecialType UnboundTypeArgument = new SpecialType(TypeKind.UnboundTypeArgument, "", isReferenceType: null);
-		
+
 		readonly TypeKind kind;
 		readonly string name;
 		readonly bool? isReferenceType;
-		
+
 		private SpecialType(TypeKind kind, string name, bool? isReferenceType)
 		{
 			this.kind = kind;
 			this.name = name;
 			this.isReferenceType = isReferenceType;
 		}
-		
+
 		public override string Name {
 			get { return name; }
 		}
-		
+
 		public override TypeKind Kind {
 			get { return kind; }
 		}
-		
+
 		public override bool? IsReferenceType {
 			get { return isReferenceType; }
 		}
-		
+
 		IType ITypeReference.Resolve(ITypeResolveContext context)
 		{
 			if (context == null)
 				throw new ArgumentNullException(nameof(context));
 			return this;
 		}
-		
-		#pragma warning disable 809
+
+#pragma warning disable 809
 		[Obsolete("Please compare special types using the kind property instead.")]
 		public override bool Equals(IType other)
 		{
@@ -106,7 +107,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// However, an unknown type with additional information is not considered to be equal to the SpecialType with TypeKind.Unknown.
 			return other is SpecialType && other.Kind == kind;
 		}
-		
+
 		public override int GetHashCode()
 		{
 			return 81625621 ^ (int)kind;

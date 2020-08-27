@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.module = module;
 			this.isReferenceType = isReferenceType;
 		}
-		
+
 		/// <summary>
 		/// Creates a new GetClassTypeReference that searches a top-level type in all assemblies.
 		/// </summary>
@@ -78,15 +78,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// of the compilation.
 		/// </summary>
 		public IModuleReference Module { get { return module; } }
-		
+
 		/// <summary>
 		/// Gets the full name of the type this reference is searching for.
 		/// </summary>
 		public FullTypeName FullTypeName { get { return fullTypeName; } }
-		
+
 		internal static IType ResolveInAllAssemblies(ICompilation compilation, in FullTypeName fullTypeName)
 		{
-			foreach (var asm in compilation.Modules) {
+			foreach (var asm in compilation.Modules)
+			{
 				IType type = asm.GetTypeDefinition(fullTypeName);
 				if (type != null)
 					return type;
@@ -98,43 +99,52 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (context == null)
 				throw new ArgumentNullException(nameof(context));
-			
+
 			IType type = null;
-			if (module == null) {
+			if (module == null)
+			{
 				// No assembly specified: look in all assemblies, but prefer the current assembly
-				if (context.CurrentModule != null) {
+				if (context.CurrentModule != null)
+				{
 					type = context.CurrentModule.GetTypeDefinition(fullTypeName);
 				}
-				if (type == null) {
+				if (type == null)
+				{
 					type = ResolveInAllAssemblies(context.Compilation, in fullTypeName);
 				}
-			} else {
+			}
+			else
+			{
 				// Assembly specified: only look in the specified assembly.
 				// But if that's not loaded in the compilation, allow fall back to other assemblies.
 				// (the non-loaded assembly might be a facade containing type forwarders -
 				//  for example, when referencing a portable library from a non-portable project)
 				IModule asm = module.Resolve(context);
-				if (asm != null) {
+				if (asm != null)
+				{
 					type = asm.GetTypeDefinition(fullTypeName);
-				} else {
+				}
+				else
+				{
 					type = ResolveInAllAssemblies(context.Compilation, in fullTypeName);
 				}
 			}
 			return type ?? new UnknownType(fullTypeName, isReferenceType);
 		}
-		
+
 		public override string ToString()
 		{
 			return fullTypeName.ToString() + (module != null ? ", " + module.ToString() : null);
 		}
-		
+
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			unchecked {
+			unchecked
+			{
 				return 33 * module.GetHashCode() + fullTypeName.GetHashCode();
 			}
 		}
-		
+
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
 			GetClassTypeReference o = other as GetClassTypeReference;

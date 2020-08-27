@@ -32,31 +32,31 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ContinueStatement : Statement
 	{
-		public static readonly TokenRole ContinueKeywordRole = new TokenRole ("continue");
-		
+		public static readonly TokenRole ContinueKeywordRole = new TokenRole("continue");
+
 		public CSharpTokenNode ContinueToken {
-			get { return GetChildByRole (ContinueKeywordRole); }
+			get { return GetChildByRole(ContinueKeywordRole); }
 		}
-		
+
 		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
+			get { return GetChildByRole(Roles.Semicolon); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitContinueStatement (this);
+			visitor.VisitContinueStatement(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitContinueStatement (this);
+			return visitor.VisitContinueStatement(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitContinueStatement (this, data);
+			return visitor.VisitContinueStatement(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ContinueStatement o = other as ContinueStatement;

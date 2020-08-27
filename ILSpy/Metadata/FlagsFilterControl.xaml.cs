@@ -4,7 +4,9 @@ using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+
 using DataGridExtensions;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -45,7 +47,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			var filter = Filter;
 
-			if (filter == null || filter.Mask == -1) {
+			if (filter == null || filter.Mask == -1)
+			{
 				listBox?.SelectAll();
 			}
 		}
@@ -54,7 +57,8 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			var filter = Filter;
 
-			if (filter == null || filter.Mask == -1) {
+			if (filter == null || filter.Mask == -1)
+			{
 				listBox?.SelectAll();
 				return;
 			}
@@ -62,8 +66,10 @@ namespace ICSharpCode.ILSpy.Metadata
 			if (listBox?.SelectedItems.Count != 0)
 				return;
 
-			foreach (var item in listBox.Items.Cast<Flag>()) {
-				if ((item.Value & filter.Mask) != 0 || item.Value == 0) {
+			foreach (var item in listBox.Items.Cast<Flag>())
+			{
+				if ((item.Value & filter.Mask) != 0 || item.Value == 0)
+				{
 					listBox.SelectedItems.Add(item);
 				}
 			}
@@ -71,12 +77,14 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			if (e.RemovedItems?.OfType<Flag>().Any(f => f.Value == -1) == true) {
+			if (e.RemovedItems?.OfType<Flag>().Any(f => f.Value == -1) == true)
+			{
 				Filter = new FlagsContentFilter(0);
 				listBox.UnselectAll();
 				return;
 			}
-			if (e.AddedItems?.OfType<Flag>().Any(f => f.Value == -1) == true) {
+			if (e.AddedItems?.OfType<Flag>().Any(f => f.Value == -1) == true)
+			{
 				Filter = new FlagsContentFilter(-1);
 				listBox.SelectAll();
 				return;
@@ -85,7 +93,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			bool deselectAny = e.RemovedItems?.OfType<Flag>().Any(f => f.Value != -1) == true;
 
 			int mask = 0;
-			foreach (var item in listBox.SelectedItems.Cast<Flag>()) {
+			foreach (var item in listBox.SelectedItems.Cast<Flag>())
+			{
 				if (deselectAny && item.Value == -1)
 					continue;
 				mask |= item.Value;

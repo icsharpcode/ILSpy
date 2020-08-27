@@ -21,13 +21,17 @@
 */
 
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class DocumentHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class DocumentHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.DocumentStart;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var doc = new BamlElement(node);
 			doc.Xaml = new XElement(ctx.GetPseudoName("Document"));
 

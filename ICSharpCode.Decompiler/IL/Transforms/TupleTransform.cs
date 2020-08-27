@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -36,7 +37,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			tupleType = inst.Field.DeclaringType;
 			target = inst.Target;
-			if (!inst.Field.Name.StartsWith("Item", StringComparison.Ordinal)) {
+			if (!inst.Field.Name.StartsWith("Item", StringComparison.Ordinal))
+			{
 				position = 0;
 				return false;
 			}
@@ -44,7 +46,8 @@ namespace ICSharpCode.Decompiler.IL
 				return false;
 			if (!TupleType.IsTupleCompatible(tupleType, out _))
 				return false;
-			while (target is LdFlda ldflda && ldflda.Field.Name == "Rest" && TupleType.IsTupleCompatible(ldflda.Field.DeclaringType, out _)) {
+			while (target is LdFlda ldflda && ldflda.Field.Name == "Rest" && TupleType.IsTupleCompatible(ldflda.Field.DeclaringType, out _))
+			{
 				tupleType = ldflda.Field.DeclaringType;
 				target = ldflda.Target;
 				position += TupleType.RestPosition - 1;
@@ -65,11 +68,13 @@ namespace ICSharpCode.Decompiler.IL
 				return false;
 			arguments = new ILInstruction[elementCount];
 			int outIndex = 0;
-			while (elementCount >= TupleType.RestPosition) {
+			while (elementCount >= TupleType.RestPosition)
+			{
 				if (newobj.Arguments.Count != TupleType.RestPosition)
 					return false;
-				for (int pos = 1; pos < TupleType.RestPosition; pos++) {
-					arguments[outIndex++] = newobj.Arguments[pos-1];
+				for (int pos = 1; pos < TupleType.RestPosition; pos++)
+				{
+					arguments[outIndex++] = newobj.Arguments[pos - 1];
 				}
 				elementCount -= TupleType.RestPosition - 1;
 				Debug.Assert(outIndex + elementCount == arguments.Length);
@@ -84,7 +89,8 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(outIndex + elementCount == arguments.Length);
 			if (newobj.Arguments.Count != elementCount)
 				return false;
-			for (int i = 0; i < elementCount; i++) {
+			for (int i = 0; i < elementCount; i++)
+			{
 				arguments[outIndex++] = newobj.Arguments[i];
 			}
 			return true;

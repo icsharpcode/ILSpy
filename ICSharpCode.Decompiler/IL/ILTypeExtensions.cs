@@ -16,8 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.TypeSystem;
 using System.Reflection.Metadata;
+
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -25,7 +26,8 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public static StackType GetStackType(this PrimitiveType primitiveType)
 		{
-			switch (primitiveType) {
+			switch (primitiveType)
+			{
 				case PrimitiveType.I1:
 				case PrimitiveType.U1:
 				case PrimitiveType.I2:
@@ -52,10 +54,11 @@ namespace ICSharpCode.Decompiler.IL
 					return StackType.O;
 			}
 		}
-		
+
 		public static Sign GetSign(this PrimitiveType primitiveType)
 		{
-			switch (primitiveType) {
+			switch (primitiveType)
+			{
 				case PrimitiveType.I1:
 				case PrimitiveType.I2:
 				case PrimitiveType.I4:
@@ -75,7 +78,7 @@ namespace ICSharpCode.Decompiler.IL
 					return Sign.None;
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets the size in bytes of the primitive type.
 		/// 
@@ -84,7 +87,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public static int GetSize(this PrimitiveType type)
 		{
-			switch (type) {
+			switch (type)
+			{
 				case PrimitiveType.I1:
 				case PrimitiveType.U1:
 					return 1;
@@ -108,7 +112,7 @@ namespace ICSharpCode.Decompiler.IL
 					return 0;
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets whether the type is a small integer type.
 		/// Small integer types are:
@@ -119,7 +123,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return GetSize(type) < 4;
 		}
-		
+
 		public static bool IsIntegerType(this PrimitiveType primitiveType)
 		{
 			return primitiveType.GetStackType().IsIntegerType();
@@ -127,7 +131,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static bool IsFloatType(this PrimitiveType type)
 		{
-			switch (type) {
+			switch (type)
+			{
 				case PrimitiveType.R4:
 				case PrimitiveType.R8:
 				case PrimitiveType.R:
@@ -144,7 +149,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public static IType InferType(this ILInstruction inst, ICompilation compilation)
 		{
-			switch (inst) {
+			switch (inst)
+			{
 				case NewObj newObj:
 					return newObj.Method.DeclaringType;
 				case NewArr newArr:
@@ -175,8 +181,10 @@ namespace ICSharpCode.Decompiler.IL
 				case LdsFlda ldsflda:
 					return new ByReferenceType(ldsflda.Field.Type);
 				case LdElema ldelema:
-					if (ldelema.Array.InferType(compilation) is ArrayType arrayType) {
-						if (TypeUtils.IsCompatibleTypeForMemoryAccess(arrayType.ElementType, ldelema.Type)) {
+					if (ldelema.Array.InferType(compilation) is ArrayType arrayType)
+					{
+						if (TypeUtils.IsCompatibleTypeForMemoryAccess(arrayType.ElementType, ldelema.Type))
+						{
 							return new ByReferenceType(arrayType.ElementType);
 						}
 					}
@@ -184,7 +192,8 @@ namespace ICSharpCode.Decompiler.IL
 				case Comp comp:
 					if (compilation == null)
 						return SpecialType.UnknownType;
-					switch (comp.LiftingKind) {
+					switch (comp.LiftingKind)
+					{
 						case ComparisonLiftingKind.None:
 						case ComparisonLiftingKind.CSharp:
 							return compilation.FindType(KnownTypeCode.Boolean);
@@ -196,7 +205,8 @@ namespace ICSharpCode.Decompiler.IL
 				case BinaryNumericInstruction bni:
 					if (bni.IsLifted)
 						return SpecialType.UnknownType;
-					switch (bni.Operator) {
+					switch (bni.Operator)
+					{
 						case BinaryNumericOperator.BitAnd:
 						case BinaryNumericOperator.BitOr:
 						case BinaryNumericOperator.BitXor:

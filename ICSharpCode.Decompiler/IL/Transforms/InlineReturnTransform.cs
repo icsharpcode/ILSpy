@@ -32,7 +32,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var instructionsToModify = new List<(BlockContainer, Block, Branch)>();
 
 			// Process all leave instructions in a leave-block, that is a block consisting solely of a leave instruction.
-			foreach (var leave in function.Descendants.OfType<Leave>()) {
+			foreach (var leave in function.Descendants.OfType<Leave>())
+			{
 				if (!(leave.Parent is Block leaveBlock && leaveBlock.Instructions.Count == 1))
 					continue;
 				// Skip, if the leave instruction has no value or the value is not a load of a local variable.
@@ -43,13 +44,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					instructionsToModify.AddRange(list);
 			}
 
-			foreach (var (container, b, br) in instructionsToModify) {
+			foreach (var (container, b, br) in instructionsToModify)
+			{
 				Block block = b;
 				// if there is only one branch to this return block, move it to the matching container.
 				// otherwise duplicate the return block.
-				if (block.IncomingEdgeCount == 1) {
+				if (block.IncomingEdgeCount == 1)
+				{
 					block.Remove();
-				} else {
+				}
+				else
+				{
 					block = (Block)block.Clone();
 				}
 				container.Blocks.Add(block);
@@ -72,7 +77,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static bool CanModifyInstructions(ILVariable returnVar, Block leaveBlock, out List<(BlockContainer, Block, Branch)> instructionsToModify)
 		{
 			instructionsToModify = new List<(BlockContainer, Block, Branch)>();
-			foreach (var inst in returnVar.StoreInstructions) {
+			foreach (var inst in returnVar.StoreInstructions)
+			{
 				if (!(inst is StLoc store))
 					return false;
 				if (!(store.Parent is Block storeBlock))

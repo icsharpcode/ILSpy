@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Immutable;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -32,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstNodeCollection<TupleTypeElement> Elements {
 			get { return GetChildrenByRole(ElementRole); }
 		}
-		
+
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
 			visitor.VisitTupleType(this);

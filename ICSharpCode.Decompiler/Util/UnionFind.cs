@@ -42,7 +42,8 @@ namespace ICSharpCode.Decompiler.Util
 		Node GetNode(T element)
 		{
 			Node node;
-			if (!mapping.TryGetValue(element, out node)) {
+			if (!mapping.TryGetValue(element, out node))
+			{
 				node = new Node {
 					value = element,
 					rank = 0
@@ -75,7 +76,8 @@ namespace ICSharpCode.Decompiler.Util
 				rootA.parent = rootB;
 			else if (rootA.rank > rootB.rank)
 				rootB.parent = rootA;
-			else {
+			else
+			{
 				rootB.parent = rootA;
 				rootA.rank++;
 			}

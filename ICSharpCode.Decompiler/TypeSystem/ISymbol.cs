@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		ReturnType,
 	}
-	
+
 	/// <summary>
 	/// Interface for type system symbols.
 	/// </summary>
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// (which derived interfaces of ISymbol are implemented)
 		/// </summary>
 		SymbolKind SymbolKind { get; }
-		
+
 		/// <summary>
 		/// Gets the short name of the symbol.
 		/// </summary>

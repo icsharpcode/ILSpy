@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Semantics;
 
@@ -34,10 +35,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		public void Run(AstNode rootNode, TransformContext context)
 		{
-			foreach (var section in rootNode.Children.OfType<AttributeSection>()) {
+			foreach (var section in rootNode.Children.OfType<AttributeSection>())
+			{
 				if (section.AttributeTarget == "assembly")
 					continue;
-				foreach (var attribute in section.Attributes) {
+				foreach (var attribute in section.Attributes)
+				{
 					var trr = attribute.Type.Annotation<TypeResolveResult>();
 					if (trr != null && trr.Type.FullName == "System.CLSCompliantAttribute")
 						attribute.Remove();

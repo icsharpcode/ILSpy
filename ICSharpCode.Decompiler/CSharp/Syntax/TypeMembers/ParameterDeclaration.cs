@@ -105,7 +105,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode ThisKeyword {
 			get {
-				if (hasThisModifier) {
+				if (hasThisModifier)
+				{
 					return GetChildByRole(ThisModifierRole);
 				}
 				return CSharpTokenNode.Null;
@@ -121,7 +122,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		ParameterModifier parameterModifier;
-		
+
 		public ParameterModifier ParameterModifier {
 			get { return parameterModifier; }
 			set {
@@ -129,54 +130,54 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				parameterModifier = value;
 			}
 		}
-		
+
 		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
-			set { SetChildByRole (Roles.Type, value); }
+			get { return GetChildByRole(Roles.Type); }
+			set { SetChildByRole(Roles.Type, value); }
 		}
-		
+
 		public string Name {
 			get {
-				return GetChildByRole (Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value));
+				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}
-		
+
 		public Identifier NameToken {
 			get {
-				return GetChildByRole (Roles.Identifier);
+				return GetChildByRole(Roles.Identifier);
 			}
 			set {
-				SetChildByRole (Roles.Identifier, value);
+				SetChildByRole(Roles.Identifier, value);
 			}
 		}
 
 		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole (Roles.Assign); }
+			get { return GetChildByRole(Roles.Assign); }
 		}
 
 		public Expression DefaultExpression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
-		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
-		{
-			visitor.VisitParameterDeclaration (this);
-		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
-		{
-			return visitor.VisitParameterDeclaration (this);
+			get { return GetChildByRole(Roles.Expression); }
+			set { SetChildByRole(Roles.Expression, value); }
 		}
 
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			return visitor.VisitParameterDeclaration (this, data);
+			visitor.VisitParameterDeclaration(this);
 		}
-		
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+		{
+			return visitor.VisitParameterDeclaration(this);
+		}
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+		{
+			return visitor.VisitParameterDeclaration(this, data);
+		}
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ParameterDeclaration o = other as ParameterDeclaration;
@@ -184,11 +185,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				&& this.Type.DoMatch(o.Type, match) && MatchString(this.Name, o.Name)
 				&& this.DefaultExpression.DoMatch(o.DefaultExpression, match);
 		}
-		
+
 		public ParameterDeclaration()
 		{
 		}
-		
+
 		public ParameterDeclaration(AstType type, string name, ParameterModifier modifier = ParameterModifier.None)
 		{
 			Type = type;

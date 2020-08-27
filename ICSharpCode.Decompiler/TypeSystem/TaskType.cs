@@ -39,14 +39,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			else
 				return type.TypeArguments[0];
 		}
-		
+
 		/// <summary>
 		/// Gets whether the specified type is Task or Task&lt;T&gt;.
 		/// </summary>
 		public static bool IsTask(IType type)
 		{
 			ITypeDefinition def = type.GetDefinition();
-			if (def != null) {
+			if (def != null)
+			{
 				if (def.KnownTypeCode == KnownTypeCode.Task)
 					return true;
 				if (def.KnownTypeCode == KnownTypeCode.TaskOfT)
@@ -62,7 +63,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			builderType = null;
 			ITypeDefinition def = type.GetDefinition();
-			if (def != null) {
+			if (def != null)
+			{
 				if (def.TypeParameterCount > 1)
 					return false;
 				var attribute = def.GetAttribute(KnownAttribute.AsyncMethodBuilder);
@@ -85,11 +87,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <param name="builderTypeName">Returns the full type-name of the builder type, if successful.</param>
 		public static bool IsNonGenericTaskType(IType task, out FullTypeName builderTypeName)
 		{
-			if (task.IsKnownType(KnownTypeCode.Task)) {
+			if (task.IsKnownType(KnownTypeCode.Task))
+			{
 				builderTypeName = new TopLevelTypeName(ns, "AsyncTaskMethodBuilder");
 				return true;
 			}
-			if (IsCustomTask(task, out var builderType)) {
+			if (IsCustomTask(task, out var builderType))
+			{
 				builderTypeName = new FullTypeName(builderType.ReflectionName);
 				return builderTypeName.TypeParameterCount == 0;
 			}
@@ -103,11 +107,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <param name="builderTypeName">Returns the full type-name of the builder type, if successful.</param>
 		public static bool IsGenericTaskType(IType task, out FullTypeName builderTypeName)
 		{
-			if (task.IsKnownType(KnownTypeCode.TaskOfT)) {
+			if (task.IsKnownType(KnownTypeCode.TaskOfT))
+			{
 				builderTypeName = new TopLevelTypeName(ns, "AsyncTaskMethodBuilder", 1);
 				return true;
 			}
-			if (IsCustomTask(task, out var builderType)) {
+			if (IsCustomTask(task, out var builderType))
+			{
 				builderTypeName = new FullTypeName(builderType.ReflectionName);
 				return builderTypeName.TypeParameterCount == 1;
 			}
@@ -124,13 +130,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentNullException(nameof(compilation));
 			if (elementType == null)
 				throw new ArgumentNullException(nameof(elementType));
-			
+
 			if (elementType.Kind == TypeKind.Void)
 				return compilation.FindType(KnownTypeCode.Task);
 			IType taskType = compilation.FindType(KnownTypeCode.TaskOfT);
 			ITypeDefinition taskTypeDef = taskType.GetDefinition();
 			if (taskTypeDef != null)
-				return new ParameterizedType(taskTypeDef, new [] { elementType });
+				return new ParameterizedType(taskTypeDef, new[] { elementType });
 			else
 				return taskType;
 		}

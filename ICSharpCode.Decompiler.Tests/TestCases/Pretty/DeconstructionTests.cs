@@ -581,14 +581,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void DeconstructDictionaryForEach(Dictionary<string, int> dictionary)
 		{
-			foreach (var (str, num2) in dictionary) {
+			foreach (var (str, num2) in dictionary)
+			{
 				Console.WriteLine(str + ": " + num2);
 			}
 		}
 
 		public void DeconstructTupleListForEach(List<(string, int)> tuples)
 		{
-			foreach (var (str, num) in tuples) {
+			foreach (var (str, num) in tuples)
+			{
 				Console.WriteLine(str + ": " + num);
 			}
 		}

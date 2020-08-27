@@ -26,6 +26,7 @@ using System.Reflection.Metadata;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Utils;
@@ -62,7 +63,8 @@ namespace ICSharpCode.ILSpy
 		{
 			string lastTransformName = "no transforms";
 			int transformCount = 0;
-			foreach (var transform in CSharpDecompiler.GetAstTransforms()) {
+			foreach (var transform in CSharpDecompiler.GetAstTransforms())
+			{
 				yield return new CSharpLanguage {
 					transformCount = transformCount,
 					name = "C# - " + lastTransformName,
@@ -94,7 +96,8 @@ namespace ICSharpCode.ILSpy
 
 		public override IReadOnlyList<LanguageVersion> LanguageVersions {
 			get {
-				if (versions == null) {
+				if (versions == null)
+				{
 					versions = new List<LanguageVersion>() {
 						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp1.ToString(), "C# 1.0 / VS .NET"),
 						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp2.ToString(), "C# 2.0 / VS 2005"),
@@ -121,7 +124,8 @@ namespace ICSharpCode.ILSpy
 			decompiler.DebugInfoProvider = module.GetDebugInfoOrNull();
 			while (decompiler.AstTransforms.Count > transformCount)
 				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
-			if (options.EscapeInvalidIdentifiers) {
+			if (options.EscapeInvalidIdentifiers)
+			{
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			}
 			return decompiler;
@@ -132,7 +136,8 @@ namespace ICSharpCode.ILSpy
 			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 			output.IndentationString = settings.CSharpFormattingOptions.IndentationString;
 			TokenWriter tokenWriter = new TextTokenWriter(output, settings, typeSystem);
-			if (output is ISmartTextOutput highlightingOutput) {
+			if (output is ISmartTextOutput highlightingOutput)
+			{
 				tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, highlightingOutput);
 			}
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
@@ -146,11 +151,14 @@ namespace ICSharpCode.ILSpy
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
 			var methodDefinition = decompiler.TypeSystem.MainModule.ResolveEntity(method.MetadataToken) as IMethod;
-			if (methodDefinition.IsConstructor && methodDefinition.DeclaringType.IsReferenceType != false) {
+			if (methodDefinition.IsConstructor && methodDefinition.DeclaringType.IsReferenceType != false)
+			{
 				var members = CollectFieldsAndCtors(methodDefinition.DeclaringTypeDefinition, methodDefinition.IsStatic);
 				decompiler.AstTransforms.Add(new SelectCtorTransform(methodDefinition));
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(members), decompiler.TypeSystem);
-			} else {
+			}
+			else
+			{
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(method.MetadataToken), decompiler.TypeSystem);
 			}
 		}
@@ -168,12 +176,17 @@ namespace ICSharpCode.ILSpy
 			public void Run(AstNode rootNode, TransformContext context)
 			{
 				ConstructorDeclaration ctorDecl = null;
-				foreach (var node in rootNode.Children) {
-					switch (node) {
+				foreach (var node in rootNode.Children)
+				{
+					switch (node)
+					{
 						case ConstructorDeclaration ctor:
-							if (ctor.GetSymbol() == this.ctor) {
+							if (ctor.GetSymbol() == this.ctor)
+							{
 								ctorDecl = ctor;
-							} else {
+							}
+							else
+							{
 								// remove other ctors
 								ctor.Remove();
 								removedSymbols.Add(ctor.GetSymbol());
@@ -181,17 +194,21 @@ namespace ICSharpCode.ILSpy
 							break;
 						case FieldDeclaration fd:
 							// Remove any fields without initializers
-							if (fd.Variables.All(v => v.Initializer.IsNull)) {
+							if (fd.Variables.All(v => v.Initializer.IsNull))
+							{
 								fd.Remove();
 								removedSymbols.Add(fd.GetSymbol());
 							}
 							break;
 					}
 				}
-				if (ctorDecl?.Initializer.ConstructorInitializerType == ConstructorInitializerType.This) {
+				if (ctorDecl?.Initializer.ConstructorInitializerType == ConstructorInitializerType.This)
+				{
 					// remove all fields
-					foreach (var node in rootNode.Children) {
-						switch (node) {
+					foreach (var node in rootNode.Children)
+					{
+						switch (node)
+						{
 							case FieldDeclaration fd:
 								fd.Remove();
 								removedSymbols.Add(fd.GetSymbol());
@@ -199,7 +216,8 @@ namespace ICSharpCode.ILSpy
 						}
 					}
 				}
-				foreach (var node in rootNode.Children) {
+				foreach (var node in rootNode.Children)
+				{
 					if (node is Comment && removedSymbols.Contains(node.GetSymbol()))
 						node.Remove();
 				}
@@ -223,9 +241,12 @@ namespace ICSharpCode.ILSpy
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, TypeToString(field.DeclaringType, includeNamespace: true));
-			if (field.IsConst) {
+			if (field.IsConst)
+			{
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(field.MetadataToken), decompiler.TypeSystem);
-			} else {
+			}
+			else
+			{
 				var members = CollectFieldsAndCtors(field.DeclaringTypeDefinition, field.IsStatic);
 				var resolvedField = decompiler.TypeSystem.MainModule.GetDefinition((FieldDefinitionHandle)field.MetadataToken);
 				decompiler.AstTransforms.Add(new SelectFieldTransform(resolvedField));
@@ -236,11 +257,13 @@ namespace ICSharpCode.ILSpy
 		static List<EntityHandle> CollectFieldsAndCtors(ITypeDefinition type, bool isStatic)
 		{
 			var members = new List<EntityHandle>();
-			foreach (var field in type.Fields) {
+			foreach (var field in type.Fields)
+			{
 				if (!field.MetadataToken.IsNil && field.IsStatic == isStatic)
 					members.Add(field.MetadataToken);
 			}
-			foreach (var ctor in type.Methods) {
+			foreach (var ctor in type.Methods)
+			{
 				if (!ctor.MetadataToken.IsNil && ctor.IsConstructor && ctor.IsStatic == isStatic)
 					members.Add(ctor.MetadataToken);
 			}
@@ -262,8 +285,10 @@ namespace ICSharpCode.ILSpy
 
 			public void Run(AstNode rootNode, TransformContext context)
 			{
-				foreach (var node in rootNode.Children) {
-					switch (node) {
+				foreach (var node in rootNode.Children)
+				{
+					switch (node)
+					{
 						case EntityDeclaration ed:
 							if (node.GetSymbol() != field)
 								node.Remove();
@@ -323,7 +348,8 @@ namespace ICSharpCode.ILSpy
 		void AddWarningMessage(PEFile module, ITextOutput output, string line1, string line2 = null,
 			string buttonText = null, System.Windows.Media.ImageSource buttonImage = null, RoutedEventHandler buttonClickHandler = null)
 		{
-			if (output is ISmartTextOutput fancyOutput) {
+			if (output is ISmartTextOutput fancyOutput)
+			{
 				string text = line1;
 				if (!string.IsNullOrEmpty(line2))
 					text += Environment.NewLine + line2;
@@ -343,11 +369,14 @@ namespace ICSharpCode.ILSpy
 					}
 				});
 				fancyOutput.WriteLine();
-				if (buttonText != null && buttonClickHandler != null) {
+				if (buttonText != null && buttonClickHandler != null)
+				{
 					fancyOutput.AddButton(buttonImage, buttonText, buttonClickHandler);
 					fancyOutput.WriteLine();
 				}
-			} else {
+			}
+			else
+			{
 				WriteCommentLine(output, line1);
 				if (!string.IsNullOrEmpty(line2))
 					WriteCommentLine(output, line2);
@@ -357,21 +386,26 @@ namespace ICSharpCode.ILSpy
 		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			var module = assembly.GetPEFileOrNull();
-			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
+			if (options.FullDecompilation && options.SaveAsProjectDirectory != null)
+			{
 				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options);
 				return decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
-			} else {
+			}
+			else
+			{
 				AddReferenceAssemblyWarningMessage(module, output);
 				AddReferenceWarningMessage(module, output);
 				output.WriteLine();
 				base.DecompileAssembly(assembly, output, options);
 
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
-				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad(assembly.AssemblyList)) {
+				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad(assembly.AssemblyList))
+				{
 					IAssemblyResolver assemblyResolver = assembly.GetAssemblyResolver();
 					var typeSystem = new DecompilerTypeSystem(module, assemblyResolver, options.DecompilerSettings);
 					var globalType = typeSystem.MainModule.TypeDefinitions.FirstOrDefault();
-					if (globalType != null) {
+					if (globalType != null)
+					{
 						output.Write("// Global type: ");
 						output.WriteReference(globalType, globalType.FullName);
 						output.WriteLine();
@@ -379,30 +413,37 @@ namespace ICSharpCode.ILSpy
 					var metadata = module.Metadata;
 					var corHeader = module.Reader.PEHeaders.CorHeader;
 					var entrypointHandle = MetadataTokenHelpers.EntityHandleOrNil(corHeader.EntryPointTokenOrRelativeVirtualAddress);
-					if (!entrypointHandle.IsNil && entrypointHandle.Kind == HandleKind.MethodDefinition) {
+					if (!entrypointHandle.IsNil && entrypointHandle.Kind == HandleKind.MethodDefinition)
+					{
 						var entrypoint = typeSystem.MainModule.ResolveMethod(entrypointHandle, new Decompiler.TypeSystem.GenericContext());
-						if (entrypoint != null) {
+						if (entrypoint != null)
+						{
 							output.Write("// Entry point: ");
 							output.WriteReference(entrypoint, entrypoint.DeclaringType.FullName + "." + entrypoint.Name);
 							output.WriteLine();
 						}
 					}
 					output.WriteLine("// Architecture: " + GetPlatformDisplayName(module));
-					if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.ILOnly) == 0) {
+					if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.ILOnly) == 0)
+					{
 						output.WriteLine("// This assembly contains unmanaged code.");
 					}
 					string runtimeName = GetRuntimeDisplayName(module);
-					if (runtimeName != null) {
+					if (runtimeName != null)
+					{
 						output.WriteLine("// Runtime: " + runtimeName);
 					}
-					if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.StrongNameSigned) != 0) {
+					if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.StrongNameSigned) != 0)
+					{
 						output.WriteLine("// This assembly is signed with a strong name key.");
 					}
-					if (metadata.IsAssembly) {
+					if (metadata.IsAssembly)
+					{
 						var asm = metadata.GetAssemblyDefinition();
 						if (asm.HashAlgorithm != AssemblyHashAlgorithm.None)
 							output.WriteLine("// Hash algorithm: " + asm.HashAlgorithm.ToString().ToUpper());
-						if (!asm.PublicKey.IsNil) {
+						if (!asm.PublicKey.IsNil)
+						{
 							output.Write("// Public key: ");
 							var reader = metadata.GetBlobReader(asm.PublicKey);
 							while (reader.RemainingBytes > 0)
@@ -411,20 +452,25 @@ namespace ICSharpCode.ILSpy
 						}
 					}
 					var debugInfo = assembly.GetDebugInfoOrNull();
-					if (debugInfo != null) {
+					if (debugInfo != null)
+					{
 						output.WriteLine("// Debug info: " + debugInfo.Description);
 					}
 					output.WriteLine();
 
 					CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings);
 					decompiler.CancellationToken = options.CancellationToken;
-					if (options.EscapeInvalidIdentifiers) {
+					if (options.EscapeInvalidIdentifiers)
+					{
 						decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 					}
 					SyntaxTree st;
-					if (options.FullDecompilation) {
+					if (options.FullDecompilation)
+					{
 						st = decompiler.DecompileWholeModuleAsSingleFile();
-					} else {
+					}
+					else
+					{
 						st = decompiler.DecompileModuleAndAssemblyAttributes();
 					}
 					WriteCode(output, options.DecompilerSettings, st, decompiler.TypeSystem);
@@ -447,8 +493,10 @@ namespace ICSharpCode.ILSpy
 
 			protected override IEnumerable<(string itemType, string fileName)> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 			{
-				foreach (var handler in App.ExportProvider.GetExportedValues<IResourceFileHandler>()) {
-					if (handler.CanHandle(fileName, options)) {
+				foreach (var handler in App.ExportProvider.GetExportedValues<IResourceFileHandler>())
+				{
+					if (handler.CanHandle(fileName, options))
+					{
 						entryStream.Position = 0;
 						fileName = handler.WriteResourceToFile(assembly, fileName, entryStream, options);
 						return new[] { (handler.EntryType, fileName) };
@@ -463,7 +511,8 @@ namespace ICSharpCode.ILSpy
 			CSharpAmbience ambience = new CSharpAmbience();
 			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewTypeFlags, if this ever changes.
 			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList;
-			if (new DecompilationOptions().DecompilerSettings.LiftNullables) {
+			if (new DecompilationOptions().DecompilerSettings.LiftNullables)
+			{
 				ambience.ConversionFlags |= ConversionFlags.UseNullableSpecifierForValueTypes;
 			}
 			return ambience;
@@ -489,17 +538,23 @@ namespace ICSharpCode.ILSpy
 				throw new ArgumentNullException(nameof(type));
 			var ambience = CreateAmbience();
 			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewFlags, if this ever changes.
-			if (includeNamespace) {
+			if (includeNamespace)
+			{
 				ambience.ConversionFlags |= ConversionFlags.UseFullyQualifiedTypeNames;
 				ambience.ConversionFlags |= ConversionFlags.UseFullyQualifiedEntityNames;
 			}
-			if (type is ITypeDefinition definition) {
+			if (type is ITypeDefinition definition)
+			{
 				return ambience.ConvertSymbol(definition);
 				// HACK : UnknownType is not supported by CSharpAmbience.
-			} else if (type.Kind == TypeKind.Unknown) {
+			}
+			else if (type.Kind == TypeKind.Unknown)
+			{
 				return (includeNamespace ? type.FullName : type.Name)
 					+ (type.TypeParameterCount > 0 ? "<" + string.Join(", ", type.TypeArguments.Select(t => t.Name)) + ">" : "");
-			} else {
+			}
+			else
+			{
 				return ambience.ConvertType(type);
 			}
 		}
@@ -538,26 +593,31 @@ namespace ICSharpCode.ILSpy
 			var currentTypeDefHandle = handle;
 			var typeDef = metadata.GetTypeDefinition(currentTypeDefHandle);
 
-			while (!currentTypeDefHandle.IsNil) {
+			while (!currentTypeDefHandle.IsNil)
+			{
 				if (builder.Length > 0)
 					builder.Insert(0, '.');
 				typeDef = metadata.GetTypeDefinition(currentTypeDefHandle);
 				var part = ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(typeDef.Name), out int typeParamCount);
 				var genericParams = typeDef.GetGenericParameters();
-				if (!omitGenerics && genericParams.Count > 0) {
+				if (!omitGenerics && genericParams.Count > 0)
+				{
 					builder.Insert(0, '>');
 					int firstIndex = genericParams.Count - typeParamCount;
-					for (int i = genericParams.Count - 1; i >= genericParams.Count - typeParamCount; i--) {
+					for (int i = genericParams.Count - 1; i >= genericParams.Count - typeParamCount; i--)
+					{
 						builder.Insert(0, metadata.GetString(metadata.GetGenericParameter(genericParams[i]).Name));
 						builder.Insert(0, i == firstIndex ? '<' : ',');
 					}
 				}
 				builder.Insert(0, part);
 				currentTypeDefHandle = typeDef.GetDeclaringType();
-				if (!fullName) break;
+				if (!fullName)
+					break;
 			}
 
-			if (fullName && !typeDef.Namespace.IsNil) {
+			if (fullName && !typeDef.Namespace.IsNil)
+			{
 				builder.Insert(0, '.');
 				builder.Insert(0, metadata.GetString(typeDef.Namespace));
 			}
@@ -568,7 +628,8 @@ namespace ICSharpCode.ILSpy
 		public override string GetEntityName(PEFile module, EntityHandle handle, bool fullName, bool omitGenerics)
 		{
 			MetadataReader metadata = module.Metadata;
-			switch (handle.Kind) {
+			switch (handle.Kind)
+			{
 				case HandleKind.TypeDefinition:
 					return ToCSharpString(metadata, (TypeDefinitionHandle)handle, fullName, omitGenerics);
 				case HandleKind.FieldDefinition:
@@ -581,7 +642,8 @@ namespace ICSharpCode.ILSpy
 					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
 					declaringType = md.GetDeclaringType();
 					string methodName = metadata.GetString(md.Name);
-					switch (methodName) {
+					switch (methodName)
+					{
 						case ".ctor":
 						case ".cctor":
 							var td = metadata.GetTypeDefinition(declaringType);
@@ -599,10 +661,12 @@ namespace ICSharpCode.ILSpy
 							break;
 						default:
 							var genericParams = md.GetGenericParameters();
-							if (!omitGenerics && genericParams.Count > 0) {
+							if (!omitGenerics && genericParams.Count > 0)
+							{
 								methodName += "<";
 								int i = 0;
-								foreach (var h in genericParams) {
+								foreach (var h in genericParams)
+								{
 									if (i > 0)
 										methodName += ",";
 									var gp = metadata.GetGenericParameter(h);
@@ -645,10 +709,12 @@ namespace ICSharpCode.ILSpy
 			var decoratedWriter = new TextWriterTokenWriter(output);
 			var writer = new CSharpHighlightingTokenWriter(TokenWriter.InsertRequiredSpaces(decoratedWriter), locatable: decoratedWriter);
 			var settings = new DecompilationOptions().DecompilerSettings;
-			if (!settings.LiftNullables) {
+			if (!settings.LiftNullables)
+			{
 				flags &= ~ConversionFlags.UseNullableSpecifierForValueTypes;
 			}
-			if (entity is IMethod m && m.IsLocalFunction) {
+			if (entity is IMethod m && m.IsLocalFunction)
+			{
 				writer.WriteIdentifier(Identifier.Create("(local)"));
 			}
 			new CSharpAmbience() {

@@ -19,6 +19,7 @@
 using System;
 using System.Linq;
 using System.Reflection.PortableExecutable;
+
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
@@ -39,12 +40,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </returns>
 		public static TargetFramework DetectTargetFramework(PEFile module)
 		{
-			if (module is null) {
+			if (module is null)
+			{
 				throw new ArgumentNullException(nameof(module));
 			}
 
 			int versionNumber;
-			switch (module.GetRuntime()) {
+			switch (module.GetRuntime())
+			{
 				case TargetRuntime.Net_1_0:
 					versionNumber = 100;
 					break;
@@ -67,14 +70,17 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			string targetFrameworkProfile = null;
 
 			string targetFramework = module.DetectTargetFrameworkId();
-			if (!string.IsNullOrEmpty(targetFramework)) {
+			if (!string.IsNullOrEmpty(targetFramework))
+			{
 				string[] frameworkParts = targetFramework.Split(',');
 				targetFrameworkIdentifier = frameworkParts.FirstOrDefault(a => !a.StartsWith(VersionToken, StringComparison.OrdinalIgnoreCase) && !a.StartsWith(ProfileToken, StringComparison.OrdinalIgnoreCase));
 				string frameworkVersion = frameworkParts.FirstOrDefault(a => a.StartsWith(VersionToken, StringComparison.OrdinalIgnoreCase));
 
-				if (frameworkVersion != null) {
+				if (frameworkVersion != null)
+				{
 					versionNumber = int.Parse(frameworkVersion.Substring(VersionToken.Length + 1).Replace(".", ""));
-					if (versionNumber < 100) versionNumber *= 10;
+					if (versionNumber < 100)
+						versionNumber *= 10;
 				}
 
 				string frameworkProfile = frameworkParts.FirstOrDefault(a => a.StartsWith(ProfileToken, StringComparison.OrdinalIgnoreCase));
@@ -92,7 +98,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <returns>The platform name, e.g. "AnyCPU" or "x86".</returns>
 		public static string GetPlatformName(PEFile module)
 		{
-			if (module is null) {
+			if (module is null)
+			{
 				throw new ArgumentNullException(nameof(module));
 			}
 
@@ -101,7 +108,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			var characteristics = headers.CoffHeader.Characteristics;
 			var corflags = headers.CorHeader.Flags;
 
-			switch (architecture) {
+			switch (architecture)
+			{
 				case Machine.I386:
 					if ((corflags & CorFlags.Prefers32Bit) != 0)
 						return "AnyCPU";

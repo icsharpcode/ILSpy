@@ -12,12 +12,12 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		{
 			throw new NotSupportedException();
 		}
-		
+
 		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
 		{
 			throw new NotSupportedException();
 		}
-		
+
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			throw new NotSupportedException();
@@ -28,8 +28,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 			throw new NotSupportedException();
 		}
 
-		public override InstructionFlags DirectFlags
-		{
+		public override InstructionFlags DirectFlags {
 			get {
 				throw new NotSupportedException();
 			}

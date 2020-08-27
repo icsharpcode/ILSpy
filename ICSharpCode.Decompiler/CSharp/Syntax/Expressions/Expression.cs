@@ -31,8 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public abstract class Expression : AstNode
 	{
 		#region Null
-		public new static readonly Expression Null = new NullExpression ();
-		
+		public new static readonly Expression Null = new NullExpression();
+
 		sealed class NullExpression : Expression
 		{
 			public override bool IsNull {
@@ -40,81 +40,81 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return true;
 				}
 			}
-			
-			public override void AcceptVisitor (IAstVisitor visitor)
+
+			public override void AcceptVisitor(IAstVisitor visitor)
 			{
 				visitor.VisitNullNode(this);
 			}
-			
-			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 			{
 				return visitor.VisitNullNode(this);
 			}
-			
-			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 			{
 				return visitor.VisitNullNode(this, data);
 			}
-			
+
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
 		}
 		#endregion
-		
+
 		#region PatternPlaceholder
 		public static implicit operator Expression(PatternMatching.Pattern pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
-		
+
 		sealed class PatternPlaceholder : Expression, PatternMatching.INode
 		{
 			readonly PatternMatching.Pattern child;
-			
+
 			public PatternPlaceholder(PatternMatching.Pattern child)
 			{
 				this.child = child;
 			}
-			
+
 			public override NodeType NodeType {
 				get { return NodeType.Pattern; }
 			}
-			
-			public override void AcceptVisitor (IAstVisitor visitor)
+
+			public override void AcceptVisitor(IAstVisitor visitor)
 			{
 				visitor.VisitPatternPlaceholder(this, child);
 			}
-				
-			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 			{
 				return visitor.VisitPatternPlaceholder(this, child);
 			}
-			
+
 			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 			{
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
-			
+
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return child.DoMatch(other, match);
 			}
-			
+
 			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
 		}
 		#endregion
-		
+
 		public override NodeType NodeType {
 			get {
 				return NodeType.Expression;
 			}
 		}
-		
+
 		public new Expression Clone()
 		{
 			return (Expression)base.Clone();

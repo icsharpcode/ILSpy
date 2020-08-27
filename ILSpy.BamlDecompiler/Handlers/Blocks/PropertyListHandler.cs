@@ -21,13 +21,17 @@
 */
 
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class PropertyListHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class PropertyListHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.PropertyListStart;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (PropertyListStartRecord)((BamlBlockNode)node).Header;
 			var doc = new BamlElement(node);
 

@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler

@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		InternalsVisibleTo,
 		TypeForwardedTo,
 		ReferenceAssembly,
-		
+
 		// Type attributes:
 		Serializable,
 		Flags,
@@ -182,7 +182,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (!attributeType.GetNonInterfaceBaseTypes().Any(t => t.IsKnownType(KnownTypeCode.Attribute)))
 				return KnownAttribute.None;
-			for (int i = 1; i < typeNames.Length; i++) {
+			for (int i = 1; i < typeNames.Length; i++)
+			{
 				if (typeNames[i] == attributeType.FullTypeName)
 					return (KnownAttribute)i;
 			}

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -35,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		readonly string identifier;
 		readonly IList<ITypeReference> typeArguments;
 		readonly NameLookupMode lookupMode;
-		
+
 		public SimpleTypeOrNamespaceReference(string identifier, IList<ITypeReference> typeArguments, NameLookupMode lookupMode = NameLookupMode.Type)
 		{
 			if (identifier == null)
@@ -44,19 +45,19 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
 			this.lookupMode = lookupMode;
 		}
-		
+
 		public string Identifier {
 			get { return identifier; }
 		}
-		
+
 		public IList<ITypeReference> TypeArguments {
 			get { return typeArguments; }
 		}
-		
+
 		public NameLookupMode LookupMode {
 			get { return lookupMode; }
 		}
-		
+
 		/// <summary>
 		/// Adds a suffix to the identifier.
 		/// Does not modify the existing type reference, but returns a new one.
@@ -65,19 +66,19 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		{
 			return new SimpleTypeOrNamespaceReference(identifier + suffix, typeArguments, lookupMode);
 		}
-		
+
 		public override ResolveResult Resolve(CSharpResolver resolver)
 		{
 			var typeArgs = typeArguments.Resolve(resolver.CurrentTypeResolveContext);
 			return resolver.LookupSimpleNameOrTypeName(identifier, typeArgs, lookupMode);
 		}
-		
+
 		public override IType ResolveType(CSharpResolver resolver)
 		{
 			TypeResolveResult trr = Resolve(resolver) as TypeResolveResult;
 			return trr != null ? trr.Type : new UnknownType(null, identifier, typeArguments.Count);
 		}
-		
+
 		public override string ToString()
 		{
 			if (typeArguments.Count == 0)
@@ -85,18 +86,19 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			else
 				return identifier + "<" + string.Join(",", typeArguments) + ">";
 		}
-		
+
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
 			int hashCode = 0;
-			unchecked {
+			unchecked
+			{
 				hashCode += 1000000021 * identifier.GetHashCode();
 				hashCode += 1000000033 * typeArguments.GetHashCode();
 				hashCode += 1000000087 * (int)lookupMode;
 			}
 			return hashCode;
 		}
-		
+
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
 			SimpleTypeOrNamespaceReference o = other as SimpleTypeOrNamespaceReference;

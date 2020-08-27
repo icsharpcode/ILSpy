@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 
@@ -91,7 +92,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			: this(module, handle, genericContext, ILStructureType.Root, 0, body.GetILReader().Length)
 		{
 			// Build the tree of exception structures:
-			for (int i = 0; i < body.ExceptionRegions.Length; i++) {
+			for (int i = 0; i < body.ExceptionRegions.Length; i++)
+			{
 				ExceptionRegion eh = body.ExceptionRegions[i];
 				if (!body.ExceptionRegions.Take(i).Any(oldEh => oldEh.TryOffset == eh.TryOffset && oldEh.TryLength == eh.TryLength))
 					AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Try, eh.TryOffset, eh.TryOffset + eh.TryLength, eh));
@@ -102,10 +104,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 			// Very simple loop detection: look for backward branches
 			(var allBranches, var isAfterUnconditionalBranch) = FindAllBranches(body.GetILReader());
 			// We go through the branches in reverse so that we find the biggest possible loop boundary first (think loops with "continue;")
-			for (int i = allBranches.Count - 1; i >= 0; i--) {
+			for (int i = allBranches.Count - 1; i >= 0; i--)
+			{
 				int loopEnd = allBranches[i].Source.End;
 				int loopStart = allBranches[i].Target;
-				if (loopStart < loopEnd) {
+				if (loopStart < loopEnd)
+				{
 					// We found a backward branch. This is a potential loop.
 					// Check that is has only one entry point:
 					int entryPoint = -1;
@@ -113,11 +117,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 					// entry point is first instruction in loop if prev inst isn't an unconditional branch
 					if (loopStart > 0 && !isAfterUnconditionalBranch[loopStart])
 						entryPoint = allBranches[i].Target;
-					
+
 					bool multipleEntryPoints = false;
-					foreach (var branch in allBranches) {
-						if (branch.Source.Start < loopStart || branch.Source.Start >= loopEnd) {
-							if (loopStart <= branch.Target && branch.Target < loopEnd) {
+					foreach (var branch in allBranches)
+					{
+						if (branch.Source.Start < loopStart || branch.Source.Start >= loopEnd)
+						{
+							if (loopStart <= branch.Target && branch.Target < loopEnd)
+							{
 								// jump from outside the loop into the loop
 								if (entryPoint < 0)
 									entryPoint = branch.Target;
@@ -126,7 +133,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 							}
 						}
 					}
-					if (!multipleEntryPoints) {
+					if (!multipleEntryPoints)
+					{
 						AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Loop, loopStart, loopEnd, entryPoint));
 					}
 				}
@@ -166,21 +174,28 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			// use <= for end-offset comparisons because both end and EndOffset are exclusive
 			Debug.Assert(StartOffset <= newStructure.StartOffset && newStructure.EndOffset <= EndOffset);
-			foreach (ILStructure child in this.Children) {
-				if (child.StartOffset <= newStructure.StartOffset && newStructure.EndOffset <= child.EndOffset) {
+			foreach (ILStructure child in this.Children)
+			{
+				if (child.StartOffset <= newStructure.StartOffset && newStructure.EndOffset <= child.EndOffset)
+				{
 					return child.AddNestedStructure(newStructure);
-				} else if (!(child.EndOffset <= newStructure.StartOffset || newStructure.EndOffset <= child.StartOffset)) {
+				}
+				else if (!(child.EndOffset <= newStructure.StartOffset || newStructure.EndOffset <= child.StartOffset))
+				{
 					// child and newStructure overlap
-					if (!(newStructure.StartOffset <= child.StartOffset && child.EndOffset <= newStructure.EndOffset)) {
+					if (!(newStructure.StartOffset <= child.StartOffset && child.EndOffset <= newStructure.EndOffset))
+					{
 						// Invalid nesting, can't build a tree. -> Don't add the new structure.
 						return false;
 					}
 				}
 			}
 			// Move existing structures into the new structure:
-			for (int i = 0; i < this.Children.Count; i++) {
+			for (int i = 0; i < this.Children.Count; i++)
+			{
 				ILStructure child = this.Children[i];
-				if (newStructure.StartOffset <= child.StartOffset && child.EndOffset <= newStructure.EndOffset) {
+				if (newStructure.StartOffset <= child.StartOffset && child.EndOffset <= newStructure.EndOffset)
+				{
 					this.Children.RemoveAt(i--);
 					newStructure.Children.Add(child);
 				}
@@ -218,11 +233,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 			var bitset = new BitSet(body.Length + 1);
 			body.Reset();
 			int target;
-			while (body.RemainingBytes > 0) {
+			while (body.RemainingBytes > 0)
+			{
 				var offset = body.Offset;
 				int endOffset;
 				var thisOpCode = body.DecodeOpCode();
-				switch (thisOpCode.GetOperandType()) {
+				switch (thisOpCode.GetOperandType())
+				{
 					case OperandType.BrTarget:
 					case OperandType.ShortBrTarget:
 						target = ILParser.DecodeBranchTarget(ref body, thisOpCode);
@@ -246,7 +263,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		static bool IsUnconditionalBranch(ILOpCode opCode)
 		{
-			switch (opCode) {
+			switch (opCode)
+			{
 				case ILOpCode.Br:
 				case ILOpCode.Br_s:
 				case ILOpCode.Ret:
@@ -275,7 +293,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public ILStructure GetInnermost(int offset)
 		{
 			Debug.Assert(StartOffset <= offset && offset < EndOffset);
-			foreach (ILStructure child in this.Children) {
+			foreach (ILStructure child in this.Children)
+			{
 				if (child.StartOffset <= offset && offset < child.EndOffset)
 					return child.GetInnermost(offset);
 			}

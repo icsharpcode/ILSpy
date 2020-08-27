@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
@@ -51,8 +52,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		void InitializeContext(UsingScope usingScope)
 		{
 			this.resolveContextStack = new Stack<CSharpTypeResolveContext>();
-			if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace)) {
-				foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.')) {
+			if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace))
+			{
+				foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.'))
+				{
 					usingScope = new UsingScope(usingScope, ns);
 				}
 			}
@@ -65,15 +68,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			var previousContext = resolveContextStack.Peek();
 			var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
-			foreach (string ident in namespaceDeclaration.Identifiers) {
+			foreach (string ident in namespaceDeclaration.Identifiers)
+			{
 				usingScope = new UsingScope(usingScope, ident);
 			}
 			var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule, usingScope.Resolve(previousContext.Compilation));
 			resolveContextStack.Push(currentContext);
-			try {
+			try
+			{
 				this.resolver = new CSharpResolver(currentContext);
 				base.VisitNamespaceDeclaration(namespaceDeclaration);
-			} finally {
+			}
+			finally
+			{
 				this.resolver = new CSharpResolver(previousContext);
 				resolveContextStack.Pop();
 			}
@@ -84,10 +91,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var previousContext = resolveContextStack.Peek();
 			var currentContext = previousContext.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
 			resolveContextStack.Push(currentContext);
-			try {
+			try
+			{
 				this.resolver = new CSharpResolver(currentContext);
 				base.VisitTypeDeclaration(typeDeclaration);
-			} finally {
+			}
+			finally
+			{
 				this.resolver = new CSharpResolver(previousContext);
 				resolveContextStack.Pop();
 			}
@@ -101,7 +111,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 			IReadOnlyList<IType> typeArguments;
 			MemberReferenceExpression memberRefExpr;
-			switch (invocationExpression.Target) {
+			switch (invocationExpression.Target)
+			{
 				case MemberReferenceExpression mre:
 					typeArguments = mre.TypeArguments.Any() ? method.TypeArguments : EmptyList<IType>.Instance;
 					memberRefExpr = mre;
@@ -110,51 +121,65 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					typeArguments = ide.TypeArguments.Any() ? method.TypeArguments : EmptyList<IType>.Instance;
 					memberRefExpr = null;
 					break;
-				default: return;
+				default:
+					return;
 			}
-			
+
 			var firstArgument = invocationExpression.Arguments.First();
 			if (firstArgument is NamedArgumentExpression)
 				return;
 			var target = firstArgument.GetResolveResult();
-			if (target is ConstantResolveResult crr && crr.ConstantValue == null) {
+			if (target is ConstantResolveResult crr && crr.ConstantValue == null)
+			{
 				target = new ConversionResolveResult(method.Parameters[0].Type, crr, Conversion.NullLiteralConversion);
 			}
 			ResolveResult[] args = new ResolveResult[invocationExpression.Arguments.Count - 1];
 			string[] argNames = null;
 			int pos = 0;
-			foreach (var arg in invocationExpression.Arguments.Skip(1)) {
-				if (arg is NamedArgumentExpression nae) {
-					if (argNames == null) {
+			foreach (var arg in invocationExpression.Arguments.Skip(1))
+			{
+				if (arg is NamedArgumentExpression nae)
+				{
+					if (argNames == null)
+					{
 						argNames = new string[args.Length];
 					}
 					argNames[pos] = nae.Name;
 					args[pos] = nae.Expression.GetResolveResult();
-				} else {
+				}
+				else
+				{
 					args[pos] = arg.GetResolveResult();
 				}
 				pos++;
 			}
 			if (!CanTransformToExtensionMethodCall(resolver, method, typeArguments, target, args, argNames))
 				return;
-			if (firstArgument is DirectionExpression dirExpr) {
+			if (firstArgument is DirectionExpression dirExpr)
+			{
 				if (!context.Settings.RefExtensionMethods || dirExpr.FieldDirection == FieldDirection.Out)
 					return;
 				firstArgument = dirExpr.Expression;
 				target = firstArgument.GetResolveResult();
 				dirExpr.Detach();
-			} else if (firstArgument is NullReferenceExpression) {
+			}
+			else if (firstArgument is NullReferenceExpression)
+			{
 				Debug.Assert(context.RequiredNamespacesSuperset.Contains(method.Parameters[0].Type.Namespace));
 				firstArgument = firstArgument.ReplaceWith(expr => new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type), expr.Detach()));
 			}
-			if (invocationExpression.Target is IdentifierExpression identifierExpression) {
+			if (invocationExpression.Target is IdentifierExpression identifierExpression)
+			{
 				identifierExpression.Detach();
 				memberRefExpr = new MemberReferenceExpression(firstArgument.Detach(), method.Name, identifierExpression.TypeArguments.Detach());
 				invocationExpression.Target = memberRefExpr;
-			} else {
+			}
+			else
+			{
 				memberRefExpr.Target = firstArgument.Detach();
 			}
-			if (invocationExpression.GetResolveResult() is CSharpInvocationResolveResult irr) {
+			if (invocationExpression.GetResolveResult() is CSharpInvocationResolveResult irr)
+			{
 				// do not forget to update the CSharpInvocationResolveResult => set IsExtensionMethodInvocation == true
 				invocationExpression.RemoveAnnotations<CSharpInvocationResolveResult>();
 				var newResolveResult = new CSharpInvocationResolveResult(
@@ -182,7 +207,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public static bool CanTransformToExtensionMethodCall(IMethod method, CSharpTypeResolveContext resolveContext, bool ignoreTypeArguments = false, bool ignoreArgumentNames = true)
 		{
-			if (method.Parameters.Count == 0) return false;
+			if (method.Parameters.Count == 0)
+				return false;
 			var targetType = method.Parameters.Select(p => new ResolveResult(p.Type)).First();
 			var paramTypes = method.Parameters.Skip(1).Select(p => new ResolveResult(p.Type)).ToArray();
 			var paramNames = ignoreArgumentNames ? null : method.Parameters.SelectReadOnlyArray(p => p.Name);

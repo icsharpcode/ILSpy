@@ -37,56 +37,56 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static Role<Expression> TrueRole = new Role<Expression>("True", Expression.Null);
 		public readonly static TokenRole ColonRole = Roles.Colon;
 		public readonly static Role<Expression> FalseRole = new Role<Expression>("False", Expression.Null);
-		
+
 		public Expression Condition {
 			get { return GetChildByRole(ConditionRole); }
 			set { SetChildByRole(ConditionRole, value); }
 		}
-		
+
 		public CSharpTokenNode QuestionMarkToken {
-			get { return GetChildByRole (QuestionMarkRole); }
+			get { return GetChildByRole(QuestionMarkRole); }
 		}
-		
+
 		public Expression TrueExpression {
 			get { return GetChildByRole(TrueRole); }
 			set { SetChildByRole(TrueRole, value); }
 		}
-		
+
 		public CSharpTokenNode ColonToken {
-			get { return GetChildByRole (ColonRole); }
+			get { return GetChildByRole(ColonRole); }
 		}
-		
+
 		public Expression FalseExpression {
 			get { return GetChildByRole(FalseRole); }
 			set { SetChildByRole(FalseRole, value); }
 		}
-		
-		public ConditionalExpression ()
+
+		public ConditionalExpression()
 		{
 		}
-		
-		public ConditionalExpression (Expression condition, Expression trueExpression, Expression falseExpression)
+
+		public ConditionalExpression(Expression condition, Expression trueExpression, Expression falseExpression)
 		{
-			AddChild (condition, ConditionRole);
-			AddChild (trueExpression, TrueRole);
-			AddChild (falseExpression, FalseRole);
+			AddChild(condition, ConditionRole);
+			AddChild(trueExpression, TrueRole);
+			AddChild(falseExpression, FalseRole);
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitConditionalExpression (this);
+			visitor.VisitConditionalExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitConditionalExpression (this);
+			return visitor.VisitConditionalExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitConditionalExpression (this, data);
+			return visitor.VisitConditionalExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ConditionalExpression o = other as ConditionalExpression;

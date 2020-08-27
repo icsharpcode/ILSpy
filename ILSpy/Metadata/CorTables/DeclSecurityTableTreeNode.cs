@@ -50,9 +50,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<DeclSecurityEntry>();
 			DeclSecurityEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.DeclarativeSecurityAttributes) {
+			foreach (var row in metadata.DeclarativeSecurityAttributes)
+			{
 				var entry = new DeclSecurityEntry(module, row);
-				if (scrollTarget == MetadataTokens.GetRowNumber(row)) {
+				if (scrollTarget == MetadataTokens.GetRowNumber(row))
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -62,7 +64,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 

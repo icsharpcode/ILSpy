@@ -46,25 +46,29 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		ForceNewLine
 	}
 
-	public enum Wrapping {
+	public enum Wrapping
+	{
 		DoNotChange,
 		DoNotWrap,
 		WrapAlways,
 		WrapIfTooLong
 	}
 
-	public enum NewLinePlacement {
+	public enum NewLinePlacement
+	{
 		DoNotCare,
 		NewLine,
 		SameLine
 	}
 
-	public enum UsingPlacement {
+	public enum UsingPlacement
+	{
 		TopOfFile,
 		InsideNamespace
 	}
 
-	public enum EmptyLineFormatting {
+	public enum EmptyLineFormatting
+	{
 		DoNotChange,
 		Indent,
 		DoNotIndent
@@ -83,9 +87,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			set;
 		}
 
-		public CSharpFormattingOptions Clone ()
+		public CSharpFormattingOptions Clone()
 		{
-			return (CSharpFormattingOptions)MemberwiseClone ();
+			return (CSharpFormattingOptions)MemberwiseClone();
 		}
 
 		#region Indentation
@@ -193,7 +197,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			set;
 		}
 		#endregion
-		
+
 		#region Braces
 		public BraceStyle NamespaceBraceStyle { // tested
 			get;
@@ -347,7 +351,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 		}
 		#endregion
-		
+
 		#region Spaces
 		// Methods
 		public bool SpaceBeforeMethodDeclarationParentheses { // tested
@@ -374,7 +378,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			get;
 			set;
 		}
-		
+
 		// Method calls
 		public bool SpaceBeforeMethodCallParentheses { // tested
 			get;
@@ -400,9 +404,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			get;
 			set;
 		}
-		
+
 		// fields
-		
+
 		public bool SpaceBeforeFieldDeclarationComma { // tested
 			get;
 			set;
@@ -412,9 +416,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			get;
 			set;
 		}
-		
+
 		// local variables
-		
+
 		public bool SpaceBeforeLocalVariableDeclarationComma { // tested
 			get;
 			set;
@@ -424,9 +428,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			get;
 			set;
 		}
-		
+
 		// constructors
-		
+
 		public bool SpaceBeforeConstructorDeclarationParentheses { // tested
 			get;
 			set;
@@ -461,7 +465,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			get;
 			set;
 		}
-		
+
 		// indexer
 		public bool SpaceBeforeIndexerDeclarationBracket { // tested
 			get;
@@ -482,9 +486,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			get;
 			set;
 		}
-		
+
 		// delegates
-		
+
 		public bool SpaceBeforeDelegateDeclarationParentheses {
 			get;
 			set;
@@ -729,7 +733,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			get;
 			set;
 		}
-		
+
 		// brackets
 		public bool SpacesWithinBrackets { // tested
 			get;
@@ -786,7 +790,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			set;
 		}
 		#endregion
-		
+
 		#region Blank Lines
 		public int MinimumBlankLinesBeforeUsings {
 			get;

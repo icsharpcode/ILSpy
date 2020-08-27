@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers.Builtin
@@ -42,7 +43,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		public bool Show(ISymbol symbol)
 		{
-			switch (symbol?.SymbolKind) {
+			switch (symbol?.SymbolKind)
+			{
 				case SymbolKind.Event:
 				case SymbolKind.Indexer:
 				case SymbolKind.Method:

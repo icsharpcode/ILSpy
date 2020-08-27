@@ -33,38 +33,38 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class ExpressionStatement : Statement
 	{
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get { return GetChildByRole(Roles.Expression); }
+			set { SetChildByRole(Roles.Expression, value); }
 		}
-		
+
 		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
+			get { return GetChildByRole(Roles.Semicolon); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitExpressionStatement (this);
+			visitor.VisitExpressionStatement(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitExpressionStatement (this);
+			return visitor.VisitExpressionStatement(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitExpressionStatement (this, data);
+			return visitor.VisitExpressionStatement(this, data);
 		}
-		
+
 		public ExpressionStatement()
 		{
 		}
-		
+
 		public ExpressionStatement(Expression expression)
 		{
 			this.Expression = expression;
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ExpressionStatement o = other as ExpressionStatement;

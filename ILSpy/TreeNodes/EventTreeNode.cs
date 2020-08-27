@@ -18,6 +18,7 @@
 
 using System;
 using System.Windows.Media;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -66,15 +67,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			else
 				return FilterResult.Hidden;
 		}
-		
+
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.DecompileEvent(EventDefinition, output, options);
 		}
-		
+
 		public override bool IsPublicAPI {
 			get {
-				switch (EventDefinition.Accessibility) {
+				switch (EventDefinition.Accessibility)
+				{
 					case Accessibility.Public:
 					case Accessibility.ProtectedOrInternal:
 					case Accessibility.Protected:

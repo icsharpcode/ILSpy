@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -49,19 +50,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class PrimitiveExpression : Expression
 	{
 		public static readonly object AnyValue = new object();
-		
+
 		TextLocation startLocation;
 		TextLocation endLocation;
-		public override TextLocation StartLocation  => startLocation;
-		public override TextLocation EndLocation  => endLocation;
-		
+		public override TextLocation StartLocation => startLocation;
+		public override TextLocation EndLocation => endLocation;
+
 		internal void SetLocation(TextLocation startLocation, TextLocation endLocation)
 		{
 			ThrowIfFrozen();
 			this.startLocation = startLocation;
 			this.endLocation = endLocation;
 		}
-		
+
 		object value;
 		LiteralFormat format;
 
@@ -72,70 +73,75 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.value = value;
 			}
 		}
-		
+
 
 		public LiteralFormat Format {
-			get {  return format;}
+			get { return format; }
 			set {
 				ThrowIfFrozen();
 				format = value;
 			}
 		}
 
-		public PrimitiveExpression (object value)
+		public PrimitiveExpression(object value)
 		{
 			this.Value = value;
 		}
-		
-		public PrimitiveExpression (object value, LiteralFormat format)
+
+		public PrimitiveExpression(object value, LiteralFormat format)
 		{
 			this.Value = value;
 			this.format = format;
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitPrimitiveExpression (this);
+			visitor.VisitPrimitiveExpression(this);
 		}
-		
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitPrimitiveExpression (this);
+			return visitor.VisitPrimitiveExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitPrimitiveExpression (this, data);
+			return visitor.VisitPrimitiveExpression(this, data);
 		}
 
 		unsafe static TextLocation AdvanceLocation(TextLocation startLocation, string str)
 		{
 			int line = startLocation.Line;
-			int col  = startLocation.Column;
-			fixed (char* start = str) {
+			int col = startLocation.Column;
+			fixed (char* start = str)
+			{
 				char* p = start;
 				char* endPtr = start + str.Length;
-				while (p < endPtr) {
+				while (p < endPtr)
+				{
 					var nl = NewLine.GetDelimiterLength(*p, () => {
 						char* nextp = p + 1;
 						if (nextp < endPtr)
 							return *nextp;
 						return '\0';
 					});
-					if (nl > 0) {
+					if (nl > 0)
+					{
 						line++;
 						col = 1;
 						if (nl == 2)
 							p++;
-					} else {
+					}
+					else
+					{
 						col++;
 					}
 					p++;
 				}
 			}
-			return new TextLocation (line, col);
+			return new TextLocation(line, col);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			PrimitiveExpression o = other as PrimitiveExpression;

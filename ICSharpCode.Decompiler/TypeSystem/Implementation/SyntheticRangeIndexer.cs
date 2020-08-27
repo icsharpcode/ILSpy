@@ -17,11 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using ICSharpCode.Decompiler.Util;
-using System.Reflection;
-using System.Reflection.Metadata;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
+using System.Reflection.Metadata;
+
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
@@ -50,9 +51,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.slicing = slicing;
 			var parameters = new List<IParameter>();
 			parameters.Add(new DefaultParameter(indexOrRangeType, ""));
-			if (slicing) {
+			if (slicing)
+			{
 				Debug.Assert(underlyingMethod.Parameters.Count == 2);
-			} else {
+			}
+			else
+			{
 				parameters.AddRange(underlyingMethod.Parameters.Skip(1));
 			}
 			this.parameters = parameters;

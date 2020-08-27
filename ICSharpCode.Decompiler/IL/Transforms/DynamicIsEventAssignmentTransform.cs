@@ -51,10 +51,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int offset = 2;
 			if (block.Instructions[pos + offset].MatchStLoc(out var valueVariable)
 				&& pos + 4 < block.Instructions.Count && valueVariable.IsSingleDefinition && valueVariable.LoadCount == 2
-				&& valueVariable.LoadInstructions.All(ld => ld.Parent is DynamicInstruction)) {
+				&& valueVariable.LoadInstructions.All(ld => ld.Parent is DynamicInstruction))
+			{
 				offset++;
 			}
-			foreach (var descendant in block.Instructions[pos + offset].Descendants) {
+			foreach (var descendant in block.Instructions[pos + offset].Descendants)
+			{
 				if (!MatchIsEventAssignmentIfInstruction(descendant, isEvent, flagVar, getMemberVar, out var setMemberInst, out var getMemberVarUse, out var isEventConditionUse))
 					continue;
 				context.Step("DynamicIsEventAssignmentTransform", block.Instructions[pos]);
@@ -84,16 +86,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			isEventConditionUse = null;
 			if (!ifInst.MatchIfInstruction(out var condition, out var trueInst, out var falseInst))
 				return false;
-			if (MatchFlagEqualsZero(condition, flagVar)) {
+			if (MatchFlagEqualsZero(condition, flagVar))
+			{
 				if (!condition.MatchCompEquals(out var left, out _))
 					return false;
 				isEventConditionUse = left;
-			} else if (condition.MatchLdLoc(flagVar)) {
+			}
+			else if (condition.MatchLdLoc(flagVar))
+			{
 				var tmp = trueInst;
 				trueInst = falseInst;
 				falseInst = tmp;
 				isEventConditionUse = condition;
-			} else
+			}
+			else
 				return false;
 			setMemberInst = Block.Unwrap(trueInst) as DynamicSetMemberInstruction;
 			if (setMemberInst == null)

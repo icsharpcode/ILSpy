@@ -50,8 +50,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (member == null)
 				throw new ArgumentNullException(nameof(member));
 
-			if (includeImplementedInterfaces) {
-				if (member.IsExplicitInterfaceImplementation && member.ExplicitlyImplementedInterfaceMembers.Count() == 1) {
+			if (includeImplementedInterfaces)
+			{
+				if (member.IsExplicitInterfaceImplementation && member.ExplicitlyImplementedInterfaceMembers.Count() == 1)
+				{
 					// C#-style explicit interface implementation
 					member = member.ExplicitlyImplementedInterfaceMembers.First();
 					yield return member;
@@ -62,30 +64,40 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var substitution = member.Substitution;
 			member = member.MemberDefinition;
 
-			if (member.DeclaringTypeDefinition == null) {
+			if (member.DeclaringTypeDefinition == null)
+			{
 				// For global methods, return empty list. (prevent SharpDevelop UDC crash 4524)
 				yield break;
 			}
 
 			IEnumerable<IType> allBaseTypes;
-			if (includeImplementedInterfaces) {
+			if (includeImplementedInterfaces)
+			{
 				allBaseTypes = member.DeclaringTypeDefinition.GetAllBaseTypes();
-			} else {
+			}
+			else
+			{
 				allBaseTypes = member.DeclaringTypeDefinition.GetNonInterfaceBaseTypes();
 			}
-			foreach (IType baseType in allBaseTypes.Reverse()) {
+			foreach (IType baseType in allBaseTypes.Reverse())
+			{
 				if (baseType == member.DeclaringTypeDefinition)
 					continue;
 
 				IEnumerable<IMember> baseMembers;
-				if (member.SymbolKind == SymbolKind.Accessor) {
+				if (member.SymbolKind == SymbolKind.Accessor)
+				{
 					baseMembers = baseType.GetAccessors(m => m.Name == member.Name && m.Accessibility > Accessibility.Private, GetMemberOptions.IgnoreInheritedMembers);
-				} else {
+				}
+				else
+				{
 					baseMembers = baseType.GetMembers(m => m.Name == member.Name && m.Accessibility > Accessibility.Private, GetMemberOptions.IgnoreInheritedMembers);
 				}
-				foreach (IMember baseMember in baseMembers) {
+				foreach (IMember baseMember in baseMembers)
+				{
 					System.Diagnostics.Debug.Assert(baseMember.Accessibility != Accessibility.Private);
-					if (SignatureComparer.Ordinal.Equals(member, baseMember)) {
+					if (SignatureComparer.Ordinal.Equals(member, baseMember))
+					{
 						yield return baseMember.Specialize(substitution);
 					}
 				}
@@ -110,10 +122,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			baseMember = baseMember.MemberDefinition;
 			bool includeInterfaces = baseMember.DeclaringTypeDefinition.Kind == TypeKind.Interface;
 			IMethod method = baseMember as IMethod;
-			if (method != null) {
-				foreach (IMethod derivedMethod in derivedType.Methods) {
-					if (derivedMethod.Name == method.Name && derivedMethod.Parameters.Count == method.Parameters.Count) {
-						if (derivedMethod.TypeParameters.Count == method.TypeParameters.Count) {
+			if (method != null)
+			{
+				foreach (IMethod derivedMethod in derivedType.Methods)
+				{
+					if (derivedMethod.Name == method.Name && derivedMethod.Parameters.Count == method.Parameters.Count)
+					{
+						if (derivedMethod.TypeParameters.Count == method.TypeParameters.Count)
+						{
 							// The method could override the base method:
 							if (GetBaseMembers(derivedMethod, includeInterfaces).Any(m => m.MemberDefinition == baseMember))
 								return derivedMethod;
@@ -122,23 +138,30 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 			IProperty property = baseMember as IProperty;
-			if (property != null) {
-				foreach (IProperty derivedProperty in derivedType.Properties) {
-					if (derivedProperty.Name == property.Name && derivedProperty.Parameters.Count == property.Parameters.Count) {
+			if (property != null)
+			{
+				foreach (IProperty derivedProperty in derivedType.Properties)
+				{
+					if (derivedProperty.Name == property.Name && derivedProperty.Parameters.Count == property.Parameters.Count)
+					{
 						// The property could override the base property:
 						if (GetBaseMembers(derivedProperty, includeInterfaces).Any(m => m.MemberDefinition == baseMember))
 							return derivedProperty;
 					}
 				}
 			}
-			if (baseMember is IEvent) {
-				foreach (IEvent derivedEvent in derivedType.Events) {
+			if (baseMember is IEvent)
+			{
+				foreach (IEvent derivedEvent in derivedType.Events)
+				{
 					if (derivedEvent.Name == baseMember.Name)
 						return derivedEvent;
 				}
 			}
-			if (baseMember is IField) {
-				foreach (IField derivedField in derivedType.Fields) {
+			if (baseMember is IField)
+			{
+				foreach (IField derivedField in derivedType.Fields)
+				{
 					if (derivedField.Name == baseMember.Name)
 						return derivedField;
 				}
@@ -150,11 +173,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#region Attributes
 		internal static IEnumerable<IAttribute> GetAttributes(ITypeDefinition typeDef)
 		{
-			foreach (var baseType in typeDef.GetNonInterfaceBaseTypes().Reverse()) {
+			foreach (var baseType in typeDef.GetNonInterfaceBaseTypes().Reverse())
+			{
 				ITypeDefinition baseTypeDef = baseType.GetDefinition();
 				if (baseTypeDef == null)
 					continue;
-				foreach (var attr in baseTypeDef.GetAttributes()) {
+				foreach (var attr in baseTypeDef.GetAttributes())
+				{
 					yield return attr;
 				}
 			}
@@ -163,13 +188,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		internal static IEnumerable<IAttribute> GetAttributes(IMember member)
 		{
 			HashSet<IMember> visitedMembers = new HashSet<IMember>();
-			do {
+			do
+			{
 				member = member.MemberDefinition; // it's sufficient to look at the definitions
-				if (!visitedMembers.Add(member)) {
+				if (!visitedMembers.Add(member))
+				{
 					// abort if we seem to be in an infinite loop (cyclic inheritance)
 					break;
 				}
-				foreach (var attr in member.GetAttributes()) {
+				foreach (var attr in member.GetAttributes())
+				{
 					yield return attr;
 				}
 			} while (member.IsOverride && (member = InheritanceHelper.GetBaseMember(member)) != null);

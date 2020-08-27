@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers.Builtin
@@ -34,7 +35,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		{
 			Debug.Assert(analyzedSymbol is IProperty);
 			var scope = context.GetScopeOf((IProperty)analyzedSymbol);
-			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
+			{
 				foreach (var result in AnalyzeType((IProperty)analyzedSymbol, type))
 					yield return result;
 			}
@@ -49,7 +51,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			if (!allTypes.Any(t => t.MetadataToken == declaringTypeToken && t.ParentModule.PEFile == module))
 				yield break;
 
-			foreach (var property in type.Properties) {
+			foreach (var property in type.Properties)
+			{
 				var baseMembers = InheritanceHelper.GetBaseMembers(property, true);
 				if (baseMembers.Any(m => m.MetadataToken == token && m.ParentModule.PEFile == module))
 					yield return property;

@@ -21,6 +21,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
@@ -41,7 +42,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public ILSpyTreeNode CreateNode(string key, object data)
 		{
-			if (data is System.Drawing.Icon) {
+			if (data is System.Drawing.Icon)
+			{
 				MemoryStream s = new MemoryStream();
 				((System.Drawing.Icon)data).Save(s);
 				return new IconResourceEntryNode(key, s);
@@ -63,11 +65,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool View(TabPageModel tabPage)
 		{
-			try {
+			try
+			{
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				Data.Position = 0;
 				IconBitmapDecoder decoder = new IconBitmapDecoder(Data, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
-				foreach (var frame in decoder.Frames) {
+				foreach (var frame in decoder.Frames)
+				{
 					output.Write(String.Format("{0}x{1}, {2} bit: ", frame.PixelHeight, frame.PixelWidth, frame.Thumbnail.Format.BitsPerPixel));
 					AddIcon(output, frame);
 					output.WriteLine();
@@ -78,7 +82,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				tabPage.ShowTextView(textView => textView.ShowNode(output, this));
 				tabPage.SupportsLanguageSwitching = false;
 				return true;
-			} catch (Exception) {
+			}
+			catch (Exception)
+			{
 				return false;
 			}
 		}

@@ -32,41 +32,41 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UncheckedStatement : Statement
 	{
-		public static readonly TokenRole UncheckedKeywordRole = new TokenRole ("unchecked");
-		
+		public static readonly TokenRole UncheckedKeywordRole = new TokenRole("unchecked");
+
 		public CSharpTokenNode UncheckedToken {
-			get { return GetChildByRole (UncheckedKeywordRole); }
+			get { return GetChildByRole(UncheckedKeywordRole); }
 		}
-		
+
 		public BlockStatement Body {
-			get { return GetChildByRole (Roles.Body); }
-			set { SetChildByRole (Roles.Body, value); }
+			get { return GetChildByRole(Roles.Body); }
+			set { SetChildByRole(Roles.Body, value); }
 		}
-		
-		public UncheckedStatement ()
+
+		public UncheckedStatement()
 		{
 		}
-		
-		public UncheckedStatement (BlockStatement body)
+
+		public UncheckedStatement(BlockStatement body)
 		{
-			AddChild (body, Roles.Body);
+			AddChild(body, Roles.Body);
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitUncheckedStatement (this);
+			visitor.VisitUncheckedStatement(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitUncheckedStatement (this);
+			return visitor.VisitUncheckedStatement(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitUncheckedStatement (this, data);
+			return visitor.VisitUncheckedStatement(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			UncheckedStatement o = other as UncheckedStatement;

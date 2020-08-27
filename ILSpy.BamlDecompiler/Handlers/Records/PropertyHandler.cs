@@ -21,14 +21,18 @@
 */
 
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Baml;
 using ILSpy.BamlDecompiler.Xaml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class PropertyHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class PropertyHandler : IHandler
+	{
 		public virtual BamlRecordType Type => BamlRecordType.Property;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (PropertyRecord)((BamlRecordNode)node).Record;
 
 			var elemType = parent.Xaml.Element.Annotation<XamlType>();

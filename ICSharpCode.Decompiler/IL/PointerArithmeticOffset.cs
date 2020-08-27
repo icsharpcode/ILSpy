@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -24,33 +25,45 @@ namespace ICSharpCode.Decompiler.IL
 			bool checkForOverflow,
 			bool unwrapZeroExtension = false)
 		{
-			if (byteOffsetInst is Conv conv && conv.InputType == StackType.I8 && conv.ResultType == StackType.I) {
+			if (byteOffsetInst is Conv conv && conv.InputType == StackType.I8 && conv.ResultType == StackType.I)
+			{
 				byteOffsetInst = conv.Argument;
 			}
 			int? elementSize = ComputeSizeOf(pointerElementType);
-			if (elementSize == 1) {
+			if (elementSize == 1)
+			{
 				return byteOffsetInst;
-			} else if (byteOffsetInst is BinaryNumericInstruction mul && mul.Operator == BinaryNumericOperator.Mul) {
+			}
+			else if (byteOffsetInst is BinaryNumericInstruction mul && mul.Operator == BinaryNumericOperator.Mul)
+			{
 				if (mul.IsLifted)
 					return null;
 				if (mul.CheckForOverflow != checkForOverflow)
 					return null;
 				if (elementSize > 0 && mul.Right.MatchLdcI(elementSize.Value)
-					|| mul.Right.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(sizeOf.Type, pointerElementType)) {
+					|| mul.Right.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(sizeOf.Type, pointerElementType))
+				{
 					var countOffsetInst = mul.Left;
-					if (unwrapZeroExtension) {
+					if (unwrapZeroExtension)
+					{
 						countOffsetInst = countOffsetInst.UnwrapConv(ConversionKind.ZeroExtend);
 					}
 					return countOffsetInst;
 				}
-			} else if (byteOffsetInst.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerElementType)) {
+			}
+			else if (byteOffsetInst.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerElementType))
+			{
 				return new LdcI4(1).WithILRange(byteOffsetInst);
-			} else if (byteOffsetInst.MatchLdcI(out long val)) {
+			}
+			else if (byteOffsetInst.MatchLdcI(out long val))
+			{
 				// If the offset is a constant, it's possible that the compiler
 				// constant-folded the multiplication.
-				if (elementSize > 0 && (val % elementSize == 0) && val > 0) {
+				if (elementSize > 0 && (val % elementSize == 0) && val > 0)
+				{
 					val /= elementSize.Value;
-					if (val <= int.MaxValue) {
+					if (val <= int.MaxValue)
+					{
 						return new LdcI4((int)val).WithILRange(byteOffsetInst);
 					}
 				}
@@ -60,7 +73,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static int? ComputeSizeOf(IType type)
 		{
-			switch (type.GetEnumUnderlyingType().GetDefinition()?.KnownTypeCode) {
+			switch (type.GetEnumUnderlyingType().GetDefinition()?.KnownTypeCode)
+			{
 				case KnownTypeCode.Boolean:
 				case KnownTypeCode.SByte:
 				case KnownTypeCode.Byte:
@@ -90,7 +104,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		internal static bool IsFixedVariable(ILInstruction inst)
 		{
-			switch (inst) {
+			switch (inst)
+			{
 				case LdLoca ldloca:
 					return ldloca.Variable.CaptureScope == null; // locals are fixed if uncaptured
 				case LdFlda ldflda:

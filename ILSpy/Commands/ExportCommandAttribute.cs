@@ -31,16 +31,16 @@ namespace ICSharpCode.ILSpy
 		object Tag { get; }
 		double ToolbarOrder { get; }
 	}
-	
+
 	[MetadataAttribute]
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple=false)]
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 	public class ExportToolbarCommandAttribute : ExportAttribute, IToolbarCommandMetadata
 	{
 		public ExportToolbarCommandAttribute()
 			: base("ToolbarCommand", typeof(ICommand))
 		{
 		}
-		
+
 		public string ToolTip { get; set; }
 		public string ToolbarIcon { get; set; }
 		public string ToolbarCategory { get; set; }
@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy
 		public object Tag { get; set; }
 	}
 	#endregion
-	
+
 	#region Main Menu
 	public interface IMainMenuCommandMetadata
 	{
@@ -60,18 +60,18 @@ namespace ICSharpCode.ILSpy
 		bool IsEnabled { get; }
 		double MenuOrder { get; }
 	}
-	
+
 	[MetadataAttribute]
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple=false)]
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 	public class ExportMainMenuCommandAttribute : ExportAttribute, IMainMenuCommandMetadata
 	{
 		bool isEnabled = true;
-		
+
 		public ExportMainMenuCommandAttribute()
 			: base("MainMenuCommand", typeof(ICommand))
 		{
 		}
-		
+
 		public string MenuIcon { get; set; }
 		public string Header { get; set; }
 		public string Menu { get; set; }

@@ -35,12 +35,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ParameterizedType pt = type.SkipModifiers() as ParameterizedType;
 			return pt != null && pt.TypeParameterCount == 1 && pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT);
 		}
-		
+
 		public static bool IsNonNullableValueType(IType type)
 		{
 			return type.IsReferenceType == false && !IsNullable(type);
 		}
-		
+
 		/// <summary>
 		/// Returns the element type, if <paramref name="type"/> is a nullable type.
 		/// Otherwise, returns the type itself.
@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			else
 				return type;
 		}
-		
+
 		/// <summary>
 		/// Creates a nullable type.
 		/// </summary>
@@ -65,15 +65,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentNullException(nameof(compilation));
 			if (elementType == null)
 				throw new ArgumentNullException(nameof(elementType));
-			
+
 			IType nullableType = compilation.FindType(KnownTypeCode.NullableOfT);
 			ITypeDefinition nullableTypeDef = nullableType.GetDefinition();
 			if (nullableTypeDef != null)
-				return new ParameterizedType(nullableTypeDef, new [] { elementType });
+				return new ParameterizedType(nullableTypeDef, new[] { elementType });
 			else
 				return nullableType;
 		}
-		
+
 		/// <summary>
 		/// Creates a nullable type reference.
 		/// </summary>
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (elementType == null)
 				throw new ArgumentNullException(nameof(elementType));
-			return new ParameterizedTypeReference(KnownTypeReference.Get(KnownTypeCode.NullableOfT), new [] { elementType });
+			return new ParameterizedTypeReference(KnownTypeReference.Get(KnownTypeCode.NullableOfT), new[] { elementType });
 		}
 	}
 }

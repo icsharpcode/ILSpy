@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -37,28 +38,28 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		IList<TypeOrNamespaceReference> usings;
 		IList<KeyValuePair<string, TypeOrNamespaceReference>> usingAliases;
 		IList<string> externAliases;
-		
+
 		protected override void FreezeInternal()
 		{
 			usings = FreezableHelper.FreezeList(usings);
 			usingAliases = FreezableHelper.FreezeList(usingAliases);
 			externAliases = FreezableHelper.FreezeList(externAliases);
-			
+
 			// In current model (no child scopes), it makes sense to freeze the parent as well
 			// to ensure the whole lookup chain is immutable.
 			if (parent != null)
 				parent.Freeze();
-			
+
 			base.FreezeInternal();
 		}
-		
+
 		/// <summary>
 		/// Creates a new root using scope.
 		/// </summary>
 		public UsingScope()
 		{
 		}
-		
+
 		/// <summary>
 		/// Creates a new nested using scope.
 		/// </summary>
@@ -73,17 +74,17 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			this.parent = parent;
 			this.shortName = shortName;
 		}
-		
+
 		public UsingScope Parent {
 			get { return parent; }
 		}
-		
+
 		public string ShortNamespaceName {
 			get {
 				return shortName;
 			}
 		}
-		
+
 		public string NamespaceName {
 			get {
 				if (parent != null)
@@ -91,14 +92,14 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				else
 					return shortName;
 			}
-//			set {
-//				if (value == null)
-//					throw new ArgumentNullException("NamespaceName");
-//				FreezableHelper.ThrowIfFrozen(this);
-//				namespaceName = value;
-//			}
+			//			set {
+			//				if (value == null)
+			//					throw new ArgumentNullException("NamespaceName");
+			//				FreezableHelper.ThrowIfFrozen(this);
+			//				namespaceName = value;
+			//			}
 		}
-		
+
 		public IList<TypeOrNamespaceReference> Usings {
 			get {
 				if (usings == null)
@@ -106,7 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				return usings;
 			}
 		}
-		
+
 		public IList<KeyValuePair<string, TypeOrNamespaceReference>> UsingAliases {
 			get {
 				if (usingAliases == null)
@@ -114,7 +115,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				return usingAliases;
 			}
 		}
-		
+
 		public IList<string> ExternAliases {
 			get {
 				if (externAliases == null)
@@ -122,30 +123,32 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				return externAliases;
 			}
 		}
-		
-//		public IList<UsingScope> ChildScopes {
-//			get {
-//				if (childScopes == null)
-//					childScopes = new List<UsingScope>();
-//				return childScopes;
-//			}
-//		}
-		
+
+		//		public IList<UsingScope> ChildScopes {
+		//			get {
+		//				if (childScopes == null)
+		//					childScopes = new List<UsingScope>();
+		//				return childScopes;
+		//			}
+		//		}
+
 		/// <summary>
 		/// Gets whether this using scope has an alias (either using or extern)
 		/// with the specified name.
 		/// </summary>
 		public bool HasAlias(string identifier)
 		{
-			if (usingAliases != null) {
-				foreach (var pair in usingAliases) {
+			if (usingAliases != null)
+			{
+				foreach (var pair in usingAliases)
+				{
 					if (pair.Key == identifier)
 						return true;
 				}
 			}
 			return externAliases != null && externAliases.Contains(identifier);
 		}
-		
+
 		/// <summary>
 		/// Resolves the namespace represented by this using scope.
 		/// </summary>
@@ -153,7 +156,8 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		{
 			CacheManager cache = compilation.CacheManager;
 			ResolvedUsingScope resolved = cache.GetShared(this) as ResolvedUsingScope;
-			if (resolved == null) {
+			if (resolved == null)
+			{
 				var csContext = new CSharpTypeResolveContext(compilation.MainModule, parent != null ? parent.Resolve(compilation) : null);
 				resolved = (ResolvedUsingScope)cache.GetOrAddShared(this, new ResolvedUsingScope(csContext, this));
 			}

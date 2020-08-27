@@ -47,7 +47,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		internal static void Print<T>(string name, IEnumerator<T> enumerator)
 		{
 			Console.WriteLine(name + ": Test start");
-			while (enumerator.MoveNext()) {
+			while (enumerator.MoveNext())
+			{
 				Console.WriteLine(name + ": " + enumerator.Current);
 			}
 		}
@@ -80,7 +81,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static IEnumerable<int> YieldReturnInLoop()
 		{
-			for (int i = 0; i < 100; i++) {
+			for (int i = 0; i < 100; i++)
+			{
 				yield return i;
 			}
 		}
@@ -88,9 +90,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static IEnumerable<int> YieldReturnWithTryFinally()
 		{
 			yield return 0;
-			try {
+			try
+			{
 				yield return 1;
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally!");
 			}
 			yield return 2;
@@ -120,28 +125,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("Start of method - 1");
 			yield return "Start of method";
 			Console.WriteLine("Start of method - 2");
-			try {
+			try
+			{
 				Console.WriteLine("Within outer try - 1");
 				yield return "Within outer try";
 				Console.WriteLine("Within outer try - 2");
-				try {
+				try
+				{
 					Console.WriteLine("Within inner try - 1");
 					yield return "Within inner try";
 					Console.WriteLine("Within inner try - 2");
-					if (breakInMiddle) {
+					if (breakInMiddle)
+					{
 						Console.WriteLine("Breaking...");
 						yield break;
 					}
 					Console.WriteLine("End of inner try - 1");
 					yield return "End of inner try";
 					Console.WriteLine("End of inner try - 2");
-				} finally {
+				}
+				finally
+				{
 					Console.WriteLine("Inner Finally");
 				}
 				Console.WriteLine("End of outer try - 1");
 				yield return "End of outer try";
 				Console.WriteLine("End of outer try - 2");
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Outer Finally");
 			}
 			Console.WriteLine("End of method - 1");
@@ -152,11 +164,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static IEnumerable<string> YieldReturnWithTwoNonNestedFinallyBlocks(IEnumerable<string> input)
 		{
 			// outer try-finally block
-			foreach (string line in input) {
+			foreach (string line in input)
+			{
 				// nested try-finally block
-				try {
+				try
+				{
 					yield return line;
-				} finally {
+				}
+				finally
+				{
 					Console.WriteLine("Processed " + line);
 				}
 			}
@@ -167,21 +183,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			yield return "E";
 			yield return "F";
 			// outer try-finally block
-			foreach (string item in input) {
+			foreach (string item in input)
+			{
 				yield return item.ToUpper();
 			}
 		}
 
 		public static IEnumerable<Func<string>> YieldReturnWithAnonymousMethods1(IEnumerable<string> input)
 		{
-			foreach (string line in input) {
+			foreach (string line in input)
+			{
 				yield return () => line;
 			}
 		}
 
 		public static IEnumerable<Func<string>> YieldReturnWithAnonymousMethods2(IEnumerable<string> input)
 		{
-			foreach (string item in input) {
+			foreach (string item in input)
+			{
 				string copy = item;
 				yield return () => copy;
 			}
@@ -189,8 +208,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static IEnumerable<int> GetEvenNumbers(int n)
 		{
-			for (int i = 0; i < n; i++) {
-				if (i % 2 == 0) {
+			for (int i = 0; i < n; i++)
+			{
+				if (i % 2 == 0)
+				{
 					yield return i;
 				}
 			}
@@ -199,20 +220,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static IEnumerable<char> ExceptionHandling()
 		{
 			yield return 'a';
-			try {
+			try
+			{
 				Console.WriteLine("1 - try");
-			} catch (Exception) {
+			}
+			catch (Exception)
+			{
 				Console.WriteLine("1 - catch");
 			}
 			yield return 'b';
-			try {
-				try {
+			try
+			{
+				try
+				{
 					Console.WriteLine("2 - try");
-				} finally {
+				}
+				finally
+				{
 					Console.WriteLine("2 - finally");
 				}
 				yield return 'c';
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("outer finally");
 			}
 		}
@@ -220,22 +250,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static IEnumerable<int> YieldBreakInCatch()
 		{
 			yield return 0;
-			try {
+			try
+			{
 				Console.WriteLine("In Try");
-			} catch {
+			}
+			catch
+			{
 				// yield return is not allowed in catch, but yield break is
 				yield break;
 			}
 			yield return 1;
 		}
-		
+
 		public static IEnumerable<int> YieldBreakInCatchInTryFinally()
 		{
-			try {
+			try
+			{
 				yield return 0;
-				try {
+				try
+				{
 					Console.WriteLine("In Try");
-				} catch {
+				}
+				catch
+				{
 					// yield return is not allowed in catch, but yield break is
 					// Note that pre-roslyn, this code triggers a compiler bug:
 					// If the finally block throws an exception, it ends up getting
@@ -243,43 +280,58 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					yield break;
 				}
 				yield return 1;
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 		}
 
 		public static IEnumerable<int> YieldBreakInTryCatchInTryFinally()
 		{
-			try {
+			try
+			{
 				yield return 0;
-				try {
+				try
+				{
 					Console.WriteLine("In Try");
 					// same compiler bug as in YieldBreakInCatchInTryFinally
 					yield break;
-				} catch {
+				}
+				catch
+				{
 					Console.WriteLine("Catch");
 				}
 				yield return 1;
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 		}
 
 		public static IEnumerable<int> YieldBreakInTryFinallyInTryFinally(bool b)
 		{
-			try {
+			try
+			{
 				yield return 0;
-				try {
+				try
+				{
 					Console.WriteLine("In Try");
-					if (b) {
+					if (b)
+					{
 						// same compiler bug as in YieldBreakInCatchInTryFinally
 						yield break;
 					}
-				} finally {
+				}
+				finally
+				{
 					Console.WriteLine("Inner Finally");
 				}
 				yield return 1;
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 		}
@@ -288,15 +340,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			yield break;
 		}
-		
+
 		public static IEnumerable<int> UnconditionalThrowInTryFinally()
 		{
 			// Here, MoveNext() doesn't call the finally methods at all
 			// (only indirectly via Dispose())
-			try {
+			try
+			{
 				yield return 0;
 				throw new NotImplementedException();
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 		}
@@ -304,23 +359,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static IEnumerable<int> NestedTryFinallyStartingOnSamePosition()
 		{
 			// The first user IL instruction is already in 2 nested try blocks.
-			try {
-				try {
+			try
+			{
+				try
+				{
 					yield return 0;
-				} finally {
+				}
+				finally
+				{
 					Console.WriteLine("Inner Finally");
 				}
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Outer Finally");
 			}
 		}
-		
+
 		public static IEnumerable<int> LocalInFinally<T>(T a) where T : IDisposable
 		{
 			yield return 1;
-			try {
+			try
+			{
 				yield return 2;
-			} finally {
+			}
+			finally
+			{
 				T val = a;
 				val.Dispose();
 				val.Dispose();
@@ -331,27 +395,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static IEnumerable<T> GenericYield<T>() where T : new()
 		{
 			T val = new T();
-			for (int i = 0; i < 3; i++) {
+			for (int i = 0; i < 3; i++)
+			{
 				yield return val;
 			}
 		}
 
 		public static IEnumerable<int> MultipleYieldBreakInTryFinally(int i)
 		{
-			try {
-				if (i == 2) {
+			try
+			{
+				if (i == 2)
+				{
 					yield break;
 				}
 
-				while (i < 40) {
-					if (i % 2 == 0) {
+				while (i < 40)
+				{
+					if (i % 2 == 0)
+					{
 						yield break;
 					}
 					i++;
 
 					yield return i;
 				}
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("finally");
 			}
 			Console.WriteLine("normal exit");
@@ -362,8 +433,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			// This loop needs to pick the implicit "yield break;" as exit point
 			// in order to produce pretty code; not the "throw" which would
 			// be a less-pretty option.
-			for (int i = 0; i < end; i++) {
-				if (i == evil) {
+			for (int i = 0; i < end; i++)
+			{
+				if (i == evil)
+				{
 					throw new InvalidOperationException("Found evil number");
 				}
 				yield return i;

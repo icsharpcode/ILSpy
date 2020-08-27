@@ -23,6 +23,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
@@ -42,24 +43,30 @@ namespace ICSharpCode.ILSpy
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				Parallel.ForEach(
-					Partitioner.Create( MainWindow.Instance.CurrentAssemblyList.GetAssemblies(), loadBalance: true),
-					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct }, 
-					delegate(LoadedAssembly asm) {
-						if (!asm.HasLoadError) {
+					Partitioner.Create(MainWindow.Instance.CurrentAssemblyList.GetAssemblies(), loadBalance: true),
+					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
+					delegate (LoadedAssembly asm) {
+						if (!asm.HasLoadError)
+						{
 							Stopwatch w = Stopwatch.StartNew();
 							Exception exception = null;
-							using (var writer = new System.IO.StreamWriter("c:\\temp\\decompiled\\" + asm.ShortName + ".cs")) {
-								try {
+							using (var writer = new System.IO.StreamWriter("c:\\temp\\decompiled\\" + asm.ShortName + ".cs"))
+							{
+								try
+								{
 									new CSharpLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), new DecompilationOptions() { FullDecompilation = true, CancellationToken = ct });
 								}
-								catch (Exception ex) {
+								catch (Exception ex)
+								{
 									writer.WriteLine(ex.ToString());
 									exception = ex;
 								}
 							}
-							lock (output) {
+							lock (output)
+							{
 								output.Write(asm.ShortName + " - " + w.Elapsed);
-								if (exception != null) {
+								if (exception != null)
+								{
 									output.Write(" - ");
 									output.Write(exception.GetType().Name);
 								}
@@ -72,7 +79,7 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources.DEBUGDecompile100x),  MenuCategory = nameof(Resources.Open),  MenuOrder = 2.6)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile100x), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
 	sealed class Decompile100TimesCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)
@@ -84,8 +91,10 @@ namespace ICSharpCode.ILSpy
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				options.CancellationToken = ct;
 				Stopwatch w = Stopwatch.StartNew();
-				for (int i = 0; i < numRuns; ++i) {
-					foreach (var node in nodes) {
+				for (int i = 0; i < numRuns; ++i)
+				{
+					foreach (var node in nodes)
+					{
 						node.Decompile(language, new PlainTextOutput(), options);
 					}
 				}

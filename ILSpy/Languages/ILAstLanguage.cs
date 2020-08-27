@@ -24,14 +24,15 @@ using System.Linq;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.ViewModels;
+
+using static System.Reflection.Metadata.PEReaderExtensions;
 
 using SRM = System.Reflection.Metadata;
-using static System.Reflection.Metadata.PEReaderExtensions;
-using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy
 {
@@ -51,12 +52,12 @@ namespace ICSharpCode.ILSpy
 		public Stepper Stepper { get; set; } = new Stepper();
 
 		readonly string name;
-		
+
 		protected ILAstLanguage(string name)
 		{
 			this.name = name;
 		}
-		
+
 		public override string Name { get { return name; } }
 
 		internal static IEnumerable<ILAstLanguage> GetDebugLanguages()
@@ -64,7 +65,7 @@ namespace ICSharpCode.ILSpy
 			yield return new TypedIL();
 			yield return new BlockIL(CSharpDecompiler.GetILTransforms());
 		}
-		
+
 		public override string FileExtension {
 			get {
 				return ".il";
@@ -82,8 +83,8 @@ namespace ICSharpCode.ILSpy
 
 		class TypedIL : ILAstLanguage
 		{
-			public TypedIL() : base("Typed IL") {}
-			
+			public TypedIL() : base("Typed IL") { }
+
 			public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);
@@ -125,16 +126,24 @@ namespace ICSharpCode.ILSpy
 				ILTransformContext context = decompiler.CreateILTransformContext(il);
 				context.Stepper.StepLimit = options.StepLimit;
 				context.Stepper.IsDebug = options.IsDebug;
-				try {
+				try
+				{
 					il.RunTransforms(transforms, context);
-				} catch (StepLimitReachedException) {
-				} catch (Exception ex) {
+				}
+				catch (StepLimitReachedException)
+				{
+				}
+				catch (Exception ex)
+				{
 					output.WriteLine(ex.ToString());
 					output.WriteLine();
 					output.WriteLine("ILAst after the crash:");
-				} finally {
+				}
+				finally
+				{
 					// update stepper even if a transform crashed unexpectedly
-					if (options.StepLimit == int.MaxValue) {
+					if (options.StepLimit == int.MaxValue)
+					{
 						Stepper = context.Stepper;
 						OnStepperUpdated(new EventArgs());
 					}
@@ -147,5 +156,5 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 	}
-	#endif
+#endif
 }

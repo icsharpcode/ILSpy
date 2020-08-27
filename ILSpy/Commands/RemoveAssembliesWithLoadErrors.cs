@@ -19,11 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources._RemoveAssembliesWithLoadErrors),  MenuCategory = nameof(Resources.Remove),  MenuOrder = 2.6)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._File), Header = nameof(Resources._RemoveAssembliesWithLoadErrors), MenuCategory = nameof(Resources.Remove), MenuOrder = 2.6)]
 	class RemoveAssembliesWithLoadErrors : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)
@@ -33,8 +34,10 @@ namespace ICSharpCode.ILSpy
 
 		public override void Execute(object parameter)
 		{
-			foreach (var asm in MainWindow.Instance.CurrentAssemblyList.GetAssemblies()) {
-				if (!asm.HasLoadError) continue;
+			foreach (var asm in MainWindow.Instance.CurrentAssemblyList.GetAssemblies())
+			{
+				if (!asm.HasLoadError)
+					continue;
 				var node = MainWindow.Instance.AssemblyListTreeNode.FindAssemblyNode(asm);
 				if (node != null && node.CanDelete())
 					node.Delete();

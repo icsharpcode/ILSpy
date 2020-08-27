@@ -48,7 +48,8 @@ namespace ICSharpCode.ILSpy.AddIn
 			};
 			process.Start();
 
-			if ((commandLineArguments != null) && commandLineArguments.Any()) {
+			if ((commandLineArguments != null) && commandLineArguments.Any())
+			{
 				// Only need a message to started process if there are any parameters to pass
 				SendMessage(ilSpyExe, "ILSpy:\r\n" + string.Join(Environment.NewLine, commandLineArguments), true);
 			}
@@ -62,17 +63,21 @@ namespace ICSharpCode.ILSpy.AddIn
 			Task.Run(async () => {
 				bool success = false;
 				int remainingAttempts = 20;
-				do {
+				do
+				{
 					NativeMethods.EnumWindows(
 						(hWnd, lParam) => {
 							string windowTitle = NativeMethods.GetWindowText(hWnd, 100);
-							if (windowTitle.StartsWith("ILSpy", StringComparison.Ordinal)) {
+							if (windowTitle.StartsWith("ILSpy", StringComparison.Ordinal))
+							{
 								string processName = NativeMethods.GetProcessNameFromWindow(hWnd);
 								Debug.WriteLine("Found {0:x4}: '{1}' in '{2}'", hWnd, windowTitle, processName);
-								if (string.Equals(processName, expectedProcessName, StringComparison.OrdinalIgnoreCase)) {
+								if (string.Equals(processName, expectedProcessName, StringComparison.OrdinalIgnoreCase))
+								{
 									IntPtr result = Send(hWnd, message);
 									Debug.WriteLine("WM_COPYDATA result: {0:x8}", result);
-									if (result == (IntPtr)1) {
+									if (result == (IntPtr)1)
+									{
 										if (activate)
 											NativeMethods.SetForegroundWindow(hWnd);
 										success = true;
@@ -97,15 +102,19 @@ namespace ICSharpCode.ILSpy.AddIn
 			CopyDataStruct lParam;
 			lParam.Padding = IntPtr.Zero;
 			lParam.Size = message.Length * 2;
-			fixed (char* buffer = message) {
+			fixed (char* buffer = message)
+			{
 				lParam.Buffer = (IntPtr)buffer;
 				IntPtr result;
 				// SendMessage with 3s timeout (e.g. when the target process is stopped in the debugger)
 				if (NativeMethods.SendMessageTimeout(
 					hWnd, NativeMethods.WM_COPYDATA, IntPtr.Zero, ref lParam,
-					SMTO_NORMAL, 3000, out result) != IntPtr.Zero) {
+					SMTO_NORMAL, 3000, out result) != IntPtr.Zero)
+				{
 					return result;
-				} else {
+				}
+				else
+				{
 					return IntPtr.Zero;
 				}
 			}

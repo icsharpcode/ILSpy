@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
@@ -95,7 +96,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentNullException(nameof(type));
 			if (baseType == null)
 				return false;
-			if (type.Compilation != baseType.Compilation) {
+			if (type.Compilation != baseType.Compilation)
+			{
 				throw new InvalidOperationException("Both arguments to IsDerivedFrom() must be from the same compilation.");
 			}
 			return type.GetAllBaseTypeDefinitions().Contains(baseType);
@@ -121,11 +123,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static IEnumerable<ITypeDefinition> GetDeclaringTypeDefinitions(this ITypeDefinition definition)
 		{
-			if (definition == null) {
+			if (definition == null)
+			{
 				throw new ArgumentNullException(nameof(definition));
 			}
 
-			while (definition != null) {
+			while (definition != null)
+			{
 				yield return definition;
 				definition = definition.DeclaringTypeDefinition;
 			}
@@ -145,7 +149,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				// If both classes and methods, or different classes (nested types)
 				// are involved, find the most specific one
 				int newNestingLevel = GetNestingLevel(type.Owner);
-				if (newNestingLevel > typeParameterOwnerNestingLevel) {
+				if (newNestingLevel > typeParameterOwnerNestingLevel)
+				{
 					typeParameterOwner = type.Owner;
 					typeParameterOwnerNestingLevel = newNestingLevel;
 				}
@@ -155,7 +160,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			static int GetNestingLevel(IEntity entity)
 			{
 				int level = 0;
-				while (entity != null) {
+				while (entity != null)
+				{
 					level++;
 					entity = entity.DeclaringTypeDefinition;
 				}
@@ -276,7 +282,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public static IType SkipModifiers(this IType ty)
 		{
-			while (ty is ModifiedType mt) {
+			while (ty is ModifiedType mt)
+			{
 				ty = mt.ElementType;
 			}
 			return ty;
@@ -338,7 +345,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (compilation == null)
 				throw new ArgumentNullException(nameof(compilation));
-			foreach (IModule asm in compilation.Modules) {
+			foreach (IModule asm in compilation.Modules)
+			{
 				ITypeDefinition def = asm.GetTypeDefinition(fullTypeName);
 				if (def != null)
 					return def;
@@ -359,7 +367,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (typeDef == null)
 				return null;
 			int typeParameterCount = topLevelTypeName.TypeParameterCount;
-			for (int i = 0; i < fullTypeName.NestingLevel; i++) {
+			for (int i = 0; i < fullTypeName.NestingLevel; i++)
+			{
 				string name = fullTypeName.GetNestedTypeName(i);
 				typeParameterCount += fullTypeName.GetNestedTypeAdditionalTypeParameterCount(i);
 				typeDef = FindNestedType(typeDef, name, typeParameterCount);
@@ -371,7 +380,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		static ITypeDefinition FindNestedType(ITypeDefinition typeDef, string name, int typeParameterCount)
 		{
-			foreach (var nestedType in typeDef.NestedTypes) {
+			foreach (var nestedType in typeDef.NestedTypes)
+			{
 				if (nestedType.Name == name && nestedType.TypeParameterCount == typeParameterCount)
 					return nestedType;
 			}
@@ -431,15 +441,23 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </returns>
 		public static IEnumerable<IAttribute> GetAttributes(this IEntity entity, bool inherit)
 		{
-			if (inherit) {
-				if (entity is ITypeDefinition td) {
+			if (inherit)
+			{
+				if (entity is ITypeDefinition td)
+				{
 					return InheritanceHelper.GetAttributes(td);
-				} else if (entity is IMember m) {
+				}
+				else if (entity is IMember m)
+				{
 					return InheritanceHelper.GetAttributes(m);
-				} else {
+				}
+				else
+				{
 					throw new NotSupportedException("Unknown entity type");
 				}
-			} else {
+			}
+			else
+			{
 				return entity.GetAttributes();
 			}
 		}
@@ -486,13 +504,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#region ResolveResult
 		public static ISymbol GetSymbol(this ResolveResult rr)
 		{
-			if (rr is LocalResolveResult) {
+			if (rr is LocalResolveResult)
+			{
 				return ((LocalResolveResult)rr).Variable;
-			} else if (rr is MemberResolveResult) {
+			}
+			else if (rr is MemberResolveResult)
+			{
 				return ((MemberResolveResult)rr).Member;
-			} else if (rr is TypeResolveResult) {
+			}
+			else if (rr is TypeResolveResult)
+			{
 				return ((TypeResolveResult)rr).Type.GetDefinition();
-			} else if (rr is ConversionResolveResult) {
+			}
+			else if (rr is ConversionResolveResult)
+			{
 				return ((ConversionResolveResult)rr).Input.GetSymbol();
 			}
 
@@ -503,13 +528,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IType GetElementTypeFromIEnumerable(this IType collectionType, ICompilation compilation, bool allowIEnumerator, out bool? isGeneric)
 		{
 			bool foundNonGenericIEnumerable = false;
-			foreach (IType baseType in collectionType.GetAllBaseTypes()) {
+			foreach (IType baseType in collectionType.GetAllBaseTypes())
+			{
 				ITypeDefinition baseTypeDef = baseType.GetDefinition();
-				if (baseTypeDef != null) {
+				if (baseTypeDef != null)
+				{
 					KnownTypeCode typeCode = baseTypeDef.KnownTypeCode;
-					if (typeCode == KnownTypeCode.IEnumerableOfT || (allowIEnumerator && typeCode == KnownTypeCode.IEnumeratorOfT)) {
+					if (typeCode == KnownTypeCode.IEnumerableOfT || (allowIEnumerator && typeCode == KnownTypeCode.IEnumeratorOfT))
+					{
 						ParameterizedType pt = baseType as ParameterizedType;
-						if (pt != null) {
+						if (pt != null)
+						{
 							isGeneric = true;
 							return pt.GetTypeArgument(0);
 						}
@@ -519,7 +548,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 			// System.Collections.IEnumerable found in type hierarchy -> Object is element type.
-			if (foundNonGenericIEnumerable) {
+			if (foundNonGenericIEnumerable)
+			{
 				isGeneric = false;
 				return compilation.FindType(KnownTypeCode.Object);
 			}
@@ -545,10 +575,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static bool IsDirectImportOf(this ITypeDefinition type, IModule module)
 		{
 			var moduleReference = type.ParentModule;
-			foreach (var asmRef in module.PEFile.AssemblyReferences) {
+			foreach (var asmRef in module.PEFile.AssemblyReferences)
+			{
 				if (asmRef.FullName == moduleReference.FullAssemblyName)
 					return true;
-				if (asmRef.Name == "netstandard" && asmRef.GetPublicKeyToken() != null) {
+				if (asmRef.Name == "netstandard" && asmRef.GetPublicKeyToken() != null)
+				{
 					var referencedModule = module.Compilation.FindModuleByReference(asmRef);
 					if (referencedModule != null && !referencedModule.PEFile.GetTypeForwarder(type.FullTypeName).IsNil)
 						return true;
@@ -559,13 +591,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public static IModule FindModuleByReference(this ICompilation compilation, IAssemblyReference assemblyName)
 		{
-			foreach (var module in compilation.Modules) {
-				if (string.Equals(module.FullAssemblyName, assemblyName.FullName, StringComparison.OrdinalIgnoreCase)) {
+			foreach (var module in compilation.Modules)
+			{
+				if (string.Equals(module.FullAssemblyName, assemblyName.FullName, StringComparison.OrdinalIgnoreCase))
+				{
 					return module;
 				}
 			}
-			foreach (var module in compilation.Modules) {
-				if (string.Equals(module.Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase)) {
+			foreach (var module in compilation.Modules)
+			{
+				if (string.Equals(module.Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase))
+				{
 					return module;
 				}
 			}

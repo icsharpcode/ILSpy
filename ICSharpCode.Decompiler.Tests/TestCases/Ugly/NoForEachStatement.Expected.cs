@@ -9,8 +9,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 		public static void SimpleNonGenericForeach(IEnumerable enumerable)
 		{
 			IEnumerator enumerator = enumerable.GetEnumerator();
-			try {
-				while (enumerator.MoveNext()) {
+			try
+			{
+				while (enumerator.MoveNext())
+				{
 #if ROSLYN && OPT
 					Console.WriteLine(enumerator.Current);
 #else
@@ -18,9 +20,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 					Console.WriteLine(current);
 #endif
 				}
-			} finally {
+			}
+			finally
+			{
 				IDisposable disposable = enumerator as IDisposable;
-				if (disposable != null) { 
+				if (disposable != null)
+				{ 
 					disposable.Dispose();
 				}
 			}
@@ -28,8 +33,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		public static void SimpleForeachOverInts(IEnumerable<int> enumerable)
 		{
-			using (IEnumerator<int> enumerator = enumerable.GetEnumerator()) {
-				while (enumerator.MoveNext()) {
+			using (IEnumerator<int> enumerator = enumerable.GetEnumerator())
+			{
+				while (enumerator.MoveNext())
+				{
 #if ROSLYN && OPT
 					Console.WriteLine(enumerator.Current);
 #else

@@ -22,8 +22,10 @@
 
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class LinePositionHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class LinePositionHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.LinePosition;
 
 		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) => null;

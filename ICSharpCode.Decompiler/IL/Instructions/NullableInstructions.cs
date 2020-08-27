@@ -18,6 +18,7 @@
 
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.IL.Transforms;
 
 namespace ICSharpCode.Decompiler.IL
@@ -68,7 +69,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.ResultType = unwrappedType;
 			this.RefInput = refInput;
-			if (unwrappedType == StackType.Ref) {
+			if (unwrappedType == StackType.Ref)
+			{
 				Debug.Assert(refInput);
 			}
 		}
@@ -76,9 +78,12 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			if (this.RefInput) {
+			if (this.RefInput)
+			{
 				Debug.Assert(Argument.ResultType == StackType.Ref, "nullable.unwrap expects reference to nullable type as input");
-			} else {
+			}
+			else
+			{
 				Debug.Assert(Argument.ResultType == StackType.O, "nullable.unwrap expects nullable type as input");
 			}
 			Debug.Assert(Ancestors.Any(a => a is NullableRewrap));
@@ -87,7 +92,8 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write("nullable.unwrap.");
-			if (RefInput) {
+			if (RefInput)
+			{
 				output.Write("refinput.");
 			}
 			output.Write(ResultType);

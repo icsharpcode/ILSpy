@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
@@ -37,37 +38,37 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole PointerRole = new TokenRole("*");
 		public static readonly Role<Identifier> CallingConventionRole = new Role<Identifier>("Target", Identifier.Null);
-		
+
 		public string CallingConvention {
 			get {
-				return GetChildByRole (CallingConventionRole).Name;
+				return GetChildByRole(CallingConventionRole).Name;
 			}
 			set {
-				SetChildByRole (CallingConventionRole, Identifier.Create (value));
+				SetChildByRole(CallingConventionRole, Identifier.Create(value));
 			}
 		}
 
 		public Identifier CallingConventionIdentifier => GetChildByRole(CallingConventionRole);
-		
+
 		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole (Roles.TypeArgument); }
+			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
 			visitor.VisitFunctionPointerType(this);
 		}
-		
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitFunctionPointerType(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
 			return visitor.VisitFunctionPointerType(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			return other is FunctionPointerType o && MatchString(this.CallingConvention, o.CallingConvention)

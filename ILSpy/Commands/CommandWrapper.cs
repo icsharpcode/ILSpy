@@ -39,8 +39,7 @@ namespace ICSharpCode.ILSpy
 				return command;
 		}
 
-		public event EventHandler CanExecuteChanged
-		{
+		public event EventHandler CanExecuteChanged {
 			add { wrappedCommand.CanExecuteChanged += value; }
 			remove { wrappedCommand.CanExecuteChanged -= value; }
 		}

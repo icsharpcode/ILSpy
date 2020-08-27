@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
+
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -32,29 +33,36 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		ILTransformContext context;
 		ITypeResolveContext decompilationContext;
 		readonly Stack<MethodDefinitionHandle> activeMethods = new Stack<MethodDefinitionHandle>();
-		
+
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
 			if (!context.Settings.AnonymousMethods)
 				return;
 			var prevContext = this.context;
 			var prevDecompilationContext = this.decompilationContext;
-			try {
+			try
+			{
 				activeMethods.Push((MethodDefinitionHandle)function.Method.MetadataToken);
 				this.context = context;
 				this.decompilationContext = new SimpleTypeResolveContext(function.Method);
 				var cancellationToken = context.CancellationToken;
-				foreach (var inst in function.Descendants) {
+				foreach (var inst in function.Descendants)
+				{
 					cancellationToken.ThrowIfCancellationRequested();
-					if (inst is NewObj call) {
+					if (inst is NewObj call)
+					{
 						context.StepStartGroup($"TransformDelegateConstruction {call.StartILOffset}", call);
 						ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
-						if (f != null && target is IInstructionWithVariableOperand instWithVar) {
-							if (instWithVar.Variable.Kind == VariableKind.Local) {
+						if (f != null && target is IInstructionWithVariableOperand instWithVar)
+						{
+							if (instWithVar.Variable.Kind == VariableKind.Local)
+							{
 								instWithVar.Variable.Kind = VariableKind.DisplayClassLocal;
 							}
-							if (instWithVar.Variable.IsSingleDefinition && instWithVar.Variable.StoreInstructions.SingleOrDefault() is StLoc store) {
-								if (store.Value is NewObj) {
+							if (instWithVar.Variable.IsSingleDefinition && instWithVar.Variable.StoreInstructions.SingleOrDefault() is StLoc store)
+							{
+								if (store.Value is NewObj)
+								{
 									instWithVar.Variable.CaptureScope = BlockContainer.FindClosestContainer(store);
 								}
 							}
@@ -62,7 +70,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						context.StepEndGroup();
 					}
 				}
-			} finally {
+			}
+			finally
+			{
 				this.context = prevContext;
 				this.decompilationContext = prevDecompilationContext;
 				activeMethods.Pop();
@@ -79,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var typeKind = inst.Method.DeclaringType.Kind;
 			return typeKind == TypeKind.Delegate || typeKind == TypeKind.Unknown;
 		}
-		
+
 		static bool IsAnonymousMethod(ITypeDefinition decompiledTypeDefinition, IMethod method)
 		{
 			if (method == null)
@@ -97,27 +107,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (method.ReturnType.ContainsAnonymousType())
 				return true;
-			foreach (var p in method.Parameters) {
+			foreach (var p in method.Parameters)
+			{
 				if (p.Type.ContainsAnonymousType())
 					return true;
 			}
 			return false;
 		}
-		
+
 		static GenericContext? GenericContextFromTypeArguments(TypeParameterSubstitution subst)
 		{
 			var classTypeParameters = new List<ITypeParameter>();
 			var methodTypeParameters = new List<ITypeParameter>();
-			if (subst.ClassTypeArguments != null) {
-				foreach (var t in subst.ClassTypeArguments) {
+			if (subst.ClassTypeArguments != null)
+			{
+				foreach (var t in subst.ClassTypeArguments)
+				{
 					if (t is ITypeParameter tp)
 						classTypeParameters.Add(tp);
 					else
 						return null;
 				}
 			}
-			if (subst.MethodTypeArguments != null) {
-				foreach (var t in subst.MethodTypeArguments) {
+			if (subst.MethodTypeArguments != null)
+			{
+				foreach (var t in subst.MethodTypeArguments)
+				{
 					if (t is ITypeParameter tp)
 						methodTypeParameters.Add(tp);
 					else
@@ -143,7 +158,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!ValidateDelegateTarget(target))
 				return null;
 			var handle = (MethodDefinitionHandle)targetMethod.MetadataToken;
-			if (activeMethods.Contains(handle)) {
+			if (activeMethods.Contains(handle))
+			{
 				this.context.Function.Warnings.Add(" Found self-referencing delegate construction. Abort transformation to avoid stack overflow.");
 				return null;
 			}
@@ -163,7 +179,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			function.CheckInvariant(ILPhase.Normal);
 
 			var contextPrefix = targetMethod.Name;
-			foreach (ILVariable v in function.Variables.Where(v => v.Kind != VariableKind.Parameter)) {
+			foreach (ILVariable v in function.Variables.Where(v => v.Kind != VariableKind.Parameter))
+			{
 				v.Name = contextPrefix + v.Name;
 			}
 
@@ -183,7 +200,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private static bool ValidateDelegateTarget(ILInstruction inst)
 		{
-			switch (inst) {
+			switch (inst)
+			{
 				case LdNull _:
 					return true;
 				case LdLoc ldloc:
@@ -196,12 +214,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// TODO : ldfld chains must be validated more thoroughly, i.e., we should make sure
 					// that the value of the field is never changed.
 					ILInstruction target = ldobj;
-					while (target is LdObj || target is LdFlda) {
-						if (target is LdObj o) {
+					while (target is LdObj || target is LdFlda)
+					{
+						if (target is LdObj o)
+						{
 							target = o.Target;
 							continue;
 						}
-						if (target is LdFlda f) {
+						if (target is LdFlda f)
+						{
 							target = f.Target;
 							continue;
 						}
@@ -225,31 +246,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			readonly ILVariable thisVariable;
 			readonly ILInstruction target;
-			
+
 			public ReplaceDelegateTargetVisitor(ILInstruction target, ILVariable thisVariable)
 			{
 				this.target = target;
 				this.thisVariable = thisVariable;
 			}
-			
+
 			protected override void Default(ILInstruction inst)
 			{
-				foreach (var child in inst.Children) {
+				foreach (var child in inst.Children)
+				{
 					child.AcceptVisitor(this);
 				}
 			}
 
 			protected internal override void VisitILFunction(ILFunction function)
 			{
-				if (function == thisVariable?.Function) {
+				if (function == thisVariable?.Function)
+				{
 					ILVariable v = null;
-					switch (target) {
+					switch (target)
+					{
 						case LdLoc l:
 							v = l.Variable;
 							break;
 						case LdObj lo:
 							ILInstruction inner = lo.Target;
-							while (inner is LdFlda ldf) {
+							while (inner is LdFlda ldf)
+							{
 								inner = ldf.Target;
 							}
 							if (inner is LdLoc l2)
@@ -264,7 +289,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			protected internal override void VisitLdLoc(LdLoc inst)
 			{
-				if (inst.Variable == thisVariable) {
+				if (inst.Variable == thisVariable)
+				{
 					inst.ReplaceWith(target.Clone());
 					return;
 				}
@@ -273,7 +299,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			protected internal override void VisitLdObj(LdObj inst)
 			{
-				if (inst.Target.MatchLdLoca(thisVariable)) {
+				if (inst.Target.MatchLdLoca(thisVariable))
+				{
 					inst.ReplaceWith(target.Clone());
 					return;
 				}

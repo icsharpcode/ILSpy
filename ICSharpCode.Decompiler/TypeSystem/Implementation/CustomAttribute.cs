@@ -22,6 +22,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
+
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -75,22 +76,29 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		void DecodeValue()
 		{
-			lock (this) {
-				try {
-					if (!valueDecoded) {
+			lock (this)
+			{
+				try
+				{
+					if (!valueDecoded)
+					{
 						var metadata = module.metadata;
 						var attr = metadata.GetCustomAttribute(handle);
 						value = attr.DecodeValue(module.TypeProvider);
 						valueDecoded = true;
 					}
-				} catch (EnumUnderlyingTypeResolveException) {
+				}
+				catch (EnumUnderlyingTypeResolveException)
+				{
 					value = new CustomAttributeValue<IType>(
 						ImmutableArray<CustomAttributeTypedArgument<IType>>.Empty,
 						ImmutableArray<CustomAttributeNamedArgument<IType>>.Empty
 					);
 					hasDecodeErrors = true;
 					valueDecoded = true; // in case of errors, never try again.
-				} catch (BadImageFormatException) {
+				}
+				catch (BadImageFormatException)
+				{
 					value = new CustomAttributeValue<IType>(
 						ImmutableArray<CustomAttributeTypedArgument<IType>>.Empty,
 						ImmutableArray<CustomAttributeNamedArgument<IType>>.Empty
@@ -100,10 +108,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 		}
-		
+
 		internal static IMember MemberForNamedArgument(IType attributeType, CustomAttributeNamedArgument<IType> namedArgument)
 		{
-			switch (namedArgument.Kind) {
+			switch (namedArgument.Kind)
+			{
 				case CustomAttributeNamedArgumentKind.Field:
 					return attributeType.GetFields(f => f.Name == namedArgument.Name).LastOrDefault();
 				case CustomAttributeNamedArgumentKind.Property:

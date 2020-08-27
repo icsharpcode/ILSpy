@@ -18,9 +18,11 @@
 
 using System.IO;
 using System.Linq;
+
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+
 using Microsoft.Win32;
 namespace ICSharpCode.ILSpy
 {
@@ -30,14 +32,17 @@ namespace ICSharpCode.ILSpy
 		public void Execute(TextViewContext context)
 		{
 			var assembly = (context.SelectedTreeNodes?.FirstOrDefault() as AssemblyTreeNode)?.LoadedAssembly;
-			if (assembly == null) return;
+			if (assembly == null)
+				return;
 			OpenFileDialog dlg = new OpenFileDialog();
 			dlg.FileName = DecompilerTextView.CleanUpName(assembly.ShortName) + ".pdb";
 			dlg.Filter = Resources.PortablePDBPdbAllFiles;
 			dlg.InitialDirectory = Path.GetDirectoryName(assembly.FileName);
-			if (dlg.ShowDialog() != true) return;
+			if (dlg.ShowDialog() != true)
+				return;
 
-			using (context.TreeView.LockUpdates()) {
+			using (context.TreeView.LockUpdates())
+			{
 				assembly.PdbFileOverride = dlg.FileName;
 				assembly.AssemblyList.ReloadAssembly(assembly);
 			}

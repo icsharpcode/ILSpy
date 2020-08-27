@@ -21,16 +21,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		int thisValue;
 
-		public int this[int i]
-		{
+		public int this[int i] {
 			get { Console.WriteLine("get_this({0})", i); return i * i; }
-			set { Console.WriteLine("set_this({0}, {1})", i, value);  thisValue = value; }
+			set { Console.WriteLine("set_this({0}, {1})", i, value); thisValue = value; }
 		}
 
 		public string AutoProp { get; set; }
 
-		public double PISquare
-		{
+		public double PISquare {
 			get { Console.WriteLine("get_PISquare"); return Math.Pow(Math.PI, 2); }
 		}
 	}

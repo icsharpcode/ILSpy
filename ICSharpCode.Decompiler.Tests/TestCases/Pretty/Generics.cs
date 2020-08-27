@@ -73,7 +73,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public void Grow(int capacity)
 			{
-				if (capacity >= arr.Length) {
+				if (capacity >= arr.Length)
+				{
 					Size(capacity);
 				}
 			}

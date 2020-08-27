@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
@@ -32,13 +33,13 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// Gets the size arguments.
 		/// </summary>
 		public readonly IReadOnlyList<ResolveResult> SizeArguments;
-		
+
 		/// <summary>
 		/// Gets the initializer elements.
 		/// This field may be null if no initializer was specified.
 		/// </summary>
 		public readonly IReadOnlyList<ResolveResult> InitializerElements;
-		
+
 		public ArrayCreateResolveResult(IType arrayType, IReadOnlyList<ResolveResult> sizeArguments, IReadOnlyList<ResolveResult> initializerElements)
 			: base(arrayType)
 		{
@@ -47,7 +48,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.SizeArguments = sizeArguments;
 			this.InitializerElements = initializerElements;
 		}
-		
+
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{
 			if (InitializerElements != null)

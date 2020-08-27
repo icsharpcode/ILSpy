@@ -100,7 +100,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void TestCallIssue1281(params object[] args)
 		{
 			Console.Write("TestCallIssue1281: count = " + args.Length + ": ");
-			foreach (var arg in args) {
+			foreach (var arg in args)
+			{
 				Console.Write(arg);
 				Console.Write(", ");
 			}

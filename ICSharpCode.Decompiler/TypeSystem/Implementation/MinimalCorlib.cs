@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -67,7 +68,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public ITypeDefinition GetTypeDefinition(TopLevelTypeName topLevelTypeName)
 		{
-			foreach (var typeDef in typeDefinitions) {
+			foreach (var typeDef in typeDefinitions)
+			{
 				if (typeDef.FullTypeName == topLevelTypeName)
 					return typeDef;
 			}
@@ -172,7 +174,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			bool? IType.IsReferenceType {
 				get {
-					switch (typeKind) {
+					switch (typeKind)
+					{
 						case TypeKind.Class:
 						case TypeKind.Interface:
 							return true;

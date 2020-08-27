@@ -18,6 +18,7 @@
 
 using System;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -40,9 +41,11 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		protected override void LoadChildren()
 		{
 			var analyzers = App.ExportProvider.GetExports<IAnalyzer, IAnalyzerMetadata>("Analyzer");
-			foreach (var lazy in analyzers.OrderBy(item => item.Metadata.Order)) {
+			foreach (var lazy in analyzers.OrderBy(item => item.Metadata.Order))
+			{
 				var analyzer = lazy.Value;
-				if (analyzer.Show(analyzedModule)) {
+				if (analyzer.Show(analyzedModule))
+				{
 					this.Children.Add(new AnalyzerSearchTreeNode(analyzedModule, analyzer, lazy.Metadata.Header));
 				}
 			}

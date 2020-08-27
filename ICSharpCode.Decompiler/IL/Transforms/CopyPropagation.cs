@@ -16,11 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -45,12 +46,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			var splitVariables = new HashSet<ILVariable>(ILVariableEqualityComparer.Instance);
-			foreach (var g in function.Variables.GroupBy(v => v, ILVariableEqualityComparer.Instance)) {
-				if (g.Count() > 1) {
+			foreach (var g in function.Variables.GroupBy(v => v, ILVariableEqualityComparer.Instance))
+			{
+				if (g.Count() > 1)
+				{
 					splitVariables.Add(g.Key);
 				}
 			}
-			foreach (var block in function.Descendants.OfType<Block>()) {
+			foreach (var block in function.Descendants.OfType<Block>())
+			{
 				if (block.Kind != BlockKind.ControlFlow)
 					continue;
 				RunOnBlock(block, context, splitVariables);
@@ -59,24 +63,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static void RunOnBlock(Block block, ILTransformContext context, HashSet<ILVariable> splitVariables = null)
 		{
-			for (int i = 0; i < block.Instructions.Count; i++) {
-				if (block.Instructions[i].MatchStLoc(out ILVariable v, out ILInstruction copiedExpr)) {
-					if (v.IsSingleDefinition && v.LoadCount == 0 && v.Kind == VariableKind.StackSlot) {
+			for (int i = 0; i < block.Instructions.Count; i++)
+			{
+				if (block.Instructions[i].MatchStLoc(out ILVariable v, out ILInstruction copiedExpr))
+				{
+					if (v.IsSingleDefinition && v.LoadCount == 0 && v.Kind == VariableKind.StackSlot)
+					{
 						// dead store to stack
-						if (SemanticHelper.IsPure(copiedExpr.Flags)) {
+						if (SemanticHelper.IsPure(copiedExpr.Flags))
+						{
 							// no-op -> delete
 							context.Step("remove dead store to stack: no-op -> delete", block.Instructions[i]);
 							block.Instructions.RemoveAt(i);
 							// This can open up new inlining opportunities:
 							int c = ILInlining.InlineInto(block, i, InliningOptions.None, context: context);
 							i -= c + 1;
-						} else {
+						}
+						else
+						{
 							// evaluate the value for its side-effects
 							context.Step("remove dead store to stack: evaluate the value for its side-effects", block.Instructions[i]);
 							copiedExpr.AddILRange(block.Instructions[i]);
 							block.Instructions[i] = copiedExpr;
 						}
-					} else if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr, splitVariables)) {
+					}
+					else if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr, splitVariables))
+					{
 						DoPropagate(v, copiedExpr, block, ref i, context);
 					}
 				}
@@ -88,13 +100,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Debug.Assert(target.StackType == value.ResultType);
 			if (target.Type.IsSmallIntegerType())
 				return false;
-			if (splitVariables != null && splitVariables.Contains(target)) {
+			if (splitVariables != null && splitVariables.Contains(target))
+			{
 				return false; // non-local code move might change semantics when there's split variables
 			}
-			switch (value.OpCode) {
+			switch (value.OpCode)
+			{
 				case OpCode.LdLoca:
-//				case OpCode.LdElema:
-//				case OpCode.LdFlda:
+				//				case OpCode.LdElema:
+				//				case OpCode.LdFlda:
 				case OpCode.LdsFlda:
 					// All address-loading instructions always return the same value for a given operand/argument combination,
 					// so they can be safely copied.
@@ -103,10 +117,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				case OpCode.LdLoc:
 					var v = ((LdLoc)value).Variable;
-					if (splitVariables != null && splitVariables.Contains(v)) {
+					if (splitVariables != null && splitVariables.Contains(v))
+					{
 						return false; // non-local code move might change semantics when there's split variables
 					}
-					switch (v.Kind) {
+					switch (v.Kind)
+					{
 						case VariableKind.Parameter:
 							// Parameters can be copied only if they aren't assigned to (directly or indirectly via ldarga)
 							// note: the initialization by the caller is the first store -> StoreCount must be 1
@@ -129,7 +145,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			context.Step($"Copy propagate {v.Name}", copiedExpr);
 			// un-inline the arguments of the ldArg instruction
 			ILVariable[] uninlinedArgs = new ILVariable[copiedExpr.Children.Count];
-			for (int j = 0; j < uninlinedArgs.Length; j++) {
+			for (int j = 0; j < uninlinedArgs.Length; j++)
+			{
 				var arg = copiedExpr.Children[j];
 				var type = context.TypeSystem.FindType(arg.ResultType.ToKnownTypeCode());
 				uninlinedArgs[j] = new ILVariable(VariableKind.StackSlot, type, arg.ResultType) {
@@ -140,9 +157,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			v.Function.Variables.AddRange(uninlinedArgs);
 			// perform copy propagation:
-			foreach (var expr in v.LoadInstructions.ToArray()) {
+			foreach (var expr in v.LoadInstructions.ToArray())
+			{
 				var clone = copiedExpr.Clone();
-				for (int j = 0; j < uninlinedArgs.Length; j++) {
+				for (int j = 0; j < uninlinedArgs.Length; j++)
+				{
 					clone.Children[j].ReplaceWith(new LdLoc(uninlinedArgs[j]));
 				}
 				expr.ReplaceWith(clone);

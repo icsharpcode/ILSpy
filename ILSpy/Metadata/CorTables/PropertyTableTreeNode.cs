@@ -52,9 +52,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<PropertyDefEntry>();
 			PropertyDefEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.PropertyDefinitions) {
+			foreach (var row in metadata.PropertyDefinitions)
+			{
 				PropertyDefEntry entry = new PropertyDefEntry(module, row);
-				if (entry.RID == this.scrollTarget) {
+				if (entry.RID == this.scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -64,7 +66,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 

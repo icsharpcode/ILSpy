@@ -36,6 +36,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using System.Xml;
+
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
@@ -55,6 +56,7 @@ using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
+
 using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy.TextView
@@ -73,22 +75,24 @@ namespace ICSharpCode.ILSpy.TextView
 		FoldingManager foldingManager;
 		ILSpyTreeNode[] decompiledNodes;
 		Uri currentAddress;
-		
+
 		DefinitionLookup definitionLookup;
 		TextSegmentCollection<ReferenceSegment> references;
 		CancellationTokenSource currentCancellationTokenSource;
-		
+
 		readonly TextMarkerService textMarkerService;
 		readonly List<ITextMarker> localReferenceMarks = new List<ITextMarker>();
-		
+
 		#region Constructor
 		public DecompilerTextView()
 		{
 			HighlightingManager.Instance.RegisterHighlighting(
 				"ILAsm", new string[] { ".il" },
 				delegate {
-					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "ILAsm-Mode.xshd")) {
-						using (XmlTextReader reader = new XmlTextReader(s)) {
+					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "ILAsm-Mode.xshd"))
+					{
+						using (XmlTextReader reader = new XmlTextReader(s))
+						{
 							return HighlightingLoader.Load(reader, HighlightingManager.Instance);
 						}
 					}
@@ -97,8 +101,10 @@ namespace ICSharpCode.ILSpy.TextView
 			HighlightingManager.Instance.RegisterHighlighting(
 				"C#", new string[] { ".cs" },
 				delegate {
-					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "CSharp-Mode.xshd")) {
-						using (XmlTextReader reader = new XmlTextReader(s)) {
+					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "CSharp-Mode.xshd"))
+					{
+						using (XmlTextReader reader = new XmlTextReader(s))
+						{
 							return HighlightingLoader.Load(reader, HighlightingManager.Instance);
 						}
 					}
@@ -107,8 +113,10 @@ namespace ICSharpCode.ILSpy.TextView
 			HighlightingManager.Instance.RegisterHighlighting(
 				"Asm", new string[] { ".s", ".asm" },
 				delegate {
-					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "Asm-Mode.xshd")) {
-						using (XmlTextReader reader = new XmlTextReader(s)) {
+					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "Asm-Mode.xshd"))
+					{
+						using (XmlTextReader reader = new XmlTextReader(s))
+						{
 							return HighlightingLoader.Load(reader, HighlightingManager.Instance);
 						}
 					}
@@ -136,7 +144,7 @@ namespace ICSharpCode.ILSpy.TextView
 			// disable Tab editing command (useless for read-only editor); allow using tab for focus navigation instead
 			RemoveEditCommand(EditingCommands.TabForward);
 			RemoveEditCommand(EditingCommands.TabBackward);
-			
+
 			textMarkerService = new TextMarkerService(textEditor.TextArea.TextView);
 			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
@@ -146,9 +154,9 @@ namespace ICSharpCode.ILSpy.TextView
 			// SearchPanel
 			SearchPanel.Install(textEditor.TextArea)
 				.RegisterCommands(Application.Current.MainWindow.CommandBindings);
-			
+
 			ShowLineMargin();
-			
+
 			// add marker service & margin
 			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
@@ -167,20 +175,23 @@ namespace ICSharpCode.ILSpy.TextView
 				handler.CommandBindings.Remove(commandBinding);
 		}
 		#endregion
-		
+
 		#region Line margin
 
 		void CurrentDisplaySettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == "ShowLineNumbers") {
+			if (e.PropertyName == "ShowLineNumbers")
+			{
 				ShowLineMargin();
 			}
 		}
-		
+
 		void ShowLineMargin()
 		{
-			foreach (var margin in this.textEditor.TextArea.LeftMargins) {
-				if (margin is LineNumberMargin || margin is System.Windows.Shapes.Line) {
+			foreach (var margin in this.textEditor.TextArea.LeftMargins)
+			{
+				if (margin is LineNumberMargin || margin is System.Windows.Shapes.Line)
+				{
 					margin.Visibility = DisplaySettingsPanel.CurrentDisplaySettings.ShowLineNumbers ? Visibility.Visible : Visibility.Collapsed;
 				}
 			}
@@ -194,7 +205,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void TextViewMouseHover(object sender, MouseEventArgs e)
 		{
-			if (!TryCloseExistingPopup(false)) {
+			if (!TryCloseExistingPopup(false))
+			{
 				return;
 			}
 			TextViewPosition? position = GetPositionFromMousePosition();
@@ -207,11 +219,13 @@ namespace ICSharpCode.ILSpy.TextView
 			if (seg == null)
 				return;
 			object content = GenerateTooltip(seg);
-	
-			if (content != null) {
+
+			if (content != null)
+			{
 				popupToolTip = content as Popup;
 
-				if (popupToolTip != null) {
+				if (popupToolTip != null)
+				{
 					var popupPosition = GetPopupPosition(e);
 					popupToolTip.Closed += ToolTipClosed;
 					popupToolTip.HorizontalOffset = popupPosition.X;
@@ -221,19 +235,24 @@ namespace ICSharpCode.ILSpy.TextView
 					e.Handled = true;
 					popupToolTip.IsOpen = true;
 					distanceToPopupLimit = double.PositiveInfinity; // reset limit; we'll re-calculate it on the next mouse movement
-				} else {
-					if (toolTip == null) {
+				}
+				else
+				{
+					if (toolTip == null)
+					{
 						toolTip = new ToolTip();
 						toolTip.Closed += ToolTipClosed;
 					}
 					toolTip.PlacementTarget = this; // required for property inheritance
 
-					if (content is string s) {
+					if (content is string s)
+					{
 						toolTip.Content = new TextBlock {
 							Text = s,
 							TextWrapping = TextWrapping.Wrap
 						};
-					} else
+					}
+					else
 						toolTip.Content = content;
 
 					e.Handled = true;
@@ -244,8 +263,10 @@ namespace ICSharpCode.ILSpy.TextView
 
 		bool TryCloseExistingPopup(bool mouseClick)
 		{
-			if (popupToolTip != null) {
-				if (popupToolTip.IsOpen && !mouseClick && popupToolTip is FlowDocumentTooltip t && !t.CloseWhenMouseMovesAway) {
+			if (popupToolTip != null)
+			{
+				if (popupToolTip.IsOpen && !mouseClick && popupToolTip is FlowDocumentTooltip t && !t.CloseWhenMouseMovesAway)
+				{
 					return false; // Popup does not want to be closed yet
 				}
 				popupToolTip.IsOpen = false;
@@ -261,13 +282,16 @@ namespace ICSharpCode.ILSpy.TextView
 			Point positionInPixels;
 			// align Popup with line bottom
 			TextViewPosition? logicalPos = textEditor.GetPositionFromPoint(mousePos);
-			if (logicalPos.HasValue) {
+			if (logicalPos.HasValue)
+			{
 				var textView = textEditor.TextArea.TextView;
 				positionInPixels =
 					textView.PointToScreen(
 						textView.GetVisualPosition(logicalPos.Value, VisualYPosition.LineBottom) - textView.ScrollOffset);
 				positionInPixels.X -= 4;
-			} else {
+			}
+			else
+			{
 				positionInPixels = PointToScreen(mousePos + new Vector(-4, 6));
 			}
 			// use device independent units, because Popup Left/Top are in independent units
@@ -277,7 +301,8 @@ namespace ICSharpCode.ILSpy.TextView
 		void TextViewMouseHoverStopped(object sender, MouseEventArgs e)
 		{
 			// Non-popup tooltips get closed as soon as the mouse starts moving again
-			if (toolTip != null) {
+			if (toolTip != null)
+			{
 				toolTip.IsOpen = false;
 				e.Handled = true;
 			}
@@ -288,12 +313,16 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void TextEditorMouseMove(object sender, MouseEventArgs e)
 		{
-			if (popupToolTip != null) {
+			if (popupToolTip != null)
+			{
 				double distanceToPopup = GetDistanceToPopup(e);
-				if (distanceToPopup > distanceToPopupLimit) {
+				if (distanceToPopup > distanceToPopupLimit)
+				{
 					// Close popup if mouse moved away, exceeding the limit
 					TryCloseExistingPopup(false);
-				} else {
+				}
+				else
+				{
 					// reduce distanceToPopupLimit
 					distanceToPopupLimit = Math.Min(distanceToPopupLimit, distanceToPopup + MaxMovementAwayFromPopup);
 				}
@@ -319,7 +348,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void TextEditorMouseLeave(object sender, MouseEventArgs e)
 		{
-			if (popupToolTip != null && !popupToolTip.IsMouseOver) {
+			if (popupToolTip != null && !popupToolTip.IsMouseOver)
+			{
 				// do not close popup if mouse moved from editor to popup
 				TryCloseExistingPopup(false);
 			}
@@ -334,10 +364,12 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void ToolTipClosed(object sender, EventArgs e)
 		{
-			if (toolTip == sender) {
+			if (toolTip == sender)
+			{
 				toolTip = null;
 			}
-			if (popupToolTip == sender) {
+			if (popupToolTip == sender)
+			{
 				// Because popupToolTip instances are created by the tooltip provider,
 				// they might be reused; so we should detach the event handler
 				popupToolTip.Closed -= ToolTipClosed;
@@ -347,25 +379,33 @@ namespace ICSharpCode.ILSpy.TextView
 
 		object GenerateTooltip(ReferenceSegment segment)
 		{
-			if (segment.Reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo code) {
+			if (segment.Reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo code)
+			{
 				XmlDocumentationProvider docProvider = XmlDocLoader.MscorlibDocumentation;
 				DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), MainWindow.Instance.CurrentLanguage.SyntaxHighlighting);
 				renderer.AddSignatureBlock($"{code.Name} (0x{code.Code:x})");
-				if (docProvider != null) {
+				if (docProvider != null)
+				{
 					string documentation = docProvider.GetDocumentation("F:System.Reflection.Emit.OpCodes." + code.EncodedName);
-					if (documentation != null) {
+					if (documentation != null)
+					{
 						renderer.AddXmlDocumentation(documentation, null, null);
 					}
 				}
 				return new FlowDocumentTooltip(renderer.CreateDocument());
-			} else if (segment.Reference is IEntity entity) {
+			}
+			else if (segment.Reference is IEntity entity)
+			{
 				var document = CreateTooltipForEntity(entity);
 				if (document == null)
 					return null;
 				return new FlowDocumentTooltip(document);
-			} else if (segment.Reference is EntityReference unresolvedEntity) {
+			}
+			else if (segment.Reference is EntityReference unresolvedEntity)
+			{
 				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Module, unresolvedEntity.Module.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
-				try {
+				try
+				{
 					IEntity resolved = typeSystem.MainModule.ResolveEntity((EntityHandle)unresolvedEntity.Handle);
 					if (resolved == null)
 						return null;
@@ -373,7 +413,9 @@ namespace ICSharpCode.ILSpy.TextView
 					if (document == null)
 						return null;
 					return new FlowDocumentTooltip(document);
-				} catch (BadImageFormatException) {
+				}
+				catch (BadImageFormatException)
+				{
 					return null;
 				}
 			}
@@ -386,17 +428,22 @@ namespace ICSharpCode.ILSpy.TextView
 			DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), currentLanguage.SyntaxHighlighting);
 			RichText richText = currentLanguage.GetRichTextTooltip(resolved);
 			renderer.AddSignatureBlock(richText.Text, richText.ToRichTextModel());
-			try {
+			try
+			{
 				if (resolved.ParentModule == null || resolved.ParentModule.PEFile == null)
 					return null;
 				var docProvider = XmlDocLoader.LoadDocumentation(resolved.ParentModule.PEFile);
-				if (docProvider != null) {
+				if (docProvider != null)
+				{
 					string documentation = docProvider.GetDocumentation(resolved.GetIdString());
-					if (documentation != null) {
+					if (documentation != null)
+					{
 						renderer.AddXmlDocumentation(documentation, resolved, ResolveReference);
 					}
 				}
-			} catch (XmlException) {
+			}
+			catch (XmlException)
+			{
 				// ignore
 			}
 			return renderer.CreateDocument();
@@ -460,10 +507,13 @@ namespace ICSharpCode.ILSpy.TextView
 		#region Highlight brackets
 		void HighlightBrackets(object sender, EventArgs e)
 		{
-			if (DisplaySettingsPanel.CurrentDisplaySettings.HighlightMatchingBraces) {
+			if (DisplaySettingsPanel.CurrentDisplaySettings.HighlightMatchingBraces)
+			{
 				var result = MainWindow.Instance.CurrentLanguage.BracketSearcher.SearchBracket(textEditor.Document, textEditor.CaretOffset);
 				bracketHighlightRenderer.SetHighlight(result);
-			} else {
+			}
+			else
+			{
 				bracketHighlightRenderer.SetHighlight(null);
 			}
 		}
@@ -483,7 +533,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			RunWithCancellation(taskCreation).ContinueWith(taskCompleted, CancellationToken.None, TaskContinuationOptions.NotOnCanceled, TaskScheduler.FromCurrentSynchronizationContext());
 		}
-		
+
 		/// <summary>
 		/// Switches the GUI into "waiting" mode, then calls <paramref name="taskCreation"/> to create
 		/// the task.
@@ -491,14 +541,16 @@ namespace ICSharpCode.ILSpy.TextView
 		/// </summary>
 		public Task<T> RunWithCancellation<T>(Func<CancellationToken, Task<T>> taskCreation)
 		{
-			if (waitAdorner.Visibility != Visibility.Visible) {
+			if (waitAdorner.Visibility != Visibility.Visible)
+			{
 				waitAdorner.Visibility = Visibility.Visible;
 				// Work around a WPF bug by setting IsIndeterminate only while the progress bar is visible.
 				// https://github.com/icsharpcode/ILSpy/issues/593
 				progressBar.IsIndeterminate = true;
 				waitAdorner.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, new Duration(TimeSpan.FromSeconds(0.5)), FillBehavior.Stop));
 				var taskBar = MainWindow.Instance.TaskbarItemInfo;
-				if (taskBar != null) {
+				if (taskBar != null)
+				{
 					taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Indeterminate;
 				}
 			}
@@ -508,52 +560,66 @@ namespace ICSharpCode.ILSpy.TextView
 			// cancel the previous only after current was set to the new one (avoid that the old one still finishes successfully)
 			if (previousCancellationTokenSource != null)
 				previousCancellationTokenSource.Cancel();
-			
+
 			var tcs = new TaskCompletionSource<T>();
 			Task<T> task;
-			try {
+			try
+			{
 				task = taskCreation(myCancellationTokenSource.Token);
-			} catch (OperationCanceledException) {
+			}
+			catch (OperationCanceledException)
+			{
 				task = TaskHelper.FromCancellation<T>();
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				task = TaskHelper.FromException<T>(ex);
 			}
 			Action continuation = delegate {
-				try {
-					if (currentCancellationTokenSource == myCancellationTokenSource) {
+				try
+				{
+					if (currentCancellationTokenSource == myCancellationTokenSource)
+					{
 						currentCancellationTokenSource = null;
 						waitAdorner.Visibility = Visibility.Collapsed;
 						progressBar.IsIndeterminate = false;
 						var taskBar = MainWindow.Instance.TaskbarItemInfo;
-						if (taskBar != null) {
+						if (taskBar != null)
+						{
 							taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.None;
 						}
-						if (task.IsCanceled) {
+						if (task.IsCanceled)
+						{
 							AvalonEditTextOutput output = new AvalonEditTextOutput();
 							output.WriteLine("The operation was canceled.");
 							ShowOutput(output);
 						}
 						tcs.SetFromTask(task);
-					} else {
+					}
+					else
+					{
 						tcs.SetCanceled();
 					}
-				} finally {
+				}
+				finally
+				{
 					myCancellationTokenSource.Dispose();
 				}
 			};
 			task.ContinueWith(delegate { Dispatcher.BeginInvoke(DispatcherPriority.Normal, continuation); });
 			return tcs.Task;
 		}
-		
+
 		void CancelButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (currentCancellationTokenSource != null) {
+			if (currentCancellationTokenSource != null)
+			{
 				currentCancellationTokenSource.Cancel();
 				// Don't set to null: the task still needs to produce output and hide the wait adorner
 			}
 		}
 		#endregion
-		
+
 		#region ShowOutput
 		public void ShowText(AvalonEditTextOutput textOutput)
 		{
@@ -572,11 +638,13 @@ namespace ICSharpCode.ILSpy.TextView
 		public void ShowNodes(AvalonEditTextOutput textOutput, ILSpyTreeNode[] nodes, IHighlightingDefinition highlighting = null)
 		{
 			// Cancel the decompilation task:
-			if (currentCancellationTokenSource != null) {
+			if (currentCancellationTokenSource != null)
+			{
 				currentCancellationTokenSource.Cancel();
 				currentCancellationTokenSource = null; // prevent canceled task from producing output
 			}
-			if (this.nextDecompilationRun != null) {
+			if (this.nextDecompilationRun != null)
+			{
 				// remove scheduled decompilation run
 				this.nextDecompilationRun.TaskCompletionSource.TrySetCanceled();
 				this.nextDecompilationRun = null;
@@ -586,7 +654,7 @@ namespace ICSharpCode.ILSpy.TextView
 			ShowOutput(textOutput, highlighting);
 			decompiledNodes = nodes;
 		}
-		
+
 		/// <summary>
 		/// Shows the given output in the text view.
 		/// </summary>
@@ -597,7 +665,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 			ClearLocalReferenceMarks();
 			textEditor.ScrollToHome();
-			if (foldingManager != null) {
+			if (foldingManager != null)
+			{
 				FoldingManager.Uninstall(foldingManager);
 				foldingManager = null;
 			}
@@ -611,63 +680,75 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.Options.EnableHyperlinks = textOutput.EnableHyperlinks;
 			if (activeRichTextColorizer != null)
 				textEditor.TextArea.TextView.LineTransformers.Remove(activeRichTextColorizer);
-			if (textOutput.HighlightingModel != null) {
+			if (textOutput.HighlightingModel != null)
+			{
 				activeRichTextColorizer = new RichTextColorizer(textOutput.HighlightingModel);
 				textEditor.TextArea.TextView.LineTransformers.Insert(highlighting == null ? 0 : 1, activeRichTextColorizer);
 			}
-			
+
 			// Change the set of active element generators:
-			foreach (var elementGenerator in activeCustomElementGenerators) {
+			foreach (var elementGenerator in activeCustomElementGenerators)
+			{
 				textEditor.TextArea.TextView.ElementGenerators.Remove(elementGenerator);
 			}
 			activeCustomElementGenerators.Clear();
-			
-			foreach (var elementGenerator in textOutput.elementGenerators) {
+
+			foreach (var elementGenerator in textOutput.elementGenerators)
+			{
 				textEditor.TextArea.TextView.ElementGenerators.Add(elementGenerator);
 				activeCustomElementGenerators.Add(elementGenerator);
 			}
-			
-			Debug.WriteLine("  Set-up: {0}", w.Elapsed); w.Restart();
+
+			Debug.WriteLine("  Set-up: {0}", w.Elapsed);
+			w.Restart();
 			textEditor.Document = textOutput.GetDocument();
-			Debug.WriteLine("  Assigning document: {0}", w.Elapsed); w.Restart();
-			if (textOutput.Foldings.Count > 0) {
-				if (state != null) {
+			Debug.WriteLine("  Assigning document: {0}", w.Elapsed);
+			w.Restart();
+			if (textOutput.Foldings.Count > 0)
+			{
+				if (state != null)
+				{
 					state.RestoreFoldings(textOutput.Foldings);
 					textEditor.ScrollToVerticalOffset(state.VerticalOffset);
 					textEditor.ScrollToHorizontalOffset(state.HorizontalOffset);
 				}
 				foldingManager = FoldingManager.Install(textEditor.TextArea);
 				foldingManager.UpdateFoldings(textOutput.Foldings.OrderBy(f => f.StartOffset), -1);
-				Debug.WriteLine("  Updating folding: {0}", w.Elapsed); w.Restart();
-			} else if (highlighting?.Name == "XML") {
+				Debug.WriteLine("  Updating folding: {0}", w.Elapsed);
+				w.Restart();
+			}
+			else if (highlighting?.Name == "XML")
+			{
 				foldingManager = FoldingManager.Install(textEditor.TextArea);
 				var foldingStrategy = new XmlFoldingStrategy();
 				foldingStrategy.UpdateFoldings(foldingManager, textEditor.Document);
-				Debug.WriteLine("  Updating folding: {0}", w.Elapsed); w.Restart();
+				Debug.WriteLine("  Updating folding: {0}", w.Elapsed);
+				w.Restart();
 			}
 
-			if (this.DataContext is PaneModel model) {
+			if (this.DataContext is PaneModel model)
+			{
 				model.Title = textOutput.Title;
 			}
 			currentAddress = textOutput.Address;
 		}
 		#endregion
-		
+
 		#region Decompile (for display)
 		// more than 5M characters is too slow to output (when user browses treeview)
-		public const int DefaultOutputLengthLimit  =  5000000;
-		
+		public const int DefaultOutputLengthLimit = 5000000;
+
 		// more than 75M characters can get us into trouble with memory usage
 		public const int ExtendedOutputLengthLimit = 75000000;
-		
+
 		DecompilationContext nextDecompilationRun;
-		
+
 		[Obsolete("Use DecompileAsync() instead")]
 		public void Decompile(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
 		{
 			DecompileAsync(language, treeNodes, options).HandleExceptions();
 		}
-		
+
 		/// <summary>
 		/// Starts the decompilation of the given nodes.
 		/// The result is displayed in the text view.
@@ -678,13 +759,14 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			// Some actions like loading an assembly list cause several selection changes in the tree view,
 			// and each of those will start a decompilation action.
-			
+
 			bool isDecompilationScheduled = this.nextDecompilationRun != null;
 			if (this.nextDecompilationRun != null)
 				this.nextDecompilationRun.TaskCompletionSource.TrySetCanceled();
 			this.nextDecompilationRun = new DecompilationContext(language, treeNodes.ToArray(), options);
 			var task = this.nextDecompilationRun.TaskCompletionSource.Task;
-			if (!isDecompilationScheduled) {
+			if (!isDecompilationScheduled)
+			{
 				Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(
 					delegate {
 						var context = this.nextDecompilationRun;
@@ -697,14 +779,14 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			return task;
 		}
-		
+
 		sealed class DecompilationContext
 		{
 			public readonly ILSpy.Language Language;
 			public readonly ILSpyTreeNode[] TreeNodes;
 			public readonly DecompilationOptions Options;
 			public readonly TaskCompletionSource<object> TaskCompletionSource = new TaskCompletionSource<object>();
-			
+
 			public DecompilationContext(ILSpy.Language language, ILSpyTreeNode[] treeNodes, DecompilationOptions options)
 			{
 				this.Language = language;
@@ -712,7 +794,7 @@ namespace ICSharpCode.ILSpy.TextView
 				this.Options = options;
 			}
 		}
-		
+
 		Task DoDecompile(DecompilationContext context, int outputLengthLimit)
 		{
 			return RunWithCancellation(
@@ -726,65 +808,76 @@ namespace ICSharpCode.ILSpy.TextView
 					decompiledNodes = context.TreeNodes;
 				})
 			.Catch<Exception>(exception => {
-					textEditor.SyntaxHighlighting = null;
-					Debug.WriteLine("Decompiler crashed: " + exception.ToString());
-					AvalonEditTextOutput output = new AvalonEditTextOutput();
-					if (exception is OutputLengthExceededException) {
-						WriteOutputLengthExceededMessage(output, context, outputLengthLimit == DefaultOutputLengthLimit);
-					} else {
-						output.WriteLine(exception.ToString());
-					}
-					ShowOutput(output);
-					decompiledNodes = context.TreeNodes;
-				});
+				textEditor.SyntaxHighlighting = null;
+				Debug.WriteLine("Decompiler crashed: " + exception.ToString());
+				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				if (exception is OutputLengthExceededException)
+				{
+					WriteOutputLengthExceededMessage(output, context, outputLengthLimit == DefaultOutputLengthLimit);
+				}
+				else
+				{
+					output.WriteLine(exception.ToString());
+				}
+				ShowOutput(output);
+				decompiledNodes = context.TreeNodes;
+			});
 		}
-		
+
 		Task<AvalonEditTextOutput> DecompileAsync(DecompilationContext context, int outputLengthLimit)
 		{
 			Debug.WriteLine("Start decompilation of {0} tree nodes", context.TreeNodes.Length);
-			
+
 			TaskCompletionSource<AvalonEditTextOutput> tcs = new TaskCompletionSource<AvalonEditTextOutput>();
-			if (context.TreeNodes.Length == 0) {
+			if (context.TreeNodes.Length == 0)
+			{
 				// If there's nothing to be decompiled, don't bother starting up a thread.
 				// (Improves perf in some cases since we don't have to wait for the thread-pool to accept our task)
 				tcs.SetResult(new AvalonEditTextOutput());
 				return tcs.Task;
 			}
-			
+
 			Thread thread = new Thread(new ThreadStart(
 				delegate {
-					try {
+					try
+					{
 						AvalonEditTextOutput textOutput = new AvalonEditTextOutput();
 						textOutput.LengthLimit = outputLengthLimit;
 						DecompileNodes(context, textOutput);
 						textOutput.PrepareDocument();
 						tcs.SetResult(textOutput);
-					} catch (OperationCanceledException) {
+					}
+					catch (OperationCanceledException)
+					{
 						tcs.SetCanceled();
-					} catch (Exception ex) {
+					}
+					catch (Exception ex)
+					{
 						tcs.SetException(ex);
 					}
 				}));
 			thread.Start();
 			return tcs.Task;
 		}
-		
+
 		void DecompileNodes(DecompilationContext context, ITextOutput textOutput)
 		{
 			var nodes = context.TreeNodes;
-			if (textOutput is ISmartTextOutput smartTextOutput) {
+			if (textOutput is ISmartTextOutput smartTextOutput)
+			{
 				smartTextOutput.Title = string.Join(", ", nodes.Select(n => n.Text));
 			}
-			for (int i = 0; i < nodes.Length; i++) {
+			for (int i = 0; i < nodes.Length; i++)
+			{
 				if (i > 0)
 					textOutput.WriteLine();
-				
+
 				context.Options.CancellationToken.ThrowIfCancellationRequested();
 				nodes[i].Decompile(context.Language, textOutput, context.Options);
 			}
 		}
 		#endregion
-		
+
 		#region WriteOutputLengthExceededMessage
 		/// <summary>
 		/// Creates a message that the decompiler output was too long.
@@ -792,13 +885,17 @@ namespace ICSharpCode.ILSpy.TextView
 		/// </summary>
 		void WriteOutputLengthExceededMessage(ISmartTextOutput output, DecompilationContext context, bool wasNormalLimit)
 		{
-			if (wasNormalLimit) {
+			if (wasNormalLimit)
+			{
 				output.WriteLine("You have selected too much code for it to be displayed automatically.");
-			} else {
+			}
+			else
+			{
 				output.WriteLine("You have selected too much code; it cannot be displayed here.");
 			}
 			output.WriteLine();
-			if (wasNormalLimit) {
+			if (wasNormalLimit)
+			{
 				output.AddButton(
 					Images.ViewCode, Properties.Resources.DisplayCode,
 					delegate {
@@ -806,7 +903,7 @@ namespace ICSharpCode.ILSpy.TextView
 					});
 				output.WriteLine();
 			}
-			
+
 			output.AddButton(
 				Images.Save, Properties.Resources.SaveCode,
 				delegate {
@@ -823,11 +920,15 @@ namespace ICSharpCode.ILSpy.TextView
 		internal void JumpToReference(ReferenceSegment referenceSegment, bool openInNewTab)
 		{
 			object reference = referenceSegment.Reference;
-			if (referenceSegment.IsLocal) {
+			if (referenceSegment.IsLocal)
+			{
 				ClearLocalReferenceMarks();
-				if (references != null) {
-					foreach (var r in references) {
-						if (reference.Equals(r.Reference)) {
+				if (references != null)
+				{
+					foreach (var r in references)
+					{
+						if (reference.Equals(r.Reference))
+						{
 							var mark = textMarkerService.Create(r.StartOffset, r.Length);
 							mark.BackgroundColor = r.IsDefinition ? Colors.LightSeaGreen : Colors.GreenYellow;
 							localReferenceMarks.Add(mark);
@@ -836,9 +937,11 @@ namespace ICSharpCode.ILSpy.TextView
 				}
 				return;
 			}
-			if (definitionLookup != null) {
+			if (definitionLookup != null)
+			{
 				int pos = definitionLookup.GetDefinitionPosition(reference);
-				if (pos >= 0) {
+				if (pos >= 0)
+				{
 					textEditor.TextArea.Focus();
 					textEditor.Select(pos, 0);
 					textEditor.ScrollTo(textEditor.TextArea.Caret.Line, textEditor.TextArea.Caret.Column);
@@ -858,7 +961,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			mouseDownPos = e.GetPosition(this);
 		}
-		
+
 		void TextAreaMouseUp(object sender, MouseButtonEventArgs e)
 		{
 			if (mouseDownPos == null)
@@ -870,9 +973,12 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				// click without moving mouse
 				var referenceSegment = GetReferenceSegmentAtMousePosition();
-				if (referenceSegment == null) {
+				if (referenceSegment == null)
+				{
 					ClearLocalReferenceMarks();
-				} else if (referenceSegment.IsLocal || !referenceSegment.IsDefinition) {
+				}
+				else if (referenceSegment.IsLocal || !referenceSegment.IsDefinition)
+				{
 					textEditor.TextArea.ClearSelection();
 					// cancel mouse selection to avoid AvalonEdit selecting between the new
 					// cursor position and the mouse position.
@@ -882,15 +988,16 @@ namespace ICSharpCode.ILSpy.TextView
 				}
 			}
 		}
-		
+
 		void ClearLocalReferenceMarks()
 		{
-			foreach (var mark in localReferenceMarks) {
+			foreach (var mark in localReferenceMarks)
+			{
 				textMarkerService.Remove(mark);
 			}
 			localReferenceMarks.Clear();
 		}
-		
+
 		/// <summary>
 		/// Filters all ReferenceSegments that are no real links.
 		/// </summary>
@@ -899,7 +1006,7 @@ namespace ICSharpCode.ILSpy.TextView
 			return referenceSegment.IsLocal || !referenceSegment.IsDefinition;
 		}
 		#endregion
-		
+
 		#region SaveToDisk
 		/// <summary>
 		/// Shows the 'save file dialog', prompting the user to save the decompiled nodes to disk.
@@ -908,21 +1015,22 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (!treeNodes.Any())
 				return;
-			
+
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.DefaultExt = language.FileExtension;
 			dlg.Filter = language.Name + "|*" + language.FileExtension + Properties.Resources.AllFiles;
 			dlg.FileName = CleanUpName(treeNodes.First().ToString()) + language.FileExtension;
-			if (dlg.ShowDialog() == true) {
+			if (dlg.ShowDialog() == true)
+			{
 				SaveToDisk(new DecompilationContext(language, treeNodes.ToArray(), options), dlg.FileName);
 			}
 		}
-		
+
 		public void SaveToDisk(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options, string fileName)
 		{
 			SaveToDisk(new DecompilationContext(language, treeNodes.ToArray(), options), fileName);
 		}
-		
+
 		/// <summary>
 		/// Starts the decompilation of the given nodes.
 		/// The result will be saved to the given file name.
@@ -951,14 +1059,19 @@ namespace ICSharpCode.ILSpy.TextView
 			TaskCompletionSource<AvalonEditTextOutput> tcs = new TaskCompletionSource<AvalonEditTextOutput>();
 			Thread thread = new Thread(new ThreadStart(
 				delegate {
-					try {
+					try
+					{
 						context.Options.EscapeInvalidIdentifiers = true;
 						Stopwatch stopwatch = new Stopwatch();
 						stopwatch.Start();
-						using (StreamWriter w = new StreamWriter(fileName)) {
-							try {
+						using (StreamWriter w = new StreamWriter(fileName))
+						{
+							try
+							{
 								DecompileNodes(context, new PlainTextOutput(w));
-							} catch (OperationCanceledException) {
+							}
+							catch (OperationCanceledException)
+							{
 								w.WriteLine();
 								w.WriteLine("Decompiled was cancelled.");
 								throw;
@@ -971,7 +1084,8 @@ namespace ICSharpCode.ILSpy.TextView
 						};
 
 						output.WriteLine(Properties.Resources.DecompilationCompleteInF1Seconds, stopwatch.Elapsed.TotalSeconds);
-						if (context.Options.SaveAsProjectDirectory != null) {
+						if (context.Options.SaveAsProjectDirectory != null)
+						{
 							output.WriteLine();
 							if (context.Options.DecompilerSettings.UseSdkStyleProjectFormat)
 								output.WriteLine(Properties.Resources.ProjectExportFormatSDKHint);
@@ -983,16 +1097,20 @@ namespace ICSharpCode.ILSpy.TextView
 						output.AddButton(null, Properties.Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
 						output.WriteLine();
 						tcs.SetResult(output);
-					} catch (OperationCanceledException) {
+					}
+					catch (OperationCanceledException)
+					{
 						tcs.SetCanceled();
-					} catch (Exception ex) {
+					}
+					catch (Exception ex)
+					{
 						tcs.SetException(ex);
 					}
 				}));
 			thread.Start();
 			return tcs.Task;
 		}
-		
+
 		/// <summary>
 		/// Cleans up a node name for use as a file name.
 		/// </summary>
@@ -1012,7 +1130,7 @@ namespace ICSharpCode.ILSpy.TextView
 			int offset = textEditor.Document.GetOffset(position.Value.Location);
 			return referenceElementGenerator.References.FindSegmentsContaining(offset).FirstOrDefault();
 		}
-		
+
 		internal TextViewPosition? GetPositionFromMousePosition()
 		{
 			var position = textEditor.TextArea.TextView.GetPosition(Mouse.GetPosition(textEditor.TextArea.TextView) + textEditor.TextArea.TextView.ScrollOffset);
@@ -1023,7 +1141,7 @@ namespace ICSharpCode.ILSpy.TextView
 				return null;
 			return position;
 		}
-		
+
 		public DecompilerTextViewState GetState()
 		{
 			if (decompiledNodes == null && currentAddress == null)
@@ -1045,20 +1163,23 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			DisplaySettingsPanel.CurrentDisplaySettings.PropertyChanged -= CurrentDisplaySettings_PropertyChanged;
 		}
-		
+
 		#region Unfold
 		public void UnfoldAndScroll(int lineNumber)
 		{
 			if (lineNumber <= 0 || lineNumber > textEditor.Document.LineCount)
 				return;
-			
+
 			var line = textEditor.Document.GetLineByNumber(lineNumber);
-			
+
 			// unfold
 			var foldings = foldingManager.GetFoldingsContaining(line.Offset);
-			if (foldings != null) {
-				foreach (var folding in foldings) {
-					if (folding.IsFolded) {
+			if (foldings != null)
+			{
+				foreach (var folding in foldings)
+				{
+					if (folding.IsFolded)
+					{
 						folding.IsFolded = false;
 					}
 				}
@@ -1066,9 +1187,8 @@ namespace ICSharpCode.ILSpy.TextView
 			// scroll to
 			textEditor.ScrollTo(lineNumber, 0);
 		}
-		
-		public FoldingManager FoldingManager
-		{
+
+		public FoldingManager FoldingManager {
 			get {
 				return foldingManager;
 			}
@@ -1089,7 +1209,7 @@ namespace ICSharpCode.ILSpy.TextView
 				&& (DecompiledNodes == other.DecompiledNodes || DecompiledNodes?.SetEquals(other.DecompiledNodes) == true);
 		}
 	}
-	
+
 	public class DecompilerTextViewState : ViewState
 	{
 		private List<Tuple<int, int>> ExpandedFoldings;
@@ -1113,7 +1233,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public override bool Equals(ViewState other)
 		{
-			if (other is DecompilerTextViewState vs) {
+			if (other is DecompilerTextViewState vs)
+			{
 				return base.Equals(vs)
 					&& FoldingsChecksum == vs.FoldingsChecksum
 					&& VerticalOffset == vs.VerticalOffset

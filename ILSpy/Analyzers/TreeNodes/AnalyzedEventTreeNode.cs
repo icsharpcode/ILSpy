@@ -18,6 +18,7 @@
 
 using System;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -55,9 +56,11 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			//	this.Children.Add(new AnalyzedAccessorTreeNode(accessor, null));
 
 			var analyzers = App.ExportProvider.GetExports<IAnalyzer, IAnalyzerMetadata>("Analyzer");
-			foreach (var lazy in analyzers.OrderBy(item => item.Metadata.Order)) {
+			foreach (var lazy in analyzers.OrderBy(item => item.Metadata.Order))
+			{
 				var analyzer = lazy.Value;
-				if (analyzer.Show(analyzedEvent)) {
+				if (analyzer.Show(analyzedEvent))
+				{
 					this.Children.Add(new AnalyzerSearchTreeNode(analyzedEvent, analyzer, lazy.Metadata.Header));
 				}
 			}
@@ -66,8 +69,10 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		bool TryFindBackingField(IEvent analyzedEvent, out IField backingField)
 		{
 			backingField = null;
-			foreach (var field in analyzedEvent.DeclaringTypeDefinition.GetFields(options: GetMemberOptions.IgnoreInheritedMembers)) {
-				if (field.Name == analyzedEvent.Name && field.Accessibility == Accessibility.Private) {
+			foreach (var field in analyzedEvent.DeclaringTypeDefinition.GetFields(options: GetMemberOptions.IgnoreInheritedMembers))
+			{
+				if (field.Name == analyzedEvent.Name && field.Accessibility == Accessibility.Private)
+				{
 					backingField = field;
 					return true;
 				}

@@ -20,6 +20,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Reflection.Metadata;
 using System.Threading;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -48,9 +49,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 				return null;
 			var module = method.ParentModule.PEFile;
 			var md = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
-			try {
+			try
+			{
 				return module.Reader.GetMethodBody(md.RelativeVirtualAddress);
-			} catch (BadImageFormatException) {
+			}
+			catch (BadImageFormatException)
+			{
 				return null;
 			}
 		}

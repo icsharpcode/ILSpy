@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -20,7 +21,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			if (IsChecked) output.Write(".checked");
+			if (IsChecked)
+				output.Write(".checked");
 			output.Write(' ');
 			type.WriteTo(output);
 			output.Write('(');

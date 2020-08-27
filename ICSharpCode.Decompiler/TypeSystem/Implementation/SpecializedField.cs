@@ -27,7 +27,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		internal static IField Create(IField fieldDefinition, TypeParameterSubstitution substitution)
 		{
-			if (TypeParameterSubstitution.Identity.Equals(substitution) || fieldDefinition.DeclaringType.TypeParameterCount == 0) {
+			if (TypeParameterSubstitution.Identity.Equals(substitution) || fieldDefinition.DeclaringType.TypeParameterCount == 0)
+			{
 				return fieldDefinition;
 			}
 			if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
@@ -36,7 +37,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		readonly IField fieldDefinition;
-		
+
 		public SpecializedField(IField fieldDefinition, TypeParameterSubstitution substitution)
 			: base(fieldDefinition)
 		{
@@ -47,20 +48,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsReadOnly {
 			get { return fieldDefinition.IsReadOnly; }
 		}
-		
+
 		public bool IsVolatile {
 			get { return fieldDefinition.IsVolatile; }
 		}
-		
+
 		IType IVariable.Type {
 			get { return this.ReturnType; }
 		}
-		
+
 		public bool IsConst {
 			get { return fieldDefinition.IsConst; }
 		}
 
-		public object GetConstantValue(bool throwOnInvalidMetadata) {
+		public object GetConstantValue(bool throwOnInvalidMetadata)
+		{
 			return fieldDefinition.GetConstantValue(throwOnInvalidMetadata);
 		}
 	}

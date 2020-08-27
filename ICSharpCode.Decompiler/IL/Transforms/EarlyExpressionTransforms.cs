@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -37,7 +38,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		protected override void Default(ILInstruction inst)
 		{
-			foreach (var child in inst.Children) {
+			foreach (var child in inst.Children)
+			{
 				child.AcceptVisitor(this);
 			}
 		}
@@ -47,7 +49,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			base.VisitStObj(inst);
 			StObjToStLoc(inst, context);
 		}
-		
+
 		// This transform is required because ILInlining only works with stloc/ldloc
 		internal static bool StObjToStLoc(StObj inst, ILTransformContext context)
 		{
@@ -91,14 +93,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// ldobj(...(ldloca V))
 			var temp = inst.Target;
 			var range = temp.ILRanges;
-			while (temp.MatchLdFlda(out var ldfldaTarget, out _)) {
+			while (temp.MatchLdFlda(out var ldfldaTarget, out _))
+			{
 				temp = ldfldaTarget;
 				range = range.Concat(temp.ILRanges);
 			}
-			if (temp.MatchAddressOf(out var addressOfTarget, out _) && addressOfTarget.MatchLdLoc(out var v)) {
+			if (temp.MatchAddressOf(out var addressOfTarget, out _) && addressOfTarget.MatchLdLoc(out var v))
+			{
 				context.Step($"ldobj(...(addressof(ldloca {v.Name}))) => ldobj(...(ldloca {v.Name}))", inst);
 				var replacement = new LdLoca(v).WithILRange(addressOfTarget);
-				foreach (var r in range) {
+				foreach (var r in range)
+				{
 					replacement = replacement.WithILRange(r);
 				}
 				temp.ReplaceWith(replacement);
@@ -108,17 +113,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		protected internal override void VisitCall(Call inst)
 		{
 			var expr = HandleCall(inst, context);
-			if (expr != null) {
+			if (expr != null)
+			{
 				// The resulting expression may trigger further rules, so continue visiting the replacement:
 				expr.AcceptVisitor(this);
-			} else {
+			}
+			else
+			{
 				base.VisitCall(inst);
 			}
 		}
 
 		internal static ILInstruction HandleCall(Call inst, ILTransformContext context)
 		{
-			if (inst.Method.IsConstructor && !inst.Method.IsStatic && inst.Method.DeclaringType.Kind == TypeKind.Struct) {
+			if (inst.Method.IsConstructor && !inst.Method.IsStatic && inst.Method.DeclaringType.Kind == TypeKind.Struct)
+			{
 				Debug.Assert(inst.Arguments.Count == inst.Method.Parameters.Count + 1);
 				context.Step("Transform call to struct constructor", inst);
 				// call(ref, ...)

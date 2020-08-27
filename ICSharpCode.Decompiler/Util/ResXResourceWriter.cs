@@ -30,12 +30,12 @@
 //	Gary Barnett		gary.barnett.mono@gmail.com
 //	includes code by Mike Krüger and Lluis Sanchez
 
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml;
-using System;
 
 namespace ICSharpCode.Decompiler.Util
 {
@@ -145,7 +145,8 @@ namespace ICSharpCode.Decompiler.Util
 			pos = 0;
 			inc = 80 + Environment.NewLine.Length + 1;
 			ins = Environment.NewLine + "\t";
-			while (pos < sb.Length) {
+			while (pos < sb.Length)
+			{
 				sb.Insert(pos, ins);
 				pos += inc;
 			}
@@ -158,7 +159,8 @@ namespace ICSharpCode.Decompiler.Util
 			writer.WriteStartElement("data");
 			writer.WriteAttributeString("name", name);
 
-			if (type != null) {
+			if (type != null)
+			{
 				writer.WriteAttributeString("type", type.AssemblyQualifiedName);
 				// byte[] should never get a mimetype, otherwise MS.NET won't be able
 				// to parse the data.
@@ -166,7 +168,9 @@ namespace ICSharpCode.Decompiler.Util
 					writer.WriteAttributeString("mimetype", ByteArraySerializedObjectMimeType);
 				writer.WriteStartElement("value");
 				WriteNiceBase64(value, offset, length);
-			} else {
+			}
+			else
+			{
 				writer.WriteAttributeString("mimetype", BinSerializedObjectMimeType);
 				writer.WriteStartElement("value");
 				writer.WriteBase64(value, offset, length);
@@ -174,7 +178,8 @@ namespace ICSharpCode.Decompiler.Util
 
 			writer.WriteEndElement();
 
-			if (!(comment == null || comment.Equals(String.Empty))) {
+			if (!(comment == null || comment.Equals(String.Empty)))
+			{
 				writer.WriteStartElement("comment");
 				writer.WriteString(comment);
 				writer.WriteEndElement();
@@ -205,7 +210,8 @@ namespace ICSharpCode.Decompiler.Util
 			writer.WriteStartElement("value");
 			writer.WriteString(value);
 			writer.WriteEndElement();
-			if (!(comment == null || comment.Equals(String.Empty))) {
+			if (!(comment == null || comment.Equals(String.Empty)))
+			{
 				writer.WriteStartElement("comment");
 				writer.WriteString(comment);
 				writer.WriteEndElement();
@@ -238,7 +244,8 @@ namespace ICSharpCode.Decompiler.Util
 
 		private void AddResource(string name, object value, string comment)
 		{
-			if (value is string) {
+			if (value is string)
+			{
 				AddResource(name, (string)value, comment);
 				return;
 			}
@@ -252,17 +259,20 @@ namespace ICSharpCode.Decompiler.Util
 			if (writer == null)
 				InitWriter();
 
-			if (value is byte[]) {
+			if (value is byte[])
+			{
 				WriteBytes(name, value.GetType(), (byte[])value, comment);
 				return;
 			}
-			if (value is ResourceSerializedObject rso) {
+			if (value is ResourceSerializedObject rso)
+			{
 				var bytes = rso.GetBytes();
 				WriteBytes(name, null, bytes, 0, bytes.Length, comment);
 				return;
 			}
 
-			if (value == null) {
+			if (value == null)
+			{
 				// nulls written as ResXNullRef
 				WriteString(name, "", ResXNullRefTypeName, comment);
 				return;
@@ -273,13 +283,15 @@ namespace ICSharpCode.Decompiler.Util
 
 			TypeConverter converter = TypeDescriptor.GetConverter(value);
 
-			if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string))) {
+			if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
+			{
 				string str = (string)converter.ConvertToInvariantString(value);
 				WriteString(name, str, value.GetType().AssemblyQualifiedName, comment);
 				return;
 			}
 
-			if (converter != null && converter.CanConvertTo(typeof(byte[])) && converter.CanConvertFrom(typeof(byte[]))) {
+			if (converter != null && converter.CanConvertTo(typeof(byte[])) && converter.CanConvertFrom(typeof(byte[])))
+			{
 				byte[] b = (byte[])converter.ConvertTo(value, typeof(byte[]));
 				WriteBytes(name, value.GetType(), b, comment);
 				return;
@@ -287,9 +299,12 @@ namespace ICSharpCode.Decompiler.Util
 
 			MemoryStream ms = new MemoryStream();
 			BinaryFormatter fmt = new BinaryFormatter();
-			try {
+			try
+			{
 				fmt.Serialize(ms, value);
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				throw new InvalidOperationException("Cannot add a " + value.GetType() +
 									 "because it cannot be serialized: " +
 									 e.Message);
@@ -320,7 +335,7 @@ namespace ICSharpCode.Decompiler.Util
 
 			WriteString(name, value, null, comment);
 		}
-		
+
 		public void AddMetadata(string name, string value)
 		{
 			if (name == null)
@@ -372,12 +387,14 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void AddMetadata(string name, object value)
 		{
-			if (value is string) {
+			if (value is string)
+			{
 				AddMetadata(name, (string)value);
 				return;
 			}
 
-			if (value is byte[]) {
+			if (value is byte[])
+			{
 				AddMetadata(name, (byte[])value);
 				return;
 			}
@@ -400,7 +417,8 @@ namespace ICSharpCode.Decompiler.Util
 			Type type = value.GetType();
 
 			TypeConverter converter = TypeDescriptor.GetConverter(value);
-			if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string))) {
+			if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
+			{
 				string str = (string)converter.ConvertToInvariantString(value);
 				writer.WriteStartElement("metadata");
 				writer.WriteAttributeString("name", name);
@@ -414,17 +432,21 @@ namespace ICSharpCode.Decompiler.Util
 				return;
 			}
 
-			if (converter != null && converter.CanConvertTo(typeof(byte[])) && converter.CanConvertFrom(typeof(byte[]))) {
+			if (converter != null && converter.CanConvertTo(typeof(byte[])) && converter.CanConvertFrom(typeof(byte[])))
+			{
 				byte[] b = (byte[])converter.ConvertTo(value, typeof(byte[]));
 				writer.WriteStartElement("metadata");
 				writer.WriteAttributeString("name", name);
 
-				if (type != null) {
+				if (type != null)
+				{
 					writer.WriteAttributeString("type", type.AssemblyQualifiedName);
 					writer.WriteAttributeString("mimetype", ByteArraySerializedObjectMimeType);
 					writer.WriteStartElement("value");
 					WriteNiceBase64(b, 0, b.Length);
-				} else {
+				}
+				else
+				{
 					writer.WriteAttributeString("mimetype", BinSerializedObjectMimeType);
 					writer.WriteStartElement("value");
 					writer.WriteBase64(b, 0, b.Length);
@@ -437,9 +459,12 @@ namespace ICSharpCode.Decompiler.Util
 
 			MemoryStream ms = new MemoryStream();
 			BinaryFormatter fmt = new BinaryFormatter();
-			try {
+			try
+			{
 				fmt.Serialize(ms, value);
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				throw new InvalidOperationException("Cannot add a " + value.GetType() +
 									 "because it cannot be serialized: " +
 									 e.Message);
@@ -448,12 +473,15 @@ namespace ICSharpCode.Decompiler.Util
 			writer.WriteStartElement("metadata");
 			writer.WriteAttributeString("name", name);
 
-			if (type != null) {
+			if (type != null)
+			{
 				writer.WriteAttributeString("type", type.AssemblyQualifiedName);
 				writer.WriteAttributeString("mimetype", ByteArraySerializedObjectMimeType);
 				writer.WriteStartElement("value");
 				WriteNiceBase64(ms.GetBuffer(), 0, ms.GetBuffer().Length);
-			} else {
+			}
+			else
+			{
 				writer.WriteAttributeString("mimetype", BinSerializedObjectMimeType);
 				writer.WriteStartElement("value");
 				writer.WriteBase64(ms.GetBuffer(), 0, ms.GetBuffer().Length);
@@ -466,8 +494,10 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Close()
 		{
-			if (writer != null) {
-				if (!written) {
+			if (writer != null)
+			{
+				if (!written)
+				{
 					Generate();
 				}
 

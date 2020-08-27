@@ -19,6 +19,7 @@
 using System;
 using System.Linq;
 using System.Windows.Threading;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
@@ -31,7 +32,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	sealed class ResourceListTreeNode : ILSpyTreeNode
 	{
 		readonly PEFile module;
-		
+
 		public ResourceListTreeNode(PEFile module)
 		{
 			this.LazyLoading = true;
@@ -49,7 +50,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (Resource r in module.Resources.OrderBy(m => m.Name, NaturalStringComparer.Instance))
 				this.Children.Add(ResourceTreeNode.Create(r));
 		}
-		
+
 		public override FilterResult Filter(FilterSettings settings)
 		{
 			if (string.IsNullOrEmpty(settings.SearchTerm))
@@ -57,11 +58,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			else
 				return FilterResult.Recurse;
 		}
-		
+
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(EnsureLazyChildren));
-			foreach (ILSpyTreeNode child in this.Children) {
+			foreach (ILSpyTreeNode child in this.Children)
+			{
 				child.Decompile(language, output, options);
 				output.WriteLine();
 			}

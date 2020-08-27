@@ -20,10 +20,12 @@
 	THE SOFTWARE.
 */
 
-namespace ILSpy.BamlDecompiler.Baml {
+namespace ILSpy.BamlDecompiler.Baml
+{
 	// Auto generated. Do not modify.
 
-	internal enum KnownMembers : short {
+	internal enum KnownMembers : short
+	{
 		Unknown = 0,
 		AccessText_Text = 1,
 		BeginStoryboard_Storyboard = 2,

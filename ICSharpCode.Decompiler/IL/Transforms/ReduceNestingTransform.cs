@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Util;
@@ -47,14 +48,16 @@ namespace ICSharpCode.Decompiler.IL
 			this.context = context;
 			Visit((BlockContainer)function.Body, null);
 
-			foreach (var node in function.Descendants.OfType<TryFinally>()) {
+			foreach (var node in function.Descendants.OfType<TryFinally>())
+			{
 				EliminateRedundantTryFinally(node, context);
 			}
 		}
 
 		private void Visit(BlockContainer container, Block continueTarget)
 		{
-			switch (container.Kind) {
+			switch (container.Kind)
+			{
 				case ContainerKind.Loop:
 				case ContainerKind.While:
 					continueTarget = container.EntryPoint;
@@ -65,7 +68,8 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 
-			for (int i = 0; i < container.Blocks.Count; i++) {
+			for (int i = 0; i < container.Blocks.Count; i++)
+			{
 				var block = container.Blocks[i];
 				// Note: it's possible for additional blocks to be appended to the container
 				// by the Visit() call; but there should be no other changes to the Blocks collection.
@@ -83,16 +87,18 @@ namespace ICSharpCode.Decompiler.IL
 		private void Visit(Block block, Block continueTarget, ILInstruction nextInstruction = null)
 		{
 			Debug.Assert(block.HasFlag(InstructionFlags.EndPointUnreachable) || nextInstruction != null);
-			
+
 			// process each instruction in the block.
-			for (int i = 0; i < block.Instructions.Count; i++) {
+			for (int i = 0; i < block.Instructions.Count; i++)
+			{
 				//  Transformations may be applied to the current and following instructions but already processed instructions will not be changed
 				var inst = block.Instructions[i];
 
 				// the next instruction to be executed. Transformations will change the next instruction, so this is a method instead of a variable
 				ILInstruction NextInsn() => i + 1 < block.Instructions.Count ? block.Instructions[i + 1] : nextInstruction;
-				
-				switch (inst) {
+
+				switch (inst)
+				{
 					case BlockContainer container:
 						// visit the contents of the container
 						Visit(container, continueTarget);
@@ -100,23 +106,26 @@ namespace ICSharpCode.Decompiler.IL
 						// reduce nesting in switch blocks
 						if (container.Kind == ContainerKind.Switch &&
 								CanDuplicateExit(NextInsn(), continueTarget, out var keywordExit1) &&
-								ReduceSwitchNesting(block, container, keywordExit1)) {
+								ReduceSwitchNesting(block, container, keywordExit1))
+						{
 							RemoveRedundantExit(block, nextInstruction);
 						}
 						break;
 					case IfInstruction ifInst:
 						ImproveILOrdering(block, ifInst, continueTarget);
-						
+
 						// reduce nesting in if/else blocks
 						if (CanDuplicateExit(NextInsn(), continueTarget, out var keywordExit2) && ReduceNesting(block, ifInst, keywordExit2))
 							RemoveRedundantExit(block, nextInstruction);
-						
+
 						// visit content blocks
 						if (ifInst.TrueInst is Block trueBlock)
 							Visit(trueBlock, continueTarget, NextInsn());
-						
-						if (ifInst.FalseInst is Block falseBlock) {
-							if (ifInst.TrueInst.HasFlag(InstructionFlags.EndPointUnreachable)) {
+
+						if (ifInst.FalseInst is Block falseBlock)
+						{
+							if (ifInst.TrueInst.HasFlag(InstructionFlags.EndPointUnreachable))
+							{
 								ExtractElseBlock(ifInst);
 								break;
 							}
@@ -131,7 +140,8 @@ namespace ICSharpCode.Decompiler.IL
 						// reducing nesting inside Try/Using/Lock etc, may make the endpoint unreachable. 
 						// This should only happen by replacing a Leave with the exit instruction we're about to delete, but I can't see a good way to assert this
 						// This would be better placed in ReduceNesting, but it's more difficult to find the affected instructions/blocks there than here
-						if (i == block.Instructions.Count - 2 && inst.HasFlag(InstructionFlags.EndPointUnreachable)) {
+						if (i == block.Instructions.Count - 2 && inst.HasFlag(InstructionFlags.EndPointUnreachable))
+						{
 							context.Step("Remove unreachable exit", block.Instructions.Last());
 							block.Instructions.RemoveLast();
 
@@ -146,7 +156,8 @@ namespace ICSharpCode.Decompiler.IL
 		// search for child containers to reduce nesting in
 		private void VisitContainers(ILInstruction inst, Block continueTarget)
 		{
-			switch (inst) {
+			switch (inst)
+			{
 				case ILFunction _:
 					break; // assume inline ILFunctions are already transformed
 				case BlockContainer cont:
@@ -177,7 +188,8 @@ namespace ICSharpCode.Decompiler.IL
 			if (trueRangeIsEmpty || falseRangeIsEmpty || falseRangeStart >= trueRangeStart)
 				return;
 
-			if (block.Instructions.Last() is Leave leave && !leave.IsLeavingFunction && leave.TargetContainer.Kind == ContainerKind.Normal) {
+			if (block.Instructions.Last() is Leave leave && !leave.IsLeavingFunction && leave.TargetContainer.Kind == ContainerKind.Normal)
+			{
 				// non-keyword leave. Can't move out of the last position in the block (fall-through) without introducing goto, unless it can be replaced with a keyword (return/continue)
 				if (!CanDuplicateExit(block.Instructions.Last(), continueTarget, out var keywordExit))
 					return;
@@ -200,7 +212,8 @@ namespace ICSharpCode.Decompiler.IL
 			UpdateStats(ifInst.TrueInst, ref maxStatements, ref maxDepth);
 
 			// if (cond) { ... } exit;
-			if (ifInst.FalseInst.MatchNop()) {
+			if (ifInst.FalseInst.MatchNop())
+			{
 				// a separate heuristic to ShouldReduceNesting as there is visual balancing to be performed based on number of statments
 				if (maxDepth < 2)
 					return false;
@@ -210,14 +223,15 @@ namespace ICSharpCode.Decompiler.IL
 				// ...; exit;
 				EnsureEndPointUnreachable(block, exitInst);
 				Debug.Assert(ifInst == block.Instructions.SecondToLastOrDefault());
-				
+
 				// use the same exit the block has. If the block already has one (such as a leave from a try), keep it in place
 				EnsureEndPointUnreachable(ifInst.TrueInst, block.Instructions.Last());
 				ConditionDetection.InvertIf(block, ifInst, context);
 
 				// ensure the exit inst of the if instruction is a keyword
 				Debug.Assert(!(ifInst.TrueInst is Block));
-				if (!ifInst.TrueInst.Match(exitInst).Success) {
+				if (!ifInst.TrueInst.Match(exitInst).Success)
+				{
 					Debug.Assert(ifInst.TrueInst is Leave);
 					context.Step("Replace leave with keyword exit", ifInst.TrueInst);
 					ifInst.TrueInst.ReplaceWith(exitInst.Clone());
@@ -228,30 +242,34 @@ namespace ICSharpCode.Decompiler.IL
 			// else-if trees are considered as a single group from the root IfInstruction
 			if (GetElseIfParent(ifInst) != null)
 				return false;
-			
+
 			// find the else block and tally stats for each else-if block
-			while (Block.Unwrap(ifInst.FalseInst) is IfInstruction elseIfInst) {
+			while (Block.Unwrap(ifInst.FalseInst) is IfInstruction elseIfInst)
+			{
 				UpdateStats(elseIfInst.TrueInst, ref maxStatements, ref maxDepth);
 				ifInst = elseIfInst;
 			}
 
 			if (!ShouldReduceNesting(ifInst.FalseInst, maxStatements, maxDepth))
 				return false;
-			
+
 			// extract the else block and insert exit points all the way up the else-if tree
-			do {
+			do
+			{
 				var elseIfInst = GetElseIfParent(ifInst);
-				
+
 				// if (cond) { ... } else { ... } exit;
 				//   ->
 				// if (cond) { ...; exit; }
 				// ...; exit;
 				EnsureEndPointUnreachable(ifInst.TrueInst, exitInst);
-				if (ifInst.FalseInst.HasFlag(InstructionFlags.EndPointUnreachable)) {
+				if (ifInst.FalseInst.HasFlag(InstructionFlags.EndPointUnreachable))
+				{
 					Debug.Assert(ifInst.HasFlag(InstructionFlags.EndPointUnreachable));
 					Debug.Assert(ifInst.Parent == block);
 					int removeAfter = ifInst.ChildIndex + 1;
-					if (removeAfter < block.Instructions.Count) {
+					if (removeAfter < block.Instructions.Count)
+					{
 						// Remove all instructions that ended up dead
 						// (this should just be exitInst itself)
 						Debug.Assert(block.Instructions.SecondToLastOrDefault() == ifInst);
@@ -265,7 +283,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			return true;
 		}
-		
+
 		/// <summary>
 		/// Reduce Nesting in switch statements by replacing break; in cases with the block exit, and extracting the default case
 		/// Does not affect IL order
@@ -283,7 +301,7 @@ namespace ICSharpCode.Decompiler.IL
 				return false;
 			if (defaultBlock.Parent != switchContainer)
 				return false;
-			
+
 			// tally stats for heuristic from each case block
 			int maxStatements = 0, maxDepth = 0;
 			foreach (var section in switchInst.Sections)
@@ -292,7 +310,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			if (!ShouldReduceNesting(defaultBlock, maxStatements, maxDepth))
 				return false;
-			
+
 			Debug.Assert(defaultBlock.HasFlag(InstructionFlags.EndPointUnreachable));
 
 			// ensure the default case dominator tree has no exits (branches to other cases)
@@ -310,10 +328,11 @@ namespace ICSharpCode.Decompiler.IL
 			// if the switch container is followed by an instruction, it must be a Leave from a try/pinned/etc or exitInst
 			// When it's a leave from a container, it's better to let the extracted default block 'fall through' rather than duplicating whatever
 			// instruction eventually follows the container
-			if (parentBlock.Instructions.SecondToLastOrDefault() == switchContainer) {
+			if (parentBlock.Instructions.SecondToLastOrDefault() == switchContainer)
+			{
 				if (defaultBlock.Instructions.Last().MatchLeave(switchContainer))
 					defaultBlock.Instructions.Last().ReplaceWith(parentBlock.Instructions.Last());
-				
+
 				parentBlock.Instructions.RemoveLast();
 			}
 
@@ -335,7 +354,8 @@ namespace ICSharpCode.Decompiler.IL
 
 			// add any additional blocks from the default case to the parent container
 			Debug.Assert(defaultBlocks[0] == defaultBlock);
-			if (defaultBlocks.Count > 1) {
+			if (defaultBlocks.Count > 1)
+			{
 				var parentContainer = (BlockContainer)parentBlock.Parent;
 				int insertAt = parentContainer.Blocks.IndexOf(parentBlock) + 1;
 				foreach (var block in defaultBlocks.Skip(1))
@@ -363,18 +383,23 @@ namespace ICSharpCode.Decompiler.IL
 			// leave from a try/pinned/lock etc, check if the target (the instruction following the target container) is duplicable, if so, set keywordExit to that
 			ILInstruction leavingInst = leave.TargetContainer;
 			Debug.Assert(!leavingInst.HasFlag(InstructionFlags.EndPointUnreachable));
-			while (!(leavingInst.Parent is Block b) || leavingInst == b.Instructions.Last()) {
-				if (leavingInst.Parent is TryFinally tryFinally) { 
-					if (leavingInst.SlotInfo == TryFinally.FinallyBlockSlot) { // cannot duplicate leaves from finally containers
+			while (!(leavingInst.Parent is Block b) || leavingInst == b.Instructions.Last())
+			{
+				if (leavingInst.Parent is TryFinally tryFinally)
+				{
+					if (leavingInst.SlotInfo == TryFinally.FinallyBlockSlot)
+					{ // cannot duplicate leaves from finally containers
 						Debug.Assert(leave.TargetContainer == tryFinally.FinallyBlock); //finally cannot have control flow
 						return false;
 					}
-					if (tryFinally.HasFlag(InstructionFlags.EndPointUnreachable)) { // finally block changes return value/throws an exception? Yikes. Lets leave it alone
+					if (tryFinally.HasFlag(InstructionFlags.EndPointUnreachable))
+					{ // finally block changes return value/throws an exception? Yikes. Lets leave it alone
 						Debug.Assert(tryFinally.FinallyBlock.HasFlag(InstructionFlags.EndPointUnreachable));
 						return false;
 					}
 				}
-				else if (leavingInst.Parent is TryFault tryFault && leavingInst.SlotInfo == TryFault.FaultBlockSlot) { // cannot duplicate leaves from fault containers either
+				else if (leavingInst.Parent is TryFault tryFault && leavingInst.SlotInfo == TryFault.FaultBlockSlot)
+				{ // cannot duplicate leaves from fault containers either
 					Debug.Assert(leave.TargetContainer == tryFault.FaultBlock);
 					return false;
 				}
@@ -385,7 +410,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 
 			var block = (Block)leavingInst.Parent;
-			var targetInst = block.Instructions[block.Instructions.IndexOf(leavingInst)+1];
+			var targetInst = block.Instructions[block.Instructions.IndexOf(leavingInst) + 1];
 			return CanDuplicateExit(targetInst, continueTarget, out keywordExit);
 		}
 
@@ -396,12 +421,14 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="fallthroughExit">The next instruction to be executed (provided inst does not exit)</param>
 		private void EnsureEndPointUnreachable(ILInstruction inst, ILInstruction fallthroughExit)
 		{
-			if (!(inst is Block block)) {
+			if (!(inst is Block block))
+			{
 				Debug.Assert(inst.HasFlag(InstructionFlags.EndPointUnreachable));
 				return;
 			}
 
-			if (!block.HasFlag(InstructionFlags.EndPointUnreachable)) {
+			if (!block.HasFlag(InstructionFlags.EndPointUnreachable))
+			{
 				context.Step("Duplicate block exit", fallthroughExit);
 				block.Instructions.Add(fallthroughExit.Clone());
 			}
@@ -412,7 +439,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		private void RemoveRedundantExit(Block block, ILInstruction implicitExit)
 		{
-			if (block.Instructions.Last().Match(implicitExit).Success) {
+			if (block.Instructions.Last().Match(implicitExit).Success)
+			{
 				context.Step("Remove redundant exit", block.Instructions.Last());
 				block.Instructions.RemoveLast();
 			}
@@ -443,7 +471,7 @@ namespace ICSharpCode.Decompiler.IL
 			ComputeStats(inst, ref numStatements, ref maxDepth, 0);
 			maxStatements = Math.Max(numStatements, maxStatements);
 		}
-		
+
 		/// <summary>
 		/// Recursively computes the number of statements and maximum nested depth of an instruction
 		/// </summary>
@@ -452,13 +480,15 @@ namespace ICSharpCode.Decompiler.IL
 			if (isStatement)
 				numStatements++;
 
-			if (currentDepth > maxDepth) {
+			if (currentDepth > maxDepth)
+			{
 				Debug.Assert(isStatement);
 				maxDepth = currentDepth;
 			}
 
 			// enumerate children statements and containers
-			switch (inst) {
+			switch (inst)
+			{
 				case Block block:
 					if (isStatement)
 						numStatements--; // don't count blocks as statements
@@ -475,7 +505,8 @@ namespace ICSharpCode.Decompiler.IL
 						numStatements++; //always add a statement for a container in an expression
 
 					var containerBody = container.EntryPoint;
-					if (container.Kind == ContainerKind.For || container.Kind == ContainerKind.While) {
+					if (container.Kind == ContainerKind.For || container.Kind == ContainerKind.While)
+					{
 						Debug.Assert(isStatement);
 
 						if (!container.MatchConditionBlock(container.EntryPoint, out _, out containerBody))
@@ -489,7 +520,7 @@ namespace ICSharpCode.Decompiler.IL
 						 container.Kind == ContainerKind.Normal && lastInst.MatchLeave(container) ||
 						 container.Kind == ContainerKind.Switch) // SwitchInstructyion always counts as a statement anyway, so no need to count the container as well
 						numStatements--;
-					
+
 					// add the nested body
 					ComputeStats(containerBody, ref numStatements, ref maxDepth, currentDepth + 1);
 					break;
@@ -500,12 +531,13 @@ namespace ICSharpCode.Decompiler.IL
 
 					// include all nested else-if instructions at the same depth
 					var elseInst = ifInst.FalseInst;
-					while (Block.Unwrap(elseInst) is IfInstruction elseIfInst) {
+					while (Block.Unwrap(elseInst) is IfInstruction elseIfInst)
+					{
 						numStatements++;
 						ComputeStats(elseIfInst.TrueInst, ref numStatements, ref maxDepth, currentDepth + 1);
 						elseInst = elseIfInst.FalseInst;
 					}
-					
+
 					// include all nested else instruction
 					ComputeStats(elseInst, ref numStatements, ref maxDepth, currentDepth + 1);
 					break;
@@ -525,7 +557,8 @@ namespace ICSharpCode.Decompiler.IL
 					int bodyStatements = 0;
 					int bodyMaxDepth = maxDepth;
 					ComputeStats(func.Body, ref bodyStatements, ref bodyMaxDepth, currentDepth);
-					if (bodyStatements >= 2) { // don't count inline functions
+					if (bodyStatements >= 2)
+					{ // don't count inline functions
 						numStatements += bodyStatements;
 						maxDepth = bodyMaxDepth;
 					}
@@ -558,7 +591,7 @@ namespace ICSharpCode.Decompiler.IL
 			// if the max depth is 2, always reduce nesting (total depth 3 or more)
 			// if the max depth is 1, reduce nesting if this block is the largest
 			// otherwise reduce nesting only if this block is twice as large as any other
-			return maxDepth2 >= 2 || maxDepth2 >= 1 && maxStatements2 > maxStatements || maxStatements2 >= 2*maxStatements;
+			return maxDepth2 >= 2 || maxDepth2 >= 1 && maxStatements2 > maxStatements || maxStatements2 >= 2 * maxStatements;
 		}
 
 		/// <summary>
@@ -606,7 +639,8 @@ namespace ICSharpCode.Decompiler.IL
 			// Finally is empty and redundant. But we'll delete the block only if there's a PinnedRegion.
 			if (!(tryFinally.TryBlock is BlockContainer tryContainer))
 				return;
-			if (tryContainer.SingleInstruction() is PinnedRegion pinnedRegion) {
+			if (tryContainer.SingleInstruction() is PinnedRegion pinnedRegion)
+			{
 				context.Step("Removing try-finally around PinnedRegion", pinnedRegion);
 				tryFinally.ReplaceWith(pinnedRegion);
 			}

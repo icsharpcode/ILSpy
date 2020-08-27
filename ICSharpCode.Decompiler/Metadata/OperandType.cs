@@ -105,7 +105,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		static HashSet<string> BuildKeywordList(params string[] keywords)
 		{
 			HashSet<string> s = new HashSet<string>(keywords);
-			foreach (var inst in operandNames) {
+			foreach (var inst in operandNames)
+			{
 				if (string.IsNullOrEmpty(inst))
 					continue;
 				s.Add(inst);

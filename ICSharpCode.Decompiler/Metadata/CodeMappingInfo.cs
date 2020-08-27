@@ -87,7 +87,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (parents.ContainsKey(part))
 				return;
 			parents.Add(part, parent);
-			if (!parts.TryGetValue(parent, out var list)) {
+			if (!parts.TryGetValue(parent, out var list))
+			{
 				list = new List<MethodDefinitionHandle>();
 				parts.Add(parent, list);
 			}

@@ -16,11 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Media;
 using System.Windows;
-using System.Collections;
+using System.Windows.Media;
 
 namespace ICSharpCode.TreeView
 {
@@ -33,7 +33,8 @@ namespace ICSharpCode.TreeView
 
 		public static IEnumerable<DependencyObject> AncestorsAndSelf(this DependencyObject d)
 		{
-			while (d != null) {
+			while (d != null)
+			{
 				yield return d;
 				d = VisualTreeHelper.GetParent(d);
 			}
@@ -41,7 +42,8 @@ namespace ICSharpCode.TreeView
 
 		public static void AddOnce(this IList list, object item)
 		{
-			if (!list.Contains(item)) {
+			if (!list.Contains(item))
+			{
 				list.Add(item);
 			}
 		}

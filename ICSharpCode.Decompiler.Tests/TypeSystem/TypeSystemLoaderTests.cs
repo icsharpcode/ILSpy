@@ -25,9 +25,11 @@ using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.TypeSystem
@@ -499,7 +501,8 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.IsFalse(valueField.IsConst);
 			Assert.IsFalse(valueField.IsStatic);
 
-			foreach (IField f in fields) {
+			foreach (IField f in fields)
+			{
 				Assert.IsTrue(f.IsStatic);
 				Assert.IsTrue(f.IsConst);
 				Assert.AreEqual(Accessibility.Public, f.Accessibility);
@@ -1020,7 +1023,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.AreEqual(5, arr.Length);
 			return arr[index];
 		}
-		
+
 		[Test]
 		public void ParamsAttribute_Integer()
 		{
@@ -1166,7 +1169,8 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void PropertyAccessorsHaveBody()
 		{
 			ITypeDefinition type = GetTypeDefinition(typeof(ClassWithStaticAndNonStaticMembers));
-			foreach (var prop in type.Properties) {
+			foreach (var prop in type.Properties)
+			{
 				Assert.IsTrue(prop.Getter.HasBody, prop.Getter.Name);
 				Assert.IsTrue(prop.Setter.HasBody, prop.Setter.Name);
 			}
@@ -1189,7 +1193,8 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void EventAccessorHaveBody()
 		{
 			ITypeDefinition type = GetTypeDefinition(typeof(ClassWithStaticAndNonStaticMembers));
-			foreach (var ev in type.Events) {
+			foreach (var ev in type.Events)
+			{
 				Assert.IsTrue(ev.AddAccessor.HasBody, ev.AddAccessor.Name);
 				Assert.IsTrue(ev.RemoveAccessor.HasBody, ev.RemoveAccessor.Name);
 			}
@@ -1353,7 +1358,8 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			IType type = compilation.FindType(typeof(ExplicitGenericInterfaceImplementationWithUnifiableMethods<int, int>));
 			Assert.AreEqual(2, type.GetMethods(m => m.IsExplicitInterfaceImplementation).Count());
-			foreach (IMethod method in type.GetMethods(m => m.IsExplicitInterfaceImplementation)) {
+			foreach (IMethod method in type.GetMethods(m => m.IsExplicitInterfaceImplementation))
+			{
 				Assert.AreEqual(1, method.ExplicitlyImplementedInterfaceMembers.Count(), method.ToString());
 				Assert.AreEqual("System.Int32", method.Parameters.Single().Type.ReflectionName);
 				IMethod interfaceMethod = (IMethod)method.ExplicitlyImplementedInterfaceMembers.Single();
@@ -1365,7 +1371,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 				Assert.AreEqual(genericParamType.ReflectionName, interfaceGenericParamType.ReflectionName);
 			}
 		}
-		
+
 		[Test]
 		public void ExplicitGenericInterfaceImplementation()
 		{
@@ -1592,40 +1598,40 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		[Test]
 		public void ExplicitImplementation()
 		{
-				var type = GetTypeDefinition(typeof(ExplicitImplementationTests));
-				var itype = GetTypeDefinition(typeof(IExplicitImplementationTests));
+			var type = GetTypeDefinition(typeof(ExplicitImplementationTests));
+			var itype = GetTypeDefinition(typeof(IExplicitImplementationTests));
 
-				var methods = type.GetMethods(m => m.Name == "M" || m.Name.EndsWith(".M")).ToList();
-				var imethod = itype.GetMethods(m => m.Name == "M").Single();
-				Assert.That(methods.Select(m => m.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
-				Assert.AreEqual(methods.SelectMany(m => m.ExplicitlyImplementedInterfaceMembers).Single(), imethod);
+			var methods = type.GetMethods(m => m.Name == "M" || m.Name.EndsWith(".M")).ToList();
+			var imethod = itype.GetMethods(m => m.Name == "M").Single();
+			Assert.That(methods.Select(m => m.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
+			Assert.AreEqual(methods.SelectMany(m => m.ExplicitlyImplementedInterfaceMembers).Single(), imethod);
 
-				var properties = type.GetProperties(p => p.Name == "P" || p.Name.EndsWith(".P")).ToList();
-				var iproperty = itype.GetProperties(m => m.Name == "P").Single();
-				Assert.That(properties.Select(p => p.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
-				Assert.AreEqual(properties.SelectMany(p => p.ExplicitlyImplementedInterfaceMembers).Single(), iproperty);
-				Assert.That(properties.Select(p => p.Getter.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
-				Assert.AreEqual(properties.SelectMany(p => p.Getter.ExplicitlyImplementedInterfaceMembers).Single(), iproperty.Getter);
-				Assert.That(properties.Select(p => p.Setter.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
-				Assert.AreEqual(properties.SelectMany(p => p.Setter.ExplicitlyImplementedInterfaceMembers).Single(), iproperty.Setter);
+			var properties = type.GetProperties(p => p.Name == "P" || p.Name.EndsWith(".P")).ToList();
+			var iproperty = itype.GetProperties(m => m.Name == "P").Single();
+			Assert.That(properties.Select(p => p.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
+			Assert.AreEqual(properties.SelectMany(p => p.ExplicitlyImplementedInterfaceMembers).Single(), iproperty);
+			Assert.That(properties.Select(p => p.Getter.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
+			Assert.AreEqual(properties.SelectMany(p => p.Getter.ExplicitlyImplementedInterfaceMembers).Single(), iproperty.Getter);
+			Assert.That(properties.Select(p => p.Setter.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
+			Assert.AreEqual(properties.SelectMany(p => p.Setter.ExplicitlyImplementedInterfaceMembers).Single(), iproperty.Setter);
 
-				var indexers = type.GetProperties(p => p.Name == "Item" || p.Name.EndsWith(".Item")).ToList();
-				var iindexer = itype.GetProperties(m => m.Name == "Item").Single();
-				Assert.That(indexers.Select(p => p.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
-				Assert.AreEqual(indexers.SelectMany(p => p.ExplicitlyImplementedInterfaceMembers).Single(), iindexer);
-				Assert.That(indexers.Select(p => p.Getter.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
-				Assert.AreEqual(indexers.SelectMany(p => p.Getter.ExplicitlyImplementedInterfaceMembers).Single(), iindexer.Getter);
-				Assert.That(indexers.Select(p => p.Setter.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
-				Assert.AreEqual(indexers.SelectMany(p => p.Setter.ExplicitlyImplementedInterfaceMembers).Single(), iindexer.Setter);
+			var indexers = type.GetProperties(p => p.Name == "Item" || p.Name.EndsWith(".Item")).ToList();
+			var iindexer = itype.GetProperties(m => m.Name == "Item").Single();
+			Assert.That(indexers.Select(p => p.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
+			Assert.AreEqual(indexers.SelectMany(p => p.ExplicitlyImplementedInterfaceMembers).Single(), iindexer);
+			Assert.That(indexers.Select(p => p.Getter.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
+			Assert.AreEqual(indexers.SelectMany(p => p.Getter.ExplicitlyImplementedInterfaceMembers).Single(), iindexer.Getter);
+			Assert.That(indexers.Select(p => p.Setter.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
+			Assert.AreEqual(indexers.SelectMany(p => p.Setter.ExplicitlyImplementedInterfaceMembers).Single(), iindexer.Setter);
 
-				var events = type.GetEvents(e => e.Name == "E" || e.Name.EndsWith(".E")).ToList();
-				var ievent = itype.GetEvents(m => m.Name == "E").Single();
-				Assert.That(events.Select(e => e.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
-				Assert.AreEqual(events.SelectMany(e => e.ExplicitlyImplementedInterfaceMembers).Single(), ievent);
-				Assert.That(events.Select(e => e.AddAccessor.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
-				Assert.AreEqual(events.SelectMany(e => e.AddAccessor.ExplicitlyImplementedInterfaceMembers).Single(), ievent.AddAccessor);
-				Assert.That(events.Select(e => e.RemoveAccessor.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
-				Assert.AreEqual(events.SelectMany(e => e.RemoveAccessor.ExplicitlyImplementedInterfaceMembers).Single(), ievent.RemoveAccessor);
+			var events = type.GetEvents(e => e.Name == "E" || e.Name.EndsWith(".E")).ToList();
+			var ievent = itype.GetEvents(m => m.Name == "E").Single();
+			Assert.That(events.Select(e => e.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
+			Assert.AreEqual(events.SelectMany(e => e.ExplicitlyImplementedInterfaceMembers).Single(), ievent);
+			Assert.That(events.Select(e => e.AddAccessor.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
+			Assert.AreEqual(events.SelectMany(e => e.AddAccessor.ExplicitlyImplementedInterfaceMembers).Single(), ievent.AddAccessor);
+			Assert.That(events.Select(e => e.RemoveAccessor.ExplicitlyImplementedInterfaceMembers.Count()).ToList(), Is.EquivalentTo(new[] { 0, 1 }));
+			Assert.AreEqual(events.SelectMany(e => e.RemoveAccessor.ExplicitlyImplementedInterfaceMembers).Single(), ievent.RemoveAccessor);
 		}
 
 		[Test]

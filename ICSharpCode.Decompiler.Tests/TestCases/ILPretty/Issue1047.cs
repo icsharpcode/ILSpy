@@ -6,7 +6,8 @@
 
 		private void ProblemMethod()
 		{
-			while (!dummy) {
+			while (!dummy)
+			{
 			}
 		}
 	}

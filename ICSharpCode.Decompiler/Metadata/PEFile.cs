@@ -24,6 +24,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -77,7 +78,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			string version = Metadata.MetadataVersion;
 			if (version == null || version.Length <= 1)
 				return TargetRuntime.Unknown;
-			switch (version[1]) {
+			switch (version[1])
+			{
 				case '1':
 					if (version.Length <= 3)
 						return TargetRuntime.Unknown;
@@ -108,7 +110,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		IEnumerable<Resource> GetResources()
 		{
 			var metadata = Metadata;
-			foreach (var h in metadata.ManifestResources) {
+			foreach (var h in metadata.ManifestResources)
+			{
 				yield return new Resource(this, h);
 			}
 		}
@@ -126,11 +129,14 @@ namespace ICSharpCode.Decompiler.Metadata
 		public TypeDefinitionHandle GetTypeDefinition(TopLevelTypeName typeName)
 		{
 			var lookup = LazyInit.VolatileRead(ref typeLookup);
-			if (lookup == null) {
+			if (lookup == null)
+			{
 				lookup = new Dictionary<TopLevelTypeName, TypeDefinitionHandle>();
-				foreach (var handle in Metadata.TypeDefinitions) {
+				foreach (var handle in Metadata.TypeDefinitions)
+				{
 					var td = Metadata.GetTypeDefinition(handle);
-					if (!td.GetDeclaringType().IsNil) {
+					if (!td.GetDeclaringType().IsNil)
+					{
 						continue; // nested type
 					}
 					var nsHandle = td.Namespace;
@@ -154,9 +160,11 @@ namespace ICSharpCode.Decompiler.Metadata
 		public ExportedTypeHandle GetTypeForwarder(FullTypeName typeName)
 		{
 			var lookup = LazyInit.VolatileRead(ref typeForwarderLookup);
-			if (lookup == null) {
+			if (lookup == null)
+			{
 				lookup = new Dictionary<FullTypeName, ExportedTypeHandle>();
-				foreach (var handle in Metadata.ExportedTypes) {
+				foreach (var handle in Metadata.ExportedTypes)
+				{
 					var td = Metadata.GetExportedType(handle);
 					lookup[td.GetFullTypeName(Metadata)] = handle;
 				}

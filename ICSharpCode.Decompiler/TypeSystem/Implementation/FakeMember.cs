@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -130,7 +131,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public override SymbolKind SymbolKind => symbolKind;
-		
+
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => EmptyList<IAttribute>.Instance;
 		bool IMethod.ReturnTypeIsRefReadOnly => false;
 		bool IMethod.ThisIsRefReadOnly => false;
@@ -154,7 +155,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IMethod IMethod.ReducedFrom => null;
 
 		public IReadOnlyList<IParameter> Parameters { get; set; } = EmptyList<IParameter>.Instance;
-		
+
 		public override IMember Specialize(TypeParameterSubstitution substitution)
 		{
 			return SpecializedMethod.Create(this, substitution);

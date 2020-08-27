@@ -36,54 +36,54 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override NodeType NodeType {
 			get { return NodeType.TypeDeclaration; }
 		}
-		
+
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.TypeDefinition; }
 		}
-		
+
 		public CSharpTokenNode DelegateToken {
 			get { return GetChildByRole(Roles.DelegateKeyword); }
 		}
 
 		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
-			get { return GetChildrenByRole (Roles.TypeParameter); }
+			get { return GetChildrenByRole(Roles.TypeParameter); }
 		}
-		
+
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
-		
+
 		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole (Roles.Parameter); }
+			get { return GetChildrenByRole(Roles.Parameter); }
 		}
-		
+
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
-		
+
 		public AstNodeCollection<Constraint> Constraints {
-			get { return GetChildrenByRole (Roles.Constraint); }
+			get { return GetChildrenByRole(Roles.Constraint); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitDelegateDeclaration (this);
+			visitor.VisitDelegateDeclaration(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitDelegateDeclaration (this);
+			return visitor.VisitDelegateDeclaration(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitDelegateDeclaration (this, data);
+			return visitor.VisitDelegateDeclaration(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			DelegateDeclaration o = other as DelegateDeclaration;
-			return o != null && MatchString(this.Name, o.Name) 
+			return o != null && MatchString(this.Name, o.Name)
 				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
 				&& this.TypeParameters.DoMatch(o.TypeParameters, match) && this.Parameters.DoMatch(o.Parameters, match)
 				&& this.Constraints.DoMatch(o.Constraints, match);

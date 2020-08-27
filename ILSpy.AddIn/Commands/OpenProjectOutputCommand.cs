@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+
 using Microsoft.VisualStudio.Shell;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
@@ -19,7 +20,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			if (sender is OleMenuCommand menuItem) {
+			if (sender is OleMenuCommand menuItem)
+			{
 				menuItem.Visible = false;
 
 				var selectedItem = owner.DTE.SelectedItems.Item(1);
@@ -34,7 +36,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			if (owner.DTE.SelectedItems.Count != 1)
 				return;
 			var projectItemWrapper = ProjectItemForILSpy.Detect(owner, owner.DTE.SelectedItems.Item(1));
-			if (projectItemWrapper != null) {
+			if (projectItemWrapper != null)
+			{
 				OpenAssembliesInILSpy(projectItemWrapper.GetILSpyParameters(owner));
 			}
 		}

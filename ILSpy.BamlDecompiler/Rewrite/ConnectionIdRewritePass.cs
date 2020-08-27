@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Xml.Linq;
+
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
@@ -46,10 +47,13 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			foreach (var child in element.Elements())
 				ProcessConnectionIds(child, eventMappings);
 
-			foreach (var annotation in element.Annotations<BamlConnectionId>()) {
+			foreach (var annotation in element.Annotations<BamlConnectionId>())
+			{
 				int index;
-				if ((index = eventMappings.FindIndex(item => item.key.Contains(annotation.Id))) > -1) {
-					foreach (var entry in eventMappings[index].value) {
+				if ((index = eventMappings.FindIndex(item => item.key.Contains(annotation.Id))) > -1)
+				{
+					foreach (var entry in eventMappings[index].value)
+					{
 						string xmlns = ""; // TODO : implement xmlns resolver!
 						element.Add(new XAttribute(xmlns + entry.EventName, entry.MethodName));
 					}
@@ -78,8 +82,10 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			MethodDefinition metadataEntry = default;
 			var module = ctx.TypeSystem.MainModule.PEFile;
 
-			foreach (IMethod m in type.Methods) {
-				if (m.ExplicitlyImplementedInterfaceMembers.Any(md => md.MemberDefinition.Equals(connect))) {
+			foreach (IMethod m in type.Methods)
+			{
+				if (m.ExplicitlyImplementedInterfaceMembers.Any(md => md.MemberDefinition.Equals(connect)))
+				{
 					method = m;
 					metadataEntry = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 					break;
@@ -106,13 +112,18 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			var block = function.Body.Children.OfType<Block>().First();
 			var ilSwitch = block.Descendants.OfType<SwitchInstruction>().FirstOrDefault();
 
-			if (ilSwitch != null) {
-				foreach (var section in ilSwitch.Sections) {
+			if (ilSwitch != null)
+			{
+				foreach (var section in ilSwitch.Sections)
+				{
 					var events = FindEvents(section.Body);
 					result.Add((section.Labels, events));
 				}
-			} else {
-				foreach (var ifInst in function.Descendants.OfType<IfInstruction>()) {
+			}
+			else
+			{
+				foreach (var ifInst in function.Descendants.OfType<IfInstruction>())
+				{
 					if (!(ifInst.Condition is Comp comp))
 						continue;
 					if (comp.Kind != ComparisonKind.Inequality && comp.Kind != ComparisonKind.Equality)
@@ -130,9 +141,11 @@ namespace ILSpy.BamlDecompiler.Rewrite
 		{
 			var events = new List<EventRegistration>();
 
-			switch (inst) {
+			switch (inst)
+			{
 				case Block _:
-					foreach (var node in ((Block)inst).Instructions) {
+					foreach (var node in ((Block)inst).Instructions)
+					{
 						FindEvents(node, events);
 					}
 					FindEvents(((Block)inst).FinalInstruction, events);
@@ -161,7 +174,8 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			eventName = "";
 			handlerName = "";
 
-			if (call.Arguments.Count == 3) {
+			if (call.Arguments.Count == 3)
+			{
 				var addMethod = call.Method;
 				if (addMethod.Name != "AddHandler" || addMethod.Parameters.Count != 2)
 					return false;
@@ -188,7 +202,8 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			eventName = "";
 			handlerName = "";
 
-			if (call.Arguments.Count == 2) {
+			if (call.Arguments.Count == 2)
+			{
 				var addMethod = call.Method;
 				if (!addMethod.Name.StartsWith("add_", StringComparison.Ordinal) || addMethod.Parameters.Count != 1)
 					return false;

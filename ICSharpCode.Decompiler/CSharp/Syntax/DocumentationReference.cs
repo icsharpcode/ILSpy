@@ -27,11 +27,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<AstType> DeclaringTypeRole = new Role<AstType>("DeclaringType", AstType.Null);
 		public static readonly Role<AstType> ConversionOperatorReturnTypeRole = new Role<AstType>("ConversionOperatorReturnType", AstType.Null);
-		
+
 		SymbolKind symbolKind;
 		OperatorType operatorType;
 		bool hasParameterList;
-		
+
 		/// <summary>
 		/// Gets/Sets the entity type.
 		/// Possible values are:
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				symbolKind = value;
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets/Sets the operator type.
 		/// This property is only used when SymbolKind==Operator.
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				operatorType = value;
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets/Sets whether a parameter list was provided.
 		/// </summary>
@@ -70,11 +70,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				hasParameterList = value;
 			}
 		}
-		
+
 		public override NodeType NodeType {
 			get { return NodeType.Unknown; }
 		}
-		
+
 		/// <summary>
 		/// Gets/Sets the declaring type.
 		/// </summary>
@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(DeclaringTypeRole); }
 			set { SetChildByRole(DeclaringTypeRole, value); }
 		}
-		
+
 		/// <summary>
 		/// Gets/sets the member name.
 		/// This property is only used when SymbolKind==None.
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Identifier).Name; }
 			set { SetChildByRole(Roles.Identifier, Identifier.Create(value)); }
 		}
-		
+
 		/// <summary>
 		/// Gets/Sets the return type of conversion operators.
 		/// This property is only used when SymbolKind==Operator and OperatorType is explicit or implicit.
@@ -100,28 +100,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(ConversionOperatorReturnTypeRole); }
 			set { SetChildByRole(ConversionOperatorReturnTypeRole, value); }
 		}
-		
+
 		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole (Roles.TypeArgument); }
+			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
-		
+
 		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole (Roles.Parameter); }
+			get { return GetChildrenByRole(Roles.Parameter); }
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			DocumentationReference o = other as DocumentationReference;
 			if (!(o != null && this.SymbolKind == o.SymbolKind && this.HasParameterList == o.HasParameterList))
 				return false;
-			if (this.SymbolKind == SymbolKind.Operator) {
+			if (this.SymbolKind == SymbolKind.Operator)
+			{
 				if (this.OperatorType != o.OperatorType)
 					return false;
-				if (this.OperatorType == OperatorType.Implicit || this.OperatorType == OperatorType.Explicit) {
+				if (this.OperatorType == OperatorType.Implicit || this.OperatorType == OperatorType.Explicit)
+				{
 					if (!this.ConversionOperatorReturnType.DoMatch(o.ConversionOperatorReturnType, match))
 						return false;
 				}
-			} else if (this.SymbolKind == SymbolKind.None) {
+			}
+			else if (this.SymbolKind == SymbolKind.None)
+			{
 				if (!MatchString(this.MemberName, o.MemberName))
 					return false;
 				if (!this.TypeArguments.DoMatch(o.TypeArguments, match))
@@ -129,20 +133,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			return this.Parameters.DoMatch(o.Parameters, match);
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitDocumentationReference (this);
+			visitor.VisitDocumentationReference(this);
 		}
-		
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitDocumentationReference (this);
+			return visitor.VisitDocumentationReference(this);
 		}
-		
+
 		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitDocumentationReference (this, data);
+			return visitor.VisitDocumentationReference(this, data);
 		}
 	}
 }

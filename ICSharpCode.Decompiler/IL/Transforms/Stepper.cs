@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -80,7 +81,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			steps = new List<Node>();
 			groups = new Stack<Node>();
 		}
-		
+
 		/// <summary>
 		/// Call this method immediately before performing a transform step.
 		/// Used for debugging the IL transforms. Has no effect in release mode.
@@ -94,7 +95,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private Node StepInternal(string description, ILInstruction near)
 		{
-			if (step == StepLimit) {
+			if (step == StepLimit)
+			{
 				if (IsDebug)
 					Debugger.Break();
 				else
@@ -123,7 +125,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void EndGroup(bool keepIfEmpty = false)
 		{
 			var node = groups.Pop();
-			if (!keepIfEmpty && node.Children.Count == 0) {
+			if (!keepIfEmpty && node.Children.Count == 0)
+			{
 				var col = groups.PeekOrDefault()?.Children ?? steps;
 				Debug.Assert(col.Last() == node);
 				col.RemoveAt(col.Count - 1);

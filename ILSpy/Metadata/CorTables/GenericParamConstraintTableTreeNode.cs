@@ -45,13 +45,15 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
 			var metadata = module.Metadata;
-			
+
 			var list = new List<GenericParamConstraintEntry>();
 			GenericParamConstraintEntry scrollTargetEntry = default;
 
-			for (int row = 1; row <= metadata.GetTableRowCount(TableIndex.GenericParamConstraint); row++) {
+			for (int row = 1; row <= metadata.GetTableRowCount(TableIndex.GenericParamConstraint); row++)
+			{
 				GenericParamConstraintEntry entry = new GenericParamConstraintEntry(module, MetadataTokens.GenericParameterConstraintHandle(row));
-				if (entry.RID == this.scrollTarget) {
+				if (entry.RID == this.scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -60,7 +62,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -81,7 +84,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset => metadataOffset
 				+ metadata.GetTableMetadataOffset(TableIndex.GenericParamConstraint)
-				+ metadata.GetTableRowSize(TableIndex.GenericParamConstraint) * (RID-1);
+				+ metadata.GetTableRowSize(TableIndex.GenericParamConstraint) * (RID - 1);
 
 			[StringFormat("X8")]
 			public int Owner => MetadataTokens.GetToken(genericParamConstraint.Parameter);
@@ -90,7 +93,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string OwnerTooltip {
 				get {
-					if (ownerTooltip == null) {
+					if (ownerTooltip == null)
+					{
 						ITextOutput output = new PlainTextOutput();
 						var p = metadata.GetGenericParameter(genericParamConstraint.Parameter);
 						output.Write("parameter " + p.Index + (p.Name.IsNil ? "" : " (" + metadata.GetString(p.Name) + ")") + " of ");

@@ -22,14 +22,16 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Util;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Controls;
-using ICSharpCode.ILSpy.TextView;
-using Microsoft.Win32;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
+
+using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -38,7 +40,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		public ILSpyTreeNode CreateNode(Resource resource)
 		{
-			if (resource.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) {
+			if (resource.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
+			{
 				return new ResourcesFileTreeNode(resource);
 			}
 			return null;
@@ -66,42 +69,57 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		protected override void LoadChildren()
 		{
 			Stream s = Resource.TryOpenStream();
-			if (s == null) return;
+			if (s == null)
+				return;
 			s.Position = 0;
-			try {
-				foreach (var entry in new ResourcesFile(s).OrderBy(e => e.Key, NaturalStringComparer.Instance)) {
+			try
+			{
+				foreach (var entry in new ResourcesFile(s).OrderBy(e => e.Key, NaturalStringComparer.Instance))
+				{
 					ProcessResourceEntry(entry);
 				}
-			} catch (BadImageFormatException) {
+			}
+			catch (BadImageFormatException)
+			{
 				// ignore errors
-			} catch (EndOfStreamException) {
+			}
+			catch (EndOfStreamException)
+			{
 				// ignore errors
 			}
 		}
 
 		private void ProcessResourceEntry(KeyValuePair<string, object> entry)
 		{
-			if (entry.Value is string) {
+			if (entry.Value is string)
+			{
 				stringTableEntries.Add(new KeyValuePair<string, string>(entry.Key, (string)entry.Value));
 				return;
 			}
 
-			if (entry.Value is byte[]) {
+			if (entry.Value is byte[])
+			{
 				Children.Add(ResourceEntryNode.Create(entry.Key, new MemoryStream((byte[])entry.Value)));
 				return;
 			}
 
 			var node = ResourceEntryNode.Create(entry.Key, entry.Value);
-			if (node != null) {
+			if (node != null)
+			{
 				Children.Add(node);
 				return;
 			}
 
-			if (entry.Value == null) {
+			if (entry.Value == null)
+			{
 				otherEntries.Add(new SerializedObjectRepresentation(entry.Key, "null", ""));
-			} else if (entry.Value is ResourceSerializedObject so) {
+			}
+			else if (entry.Value is ResourceSerializedObject so)
+			{
 				otherEntries.Add(new SerializedObjectRepresentation(entry.Key, so.TypeName, "<serialized>"));
-			} else {
+			}
+			else
+			{
 				otherEntries.Add(new SerializedObjectRepresentation(entry.Key, entry.Value.GetType().FullName, entry.Value.ToString()));
 			}
 		}
@@ -109,29 +127,40 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool Save(TabPageModel tabPage)
 		{
 			Stream s = Resource.TryOpenStream();
-			if (s == null) return false;
+			if (s == null)
+				return false;
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = DecompilerTextView.CleanUpName(Resource.Name);
 			dlg.Filter = Resources.ResourcesFileFilter;
-			if (dlg.ShowDialog() == true) {
+			if (dlg.ShowDialog() == true)
+			{
 				s.Position = 0;
-				switch (dlg.FilterIndex) {
+				switch (dlg.FilterIndex)
+				{
 					case 1:
-						using (var fs = dlg.OpenFile()) {
+						using (var fs = dlg.OpenFile())
+						{
 							s.CopyTo(fs);
 						}
 						break;
 					case 2:
-						try {
+						try
+						{
 							using (var fs = dlg.OpenFile())
-							using (var writer = new ResXResourceWriter(fs)) {
-								foreach (var entry in new ResourcesFile(s)) {
+							using (var writer = new ResXResourceWriter(fs))
+							{
+								foreach (var entry in new ResourcesFile(s))
+								{
 									writer.AddResource(entry.Key, entry.Value);
 								}
 							}
-						} catch (BadImageFormatException) {
+						}
+						catch (BadImageFormatException)
+						{
 							// ignore errors
-						} catch (EndOfStreamException) {
+						}
+						catch (EndOfStreamException)
+						{
 							// ignore errors
 						}
 						break;
@@ -146,9 +175,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			EnsureLazyChildren();
 			base.Decompile(language, output, options);
 			var textView = (DecompilerTextView)Docking.DockWorkspace.Instance.ActiveTabPage.Content;
-			if (stringTableEntries.Count != 0) {
+			if (stringTableEntries.Count != 0)
+			{
 				ISmartTextOutput smartOutput = output as ISmartTextOutput;
-				if (null != smartOutput) {
+				if (null != smartOutput)
+				{
 					smartOutput.AddUIElement(
 						delegate {
 							return new ResourceStringTable(stringTableEntries, textView);
@@ -158,9 +189,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				output.WriteLine();
 				output.WriteLine();
 			}
-			if (otherEntries.Count != 0) {
+			if (otherEntries.Count != 0)
+			{
 				ISmartTextOutput smartOutput = output as ISmartTextOutput;
-				if (null != smartOutput) {
+				if (null != smartOutput)
+				{
 					smartOutput.AddUIElement(
 						delegate {
 							return new ResourceObjectTable(otherEntries, textView);

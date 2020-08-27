@@ -21,7 +21,9 @@ using System.CodeDom.Compiler;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+
 using ICSharpCode.Decompiler.Tests.Helpers;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
@@ -38,9 +40,11 @@ namespace ICSharpCode.Decompiler.Tests
 				.Where(m => m.GetCustomAttributes(typeof(TestAttribute), false).Any())
 				.Select(m => m.Name)
 				.ToArray();
-			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles()) {
+			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles())
+			{
 				if (file.Extension.Equals(".il", StringComparison.OrdinalIgnoreCase)
-					|| file.Extension.Equals(".cs", StringComparison.OrdinalIgnoreCase)) {
+					|| file.Extension.Equals(".cs", StringComparison.OrdinalIgnoreCase))
+				{
 					var testName = file.Name.Split('.')[0];
 					Assert.Contains(testName, testNames);
 				}
@@ -125,13 +129,17 @@ namespace ICSharpCode.Decompiler.Tests
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 			var expectedFile = Path.Combine(TestCasePath, testName + ".Expected.cs");
 
-			if (!File.Exists(ilFile)) {
+			if (!File.Exists(ilFile))
+			{
 				// re-create .il file if necessary
 				CompilerResults output = null;
-				try {
+				try
+				{
 					output = Tester.CompileCSharp(csFile, cscOptions);
 					Tester.Disassemble(output.PathToAssembly, ilFile, asmOptions);
-				} finally {
+				}
+				finally
+				{
 					if (output != null)
 						output.TempFiles.Delete();
 				}
@@ -139,7 +147,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 			var executable = Tester.AssembleIL(ilFile, asmOptions);
 			var decompiled = Tester.DecompileCSharp(executable, decompilerSettings);
-			
+
 			CodeAssert.FilesAreEqual(expectedFile, decompiled, Tester.GetPreprocessorSymbols(cscOptions).ToArray());
 		}
 	}

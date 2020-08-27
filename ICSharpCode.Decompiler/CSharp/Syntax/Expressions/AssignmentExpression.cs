@@ -25,8 +25,8 @@
 // THE SOFTWARE.
 
 using System;
-using System.Linq.Expressions;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -38,80 +38,81 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// reuse roles from BinaryOperatorExpression
 		public readonly static Role<Expression> LeftRole = BinaryOperatorExpression.LeftRole;
 		public readonly static Role<Expression> RightRole = BinaryOperatorExpression.RightRole;
-		
-		public readonly static TokenRole AssignRole = new TokenRole ("=");
-		public readonly static TokenRole AddRole = new TokenRole ("+=");
-		public readonly static TokenRole SubtractRole = new TokenRole ("-=");
-		public readonly static TokenRole MultiplyRole = new TokenRole ("*=");
-		public readonly static TokenRole DivideRole = new TokenRole ("/=");
-		public readonly static TokenRole ModulusRole = new TokenRole ("%=");
-		public readonly static TokenRole ShiftLeftRole = new TokenRole ("<<=");
-		public readonly static TokenRole ShiftRightRole = new TokenRole (">>=");
-		public readonly static TokenRole BitwiseAndRole = new TokenRole ("&=");
-		public readonly static TokenRole BitwiseOrRole = new TokenRole ("|=");
-		public readonly static TokenRole ExclusiveOrRole = new TokenRole ("^=");
-		
+
+		public readonly static TokenRole AssignRole = new TokenRole("=");
+		public readonly static TokenRole AddRole = new TokenRole("+=");
+		public readonly static TokenRole SubtractRole = new TokenRole("-=");
+		public readonly static TokenRole MultiplyRole = new TokenRole("*=");
+		public readonly static TokenRole DivideRole = new TokenRole("/=");
+		public readonly static TokenRole ModulusRole = new TokenRole("%=");
+		public readonly static TokenRole ShiftLeftRole = new TokenRole("<<=");
+		public readonly static TokenRole ShiftRightRole = new TokenRole(">>=");
+		public readonly static TokenRole BitwiseAndRole = new TokenRole("&=");
+		public readonly static TokenRole BitwiseOrRole = new TokenRole("|=");
+		public readonly static TokenRole ExclusiveOrRole = new TokenRole("^=");
+
 		public AssignmentExpression()
 		{
 		}
-		
+
 		public AssignmentExpression(Expression left, Expression right)
 		{
 			this.Left = left;
 			this.Right = right;
 		}
-		
+
 		public AssignmentExpression(Expression left, AssignmentOperatorType op, Expression right)
 		{
 			this.Left = left;
 			this.Operator = op;
 			this.Right = right;
 		}
-		
+
 		public AssignmentOperatorType Operator {
 			get;
 			set;
 		}
-		
+
 		public Expression Left {
-			get { return GetChildByRole (LeftRole); }
+			get { return GetChildByRole(LeftRole); }
 			set { SetChildByRole(LeftRole, value); }
 		}
-		
+
 		public CSharpTokenNode OperatorToken {
-			get { return GetChildByRole (GetOperatorRole(Operator)); }
+			get { return GetChildByRole(GetOperatorRole(Operator)); }
 		}
-		
+
 		public Expression Right {
-			get { return GetChildByRole (RightRole); }
+			get { return GetChildByRole(RightRole); }
 			set { SetChildByRole(RightRole, value); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitAssignmentExpression (this);
+			visitor.VisitAssignmentExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitAssignmentExpression (this);
+			return visitor.VisitAssignmentExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitAssignmentExpression (this, data);
+			return visitor.VisitAssignmentExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			AssignmentExpression o = other as AssignmentExpression;
 			return o != null && (this.Operator == AssignmentOperatorType.Any || this.Operator == o.Operator)
 				&& this.Left.DoMatch(o.Left, match) && this.Right.DoMatch(o.Right, match);
 		}
-		
+
 		public static TokenRole GetOperatorRole(AssignmentOperatorType op)
 		{
-			switch (op) {
+			switch (op)
+			{
 				case AssignmentOperatorType.Assign:
 					return AssignRole;
 				case AssignmentOperatorType.Add:
@@ -138,14 +139,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					throw new NotSupportedException("Invalid value for AssignmentOperatorType");
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets the binary operator for the specified compound assignment operator.
 		/// Returns null if 'op' is not a compound assignment.
 		/// </summary>
 		public static BinaryOperatorType? GetCorrespondingBinaryOperator(AssignmentOperatorType op)
 		{
-			switch (op) {
+			switch (op)
+			{
 				case AssignmentOperatorType.Assign:
 					return null;
 				case AssignmentOperatorType.Add:
@@ -172,10 +174,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					throw new NotSupportedException("Invalid value for AssignmentOperatorType");
 			}
 		}
-		
+
 		public static ExpressionType GetLinqNodeType(AssignmentOperatorType op, bool checkForOverflow)
 		{
-			switch (op) {
+			switch (op)
+			{
 				case AssignmentOperatorType.Assign:
 					return ExpressionType.Assign;
 				case AssignmentOperatorType.Add:
@@ -205,7 +208,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static AssignmentOperatorType? GetAssignmentOperatorTypeFromExpressionType(ExpressionType expressionType)
 		{
-			switch (expressionType) {
+			switch (expressionType)
+			{
 				case ExpressionType.AddAssign:
 				case ExpressionType.AddAssignChecked:
 					return AssignmentOperatorType.Add;
@@ -234,12 +238,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 	}
-	
+
 	public enum AssignmentOperatorType
 	{
 		/// <summary>left = right</summary>
 		Assign,
-		
+
 		/// <summary>left += right</summary>
 		Add,
 		/// <summary>left -= right</summary>
@@ -255,14 +259,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		ShiftLeft,
 		/// <summary>left >>= right</summary>
 		ShiftRight,
-		
+
 		/// <summary>left &amp;= right</summary>
 		BitwiseAnd,
 		/// <summary>left |= right</summary>
 		BitwiseOr,
 		/// <summary>left ^= right</summary>
 		ExclusiveOr,
-		
+
 		/// <summary>Any operator (for pattern matching)</summary>
 		Any
 	}

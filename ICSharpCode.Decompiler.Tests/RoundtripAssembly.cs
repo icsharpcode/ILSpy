@@ -23,12 +23,15 @@ using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 using System.Threading;
+
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
+
 using Microsoft.Build.Locator;
 using Microsoft.Win32;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
@@ -38,7 +41,7 @@ namespace ICSharpCode.Decompiler.Tests
 	{
 		public static readonly string TestDir = Path.GetFullPath(Path.Combine(Tester.TestCasePath, "../../ILSpy-tests"));
 		static readonly string nunit = Path.Combine(TestDir, "nunit", "nunit3-console.exe");
-		
+
 		[Test]
 		public void Cecil_net45()
 		{
@@ -54,9 +57,12 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void NewtonsoftJson_pcl_debug()
 		{
-			try {
+			try
+			{
 				RunWithTest("Newtonsoft.Json-pcl-debug", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll", useOldProjectFormat: true);
-			} catch (CompilationFailedException) {
+			}
+			catch (CompilationFailedException)
+			{
 				Assert.Ignore("Cannot yet re-compile PCL projects.");
 			}
 		}
@@ -148,14 +154,16 @@ namespace ICSharpCode.Decompiler.Tests
 
 		void RunInternal(string dir, string fileToRoundtrip, Action<string> testAction, LanguageVersion languageVersion, string snkFilePath = null, bool useOldProjectFormat = false)
 		{
-			if (!Directory.Exists(TestDir)) {
+			if (!Directory.Exists(TestDir))
+			{
 				Assert.Ignore($"Assembly-roundtrip test ignored: test directory '{TestDir}' needs to be checked out separately." + Environment.NewLine +
-				              $"git clone https://github.com/icsharpcode/ILSpy-tests \"{TestDir}\"");
+							  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{TestDir}\"");
 			}
 			string inputDir = Path.Combine(TestDir, dir);
 			string decompiledDir = inputDir + "-decompiled";
 			string outputDir = inputDir + "-output";
-			if (inputDir.EndsWith("TestCases")) {
+			if (inputDir.EndsWith("TestCases"))
+			{
 				// make sure output dir names are unique so that we don't get trouble due to parallel test execution
 				decompiledDir += Path.GetFileNameWithoutExtension(fileToRoundtrip) + "_" + languageVersion.ToString();
 				outputDir += Path.GetFileNameWithoutExtension(fileToRoundtrip) + "_" + languageVersion.ToString();
@@ -163,16 +171,20 @@ namespace ICSharpCode.Decompiler.Tests
 			ClearDirectory(decompiledDir);
 			ClearDirectory(outputDir);
 			string projectFile = null;
-			foreach (string file in Directory.EnumerateFiles(inputDir, "*", SearchOption.AllDirectories)) {
-				if (!file.StartsWith(inputDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) {
+			foreach (string file in Directory.EnumerateFiles(inputDir, "*", SearchOption.AllDirectories))
+			{
+				if (!file.StartsWith(inputDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+				{
 					Assert.Fail($"Unexpected file name: {file}");
 				}
 				string relFile = file.Substring(inputDir.Length + 1);
 				Directory.CreateDirectory(Path.Combine(outputDir, Path.GetDirectoryName(relFile)));
-				if (relFile.Equals(fileToRoundtrip, StringComparison.OrdinalIgnoreCase)) {
+				if (relFile.Equals(fileToRoundtrip, StringComparison.OrdinalIgnoreCase))
+				{
 					Console.WriteLine($"Decompiling {fileToRoundtrip}...");
 					Stopwatch w = Stopwatch.StartNew();
-					using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read)) {
+					using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read))
+					{
 						PEFile module = new PEFile(file, fileStream, PEStreamOptions.PrefetchEntireImage);
 						var resolver = new TestAssemblyResolver(file, inputDir, module.Reader.DetectTargetFrameworkId());
 						resolver.AddSearchDirectory(inputDir);
@@ -182,25 +194,29 @@ namespace ICSharpCode.Decompiler.Tests
 						var projectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
 
 						var settings = new DecompilerSettings(languageVersion);
-						if (useOldProjectFormat) {
+						if (useOldProjectFormat)
+						{
 							settings.UseSdkStyleProjectFormat = false;
 						}
 
 						var decompiler = new TestProjectDecompiler(projectGuid, resolver, settings);
 
-						if (snkFilePath != null) {
+						if (snkFilePath != null)
+						{
 							decompiler.StrongNameKeyFile = Path.Combine(inputDir, snkFilePath);
 						}
 						decompiler.DecompileProject(module, decompiledDir);
 						Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
 						projectFile = Path.Combine(decompiledDir, module.Name + ".csproj");
 					}
-				} else {
+				}
+				else
+				{
 					File.Copy(file, Path.Combine(outputDir, relFile));
 				}
 			}
 			Assert.IsNotNull(projectFile, $"Could not find {fileToRoundtrip}");
-			
+
 			Compile(projectFile, outputDir);
 			testAction(outputDir);
 		}
@@ -208,19 +224,25 @@ namespace ICSharpCode.Decompiler.Tests
 		static void ClearDirectory(string dir)
 		{
 			Directory.CreateDirectory(dir);
-			foreach (string subdir in Directory.EnumerateDirectories(dir)) {
-				for (int attempt = 0; ; attempt++) {
-					try {
+			foreach (string subdir in Directory.EnumerateDirectories(dir))
+			{
+				for (int attempt = 0; ; attempt++)
+				{
+					try
+					{
 						Directory.Delete(subdir, true);
 						break;
-					} catch (IOException) {
+					}
+					catch (IOException)
+					{
 						if (attempt >= 10)
 							throw;
 						Thread.Sleep(100);
 					}
 				}
 			}
-			foreach (string file in Directory.EnumerateFiles(dir)) {
+			foreach (string file in Directory.EnumerateFiles(dir))
+			{
 				File.Delete(file);
 			}
 		}
@@ -228,9 +250,9 @@ namespace ICSharpCode.Decompiler.Tests
 		static string FindMSBuild()
 		{
 			string vsPath = MSBuildLocator.QueryVisualStudioInstances(new VisualStudioInstanceQueryOptions { DiscoveryTypes = DiscoveryType.VisualStudioSetup })
-										  .OrderByDescending(i => i.Version)										  
+										  .OrderByDescending(i => i.Version)
 										  .FirstOrDefault()
-										  ?.MSBuildPath; 
+										  ?.MSBuildPath;
 			if (vsPath == null)
 				throw new InvalidOperationException("Could not find MSBuild");
 			return Path.Combine(vsPath, "msbuild.exe");
@@ -247,16 +269,20 @@ namespace ICSharpCode.Decompiler.Tests
 			info.EnvironmentVariables.Remove("Configuration");
 			info.EnvironmentVariables.Remove("Platform");
 			Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
-			using (var p = Process.Start(info)) {
+			using (var p = Process.Start(info))
+			{
 				Regex errorRegex = new Regex(@"^[\w\d.\\-]+\(\d+,\d+\):");
 				string suffix = $" [{projectFile}]";
 				string line;
-				while ((line = p.StandardOutput.ReadLine()) != null) {
-					if (line.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)) {
+				while ((line = p.StandardOutput.ReadLine()) != null)
+				{
+					if (line.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+					{
 						line = line.Substring(0, line.Length - suffix.Length);
 					}
 					Match m = errorRegex.Match(line);
-					if (m.Success) {
+					if (m.Success)
+					{
 						// Make path absolute so that it gets hyperlinked
 						line = Path.GetDirectoryName(projectFile) + Path.DirectorySeparatorChar + line;
 					}
@@ -267,7 +293,7 @@ namespace ICSharpCode.Decompiler.Tests
 					throw new CompilationFailedException($"Compilation of {Path.GetFileName(projectFile)} failed");
 			}
 		}
-		
+
 		static void RunTest(string outputDir, string fileToTest)
 		{
 			var info = new ProcessStartInfo(nunit);
@@ -277,9 +303,11 @@ namespace ICSharpCode.Decompiler.Tests
 			info.UseShellExecute = false;
 			info.RedirectStandardOutput = true;
 			Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
-			using (var p = Process.Start(info)) {
+			using (var p = Process.Start(info))
+			{
 				string line;
-				while ((line = p.StandardOutput.ReadLine()) != null) {
+				while ((line = p.StandardOutput.ReadLine()) != null)
+				{
 					Console.WriteLine(line);
 				}
 				p.WaitForExit();
@@ -302,7 +330,7 @@ namespace ICSharpCode.Decompiler.Tests
 			{
 			}
 		}
-		
+
 		class TestRunFailedException : Exception
 		{
 			public TestRunFailedException(string message) : base(message)

@@ -33,49 +33,49 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class TypeOfExpression : Expression
 	{
-		public readonly static TokenRole TypeofKeywordRole = new TokenRole ("typeof");
-		
+		public readonly static TokenRole TypeofKeywordRole = new TokenRole("typeof");
+
 		public CSharpTokenNode TypeOfToken {
-			get { return GetChildByRole (TypeofKeywordRole); }
+			get { return GetChildByRole(TypeofKeywordRole); }
 		}
-		
+
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
-		
+
 		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
+			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
-		
+
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
-		
-		public TypeOfExpression ()
+
+		public TypeOfExpression()
 		{
 		}
-		
-		public TypeOfExpression (AstType type)
+
+		public TypeOfExpression(AstType type)
 		{
-			AddChild (type, Roles.Type);
+			AddChild(type, Roles.Type);
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitTypeOfExpression (this);
+			visitor.VisitTypeOfExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitTypeOfExpression (this);
+			return visitor.VisitTypeOfExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitTypeOfExpression (this, data);
+			return visitor.VisitTypeOfExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			TypeOfExpression o = other as TypeOfExpression;

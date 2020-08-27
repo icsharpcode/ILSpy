@@ -25,12 +25,12 @@ namespace ICSharpCode.Decompiler.IL
 	public class SlotInfo
 	{
 		public static SlotInfo None = new SlotInfo("<no slot>");
-		
+
 		/// <summary>
 		/// Gets the name of the slot.
 		/// </summary>
 		public readonly string Name;
-		
+
 		/// <summary>
 		/// Gets whether it is possible to inline into this slot.
 		/// </summary>
@@ -40,14 +40,14 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets whether this slot belongs to a collection.
 		/// </summary>
 		public readonly bool IsCollection;
-		
+
 		public SlotInfo(string name, bool canInlineInto = false, bool isCollection = false)
 		{
 			this.IsCollection = isCollection;
 			this.Name = name;
 			this.CanInlineInto = canInlineInto;
 		}
-		
+
 		public override string ToString()
 		{
 			return Name;

@@ -32,29 +32,29 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class StackAllocExpression : Expression
 	{
-		public readonly static TokenRole StackallocKeywordRole = new TokenRole ("stackalloc");
+		public readonly static TokenRole StackallocKeywordRole = new TokenRole("stackalloc");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", ArrayInitializerExpression.Null);
 
 		public CSharpTokenNode StackAllocToken {
-			get { return GetChildByRole (StackallocKeywordRole); }
+			get { return GetChildByRole(StackallocKeywordRole); }
 		}
-		
+
 		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
+			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
-		
+
 		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole (Roles.LBracket); }
+			get { return GetChildByRole(Roles.LBracket); }
 		}
-		
+
 		public Expression CountExpression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get { return GetChildByRole(Roles.Expression); }
+			set { SetChildByRole(Roles.Expression, value); }
 		}
-		
+
 		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole (Roles.RBracket); }
+			get { return GetChildByRole(Roles.RBracket); }
 		}
 
 		public ArrayInitializerExpression Initializer {
@@ -62,21 +62,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(InitializerRole, value); }
 		}
 
-		public override void AcceptVisitor (IAstVisitor visitor)
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitStackAllocExpression (this);
+			visitor.VisitStackAllocExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitStackAllocExpression (this);
+			return visitor.VisitStackAllocExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitStackAllocExpression (this, data);
+			return visitor.VisitStackAllocExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			StackAllocExpression o = other as StackAllocExpression;

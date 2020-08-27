@@ -73,9 +73,12 @@ namespace ICSharpCode.Decompiler.Util
 
 		static string Escape(string text)
 		{
-			if (Regex.IsMatch(text, @"^[\w\d]+$")) {
+			if (Regex.IsMatch(text, @"^[\w\d]+$"))
+			{
 				return text;
-			} else {
+			}
+			else
+			{
 				return "\"" + text.Replace("\\", "\\\\").Replace("\r", "").Replace("\n", "\\n").Replace("\"", "\\\"") + "\"";
 			}
 		}
@@ -88,21 +91,24 @@ namespace ICSharpCode.Decompiler.Util
 
 		internal static void WriteAttribute(TextWriter writer, string name, double? value, ref bool isFirst)
 		{
-			if (value != null) {
+			if (value != null)
+			{
 				WriteAttribute(writer, name, value.Value.ToString(CultureInfo.InvariantCulture), ref isFirst);
 			}
 		}
 
 		internal static void WriteAttribute(TextWriter writer, string name, bool? value, ref bool isFirst)
 		{
-			if (value != null) {
+			if (value != null)
+			{
 				WriteAttribute(writer, name, value.Value ? "true" : "false", ref isFirst);
 			}
 		}
 
 		internal static void WriteAttribute(TextWriter writer, string name, string value, ref bool isFirst)
 		{
-			if (value != null) {
+			if (value != null)
+			{
 				if (isFirst)
 					isFirst = false;
 				else
@@ -118,10 +124,12 @@ namespace ICSharpCode.Decompiler.Util
 			writer.WriteLine("digraph G {");
 			writer.WriteLine("node [fontsize = 16];");
 			WriteGraphAttribute(writer, "rankdir", rankdir);
-			foreach (GraphVizNode node in nodes) {
+			foreach (GraphVizNode node in nodes)
+			{
 				node.Save(writer);
 			}
-			foreach (GraphVizEdge edge in edges) {
+			foreach (GraphVizEdge edge in edges)
+			{
 				edge.Save(writer);
 			}
 			writer.WriteLine("}");

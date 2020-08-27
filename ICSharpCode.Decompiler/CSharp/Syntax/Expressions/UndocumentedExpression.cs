@@ -35,65 +35,66 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		RefType, // __reftype (expr)
 		MakeRef // __makeref (expr)
 	}
-	
+
 	/// <summary>
 	/// Represents undocumented expressions.
 	/// </summary>
 	public class UndocumentedExpression : Expression
 	{
-		public readonly static TokenRole ArglistKeywordRole = new TokenRole ("__arglist");
-		public readonly static TokenRole RefvalueKeywordRole = new TokenRole ("__refvalue");
-		public readonly static TokenRole ReftypeKeywordRole = new TokenRole ("__reftype");
-		public readonly static TokenRole MakerefKeywordRole = new TokenRole ("__makeref");
-		
+		public readonly static TokenRole ArglistKeywordRole = new TokenRole("__arglist");
+		public readonly static TokenRole RefvalueKeywordRole = new TokenRole("__refvalue");
+		public readonly static TokenRole ReftypeKeywordRole = new TokenRole("__reftype");
+		public readonly static TokenRole MakerefKeywordRole = new TokenRole("__makeref");
+
 		public UndocumentedExpressionType UndocumentedExpressionType {
 			get; set;
 		}
-		
+
 		public CSharpTokenNode UndocumentedToken {
 			get {
-				switch (UndocumentedExpressionType) {
-				case UndocumentedExpressionType.ArgListAccess:
-				case UndocumentedExpressionType.ArgList:
-					return GetChildByRole (ArglistKeywordRole);
-				case UndocumentedExpressionType.RefValue:
-					return GetChildByRole (RefvalueKeywordRole);
-				case UndocumentedExpressionType.RefType:
-					return GetChildByRole (ReftypeKeywordRole);
-				case UndocumentedExpressionType.MakeRef:
-					return GetChildByRole (MakerefKeywordRole);
+				switch (UndocumentedExpressionType)
+				{
+					case UndocumentedExpressionType.ArgListAccess:
+					case UndocumentedExpressionType.ArgList:
+						return GetChildByRole(ArglistKeywordRole);
+					case UndocumentedExpressionType.RefValue:
+						return GetChildByRole(RefvalueKeywordRole);
+					case UndocumentedExpressionType.RefType:
+						return GetChildByRole(ReftypeKeywordRole);
+					case UndocumentedExpressionType.MakeRef:
+						return GetChildByRole(MakerefKeywordRole);
 				}
 				return CSharpTokenNode.Null;
 			}
 		}
-		
+
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
-		
+
 		public AstNodeCollection<Expression> Arguments {
 			get { return GetChildrenByRole(Roles.Argument); }
 		}
-		
+
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitUndocumentedExpression (this);
+			visitor.VisitUndocumentedExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitUndocumentedExpression (this);
+			return visitor.VisitUndocumentedExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitUndocumentedExpression (this, data);
+			return visitor.VisitUndocumentedExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			UndocumentedExpression o = other as UndocumentedExpression;

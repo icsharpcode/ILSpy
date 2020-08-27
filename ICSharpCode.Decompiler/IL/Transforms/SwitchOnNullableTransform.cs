@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -37,11 +38,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
 
-			foreach (var block in function.Descendants.OfType<Block>()) {
+			foreach (var block in function.Descendants.OfType<Block>())
+			{
 				bool changed = false;
-				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+				for (int i = block.Instructions.Count - 1; i >= 0; i--)
+				{
 					SwitchInstruction newSwitch;
-					if (MatchSwitchOnNullable(block.Instructions, i, out newSwitch)) {
+					if (MatchSwitchOnNullable(block.Instructions, i, out newSwitch))
+					{
 						newSwitch.AddILRange(block.Instructions[i - 2]);
 						block.Instructions[i + 1].ReplaceWith(newSwitch);
 						block.Instructions.RemoveRange(i - 2, 3);
@@ -49,7 +53,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						changed = true;
 						continue;
 					}
-					if (MatchRoslynSwitchOnNullable(block.Instructions, i, out newSwitch)) {
+					if (MatchRoslynSwitchOnNullable(block.Instructions, i, out newSwitch))
+					{
 						newSwitch.AddILRange(block.Instructions[i]);
 						newSwitch.AddILRange(block.Instructions[i + 1]);
 						block.Instructions[i].ReplaceWith(newSwitch);
@@ -58,7 +63,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						continue;
 					}
 				}
-				if (!changed) continue;
+				if (!changed)
+					continue;
 				SwitchDetection.SimplifySwitchInstruction(block, context);
 				if (block.Parent is BlockContainer container)
 					changedContainers.Add(container);
@@ -79,7 +85,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// stloc switchVariable(call GetValueOrDefault(ldloc tmp))
 			// if (logic.not(call get_HasValue(ldloc tmp))) br nullCaseBlock
 			// br switchBlock
-			if (i < 2) return false;
+			if (i < 2)
+				return false;
 			if (!instructions[i - 2].MatchStLoc(out var tmp, out var ldloca) ||
 				!instructions[i - 1].MatchStLoc(out var switchVariable, out var getValueOrDefault) ||
 				!instructions[i].MatchIfInstruction(out var condition, out var trueInst))
@@ -149,8 +156,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (switchBlock.IncomingEdgeCount != 1)
 				return false;
 			SwitchInstruction switchInst;
-			switch (switchBlock.Instructions.Count) {
-				case 2: {
+			switch (switchBlock.Instructions.Count)
+			{
+				case 2:
+				{
 					// this is the normal case described by the pattern above
 					if (!switchBlock.Instructions[0].MatchStLoc(out var switchVar, out var getValueOrDefault))
 						return false;
@@ -163,7 +172,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					switchInst = si;
 					break;
 				}
-				case 1: {
+				case 1:
+				{
 					// this is the special case where `call GetValueOrDefault(ldloca tmp)` is inlined into the switch.
 					if (!(switchBlock.Instructions[0] is SwitchInstruction si))
 						return false;
@@ -172,7 +182,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					switchInst = si;
 					break;
 				}
-				default: {
+				default:
+				{
 					return false;
 				}
 			}

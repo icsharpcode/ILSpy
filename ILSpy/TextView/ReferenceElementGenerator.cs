@@ -18,6 +18,7 @@
 
 using System;
 using System.Windows.Input;
+
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 
@@ -29,19 +30,19 @@ namespace ICSharpCode.ILSpy.TextView
 	sealed class ReferenceElementGenerator : VisualLineElementGenerator
 	{
 		readonly Predicate<ReferenceSegment> isLink;
-		
+
 		/// <summary>
 		/// The collection of references (hyperlinks).
 		/// </summary>
 		public TextSegmentCollection<ReferenceSegment> References { get; set; }
-		
+
 		public ReferenceElementGenerator(Predicate<ReferenceSegment> isLink)
 		{
 			if (isLink == null)
 				throw new ArgumentNullException(nameof(isLink));
 			this.isLink = isLink;
 		}
-		
+
 		public override int GetFirstInterestedOffset(int startOffset)
 		{
 			if (this.References == null)
@@ -50,26 +51,28 @@ namespace ICSharpCode.ILSpy.TextView
 			var segment = this.References.FindFirstSegmentWithStartAfter(startOffset);
 			return segment != null ? segment.StartOffset : -1;
 		}
-		
+
 		public override VisualLineElement ConstructElement(int offset)
 		{
 			if (this.References == null)
 				return null;
-			foreach (var segment in this.References.FindSegmentsContaining(offset)) {
+			foreach (var segment in this.References.FindSegmentsContaining(offset))
+			{
 				// skip all non-links
 				if (!isLink(segment))
 					continue;
 				// ensure that hyperlinks don't span several lines (VisualLineElements can't contain line breaks)
 				int endOffset = Math.Min(segment.EndOffset, CurrentContext.VisualLine.LastDocumentLine.EndOffset);
 				// don't create hyperlinks with length 0
-				if (offset < endOffset) {
+				if (offset < endOffset)
+				{
 					return new VisualLineReferenceText(CurrentContext.VisualLine, endOffset - offset, this, segment);
 				}
 			}
 			return null;
 		}
 	}
-	
+
 	/// <summary>
 	/// VisualLineElement that represents a piece of text and is a clickable link.
 	/// </summary>
@@ -77,7 +80,7 @@ namespace ICSharpCode.ILSpy.TextView
 	{
 		readonly ReferenceElementGenerator parent;
 		readonly ReferenceSegment referenceSegment;
-		
+
 		/// <summary>
 		/// Creates a visual line text element with the specified length.
 		/// It uses the <see cref="ITextRunConstructionContext.VisualLine"/> and its
@@ -88,14 +91,14 @@ namespace ICSharpCode.ILSpy.TextView
 			this.parent = parent;
 			this.referenceSegment = referenceSegment;
 		}
-		
+
 		/// <inheritdoc/>
 		protected override void OnQueryCursor(QueryCursorEventArgs e)
 		{
 			e.Handled = true;
 			e.Cursor = referenceSegment.IsLocal ? Cursors.Arrow : Cursors.Hand;
 		}
-		
+
 		/// <inheritdoc/>
 		protected override VisualLineText CreateInstance(int length)
 		{

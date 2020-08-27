@@ -45,9 +45,12 @@ namespace LightJson
 			get {
 				JsonValue value;
 
-				if (this.properties.TryGetValue(key, out value)) {
+				if (this.properties.TryGetValue(key, out value))
+				{
 					return value;
-				} else {
+				}
+				else
+				{
 					return JsonValue.Null;
 				}
 			}
@@ -114,14 +117,16 @@ namespace LightJson
 		/// <returns>Returns this JsonObject.</returns>
 		public JsonObject Rename(string oldKey, string newKey)
 		{
-			if (oldKey == newKey) {
+			if (oldKey == newKey)
+			{
 				// Renaming to the same name just does nothing
 				return this;
 			}
 
 			JsonValue value;
 
-			if (this.properties.TryGetValue(oldKey, out value)) {
+			if (this.properties.TryGetValue(oldKey, out value))
+			{
 				this[newKey] = value;
 				this.Remove(oldKey);
 			}
@@ -192,7 +197,8 @@ namespace LightJson
 					var keys = new KeyValuePair[this.jsonObject.Count];
 
 					var i = 0;
-					foreach (var property in this.jsonObject) {
+					foreach (var property in this.jsonObject)
+					{
 						keys[i] = new KeyValuePair(property.Key, property.Value);
 						i += 1;
 					}
@@ -219,11 +225,16 @@ namespace LightJson
 				[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 				public object View {
 					get {
-						if (this.value.IsJsonObject) {
+						if (this.value.IsJsonObject)
+						{
 							return (JsonObject)this.value;
-						} else if (this.value.IsJsonArray) {
+						}
+						else if (this.value.IsJsonArray)
+						{
 							return (JsonArray)this.value;
-						} else {
+						}
+						else
+						{
 							return this.value;
 						}
 					}

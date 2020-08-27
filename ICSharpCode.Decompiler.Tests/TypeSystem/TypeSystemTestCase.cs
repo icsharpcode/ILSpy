@@ -18,8 +18,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 [assembly: ICSharpCode.Decompiler.Tests.TypeSystem.TypeTestAttribute(
 	42, typeof(System.Action<>), typeof(IDictionary<string, IList<NUnit.Framework.TestAttribute>>))]
@@ -537,30 +537,30 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 	public interface IMarshalAsTests
 	{
 		[DispId(48)]
-		void AliasComponent([MarshalAs(UnmanagedType.BStr)] [In] string bstrSrcApplicationIDOrName, [MarshalAs(UnmanagedType.BStr)] [In] string bstrCLSIDOrProgID, [MarshalAs(UnmanagedType.BStr)] [In] string bstrDestApplicationIDOrName, [MarshalAs(UnmanagedType.BStr)] [In] string bstrNewProgId, [MarshalAs(UnmanagedType.BStr)] [In] string bstrNewClsid);
+		void AliasComponent([MarshalAs(UnmanagedType.BStr)][In] string bstrSrcApplicationIDOrName, [MarshalAs(UnmanagedType.BStr)][In] string bstrCLSIDOrProgID, [MarshalAs(UnmanagedType.BStr)][In] string bstrDestApplicationIDOrName, [MarshalAs(UnmanagedType.BStr)][In] string bstrNewProgId, [MarshalAs(UnmanagedType.BStr)][In] string bstrNewClsid);
 
 		[DispId(33)]
 		[return: MarshalAs(UnmanagedType.VariantBool)]
-		bool AreApplicationInstancesPaused([MarshalAs(UnmanagedType.LPStruct)] [In] object pVarApplicationInstanceID);
+		bool AreApplicationInstancesPaused([MarshalAs(UnmanagedType.LPStruct)][In] object pVarApplicationInstanceID);
 
 		[DispId(19)]
-		void BackupREGDB([MarshalAs(UnmanagedType.BStr)] [In] string bstrBackupFilePath);
+		void BackupREGDB([MarshalAs(UnmanagedType.BStr)][In] string bstrBackupFilePath);
 
 		[DispId(2)]
 		[return: MarshalAs(UnmanagedType.Interface)]
-		object Connect([MarshalAs(UnmanagedType.BStr)] [In] string connectStr);
+		object Connect([MarshalAs(UnmanagedType.BStr)][In] string connectStr);
 
 		[DispId(45)]
-		void CopyApplications([MarshalAs(UnmanagedType.BStr)] [In] string bstrSourcePartitionIDOrName, [MarshalAs(UnmanagedType.LPStruct)] [In] object pVarApplicationID, [MarshalAs(UnmanagedType.BStr)] [In] string bstrDestinationPartitionIDOrName);
+		void CopyApplications([MarshalAs(UnmanagedType.BStr)][In] string bstrSourcePartitionIDOrName, [MarshalAs(UnmanagedType.LPStruct)][In] object pVarApplicationID, [MarshalAs(UnmanagedType.BStr)][In] string bstrDestinationPartitionIDOrName);
 
 		[DispId(46)]
-		void CopyComponents([MarshalAs(UnmanagedType.BStr)] [In] string bstrSourceApplicationIDOrName, [MarshalAs(UnmanagedType.LPStruct)] [In] object pVarCLSIDOrProgID, [MarshalAs(UnmanagedType.BStr)] [In] string bstrDestinationApplicationIDOrName);
+		void CopyComponents([MarshalAs(UnmanagedType.BStr)][In] string bstrSourceApplicationIDOrName, [MarshalAs(UnmanagedType.LPStruct)][In] object pVarCLSIDOrProgID, [MarshalAs(UnmanagedType.BStr)][In] string bstrDestinationApplicationIDOrName);
 
 		[DispId(36)]
-		void CreateServiceForApplication([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplicationIDOrName, [MarshalAs(UnmanagedType.BStr)] [In] string bstrServiceName, [MarshalAs(UnmanagedType.BStr)] [In] string bstrStartType, [MarshalAs(UnmanagedType.BStr)] [In] string bstrErrorControl, [MarshalAs(UnmanagedType.BStr)] [In] string bstrDependencies, [MarshalAs(UnmanagedType.BStr)] [In] string bstrRunAs, [MarshalAs(UnmanagedType.BStr)] [In] string bstrPassword, [MarshalAs(UnmanagedType.VariantBool)] [In] bool bDesktopOk);
+		void CreateServiceForApplication([MarshalAs(UnmanagedType.BStr)][In] string bstrApplicationIDOrName, [MarshalAs(UnmanagedType.BStr)][In] string bstrServiceName, [MarshalAs(UnmanagedType.BStr)][In] string bstrStartType, [MarshalAs(UnmanagedType.BStr)][In] string bstrErrorControl, [MarshalAs(UnmanagedType.BStr)][In] string bstrDependencies, [MarshalAs(UnmanagedType.BStr)][In] string bstrRunAs, [MarshalAs(UnmanagedType.BStr)][In] string bstrPassword, [MarshalAs(UnmanagedType.VariantBool)][In] bool bDesktopOk);
 
 		[DispId(40)]
-		void CurrentPartition([MarshalAs(UnmanagedType.BStr)] [In] string bstrPartitionIDOrName);
+		void CurrentPartition([MarshalAs(UnmanagedType.BStr)][In] string bstrPartitionIDOrName);
 
 		[DispId(41)]
 		[return: MarshalAs(UnmanagedType.BStr)]
@@ -571,85 +571,85 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		string CurrentPartitionName();
 
 		[DispId(37)]
-		void DeleteServiceForApplication([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplicationIDOrName);
+		void DeleteServiceForApplication([MarshalAs(UnmanagedType.BStr)][In] string bstrApplicationIDOrName);
 
 		[DispId(34)]
 		[return: MarshalAs(UnmanagedType.BStr)]
-		string DumpApplicationInstance([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplicationInstanceID, [MarshalAs(UnmanagedType.BStr)] [In] string bstrDirectory, [MarshalAs(UnmanagedType.I4)] [In] int lMaxImages);
+		string DumpApplicationInstance([MarshalAs(UnmanagedType.BStr)][In] string bstrApplicationInstanceID, [MarshalAs(UnmanagedType.BStr)][In] string bstrDirectory, [MarshalAs(UnmanagedType.I4)][In] int lMaxImages);
 
 		[DispId(9)]
-		void ExportApplication([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplIdOrName, [MarshalAs(UnmanagedType.BStr)] [In] string bstrApplicationFile, [In] int lOptions);
+		void ExportApplication([MarshalAs(UnmanagedType.BStr)][In] string bstrApplIdOrName, [MarshalAs(UnmanagedType.BStr)][In] string bstrApplicationFile, [In] int lOptions);
 
 		[DispId(54)]
-		void ExportPartition([MarshalAs(UnmanagedType.BStr)] [In] string bstrPartitionIDOrName, [MarshalAs(UnmanagedType.BStr)] [In] string bstrPartitionFileName, [MarshalAs(UnmanagedType.I4)] [In] int lOptions);
+		void ExportPartition([MarshalAs(UnmanagedType.BStr)][In] string bstrPartitionIDOrName, [MarshalAs(UnmanagedType.BStr)][In] string bstrPartitionFileName, [MarshalAs(UnmanagedType.I4)][In] int lOptions);
 
 		[DispId(44)]
 		void FlushPartitionCache();
 
 		[DispId(28)]
 		[return: MarshalAs(UnmanagedType.BStr)]
-		string GetApplicationInstanceIDFromProcessID([MarshalAs(UnmanagedType.I4)] [In] int lProcessID);
+		string GetApplicationInstanceIDFromProcessID([MarshalAs(UnmanagedType.I4)][In] int lProcessID);
 
 		[DispId(1)]
 		[return: MarshalAs(UnmanagedType.Interface)]
-		object GetCollection([MarshalAs(UnmanagedType.BStr)] [In] string bstrCollName);
+		object GetCollection([MarshalAs(UnmanagedType.BStr)][In] string bstrCollName);
 
 		[DispId(5)]
 		[return: MarshalAs(UnmanagedType.Interface)]
-		object GetCollectionByQuery([MarshalAs(UnmanagedType.BStr)] [In] string collName, [MarshalAs(UnmanagedType.SafeArray)] [In] ref object[] aQuery);
+		object GetCollectionByQuery([MarshalAs(UnmanagedType.BStr)][In] string collName, [MarshalAs(UnmanagedType.SafeArray)][In] ref object[] aQuery);
 
 		[DispId(27)]
 		[return: MarshalAs(UnmanagedType.Interface)]
-		object GetCollectionByQuery2([MarshalAs(UnmanagedType.BStr)] [In] string bstrCollectionName, [MarshalAs(UnmanagedType.LPStruct)] [In] object pVarQueryStrings);
+		object GetCollectionByQuery2([MarshalAs(UnmanagedType.BStr)][In] string bstrCollectionName, [MarshalAs(UnmanagedType.LPStruct)][In] object pVarQueryStrings);
 
 		[DispId(57)]
 		[return: MarshalAs(UnmanagedType.I4)]
-		int GetComponentVersionCount([MarshalAs(UnmanagedType.BStr)] [In] string bstrCLSIDOrProgID);
+		int GetComponentVersionCount([MarshalAs(UnmanagedType.BStr)][In] string bstrCLSIDOrProgID);
 
 		[DispId(26)]
-		void GetEventClassesForIID([In] string bstrIID, [MarshalAs(UnmanagedType.SafeArray)] [In] [Out] ref object[] varCLSIDS, [MarshalAs(UnmanagedType.SafeArray)] [In] [Out] ref object[] varProgIDs, [MarshalAs(UnmanagedType.SafeArray)] [In] [Out] ref object[] varDescriptions);
+		void GetEventClassesForIID([In] string bstrIID, [MarshalAs(UnmanagedType.SafeArray)][In][Out] ref object[] varCLSIDS, [MarshalAs(UnmanagedType.SafeArray)][In][Out] ref object[] varProgIDs, [MarshalAs(UnmanagedType.SafeArray)][In][Out] ref object[] varDescriptions);
 
 		[DispId(17)]
-		void GetMultipleComponentsInfo([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplIdOrName, [In] object varFileNames, [MarshalAs(UnmanagedType.SafeArray)] out object[] varCLSIDS, [MarshalAs(UnmanagedType.SafeArray)] out object[] varClassNames, [MarshalAs(UnmanagedType.SafeArray)] out object[] varFileFlags, [MarshalAs(UnmanagedType.SafeArray)] out object[] varComponentFlags);
+		void GetMultipleComponentsInfo([MarshalAs(UnmanagedType.BStr)][In] string bstrApplIdOrName, [In] object varFileNames, [MarshalAs(UnmanagedType.SafeArray)] out object[] varCLSIDS, [MarshalAs(UnmanagedType.SafeArray)] out object[] varClassNames, [MarshalAs(UnmanagedType.SafeArray)] out object[] varFileFlags, [MarshalAs(UnmanagedType.SafeArray)] out object[] varComponentFlags);
 
 		[DispId(38)]
 		[return: MarshalAs(UnmanagedType.BStr)]
-		string GetPartitionID([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplicationIDOrName);
+		string GetPartitionID([MarshalAs(UnmanagedType.BStr)][In] string bstrApplicationIDOrName);
 
 		[DispId(39)]
 		[return: MarshalAs(UnmanagedType.BStr)]
-		string GetPartitionName([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplicationIDOrName);
+		string GetPartitionName([MarshalAs(UnmanagedType.BStr)][In] string bstrApplicationIDOrName);
 
 		[DispId(43)]
 		[return: MarshalAs(UnmanagedType.BStr)]
 		string GlobalPartitionID();
 
 		[DispId(6)]
-		void ImportComponent([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplIdOrName, [MarshalAs(UnmanagedType.BStr)] [In] string bstrCLSIDOrProgId);
+		void ImportComponent([MarshalAs(UnmanagedType.BStr)][In] string bstrApplIdOrName, [MarshalAs(UnmanagedType.BStr)][In] string bstrCLSIDOrProgId);
 
 		[DispId(52)]
-		void ImportComponents([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplicationIDOrName, [MarshalAs(UnmanagedType.LPStruct)] [In] object pVarCLSIDOrProgID, [MarshalAs(UnmanagedType.LPStruct)] [In] object pVarComponentType);
+		void ImportComponents([MarshalAs(UnmanagedType.BStr)][In] string bstrApplicationIDOrName, [MarshalAs(UnmanagedType.LPStruct)][In] object pVarCLSIDOrProgID, [MarshalAs(UnmanagedType.LPStruct)][In] object pVarComponentType);
 
 		[DispId(50)]
-		void ImportUnconfiguredComponents([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplicationIDOrName, [MarshalAs(UnmanagedType.LPStruct)] [In] object pVarCLSIDOrProgID, [MarshalAs(UnmanagedType.LPStruct)] [In] object pVarComponentType);
+		void ImportUnconfiguredComponents([MarshalAs(UnmanagedType.BStr)][In] string bstrApplicationIDOrName, [MarshalAs(UnmanagedType.LPStruct)][In] object pVarCLSIDOrProgID, [MarshalAs(UnmanagedType.LPStruct)][In] object pVarComponentType);
 
 		[DispId(10)]
-		void InstallApplication([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplicationFile, [MarshalAs(UnmanagedType.BStr)] [In] string bstrDestinationDirectory, [In] int lOptions, [MarshalAs(UnmanagedType.BStr)] [In] string bstrUserId, [MarshalAs(UnmanagedType.BStr)] [In] string bstrPassword, [MarshalAs(UnmanagedType.BStr)] [In] string bstrRSN);
+		void InstallApplication([MarshalAs(UnmanagedType.BStr)][In] string bstrApplicationFile, [MarshalAs(UnmanagedType.BStr)][In] string bstrDestinationDirectory, [In] int lOptions, [MarshalAs(UnmanagedType.BStr)][In] string bstrUserId, [MarshalAs(UnmanagedType.BStr)][In] string bstrPassword, [MarshalAs(UnmanagedType.BStr)][In] string bstrRSN);
 
 		[DispId(7)]
-		void InstallComponent([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplIdOrName, [MarshalAs(UnmanagedType.BStr)] [In] string bstrDLL, [MarshalAs(UnmanagedType.BStr)] [In] string bstrTLB, [MarshalAs(UnmanagedType.BStr)] [In] string bstrPSDLL);
+		void InstallComponent([MarshalAs(UnmanagedType.BStr)][In] string bstrApplIdOrName, [MarshalAs(UnmanagedType.BStr)][In] string bstrDLL, [MarshalAs(UnmanagedType.BStr)][In] string bstrTLB, [MarshalAs(UnmanagedType.BStr)][In] string bstrPSDLL);
 
 		[DispId(25)]
-		void InstallEventClass([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplIdOrName, [MarshalAs(UnmanagedType.BStr)] [In] string bstrDLL, [MarshalAs(UnmanagedType.BStr)] [In] string bstrTLB, [MarshalAs(UnmanagedType.BStr)] [In] string bstrPSDLL);
+		void InstallEventClass([MarshalAs(UnmanagedType.BStr)][In] string bstrApplIdOrName, [MarshalAs(UnmanagedType.BStr)][In] string bstrDLL, [MarshalAs(UnmanagedType.BStr)][In] string bstrTLB, [MarshalAs(UnmanagedType.BStr)][In] string bstrPSDLL);
 
 		[DispId(16)]
-		void InstallMultipleComponents([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplIdOrName, [MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_VARIANT)] [In] ref object[] fileNames, [MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_VARIANT)] [In] ref object[] CLSIDS);
+		void InstallMultipleComponents([MarshalAs(UnmanagedType.BStr)][In] string bstrApplIdOrName, [MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_VARIANT)][In] ref object[] fileNames, [MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_VARIANT)][In] ref object[] CLSIDS);
 
 		[DispId(24)]
-		void InstallMultipleEventClasses([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplIdOrName, [MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_VARIANT)] [In] ref object[] fileNames, [MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_VARIANT)] [In] ref object[] CLSIDS);
+		void InstallMultipleEventClasses([MarshalAs(UnmanagedType.BStr)][In] string bstrApplIdOrName, [MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_VARIANT)][In] ref object[] fileNames, [MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_VARIANT)][In] ref object[] CLSIDS);
 
 		[DispId(55)]
-		void InstallPartition([MarshalAs(UnmanagedType.BStr)] [In] string bstrFileName, [MarshalAs(UnmanagedType.BStr)] [In] string bstrDestDirectory, [MarshalAs(UnmanagedType.I4)] [In] int lOptions, [MarshalAs(UnmanagedType.BStr)] [In] string bstrUserID, [MarshalAs(UnmanagedType.BStr)] [In] string bstrPassword, [MarshalAs(UnmanagedType.BStr)] [In] string bstrRSN);
+		void InstallPartition([MarshalAs(UnmanagedType.BStr)][In] string bstrFileName, [MarshalAs(UnmanagedType.BStr)][In] string bstrDestDirectory, [MarshalAs(UnmanagedType.I4)][In] int lOptions, [MarshalAs(UnmanagedType.BStr)][In] string bstrUserID, [MarshalAs(UnmanagedType.BStr)][In] string bstrPassword, [MarshalAs(UnmanagedType.BStr)][In] string bstrRSN);
 
 		[DispId(53)]
 		[return: MarshalAs(UnmanagedType.VariantBool)]
@@ -661,7 +661,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 
 		[DispId(49)]
 		[return: MarshalAs(UnmanagedType.Interface)]
-		object IsSafeToDelete([MarshalAs(UnmanagedType.BStr)] [In] string bstrDllName);
+		object IsSafeToDelete([MarshalAs(UnmanagedType.BStr)][In] string bstrDllName);
 
 		[DispId(3)]
 		int MajorVersion();
@@ -670,23 +670,23 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		int MinorVersion();
 
 		[DispId(47)]
-		void MoveComponents([MarshalAs(UnmanagedType.BStr)] [In] string bstrSourceApplicationIDOrName, [MarshalAs(UnmanagedType.LPStruct)] [In] object pVarCLSIDOrProgID, [MarshalAs(UnmanagedType.BStr)] [In] string bstrDestinationApplicationIDOrName);
+		void MoveComponents([MarshalAs(UnmanagedType.BStr)][In] string bstrSourceApplicationIDOrName, [MarshalAs(UnmanagedType.LPStruct)][In] object pVarCLSIDOrProgID, [MarshalAs(UnmanagedType.BStr)][In] string bstrDestinationApplicationIDOrName);
 
 		[DispId(30)]
-		void PauseApplicationInstances([MarshalAs(UnmanagedType.LPStruct)] [In] object pVarApplicationInstanceID);
+		void PauseApplicationInstances([MarshalAs(UnmanagedType.LPStruct)][In] object pVarApplicationInstanceID);
 
 		[DispId(51)]
-		void PromoteUnconfiguredComponents([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplicationIDOrName, [MarshalAs(UnmanagedType.LPStruct)] [In] object pVarCLSIDOrProgID, [MarshalAs(UnmanagedType.LPStruct)] [In] object pVarComponentType);
+		void PromoteUnconfiguredComponents([MarshalAs(UnmanagedType.BStr)][In] string bstrApplicationIDOrName, [MarshalAs(UnmanagedType.LPStruct)][In] object pVarCLSIDOrProgID, [MarshalAs(UnmanagedType.LPStruct)][In] object pVarComponentType);
 
 		[DispId(21)]
-		void QueryApplicationFile([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplicationFile, [MarshalAs(UnmanagedType.BStr)] out string bstrApplicationName, [MarshalAs(UnmanagedType.BStr)] out string bstrApplicationDescription, [MarshalAs(UnmanagedType.VariantBool)] out bool bHasUsers, [MarshalAs(UnmanagedType.VariantBool)] out bool bIsProxy, [MarshalAs(UnmanagedType.SafeArray)] out object[] varFileNames);
+		void QueryApplicationFile([MarshalAs(UnmanagedType.BStr)][In] string bstrApplicationFile, [MarshalAs(UnmanagedType.BStr)] out string bstrApplicationName, [MarshalAs(UnmanagedType.BStr)] out string bstrApplicationDescription, [MarshalAs(UnmanagedType.VariantBool)] out bool bHasUsers, [MarshalAs(UnmanagedType.VariantBool)] out bool bIsProxy, [MarshalAs(UnmanagedType.SafeArray)] out object[] varFileNames);
 
 		[DispId(56)]
 		[return: MarshalAs(UnmanagedType.IDispatch)]
-		object QueryApplicationFile2([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplicationFile);
+		object QueryApplicationFile2([MarshalAs(UnmanagedType.BStr)][In] string bstrApplicationFile);
 
 		[DispId(32)]
-		void RecycleApplicationInstances([MarshalAs(UnmanagedType.LPStruct)] [In] object pVarApplicationInstanceID, [MarshalAs(UnmanagedType.I4)] [In] int lReasonCode);
+		void RecycleApplicationInstances([MarshalAs(UnmanagedType.LPStruct)][In] object pVarApplicationInstanceID, [MarshalAs(UnmanagedType.I4)][In] int lReasonCode);
 
 		[DispId(18)]
 		void RefreshComponents();
@@ -701,22 +701,22 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		void Reserved2();
 
 		[DispId(20)]
-		void RestoreREGDB([MarshalAs(UnmanagedType.BStr)] [In] string bstrBackupFilePath);
+		void RestoreREGDB([MarshalAs(UnmanagedType.BStr)][In] string bstrBackupFilePath);
 
 		[DispId(31)]
-		void ResumeApplicationInstances([MarshalAs(UnmanagedType.LPStruct)] [In] object pVarApplicationInstanceID);
+		void ResumeApplicationInstances([MarshalAs(UnmanagedType.LPStruct)][In] object pVarApplicationInstanceID);
 
 		[DispId(23)]
 		int ServiceCheck([In] int lService);
 
 		[DispId(8)]
-		void ShutdownApplication([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplIdOrName);
+		void ShutdownApplication([MarshalAs(UnmanagedType.BStr)][In] string bstrApplIdOrName);
 
 		[DispId(29)]
-		void ShutdownApplicationInstances([MarshalAs(UnmanagedType.LPStruct)] [In] object pVarApplicationInstanceID);
+		void ShutdownApplicationInstances([MarshalAs(UnmanagedType.LPStruct)][In] object pVarApplicationInstanceID);
 
 		[DispId(22)]
-		void StartApplication([MarshalAs(UnmanagedType.BStr)] [In] string bstrApplIdOrName);
+		void StartApplication([MarshalAs(UnmanagedType.BStr)][In] string bstrApplIdOrName);
 
 		[DispId(13)]
 		void StartRouter();

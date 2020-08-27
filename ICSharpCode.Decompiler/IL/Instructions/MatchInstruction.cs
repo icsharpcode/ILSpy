@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -119,7 +120,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public static bool IsPatternMatch(ILInstruction inst, out ILInstruction testedOperand)
 		{
-			switch (inst) {
+			switch (inst)
+			{
 				case MatchInstruction m:
 					testedOperand = m.testedOperand;
 					return true;
@@ -150,14 +152,16 @@ namespace ICSharpCode.Decompiler.IL
 
 		internal IType GetDeconstructResultType(int index)
 		{
-			if (this.IsDeconstructCall) {
+			if (this.IsDeconstructCall)
+			{
 				int firstOutParam = (method.IsStatic ? 1 : 0);
 				var outParamType = this.Method.Parameters[firstOutParam + index].Type;
 				if (!(outParamType is ByReferenceType brt))
 					throw new InvalidOperationException("deconstruct out param must be by reference");
 				return brt.ElementType;
 			}
-			if (this.IsDeconstructTuple) {
+			if (this.IsDeconstructTuple)
+			{
 				var elementTypes = TupleType.GetTupleElementTypes(this.variable.Type);
 				return elementTypes[index];
 			}
@@ -167,29 +171,41 @@ namespace ICSharpCode.Decompiler.IL
 		void AdditionalInvariants()
 		{
 			Debug.Assert(variable.Kind == VariableKind.PatternLocal);
-			if (this.IsDeconstructCall) {
+			if (this.IsDeconstructCall)
+			{
 				Debug.Assert(IsDeconstructMethod(method));
-			} else {
+			}
+			else
+			{
 				Debug.Assert(method == null);
 			}
-			if (this.IsDeconstructTuple) {
+			if (this.IsDeconstructTuple)
+			{
 				Debug.Assert(variable.Type.Kind == TypeKind.Tuple);
 			}
 			Debug.Assert(SubPatterns.Count >= NumPositionalPatterns);
-			foreach (var subPattern in SubPatterns) {
+			foreach (var subPattern in SubPatterns)
+			{
 				if (!IsPatternMatch(subPattern, out ILInstruction operand))
 					Debug.Fail("Sub-Pattern must be a valid pattern");
 				// the first child is TestedOperand
 				int subPatternIndex = subPattern.ChildIndex - 1;
-				if (subPatternIndex < NumPositionalPatterns) {
+				if (subPatternIndex < NumPositionalPatterns)
+				{
 					// positional pattern
-					Debug.Assert(operand is DeconstructResultInstruction  result && result.Index == subPatternIndex);
-				} else if (operand.MatchLdFld(out var target, out _)) {
+					Debug.Assert(operand is DeconstructResultInstruction result && result.Index == subPatternIndex);
+				}
+				else if (operand.MatchLdFld(out var target, out _))
+				{
 					Debug.Assert(target.MatchLdLoc(variable));
-				} else if (operand is CallInstruction call) {
+				}
+				else if (operand is CallInstruction call)
+				{
 					Debug.Assert(call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter);
 					Debug.Assert(call.Arguments[0].MatchLdLoc(variable));
-				} else {
+				}
+				else
+				{
 					Debug.Fail("Tested operand of sub-pattern is invalid.");
 				}
 			}
@@ -202,11 +218,14 @@ namespace ICSharpCode.Decompiler.IL
 			if (method.ReturnType.Kind != TypeKind.Void)
 				return false;
 			int firstOutParam = (method.IsStatic ? 1 : 0);
-			if (method.IsStatic) {
+			if (method.IsStatic)
+			{
 				if (!method.IsExtensionMethod)
 					return false;
 				// TODO : check whether all type arguments can be inferred from the first argument
-			} else {
+			}
+			else
+			{
 				if (method.TypeParameters.Count != 0)
 					return false;
 			}
@@ -216,7 +235,8 @@ namespace ICSharpCode.Decompiler.IL
 			if (method.Parameters.Count < firstOutParam)
 				return false;
 
-			for (int i = firstOutParam; i < method.Parameters.Count; i++) {
+			for (int i = firstOutParam; i < method.Parameters.Count; i++)
+			{
 				if (!method.Parameters[i].IsOut)
 					return false;
 			}
@@ -228,20 +248,24 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			if (CheckNotNull) {
+			if (CheckNotNull)
+			{
 				output.Write(".notnull");
 			}
-			if (CheckType) {
+			if (CheckType)
+			{
 				output.Write(".type[");
 				variable.Type.WriteTo(output);
 				output.Write(']');
 			}
-			if (IsDeconstructCall) {
+			if (IsDeconstructCall)
+			{
 				output.Write(".deconstruct[");
 				method.WriteTo(output);
 				output.Write(']');
 			}
-			if (IsDeconstructTuple) {
+			if (IsDeconstructTuple)
+			{
 				output.Write(".tuple");
 			}
 			output.Write(' ');
@@ -250,11 +274,13 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(" = ");
 			TestedOperand.WriteTo(output, options);
 			output.Write(')');
-			if (SubPatterns.Count > 0) {
+			if (SubPatterns.Count > 0)
+			{
 				output.MarkFoldStart("{...}");
 				output.WriteLine("{");
 				output.Indent();
-				foreach (var pattern in SubPatterns) {
+				foreach (var pattern in SubPatterns)
+				{
 					pattern.WriteTo(output, options);
 					output.WriteLine();
 				}

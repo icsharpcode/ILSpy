@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				ConstructorBraceStyle = BraceStyle.NextLine,
 				DestructorBraceStyle = BraceStyle.NextLine,
 				AnonymousMethodBraceStyle = BraceStyle.EndOfLine,
-	
+
 				PropertyBraceStyle = BraceStyle.EndOfLine,
 				PropertyGetBraceStyle = BraceStyle.EndOfLine,
 				PropertySetBraceStyle = BraceStyle.EndOfLine,
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				AllowEventAddBlockInline = true,
 				AllowEventRemoveBlockInline = true,
 				StatementBraceStyle = BraceStyle.EndOfLine,
-	
+
 				ElseNewLinePlacement = NewLinePlacement.SameLine,
 				ElseIfNewLinePlacement = NewLinePlacement.SameLine,
 				CatchNewLinePlacement = NewLinePlacement.SameLine,
@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				SpacesBetweenEmptyNewParentheses = false,
 				SpaceBeforeNewParameterComma = false,
 				SpaceAfterNewParameterComma = true,
-				
+
 				SpaceBeforeIfParentheses = true,
 				SpaceBeforeWhileParentheses = true,
 				SpaceBeforeForParentheses = true,
@@ -140,16 +140,16 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				SpaceAfterConditionalOperatorCondition = true,
 				SpaceBeforeConditionalOperatorSeparator = true,
 				SpaceAfterConditionalOperatorSeparator = true,
-	
+
 				SpacesWithinBrackets = false,
 				SpacesBeforeBrackets = true,
 				SpaceBeforeBracketComma = false,
 				SpaceAfterBracketComma = true,
-						
+
 				SpaceBeforeForSemicolon = false,
 				SpaceAfterForSemicolon = true,
 				SpaceAfterTypecast = false,
-				
+
 				AlignEmbeddedStatements = true,
 				SimplePropertyFormatting = PropertyFormatting.AllowOneLine,
 				AutoPropertyFormatting = PropertyFormatting.AllowOneLine,
@@ -161,19 +161,19 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				SpaceAfterFieldDeclarationComma = true,
 				SpaceBeforeLocalVariableDeclarationComma = false,
 				SpaceAfterLocalVariableDeclarationComma = true,
-				
+
 				SpaceBeforeIndexerDeclarationBracket = true,
 				SpaceWithinIndexerDeclarationBracket = false,
 				SpaceBeforeIndexerDeclarationParameterComma = false,
 				SpaceInNamedArgumentAfterDoubleColon = true,
 				RemoveEndOfLineWhiteSpace = true,
-			
+
 				SpaceAfterIndexerDeclarationParameterComma = true,
-				
+
 				MinimumBlankLinesBeforeUsings = 0,
 				MinimumBlankLinesAfterUsings = 1,
 				UsingPlacement = UsingPlacement.TopOfFile,
-				
+
 				MinimumBlankLinesBeforeFirstDeclaration = 0,
 				MinimumBlankLinesBetweenTypes = 1,
 				MinimumBlankLinesBetweenFields = 0,
@@ -242,14 +242,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				PropertySetBraceStyle = BraceStyle.EndOfLine,
 				SimpleGetBlockFormatting = PropertyFormatting.AllowOneLine,
 				SimpleSetBlockFormatting = PropertyFormatting.AllowOneLine,
-	
+
 				EventBraceStyle = BraceStyle.EndOfLine,
 				EventAddBraceStyle = BraceStyle.EndOfLine,
 				EventRemoveBraceStyle = BraceStyle.EndOfLine,
 				AllowEventAddBlockInline = true,
 				AllowEventRemoveBlockInline = true,
 				StatementBraceStyle = BraceStyle.EndOfLine,
-	
+
 				ElseNewLinePlacement = NewLinePlacement.SameLine,
 				ElseIfNewLinePlacement = NewLinePlacement.SameLine,
 				CatchNewLinePlacement = NewLinePlacement.SameLine,
@@ -257,7 +257,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				WhileNewLinePlacement = NewLinePlacement.SameLine,
 				ArrayInitializerWrapping = Wrapping.WrapIfTooLong,
 				ArrayInitializerBraceStyle = BraceStyle.EndOfLine,
-	
+
 				SpaceBeforeMethodCallParentheses = false,
 				SpaceBeforeMethodDeclarationParentheses = false,
 				SpaceBeforeConstructorDeclarationParentheses = false,
@@ -267,13 +267,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				SpaceAfterConstructorDeclarationParameterComma = true,
 				NewLineBeforeConstructorInitializerColon = NewLinePlacement.NewLine,
 				NewLineAfterConstructorInitializerColon = NewLinePlacement.SameLine,
-				
+
 				SpaceBeforeNewParentheses = false,
 				SpacesWithinNewParentheses = false,
 				SpacesBetweenEmptyNewParentheses = false,
 				SpaceBeforeNewParameterComma = false,
 				SpaceAfterNewParameterComma = true,
-				
+
 				SpaceBeforeIfParentheses = true,
 				SpaceBeforeWhileParentheses = true,
 				SpaceBeforeForParentheses = true,
@@ -317,11 +317,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				SpacesBeforeBrackets = false,
 				SpaceBeforeBracketComma = false,
 				SpaceAfterBracketComma = true,
-						
+
 				SpaceBeforeForSemicolon = false,
 				SpaceAfterForSemicolon = true,
 				SpaceAfterTypecast = false,
-				
+
 				AlignEmbeddedStatements = true,
 				SimplePropertyFormatting = PropertyFormatting.AllowOneLine,
 				AutoPropertyFormatting = PropertyFormatting.AllowOneLine,
@@ -333,14 +333,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				SpaceAfterFieldDeclarationComma = true,
 				SpaceBeforeLocalVariableDeclarationComma = false,
 				SpaceAfterLocalVariableDeclarationComma = true,
-				
+
 				SpaceWithinIndexerDeclarationBracket = false,
 				SpaceBeforeIndexerDeclarationParameterComma = false,
 				SpaceInNamedArgumentAfterDoubleColon = true,
-			
+
 				SpaceAfterIndexerDeclarationParameterComma = true,
 				RemoveEndOfLineWhiteSpace = true,
-				
+
 				MinimumBlankLinesBeforeUsings = 0,
 				MinimumBlankLinesAfterUsings = 1,
 
@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				MinimumBlankLinesBetweenMembers = 1,
 				MinimumBlankLinesAroundRegion = 1,
 				MinimumBlankLinesInsideRegion = 1,
-	
+
 				KeepCommentsAtFirstColumn = true,
 				ChainedMethodCallWrapping = Wrapping.DoNotChange,
 				MethodCallArgumentWrapping = Wrapping.DoNotChange,
@@ -401,7 +401,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public static CSharpFormattingOptions CreateWhitesmiths()
 		{
 			var baseOptions = CreateKRStyle();
-				
+
 			baseOptions.NamespaceBraceStyle = BraceStyle.NextLineShifted;
 			baseOptions.ClassBraceStyle = BraceStyle.NextLineShifted;
 			baseOptions.InterfaceBraceStyle = BraceStyle.NextLineShifted;
@@ -414,7 +414,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			baseOptions.PropertyBraceStyle = BraceStyle.NextLineShifted;
 			baseOptions.PropertyGetBraceStyle = BraceStyle.NextLineShifted;
 			baseOptions.PropertySetBraceStyle = BraceStyle.NextLineShifted;
-	
+
 			baseOptions.EventBraceStyle = BraceStyle.NextLineShifted;
 			baseOptions.EventAddBraceStyle = BraceStyle.NextLineShifted;
 			baseOptions.EventRemoveBraceStyle = BraceStyle.NextLineShifted;

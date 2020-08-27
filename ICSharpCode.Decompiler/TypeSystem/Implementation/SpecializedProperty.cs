@@ -27,7 +27,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		internal static IProperty Create(IProperty propertyDefinition, TypeParameterSubstitution substitution)
 		{
-			if (TypeParameterSubstitution.Identity.Equals(substitution) || propertyDefinition.DeclaringType.TypeParameterCount == 0) {
+			if (TypeParameterSubstitution.Identity.Equals(substitution) || propertyDefinition.DeclaringType.TypeParameterCount == 0)
+			{
 				return propertyDefinition;
 			}
 			if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
@@ -36,32 +37,32 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		readonly IProperty propertyDefinition;
-		
+
 		public SpecializedProperty(IProperty propertyDefinition, TypeParameterSubstitution substitution)
 			: base(propertyDefinition)
 		{
 			this.propertyDefinition = propertyDefinition;
 			AddSubstitution(substitution);
 		}
-		
+
 		public bool CanGet {
 			get { return propertyDefinition.CanGet; }
 		}
-		
+
 		public bool CanSet {
 			get { return propertyDefinition.CanSet; }
 		}
-		
+
 		IMethod getter, setter;
-		
+
 		public IMethod Getter {
 			get { return WrapAccessor(ref this.getter, propertyDefinition.Getter); }
 		}
-		
+
 		public IMethod Setter {
 			get { return WrapAccessor(ref this.setter, propertyDefinition.Setter); }
 		}
-		
+
 		public bool IsIndexer {
 			get { return propertyDefinition.IsIndexer; }
 		}

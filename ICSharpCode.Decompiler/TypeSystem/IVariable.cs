@@ -27,12 +27,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the name of the variable.
 		/// </summary>
 		new string Name { get; }
-		
+
 		/// <summary>
 		/// Gets the type of the variable.
 		/// </summary>
 		IType Type { get; }
-		
+
 		/// <summary>
 		/// Gets whether this variable is a constant (C#-like const).
 		/// </summary>

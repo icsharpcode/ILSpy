@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection.Metadata;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
@@ -32,7 +33,7 @@ namespace ICSharpCode.Decompiler
 		readonly TextWriter writer;
 		int indent;
 		bool needsIndent;
-		
+
 		int line = 1;
 		int column = 1;
 
@@ -44,58 +45,60 @@ namespace ICSharpCode.Decompiler
 				throw new ArgumentNullException(nameof(writer));
 			this.writer = writer;
 		}
-		
+
 		public PlainTextOutput()
 		{
 			this.writer = new StringWriter();
 		}
-		
+
 		public TextLocation Location {
 			get {
 				return new TextLocation(line, column + (needsIndent ? indent : 0));
 			}
 		}
-		
+
 		public override string ToString()
 		{
 			return writer.ToString();
 		}
-		
+
 		public void Indent()
 		{
 			indent++;
 		}
-		
+
 		public void Unindent()
 		{
 			indent--;
 		}
-		
+
 		void WriteIndent()
 		{
-			if (needsIndent) {
+			if (needsIndent)
+			{
 				needsIndent = false;
-				for (int i = 0; i < indent; i++) {
+				for (int i = 0; i < indent; i++)
+				{
 					writer.Write(IndentationString);
 				}
 				column += indent;
 			}
 		}
-		
+
 		public void Write(char ch)
 		{
 			WriteIndent();
 			writer.Write(ch);
 			column++;
 		}
-		
+
 		public void Write(string text)
 		{
 			WriteIndent();
 			writer.Write(text);
 			column += text.Length;
 		}
-		
+
 		public void WriteLine()
 		{
 			writer.WriteLine();
@@ -106,12 +109,16 @@ namespace ICSharpCode.Decompiler
 
 		public void WriteReference(Disassembler.OpCodeInfo opCode, bool omitSuffix = false)
 		{
-			if (omitSuffix) {
+			if (omitSuffix)
+			{
 				int lastDot = opCode.Name.LastIndexOf('.');
-				if (lastDot > 0) {
+				if (lastDot > 0)
+				{
 					Write(opCode.Name.Remove(lastDot + 1));
 				}
-			} else {
+			}
+			else
+			{
 				Write(opCode.Name);
 			}
 		}
@@ -139,7 +146,7 @@ namespace ICSharpCode.Decompiler
 		void ITextOutput.MarkFoldStart(string collapsedText, bool defaultCollapsed)
 		{
 		}
-		
+
 		void ITextOutput.MarkFoldEnd()
 		{
 		}
@@ -167,7 +174,8 @@ namespace ICSharpCode.Decompiler
 
 		public void Commit()
 		{
-			foreach (var action in actions) {
+			foreach (var action in actions)
+			{
 				action(target);
 			}
 		}

@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -40,7 +41,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var paramList = new List<IParameter>(baseMethod.Parameters);
 			Debug.Assert(paramList.Last().Type.Kind == TypeKind.ArgList);
 			paramList.RemoveAt(paramList.Count - 1);
-			foreach (IType varArg in varArgTypes) {
+			foreach (IType varArg in varArgTypes)
+			{
 				paramList.Add(new DefaultParameter(varArg, name: string.Empty, owner: this));
 			}
 			this.parameters = paramList.ToArray();
@@ -51,17 +53,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public int RegularParameterCount {
 			get { return baseMethod.Parameters.Count - 1; }
 		}
-		
+
 		public IReadOnlyList<IParameter> Parameters {
 			get { return parameters; }
 		}
-		
+
 		public override bool Equals(object obj)
 		{
 			VarArgInstanceMethod other = obj as VarArgInstanceMethod;
 			return other != null && baseMethod.Equals(other.baseMethod);
 		}
-		
+
 		public override int GetHashCode()
 		{
 			return baseMethod.GetHashCode();
@@ -77,24 +79,28 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			StringBuilder b = new StringBuilder("[");
 			b.Append(this.SymbolKind);
-			if (this.DeclaringType != null) {
+			if (this.DeclaringType != null)
+			{
 				b.Append(this.DeclaringType.ReflectionName);
 				b.Append('.');
 			}
 			b.Append(this.Name);
-			if (this.TypeParameters.Count > 0) {
+			if (this.TypeParameters.Count > 0)
+			{
 				b.Append("``");
 				b.Append(this.TypeParameters.Count);
 			}
 			b.Append('(');
-			for (int i = 0; i < this.Parameters.Count; i++) {
+			for (int i = 0; i < this.Parameters.Count; i++)
+			{
 				if (i > 0)
 					b.Append(", ");
 				if (i == this.RegularParameterCount)
 					b.Append("..., ");
 				b.Append(this.Parameters[i].Type.ReflectionName);
 			}
-			if (this.Parameters.Count == this.RegularParameterCount) {
+			if (this.Parameters.Count == this.RegularParameterCount)
+			{
 				b.Append(", ...");
 			}
 			b.Append("):");
@@ -102,7 +108,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			b.Append(']');
 			return b.ToString();
 		}
-		
+
 		#region IMethod implementation
 		public IMethod Specialize(TypeParameterSubstitution substitution)
 		{
@@ -146,11 +152,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public bool IsOperator {
 			get { return baseMethod.IsOperator; }
 		}
-		
+
 		public bool HasBody {
 			get { return baseMethod.HasBody; }
 		}
-		
+
 		public bool IsAccessor => baseMethod.IsAccessor;
 		public IMember AccessorOwner => baseMethod.AccessorOwner;
 		public MethodSemanticsAttributes AccessorKind => baseMethod.AccessorKind;
@@ -203,7 +209,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region ISymbol implementation
-		
+
 		public SymbolKind SymbolKind {
 			get { return baseMethod.SymbolKind; }
 		}
@@ -215,7 +221,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region IEntity implementation
-		
+
 		public ITypeDefinition DeclaringTypeDefinition {
 			get { return baseMethod.DeclaringTypeDefinition; }
 		}
@@ -247,7 +253,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public Accessibility Accessibility {
 			get { return baseMethod.Accessibility; }
 		}
-		
+
 		#endregion
 
 		#region INamedElement implementation

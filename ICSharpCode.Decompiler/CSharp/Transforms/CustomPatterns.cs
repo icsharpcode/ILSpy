@@ -18,6 +18,7 @@
 
 using System;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.Semantics;
@@ -28,22 +29,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		readonly string ns;
 		readonly string name;
-		
+
 		public TypePattern(Type type)
 		{
 			this.ns = type.Namespace;
 			this.name = type.Name;
 		}
-		
+
 		public override bool DoMatch(INode other, Match match)
 		{
 			ComposedType ct = other as ComposedType;
 			AstType o;
-			if (ct != null && !ct.HasRefSpecifier && !ct.HasNullableSpecifier && ct.PointerRank == 0 && !ct.ArraySpecifiers.Any()) {
+			if (ct != null && !ct.HasRefSpecifier && !ct.HasNullableSpecifier && ct.PointerRank == 0 && !ct.ArraySpecifiers.Any())
+			{
 				// Special case: ILSpy sometimes produces a ComposedType but then removed all array specifiers
 				// from it. In that case, we need to look at the base type for the annotations.
 				o = ct.BaseType;
-			} else {
+			}
+			else
+			{
 				o = other as AstType;
 				if (o == null)
 					return false;
@@ -51,44 +55,45 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var trr = o.GetResolveResult() as TypeResolveResult;
 			return trr != null && trr.Type.Namespace == ns && trr.Type.Name == name;
 		}
-		
+
 		public override string ToString()
 		{
 			return name;
 		}
 	}
-	
+
 	sealed class LdTokenPattern : Pattern
 	{
 		AnyNode childNode;
-		
+
 		public LdTokenPattern(string groupName)
 		{
 			this.childNode = new AnyNode(groupName);
 		}
-		
+
 		public override bool DoMatch(INode other, Match match)
 		{
 			InvocationExpression ie = other as InvocationExpression;
-			if (ie != null && ie.Annotation<LdTokenAnnotation>() != null && ie.Arguments.Count == 1) {
+			if (ie != null && ie.Annotation<LdTokenAnnotation>() != null && ie.Arguments.Count == 1)
+			{
 				return childNode.DoMatch(ie.Arguments.Single(), match);
 			}
 			return false;
 		}
-		
+
 		public override string ToString()
 		{
 			return "ldtoken(...)";
 		}
 	}
-	
+
 	/// <summary>
 	/// typeof-Pattern that applies on the expanded form of typeof (prior to ReplaceMethodCallsWithOperators)
 	/// </summary>
 	sealed class TypeOfPattern : Pattern
 	{
 		INode childNode;
-		
+
 		public TypeOfPattern(string groupName)
 		{
 			childNode = new MemberReferenceExpression(
@@ -99,12 +104,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					new TypeOfExpression(new AnyNode(groupName))
 				), "TypeHandle");
 		}
-		
+
 		public override bool DoMatch(INode other, Match match)
 		{
 			return childNode.DoMatch(other, match);
 		}
-		
+
 		public override string ToString()
 		{
 			return "typeof(...)";

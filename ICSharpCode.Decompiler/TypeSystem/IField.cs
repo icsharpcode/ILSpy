@@ -27,12 +27,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the name of the field.
 		/// </summary>
 		new string Name { get; } // solve ambiguity between IMember.Name and IVariable.Name
-		
+
 		/// <summary>
 		/// Gets whether this field is readonly.
 		/// </summary>
 		bool IsReadOnly { get; }
-		
+
 		/// <summary>
 		/// Gets whether this field is volatile.
 		/// </summary>

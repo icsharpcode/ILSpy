@@ -21,13 +21,17 @@
 */
 
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class PresentationOptionsAttributeHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class PresentationOptionsAttributeHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.PresentationOptionsAttribute;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (PresentationOptionsAttributeRecord)((BamlRecordNode)node).Record;
 
 			var attrName = ctx.ResolveString(record.NameId);

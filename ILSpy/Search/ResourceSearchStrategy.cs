@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -55,7 +56,8 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
-			if (node is ResourceTreeNode treeNode) {
+			if (node is ResourceTreeNode treeNode)
+			{
 				if (!CheckVisibility(treeNode.Resource))
 					return;
 				resource = treeNode.Resource;

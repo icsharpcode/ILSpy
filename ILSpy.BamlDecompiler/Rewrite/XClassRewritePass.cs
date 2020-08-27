@@ -22,16 +22,21 @@
 
 using System.Linq;
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Xaml;
 
-namespace ILSpy.BamlDecompiler.Rewrite {
-	internal class XClassRewritePass : IRewritePass {
-		public void Run(XamlContext ctx, XDocument document) {
+namespace ILSpy.BamlDecompiler.Rewrite
+{
+	internal class XClassRewritePass : IRewritePass
+	{
+		public void Run(XamlContext ctx, XDocument document)
+		{
 			foreach (var elem in document.Elements(ctx.GetPseudoName("Document")).Elements())
 				RewriteClass(ctx, elem);
 		}
 
-		void RewriteClass(XamlContext ctx, XElement elem) {
+		void RewriteClass(XamlContext ctx, XElement elem)
+		{
 			var type = elem.Annotation<XamlType>();
 			if (type == null || type.ResolvedType == null)
 				return;
@@ -51,7 +56,8 @@ namespace ILSpy.BamlDecompiler.Rewrite {
 			var attrName = ctx.GetKnownNamespace("Class", XamlContext.KnownNamespace_Xaml, elem);
 
 			var attrs = elem.Attributes().ToList();
-			if (typeDef.Accessibility != ICSharpCode.Decompiler.TypeSystem.Accessibility.Public) {
+			if (typeDef.Accessibility != ICSharpCode.Decompiler.TypeSystem.Accessibility.Public)
+			{
 				var classModifierName = ctx.GetKnownNamespace("ClassModifier", XamlContext.KnownNamespace_Xaml, elem);
 				attrs.Insert(0, new XAttribute(classModifierName, "internal"));
 			}

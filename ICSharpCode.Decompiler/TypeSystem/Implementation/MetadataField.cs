@@ -23,6 +23,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -42,7 +43,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		object constantValue;
 		IType type;
 		bool isVolatile; // initialized together with this.type
-		// this can't be bool? as bool? is not thread-safe from torn reads
+						 // this can't be bool? as bool? is not thread-safe from torn reads
 		byte decimalConstantState;
 
 		internal MetadataField(MetadataModule module, FieldDefinitionHandle handle)
@@ -78,7 +79,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public Accessibility Accessibility {
 			get {
-				switch (attributes & FieldAttributes.FieldAccessMask) {
+				switch (attributes & FieldAttributes.FieldAccessMask)
+				{
 					case FieldAttributes.Public:
 						return Accessibility.Public;
 					case FieldAttributes.FamANDAssem:
@@ -97,7 +99,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public bool IsReadOnly => (attributes & FieldAttributes.InitOnly) != 0;
 		public bool IsStatic => (attributes & FieldAttributes.Static) != 0;
-		
+
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Field;
 		IMember IMember.MemberDefinition => this;
 		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
@@ -114,9 +116,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public ITypeDefinition DeclaringTypeDefinition {
 			get {
 				var declType = LazyInit.VolatileRead(ref this.declaringType);
-				if (declType != null) {
+				if (declType != null)
+				{
 					return declType;
-				} else {
+				}
+				else
+				{
 					var def = module.metadata.GetFieldDefinition(handle);
 					return LazyInit.GetOrSet(ref this.declaringType,
 						module.GetDefinition(def.GetDeclaringType()));
@@ -127,7 +132,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IType DeclaringType => DeclaringTypeDefinition;
 		public IModule ParentModule => module;
 		public ICompilation Compilation => module.Compilation;
-		
+
 		public IEnumerable<IAttribute> GetAttributes()
 		{
 			var b = new AttributeListBuilder(module);
@@ -136,12 +141,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			// FieldOffsetAttribute
 			int offset = fieldDef.GetOffset();
-			if (offset != -1) {
+			if (offset != -1)
+			{
 				b.Add(KnownAttribute.FieldOffset, KnownTypeCode.Int32, offset);
 			}
 
 			// NonSerializedAttribute
-			if ((fieldDef.Attributes & FieldAttributes.NotSerialized) != 0) {
+			if ((fieldDef.Attributes & FieldAttributes.NotSerialized) != 0)
+			{
 				b.Add(KnownAttribute.NonSerialized);
 			}
 
@@ -157,7 +164,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public bool IsVolatile {
 			get {
-				if (LazyInit.VolatileRead(ref this.type) == null) {
+				if (LazyInit.VolatileRead(ref this.type) == null)
+				{
 					DecodeTypeAndVolatileFlag();
 				}
 				return this.isVolatile;
@@ -167,7 +175,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IType Type {
 			get {
 				var ty = LazyInit.VolatileRead(ref this.type);
-				if (ty != null) {
+				if (ty != null)
+				{
 					return ty;
 				}
 				return DecodeTypeAndVolatileFlag();
@@ -179,16 +188,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			var fieldDef = metadata.GetFieldDefinition(handle);
 			IType ty;
-			try {
+			try
+			{
 				ty = fieldDef.DecodeSignature(module.TypeProvider, new GenericContext(DeclaringType?.TypeParameters));
-				if (ty is ModifiedType mod && mod.Modifier.Name == "IsVolatile" && mod.Modifier.Namespace == "System.Runtime.CompilerServices") {
+				if (ty is ModifiedType mod && mod.Modifier.Name == "IsVolatile" && mod.Modifier.Namespace == "System.Runtime.CompilerServices")
+				{
 					Volatile.Write(ref this.isVolatile, true);
 					ty = mod.ElementType;
 				}
 				ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation,
 					fieldDef.GetCustomAttributes(), metadata, module.OptionsForEntity(this),
 					DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious);
-			} catch (BadImageFormatException) {
+			}
+			catch (BadImageFormatException)
+			{
 				ty = SpecialType.UnknownType;
 			}
 			return LazyInit.GetOrSet(ref this.type, ty);
@@ -199,7 +212,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool IsDecimalConstant {
 			get {
-				if (decimalConstantState == ThreeState.Unknown) {
+				if (decimalConstantState == ThreeState.Unknown)
+				{
 					var fieldDef = module.metadata.GetFieldDefinition(handle);
 					decimalConstantState = ThreeState.From(DecimalConstantHelper.IsDecimalConstant(module, fieldDef.GetCustomAttributes()));
 				}
@@ -212,32 +226,42 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			object val = LazyInit.VolatileRead(ref this.constantValue);
 			if (val != null)
 				return val;
-			try {
+			try
+			{
 				var metadata = module.metadata;
 				var fieldDef = metadata.GetFieldDefinition(handle);
-				if (IsDecimalConstant && DecimalConstantHelper.AllowsDecimalConstants(module)) {
+				if (IsDecimalConstant && DecimalConstantHelper.AllowsDecimalConstants(module))
+				{
 					val = DecimalConstantHelper.GetDecimalConstantValue(module, fieldDef.GetCustomAttributes());
-				} else {
+				}
+				else
+				{
 					var constantHandle = fieldDef.GetDefaultValue();
 					if (constantHandle.IsNil)
 						return null;
 					var constant = metadata.GetConstant(constantHandle);
 					var blobReader = metadata.GetBlobReader(constant.Value);
-					try {
+					try
+					{
 						val = blobReader.ReadConstant(constant.TypeCode);
-					} catch (ArgumentOutOfRangeException) {
+					}
+					catch (ArgumentOutOfRangeException)
+					{
 						throw new BadImageFormatException($"Constant with invalid typecode: {constant.TypeCode}");
 					}
 				}
 				return LazyInit.GetOrSet(ref this.constantValue, val);
-			} catch (BadImageFormatException) when (!throwOnInvalidMetadata) {
+			}
+			catch (BadImageFormatException) when (!throwOnInvalidMetadata)
+			{
 				return null;
 			}
 		}
 
 		public override bool Equals(object obj)
 		{
-			if (obj is MetadataField f) {
+			if (obj is MetadataField f)
+			{
 				return handle == f.handle && module.PEFile == f.module.PEFile;
 			}
 			return false;

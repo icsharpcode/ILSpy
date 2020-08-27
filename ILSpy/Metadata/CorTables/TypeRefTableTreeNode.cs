@@ -44,23 +44,26 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
 			var metadata = module.Metadata;
-			
+
 			var list = new List<TypeRefEntry>();
 			TypeRefEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.TypeReferences) {
+			foreach (var row in metadata.TypeReferences)
+			{
 				TypeRefEntry entry = new TypeRefEntry(module, row);
-				if (entry.RID == this.scrollTarget) {
+				if (entry.RID == this.scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
-			
+
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -81,7 +84,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset => metadataOffset
 				+ metadata.GetTableMetadataOffset(TableIndex.TypeRef)
-				+ metadata.GetTableRowSize(TableIndex.TypeRef) * (RID-1);
+				+ metadata.GetTableRowSize(TableIndex.TypeRef) * (RID - 1);
 
 			[StringFormat("X8")]
 			public int ResolutionScope => MetadataTokens.GetToken(typeRef.ResolutionScope);
@@ -91,7 +94,8 @@ namespace ICSharpCode.ILSpy.Metadata
 					if (typeRef.ResolutionScope.IsNil)
 						return null;
 					var output = new PlainTextOutput();
-					switch (typeRef.ResolutionScope.Kind) {
+					switch (typeRef.ResolutionScope.Kind)
+					{
 						case HandleKind.ModuleDefinition:
 							output.Write(metadata.GetString(metadata.GetModuleDefinition().Name));
 							break;

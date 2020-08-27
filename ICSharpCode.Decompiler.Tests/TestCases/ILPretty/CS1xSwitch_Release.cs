@@ -55,7 +55,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SparseIntegerSwitch(int i)
 		{
 			Console.WriteLine("SparseIntegerSwitch: " + i);
-			switch (i) {
+			switch (i)
+			{
 				case -10000000:
 					return "-10 mln";
 				case -100:
@@ -85,7 +86,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchOverInt(int i)
 		{
-			switch (i) {
+			switch (i)
+			{
 				case 0:
 					Console.WriteLine("zero");
 					break;
@@ -113,7 +115,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string ShortSwitchOverString(string text)
 		{
 			Console.WriteLine("ShortSwitchOverString: " + text);
-			switch (text) {
+			switch (text)
+			{
 				case "First case":
 					return "Text1";
 				case "Second case":
@@ -128,7 +131,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string ShortSwitchOverStringWithNullCase(string text)
 		{
 			Console.WriteLine("ShortSwitchOverStringWithNullCase: " + text);
-			switch (text) {
+			switch (text)
+			{
 				case "First case":
 					return "Text1";
 				case "Second case":
@@ -143,7 +147,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SwitchOverString1(string text)
 		{
 			Console.WriteLine("SwitchOverString1: " + text);
-			switch (text) {
+			switch (text)
+			{
 				case "First case":
 					return "Text1";
 				case "Second case":
@@ -167,7 +172,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SwitchOverString2()
 		{
 			Console.WriteLine("SwitchOverString2:");
-			switch (Environment.UserName) {
+			switch (Environment.UserName)
+			{
 				case "First case":
 					return "Text1";
 				case "Second case":
@@ -197,9 +203,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string TwoDifferentSwitchBlocksInTryFinally()
 		{
-			try {
+			try
+			{
 				Console.WriteLine("TwoDifferentSwitchBlocks:");
-				switch (Environment.UserName) {
+				switch (Environment.UserName)
+				{
 					case "First case":
 						return "Text1";
 					case "Second case":
@@ -225,9 +233,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					default:
 						return "Default";
 				}
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Second switch:");
-				switch (Console.ReadLine()) {
+				switch (Console.ReadLine())
+				{
 					case "12":
 						Console.WriteLine("Te43234xt1");
 						break;
@@ -271,7 +282,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SwitchOverBool(bool b)
 		{
 			Console.WriteLine("SwitchOverBool: " + b);
-			switch (b) {
+			switch (b)
+			{
 				case true:
 					return bool.TrueString;
 				case false:
@@ -284,8 +296,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void SwitchInLoop(int i)
 		{
 			Console.WriteLine("SwitchInLoop: " + i);
-			while (true) {
-				switch (i) {
+			while (true)
+			{
+				switch (i)
+				{
 					case 1:
 						Console.WriteLine("one");
 						break;
@@ -310,7 +324,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void SwitchWithGoto(int i)
 		{
 			Console.WriteLine("SwitchWithGoto: " + i);
-			switch (i) {
+			switch (i)
+			{
 				case 1:
 					Console.WriteLine("one");
 					goto default;
@@ -340,10 +355,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ArrayList arrayList = new ArrayList();
 			ArrayList arrayList2 = new ArrayList();
 			SetProperty[] properties = GetProperties();
-			for (int i = 0; i < properties.Length; i++) {
+			for (int i = 0; i < properties.Length; i++)
+			{
 				Console.WriteLine("In for-loop");
 				SetProperty setProperty = properties[i];
-				switch (setProperty.Property.Name) {
+				switch (setProperty.Property.Name)
+				{
 					case "Name1":
 						setProperty.Set = 1;
 						arrayList.Add(setProperty);
@@ -373,7 +390,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchWithComplexCondition(string[] args)
 		{
-			switch ((args.Length == 0) ? "dummy" : args[0]) {
+			switch ((args.Length == 0) ? "dummy" : args[0])
+			{
 				case "a":
 					Console.WriteLine("a");
 					break;
@@ -392,7 +410,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchWithArray(string[] args)
 		{
-			switch (args[0]) {
+			switch (args[0])
+			{
 				case "a":
 					Console.WriteLine("a");
 					break;

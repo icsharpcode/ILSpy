@@ -59,13 +59,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			Console.WriteLine("TruncatedComp1(-1):");
 			TruncatedComp1(-1);
-			
+
 			Console.WriteLine("TruncatedComp1(0x100000001):");
 			TruncatedComp1(0x100000001);
 
 			Console.WriteLine("TruncatedComp1(long.MinValue):");
 			TruncatedComp1(long.MinValue);
-			
+
 			Console.WriteLine("TruncatedComp2(1):");
 			TruncatedComp2(1, 1);
 

@@ -48,9 +48,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<ExportedTypeEntry>();
 			ExportedTypeEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.ExportedTypes) {
+			foreach (var row in metadata.ExportedTypes)
+			{
 				ExportedTypeEntry entry = new ExportedTypeEntry(module.Reader.PEHeaders.MetadataStartOffset, module, row, metadata.GetExportedType(row));
-				if (entry.RID == this.scrollTarget) {
+				if (entry.RID == this.scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -60,7 +62,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -81,7 +84,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset => metadataOffset
 				+ metadata.GetTableMetadataOffset(TableIndex.ExportedType)
-				+ metadata.GetTableRowSize(TableIndex.ExportedType) * (RID-1);
+				+ metadata.GetTableRowSize(TableIndex.ExportedType) * (RID - 1);
 
 			[StringFormat("X8")]
 			public TypeAttributes Attributes => type.Attributes;

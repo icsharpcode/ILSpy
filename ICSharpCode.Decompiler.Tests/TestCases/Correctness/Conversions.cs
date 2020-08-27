@@ -19,6 +19,7 @@
 // #include "../../../ICSharpCode.Decompiler/Util/CSharpPrimitiveCast.cs"
 
 using System;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
@@ -39,48 +40,48 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			TypeCode.Double,
 			TypeCode.Decimal
 		};
-		
+
 		static object[] inputValues = {
 			'\0',
 			'a',
 			'\uFFFE',
-			
+
 			sbyte.MinValue,
 			sbyte.MaxValue,
 			(sbyte)-1,
 			(sbyte)1,
-			
+
 			byte.MinValue,
 			byte.MaxValue,
 			(byte)1,
-			
+
 			short.MinValue,
 			short.MaxValue,
 			(short)-1,
 			(short)1,
-			
+
 			ushort.MinValue,
 			ushort.MaxValue,
 			(ushort)1,
-			
+
 			int.MinValue,
 			int.MaxValue,
 			(int)-1,
 			(int)1,
-			
+
 			uint.MinValue,
 			uint.MaxValue,
 			(uint)1,
-			
+
 			long.MinValue,
 			long.MaxValue,
 			(long)-1,
 			(long)1,
-			
+
 			ulong.MinValue,
 			ulong.MaxValue,
 			(ulong)1,
-			
+
 			-1.1f,
 			1.1f,
 			float.MinValue,
@@ -88,7 +89,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			float.NegativeInfinity,
 			float.PositiveInfinity,
 			float.NaN,
-			
+
 			-1.1,
 			1.1,
 			double.MinValue,
@@ -96,64 +97,72 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			double.NegativeInfinity,
 			double.PositiveInfinity,
 			double.NaN,
-			
+
 			decimal.MinValue,
 			decimal.MaxValue,
 			decimal.MinusOne,
 			decimal.One
 		};
-		
+
 		static void Main(string[] args)
 		{
 			RunTest(checkForOverflow: false);
 			RunTest(checkForOverflow: true);
-			
+
 			Console.WriteLine(ReadZeroTerminatedString("Hello World!".Length));
 			C1.Test();
 		}
-		
+
 		static void RunTest(bool checkForOverflow)
 		{
 			string mode = checkForOverflow ? "checked" : "unchecked";
-			foreach (object input in inputValues) {
+			foreach (object input in inputValues)
+			{
 				string inputType = input.GetType().Name;
-				foreach (var targetType in targetTypes) {
-					try {
+				foreach (var targetType in targetTypes)
+				{
+					try
+					{
 						object result = CSharpPrimitiveCast.Cast(targetType, input, checkForOverflow);
 						Console.WriteLine("{0} ({1})({2}){3} = ({4}){5}", mode, targetType, inputType, input,
-						                  result.GetType().Name, result);
-					} catch (Exception ex) {
+										  result.GetType().Name, result);
+					}
+					catch (Exception ex)
+					{
 						Console.WriteLine("{0} ({1})({2}){3} = {4}", mode, targetType, inputType, input,
-						                  ex.GetType().Name);
+										  ex.GetType().Name);
 					}
 				}
 			}
 		}
-		
+
 		static object MM(sbyte c)
 		{
-			checked {
+			checked
+			{
 				return (UInt64)c;
 			}
 		}
-		
-		static string ReadZeroTerminatedString (int length)
+
+		static string ReadZeroTerminatedString(int length)
 		{
 			int read = 0;
-			var buffer = new char [length];
-			var bytes = ReadBytes (length);
-			while (read < length) {
-				var current = bytes [read];
+			var buffer = new char[length];
+			var bytes = ReadBytes(length);
+			while (read < length)
+			{
+				var current = bytes[read];
 				if (current == 0)
 					break;
 
-				buffer [read++] = (char) current;
+				buffer[read++] = (char)current;
 			}
 
-			return new string (buffer, 0, read);
+			return new string(buffer, 0, read);
 		}
-		
-		static byte[] ReadBytes(int length) {
+
+		static byte[] ReadBytes(int length)
+		{
 			return System.Text.Encoding.ASCII.GetBytes("Hello World!");
 		}
 	}
@@ -176,7 +185,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine(((Type)c).Name);
 		}
-		
+
 		static Type ChainedImplicitConversions(C2 c)
 		{
 			return (C1)c;

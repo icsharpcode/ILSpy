@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Globalization;
+
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -38,7 +39,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public readonly string Member;
 
-		public DynamicMemberResolveResult(ResolveResult target, string member) : base(SpecialType.Dynamic) {
+		public DynamicMemberResolveResult(ResolveResult target, string member) : base(SpecialType.Dynamic)
+		{
 			this.Target = target;
 			this.Member = member;
 		}
@@ -48,7 +50,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return string.Format(CultureInfo.InvariantCulture, "[Dynamic member '{0}']", Member);
 		}
 
-		public override IEnumerable<ResolveResult> GetChildResults() {
+		public override IEnumerable<ResolveResult> GetChildResults()
+		{
 			return new[] { Target };
 		}
 	}

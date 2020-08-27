@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -34,7 +35,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IReadOnlyList<IModule> referencedAssemblies;
 		bool initialized;
 		INamespace rootNamespace;
-		
+
 		public SimpleCompilation(IModuleReference mainAssembly, params IModuleReference[] assemblyReferences)
 		{
 			Init(mainAssembly, assemblyReferences);
@@ -60,11 +61,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			List<IModule> assemblies = new List<IModule>();
 			assemblies.Add(this.mainModule);
 			List<IModule> referencedAssemblies = new List<IModule>();
-			foreach (var asmRef in assemblyReferences) {
+			foreach (var asmRef in assemblyReferences)
+			{
 				IModule asm;
-				try {
+				try
+				{
 					asm = asmRef.Resolve(context);
-				} catch (InvalidOperationException) {
+				}
+				catch (InvalidOperationException)
+				{
 					throw new InvalidOperationException("Tried to initialize compilation with an invalid assembly reference. (Forgot to load the assembly reference ? - see CecilLoader)");
 				}
 				if (asm != null && !assemblies.Contains(asm))
@@ -85,7 +90,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return mainModule;
 			}
 		}
-		
+
 		public IReadOnlyList<IModule> Modules {
 			get {
 				if (!initialized)
@@ -93,7 +98,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return assemblies;
 			}
 		}
-		
+
 		public IReadOnlyList<IModule> ReferencedModules {
 			get {
 				if (!initialized)
@@ -101,36 +106,40 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return referencedAssemblies;
 			}
 		}
-		
+
 		public INamespace RootNamespace {
 			get {
 				INamespace ns = LazyInit.VolatileRead(ref this.rootNamespace);
-				if (ns != null) {
+				if (ns != null)
+				{
 					return ns;
-				} else {
+				}
+				else
+				{
 					if (!initialized)
 						throw new InvalidOperationException("Compilation isn't initialized yet");
 					return LazyInit.GetOrSet(ref this.rootNamespace, CreateRootNamespace());
 				}
 			}
 		}
-		
+
 		protected virtual INamespace CreateRootNamespace()
 		{
 			// SimpleCompilation does not support extern aliases; but derived classes might.
 			// CreateRootNamespace() is virtual so that derived classes can change the global namespace.
 			INamespace[] namespaces = new INamespace[referencedAssemblies.Count + 1];
 			namespaces[0] = mainModule.RootNamespace;
-			for (int i = 0; i < referencedAssemblies.Count; i++) {
+			for (int i = 0; i < referencedAssemblies.Count; i++)
+			{
 				namespaces[i + 1] = referencedAssemblies[i].RootNamespace;
 			}
 			return new MergedNamespace(this, namespaces);
 		}
-		
+
 		public CacheManager CacheManager {
 			get { return cacheManager; }
 		}
-		
+
 		public virtual INamespace GetNamespaceForExternAlias(string alias)
 		{
 			if (string.IsNullOrEmpty(alias))
@@ -138,16 +147,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// SimpleCompilation does not support extern aliases; but derived classes might.
 			return null;
 		}
-		
+
 		public IType FindType(KnownTypeCode typeCode)
 		{
 			return knownTypeCache.FindType(typeCode);
 		}
-		
+
 		public StringComparer NameComparer {
 			get { return StringComparer.Ordinal; }
 		}
-		
+
 		public override string ToString()
 		{
 			return "[" + GetType().Name + " " + mainModule.AssemblyName + "]";

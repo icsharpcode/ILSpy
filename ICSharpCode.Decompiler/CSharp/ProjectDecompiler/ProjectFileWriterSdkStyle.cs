@@ -22,6 +22,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Xml;
+
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
@@ -67,7 +68,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			IEnumerable<(string itemType, string fileName)> files,
 			PEFile module)
 		{
-			using (XmlTextWriter xmlWriter = new XmlTextWriter(target)) {
+			using (XmlTextWriter xmlWriter = new XmlTextWriter(target))
+			{
 				xmlWriter.Formatting = Formatting.Indented;
 				Write(xmlWriter, project, module);
 			}
@@ -90,9 +92,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		static void PlaceIntoTag(string tagName, XmlTextWriter xml, Action content)
 		{
 			xml.WriteStartElement(tagName);
-			try {
+			try
+			{
 				content();
-			} finally {
+			}
+			finally
+			{
 				xml.WriteEndElement();
 			}
 		}
@@ -105,7 +110,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			xml.WriteElementString("GenerateAssemblyInfo", FalseString);
 
 			// 'Library' is default, so only need to specify output type for executables
-			if (!module.Reader.PEHeaders.IsDll) {
+			if (!module.Reader.PEHeaders.IsDll)
+			{
 				WriteOutputType(xml, module.Reader.PEHeaders.PEHeader.Subsystem);
 			}
 
@@ -114,25 +120,29 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			string platformName = TargetServices.GetPlatformName(module);
 			var targetFramework = TargetServices.DetectTargetFramework(module);
 
-			if (targetFramework.Moniker == null) {
+			if (targetFramework.Moniker == null)
+			{
 				throw new NotSupportedException($"Cannot decompile this assembly to a SDK style project. Use default project format instead.");
 			}
 
 			xml.WriteElementString("TargetFramework", targetFramework.Moniker);
 
 			// 'AnyCPU' is default, so only need to specify platform if it differs
-			if (platformName != AnyCpuString) {
+			if (platformName != AnyCpuString)
+			{
 				xml.WriteElementString("PlatformTarget", platformName);
 			}
 
-			if (platformName == AnyCpuString && (module.Reader.PEHeaders.CorHeader.Flags & CorFlags.Prefers32Bit) != 0) {
+			if (platformName == AnyCpuString && (module.Reader.PEHeaders.CorHeader.Flags & CorFlags.Prefers32Bit) != 0)
+			{
 				xml.WriteElementString("Prefer32Bit", TrueString);
 			}
 		}
 
 		static void WriteOutputType(XmlTextWriter xml, Subsystem moduleSubsystem)
 		{
-			switch (moduleSubsystem) {
+			switch (moduleSubsystem)
+			{
 				case Subsystem.WindowsGui:
 					xml.WriteElementString("OutputType", "WinExe");
 					break;
@@ -144,9 +154,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		static void WriteDesktopExtensions(XmlTextWriter xml, ProjectType projectType)
 		{
-			if (projectType == ProjectType.Wpf) {
+			if (projectType == ProjectType.Wpf)
+			{
 				xml.WriteElementString("UseWPF", TrueString);
-			} else if (projectType == ProjectType.WinForms) {
+			}
+			else if (projectType == ProjectType.WinForms)
+			{
 				xml.WriteElementString("UseWindowsForms", TrueString);
 			}
 		}
@@ -156,7 +169,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			xml.WriteElementString("LangVersion", project.LanguageVersion.ToString().Replace("CSharp", "").Replace('_', '.'));
 			xml.WriteElementString("AllowUnsafeBlocks", TrueString);
 
-			if (project.StrongNameKeyFile != null) {
+			if (project.StrongNameKeyFile != null)
+			{
 				xml.WriteElementString("SignAssembly", TrueString);
 				xml.WriteElementString("AssemblyOriginatorKeyFile", Path.GetFileName(project.StrongNameKeyFile));
 			}
@@ -164,12 +178,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		static void WriteReferences(XmlTextWriter xml, PEFile module, IProjectInfoProvider project)
 		{
-			foreach (var reference in module.AssemblyReferences.Where(r => !ImplicitReferences.Contains(r.Name))) {
+			foreach (var reference in module.AssemblyReferences.Where(r => !ImplicitReferences.Contains(r.Name)))
+			{
 				xml.WriteStartElement("Reference");
 				xml.WriteAttributeString("Include", reference.Name);
-				
+
 				var asembly = project.AssemblyResolver.Resolve(reference);
-				if (asembly != null) {
+				if (asembly != null)
+				{
 					xml.WriteElementString("HintPath", asembly.FileName);
 				}
 
@@ -179,7 +195,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		static string GetSdkString(ProjectType projectType)
 		{
-			switch (projectType) {
+			switch (projectType)
+			{
 				case ProjectType.WinForms:
 				case ProjectType.Wpf:
 					return "Microsoft.NET.Sdk.WindowsDesktop";
@@ -192,16 +209,20 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		static ProjectType GetProjectType(PEFile module)
 		{
-			foreach (var referenceName in module.AssemblyReferences.Select(r => r.Name)) {
-				if (referenceName.StartsWith(AspNetCorePrefix, StringComparison.Ordinal)) {
+			foreach (var referenceName in module.AssemblyReferences.Select(r => r.Name))
+			{
+				if (referenceName.StartsWith(AspNetCorePrefix, StringComparison.Ordinal))
+				{
 					return ProjectType.Web;
 				}
 
-				if (referenceName == PresentationFrameworkName) {
+				if (referenceName == PresentationFrameworkName)
+				{
 					return ProjectType.Wpf;
 				}
 
-				if (referenceName == WindowsFormsName) {
+				if (referenceName == WindowsFormsName)
+				{
 					return ProjectType.WinForms;
 				}
 			}

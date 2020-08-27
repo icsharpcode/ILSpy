@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using EnvDTE;
+
 using ICSharpCode.Decompiler.Metadata;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.Shell;
+
 using Mono.Cecil;
+
 using VSLangProj;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
@@ -24,7 +29,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			if (sender is OleMenuCommand menuItem) {
+			if (sender is OleMenuCommand menuItem)
+			{
 				menuItem.Visible = false;
 
 				var selectedItemData = owner.GetSelectedItemsData<object>().FirstOrDefault();
@@ -38,7 +44,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				 */
 				if ((AssemblyReferenceForILSpy.Detect(selectedItemData) != null)
 					|| (ProjectReferenceForILSpy.Detect(selectedItemData) != null)
-					|| (NuGetReferenceForILSpy.Detect(selectedItemData) != null)) {
+					|| (NuGetReferenceForILSpy.Detect(selectedItemData) != null))
+				{
 					menuItem.Visible = true;
 				}
 			}
@@ -53,7 +60,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				return;
 
 			var referenceItem = AssemblyReferenceForILSpy.Detect(itemObject);
-			if (referenceItem != null) {
+			if (referenceItem != null)
+			{
 				Reference reference = itemObject as Reference;
 				var project = reference.ContainingProject;
 				var roslynProject = owner.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == project.FileName);
@@ -68,20 +76,24 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 			// Handle NuGet references
 			var nugetRefItem = NuGetReferenceForILSpy.Detect(itemObject);
-			if (nugetRefItem != null) {
+			if (nugetRefItem != null)
+			{
 				OpenAssembliesInILSpy(nugetRefItem.GetILSpyParameters());
 				return;
 			}
 
 			// Handle project references
 			var projectRefItem = ProjectReferenceForILSpy.Detect(itemObject);
-			if (projectRefItem != null) {
+			if (projectRefItem != null)
+			{
 				var projectItem = itemObject as ProjectItem;
 				string fileName = projectItem.ContainingProject?.FileName;
-				if (!string.IsNullOrEmpty(fileName)) {
+				if (!string.IsNullOrEmpty(fileName))
+				{
 					var roslynProject = owner.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == fileName);
 					var references = GetReferences(roslynProject);
-					if (references.TryGetValue(projectItem.Name, out DetectedReference path)) {
+					if (references.TryGetValue(projectItem.Name, out DetectedReference path))
+					{
 						OpenAssembliesInILSpy(projectRefItem.GetILSpyParameters(references));
 						return;
 					}

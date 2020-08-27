@@ -18,6 +18,7 @@
 
 using System;
 using System.Linq;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
@@ -41,7 +42,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			if (context.SelectedTreeNodes == null)
 				return context.Reference != null && context.Reference.Reference is IEntity;
-			foreach (IMemberTreeNode node in context.SelectedTreeNodes) {
+			foreach (IMemberTreeNode node in context.SelectedTreeNodes)
+			{
 				if (!IsValidReference(node.Member))
 					return false;
 			}
@@ -56,32 +58,44 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public void Execute(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes != null) {
-				foreach (IMemberTreeNode node in context.SelectedTreeNodes) {
+			if (context.SelectedTreeNodes != null)
+			{
+				foreach (IMemberTreeNode node in context.SelectedTreeNodes)
+				{
 					MainWindow.Instance.AnalyzerTreeView.Analyze(node.Member);
 				}
-			} else if (context.Reference != null && context.Reference.Reference is IEntity entity) {
+			}
+			else if (context.Reference != null && context.Reference.Reference is IEntity entity)
+			{
 				MainWindow.Instance.AnalyzerTreeView.Analyze(entity);
 			}
 		}
 
 		public override bool CanExecute(object parameter)
 		{
-			if (MainWindow.Instance.AnalyzerTreeView.IsKeyboardFocusWithin) {
+			if (MainWindow.Instance.AnalyzerTreeView.IsKeyboardFocusWithin)
+			{
 				return MainWindow.Instance.AnalyzerTreeView.SelectedItems.OfType<object>().All(n => n is IMemberTreeNode);
-			} else {
+			}
+			else
+			{
 				return MainWindow.Instance.SelectedNodes.All(n => n is IMemberTreeNode);
 			}
 		}
 
 		public override void Execute(object parameter)
 		{
-			if (MainWindow.Instance.AnalyzerTreeView.IsKeyboardFocusWithin) {
-				foreach (IMemberTreeNode node in MainWindow.Instance.AnalyzerTreeView.SelectedItems.OfType<IMemberTreeNode>().ToArray()) {
+			if (MainWindow.Instance.AnalyzerTreeView.IsKeyboardFocusWithin)
+			{
+				foreach (IMemberTreeNode node in MainWindow.Instance.AnalyzerTreeView.SelectedItems.OfType<IMemberTreeNode>().ToArray())
+				{
 					MainWindow.Instance.AnalyzerTreeView.Analyze(node.Member);
 				}
-			} else {
-				foreach (IMemberTreeNode node in MainWindow.Instance.SelectedNodes) {
+			}
+			else
+			{
+				foreach (IMemberTreeNode node in MainWindow.Instance.SelectedNodes)
+				{
 					MainWindow.Instance.AnalyzerTreeView.Analyze(node.Member);
 				}
 			}

@@ -23,11 +23,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.BamlDecompiler.Baml {
-	internal partial class KnownThings {
+namespace ILSpy.BamlDecompiler.Baml
+{
+	internal partial class KnownThings
+	{
 		readonly IDecompilerTypeSystem typeSystem;
 
 		readonly Dictionary<int, IModule> assemblies;
@@ -36,7 +39,8 @@ namespace ILSpy.BamlDecompiler.Baml {
 		readonly Dictionary<int, string> strings;
 		readonly Dictionary<int, (string, string, string)> resources;
 
-		public KnownThings(IDecompilerTypeSystem typeSystem) {
+		public KnownThings(IDecompilerTypeSystem typeSystem)
+		{
 			this.typeSystem = typeSystem;
 
 			assemblies = new Dictionary<int, IModule>();
@@ -45,13 +49,16 @@ namespace ILSpy.BamlDecompiler.Baml {
 			strings = new Dictionary<int, string>();
 			resources = new Dictionary<int, (string, string, string)>();
 
-			try {
+			try
+			{
 				InitAssemblies();
 				InitTypes();
 				InitMembers();
 				InitStrings();
 				InitResources();
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				throw new ICSharpCode.Decompiler.DecompilerException(typeSystem.MainModule.PEFile, ex.Message, ex);
 			}
 		}
@@ -73,8 +80,10 @@ namespace ILSpy.BamlDecompiler.Baml {
 		KnownMember InitMember(KnownTypes parent, string name, ITypeDefinition type) => new KnownMember(parent, types[parent], name, type);
 	}
 
-	internal class KnownMember {
-		public KnownMember(KnownTypes parent, ITypeDefinition declType, string name, ITypeDefinition type) {
+	internal class KnownMember
+	{
+		public KnownMember(KnownTypes parent, ITypeDefinition declType, string name, ITypeDefinition type)
+		{
 			Parent = parent;
 			Property = declType.GetProperties(p => p.Name == name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
 			DeclaringType = declType;

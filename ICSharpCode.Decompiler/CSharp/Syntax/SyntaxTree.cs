@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -33,15 +34,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class SyntaxTree : AstNode
 	{
 		public static readonly Role<AstNode> MemberRole = new Role<AstNode>("Member", AstNode.Null);
-		
+
 		public override NodeType NodeType {
 			get {
 				return NodeType.Unknown;
 			}
 		}
-		
+
 		string fileName;
-		
+
 		/// <summary>
 		/// Gets/Sets the file name of this syntax tree.
 		/// </summary>
@@ -52,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				fileName = value;
 			}
 		}
-		
+
 		public AstNodeCollection<AstNode> Members {
 			get { return GetChildrenByRole(MemberRole); }
 		}
@@ -84,11 +85,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get;
 			internal set;
 		}
-		
-		public SyntaxTree ()
+
+		public SyntaxTree()
 		{
 		}
-		
+
 		/// <summary>
 		/// Gets all defined types in this syntax tree.
 		/// </summary>
@@ -97,41 +98,44 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </returns>
 		public IEnumerable<EntityDeclaration> GetTypes(bool includeInnerTypes = false)
 		{
-			Stack<AstNode> nodeStack = new Stack<AstNode> ();
+			Stack<AstNode> nodeStack = new Stack<AstNode>();
 			nodeStack.Push(this);
-			while (nodeStack.Count > 0) {
+			while (nodeStack.Count > 0)
+			{
 				var curNode = nodeStack.Pop();
-				if (curNode is TypeDeclaration || curNode is DelegateDeclaration) {
+				if (curNode is TypeDeclaration || curNode is DelegateDeclaration)
+				{
 					yield return (EntityDeclaration)curNode;
 				}
-				foreach (var child in curNode.Children) {
+				foreach (var child in curNode.Children)
+				{
 					if (!(child is Statement || child is Expression) &&
-					    (child.Role != Roles.TypeMemberRole || ((child is TypeDeclaration || child is DelegateDeclaration) && includeInnerTypes)))
-						nodeStack.Push (child);
+						(child.Role != Roles.TypeMemberRole || ((child is TypeDeclaration || child is DelegateDeclaration) && includeInnerTypes)))
+						nodeStack.Push(child);
 				}
 			}
 		}
 
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			SyntaxTree o = other as SyntaxTree;
 			return o != null && this.Members.DoMatch(o.Members, match);
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitSyntaxTree (this);
+			visitor.VisitSyntaxTree(this);
 		}
-		
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitSyntaxTree (this);
+			return visitor.VisitSyntaxTree(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitSyntaxTree (this, data);
+			return visitor.VisitSyntaxTree(this, data);
 		}
 	}
 }

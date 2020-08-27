@@ -25,28 +25,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static async void TestAsyncUsing(IAsyncDisposable disposable)
 		{
-			await using (disposable) {
+			await using (disposable)
+			{
 				Console.WriteLine("Hello");
 			}
 		}
 
 		public static async void TestAsyncUsingClass()
 		{
-			await using (AsyncDisposableClass test = new AsyncDisposableClass()) {
+			await using (AsyncDisposableClass test = new AsyncDisposableClass())
+			{
 				Use(test);
 			}
 		}
 
 		public static async void TestAsyncUsingStruct()
 		{
-			await using (AsyncDisposableStruct asyncDisposableStruct = default(AsyncDisposableStruct)) {
+			await using (AsyncDisposableStruct asyncDisposableStruct = default(AsyncDisposableStruct))
+			{
 				Use(asyncDisposableStruct);
 			}
 		}
 
 		public static async void TestAsyncUsingNullableStruct()
 		{
-			await using (AsyncDisposableStruct? asyncDisposableStruct = new AsyncDisposableStruct?(default(AsyncDisposableStruct))) {
+			await using (AsyncDisposableStruct? asyncDisposableStruct = new AsyncDisposableStruct?(default(AsyncDisposableStruct)))
+			{
 				Use(asyncDisposableStruct);
 			}
 		}

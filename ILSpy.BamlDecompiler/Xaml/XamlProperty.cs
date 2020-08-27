@@ -23,21 +23,26 @@
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.BamlDecompiler.Xaml {
-	internal class XamlProperty {
+namespace ILSpy.BamlDecompiler.Xaml
+{
+	internal class XamlProperty
+	{
 		public XamlType DeclaringType { get; }
 		public string PropertyName { get; }
 
 		public IMember ResolvedMember { get; set; }
 
-		public XamlProperty(XamlType type, string name) {
+		public XamlProperty(XamlType type, string name)
+		{
 			DeclaringType = type;
 			PropertyName = name;
 		}
 
-		public void TryResolve() {
+		public void TryResolve()
+		{
 			if (ResolvedMember != null)
 				return;
 
@@ -60,14 +65,16 @@ namespace ILSpy.BamlDecompiler.Xaml {
 			ResolvedMember = typeDef.GetFields(f => f.Name == PropertyName + "Event").FirstOrDefault();
 		}
 
-		public bool IsAttachedTo(XamlType type) {
+		public bool IsAttachedTo(XamlType type)
+		{
 			if (type == null || ResolvedMember == null || type.ResolvedType == null)
 				return true;
 
 			var declType = ResolvedMember.DeclaringType;
 			var t = type.ResolvedType;
 
-			do {
+			do
+			{
 				if (t.FullName == declType.FullName && t.TypeParameterCount == declType.TypeParameterCount)
 					return false;
 				t = t.DirectBaseTypes.FirstOrDefault();
@@ -75,12 +82,14 @@ namespace ILSpy.BamlDecompiler.Xaml {
 			return true;
 		}
 
-		public XName ToXName(XamlContext ctx, XElement parent, bool isFullName = true) {
+		public XName ToXName(XamlContext ctx, XElement parent, bool isFullName = true)
+		{
 			var typeName = DeclaringType.ToXName(ctx);
 			XName name;
 			if (!isFullName)
 				name = XmlConvert.EncodeLocalName(PropertyName);
-			else {
+			else
+			{
 				name = typeName.LocalName + "." + XmlConvert.EncodeLocalName(PropertyName);
 				if (parent == null || parent.GetDefaultNamespace() != typeName.Namespace)
 					name = typeName.Namespace + name.LocalName;

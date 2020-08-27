@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
@@ -62,15 +63,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		void DoTransform(Statement statement, Statement parent)
 		{
-			if (statement.IsNull) return;
-			if (context.Settings.AlwaysUseBraces) {
-				if (!IsElseIf(statement, parent)) {
+			if (statement.IsNull)
+				return;
+			if (context.Settings.AlwaysUseBraces)
+			{
+				if (!IsElseIf(statement, parent))
+				{
 					InsertBlock(statement);
 				}
-			} else {
-				if (statement is BlockStatement b && b.Statements.Count == 1 && IsAllowedAsEmbeddedStatement(b.Statements.First(), parent)) {
+			}
+			else
+			{
+				if (statement is BlockStatement b && b.Statements.Count == 1 && IsAllowedAsEmbeddedStatement(b.Statements.First(), parent))
+				{
 					statement.ReplaceWith(b.Statements.First().Detach());
-				} else if (!IsAllowedAsEmbeddedStatement(statement, parent)) {
+				}
+				else if (!IsAllowedAsEmbeddedStatement(statement, parent))
+				{
 					InsertBlock(statement);
 				}
 			}
@@ -83,13 +92,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		static void InsertBlock(Statement statement)
 		{
-			if (statement.IsNull) return;
-			if (!(statement is BlockStatement)) {
+			if (statement.IsNull)
+				return;
+			if (!(statement is BlockStatement))
+			{
 				var b = new BlockStatement();
 				statement.ReplaceWith(b);
-				if (statement is EmptyStatement && !statement.Children.Any()) {
+				if (statement is EmptyStatement && !statement.Children.Any())
+				{
 					b.CopyAnnotationsFrom(statement);
-				} else {
+				}
+				else
+				{
 					b.Add(statement);
 				}
 			}
@@ -97,7 +111,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		bool IsAllowedAsEmbeddedStatement(Statement statement, Statement parent)
 		{
-			switch (statement) {
+			switch (statement)
+			{
 				case IfElseStatement ies:
 					return parent is IfElseStatement && ies.Role == IfElseStatement.FalseRole;
 				case VariableDeclarationStatement vds:
@@ -124,7 +139,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
 		{
-			if (context.Settings.UseExpressionBodyForCalculatedGetterOnlyProperties) {
+			if (context.Settings.UseExpressionBodyForCalculatedGetterOnlyProperties)
+			{
 				SimplifyPropertyDeclaration(propertyDeclaration);
 			}
 			base.VisitPropertyDeclaration(propertyDeclaration);
@@ -132,7 +148,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override void VisitIndexerDeclaration(IndexerDeclaration indexerDeclaration)
 		{
-			if (context.Settings.UseExpressionBodyForCalculatedGetterOnlyProperties) {
+			if (context.Settings.UseExpressionBodyForCalculatedGetterOnlyProperties)
+			{
 				SimplifyIndexerDeclaration(indexerDeclaration);
 			}
 			base.VisitIndexerDeclaration(indexerDeclaration);
@@ -144,9 +161,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Name = Pattern.AnyString,
 			PrivateImplementationType = new AnyNodeOrNull(),
 			ReturnType = new AnyNode(),
-			Getter = new Accessor() { 
+			Getter = new Accessor() {
 				Modifiers = Modifiers.Any,
-				Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) } 
+				Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) }
 			}
 		};
 
@@ -158,7 +175,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			ReturnType = new AnyNode(),
 			Getter = new Accessor() {
 				Modifiers = Modifiers.Any,
-				Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) } 
+				Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) }
 			}
 		};
 

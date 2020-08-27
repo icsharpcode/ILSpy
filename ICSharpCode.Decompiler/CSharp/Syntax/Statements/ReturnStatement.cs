@@ -32,45 +32,45 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ReturnStatement : Statement
 	{
-		public static readonly TokenRole ReturnKeywordRole = new TokenRole ("return");
+		public static readonly TokenRole ReturnKeywordRole = new TokenRole("return");
 
 		public CSharpTokenNode ReturnToken {
-			get { return GetChildByRole (ReturnKeywordRole); }
+			get { return GetChildByRole(ReturnKeywordRole); }
 		}
-		
+
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get { return GetChildByRole(Roles.Expression); }
+			set { SetChildByRole(Roles.Expression, value); }
 		}
-		
+
 		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
+			get { return GetChildByRole(Roles.Semicolon); }
 		}
-		
-		public ReturnStatement ()
+
+		public ReturnStatement()
 		{
 		}
-		
-		public ReturnStatement (Expression returnExpression)
+
+		public ReturnStatement(Expression returnExpression)
 		{
-			AddChild (returnExpression, Roles.Expression);
+			AddChild(returnExpression, Roles.Expression);
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitReturnStatement (this);
+			visitor.VisitReturnStatement(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitReturnStatement (this);
+			return visitor.VisitReturnStatement(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitReturnStatement (this, data);
+			return visitor.VisitReturnStatement(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ReturnStatement o = other as ReturnStatement;

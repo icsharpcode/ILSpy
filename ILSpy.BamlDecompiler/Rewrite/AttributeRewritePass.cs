@@ -22,34 +22,43 @@
 
 using System.Collections.Generic;
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Xaml;
 
-namespace ILSpy.BamlDecompiler.Rewrite {
-	internal class AttributeRewritePass : IRewritePass {
+namespace ILSpy.BamlDecompiler.Rewrite
+{
+	internal class AttributeRewritePass : IRewritePass
+	{
 		XName key;
 
-		public void Run(XamlContext ctx, XDocument document) {
+		public void Run(XamlContext ctx, XDocument document)
+		{
 			key = ctx.GetKnownNamespace("Key", XamlContext.KnownNamespace_Xaml);
 
 			bool doWork;
-			do {
+			do
+			{
 				doWork = false;
-				foreach (var elem in document.Elements()) {
+				foreach (var elem in document.Elements())
+				{
 					doWork |= ProcessElement(ctx, elem);
 				}
 			} while (doWork);
 		}
 
-		bool ProcessElement(XamlContext ctx, XElement elem) {
+		bool ProcessElement(XamlContext ctx, XElement elem)
+		{
 			bool doWork = false;
-			foreach (var child in elem.Elements()) {
+			foreach (var child in elem.Elements())
+			{
 				doWork |= RewriteElement(ctx, elem, child);
 				doWork |= ProcessElement(ctx, child);
 			}
 			return doWork;
 		}
 
-		bool RewriteElement(XamlContext ctx, XElement parent, XElement elem) {
+		bool RewriteElement(XamlContext ctx, XElement parent, XElement elem)
+		{
 			var property = elem.Annotation<XamlProperty>();
 			if (property == null && elem.Name != key)
 				return false;

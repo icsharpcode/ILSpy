@@ -18,6 +18,7 @@
 
 using System;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -44,22 +45,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			base.VisitAssignmentExpression(assignment);
 			// Combine "x = x op y" into "x op= y"
 			BinaryOperatorExpression binary = assignment.Right as BinaryOperatorExpression;
-			if (binary != null && assignment.Operator == AssignmentOperatorType.Assign) {
-				if (CanConvertToCompoundAssignment(assignment.Left) && assignment.Left.IsMatch(binary.Left)) {
+			if (binary != null && assignment.Operator == AssignmentOperatorType.Assign)
+			{
+				if (CanConvertToCompoundAssignment(assignment.Left) && assignment.Left.IsMatch(binary.Left))
+				{
 					assignment.Operator = GetAssignmentOperatorForBinaryOperator(binary.Operator);
-					if (assignment.Operator != AssignmentOperatorType.Assign) {
+					if (assignment.Operator != AssignmentOperatorType.Assign)
+					{
 						// If we found a shorter operator, get rid of the BinaryOperatorExpression:
 						assignment.CopyAnnotationsFrom(binary);
 						assignment.Right = binary.Right;
 					}
 				}
 			}
-			if (context.Settings.IntroduceIncrementAndDecrement && assignment.Operator == AssignmentOperatorType.Add || assignment.Operator == AssignmentOperatorType.Subtract) {
+			if (context.Settings.IntroduceIncrementAndDecrement && assignment.Operator == AssignmentOperatorType.Add || assignment.Operator == AssignmentOperatorType.Subtract)
+			{
 				// detect increment/decrement
 				var rr = assignment.Right.GetResolveResult();
-				if (rr.IsCompileTimeConstant && rr.Type.IsCSharpPrimitiveIntegerType() && CSharpPrimitiveCast.Cast(rr.Type.GetTypeCode(), 1, false).Equals(rr.ConstantValue)) {
+				if (rr.IsCompileTimeConstant && rr.Type.IsCSharpPrimitiveIntegerType() && CSharpPrimitiveCast.Cast(rr.Type.GetTypeCode(), 1, false).Equals(rr.ConstantValue))
+				{
 					// only if it's not a custom operator
-					if (assignment.Annotation<IL.CallInstruction>() == null && assignment.Annotation<IL.UserDefinedCompoundAssign>() == null && assignment.Annotation<IL.DynamicCompoundAssign>() == null) {
+					if (assignment.Annotation<IL.CallInstruction>() == null && assignment.Annotation<IL.UserDefinedCompoundAssign>() == null && assignment.Annotation<IL.DynamicCompoundAssign>() == null)
+					{
 						UnaryOperatorType type;
 						// When the parent is an expression statement, pre- or post-increment doesn't matter;
 						// so we can pick post-increment which is more commonly used (for (int i = 0; i < x; i++))
@@ -75,7 +82,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public static AssignmentOperatorType GetAssignmentOperatorForBinaryOperator(BinaryOperatorType bop)
 		{
-			switch (bop) {
+			switch (bop)
+			{
 				case BinaryOperatorType.Add:
 					return AssignmentOperatorType.Add;
 				case BinaryOperatorType.Subtract:
@@ -123,9 +131,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		void IAstTransform.Run(AstNode node, TransformContext context)
 		{
 			this.context = context;
-			try {
+			try
+			{
 				node.AcceptVisitor(this);
-			} finally {
+			}
+			finally
+			{
 				this.context = null;
 			}
 		}

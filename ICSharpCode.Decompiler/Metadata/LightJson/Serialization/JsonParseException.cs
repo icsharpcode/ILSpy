@@ -84,7 +84,8 @@ namespace LightJson.Serialization
 
 		private static string GetDefaultMessage(ErrorType type)
 		{
-			switch (type) {
+			switch (type)
+			{
 				case ErrorType.IncompleteMessage:
 					return "The string ended before a value could be parsed.";
 

@@ -57,7 +57,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("before using");
 			// Mono has a compiler bug and introduces an assembly reference to [gmcs] here...
 #if !MCS
-			using (null) {
+			using (null)
+			{
 				Console.WriteLine("using (null)");
 			}
 #endif
@@ -67,9 +68,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void NoUsingDueToAssignment()
 		{
 			PrintOnDispose printOnDispose = new PrintOnDispose("Wrong");
-			try {
+			try
+			{
 				printOnDispose = new PrintOnDispose("Correct");
-			} finally {
+			}
+			finally
+			{
 				printOnDispose.Dispose();
 			}
 		}
@@ -77,11 +81,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void NoUsingDueToAssignment2()
 		{
 			PrintOnDispose printOnDispose = new PrintOnDispose("NoUsing(): Wrong");
-			try {
+			try
+			{
 				printOnDispose = new PrintOnDispose("NoUsing(): Correct");
-			} finally {
+			}
+			finally
+			{
 				IDisposable disposable = (object)printOnDispose as IDisposable;
-				if (disposable != null) {
+				if (disposable != null)
+				{
 					disposable.Dispose();
 				}
 			}
@@ -95,12 +103,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void NoUsingDueToByRefCall()
 		{
 			PrintOnDispose printOnDispose = new PrintOnDispose("NoUsingDueToByRefCall(): Wrong");
-			try {
+			try
+			{
 				Console.WriteLine("NoUsingDueToByRefCall");
 				Clear(ref printOnDispose);
-			} finally {
+			}
+			finally
+			{
 				IDisposable disposable = (object)printOnDispose as IDisposable;
-				if (disposable != null) {
+				if (disposable != null)
+				{
 					disposable.Dispose();
 				}
 			}
@@ -110,11 +122,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			var obj = new System.IO.StringWriter();
 			IDisposable disposable;
-			try {
+			try
+			{
 				obj.WriteLine("NoUsingDueToContinuedDisposableUse");
-			} finally {
+			}
+			finally
+			{
 				disposable = (object)obj as IDisposable;
-				if (disposable != null) {
+				if (disposable != null)
+				{
 					disposable.Dispose();
 				}
 			}
@@ -124,11 +140,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void ContinuedObjectUse()
 		{
 			var obj = new System.IO.StringWriter();
-			try {
+			try
+			{
 				obj.WriteLine("ContinuedObjectUse");
-			} finally {
+			}
+			finally
+			{
 				IDisposable disposable = (object)obj as IDisposable;
-				if (disposable != null) {
+				if (disposable != null)
+				{
 					disposable.Dispose();
 				}
 			}
@@ -141,11 +161,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			obj.Write("VariableAlreadyUsedBefore - 1");
 			Console.WriteLine(obj);
 			obj = new System.IO.StringWriter();
-			try {
+			try
+			{
 				obj.WriteLine("VariableAlreadyUsedBefore - 2");
-			} finally {
+			}
+			finally
+			{
 				IDisposable disposable = (object)obj as IDisposable;
-				if (disposable != null) {
+				if (disposable != null)
+				{
 					disposable.Dispose();
 				}
 			}
@@ -154,11 +178,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void UsingObject()
 		{
 			object obj = new object();
-			try {
+			try
+			{
 				Console.WriteLine("UsingObject: {0}", obj);
-			} finally {
+			}
+			finally
+			{
 				IDisposable disposable = obj as IDisposable;
-				if (disposable != null) {
+				if (disposable != null)
+				{
 					disposable.Dispose();
 				}
 			}

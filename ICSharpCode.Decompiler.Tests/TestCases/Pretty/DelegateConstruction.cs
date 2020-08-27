@@ -48,8 +48,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public Action CaptureOfThisAndParameterInForEach(int a)
 			{
-				foreach (int item in Enumerable.Empty<int>()) {
-					if (item > 0) {
+				foreach (int item in Enumerable.Empty<int>())
+				{
+					if (item > 0)
+					{
 						return delegate {
 							CaptureOfThisAndParameter(item + a);
 						};
@@ -60,9 +62,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public Action CaptureOfThisAndParameterInForEachWithItemCopy(int a)
 			{
-				foreach (int item in Enumerable.Empty<int>()) {
+				foreach (int item in Enumerable.Empty<int>())
+				{
 					int copyOfItem = item;
-					if (item > 0) {
+					if (item > 0)
+					{
 						return delegate {
 							CaptureOfThisAndParameter(item + a + copyOfItem);
 						};
@@ -73,7 +77,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public void LambdaInForLoop()
 			{
-				for (int i = 0; i < 100000; i++) {
+				for (int i = 0; i < 100000; i++)
+				{
 					Bar(() => Foo());
 				}
 			}
@@ -96,7 +101,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public void Bug951(int amount)
 			{
 				DoAction(delegate {
-					if (amount < 0) {
+					if (amount < 0)
+					{
 						amount = 0;
 					}
 					DoAction(delegate {
@@ -109,7 +115,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				int amount = Foo();
 				DoAction(delegate {
-					if (amount < 0) {
+					if (amount < 0)
+					{
 						amount = 0;
 					}
 					DoAction(delegate {
@@ -225,7 +232,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public Func<TNonCaptured, TNonCapturedMP, TCaptured> GetFunc<TNonCapturedMP>(Func<TCaptured> f)
 			{
 				TCaptured captured = f();
-				return delegate(TNonCaptured a, TNonCapturedMP d) {
+				return delegate (TNonCaptured a, TNonCapturedMP d) {
 					Console.WriteLine(a.GetHashCode());
 					Console.WriteLine(captured.GetType().FullName);
 					return captured;
@@ -248,10 +255,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static Predicate<T> And<T>(this Predicate<T> filter1, Predicate<T> filter2)
 		{
-			if (filter1 == null) {
+			if (filter1 == null)
+			{
 				return filter2;
 			}
-			if (filter2 == null) {
+			if (filter2 == null)
+			{
 				return filter1;
 			}
 			return (T m) => filter1(m) && filter2(m);
@@ -295,9 +304,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static List<Action<int>> AnonymousMethodStoreWithinLoop()
 		{
 			List<Action<int>> list = new List<Action<int>>();
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 10; i++)
+			{
 				int counter;
-				list.Add(delegate(int x) {
+				list.Add(delegate (int x) {
 					counter = x;
 				});
 			}
@@ -308,8 +318,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			List<Action<int>> list = new List<Action<int>>();
 			int counter;
-			for (int i = 0; i < 10; i++) {
-				list.Add(delegate(int x) {
+			for (int i = 0; i < 10; i++)
+			{
+				list.Add(delegate (int x) {
 					counter = x;
 				});
 			}
@@ -331,11 +342,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			// k is local in main method
 			// Ensure that the decompiler doesn't introduce name conflicts
 			List<Action<int>> list = new List<Action<int>>();
-			for (int k = 0; k < 10; k++) {
+			for (int k = 0; k < 10; k++)
+			{
 				int i;
-				for (i = 0; i < 10; i++) {
-					list.Add(delegate(int j) {
-						for (int l = 0; l < i; l += j) {
+				for (i = 0; i < 10; i++)
+				{
+					list.Add(delegate (int j) {
+						for (int l = 0; l < i; l += j)
+						{
 							Console.WriteLine();
 						}
 					});
@@ -346,8 +360,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void NameConflict2(int j)
 		{
 			List<Action<int>> list = new List<Action<int>>();
-			for (int k = 0; k < 10; k++) {
-				list.Add(delegate(int i) {
+			for (int k = 0; k < 10; k++)
+			{
+				list.Add(delegate (int i) {
 					Console.WriteLine(i);
 				});
 			}
@@ -355,8 +370,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static Action<int> NameConflict3(int i)
 		{
-			return delegate(int j) {
-				for (int k = 0; k < j; k++) {
+			return delegate (int j) {
+				for (int k = 0; k < j; k++)
+				{
 					Console.WriteLine(k);
 				}
 			};
@@ -450,10 +466,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Issue1867 m1;
 			Issue1867 m2;
-			if (x.value > value) {
+			if (x.value > value)
+			{
 				m1 = this;
 				m2 = x;
-			} else {
+			}
+			else
+			{
 				m1 = x;
 				m2 = this;
 			}

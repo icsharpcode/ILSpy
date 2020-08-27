@@ -40,8 +40,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			get;
 			private set;
 		}
-		
-		public AliasNamespaceResolveResult(string alias, NamespaceResolveResult underlyingResult) : base (underlyingResult.Namespace)
+
+		public AliasNamespaceResolveResult(string alias, NamespaceResolveResult underlyingResult) : base(underlyingResult.Namespace)
 		{
 			this.Alias = alias;
 		}

@@ -20,11 +20,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Tests.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Semantics
@@ -37,8 +39,8 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[OneTimeSetUp]
 		public void SetUp()
 		{
-			compilation = new SimpleCompilation(TypeSystemLoaderTests.TestAssembly, 
-				TypeSystemLoaderTests.Mscorlib, 
+			compilation = new SimpleCompilation(TypeSystemLoaderTests.TestAssembly,
+				TypeSystemLoaderTests.Mscorlib,
 				TypeSystemLoaderTests.SystemCore);
 		}
 
@@ -53,7 +55,8 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			var m = new FakeMethod(compilation, SymbolKind.Method);
 			m.Name = "Method";
 			var parameters = new List<IParameter>();
-			foreach (var typeOrDefaultValue in parameterTypesOrDefaultValues) {
+			foreach (var typeOrDefaultValue in parameterTypesOrDefaultValues)
+			{
 				Type type = typeOrDefaultValue as Type;
 				if (type != null)
 					parameters.Add(new DefaultParameter(compilation.FindType(type), string.Empty, owner: m));
@@ -77,7 +80,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			m.Parameters = parameters;
 			return m;
 		}
-		
+
 		[Test]
 		public void PreferIntOverUInt()
 		{
@@ -320,15 +323,16 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			var container = compilation.FindType(typeof(BetterFunctionMemberIsNotTransitiveTestCase)).GetDefinition();
 
 			var args = new ResolveResult[] {
-				new MockLambda(compilation.FindType(KnownTypeCode.String)) { parameters = { new DefaultParameter(SpecialType.UnknownType, "arg") } } 
+				new MockLambda(compilation.FindType(KnownTypeCode.String)) { parameters = { new DefaultParameter(SpecialType.UnknownType, "arg") } }
 			};
 
 			OverloadResolution r = new OverloadResolution(compilation, args);
-			foreach (var method in container.GetMethods(m => m.Name == "Method")) {
+			foreach (var method in container.GetMethods(m => m.Name == "Method"))
+			{
 				Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(method));
 			}
 
-			Assert.AreEqual(container.GetMethods(m => m.Name == "Method").Last(), r.BestCandidate); 
+			Assert.AreEqual(container.GetMethods(m => m.Name == "Method").Last(), r.BestCandidate);
 		}
 
 		class BetterFunctionMemberIsNotTransitiveTestCase

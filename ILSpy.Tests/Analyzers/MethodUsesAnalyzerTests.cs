@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using System.Windows;
+
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.Analyzers.Builtin;
-using ICSharpCode.Decompiler.TypeSystem;
-using System.Windows;
+
+using NUnit.Framework;
 
 namespace ICSharpCode.ILSpy.Tests.Analyzers
 {

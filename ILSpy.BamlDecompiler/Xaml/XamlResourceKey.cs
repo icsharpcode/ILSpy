@@ -22,11 +22,15 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler.Xaml {
-	internal class XamlResourceKey {
-		XamlResourceKey(BamlNode node) {
+namespace ILSpy.BamlDecompiler.Xaml
+{
+	internal class XamlResourceKey
+	{
+		XamlResourceKey(BamlNode node)
+		{
 			KeyNode = node;
 			StaticResources = new List<BamlNode>();
 
@@ -36,24 +40,28 @@ namespace ILSpy.BamlDecompiler.Xaml {
 			else
 				keyRecord = (IBamlDeferRecord)((BamlRecordNode)node).Record;
 
-			if (keyRecord.Record.Type == BamlRecordType.ElementEnd) {
+			if (keyRecord.Record.Type == BamlRecordType.ElementEnd)
+			{
 				Debug.Assert(node.Parent.Footer == keyRecord.Record);
 				node.Parent.Annotation = this;
 				node.Annotation = this;
 				return;
 			}
 
-			if (keyRecord.Record.Type != BamlRecordType.ElementStart && node.Parent.Type == BamlRecordType.ElementStart) {
+			if (keyRecord.Record.Type != BamlRecordType.ElementStart && node.Parent.Type == BamlRecordType.ElementStart)
+			{
 				node.Parent.Annotation = this;
 				node.Annotation = this;
 				return;
 			}
 
-			if (keyRecord.Record.Type != BamlRecordType.ElementStart) {
+			if (keyRecord.Record.Type != BamlRecordType.ElementStart)
+			{
 				Debug.WriteLine($"Key record @{keyRecord.Position} must be attached to ElementStart (actual {keyRecord.Record.Type})");
 			}
 
-			foreach (var child in node.Parent.Children) {
+			foreach (var child in node.Parent.Children)
+			{
 				if (child.Record != keyRecord.Record)
 					continue;
 
@@ -70,10 +78,12 @@ namespace ILSpy.BamlDecompiler.Xaml {
 		public BamlElement KeyElement { get; set; }
 		public IList<BamlNode> StaticResources { get; }
 
-		public static XamlResourceKey FindKeyInSiblings(BamlNode node) {
+		public static XamlResourceKey FindKeyInSiblings(BamlNode node)
+		{
 			var children = node.Parent.Children;
 			var index = children.IndexOf(node);
-			for (int i = index; i >= 0; i--) {
+			for (int i = index; i >= 0; i--)
+			{
 				if (children[i].Annotation is XamlResourceKey)
 					return (XamlResourceKey)children[i].Annotation;
 			}
@@ -82,10 +92,13 @@ namespace ILSpy.BamlDecompiler.Xaml {
 
 		public static XamlResourceKey FindKeyInAncestors(BamlNode node) => FindKeyInAncestors(node, out var found);
 
-		public static XamlResourceKey FindKeyInAncestors(BamlNode node, out BamlNode found) {
+		public static XamlResourceKey FindKeyInAncestors(BamlNode node, out BamlNode found)
+		{
 			BamlNode n = node;
-			do {
-				if (n.Annotation is XamlResourceKey) {
+			do
+			{
+				if (n.Annotation is XamlResourceKey)
+				{
 					found = n;
 					return (XamlResourceKey)n.Annotation;
 				}

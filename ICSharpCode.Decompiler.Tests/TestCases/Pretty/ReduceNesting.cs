@@ -9,12 +9,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void IfIf()
 		{
-			if (B(0)) {
+			if (B(0))
+			{
 				Console.WriteLine(0);
 				return;
 			}
 
-			if (B(1)) {
+			if (B(1))
+			{
 				Console.WriteLine(1);
 			}
 
@@ -23,13 +25,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void IfSwitch()
 		{
-			if (B(0)) {
+			if (B(0))
+			{
 				Console.WriteLine(0);
 				return;
 			}
 
 			Console.WriteLine("switch");
-			switch (I(0)) {
+			switch (I(0))
+			{
 				case 0:
 					Console.WriteLine("case 0");
 					break;
@@ -44,13 +48,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void IfSwitchSwitch()
 		{
-			if (B(0)) {
+			if (B(0))
+			{
 				Console.WriteLine(0);
 				return;
 			}
 
 			Console.WriteLine("switch 0");
-			switch (I(1)) {
+			switch (I(1))
+			{
 				case 0:
 					Console.WriteLine("case 0");
 					return;
@@ -60,7 +66,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 
 			Console.WriteLine("switch 1");
-			switch (I(1)) {
+			switch (I(1))
+			{
 				case 0:
 					Console.WriteLine("case 0");
 					break;
@@ -75,12 +82,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void IfLoop()
 		{
-			if (B(0)) {
+			if (B(0))
+			{
 				Console.WriteLine(0);
 				return;
 			}
 
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 10; i++)
+			{
 				Console.WriteLine(i);
 			}
 
@@ -89,14 +98,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void LoopContinue()
 		{
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 10; i++)
+			{
 				Console.WriteLine(i);
-				if (B(0)) {
+				if (B(0))
+				{
 					Console.WriteLine(0);
 					continue;
 				}
-				
-				if (B(1)) {
+
+				if (B(1))
+				{
 					Console.WriteLine(1);
 				}
 				Console.WriteLine("loop-tail");
@@ -105,19 +117,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void LoopBreak()
 		{
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 10; i++)
+			{
 				Console.WriteLine(i);
-				if (B(0)) {
+				if (B(0))
+				{
 					Console.WriteLine(0);
 					continue;
 				}
-				
-				if (B(1)) {
+
+				if (B(1))
+				{
 					Console.WriteLine(1);
 					break;
 				}
 
-				if (B(2)) {
+				if (B(2))
+				{
 					Console.WriteLine(2);
 				}
 
@@ -129,16 +145,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void LoopBreakElseIf()
 		{
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 10; i++)
+			{
 				Console.WriteLine(i);
-				if (B(0)) {
+				if (B(0))
+				{
 					Console.WriteLine(0);
 					continue;
 				}
-				
-				if (B(1)) {
+
+				if (B(1))
+				{
 					Console.WriteLine(1);
-				} else if (B(2)) {
+				}
+				else if (B(2))
+				{
 					Console.WriteLine(2);
 				}
 				break;
@@ -148,7 +169,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void SwitchIf()
 		{
-			switch (I(0)) {
+			switch (I(0))
+			{
 				case 0:
 					Console.WriteLine("case 0");
 					return;
@@ -156,8 +178,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					Console.WriteLine("case 1");
 					return;
 			}
-			
-			if (B(0)) {
+
+			if (B(0))
+			{
 				Console.WriteLine(0);
 			}
 			Console.WriteLine("end");
@@ -165,8 +188,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void NestedSwitchIf()
 		{
-			if (B(0)) {
-				switch (I(0)) {
+			if (B(0))
+			{
+				switch (I(0))
+				{
 					case 0:
 						Console.WriteLine("case 0");
 						return;
@@ -175,10 +200,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						return;
 				}
 
-				if (B(1)) {
+				if (B(1))
+				{
 					Console.WriteLine(1);
 				}
-			} else {
+			}
+			else
+			{
 				Console.WriteLine("else");
 			}
 		}
@@ -186,66 +214,84 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// nesting should not be reduced as maximum nesting level is 1
 		public void EarlyExit1()
 		{
-			if (!B(0)) {
-				for (int i = 0; i < 10; i++) {
+			if (!B(0))
+			{
+				for (int i = 0; i < 10; i++)
+				{
 					Console.WriteLine(i);
 				}
 				Console.WriteLine("end");
 			}
 		}
-		
+
 		// nesting should be reduced as maximum nesting level is 2
 		public void EarlyExit2()
 		{
-			if (B(0)) {
+			if (B(0))
+			{
 				return;
 			}
 
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 10; i++)
+			{
 				Console.WriteLine(i);
-				if (i % 2 == 0) {
+				if (i % 2 == 0)
+				{
 					Console.WriteLine("even");
 				}
 			}
 
 			Console.WriteLine("end");
 		}
-		
+
 		// nesting should not be reduced as maximum nesting level is 1 and the else block has no more instructions than any other block
 		public void BalancedIf()
 		{
-			if (B(0)) {
+			if (B(0))
+			{
 				Console.WriteLine("true");
-				if (B(1)) {
+				if (B(1))
+				{
 					Console.WriteLine(1);
 				}
-			} else {
-				if (B(2)) {
+			}
+			else
+			{
+				if (B(2))
+				{
 					Console.WriteLine(2);
 				}
 				Console.WriteLine("false");
 			}
 		}
-		
+
 		public string ComplexCase1(string s)
 		{
-			if (B(0)) {
+			if (B(0))
+			{
 				return s;
 			}
 
-			for (int i = 0; i < s.Length; i++) {
-				if (B(1)) {
+			for (int i = 0; i < s.Length; i++)
+			{
+				if (B(1))
+				{
 					Console.WriteLine(1);
-				} else if (B(2)) {
-					switch (i) {
+				}
+				else if (B(2))
+				{
+					switch (i)
+					{
 						case 1:
-							if (B(3)) {
+							if (B(3))
+							{
 								Console.WriteLine(3);
 								break;
 							}
-							
+
 							Console.WriteLine("case1");
-							if (B(4)) {
+							if (B(4))
+							{
 								Console.WriteLine(4);
 							}
 							break;
@@ -255,10 +301,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 							break;
 					}
 					Console.WriteLine(2);
-				} else if (B(5)) {
+				}
+				else if (B(5))
+				{
 					Console.WriteLine(5);
-				} else {
-					if (B(6)) {
+				}
+				else
+				{
+					if (B(6))
+					{
 						Console.WriteLine(6);
 					}
 					Console.WriteLine("else");
@@ -269,48 +320,64 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void EarlyExitBeforeTry()
 		{
-			if (B(0)) {
+			if (B(0))
+			{
 				return;
 			}
 
-			try {
-				if (B(1)) {
+			try
+			{
+				if (B(1))
+				{
 					Console.WriteLine();
 				}
-			} catch {
+			}
+			catch
+			{
 			}
 		}
 
 		public void EarlyExitInTry()
 		{
-			try {
-				if (B(0)) {
+			try
+			{
+				if (B(0))
+				{
 					return;
 				}
 
 				Console.WriteLine();
 
-				if (B(1)) {
-					for (int i = 0; i < 10; i++) {
+				if (B(1))
+				{
+					for (int i = 0; i < 10; i++)
+					{
 						Console.WriteLine(i);
 					}
 				}
-			} catch {
+			}
+			catch
+			{
 			}
 		}
 
 		public void ContinueLockInLoop()
 		{
-			while (B(0)) {
-				lock (Console.Out) {
-					if (B(1)) {
+			while (B(0))
+			{
+				lock (Console.Out)
+				{
+					if (B(1))
+					{
 						continue;
 					}
 
 					Console.WriteLine();
 
-					if (B(2)) {
-						for (int i = 0; i < 10; i++) {
+					if (B(2))
+					{
+						for (int i = 0; i < 10; i++)
+						{
 							Console.WriteLine(i);
 						}
 					}
@@ -320,18 +387,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void BreakLockInLoop()
 		{
-			while (B(0)) {
-				lock (Console.Out) {
+			while (B(0))
+			{
+				lock (Console.Out)
+				{
 					// Before ReduceNestingTransform, the rest of the lock body is nested in if(!B(1)) with a continue;
 					// the B(1) case falls through to a break outside the lock
-					if (B(1)) {
+					if (B(1))
+					{
 						break;
 					}
 
 					Console.WriteLine();
 
-					if (B(2)) {
-						for (int i = 0; i < 10; i++) {
+					if (B(2))
+					{
+						for (int i = 0; i < 10; i++)
+						{
 							Console.WriteLine(i);
 						}
 					}
@@ -347,16 +419,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe void BreakPinnedInLoop(int[] arr)
 		{
-			while (B(0)) {
-				fixed (int* ptr = arr) {
-					if (B(1)) {
+			while (B(0))
+			{
+				fixed (int* ptr = arr)
+				{
+					if (B(1))
+					{
 						break;
 					}
 
 					Console.WriteLine();
 
-					if (B(2)) {
-						for (int i = 0; i < 10; i++) {
+					if (B(2))
+					{
+						for (int i = 0; i < 10; i++)
+						{
 							Console.WriteLine(ptr[i]);
 						}
 					}
@@ -370,29 +447,39 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void CannotEarlyExitInTry()
 		{
-			try {
-				if (B(0)) {
+			try
+			{
+				if (B(0))
+				{
 					Console.WriteLine();
 
-					if (B(1)) {
-						for (int i = 0; i < 10; i++) {
+					if (B(1))
+					{
+						for (int i = 0; i < 10; i++)
+						{
 							Console.WriteLine(i);
 						}
 					}
 				}
-			} catch {
+			}
+			catch
+			{
 			}
 			Console.WriteLine();
 		}
 
 		public void EndpointUnreachableDueToEarlyExit()
 		{
-			using (Console.Out) {
-				if (B(0)) {
+			using (Console.Out)
+			{
+				if (B(0))
+				{
 					return;
 				}
-				do {
-					if (B(1)) {
+				do
+				{
+					if (B(1))
+					{
 						return;
 					}
 				} while (B(2));
@@ -402,8 +489,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void SwitchInTry()
 		{
-			try {
-				switch (I(0)) {
+			try
+			{
+				switch (I(0))
+				{
 					case 1:
 						Console.WriteLine(1);
 						return;
@@ -412,19 +501,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						return;
 				}
 				Console.WriteLine(3);
-				for (int i = 0; i < 10; i++) {
+				for (int i = 0; i < 10; i++)
+				{
 					Console.WriteLine(i);
 				}
-			} catch {
+			}
+			catch
+			{
 				throw;
 			}
 		}
 
 		public void SwitchInTryInLoopReturn()
 		{
-			for (int i = 0; i < 10; i++) {
-				try {
-					switch (I(0)) {
+			for (int i = 0; i < 10; i++)
+			{
+				try
+				{
+					switch (I(0))
+					{
 						case 1:
 							Console.WriteLine(1);
 							return;
@@ -433,10 +528,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 							return;
 					}
 					Console.WriteLine(3);
-					for (int j = 0; j < 10; j++) {
+					for (int j = 0; j < 10; j++)
+					{
 						Console.WriteLine(j);
 					}
-				} catch {
+				}
+				catch
+				{
 					throw;
 				}
 			}
@@ -444,9 +542,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void SwitchInTryInLoopContinue()
 		{
-			for (int i = 0; i < 10; i++) {
-				try {
-					switch (I(0)) {
+			for (int i = 0; i < 10; i++)
+			{
+				try
+				{
+					switch (I(0))
+					{
 						case 1:
 							Console.WriteLine(1);
 							continue;
@@ -455,10 +556,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 							continue;
 					}
 					Console.WriteLine(3);
-					for (int j = 0; j < 10; j++) {
+					for (int j = 0; j < 10; j++)
+					{
 						Console.WriteLine(j);
 					}
-				} catch {
+				}
+				catch
+				{
 					throw;
 				}
 			}

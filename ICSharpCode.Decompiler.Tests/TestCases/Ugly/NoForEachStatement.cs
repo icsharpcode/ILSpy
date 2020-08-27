@@ -8,14 +8,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 	{
 		public static void SimpleNonGenericForeach(IEnumerable enumerable)
 		{
-			foreach (object item in enumerable) {
+			foreach (object item in enumerable)
+			{
 				Console.WriteLine(item);
 			}
 		}
 
 		public static void SimpleForeachOverInts(IEnumerable<int> enumerable)
 		{
-			foreach (int item in enumerable) {
+			foreach (int item in enumerable)
+			{
 				Console.WriteLine(item);
 			}
 		}

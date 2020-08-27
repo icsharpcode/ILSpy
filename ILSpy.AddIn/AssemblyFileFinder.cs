@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 
@@ -12,9 +13,12 @@ namespace ICSharpCode.ILSpy.AddIn
 		{
 			string tfi = DetectTargetFrameworkId(assemblyDefinition, assemblyFile);
 			UniversalAssemblyResolver assemblyResolver;
-			if (IsReferenceAssembly(assemblyDefinition, assemblyFile)) {
+			if (IsReferenceAssembly(assemblyDefinition, assemblyFile))
+			{
 				assemblyResolver = new UniversalAssemblyResolver(null, throwOnError: false, tfi);
-			} else {
+			}
+			else
+			{
 				assemblyResolver = new UniversalAssemblyResolver(assemblyFile, throwOnError: false, tfi);
 			}
 
@@ -44,17 +48,20 @@ namespace ICSharpCode.ILSpy.AddIn
 
 			const string TargetFrameworkAttributeName = "System.Runtime.Versioning.TargetFrameworkAttribute";
 
-			foreach (var attribute in assembly.CustomAttributes) {
+			foreach (var attribute in assembly.CustomAttributes)
+			{
 				if (attribute.AttributeType.FullName != TargetFrameworkAttributeName)
 					continue;
-				if (attribute.HasConstructorArguments) {
+				if (attribute.HasConstructorArguments)
+				{
 					if (attribute.ConstructorArguments[0].Value is string value)
 						return value;
 				}
 			}
 
 			// Optionally try to detect target version through assembly path as a fallback (use case: reference assemblies)
-			if (assemblyPath != null) {
+			if (assemblyPath != null)
+			{
 				/*
 				 * Detected path patterns (examples):
 				 * 
@@ -65,15 +72,21 @@ namespace ICSharpCode.ILSpy.AddIn
 				 */
 				var pathMatch = Regex.Match(assemblyPath, DetectTargetFrameworkIdRefPathPattern,
 					RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
-				if (pathMatch.Success) {
+				if (pathMatch.Success)
+				{
 					var type = pathMatch.Groups[1].Value;
 					var version = pathMatch.Groups[2].Value;
 
-					if (type == ".NETFramework") {
+					if (type == ".NETFramework")
+					{
 						return $".NETFramework,Version=v{version}";
-					} else if (type.ToLower().Contains("netcore")) {
+					}
+					else if (type.ToLower().Contains("netcore"))
+					{
 						return $".NETCoreApp,Version=v{version}";
-					} else if (type.ToLower().Contains("netstandard")) {
+					}
+					else if (type.ToLower().Contains("netstandard"))
+					{
 						return $".NETStandard,Version=v{version}";
 					}
 				}

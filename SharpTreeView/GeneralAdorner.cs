@@ -16,8 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Windows.Documents;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Media;
 
 namespace ICSharpCode.TreeView
@@ -31,15 +31,13 @@ namespace ICSharpCode.TreeView
 
 		FrameworkElement child;
 
-		public FrameworkElement Child
-		{
-			get
-			{
+		public FrameworkElement Child {
+			get {
 				return child;
 			}
-			set
-			{
-				if (child != value) {
+			set {
+				if (child != value)
+				{
 					RemoveVisualChild(child);
 					RemoveLogicalChild(child);
 					child = value;
@@ -50,8 +48,7 @@ namespace ICSharpCode.TreeView
 			}
 		}
 
-		protected override int VisualChildrenCount
-		{
+		protected override int VisualChildrenCount {
 			get { return child == null ? 0 : 1; }
 		}
 
@@ -62,7 +59,8 @@ namespace ICSharpCode.TreeView
 
 		protected override Size MeasureOverride(Size constraint)
 		{
-			if (child != null) {
+			if (child != null)
+			{
 				child.Measure(constraint);
 				return child.DesiredSize;
 			}
@@ -71,7 +69,8 @@ namespace ICSharpCode.TreeView
 
 		protected override Size ArrangeOverride(Size finalSize)
 		{
-			if (child != null) {
+			if (child != null)
+			{
 				child.Arrange(new Rect(finalSize));
 				return finalSize;
 			}

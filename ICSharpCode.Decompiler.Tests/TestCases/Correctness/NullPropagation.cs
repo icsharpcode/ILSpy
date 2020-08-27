@@ -13,7 +13,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			public string Text;
 		}
-		
+
 		void TestNotCoalescing()
 		{
 			Console.WriteLine("TestNotCoalescing:");

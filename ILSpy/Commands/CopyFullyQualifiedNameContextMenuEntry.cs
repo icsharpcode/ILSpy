@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -21,7 +22,8 @@ namespace ICSharpCode.ILSpy
 		public void Execute(TextViewContext context)
 		{
 			var member = GetMemberNodeFromContext(context)?.Member;
-			if (member == null) return;
+			if (member == null)
+				return;
 			Clipboard.SetText(member.ReflectionName);
 		}
 

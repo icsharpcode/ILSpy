@@ -22,6 +22,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Metadata
@@ -60,17 +61,20 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public MethodSemanticsLookup(MetadataReader metadata, MethodSemanticsAttributes filter = csharpAccessors)
 		{
-			if ((filter & MethodSemanticsAttributes.Other) != 0) {
+			if ((filter & MethodSemanticsAttributes.Other) != 0)
+			{
 				throw new NotSupportedException("SRM doesn't provide access to 'other' accessors");
 			}
 			entries = new List<Entry>(metadata.GetTableRowCount(TableIndex.MethodSemantics));
-			foreach (var propHandle in metadata.PropertyDefinitions) {
+			foreach (var propHandle in metadata.PropertyDefinitions)
+			{
 				var prop = metadata.GetPropertyDefinition(propHandle);
 				var accessors = prop.GetAccessors();
 				AddEntry(MethodSemanticsAttributes.Getter, accessors.Getter, propHandle);
 				AddEntry(MethodSemanticsAttributes.Setter, accessors.Setter, propHandle);
 			}
-			foreach (var eventHandle in metadata.EventDefinitions) {
+			foreach (var eventHandle in metadata.EventDefinitions)
+			{
 				var ev = metadata.GetEventDefinition(eventHandle);
 				var accessors = ev.GetAccessors();
 				AddEntry(MethodSemanticsAttributes.Adder, accessors.Adder, eventHandle);
@@ -90,9 +94,12 @@ namespace ICSharpCode.Decompiler.Metadata
 		public (EntityHandle, MethodSemanticsAttributes) GetSemantics(MethodDefinitionHandle method)
 		{
 			int pos = entries.BinarySearch(new Entry(0, method, default(EntityHandle)));
-			if (pos >= 0) {
+			if (pos >= 0)
+			{
 				return (entries[pos].Association, entries[pos].Semantics);
-			} else {
+			}
+			else
+			{
 				return (default(EntityHandle), 0);
 			}
 		}

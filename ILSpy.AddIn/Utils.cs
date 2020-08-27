@@ -5,7 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+
 using EnvDTE;
+
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.VisualStudio.Shell;
@@ -35,7 +37,8 @@ namespace ICSharpCode.ILSpy.AddIn
 			if (hex == null)
 				throw new ArgumentNullException(nameof(hex));
 			var result = new byte[hex.Length / 2];
-			for (int i = 0; i < hex.Length / 2; i++) {
+			for (int i = 0; i < hex.Length / 2; i++)
+			{
 				result[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
 			}
 			return result;
@@ -43,10 +46,13 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static bool TryGetProjectFileName(dynamic referenceObject, out string fileName)
 		{
-			try {
+			try
+			{
 				fileName = referenceObject.Project.FileName;
 				return true;
-			} catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException) {
+			}
+			catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException)
+			{
 				fileName = null;
 				return false;
 			}
@@ -57,17 +63,24 @@ namespace ICSharpCode.ILSpy.AddIn
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			var values = new object[names.Length];
-			foreach (object p in properties) {
-				try {
-					if (p is Property property) {
-						for (int i = 0; i < names.Length; i++) {
-							if (names[i] == property.Name) {
+			foreach (object p in properties)
+			{
+				try
+				{
+					if (p is Property property)
+					{
+						for (int i = 0; i < names.Length; i++)
+						{
+							if (names[i] == property.Name)
+							{
 								values[i] = property.Value;
 								break;
 							}
 						}
 					}
-				} catch {
+				}
+				catch
+				{
 					continue;
 				}
 			}
@@ -79,12 +92,17 @@ namespace ICSharpCode.ILSpy.AddIn
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			var result = new List<(string, object)>();
-			for (int i = 0; i < properties.Count; i++) {
-				try {
-					if (properties.Item(i) is Property p) {
+			for (int i = 0; i < properties.Count; i++)
+			{
+				try
+				{
+					if (properties.Item(i) is Property p)
+					{
 						result.Add((p.Name, p.Value));
 					}
-				} catch {
+				}
+				catch
+				{
 					continue;
 				}
 			}
@@ -117,7 +135,8 @@ namespace ICSharpCode.ILSpy.AddIn
 		public static IWpfTextViewHost GetCurrentViewHost(IServiceProvider serviceProvider)
 		{
 			IVsTextManager txtMgr = (IVsTextManager)serviceProvider.GetService(typeof(SVsTextManager));
-			if (txtMgr == null) {
+			if (txtMgr == null)
+			{
 				return null;
 			}
 

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.Semantics;
@@ -58,21 +59,26 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var arguments = invocationExpression.Arguments.ToArray();
 
 			// Reduce "String.Concat(a, b)" to "a + b"
-			if (IsStringConcat(method) && CheckArgumentsForStringConcat(arguments)) {
+			if (IsStringConcat(method) && CheckArgumentsForStringConcat(arguments))
+			{
 				bool isInExpressionTree = invocationExpression.Ancestors.OfType<LambdaExpression>().Any(
 					lambda => lambda.Annotation<IL.ILFunction>()?.Kind == IL.ILFunctionKind.ExpressionTree);
 				Expression arg0 = arguments[0].Detach();
 				Expression arg1 = arguments[1].Detach();
-				if (!isInExpressionTree) {
+				if (!isInExpressionTree)
+				{
 					arg1 = RemoveRedundantToStringInConcat(arg1, method, isLastArgument: arguments.Length == 2).Detach();
-					if (arg1.GetResolveResult().Type.IsKnownType(KnownTypeCode.String)) {
+					if (arg1.GetResolveResult().Type.IsKnownType(KnownTypeCode.String))
+					{
 						arg0 = RemoveRedundantToStringInConcat(arg0, method, isLastArgument: false).Detach();
 					}
 				}
 				var expr = new BinaryOperatorExpression(arg0, BinaryOperatorType.Add, arg1);
-				for (int i = 2; i < arguments.Length; i++) {
+				for (int i = 2; i < arguments.Length; i++)
+				{
 					var arg = arguments[i].Detach();
-					if (!isInExpressionTree) {
+					if (!isInExpressionTree)
+					{
 						arg = RemoveRedundantToStringInConcat(arg, method, isLastArgument: i == arguments.Length - 1).Detach();
 					}
 					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Add, arg);
@@ -82,10 +88,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 			}
 
-			switch (method.FullName) {
+			switch (method.FullName)
+			{
 				case "System.Type.GetTypeFromHandle":
-					if (arguments.Length == 1) {
-						if (typeHandleOnTypeOfPattern.IsMatch(arguments[0])) {
+					if (arguments.Length == 1)
+					{
+						if (typeHandleOnTypeOfPattern.IsMatch(arguments[0]))
+						{
 							Expression target = ((MemberReferenceExpression)arguments[0]).Target;
 							target.CopyInstructionsFrom(invocationExpression);
 							invocationExpression.ReplaceWith(target);
@@ -93,40 +102,42 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						}
 					}
 					break;
-					/*
-				case "System.Reflection.FieldInfo.GetFieldFromHandle":
-					// TODO : This is dead code because LdTokenAnnotation is not added anywhere:
-					if (arguments.Length == 1) {
-						MemberReferenceExpression mre = arguments[0] as MemberReferenceExpression;
-						if (mre != null && mre.MemberName == "FieldHandle" && mre.Target.Annotation<LdTokenAnnotation>() != null) {
-							invocationExpression.ReplaceWith(mre.Target);
-							return;
-						}
-					} else if (arguments.Length == 2) {
-						MemberReferenceExpression mre1 = arguments[0] as MemberReferenceExpression;
-						MemberReferenceExpression mre2 = arguments[1] as MemberReferenceExpression;
-						if (mre1 != null && mre1.MemberName == "FieldHandle" && mre1.Target.Annotation<LdTokenAnnotation>() != null) {
-							if (mre2 != null && mre2.MemberName == "TypeHandle" && mre2.Target is TypeOfExpression) {
-								Expression oldArg = ((InvocationExpression)mre1.Target).Arguments.Single();
-								FieldReference field = oldArg.Annotation<FieldReference>();
-								if (field != null) {
-									AstType declaringType = ((TypeOfExpression)mre2.Target).Type.Detach();
-									oldArg.ReplaceWith(new MemberReferenceExpression(new TypeReferenceExpression(declaringType), field.Name).CopyAnnotationsFrom(oldArg));
-									invocationExpression.ReplaceWith(mre1.Target);
-									return;
-								}
+				/*
+			case "System.Reflection.FieldInfo.GetFieldFromHandle":
+				// TODO : This is dead code because LdTokenAnnotation is not added anywhere:
+				if (arguments.Length == 1) {
+					MemberReferenceExpression mre = arguments[0] as MemberReferenceExpression;
+					if (mre != null && mre.MemberName == "FieldHandle" && mre.Target.Annotation<LdTokenAnnotation>() != null) {
+						invocationExpression.ReplaceWith(mre.Target);
+						return;
+					}
+				} else if (arguments.Length == 2) {
+					MemberReferenceExpression mre1 = arguments[0] as MemberReferenceExpression;
+					MemberReferenceExpression mre2 = arguments[1] as MemberReferenceExpression;
+					if (mre1 != null && mre1.MemberName == "FieldHandle" && mre1.Target.Annotation<LdTokenAnnotation>() != null) {
+						if (mre2 != null && mre2.MemberName == "TypeHandle" && mre2.Target is TypeOfExpression) {
+							Expression oldArg = ((InvocationExpression)mre1.Target).Arguments.Single();
+							FieldReference field = oldArg.Annotation<FieldReference>();
+							if (field != null) {
+								AstType declaringType = ((TypeOfExpression)mre2.Target).Type.Detach();
+								oldArg.ReplaceWith(new MemberReferenceExpression(new TypeReferenceExpression(declaringType), field.Name).CopyAnnotationsFrom(oldArg));
+								invocationExpression.ReplaceWith(mre1.Target);
+								return;
 							}
 						}
 					}
-					break;
-					*/
+				}
+				break;
+				*/
 				case "System.Activator.CreateInstance":
-					if (arguments.Length == 0 && method.TypeArguments.Count == 1 && IsInstantiableTypeParameter(method.TypeArguments[0])) {
+					if (arguments.Length == 0 && method.TypeArguments.Count == 1 && IsInstantiableTypeParameter(method.TypeArguments[0]))
+					{
 						invocationExpression.ReplaceWith(new ObjectCreateExpression(context.TypeSystemAstBuilder.ConvertType(method.TypeArguments.First())));
 					}
 					break;
 				case "System.Runtime.CompilerServices.RuntimeHelpers.GetSubArray":
-					if (arguments.Length == 2 && context.Settings.Ranges) {
+					if (arguments.Length == 2 && context.Settings.Ranges)
+					{
 						var slicing = new IndexerExpression(arguments[0].Detach(), arguments[1].Detach());
 						slicing.CopyAnnotationsFrom(invocationExpression);
 						invocationExpression.ReplaceWith(slicing);
@@ -135,7 +146,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 
 			BinaryOperatorType? bop = GetBinaryOperatorTypeFromMetadataName(method.Name);
-			if (bop != null && arguments.Length == 2) {
+			if (bop != null && arguments.Length == 2)
+			{
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
 				invocationExpression.ReplaceWith(
 					new BinaryOperatorExpression(
@@ -147,11 +159,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 			}
 			UnaryOperatorType? uop = GetUnaryOperatorTypeFromMetadataName(method.Name);
-			if (uop != null && arguments.Length == 1) {
-				if (uop == UnaryOperatorType.Increment || uop == UnaryOperatorType.Decrement) {
+			if (uop != null && arguments.Length == 1)
+			{
+				if (uop == UnaryOperatorType.Increment || uop == UnaryOperatorType.Decrement)
+				{
 					// `op_Increment(a)` is not equivalent to `++a`,
 					// because it doesn't assign the incremented value to a.
-					if (method.DeclaringType.IsKnownType(KnownTypeCode.Decimal)) {
+					if (method.DeclaringType.IsKnownType(KnownTypeCode.Decimal))
+					{
 						// Legacy csc optimizes "d + 1m" to "op_Increment(d)",
 						// so reverse that optimization here:
 						invocationExpression.ReplaceWith(
@@ -170,7 +185,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				);
 				return;
 			}
-			if (method.Name == "op_Explicit" && arguments.Length == 1) {
+			if (method.Name == "op_Explicit" && arguments.Length == 1)
+			{
 				arguments[0].Remove(); // detach argument
 				invocationExpression.ReplaceWith(
 					new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.ReturnType), arguments[0].UnwrapInDirectionExpression())
@@ -178,14 +194,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				);
 				return;
 			}
-			if (method.Name == "op_True" && arguments.Length == 1 && invocationExpression.Role == Roles.Condition) {
+			if (method.Name == "op_True" && arguments.Length == 1 && invocationExpression.Role == Roles.Condition)
+			{
 				invocationExpression.ReplaceWith(arguments[0].UnwrapInDirectionExpression());
 				return;
 			}
 
 			return;
 		}
-		
+
 		bool IsInstantiableTypeParameter(IType type)
 		{
 			return type is ITypeParameter tp && tp.HasDefaultConstructorConstraint;
@@ -215,13 +232,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// To ensure the decompiled code's behavior matches the original IL behavior,
 			// no matter which compiler is used to recompile it, we require that all
 			// implicit ToString() calls except for the last are free of side effects.
-			foreach (var arg in arguments.SkipLast(1)) {
-				if (!ToStringIsKnownEffectFree(arg.GetResolveResult().Type)) {
+			foreach (var arg in arguments.SkipLast(1))
+			{
+				if (!ToStringIsKnownEffectFree(arg.GetResolveResult().Type))
+				{
 					return false;
 				}
 			}
-			foreach (var arg in arguments) {
-				if (arg.GetResolveResult() is InvocationResolveResult rr && IsStringConcat(rr.Member)) {
+			foreach (var arg in arguments)
+			{
+				if (arg.GetResolveResult() is InvocationResolveResult rr && IsStringConcat(rr.Member))
+				{
 					// Roslyn + mcs also flatten nested string.Concat() invocations within a operator+ use,
 					// which causes it to use the incorrect evaluation order despite the code using an
 					// explicit string.Concat() call.
@@ -263,7 +284,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!m.Success)
 				return expr;
 
-			if (!concatMethod.Parameters.All(IsStringParameter)) {
+			if (!concatMethod.Parameters.All(IsStringParameter))
+			{
 				// If we're using a string.Concat() overload involving object parameters,
 				// string.Concat() itself already calls ToString() so the C# compiler shouldn't
 				// generate additional ToString() calls in this case.
@@ -272,15 +294,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var toStringMethod = m.Get<Expression>("call").Single().GetSymbol() as IMethod;
 			var target = m.Get<Expression>("target").Single();
 			var type = target.GetResolveResult().Type;
-			if (!(isLastArgument || ToStringIsKnownEffectFree(type))) {
+			if (!(isLastArgument || ToStringIsKnownEffectFree(type)))
+			{
 				// ToString() order of evaluation matters, see CheckArgumentsForStringConcat().
 				return expr;
 			}
-			if (type.IsReferenceType != false && !m.Has("nullConditional")) {
+			if (type.IsReferenceType != false && !m.Has("nullConditional"))
+			{
 				// ToString() might throw NullReferenceException, but the builtin operator+ doesn't.
 				return expr;
 			}
-			if (!ToStringIsKnownEffectFree(type) && toStringMethod != null && IL.Transforms.ILInlining.MethodRequiresCopyForReadonlyLValue(toStringMethod)) {
+			if (!ToStringIsKnownEffectFree(type) && toStringMethod != null && IL.Transforms.ILInlining.MethodRequiresCopyForReadonlyLValue(toStringMethod))
+			{
 				// ToString() on a struct may mutate the struct.
 				// For operator+ the C# compiler creates a temporary copy before implicitly calling ToString(),
 				// whereas an explicit ToString() call would mutate the original lvalue.
@@ -304,7 +329,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		static bool ToStringIsKnownEffectFree(IType type)
 		{
 			type = NullableType.GetUnderlyingType(type);
-			switch (type.GetDefinition()?.KnownTypeCode) {
+			switch (type.GetDefinition()?.KnownTypeCode)
+			{
 				case KnownTypeCode.Boolean:
 				case KnownTypeCode.Char:
 				case KnownTypeCode.SByte:
@@ -329,7 +355,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		static BinaryOperatorType? GetBinaryOperatorTypeFromMetadataName(string name)
 		{
-			switch (name) {
+			switch (name)
+			{
 				case "op_Addition":
 					return BinaryOperatorType.Add;
 				case "op_Subtraction":
@@ -369,7 +396,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		static UnaryOperatorType? GetUnaryOperatorTypeFromMetadataName(string name)
 		{
-			switch (name) {
+			switch (name)
+			{
 				case "op_LogicalNot":
 					return UnaryOperatorType.Not;
 				case "op_OnesComplement":
@@ -401,9 +429,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			base.VisitCastExpression(castExpression);
 			// Handle methodof
 			Match m = getMethodOrConstructorFromHandlePattern.Match(castExpression);
-			if (m.Success) {
+			if (m.Success)
+			{
 				IMethod method = m.Get<AstNode>("method").Single().GetSymbol() as IMethod;
-				if (m.Has("declaringType") && method != null) {
+				if (m.Has("declaringType") && method != null)
+				{
 					Expression newNode = new MemberReferenceExpression(new TypeReferenceExpression(m.Get<AstType>("declaringType").Single().Detach()), method.Name);
 					newNode = new InvocationExpression(newNode, method.Parameters.Select(p => new TypeReferenceExpression(context.TypeSystemAstBuilder.ConvertType(p.Type))));
 					m.Get<AstNode>("method").Single().ReplaceWith(newNode);
@@ -414,10 +444,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		void IAstTransform.Run(AstNode rootNode, TransformContext context)
 		{
-			try {
+			try
+			{
 				this.context = context;
 				rootNode.AcceptVisitor(this);
-			} finally {
+			}
+			finally
+			{
 				this.context = null;
 			}
 		}

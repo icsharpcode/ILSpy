@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(GetFormat(), value = new InlineAssignmentTest());
 			Console.WriteLine(value);
 		}
-		
+
 		public void SimpleInlineWithFields()
 		{
 			Console.WriteLine(field1 = 5);
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			UseShort(field4 = UseShort(0));
 			Console.WriteLine(field4);
 		}
-		
+
 		public short UseShort(short s)
 		{
 			Console.WriteLine(s);
@@ -81,7 +81,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void ReadLoop1(TextReader r)
 		{
 			string value;
-			while ((value = r.ReadLine()) != null) {
+			while ((value = r.ReadLine()) != null)
+			{
 				Console.WriteLine(value);
 			}
 		}
@@ -92,32 +93,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(num = a[0]);
 			Console.WriteLine(a[num] = num);
 		}
-		
+
 		public int Return(ref int a)
 		{
 			return a = 3;
 		}
-		
+
 		public int Array(int[] a, int i)
 		{
 			return a[i] = i;
 		}
-		
+
 		public int Array2(int i)
 		{
 			return field3[i] = 1;
 		}
-		
+
 		public int GetIndex()
 		{
 			return new Random().Next(0, 100);
 		}
-		
+
 		public int[] GetArray()
 		{
 			throw new NotImplementedException();
 		}
-		
+
 		public string GetFormat()
 		{
 			return "{0}";
@@ -127,7 +128,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return value;
 		}
-		
+
 		public int ArrayUsageWithMethods()
 		{
 			return GetArray()[GetIndex()] = GetValue(GetIndex());

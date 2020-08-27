@@ -22,6 +22,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
@@ -51,9 +52,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<MethodDebugInformationEntry>();
 			MethodDebugInformationEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.MethodDebugInformation) {
+			foreach (var row in metadata.MethodDebugInformation)
+			{
 				MethodDebugInformationEntry entry = new MethodDebugInformationEntry(module, metadata, isEmbedded, row);
-				if (entry.RID == scrollTarget) {
+				if (entry.RID == scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -63,7 +66,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 1) {
+			if (scrollTargetEntry.RID > 1)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -102,7 +106,8 @@ namespace ICSharpCode.ILSpy.Metadata
 					if (debugInfo.SequencePointsBlob.IsNil)
 						return null;
 					StringBuilder sb = new StringBuilder();
-					foreach (var p in debugInfo.GetSequencePoints()) {
+					foreach (var p in debugInfo.GetSequencePoints())
+					{
 						sb.AppendLine($"document='{MetadataTokens.GetToken(p.Document):X8}', offset={p.Offset}, start={p.StartLine};{p.StartColumn}, end={p.EndLine};{p.EndColumn}, hidden={p.IsHidden}");
 					}
 					return sb.ToString().TrimEnd();
@@ -121,8 +126,10 @@ namespace ICSharpCode.ILSpy.Metadata
 					StandaloneSignature localSignature = module.Metadata.GetStandaloneSignature(debugInfo.LocalSignature);
 					var signatureDecoder = new DisassemblerSignatureTypeProvider(module, output);
 					int index = 0;
-					foreach (var item in localSignature.DecodeLocalSignature(signatureDecoder, context)) {
-						if (index > 0) output.WriteLine();
+					foreach (var item in localSignature.DecodeLocalSignature(signatureDecoder, context))
+					{
+						if (index > 0)
+							output.WriteLine();
 						output.Write("[{0}] ", index);
 						item(ILNameSyntax.Signature);
 						index++;

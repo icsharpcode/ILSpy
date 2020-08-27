@@ -21,9 +21,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
+
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
+
 using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler
@@ -54,7 +56,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			return string.Format("IL_{0:x4}", offset);
 		}
-		
+
 		public static string OffsetToString(long offset)
 		{
 			return string.Format("IL_{0:x4}", offset);
@@ -76,12 +78,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteOffsetReference(writer, exceptionHandler.TryOffset + exceptionHandler.TryLength);
 			writer.Write(' ');
 			writer.Write(exceptionHandler.Kind.ToString().ToLowerInvariant());
-			if (exceptionHandler.FilterOffset != -1) {
+			if (exceptionHandler.FilterOffset != -1)
+			{
 				writer.Write(' ');
 				WriteOffsetReference(writer, exceptionHandler.FilterOffset);
 				writer.Write(" handler ");
 			}
-			if (!exceptionHandler.CatchType.IsNil) {
+			if (!exceptionHandler.CatchType.IsNil)
+			{
 				writer.Write(' ');
 				exceptionHandler.CatchType.WriteTo(module, writer, context);
 			}
@@ -108,11 +112,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			if (string.IsNullOrEmpty(identifier))
 				return false;
-			if (!(char.IsLetter(identifier[0]) || IsValidIdentifierCharacter(identifier[0]))) {
+			if (!(char.IsLetter(identifier[0]) || IsValidIdentifierCharacter(identifier[0])))
+			{
 				// As a special case, .ctor and .cctor are valid despite starting with a dot
 				return identifier == ".ctor" || identifier == ".cctor";
 			}
-			for (int i = 1; i < identifier.Length; i++) {
+			for (int i = 1; i < identifier.Length; i++)
+			{
 				if (!(char.IsLetterOrDigit(identifier[i]) || IsValidIdentifierCharacter(identifier[i]) || identifier[i] == '.'))
 					return false;
 			}
@@ -121,9 +127,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public static string Escape(string identifier)
 		{
-			if (IsValidIdentifier(identifier) && !Metadata.ILOpCodeExtensions.ILKeywords.Contains(identifier)) {
+			if (IsValidIdentifier(identifier) && !Metadata.ILOpCodeExtensions.ILKeywords.Contains(identifier))
+			{
 				return identifier;
-			} else {
+			}
+			else
+			{
 				// The ECMA specification says that ' inside SQString should be ecaped using an octal escape sequence,
 				// but we follow Microsoft's ILDasm and use \'.
 				return "'" + EscapeString(identifier).Replace("'", "\\'") + "'";
@@ -137,16 +146,23 @@ namespace ICSharpCode.Decompiler.Disassembler
 			var parameters = methodDefinition.GetParameters().Select(p => metadata.GetParameter(p)).ToArray();
 			var signatureHeader = signature.Header;
 			int index = sequence;
-			if (signatureHeader.IsInstance && signature.ParameterTypes.Length == parameters.Length) {
+			if (signatureHeader.IsInstance && signature.ParameterTypes.Length == parameters.Length)
+			{
 				index--;
 			}
-			if (index < 0 || index >= parameters.Length) {
+			if (index < 0 || index >= parameters.Length)
+			{
 				writer.WriteLocalReference(sequence.ToString(), "param_" + index);
-			} else {
+			}
+			else
+			{
 				var param = parameters[index];
-				if (param.Name.IsNil) {
+				if (param.Name.IsNil)
+				{
 					writer.WriteLocalReference(sequence.ToString(), "param_" + index);
-				} else {
+				}
+				else
+				{
 					writer.WriteLocalReference(Escape(metadata.GetString(param.Name)), "param_" + index);
 				}
 			}
@@ -163,17 +179,28 @@ namespace ICSharpCode.Decompiler.Disassembler
 				throw new ArgumentNullException(nameof(operand));
 
 			string s = operand as string;
-			if (s != null) {
+			if (s != null)
+			{
 				WriteOperand(writer, s);
-			} else if (operand is char) {
+			}
+			else if (operand is char)
+			{
 				writer.Write(((int)(char)operand).ToString());
-			} else if (operand is float) {
+			}
+			else if (operand is float)
+			{
 				WriteOperand(writer, (float)operand);
-			} else if (operand is double) {
+			}
+			else if (operand is double)
+			{
 				WriteOperand(writer, (double)operand);
-			} else if (operand is bool) {
+			}
+			else if (operand is bool)
+			{
 				writer.Write((bool)operand ? "true" : "false");
-			} else {
+			}
+			else
+			{
 				s = ToInvariantCultureString(operand);
 				writer.Write(s);
 			}
@@ -186,44 +213,58 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public static void WriteOperand(ITextOutput writer, float val)
 		{
-			if (val == 0) {
-				if (1 / val == float.NegativeInfinity) {
+			if (val == 0)
+			{
+				if (1 / val == float.NegativeInfinity)
+				{
 					// negative zero is a special case
 					writer.Write('-');
 				}
 				writer.Write("0.0");
-			} else if (float.IsInfinity(val) || float.IsNaN(val)) {
+			}
+			else if (float.IsInfinity(val) || float.IsNaN(val))
+			{
 				byte[] data = BitConverter.GetBytes(val);
 				writer.Write('(');
-				for (int i = 0; i < data.Length; i++) {
+				for (int i = 0; i < data.Length; i++)
+				{
 					if (i > 0)
 						writer.Write(' ');
 					writer.Write(data[i].ToString("X2"));
 				}
 				writer.Write(')');
-			} else {
+			}
+			else
+			{
 				writer.Write(val.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
 			}
 		}
 
 		public static void WriteOperand(ITextOutput writer, double val)
 		{
-			if (val == 0) {
-				if (1 / val == double.NegativeInfinity) {
+			if (val == 0)
+			{
+				if (1 / val == double.NegativeInfinity)
+				{
 					// negative zero is a special case
 					writer.Write('-');
 				}
 				writer.Write("0.0");
-			} else if (double.IsInfinity(val) || double.IsNaN(val)) {
+			}
+			else if (double.IsInfinity(val) || double.IsNaN(val))
+			{
 				byte[] data = BitConverter.GetBytes(val);
 				writer.Write('(');
-				for (int i = 0; i < data.Length; i++) {
+				for (int i = 0; i < data.Length; i++)
+				{
 					if (i > 0)
 						writer.Write(' ');
 					writer.Write(data[i].ToString("X2"));
 				}
 				writer.Write(')');
-			} else {
+			}
+			else
+			{
 				writer.Write(val.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
 			}
 		}
@@ -238,8 +279,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public static string EscapeString(string str)
 		{
 			StringBuilder sb = new StringBuilder();
-			foreach (char ch in str) {
-				switch (ch) {
+			foreach (char ch in str)
+			{
+				switch (ch)
+				{
 					case '"':
 						sb.Append("\\\"");
 						break;
@@ -272,9 +315,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 						break;
 					default:
 						// print control characters and uncommon white spaces as numbers
-						if (char.IsControl(ch) || char.IsSurrogate(ch) || (char.IsWhiteSpace(ch) && ch != ' ')) {
+						if (char.IsControl(ch) || char.IsSurrogate(ch) || (char.IsWhiteSpace(ch) && ch != ' '))
+						{
 							sb.Append("\\u" + ((int)ch).ToString("x4"));
-						} else {
+						}
+						else
+						{
 							sb.Append(ch);
 						}
 						break;
@@ -284,7 +330,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		}
 		public static string PrimitiveTypeName(string fullName)
 		{
-			switch (fullName) {
+			switch (fullName)
+			{
 				case "System.SByte":
 					return "int8";
 				case "System.Int16":

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
+
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
@@ -68,8 +69,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public abstract string FileExtension { get; }
 
-		public virtual string ProjectFileExtension
-		{
+		public virtual string ProjectFileExtension {
 			get { return null; }
 		}
 
@@ -82,10 +82,8 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets the syntax highlighting used for this language.
 		/// </summary>
-		public virtual ICSharpCode.AvalonEdit.Highlighting.IHighlightingDefinition SyntaxHighlighting
-		{
-			get
-			{
+		public virtual ICSharpCode.AvalonEdit.Highlighting.IHighlightingDefinition SyntaxHighlighting {
+			get {
 				return ICSharpCode.AvalonEdit.Highlighting.HighlightingManager.Instance.GetDefinitionByExtension(this.FileExtension);
 			}
 		}
@@ -130,16 +128,23 @@ namespace ICSharpCode.ILSpy
 		{
 			WriteCommentLine(output, assembly.FileName);
 			var asm = assembly.GetPEFileOrNull();
-			if (asm == null) return null;
+			if (asm == null)
+				return null;
 			var metadata = asm.Metadata;
-			if (metadata.IsAssembly) {
+			if (metadata.IsAssembly)
+			{
 				var name = metadata.GetAssemblyDefinition();
-				if ((name.Flags & System.Reflection.AssemblyFlags.WindowsRuntime) != 0) {
+				if ((name.Flags & System.Reflection.AssemblyFlags.WindowsRuntime) != 0)
+				{
 					WriteCommentLine(output, metadata.GetString(name.Name) + " [WinRT]");
-				} else {
+				}
+				else
+				{
 					WriteCommentLine(output, metadata.GetFullAssemblyName());
 				}
-			} else {
+			}
+			else
+			{
 				WriteCommentLine(output, metadata.GetString(metadata.GetModuleDefinition().Name));
 			}
 			return null;
@@ -229,7 +234,8 @@ namespace ICSharpCode.ILSpy
 			{
 				type.GenericType.AcceptVisitor(this);
 				builder.Append('<');
-				for (int i = 0; i < type.TypeArguments.Count; i++) {
+				for (int i = 0; i < type.TypeArguments.Count; i++)
+				{
 					if (i > 0)
 						builder.Append(',');
 					type.TypeArguments[i].AcceptVisitor(this);
@@ -256,7 +262,8 @@ namespace ICSharpCode.ILSpy
 					EscapeName(builder, type.FullName);
 				else
 					EscapeName(builder, type.Name);
-				if (type.TypeParameterCount > 0) {
+				if (type.TypeParameterCount > 0)
+				{
 					builder.Append('`');
 					builder.Append(type.TypeParameterCount);
 				}
@@ -264,7 +271,8 @@ namespace ICSharpCode.ILSpy
 
 			public override IType VisitTypeDefinition(ITypeDefinition type)
 			{
-				switch (type.KnownTypeCode) {
+				switch (type.KnownTypeCode)
+				{
 					case KnownTypeCode.Object:
 						builder.Append("object");
 						break;
@@ -369,11 +377,13 @@ namespace ICSharpCode.ILSpy
 			var buffer = new StringBuilder();
 			buffer.Append(GetDisplayName(method, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName));
 			var typeParameters = method.TypeParameters;
-			if (typeParameters.Count > 0) {
+			if (typeParameters.Count > 0)
+			{
 				buffer.Append("``");
 				buffer.Append(typeParameters.Count);
 				buffer.Append('<');
-				foreach (var tp in typeParameters) {
+				foreach (var tp in typeParameters)
+				{
 					if (i > 0)
 						buffer.Append(", ");
 					buffer.Append(tp.Name);
@@ -385,14 +395,16 @@ namespace ICSharpCode.ILSpy
 
 			i = 0;
 			var parameters = method.Parameters;
-			foreach (var param in parameters) {
+			foreach (var param in parameters)
+			{
 				if (i > 0)
 					buffer.Append(", ");
 				buffer.Append(TypeToString(param.Type, includeNamespace));
 				i++;
 			}
 			buffer.Append(')');
-			if (!method.IsConstructor) {
+			if (!method.IsConstructor)
+			{
 				buffer.Append(" : ");
 				buffer.Append(TypeToString(method.ReturnType, includeNamespace));
 			}
@@ -413,18 +425,24 @@ namespace ICSharpCode.ILSpy
 		protected string GetDisplayName(IEntity entity, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			string entityName;
-			if (entity is ITypeDefinition t && !t.MetadataToken.IsNil) {
+			if (entity is ITypeDefinition t && !t.MetadataToken.IsNil)
+			{
 				MetadataReader metadata = t.ParentModule.PEFile.Metadata;
 				var typeDef = metadata.GetTypeDefinition((TypeDefinitionHandle)t.MetadataToken);
 				entityName = EscapeName(metadata.GetString(typeDef.Name));
-			} else {
+			}
+			else
+			{
 				entityName = EscapeName(entity.Name);
 			}
-			if (includeNamespace || includeDeclaringTypeName) {
+			if (includeNamespace || includeDeclaringTypeName)
+			{
 				if (entity.DeclaringTypeDefinition != null)
 					return TypeToString(entity.DeclaringTypeDefinition, includeNamespaceOfDeclaringTypeName) + "." + entityName;
 				return EscapeName(entity.Namespace) + "." + entityName;
-			} else {
+			}
+			else
+			{
 				return entityName;
 			}
 		}
@@ -448,7 +466,8 @@ namespace ICSharpCode.ILSpy
 		public virtual string GetEntityName(PEFile module, EntityHandle handle, bool fullName, bool omitGenerics)
 		{
 			MetadataReader metadata = module.Metadata;
-			switch (handle.Kind) {
+			switch (handle.Kind)
+			{
 				case HandleKind.TypeDefinition:
 					if (fullName)
 						return EscapeName(((TypeDefinitionHandle)handle).GetFullTypeName(metadata).ToILNameString(omitGenerics));
@@ -462,10 +481,11 @@ namespace ICSharpCode.ILSpy
 				case HandleKind.MethodDefinition:
 					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
 					string methodName = metadata.GetString(md.Name);
-					if (!omitGenerics) {
+					if (!omitGenerics)
+					{
 						int genericParamCount = md.GetGenericParameters().Count;
 						if (genericParamCount > 0)
-							methodName += "``" + genericParamCount; 
+							methodName += "``" + genericParamCount;
 					}
 					if (fullName)
 						return EscapeName(md.GetDeclaringType().GetFullTypeName(metadata).ToILNameString(omitGenerics) + "." + methodName);
@@ -491,7 +511,8 @@ namespace ICSharpCode.ILSpy
 		{
 			var declaringType = member.GetDeclaringType(module.Metadata);
 
-			if (declaringType.IsNil && member.Kind == SRM.HandleKind.TypeDefinition) {
+			if (declaringType.IsNil && member.Kind == SRM.HandleKind.TypeDefinition)
+			{
 				declaringType = (SRM.TypeDefinitionHandle)member;
 			}
 
@@ -504,7 +525,8 @@ namespace ICSharpCode.ILSpy
 			var architecture = headers.CoffHeader.Machine;
 			var characteristics = headers.CoffHeader.Characteristics;
 			var corflags = headers.CorHeader.Flags;
-			switch (architecture) {
+			switch (architecture)
+			{
 				case Machine.I386:
 					if ((corflags & CorFlags.Prefers32Bit) != 0)
 						return "AnyCPU (32-bit preferred)";
@@ -534,7 +556,8 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public static StringBuilder EscapeName(StringBuilder sb, string name)
 		{
-			foreach (char ch in name) {
+			foreach (char ch in name)
+			{
 				if (char.IsWhiteSpace(ch) || char.IsControl(ch) || char.IsSurrogate(ch))
 					sb.AppendFormat("\\u{0:x4}", (int)ch);
 				else

@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,6 +23,9 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -65,7 +66,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			this.mode = mode;
 			this.stateField = stateField;
-			if (mode == StateRangeAnalysisMode.IteratorDispose) {
+			if (mode == StateRangeAnalysisMode.IteratorDispose)
+			{
 				finallyMethodToStateRange = new Dictionary<IMethod, LongSet>();
 			}
 
@@ -86,7 +88,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var sra = new StateRangeAnalysis(mode, stateField);
 			sra.doFinallyBodies = this.doFinallyBodies;
 			sra.skipFinallyBodies = this.skipFinallyBodies;
-			foreach (var v in this.evalContext.StateVariables) {
+			foreach (var v in this.evalContext.StateVariables)
+			{
 				sra.evalContext.AddStateVariable(v);
 			}
 			return sra;
@@ -104,13 +107,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public LongSet AssignStateRanges(ILInstruction inst, LongSet stateRange)
 		{
 			CancellationToken.ThrowIfCancellationRequested();
-			switch (inst) {
+			switch (inst)
+			{
 				case BlockContainer blockContainer:
 					AddStateRange(blockContainer.EntryPoint, stateRange);
-					foreach (var block in blockContainer.Blocks) {
+					foreach (var block in blockContainer.Blocks)
+					{
 						// We assume that there are no jumps to blocks already processed.
 						// TODO: is SortBlocks() guaranteeing this, even if the user code has loops?
-						if (ranges.TryGetValue(block, out stateRange)) {
+						if (ranges.TryGetValue(block, out stateRange))
+						{
 							AssignStateRanges(block, stateRange);
 						}
 					}
@@ -118,7 +124,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// return LongSet.Empty.
 					return LongSet.Empty;
 				case Block block:
-					foreach (var instInBlock in block.Instructions) {
+					foreach (var instInBlock in block.Instructions)
+					{
 						if (stateRange.IsEmpty)
 							break;
 						var oldStateRange = stateRange;
@@ -141,7 +148,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (val.Type != SymbolicValueType.State)
 						goto default;
 					List<LongInterval> exitIntervals = new List<LongInterval>();
-					foreach (var section in switchInst.Sections) {
+					foreach (var section in switchInst.Sections)
+					{
 						// switch (state + Constant)
 						// matches 'case VALUE:'
 						// iff (state + Constant == value)
@@ -154,7 +162,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return new LongSet(exitIntervals);
 				case IfInstruction ifInst:
 					val = evalContext.Eval(ifInst.Condition).AsBool();
-					if (val.Type != SymbolicValueType.StateInSet) {
+					if (val.Type != SymbolicValueType.StateInSet)
+					{
 						goto default;
 					}
 					LongSet trueRanges = val.ValueSet;
@@ -173,10 +182,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return stateRange;
 				case StLoc stloc:
 					val = evalContext.Eval(stloc.Value);
-					if (val.Type == SymbolicValueType.State && val.Constant == 0) {
+					if (val.Type == SymbolicValueType.State && val.Constant == 0)
+					{
 						evalContext.AddStateVariable(stloc.Variable);
 						return stateRange;
-					} else {
+					}
+					else
+					{
 						goto default; // user code
 					}
 				case Call call when mode == StateRangeAnalysisMode.IteratorDispose:
@@ -186,20 +198,23 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					finallyMethodToStateRange.Add((IMethod)call.Method.MemberDefinition, stateRange);
 					return LongSet.Empty; // return Empty since we executed user code (the finally method)
 				case StObj stobj when mode == StateRangeAnalysisMode.IteratorMoveNext:
+				{
+					if (stobj.MatchStFld(out var target, out var field, out var value)
+						&& target.MatchLdThis() && field.MemberDefinition == stateField && value.MatchLdcI4(-1))
 					{
-						if (stobj.MatchStFld(out var target, out var field, out var value)
-							&& target.MatchLdThis() && field.MemberDefinition == stateField && value.MatchLdcI4(-1))
-						{
-							// Mono resets the state field during MoveNext();
-							// don't consider this user code.
-							return stateRange;
-						} else {
-							goto default;
-						}
+						// Mono resets the state field during MoveNext();
+						// don't consider this user code.
+						return stateRange;
 					}
+					else
+					{
+						goto default;
+					}
+				}
 				default:
 					// User code - abort analysis
-					if (mode == StateRangeAnalysisMode.IteratorDispose && !(inst is Leave l && l.IsLeavingFunction)) {
+					if (mode == StateRangeAnalysisMode.IteratorDispose && !(inst is Leave l && l.IsLeavingFunction))
+					{
 						throw new SymbolicAnalysisFailedException("Unexpected instruction in Iterator.Dispose()");
 					}
 					return LongSet.Empty;
@@ -228,13 +243,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			IEnumerable<(LongSet, Block)> GetMapping()
 			{
 				// First, consider container exits:
-				foreach (var (block, states) in ranges) {
+				foreach (var (block, states) in ranges)
+				{
 					if (block.Parent != container)
 						yield return (states, block);
 				}
 				// Then blocks within the container:
-				foreach (var block in container.Blocks.Reverse()) {
-					if (ranges.TryGetValue(block, out var states)) {
+				foreach (var block in container.Blocks.Reverse())
+				{
+					if (ranges.TryGetValue(block, out var states))
+					{
 						yield return (states, block);
 					}
 				}

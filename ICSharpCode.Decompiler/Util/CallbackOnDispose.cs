@@ -31,18 +31,19 @@ namespace ICSharpCode.Decompiler.Util
 	public sealed class CallbackOnDispose : IDisposable
 	{
 		Action action;
-		
+
 		public CallbackOnDispose(Action action)
 		{
 			if (action == null)
 				throw new ArgumentNullException(nameof(action));
 			this.action = action;
 		}
-		
+
 		public void Dispose()
 		{
 			Action a = Interlocked.Exchange(ref action, null);
-			if (a != null) {
+			if (a != null)
+			{
 				a();
 			}
 		}

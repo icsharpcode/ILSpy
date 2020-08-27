@@ -7,6 +7,7 @@ using System.Reflection.Metadata;
 using System.Threading;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -34,7 +35,8 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
-			if (searchKind == AssemblySearchKind.NameOrFileName) {
+			if (searchKind == AssemblySearchKind.NameOrFileName)
+			{
 				string localName = GetNameToMatch(module, AssemblySearchKind.Name);
 				string fileName = Path.GetFileName(GetNameToMatch(module, AssemblySearchKind.FilePath));
 				if (IsMatch(localName) || IsMatch(fileName))
@@ -49,7 +51,8 @@ namespace ICSharpCode.ILSpy.Search
 
 		string GetNameToMatch(PEFile module, AssemblySearchKind kind)
 		{
-			switch (kind) {
+			switch (kind)
+			{
 				case AssemblySearchKind.FullName:
 					return module.FullName;
 				case AssemblySearchKind.Name:
@@ -64,7 +67,8 @@ namespace ICSharpCode.ILSpy.Search
 			var metadata = module.Metadata;
 			var definition = module.Metadata.GetAssemblyDefinition();
 
-			switch (kind) {
+			switch (kind)
+			{
 				case AssemblySearchKind.Culture:
 					if (definition.Culture.IsNil)
 						return "neutral";

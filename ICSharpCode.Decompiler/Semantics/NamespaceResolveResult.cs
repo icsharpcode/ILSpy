@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Globalization;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
@@ -27,20 +28,20 @@ namespace ICSharpCode.Decompiler.Semantics
 	public class NamespaceResolveResult : ResolveResult
 	{
 		readonly INamespace ns;
-		
+
 		public NamespaceResolveResult(INamespace ns) : base(SpecialType.NoType)
 		{
 			this.ns = ns;
 		}
-		
+
 		public INamespace Namespace {
 			get { return ns; }
 		}
-		
+
 		public string NamespaceName {
 			get { return ns.FullName; }
 		}
-		
+
 		public override string ToString()
 		{
 			return string.Format(CultureInfo.InvariantCulture, "[{0} {1}]", GetType().Name, ns);

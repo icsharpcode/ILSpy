@@ -22,11 +22,14 @@
 
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class ConnectionIdHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class ConnectionIdHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.ConnectionId;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (ConnectionIdRecord)((BamlRecordNode)node).Record;
 
 			parent.Xaml.Element.AddAnnotation(new BamlConnectionId(record.ConnectionId));

@@ -143,15 +143,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void CompoundAssign()
 		{
 			GetInstance(0).i += i32;
-			checked {
+			checked
+			{
 				GetInstance(1).i += i32;
 			}
 			GetInstance(2).u *= 2u;
-			checked {
+			checked
+			{
 				GetInstance(3).u *= 2u;
 			}
 			GetInstance(4).intptr += (nint)i32;
-			checked {
+			checked
+			{
 				// Note: the cast is necessary here, without it we'd call IntPtr.op_Addition
 				// but that is always unchecked.
 				GetInstance(5).intptr += (nint)i32;

@@ -41,14 +41,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public abstract class InterningProvider
 	{
 		public static readonly InterningProvider Dummy = new DummyInterningProvider();
-		
+
 		/// <summary>
 		/// Interns the specified object.
 		/// 
 		/// If the object is freezable, it will be frozen.
 		/// </summary>
 		public abstract ISupportsInterning Intern(ISupportsInterning obj);
-		
+
 		/// <summary>
 		/// Interns the specified object.
 		/// 
@@ -59,39 +59,39 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ISupportsInterning input = obj;
 			return (T)Intern(input);
 		}
-		
+
 		/// <summary>
 		/// Interns the specified string.
 		/// </summary>
 		public abstract string Intern(string text);
-		
+
 		/// <summary>
 		/// Inters a boxed value type.
 		/// </summary>
 		public abstract object InternValue(object obj);
-		
+
 		/// <summary>
 		/// Interns the given list. Uses reference equality to compare the list elements.
 		/// </summary>
 		public abstract IList<T> InternList<T>(IList<T> list) where T : class;
-		
+
 		sealed class DummyInterningProvider : InterningProvider
 		{
 			public override ISupportsInterning Intern(ISupportsInterning obj)
 			{
 				return obj;
 			}
-			
+
 			public override string Intern(string text)
 			{
 				return text;
 			}
-			
+
 			public override object InternValue(object obj)
 			{
 				return obj;
 			}
-			
+
 			public override IList<T> InternList<T>(IList<T> list)
 			{
 				return list;

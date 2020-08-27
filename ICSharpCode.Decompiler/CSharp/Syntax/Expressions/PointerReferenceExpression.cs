@@ -32,54 +32,54 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class PointerReferenceExpression : Expression
 	{
-		public readonly static TokenRole ArrowRole = new TokenRole ("->");
-		
+		public readonly static TokenRole ArrowRole = new TokenRole("->");
+
 		public Expression Target {
-			get { return GetChildByRole (Roles.TargetExpression); }
+			get { return GetChildByRole(Roles.TargetExpression); }
 			set { SetChildByRole(Roles.TargetExpression, value); }
 		}
-		
+
 		public CSharpTokenNode ArrowToken {
-			get { return GetChildByRole (ArrowRole); }
+			get { return GetChildByRole(ArrowRole); }
 		}
-		
+
 		public string MemberName {
 			get {
-				return GetChildByRole (Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole(Roles.Identifier, Identifier.Create (value));
+				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}
-		
+
 		public Identifier MemberNameToken {
 			get {
-				return GetChildByRole (Roles.Identifier);
+				return GetChildByRole(Roles.Identifier);
 			}
 			set {
-				SetChildByRole (Roles.Identifier, value);
+				SetChildByRole(Roles.Identifier, value);
 			}
 		}
-		
+
 		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole (Roles.TypeArgument); }
+			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitPointerReferenceExpression (this);
+			visitor.VisitPointerReferenceExpression(this);
 		}
-		
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitPointerReferenceExpression (this);
+			return visitor.VisitPointerReferenceExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitPointerReferenceExpression (this, data);
+			return visitor.VisitPointerReferenceExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			PointerReferenceExpression o = other as PointerReferenceExpression;

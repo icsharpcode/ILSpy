@@ -25,16 +25,20 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 
-namespace ILSpy.BamlDecompiler.Baml {
-	internal abstract class BamlNode {
+namespace ILSpy.BamlDecompiler.Baml
+{
+	internal abstract class BamlNode
+	{
 		public BamlBlockNode Parent { get; set; }
 		public abstract BamlRecordType Type { get; }
 		public object Annotation { get; set; }
 
 		public abstract BamlRecord Record { get; }
 
-		public static bool IsHeader(BamlRecord rec) {
-			switch (rec.Type) {
+		public static bool IsHeader(BamlRecord rec)
+		{
+			switch (rec.Type)
+			{
 				case BamlRecordType.ConstructorParametersStart:
 				case BamlRecordType.DocumentStart:
 				case BamlRecordType.ElementStart:
@@ -50,8 +54,10 @@ namespace ILSpy.BamlDecompiler.Baml {
 			return false;
 		}
 
-		public static bool IsFooter(BamlRecord rec) {
-			switch (rec.Type) {
+		public static bool IsFooter(BamlRecord rec)
+		{
+			switch (rec.Type)
+			{
 				case BamlRecordType.ConstructorParametersEnd:
 				case BamlRecordType.DocumentEnd:
 				case BamlRecordType.ElementEnd:
@@ -66,8 +72,10 @@ namespace ILSpy.BamlDecompiler.Baml {
 			return false;
 		}
 
-		public static bool IsMatch(BamlRecord header, BamlRecord footer) {
-			switch (header.Type) {
+		public static bool IsMatch(BamlRecord header, BamlRecord footer)
+		{
+			switch (header.Type)
+			{
 				case BamlRecordType.ConstructorParametersStart:
 					return footer.Type == BamlRecordType.ConstructorParametersEnd;
 
@@ -99,33 +107,39 @@ namespace ILSpy.BamlDecompiler.Baml {
 			return false;
 		}
 
-		public static BamlNode Parse(BamlDocument document, CancellationToken token) {
+		public static BamlNode Parse(BamlDocument document, CancellationToken token)
+		{
 			Debug.Assert(document.Count > 0 && document[0].Type == BamlRecordType.DocumentStart);
 
 			BamlBlockNode current = null;
 			var stack = new Stack<BamlBlockNode>();
 
-			for (int i = 0; i < document.Count; i++) {
+			for (int i = 0; i < document.Count; i++)
+			{
 				token.ThrowIfCancellationRequested();
 
-				if (IsHeader(document[i])) {
+				if (IsHeader(document[i]))
+				{
 					var prev = current;
 
 					current = new BamlBlockNode {
 						Header = document[i]
 					};
 
-					if (prev != null) {
+					if (prev != null)
+					{
 						prev.Children.Add(current);
 						current.Parent = prev;
 						stack.Push(prev);
 					}
 				}
-				else if (IsFooter(document[i])) {
+				else if (IsFooter(document[i]))
+				{
 					if (current == null)
 						throw new Exception("Unexpected footer.");
 
-					while (!IsMatch(current.Header, document[i])) {
+					while (!IsMatch(current.Header, document[i]))
+					{
 						// End record can be omited (sometimes).
 						if (stack.Count > 0)
 							current = stack.Pop();
@@ -142,7 +156,8 @@ namespace ILSpy.BamlDecompiler.Baml {
 		}
 	}
 
-	internal class BamlRecordNode : BamlNode {
+	internal class BamlRecordNode : BamlNode
+	{
 		BamlRecord record;
 
 		public override BamlRecord Record => record;
@@ -151,7 +166,8 @@ namespace ILSpy.BamlDecompiler.Baml {
 		public BamlRecordNode(BamlRecord record) => this.record = record;
 	}
 
-	internal class BamlBlockNode : BamlNode {
+	internal class BamlBlockNode : BamlNode
+	{
 		public BamlRecord Header { get; set; }
 		public IList<BamlNode> Children { get; }
 		public BamlRecord Footer { get; set; }

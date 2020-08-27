@@ -28,12 +28,12 @@ namespace ICSharpCode.Decompiler.Semantics
 		public AmbiguousTypeResolveResult(IType type) : base(type)
 		{
 		}
-		
+
 		public override bool IsError {
 			get { return true; }
 		}
 	}
-	
+
 	/// <summary>
 	/// Represents an ambiguous field/property/event access.
 	/// </summary>
@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		public AmbiguousMemberResolveResult(ResolveResult targetResult, IMember member) : base(targetResult, member)
 		{
 		}
-		
+
 		public override bool IsError {
 			get { return true; }
 		}

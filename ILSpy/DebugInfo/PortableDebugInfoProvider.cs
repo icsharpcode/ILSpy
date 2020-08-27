@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
+
 using ICSharpCode.Decompiler.DebugInfo;
 
 namespace ICSharpCode.Decompiler.PdbProvider
@@ -45,13 +46,17 @@ namespace ICSharpCode.Decompiler.PdbProvider
 			var debugInfo = metadata.GetMethodDebugInformation(method);
 			var sequencePoints = new List<Decompiler.DebugInfo.SequencePoint>();
 
-			foreach (var point in debugInfo.GetSequencePoints()) {
+			foreach (var point in debugInfo.GetSequencePoints())
+			{
 				string documentFileName;
 
-				if (!point.Document.IsNil) {
+				if (!point.Document.IsNil)
+				{
 					var document = metadata.GetDocument(point.Document);
 					documentFileName = metadata.GetString(document.Name);
-				} else {
+				}
+				else
+				{
 					documentFileName = "";
 				}
 
@@ -73,9 +78,11 @@ namespace ICSharpCode.Decompiler.PdbProvider
 			var metadata = Provider.GetMetadataReader();
 			var variables = new List<Variable>();
 
-			foreach (var h in metadata.GetLocalScopes(method)) {
+			foreach (var h in metadata.GetLocalScopes(method))
+			{
 				var scope = metadata.GetLocalScope(h);
-				foreach (var v in scope.GetLocalVariables()) {
+				foreach (var v in scope.GetLocalVariables())
+				{
 					var var = metadata.GetLocalVariable(v);
 					variables.Add(new Variable(var.Index, metadata.GetString(var.Name)));
 				}
@@ -89,11 +96,14 @@ namespace ICSharpCode.Decompiler.PdbProvider
 			var metadata = Provider.GetMetadataReader();
 			name = null;
 
-			foreach (var h in metadata.GetLocalScopes(method)) {
+			foreach (var h in metadata.GetLocalScopes(method))
+			{
 				var scope = metadata.GetLocalScope(h);
-				foreach (var v in scope.GetLocalVariables()) {
+				foreach (var v in scope.GetLocalVariables())
+				{
 					var var = metadata.GetLocalVariable(v);
-					if (var.Index == index) {
+					if (var.Index == index)
+					{
 						name = metadata.GetString(var.Name);
 						return true;
 					}

@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.Controls
 			if (e.HeightChanged)
 				MaxHeight = e.NewSize.Height;
 		}
-		
+
 		void ExecuteCopy(object sender, ExecutedRoutedEventArgs args)
 		{
 			StringBuilder sb = new StringBuilder();
@@ -58,7 +58,7 @@ namespace ICSharpCode.ILSpy.Controls
 			}
 			Clipboard.SetText(sb.ToString());
 		}
-		
+
 		void CanExecuteCopy(object sender, CanExecuteRoutedEventArgs args)
 		{
 			args.CanExecute = true;

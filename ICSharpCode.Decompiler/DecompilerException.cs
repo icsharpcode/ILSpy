@@ -20,12 +20,12 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -44,7 +44,8 @@ namespace ICSharpCode.Decompiler
 		public IModule Module { get; }
 		public PEFile File { get; }
 
-		public DecompilerException(MetadataModule module, IEntity decompiledEntity, Exception innerException, string message = null)
+		public DecompilerException(MetadataModule module, IEntity decompiledEntity,
+			Exception innerException, string message = null)
 			: base(message ?? GetDefaultMessage(decompiledEntity), innerException)
 		{
 			this.File = module.PEFile;
@@ -80,7 +81,8 @@ namespace ICSharpCode.Decompiler
 				throw new ArgumentNullException(nameof(exception));
 			string exceptionType = GetTypeName(exception);
 			string stacktrace = GetStackTrace(exception);
-			while (exception.InnerException != null) {
+			while (exception.InnerException != null)
+			{
 				exception = exception.InnerException;
 
 				stacktrace = GetStackTrace(exception) + Environment.NewLine
@@ -105,11 +107,13 @@ namespace ICSharpCode.Decompiler
 
 		static string GetStackTrace(Exception exception)
 		{
-			// Output stacktrace in custom format (very similar to Exception.StackTrace property on English systems).
+			// Output stacktrace in custom format (very similar to Exception.StackTrace
+			// property on English systems).
 			// Include filenames where available, but no paths.
 			StackTrace stackTrace = new StackTrace(exception, true);
 			StringBuilder b = new StringBuilder();
-			for (int i = 0; i < stackTrace.FrameCount; i++) {
+			for (int i = 0; i < stackTrace.FrameCount; i++)
+			{
 				StackFrame frame = stackTrace.GetFrame(i);
 				MethodBase method = frame.GetMethod();
 				if (method == null)
@@ -120,16 +124,19 @@ namespace ICSharpCode.Decompiler
 
 				b.Append("   at ");
 				Type declaringType = method.DeclaringType;
-				if (declaringType != null) {
+				if (declaringType != null)
+				{
 					b.Append(declaringType.FullName.Replace('+', '.'));
 					b.Append('.');
 				}
 				b.Append(method.Name);
 				// output type parameters, if any
-				if ((method is MethodInfo) && ((MethodInfo)method).IsGenericMethod) {
+				if ((method is MethodInfo) && ((MethodInfo)method).IsGenericMethod)
+				{
 					Type[] genericArguments = ((MethodInfo)method).GetGenericArguments();
 					b.Append('[');
-					for (int j = 0; j < genericArguments.Length; j++) {
+					for (int j = 0; j < genericArguments.Length; j++)
+					{
 						if (j > 0)
 							b.Append(',');
 						b.Append(genericArguments[j].Name);
@@ -140,15 +147,20 @@ namespace ICSharpCode.Decompiler
 				// output parameters, if any
 				b.Append('(');
 				ParameterInfo[] parameters = method.GetParameters();
-				for (int j = 0; j < parameters.Length; j++) {
+				for (int j = 0; j < parameters.Length; j++)
+				{
 					if (j > 0)
 						b.Append(", ");
-					if (parameters[j].ParameterType != null) {
+					if (parameters[j].ParameterType != null)
+					{
 						b.Append(parameters[j].ParameterType.Name);
-					} else {
+					}
+					else
+					{
 						b.Append('?');
 					}
-					if (!string.IsNullOrEmpty(parameters[j].Name)) {
+					if (!string.IsNullOrEmpty(parameters[j].Name))
+					{
 						b.Append(' ');
 						b.Append(parameters[j].Name);
 					}
@@ -156,23 +168,32 @@ namespace ICSharpCode.Decompiler
 				b.Append(')');
 
 				// source location
-				if (frame.GetILOffset() >= 0) {
+				if (frame.GetILOffset() >= 0)
+				{
 					string filename = null;
-					try {
+					try
+					{
 						string fullpath = frame.GetFileName();
 						if (fullpath != null)
 							filename = Path.GetFileName(fullpath);
-					} catch (SecurityException) {
+					}
+					catch (SecurityException)
+					{
 						// StackFrame.GetFileName requires PathDiscovery permission
-					} catch (ArgumentException) {
+					}
+					catch (ArgumentException)
+					{
 						// Path.GetFileName might throw on paths with invalid chars
 					}
 					b.Append(" in ");
-					if (filename != null) {
+					if (filename != null)
+					{
 						b.Append(filename);
 						b.Append(":line ");
 						b.Append(frame.GetFileLineNumber());
-					} else {
+					}
+					else
+					{
 						b.Append("offset ");
 						b.Append(frame.GetILOffset());
 					}

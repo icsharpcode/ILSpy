@@ -20,14 +20,16 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Reflection.Metadata;
-using SRM = System.Reflection.Metadata;
-using System.Text;
-using ICSharpCode.Decompiler.Util;
-using ICSharpCode.Decompiler.Semantics;
-using System.Runtime.InteropServices;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
+using System.Text;
+
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.Util;
+
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
@@ -88,11 +90,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			Add(new DefaultAttribute(module.GetAttributeType(type), fixedArguments,
 				ImmutableArray.Create<CustomAttributeNamedArgument<IType>>()));
 		}
-		
+
 		#region MarshalAsAttribute (ConvertMarshalInfo)
 		internal void AddMarshalInfo(BlobHandle marshalInfo)
 		{
-			if (marshalInfo.IsNil) return;
+			if (marshalInfo.IsNil)
+				return;
 			var metadata = module.metadata;
 			Add(ConvertMarshalInfo(metadata.GetBlobReader(marshalInfo)));
 		}
@@ -106,44 +109,54 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			int type = marshalInfo.ReadByte();
 			b.AddFixedArg(unmanagedTypeType, type);
-			
+
 			int size;
-			switch (type) {
+			switch (type)
+			{
 				case 0x1e: // FixedArray
 					if (!marshalInfo.TryReadCompressedInteger(out size))
 						size = 0;
 					b.AddNamedArg("SizeConst", KnownTypeCode.Int32, size);
-					if (marshalInfo.RemainingBytes > 0) {
+					if (marshalInfo.RemainingBytes > 0)
+					{
 						type = marshalInfo.ReadByte();
 						if (type != 0x66) // None
 							b.AddNamedArg("ArraySubType", unmanagedTypeType, type);
 					}
 					break;
 				case 0x1d: // SafeArray
-					if (marshalInfo.RemainingBytes > 0) {
+					if (marshalInfo.RemainingBytes > 0)
+					{
 						VarEnum varType = (VarEnum)marshalInfo.ReadByte();
-						if (varType != VarEnum.VT_EMPTY) {
+						if (varType != VarEnum.VT_EMPTY)
+						{
 							var varEnumType = new TopLevelTypeName(InteropServices, nameof(VarEnum));
 							b.AddNamedArg("SafeArraySubType", varEnumType, (int)varType);
 						}
 					}
 					break;
 				case 0x2a: // NATIVE_TYPE_ARRAY
-					if (marshalInfo.RemainingBytes > 0) {
+					if (marshalInfo.RemainingBytes > 0)
+					{
 						type = marshalInfo.ReadByte();
-					} else {
+					}
+					else
+					{
 						type = 0x66; // Cecil uses NativeType.None as default.
 					}
-					if (type != 0x50) { // Max
+					if (type != 0x50)
+					{ // Max
 						b.AddNamedArg("ArraySubType", unmanagedTypeType, type);
 					}
 					int sizeParameterIndex = marshalInfo.TryReadCompressedInteger(out int value) ? value : -1;
 					size = marshalInfo.TryReadCompressedInteger(out value) ? value : -1;
 					int sizeParameterMultiplier = marshalInfo.TryReadCompressedInteger(out value) ? value : -1;
-					if (size >= 0) {
+					if (size >= 0)
+					{
 						b.AddNamedArg("SizeConst", KnownTypeCode.Int32, size);
 					}
-					if (sizeParameterMultiplier != 0 && sizeParameterIndex >= 0) {
+					if (sizeParameterMultiplier != 0 && sizeParameterIndex >= 0)
+					{
 						b.AddNamedArg("SizeParamIndex", KnownTypeCode.Int16, (short)sizeParameterIndex);
 					}
 					break;
@@ -152,10 +165,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					string unmanagedType = marshalInfo.ReadSerializedString();
 					string managedType = marshalInfo.ReadSerializedString();
 					string cookie = marshalInfo.ReadSerializedString();
-					if (managedType != null) {
+					if (managedType != null)
+					{
 						b.AddNamedArg("MarshalType", KnownTypeCode.String, managedType);
 					}
-					if (!string.IsNullOrEmpty(cookie)) {
+					if (!string.IsNullOrEmpty(cookie))
+					{
 						b.AddNamedArg("MarshalCookie", KnownTypeCode.String, cookie);
 					}
 					break;
@@ -172,12 +187,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public void Add(CustomAttributeHandleCollection attributes, SymbolKind target)
 		{
 			var metadata = module.metadata;
-			foreach (var handle in attributes) {
+			foreach (var handle in attributes)
+			{
 				var attribute = metadata.GetCustomAttribute(handle);
 				// Attribute types shouldn't be generic (and certainly not open), so we don't need a generic context.
 				var ctor = module.ResolveMethod(attribute.Constructor, new GenericContext());
 				var type = ctor.DeclaringType;
-				if (IgnoreAttribute(type, target)) {
+				if (IgnoreAttribute(type, target))
+				{
 					continue;
 				}
 				Add(new CustomAttribute(module, ctor, handle));
@@ -188,10 +205,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (attributeType.DeclaringType != null || attributeType.TypeParameterCount != 0)
 				return false;
-			switch (attributeType.Namespace) {
+			switch (attributeType.Namespace)
+			{
 				case "System.Runtime.CompilerServices":
 					var options = module.TypeSystemOptions;
-					switch (attributeType.Name) {
+					switch (attributeType.Name)
+					{
 						case "DynamicAttribute":
 							return (options & TypeSystemOptions.Dynamic) != 0;
 						case "NativeIntegerAttribute":
@@ -203,7 +222,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "DecimalConstantAttribute":
 							return (options & TypeSystemOptions.DecimalConstants) != 0 && (target == SymbolKind.Field || target == SymbolKind.Parameter);
 						case "IsReadOnlyAttribute":
-							switch (target) {
+							switch (target)
+							{
 								case SymbolKind.TypeDefinition:
 								case SymbolKind.Parameter:
 									return (options & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0;
@@ -240,14 +260,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public void AddSecurityAttributes(DeclarativeSecurityAttributeHandleCollection securityDeclarations)
 		{
 			var metadata = module.metadata;
-			foreach (var secDecl in securityDeclarations) {
+			foreach (var secDecl in securityDeclarations)
+			{
 				if (secDecl.IsNil)
 					continue;
-				try {
+				try
+				{
 					AddSecurityAttributes(metadata.GetDeclarativeSecurityAttribute(secDecl));
-				} catch (EnumUnderlyingTypeResolveException) {
+				}
+				catch (EnumUnderlyingTypeResolveException)
+				{
 					// ignore resolve errors
-				} catch (BadImageFormatException) {
+				}
+				catch (BadImageFormatException)
+				{
 					// ignore invalid security declarations
 				}
 			}
@@ -259,13 +285,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var securityAction = new CustomAttributeTypedArgument<IType>(securityActionType, (int)secDecl.Action);
 			var metadata = module.metadata;
 			var reader = metadata.GetBlobReader(secDecl.PermissionSet);
-			if (reader.ReadByte() == '.') {
+			if (reader.ReadByte() == '.')
+			{
 				// binary attribute
 				int attributeCount = reader.ReadCompressedInteger();
-				for (int i = 0; i < attributeCount; i++) {
+				for (int i = 0; i < attributeCount; i++)
+				{
 					Add(ReadBinarySecurityAttribute(ref reader, securityAction));
 				}
-			} else {
+			}
+			else
+			{
 				// for backward compatibility with .NET 1.0: XML-encoded attribute
 				reader.Reset();
 				Add(ReadXmlSecurityAttribute(ref reader, securityAction));
@@ -358,7 +388,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			AddNamedArg(name, compilation.FindType(type), value);
 		}
-		
+
 		public void AddNamedArg(string name, IType type, object value)
 		{
 			CustomAttributeNamedArgumentKind kind;

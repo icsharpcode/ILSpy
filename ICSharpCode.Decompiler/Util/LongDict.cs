@@ -50,8 +50,10 @@ namespace ICSharpCode.Decompiler.Util
 			LongSet available = LongSet.Universe;
 			var keys = new List<LongInterval>();
 			var values = new List<T>();
-			foreach (var (key, val) in entries) {
-				foreach (var interval in key.IntersectWith(available).Intervals) {
+			foreach (var (key, val) in entries)
+			{
+				foreach (var interval in key.IntersectWith(available).Intervals)
+				{
 					keys.Add(interval);
 					values.Add(val);
 				}
@@ -69,7 +71,8 @@ namespace ICSharpCode.Decompiler.Util
 			// We use this to find the previous element (if there wasn't any exact match).
 			if (pos < 0)
 				pos = ~pos - 1;
-			if (pos >= 0 && this.keys[pos].Contains(key)) {
+			if (pos >= 0 && this.keys[pos].Contains(key))
+			{
 				value = this.values[pos];
 				return true;
 			}
@@ -85,7 +88,8 @@ namespace ICSharpCode.Decompiler.Util
 
 		public IEnumerator<KeyValuePair<LongInterval, T>> GetEnumerator()
 		{
-			for (int i = 0; i < this.keys.Length; ++i) {
+			for (int i = 0; i < this.keys.Length; ++i)
+			{
 				yield return new KeyValuePair<LongInterval, T>(this.keys[i], this.values[i]);
 			}
 		}

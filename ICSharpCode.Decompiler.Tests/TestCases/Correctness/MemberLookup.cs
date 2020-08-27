@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	public class MemberLookup
 	{
 		static readonly Action delegateConstruction = (new Child1() as Base1).TestAction;
-		
+
 		public static int Main()
 		{
 			Console.WriteLine((new Child1() as Base1).Field);
@@ -32,49 +32,49 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			new Child2b().CallTestMethod();
 			return 0;
 		}
-		
+
 		class Base1
 		{
 			public int Field = 1;
-			
+
 			protected virtual void TestMethod()
 			{
 				Property = 5;
 				Console.WriteLine("Base1.TestMethod()");
 				Console.WriteLine(Property);
 			}
-			
+
 			public void TestAction()
 			{
 				Console.WriteLine("Base1.TestAction()");
 			}
-			
+
 			public int Property { get; set; }
-			
+
 			public virtual int VirtProp {
 				get {
 					return 3;
 				}
 			}
 		}
-		
+
 		class Child1 : Base1
 		{
 			Child1 child;
 			new public int Field = 2;
-			
+
 			public static void Test()
 			{
 				var o = new Child1();
 				o.child = new Child1();
 				o.TestMethod();
-				
+
 				Console.WriteLine(((Base1)o).Property);
 				Console.WriteLine(o.Property);
 				Console.WriteLine(((Base1)o).VirtProp);
 				Console.WriteLine(o.VirtProp);
 			}
-			
+
 			protected override void TestMethod()
 			{
 				Property = 10;
@@ -86,14 +86,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				Console.WriteLine("Field = " + Field);
 				Console.WriteLine("base.Field = " + base.Field);
 			}
-			
+
 			new public void TestAction()
 			{
 				Console.WriteLine("Child1.TestAction()");
 			}
-			
+
 			new public int Property { get; set; }
-			
+
 			public override int VirtProp {
 				get {
 					return base.VirtProp * 2;

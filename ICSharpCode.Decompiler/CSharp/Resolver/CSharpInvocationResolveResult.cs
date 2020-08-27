@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -31,24 +32,24 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	public class CSharpInvocationResolveResult : InvocationResolveResult
 	{
 		public readonly OverloadResolutionErrors OverloadResolutionErrors;
-		
+
 		/// <summary>
 		/// Gets whether this invocation is calling an extension method using extension method syntax.
 		/// </summary>
 		public readonly bool IsExtensionMethodInvocation;
-		
+
 		/// <summary>
 		/// Gets whether this invocation is calling a delegate (without explicitly calling ".Invoke()").
 		/// </summary>
 		public readonly bool IsDelegateInvocation;
-		
+
 		/// <summary>
 		/// Gets whether a params-Array is being used in its expanded form.
 		/// </summary>
 		public readonly bool IsExpandedForm;
 
 		readonly IReadOnlyList<int> argumentToParameterMap;
-		
+
 		public CSharpInvocationResolveResult(
 			ResolveResult targetResult, IParameterizedMember member,
 			IList<ResolveResult> arguments,
@@ -68,11 +69,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			this.IsDelegateInvocation = isDelegateInvocation;
 			this.argumentToParameterMap = argumentToParameterMap;
 		}
-		
+
 		public override bool IsError {
 			get { return this.OverloadResolutionErrors != OverloadResolutionErrors.None; }
 		}
-		
+
 		/// <summary>
 		/// Gets an array that maps argument indices to parameter indices.
 		/// For arguments that could not be mapped to any parameter, the value will be -1.
@@ -83,23 +84,28 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			return argumentToParameterMap;
 		}
-		
+
 		public override IList<ResolveResult> GetArgumentsForCall()
 		{
 			ResolveResult[] results = new ResolveResult[Member.Parameters.Count];
 			List<ResolveResult> paramsArguments = IsExpandedForm ? new List<ResolveResult>() : null;
 			// map arguments to parameters:
-			for (int i = 0; i < Arguments.Count; i++) {
+			for (int i = 0; i < Arguments.Count; i++)
+			{
 				int mappedTo;
 				if (argumentToParameterMap != null)
 					mappedTo = argumentToParameterMap[i];
 				else
 					mappedTo = IsExpandedForm ? Math.Min(i, results.Length - 1) : i;
-				
-				if (mappedTo >= 0 && mappedTo < results.Length) {
-					if (IsExpandedForm && mappedTo == results.Length - 1) {
+
+				if (mappedTo >= 0 && mappedTo < results.Length)
+				{
+					if (IsExpandedForm && mappedTo == results.Length - 1)
+					{
 						paramsArguments.Add(Arguments[i]);
-					} else {
+					}
+					else
+					{
 						var narr = Arguments[i] as NamedArgumentResolveResult;
 						if (narr != null)
 							results[mappedTo] = narr.Argument;
@@ -108,23 +114,29 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 				}
 			}
-			if (IsExpandedForm){
+			if (IsExpandedForm)
+			{
 				IType arrayType = Member.Parameters.Last().Type;
 				IType int32 = Member.Compilation.FindType(KnownTypeCode.Int32);
 				ResolveResult[] sizeArguments = { new ConstantResolveResult(int32, paramsArguments.Count) };
 				results[results.Length - 1] = new ArrayCreateResolveResult(arrayType, sizeArguments, paramsArguments);
 			}
-			
-			for (int i = 0; i < results.Length; i++) {
-				if (results[i] == null) {
-					if (Member.Parameters[i].IsOptional) {
+
+			for (int i = 0; i < results.Length; i++)
+			{
+				if (results[i] == null)
+				{
+					if (Member.Parameters[i].IsOptional)
+					{
 						results[i] = new ConstantResolveResult(Member.Parameters[i].Type, Member.Parameters[i].GetConstantValue());
-					} else {
+					}
+					else
+					{
 						results[i] = ErrorResolveResult.UnknownError;
 					}
 				}
 			}
-			
+
 			return results;
 		}
 	}

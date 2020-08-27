@@ -17,10 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Diagnostics;
-using ICSharpCode.Decompiler.IL.Transforms;
-using System.Threading;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
+
+using ICSharpCode.Decompiler.IL.Transforms;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -67,13 +68,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		internal static ILInstruction GetExit(ILInstruction inst)
 		{
 			SlotInfo slot = inst.SlotInfo;
-			if (slot == Block.InstructionSlot) {
+			if (slot == Block.InstructionSlot)
+			{
 				Block block = (Block)inst.Parent;
 				return block.Instructions.ElementAtOrDefault(inst.ChildIndex + 1) ?? ExitNotYetDetermined;
-			} else if (slot == TryInstruction.TryBlockSlot
-				|| slot == TryCatchHandler.BodySlot
-				|| slot == TryCatch.HandlerSlot
-				|| slot == PinnedRegion.BodySlot)
+			}
+			else if (slot == TryInstruction.TryBlockSlot
+			  || slot == TryCatchHandler.BodySlot
+			  || slot == TryCatch.HandlerSlot
+			  || slot == PinnedRegion.BodySlot)
 			{
 				return GetExit(inst.Parent);
 			}
@@ -88,7 +91,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (exit1 == null || exit2 == null || exit1.OpCode != exit2.OpCode)
 				return false;
-			switch (exit1.OpCode) {
+			switch (exit1.OpCode)
+			{
 				case OpCode.Branch:
 					Branch br1 = (Branch)exit1;
 					Branch br2 = (Branch)exit2;
@@ -130,8 +134,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// It's possible that there are unreachable code blocks which we only
 			// detect as such during exit point detection.
 			// Clean them up.
-			foreach (var block in blocksPotentiallyMadeUnreachable) {
-				if (block.IncomingEdgeCount == 0 || block.IncomingEdgeCount == 1 && IsInfiniteLoop(block)) {
+			foreach (var block in blocksPotentiallyMadeUnreachable)
+			{
+				if (block.IncomingEdgeCount == 0 || block.IncomingEdgeCount == 1 && IsInfiniteLoop(block))
+				{
 					block.Remove();
 				}
 			}
@@ -150,7 +156,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var child in inst.Children)
 				child.AcceptVisitor(this);
 		}
-		
+
 		protected internal override void VisitBlockContainer(BlockContainer container)
 		{
 			var oldExit = currentExit;
@@ -161,11 +167,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			currentContainer = container;
 			potentialExits = (thisExit == ExitNotYetDetermined ? new List<ILInstruction>() : null);
 			base.VisitBlockContainer(container);
-			if (thisExit == ExitNotYetDetermined && potentialExits.Count > 0) {
+			if (thisExit == ExitNotYetDetermined && potentialExits.Count > 0)
+			{
 				// This transform determined an exit point.
 				currentExit = ChooseExit(potentialExits);
-				foreach (var exit in potentialExits) {
-					if (CompatibleExitInstruction(currentExit, exit)) {
+				foreach (var exit in potentialExits)
+				{
+					if (CompatibleExitInstruction(currentExit, exit))
+					{
 						exit.ReplaceWith(new Leave(currentContainer).WithILRange(exit));
 					}
 				}
@@ -176,18 +185,24 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				while (inst.Parent.OpCode != OpCode.Block)
 					inst = inst.Parent;
 				Block block = (Block)inst.Parent;
-				if (block.HasFlag(InstructionFlags.EndPointUnreachable)) {
+				if (block.HasFlag(InstructionFlags.EndPointUnreachable))
+				{
 					// Special case: despite replacing the exits with leave(currentContainer),
 					// we still have an unreachable endpoint.
 					// The appended currentExit instruction would not be reachable!
 					// This happens in test case ExceptionHandling.ThrowInFinally()
-					if (currentExit is Branch b) {
+					if (currentExit is Branch b)
+					{
 						blocksPotentiallyMadeUnreachable.Add(b.TargetBlock);
 					}
-				} else {
+				}
+				else
+				{
 					block.Instructions.Add(currentExit);
 				}
-			} else {
+			}
+			else
+			{
 				Debug.Assert(thisExit == currentExit);
 			}
 			currentExit = oldExit;
@@ -198,8 +213,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		static ILInstruction ChooseExit(List<ILInstruction> potentialExits)
 		{
 			ILInstruction first = potentialExits[0];
-			if (first is Leave l && l.IsLeavingFunction) {
-				for (int i = 1; i < potentialExits.Count; i++) {
+			if (first is Leave l && l.IsLeavingFunction)
+			{
+				for (int i = 1; i < potentialExits.Count; i++)
+				{
 					var exit = potentialExits[i];
 					if (!(exit is Leave l2 && l2.IsLeavingFunction))
 						return exit;
@@ -212,37 +229,46 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			// Don't use foreach loop, because the children might add to the block
-			for (int i = 0; i < block.Instructions.Count; i++) {
+			for (int i = 0; i < block.Instructions.Count; i++)
+			{
 				block.Instructions[i].AcceptVisitor(this);
 			}
 		}
 
 		void HandleExit(ILInstruction inst)
 		{
-			if (currentExit == ExitNotYetDetermined && CanIntroduceAsExit(inst)) {
+			if (currentExit == ExitNotYetDetermined && CanIntroduceAsExit(inst))
+			{
 				potentialExits.Add(inst);
-			} else if (CompatibleExitInstruction(inst, currentExit)) {
+			}
+			else if (CompatibleExitInstruction(inst, currentExit))
+			{
 				inst.ReplaceWith(new Leave(currentContainer).WithILRange(inst));
 			}
 		}
 
 		private bool CanIntroduceAsExit(ILInstruction inst)
 		{
-			if (currentContainer.LeaveCount > 0) {
+			if (currentContainer.LeaveCount > 0)
+			{
 				// if we're re-running on a block container that already has an exit,
 				// we can't introduce any additional exits
 				return false;
 			}
-			if (inst is Leave l && l.IsLeavingFunction) {
+			if (inst is Leave l && l.IsLeavingFunction)
+			{
 				return canIntroduceExitForReturn;
-			} else {
+			}
+			else
+			{
 				return true;
 			}
 		}
 
 		protected internal override void VisitBranch(Branch inst)
 		{
-			if (!inst.TargetBlock.IsDescendantOf(currentContainer)) {
+			if (!inst.TargetBlock.IsDescendantOf(currentContainer))
+			{
 				HandleExit(inst);
 			}
 		}

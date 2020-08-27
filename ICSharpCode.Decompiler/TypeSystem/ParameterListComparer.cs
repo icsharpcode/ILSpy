@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -50,14 +51,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				includeModifiers = includeModifiers
 			};
 		}
-		
+
 		public bool Equals(IReadOnlyList<IParameter> x, IReadOnlyList<IParameter> y)
 		{
 			if (x == y)
 				return true;
 			if (x == null || y == null || x.Count != y.Count)
 				return false;
-			for (int i = 0; i < x.Count; i++) {
+			for (int i = 0; i < x.Count; i++)
+			{
 				var a = x[i];
 				var b = y[i];
 				if (a == null && b == null)
@@ -65,30 +67,33 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (a == null || b == null)
 					return false;
 
-				if (includeModifiers) {
+				if (includeModifiers)
+				{
 					if (a.ReferenceKind != b.ReferenceKind)
 						return false;
 					if (a.IsParams != b.IsParams)
 						return false;
 				}
-				
+
 				// We want to consider the parameter lists "Method<T>(T a)" and "Method<S>(S b)" as equal.
 				// However, the parameter types are not considered equal, as T is a different type parameter than S.
 				// In order to compare the method signatures, we will normalize all method type parameters.
 				IType aType = a.Type.AcceptVisitor(normalizationVisitor);
 				IType bType = b.Type.AcceptVisitor(normalizationVisitor);
-				
+
 				if (!aType.Equals(bType))
 					return false;
 			}
 			return true;
 		}
-		
+
 		public int GetHashCode(IReadOnlyList<IParameter> obj)
 		{
 			int hashCode = obj.Count;
-			unchecked {
-				foreach (IParameter p in obj) {
+			unchecked
+			{
+				foreach (IParameter p in obj)
+				{
 					hashCode *= 27;
 					IType type = p.Type.AcceptVisitor(normalizationVisitor);
 					hashCode += type.GetHashCode();
@@ -97,7 +102,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return hashCode;
 		}
 	}
-	
+
 	/// <summary>
 	/// Compares member signatures.
 	/// </summary>
@@ -107,19 +112,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public sealed class SignatureComparer : IEqualityComparer<IMember>
 	{
 		StringComparer nameComparer;
-		
+
 		public SignatureComparer(StringComparer nameComparer)
 		{
 			if (nameComparer == null)
 				throw new ArgumentNullException(nameof(nameComparer));
 			this.nameComparer = nameComparer;
 		}
-		
+
 		/// <summary>
 		/// Gets a signature comparer that uses an ordinal comparison for the member name.
 		/// </summary>
 		public static readonly SignatureComparer Ordinal = new SignatureComparer(StringComparer.Ordinal);
-		
+
 		public bool Equals(IMember x, IMember y)
 		{
 			if (x == y)
@@ -128,23 +133,28 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return false;
 			IParameterizedMember px = x as IParameterizedMember;
 			IParameterizedMember py = y as IParameterizedMember;
-			if (px != null && py != null) {
+			if (px != null && py != null)
+			{
 				IMethod mx = x as IMethod;
 				IMethod my = y as IMethod;
 				if (mx != null && my != null && mx.TypeParameters.Count != my.TypeParameters.Count)
 					return false;
 				return ParameterListComparer.Instance.Equals(px.Parameters, py.Parameters);
-			} else {
+			}
+			else
+			{
 				return true;
 			}
 		}
-		
+
 		public int GetHashCode(IMember obj)
 		{
-			unchecked {
+			unchecked
+			{
 				int hash = (int)obj.SymbolKind * 33 + nameComparer.GetHashCode(obj.Name);
 				IParameterizedMember pm = obj as IParameterizedMember;
-				if (pm != null) {
+				if (pm != null)
+				{
 					hash *= 27;
 					hash += ParameterListComparer.Instance.GetHashCode(pm.Parameters);
 					IMethod m = pm as IMethod;

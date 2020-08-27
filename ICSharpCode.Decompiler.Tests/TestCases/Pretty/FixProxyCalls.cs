@@ -96,10 +96,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 
 		protected internal override void Test(string test)
 		{
-			action = delegate(string a) {
+			action = delegate (string a) {
 				base.Test(a);
 			};
-			if (test.Equals(1)) {
+			if (test.Equals(1))
+			{
 				throw new Exception("roslyn optimizes is inlining the assignment which lets the test fail");
 			}
 			action(test);
@@ -118,7 +119,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		public Action<object> M(object state)
 		{
-			return delegate(object x) {
+			return delegate (object x) {
 				base.BaseCall(x, state, (Func<object>)(() => null));
 			};
 		}
@@ -138,7 +139,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 			Action action = delegate {
 				base.Test(a);
 			};
-			if (a.Equals(1)) {
+			if (a.Equals(1))
+			{
 				throw new Exception("roslyn optimize is inlining the assignment which lets the test fail");
 			}
 			action();

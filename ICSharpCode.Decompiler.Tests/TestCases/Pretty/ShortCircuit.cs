@@ -31,37 +31,37 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public abstract void M1();
 		public abstract void M2();
 		public abstract void E();
-		
+
 		public void ExprAnd()
 		{
 			B(F(0) && F(1));
 		}
-		
+
 		public void ExprOr()
 		{
 			B(F(0) || F(1));
 		}
-		
+
 		public void ExprCond()
 		{
 			B(F(0) ? F(1) : F(2));
 		}
-		
+
 		public void ExprCondAnd()
 		{
 			B((F(0) && F(1)) ? F(2) : F(3));
 		}
-		
+
 		public void ExprMix4A()
 		{
 			B(((F(0) || F(1)) && F(2)) || F(3));
 		}
-		
+
 		public void ExprMix4B()
 		{
 			B((F(0) || F(1)) && (F(2) || F(3)));
 		}
-		
+
 		public void ExprMix4C()
 		{
 			B((F(0) && F(1)) || (F(2) && F(3)));
@@ -69,9 +69,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtAnd2()
 		{
-			if (F(0) && F(1)) {
+			if (F(0) && F(1))
+			{
 				M1();
-			} else {
+			}
+			else
+			{
 				M2();
 			}
 			E();
@@ -79,16 +82,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtOr2A()
 		{
-			if (F(0) || F(1)) {
+			if (F(0) || F(1))
+			{
 				M1();
 			}
 		}
-		
+
 		public void StmtOr2B()
 		{
-			if (F(0) || F(1)) {
+			if (F(0) || F(1))
+			{
 				M1();
-			} else {
+			}
+			else
+			{
 				M2();
 			}
 			E();
@@ -96,9 +103,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtAnd3()
 		{
-			if (F(0) && F(1) && F(2)) {
+			if (F(0) && F(1) && F(2))
+			{
 				M1();
-			} else {
+			}
+			else
+			{
 				M2();
 			}
 			E();
@@ -106,9 +116,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtOr3()
 		{
-			if (F(0) || F(1) || F(2)) {
+			if (F(0) || F(1) || F(2))
+			{
 				M1();
-			} else {
+			}
+			else
+			{
 				M2();
 			}
 			E();
@@ -116,9 +129,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtOr4()
 		{
-			if (GetInt(0) != 0 || GetInt(1) != 0) {
+			if (GetInt(0) != 0 || GetInt(1) != 0)
+			{
 				M1();
-			} else {
+			}
+			else
+			{
 				M2();
 			}
 			E();
@@ -126,73 +142,92 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtMix3A()
 		{
-			if ((F(0) || F(1)) && F(2)) {
+			if ((F(0) || F(1)) && F(2))
+			{
 				M1();
 			}
 		}
 
 		public void StmtMix3B()
 		{
-			if ((F(0) || F(1)) && F(2)) {
+			if ((F(0) || F(1)) && F(2))
+			{
 				M1();
-			} else {
+			}
+			else
+			{
 				M2();
 			}
 		}
 
 		public void StmtMix4V1A()
 		{
-			if (((F(0) || F(1)) && F(2)) || F(3)) {
+			if (((F(0) || F(1)) && F(2)) || F(3))
+			{
 				M1();
 			}
 		}
 
 		public void StmtMix4V1B()
 		{
-			if (((F(0) || F(1)) && F(2)) || F(3)) {
+			if (((F(0) || F(1)) && F(2)) || F(3))
+			{
 				M1();
-			} else {
+			}
+			else
+			{
 				M2();
 			}
 		}
 
 		public void StmtMix4V2A()
 		{
-			if ((F(0) || F(1)) && (F(2) || F(3))) {
+			if ((F(0) || F(1)) && (F(2) || F(3)))
+			{
 				M1();
 			}
 		}
 
 		public void StmtMix4V2B()
 		{
-			if ((F(0) || F(1)) && (F(2) || F(3))) {
+			if ((F(0) || F(1)) && (F(2) || F(3)))
+			{
 				M1();
-			} else {
+			}
+			else
+			{
 				M2();
 			}
 		}
 
 		public void StmtMix4V3A()
 		{
-			if ((F(0) && F(1)) || (F(2) && F(3))) {
+			if ((F(0) && F(1)) || (F(2) && F(3)))
+			{
 				M1();
 			}
 		}
 
 		public void StmtMix4V3B()
 		{
-			if ((F(0) && F(1)) || (F(2) && F(3))) {
+			if ((F(0) && F(1)) || (F(2) && F(3)))
+			{
 				M1();
-			} else {
+			}
+			else
+			{
 				M2();
 			}
 		}
 
 		public void StmtComplex()
 		{
-			if (F(0) && F(1) && !F(2) && (F(3) || F(4))) {
+			if (F(0) && F(1) && !F(2) && (F(3) || F(4)))
+			{
 				M1();
-			} else {
+			}
+			else
+			{
 				M2();
 			}
 			E();
@@ -200,9 +235,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtComplex2(int i)
 		{
-			if (i > 1000 || (i >= 1 && i <= 8) || i == 42) {
+			if (i > 1000 || (i >= 1 && i <= 8) || i == 42)
+			{
 				M1();
-			} else {
+			}
+			else
+			{
 				M2();
 			}
 			E();
@@ -210,9 +248,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtComplex3(int i)
 		{
-			if (i > 1000 || (i >= 1 && i <= 8) || (i >= 100 && i <= 200) || i == 42) {
+			if (i > 1000 || (i >= 1 && i <= 8) || (i >= 100 && i <= 200) || i == 42)
+			{
 				M1();
-			} else {
+			}
+			else
+			{
 				M2();
 			}
 			E();
@@ -220,9 +261,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtComplex4(int i)
 		{
-			if (i > 1000 || (i >= 1 && i <= 8) || i == 42 || i == 23) {
+			if (i > 1000 || (i >= 1 && i <= 8) || i == 42 || i == 23)
+			{
 				M1();
-			} else {
+			}
+			else
+			{
 				M2();
 			}
 			E();
@@ -230,11 +274,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtComplex5()
 		{
-			if (F(0)) {
-				if (!F(1) && !F(2)) {
+			if (F(0))
+			{
+				if (!F(1) && !F(2))
+				{
 					return;
 				}
-			} else if (!F(3) || !F(4)) {
+			}
+			else if (!F(3) || !F(4))
+			{
 				M2();
 				return;
 			}
@@ -243,9 +291,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int StmtComplex6()
 		{
-			if (F(0)) {
+			if (F(0))
+			{
 				M1();
-				if (F(1) || F(2)) {
+				if (F(1) || F(2))
+				{
 					return 1;
 				}
 			}
@@ -254,7 +304,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int InferCorrectOrder()
 		{
-			if (F(1) || F(2)) {
+			if (F(1) || F(2))
+			{
 				return 1;
 			}
 			return 2;
@@ -263,15 +314,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if !OPT
 		public void EmptyIf()
 		{
-			if (F(0)) {
+			if (F(0))
+			{
 			}
-			if (!F(1)) {
+			if (!F(1))
+			{
 			}
-			if (F(2) && F(3)) {
+			if (F(2) && F(3))
+			{
 			}
-			if (F(4) || F(5)) {
+			if (F(4) || F(5))
+			{
 			}
-			if (F(0) && F(1) && !F(2) && (F(3) || F(4))) {
+			if (F(0) && F(1) && !F(2) && (F(3) || F(4)))
+			{
 			}
 			E();
 		}

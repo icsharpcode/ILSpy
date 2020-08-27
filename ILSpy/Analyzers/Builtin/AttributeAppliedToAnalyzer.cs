@@ -22,6 +22,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -38,9 +39,12 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 			var scope = context.GetScopeOf(attributeType);
 			// TODO: DeclSecurity attributes are not supported.
-			if (!IsBuiltinAttribute(attributeType, out var knownAttribute)) {
+			if (!IsBuiltinAttribute(attributeType, out var knownAttribute))
+			{
 				return HandleCustomAttribute(attributeType, scope);
-			} else {
+			}
+			else
+			{
 				return HandleBuiltinAttribute(knownAttribute, scope).SelectMany(s => s);
 			}
 		}
@@ -48,7 +52,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		bool IsBuiltinAttribute(ITypeDefinition attributeType, out KnownAttribute knownAttribute)
 		{
 			knownAttribute = attributeType.IsBuiltinAttribute();
-			switch (knownAttribute) {
+			switch (knownAttribute)
+			{
 				case KnownAttribute.Serializable:
 				case KnownAttribute.ComImport:
 				case KnownAttribute.StructLayout:
@@ -107,10 +112,12 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					.Select(m => m.AccessorOwner ?? m);
 			}
 
-			foreach (Decompiler.Metadata.PEFile module in scope.GetAllModules()) {
+			foreach (Decompiler.Metadata.PEFile module in scope.GetAllModules())
+			{
 				var ts = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
 
-				switch (attribute) {
+				switch (attribute)
+				{
 					case KnownAttribute.Serializable:
 					case KnownAttribute.ComImport:
 					case KnownAttribute.StructLayout:
@@ -145,31 +152,42 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		{
 			var genericContext = new GenericContext(); // type arguments do not matter for this analyzer.
 
-			foreach (var module in scope.GetAllModules()) {
+			foreach (var module in scope.GetAllModules())
+			{
 				var ts = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
 				var referencedParameters = new HashSet<ParameterHandle>();
-				foreach (var h in module.Metadata.CustomAttributes) {
+				foreach (var h in module.Metadata.CustomAttributes)
+				{
 					var customAttribute = module.Metadata.GetCustomAttribute(h);
 					var attributeCtor = ts.MainModule.ResolveMethod(customAttribute.Constructor, genericContext);
 					if (attributeCtor.DeclaringTypeDefinition != null
 						&& attributeCtor.ParentModule.PEFile == attributeType.ParentModule.PEFile
-						&& attributeCtor.DeclaringTypeDefinition.MetadataToken == attributeType.MetadataToken) {
-						if (customAttribute.Parent.Kind == HandleKind.Parameter) {
+						&& attributeCtor.DeclaringTypeDefinition.MetadataToken == attributeType.MetadataToken)
+					{
+						if (customAttribute.Parent.Kind == HandleKind.Parameter)
+						{
 							referencedParameters.Add((ParameterHandle)customAttribute.Parent);
-						} else {
+						}
+						else
+						{
 							var parent = GetParentEntity(ts, customAttribute);
 							if (parent != null)
 								yield return parent;
 						}
 					}
 				}
-				if (referencedParameters.Count > 0) {
-					foreach (var h in module.Metadata.MethodDefinitions) {
+				if (referencedParameters.Count > 0)
+				{
+					foreach (var h in module.Metadata.MethodDefinitions)
+					{
 						var md = module.Metadata.GetMethodDefinition(h);
-						foreach (var p in md.GetParameters()) {
-							if (referencedParameters.Contains(p)) {
+						foreach (var p in md.GetParameters())
+						{
+							if (referencedParameters.Contains(p))
+							{
 								var method = ts.MainModule.ResolveMethod(h, genericContext);
-								if (method != null) {
+								if (method != null)
+								{
 									if (method.IsAccessor)
 										yield return method.AccessorOwner;
 									else
@@ -186,7 +204,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		ISymbol GetParentEntity(DecompilerTypeSystem ts, CustomAttribute customAttribute)
 		{
 			var metadata = ts.MainModule.PEFile.Metadata;
-			switch (customAttribute.Parent.Kind) {
+			switch (customAttribute.Parent.Kind)
+			{
 				case HandleKind.MethodDefinition:
 				case HandleKind.FieldDefinition:
 				case HandleKind.PropertyDefinition:

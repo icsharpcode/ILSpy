@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -51,20 +52,28 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override IType VisitTypeParameter(ITypeParameter type)
 		{
-			if (type.OwnerType == SymbolKind.Method && ReplaceMethodTypeParametersWithDummy) {
+			if (type.OwnerType == SymbolKind.Method && ReplaceMethodTypeParametersWithDummy)
+			{
 				return DummyTypeParameter.GetMethodTypeParameter(type.Index);
-			} else if (type.OwnerType == SymbolKind.TypeDefinition && ReplaceClassTypeParametersWithDummy) {
+			}
+			else if (type.OwnerType == SymbolKind.TypeDefinition && ReplaceClassTypeParametersWithDummy)
+			{
 				return DummyTypeParameter.GetClassTypeParameter(type.Index);
-			} else if (RemoveNullability && type is NullabilityAnnotatedTypeParameter natp) {
+			}
+			else if (RemoveNullability && type is NullabilityAnnotatedTypeParameter natp)
+			{
 				return natp.TypeWithoutAnnotation.AcceptVisitor(this);
-			} else {
+			}
+			else
+			{
 				return base.VisitTypeParameter(type);
 			}
 		}
 
 		public override IType VisitTypeDefinition(ITypeDefinition type)
 		{
-			switch (type.KnownTypeCode) {
+			switch (type.KnownTypeCode)
+			{
 				case KnownTypeCode.Object when DynamicAndObject:
 					// Instead of normalizing dynamic->object,
 					// we do this the opposite direction, so that we don't need a compilation to find the object type.
@@ -82,9 +91,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override IType VisitTupleType(TupleType type)
 		{
-			if (TupleToUnderlyingType) {
+			if (TupleToUnderlyingType)
+			{
 				return type.UnderlyingType.AcceptVisitor(this);
-			} else {
+			}
+			else
+			{
 				return base.VisitTupleType(type);
 			}
 		}
@@ -107,18 +119,24 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override IType VisitModOpt(ModifiedType type)
 		{
-			if (RemoveModOpt) {
+			if (RemoveModOpt)
+			{
 				return type.ElementType.AcceptVisitor(this);
-			} else {
+			}
+			else
+			{
 				return base.VisitModOpt(type);
 			}
 		}
 
 		public override IType VisitModReq(ModifiedType type)
 		{
-			if (RemoveModReq) {
+			if (RemoveModReq)
+			{
 				return type.ElementType.AcceptVisitor(this);
-			} else {
+			}
+			else
+			{
 				return base.VisitModReq(type);
 			}
 		}

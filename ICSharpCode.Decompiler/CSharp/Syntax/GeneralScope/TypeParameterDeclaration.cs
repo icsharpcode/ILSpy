@@ -30,27 +30,28 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class TypeParameterDeclaration : AstNode
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
-		public static readonly TokenRole OutVarianceKeywordRole = new TokenRole ("out");
-		public static readonly TokenRole InVarianceKeywordRole = new TokenRole ("in");
-		
+		public static readonly TokenRole OutVarianceKeywordRole = new TokenRole("out");
+		public static readonly TokenRole InVarianceKeywordRole = new TokenRole("in");
+
 		public override NodeType NodeType {
 			get { return NodeType.Unknown; }
 		}
-		
+
 		public AstNodeCollection<AttributeSection> Attributes {
-			get { return GetChildrenByRole (AttributeRole); }
+			get { return GetChildrenByRole(AttributeRole); }
 		}
-		
+
 		VarianceModifier variance;
-		
+
 		public VarianceModifier Variance {
 			get { return variance; }
 			set { ThrowIfFrozen(); variance = value; }
 		}
-		
+
 		public CSharpTokenNode VarianceToken {
 			get {
-				switch (Variance) {
+				switch (Variance)
+				{
 					case VarianceModifier.Covariant:
 						return GetChildByRole(OutVarianceKeywordRole);
 					case VarianceModifier.Contravariant:
@@ -60,49 +61,49 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 			}
 		}
-		
+
 		public string Name {
 			get {
-				return GetChildByRole (Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole(Roles.Identifier, Identifier.Create (value));
-			}
-		}
-		
-		public Identifier NameToken {
-			get {
-				return GetChildByRole (Roles.Identifier);
-			}
-			set {
-				SetChildByRole (Roles.Identifier, value);
+				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}
 
-		public TypeParameterDeclaration ()
+		public Identifier NameToken {
+			get {
+				return GetChildByRole(Roles.Identifier);
+			}
+			set {
+				SetChildByRole(Roles.Identifier, value);
+			}
+		}
+
+		public TypeParameterDeclaration()
 		{
 		}
 
-		public TypeParameterDeclaration (string name)
+		public TypeParameterDeclaration(string name)
 		{
 			Name = name;
 		}
 
-		public override void AcceptVisitor (IAstVisitor visitor)
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitTypeParameterDeclaration (this);
+			visitor.VisitTypeParameterDeclaration(this);
 		}
-		
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitTypeParameterDeclaration (this);
+			return visitor.VisitTypeParameterDeclaration(this);
 		}
-		
+
 		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
 			return visitor.VisitTypeParameterDeclaration(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			TypeParameterDeclaration o = other as TypeParameterDeclaration;

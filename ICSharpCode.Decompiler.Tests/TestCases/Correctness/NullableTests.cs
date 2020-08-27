@@ -103,18 +103,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void FieldAccessOrderOfEvaluation(NullableTests c)
 		{
 			Console.WriteLine("GetInt, then NRE:");
-			try {
+			try
+			{
 				c.intField = GetValue<int>();
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				Console.WriteLine(ex.Message);
 			}
 			Console.WriteLine("NRE before GetInt:");
-			try {
+			try
+			{
 #if CS60
 				ref int i = ref c.intField;
 				i = GetValue<int>();
 #endif
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				Console.WriteLine(ex.Message);
 			}
 		}
@@ -124,18 +130,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void FieldAccessOrderOfEvaluationWithStruct(NullableTests c)
 		{
 			Console.WriteLine("GetInt, then NRE (with struct):");
-			try {
+			try
+			{
 				c.structField.IntField = GetValue<int>();
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				Console.WriteLine(ex.Message);
 			}
 			Console.WriteLine("NRE before GetInt (with struct):");
-			try {
+			try
+			{
 #if CS60
 				ref SomeStruct s = ref c.structField;
 				s.IntField = GetValue<int>();
 #endif
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				Console.WriteLine(ex.Message);
 			}
 		}
@@ -155,27 +167,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void ArrayAccessOrderOfEvaluation()
 		{
 			Console.WriteLine("GetArray direct:");
-			try {
+			try
+			{
 				GetArray<int>()[GetIndex()] = GetValue<int>();
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				Console.WriteLine(ex.Message);
 			}
 			Console.WriteLine("GetArray with ref:");
-			try {
+			try
+			{
 #if CS60
 				ref int elem = ref GetArray<int>()[GetIndex()];
 				elem = GetValue<int>();
 #endif
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				Console.WriteLine(ex.Message);
 			}
 			Console.WriteLine("GetArray direct with value-type:");
-			try {
+			try
+			{
 				// This line is mis-compiled by legacy csc:
 				// with the legacy compiler the NRE is thrown before the GetValue call;
 				// with Roslyn the NRE is thrown after the GetValue call.
 				GetArray<TimeSpan>()[GetIndex()] = GetValue<TimeSpan>();
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				Console.WriteLine(ex.Message);
 			}
 		}

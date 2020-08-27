@@ -1,8 +1,8 @@
 ﻿// This test case is taken from https://blogs.msdn.microsoft.com/lukeh/2007/10/01/taking-linq-to-objects-to-extremes-a-fully-linqified-raytracer/
 
-using System.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace RayTracer
 {
@@ -333,13 +333,17 @@ namespace RayTracer
 			Vector eo = Vector.Minus(Center, ray.Start);
 			double v = Vector.Dot(eo, ray.Dir);
 			double dist;
-			if (v < 0) {
+			if (v < 0)
+			{
 				dist = 0;
-			} else {
+			}
+			else
+			{
 				double disc = Math.Pow(Radius, 2) - (Vector.Dot(eo, eo) - Math.Pow(v, 2));
 				dist = disc < 0 ? 0 : v - Math.Sqrt(disc);
 			}
-			if (dist == 0) return null;
+			if (dist == 0)
+				return null;
 			return new ISect() {
 				Thing = this,
 				Ray = ray,
@@ -361,7 +365,8 @@ namespace RayTracer
 		public override ISect Intersect(Ray ray)
 		{
 			double denom = Vector.Dot(Norm, ray.Dir);
-			if (denom > 0) return null;
+			if (denom > 0)
+				return null;
 			return new ISect() {
 				Thing = this,
 				Ray = ray,

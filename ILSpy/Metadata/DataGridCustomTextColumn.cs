@@ -32,7 +32,8 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			TextBox textBox = new TextBox() { Style = (Style)MetadataTableViews.Instance["DataGridCustomTextColumnTextBoxStyle"] };
 			BindingOperations.SetBinding(textBox, TextBox.TextProperty, Binding);
-			if (ToolTipBinding != null) {
+			if (ToolTipBinding != null)
+			{
 				textBox.MouseMove += TextBox_MouseMove;
 			}
 			textBox.GotFocus += TextBox_GotFocus;

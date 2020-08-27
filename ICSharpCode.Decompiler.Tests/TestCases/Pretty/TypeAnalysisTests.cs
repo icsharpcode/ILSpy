@@ -118,7 +118,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void TernaryOp(Random a, Random b, bool c)
 		{
-			if ((c ? a : b) == null) {
+			if ((c ? a : b) == null)
+			{
 				Console.WriteLine();
 			}
 		}

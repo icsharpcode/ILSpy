@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// if (cond) {
 			//   if (cond2) {
 			//     leave (value)
-		    //   }
+			//   }
 			//   leave (value2)
 			// }
 			// leave (value3)

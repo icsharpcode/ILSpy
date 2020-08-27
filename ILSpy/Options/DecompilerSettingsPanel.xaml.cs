@@ -24,6 +24,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Xml.Linq;
+
 using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.Options
@@ -58,7 +59,8 @@ namespace ICSharpCode.ILSpy.Options
 			var newSettings = new Decompiler.DecompilerSettings();
 			var properties = typeof(Decompiler.DecompilerSettings).GetProperties()
 				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false);
-			foreach (var p in properties) {
+			foreach (var p in properties)
+			{
 				var value = (bool?)e.Attribute(p.Name);
 				if (value.HasValue)
 					p.SetValue(newSettings, value.Value);
@@ -77,7 +79,8 @@ namespace ICSharpCode.ILSpy.Options
 			var newSettings = ((DecompilerSettings)this.DataContext).ToDecompilerSettings();
 			var properties = typeof(Decompiler.DecompilerSettings).GetProperties()
 				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false);
-			foreach (var p in properties) {
+			foreach (var p in properties)
+			{
 				section.SetAttributeValue(p.Name, p.GetValue(newSettings));
 			}
 			XElement existingElement = root.Element("DecompilerSettings");
@@ -100,8 +103,10 @@ namespace ICSharpCode.ILSpy.Options
 
 		void CheckGroup(CollectionViewGroup group, bool value)
 		{
-			foreach (var item in group.Items) {
-				switch (item) {
+			foreach (var item in group.Items)
+			{
+				switch (item)
+				{
 					case CollectionViewGroup subGroup:
 						CheckGroup(subGroup, value);
 						break;
@@ -115,8 +120,10 @@ namespace ICSharpCode.ILSpy.Options
 		bool IsGroupChecked(CollectionViewGroup group)
 		{
 			bool value = true;
-			foreach (var item in group.Items) {
-				switch (item) {
+			foreach (var item in group.Items)
+			{
+				switch (item)
+				{
 					case CollectionViewGroup subGroup:
 						value = value && IsGroupChecked(subGroup);
 						break;
@@ -165,7 +172,8 @@ namespace ICSharpCode.ILSpy.Options
 		public Decompiler.DecompilerSettings ToDecompilerSettings()
 		{
 			var settings = new Decompiler.DecompilerSettings();
-			foreach (var item in Settings) {
+			foreach (var item in Settings)
+			{
 				item.Property.SetValue(settings, item.IsEnabled);
 			}
 			return settings;
@@ -179,8 +187,8 @@ namespace ICSharpCode.ILSpy.Options
 		public CSharpDecompilerSetting(PropertyInfo p)
 		{
 			this.Property = p;
-			this.Category =  GetResourceString(p.GetCustomAttribute<CategoryAttribute>()?.Category ?? Resources.Other);
-			this.Description =  GetResourceString(p.GetCustomAttribute<DescriptionAttribute>()?.Description ?? p.Name);
+			this.Category = GetResourceString(p.GetCustomAttribute<CategoryAttribute>()?.Category ?? Resources.Other);
+			this.Description = GetResourceString(p.GetCustomAttribute<DescriptionAttribute>()?.Description ?? p.Name);
 		}
 
 		public PropertyInfo Property { get; }
@@ -188,7 +196,8 @@ namespace ICSharpCode.ILSpy.Options
 		public bool IsEnabled {
 			get => isEnabled;
 			set {
-				if (value != isEnabled) {
+				if (value != isEnabled)
+				{
 					isEnabled = value;
 					OnPropertyChanged();
 				}

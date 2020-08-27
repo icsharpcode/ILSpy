@@ -16,15 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.IL.Transforms;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Diagnostics;
-using ICSharpCode.Decompiler.FlowAnalysis;
-using ICSharpCode.Decompiler.Util;
-using ICSharpCode.Decompiler.TypeSystem;
+using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.FlowAnalysis;
+using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -89,30 +90,32 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return loopHead;
 
 				// match for loop increment block
-				if (pred.Successors.Count == 1) {
-					if (HighLevelLoopTransform.MatchIncrementBlock((Block)pred.UserData, out var target) &&target == loopHead.UserData)
+				if (pred.Successors.Count == 1)
+				{
+					if (HighLevelLoopTransform.MatchIncrementBlock((Block)pred.UserData, out var target) && target == loopHead.UserData)
 						return pred;
 				}
 
 				// match do-while condition
-				if (pred.Successors.Count <= 2) {
+				if (pred.Successors.Count <= 2)
+				{
 					if (HighLevelLoopTransform.MatchDoWhileConditionBlock((Block)pred.UserData, out var t1, out var t2) &&
-					    (t1 == loopHead.UserData || t2 == loopHead.UserData))
+						(t1 == loopHead.UserData || t2 == loopHead.UserData))
 						return pred;
 				}
 
 				return loopHead;
 			}
-			
+
 			public bool MatchContinue(ControlFlowNode node) => MatchContinue(node, out var _);
 
-			public bool MatchContinue(ControlFlowNode node, int depth) => 
+			public bool MatchContinue(ControlFlowNode node, int depth) =>
 				MatchContinue(node, out int _depth) && depth == _depth;
 
 			public bool MatchContinue(ControlFlowNode node, out int depth) => continueDepth.TryGetValue(node, out depth);
 
 			public int GetContinueDepth(ControlFlowNode node) => MatchContinue(node, out var depth) ? depth : 0;
-		
+
 			/// <summary>
 			/// Lists all potential targets for break; statements from a domination tree,
 			/// assuming the domination tree must be exited via either break; or continue;
@@ -123,7 +126,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			/// Note that node will be returned once for each outgoing edge.
 			/// Labelled continue statements (depth > 1) are counted as break targets
 			/// </summary>
-			internal IEnumerable<ControlFlowNode> GetBreakTargets(ControlFlowNode dominator) => 
+			internal IEnumerable<ControlFlowNode> GetBreakTargets(ControlFlowNode dominator) =>
 				TreeTraversal.PreOrder(dominator, n => n.DominatorTreeChildren.Where(c => !MatchContinue(c)))
 					.SelectMany(n => n.Successors)
 					.Where(n => !dominator.Dominates(n) && !MatchContinue(n, 1));
@@ -135,16 +138,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			analysis.AllowUnreachableCases = context.Settings.RemoveDeadCode;
 
-			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
+			foreach (var container in function.Descendants.OfType<BlockContainer>())
+			{
 				currentContainer = container;
 				controlFlowGraph = null;
 
 				bool blockContainerNeedsCleanup = false;
-				foreach (var block in container.Blocks) {
+				foreach (var block in container.Blocks)
+				{
 					context.CancellationToken.ThrowIfCancellationRequested();
 					ProcessBlock(block, ref blockContainerNeedsCleanup);
 				}
-				if (blockContainerNeedsCleanup) {
+				if (blockContainerNeedsCleanup)
+				{
 					Debug.Assert(container.Blocks.All(b => b.Instructions.Count != 0 || b.IncomingEdgeCount == 0));
 
 					// if the original code has an unreachable switch-like condition
@@ -161,33 +167,40 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void ProcessBlock(Block block, ref bool blockContainerNeedsCleanup)
 		{
 			bool analysisSuccess = analysis.AnalyzeBlock(block);
-			if (analysisSuccess && UseCSharpSwitch(out _)) {
+			if (analysisSuccess && UseCSharpSwitch(out _))
+			{
 				// complex multi-block switch that can be combined into a single SwitchInstruction
 				ILInstruction switchValue = new LdLoc(analysis.SwitchVariable);
 				Debug.Assert(switchValue.ResultType.IsIntegerType() || switchValue.ResultType == StackType.Unknown);
-				if (!(switchValue.ResultType == StackType.I4 || switchValue.ResultType == StackType.I8)) {
+				if (!(switchValue.ResultType == StackType.I4 || switchValue.ResultType == StackType.I8))
+				{
 					// switchValue must have a result type of either I4 or I8
 					switchValue = new Conv(switchValue, PrimitiveType.I8, false, Sign.Signed);
 				}
 				var sw = new SwitchInstruction(switchValue);
-				foreach (var section in analysis.Sections) {
+				foreach (var section in analysis.Sections)
+				{
 					sw.Sections.Add(new SwitchSection {
 						Labels = section.Key,
 						Body = section.Value
 					});
 				}
-				if (block.Instructions.Last() is SwitchInstruction) {
+				if (block.Instructions.Last() is SwitchInstruction)
+				{
 					// we'll replace the switch
-				} else {
+				}
+				else
+				{
 					Debug.Assert(block.Instructions.SecondToLastOrDefault() is IfInstruction);
 					// Remove branch/leave after if; it's getting moved into a section.
 					block.Instructions.RemoveAt(block.Instructions.Count - 1);
 				}
 				sw.AddILRange(block.Instructions[block.Instructions.Count - 1]);
 				block.Instructions[block.Instructions.Count - 1] = sw;
-				
+
 				// mark all inner blocks that were converted to the switch statement for deletion
-				foreach (var innerBlock in analysis.InnerBlocks) {
+				foreach (var innerBlock in analysis.InnerBlocks)
+				{
 					Debug.Assert(innerBlock.Parent == block.Parent);
 					Debug.Assert(innerBlock != ((BlockContainer)block.Parent).EntryPoint);
 					innerBlock.Instructions.Clear();
@@ -196,7 +209,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				controlFlowGraph = null; // control flow graph is no-longer valid
 				blockContainerNeedsCleanup = true;
 				SortSwitchSections(sw);
-			} else {
+			}
+			else
+			{
 				// 2nd pass of SimplifySwitchInstruction (after duplicating return blocks),
 				// (1st pass was in ControlFlowSimplification)
 				SimplifySwitchInstruction(block, context);
@@ -218,12 +233,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var dict = new Dictionary<Block, SwitchSection>(); // branch target -> switch section
 			sw.Sections.RemoveAll(
 				section => {
-					if (section.Body.MatchBranch(out Block target)) {
-						if (dict.TryGetValue(target, out SwitchSection primarySection)) {
+					if (section.Body.MatchBranch(out Block target))
+					{
+						if (dict.TryGetValue(target, out SwitchSection primarySection))
+						{
 							primarySection.Labels = primarySection.Labels.UnionWith(section.Labels);
 							primarySection.HasNullLabel |= section.HasNullLabel;
 							return true; // remove this section
-						} else {
+						}
+						else
+						{
 							dict.Add(target, section);
 						}
 					}
@@ -244,11 +263,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		static void AdjustLabels(SwitchInstruction sw, ILTransformContext context)
 		{
-			if (sw.Value is BinaryNumericInstruction bop && !bop.CheckForOverflow && bop.Right.MatchLdcI(out long val)) {
+			if (sw.Value is BinaryNumericInstruction bop && !bop.CheckForOverflow && bop.Right.MatchLdcI(out long val))
+			{
 				// Move offset into labels:
 				context.Step("Move offset into switch labels", bop);
 				long offset;
-				switch (bop.Operator) {
+				switch (bop.Operator)
+				{
 					case BinaryNumericOperator.Add:
 						offset = unchecked(-val);
 						break;
@@ -259,7 +280,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						return;
 				}
 				sw.Value = bop.Left;
-				foreach (var section in sw.Sections) {
+				foreach (var section in sw.Sections)
+				{
 					section.Labels = section.Labels.AddOffset(offset);
 				}
 			}
@@ -272,18 +294,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		private bool UseCSharpSwitch(out KeyValuePair<LongSet, ILInstruction> defaultSection)
 		{
-			if (!analysis.InnerBlocks.Any()) {
+			if (!analysis.InnerBlocks.Any())
+			{
 				defaultSection = default;
 				return false;
 			}
 			defaultSection = analysis.Sections.FirstOrDefault(s => s.Key.Count() > MaxValuesPerSection);
-			if (defaultSection.Value == null) {
+			if (defaultSection.Value == null)
+			{
 				// no default section found?
 				// This should never happen, as we'd need 2^64/MaxValuesPerSection sections to hit this case...
 				return false;
 			}
 			var defaultSectionKey = defaultSection.Key;
-			if (analysis.Sections.Any(s => !s.Key.SetEquals(defaultSectionKey) && s.Key.Count() > MaxValuesPerSection)) {
+			if (analysis.Sections.Any(s => !s.Key.SetEquals(defaultSectionKey) && s.Key.Count() > MaxValuesPerSection))
+			{
 				// Only the default section is allowed to have tons of keys.
 				// C# doesn't support "case 1 to 100000000", and we don't want to generate
 				// gigabytes of case labels.
@@ -293,13 +318,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// good enough indicator that the surrounding code also forms a switch statement
 			if (analysis.ContainsILSwitch || MatchRoslynSwitchOnString())
 				return true;
-			
+
 			// heuristic to determine if a block would be better represented as an if statement rather than switch
 			int ifCount = analysis.InnerBlocks.Count + 1;
 			int intervalCount = analysis.Sections.Where(s => !s.Key.SetEquals(defaultSectionKey)).Sum(s => s.Key.Intervals.Length);
 			if (ifCount < intervalCount)
 				return false;
-			
+
 			(var flowNodes, var caseNodes) = AnalyzeControlFlow();
 
 			// don't create switch statements with only one non-default label when the corresponding condition tree is flat
@@ -307,7 +332,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// for example, a loop condition: while (c == '\n' || c == '\r')
 			if (analysis.Sections.Count == 2 && IsSingleCondition(flowNodes, caseNodes))
 				return false;
-			
+
 			// if there is no ILSwitch, there's still many control flow patterns that 
 			// match a switch statement but were originally just regular if statements,
 			// and converting them to switches results in poor quality code with goto statements
@@ -345,7 +370,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (controlFlowGraph == null)
 				controlFlowGraph = new ControlFlowGraph(currentContainer, context.CancellationToken);
-			
+
 			var switchHead = controlFlowGraph.GetNode(analysis.RootBlock);
 			loopContext = new LoopContext(controlFlowGraph, switchHead);
 
@@ -354,11 +379,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// grab the control flow nodes for blocks targetted by each section
 			var caseNodes = new List<ControlFlowNode>();
-			foreach (var s in analysis.Sections) {
-				if (!s.Value.MatchBranch(out var block)) 
+			foreach (var s in analysis.Sections)
+			{
+				if (!s.Value.MatchBranch(out var block))
 					continue;
 
-				if (block.Parent == currentContainer) {
+				if (block.Parent == currentContainer)
+				{
 					var node = controlFlowGraph.GetNode(block);
 					if (!loopContext.MatchContinue(node))
 						caseNodes.Add(node);
@@ -385,7 +412,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			breakBlock = null;
 			if (externalCases.Count > 1)
 				return true; // cannot have more than one break case without gotos
-			
+
 			// check that case nodes flow through a single point
 			var breakTargets = caseNodes.Except(externalCases).SelectMany(n => loopContext.GetBreakTargets(n)).ToHashSet();
 
@@ -393,8 +420,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// if there are none, then the external case (if any) can be the break target
 			if (breakTargets.Count != 1)
 				return breakTargets.Count > 1;
-			
-			breakBlock = (Block) breakTargets.Single().UserData;
+
+			breakBlock = (Block)breakTargets.Single().UserData;
 
 			// external case must consist of a single "break;"
 			return externalCases.Count == 1 && breakBlock != externalCases.Single().UserData;
@@ -408,18 +435,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (analysis.RootBlock.IncomingEdgeCount != 1)
 				return;
-			
+
 			// if (comp(logic.not(call get_HasValue(ldloca nullableVar))) br NullCase
 			// br RootBlock
 			var nullableBlock = (Block)controlFlowGraph.GetNode(analysis.RootBlock).Predecessors.SingleOrDefault()?.UserData;
 			if (nullableBlock == null ||
-			    nullableBlock.Instructions.Count < 2 ||
-			    !nullableBlock.Instructions.Last().MatchBranch(analysis.RootBlock) ||
-			    !nullableBlock.Instructions.SecondToLastOrDefault().MatchIfInstruction(out var cond, out var trueInst) ||
-			    !cond.MatchLogicNot(out var getHasValue) ||
-			    !NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILInstruction nullableInst))
+				nullableBlock.Instructions.Count < 2 ||
+				!nullableBlock.Instructions.Last().MatchBranch(analysis.RootBlock) ||
+				!nullableBlock.Instructions.SecondToLastOrDefault().MatchIfInstruction(out var cond, out var trueInst) ||
+				!cond.MatchLogicNot(out var getHasValue) ||
+				!NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILInstruction nullableInst))
 				return;
-			
+
 			// could check that nullableInst is ldloc or ldloca and that the switch variable matches a GetValueOrDefault
 			// but the effect of adding an incorrect block to the flowBlock list would only be disasterous if it branched directly
 			// to a candidate case block
@@ -486,15 +513,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// search down the tree, marking nodes as visited while they continue the current condition
 			var n = rootNode;
-			while (n.Successors.Count > 0 && (n == rootNode || IsFlowNode(n))) {
-				if (n.Successors.Count == 1) {
+			while (n.Successors.Count > 0 && (n == rootNode || IsFlowNode(n)))
+			{
+				if (n.Successors.Count == 1)
+				{
 					// if there is more than one case node, then a flow node with only one successor is not part of the initial condition
 					if (caseNodes.Count > 1)
 						break;
-					
+
 					n = n.Successors[0];
 				}
-				else { // 2 successors
+				else
+				{ // 2 successors
 					if (IsShortCircuit(n, 0))
 						n = n.Successors[0];
 					else if (IsShortCircuit(n, 1))
@@ -502,7 +532,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					else
 						break;
 				}
-				
+
 				n.Visited = true;
 				if (loopContext.MatchContinue(n))
 					break;

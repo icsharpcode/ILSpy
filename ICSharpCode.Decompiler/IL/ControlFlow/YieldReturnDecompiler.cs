@@ -16,15 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.IL.Transforms;
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
+
+using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -88,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// and the decompiled code of the finally method body.
 		/// </summary>
 		readonly Dictionary<IMethod, (int? outerState, ILFunction function)> decompiledFinallyMethods = new Dictionary<IMethod, (int? outerState, ILFunction body)>();
-		
+
 		/// <summary>
 		/// Temporary stores for 'yield break'.
 		/// </summary>
@@ -126,13 +127,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!MatchEnumeratorCreationPattern(function))
 				return;
 			BlockContainer newBody;
-			try {
+			try
+			{
 				AnalyzeCtor();
 				AnalyzeCurrentProperty();
 				ResolveIEnumerableIEnumeratorFieldMapping();
 				ConstructExceptionTable();
 				newBody = AnalyzeMoveNext(function);
-			} catch (SymbolicAnalysisFailedException) {
+			}
+			catch (SymbolicAnalysisFailedException)
+			{
 				return;
 			}
 
@@ -146,15 +150,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			PrintFinallyMethodStateRanges(newBody);
 
 			// Add state machine field meta-data to parameter ILVariables.
-			foreach (var (f, p) in fieldToParameterMap) {
+			foreach (var (f, p) in fieldToParameterMap)
+			{
 				p.StateMachineField = f;
 			}
 
 			context.Step("Delete unreachable blocks", function);
 
-			if (isCompiledWithMono) {
+			if (isCompiledWithMono)
+			{
 				// mono has try-finally inline (like async on MS); we also need to sort nested blocks:
-				foreach (var nestedContainer in newBody.Blocks.SelectMany(c => c.Descendants).OfType<BlockContainer>()) {
+				foreach (var nestedContainer in newBody.Blocks.SelectMany(c => c.Descendants).OfType<BlockContainer>())
+				{
 					nestedContainer.SortBlocks(deleteUnreachableBlocks: true);
 				}
 				// We need to clean up nested blocks before the main block, so that edges from unreachable code
@@ -165,7 +172,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			newBody.SortBlocks(deleteUnreachableBlocks: true);
 			function.CheckInvariant(ILPhase.Normal);
 
-			if (!isCompiledWithMono) {
+			if (!isCompiledWithMono)
+			{
 				DecompileFinallyBlocks();
 				ReconstructTryFinallyBlocks(function);
 			}
@@ -176,19 +184,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			CleanSkipFinallyBodies(function);
 
 			// On mono, we still need to remove traces of the state variable(s):
-			if (isCompiledWithMono) {
-				if (fieldToParameterMap.TryGetValue(stateField, out var stateVar)) {
+			if (isCompiledWithMono)
+			{
+				if (fieldToParameterMap.TryGetValue(stateField, out var stateVar))
+				{
 					returnStores.AddRange(stateVar.StoreInstructions.OfType<StLoc>());
 				}
-				foreach (var cachedStateVar in cachedStateVars) {
+				foreach (var cachedStateVar in cachedStateVars)
+				{
 					returnStores.AddRange(cachedStateVar.StoreInstructions.OfType<StLoc>());
 				}
 			}
 
-			if (returnStores.Count > 0) {
+			if (returnStores.Count > 0)
+			{
 				context.Step("Remove temporaries", function);
-				foreach (var store in returnStores) {
-					if (store.Variable.LoadCount == 0 && store.Variable.AddressCount == 0 && store.Parent is Block block) {
+				foreach (var store in returnStores)
+				{
+					if (store.Variable.LoadCount == 0 && store.Variable.AddressCount == 0 && store.Parent is Block block)
+					{
 						Debug.Assert(SemanticHelper.IsPure(store.Value.Flags));
 						block.Instructions.Remove(store);
 					}
@@ -205,22 +219,29 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		bool MatchEnumeratorCreationPattern(ILFunction function)
 		{
 			Block body = SingleBlock(function.Body);
-			if (body == null || body.Instructions.Count == 0) {
+			if (body == null || body.Instructions.Count == 0)
+			{
 				return false;
 			}
 
 			ILInstruction newObj;
-			if (body.Instructions.Count == 1) {
+			if (body.Instructions.Count == 1)
+			{
 				// No parameters passed to enumerator (not even 'this'):
 				// ret(newobj(...))
 				if (!body.Instructions[0].MatchReturn(out newObj))
 					return false;
-				if (MatchEnumeratorCreationNewObj(newObj)) {
+				if (MatchEnumeratorCreationNewObj(newObj))
+				{
 					return true;
-				} else if (MatchMonoEnumeratorCreationNewObj(newObj)) {
+				}
+				else if (MatchMonoEnumeratorCreationNewObj(newObj))
+				{
 					isCompiledWithMono = true;
 					return true;
-				} else {
+				}
+				else
+				{
 					return false;
 				}
 			}
@@ -233,41 +254,55 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// stloc(var_1, newobj(..))
 			if (!body.Instructions[pos].MatchStLoc(out var var1, out newObj))
 				return false;
-			if (MatchEnumeratorCreationNewObj(newObj)) {
+			if (MatchEnumeratorCreationNewObj(newObj))
+			{
 				pos++; // OK
 				isCompiledWithMono = false;
-			} else if (MatchMonoEnumeratorCreationNewObj(newObj)) {
+			}
+			else if (MatchMonoEnumeratorCreationNewObj(newObj))
+			{
 				pos++;
 				isCompiledWithMono = true;
-			} else {
+			}
+			else
+			{
 				return false;
 			}
-			
-			for (; pos < body.Instructions.Count; pos++) {
+
+			for (; pos < body.Instructions.Count; pos++)
+			{
 				// stfld(..., ldloc(var_1), ldloc(parameter))
 				// or (in structs): stfld(..., ldloc(var_1), ldobj(ldloc(this)))
 				if (!body.Instructions[pos].MatchStFld(out var ldloc, out var storedField, out var value))
 					break;
-				if (!ldloc.MatchLdLoc(var1)) {
+				if (!ldloc.MatchLdLoc(var1))
+				{
 					return false;
 				}
-				if (value.MatchLdLoc(out var parameter) && parameter.Kind == VariableKind.Parameter) {
+				if (value.MatchLdLoc(out var parameter) && parameter.Kind == VariableKind.Parameter)
+				{
 					fieldToParameterMap[(IField)storedField.MemberDefinition] = parameter;
-				} else if (value is LdObj ldobj && ldobj.Target.MatchLdThis()) {
+				}
+				else if (value is LdObj ldobj && ldobj.Target.MatchLdThis())
+				{
 					// copy of 'this' in struct
 					fieldToParameterMap[(IField)storedField.MemberDefinition] = ((LdLoc)ldobj.Target).Variable;
-				} else {
+				}
+				else
+				{
 					return false;
 				}
 			}
 
 			// In debug builds, the compiler may copy the var1 into another variable (var2) before returning it.
 			if (body.Instructions[pos].MatchStLoc(out var var2, out var ldlocForStloc2)
-				&& ldlocForStloc2.MatchLdLoc(var1)) {
+				&& ldlocForStloc2.MatchLdLoc(var1))
+			{
 				// stloc(var_2, ldloc(var_1))
 				pos++;
 			}
-			if (isCompiledWithMono) {
+			if (isCompiledWithMono)
+			{
 				// Mono initializes the state field separately:
 				// (but not if it's left at the default value 0)
 				if (body.Instructions[pos].MatchStFld(out var target, out var field, out var value)
@@ -280,10 +315,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 			if (body.Instructions[pos].MatchReturn(out var retVal)
-				&& retVal.MatchLdLoc(var2 ?? var1)) {
+				&& retVal.MatchLdLoc(var2 ?? var1))
+			{
 				// ret(ldloc(var_2))
 				return true;
-			} else {
+			}
+			else
+			{
 				return false;
 			}
 		}
@@ -294,7 +332,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		internal static Block SingleBlock(ILInstruction body)
 		{
 			var block = body as Block;
-			if (body is BlockContainer blockContainer && blockContainer.Blocks.Count == 1) {
+			if (body is BlockContainer blockContainer && blockContainer.Blocks.Count == 1)
+			{
 				block = blockContainer.Blocks.Single() as Block;
 			}
 			return block;
@@ -309,7 +348,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				out enumeratorCtor, out enumeratorType);
 		}
 
-		internal static bool MatchEnumeratorCreationNewObj(ILInstruction inst, 
+		internal static bool MatchEnumeratorCreationNewObj(ILInstruction inst,
 			MetadataReader metadata, TypeDefinitionHandle currentType,
 			out MethodDefinitionHandle enumeratorCtor, out TypeDefinitionHandle enumeratorType)
 		{
@@ -350,7 +389,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			TypeDefinition td;
 			if (type.IsNil || !type.IsCompilerGeneratedOrIsInCompilerGeneratedClass(metadata) || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
 				return false;
-			foreach (var i in td.GetInterfaceImplementations()) {
+			foreach (var i in td.GetInterfaceImplementations())
+			{
 				var tr = metadata.GetInterfaceImplementation(i).Interface.GetFullTypeName(metadata);
 				if (!tr.IsNested && tr.TopLevelTypeName.Namespace == "System.Collections" && tr.TopLevelTypeName.Name == "IEnumerator")
 					return true;
@@ -368,11 +408,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Block body = SingleBlock(CreateILAst(enumeratorCtor, context).Body);
 			if (body == null)
 				throw new SymbolicAnalysisFailedException("Missing enumeratorCtor.Body");
-			foreach (var inst in body.Instructions) {
+			foreach (var inst in body.Instructions)
+			{
 				if (inst.MatchStFld(out var target, out var field, out var value)
 					&& target.MatchLdThis()
 					&& value.MatchLdLoc(out var arg)
-					&& arg.Kind == VariableKind.Parameter && arg.Index == 0) {
+					&& arg.Kind == VariableKind.Parameter && arg.Index == 0)
+				{
 					stateField = (IField)field.MemberDefinition;
 				}
 			}
@@ -422,15 +464,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Block body = SingleBlock(CreateILAst(getCurrentMethod, context).Body);
 			if (body == null)
 				throw new SymbolicAnalysisFailedException();
-			if (body.Instructions.Count == 1) {
+			if (body.Instructions.Count == 1)
+			{
 				// release builds directly return the current field
 				// ret(ldfld F(ldloc(this)))
 				if (body.Instructions[0].MatchReturn(out var retVal)
 					&& retVal.MatchLdFld(out var target, out var field)
-					&& target.MatchLdThis()) {
+					&& target.MatchLdThis())
+				{
 					currentField = (IField)field.MemberDefinition;
 				}
-			} else if (body.Instructions.Count == 2) {
+			}
+			else if (body.Instructions.Count == 2)
+			{
 				// debug builds store the return value in a temporary
 				// stloc V = ldfld F(ldloc(this))
 				// ret(ldloc V)
@@ -438,7 +484,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					&& ldfld.MatchLdFld(out var target, out var field)
 					&& target.MatchLdThis()
 					&& body.Instructions[1].MatchReturn(out var retVal)
-					&& retVal.MatchLdLoc(v)) {
+					&& retVal.MatchLdLoc(v))
+				{
 					currentField = (IField)field.MemberDefinition;
 				}
 			}
@@ -462,12 +509,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (getEnumeratorMethod.IsNil)
 				return; // no mappings (maybe it's just an IEnumerator implementation?)
 			var function = CreateILAst(getEnumeratorMethod, context);
-			foreach (var block in function.Descendants.OfType<Block>()) {
-				foreach (var inst in block.Instructions) {
+			foreach (var block in function.Descendants.OfType<Block>())
+			{
+				foreach (var inst in block.Instructions)
+				{
 					// storeTarget.storeField = this.loadField;
 					if (inst.MatchStFld(out var storeTarget, out var storeField, out var storeValue)
 						&& storeValue.MatchLdFld(out var loadTarget, out var loadField)
-						&& loadTarget.MatchLdThis()) {
+						&& loadTarget.MatchLdThis())
+					{
 						storeField = (IField)storeField.MemberDefinition;
 						loadField = (IField)loadField.MemberDefinition;
 						if (fieldToParameterMap.TryGetValue(loadField, out var mappedParameter))
@@ -483,17 +533,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void ConstructExceptionTable()
 		{
-			if (isCompiledWithMono) {
+			if (isCompiledWithMono)
+			{
 				disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "Dispose");
 				var function = CreateILAst(disposeMethod, context);
 				BlockContainer body = (BlockContainer)function.Body;
 
-				for (var i = 0; (i < body.EntryPoint.Instructions.Count) && !(body.EntryPoint.Instructions[i] is Branch); i++) {
+				for (var i = 0; (i < body.EntryPoint.Instructions.Count) && !(body.EntryPoint.Instructions[i] is Branch); i++)
+				{
 					if (body.EntryPoint.Instructions[i] is StObj stobj
 						&& stobj.MatchStFld(out var target, out var field, out var value)
 						&& target.MatchLdThis()
 						&& field.Type.IsKnownType(KnownTypeCode.Boolean)
-						&& value.MatchLdcI4(1)) {
+						&& value.MatchLdcI4(1))
+					{
 						disposingField = (IField)field.MemberDefinition;
 						break;
 					}
@@ -501,7 +554,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 				// On mono, we don't need to analyse Dispose() to reconstruct the try-finally structure.
 				finallyMethodToStateRange = default;
-			} else {
+			}
+			else
+			{
 				// Non-Mono: analyze try-finally structure in Dispose()
 				disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "System.IDisposable.Dispose");
 				var function = CreateILAst(disposeMethod, context);
@@ -510,13 +565,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				finallyMethodToStateRange = rangeAnalysis.finallyMethodToStateRange;
 			}
 		}
-		
+
 		[Conditional("DEBUG")]
 		void PrintFinallyMethodStateRanges(BlockContainer bc)
 		{
 			if (finallyMethodToStateRange == null)
 				return;
-			foreach (var (method, stateRange) in finallyMethodToStateRange) {
+			foreach (var (method, stateRange) in finallyMethodToStateRange)
+			{
 				bc.Blocks[0].Instructions.Insert(0, new Nop {
 					Comment = method.Name + " in " + stateRange
 				});
@@ -537,12 +593,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// Copy-propagate temporaries holding a copy of 'this'.
 			// This is necessary because the old (pre-Roslyn) C# compiler likes to store 'this' in temporary variables.
-			foreach (var stloc in moveNextFunction.Descendants.OfType<StLoc>().Where(s => s.Variable.IsSingleDefinition && s.Value.MatchLdThis()).ToList()) {
+			foreach (var stloc in moveNextFunction.Descendants.OfType<StLoc>().Where(s => s.Variable.IsSingleDefinition && s.Value.MatchLdThis()).ToList())
+			{
 				CopyPropagation.Propagate(stloc, context);
 			}
 
 			var body = (BlockContainer)moveNextFunction.Body;
-			if (body.Blocks.Count == 1 && body.Blocks[0].Instructions.Count == 1 && body.Blocks[0].Instructions[0] is TryFault tryFault) {
+			if (body.Blocks.Count == 1 && body.Blocks[0].Instructions.Count == 1 && body.Blocks[0].Instructions[0] is TryFault tryFault)
+			{
 				body = (BlockContainer)tryFault.TryBlock;
 				var faultBlockContainer = tryFault.FaultBlock as BlockContainer;
 				if (faultBlockContainer?.Blocks.Count != 1)
@@ -553,32 +611,42 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					&& call.Method.MetadataToken == disposeMethod
 					&& call.Arguments.Count == 1
 					&& call.Arguments[0].MatchLdThis()
-					&& faultBlock.Instructions[1].MatchLeave(faultBlockContainer))) {
+					&& faultBlock.Instructions[1].MatchLeave(faultBlockContainer)))
+				{
 					throw new SymbolicAnalysisFailedException("Unexpected fault block contents in MoveNext()");
 				}
 			}
 
-			if (stateField == null) {
+			if (stateField == null)
+			{
 				// With mono-compiled state machines, it's possible that we haven't discovered the state field
 				// yet because the compiler let it be implicitly initialized to 0.
 				// In this case, we must discover it from the first instruction in MoveNext():
 				if (body.EntryPoint.Instructions[0] is StLoc stloc
 					&& stloc.Value.MatchLdFld(out var target, out var field)
-					&& target.MatchLdThis() && field.Type.IsKnownType(KnownTypeCode.Int32)) {
+					&& target.MatchLdThis() && field.Type.IsKnownType(KnownTypeCode.Int32))
+				{
 					stateField = (IField)field.MemberDefinition;
-				} else {
+				}
+				else
+				{
 					throw new SymbolicAnalysisFailedException("Could not find state field.");
 				}
 			}
 
 			skipFinallyBodies = null;
-			if (isCompiledWithMono) {
+			if (isCompiledWithMono)
+			{
 				// Mono uses skipFinallyBodies; find out which variable that is:
-				foreach (var tryFinally in body.Descendants.OfType<TryFinally>()) {
-					if ((tryFinally.FinallyBlock as BlockContainer)?.EntryPoint.Instructions[0] is IfInstruction ifInst) {
-						if (ifInst.Condition.MatchLogicNot(out var arg) && arg.MatchLdLoc(out var v) && v.Type.IsKnownType(KnownTypeCode.Boolean)) {
+				foreach (var tryFinally in body.Descendants.OfType<TryFinally>())
+				{
+					if ((tryFinally.FinallyBlock as BlockContainer)?.EntryPoint.Instructions[0] is IfInstruction ifInst)
+					{
+						if (ifInst.Condition.MatchLogicNot(out var arg) && arg.MatchLdLoc(out var v) && v.Type.IsKnownType(KnownTypeCode.Boolean))
+						{
 							bool isInitializedInEntryBlock = false;
-							for (int i = 0; i < 3; i++) {
+							for (int i = 0; i < 3; i++)
+							{
 								if (body.EntryPoint.Instructions.ElementAtOrDefault(i) is StLoc stloc
 									&& stloc.Variable == v && stloc.Value.MatchLdcI4(0))
 								{
@@ -586,7 +654,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 									break;
 								}
 							}
-							if (isInitializedInEntryBlock) {
+							if (isInitializedInEntryBlock)
+							{
 								skipFinallyBodies = v;
 								break;
 							}
@@ -621,25 +690,34 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// at the beginning of MoveNext(). Undo this optimization.
 			context.StepStartGroup("PropagateCopiesOfFields");
 			var mutableFields = body.Descendants.OfType<LdFlda>().Where(ldflda => ldflda.Parent.OpCode != OpCode.LdObj).Select(ldflda => ldflda.Field).ToHashSet();
-			for (int i = 0; i < body.EntryPoint.Instructions.Count; i++) {
+			for (int i = 0; i < body.EntryPoint.Instructions.Count; i++)
+			{
 				if (body.EntryPoint.Instructions[i] is StLoc store
 					&& store.Variable.IsSingleDefinition
 					&& store.Value is LdObj ldobj
 					&& ldobj.Target is LdFlda ldflda
 					&& ldflda.Target.MatchLdThis())
 				{
-					if (!mutableFields.Contains(ldflda.Field)) {
+					if (!mutableFields.Contains(ldflda.Field))
+					{
 						// perform copy propagation: (unlike CopyPropagation.Propagate(), copy the ldobj arguments as well)
-						foreach (var expr in store.Variable.LoadInstructions.ToArray()) {
+						foreach (var expr in store.Variable.LoadInstructions.ToArray())
+						{
 							expr.ReplaceWith(store.Value.Clone());
 						}
 						body.EntryPoint.Instructions.RemoveAt(i--);
-					} else if (ldflda.Field.MemberDefinition == stateField.MemberDefinition) {
+					}
+					else if (ldflda.Field.MemberDefinition == stateField.MemberDefinition)
+					{
 						continue;
-					} else {
+					}
+					else
+					{
 						break; // unsupported: load of mutable field (other than state field)
 					}
-				} else {
+				}
+				else
+				{
 					break; // unknown instruction
 				}
 			}
@@ -671,41 +749,54 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var blockStateMap = rangeAnalysis.GetBlockStateSetMapping(oldBody);
 			BlockContainer newBody = new BlockContainer().WithILRange(oldBody);
 			// create all new blocks so that they can be referenced by gotos
-			for (int blockIndex = 0; blockIndex < oldBody.Blocks.Count; blockIndex++) {
+			for (int blockIndex = 0; blockIndex < oldBody.Blocks.Count; blockIndex++)
+			{
 				newBody.Blocks.Add(new Block().WithILRange(oldBody.Blocks[blockIndex]));
 			}
 			// convert contents of blocks
 
-			for (int i = 0; i < oldBody.Blocks.Count; i++) {
+			for (int i = 0; i < oldBody.Blocks.Count; i++)
+			{
 				var oldBlock = oldBody.Blocks[i];
 				var newBlock = newBody.Blocks[i];
-				foreach (var oldInst in oldBlock.Instructions) {
+				foreach (var oldInst in oldBlock.Instructions)
+				{
 					context.CancellationToken.ThrowIfCancellationRequested();
-					if (oldInst.MatchStFld(out var target, out var field, out var value) && target.MatchLdThis()) {
-						if (field.MemberDefinition.Equals(stateField)) {
-							if (value.MatchLdcI4(out int newState)) {
+					if (oldInst.MatchStFld(out var target, out var field, out var value) && target.MatchLdThis())
+					{
+						if (field.MemberDefinition.Equals(stateField))
+						{
+							if (value.MatchLdcI4(out int newState))
+							{
 								// On state change, break up the block:
 								// (this allows us to consider each block individually for try-finally reconstruction)
 								newBlock = SplitBlock(newBlock, oldInst);
 								// We keep the state-changing instruction around (as first instruction of the new block)
 								// for reconstructing the try-finallys. 
-							} else {
+							}
+							else
+							{
 								newBlock.Instructions.Add(new InvalidExpression("Assigned non-constant to iterator.state field").WithILRange(oldInst));
 								continue; // don't copy over this instruction, but continue with the basic block
 							}
-						} else if (field.MemberDefinition.Equals(currentField)) {
+						}
+						else if (field.MemberDefinition.Equals(currentField))
+						{
 							// create yield return
 							newBlock.Instructions.Add(new YieldReturn(value).WithILRange(oldInst));
 							ConvertBranchAfterYieldReturn(newBlock, oldBlock, oldInst.ChildIndex + 1);
 							break; // we're done with this basic block
 						}
-					} else if (oldInst is Call call && call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()
-						&& finallyMethodToStateRange.ContainsKey((IMethod)call.Method.MemberDefinition))
+					}
+					else if (oldInst is Call call && call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()
+					  && finallyMethodToStateRange.ContainsKey((IMethod)call.Method.MemberDefinition))
 					{
 						// Break up the basic block on a call to a finally method
 						// (this allows us to consider each block individually for try-finally reconstruction)
 						newBlock = SplitBlock(newBlock, oldInst);
-					} else if (oldInst is TryFinally tryFinally && isCompiledWithMono) {
+					}
+					else if (oldInst is TryFinally tryFinally && isCompiledWithMono)
+					{
 						// with mono, we have to recurse into try-finally blocks
 						var oldTryBlock = (BlockContainer)tryFinally.TryBlock;
 						var sra = rangeAnalysis.CreateNestedAnalysis();
@@ -731,7 +822,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			void ConvertBranchAfterYieldReturn(Block newBlock, Block oldBlock, int pos)
 			{
 				Block targetBlock;
-				if (isCompiledWithMono && disposingField != null) {
+				if (isCompiledWithMono && disposingField != null)
+				{
 					// Mono skips over the state assignment if 'this.disposing' is set:
 					//      ...
 					//      stfld $current(ldloc this, yield-expr)
@@ -752,7 +844,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						&& condition.MatchLdFld(out var condTarget, out var condField)
 						&& condTarget.MatchLdThis() && condField.MemberDefinition.Equals(disposingField)
 						&& oldBlock.Instructions[pos + 1].MatchBranch(out targetBlock)
-						&& targetBlock.Parent == oldBlock.Parent) {
+						&& targetBlock.Parent == oldBlock.Parent)
+					{
 						// Keep looking at the target block:
 						oldBlock = targetBlock;
 						pos = 0;
@@ -762,19 +855,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (oldBlock.Instructions[pos].MatchStFld(out var target, out var field, out var value)
 					&& target.MatchLdThis()
 					&& field.MemberDefinition == stateField
-					&& value.MatchLdcI4(out int newState)) {
+					&& value.MatchLdcI4(out int newState))
+				{
 					pos++;
-				} else {
+				}
+				else
+				{
 					newBlock.Instructions.Add(new InvalidBranch("Unable to find new state assignment for yield return"));
 					return;
 				}
 				// Mono may have 'br setSkipFinallyBodies' here, so follow the branch
-				if (oldBlock.Instructions[pos].MatchBranch(out targetBlock) && targetBlock.Parent == oldBlock.Parent) {
+				if (oldBlock.Instructions[pos].MatchBranch(out targetBlock) && targetBlock.Parent == oldBlock.Parent)
+				{
 					oldBlock = targetBlock;
 					pos = 0;
 				}
-				if (oldBlock.Instructions[pos].MatchStLoc(skipFinallyBodies, out value)) {
-					if (!value.MatchLdcI4(1)) {
+				if (oldBlock.Instructions[pos].MatchStLoc(skipFinallyBodies, out value))
+				{
+					if (!value.MatchLdcI4(1))
+					{
 						newBlock.Instructions.Add(new InvalidExpression {
 							ExpectedResultType = StackType.Void,
 							Message = "Unexpected assignment to skipFinallyBodies"
@@ -783,12 +882,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					pos++;
 				}
 
-				if (oldBlock.Instructions[pos].MatchReturn(out var retVal) && retVal.MatchLdcI4(1)) {
+				if (oldBlock.Instructions[pos].MatchReturn(out var retVal) && retVal.MatchLdcI4(1))
+				{
 					// OK, found return directly after state assignment
-				} else if (oldBlock.Instructions[pos].MatchBranch(out targetBlock) 
-					&& targetBlock.Instructions[0].MatchReturn(out retVal) && retVal.MatchLdcI4(1)) {
+				}
+				else if (oldBlock.Instructions[pos].MatchBranch(out targetBlock)
+				  && targetBlock.Instructions[0].MatchReturn(out retVal) && retVal.MatchLdcI4(1))
+				{
 					// OK, jump to common return block (e.g. on Mono)
-				} else {
+				}
+				else
+				{
 					newBlock.Instructions.Add(new InvalidBranch("Unable to find 'return true' for yield return"));
 					return;
 				}
@@ -797,7 +901,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			Block SplitBlock(Block newBlock, ILInstruction oldInst)
 			{
-				if (newBlock.Instructions.Count > 0) {
+				if (newBlock.Instructions.Count > 0)
+				{
 					var newBlock2 = new Block();
 					newBlock2.AddILRange(new Interval(oldInst.StartILOffset, oldInst.StartILOffset));
 					newBody.Blocks.Add(newBlock2);
@@ -810,26 +915,32 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ILInstruction MakeGoTo(int v)
 			{
 				Block targetBlock = blockStateMap.GetOrDefault(v);
-				if (targetBlock != null) {
+				if (targetBlock != null)
+				{
 					if (targetBlock.Parent == oldBody)
 						return new Branch(newBody.Blocks[targetBlock.ChildIndex]);
 					else
 						return new Branch(targetBlock);
-				} else {
+				}
+				else
+				{
 					return new InvalidBranch("Could not find block for state " + v);
 				}
 			}
 
 			void UpdateBranchTargets(ILInstruction inst)
 			{
-				switch (inst) {
+				switch (inst)
+				{
 					case Branch branch:
-						if (branch.TargetContainer == oldBody) {
+						if (branch.TargetContainer == oldBody)
+						{
 							branch.TargetBlock = newBody.Blocks[branch.TargetBlock.ChildIndex];
 						}
 						break;
 					case Leave leave:
-						if (leave.MatchReturn(out var value)) {
+						if (leave.MatchReturn(out var value))
+						{
 							bool validYieldBreak = value.MatchLdcI4(0);
 							if (value.MatchLdLoc(out var v)
 								&& (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot)
@@ -838,20 +949,27 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 								validYieldBreak = true;
 								returnStores.AddRange(v.StoreInstructions.Cast<StLoc>());
 							}
-							if (validYieldBreak) {
+							if (validYieldBreak)
+							{
 								// yield break
 								leave.ReplaceWith(new Leave(newBody).WithILRange(leave));
-							} else {
+							}
+							else
+							{
 								leave.ReplaceWith(new InvalidBranch("Unexpected return in MoveNext()").WithILRange(leave));
 							}
-						} else {
-							if (leave.TargetContainer == oldBody) {
+						}
+						else
+						{
+							if (leave.TargetContainer == oldBody)
+							{
 								leave.TargetContainer = newBody;
 							}
 						}
 						break;
 				}
-				foreach (var child in inst.Children) {
+				foreach (var child in inst.Children)
+				{
 					UpdateBranchTargets(child);
 				}
 			}
@@ -864,11 +982,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		internal static void TranslateFieldsToLocalAccess(ILFunction function, ILInstruction inst, Dictionary<IField, ILVariable> fieldToVariableMap, bool isCompiledWithMono = false)
 		{
-			if (inst is LdFlda ldflda && ldflda.Target.MatchLdThis()) {
+			if (inst is LdFlda ldflda && ldflda.Target.MatchLdThis())
+			{
 				var fieldDef = (IField)ldflda.Field.MemberDefinition;
-				if (!fieldToVariableMap.TryGetValue(fieldDef, out var v)) {
+				if (!fieldToVariableMap.TryGetValue(fieldDef, out var v))
+				{
 					string name = null;
-					if (!string.IsNullOrEmpty(fieldDef.Name) && fieldDef.Name[0] == '<') {
+					if (!string.IsNullOrEmpty(fieldDef.Name) && fieldDef.Name[0] == '<')
+					{
 						int pos = fieldDef.Name.IndexOf('>');
 						if (pos > 1)
 							name = fieldDef.Name.Substring(1, pos - 1);
@@ -878,24 +999,35 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					v.StateMachineField = ldflda.Field;
 					fieldToVariableMap.Add(fieldDef, v);
 				}
-				if (v.StackType == StackType.Ref) {
+				if (v.StackType == StackType.Ref)
+				{
 					Debug.Assert(v.Kind == VariableKind.Parameter && v.Index < 0); // this pointer
 					inst.ReplaceWith(new LdLoc(v).WithILRange(inst));
-				} else {
+				}
+				else
+				{
 					inst.ReplaceWith(new LdLoca(v).WithILRange(inst));
 				}
-			} else if (!isCompiledWithMono && inst.MatchLdThis()) {
+			}
+			else if (!isCompiledWithMono && inst.MatchLdThis())
+			{
 				inst.ReplaceWith(new InvalidExpression("stateMachine") { ExpectedResultType = inst.ResultType }.WithILRange(inst));
-			} else {
-				foreach (var child in inst.Children) {
+			}
+			else
+			{
+				foreach (var child in inst.Children)
+				{
 					TranslateFieldsToLocalAccess(function, child, fieldToVariableMap, isCompiledWithMono);
 				}
-				if (inst is LdObj ldobj && ldobj.Target is LdLoca ldloca && ldloca.Variable.StateMachineField != null) {
+				if (inst is LdObj ldobj && ldobj.Target is LdLoca ldloca && ldloca.Variable.StateMachineField != null)
+				{
 					LdLoc ldloc = new LdLoc(ldloca.Variable);
 					ldloc.AddILRange(ldobj);
 					ldloc.AddILRange(ldloca);
 					inst.ReplaceWith(ldloc);
-				} else if (inst is StObj stobj && stobj.Target is LdLoca ldloca2 && ldloca2.Variable.StateMachineField != null) {
+				}
+				else if (inst is StObj stobj && stobj.Target is LdLoca ldloca2 && ldloca2.Variable.StateMachineField != null)
+				{
 					StLoc stloc = new StLoc(ldloca2.Variable, stobj.Value);
 					stloc.AddILRange(stobj);
 					stloc.AddILRange(ldloca2);
@@ -908,11 +1040,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		#region DecompileFinallyBlocks
 		void DecompileFinallyBlocks()
 		{
-			foreach (var method in finallyMethodToStateRange.Keys) {
+			foreach (var method in finallyMethodToStateRange.Keys)
+			{
 				var function = CreateILAst((MethodDefinitionHandle)method.MetadataToken, context);
 				var body = (BlockContainer)function.Body;
 				var newState = GetNewState(body.EntryPoint);
-				if (newState != null) {
+				if (newState != null)
+				{
 					body.EntryPoint.Instructions.RemoveAt(0);
 				}
 				function.ReleaseRef(); // make body reusable outside of function
@@ -944,16 +1078,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var stateToContainer = new Dictionary<int, BlockContainer>();
 			stateToContainer.Add(-1, newBody);
 			// First, analyse the newBody: for each block, determine the active state number.
-			foreach (var block in newBody.Blocks) {
+			foreach (var block in newBody.Blocks)
+			{
 				context.CancellationToken.ThrowIfCancellationRequested();
 				int oldState = blockState[block.ChildIndex];
 				BlockContainer container; // new container for the block
-				if (GetNewState(block) is int newState) {
+				if (GetNewState(block) is int newState)
+				{
 					// OK, state change
 					// Remove the state-changing instruction
 					block.Instructions.RemoveAt(0);
 
-					if (!stateToContainer.TryGetValue(newState, out container)) {
+					if (!stateToContainer.TryGetValue(newState, out container))
+					{
 						// First time we see this state.
 						// This means we just found the entry point of a try block.
 						CreateTryBlock(block, newState);
@@ -964,13 +1101,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// we can use stateToContainer[oldState] as parent.
 						container = stateToContainer[oldState];
 					}
-				} else {
+				}
+				else
+				{
 					// Because newBody is topologically sorted we because we just removed unreachable code,
 					// we can assume that blockState[] was already set for this block.
 					newState = oldState;
 					container = stateToContainer[oldState];
 				}
-				if (container != newBody) {
+				if (container != newBody)
+				{
 					// Move the block into the container.
 					container.Blocks.Add(block);
 					// Keep the stale reference in newBody.Blocks for now, to avoid
@@ -981,12 +1121,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				block.Instructions.Insert(0, new Nop { Comment = "state == " + newState });
 #endif
 				// Propagate newState to successor blocks
-				foreach (var branch in block.Descendants.OfType<Branch>()) {
-					if (branch.TargetBlock.Parent == newBody) {
+				foreach (var branch in block.Descendants.OfType<Branch>())
+				{
+					if (branch.TargetBlock.Parent == newBody)
+					{
 						int stateAfterBranch = newState;
 						if (Block.GetPredecessor(branch) is Call call
 							&& call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()
-							&& call.Method.Name == "System.IDisposable.Dispose") {
+							&& call.Method.Name == "System.IDisposable.Dispose")
+						{
 							// pre-roslyn compiles "yield break;" into "Dispose(); goto return_false;",
 							// so convert the dispose call into a state transition to the final state
 							stateAfterBranch = -1;
@@ -1002,7 +1145,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			void CreateTryBlock(Block block, int state)
 			{
 				var finallyMethod = FindFinallyMethod(state);
-				if (finallyMethod != null) {
+				if (finallyMethod != null)
+				{
 					// remove the method so that it doesn't cause ambiguity when processing nested try-finally blocks
 					finallyMethodToStateRange.Remove(finallyMethod);
 				}
@@ -1016,16 +1160,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				stateToContainer.Add(state, tryBlockContainer);
 
 				ILInstruction finallyBlock;
-				if (finallyMethod == null) {
+				if (finallyMethod == null)
+				{
 					finallyBlock = new InvalidBranch($"Could not find finallyMethod for state={state}.\n" +
 						$"Possibly this method is affected by a C# compiler bug that causes the finally body\n" +
 						$"not to run in case of an exception or early 'break;' out of a loop consuming this iterable.");
-				} else if (decompiledFinallyMethods.TryGetValue(finallyMethod, out var decompiledMethod)) {
+				}
+				else if (decompiledFinallyMethods.TryGetValue(finallyMethod, out var decompiledMethod))
+				{
 					finallyBlock = decompiledMethod.function.Body;
 					var vars = decompiledMethod.function.Variables.ToArray();
 					decompiledMethod.function.Variables.Clear();
 					iteratorFunction.Variables.AddRange(vars);
-				} else {
+				}
+				else
+				{
 					finallyBlock = new InvalidBranch("Missing decompiledFinallyMethod");
 				}
 
@@ -1036,8 +1185,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			IMethod FindFinallyMethod(int state)
 			{
 				IMethod foundMethod = null;
-				foreach (var (method, stateRange) in finallyMethodToStateRange) {
-					if (stateRange.Contains(state)) {
+				foreach (var (method, stateRange) in finallyMethodToStateRange)
+				{
+					if (stateRange.Contains(state))
+					{
 						if (foundMethod == null)
 							foundMethod = method;
 						else
@@ -1057,9 +1208,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				&& value.MatchLdcI4(out int newState))
 			{
 				return newState;
-			} else if (block.Instructions[0] is Call call
-				&& call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()
-				&& decompiledFinallyMethods.TryGetValue((IMethod)call.Method.MemberDefinition, out var finallyMethod))
+			}
+			else if (block.Instructions[0] is Call call
+			  && call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()
+			  && decompiledFinallyMethods.TryGetValue((IMethod)call.Method.MemberDefinition, out var finallyMethod))
 			{
 				return finallyMethod.outerState;
 			}
@@ -1073,21 +1225,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		private void CleanSkipFinallyBodies(ILFunction function)
 		{
-			if (skipFinallyBodies == null) {
+			if (skipFinallyBodies == null)
+			{
 				return; // only mono-compiled code uses skipFinallyBodies
 			}
 			context.StepStartGroup("CleanSkipFinallyBodies", function);
 			Block entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(function.Body as BlockContainer);
-			if (skipFinallyBodies.StoreInstructions.Count != 0 || skipFinallyBodies.AddressCount != 0) {
+			if (skipFinallyBodies.StoreInstructions.Count != 0 || skipFinallyBodies.AddressCount != 0)
+			{
 				// misdetected another variable as doFinallyBodies?
 				// Fortunately removing the initial store of 0 is harmless, as we
 				// default-initialize the variable on uninit uses
 				return;
 			}
-			foreach (var tryFinally in function.Descendants.OfType<TryFinally>()) {
+			foreach (var tryFinally in function.Descendants.OfType<TryFinally>())
+			{
 				entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(tryFinally.FinallyBlock as BlockContainer);
-				if (entryPoint?.Instructions[0] is IfInstruction ifInst) {
-					if (ifInst.Condition.MatchLogicNot(out var logicNotArg) && logicNotArg.MatchLdLoc(skipFinallyBodies)) {
+				if (entryPoint?.Instructions[0] is IfInstruction ifInst)
+				{
+					if (ifInst.Condition.MatchLogicNot(out var logicNotArg) && logicNotArg.MatchLdLoc(skipFinallyBodies))
+					{
 						context.Step("Remove if (skipFinallyBodies) from try-finally", tryFinally);
 						// condition will always be true now that we're using 'yield' instructions
 						entryPoint.Instructions[0] = ifInst.TrueInst;

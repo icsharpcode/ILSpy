@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -35,7 +36,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			if (!TransformRefTypes(block, pos, context)) {
+			if (!TransformRefTypes(block, pos, context))
+			{
 				TransformThrowExpressionValueTypes(block, pos, context);
 			}
 		}
@@ -60,7 +62,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// }
 			// =>
 			// stloc s(if.notnull(valueInst, fallbackInst))
-			if (trueInst.MatchStLoc(stloc.Variable, out var fallbackValue)) {
+			if (trueInst.MatchStLoc(stloc.Variable, out var fallbackValue))
+			{
 				context.Step("NullCoalescingTransform: simple (reference types)", stloc);
 				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
 				block.Instructions.RemoveAt(pos + 1); // remove if instruction
@@ -78,7 +81,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& trueBlock.Instructions[0].MatchStLoc(out var temporary, out fallbackValue)
 				&& temporary.IsSingleDefinition && temporary.LoadCount == 1
 				&& trueBlock.Instructions[1].MatchStLoc(stloc.Variable, out var useOfTemporary)
-				&& useOfTemporary.MatchLdLoc(temporary)) {
+				&& useOfTemporary.MatchLdLoc(temporary))
+			{
 				context.Step("NullCoalescingTransform: with temporary variable (reference types)", stloc);
 				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
 				block.Instructions.RemoveAt(pos + 1); // remove if instruction
@@ -91,7 +95,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// }
 			// =>
 			// stloc obj(if.notnull(valueInst, throw(...)))
-			if (context.Settings.ThrowExpressions && trueInst is Throw throwInst) {
+			if (context.Settings.ThrowExpressions && trueInst is Throw throwInst)
+			{
 				context.Step("NullCoalescingTransform (reference types + throw expression)", stloc);
 				throwInst.resultType = StackType.O;
 				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, throwInst);
@@ -143,7 +148,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				result.LoadInst.Parent.ReplaceWith(nullCoalescingWithThrow);
 				block.Instructions.RemoveRange(pos, 2); // remove store(s) and if instruction
 				return true;
-			} else {
+			}
+			else
+			{
 				// reset the primary position (see remarks on ILInstruction.Parent)
 				stloc.Value = stloc.Value;
 				var children = throwInstParent.Children;

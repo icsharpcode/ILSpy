@@ -82,13 +82,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomShortCircuitOperat
 
 		private static void Test2()
 		{
-			if (GetC(1) && GetC(2)) {
+			if (GetC(1) && GetC(2))
+			{
 				Console.WriteLine(GetC(3));
 			}
-			if (GetC(1) || GetC(2)) {
+			if (GetC(1) || GetC(2))
+			{
 				Console.WriteLine(GetC(3));
 			}
-			if (!(GetC(1) && GetC(2))) {
+			if (!(GetC(1) && GetC(2)))
+			{
 				Console.WriteLine(GetC(3));
 			}
 		}
@@ -96,10 +99,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomShortCircuitOperat
 		private static void Test3()
 		{
 			C c = new C();
-			if (c) {
+			if (c)
+			{
 				Console.WriteLine(c.ToString());
 			}
-			if (!c) {
+			if (!c)
+			{
 				Console.WriteLine(c.ToString());
 			}
 		}
@@ -108,10 +113,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomShortCircuitOperat
 		{
 			Console.WriteLine(GetC(1) && d.P);
 			Console.WriteLine(GetC(2) || d.P);
-			if (GetC(3) && d.P) {
+			if (GetC(3) && d.P)
+			{
 				Console.WriteLine(GetC(4));
 			}
-			if (GetC(5) || d.P) {
+			if (GetC(5) || d.P)
+			{
 				Console.WriteLine(GetC(6));
 			}
 		}
@@ -169,14 +176,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomShortCircuitOperat
 		public void InConditionDetection()
 		{
 			Console.WriteLine("a");
-			if (Get(1) && Get(2)) {
+			if (Get(1) && Get(2))
+			{
 				Console.WriteLine("b");
-			} else {
+			}
+			else
+			{
 				Console.WriteLine("c");
 			}
-			if (Get(1) || Get(2)) {
+			if (Get(1) || Get(2))
+			{
 				Console.WriteLine("d");
-			} else {
+			}
+			else
+			{
 				Console.WriteLine("e");
 			}
 		}
@@ -185,10 +198,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomShortCircuitOperat
 		{
 			Console.WriteLine(Get(1) && d.P);
 			Console.WriteLine(Get(2) || d.P);
-			if (Get(3) && d.P) {
+			if (Get(3) && d.P)
+			{
 				Console.WriteLine(Get(4));
 			}
-			if (Get(5) || d.P) {
+			if (Get(5) || d.P)
+			{
 				Console.WriteLine(Get(6));
 			}
 		}

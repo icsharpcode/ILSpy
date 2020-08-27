@@ -24,12 +24,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Xml.Linq;
-using ILSpy.BamlDecompiler.Baml;
-using ILSpy.BamlDecompiler.Rewrite;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.BamlDecompiler {
-	internal class XamlDecompiler {
+using ILSpy.BamlDecompiler.Baml;
+using ILSpy.BamlDecompiler.Rewrite;
+
+namespace ILSpy.BamlDecompiler
+{
+	internal class XamlDecompiler
+	{
 		static readonly IRewritePass[] rewritePasses = new IRewritePass[] {
 			new XClassRewritePass(),
 			new MarkupExtensionRewritePass(),
@@ -38,7 +42,8 @@ namespace ILSpy.BamlDecompiler {
 			new DocumentRewritePass(),
 		};
 
-		public XDocument Decompile(IDecompilerTypeSystem typeSystem, BamlDocument document, CancellationToken token, BamlDecompilerOptions bamlDecompilerOptions, List<string> assemblyReferences) {
+		public XDocument Decompile(IDecompilerTypeSystem typeSystem, BamlDocument document, CancellationToken token, BamlDecompilerOptions bamlDecompilerOptions, List<string> assemblyReferences)
+		{
 			var ctx = XamlContext.Construct(typeSystem, document, token, bamlDecompilerOptions);
 
 			var handler = HandlerMap.LookupHandler(ctx.RootNode.Type);
@@ -47,7 +52,8 @@ namespace ILSpy.BamlDecompiler {
 			var xaml = new XDocument();
 			xaml.Add(elem.Xaml.Element);
 
-			foreach (var pass in rewritePasses) {
+			foreach (var pass in rewritePasses)
+			{
 				token.ThrowIfCancellationRequested();
 				pass.Run(ctx, xaml);
 			}

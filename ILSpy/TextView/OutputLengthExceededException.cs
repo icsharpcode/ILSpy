@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 		}
 
-	 	public OutputLengthExceededException(string message) : base(message)
+		public OutputLengthExceededException(string message) : base(message)
 		{
 		}
 

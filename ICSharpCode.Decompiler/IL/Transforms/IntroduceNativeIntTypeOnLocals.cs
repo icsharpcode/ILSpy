@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -31,18 +32,21 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (!context.Settings.NativeIntegers)
 				return;
-			foreach (var variable in function.Variables) {
+			foreach (var variable in function.Variables)
+			{
 				if (variable.Kind != VariableKind.Local &&
 					variable.Kind != VariableKind.StackSlot &&
 					variable.Kind != VariableKind.ForeachLocal &&
-					variable.Kind != VariableKind.UsingLocal) {
+					variable.Kind != VariableKind.UsingLocal)
+				{
 					continue;
 				}
 				if (!(variable.Type.IsKnownType(KnownTypeCode.IntPtr) || variable.Type.IsKnownType(KnownTypeCode.UIntPtr)))
 					continue;
 				bool isUsedAsNativeInt = variable.LoadInstructions.Any(IsUsedAsNativeInt);
 				bool isAssignedNativeInt = variable.StoreInstructions.Any(store => IsNativeIntStore(store, context.TypeSystem));
-				if (isUsedAsNativeInt || isAssignedNativeInt) {
+				if (isUsedAsNativeInt || isAssignedNativeInt)
+				{
 					variable.Type = variable.Type.GetSign() == Sign.Unsigned ? SpecialType.NUInt : SpecialType.NInt;
 				}
 			}
@@ -61,8 +65,10 @@ namespace ICSharpCode.Decompiler.IL
 
 		static bool IsNativeIntStore(IStoreInstruction store, ICompilation compilation)
 		{
-			if (store is StLoc stloc) {
-				switch (stloc.Value) {
+			if (store is StLoc stloc)
+			{
+				switch (stloc.Value)
+				{
 					case BinaryNumericInstruction { UnderlyingResultType: StackType.I }:
 						return true;
 					case Conv { ResultType: StackType.I }:

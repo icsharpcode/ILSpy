@@ -80,7 +80,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		public void RequestRerun(int pos)
 		{
-			if (rerunPosition == null || pos > rerunPosition) {
+			if (rerunPosition == null || pos > rerunPosition)
+			{
 				rerunPosition = pos;
 			}
 		}
@@ -101,7 +102,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	public class StatementTransform : IBlockTransform
 	{
 		readonly IStatementTransform[] children;
-		
+
 		public StatementTransform(params IStatementTransform[] children)
 		{
 			this.children = children;
@@ -112,11 +113,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var ctx = new StatementTransformContext(context);
 			int pos = 0;
 			ctx.rerunPosition = block.Instructions.Count - 1;
-			while (pos >= 0) {
-				if (ctx.rerunPosition != null) {
+			while (pos >= 0)
+			{
+				if (ctx.rerunPosition != null)
+				{
 					Debug.Assert(ctx.rerunPosition >= pos);
 #if DEBUG
-					for (; pos < ctx.rerunPosition; ++pos) {
+					for (; pos < ctx.rerunPosition; ++pos)
+					{
 						block.Instructions[pos].ResetDirty();
 					}
 #else
@@ -125,26 +129,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					Debug.Assert(pos == ctx.rerunPosition);
 					ctx.rerunPosition = null;
 				}
-				foreach (var transform in children) {
+				foreach (var transform in children)
+				{
 					Debug.Assert(block.HasFlag(InstructionFlags.EndPointUnreachable));
 					transform.Run(block, pos, ctx);
 #if DEBUG
 					block.Instructions[pos].CheckInvariant(ILPhase.Normal);
-					for (int i = Math.Max(0, pos - 100); i < pos; ++i) {
-						if (block.Instructions[i].IsDirty) {
+					for (int i = Math.Max(0, pos - 100); i < pos; ++i)
+					{
+						if (block.Instructions[i].IsDirty)
+						{
 							Debug.Fail($"{transform.GetType().Name} modified an instruction before pos");
 						}
 					}
 #endif
-					if (ctx.rerunCurrentPosition) {
+					if (ctx.rerunCurrentPosition)
+					{
 						ctx.rerunCurrentPosition = false;
 						ctx.RequestRerun(pos);
 					}
-					if (ctx.rerunPosition != null) {
+					if (ctx.rerunPosition != null)
+					{
 						break;
 					}
 				}
-				if (ctx.rerunPosition == null) {
+				if (ctx.rerunPosition == null)
+				{
 					pos--;
 				}
 			}

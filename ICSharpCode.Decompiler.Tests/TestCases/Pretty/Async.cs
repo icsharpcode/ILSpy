@@ -95,7 +95,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public async void TwoAwaitsWithDifferentAwaiterTypes()
 		{
 			Console.WriteLine("Before");
-			if (await SimpleBoolTaskMethod()) {
+			if (await SimpleBoolTaskMethod())
+			{
 				await Task.Delay(TimeSpan.FromSeconds(1.0));
 			}
 			Console.WriteLine("After");
@@ -103,7 +104,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async void AwaitInLoopCondition()
 		{
-			while (await SimpleBoolTaskMethod()) {
+			while (await SimpleBoolTaskMethod())
+			{
 				Console.WriteLine("Body");
 			}
 		}
@@ -111,14 +113,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if CS60
 		public async Task AwaitInCatch(bool b, Task<int> task1, Task<int> task2)
 		{
-			try {
+			try
+			{
 				Console.WriteLine("Start try");
 				await task1;
 				Console.WriteLine("End try");
-			} catch (Exception) {
-				if (!b) {
+			}
+			catch (Exception)
+			{
+				if (!b)
+				{
 					await task2;
-				} else {
+				}
+				else
+				{
 					Console.WriteLine("No await");
 				}
 			}
@@ -126,14 +134,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async Task AwaitInFinally(bool b, Task<int> task1, Task<int> task2)
 		{
-			try {
+			try
+			{
 				Console.WriteLine("Start try");
 				await task1;
 				Console.WriteLine("End try");
-			} finally {
-				if (!b) {
+			}
+			finally
+			{
+				if (!b)
+				{
 					await task2;
-				} else {
+				}
+				else
+				{
 					Console.WriteLine("No await");
 				}
 			}
@@ -144,7 +158,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			await Task.Delay(100);
 			int num = 0;
-			foreach (int item in items) {
+			foreach (int item in items)
+			{
 				num += item;
 			}
 			return num;
@@ -174,13 +189,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static async Task InfiniteLoop()
 		{
-			while (true) {
+			while (true)
+			{
 			}
 		}
 
 		public static async Task InfiniteLoopWithAwait()
 		{
-			while (true) {
+			while (true)
+			{
 				await Task.Delay(10);
 			}
 		}

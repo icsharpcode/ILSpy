@@ -23,8 +23,8 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -86,7 +86,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				var result = new Stack<string>();
 				AstType type = NamespaceName;
-				while (type is MemberType) {
+				while (type is MemberType)
+				{
 					var mt = (MemberType)type;
 					result.Push(mt.MemberName);
 					type = mt.Target;
@@ -153,4 +154,4 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return o != null && MatchString(this.Name, o.Name) && this.Members.DoMatch(o.Members, match);
 		}
 	}
-}			;
+};

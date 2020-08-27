@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -46,22 +47,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Dictionary<IField, CallSiteInfo> callsites = new Dictionary<IField, CallSiteInfo>();
 			HashSet<BlockContainer> modifiedContainers = new HashSet<BlockContainer>();
 
-			foreach (var block in function.Descendants.OfType<Block>()) {
-				if (block.Instructions.Count < 2) continue;
+			foreach (var block in function.Descendants.OfType<Block>())
+			{
+				if (block.Instructions.Count < 2)
+					continue;
 				// Check if, we deal with a callsite cache field null check:
 				// if (comp(ldsfld <>p__3 == ldnull)) br IL_000c
 				// br IL_002b
-				if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst)) continue;
-				if (!(block.Instructions.LastOrDefault() is Branch branchAfterInit)) continue;
+				if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst))
+					continue;
+				if (!(block.Instructions.LastOrDefault() is Branch branchAfterInit))
+					continue;
 				if (!MatchCallSiteCacheNullCheck(ifInst.Condition, out var callSiteCacheField, out var callSiteDelegate, out bool invertBranches))
 					continue;
 				if (!ifInst.TrueInst.MatchBranch(out var trueBlock))
 					continue;
 				Block callSiteInitBlock, targetBlockAfterInit;
-				if (invertBranches) {
+				if (invertBranches)
+				{
 					callSiteInitBlock = branchAfterInit.TargetBlock;
 					targetBlockAfterInit = trueBlock;
-				} else {
+				}
+				else
+				{
 					callSiteInitBlock = trueBlock;
 					targetBlockAfterInit = branchAfterInit.TargetBlock;
 				}
@@ -78,11 +86,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			var storesToRemove = new List<StLoc>();
 
-			foreach (var invokeCall in function.Descendants.OfType<CallVirt>()) {
+			foreach (var invokeCall in function.Descendants.OfType<CallVirt>())
+			{
 				if (invokeCall.Method.DeclaringType.Kind != TypeKind.Delegate || invokeCall.Method.Name != "Invoke" || invokeCall.Arguments.Count == 0)
 					continue;
 				var firstArgument = invokeCall.Arguments[0];
-				if (firstArgument.MatchLdLoc(out var stackSlot) && stackSlot.Kind == VariableKind.StackSlot && stackSlot.IsSingleDefinition) {
+				if (firstArgument.MatchLdLoc(out var stackSlot) && stackSlot.Kind == VariableKind.StackSlot && stackSlot.IsSingleDefinition)
+				{
 					firstArgument = ((StLoc)stackSlot.StoreInstructions[0]).Value;
 				}
 				if (!firstArgument.MatchLdFld(out var cacheFieldLoad, out var targetField))
@@ -99,16 +109,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				invokeCall.ReplaceWith(replacement);
 				Debug.Assert(callsite.ConditionalJumpToInit?.Parent is Block);
 				var block = ((Block)callsite.ConditionalJumpToInit.Parent);
-				if (callsite.Inverted) {
+				if (callsite.Inverted)
+				{
 					block.Instructions.Remove(callsite.ConditionalJumpToInit);
 					callsite.BranchAfterInit.ReplaceWith(callsite.ConditionalJumpToInit.TrueInst);
-				} else {
+				}
+				else
+				{
 					block.Instructions.Remove(callsite.ConditionalJumpToInit);
 				}
-				foreach (var arg in deadArguments) {
-					if (arg.MatchLdLoc(out var temporary) && temporary.Kind == VariableKind.StackSlot && temporary.IsSingleDefinition && temporary.LoadCount == 0) {
+				foreach (var arg in deadArguments)
+				{
+					if (arg.MatchLdLoc(out var temporary) && temporary.Kind == VariableKind.StackSlot && temporary.IsSingleDefinition && temporary.LoadCount == 0)
+					{
 						StLoc stLoc = (StLoc)temporary.StoreInstructions[0];
-						if (stLoc.Parent is Block storeParentBlock) {
+						if (stLoc.Parent is Block storeParentBlock)
+						{
 							var value = stLoc.Value;
 							if (value.MatchLdsFld(out var cacheFieldCopy) && cacheFieldCopy.Equals(cacheField))
 								storesToRemove.Add(stLoc);
@@ -120,7 +136,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				modifiedContainers.Add((BlockContainer)block.Parent);
 			}
 
-			foreach (var inst in storesToRemove) {
+			foreach (var inst in storesToRemove)
+			{
 				Block parentBlock = (Block)inst.Parent;
 				parentBlock.Instructions.RemoveAt(inst.ChildIndex);
 			}
@@ -131,7 +148,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		ILInstruction MakeDynamicInstruction(CallSiteInfo callsite, CallVirt targetInvokeCall, List<ILInstruction> deadArguments)
 		{
-			switch (callsite.Kind) {
+			switch (callsite.Kind)
+			{
 				case BinderMethodKind.BinaryOperation:
 					deadArguments.AddRange(targetInvokeCall.Arguments.Take(2));
 					return new DynamicBinaryOperatorInstruction(
@@ -151,7 +169,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						type: callsite.ConvertTargetType,
 						argument: targetInvokeCall.Arguments[2]
 					);
-					if (result.ResultType == StackType.Unknown) {
+					if (result.ResultType == StackType.Unknown)
+					{
 						// if references are missing, we need to coerce the primitive type to None.
 						// Otherwise we will get loads of assertions.
 						result = new Conv(result, PrimitiveType.None, ((DynamicConvertInstruction)result).IsChecked, Sign.None);
@@ -187,7 +206,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// Extract type information from targetInvokeCall:
 					// Must either be an inlined type or
 					// a reference to a variable that is initialized with a type.
-					if (!TransformExpressionTrees.MatchGetTypeFromHandle(arguments[0], out var type)) {
+					if (!TransformExpressionTrees.MatchGetTypeFromHandle(arguments[0], out var type))
+					{
 						if (!(arguments[0].MatchLdLoc(out var temp) && temp.IsSingleDefinition && temp.StoreInstructions.FirstOrDefault() is StLoc initStore))
 							return null;
 						if (!TransformExpressionTrees.MatchGetTypeFromHandle(initStore.Value, out type))
@@ -269,7 +289,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			callSiteInfo.DelegateType = callSiteDelegateType;
 			callSiteInfo.InitBlock = callSiteInitBlock;
-			switch (binderCall.Method.Name) {
+			switch (binderCall.Method.Name)
+			{
 				case "IsEvent":
 					callSiteInfo.Kind = BinderMethodKind.IsEvent;
 					// In the case of Binder.IsEvent all arguments should already be properly inlined, as there is no array initializer:
@@ -331,25 +352,31 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (!callSiteInitBlock.Instructions[2].MatchStLoc(out var variableOrTemporary, out value))
 						return false;
 					int numberOfTypeArguments = 0;
-					if (!value.MatchLdNull()) {
-						if (value is NewArr typeArgsNewArr && typeArgsNewArr.Type.IsKnownType(KnownTypeCode.Type) && typeArgsNewArr.Indices.Count == 1 && typeArgsNewArr.Indices[0].MatchLdcI4(out numberOfTypeArguments)) {
+					if (!value.MatchLdNull())
+					{
+						if (value is NewArr typeArgsNewArr && typeArgsNewArr.Type.IsKnownType(KnownTypeCode.Type) && typeArgsNewArr.Indices.Count == 1 && typeArgsNewArr.Indices[0].MatchLdcI4(out numberOfTypeArguments))
+						{
 							if (!TransformArrayInitializers.HandleSimpleArrayInitializer(context.Function, callSiteInitBlock, 3, variableOrTemporary, typeArgsNewArr.Type, new[] { numberOfTypeArguments }, out var typeArguments, out _))
 								return false;
 							int i = 0;
 							callSiteInfo.TypeArguments = new IType[numberOfTypeArguments];
-							foreach (var (_, typeArg) in typeArguments) {
+							foreach (var (_, typeArg) in typeArguments)
+							{
 								if (!TransformExpressionTrees.MatchGetTypeFromHandle(typeArg, out var type))
 									return false;
 								callSiteInfo.TypeArguments[i] = type;
 								i++;
 							}
-						} else {
+						}
+						else
+						{
 							return false;
 						}
 					}
 					int typeArgumentsOffset = numberOfTypeArguments;
 					// Special case for csc array initializers:
-					if (variableOrTemporary != variable) {
+					if (variableOrTemporary != variable)
+					{
 						// store temporary from array initializer in variable
 						if (!callSiteInitBlock.Instructions[3 + typeArgumentsOffset].MatchStLoc(variable, out value))
 							return false;
@@ -416,7 +443,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case "SetIndex":
 				case "InvokeConstructor":
 				case "Invoke":
-					switch (binderCall.Method.Name) {
+					switch (binderCall.Method.Name)
+					{
 						case "GetIndex":
 							callSiteInfo.Kind = BinderMethodKind.GetIndex;
 							break;
@@ -515,7 +543,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (invokeMethod == null)
 				return false;
 			var compileTimeTypes = invokeMethod.Parameters.SelectReadOnlyArray(p => p.Type);
-			foreach (var (_, arg) in arguments) {
+			foreach (var (_, arg) in arguments)
+			{
 				if (!(arg is Call createCall))
 					return false;
 				if (!(createCall.Method.Name == "Create" && createCall.Method.DeclaringType.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && createCall.Arguments.Count == 2))
@@ -536,7 +565,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			callSiteCacheField = null;
 			callSiteDelegate = null;
 			invertBranches = false;
-			if (!condition.MatchCompEqualsNull(out var argument)) {
+			if (!condition.MatchCompEqualsNull(out var argument))
+			{
 				if (!condition.MatchCompNotEqualsNull(out argument))
 					return false;
 				invertBranches = true;

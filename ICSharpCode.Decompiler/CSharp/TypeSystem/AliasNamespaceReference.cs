@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -34,39 +35,39 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	public sealed class AliasNamespaceReference : TypeOrNamespaceReference, ISupportsInterning
 	{
 		readonly string identifier;
-		
+
 		public AliasNamespaceReference(string identifier)
 		{
 			if (identifier == null)
 				throw new ArgumentNullException(nameof(identifier));
 			this.identifier = identifier;
 		}
-		
+
 		public string Identifier {
 			get { return identifier; }
 		}
-		
+
 		public override ResolveResult Resolve(CSharpResolver resolver)
 		{
 			return resolver.ResolveAlias(identifier);
 		}
-		
+
 		public override IType ResolveType(CSharpResolver resolver)
 		{
 			// alias cannot refer to types
 			return SpecialType.NoType;
 		}
-		
+
 		public override string ToString()
 		{
 			return identifier + "::";
 		}
-		
+
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
 			return identifier.GetHashCode();
 		}
-		
+
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
 			AliasNamespaceReference anr = other as AliasNamespaceReference;

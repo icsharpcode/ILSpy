@@ -8,6 +8,7 @@ using System.Reflection.Metadata;
 using System.Threading;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -30,7 +31,8 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			var typeSystem = module.GetTypeSystemWithCurrentOptionsOrNull();
-			if (typeSystem == null) return;
+			if (typeSystem == null)
+				return;
 
 			var root = ((MetadataModule)typeSystem.MainModule).RootNamespace;
 			Search(module, root);
@@ -38,7 +40,8 @@ namespace ICSharpCode.ILSpy.Search
 
 		private void Search(PEFile module, INamespace ns)
 		{
-			if (ns.Types.Any()) {
+			if (ns.Types.Any())
+			{
 				if (IsMatch(ns.FullName.Length == 0 ? "-" : ns.FullName))
 					OnFoundResult(module, ns);
 			}

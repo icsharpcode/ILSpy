@@ -36,7 +36,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 			private void Model_PropertyChanged(object sender, PropertyChangedEventArgs e)
 			{
-				if (e.PropertyName == nameof(model.IsCloseable)) {
+				if (e.PropertyName == nameof(model.IsCloseable))
+				{
 					CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 				}
 			}
@@ -70,7 +71,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public bool IsSelected {
 			get => isSelected;
 			set {
-				if (isSelected != value) {
+				if (isSelected != value)
+				{
 					isSelected = value;
 					RaisePropertyChanged(nameof(IsSelected));
 				}
@@ -81,7 +83,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public bool IsActive {
 			get => isActive;
 			set {
-				if (isActive != value) {
+				if (isActive != value)
+				{
 					isActive = value;
 					RaisePropertyChanged(nameof(IsActive));
 				}
@@ -92,7 +95,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public bool IsVisible {
 			get { return isVisible; }
 			set {
-				if (isVisible != value) {
+				if (isVisible != value)
+				{
 					isVisible = value;
 					RaisePropertyChanged(nameof(IsVisible));
 				}
@@ -103,7 +107,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public bool IsCloseable {
 			get { return isCloseable; }
 			set {
-				if (isCloseable != value) {
+				if (isCloseable != value)
+				{
 					isCloseable = value;
 					RaisePropertyChanged(nameof(IsCloseable));
 				}
@@ -114,7 +119,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public ICommand CloseCommand {
 			get { return closeCommand; }
 			set {
-				if (closeCommand != value) {
+				if (closeCommand != value)
+				{
 					closeCommand = value;
 					RaisePropertyChanged(nameof(CloseCommand));
 				}
@@ -125,7 +131,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public string ContentId {
 			get => contentId;
 			set {
-				if (contentId != value) {
+				if (contentId != value)
+				{
 					contentId = value;
 					RaisePropertyChanged(nameof(ContentId));
 				}
@@ -136,7 +143,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public string Title {
 			get => title;
 			set {
-				if (title != value) {
+				if (title != value)
+				{
 					title = value;
 					RaisePropertyChanged(nameof(Title));
 				}

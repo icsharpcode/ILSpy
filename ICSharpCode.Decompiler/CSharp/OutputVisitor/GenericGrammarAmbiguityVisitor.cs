@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
@@ -35,8 +36,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		public static void ResolveAmbiguities(AstNode rootNode)
 		{
-			foreach (var node in rootNode.Descendants.OfType<BinaryOperatorExpression>()) {
-				if (CausesAmbiguityWithGenerics(node)) {
+			foreach (var node in rootNode.Descendants.OfType<BinaryOperatorExpression>())
+			{
+				if (CausesAmbiguityWithGenerics(node))
+				{
 					node.ReplaceWith(n => new ParenthesizedExpression(n));
 				}
 			}
@@ -50,7 +53,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			var v = new GenericGrammarAmbiguityVisitor();
 			v.genericNestingLevel = 1;
 
-			for (AstNode node = binaryOperatorExpression.Right; node != null; node = node.GetNextNode()) {
+			for (AstNode node = binaryOperatorExpression.Right; node != null; node = node.GetNextNode())
+			{
 				if (node.AcceptVisitor(v))
 					return v.ambiguityFound;
 			}
@@ -63,11 +67,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		protected override bool VisitChildren(AstNode node)
 		{
 			// unhandled node: probably not syntactically valid in a typename
-			
+
 			// These are preconditions for all recursive Visit() calls.
 			Debug.Assert(genericNestingLevel > 0);
 			Debug.Assert(!ambiguityFound);
-			
+
 			// The return value merely indicates whether to stop visiting.
 			return true; // stop visiting, no ambiguity found
 		}
@@ -77,7 +81,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (binaryOperatorExpression.Left.AcceptVisitor(this))
 				return true;
 			Debug.Assert(genericNestingLevel > 0);
-			switch (binaryOperatorExpression.Operator) {
+			switch (binaryOperatorExpression.Operator)
+			{
 				case BinaryOperatorType.LessThan:
 					genericNestingLevel += 1;
 					break;
@@ -90,7 +95,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				default:
 					return true; // stop visiting, no ambiguity found
 			}
-			if (genericNestingLevel == 0) {
+			if (genericNestingLevel == 0)
+			{
 				// Of the all tokens that might follow `>` and trigger the ambiguity to be resolved in favor of generics,
 				// `(` is the only one that might start an expression.
 				ambiguityFound = binaryOperatorExpression.Right is ParenthesizedExpression;

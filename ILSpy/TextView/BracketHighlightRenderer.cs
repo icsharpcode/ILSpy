@@ -18,6 +18,7 @@
 
 using System;
 using System.Windows.Media;
+
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 
@@ -77,7 +78,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public void SetHighlight(BracketSearchResult result)
 		{
-			if (this.result != result) {
+			if (this.result != result)
+			{
 				this.result = result;
 				textView.InvalidateLayer(this.Layer);
 			}
@@ -119,7 +121,8 @@ namespace ICSharpCode.ILSpy.TextView
 			builder.AddSegment(textView, new TextSegment() { StartOffset = result.ClosingBracketOffset, Length = result.ClosingBracketLength });
 
 			Geometry geometry = builder.CreateGeometry();
-			if (geometry != null) {
+			if (geometry != null)
+			{
 				drawingContext.DrawGeometry(backgroundBrush, borderPen, geometry);
 			}
 		}

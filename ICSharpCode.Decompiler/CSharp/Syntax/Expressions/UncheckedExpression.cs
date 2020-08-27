@@ -32,49 +32,49 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UncheckedExpression : Expression
 	{
-		public readonly static TokenRole UncheckedKeywordRole = new TokenRole ("unchecked");
+		public readonly static TokenRole UncheckedKeywordRole = new TokenRole("unchecked");
 
 		public CSharpTokenNode UncheckedToken {
-			get { return GetChildByRole (UncheckedKeywordRole); }
+			get { return GetChildByRole(UncheckedKeywordRole); }
 		}
-		
+
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
-		
+
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
+			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
 		}
-		
+
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
-		
-		public UncheckedExpression ()
+
+		public UncheckedExpression()
 		{
 		}
-		
-		public UncheckedExpression (Expression expression)
+
+		public UncheckedExpression(Expression expression)
 		{
-			AddChild (expression, Roles.Expression);
+			AddChild(expression, Roles.Expression);
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitUncheckedExpression (this);
+			visitor.VisitUncheckedExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitUncheckedExpression (this);
+			return visitor.VisitUncheckedExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitUncheckedExpression (this, data);
+			return visitor.VisitUncheckedExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			UncheckedExpression o = other as UncheckedExpression;

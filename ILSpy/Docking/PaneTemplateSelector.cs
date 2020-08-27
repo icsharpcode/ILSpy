@@ -36,7 +36,8 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public override DataTemplate SelectTemplate(object item, DependencyObject container)
 		{
-			if (item == null) {
+			if (item == null)
+			{
 				return base.SelectTemplate(item, container);
 			}
 

@@ -21,12 +21,15 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.Analyzers.Builtin;
+
 using Moq;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.ILSpy.Tests.Analyzers
@@ -40,7 +43,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 
 		static readonly TypeKind[] ValidTypeKinds = { TypeKind.Class, TypeKind.Struct };
 		static readonly TypeKind[] InvalidTypeKinds = Enum.GetValues(typeof(TypeKind)).Cast<TypeKind>().Except(ValidTypeKinds).ToArray();
-		
+
 		private ICompilation testAssembly;
 
 		[OneTimeSetUp]
@@ -48,7 +51,8 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 		{
 			string fileName = GetType().Assembly.Location;
 
-			using (var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read)) {
+			using (var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+			{
 				var module = new PEFile(fileName, stream, PEStreamOptions.PrefetchEntireImage, MetadataReaderOptions.None);
 
 				testAssembly = new SimpleCompilation(module.WithOptions(TypeSystemOptions.Default), MinimalCorlib.Instance);
@@ -63,7 +67,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 
 			// Act
 			var shouldShow = analyzer.Show(symbol: null);
-			
+
 			// Assert
 			Assert.IsFalse(shouldShow, $"The analyzer will be unexpectedly shown for no symbol");
 		}
@@ -160,7 +164,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 		}
 
 		private static Mock<IMember> SetupMemberMock(SymbolKind symbolKind, TypeKind typeKind, bool isStatic)
-        {
+		{
 			var memberMock = new Mock<IMember>();
 			memberMock.Setup(m => m.SymbolKind).Returns(symbolKind);
 			memberMock.Setup(m => m.DeclaringTypeDefinition.Kind).Returns(typeKind);

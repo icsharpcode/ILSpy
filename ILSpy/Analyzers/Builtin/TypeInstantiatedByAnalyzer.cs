@@ -24,6 +24,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
@@ -43,35 +44,44 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		{
 			Debug.Assert(analyzedSymbol is ITypeDefinition);
 			var scope = context.GetScopeOf((ITypeDefinition)analyzedSymbol);
-			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
+			{
 				var mappingInfo = context.Language.GetCodeMappingInfo(type.ParentModule.PEFile, type.MetadataToken);
 				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
-				foreach (var method in methods) {
+				foreach (var method in methods)
+				{
 					if (IsUsedInMethod((ITypeDefinition)analyzedSymbol, method, mappingInfo, context))
 						yield return method;
 				}
 
-				foreach (var property in type.Properties) {
-					if (property.CanGet && IsUsedInMethod((ITypeDefinition)analyzedSymbol, property.Getter, mappingInfo, context)) {
+				foreach (var property in type.Properties)
+				{
+					if (property.CanGet && IsUsedInMethod((ITypeDefinition)analyzedSymbol, property.Getter, mappingInfo, context))
+					{
 						yield return property;
 						continue;
 					}
-					if (property.CanSet && IsUsedInMethod((ITypeDefinition)analyzedSymbol, property.Setter, mappingInfo, context)) {
+					if (property.CanSet && IsUsedInMethod((ITypeDefinition)analyzedSymbol, property.Setter, mappingInfo, context))
+					{
 						yield return property;
 						continue;
 					}
 				}
 
-				foreach (var @event in type.Events) {
-					if (@event.CanAdd && IsUsedInMethod((ITypeDefinition)analyzedSymbol, @event.AddAccessor, mappingInfo, context)) {
+				foreach (var @event in type.Events)
+				{
+					if (@event.CanAdd && IsUsedInMethod((ITypeDefinition)analyzedSymbol, @event.AddAccessor, mappingInfo, context))
+					{
 						yield return @event;
 						continue;
 					}
-					if (@event.CanRemove && IsUsedInMethod((ITypeDefinition)analyzedSymbol, @event.RemoveAccessor, mappingInfo, context)) {
+					if (@event.CanRemove && IsUsedInMethod((ITypeDefinition)analyzedSymbol, @event.RemoveAccessor, mappingInfo, context))
+					{
 						yield return @event;
 						continue;
 					}
-					if (@event.CanInvoke && IsUsedInMethod((ITypeDefinition)analyzedSymbol, @event.InvokeAccessor, mappingInfo, context)) {
+					if (@event.CanInvoke && IsUsedInMethod((ITypeDefinition)analyzedSymbol, @event.InvokeAccessor, mappingInfo, context))
+					{
 						yield return @event;
 						continue;
 					}
@@ -92,24 +102,32 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var module = (MetadataModule)method.ParentModule;
 			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
-			while (blob.RemainingBytes > 0) {
+			while (blob.RemainingBytes > 0)
+			{
 				ILOpCode opCode;
-				try {
+				try
+				{
 					opCode = blob.DecodeOpCode();
-					if (!CanBeReference(opCode)) {
+					if (!CanBeReference(opCode))
+					{
 						blob.SkipOperand(opCode);
 						continue;
 					}
-				} catch (BadImageFormatException) {
+				}
+				catch (BadImageFormatException)
+				{
 					return false;
 				}
 				EntityHandle methodHandle = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
 				if (!methodHandle.Kind.IsMemberKind())
 					continue;
 				IMethod ctor;
-				try {
+				try
+				{
 					ctor = module.ResolveMethod(methodHandle, genericContext);
-				} catch (BadImageFormatException) {
+				}
+				catch (BadImageFormatException)
+				{
 					continue;
 				}
 				if (ctor == null || !ctor.IsConstructor)

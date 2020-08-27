@@ -43,73 +43,75 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public CSharpTokenNode DotToken {
-			get { return GetChildByRole (Roles.Dot); }
+			get { return GetChildByRole(Roles.Dot); }
 		}
-		
+
 		public string MemberName {
 			get {
-				return GetChildByRole (Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value));
+				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}
-		
+
 		public Identifier MemberNameToken {
 			get {
-				return GetChildByRole (Roles.Identifier);
+				return GetChildByRole(Roles.Identifier);
 			}
 			set {
-				SetChildByRole (Roles.Identifier, value);
+				SetChildByRole(Roles.Identifier, value);
 			}
 		}
-		
+
 		public CSharpTokenNode LChevronToken {
-			get { return GetChildByRole (Roles.LChevron); }
+			get { return GetChildByRole(Roles.LChevron); }
 		}
-		
+
 		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole (Roles.TypeArgument); }
+			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
-		
+
 		public CSharpTokenNode RChevronToken {
-			get { return GetChildByRole (Roles.RChevron); }
+			get { return GetChildByRole(Roles.RChevron); }
 		}
-		
-		public MemberReferenceExpression ()
+
+		public MemberReferenceExpression()
 		{
 		}
-		
-		public MemberReferenceExpression (Expression target, string memberName, IEnumerable<AstType> arguments = null)
+
+		public MemberReferenceExpression(Expression target, string memberName, IEnumerable<AstType> arguments = null)
 		{
-			AddChild (target, Roles.TargetExpression);
+			AddChild(target, Roles.TargetExpression);
 			MemberName = memberName;
-			if (arguments != null) {
-				foreach (var arg in arguments) {
-					AddChild (arg, Roles.TypeArgument);
+			if (arguments != null)
+			{
+				foreach (var arg in arguments)
+				{
+					AddChild(arg, Roles.TypeArgument);
 				}
 			}
 		}
-		
-		public MemberReferenceExpression (Expression target, string memberName, params AstType[] arguments) : this (target, memberName, (IEnumerable<AstType>)arguments)
+
+		public MemberReferenceExpression(Expression target, string memberName, params AstType[] arguments) : this(target, memberName, (IEnumerable<AstType>)arguments)
 		{
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitMemberReferenceExpression (this);
+			visitor.VisitMemberReferenceExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitMemberReferenceExpression (this);
+			return visitor.VisitMemberReferenceExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitMemberReferenceExpression (this, data);
+			return visitor.VisitMemberReferenceExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			MemberReferenceExpression o = other as MemberReferenceExpression;

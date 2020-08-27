@@ -32,9 +32,12 @@ namespace ICSharpCode.Decompiler.Metadata
 			// but that causes problems later on.
 			if (metadataToken < 0)
 				return null;
-			try {
+			try
+			{
 				return MetadataTokens.EntityHandle(metadataToken);
-			} catch (ArgumentException) {
+			}
+			catch (ArgumentException)
+			{
 				return null;
 			}
 		}
@@ -45,9 +48,12 @@ namespace ICSharpCode.Decompiler.Metadata
 			// but that causes problems later on.
 			if (metadataToken < 0)
 				return MetadataTokens.EntityHandle(0);
-			try {
+			try
+			{
 				return MetadataTokens.EntityHandle(metadataToken);
-			} catch (ArgumentException) {
+			}
+			catch (ArgumentException)
+			{
 				return MetadataTokens.EntityHandle(0);
 			}
 		}

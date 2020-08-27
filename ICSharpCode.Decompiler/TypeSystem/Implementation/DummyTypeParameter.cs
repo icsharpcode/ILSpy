@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -28,34 +29,39 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		static ITypeParameter[] methodTypeParameters = { new DummyTypeParameter(SymbolKind.Method, 0) };
 		static ITypeParameter[] classTypeParameters = { new DummyTypeParameter(SymbolKind.TypeDefinition, 0) };
 		static IReadOnlyList<ITypeParameter>[] classTypeParameterLists = { EmptyList<ITypeParameter>.Instance };
-		
+
 		public static ITypeParameter GetMethodTypeParameter(int index)
 		{
 			return GetTypeParameter(ref methodTypeParameters, SymbolKind.Method, index);
 		}
-		
+
 		public static ITypeParameter GetClassTypeParameter(int index)
 		{
 			return GetTypeParameter(ref classTypeParameters, SymbolKind.TypeDefinition, index);
 		}
-		
+
 		static ITypeParameter GetTypeParameter(ref ITypeParameter[] typeParameters, SymbolKind symbolKind, int index)
 		{
 			ITypeParameter[] tps = typeParameters;
-			while (index >= tps.Length) {
+			while (index >= tps.Length)
+			{
 				// We don't have a normal type parameter for this index, so we need to extend our array.
 				// Because the array can be used concurrently from multiple threads, we have to use
 				// Interlocked.CompareExchange.
 				ITypeParameter[] newTps = new ITypeParameter[index + 1];
 				tps.CopyTo(newTps, 0);
-				for (int i = tps.Length; i < newTps.Length; i++) {
+				for (int i = tps.Length; i < newTps.Length; i++)
+				{
 					newTps[i] = new DummyTypeParameter(symbolKind, i);
 				}
 				ITypeParameter[] oldTps = Interlocked.CompareExchange(ref typeParameters, newTps, tps);
-				if (oldTps == tps) {
+				if (oldTps == tps)
+				{
 					// exchange successful
 					tps = newTps;
-				} else {
+				}
+				else
+				{
 					// exchange not successful
 					tps = oldTps;
 				}
@@ -69,96 +75,102 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		internal static IReadOnlyList<ITypeParameter> GetClassTypeParameterList(int length)
 		{
 			IReadOnlyList<ITypeParameter>[] tps = classTypeParameterLists;
-			while (length >= tps.Length) {
+			while (length >= tps.Length)
+			{
 				// We don't have a normal type parameter for this index, so we need to extend our array.
 				// Because the array can be used concurrently from multiple threads, we have to use
 				// Interlocked.CompareExchange.
 				IReadOnlyList<ITypeParameter>[] newTps = new IReadOnlyList<ITypeParameter>[length + 1];
 				tps.CopyTo(newTps, 0);
-				for (int i = tps.Length; i < newTps.Length; i++) {
+				for (int i = tps.Length; i < newTps.Length; i++)
+				{
 					var newList = new ITypeParameter[i];
-					for (int j = 0; j < newList.Length; j++) {
+					for (int j = 0; j < newList.Length; j++)
+					{
 						newList[j] = GetClassTypeParameter(j);
 					}
 					newTps[i] = newList;
 				}
 				var oldTps = Interlocked.CompareExchange(ref classTypeParameterLists, newTps, tps);
-				if (oldTps == tps) {
+				if (oldTps == tps)
+				{
 					// exchange successful
 					tps = newTps;
-				} else {
+				}
+				else
+				{
 					// exchange not successful
 					tps = oldTps;
 				}
 			}
 			return tps[length];
 		}
-		
+
 		readonly SymbolKind ownerType;
 		readonly int index;
-		
+
 		private DummyTypeParameter(SymbolKind ownerType, int index)
 		{
 			this.ownerType = ownerType;
 			this.index = index;
 		}
-		
+
 		SymbolKind ISymbol.SymbolKind {
 			get { return SymbolKind.TypeParameter; }
 		}
-		
+
 		public override string Name {
 			get {
 				return (ownerType == SymbolKind.Method ? "!!" : "!") + index;
 			}
 		}
-		
+
 		public override string ReflectionName {
 			get {
 				return (ownerType == SymbolKind.Method ? "``" : "`") + index;
 			}
 		}
-		
+
 		public override string ToString()
 		{
 			return ReflectionName + " (dummy)";
 		}
-		
+
 		public override bool? IsReferenceType {
 			get { return null; }
 		}
-		
+
 		public override TypeKind Kind {
 			get { return TypeKind.TypeParameter; }
 		}
-		
+
 		public override IType AcceptVisitor(TypeVisitor visitor)
 		{
 			return visitor.VisitTypeParameter(this);
 		}
-		
+
 		public int Index {
 			get { return index; }
 		}
-		
-		IEnumerable<IAttribute> ITypeParameter.GetAttributes() =>EmptyList<IAttribute>.Instance;
-		
+
+		IEnumerable<IAttribute> ITypeParameter.GetAttributes() => EmptyList<IAttribute>.Instance;
+
 		SymbolKind ITypeParameter.OwnerType {
 			get { return ownerType; }
 		}
-		
+
 		VarianceModifier ITypeParameter.Variance {
 			get { return VarianceModifier.Invariant; }
 		}
-		
+
 		IEntity ITypeParameter.Owner {
 			get { return null; }
 		}
-		
+
 		IType ITypeParameter.EffectiveBaseClass {
 			get { return SpecialType.UnknownType; }
 		}
-		
+
 		IReadOnlyCollection<IType> ITypeParameter.EffectiveInterfaceSet {
 			get { return EmptyList<IType>.Instance; }
 		}
@@ -173,9 +185,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override IType ChangeNullability(Nullability nullability)
 		{
-			if (nullability == Nullability.Oblivious) {
+			if (nullability == Nullability.Oblivious)
+			{
 				return this;
-			} else {
+			}
+			else
+			{
 				return new NullabilityAnnotatedTypeParameter(this, nullability);
 			}
 		}

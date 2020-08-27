@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
@@ -29,7 +30,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		readonly AssemblyReference r;
 		readonly AssemblyTreeNode parentAssembly;
-		
+
 		public AssemblyReferenceTreeNode(AssemblyReference r, AssemblyTreeNode parentAssembly)
 		{
 			this.r = r ?? throw new ArgumentNullException(nameof(r));
@@ -52,45 +53,54 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return base.ShowExpander;
 			}
 		}
-		
+
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
 			var assemblyListNode = parentAssembly.Parent as AssemblyListTreeNode;
-			if (assemblyListNode != null) {
+			if (assemblyListNode != null)
+			{
 				assemblyListNode.Select(assemblyListNode.FindAssemblyNode(parentAssembly.LoadedAssembly.LookupReferencedAssembly(r)));
 				e.Handled = true;
 			}
 		}
-		
+
 		protected override void LoadChildren()
 		{
 			var assemblyListNode = parentAssembly.Parent as AssemblyListTreeNode;
-			if (assemblyListNode != null) {
+			if (assemblyListNode != null)
+			{
 				var refNode = assemblyListNode.FindAssemblyNode(parentAssembly.LoadedAssembly.LookupReferencedAssembly(r));
-				if (refNode != null) {
+				if (refNode != null)
+				{
 					var module = refNode.LoadedAssembly.GetPEFileOrNull();
-					if (module != null) {
+					if (module != null)
+					{
 						foreach (var childRef in module.AssemblyReferences)
 							this.Children.Add(new AssemblyReferenceTreeNode(childRef, refNode));
 					}
 				}
 			}
 		}
-		
+
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			var loaded = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo.TryGetInfo(r.FullName, out var info);
-			if (r.IsWindowsRuntime) {
+			if (r.IsWindowsRuntime)
+			{
 				language.WriteCommentLine(output, r.FullName + " [WinRT]" + (!loaded ? " (unresolved)" : ""));
-			} else {
+			}
+			else
+			{
 				language.WriteCommentLine(output, r.FullName + (!loaded ? " (unresolved)" : ""));
 			}
-			if (loaded) {
+			if (loaded)
+			{
 				output.Indent();
 				language.WriteCommentLine(output, "Assembly reference loading information:");
 				if (info.HasErrors)
 					language.WriteCommentLine(output, "There were some problems during assembly reference load, see below for more information!");
-				foreach (var item in info.Messages) {
+				foreach (var item in info.Messages)
+				{
 					language.WriteCommentLine(output, $"{item.Item1}: {item.Item2}");
 				}
 				output.Unindent();

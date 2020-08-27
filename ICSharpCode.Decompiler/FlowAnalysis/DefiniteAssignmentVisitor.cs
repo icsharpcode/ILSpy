@@ -16,13 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Diagnostics;
-using ICSharpCode.Decompiler.IL;
-using ICSharpCode.Decompiler.Util;
-using System.Threading;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
+
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.FlowAnalysis
 {
@@ -55,7 +56,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				this.bits = new BitSet(variableCount);
 				this.bits.Set(0, variableCount);
 			}
-			
+
 			private State(BitSet bits)
 			{
 				this.bits = bits;
@@ -123,7 +124,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 		readonly Dictionary<IMethod, State> stateOfLocalFunctionUse = new Dictionary<IMethod, State>();
 		readonly HashSet<IMethod> localFunctionsNeedingAnalysis = new HashSet<IMethod>();
-		
+
 		public DefiniteAssignmentVisitor(ILFunction scope, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
@@ -133,36 +134,38 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			base.flagsRequiringManualImpl |= InstructionFlags.MayReadLocals | InstructionFlags.MayWriteLocals;
 			Initialize(new State(scope.Variables.Count));
 		}
-		
+
 		public bool IsPotentiallyUsedUninitialized(ILVariable v)
 		{
 			Debug.Assert(v.Function == scope);
 			return variablesWithUninitializedUsage[v.IndexInFunction];
 		}
-		
+
 		void HandleStore(ILVariable v)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			if (v.Function == scope) {
+			if (v.Function == scope)
+			{
 				// Mark the variable as initialized:
 				state.MarkVariableInitialized(v.IndexInFunction);
 				// Note that this gets called even if the store is in unreachable code,
 				// but that's OK because bottomState.MarkVariableInitialized() has no effect.
-				
+
 				// After the state change, we have to call
 				//  PropagateStateOnException() = currentStateOnException.JoinWith(state);
 				// but because MarkVariableInitialized() only clears a bit,
 				// this is guaranteed to be a no-op.
 			}
 		}
-		
+
 		void EnsureInitialized(ILVariable v)
 		{
-			if (v.Function == scope && state.IsPotentiallyUninitialized(v.IndexInFunction)) {
+			if (v.Function == scope && state.IsPotentiallyUninitialized(v.IndexInFunction))
+			{
 				variablesWithUninitializedUsage.Set(v.IndexInFunction);
 			}
 		}
-		
+
 		protected internal override void VisitStLoc(StLoc inst)
 		{
 			inst.Value.AcceptVisitor(this);
@@ -179,19 +182,19 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			HandleStore(inst.Variable);
 			base.BeginTryCatchHandler(inst);
 		}
-		
+
 		protected internal override void VisitPinnedRegion(PinnedRegion inst)
 		{
 			inst.Init.AcceptVisitor(this);
 			HandleStore(inst.Variable);
 			inst.Body.AcceptVisitor(this);
 		}
-		
+
 		protected internal override void VisitLdLoc(LdLoc inst)
 		{
 			EnsureInitialized(inst.Variable);
 		}
-		
+
 		protected internal override void VisitLdLoca(LdLoca inst)
 		{
 			// A variable needs to be initialized before we can take it by reference.
@@ -233,9 +236,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			// Because we might discover additional points of use within the local functions,
 			// we use a fixed-point iteration.
 			bool changed;
-			do {
+			do
+			{
 				changed = false;
-				foreach (var nestedFunction in inst.LocalFunctions) {
+				foreach (var nestedFunction in inst.LocalFunctions)
+				{
 					if (!localFunctionsNeedingAnalysis.Contains(nestedFunction.ReducedMethod))
 						continue;
 					localFunctionsNeedingAnalysis.Remove(nestedFunction.ReducedMethod);
@@ -255,19 +260,26 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			DebugStartPoint(call);
 			bool hasOutArgs = false;
-			foreach (var arg in call.Arguments) {
-				if (arg.MatchLdLoca(out var v) && call.GetParameter(arg.ChildIndex)?.IsOut == true) {
+			foreach (var arg in call.Arguments)
+			{
+				if (arg.MatchLdLoca(out var v) && call.GetParameter(arg.ChildIndex)?.IsOut == true)
+				{
 					// Visiting ldloca would require the variable to be initialized,
 					// but we don't need out arguments to be initialized.
 					hasOutArgs = true;
-				} else {
+				}
+				else
+				{
 					arg.AcceptVisitor(this);
 				}
 			}
 			// Mark out arguments as initialized, but only after the whole call:
-			if (hasOutArgs) {
-				foreach (var arg in call.Arguments) {
-					if (arg.MatchLdLoca(out var v) && call.GetParameter(arg.ChildIndex)?.IsOut == true) {
+			if (hasOutArgs)
+			{
+				foreach (var arg in call.Arguments)
+				{
+					if (arg.MatchLdLoca(out var v) && call.GetParameter(arg.ChildIndex)?.IsOut == true)
+					{
 						HandleStore(v);
 					}
 				}
@@ -282,13 +294,18 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </summary>
 		void HandleLocalFunctionUse(IMethod method)
 		{
-			if (method.IsLocalFunction) {
-				if (stateOfLocalFunctionUse.TryGetValue(method, out var stateOnEntry)) {
-					if (!state.LessThanOrEqual(stateOnEntry)) {
+			if (method.IsLocalFunction)
+			{
+				if (stateOfLocalFunctionUse.TryGetValue(method, out var stateOnEntry))
+				{
+					if (!state.LessThanOrEqual(stateOnEntry))
+					{
 						stateOnEntry.JoinWith(state);
 						localFunctionsNeedingAnalysis.Add(method);
 					}
-				} else {
+				}
+				else
+				{
 					stateOfLocalFunctionUse.Add(method, state.Clone());
 					localFunctionsNeedingAnalysis.Add(method);
 				}

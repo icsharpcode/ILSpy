@@ -16,8 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Runtime.CompilerServices;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -43,12 +43,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the reference kind of this parameter.
 		/// </summary>
 		ReferenceKind ReferenceKind { get; }
-		
+
 		/// <summary>
 		/// Gets whether this parameter is a C# 'ref' parameter.
 		/// </summary>
 		bool IsRef { get; }
-		
+
 		/// <summary>
 		/// Gets whether this parameter is a C# 'out' parameter.
 		/// </summary>
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The default value is given by the <see cref="IVariable.GetConstantValue"/> function.
 		/// </summary>
 		bool IsOptional { get; }
-		
+
 		/// <summary>
 		/// Gets whether this parameter has a constant value when presented in method signature.
 		/// </summary>
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// On the call sites, though, we can still use the value inferred from the attribute.
 		/// </remarks>
 		bool HasConstantValueInSignature { get; }
-		
+
 		/// <summary>
 		/// Gets the owner of this parameter.
 		/// May return null; for example when parameters belong to lambdas or anonymous methods.

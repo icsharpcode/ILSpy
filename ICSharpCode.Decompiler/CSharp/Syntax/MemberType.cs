@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -34,9 +35,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class MemberType : AstType
 	{
 		public static readonly Role<AstType> TargetRole = new Role<AstType>("Target", AstType.Null);
-		
+
 		bool isDoubleColon;
-		
+
 		public bool IsDoubleColon {
 			get { return isDoubleColon; }
 			set {
@@ -44,72 +45,73 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				isDoubleColon = value;
 			}
 		}
-		
+
 		public AstType Target {
 			get { return GetChildByRole(TargetRole); }
 			set { SetChildByRole(TargetRole, value); }
 		}
-		
+
 		public string MemberName {
 			get {
-				return GetChildByRole (Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value));
+				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}
-		
+
 		public Identifier MemberNameToken {
 			get {
-				return GetChildByRole (Roles.Identifier);
+				return GetChildByRole(Roles.Identifier);
 			}
 			set {
-				SetChildByRole (Roles.Identifier, value);
+				SetChildByRole(Roles.Identifier, value);
 			}
 		}
-		
+
 		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole (Roles.TypeArgument); }
+			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
-		
-		public MemberType ()
+
+		public MemberType()
 		{
 		}
-		
-		public MemberType (AstType target, string memberName)
-		{
-			this.Target = target;
-			this.MemberName = memberName;
-		}
-		
-		public MemberType (AstType target, string memberName, IEnumerable<AstType> typeArguments)
+
+		public MemberType(AstType target, string memberName)
 		{
 			this.Target = target;
 			this.MemberName = memberName;
-			foreach (var arg in typeArguments) {
-				AddChild (arg, Roles.TypeArgument);
+		}
+
+		public MemberType(AstType target, string memberName, IEnumerable<AstType> typeArguments)
+		{
+			this.Target = target;
+			this.MemberName = memberName;
+			foreach (var arg in typeArguments)
+			{
+				AddChild(arg, Roles.TypeArgument);
 			}
 		}
-		
-		public MemberType (AstType target, string memberName, params AstType[] typeArguments) : this (target, memberName, (IEnumerable<AstType>)typeArguments)
+
+		public MemberType(AstType target, string memberName, params AstType[] typeArguments) : this(target, memberName, (IEnumerable<AstType>)typeArguments)
 		{
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitMemberType (this);
+			visitor.VisitMemberType(this);
 		}
-		
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitMemberType (this);
+			return visitor.VisitMemberType(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitMemberType (this, data);
+			return visitor.VisitMemberType(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			MemberType o = other as MemberType;
@@ -122,22 +124,29 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (interningProvider == null)
 				interningProvider = InterningProvider.Dummy;
-			
+
 			TypeOrNamespaceReference t;
-			if (this.IsDoubleColon) {
+			if (this.IsDoubleColon)
+			{
 				SimpleType st = this.Target as SimpleType;
-				if (st != null) {
+				if (st != null)
+				{
 					t = interningProvider.Intern(new AliasNamespaceReference(interningProvider.Intern(st.Identifier)));
-				} else {
+				}
+				else
+				{
 					t = null;
 				}
-			} else {
+			}
+			else
+			{
 				t = this.Target.ToTypeReference(lookupMode, interningProvider) as TypeOrNamespaceReference;
 			}
 			if (t == null)
 				return SpecialType.UnknownType;
 			var typeArguments = new List<ITypeReference>();
-			foreach (var ta in this.TypeArguments) {
+			foreach (var ta in this.TypeArguments)
+			{
 				typeArguments.Add(ta.ToTypeReference(lookupMode, interningProvider));
 			}
 			string memberName = interningProvider.Intern(this.MemberName);

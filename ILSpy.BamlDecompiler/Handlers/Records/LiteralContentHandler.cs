@@ -21,13 +21,17 @@
 */
 
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class LiteralContentHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class LiteralContentHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.LiteralContent;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (LiteralContentRecord)((BamlRecordNode)node).Record;
 
 			var elem = new XElement(ctx.GetKnownNamespace("XData", XamlContext.KnownNamespace_Xaml, parent.Xaml));

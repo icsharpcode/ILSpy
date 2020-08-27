@@ -33,48 +33,48 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class ParenthesizedExpression : Expression
 	{
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
-		
+
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get { return GetChildByRole(Roles.Expression); }
+			set { SetChildByRole(Roles.Expression, value); }
 		}
-		
+
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
-		
+
 		public ParenthesizedExpression()
 		{
 		}
-		
+
 		public ParenthesizedExpression(Expression expr)
 		{
 			Expression = expr;
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitParenthesizedExpression (this);
+			visitor.VisitParenthesizedExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitParenthesizedExpression (this);
+			return visitor.VisitParenthesizedExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitParenthesizedExpression (this, data);
+			return visitor.VisitParenthesizedExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ParenthesizedExpression o = other as ParenthesizedExpression;
 			return o != null && this.Expression.DoMatch(o.Expression, match);
 		}
-		
+
 		/// <summary>
 		/// Gets whether the expression acts like a parenthesized expression,
 		/// i.e. whether information about the expected type (for lambda type inference) flows
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return expression is ParenthesizedExpression || expression is CheckedExpression || expression is UncheckedExpression;
 		}
-		
+
 		/// <summary>
 		/// Unpacks the given expression if it is a ParenthesizedExpression, CheckedExpression or UncheckedExpression.
 		/// </summary>

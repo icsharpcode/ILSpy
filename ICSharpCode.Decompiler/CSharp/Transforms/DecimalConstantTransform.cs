@@ -28,15 +28,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	public class DecimalConstantTransform : DepthFirstAstVisitor, IAstTransform
 	{
 		static readonly PrimitiveType decimalType = new PrimitiveType("decimal");
-		
+
 		public override void VisitFieldDeclaration(FieldDeclaration fieldDeclaration)
 		{
 			const Modifiers staticReadOnly = Modifiers.Static | Modifiers.Readonly;
-			if ((fieldDeclaration.Modifiers & staticReadOnly) == staticReadOnly && decimalType.IsMatch(fieldDeclaration.ReturnType)) {
-				foreach (var attributeSection in fieldDeclaration.Attributes) {
-					foreach (var attribute in attributeSection.Attributes) {
+			if ((fieldDeclaration.Modifiers & staticReadOnly) == staticReadOnly && decimalType.IsMatch(fieldDeclaration.ReturnType))
+			{
+				foreach (var attributeSection in fieldDeclaration.Attributes)
+				{
+					foreach (var attribute in attributeSection.Attributes)
+					{
 						var t = attribute.Type.GetSymbol() as IType;
-						if (t != null && t.Name == "DecimalConstantAttribute" && t.Namespace == "System.Runtime.CompilerServices") {
+						if (t != null && t.Name == "DecimalConstantAttribute" && t.Namespace == "System.Runtime.CompilerServices")
+						{
 							attribute.Remove();
 							if (attributeSection.Attributes.Count == 0)
 								attributeSection.Remove();

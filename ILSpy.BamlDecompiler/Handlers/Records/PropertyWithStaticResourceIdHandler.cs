@@ -22,14 +22,18 @@
 
 using System;
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Baml;
 using ILSpy.BamlDecompiler.Xaml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class PropertyWithStaticResourceIdHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class PropertyWithStaticResourceIdHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.PropertyWithStaticResourceId;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (PropertyWithStaticResourceIdRecord)((BamlRecordNode)node).Record;
 			var doc = new BamlElement(node);
 
@@ -41,7 +45,8 @@ namespace ILSpy.BamlDecompiler.Handlers {
 
 			BamlNode found = node;
 			XamlResourceKey key;
-			do {
+			do
+			{
 				key = XamlResourceKey.FindKeyInAncestors(found.Parent, out found);
 			} while (key != null && record.StaticResourceId >= key.StaticResources.Count);
 

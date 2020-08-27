@@ -20,10 +20,12 @@
 	THE SOFTWARE.
 */
 
-namespace ILSpy.BamlDecompiler.Baml {
+namespace ILSpy.BamlDecompiler.Baml
+{
 	// Auto generated. Do not modify.
 
-	internal enum KnownTypes : short {
+	internal enum KnownTypes : short
+	{
 		Unknown = 0,
 		AccessText = 1,
 		AdornedElementPlaceholder = 2,

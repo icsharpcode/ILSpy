@@ -25,8 +25,8 @@
 /////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-using System.Resources;
 using System.Reflection;
+using System.Resources;
 
 [assembly: System.Runtime.InteropServices.ComVisible(false)]
 [assembly: AssemblyCompany("ic#code")]
@@ -46,6 +46,6 @@ internal static class RevisionClass
 	public const string Build = "0";
 	public const string Revision = "8752";
 	public const string VersionName = "Beta 2";
-	
+
 	public const string FullVersion = Major + "." + Minor + "." + Build + ".8752-Beta 2";
 }

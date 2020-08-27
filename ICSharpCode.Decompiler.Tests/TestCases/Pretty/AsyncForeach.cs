@@ -27,8 +27,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public async Task<int> SumIntegers(IAsyncEnumerable<int> items, CancellationToken token)
 		{
 			int sum = 0;
-			await foreach (int item in items.WithCancellation(token)) {
-				if (token.IsCancellationRequested) {
+			await foreach (int item in items.WithCancellation(token))
+			{
+				if (token.IsCancellationRequested)
+				{
 					break;
 				}
 				sum += item;
@@ -39,8 +41,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public async Task<int> MaxInteger(IAsyncEnumerable<int> items)
 		{
 			int max = int.MinValue;
-			await foreach (int item in items) {
-				if (item > max) {
+			await foreach (int item in items)
+			{
+				if (item > max)
+				{
 					max = item;
 				}
 			}

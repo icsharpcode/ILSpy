@@ -21,6 +21,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
@@ -44,8 +45,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public ILSpyTreeNode CreateNode(string key, object data)
 		{
 			if (!(data is Stream))
-			    return null;
-			foreach (string fileExt in imageFileExtensions) {
+				return null;
+			foreach (string fileExt in imageFileExtensions)
+			{
 				if (key.EndsWith(fileExt, StringComparison.OrdinalIgnoreCase))
 					return new CursorResourceEntryNode(key, (Stream)data);
 			}
@@ -64,7 +66,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool View(TabPageModel tabPage)
 		{
-			try {
+			try
+			{
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				Data.Position = 0;
 				BitmapImage image = new BitmapImage();
@@ -80,7 +83,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				}
 				byte[] curData = s.ToArray();
 				curData[2] = 1;
-				using (Stream stream = new MemoryStream(curData)) {
+				using (Stream stream = new MemoryStream(curData))
+				{
 					image.BeginInit();
 					image.StreamSource = stream;
 					image.EndInit();
@@ -95,7 +99,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				tabPage.SupportsLanguageSwitching = false;
 				return true;
 			}
-			catch (Exception) {
+			catch (Exception)
+			{
 				return false;
 			}
 		}

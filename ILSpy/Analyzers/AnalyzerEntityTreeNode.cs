@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Windows;
+
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.TreeView;
@@ -31,25 +32,27 @@ namespace ICSharpCode.ILSpy.Analyzers
 	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode, IMemberTreeNode
 	{
 		public abstract IEntity Member { get; }
-		
+
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
 			e.Handled = true;
-			if (this.Member.MetadataToken.IsNil) {
+			if (this.Member.MetadataToken.IsNil)
+			{
 				MessageBox.Show(Properties.Resources.CannotAnalyzeMissingRef, "ILSpy");
 				return;
 			}
 			MainWindow.Instance.JumpToReference(this.Member);
 		}
-		
+
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 		{
-			foreach (LoadedAssembly asm in removedAssemblies) {
+			foreach (LoadedAssembly asm in removedAssemblies)
+			{
 				if (this.Member.ParentModule.PEFile == asm.GetPEFileOrNull())
 					return false; // remove this node
 			}
 			this.Children.RemoveAll(
-				delegate(SharpTreeNode n) {
+				delegate (SharpTreeNode n) {
 					AnalyzerTreeNode an = n as AnalyzerTreeNode;
 					return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
 				});

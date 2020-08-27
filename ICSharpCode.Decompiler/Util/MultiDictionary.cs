@@ -27,21 +27,22 @@ namespace ICSharpCode.Decompiler.Util
 	public class MultiDictionary<TKey, TValue> : ILookup<TKey, TValue>
 	{
 		readonly Dictionary<TKey, List<TValue>> dict;
-		
+
 		public MultiDictionary()
 		{
 			dict = new Dictionary<TKey, List<TValue>>();
 		}
-		
+
 		public MultiDictionary(IEqualityComparer<TKey> comparer)
 		{
 			dict = new Dictionary<TKey, List<TValue>>(comparer);
 		}
-		
+
 		public void Add(TKey key, TValue value)
 		{
 			List<TValue> valueList;
-			if (!dict.TryGetValue(key, out valueList)) {
+			if (!dict.TryGetValue(key, out valueList))
+			{
 				valueList = new List<TValue>();
 				dict.Add(key, valueList);
 			}
@@ -51,8 +52,10 @@ namespace ICSharpCode.Decompiler.Util
 		public bool Remove(TKey key, TValue value)
 		{
 			List<TValue> valueList;
-			if (dict.TryGetValue(key, out valueList)) {
-				if (valueList.Remove(value)) {
+			if (dict.TryGetValue(key, out valueList))
+			{
+				if (valueList.Remove(value))
+				{
 					if (valueList.Count == 0)
 						dict.Remove(key);
 					return true;
@@ -60,7 +63,7 @@ namespace ICSharpCode.Decompiler.Util
 			}
 			return false;
 		}
-		
+
 		/// <summary>
 		/// Removes all entries with the specified key.
 		/// </summary>
@@ -69,12 +72,12 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			return dict.Remove(key);
 		}
-		
+
 		public void Clear()
 		{
 			dict.Clear();
 		}
-		
+
 		public IReadOnlyList<TValue> this[TKey key] {
 			get {
 				if (dict.TryGetValue(key, out var list))
@@ -83,62 +86,62 @@ namespace ICSharpCode.Decompiler.Util
 					return EmptyList<TValue>.Instance;
 			}
 		}
-		
+
 		/// <summary>
 		/// Returns the number of different keys.
 		/// </summary>
 		public int Count {
 			get { return dict.Count; }
 		}
-		
+
 		public ICollection<TKey> Keys {
 			get { return dict.Keys; }
 		}
-		
+
 		public IEnumerable<TValue> Values {
 			get { return dict.Values.SelectMany(list => list); }
 		}
-		
+
 		IEnumerable<TValue> ILookup<TKey, TValue>.this[TKey key] {
 			get { return this[key]; }
 		}
-		
+
 		bool ILookup<TKey, TValue>.Contains(TKey key)
 		{
 			return dict.ContainsKey(key);
 		}
-		
+
 		public IEnumerator<IGrouping<TKey, TValue>> GetEnumerator()
 		{
 			foreach (var pair in dict)
 				yield return new Grouping(pair.Key, pair.Value);
 		}
-		
+
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
 		{
 			return GetEnumerator();
 		}
-		
+
 		sealed class Grouping : IGrouping<TKey, TValue>
 		{
 			readonly TKey key;
 			readonly List<TValue> values;
-			
+
 			public Grouping(TKey key, List<TValue> values)
 			{
 				this.key = key;
 				this.values = values;
 			}
-			
+
 			public TKey Key {
 				get { return key; }
 			}
-			
+
 			public IEnumerator<TValue> GetEnumerator()
 			{
 				return values.GetEnumerator();
 			}
-			
+
 			System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
 			{
 				return values.GetEnumerator();

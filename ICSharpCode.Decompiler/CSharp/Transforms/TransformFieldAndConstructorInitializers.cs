@@ -18,9 +18,11 @@
 
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
+
 using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
@@ -37,7 +39,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			this.context = context;
 
-			try {
+			try
+			{
 				// If we're viewing some set of members (fields are direct children of SyntaxTree),
 				// we also need to handle those:
 				HandleInstanceFieldInitializers(node.Children);
@@ -46,7 +49,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				node.AcceptVisitor(this);
 
 				RemoveSingleEmptyConstructor(node.Children, context.CurrentTypeDefinition);
-			} finally {
+			}
+			finally
+			{
 				this.context = null;
 			}
 		}
@@ -57,7 +62,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 			var currentCtor = (IMethod)constructorDeclaration.GetSymbol();
 			ConstructorInitializer ci;
-			switch (stmt.Expression) {
+			switch (stmt.Expression)
+			{
 				// Pattern for reference types:
 				// this..ctor(...);
 				case InvocationExpression invocation:
@@ -140,7 +146,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			var instanceCtors = members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
 			var instanceCtorsNotChainingWithThis = instanceCtors.Where(ctor => !thisCallPattern.IsMatch(ctor.Body.Statements.FirstOrDefault())).ToArray();
-			if (instanceCtorsNotChainingWithThis.Length > 0) {
+			if (instanceCtorsNotChainingWithThis.Length > 0)
+			{
 				var ctorMethodDef = instanceCtorsNotChainingWithThis[0].GetSymbol() as IMethod;
 				if (ctorMethodDef != null && ctorMethodDef.DeclaringType.IsReferenceType == false)
 					return;
@@ -150,7 +157,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// Recognize field or property initializers:
 				// Translate first statement in all ctors (if all ctors have the same statement) into an initializer.
 				bool allSame;
-				do {
+				do
+				{
 					Match m = fieldInitializerPattern.Match(instanceCtorsNotChainingWithThis[0].Body.FirstOrDefault());
 					if (!m.Success)
 						break;
@@ -167,9 +175,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						break;
 
 					allSame = true;
-					for (int i = 1; i < instanceCtorsNotChainingWithThis.Length; i++) {
+					for (int i = 1; i < instanceCtorsNotChainingWithThis.Length; i++)
+					{
 						var otherMatch = fieldInitializerPattern.Match(instanceCtorsNotChainingWithThis[i].Body.FirstOrDefault());
-						if (!otherMatch.Success) {
+						if (!otherMatch.Success)
+						{
 							allSame = false;
 							break;
 						}
@@ -179,15 +189,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						if (!initializer.IsMatch(otherMatch.Get<AstNode>("initializer").Single()))
 							allSame = false;
 					}
-					if (allSame) {
+					if (allSame)
+					{
 						foreach (var ctor in instanceCtorsNotChainingWithThis)
 							ctor.Body.First().Remove();
-						if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(initializer)) {
+						if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(initializer))
+						{
 							fieldOrPropertyOrEventDecl.Modifiers |= Modifiers.Unsafe;
 						}
-						if (fieldOrPropertyOrEventDecl is PropertyDeclaration pd) {
+						if (fieldOrPropertyOrEventDecl is PropertyDeclaration pd)
+						{
 							pd.Initializer = initializer.Detach();
-						} else {
+						}
+						else
+						{
 							fieldOrPropertyOrEventDecl.GetChildrenByRole(Roles.Variable).Single().Initializer = initializer.Detach();
 						}
 					}
@@ -198,12 +213,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		void RemoveSingleEmptyConstructor(IEnumerable<AstNode> members, ITypeDefinition contextTypeDefinition)
 		{
 			// if we're outside of a type definition skip this altogether
-			if (contextTypeDefinition == null) return;
+			if (contextTypeDefinition == null)
+				return;
 			// first get non-static constructor declarations from the AST
 			var instanceCtors = members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
 			// if there's exactly one ctor and it's part of a type declaration or there's more than one member in the current selection
 			// we can remove the constructor. (We do not want to hide the constructor if the user explicitly selected it in the tree view.) 
-			if (instanceCtors.Length == 1 && (instanceCtors[0].Parent is TypeDeclaration || members.Skip(1).Any())) {
+			if (instanceCtors.Length == 1 && (instanceCtors[0].Parent is TypeDeclaration || members.Skip(1).Any()))
+			{
 				var ctor = instanceCtors[0];
 				// dynamically create a pattern of an empty ctor
 				ConstructorDeclaration emptyCtorPattern = new ConstructorDeclaration();
@@ -212,7 +229,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					emptyCtorPattern.Modifiers |= Modifiers.Unsafe;
 				emptyCtorPattern.Body = new BlockStatement();
 
-				if (emptyCtorPattern.IsMatch(ctor)) {
+				if (emptyCtorPattern.IsMatch(ctor))
+				{
 					bool retainBecauseOfDocumentation = ctor.GetSymbol() is IMethod ctorMethod
 						&& context.Settings.ShowXmlDocumentation
 						&& context.DecompileRun.DocumentationProvider?.GetDocumentation(ctorMethod) != null;
@@ -226,15 +244,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			// Translate static constructor into field initializers if the class is BeforeFieldInit
 			var staticCtor = members.OfType<ConstructorDeclaration>().FirstOrDefault(c => (c.Modifiers & Modifiers.Static) == Modifiers.Static);
-			if (staticCtor != null) {
+			if (staticCtor != null)
+			{
 				bool ctorIsUnsafe = staticCtor.HasModifier(Modifiers.Unsafe);
 				IMethod ctorMethod = staticCtor.GetSymbol() as IMethod;
-				if (!ctorMethod.MetadataToken.IsNil) {
+				if (!ctorMethod.MetadataToken.IsNil)
+				{
 					var metadata = context.TypeSystem.MainModule.PEFile.Metadata;
 					SRM.MethodDefinition ctorMethodDef = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)ctorMethod.MetadataToken);
 					SRM.TypeDefinition declaringType = metadata.GetTypeDefinition(ctorMethodDef.GetDeclaringType());
-					if (declaringType.HasFlag(System.Reflection.TypeAttributes.BeforeFieldInit)) {
-						while (true) {
+					if (declaringType.HasFlag(System.Reflection.TypeAttributes.BeforeFieldInit))
+					{
+						while (true)
+						{
 							ExpressionStatement es = staticCtor.Body.Statements.FirstOrDefault() as ExpressionStatement;
 							if (es == null)
 								break;
@@ -247,7 +269,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							var fieldOrPropertyDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty) as EntityDeclaration;
 							if (fieldOrPropertyDecl == null)
 								break;
-							if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(assignment.Right)) {
+							if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(assignment.Right))
+							{
 								fieldOrPropertyDecl.Modifiers |= Modifiers.Unsafe;
 							}
 							if (fieldOrPropertyDecl is FieldDeclaration fd)

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -36,7 +37,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return methodDefinition;
 			if (methodDefinition.DeclaringType is ArrayType)
 				return new SpecializedMethod(methodDefinition, substitution);
-			if (methodDefinition.TypeParameters.Count == 0) {
+			if (methodDefinition.TypeParameters.Count == 0)
+			{
 				if (methodDefinition.DeclaringType.TypeParameterCount == 0)
 					return methodDefinition;
 				if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
@@ -49,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly ITypeParameter[] specializedTypeParameters;
 		readonly bool isParameterized;
 		readonly TypeParameterSubstitution substitutionWithoutSpecializedTypeParameters;
-		
+
 		public SpecializedMethod(IMethod methodDefinition, TypeParameterSubstitution substitution)
 			: base(methodDefinition)
 		{
@@ -57,14 +59,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				throw new ArgumentNullException(nameof(substitution));
 			this.methodDefinition = methodDefinition;
 			this.isParameterized = substitution.MethodTypeArguments != null;
-			if (methodDefinition.TypeParameters.Count > 0) {
+			if (methodDefinition.TypeParameters.Count > 0)
+			{
 				// The method is generic, so we need to specialize the type parameters
 				// (for specializing the constraints, and also to set the correct Owner)
 				specializedTypeParameters = new ITypeParameter[methodDefinition.TypeParameters.Count];
-				for (int i = 0; i < specializedTypeParameters.Length; i++) {
+				for (int i = 0; i < specializedTypeParameters.Length; i++)
+				{
 					specializedTypeParameters[i] = new SpecializedTypeParameter(methodDefinition.TypeParameters[i], this);
 				}
-				if (!isParameterized) {
+				if (!isParameterized)
+				{
 					// Add substitution that replaces the base method's type parameters with our specialized version
 					// but do this only if the type parameters on the baseMember have not already been substituted
 					substitutionWithoutSpecializedTypeParameters = this.Substitution;
@@ -73,23 +78,28 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			// Add the main substitution after the method type parameter specialization.
 			AddSubstitution(substitution);
-			if (substitutionWithoutSpecializedTypeParameters != null) {
+			if (substitutionWithoutSpecializedTypeParameters != null)
+			{
 				// If we already have a substitution without specialized type parameters, update that:
 				substitutionWithoutSpecializedTypeParameters = TypeParameterSubstitution.Compose(substitution, substitutionWithoutSpecializedTypeParameters);
-			} else {
+			}
+			else
+			{
 				// Otherwise just use the whole substitution, as that doesn't contain specialized type parameters
 				// in this case.
 				substitutionWithoutSpecializedTypeParameters = this.Substitution;
 			}
-			if (specializedTypeParameters != null) {
+			if (specializedTypeParameters != null)
+			{
 				// Set the substitution on the type parameters to the final composed substitution
-				foreach (var tp in specializedTypeParameters.OfType<SpecializedTypeParameter>()) {
+				foreach (var tp in specializedTypeParameters.OfType<SpecializedTypeParameter>())
+				{
 					if (tp.Owner == this)
 						tp.substitution = base.Substitution;
 				}
 			}
 		}
-		
+
 		public IReadOnlyList<IType> TypeArguments {
 			get { return this.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance; }
 		}
@@ -117,19 +127,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsConstructor {
 			get { return methodDefinition.IsConstructor; }
 		}
-		
+
 		public bool IsDestructor {
 			get { return methodDefinition.IsDestructor; }
 		}
-		
+
 		public bool IsOperator {
 			get { return methodDefinition.IsOperator; }
 		}
-		
+
 		public bool HasBody {
 			get { return methodDefinition.HasBody; }
 		}
-		
+
 		public bool IsAccessor {
 			get { return methodDefinition.IsAccessor; }
 		}
@@ -141,13 +151,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		IMember accessorOwner;
-		
+
 		public IMember AccessorOwner {
 			get {
 				var result = LazyInit.VolatileRead(ref accessorOwner);
-				if (result != null) {
+				if (result != null)
+				{
 					return result;
-				} else {
+				}
+				else
+				{
 					var ownerDefinition = methodDefinition.AccessorOwner;
 					if (ownerDefinition == null)
 						return null;
@@ -176,10 +189,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return false;
 			return this.baseMember.Equals(other.baseMember) && this.substitutionWithoutSpecializedTypeParameters.Equals(other.substitutionWithoutSpecializedTypeParameters);
 		}
-		
+
 		public override int GetHashCode()
 		{
-			unchecked {
+			unchecked
+			{
 				return 1000000013 * baseMember.GetHashCode() + 1000000009 * substitutionWithoutSpecializedTypeParameters.GetHashCode();
 			}
 		}
@@ -188,12 +202,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			return methodDefinition.Specialize(TypeParameterSubstitution.Compose(newSubstitution, substitutionWithoutSpecializedTypeParameters));
 		}
-		
+
 		IMethod IMethod.Specialize(TypeParameterSubstitution newSubstitution)
 		{
 			return methodDefinition.Specialize(TypeParameterSubstitution.Compose(newSubstitution, substitutionWithoutSpecializedTypeParameters));
 		}
-		
+
 		public override string ToString()
 		{
 			StringBuilder b = new StringBuilder("[");
@@ -202,20 +216,27 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			b.Append(this.DeclaringType.ReflectionName);
 			b.Append('.');
 			b.Append(this.Name);
-			if (this.TypeArguments.Count > 0) {
+			if (this.TypeArguments.Count > 0)
+			{
 				b.Append('[');
-				for (int i = 0; i < this.TypeArguments.Count; i++) {
-					if (i > 0) b.Append(", ");
+				for (int i = 0; i < this.TypeArguments.Count; i++)
+				{
+					if (i > 0)
+						b.Append(", ");
 					b.Append(this.TypeArguments[i].ToString());
 				}
 				b.Append(']');
-			} else if (this.TypeParameters.Count > 0) {
+			}
+			else if (this.TypeParameters.Count > 0)
+			{
 				b.Append("``");
 				b.Append(this.TypeParameters.Count);
 			}
 			b.Append('(');
-			for (int i = 0; i < this.Parameters.Count; i++) {
-				if (i > 0) b.Append(", ");
+			for (int i = 0; i < this.Parameters.Count; i++)
+			{
+				if (i > 0)
+					b.Append(", ");
 				b.Append(this.Parameters[i].ToString());
 			}
 			b.Append("):");
@@ -223,14 +244,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			b.Append(']');
 			return b.ToString();
 		}
-		
+
 		sealed class SpecializedTypeParameter : AbstractTypeParameter
 		{
 			readonly ITypeParameter baseTp;
-			
+
 			// The substition is set at the end of SpecializedMethod constructor
 			internal TypeVisitor substitution;
-			
+
 			public SpecializedTypeParameter(ITypeParameter baseTp, IMethod specializedOwner)
 				: base(specializedOwner, baseTp.Index, baseTp.Name, baseTp.Variance)
 			{
@@ -245,14 +266,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return baseTp.GetHashCode() ^ this.Owner.GetHashCode();
 			}
-			
+
 			public override bool Equals(IType other)
 			{
 				// Compare the owner, not the substitution, because the substitution may contain this specialized type parameter recursively
 				SpecializedTypeParameter o = other as SpecializedTypeParameter;
 				return o != null && baseTp.Equals(o.baseTp) && this.Owner.Equals(o.Owner);
 			}
-			
+
 			public override bool HasValueTypeConstraint => baseTp.HasValueTypeConstraint;
 			public override bool HasReferenceTypeConstraint => baseTp.HasReferenceTypeConstraint;
 			public override bool HasDefaultConstructorConstraint => baseTp.HasDefaultConstructorConstraint;
@@ -265,7 +286,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			public override IReadOnlyList<TypeConstraint> TypeConstraints {
 				get {
 					var typeConstraints = LazyInit.VolatileRead(ref this.typeConstraints);
-					if (typeConstraints == null) {
+					if (typeConstraints == null)
+					{
 						typeConstraints = baseTp.TypeConstraints.SelectReadOnlyArray(c => new TypeConstraint(c.Type.AcceptVisitor(substitution), c.Attributes));
 						typeConstraints = LazyInit.GetOrSet(ref this.typeConstraints, typeConstraints);
 					}

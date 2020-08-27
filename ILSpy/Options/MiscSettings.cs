@@ -23,7 +23,9 @@ using System.Runtime.CompilerServices;
 using System.Security.Principal;
 using System.Windows;
 using System.Windows.Input;
+
 using ICSharpCode.ILSpy.Commands;
+
 using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy.Options
@@ -41,11 +43,11 @@ namespace ICSharpCode.ILSpy.Options
 		/// <summary>
 		/// Allow multiple instances.
 		/// </summary>
-		public bool AllowMultipleInstances
-		{
+		public bool AllowMultipleInstances {
 			get { return allowMultipleInstances; }
 			set {
-				if (allowMultipleInstances != value) {
+				if (allowMultipleInstances != value)
+				{
 					allowMultipleInstances = value;
 					OnPropertyChanged();
 				}
@@ -58,7 +60,8 @@ namespace ICSharpCode.ILSpy.Options
 		public bool LoadPreviousAssemblies {
 			get { return loadPreviousAssemblies; }
 			set {
-				if (loadPreviousAssemblies != value) {
+				if (loadPreviousAssemblies != value)
+				{
 					loadPreviousAssemblies = value;
 					OnPropertyChanged();
 				}
@@ -73,13 +76,18 @@ namespace ICSharpCode.ILSpy.Options
 		private void AddRemoveShellIntegration(object obj)
 		{
 			string commandLine = NativeMethods.ArgumentArrayToCommandLine(Assembly.GetEntryAssembly().Location) + " \"%L\"";
-			if (RegistryEntriesExist()) {
-				if (MessageBox.Show(string.Format(Properties.Resources.RemoveShellIntegrationMessage, commandLine), "ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes) {
+			if (RegistryEntriesExist())
+			{
+				if (MessageBox.Show(string.Format(Properties.Resources.RemoveShellIntegrationMessage, commandLine), "ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+				{
 					Registry.CurrentUser.CreateSubKey(string.Format(rootPath, "dllfile")).DeleteSubKeyTree("Open with ILSpy");
 					Registry.CurrentUser.CreateSubKey(string.Format(rootPath, "exefile")).DeleteSubKeyTree("Open with ILSpy");
 				}
-			} else {
-				if (MessageBox.Show(string.Format(Properties.Resources.AddShellIntegrationMessage, commandLine), "ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes) {
+			}
+			else
+			{
+				if (MessageBox.Show(string.Format(Properties.Resources.AddShellIntegrationMessage, commandLine), "ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+				{
 					Registry.CurrentUser.CreateSubKey(string.Format(fullPath, "dllfile"))?
 						.SetValue("", commandLine);
 					Registry.CurrentUser.CreateSubKey(string.Format(fullPath, "exefile"))?

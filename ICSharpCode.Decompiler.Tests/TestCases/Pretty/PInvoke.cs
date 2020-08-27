@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		[DllImport("ws2_32.dll", SetLastError = true)]
-		internal static extern IntPtr ioctlsocket([In] IntPtr socketHandle, [In] int cmd, [In] [Out] ref int argp);
+		internal static extern IntPtr ioctlsocket([In] IntPtr socketHandle, [In] int cmd, [In][Out] ref int argp);
 
 		public void CallMethodWithInOutParameter()
 		{

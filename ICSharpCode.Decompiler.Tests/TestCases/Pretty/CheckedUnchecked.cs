@@ -52,8 +52,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ForWithCheckedIteratorAndUncheckedBody(int n)
 		{
-			checked {
-				for (int i = n + 1; i < n + 1; i++) {
+			checked
+			{
+				for (int i = n + 1; i < n + 1; i++)
+				{
 					n = unchecked(i * i);
 				}
 			}
@@ -62,7 +64,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void ForWithCheckedInitializerAndUncheckedIterator(int n)
 		{
 			int num = n;
-			for (num = checked(num - 10); num < n; num++) {
+			for (num = checked(num - 10); num < n; num++)
+			{
 				n--;
 			}
 		}
@@ -111,13 +114,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public short Unbox(TypeCode c, object b)
 		{
-			checked {
-				switch (c) {
+			checked
+			{
+				switch (c)
+				{
 					case TypeCode.Int32:
 						return (short)((Box<int>)b).Value;
 					case TypeCode.UInt32:
 						return (short)((Box<uint>)b).Value;
-					case TypeCode.Double: {
+					case TypeCode.Double:
+					{
 						float num = (float)((Box<double>)b).Value;
 						Console.WriteLine(num);
 						return (short)num;

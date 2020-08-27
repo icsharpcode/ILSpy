@@ -52,32 +52,34 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.additionalTypeParameterCount = additionalTypeParameterCount;
 			this.isReferenceType = isReferenceType;
 		}
-		
+
 		public ITypeReference DeclaringTypeReference {
 			get { return declaringTypeRef; }
 		}
-		
+
 		public string Name {
 			get { return name; }
 		}
-		
+
 		public int AdditionalTypeParameterCount {
 			get { return additionalTypeParameterCount; }
 		}
-		
+
 		public IType Resolve(ITypeResolveContext context)
 		{
 			ITypeDefinition declaringType = declaringTypeRef.Resolve(context) as ITypeDefinition;
-			if (declaringType != null) {
+			if (declaringType != null)
+			{
 				int tpc = declaringType.TypeParameterCount;
-				foreach (IType type in declaringType.NestedTypes) {
+				foreach (IType type in declaringType.NestedTypes)
+				{
 					if (type.Name == name && type.TypeParameterCount == tpc + additionalTypeParameterCount)
 						return type;
 				}
 			}
 			return new UnknownType(null, name, additionalTypeParameterCount);
 		}
-		
+
 		public override string ToString()
 		{
 			if (additionalTypeParameterCount == 0)
@@ -85,16 +87,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			else
 				return declaringTypeRef + "+" + name + "`" + additionalTypeParameterCount;
 		}
-		
+
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
 			return declaringTypeRef.GetHashCode() ^ name.GetHashCode() ^ additionalTypeParameterCount;
 		}
-		
+
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
 			NestedTypeReference o = other as NestedTypeReference;
-			return o != null && declaringTypeRef == o.declaringTypeRef && name == o.name 
+			return o != null && declaringTypeRef == o.declaringTypeRef && name == o.name
 				&& additionalTypeParameterCount == o.additionalTypeParameterCount
 				&& isReferenceType == o.isReferenceType;
 		}

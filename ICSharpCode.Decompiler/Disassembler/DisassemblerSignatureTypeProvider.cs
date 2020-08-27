@@ -20,8 +20,8 @@ using System;
 using System.Collections.Immutable;
 using System.Reflection.Metadata;
 
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
@@ -44,12 +44,15 @@ namespace ICSharpCode.Decompiler.Disassembler
 				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters ? syntax : ILNameSyntax.Signature;
 				elementType(syntaxForElementTypes);
 				output.Write('[');
-				for (int i = 0; i < shape.Rank; i++) {
+				for (int i = 0; i < shape.Rank; i++)
+				{
 					if (i > 0)
 						output.Write(", ");
-					if (i < shape.LowerBounds.Length || i < shape.Sizes.Length) {
+					if (i < shape.LowerBounds.Length || i < shape.Sizes.Length)
+					{
 						int lower = 0;
-						if (i < shape.LowerBounds.Length) {
+						if (i < shape.LowerBounds.Length)
+						{
 							lower = shape.LowerBounds[i];
 							output.Write(lower.ToString());
 						}
@@ -77,7 +80,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.Write("method ");
 				signature.ReturnType(syntax);
 				output.Write(" *(");
-				for (int i = 0; i < signature.ParameterTypes.Length; i++) {
+				for (int i = 0; i < signature.ParameterTypes.Length; i++)
+				{
 					if (i > 0)
 						output.Write(", ");
 					signature.ParameterTypes[i](syntax);
@@ -92,7 +96,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters ? syntax : ILNameSyntax.Signature;
 				genericType(syntaxForElementTypes);
 				output.Write('<');
-				for (int i = 0; i < typeArguments.Length; i++) {
+				for (int i = 0; i < typeArguments.Length; i++)
+				{
 					if (i > 0)
 						output.Write(", ");
 					typeArguments[i](syntaxForElementTypes);
@@ -121,7 +126,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			if (paramRef.IsNil || syntax == ILNameSyntax.SignatureNoNamedTypeParameters)
 				output.Write(index.ToString());
-			else {
+			else
+			{
 				var param = metadata.GetGenericParameter(paramRef);
 				if (param.Name.IsNil)
 					output.Write(param.Index.ToString());
@@ -164,7 +170,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public Action<ILNameSyntax> GetPrimitiveType(PrimitiveTypeCode typeCode)
 		{
-			switch (typeCode) {
+			switch (typeCode)
+			{
 				case PrimitiveTypeCode.SByte:
 					return syntax => output.Write("int8");
 				case PrimitiveTypeCode.Int16:
@@ -219,7 +226,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public Action<ILNameSyntax> GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
 		{
 			return syntax => {
-				switch (rawTypeKind) {
+				switch (rawTypeKind)
+				{
 					case 0x00:
 						break;
 					case 0x11:
@@ -238,7 +246,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public Action<ILNameSyntax> GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
 		{
 			return syntax => {
-				switch (rawTypeKind) {
+				switch (rawTypeKind)
+				{
 					case 0x00:
 						break;
 					case 0x11:

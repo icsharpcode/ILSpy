@@ -17,9 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -29,19 +30,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
 			var callsToFix = new List<Call>();
-			foreach (var call in function.Descendants.OfType<Call>()) {
+			foreach (var call in function.Descendants.OfType<Call>())
+			{
 				if (!(call.Method.IsOperator && (call.Method.Name == "op_Increment" || call.Method.Name == "op_Decrement")))
 					continue;
 				if (call.Arguments.Count != 1)
 					continue;
-				if (call.Method.DeclaringType.IsKnownType(KnownTypeCode.Decimal)) {
+				if (call.Method.DeclaringType.IsKnownType(KnownTypeCode.Decimal))
+				{
 					// For decimal, legacy csc can optimize "d + 1m" to "op_Increment(d)".
 					// We can handle these calls in ReplaceMethodCallsWithOperators.
 					continue;
 				}
 				callsToFix.Add(call);
 			}
-			foreach (var call in callsToFix) {
+			foreach (var call in callsToFix)
+			{
 				// A user-defined increment/decrement that was not handled by TransformAssignment.
 				// This can happen because the variable-being-incremented was optimized out by Roslyn,
 				// e.g.
@@ -52,7 +56,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				//   }
 				// can end up being compiled to:
 				//      Console.WriteLine(UserType.op_Increment(a + b));
-				if (call.SlotInfo == StLoc.ValueSlot && call.Parent.SlotInfo == Block.InstructionSlot) {
+				if (call.SlotInfo == StLoc.ValueSlot && call.Parent.SlotInfo == Block.InstructionSlot)
+				{
 					var store = (StLoc)call.Parent;
 					var block = (Block)store.Parent;
 					context.Step($"Fix {call.Method.Name} call at 0x{call.StartILOffset:x4} using {store.Variable.Name}", call);
@@ -64,10 +69,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					block.Instructions.Insert(store.ChildIndex + 1,
 						new UserDefinedCompoundAssign(call.Method, CompoundEvalMode.EvaluatesToNewValue,
 						new LdLoca(store.Variable), CompoundTargetKind.Address, new LdcI4(1)).WithILRange(call));
-				} else {
+				}
+				else
+				{
 					context.Step($"Fix {call.Method.Name} call at 0x{call.StartILOffset:x4} using new local", call);
 					var newVariable = call.Arguments[0].Extract();
-					if (newVariable == null) {
+					if (newVariable == null)
+					{
 						Debug.Fail("Failed to extract argument of remaining increment/decrement");
 						continue;
 					}

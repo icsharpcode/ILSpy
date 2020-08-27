@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Diagnostics;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -29,13 +30,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		protected ITypeDefinition currentTypeDefinition;
 		protected IMethod currentMethod;
-		
+
 		protected void Initialize(TransformContext context)
 		{
 			currentTypeDefinition = context.CurrentTypeDefinition;
 			currentMethod = context.CurrentMember as IMethod;
 		}
-		
+
 		protected void Uninitialize()
 		{
 			currentTypeDefinition = null;
@@ -45,65 +46,83 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override TResult VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
 			ITypeDefinition oldType = currentTypeDefinition;
-			try {
+			try
+			{
 				currentTypeDefinition = typeDeclaration.GetSymbol() as ITypeDefinition;
 				return base.VisitTypeDeclaration(typeDeclaration);
-			} finally {
+			}
+			finally
+			{
 				currentTypeDefinition = oldType;
 			}
 		}
-		
+
 		public override TResult VisitMethodDeclaration(MethodDeclaration methodDeclaration)
 		{
 			var oldMethod = currentMethod;
-			try {
+			try
+			{
 				currentMethod = methodDeclaration.GetSymbol() as IMethod;
 				return base.VisitMethodDeclaration(methodDeclaration);
-			} finally {
+			}
+			finally
+			{
 				currentMethod = oldMethod;
 			}
 		}
-		
+
 		public override TResult VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
 		{
 			var oldMethod = currentMethod;
-			try {
+			try
+			{
 				currentMethod = constructorDeclaration.GetSymbol() as IMethod;
 				return base.VisitConstructorDeclaration(constructorDeclaration);
-			} finally {
+			}
+			finally
+			{
 				currentMethod = oldMethod;
 			}
 		}
-		
+
 		public override TResult VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration)
 		{
 			var oldMethod = currentMethod;
-			try {
+			try
+			{
 				currentMethod = destructorDeclaration.GetSymbol() as IMethod;
 				return base.VisitDestructorDeclaration(destructorDeclaration);
-			} finally {
+			}
+			finally
+			{
 				currentMethod = oldMethod;
 			}
 		}
-		
+
 		public override TResult VisitOperatorDeclaration(OperatorDeclaration operatorDeclaration)
 		{
 			var oldMethod = currentMethod;
-			try {
+			try
+			{
 				currentMethod = operatorDeclaration.GetSymbol() as IMethod;
 				return base.VisitOperatorDeclaration(operatorDeclaration);
-			} finally {
+			}
+			finally
+			{
 				currentMethod = oldMethod;
 			}
 		}
-		
+
 		public override TResult VisitAccessor(Accessor accessor)
 		{
 			var oldMethod = currentMethod;
-			try {
+			try
+			{
 				currentMethod = accessor.GetSymbol() as IMethod;
 				return base.VisitAccessor(accessor);
-			} finally {
+			}
+			finally
+			{
 				currentMethod = oldMethod;
 			}
 		}

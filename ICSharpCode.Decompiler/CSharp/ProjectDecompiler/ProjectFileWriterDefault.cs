@@ -22,6 +22,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Xml;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 
@@ -54,7 +55,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				typeGuids.Add(ProjectTypeGuids.PortableLibrary);
 			typeGuids.Add(ProjectTypeGuids.CSharpWindows);
 
-			using (XmlTextWriter w = new XmlTextWriter(target)) {
+			using (XmlTextWriter w = new XmlTextWriter(target))
+			{
 				w.Formatting = Formatting.Indented;
 				w.WriteStartDocument();
 				w.WriteStartElement("Project", ns);
@@ -75,10 +77,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				w.WriteValue(platformName);
 				w.WriteEndElement(); // </Platform>
 
-				if (module.Reader.PEHeaders.IsDll) {
+				if (module.Reader.PEHeaders.IsDll)
+				{
 					w.WriteElementString("OutputType", "Library");
-				} else {
-					switch (module.Reader.PEHeaders.PEHeader.Subsystem) {
+				}
+				else
+				{
+					switch (module.Reader.PEHeaders.PEHeader.Subsystem)
+					{
 						case Subsystem.WindowsGui:
 							w.WriteElementString("OutputType", "WinExe");
 							break;
@@ -103,7 +109,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				w.WriteElementString("WarningLevel", "4");
 				w.WriteElementString("AllowUnsafeBlocks", "True");
 
-				if (project.StrongNameKeyFile != null) {
+				if (project.StrongNameKeyFile != null)
+				{
 					w.WriteElementString("SignAssembly", "True");
 					w.WriteElementString("AssemblyOriginatorKeyFile", Path.GetFileName(project.StrongNameKeyFile));
 				}
@@ -113,7 +120,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				w.WriteStartElement("PropertyGroup"); // platform-specific
 				w.WriteAttributeString("Condition", " '$(Platform)' == '" + platformName + "' ");
 				w.WriteElementString("PlatformTarget", platformName);
-				if (targetFramework.VersionNumber > 400 && platformName == "AnyCPU" && (module.Reader.PEHeaders.CorHeader.Flags & CorFlags.Prefers32Bit) == 0) {
+				if (targetFramework.VersionNumber > 400 && platformName == "AnyCPU" && (module.Reader.PEHeaders.CorHeader.Flags & CorFlags.Prefers32Bit) == 0)
+				{
 					w.WriteElementString("Prefer32Bit", "false");
 				}
 				w.WriteEndElement(); // </PropertyGroup> (platform-specific)
@@ -136,12 +144,15 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 
 				w.WriteStartElement("ItemGroup"); // References
-				foreach (var r in module.AssemblyReferences) {
-					if (r.Name != "mscorlib") {
+				foreach (var r in module.AssemblyReferences)
+				{
+					if (r.Name != "mscorlib")
+					{
 						w.WriteStartElement("Reference");
 						w.WriteAttributeString("Include", r.Name);
 						var asm = project.AssemblyResolver.Resolve(r);
-						if (asm != null && !project.AssemblyResolver.IsGacAssembly(r)) {
+						if (asm != null && !project.AssemblyResolver.IsGacAssembly(r))
+						{
 							w.WriteElementString("HintPath", asm.FileName);
 						}
 						w.WriteEndElement();
@@ -149,20 +160,25 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				}
 				w.WriteEndElement(); // </ItemGroup> (References)
 
-				foreach (IGrouping<string, string> gr in from f in files group f.fileName by f.itemType into g orderby g.Key select g) {
+				foreach (IGrouping<string, string> gr in from f in files group f.fileName by f.itemType into g orderby g.Key select g)
+				{
 					w.WriteStartElement("ItemGroup");
-					foreach (string file in gr.OrderBy(f => f, StringComparer.OrdinalIgnoreCase)) {
+					foreach (string file in gr.OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
+					{
 						w.WriteStartElement(gr.Key);
 						w.WriteAttributeString("Include", file);
 						w.WriteEndElement();
 					}
 					w.WriteEndElement();
 				}
-				if (targetFramework.IsPortableClassLibrary) {
+				if (targetFramework.IsPortableClassLibrary)
+				{
 					w.WriteStartElement("Import");
 					w.WriteAttributeString("Project", "$(MSBuildExtensionsPath32)\\Microsoft\\Portable\\$(TargetFrameworkVersion)\\Microsoft.Portable.CSharp.targets");
 					w.WriteEndElement();
-				} else {
+				}
+				else
+				{
 					w.WriteStartElement("Import");
 					w.WriteAttributeString("Project", "$(MSBuildToolsPath)\\Microsoft.CSharp.targets");
 					w.WriteEndElement();

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -31,9 +32,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void IBlockTransform.Run(Block block, BlockTransformContext context)
 		{
-			if (!context.Settings.UsingStatement) return;
+			if (!context.Settings.UsingStatement)
+				return;
 			this.context = context;
-			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+			for (int i = block.Instructions.Count - 1; i >= 0; i--)
+			{
 				if (!TransformUsing(block, i) && !TransformUsingVB(block, i) && !TransformAsyncUsing(block, i))
 					continue;
 				// This happens in some cases:
@@ -71,7 +74,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool TransformUsing(Block block, int i)
 		{
-			if (i < 1) return false;
+			if (i < 1)
+				return false;
 			if (!(block.Instructions[i] is TryFinally tryFinally) || !(block.Instructions[i - 1] is StLoc storeInst))
 				return false;
 			if (!(storeInst.Value.MatchLdNull() || CheckResourceType(storeInst.Variable.Type)))
@@ -181,7 +185,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int castIndex = entryPoint.Instructions.Count == 3 ? 0 : -1;
 			var checkInst = entryPoint.Instructions[checkIndex];
 			bool isReference = objVar.Type.IsReferenceType != false;
-			if (castIndex > -1) {
+			if (castIndex > -1)
+			{
 				if (!entryPoint.Instructions[castIndex].MatchStLoc(out var tempVar, out var isinst))
 					return false;
 				if (!isinst.MatchIsInst(out var load, out var disposableType) || !load.MatchLdLoc(objVar) || !disposableType.IsKnownType(disposeTypeCode))
@@ -193,7 +198,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (tempVar.LoadCount != numObjVarLoadsInCheck)
 					return false;
-			} else {
+			}
+			else
+			{
 				if (!MatchDisposeCheck(objVar, checkInst, isReference, usingNull, out _, disposeMethodFullName, disposeTypeCode))
 					return false;
 			}
@@ -207,19 +214,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			numObjVarLoadsInCheck = 2;
 			ILInstruction disposeInvocation;
 			CallInstruction disposeCall;
-			if (objVar.Type.IsKnownType(KnownTypeCode.NullableOfT)) {
-				if (checkInst.MatchIfInstruction(out var condition, out var disposeInst)) {
+			if (objVar.Type.IsKnownType(KnownTypeCode.NullableOfT))
+			{
+				if (checkInst.MatchIfInstruction(out var condition, out var disposeInst))
+				{
 					if (!NullableLiftingTransform.MatchHasValueCall(condition, objVar))
 						return false;
 					if (!(disposeInst is Block disposeBlock) || disposeBlock.Instructions.Count != 1)
 						return false;
 					disposeInvocation = disposeBlock.Instructions[0];
-				} else if (checkInst.MatchNullableRewrap(out disposeInst)) {
+				}
+				else if (checkInst.MatchNullableRewrap(out disposeInst))
+				{
 					disposeInvocation = disposeInst;
-				} else {
+				}
+				else
+				{
 					return false;
 				}
-				if (disposeTypeCode == KnownTypeCode.IAsyncDisposable) {
+				if (disposeTypeCode == KnownTypeCode.IAsyncDisposable)
+				{
 					if (!UnwrapAwait(ref disposeInvocation))
 						return false;
 				}
@@ -233,22 +247,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (disposeCall.Arguments.Count != 1)
 					return false;
 				var firstArg = disposeCall.Arguments.FirstOrDefault();
-				if (!(firstArg.MatchUnboxAny(out var innerArg1, out var unboxType) && unboxType.IsKnownType(disposeTypeCode))) {
+				if (!(firstArg.MatchUnboxAny(out var innerArg1, out var unboxType) && unboxType.IsKnownType(disposeTypeCode)))
+				{
 					if (!firstArg.MatchAddressOf(out var innerArg2, out _))
 						return false;
 					return NullableLiftingTransform.MatchGetValueOrDefault(innerArg2, objVar)
 						|| (innerArg2 is NullableUnwrap unwrap
 							&& unwrap.Argument.MatchLdLoc(objVar));
-				} else {
+				}
+				else
+				{
 					if (!(innerArg1.MatchBox(out firstArg, out var boxType) && boxType.IsKnownType(KnownTypeCode.NullableOfT) &&
 					NullableType.GetUnderlyingType(boxType).Equals(NullableType.GetUnderlyingType(objVar.Type))))
 						return false;
 					return firstArg.MatchLdLoc(objVar);
 				}
-			} else {
+			}
+			else
+			{
 				ILInstruction target;
 				bool boxedValue = false;
-				if (isReference && checkInst is NullableRewrap rewrap) {
+				if (isReference && checkInst is NullableRewrap rewrap)
+				{
 					// the null check of reference types might have been transformed into "objVar?.Dispose();"
 					if (!(rewrap.Argument is CallVirt cv))
 						return false;
@@ -257,7 +277,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					numObjVarLoadsInCheck = 1;
 					disposeCall = cv;
 					target = unwrap.Argument;
-				} else if (isReference) {
+				}
+				else if (isReference)
+				{
 					// reference types have a null check.
 					if (!checkInst.MatchIfInstruction(out var condition, out var disposeInst))
 						return false;
@@ -266,7 +288,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (!(disposeInst is Block disposeBlock) || disposeBlock.Instructions.Count != 1)
 						return false;
 					disposeInvocation = disposeBlock.Instructions[0];
-					if (disposeTypeCode == KnownTypeCode.IAsyncDisposable) {
+					if (disposeTypeCode == KnownTypeCode.IAsyncDisposable)
+					{
 						if (!UnwrapAwait(ref disposeInvocation))
 							return false;
 					}
@@ -278,7 +301,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (target.MatchBox(out var newTarget, out var type) && type.Equals(objVar.Type))
 						target = newTarget;
 					disposeCall = cv;
-				} else if (objVar.Type.Kind == TypeKind.Struct && objVar.Type.IsByRefLike) {
+				}
+				else if (objVar.Type.Kind == TypeKind.Struct && objVar.Type.IsByRefLike)
+				{
 					if (!(checkInst is Call call && call.Method.DeclaringType == objVar.Type))
 						return false;
 					target = call.Arguments.FirstOrDefault();
@@ -288,8 +313,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					disposeMethodFullName = call.Method.FullName;
 					disposeCall = call;
-				} else {
-					if (disposeTypeCode == KnownTypeCode.IAsyncDisposable) {
+				}
+				else
+				{
+					if (disposeTypeCode == KnownTypeCode.IAsyncDisposable)
+					{
 						if (!UnwrapAwait(ref checkInst))
 							return false;
 					}
@@ -298,7 +326,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					target = cv.Arguments.FirstOrDefault();
 					if (target == null)
 						return false;
-					if (target.MatchBox(out var newTarget, out var type) && type.Equals(objVar.Type)) {
+					if (target.MatchBox(out var newTarget, out var type) && type.Equals(objVar.Type))
+					{
 						boxedValue = type.IsReferenceType != true;
 						target = newTarget;
 					}
@@ -342,7 +371,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		private bool TransformAsyncUsing(Block block, int i)
 		{
-			if (i < 1 || !context.Settings.AsyncUsingAndForEachStatement) return false;
+			if (i < 1 || !context.Settings.AsyncUsingAndForEachStatement)
+				return false;
 			if (!(block.Instructions[i] is TryFinally tryFinally) || !(block.Instructions[i - 1] is StLoc storeInst))
 				return false;
 			if (!CheckAsyncResourceType(storeInst.Variable.Type, out string disposeMethodFullName))
@@ -369,7 +399,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			disposeMethodFullName = null;
 			IType t = NullableType.GetUnderlyingType(type);
-			if (t.GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IAsyncDisposable))) {
+			if (t.GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IAsyncDisposable)))
+			{
 				disposeMethodFullName = "System.IAsyncDisposable.DisposeAsync";
 				return true;
 			}
@@ -377,7 +408,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			IMethod disposeMethod = t
 				.GetMethods(m => m.Parameters.Count == 0 && m.TypeParameters.Count == 0 && m.Name == "DisposeAsync")
 				.SingleOrDefault();
-			if (disposeMethod != null) {
+			if (disposeMethod != null)
+			{
 				disposeMethodFullName = disposeMethod.FullName;
 				return true;
 			}

@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -33,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		readonly AstNode node;
 		readonly Role<T> role;
-		
+
 		public AstNodeCollection(AstNode node, Role<T> role)
 		{
 			if (node == null)
@@ -43,43 +44,46 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.node = node;
 			this.role = role;
 		}
-		
+
 		public int Count {
 			get {
 				int count = 0;
 				uint roleIndex = role.Index;
-				for (AstNode cur = node.FirstChild; cur != null; cur = cur.NextSibling) {
+				for (AstNode cur = node.FirstChild; cur != null; cur = cur.NextSibling)
+				{
 					if (cur.RoleIndex == roleIndex)
 						count++;
 				}
 				return count;
 			}
 		}
-		
+
 		public void Add(T element)
 		{
 			node.AddChild(element, role);
 		}
-		
+
 		public void AddRange(IEnumerable<T> nodes)
 		{
 			// Evaluate 'nodes' first, since it might change when we add the new children
 			// Example: collection.AddRange(collection);
-			if (nodes != null) {
+			if (nodes != null)
+			{
 				foreach (T node in nodes.ToList())
 					Add(node);
 			}
 		}
-		
+
 		public void AddRange(T[] nodes)
 		{
 			// Fast overload for arrays - we don't need to create a copy
-			if (nodes != null) {
+			if (nodes != null)
+			{
 				foreach (T node in nodes)
 					Add(node);
 			}
 		}
-		
+
 		public void ReplaceWith(IEnumerable<T> nodes)
 		{
 			// Evaluate 'nodes' first, since it might change when we call Clear()
@@ -87,43 +91,48 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (nodes != null)
 				nodes = nodes.ToList();
 			Clear();
-			if (nodes != null) {
+			if (nodes != null)
+			{
 				foreach (T node in nodes)
 					Add(node);
 			}
 		}
-		
+
 		public void MoveTo(ICollection<T> targetCollection)
 		{
 			if (targetCollection == null)
 				throw new ArgumentNullException(nameof(targetCollection));
-			foreach (T node in this) {
+			foreach (T node in this)
+			{
 				node.Remove();
 				targetCollection.Add(node);
 			}
 		}
-		
+
 		public bool Contains(T element)
 		{
 			return element != null && element.Parent == node && element.RoleIndex == role.Index;
 		}
-		
+
 		public bool Remove(T element)
 		{
-			if (Contains(element)) {
+			if (Contains(element))
+			{
 				element.Remove();
 				return true;
-			} else {
+			}
+			else
+			{
 				return false;
 			}
 		}
-		
+
 		public void CopyTo(T[] array, int arrayIndex)
 		{
 			foreach (T item in this)
 				array[arrayIndex++] = item;
 		}
-		
+
 		public void Clear()
 		{
 			foreach (T item in this)
@@ -135,7 +144,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			foreach (T item in this)
 				yield return item.Detach();
 		}
-		
+
 		/// <summary>
 		/// Returns the first element for which the predicate returns true,
 		/// or the null node (AstNode with IsNull=true) if no such object is found.
@@ -147,7 +156,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return item;
 			return role.NullObject;
 		}
-		
+
 		/// <summary>
 		/// Returns the last element for which the predicate returns true,
 		/// or the null node (AstNode with IsNull=true) if no such object is found.
@@ -160,16 +169,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					result = item;
 			return result;
 		}
-		
+
 		bool ICollection<T>.IsReadOnly {
 			get { return false; }
 		}
-		
+
 		public IEnumerator<T> GetEnumerator()
 		{
 			uint roleIndex = role.Index;
 			AstNode next;
-			for (AstNode cur = node.FirstChild; cur != null; cur = next) {
+			for (AstNode cur = node.FirstChild; cur != null; cur = next)
+			{
 				Debug.Assert(cur.Parent == node);
 				// Remember next before yielding cur.
 				// This allows removing/replacing nodes while iterating through the list.
@@ -178,18 +188,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					yield return (T)cur;
 			}
 		}
-		
+
 		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return GetEnumerator();
 		}
-		
+
 		#region Equals and GetHashCode implementation
 		public override int GetHashCode()
 		{
 			return node.GetHashCode() ^ role.GetHashCode();
 		}
-		
+
 		public override bool Equals(object obj)
 		{
 			AstNodeCollection<T> other = obj as AstNodeCollection<T>;
@@ -198,22 +208,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return this.node == other.node && this.role == other.role;
 		}
 		#endregion
-		
+
 		internal bool DoMatch(AstNodeCollection<T> other, Match match)
 		{
 			return Pattern.DoMatchCollection(role, node.FirstChild, other.node.FirstChild, match);
 		}
-		
+
 		public void InsertAfter(T existingItem, T newItem)
 		{
 			node.InsertChildAfter(existingItem, newItem, role);
 		}
-		
+
 		public void InsertBefore(T existingItem, T newItem)
 		{
 			node.InsertChildBefore(existingItem, newItem, role);
 		}
-		
+
 		/// <summary>
 		/// Applies the <paramref name="visitor"/> to all nodes in this collection.
 		/// </summary>
@@ -221,7 +231,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			uint roleIndex = role.Index;
 			AstNode next;
-			for (AstNode cur = node.FirstChild; cur != null; cur = next) {
+			for (AstNode cur = node.FirstChild; cur != null; cur = next)
+			{
 				Debug.Assert(cur.Parent == node);
 				// Remember next before yielding cur.
 				// This allows removing/replacing nodes while iterating through the list.

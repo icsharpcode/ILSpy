@@ -54,7 +54,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void NotAUsingVar()
 		{
 			Console.WriteLine("before using");
-			using (IDisposable disposable = GetDisposable()) {
+			using (IDisposable disposable = GetDisposable())
+			{
 				Console.WriteLine("inside using");
 				Use(disposable);
 			}
@@ -63,7 +64,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void UsingVarInNestedBlocks(bool condition)
 		{
-			if (condition) {
+			if (condition)
+			{
 				using IDisposable disposable = GetDisposable();
 				Console.WriteLine("inside using");
 				Use(disposable);

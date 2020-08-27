@@ -22,7 +22,7 @@ namespace ICSharpCode.TreeView
 {
 	class SharpTreeViewAutomationPeer : FrameworkElementAutomationPeer
 	{
-		internal SharpTreeViewAutomationPeer(SharpTreeView owner ): base(owner)
+		internal SharpTreeViewAutomationPeer(SharpTreeView owner) : base(owner)
 		{
 		}
 

@@ -42,17 +42,18 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
-			
+
 			var list = new List<ModuleEntry>();
 			ModuleEntry scrollTargetEntry = default;
 
 			list.Add(new ModuleEntry(module, EntityHandle.ModuleDefinition));
 
 			view.ItemsSource = list;
-			
+
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -73,7 +74,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset => metadataOffset
 				+ metadata.GetTableMetadataOffset(TableIndex.Module)
-				+ metadata.GetTableRowSize(TableIndex.Module) * (RID-1);
+				+ metadata.GetTableRowSize(TableIndex.Module) * (RID - 1);
 
 			public int Generation => moduleDef.Generation;
 

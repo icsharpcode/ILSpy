@@ -7,15 +7,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public sealed class TokenRole : Role<CSharpTokenNode>
 	{
-		internal readonly static List<string> Tokens = new List<string> ();
-		internal readonly static List<int>    TokenLengths = new List<int> ();
+		internal readonly static List<string> Tokens = new List<string>();
+		internal readonly static List<int> TokenLengths = new List<int>();
 		internal readonly uint TokenIndex;
 
-		static TokenRole ()
+		static TokenRole()
 		{
 			// null token
-			Tokens.Add ("");
-			TokenLengths.Add (0);
+			Tokens.Add("");
+			TokenLengths.Add(0);
 		}
 
 		/// <summary>
@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get;
 			private set;
 		}
-		
+
 		/// <summary>
 		/// Gets the char length of the token.
 		/// </summary>
@@ -35,24 +35,27 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 
-		public TokenRole(string token) : base (token, CSharpTokenNode.Null)
+		public TokenRole(string token) : base(token, CSharpTokenNode.Null)
 		{
 			this.Token = token;
 			this.Length = token.Length;
 
 			bool found = false;
-			for (int i = 0; i < Tokens.Count; i++) {
-				var existingToken = Tokens [i];
-				if (existingToken == token) {
+			for (int i = 0; i < Tokens.Count; i++)
+			{
+				var existingToken = Tokens[i];
+				if (existingToken == token)
+				{
 					TokenIndex = (uint)i;
 					found = true;
 					break;
 				}
 			}
-			if (!found) {
+			if (!found)
+			{
 				TokenIndex = (uint)Tokens.Count;
-				Tokens.Add (token);
-				TokenLengths.Add (this.Length);
+				Tokens.Add(token);
+				TokenLengths.Add(this.Length);
 			}
 		}
 	}

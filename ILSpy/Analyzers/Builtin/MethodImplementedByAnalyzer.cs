@@ -23,6 +23,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers.Builtin
@@ -37,7 +38,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		{
 			Debug.Assert(analyzedSymbol is IMethod);
 			var scope = context.GetScopeOf((IEntity)analyzedSymbol);
-			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
+			{
 				foreach (var result in AnalyzeType((IMethod)analyzedSymbol, type))
 					yield return result;
 			}
@@ -52,7 +54,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			if (!allTypes.Any(t => t.MetadataToken == declaringTypeToken && t.ParentModule.PEFile == module))
 				yield break;
 
-			foreach (var method in type.Methods) {
+			foreach (var method in type.Methods)
+			{
 				var baseMembers = InheritanceHelper.GetBaseMembers(method, true);
 				if (baseMembers.Any(m => m.MetadataToken == token && m.ParentModule.PEFile == module))
 					yield return method;

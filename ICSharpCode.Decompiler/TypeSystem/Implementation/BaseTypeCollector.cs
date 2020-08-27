@@ -26,17 +26,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	sealed class BaseTypeCollector : List<IType>
 	{
 		readonly Stack<IType> activeTypes = new Stack<IType>();
-		
+
 		/// <summary>
 		/// If this option is enabled, the list will not contain interfaces when retrieving the base types
 		/// of a class.
 		/// </summary>
 		internal bool SkipImplementedInterfaces;
-		
+
 		public void CollectBaseTypes(IType type)
 		{
 			IType def = type.GetDefinition() ?? type;
-			
+
 			// Maintain a stack of currently active type definitions, and avoid having one definition
 			// multiple times on that stack.
 			// This is necessary to ensure the output is finite in the presence of cyclic inheritance:
@@ -49,13 +49,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// cyclic inheritance in type parameters (where T : S where S : T).
 			// The output check doesn't help there because we call Add(type) only at the end.
 			// We can't simply call this.Add(type); at the start because that would return in an incorrect order.
-			
+
 			// Avoid outputting a type more than once - necessary for "diamond" multiple inheritance
 			// (e.g. C implements I1 and I2, and both interfaces derive from Object)
-			if (!this.Contains(type)) {
-				foreach (IType baseType in type.DirectBaseTypes) {
-					if (SkipImplementedInterfaces && def != null && def.Kind != TypeKind.Interface && def.Kind != TypeKind.TypeParameter) {
-						if (baseType.Kind == TypeKind.Interface) {
+			if (!this.Contains(type))
+			{
+				foreach (IType baseType in type.DirectBaseTypes)
+				{
+					if (SkipImplementedInterfaces && def != null && def.Kind != TypeKind.Interface && def.Kind != TypeKind.TypeParameter)
+					{
+						if (baseType.Kind == TypeKind.Interface)
+						{
 							// skip the interface
 							continue;
 						}

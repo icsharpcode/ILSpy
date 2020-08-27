@@ -34,13 +34,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Ref,
 		In
 	}
-	
+
 	/// <summary>
 	/// ref Expression
 	/// </summary>
 	public class DirectionExpression : Expression
 	{
-		public readonly static TokenRole RefKeywordRole = new TokenRole ("ref");
+		public readonly static TokenRole RefKeywordRole = new TokenRole("ref");
 		public readonly static TokenRole OutKeywordRole = new TokenRole("out");
 		public readonly static TokenRole InKeywordRole = new TokenRole("in");
 
@@ -48,10 +48,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get;
 			set;
 		}
-		
+
 		public CSharpTokenNode FieldDirectionToken {
 			get {
-				switch (FieldDirection) {
+				switch (FieldDirection)
+				{
 					case FieldDirection.Ref:
 						return GetChildByRole(RefKeywordRole);
 					case FieldDirection.In:
@@ -61,37 +62,37 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 			}
 		}
-		
+
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get { return GetChildByRole(Roles.Expression); }
+			set { SetChildByRole(Roles.Expression, value); }
 		}
-		
-		public DirectionExpression ()
+
+		public DirectionExpression()
 		{
 		}
-		
-		public DirectionExpression (FieldDirection direction, Expression expression)
+
+		public DirectionExpression(FieldDirection direction, Expression expression)
 		{
 			this.FieldDirection = direction;
-			AddChild (expression, Roles.Expression);
+			AddChild(expression, Roles.Expression);
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitDirectionExpression (this);
+			visitor.VisitDirectionExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitDirectionExpression (this);
+			return visitor.VisitDirectionExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitDirectionExpression (this, data);
+			return visitor.VisitDirectionExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			DirectionExpression o = other as DirectionExpression;

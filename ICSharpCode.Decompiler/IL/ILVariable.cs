@@ -18,9 +18,10 @@
 
 using System;
 using System.Collections.Generic;
-using ICSharpCode.Decompiler.TypeSystem;
 using System.Diagnostics;
 using System.Linq;
+
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -94,7 +95,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static bool IsLocal(this VariableKind kind)
 		{
-			switch (kind) {
+			switch (kind)
+			{
 				case VariableKind.Local:
 				case VariableKind.ExceptionLocal:
 				case VariableKind.ForeachLocal:
@@ -121,7 +123,8 @@ namespace ICSharpCode.Decompiler.IL
 			internal set {
 				if (kind == VariableKind.Parameter)
 					throw new InvalidOperationException("Kind=Parameter cannot be changed!");
-				if (Index != null && value.IsLocal() && !kind.IsLocal()) {
+				if (Index != null && value.IsLocal() && !kind.IsLocal())
+				{
 					// For variables, Index has different meaning than for stack slots,
 					// so we need to reset it to null.
 					// StackSlot -> ForeachLocal can happen sometimes (e.g. PST.TransformForeachOnArray)
@@ -132,7 +135,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public readonly StackType StackType;
-		
+
 		IType type;
 		public IType Type {
 			get {
@@ -149,7 +152,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// This variable is either a C# 7 'in' parameter or must be declared as 'ref readonly'.
 		/// </summary>
 		public bool IsRefReadOnly { get; internal set; }
-		
+
 		/// <summary>
 		/// The index of the local variable or parameter (depending on Kind)
 		/// 
@@ -162,11 +165,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// For other kinds, the index has no meaning, and is usually null.
 		/// </summary>
 		public int? Index { get; private set; }
-		
+
 		[Conditional("DEBUG")]
 		internal void CheckInvariant()
 		{
-			switch (kind) {
+			switch (kind)
+			{
 				case VariableKind.Local:
 				case VariableKind.ForeachLocal:
 				case VariableKind.PinnedLocal:
@@ -199,7 +203,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// This property is set automatically when the variable is added to the <c>ILFunction.Variables</c> collection.
 		/// </remarks>
 		public ILFunction Function { get; internal set; }
-		
+
 		/// <summary>
 		/// Gets the block container in which this variable is captured.
 		/// For captured variables declared inside the loop, the capture scope is the BlockContainer of the loop.
@@ -315,7 +319,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		bool hasInitialValue;
-		
+
 		/// <summary>
 		/// Gets/Sets whether the variable has an initial value.
 		/// This is always <c>true</c> for parameters (incl. <c>this</c>).
@@ -380,7 +384,7 @@ namespace ICSharpCode.Decompiler.IL
 				this.HasInitialValue = true;
 			CheckInvariant();
 		}
-		
+
 		public ILVariable(VariableKind kind, IType type, StackType stackType, int? index = null)
 		{
 			if (type == null)
@@ -398,13 +402,15 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Name;
 		}
-		
+
 		internal void WriteDefinitionTo(ITextOutput output)
 		{
-			if (IsRefReadOnly) {
+			if (IsRefReadOnly)
+			{
 				output.Write("readonly ");
 			}
-			switch (Kind) {
+			switch (Kind)
+			{
 				case VariableKind.Local:
 					output.Write("local ");
 					break;
@@ -454,36 +460,42 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(" : ");
 			Type.WriteTo(output);
 			output.Write('(');
-			if (Kind == VariableKind.Parameter || Kind == VariableKind.Local || Kind == VariableKind.PinnedLocal || Kind == VariableKind.PinnedRegionLocal) {
+			if (Kind == VariableKind.Parameter || Kind == VariableKind.Local || Kind == VariableKind.PinnedLocal || Kind == VariableKind.PinnedRegionLocal)
+			{
 				output.Write("Index={0}, ", Index);
 			}
 			output.Write("LoadCount={0}, AddressCount={1}, StoreCount={2})", LoadCount, AddressCount, StoreCount);
-			if (hasInitialValue && Kind != VariableKind.Parameter) {
+			if (hasInitialValue && Kind != VariableKind.Parameter)
+			{
 				output.Write(" init");
 			}
-			if (CaptureScope != null) {
+			if (CaptureScope != null)
+			{
 				output.Write(" captured in ");
 				output.WriteLocalReference(CaptureScope.EntryPoint.Label, CaptureScope);
 			}
-			if (StateMachineField != null) {
+			if (StateMachineField != null)
+			{
 				output.Write(" from state-machine");
 			}
 		}
-		
+
 		internal void WriteTo(ITextOutput output)
 		{
 			output.WriteLocalReference(this.Name, this);
 		}
-		
+
 		/// <summary>
 		/// Gets whether this variable occurs within the specified instruction.
 		/// </summary>
 		internal bool IsUsedWithin(ILInstruction inst)
 		{
-			if (inst is IInstructionWithVariableOperand iwvo && iwvo.Variable == this) {
+			if (inst is IInstructionWithVariableOperand iwvo && iwvo.Variable == this)
+			{
 				return true;
 			}
-			foreach (var child in inst.Children) {
+			foreach (var child in inst.Children)
+			{
 				if (IsUsedWithin(child))
 					return true;
 			}

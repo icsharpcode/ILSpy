@@ -24,6 +24,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
@@ -59,11 +60,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.TypeProvider = new TypeProvider(this);
 
 			// assembly metadata
-			if (metadata.IsAssembly) {
+			if (metadata.IsAssembly)
+			{
 				var asmdef = metadata.GetAssemblyDefinition();
 				this.AssemblyName = metadata.GetString(asmdef.Name);
 				this.FullAssemblyName = metadata.GetFullAssemblyName();
-			} else {
+			}
+			else
+			{
 				var moddef = metadata.GetModuleDefinition();
 				this.AssemblyName = metadata.GetString(moddef.Name);
 				this.FullAssemblyName = this.AssemblyName;
@@ -73,7 +77,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.minAccessibilityForNRT = FindMinimumAccessibilityForNRT(metadata, customAttrs);
 			this.rootNamespace = new MetadataNamespace(this, null, string.Empty, metadata.GetNamespaceDefinitionRoot());
 
-			if (!options.HasFlag(TypeSystemOptions.Uncached)) {
+			if (!options.HasFlag(TypeSystemOptions.Uncached))
+			{
 				// create arrays for resolved entities, indexed by row index
 				this.typeDefs = new MetadataTypeDefinition[metadata.TypeDefinitions.Count + 1];
 				this.fieldDefs = new MetadataField[metadata.FieldDefinitions.Count + 1];
@@ -104,13 +109,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public INamespace RootNamespace => rootNamespace;
 
 		public IEnumerable<ITypeDefinition> TopLevelTypeDefinitions => TypeDefinitions.Where(td => td.DeclaringTypeDefinition == null);
-		
+
 		public ITypeDefinition GetTypeDefinition(TopLevelTypeName topLevelTypeName)
 		{
 			var typeDefHandle = PEFile.GetTypeDefinition(topLevelTypeName);
-			if (typeDefHandle.IsNil) {
+			if (typeDefHandle.IsNil)
+			{
 				var forwarderHandle = PEFile.GetTypeForwarder(topLevelTypeName);
-				if (!forwarderHandle.IsNil) {
+				if (!forwarderHandle.IsNil)
+				{
 					var forwarder = metadata.GetExportedType(forwarderHandle);
 					return ResolveForwardedType(forwarder).GetDefinition();
 				}
@@ -124,7 +131,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (this == module)
 				return true;
-			foreach (string shortName in GetInternalsVisibleTo()) {
+			foreach (string shortName in GetInternalsVisibleTo())
+			{
 				if (string.Equals(module.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase))
 					return true;
 			}
@@ -136,24 +144,32 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		string[] GetInternalsVisibleTo()
 		{
 			var result = LazyInit.VolatileRead(ref this.internalsVisibleTo);
-			if (result != null) {
+			if (result != null)
+			{
 				return result;
 			}
-			if (metadata.IsAssembly) {
+			if (metadata.IsAssembly)
+			{
 				var list = new List<string>();
-				foreach (var attrHandle in metadata.GetAssemblyDefinition().GetCustomAttributes()) {
+				foreach (var attrHandle in metadata.GetAssemblyDefinition().GetCustomAttributes())
+				{
 					var attr = metadata.GetCustomAttribute(attrHandle);
-					if (attr.IsKnownAttribute(metadata, KnownAttribute.InternalsVisibleTo)) {
+					if (attr.IsKnownAttribute(metadata, KnownAttribute.InternalsVisibleTo))
+					{
 						var attrValue = attr.DecodeValue(this.TypeProvider);
-						if (attrValue.FixedArguments.Length == 1) {
-							if (attrValue.FixedArguments[0].Value is string s) {
+						if (attrValue.FixedArguments.Length == 1)
+						{
+							if (attrValue.FixedArguments[0].Value is string s)
+							{
 								list.Add(GetShortName(s));
 							}
 						}
 					}
 				}
 				result = list.ToArray();
-			} else {
+			}
+			else
+			{
 				result = Empty<string>.Array;
 			}
 			return LazyInit.GetOrSet(ref this.internalsVisibleTo, result);
@@ -177,7 +193,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public IEnumerable<ITypeDefinition> TypeDefinitions {
 			get {
-				foreach (var tdHandle in metadata.TypeDefinitions) {
+				foreach (var tdHandle in metadata.TypeDefinitions)
+				{
 					yield return GetDefinition(tdHandle);
 				}
 			}
@@ -304,8 +321,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return null;
 			var modRef = metadata.GetModuleReference(handle);
 			string name = metadata.GetString(modRef.Name);
-			foreach (var mod in Compilation.Modules) {
-				if (mod.Name == name) {
+			foreach (var mod in Compilation.Modules)
+			{
+				if (mod.Name == name)
+				{
 					return mod;
 				}
 			}
@@ -317,7 +336,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (handle.IsNil)
 				return null;
 			var tr = metadata.GetTypeReference(handle);
-			switch (tr.ResolutionScope.Kind) {
+			switch (tr.ResolutionScope.Kind)
+			{
 				case HandleKind.TypeReference:
 					return GetDeclaringModule((TypeReferenceHandle)tr.ResolutionScope);
 				case HandleKind.AssemblyReference:
@@ -341,7 +361,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (typeRefDefSpec.IsNil)
 				return SpecialType.UnknownType;
 			IType ty;
-			switch (typeRefDefSpec.Kind) {
+			switch (typeRefDefSpec.Kind)
+			{
 				case HandleKind.TypeDefinition:
 					ty = TypeProvider.GetTypeFromDefinition(metadata, (TypeDefinitionHandle)typeRefDefSpec, 0);
 					break;
@@ -383,7 +404,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (methodReference.IsNil)
 				throw new ArgumentNullException(nameof(methodReference));
-			switch (methodReference.Kind) {
+			switch (methodReference.Kind)
+			{
 				case HandleKind.MethodDefinition:
 					return ResolveMethodDefinition((MethodDefinitionHandle)methodReference, expandVarArgs: true);
 				case HandleKind.MemberReference:
@@ -398,7 +420,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMethod ResolveMethodDefinition(MethodDefinitionHandle methodDefHandle, bool expandVarArgs)
 		{
 			var method = GetDefinition(methodDefHandle);
-			if (expandVarArgs && method.Parameters.LastOrDefault()?.Type.Kind == TypeKind.ArgList) {
+			if (expandVarArgs && method.Parameters.LastOrDefault()?.Type.Kind == TypeKind.ArgList)
+			{
 				method = new VarArgInstanceMethod(method, EmptyList<IType>.Instance);
 			}
 			return method;
@@ -410,11 +433,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var methodTypeArgs = methodSpec.DecodeSignature(TypeProvider, context)
 				.SelectReadOnlyArray(IntroduceTupleTypes);
 			IMethod method;
-			if (methodSpec.Method.Kind == HandleKind.MethodDefinition) {
+			if (methodSpec.Method.Kind == HandleKind.MethodDefinition)
+			{
 				// generic instance of a methoddef (=generic method in non-generic class in current assembly)
 				method = ResolveMethodDefinition((MethodDefinitionHandle)methodSpec.Method, expandVarArgs);
 				method = method.Specialize(new TypeParameterSubstitution(null, methodTypeArgs));
-			} else {
+			}
+			else
+			{
 				method = ResolveMethodReference((MemberReferenceHandle)methodSpec.Method, context, methodTypeArgs, expandVarArgs);
 			}
 			return method;
@@ -434,13 +460,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			MethodSignature<IType> signature;
 			IReadOnlyList<IType> classTypeArguments = null;
 			IMethod method;
-			if (memberRef.Parent.Kind == HandleKind.MethodDefinition) {
+			if (memberRef.Parent.Kind == HandleKind.MethodDefinition)
+			{
 				method = ResolveMethodDefinition((MethodDefinitionHandle)memberRef.Parent, expandVarArgs: false);
 				signature = memberRef.DecodeMethodSignature(TypeProvider, context);
-			} else {
+			}
+			else
+			{
 				var declaringType = ResolveDeclaringType(memberRef.Parent, context);
 				var declaringTypeDefinition = declaringType.GetDefinition();
-				if (declaringType.TypeArguments.Count > 0) {
+				if (declaringType.TypeArguments.Count > 0)
+				{
 					classTypeArguments = declaringType.TypeArguments;
 				}
 				// Note: declaringType might be parameterized, but the signature is for the original method definition.
@@ -448,48 +478,64 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				string name = metadata.GetString(memberRef.Name);
 				signature = memberRef.DecodeMethodSignature(TypeProvider,
 					new GenericContext(declaringTypeDefinition?.TypeParameters));
-				if (declaringTypeDefinition != null) {
+				if (declaringTypeDefinition != null)
+				{
 					// Find the set of overloads to search:
 					IEnumerable<IMethod> methods;
-					if (name == ".ctor") {
+					if (name == ".ctor")
+					{
 						methods = declaringTypeDefinition.GetConstructors();
-					} else if (name == ".cctor") {
+					}
+					else if (name == ".cctor")
+					{
 						methods = declaringTypeDefinition.Methods.Where(m => m.IsConstructor && m.IsStatic);
-					} else {
+					}
+					else
+					{
 						methods = declaringTypeDefinition.GetMethods(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers)
 							.Concat(declaringTypeDefinition.GetAccessors(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers));
 					}
 					// Determine the expected parameters from the signature:
 					ImmutableArray<IType> parameterTypes;
-					if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs) {
+					if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs)
+					{
 						parameterTypes = signature.ParameterTypes
 							.Take(signature.RequiredParameterCount)
 							.Concat(new[] { SpecialType.ArgList })
 							.ToImmutableArray();
-					} else {
+					}
+					else
+					{
 						parameterTypes = signature.ParameterTypes;
 					}
 					// Search for the matching method:
 					method = null;
-					foreach (var m in methods) {
+					foreach (var m in methods)
+					{
 						if (m.TypeParameters.Count != signature.GenericParameterCount)
 							continue;
-						if (CompareSignatures(m.Parameters, parameterTypes) && CompareTypes(m.ReturnType, signature.ReturnType)) {
+						if (CompareSignatures(m.Parameters, parameterTypes) && CompareTypes(m.ReturnType, signature.ReturnType))
+						{
 							method = m;
 							break;
 						}
 					}
-				} else {
+				}
+				else
+				{
 					method = null;
 				}
-				if (method == null) {
+				if (method == null)
+				{
 					method = CreateFakeMethod(declaringType, name, signature);
 				}
 			}
-			if (classTypeArguments != null || methodTypeArguments != null) {
+			if (classTypeArguments != null || methodTypeArguments != null)
+			{
 				method = method.Specialize(new TypeParameterSubstitution(classTypeArguments, methodTypeArguments));
 			}
-			if (expandVarArgs && signature.Header.CallingConvention == SignatureCallingConvention.VarArgs) {
+			if (expandVarArgs && signature.Header.CallingConvention == SignatureCallingConvention.VarArgs)
+			{
 				method = new VarArgInstanceMethod(method, signature.ParameterTypes.Skip(signature.RequiredParameterCount));
 			}
 			return method;
@@ -511,7 +557,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (parameterTypes.Length != parameters.Count)
 				return false;
-			for (int i = 0; i < parameterTypes.Length; i++) {
+			for (int i = 0; i < parameterTypes.Length; i++)
+			{
 				if (!CompareTypes(parameterTypes[i], parameters[i].Type))
 					return false;
 			}
@@ -533,20 +580,26 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			m.IsStatic = !signature.Header.IsInstance;
 
 			TypeParameterSubstitution substitution = null;
-			if (signature.GenericParameterCount > 0) {
+			if (signature.GenericParameterCount > 0)
+			{
 				var typeParameters = new List<ITypeParameter>();
-				for (int i = 0; i < signature.GenericParameterCount; i++) {
+				for (int i = 0; i < signature.GenericParameterCount; i++)
+				{
 					typeParameters.Add(new DefaultTypeParameter(m, i));
 				}
 				m.TypeParameters = typeParameters;
 				substitution = new TypeParameterSubstitution(declaringType.TypeArguments, typeParameters);
-			} else if (declaringType.TypeArguments.Count > 0) {
+			}
+			else if (declaringType.TypeArguments.Count > 0)
+			{
 				substitution = declaringType.GetSubstitution();
 			}
 			var parameters = new List<IParameter>();
-			for (int i = 0; i < signature.RequiredParameterCount; i++) {
+			for (int i = 0; i < signature.RequiredParameterCount; i++)
+			{
 				var type = signature.ParameterTypes[i];
-				if (substitution != null) {
+				if (substitution != null)
+				{
 					// replace the dummy method type parameters with the owned instances we just created
 					type = type.AcceptVisitor(substitution);
 				}
@@ -572,7 +625,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </remarks>
 		public IEntity ResolveEntity(EntityHandle entityHandle, GenericContext context = default)
 		{
-			switch (entityHandle.Kind) {
+			switch (entityHandle.Kind)
+			{
 				case HandleKind.TypeReference:
 				case HandleKind.TypeDefinition:
 				case HandleKind.TypeSpecification:
@@ -580,7 +634,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return ResolveType(entityHandle, context).GetDefinition();
 				case HandleKind.MemberReference:
 					var memberReferenceHandle = (MemberReferenceHandle)entityHandle;
-					switch (metadata.GetMemberReference(memberReferenceHandle).GetKind()) {
+					switch (metadata.GetMemberReference(memberReferenceHandle).GetKind())
+					{
 						case MemberReferenceKind.Method:
 							// for consistency with the MethodDefinition case, never expand varargs
 							return ResolveMethodReference(memberReferenceHandle, context, expandVarArgs: false);
@@ -616,9 +671,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// 'f' in the predicate is also the definition, even if declaringType is a ParameterizedType
 			var field = declaringType.GetFields(f => f.Name == name && CompareTypes(f.ReturnType, signature),
 				GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
-			if (field == null) {
+			if (field == null)
+			{
 				// If it's a field in a generic type, we need to substitute the type arguments:
-				if (declaringType.TypeArguments.Count > 0) {
+				if (declaringType.TypeArguments.Count > 0)
+				{
 					signature = signature.AcceptVisitor(declaringType.GetSubstitution());
 				}
 				field = new FakeField(Compilation) {
@@ -666,13 +723,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public IEnumerable<IAttribute> GetAssemblyAttributes()
 		{
 			var b = new AttributeListBuilder(this);
-			if (metadata.IsAssembly) {
+			if (metadata.IsAssembly)
+			{
 				var assembly = metadata.GetAssemblyDefinition();
 				b.Add(metadata.GetCustomAttributes(Handle.AssemblyDefinition), SymbolKind.Module);
 				b.AddSecurityAttributes(assembly.GetDeclarativeSecurityAttributes());
 
 				// AssemblyVersionAttribute
-				if (assembly.Version != null) {
+				if (assembly.Version != null)
+				{
 					b.Add(KnownAttribute.AssemblyVersion, KnownTypeCode.String, assembly.Version.ToString());
 				}
 
@@ -688,7 +747,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			var b = new AttributeListBuilder(this);
 			b.Add(metadata.GetCustomAttributes(Handle.ModuleDefinition), SymbolKind.Module);
-			if (!metadata.IsAssembly) {
+			if (!metadata.IsAssembly)
+			{
 				AddTypeForwarderAttributes(ref b);
 			}
 			return b.Build();
@@ -696,9 +756,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		void AddTypeForwarderAttributes(ref AttributeListBuilder b)
 		{
-			foreach (ExportedTypeHandle t in metadata.ExportedTypes) {
+			foreach (ExportedTypeHandle t in metadata.ExportedTypes)
+			{
 				var type = metadata.GetExportedType(t);
-				if (type.IsForwarder) {
+				if (type.IsForwarder)
+				{
 					b.Add(KnownAttribute.TypeForwardedTo, KnownTypeCode.Type, ResolveForwardedType(type));
 				}
 			}
@@ -710,10 +772,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var typeName = forwarder.GetFullTypeName(metadata);
 			if (module == null)
 				return new UnknownType(typeName);
-			using (var busyLock = BusyManager.Enter(this)) {
-				if (busyLock.Success) {
+			using (var busyLock = BusyManager.Enter(this))
+			{
+				if (busyLock.Success)
+				{
 					var td = module.GetTypeDefinition(typeName);
-					if (td != null) {
+					if (td != null)
+					{
 						return td;
 					}
 				}
@@ -722,7 +787,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			IModule ResolveModule(ExportedType type)
 			{
-				switch (type.Implementation.Kind) {
+				switch (type.Implementation.Kind)
+				{
 					case HandleKind.AssemblyFile:
 						// TODO : Resolve assembly file (module)...
 						return this;
@@ -732,8 +798,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					case HandleKind.AssemblyReference:
 						var asmRef = metadata.GetAssemblyReference((AssemblyReferenceHandle)type.Implementation);
 						string shortName = metadata.GetString(asmRef.Name);
-						foreach (var asm in Compilation.Modules) {
-							if (string.Equals(asm.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase)) {
+						foreach (var asm in Compilation.Modules)
+						{
+							if (string.Equals(asm.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase))
+							{
 								return asm;
 							}
 						}
@@ -774,7 +842,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (attr != null)
 				return attr;
 			attr = new DefaultAttribute(GetAttributeType(type),
-				ImmutableArray.Create<CustomAttributeTypedArgument<IType>>(), 
+				ImmutableArray.Create<CustomAttributeTypedArgument<IType>>(),
 				ImmutableArray.Create<CustomAttributeNamedArgument<IType>>());
 			return LazyInit.GetOrSet(ref knownAttributes[(int)type], attr);
 		}
@@ -808,18 +876,26 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		static Accessibility FindMinimumAccessibilityForNRT(MetadataReader metadata, CustomAttributeHandleCollection customAttributes)
 		{
 			// Determine the minimum effective accessibility an entity must have, so that the metadata stores the nullability for its type.
-			foreach (var handle in customAttributes) {
+			foreach (var handle in customAttributes)
+			{
 				var customAttribute = metadata.GetCustomAttribute(handle);
-				if (customAttribute.IsKnownAttribute(metadata, KnownAttribute.NullablePublicOnly)) {
+				if (customAttribute.IsKnownAttribute(metadata, KnownAttribute.NullablePublicOnly))
+				{
 					CustomAttributeValue<IType> value;
-					try {
+					try
+					{
 						value = customAttribute.DecodeValue(Metadata.MetadataExtensions.MinimalAttributeTypeProvider);
-					} catch (BadImageFormatException) {
-						continue;
-					} catch (EnumUnderlyingTypeResolveException) {
+					}
+					catch (BadImageFormatException)
+					{
 						continue;
 					}
-					if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is bool includesInternals) {
+					catch (EnumUnderlyingTypeResolveException)
+					{
+						continue;
+					}
+					if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is bool includesInternals)
+					{
 						return includesInternals ? Accessibility.ProtectedAndInternal : Accessibility.Protected;
 					}
 				}
@@ -839,8 +915,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		internal TypeSystemOptions OptionsForEntity(IEntity entity)
 		{
 			var opt = this.options;
-			if ((opt & TypeSystemOptions.NullabilityAnnotations) != 0) {
-				if (!ShouldDecodeNullableAttributes(entity)) {
+			if ((opt & TypeSystemOptions.NullabilityAnnotations) != 0)
+			{
+				if (!ShouldDecodeNullableAttributes(entity))
+				{
 					opt &= ~TypeSystemOptions.NullabilityAnnotations;
 				}
 			}

@@ -26,16 +26,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	public class AnyNode : Pattern
 	{
 		readonly string groupName;
-		
+
 		public string GroupName {
 			get { return groupName; }
 		}
-		
+
 		public AnyNode(string groupName = null)
 		{
 			this.groupName = groupName;
 		}
-		
+
 		public override bool DoMatch(INode other, Match match)
 		{
 			match.Add(this.groupName, other);

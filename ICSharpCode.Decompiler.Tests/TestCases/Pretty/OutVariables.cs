@@ -25,7 +25,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public static void OutVarInShortCircuit(Dictionary<int, string> d)
 		{
-			if (d.Count > 2 && d.TryGetValue(42, out string value)) {
+			if (d.Count > 2 && d.TryGetValue(42, out string value))
+			{
 				Console.WriteLine(value);
 			}
 		}
@@ -34,7 +35,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			// Note: needs reasoning about "definitely assigned if true"
 			// to ensure that the value is initialized when the delegate is declared.
-			if (d.Count > 2 && d.TryGetValue(42, out string value)) {
+			if (d.Count > 2 && d.TryGetValue(42, out string value))
+			{
 				return delegate {
 					Console.WriteLine(value);
 				};

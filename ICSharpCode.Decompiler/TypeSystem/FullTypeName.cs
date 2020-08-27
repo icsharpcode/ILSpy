@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			public readonly string Name;
 			public readonly int AdditionalTypeParameterCount;
-			
+
 			public NestedTypeName(string name, int additionalTypeParameterCount)
 			{
 				if (name == null)
@@ -50,16 +50,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				this.AdditionalTypeParameterCount = additionalTypeParameterCount;
 			}
 		}
-		
+
 		readonly TopLevelTypeName topLevelType;
 		readonly NestedTypeName[] nestedTypes;
-		
+
 		FullTypeName(TopLevelTypeName topLevelTypeName, NestedTypeName[] nestedTypes)
 		{
 			this.topLevelType = topLevelTypeName;
 			this.nestedTypes = nestedTypes;
 		}
-		
+
 		/// <summary>
 		/// Constructs a FullTypeName representing the given top-level type.
 		/// </summary>
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.topLevelType = topLevelTypeName;
 			this.nestedTypes = null;
 		}
-		
+
 		/// <summary>
 		/// Constructs a FullTypeName by parsing the given reflection name.
 		/// Note that FullTypeName can only represent type definition names. If the reflection name
@@ -87,30 +87,34 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public FullTypeName(string reflectionName)
 		{
 			int pos = reflectionName.IndexOf('+');
-			if (pos < 0) {
+			if (pos < 0)
+			{
 				// top-level type
 				this.topLevelType = new TopLevelTypeName(reflectionName);
 				this.nestedTypes = null;
-			} else {
+			}
+			else
+			{
 				// nested type
 				string[] parts = reflectionName.Split('+');
 				this.topLevelType = new TopLevelTypeName(parts[0]);
 				this.nestedTypes = new NestedTypeName[parts.Length - 1];
-				for (int i = 0; i < nestedTypes.Length; i++) {
+				for (int i = 0; i < nestedTypes.Length; i++)
+				{
 					int tpc;
 					string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(parts[i + 1], out tpc);
 					nestedTypes[i] = new NestedTypeName(name, tpc);
 				}
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets the top-level type name.
 		/// </summary>
 		public TopLevelTypeName TopLevelTypeName {
 			get { return topLevelType; }
 		}
-		
+
 		/// <summary>
 		/// Gets whether this is a nested type.
 		/// </summary>
@@ -119,7 +123,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return nestedTypes != null;
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets the nesting level.
 		/// </summary>
@@ -128,7 +132,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return nestedTypes != null ? nestedTypes.Length : 0;
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets the name of the type.
 		/// For nested types, this is the name of the innermost type.
@@ -141,16 +145,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return topLevelType.Name;
 			}
 		}
-		
+
 		public string ReflectionName {
 			get {
 				if (nestedTypes == null)
 					return topLevelType.ReflectionName;
 				StringBuilder b = new StringBuilder(topLevelType.ReflectionName);
-				foreach (NestedTypeName nt in nestedTypes) {
+				foreach (NestedTypeName nt in nestedTypes)
+				{
 					b.Append('+');
 					b.Append(nt.Name);
-					if (nt.AdditionalTypeParameterCount > 0) {
+					if (nt.AdditionalTypeParameterCount > 0)
+					{
 						b.Append('`');
 						b.Append(nt.AdditionalTypeParameterCount);
 					}
@@ -158,22 +164,24 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return b.ToString();
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets the total type parameter count.
 		/// </summary>
 		public int TypeParameterCount {
 			get {
 				int tpc = topLevelType.TypeParameterCount;
-				if (nestedTypes != null) {
-					foreach (var nt in nestedTypes) {
+				if (nestedTypes != null)
+				{
+					foreach (var nt in nestedTypes)
+					{
 						tpc += nt.AdditionalTypeParameterCount;
 					}
 				}
 				return tpc;
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets the name of the nested type at the given level.
 		/// </summary>
@@ -183,7 +191,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new InvalidOperationException();
 			return nestedTypes[nestingLevel].Name;
 		}
-		
+
 		/// <summary>
 		/// Gets the number of additional type parameters of the nested type at the given level.
 		/// </summary>
@@ -193,7 +201,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new InvalidOperationException();
 			return nestedTypes[nestingLevel].AdditionalTypeParameterCount;
 		}
-		
+
 		/// <summary>
 		/// Gets the declaring type name.
 		/// </summary>
@@ -209,7 +217,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			Array.Copy(nestedTypes, 0, outerNestedTypeNames, 0, outerNestedTypeNames.Length);
 			return new FullTypeName(topLevelType, outerNestedTypeNames);
 		}
-		
+
 		/// <summary>
 		/// Creates a nested type name.
 		/// </summary>
@@ -226,58 +234,58 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			newNestedTypeNames[newNestedTypeNames.Length - 1] = newNestedType;
 			return new FullTypeName(topLevelType, newNestedTypeNames);
 		}
-		
+
 		public static implicit operator FullTypeName(TopLevelTypeName topLevelTypeName)
 		{
 			return new FullTypeName(topLevelTypeName);
 		}
-		
+
 		public override string ToString()
 		{
 			return this.ReflectionName;
 		}
-		
+
 		#region Equals and GetHashCode implementation
 		public override bool Equals(object obj)
 		{
 			return obj is FullTypeName && Equals((FullTypeName)obj);
 		}
-		
+
 		public bool Equals(FullTypeName other)
 		{
 			return FullTypeNameComparer.Ordinal.Equals(this, other);
 		}
-		
+
 		public override int GetHashCode()
 		{
 			return FullTypeNameComparer.Ordinal.GetHashCode(this);
 		}
-		
+
 		public static bool operator ==(FullTypeName left, FullTypeName right)
 		{
 			return left.Equals(right);
 		}
-		
+
 		public static bool operator !=(FullTypeName left, FullTypeName right)
 		{
 			return !left.Equals(right);
 		}
 		#endregion
 	}
-	
+
 	[Serializable]
 	public sealed class FullTypeNameComparer : IEqualityComparer<FullTypeName>
 	{
 		public static readonly FullTypeNameComparer Ordinal = new FullTypeNameComparer(StringComparer.Ordinal);
 		public static readonly FullTypeNameComparer OrdinalIgnoreCase = new FullTypeNameComparer(StringComparer.OrdinalIgnoreCase);
-		
+
 		public readonly StringComparer NameComparer;
-		
+
 		public FullTypeNameComparer(StringComparer nameComparer)
 		{
 			this.NameComparer = nameComparer;
 		}
-		
+
 		public bool Equals(FullTypeName x, FullTypeName y)
 		{
 			if (x.NestingLevel != y.NestingLevel)
@@ -285,10 +293,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			TopLevelTypeName topX = x.TopLevelTypeName;
 			TopLevelTypeName topY = y.TopLevelTypeName;
 			if (topX.TypeParameterCount == topY.TypeParameterCount
-			    && NameComparer.Equals(topX.Name, topY.Name)
-			    && NameComparer.Equals(topX.Namespace, topY.Namespace))
+				&& NameComparer.Equals(topX.Name, topY.Name)
+				&& NameComparer.Equals(topX.Namespace, topY.Namespace))
 			{
-				for (int i = 0; i < x.NestingLevel; i++) {
+				for (int i = 0; i < x.NestingLevel; i++)
+				{
 					if (x.GetNestedTypeAdditionalTypeParameterCount(i) != y.GetNestedTypeAdditionalTypeParameterCount(i))
 						return false;
 					if (!NameComparer.Equals(x.GetNestedTypeName(i), y.GetNestedTypeName(i)))
@@ -298,13 +307,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return false;
 		}
-		
+
 		public int GetHashCode(FullTypeName obj)
 		{
 			TopLevelTypeName top = obj.TopLevelTypeName;
 			int hash = NameComparer.GetHashCode(top.Name) ^ NameComparer.GetHashCode(top.Namespace) ^ top.TypeParameterCount;
-			unchecked {
-				for (int i = 0; i < obj.NestingLevel; i++) {
+			unchecked
+			{
+				for (int i = 0; i < obj.NestingLevel; i++)
+				{
 					hash *= 31;
 					hash += NameComparer.GetHashCode(obj.Name) ^ obj.TypeParameterCount;
 				}

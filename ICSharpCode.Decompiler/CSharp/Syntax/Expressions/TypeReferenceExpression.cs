@@ -29,31 +29,31 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitTypeReferenceExpression (this);
+			visitor.VisitTypeReferenceExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitTypeReferenceExpression (this);
+			return visitor.VisitTypeReferenceExpression(this);
 		}
-		
+
 		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
 			return visitor.VisitTypeReferenceExpression(this, data);
 		}
-		
-		public TypeReferenceExpression ()
+
+		public TypeReferenceExpression()
 		{
 		}
-		
-		public TypeReferenceExpression (AstType type)
+
+		public TypeReferenceExpression(AstType type)
 		{
-			AddChild (type, Roles.Type);
+			AddChild(type, Roles.Type);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			TypeReferenceExpression o = other as TypeReferenceExpression;

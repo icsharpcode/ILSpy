@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -30,7 +31,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// referenced by the main module.
 		/// </summary>
 		IModule MainModule { get; }
-		
+
 		/// <summary>
 		/// Gets the list of all modules in the compilation.
 		/// </summary>
@@ -44,7 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// This list does not include the main module.
 		/// </summary>
 		IReadOnlyList<IModule> ReferencedModules { get; }
-		
+
 		/// <summary>
 		/// Gets the root namespace of this compilation.
 		/// This is a merged version of the root namespaces of all assemblies.
@@ -53,7 +54,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// This always is the namespace without a name - it's unrelated to the 'root namespace' project setting.
 		/// </remarks>
 		INamespace RootNamespace { get; }
-		
+
 		/// <summary>
 		/// Gets the root namespace for a given extern alias.
 		/// </summary>
@@ -63,18 +64,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// If no alias with the specified name exists, this method returns null.
 		/// </remarks>
 		INamespace GetNamespaceForExternAlias(string alias);
-		
+
 		IType FindType(KnownTypeCode typeCode);
-		
+
 		/// <summary>
 		/// Gets the name comparer for the language being compiled.
 		/// This is the string comparer used for the INamespace.GetTypeDefinition method.
 		/// </summary>
 		StringComparer NameComparer { get; }
-		
+
 		CacheManager CacheManager { get; }
 	}
-	
+
 	public interface ICompilationProvider
 	{
 		/// <summary>

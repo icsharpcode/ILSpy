@@ -20,7 +20,9 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+
 using ICSharpCode.Decompiler.Tests.Helpers;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
@@ -37,8 +39,10 @@ namespace ICSharpCode.Decompiler.Tests
 				.Where(m => m.GetCustomAttributes(typeof(TestAttribute), false).Any())
 				.Select(m => m.Name)
 				.ToArray();
-			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles()) {
-				if (file.Extension.Equals(".vb", StringComparison.OrdinalIgnoreCase)) {
+			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles())
+			{
+				if (file.Extension.Equals(".vb", StringComparison.OrdinalIgnoreCase))
+				{
 					var testName = file.Name.Split('.')[0];
 					Assert.Contains(testName, testNames);
 					Assert.IsTrue(File.Exists(Path.Combine(TestCasePath, testName + ".cs")));
@@ -89,7 +93,8 @@ namespace ICSharpCode.Decompiler.Tests
 			var vbFile = Path.Combine(TestCasePath, testName + ".vb");
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 			var exeFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(options) + ".exe";
-			if (options.HasFlag(CompilerOptions.Library)) {
+			if (options.HasFlag(CompilerOptions.Library))
+			{
 				exeFile = Path.ChangeExtension(exeFile, ".dll");
 			}
 

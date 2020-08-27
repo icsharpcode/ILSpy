@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.Util;
 
@@ -38,10 +39,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			this.context = context;
 
-			foreach (var loop in function.Descendants.OfType<BlockContainer>()) {
+			foreach (var loop in function.Descendants.OfType<BlockContainer>())
+			{
 				if (loop.Kind != ContainerKind.Loop)
 					continue;
-				if (MatchWhileLoop(loop, out var condition, out var loopBody)) {
+				if (MatchWhileLoop(loop, out var condition, out var loopBody))
+				{
 					if (context.Settings.ForStatement)
 						MatchForLoop(loop, condition, loopBody);
 					continue;
@@ -69,20 +72,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 
 			condition = ifInstruction;
-			if (!ifInstruction.TrueInst.MatchLeave(loop)) {
+			if (!ifInstruction.TrueInst.MatchLeave(loop))
+			{
 				// sometimes the loop-body is nested within the if
 				// if (loop-condition) { loop-body }
 				// leave loop-container
 
 				if (loopBody.Instructions.Count != 2 || !loop.EntryPoint.Instructions.Last().MatchLeave(loop))
 					return false;
-				
+
 				if (!ifInstruction.TrueInst.HasFlag(InstructionFlags.EndPointUnreachable))
 					((Block)ifInstruction.TrueInst).Instructions.Add(new Leave(loop));
 
 				ConditionDetection.InvertIf(loopBody, ifInstruction, context);
 			}
-			
+
 			context.Step("Transform to while (condition) loop: " + loop.EntryPoint.Label, loop);
 			loop.Kind = ContainerKind.While;
 			//invert comparison
@@ -96,7 +100,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			ifInstruction.TrueInst = new Branch(loopBody);
 			ExpressionTransforms.RunOnSingleStatement(ifInstruction, context);
-			
+
 			// Analyze conditions and decide whether to move some of them out of the condition block:
 			/*var conditions = new List<ILInstruction>();
 			SplitConditions(condition.Condition, conditions);
@@ -109,7 +113,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					ExpressionTransforms.RunOnSingleStatment(inst, context);
 				}
 			}*/
-			
+
 			return true;
 		}
 
@@ -132,10 +136,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void SplitConditions(ILInstruction expression, List<ILInstruction> conditions)
 		{
-			if (expression.MatchLogicAnd(out var l, out var r)) {
+			if (expression.MatchLogicAnd(out var l, out var r))
+			{
 				SplitConditions(l, conditions);
 				SplitConditions(r, conditions);
-			} else {
+			}
+			else
+			{
 				conditions.Add(expression);
 			}
 		}
@@ -155,7 +162,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Block conditionBlock;
 			// first we remove all extracted instructions from the original block.
 			var originalBlock = (Block)exit.Parent;
-			if (unwrap) {
+			if (unwrap)
+			{
 				// we found a condition block nested in a condition that is followed by a return statement:
 				// we flip the condition and swap the blocks
 				Debug.Assert(originalBlock.Parent is IfInstruction);
@@ -175,12 +183,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			originalBlock.Instructions.RemoveRange(originalBlock.Instructions.Count - conditions.Count - 1, conditions.Count + 1);
 			// we need to split the block:
-			if (split) {
+			if (split)
+			{
 				// add a new block at the end and add a branch to the new block.
 				conditionBlock = new Block();
 				loop.Blocks.Add(conditionBlock);
 				originalBlock.Instructions.Add(new Branch(conditionBlock));
-			} else {
+			}
+			else
+			{
 				// move the condition block to the end.
 				conditionBlock = originalBlock;
 				loop.Blocks.MoveElementToEnd(originalBlock);
@@ -188,22 +199,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// combine all conditions and the exit instruction into one IfInstruction:
 			IfInstruction condition = null;
 			conditionBlock.AddILRange(exit);
-			foreach (var inst in conditions) {
+			foreach (var inst in conditions)
+			{
 				conditionBlock.AddILRange(inst);
-				if (condition == null) {
+				if (condition == null)
+				{
 					condition = inst;
-					if (swap) {
+					if (swap)
+					{
 						// branches must be swapped and condition negated:
 						condition.Condition = Comp.LogicNot(condition.Condition);
 						condition.FalseInst = condition.TrueInst;
 						condition.TrueInst = exit;
-					} else {
+					}
+					else
+					{
 						condition.FalseInst = exit;
 					}
-				} else {
-					if (swap) {
+				}
+				else
+				{
+					if (swap)
+					{
 						condition.Condition = IfInstruction.LogicAnd(Comp.LogicNot(inst.Condition), condition.Condition);
-					} else {
+					}
+					else
+					{
 						condition.Condition = IfInstruction.LogicAnd(inst.Condition, condition.Condition);
 					}
 				}
@@ -221,9 +242,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			// we iterate over all blocks from the bottom, because the entry-point
 			// should only be considered as condition block, if there are no other blocks.
-			foreach (var block in loop.Blocks.Reverse()) {
+			foreach (var block in loop.Blocks.Reverse())
+			{
 				// first we match the end of the block:
-				if (MatchDoWhileConditionBlock(loop, block, out bool swap, out bool unwrapCondtionBlock, out Block conditionBlock)) {
+				if (MatchDoWhileConditionBlock(loop, block, out bool swap, out bool unwrapCondtionBlock, out Block conditionBlock))
+				{
 					// now collect all instructions that are usable as loop conditions
 					var conditions = CollectConditions(loop, conditionBlock, swap);
 					// split only if the block is either the entry-point or contains other instructions as well.
@@ -242,16 +265,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var list = new List<IfInstruction>();
 			int i = block.Instructions.Count - 2;
-			while (i >= 0 && block.Instructions[i] is IfInstruction ifInst) {
+			while (i >= 0 && block.Instructions[i] is IfInstruction ifInst)
+			{
 				if (!ifInst.FalseInst.MatchNop())
 					break;
 				if (UsesVariableCapturedInLoop(loop, ifInst.Condition))
 					break;
-				if (swap) {
+				if (swap)
+				{
 					if (!ifInst.TrueInst.MatchLeave(loop))
 						break;
 					list.Add(ifInst);
-				} else {
+				}
+				else
+				{
 					if (!ifInst.TrueInst.MatchBranch(loop.EntryPoint))
 						break;
 					list.Add(ifInst);
@@ -264,7 +291,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool UsesVariableCapturedInLoop(BlockContainer loop, ILInstruction condition)
 		{
-			foreach (var inst in condition.Descendants.OfType<IInstructionWithVariableOperand>()) {
+			foreach (var inst in condition.Descendants.OfType<IInstructionWithVariableOperand>())
+			{
 				if (inst.Variable.CaptureScope == loop)
 					return true;
 			}
@@ -292,7 +320,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			// the block ends in a return statement preceeded by an IfInstruction
 			// take a look at the nested block and check if that might be a condition block
-			if (last.MatchReturn(out _) && ifInstruction.TrueInst is Block nestedConditionBlock) {
+			if (last.MatchReturn(out _) && ifInstruction.TrueInst is Block nestedConditionBlock)
+			{
 				if (nestedConditionBlock.Instructions.Count < 2)
 					return false;
 				last = nestedConditionBlock.Instructions.Last();
@@ -308,12 +337,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				swapBranches = true;
 			else if (last.MatchLeave(loop))
 				swapBranches = false;
-			else return false;
+			else
+				return false;
 			// match the IfInstruction
-			if (swapBranches) {
+			if (swapBranches)
+			{
 				if (!ifInstruction.TrueInst.MatchLeave(loop))
 					return false;
-			} else {
+			}
+			else
+			{
 				if (!ifInstruction.TrueInst.MatchBranch(loop.EntryPoint))
 					return false;
 			}
@@ -332,16 +365,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 
 			return (ifInstruction.TrueInst.MatchBranch(out target1) || ifInstruction.TrueInst.MatchReturn(out var _)) &&
-			       (last.MatchBranch(out target2) || last.MatchReturn(out var _));
+				   (last.MatchBranch(out target2) || last.MatchReturn(out var _));
 		}
 
-		internal static Block GetIncrementBlock(BlockContainer loop, Block whileLoopBody) => 
+		internal static Block GetIncrementBlock(BlockContainer loop, Block whileLoopBody) =>
 			loop.Blocks.SingleOrDefault(b => b != whileLoopBody
-			                              && b.Instructions.Last().MatchBranch(loop.EntryPoint)
-			                              && b.Instructions.SkipLast(1).All(IsSimpleStatement));
+										  && b.Instructions.Last().MatchBranch(loop.EntryPoint)
+										  && b.Instructions.SkipLast(1).All(IsSimpleStatement));
 
 		internal static bool MatchIncrementBlock(Block block, out Block loopHead) =>
-			block.Instructions.Last().MatchBranch(out loopHead) 
+			block.Instructions.Last().MatchBranch(out loopHead)
 			&& block.Instructions.SkipLast(1).All(IsSimpleStatement);
 
 		bool MatchForLoop(BlockContainer loop, IfInstruction whileCondition, Block whileLoopBody)
@@ -352,7 +385,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// try to find an increment block:
 			// consists of simple statements only.
 			var incrementBlock = GetIncrementBlock(loop, whileLoopBody);
-			if (incrementBlock != null) {
+			if (incrementBlock != null)
+			{
 				// we found a possible increment block, just make sure, that there are at least three blocks:
 				// - condition block
 				// - loop body
@@ -363,7 +397,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// move the block to the end of the loop:
 				loop.Blocks.MoveElementToEnd(incrementBlock);
 				loop.Kind = ContainerKind.For;
-			} else {
+			}
+			else
+			{
 				// we need to move the increment statements into its own block:
 				// last must be a branch entry-point
 				var last = whileLoopBody.Instructions.LastOrDefault();
@@ -383,16 +419,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				SplitConditions(whileCondition.Condition, conditions);
 				IfInstruction forCondition = null;
 				int numberOfConditions = 0;
-				foreach (var condition in conditions) {
+				foreach (var condition in conditions)
+				{
 					// the increment variable must be used in the condition
 					if (!condition.Descendants.Any(inst => inst.MatchLdLoc(incrementVariable)))
 						break;
 					// condition should not contain an assignment
 					if (condition.Descendants.Any(IsAssignment))
 						break;
-					if (forCondition == null) {
+					if (forCondition == null)
+					{
 						forCondition = new IfInstruction(condition, whileCondition.TrueInst, whileCondition.FalseInst);
-					} else {
+					}
+					else
+					{
 						forCondition.Condition = IfInstruction.LogicAnd(forCondition.Condition, condition);
 					}
 					numberOfConditions++;
@@ -403,7 +443,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// split condition block:
 				whileCondition.ReplaceWith(forCondition);
 				ExpressionTransforms.RunOnSingleStatement(forCondition, context);
-				for (int i = conditions.Count - 1; i >= numberOfConditions; i--) {
+				for (int i = conditions.Count - 1; i >= numberOfConditions; i--)
+				{
 					IfInstruction inst;
 					whileLoopBody.Instructions.Insert(0, inst = new IfInstruction(Comp.LogicNot(conditions[i]), new Leave(loop)));
 					ExpressionTransforms.RunOnSingleStatement(inst, context);
@@ -439,11 +480,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		public static bool MatchIncrement(ILInstruction inst, out ILVariable variable)
 		{
-			if (inst.MatchStLoc(out variable, out var value)) {
-				if (value.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right)) {
+			if (inst.MatchStLoc(out variable, out var value))
+			{
+				if (value.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right))
+				{
 					return left.MatchLdLoc(variable);
 				}
-			} else if (inst is CompoundAssignmentInstruction cai) {
+			}
+			else if (inst is CompoundAssignmentInstruction cai)
+			{
 				return cai.TargetKind == CompoundTargetKind.Address && cai.Target.MatchLdLoca(out variable);
 			}
 			return false;
@@ -455,7 +500,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		static bool IsSimpleStatement(ILInstruction inst)
 		{
-			switch (inst.OpCode) {
+			switch (inst.OpCode)
+			{
 				case OpCode.Call:
 				case OpCode.CallVirt:
 				case OpCode.NewObj:

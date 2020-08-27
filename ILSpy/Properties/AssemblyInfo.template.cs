@@ -1,11 +1,11 @@
 ﻿#region Using directives
 
 using System;
-using System.Resources;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -41,6 +41,6 @@ internal static class RevisionClass
 	public const string Build = "0";
 	public const string Revision = "$INSERTREVISION$";
 	public const string VersionName = "preview1";
-	
+
 	public const string FullVersion = Major + "." + Minor + "." + Build + ".$INSERTREVISION$$INSERTBRANCHPOSTFIX$$INSERTVERSIONNAMEPOSTFIX$";
 }

@@ -31,54 +31,54 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public IdentifierExpression()
 		{
 		}
-		
+
 		public IdentifierExpression(string identifier)
 		{
 			this.Identifier = identifier;
 		}
-		
+
 		public IdentifierExpression(string identifier, TextLocation location)
 		{
-			SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create (identifier, location));
+			SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(identifier, location));
 		}
-		
+
 		public string Identifier {
 			get {
-				return GetChildByRole (Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create (value));
+				SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(value));
 			}
 		}
 
 		public Identifier IdentifierToken {
 			get {
-				return GetChildByRole (Roles.Identifier);
+				return GetChildByRole(Roles.Identifier);
 			}
 			set {
-				SetChildByRole (Roles.Identifier, value);
+				SetChildByRole(Roles.Identifier, value);
 			}
 		}
 
 		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole (Roles.TypeArgument); }
+			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitIdentifierExpression (this);
+			visitor.VisitIdentifierExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitIdentifierExpression (this);
+			return visitor.VisitIdentifierExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitIdentifierExpression (this, data);
+			return visitor.VisitIdentifierExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			IdentifierExpression o = other as IdentifierExpression;

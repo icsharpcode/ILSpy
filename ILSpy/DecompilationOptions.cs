@@ -18,6 +18,7 @@
 
 using System;
 using System.Threading;
+
 using ICSharpCode.ILSpy.Options;
 
 namespace ICSharpCode.ILSpy
@@ -32,7 +33,7 @@ namespace ICSharpCode.ILSpy
 		/// If this option is false, language bindings are allowed to show the only headers of the decompiled element's children.
 		/// </summary>
 		public bool FullDecompilation { get; set; }
-		
+
 		/// <summary>
 		/// Gets/Sets the directory into which the project is saved.
 		/// </summary>
@@ -43,7 +44,7 @@ namespace ICSharpCode.ILSpy
 		/// This setting is ignored in case <see cref="SaveAsProjectDirectory"/> is set.
 		/// </summary>
 		public bool EscapeInvalidIdentifiers { get; set; }
-		
+
 		/// <summary>
 		/// Gets the cancellation token that is used to abort the decompiler.
 		/// </summary>
@@ -52,7 +53,7 @@ namespace ICSharpCode.ILSpy
 		/// to allow for cooperative cancellation of the decompilation task.
 		/// </remarks>
 		public CancellationToken CancellationToken { get; set; }
-		
+
 		/// <summary>
 		/// Gets the settings for the decompiler.
 		/// </summary>
@@ -84,7 +85,7 @@ namespace ICSharpCode.ILSpy
 
 		public DecompilationOptions(LanguageVersion version, Decompiler.DecompilerSettings settings, Options.DisplaySettings displaySettings)
 		{
-			if (!Enum.TryParse(version?.Version, out Decompiler.CSharp.LanguageVersion languageVersion)) 
+			if (!Enum.TryParse(version?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
 				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
 			var newSettings = this.DecompilerSettings = settings.Clone();
 			newSettings.SetLanguageVersion(languageVersion);
@@ -97,7 +98,8 @@ namespace ICSharpCode.ILSpy
 
 		private string GetIndentationString(DisplaySettings displaySettings)
 		{
-			if (displaySettings.IndentationUseTabs) {
+			if (displaySettings.IndentationUseTabs)
+			{
 				int numberOfTabs = displaySettings.IndentationSize / displaySettings.IndentationTabSize;
 				int numberOfSpaces = displaySettings.IndentationSize % displaySettings.IndentationTabSize;
 				return new string('\t', numberOfTabs) + new string(' ', numberOfSpaces);

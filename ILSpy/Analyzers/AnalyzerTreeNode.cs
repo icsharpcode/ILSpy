@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.Analyzers
@@ -30,7 +31,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public Language Language {
 			get { return language; }
 			set {
-				if (language != value) {
+				if (language != value)
+				{
 					language = value;
 					foreach (var child in this.Children.OfType<AnalyzerTreeNode>())
 						child.Language = value;
@@ -55,7 +57,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		protected override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
-			if (e.NewItems != null) {
+			if (e.NewItems != null)
+			{
 				foreach (AnalyzerTreeNode a in e.NewItems.OfType<AnalyzerTreeNode>())
 					a.Language = this.Language;
 			}

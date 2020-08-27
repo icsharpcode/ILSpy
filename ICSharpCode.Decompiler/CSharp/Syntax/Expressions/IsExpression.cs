@@ -32,17 +32,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class IsExpression : Expression
 	{
-		public readonly static TokenRole IsKeywordRole = new TokenRole ("is");
-		
+		public readonly static TokenRole IsKeywordRole = new TokenRole("is");
+
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
 		}
-		
+
 		public CSharpTokenNode IsToken {
-			get { return GetChildByRole (IsKeywordRole); }
+			get { return GetChildByRole(IsKeywordRole); }
 		}
-		
+
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
@@ -52,28 +52,28 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public IsExpression (Expression expression, AstType type)
+		public IsExpression(Expression expression, AstType type)
 		{
-			AddChild (expression, Roles.Expression);
-			AddChild (type, Roles.Type);
+			AddChild(expression, Roles.Expression);
+			AddChild(type, Roles.Type);
 		}
 
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitIsExpression (this);
+			visitor.VisitIsExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitIsExpression (this);
+			return visitor.VisitIsExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitIsExpression (this, data);
+			return visitor.VisitIsExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			IsExpression o = other as IsExpression;

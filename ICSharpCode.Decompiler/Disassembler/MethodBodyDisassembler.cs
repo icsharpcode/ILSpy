@@ -22,6 +22,7 @@ using System.Collections.Immutable;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading;
+
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
@@ -87,16 +88,20 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			// start writing IL code
 			output.WriteLine("// Method begins at RVA 0x{0:x4}", methodDefinition.RelativeVirtualAddress);
-			if (methodDefinition.RelativeVirtualAddress == 0) {
+			if (methodDefinition.RelativeVirtualAddress == 0)
+			{
 				output.WriteLine("// Code size {0} (0x{0:x})", 0);
 				output.WriteLine(".maxstack {0}", 0);
 				output.WriteLine();
 				return;
 			}
 			MethodBodyBlock body;
-			try {
+			try
+			{
 				body = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
-			} catch (BadImageFormatException ex) {
+			}
+			catch (BadImageFormatException ex)
+			{
 				output.WriteLine("// {0}", ex.Message);
 				return;
 			}
@@ -113,13 +118,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			sequencePoints = DebugInfo?.GetSequencePoints(handle) ?? EmptyList<DebugInfo.SequencePoint>.Instance;
 			nextSequencePointIndex = 0;
-			if (DetectControlStructure && blob.Length > 0) {
+			if (DetectControlStructure && blob.Length > 0)
+			{
 				blob.Reset();
 				HashSet<int> branchTargets = GetBranchTargets(blob);
 				blob.Reset();
 				WriteStructureBody(new ILStructure(module, handle, genericContext, body), branchTargets, ref blob);
-			} else {
-				while (blob.RemainingBytes > 0) {
+			}
+			else
+			{
+				while (blob.RemainingBytes > 0)
+				{
 					cancellationToken.ThrowIfCancellationRequested();
 					WriteInstruction(output, metadata, handle, ref blob);
 				}
@@ -138,24 +147,32 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.Write(" init");
 			var blob = metadata.GetStandaloneSignature(body.LocalSignature);
 			var signature = ImmutableArray<Action<ILNameSyntax>>.Empty;
-			try {
-				if (blob.GetKind() == StandaloneSignatureKind.LocalVariables) {
+			try
+			{
+				if (blob.GetKind() == StandaloneSignatureKind.LocalVariables)
+				{
 					signature = blob.DecodeLocalSignature(signatureDecoder, genericContext);
-				} else {
+				}
+				else
+				{
 					output.Write(" /* wrong signature kind */");
 				}
-			} catch (BadImageFormatException ex) {
+			}
+			catch (BadImageFormatException ex)
+			{
 				output.Write($" /* {ex.Message} */");
 			}
 			output.Write(' ');
 			output.WriteLine("(");
 			output.Indent();
 			int index = 0;
-			foreach (var v in signature) {
+			foreach (var v in signature)
+			{
 				output.WriteLocalReference("[" + index + "]", "loc_" + index, isDefinition: true);
 				output.Write(' ');
 				v(ILNameSyntax.TypeName);
-				if (DebugInfo != null && DebugInfo.TryGetName(method, index, out var name)) {
+				if (DebugInfo != null && DebugInfo.TryGetName(method, index, out var name))
+				{
 					output.Write(" " + DisassemblerHelpers.Escape(name));
 				}
 				if (index + 1 < signature.Length)
@@ -174,9 +191,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			genericContext = new GenericContext(handle, module);
 			signatureDecoder = new DisassemblerSignatureTypeProvider(module, output);
 			var handlers = body.ExceptionRegions;
-			if (!handlers.IsEmpty) {
+			if (!handlers.IsEmpty)
+			{
 				output.WriteLine();
-				foreach (var eh in handlers) {
+				foreach (var eh in handlers)
+				{
 					eh.WriteTo(module, genericContext, output);
 					output.WriteLine();
 				}
@@ -186,13 +205,19 @@ namespace ICSharpCode.Decompiler.Disassembler
 		HashSet<int> GetBranchTargets(BlobReader blob)
 		{
 			HashSet<int> branchTargets = new HashSet<int>();
-			while (blob.RemainingBytes > 0) {
+			while (blob.RemainingBytes > 0)
+			{
 				var opCode = ILParser.DecodeOpCode(ref blob);
-				if (opCode == ILOpCode.Switch) {
+				if (opCode == ILOpCode.Switch)
+				{
 					branchTargets.UnionWith(ILParser.DecodeSwitchTargets(ref blob));
-				} else if (opCode.IsBranch()) {
+				}
+				else if (opCode.IsBranch())
+				{
 					branchTargets.Add(ILParser.DecodeBranchTarget(ref blob, opCode));
-				} else {
+				}
+				else
+				{
 					ILParser.SkipOperand(ref blob, opCode);
 				}
 			}
@@ -201,10 +226,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void WriteStructureHeader(ILStructure s)
 		{
-			switch (s.Type) {
+			switch (s.Type)
+			{
 				case ILStructureType.Loop:
 					output.Write("// loop start");
-					if (s.LoopEntryPointOffset >= 0) {
+					if (s.LoopEntryPointOffset >= 0)
+					{
 						output.Write(" (head: ");
 						DisassemblerHelpers.WriteOffsetReference(output, s.LoopEntryPointOffset);
 						output.Write(')');
@@ -216,11 +243,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.WriteLine("{");
 					break;
 				case ILStructureType.Handler:
-					switch (s.ExceptionHandler.Kind) {
+					switch (s.ExceptionHandler.Kind)
+					{
 						case ExceptionRegionKind.Catch:
 						case ExceptionRegionKind.Filter:
 							output.Write("catch");
-							if (!s.ExceptionHandler.CatchType.IsNil) {
+							if (!s.ExceptionHandler.CatchType.IsNil)
+							{
 								output.Write(' ');
 								s.ExceptionHandler.CatchType.WriteTo(s.Module, output, s.GenericContext, ILNameSyntax.TypeName);
 							}
@@ -252,16 +281,21 @@ namespace ICSharpCode.Decompiler.Disassembler
 			bool isFirstInstructionInStructure = true;
 			bool prevInstructionWasBranch = false;
 			int childIndex = 0;
-			while (body.RemainingBytes > 0 && body.Offset < s.EndOffset) {
+			while (body.RemainingBytes > 0 && body.Offset < s.EndOffset)
+			{
 				cancellationToken.ThrowIfCancellationRequested();
 				int offset = body.Offset;
-				if (childIndex < s.Children.Count && s.Children[childIndex].StartOffset <= offset && offset < s.Children[childIndex].EndOffset) {
+				if (childIndex < s.Children.Count && s.Children[childIndex].StartOffset <= offset && offset < s.Children[childIndex].EndOffset)
+				{
 					ILStructure child = s.Children[childIndex++];
 					WriteStructureHeader(child);
 					WriteStructureBody(child, branchTargets, ref body);
 					WriteStructureFooter(child);
-				} else {
-					if (!isFirstInstructionInStructure && (prevInstructionWasBranch || branchTargets.Contains(offset))) {
+				}
+				else
+				{
+					if (!isFirstInstructionInStructure && (prevInstructionWasBranch || branchTargets.Contains(offset)))
+					{
 						output.WriteLine(); // put an empty line after branches, and in front of branch targets
 					}
 					var currentOpCode = ILParser.DecodeOpCode(ref body);
@@ -280,7 +314,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		void WriteStructureFooter(ILStructure s)
 		{
 			output.Unindent();
-			switch (s.Type) {
+			switch (s.Type)
+			{
 				case ILStructureType.Loop:
 					output.WriteLine("// end loop");
 					break;
@@ -301,16 +336,22 @@ namespace ICSharpCode.Decompiler.Disassembler
 		protected virtual void WriteInstruction(ITextOutput output, MetadataReader metadata, MethodDefinitionHandle methodDefinition, ref BlobReader blob)
 		{
 			int offset = blob.Offset;
-			if (ShowSequencePoints && nextSequencePointIndex < sequencePoints?.Count) {
+			if (ShowSequencePoints && nextSequencePointIndex < sequencePoints?.Count)
+			{
 				var sp = sequencePoints[nextSequencePointIndex];
-				if (sp.Offset <= offset) {
+				if (sp.Offset <= offset)
+				{
 					output.Write("// sequence point: ");
-					if (sp.Offset != offset) {
+					if (sp.Offset != offset)
+					{
 						output.Write("!! at " + DisassemblerHelpers.OffsetToString(sp.Offset) + " !!");
 					}
-					if (sp.IsHidden) {
+					if (sp.IsHidden)
+					{
 						output.WriteLine("hidden");
-					} else {
+					}
+					else
+					{
 						output.WriteLine($"(line {sp.StartLine}, col {sp.StartColumn}) to (line {sp.EndLine}, col {sp.EndColumn}) in {sp.DocumentUrl}");
 					}
 					nextSequencePointIndex++;
@@ -319,9 +360,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			ILOpCode opCode = ILParser.DecodeOpCode(ref blob);
 			output.WriteLocalReference(DisassemblerHelpers.OffsetToString(offset), offset, isDefinition: true);
 			output.Write(": ");
-			if (opCode.IsDefined()) {
+			if (opCode.IsDefined())
+			{
 				WriteOpCode(opCode);
-				switch (opCode.GetOperandType()) {
+				switch (opCode.GetOperandType())
+				{
 					case OperandType.BrTarget:
 					case OperandType.ShortBrTarget:
 						output.Write(' ');
@@ -335,9 +378,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write(' ');
 						int metadataToken = blob.ReadInt32();
 						EntityHandle? handle = MetadataTokenHelpers.TryAsEntityHandle(metadataToken);
-						try {
+						try
+						{
 							handle?.WriteTo(module, output, genericContext);
-						} catch (BadImageFormatException) {
+						}
+						catch (BadImageFormatException)
+						{
 							handle = null;
 						}
 						WriteMetadataToken(handle, metadataToken, spaceBefore: true);
@@ -346,9 +392,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write(' ');
 						metadataToken = blob.ReadInt32();
 						handle = MetadataTokenHelpers.TryAsEntityHandle(metadataToken);
-						switch (handle?.Kind) {
+						switch (handle?.Kind)
+						{
 							case HandleKind.MemberReference:
-								switch (metadata.GetMemberReference((MemberReferenceHandle)handle).GetKind()) {
+								switch (metadata.GetMemberReference((MemberReferenceHandle)handle).GetKind())
+								{
 									case MemberReferenceKind.Method:
 										output.Write("method ");
 										break;
@@ -364,9 +412,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 								output.Write("method ");
 								break;
 						}
-						try {
+						try
+						{
 							handle?.WriteTo(module, output, genericContext);
-						} catch (BadImageFormatException) {
+						}
+						catch (BadImageFormatException)
+						{
 							handle = null;
 						}
 						WriteMetadataToken(handle, metadataToken, spaceBefore: true);
@@ -396,14 +447,18 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write(' ');
 						UserStringHandle? userString;
 						string text;
-						try {
+						try
+						{
 							userString = MetadataTokens.UserStringHandle(metadataToken);
 							text = metadata.GetUserString(userString.Value);
-						} catch (BadImageFormatException) {
+						}
+						catch (BadImageFormatException)
+						{
 							userString = null;
 							text = null;
 						}
-						if (userString != null) {
+						if (userString != null)
+						{
 							DisassemblerHelpers.WriteOperand(output, text);
 						}
 						WriteMetadataToken(userString, metadataToken, spaceBefore: true);
@@ -411,7 +466,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 					case OperandType.Switch:
 						int[] targets = ILParser.DecodeSwitchTargets(ref blob);
 						output.Write(" (");
-						for (int i = 0; i < targets.Length; i++) {
+						for (int i = 0; i < targets.Length; i++)
+						{
 							if (i > 0)
 								output.Write(", ");
 							output.WriteLocalReference($"IL_{targets[i]:x4}", targets[i]);
@@ -421,32 +477,43 @@ namespace ICSharpCode.Decompiler.Disassembler
 					case OperandType.Variable:
 						output.Write(' ');
 						int index = blob.ReadUInt16();
-						if (opCode == ILOpCode.Ldloc || opCode == ILOpCode.Ldloca || opCode == ILOpCode.Stloc) {
+						if (opCode == ILOpCode.Ldloc || opCode == ILOpCode.Ldloca || opCode == ILOpCode.Stloc)
+						{
 							DisassemblerHelpers.WriteVariableReference(output, metadata, methodDefinition, index);
-						} else {
+						}
+						else
+						{
 							DisassemblerHelpers.WriteParameterReference(output, metadata, methodDefinition, index);
 						}
 						break;
 					case OperandType.ShortVariable:
 						output.Write(' ');
 						index = blob.ReadByte();
-						if (opCode == ILOpCode.Ldloc_s || opCode == ILOpCode.Ldloca_s || opCode == ILOpCode.Stloc_s) {
+						if (opCode == ILOpCode.Ldloc_s || opCode == ILOpCode.Ldloca_s || opCode == ILOpCode.Stloc_s)
+						{
 							DisassemblerHelpers.WriteVariableReference(output, metadata, methodDefinition, index);
-						} else {
+						}
+						else
+						{
 							DisassemblerHelpers.WriteParameterReference(output, metadata, methodDefinition, index);
 						}
 						break;
 				}
-			} else {
+			}
+			else
+			{
 				ushort opCodeValue = (ushort)opCode;
-				if (opCodeValue > 0xFF) {
+				if (opCodeValue > 0xFF)
+				{
 					// split 16-bit value into two emitbyte directives
 					output.WriteLine($".emitbyte 0x{(byte)(opCodeValue >> 8):x}");
 					// add label
 					output.WriteLocalReference(DisassemblerHelpers.OffsetToString(offset + 1), offset + 1, isDefinition: true);
 					output.Write(": ");
 					output.Write($".emitbyte 0x{(byte)(opCodeValue & 0xFF):x}");
-				} else {
+				}
+				else
+				{
 					output.Write($".emitbyte 0x{(byte)opCodeValue:x}");
 				}
 			}
@@ -457,7 +524,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			var opCodeInfo = new OpCodeInfo(opCode, opCode.GetDisplayName());
 			string index;
-			switch (opCode) {
+			switch (opCode)
+			{
 				case ILOpCode.Ldarg_0:
 				case ILOpCode.Ldarg_1:
 				case ILOpCode.Ldarg_2:

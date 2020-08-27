@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		/// <summary>Language-specific type that is not part of NRefactory.TypeSystem itself.</summary>
 		Other,
-		
+
 		/// <summary>A <see cref="ITypeDefinition"/> or <see cref="ParameterizedType"/> that is a class.</summary>
 		Class,
 		/// <summary>A <see cref="ITypeDefinition"/> or <see cref="ParameterizedType"/> that is an interface.</summary>
@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>A <see cref="ITypeDefinition"/> that is an enum.</summary>
 		/// <remarks><c>System.Enum</c> itself is TypeKind.Class</remarks>
 		Enum,
-		
+
 		/// <summary>The <c>System.Void</c> type.</summary>
 		/// <see cref="KnownTypeCode.Void"/>
 		Void,
@@ -60,11 +60,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <see cref="SpecialType.UnboundTypeArgument"/>
 		/// <see cref="IType">IType.GetNestedTypes(Predicate{ITypeDefinition}, GetMemberOptions)</see>
 		UnboundTypeArgument,
-		
+
 		/// <summary>The type is a type parameter.</summary>
 		/// <see cref="ITypeParameter"/>
 		TypeParameter,
-		
+
 		/// <summary>An array type</summary>
 		/// <see cref="ArrayType"/>
 		Array,
@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>A managed reference type</summary>
 		/// <see cref="ByReferenceType"/>
 		ByReference,
-		
+
 		/// <summary>Intersection of several types</summary>
 		/// <see cref="IntersectionType"/>
 		Intersection,

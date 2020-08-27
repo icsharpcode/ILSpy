@@ -201,7 +201,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 	}
 	public interface T15_IMyInterface_PropertyInterfaceImplementation
-		{
+	{
 		int MyProperty {
 			get;
 			set;

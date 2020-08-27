@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler
@@ -64,7 +65,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			get {
 				if (encodedName != null)
 					return encodedName;
-				switch (Name) {
+				switch (Name)
+				{
 					case "constrained.":
 						encodedName = "Constrained";
 						return encodedName;
@@ -86,14 +88,20 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 				string text = "";
 				bool toUpperCase = true;
-				foreach (var ch in Name) {
-					if (ch == '.') {
+				foreach (var ch in Name)
+				{
+					if (ch == '.')
+					{
 						text += '_';
 						toUpperCase = true;
-					} else if (toUpperCase) {
+					}
+					else if (toUpperCase)
+					{
 						text += char.ToUpperInvariant(ch);
 						toUpperCase = false;
-					} else {
+					}
+					else
+					{
 						text += ch;
 					}
 				}

@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -27,90 +28,99 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<AttributeSection> AttributeRole = new Role<AttributeSection>("Attribute");
 		public static readonly Role<CSharpModifierToken> ModifierRole = new Role<CSharpModifierToken>("Modifier");
 		public static readonly Role<AstType> PrivateImplementationTypeRole = new Role<AstType>("PrivateImplementationType", AstType.Null);
-		
+
 		public override NodeType NodeType {
 			get { return NodeType.Member; }
 		}
-		
+
 		public abstract SymbolKind SymbolKind { get; }
-		
+
 		public AstNodeCollection<AttributeSection> Attributes {
-			get { return base.GetChildrenByRole (AttributeRole); }
+			get { return base.GetChildrenByRole(AttributeRole); }
 		}
-		
+
 		public Modifiers Modifiers {
 			get { return GetModifiers(this); }
 			set { SetModifiers(this, value); }
 		}
-		
-		public bool HasModifier (Modifiers mod)
+
+		public bool HasModifier(Modifiers mod)
 		{
 			return (Modifiers & mod) == mod;
 		}
-		
+
 		public IEnumerable<CSharpModifierToken> ModifierTokens {
-			get { return GetChildrenByRole (ModifierRole); }
+			get { return GetChildrenByRole(ModifierRole); }
 		}
-		
+
 		public virtual string Name {
 			get {
-				return GetChildByRole (Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value, TextLocation.Empty));
+				SetChildByRole(Roles.Identifier, Identifier.Create(value, TextLocation.Empty));
 			}
 		}
-		
+
 		public virtual Identifier NameToken {
-			get { return GetChildByRole (Roles.Identifier); }
-			set { SetChildByRole (Roles.Identifier, value); }
+			get { return GetChildByRole(Roles.Identifier); }
+			set { SetChildByRole(Roles.Identifier, value); }
 		}
-		
+
 		public virtual AstType ReturnType {
-			get { return GetChildByRole (Roles.Type); }
+			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
 
 		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
+			get { return GetChildByRole(Roles.Semicolon); }
 		}
 
 		internal static Modifiers GetModifiers(AstNode node)
 		{
 			Modifiers m = 0;
-			foreach (CSharpModifierToken t in node.GetChildrenByRole (ModifierRole)) {
+			foreach (CSharpModifierToken t in node.GetChildrenByRole(ModifierRole))
+			{
 				m |= t.Modifier;
 			}
 			return m;
 		}
-		
+
 		internal static void SetModifiers(AstNode node, Modifiers newValue)
 		{
 			Modifiers oldValue = GetModifiers(node);
 			AstNode insertionPos = node.GetChildrenByRole(AttributeRole).LastOrDefault();
-			foreach (Modifiers m in CSharpModifierToken.AllModifiers) {
-				if ((m & newValue) != 0) {
-					if ((m & oldValue) == 0) {
+			foreach (Modifiers m in CSharpModifierToken.AllModifiers)
+			{
+				if ((m & newValue) != 0)
+				{
+					if ((m & oldValue) == 0)
+					{
 						// Modifier was added
 						var newToken = new CSharpModifierToken(TextLocation.Empty, m);
 						node.InsertChildAfter(insertionPos, newToken, ModifierRole);
 						insertionPos = newToken;
-					} else {
+					}
+					else
+					{
 						// Modifier already exists
 						insertionPos = node.GetChildrenByRole(ModifierRole).First(t => t.Modifier == m);
 					}
-				} else {
-					if ((m & oldValue) != 0) {
+				}
+				else
+				{
+					if ((m & oldValue) != 0)
+					{
 						// Modifier was removed
-						node.GetChildrenByRole (ModifierRole).First(t => t.Modifier == m).Remove();
+						node.GetChildrenByRole(ModifierRole).First(t => t.Modifier == m).Remove();
 					}
 				}
 			}
 		}
-		
-		protected bool MatchAttributesAndModifiers (EntityDeclaration o, PatternMatching.Match match)
+
+		protected bool MatchAttributesAndModifiers(EntityDeclaration o, PatternMatching.Match match)
 		{
-			return (this.Modifiers == Modifiers.Any || this.Modifiers == o.Modifiers) && this.Attributes.DoMatch (o.Attributes, match);
+			return (this.Modifiers == Modifiers.Any || this.Modifiers == o.Modifiers) && this.Attributes.DoMatch(o.Attributes, match);
 		}
 	}
 }

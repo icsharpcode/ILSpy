@@ -33,7 +33,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			// compare signature headers
 			if (a.RemainingBytes == 0 || b.RemainingBytes == 0 || (header = a.ReadSignatureHeader()) != b.ReadSignatureHeader())
 				return false;
-			if (header.IsGeneric) {
+			if (header.IsGeneric)
+			{
 				// read & compare generic parameter count
 				if (!IsSameCompressedInteger(ref a, ref b, out _))
 					return false;
@@ -46,7 +47,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
 				return false;
 			int i = 0;
-			for (; i < totalParameterCount; i++) {
+			for (; i < totalParameterCount; i++)
+			{
 				if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
 					return false;
 				// varargs sentinel
@@ -55,7 +57,8 @@ namespace ICSharpCode.Decompiler.Metadata
 				if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
 					return false;
 			}
-			for (; i < totalParameterCount; i++) {
+			for (; i < totalParameterCount; i++)
+			{
 				if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
 					return false;
 				if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
@@ -88,7 +91,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		static bool TypesAreEqual(ref BlobReader a, ref BlobReader b, MetadataReader contextForA, MetadataReader contextForB, int typeCode)
 		{
-			switch (typeCode) {
+			switch (typeCode)
+			{
 				case 0x1: // ELEMENT_TYPE_VOID
 				case 0x2: // ELEMENT_TYPE_BOOLEAN 
 				case 0x3: // ELEMENT_TYPE_CHAR 
@@ -122,7 +126,7 @@ namespace ICSharpCode.Decompiler.Metadata
 						return false;
 					return true;
 				case 0x14: // ELEMENT_TYPE_ARRAY 
-					// element type
+						   // element type
 					if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
 						return false;
 					if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
@@ -133,21 +137,23 @@ namespace ICSharpCode.Decompiler.Metadata
 					// sizes
 					if (!IsSameCompressedInteger(ref a, ref b, out int numOfSizes))
 						return false;
-					for (int i = 0; i < numOfSizes; i++) {
+					for (int i = 0; i < numOfSizes; i++)
+					{
 						if (!IsSameCompressedInteger(ref a, ref b, out _))
 							return false;
 					}
 					// lower bounds
 					if (!IsSameCompressedInteger(ref a, ref b, out int numOfLowerBounds))
 						return false;
-					for (int i = 0; i < numOfLowerBounds; i++) {
+					for (int i = 0; i < numOfLowerBounds; i++)
+					{
 						if (!IsSameCompressedSignedInteger(ref a, ref b, out _))
 							return false;
 					}
 					return true;
 				case 0x1F: // ELEMENT_TYPE_CMOD_REQD 
 				case 0x20: // ELEMENT_TYPE_CMOD_OPT 
-					// modifier
+						   // modifier
 					if (!TypeHandleEquals(ref a, ref b, contextForA, contextForB))
 						return false;
 					// unmodified type
@@ -157,14 +163,15 @@ namespace ICSharpCode.Decompiler.Metadata
 						return false;
 					return true;
 				case 0x15: // ELEMENT_TYPE_GENERICINST 
-					// generic type
+						   // generic type
 					if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
 						return false;
 					if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
 						return false;
 					if (!IsSameCompressedInteger(ref a, ref b, out int numOfArguments))
 						return false;
-					for (int i = 0; i < numOfArguments; i++) {
+					for (int i = 0; i < numOfArguments; i++)
+					{
 						if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
 							return false;
 						if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
@@ -173,7 +180,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					return true;
 				case 0x13: // ELEMENT_TYPE_VAR
 				case 0x1E: // ELEMENT_TYPE_MVAR 
-					// index
+						   // index
 					if (!IsSameCompressedInteger(ref a, ref b, out _))
 						return false;
 					return true;

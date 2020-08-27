@@ -18,6 +18,7 @@
 
 using System.Collections.Immutable;
 using System.Reflection.Metadata;
+
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem

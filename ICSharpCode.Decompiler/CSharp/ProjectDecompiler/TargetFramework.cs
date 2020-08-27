@@ -36,7 +36,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <param name="profile">The framework profile. Can be null.</param>
 		public TargetFramework(string identifier, int version, string profile)
 		{
-			if (version < 100) {
+			if (version < 100)
+			{
 				throw new ArgumentException("The version number must be greater than or equal to 100", nameof(version));
 			}
 
@@ -52,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// Gets the target framework identifier. Can be null if not defined.
 		/// </summary>
 		public string Identifier { get; }
-		
+
 		/// <summary>
 		/// Gets the target framework moniker. Can be null if not supported.
 		/// </summary>
@@ -81,7 +82,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		static string GetTargetFrameworkMoniker(string frameworkIdentifier, int version)
 		{
 			// Reference: https://docs.microsoft.com/en-us/dotnet/standard/frameworks
-			switch (frameworkIdentifier) {
+			switch (frameworkIdentifier)
+			{
 				case null:
 				case ".NETFramework":
 					return "net" + GetVersionString(version, withDots: false);
@@ -115,21 +117,25 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			int minor = version % 100 / 10;
 			int patch = version % 10;
 
-			if (omitMinorWhenZero && minor == 0 && patch == 0) {
+			if (omitMinorWhenZero && minor == 0 && patch == 0)
+			{
 				return major.ToString();
 			}
 
 			var versionBuilder = new StringBuilder(8);
 			versionBuilder.Append(major);
 
-			if (withDots) {
+			if (withDots)
+			{
 				versionBuilder.Append('.');
 			}
 
 			versionBuilder.Append(minor);
 
-			if (patch != 0) {
-				if (withDots) {
+			if (patch != 0)
+			{
+				if (withDots)
+				{
 					versionBuilder.Append('.');
 				}
 

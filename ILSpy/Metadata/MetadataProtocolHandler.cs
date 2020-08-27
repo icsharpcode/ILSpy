@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -22,7 +23,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			if (assemblyTreeNode == null)
 				return null;
 			var mxNode = assemblyTreeNode.Children.OfType<MetadataTreeNode>().FirstOrDefault();
-			if (mxNode != null) {
+			if (mxNode != null)
+			{
 				mxNode.EnsureLazyChildren();
 				var node = mxNode.FindNodeByHandleKind(handle.Kind);
 				node?.ScrollTo(handle);

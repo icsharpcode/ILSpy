@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection.Metadata;
+
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 
@@ -58,11 +59,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.attributeType = constructor.DeclaringType ?? SpecialType.UnknownType;
 			this.FixedArguments = fixedArguments;
 			this.NamedArguments = namedArguments;
-			if (fixedArguments.Length != constructor.Parameters.Count) {
+			if (fixedArguments.Length != constructor.Parameters.Count)
+			{
 				throw new ArgumentException("Positional argument count must match the constructor's parameter count");
 			}
 		}
-		
+
 		public IType AttributeType {
 			get { return attributeType; }
 		}
@@ -72,9 +74,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IMethod Constructor {
 			get {
 				IMethod ctor = this.constructor;
-				if (ctor == null) {
-					foreach (IMethod candidate in this.AttributeType.GetConstructors(m => m.Parameters.Count == FixedArguments.Length)) {
-						if (candidate.Parameters.Select(p => p.Type).SequenceEqual(this.FixedArguments.Select(a => a.Type))) {
+				if (ctor == null)
+				{
+					foreach (IMethod candidate in this.AttributeType.GetConstructors(m => m.Parameters.Count == FixedArguments.Length))
+					{
+						if (candidate.Parameters.Select(p => p.Type).SequenceEqual(this.FixedArguments.Select(a => a.Type)))
+						{
 							ctor = candidate;
 							break;
 						}

@@ -19,6 +19,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy
@@ -26,14 +27,14 @@ namespace ICSharpCode.ILSpy
 	public static class TaskHelper
 	{
 		public static readonly Task CompletedTask = FromResult<object>(null);
-		
+
 		public static Task<T> FromResult<T>(T result)
 		{
 			TaskCompletionSource<T> tcs = new TaskCompletionSource<T>();
 			tcs.SetResult(result);
 			return tcs.Task;
 		}
-		
+
 		public static Task<T> FromException<T>(Exception ex)
 		{
 			var tcs = new TaskCompletionSource<T>();
@@ -53,7 +54,8 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public static void SetFromTask<T>(this TaskCompletionSource<T> tcs, Task<T> task)
 		{
-			switch (task.Status) {
+			switch (task.Status)
+			{
 				case TaskStatus.RanToCompletion:
 					tcs.SetResult(task.Result);
 					break;
@@ -67,13 +69,14 @@ namespace ICSharpCode.ILSpy
 					throw new InvalidOperationException("The input task must have already finished");
 			}
 		}
-		
+
 		/// <summary>
 		/// Sets the result of the TaskCompletionSource based on the result of the finished task.
 		/// </summary>
 		public static void SetFromTask(this TaskCompletionSource<object> tcs, Task task)
 		{
-			switch (task.Status) {
+			switch (task.Status)
+			{
 				case TaskStatus.RanToCompletion:
 					tcs.SetResult(null);
 					break;
@@ -87,7 +90,7 @@ namespace ICSharpCode.ILSpy
 					throw new InvalidOperationException("The input task must have already finished");
 			}
 		}
-		
+
 		public static Task Then<T>(this Task<T> task, Action<T> action)
 		{
 			if (action == null)
@@ -169,7 +172,8 @@ namespace ICSharpCode.ILSpy
 			if (action == null)
 				throw new ArgumentNullException(nameof(action));
 			return task.ContinueWith(t => {
-				if (t.IsFaulted) {
+				if (t.IsFaulted)
+				{
 					Exception ex = t.Exception;
 					while (ex is AggregateException)
 						ex = ex.InnerException;
@@ -180,14 +184,14 @@ namespace ICSharpCode.ILSpy
 				}
 			}, CancellationToken.None, TaskContinuationOptions.NotOnCanceled, TaskScheduler.FromCurrentSynchronizationContext());
 		}
-		
+
 		/// <summary>
 		/// Ignore exceptions thrown by the task.
 		/// </summary>
 		public static void IgnoreExceptions(this Task task)
 		{
 		}
-		
+
 		/// <summary>
 		/// Handle exceptions by displaying the error message in the text view.
 		/// </summary>

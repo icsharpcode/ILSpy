@@ -34,7 +34,8 @@ namespace ICSharpCode.Decompiler.IL
 		public bool UseLogicOperationSugar {
 			get { return useLogicOperationSugar; }
 			set {
-				if (useLogicOperationSugar != value) {
+				if (useLogicOperationSugar != value)
+				{
 					useLogicOperationSugar = value;
 					OnPropertyChanged();
 				}
@@ -47,7 +48,8 @@ namespace ICSharpCode.Decompiler.IL
 		public bool UseFieldSugar {
 			get { return useFieldSugar; }
 			set {
-				if (useFieldSugar != value) {
+				if (useFieldSugar != value)
+				{
 					useFieldSugar = value;
 					OnPropertyChanged();
 				}
@@ -60,7 +62,8 @@ namespace ICSharpCode.Decompiler.IL
 		public bool ShowILRanges {
 			get { return showILRanges; }
 			set {
-				if (showILRanges != value) {
+				if (showILRanges != value)
+				{
 					showILRanges = value;
 					OnPropertyChanged();
 				}
@@ -73,7 +76,8 @@ namespace ICSharpCode.Decompiler.IL
 		public bool ShowChildIndexInBlock {
 			get { return showChildIndexInBlock; }
 			set {
-				if (showChildIndexInBlock != value) {
+				if (showChildIndexInBlock != value)
+				{
 					showChildIndexInBlock = value;
 					OnPropertyChanged();
 				}

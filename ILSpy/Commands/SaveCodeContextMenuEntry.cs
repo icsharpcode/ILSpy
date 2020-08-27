@@ -22,10 +22,12 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
+
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.TreeView;
+
 using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy.TextView
@@ -58,15 +60,19 @@ namespace ICSharpCode.ILSpy.TextView
 			var currentLanguage = MainWindow.Instance.CurrentLanguage;
 			var tabPage = Docking.DockWorkspace.Instance.ActiveTabPage;
 			tabPage.ShowTextView(textView => {
-				if (selectedNodes.Count == 1 && selectedNodes[0] is ILSpyTreeNode singleSelection) {
+				if (selectedNodes.Count == 1 && selectedNodes[0] is ILSpyTreeNode singleSelection)
+				{
 					// if there's only one treenode selected
 					// we will invoke the custom Save logic
 					if (singleSelection.Save(tabPage))
 						return;
-				} else if (selectedNodes.Count > 1 && selectedNodes.All(n => n is AssemblyTreeNode)) {
+				}
+				else if (selectedNodes.Count > 1 && selectedNodes.All(n => n is AssemblyTreeNode))
+				{
 					var selectedPath = SelectSolutionFile();
 
-					if (!string.IsNullOrEmpty(selectedPath)) {
+					if (!string.IsNullOrEmpty(selectedPath))
+					{
 						var assemblies = selectedNodes.OfType<AssemblyTreeNode>()
 							.Select(n => n.LoadedAssembly)
 							.Where(a => !a.HasLoadError).ToArray();
@@ -95,15 +101,19 @@ namespace ICSharpCode.ILSpy.TextView
 			dlg.FileName = "Solution.sln";
 			dlg.Filter = Resources.VisualStudioSolutionFileSlnAllFiles;
 
-			if (dlg.ShowDialog() != true) {
+			if (dlg.ShowDialog() != true)
+			{
 				return null;
 			}
 
 			string selectedPath = Path.GetDirectoryName(dlg.FileName);
 			bool directoryNotEmpty;
-			try {
+			try
+			{
 				directoryNotEmpty = Directory.EnumerateFileSystemEntries(selectedPath).Any();
-			} catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException) {
+			}
+			catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException)
+			{
 				MessageBox.Show(
 					"The directory cannot be accessed. Please ensure it exists and you have sufficient rights to access it.",
 					"Solution directory not accessible",
@@ -111,7 +121,8 @@ namespace ICSharpCode.ILSpy.TextView
 				return null;
 			}
 
-			if (directoryNotEmpty) {
+			if (directoryNotEmpty)
+			{
 				var result = MessageBox.Show(
 					Resources.AssemblySaveCodeDirectoryNotEmpty,
 					Resources.AssemblySaveCodeDirectoryNotEmptyTitle,

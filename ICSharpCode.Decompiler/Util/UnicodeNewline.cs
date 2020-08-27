@@ -27,7 +27,8 @@ using System;
 
 namespace ICSharpCode.Decompiler.Util
 {
-	public enum UnicodeNewline {
+	public enum UnicodeNewline
+	{
 		Unknown,
 
 		/// <summary>
@@ -94,22 +95,22 @@ namespace ICSharpCode.Decompiler.Util
 		/// <summary>
 		/// Vertical Tab, U+000B
 		/// </summary>
-		public const char VT  = (char)0x0B;
+		public const char VT = (char)0x0B;
 
 		/// <summary>
 		/// Form Feed, U+000C
 		/// </summary>
-		public const char FF  = (char)0x0C;
+		public const char FF = (char)0x0C;
 
 		/// <summary>
 		/// Line Separator, U+2028
 		/// </summary>
-		public const char LS  = (char)0x2028;
+		public const char LS = (char)0x2028;
 
 		/// <summary>
 		/// Paragraph Separator, U+2029
 		/// </summary>
-		public const char PS  = (char)0x2029;
+		public const char PS = (char)0x2029;
 
 		/// <summary>
 		/// Determines if a char is a new line delimiter.
@@ -117,10 +118,11 @@ namespace ICSharpCode.Decompiler.Util
 		/// <returns>0 == no new line, otherwise it returns either 1 or 2 depending of the length of the delimiter.</returns>
 		/// <param name="curChar">The current character.</param>
 		/// <param name="nextChar">A callback getting the next character (may be null).</param>
-		public static int GetDelimiterLength (char curChar, Func<char> nextChar = null)
+		public static int GetDelimiterLength(char curChar, Func<char> nextChar = null)
 		{
-			if (curChar == CR) {
-				if (nextChar != null && nextChar () == LF)
+			if (curChar == CR)
+			{
+				if (nextChar != null && nextChar() == LF)
 					return 2;
 				return 1;
 			}
@@ -136,9 +138,10 @@ namespace ICSharpCode.Decompiler.Util
 		/// <returns>0 == no new line, otherwise it returns either 1 or 2 depending of the length of the delimiter.</returns>
 		/// <param name="curChar">The current character.</param>
 		/// <param name="nextChar">The next character (if != LF then length will always be 0 or 1).</param>
-		public static int GetDelimiterLength (char curChar, char nextChar)
+		public static int GetDelimiterLength(char curChar, char nextChar)
 		{
-			if (curChar == CR) {
+			if (curChar == CR)
+			{
 				if (nextChar == LF)
 					return 2;
 				return 1;
@@ -158,13 +161,17 @@ namespace ICSharpCode.Decompiler.Util
 		/// <param name = "length">The length of the delimiter</param>
 		/// <param name = "type">The type of the delimiter</param>
 		/// <param name="nextChar">A callback getting the next character (may be null).</param>
-		public static bool TryGetDelimiterLengthAndType (char curChar, out int length, out UnicodeNewline type, Func<char> nextChar = null)
+		public static bool TryGetDelimiterLengthAndType(char curChar, out int length, out UnicodeNewline type, Func<char> nextChar = null)
 		{
-			if (curChar == CR) {
-				if (nextChar != null && nextChar () == LF) {
+			if (curChar == CR)
+			{
+				if (nextChar != null && nextChar() == LF)
+				{
 					length = 2;
 					type = UnicodeNewline.CRLF;
-				} else {
+				}
+				else
+				{
 					length = 1;
 					type = UnicodeNewline.CR;
 
@@ -172,31 +179,32 @@ namespace ICSharpCode.Decompiler.Util
 				return true;
 			}
 
-			switch (curChar) {
-			case LF:
-				type = UnicodeNewline.LF;
-				length = 1;
-				return true;
-			case NEL:
-				type = UnicodeNewline.NEL;
-				length = 1;
-				return true;
-			case VT:
-				type = UnicodeNewline.VT;
-				length = 1;
-				return true;
-			case FF:
-				type = UnicodeNewline.FF;
-				length = 1;
-				return true;
-			case LS:
-				type = UnicodeNewline.LS;
-				length = 1;
-				return true;
-			case PS:
-				type = UnicodeNewline.PS;
-				length = 1;
-				return true;
+			switch (curChar)
+			{
+				case LF:
+					type = UnicodeNewline.LF;
+					length = 1;
+					return true;
+				case NEL:
+					type = UnicodeNewline.NEL;
+					length = 1;
+					return true;
+				case VT:
+					type = UnicodeNewline.VT;
+					length = 1;
+					return true;
+				case FF:
+					type = UnicodeNewline.FF;
+					length = 1;
+					return true;
+				case LS:
+					type = UnicodeNewline.LS;
+					length = 1;
+					return true;
+				case PS:
+					type = UnicodeNewline.PS;
+					length = 1;
+					return true;
 			}
 			length = -1;
 			type = UnicodeNewline.Unknown;
@@ -211,13 +219,17 @@ namespace ICSharpCode.Decompiler.Util
 		/// <param name = "length">The length of the delimiter</param>
 		/// <param name = "type">The type of the delimiter</param>
 		/// <param name="nextChar">The next character (if != LF then length will always be 0 or 1).</param>
-		public static bool TryGetDelimiterLengthAndType (char curChar, out int length, out UnicodeNewline type, char nextChar)
+		public static bool TryGetDelimiterLengthAndType(char curChar, out int length, out UnicodeNewline type, char nextChar)
 		{
-			if (curChar == CR) {
-				if (nextChar == LF) {
+			if (curChar == CR)
+			{
+				if (nextChar == LF)
+				{
 					length = 2;
 					type = UnicodeNewline.CRLF;
-				} else {
+				}
+				else
+				{
 					length = 1;
 					type = UnicodeNewline.CR;
 
@@ -225,31 +237,32 @@ namespace ICSharpCode.Decompiler.Util
 				return true;
 			}
 
-			switch (curChar) {
-			case LF:
-				type = UnicodeNewline.LF;
-				length = 1;
-				return true;
-			case NEL:
-				type = UnicodeNewline.NEL;
-				length = 1;
-				return true;
-			case VT:
-				type = UnicodeNewline.VT;
-				length = 1;
-				return true;
-			case FF:
-				type = UnicodeNewline.FF;
-				length = 1;
-				return true;
-			case LS:
-				type = UnicodeNewline.LS;
-				length = 1;
-				return true;
-			case PS:
-				type = UnicodeNewline.PS;
-				length = 1;
-				return true;
+			switch (curChar)
+			{
+				case LF:
+					type = UnicodeNewline.LF;
+					length = 1;
+					return true;
+				case NEL:
+					type = UnicodeNewline.NEL;
+					length = 1;
+					return true;
+				case VT:
+					type = UnicodeNewline.VT;
+					length = 1;
+					return true;
+				case FF:
+					type = UnicodeNewline.FF;
+					length = 1;
+					return true;
+				case LS:
+					type = UnicodeNewline.LS;
+					length = 1;
+					return true;
+				case PS:
+					type = UnicodeNewline.PS;
+					length = 1;
+					return true;
 			}
 			length = -1;
 			type = UnicodeNewline.Unknown;
@@ -262,25 +275,26 @@ namespace ICSharpCode.Decompiler.Util
 		/// <returns>0 == no new line, otherwise it returns either 1 or 2 depending of the length of the delimiter.</returns>
 		/// <param name="curChar">The current character.</param>
 		/// <param name="nextChar">A callback getting the next character (may be null).</param>
-		public static UnicodeNewline GetDelimiterType (char curChar, Func<char> nextChar = null)
+		public static UnicodeNewline GetDelimiterType(char curChar, Func<char> nextChar = null)
 		{
-			switch (curChar) {
+			switch (curChar)
+			{
 				case CR:
-				if (nextChar != null && nextChar () == LF)
-					return UnicodeNewline.CRLF;
-				return UnicodeNewline.CR;
+					if (nextChar != null && nextChar() == LF)
+						return UnicodeNewline.CRLF;
+					return UnicodeNewline.CR;
 				case LF:
-				return UnicodeNewline.LF;
+					return UnicodeNewline.LF;
 				case NEL:
-				return UnicodeNewline.NEL;
+					return UnicodeNewline.NEL;
 				case VT:
-				return UnicodeNewline.VT;
+					return UnicodeNewline.VT;
 				case FF:
-				return UnicodeNewline.FF;
+					return UnicodeNewline.FF;
 				case LS:
-				return UnicodeNewline.LS;
+					return UnicodeNewline.LS;
 				case PS:
-				return UnicodeNewline.PS;
+					return UnicodeNewline.PS;
 			}
 			return UnicodeNewline.Unknown;
 		}
@@ -291,25 +305,26 @@ namespace ICSharpCode.Decompiler.Util
 		/// <returns>0 == no new line, otherwise it returns either 1 or 2 depending of the length of the delimiter.</returns>
 		/// <param name="curChar">The current character.</param>
 		/// <param name="nextChar">The next character (if != LF then length will always be 0 or 1).</param>
-		public static UnicodeNewline GetDelimiterType (char curChar, char nextChar)
+		public static UnicodeNewline GetDelimiterType(char curChar, char nextChar)
 		{
-			switch (curChar) {
-			case CR:
-				if (nextChar == LF)
-					return UnicodeNewline.CRLF;
-				return UnicodeNewline.CR;
-			case LF:
-				return UnicodeNewline.LF;
-			case NEL:
-				return UnicodeNewline.NEL;
-			case VT:
-				return UnicodeNewline.VT;
-			case FF:
-				return UnicodeNewline.FF;
-			case LS:
-				return UnicodeNewline.LS;
-			case PS:
-				return UnicodeNewline.PS;
+			switch (curChar)
+			{
+				case CR:
+					if (nextChar == LF)
+						return UnicodeNewline.CRLF;
+					return UnicodeNewline.CR;
+				case LF:
+					return UnicodeNewline.LF;
+				case NEL:
+					return UnicodeNewline.NEL;
+				case VT:
+					return UnicodeNewline.VT;
+				case FF:
+					return UnicodeNewline.FF;
+				case LS:
+					return UnicodeNewline.LS;
+				case PS:
+					return UnicodeNewline.PS;
 			}
 			return UnicodeNewline.Unknown;
 		}
@@ -335,29 +350,30 @@ namespace ICSharpCode.Decompiler.Util
 		/// <summary>
 		/// Gets the new line as a string.
 		/// </summary>
-		public static string GetString (UnicodeNewline newLine)
+		public static string GetString(UnicodeNewline newLine)
 		{
-			switch (newLine) {
-			case UnicodeNewline.Unknown:
-				return "";
-			case UnicodeNewline.LF:
-				return "\n";
-			case UnicodeNewline.CRLF:
-				return "\r\n";
-			case UnicodeNewline.CR:
-				return "\r";
-			case UnicodeNewline.NEL:
-				return "\u0085";
-			case UnicodeNewline.VT:
-				return "\u000B";
-			case UnicodeNewline.FF:
-				return "\u000C";
-			case UnicodeNewline.LS:
-				return "\u2028";
-			case UnicodeNewline.PS:
-				return "\u2029";
-			default:
-				throw new ArgumentOutOfRangeException ();
+			switch (newLine)
+			{
+				case UnicodeNewline.Unknown:
+					return "";
+				case UnicodeNewline.LF:
+					return "\n";
+				case UnicodeNewline.CRLF:
+					return "\r\n";
+				case UnicodeNewline.CR:
+					return "\r";
+				case UnicodeNewline.NEL:
+					return "\u0085";
+				case UnicodeNewline.VT:
+					return "\u000B";
+				case UnicodeNewline.FF:
+					return "\u000C";
+				case UnicodeNewline.LS:
+					return "\u2028";
+				case UnicodeNewline.PS:
+					return "\u2029";
+				default:
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 	}

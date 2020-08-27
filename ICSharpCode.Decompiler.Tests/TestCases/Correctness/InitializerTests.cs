@@ -52,36 +52,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		private class Data
 		{
 			public List<InitializerTests.MyEnum2> FieldList = new List<InitializerTests.MyEnum2>();
-			public InitializerTests.MyEnum a
-			{
+			public InitializerTests.MyEnum a {
 				get;
 				set;
 			}
-			public InitializerTests.MyEnum b
-			{
+			public InitializerTests.MyEnum b {
 				get;
 				set;
 			}
-			public List<InitializerTests.MyEnum2> PropertyList
-			{
-				get;
-				set;
-			}
-
-			public InitializerTests.Data MoreData
-			{
+			public List<InitializerTests.MyEnum2> PropertyList {
 				get;
 				set;
 			}
 
-			public InitializerTests.StructData NestedStruct
-			{
+			public InitializerTests.Data MoreData {
 				get;
 				set;
 			}
 
-			public InitializerTests.Data this[int i]
-			{
+			public InitializerTests.StructData NestedStruct {
+				get;
+				set;
+			}
+
+			public InitializerTests.Data this[int i] {
 				get {
 					return null;
 				}
@@ -99,14 +93,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		private struct StructData
 		{
 			public int Field;
-			public int Property
-			{
+			public int Property {
 				get;
 				set;
 			}
 
-			public InitializerTests.Data MoreData
-			{
+			public InitializerTests.Data MoreData {
 				get;
 				set;
 			}
@@ -191,8 +183,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void ObjectInitializer()
 		{
-			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
-			{
+			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {
 				a = InitializerTests.MyEnum.a
 			});
 		}
@@ -206,8 +197,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void ObjectInitializerAssignCollectionToField()
 		{
-			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
-			{
+			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {
 				a = InitializerTests.MyEnum.a,
 				FieldList = new List<InitializerTests.MyEnum2>
 				{
@@ -219,8 +209,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void ObjectInitializerAddToCollectionInField()
 		{
-			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
-			{
+			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {
 				a = InitializerTests.MyEnum.a,
 				FieldList =
 				{
@@ -232,8 +221,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void ObjectInitializerAssignCollectionToProperty()
 		{
-			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
-			{
+			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {
 				a = InitializerTests.MyEnum.a,
 				PropertyList = new List<InitializerTests.MyEnum2>
 				{
@@ -245,8 +233,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void ObjectInitializerAddToCollectionInProperty()
 		{
-			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
-			{
+			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {
 				a = InitializerTests.MyEnum.a,
 				PropertyList =
 				{
@@ -258,8 +245,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void ObjectInitializerWithInitializationOfNestedObjects()
 		{
-			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
-			{
+			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {
 				MoreData =
 				{
 					a = InitializerTests.MyEnum.a,
@@ -342,8 +328,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void StructInitializer_DefaultConstructor()
 		{
-			InitializerTests.X(InitializerTests.Y(), new InitializerTests.StructData
-			{
+			InitializerTests.X(InitializerTests.Y(), new InitializerTests.StructData {
 				Field = 1,
 				Property = 2
 			});
@@ -359,8 +344,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void StructInitializer_ExplicitConstructor()
 		{
-			InitializerTests.X(InitializerTests.Y(), new InitializerTests.StructData(0)
-			{
+			InitializerTests.X(InitializerTests.Y(), new InitializerTests.StructData(0) {
 				Field = 1,
 				Property = 2
 			});
@@ -368,8 +352,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void StructInitializerWithInitializationOfNestedObjects()
 		{
-			InitializerTests.X(InitializerTests.Y(), new InitializerTests.StructData
-			{
+			InitializerTests.X(InitializerTests.Y(), new InitializerTests.StructData {
 				MoreData =
 				{
 					a = InitializerTests.MyEnum.a,
@@ -384,10 +367,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void StructInitializerWithinObjectInitializer()
 		{
-			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
-			{
-				NestedStruct = new InitializerTests.StructData(2)
-				{
+			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {
+				NestedStruct = new InitializerTests.StructData(2) {
 					Field = 1,
 					Property = 2
 				}
@@ -435,7 +416,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 				int num = 0;
 
-				for (int i = 0; i < 2; i++) {
+				for (int i = 0; i < 2; i++)
+				{
 					if (num < 10)
 						items.SetItem(num, Item(string.Empty, new Data { Obj = null }));
 				}

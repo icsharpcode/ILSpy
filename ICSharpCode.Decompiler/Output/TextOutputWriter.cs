@@ -25,28 +25,28 @@ namespace ICSharpCode.Decompiler
 	public class TextOutputWriter : TextWriter
 	{
 		readonly ITextOutput output;
-		
+
 		public TextOutputWriter(ITextOutput output)
 		{
 			if (output == null)
 				throw new ArgumentNullException(nameof(output));
 			this.output = output;
 		}
-		
+
 		public override Encoding Encoding {
 			get { return Encoding.UTF8; }
 		}
-		
+
 		public override void Write(char value)
 		{
 			output.Write(value);
 		}
-		
+
 		public override void Write(string value)
 		{
 			output.Write(value);
 		}
-		
+
 		public override void WriteLine()
 		{
 			output.WriteLine();

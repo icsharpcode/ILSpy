@@ -27,14 +27,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	public class Repeat : Pattern
 	{
 		readonly INode childNode;
-		
+
 		public int MinCount { get; set; }
 		public int MaxCount { get; set; }
-		
+
 		public INode ChildNode {
 			get { return childNode; }
 		}
-		
+
 		public Repeat(INode childNode)
 		{
 			if (childNode == null)
@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			this.MinCount = 0;
 			this.MaxCount = int.MaxValue;
 		}
-		
+
 		public override bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
 		{
 			var backtrackingStack = backtrackingInfo.backtrackingStack;
@@ -51,9 +51,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			int matchCount = 0;
 			if (this.MinCount <= 0)
 				backtrackingStack.Push(new PossibleMatch(pos, match.CheckPoint()));
-			while (matchCount < this.MaxCount && pos != null && childNode.DoMatch(pos, match)) {
+			while (matchCount < this.MaxCount && pos != null && childNode.DoMatch(pos, match))
+			{
 				matchCount++;
-				do {
+				do
+				{
 					pos = pos.NextSibling;
 				} while (pos != null && pos.Role != role);
 				if (matchCount >= this.MinCount)
@@ -61,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			}
 			return false; // never do a normal (single-element) match; always make the caller look at the results on the back-tracking stack.
 		}
-		
+
 		public override bool DoMatch(INode other, Match match)
 		{
 			if (other == null || other.IsNull)

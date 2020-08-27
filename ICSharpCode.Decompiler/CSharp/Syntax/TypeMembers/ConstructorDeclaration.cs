@@ -31,52 +31,52 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class ConstructorDeclaration : EntityDeclaration
 	{
 		public static readonly Role<ConstructorInitializer> InitializerRole = new Role<ConstructorInitializer>("Initializer", ConstructorInitializer.Null);
-		
+
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Constructor; }
 		}
-		
+
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
-		
+
 		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole (Roles.Parameter); }
+			get { return GetChildrenByRole(Roles.Parameter); }
 		}
-		
+
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
-		
+
 		public CSharpTokenNode ColonToken {
-			get { return GetChildByRole (Roles.Colon); }
+			get { return GetChildByRole(Roles.Colon); }
 		}
-		
+
 		public ConstructorInitializer Initializer {
-			get { return GetChildByRole (InitializerRole); }
-			set { SetChildByRole( InitializerRole, value); }
+			get { return GetChildByRole(InitializerRole); }
+			set { SetChildByRole(InitializerRole, value); }
 		}
-		
+
 		public BlockStatement Body {
-			get { return GetChildByRole (Roles.Body); }
-			set { SetChildByRole (Roles.Body, value); }
+			get { return GetChildByRole(Roles.Body); }
+			set { SetChildByRole(Roles.Body, value); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitConstructorDeclaration (this);
+			visitor.VisitConstructorDeclaration(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitConstructorDeclaration (this);
+			return visitor.VisitConstructorDeclaration(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitConstructorDeclaration (this, data);
+			return visitor.VisitConstructorDeclaration(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ConstructorDeclaration o = other as ConstructorDeclaration;
@@ -84,19 +84,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				&& this.Initializer.DoMatch(o.Initializer, match) && this.Body.DoMatch(o.Body, match);
 		}
 	}
-	
-	public enum ConstructorInitializerType {
+
+	public enum ConstructorInitializerType
+	{
 		Any,
 		Base,
 		This
 	}
-	
+
 	public class ConstructorInitializer : AstNode
 	{
-		public static readonly TokenRole BaseKeywordRole = new TokenRole ("base");
-		public static readonly TokenRole ThisKeywordRole = new TokenRole ("this");
-		
-		public static readonly new ConstructorInitializer Null = new NullConstructorInitializer ();
+		public static readonly TokenRole BaseKeywordRole = new TokenRole("base");
+		public static readonly TokenRole ThisKeywordRole = new TokenRole("this");
+
+		public static readonly new ConstructorInitializer Null = new NullConstructorInitializer();
 		class NullConstructorInitializer : ConstructorInitializer
 		{
 			public override NodeType NodeType {
@@ -104,45 +105,45 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return NodeType.Unknown;
 				}
 			}
-			
+
 			public override bool IsNull {
 				get {
 					return true;
 				}
 			}
-			
-			public override void AcceptVisitor (IAstVisitor visitor)
+
+			public override void AcceptVisitor(IAstVisitor visitor)
 			{
 				visitor.VisitNullNode(this);
 			}
-			
-			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 			{
 				return visitor.VisitNullNode(this);
 			}
-			
-			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 			{
 				return visitor.VisitNullNode(this, data);
 			}
-			
+
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
 		}
-		
+
 		public override NodeType NodeType {
 			get {
 				return NodeType.Unknown;
 			}
 		}
-		
+
 		public ConstructorInitializerType ConstructorInitializerType {
 			get;
 			set;
 		}
-		
+
 		public CSharpTokenNode Keyword {
 			get {
 				if (ConstructorInitializerType == ConstructorInitializerType.Base)
@@ -151,38 +152,38 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return GetChildByRole(ThisKeywordRole);
 			}
 		}
-		
+
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
-		
+
 		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole (Roles.Argument); }
+			get { return GetChildrenByRole(Roles.Argument); }
 		}
-		
+
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitConstructorInitializer (this);
+			visitor.VisitConstructorInitializer(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitConstructorInitializer (this);
+			return visitor.VisitConstructorInitializer(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitConstructorInitializer (this, data);
+			return visitor.VisitConstructorInitializer(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ConstructorInitializer o = other as ConstructorInitializer;
-			return o != null && !o.IsNull 
+			return o != null && !o.IsNull
 				&& (this.ConstructorInitializerType == ConstructorInitializerType.Any || this.ConstructorInitializerType == o.ConstructorInitializerType)
 				&& this.Arguments.DoMatch(o.Arguments, match);
 		}

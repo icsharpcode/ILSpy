@@ -22,9 +22,10 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -55,9 +56,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var reader = new BlobReader(metadata.MetadataPointer, metadata.MetadataLength);
 			reader.Offset = +metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
 
-			for (int rid = 1; rid <= length; rid++) {
+			for (int rid = 1; rid <= length; rid++)
+			{
 				StateMachineMethodEntry entry = new StateMachineMethodEntry(module, ref reader, isEmbedded, rid);
-				if (scrollTarget == rid) {
+				if (scrollTarget == rid)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -67,7 +70,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 1) {
+			if (scrollTargetEntry.RID > 1)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 

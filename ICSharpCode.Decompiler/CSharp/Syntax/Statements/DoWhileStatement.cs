@@ -32,54 +32,54 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class DoWhileStatement : Statement
 	{
-		public static readonly TokenRole DoKeywordRole = new TokenRole ("do");
-		public static readonly TokenRole WhileKeywordRole = new TokenRole ("while");
-		
+		public static readonly TokenRole DoKeywordRole = new TokenRole("do");
+		public static readonly TokenRole WhileKeywordRole = new TokenRole("while");
+
 		public CSharpTokenNode DoToken {
-			get { return GetChildByRole (DoKeywordRole); }
+			get { return GetChildByRole(DoKeywordRole); }
 		}
-		
+
 		public Statement EmbeddedStatement {
-			get { return GetChildByRole (Roles.EmbeddedStatement); }
-			set { SetChildByRole (Roles.EmbeddedStatement, value); }
+			get { return GetChildByRole(Roles.EmbeddedStatement); }
+			set { SetChildByRole(Roles.EmbeddedStatement, value); }
 		}
-		
+
 		public CSharpTokenNode WhileToken {
-			get { return GetChildByRole (WhileKeywordRole); }
+			get { return GetChildByRole(WhileKeywordRole); }
 		}
-		
+
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
-		
+
 		public Expression Condition {
-			get { return GetChildByRole (Roles.Condition); }
-			set { SetChildByRole (Roles.Condition, value); }
+			get { return GetChildByRole(Roles.Condition); }
+			set { SetChildByRole(Roles.Condition, value); }
 		}
-		
+
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
-		
+
 		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
+			get { return GetChildByRole(Roles.Semicolon); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitDoWhileStatement (this);
+			visitor.VisitDoWhileStatement(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitDoWhileStatement (this);
+			return visitor.VisitDoWhileStatement(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitDoWhileStatement (this, data);
+			return visitor.VisitDoWhileStatement(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			DoWhileStatement o = other as DoWhileStatement;

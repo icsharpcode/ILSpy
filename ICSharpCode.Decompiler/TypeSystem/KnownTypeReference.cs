@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		// Note: DefaultResolvedTypeDefinition uses (KnownTypeCode)-1 as special value for "not yet calculated".
 		// The order of type codes at the beginning must correspond to those in System.TypeCode.
-		
+
 		/// <summary>
 		/// Not one of the known types.
 		/// </summary>
@@ -67,9 +67,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		DateTime,
 		/// <summary><c>string</c> (System.String)</summary>
 		String = 18,
-		
+
 		// String was the last element from System.TypeCode, now our additional known types start
-		
+
 		/// <summary><c>void</c> (System.Void)</summary>
 		Void,
 		/// <summary><c>System.Type</c></summary>
@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new KnownTypeReference(KnownTypeCode.Index, TypeKind.Struct, "System", "Index", 0),
 			new KnownTypeReference(KnownTypeCode.Range, TypeKind.Struct, "System", "Range", 0),
 		};
-		
+
 		/// <summary>
 		/// Gets the known type reference for the specified type code.
 		/// Returns null for KnownTypeCode.None.
@@ -235,10 +235,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return knownTypeReferences[(int)typeCode];
 		}
-		
+
 		public static IEnumerable<KnownTypeReference> AllKnownTypes {
 			get {
-				for (int i = 0; i < KnownTypeCodeCount; i++) {
+				for (int i = 0; i < KnownTypeCodeCount; i++)
+				{
 					var ktr = Get((KnownTypeCode)i);
 					if (ktr == null)
 						continue;
@@ -265,19 +266,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.typeKind = typeKind;
 			this.baseType = baseType;
 		}
-		
+
 		public KnownTypeCode KnownTypeCode {
 			get { return knownTypeCode; }
 		}
-		
+
 		public string Namespace {
 			get { return namespaceName; }
 		}
-		
+
 		public string Name {
 			get { return name; }
 		}
-		
+
 		public int TypeParameterCount {
 			get { return typeParameterCount; }
 		}
@@ -288,19 +289,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return context.Compilation.FindType(knownTypeCode);
 		}
-		
+
 		public override string ToString()
 		{
 			return GetCSharpNameByTypeCode(knownTypeCode) ?? (this.Namespace + "." + this.Name);
 		}
-		
+
 		/// <summary>
 		/// Gets the C# primitive type name from the known type code.
 		/// Returns null if there is no primitive name for the specified type.
 		/// </summary>
 		public static string GetCSharpNameByTypeCode(KnownTypeCode knownTypeCode)
 		{
-			switch (knownTypeCode) {
+			switch (knownTypeCode)
+			{
 				case KnownTypeCode.Object:
 					return "object";
 				case KnownTypeCode.Boolean:

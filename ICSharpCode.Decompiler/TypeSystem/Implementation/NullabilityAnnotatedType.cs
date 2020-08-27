@@ -52,26 +52,34 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override IType VisitChildren(TypeVisitor visitor)
 		{
 			IType newBase = baseType.AcceptVisitor(visitor);
-			if (newBase != baseType) {
-				if (newBase.Nullability == Nullability.Nullable) {
+			if (newBase != baseType)
+			{
+				if (newBase.Nullability == Nullability.Nullable)
+				{
 					// `T!` with substitution T=`U?` becomes `U?`
 					// This happens during type substitution for generic methods.
 					return newBase;
 				}
-				if (newBase.Kind == TypeKind.TypeParameter || newBase.IsReferenceType == true) {
+				if (newBase.Kind == TypeKind.TypeParameter || newBase.IsReferenceType == true)
+				{
 					return newBase.ChangeNullability(nullability);
-				} else {
+				}
+				else
+				{
 					// `T!` with substitution T=`int` becomes `int`, not `int!`
 					return newBase;
 				}
-			} else {
+			}
+			else
+			{
 				return this;
 			}
 		}
 
 		public override string ToString()
 		{
-			switch (nullability) {
+			switch (nullability)
+			{
 				case Nullability.Nullable:
 					return $"{baseType.ToString()}?";
 				case Nullability.NotNullable:

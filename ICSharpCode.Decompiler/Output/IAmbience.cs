@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Output
@@ -31,19 +32,19 @@ namespace ICSharpCode.Decompiler.Output
 		/// <summary>
 		/// Show the parameter list
 		/// </summary>
-		ShowParameterList      = 1,
+		ShowParameterList = 1,
 		/// <summary>
 		/// Show names for parameters
 		/// </summary>
-		ShowParameterNames     = 2,
+		ShowParameterNames = 2,
 		/// <summary>
 		/// Show the accessibility (private, public, etc.)
 		/// </summary>
-		ShowAccessibility      = 4,
+		ShowAccessibility = 4,
 		/// <summary>
 		/// Show the definition key word (class, struct, Sub, Function, etc.)
 		/// </summary>
-		ShowDefinitionKeyword  = 8,
+		ShowDefinitionKeyword = 8,
 		/// <summary>
 		/// Show the declaring type for the type or member
 		/// </summary>
@@ -51,7 +52,7 @@ namespace ICSharpCode.Decompiler.Output
 		/// <summary>
 		/// Show modifiers (virtual, override, etc.)
 		/// </summary>
-		ShowModifiers          = 0x20,
+		ShowModifiers = 0x20,
 		/// <summary>
 		/// Show the return type
 		/// </summary>
@@ -109,21 +110,21 @@ namespace ICSharpCode.Decompiler.Output
 			ShowTypeParameterVarianceModifier |
 			ShowDefinitionKeyword |
 			ShowBody,
-		
+
 		All = 0x7ffff,
 	}
-	
+
 	/// <summary>
 	/// Ambiences are used to convert type system symbols to text (usually for displaying the symbol to the user; e.g. in editor tooltips).
 	/// </summary>
 	public interface IAmbience
 	{
 		ConversionFlags ConversionFlags { get; set; }
-		
+
 		string ConvertSymbol(ISymbol symbol);
 		string ConvertType(IType type);
 		string ConvertConstantValue(object constantValue);
-		
+
 		string WrapComment(string comment);
 	}
 }

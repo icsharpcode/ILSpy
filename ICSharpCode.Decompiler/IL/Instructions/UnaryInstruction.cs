@@ -53,7 +53,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			if (IsLifted) {
+			if (IsLifted)
+			{
 				output.Write(".lifted");
 			}
 			output.Write('(');

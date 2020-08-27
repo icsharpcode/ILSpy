@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -41,7 +42,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		IModule Resolve(ITypeResolveContext context);
 	}
-	
+
 	/// <summary>
 	/// Represents a metadata module.
 	/// </summary>
@@ -56,12 +57,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets whether this assembly is the main assembly of the compilation.
 		/// </summary>
 		bool IsMainModule { get; }
-		
+
 		/// <summary>
 		/// Gets the assembly name (short name).
 		/// </summary>
 		string AssemblyName { get; }
-		
+
 		/// <summary>
 		/// Gets the full assembly name (including public key token etc.)
 		/// </summary>
@@ -76,12 +77,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the list of all module attributes in the project.
 		/// </summary>
 		IEnumerable<IAttribute> GetModuleAttributes();
-		
+
 		/// <summary>
 		/// Gets whether the internals of this assembly are visible in the specified assembly.
 		/// </summary>
 		bool InternalsVisibleTo(IModule module);
-		
+
 		/// <summary>
 		/// Gets the root namespace for this module.
 		/// </summary>
@@ -91,13 +92,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// to get the combined view of all referenced assemblies.
 		/// </remarks>
 		INamespace RootNamespace { get; }
-		
+
 		/// <summary>
 		/// Gets the type definition for a top-level type.
 		/// </summary>
 		/// <remarks>This method uses ordinal name comparison, not the compilation's name comparer.</remarks>
 		ITypeDefinition GetTypeDefinition(TopLevelTypeName topLevelTypeName);
-		
+
 		/// <summary>
 		/// Gets all non-nested types in the assembly.
 		/// </summary>

@@ -1,8 +1,9 @@
-﻿using CustomAttributeConflicts.NS1;
+﻿using System;
+
+using CustomAttributeConflicts.NS1;
 using CustomAttributeConflicts.NS2;
 using CustomAttributeConflicts.NSWithConflictingTypes;
 using CustomAttributeConflicts.NSWithConflictingTypes2;
-using System;
 
 namespace CustomAttributeConflicts
 {

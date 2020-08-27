@@ -21,19 +21,24 @@
 */
 
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Baml;
 using ILSpy.BamlDecompiler.Xaml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class DefAttributeStringHandler : IHandler, IDeferHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class DefAttributeStringHandler : IHandler, IDeferHandler
+	{
 		public BamlRecordType Type => BamlRecordType.DefAttributeKeyString;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			XamlResourceKey.Create(node);
 			return null;
 		}
 
-		public BamlElement TranslateDefer(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement TranslateDefer(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (DefAttributeKeyStringRecord)((BamlRecordNode)node).Record;
 			var key = (XamlResourceKey)node.Annotation;
 

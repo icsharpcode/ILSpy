@@ -1233,9 +1233,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				}
 			};
 		}
-#endregion
+		#endregion
 
-#region Object initializers
+		#region Object initializers
 		public C Test1()
 		{
 			C c = new C();
@@ -1537,7 +1537,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		private Data Issue1279(int p)
 		{
-			if (p == 1) {
+			if (p == 1)
+			{
 				Data data = new Data();
 				data.a = MyEnum.a;
 				data.TestEvent += Data_TestEvent;
@@ -1546,9 +1547,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			return null;
 		}
 
-#endregion
+		#endregion
 
-#region Collection initializer
+		#region Collection initializer
 
 		public static void ExtensionMethodInCollectionInitializer()
 		{
@@ -1733,6 +1734,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		}
 
 #endif
-#endregion
-		}
+		#endregion
+	}
 }

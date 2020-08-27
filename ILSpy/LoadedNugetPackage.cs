@@ -18,13 +18,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO.Compression;
-using System.IO;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace ICSharpCode.ILSpy
 {
@@ -35,9 +35,12 @@ namespace ICSharpCode.ILSpy
 
 		public LoadedNugetPackage(string file)
 		{
-			using (var archive = ZipFile.OpenRead(file)) {
-				foreach (var entry in archive.Entries) {
-					switch (Path.GetExtension(entry.FullName)) {
+			using (var archive = ZipFile.OpenRead(file))
+			{
+				foreach (var entry in archive.Entries)
+				{
+					switch (Path.GetExtension(entry.FullName))
+					{
 						case ".dll":
 						case ".exe":
 							var memory = new MemoryStream();
@@ -54,7 +57,8 @@ namespace ICSharpCode.ILSpy
 
 		void EntryPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(Entry.IsSelected)) {
+			if (e.PropertyName == nameof(Entry.IsSelected))
+			{
 				var entry = (Entry)sender;
 				if (entry.IsSelected)
 					SelectedEntries.Add(entry);
@@ -84,7 +88,8 @@ namespace ICSharpCode.ILSpy
 		public bool IsSelected {
 			get { return isSelected; }
 			set {
-				if (isSelected != value) {
+				if (isSelected != value)
+				{
 					isSelected = value;
 					OnPropertyChanged();
 				}

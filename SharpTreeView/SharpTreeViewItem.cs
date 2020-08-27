@@ -18,8 +18,8 @@
 
 using System;
 using System.Linq;
-using System.Windows.Controls;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace ICSharpCode.TreeView
@@ -29,11 +29,10 @@ namespace ICSharpCode.TreeView
 		static SharpTreeViewItem()
 		{
 			DefaultStyleKeyProperty.OverrideMetadata(typeof(SharpTreeViewItem),
-			                                         new FrameworkPropertyMetadata(typeof(SharpTreeViewItem)));
+													 new FrameworkPropertyMetadata(typeof(SharpTreeViewItem)));
 		}
 
-		public SharpTreeNode Node
-		{
+		public SharpTreeNode Node {
 			get { return DataContext as SharpTreeNode; }
 		}
 
@@ -42,15 +41,18 @@ namespace ICSharpCode.TreeView
 
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
-			switch (e.Key) {
+			switch (e.Key)
+			{
 				case Key.F2:
-					if (Node.IsEditable && ParentTreeView != null && ParentTreeView.SelectedItems.Count == 1 && ParentTreeView.SelectedItems[0] == Node) {
+					if (Node.IsEditable && ParentTreeView != null && ParentTreeView.SelectedItems.Count == 1 && ParentTreeView.SelectedItems[0] == Node)
+					{
 						Node.IsEditing = true;
 						e.Handled = true;
 					}
 					break;
 				case Key.Escape:
-					if (Node.IsEditing) {
+					if (Node.IsEditing)
+					{
 						Node.IsEditing = false;
 						e.Handled = true;
 					}
@@ -72,15 +74,18 @@ namespace ICSharpCode.TreeView
 		protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
 		{
 			wasSelected = IsSelected;
-			if (!IsSelected) {
+			if (!IsSelected)
+			{
 				base.OnMouseLeftButtonDown(e);
 			}
 
-			if (Mouse.LeftButton == MouseButtonState.Pressed) {
+			if (Mouse.LeftButton == MouseButtonState.Pressed)
+			{
 				startPoint = e.GetPosition(null);
 				CaptureMouse();
 
-				if (e.ClickCount == 2) {
+				if (e.ClickCount == 2)
+				{
 					wasDoubleClick = true;
 				}
 			}
@@ -88,13 +93,16 @@ namespace ICSharpCode.TreeView
 
 		protected override void OnMouseMove(MouseEventArgs e)
 		{
-			if (IsMouseCaptured) {
+			if (IsMouseCaptured)
+			{
 				var currentPoint = e.GetPosition(null);
 				if (Math.Abs(currentPoint.X - startPoint.X) >= SystemParameters.MinimumHorizontalDragDistance ||
-				    Math.Abs(currentPoint.Y - startPoint.Y) >= SystemParameters.MinimumVerticalDragDistance) {
+					Math.Abs(currentPoint.Y - startPoint.Y) >= SystemParameters.MinimumVerticalDragDistance)
+				{
 
 					var selection = ParentTreeView.GetTopLevelSelection().ToArray();
-					if (Node.CanDrag(selection)) {
+					if (Node.CanDrag(selection))
+					{
 						Node.StartDrag(this, selection);
 					}
 				}
@@ -103,27 +111,34 @@ namespace ICSharpCode.TreeView
 
 		protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
 		{
-			if (wasDoubleClick) {
+			if (wasDoubleClick)
+			{
 				wasDoubleClick = false;
 				Node.ActivateItem(e);
-				if (!e.Handled) {
-					if (!Node.IsRoot || ParentTreeView.ShowRootExpander) {
+				if (!e.Handled)
+				{
+					if (!Node.IsRoot || ParentTreeView.ShowRootExpander)
+					{
 						Node.IsExpanded = !Node.IsExpanded;
 					}
 				}
 			}
-			
+
 			ReleaseMouseCapture();
-			if (wasSelected) {
+			if (wasSelected)
+			{
 				base.OnMouseLeftButtonDown(e);
 			}
 		}
 
 		protected override void OnMouseUp(MouseButtonEventArgs e)
 		{
-			if (e.ChangedButton == MouseButton.Middle) {
+			if (e.ChangedButton == MouseButton.Middle)
+			{
 				Node.ActivateItemSecondary(e);
-			} else {
+			}
+			else
+			{
 				base.OnMouseUp(e);
 			}
 		}

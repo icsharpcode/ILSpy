@@ -52,7 +52,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if !ROSLYN
 		public static State SwitchOverNullableBool(bool? value)
 		{
-			switch (value) {
+			switch (value)
+			{
 				case false:
 					return State.False;
 				case true:
@@ -67,7 +68,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static bool? SwitchOverNullableEnum(State? state)
 		{
-			switch (state) {
+			switch (state)
+			{
 				case State.False:
 					return false;
 				case State.True:
@@ -82,7 +84,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SparseIntegerSwitch(int i)
 		{
 			Console.WriteLine("SparseIntegerSwitch: " + i);
-			switch (i) {
+			switch (i)
+			{
 				case -10000000:
 					return "-10 mln";
 				case -100:
@@ -112,7 +115,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SparseIntegerSwitch2(int i)
 		{
-			switch (i) {
+			switch (i)
+			{
 				case 4:
 				case 10:
 				case 11:
@@ -130,7 +134,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static bool SparseIntegerSwitch3(int i)
 		{
-			switch (i) {
+			switch (i)
+			{
 				case 0:
 				case 10:
 				case 11:
@@ -146,7 +151,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverNullableInt(int? i)
 		{
-			switch (i) {
+			switch (i)
+			{
 				case null:
 					return "null";
 				case 0:
@@ -162,7 +168,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverNullableIntNullCaseCombined(int? i)
 		{
-			switch (i) {
+			switch (i)
+			{
 				case null:
 				case 0:
 					return "zero";
@@ -177,7 +184,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverNullableIntShifted(int? i)
 		{
-			switch (i + 5) {
+			switch (i + 5)
+			{
 				case null:
 					return "null";
 				case 0:
@@ -193,7 +201,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverNullableIntShiftedNullCaseCombined(int? i)
 		{
-			switch (i + 5) {
+			switch (i + 5)
+			{
 				case null:
 				case 0:
 					return "zero";
@@ -208,7 +217,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverNullableIntNoNullCase(int? i)
 		{
-			switch (i) {
+			switch (i)
+			{
 				case 0:
 					return "zero";
 				case 5:
@@ -222,7 +232,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverNullableIntNoNullCaseShifted(int? i)
 		{
-			switch (i + 5) {
+			switch (i + 5)
+			{
 				case 0:
 					return "zero";
 				case 5:
@@ -236,7 +247,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchOverInt(int i)
 		{
-			switch (i) {
+			switch (i)
+			{
 				case 0:
 					Console.WriteLine("zero");
 					break;
@@ -264,7 +276,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// SwitchDetection.UseCSharpSwitch requires more complex heuristic to identify this when compiled with Roslyn
 		public static void CompactSwitchOverInt(int i)
 		{
-			switch (i) {
+			switch (i)
+			{
 				case 0:
 				case 1:
 				case 2:
@@ -283,7 +296,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string ShortSwitchOverString(string text)
 		{
 			Console.WriteLine("ShortSwitchOverString: " + text);
-			switch (text) {
+			switch (text)
+			{
 				case "First case":
 					return "Text1";
 				case "Second case":
@@ -298,7 +312,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string ShortSwitchOverStringWithNullCase(string text)
 		{
 			Console.WriteLine("ShortSwitchOverStringWithNullCase: " + text);
-			switch (text) {
+			switch (text)
+			{
 				case "First case":
 					return "Text1";
 				case "Second case":
@@ -313,7 +328,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SwitchOverString1(string text)
 		{
 			Console.WriteLine("SwitchOverString1: " + text);
-			switch (text) {
+			switch (text)
+			{
 				case "First case":
 					return "Text1";
 				case "Second case":
@@ -337,7 +353,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SwitchOverString2()
 		{
 			Console.WriteLine("SwitchOverString2:");
-			switch (Environment.UserName) {
+			switch (Environment.UserName)
+			{
 				case "First case":
 					return "Text1";
 				case "Second case":
@@ -369,7 +386,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SwitchOverBool(bool b)
 		{
 			Console.WriteLine("SwitchOverBool: " + b);
-			switch (b) {
+			switch (b)
+			{
 				case true:
 					return bool.TrueString;
 				case false:
@@ -383,8 +401,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void SwitchInLoop(int i)
 		{
 			Console.WriteLine("SwitchInLoop: " + i);
-			while (true) {
-				switch (i) {
+			while (true)
+			{
+				switch (i)
+				{
 					case 1:
 						Console.WriteLine("one");
 						break;
@@ -409,7 +429,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void SwitchWithGoto(int i)
 		{
 			Console.WriteLine("SwitchWithGoto: " + i);
-			switch (i) {
+			switch (i)
+			{
 				case 1:
 					Console.WriteLine("one");
 					goto default;
@@ -433,7 +454,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void SwitchWithGotoString(string s)
 		{
 			Console.WriteLine("SwitchWithGotoString: " + s);
-			switch (s) {
+			switch (s)
+			{
 				case "1":
 					Console.WriteLine("one");
 					goto default;
@@ -471,7 +493,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void SwitchWithGotoComplex(string s)
 		{
 			Console.WriteLine("SwitchWithGotoComplex: " + s);
-			switch (s) {
+			switch (s)
+			{
 				case "1":
 					Console.WriteLine("one");
 					goto case "8";
@@ -480,7 +503,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					goto case "3";
 				case "3":
 					Console.WriteLine("three");
-					if (s.Length != 2) {
+					if (s.Length != 2)
+					{
 						break;
 					}
 					goto case "5";
@@ -518,10 +542,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			List<SetProperty> list = new List<SetProperty>();
 			List<SetProperty> list2 = new List<SetProperty>();
 			SetProperty[] properties = GetProperties();
-			for (int i = 0; i < properties.Length; i++) {
+			for (int i = 0; i < properties.Length; i++)
+			{
 				Console.WriteLine("In for-loop");
 				SetProperty setProperty = properties[i];
-				switch (setProperty.Property.Name) {
+				switch (setProperty.Property.Name)
+				{
 					case "Name1":
 						setProperty.Set = 1;
 						list.Add(setProperty);
@@ -551,8 +577,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchInTryBlock(string value)
 		{
-			try {
-				switch (value.Substring(5)) {
+			try
+			{
+				switch (value.Substring(5))
+				{
 					case "Name1":
 						Console.WriteLine("1");
 						break;
@@ -573,14 +601,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						Console.WriteLine("default");
 						break;
 				}
-			} catch (Exception) {
+			}
+			catch (Exception)
+			{
 				Console.WriteLine("catch block");
 			}
 		}
 
 		public static void SwitchWithComplexCondition(string[] args)
 		{
-			switch ((args.Length == 0) ? "dummy" : args[0]) {
+			switch ((args.Length == 0) ? "dummy" : args[0])
+			{
 				case "a":
 					Console.WriteLine("a");
 					break;
@@ -599,7 +630,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchWithArray(string[] args)
 		{
-			switch (args[0]) {
+			switch (args[0])
+			{
 				case "a":
 					Console.WriteLine("a");
 					break;
@@ -618,19 +650,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchWithContinue1(int i, bool b)
 		{
-			while (true) {
-				switch (i) {
+			while (true)
+			{
+				switch (i)
+				{
 #if OPT
 					case 1:
 						continue;
 #endif
 					case 0:
-						if (b) {
+						if (b)
+						{
 							continue;
 						}
 						break;
 					case 2:
-						if (!b) {
+						if (!b)
+						{
 							continue;
 						}
 						break;
@@ -646,10 +682,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// while condition, return and break cases
 		public static void SwitchWithContinue2(int i, bool b)
 		{
-			while (i < 10) {
-				switch (i) {
+			while (i < 10)
+			{
+				switch (i)
+				{
 					case 0:
-						if (b) {
+						if (b)
+						{
 							Console.WriteLine("0b");
 							continue;
 						}
@@ -657,14 +696,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						break;
 					case 2:
 #if OPT
-						if (b) {
+						if (b)
+						{
 							Console.WriteLine("2b");
 							return;
 						}
 						Console.WriteLine("2!b");
 						continue;
 #else
-						if (!b) {
+						if (!b)
+						{
 							Console.WriteLine("2!b");
 							continue;
 						}
@@ -687,10 +728,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// for loop version
 		public static void SwitchWithContinue3(bool b)
 		{
-			for (int i = 0; i < 10; i++) {
-				switch (i) {
+			for (int i = 0; i < 10; i++)
+			{
+				switch (i)
+				{
 					case 0:
-						if (b) {
+						if (b)
+						{
 							Console.WriteLine("0b");
 							continue;
 						}
@@ -698,14 +742,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						break;
 					case 2:
 #if OPT
-						if (b) {
+						if (b)
+						{
 							Console.WriteLine("2b");
 							return;
 						}
 						Console.WriteLine("2!b");
 						continue;
 #else
-						if (!b) {
+						if (!b)
+						{
 							Console.WriteLine("2!b");
 							continue;
 						}
@@ -727,16 +773,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// foreach version
 		public static void SwitchWithContinue4(bool b)
 		{
-			foreach (int item in Enumerable.Range(0, 10)) {
+			foreach (int item in Enumerable.Range(0, 10))
+			{
 				Console.WriteLine("loop: " + item);
-				switch (item) {
+				switch (item)
+				{
 					case 1:
-						if (b) {
+						if (b)
+						{
 							continue;
 						}
 						break;
 					case 3:
-						if (!b) {
+						if (!b)
+						{
 							continue;
 						}
 						return;
@@ -747,20 +797,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						Console.WriteLine(5);
 						goto default;
 					case 6:
-						if (b) {
+						if (b)
+						{
 							continue;
 						}
 						goto case 3;
 					case 7:
-						if (item % 2 == 0) {
+						if (item % 2 == 0)
+						{
 							goto case 3;
 						}
-						if (!b) {
+						if (!b)
+						{
 							continue;
 						}
 						goto case 8;
 					case 8:
-						if (b) {
+						if (b)
+						{
 							continue;
 						}
 						goto case 5;
@@ -776,11 +830,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// internal if statement, loop increment block not dominated by the switch head
 		public static void SwitchWithContinue5(bool b)
 		{
-			for (int i = 0; i < 10; i++) {
-				if (i < 5) {
-					switch (i) {
+			for (int i = 0; i < 10; i++)
+			{
+				if (i < 5)
+				{
+					switch (i)
+					{
 						case 0:
-							if (b) {
+							if (b)
+							{
 								Console.WriteLine("0b");
 								continue;
 							}
@@ -788,14 +846,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 							break;
 						case 2:
 #if OPT
-							if (b) {
+							if (b)
+							{
 								Console.WriteLine("2b");
 								return;
 							}
 							Console.WriteLine("2!b");
 							continue;
 #else
-							if (!b) {
+							if (!b)
+							{
 								Console.WriteLine("2!b");
 								continue;
 							}
@@ -819,10 +879,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// do-while loop version
 		public static void SwitchWithContinue6(int i, bool b)
 		{
-			do {
-				switch (i) {
+			do
+			{
+				switch (i)
+				{
 					case 0:
-						if (!b) {
+						if (!b)
+						{
 							Console.WriteLine("0!b");
 							break;
 						}
@@ -830,7 +893,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						// ConditionDetection doesn't recognise Do-While continues yet
 						continue;
 					case 2:
-						if (b) {
+						if (b)
+						{
 							Console.WriteLine("2b");
 							return;
 						}
@@ -851,9 +915,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// double break from switch to loop exit requires additional pattern matching in HighLevelLoopTransform
 		public static void SwitchWithContinue7()
 		{
-			for (int num = 0; num >= 0; num--) {
+			for (int num = 0; num >= 0; num--)
+			{
 				Console.WriteLine("loop-head");
-				switch (num) {
+				switch (num)
+				{
 					default:
 						Console.WriteLine("default");
 						break;
@@ -870,9 +936,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void SwitchWithContinueInDoubleLoop()
 		{
 			bool value = false;
-			for (int i = 0; i < 10; i++) {
-				for (int j = 0; j < 10; j++) {
-					switch (i + j) {
+			for (int i = 0; i < 10; i++)
+			{
+				for (int j = 0; j < 10; j++)
+				{
+					switch (i + j)
+					{
 						case 1:
 						case 3:
 						case 5:
@@ -893,8 +962,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchLoopNesting()
 		{
-			for (int i = 0; i < 10; i++) {
-				switch (i) {
+			for (int i = 0; i < 10; i++)
+			{
+				switch (i)
+				{
 					case 0:
 						Console.WriteLine(0);
 						break;
@@ -902,8 +973,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						Console.WriteLine(1);
 						break;
 					default:
-						if (i % 2 == 0) {
-							while (i % 3 != 0) {
+						if (i % 2 == 0)
+						{
+							while (i % 3 != 0)
+							{
 								Console.WriteLine(i++);
 							}
 						}
@@ -911,9 +984,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						break;
 				}
 
-				if (i > 4) {
+				if (i > 4)
+				{
 					Console.WriteLine("high");
-				} else {
+				}
+				else
+				{
 					Console.WriteLine("low");
 				}
 			}
@@ -925,7 +1001,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if ROSLYN || OPT
 		public static void SingleIf1(int i, bool a)
 		{
-			if (i == 1 || (i == 2 && a)) {
+			if (i == 1 || (i == 2 && a))
+			{
 				Console.WriteLine(1);
 			}
 			Console.WriteLine(2);
@@ -934,7 +1011,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SingleIf2(int i, bool a, bool b)
 		{
-			if (i == 1 || (i == 2 && a) || (i == 3 && b)) {
+			if (i == 1 || (i == 2 && a) || (i == 3 && b))
+			{
 				Console.WriteLine(1);
 			}
 			Console.WriteLine(2);
@@ -942,7 +1020,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SingleIf3(int i, bool a, bool b)
 		{
-			if (a || i == 1 || (i == 2 && b)) {
+			if (a || i == 1 || (i == 2 && b))
+			{
 				Console.WriteLine(1);
 			}
 			Console.WriteLine(2);
@@ -950,7 +1029,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SingleIf4(int i, bool a)
 		{
-			if (i == 1 || i == 2 || (i != 3 && a) || i != 4) {
+			if (i == 1 || i == 2 || (i != 3 && a) || i != 4)
+			{
 				Console.WriteLine(1);
 			}
 			Console.WriteLine(2);
@@ -958,8 +1038,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void NestedIf(int i)
 		{
-			if (i != 1) {
-				if (i == 2) {
+			if (i != 1)
+			{
+				if (i == 2)
+				{
 					Console.WriteLine(2);
 				}
 				Console.WriteLine("default");
@@ -969,19 +1051,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void IfChainWithCondition(int i)
 		{
-			if (i == 0) {
+			if (i == 0)
+			{
 				Console.WriteLine(0);
-			} else if (i == 1) {
+			}
+			else if (i == 1)
+			{
 				Console.WriteLine(1);
-			} else if (i == 2) {
+			}
+			else if (i == 2)
+			{
 				Console.WriteLine(2);
-			} else if (i == 3) {
+			}
+			else if (i == 3)
+			{
 				Console.WriteLine(3);
-			} else if (i == 4) {
+			}
+			else if (i == 4)
+			{
 				Console.WriteLine(4);
-			} else if (i == 5 && Console.CapsLock) {
+			}
+			else if (i == 5 && Console.CapsLock)
+			{
 				Console.WriteLine("5A");
-			} else {
+			}
+			else
+			{
 				Console.WriteLine("default");
 			}
 
@@ -990,37 +1085,48 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static bool SwitchlikeIf(int i, int j)
 		{
-			if (i != 0 && j != 0) {
-				if (i == -1 && j == -1) {
+			if (i != 0 && j != 0)
+			{
+				if (i == -1 && j == -1)
+				{
 					Console.WriteLine("-1, -1");
 				}
-				if (i == -1 && j == 1) {
+				if (i == -1 && j == 1)
+				{
 					Console.WriteLine("-1, 1");
 				}
-				if (i == 1 && j == -1) {
+				if (i == 1 && j == -1)
+				{
 					Console.WriteLine("1, -1");
 				}
-				if (i == 1 && j == 1) {
+				if (i == 1 && j == 1)
+				{
 					Console.WriteLine("1, 1");
 				}
 				return false;
 			}
 
-			if (i != 0) {
-				if (i == -1) {
+			if (i != 0)
+			{
+				if (i == -1)
+				{
 					Console.WriteLine("-1, 0");
 				}
-				if (i == 1) {
+				if (i == 1)
+				{
 					Console.WriteLine("1, 0");
 				}
 				return false;
 			}
 
-			if (j != 0) {
-				if (j == -1) {
+			if (j != 0)
+			{
+				if (j == -1)
+				{
 					Console.WriteLine("0, -1");
 				}
-				if (j == 1) {
+				if (j == 1)
+				{
 					Console.WriteLine("0, 1");
 				}
 				return false;
@@ -1031,15 +1137,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static bool SwitchlikeIf2(int i)
 		{
-			if (i != 0) {
+			if (i != 0)
+			{
 				// note that using else-if in this chain creates a nice-looking switch here (as expected)
-				if (i == 1) {
+				if (i == 1)
+				{
 					Console.WriteLine(1);
 				}
-				if (i == 2) {
+				if (i == 2)
+				{
 					Console.WriteLine(2);
 				}
-				if (i == 3) {
+				if (i == 3)
+				{
 					Console.WriteLine(3);
 				}
 				return false;
@@ -1049,7 +1159,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SingleIntervalIf(char c)
 		{
-			if (c >= 'A' && c <= 'Z') {
+			if (c >= 'A' && c <= 'Z')
+			{
 				Console.WriteLine("alphabet");
 			}
 			Console.WriteLine("end");
@@ -1057,8 +1168,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static bool Loop8(char c, bool b, Func<char> getChar)
 		{
-			if (b) {
-				while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+			if (b)
+			{
+				while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+				{
 					c = getChar();
 				}
 			}
@@ -1069,7 +1182,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void Loop9(Func<char> getChar)
 		{
 			char c;
-			do {
+			do
+			{
 				c = getChar();
 			} while (c != -1 && c != '\n' && c != '\u2028' && c != '\u2029');
 		}
@@ -1078,8 +1192,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// Ensure correctness of SwitchDetection.UseCSharpSwitch control flow heuristics
 		public static void SwitchWithBreakCase(int i, bool b)
 		{
-			if (b) {
-				switch (i) {
+			if (b)
+			{
+				switch (i)
+				{
 					case 1:
 						Console.WriteLine(1);
 						break;
@@ -1096,14 +1212,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchWithReturnAndBreak(int i, bool b)
 		{
-			switch (i) {
+			switch (i)
+			{
 				case 0:
-					if (b) {
+					if (b)
+					{
 						return;
 					}
 					break;
 				case 1:
-					if (!b) {
+					if (!b)
+					{
 						return;
 					}
 					break;
@@ -1113,13 +1232,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static int SwitchWithReturnAndBreak2(int i, bool b)
 		{
-			switch (i) {
+			switch (i)
+			{
 				case 4:
 				case 33:
 					Console.WriteLine();
 					return 1;
 				case 334:
-					if (b) {
+					if (b)
+					{
 						return 2;
 					}
 					break;
@@ -1135,7 +1256,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchWithReturnAndBreak3(int i)
 		{
-			switch (i) {
+			switch (i)
+			{
 				default:
 					return;
 				case 0:
@@ -1150,10 +1272,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string Issue1621(int x)
 		{
-			if (x == 5) {
+			if (x == 5)
+			{
 				return "5";
 			}
-			switch (x) {
+			switch (x)
+			{
 				case 1:
 					return "1";
 				case 2:
@@ -1173,7 +1297,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static int Issue1602(string x)
 		{
-			switch (x) {
+			switch (x)
+			{
 				case null:
 					return 0;
 				case "":
@@ -1197,7 +1322,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void Issue1745(string aaa)
 		{
-			switch (aaa) {
+			switch (aaa)
+			{
 				case "a":
 				case "b":
 				case "c":
@@ -1218,7 +1344,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static bool DoNotRemoveAssignmentBeforeSwitch(string x, out ConsoleKey key)
 		{
 			key = (ConsoleKey)0;
-			switch (x) {
+			switch (x)
+			{
 				case "A":
 					key = ConsoleKey.A;
 					break;
@@ -1234,7 +1361,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void Issue1767(string s)
 		{
-			switch (s) {
+			switch (s)
+			{
 				case "a":
 					ch1767 = s[0];
 					break;

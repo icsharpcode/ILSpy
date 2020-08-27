@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Does not include method parameters.
 		/// </summary>
 		IEnumerable<IVariable> LocalVariables { get; }
-		
+
 		/// <summary>
 		/// Gets whether the context is within a lambda expression or anonymous method.
 		/// </summary>

@@ -32,49 +32,49 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class SizeOfExpression : Expression
 	{
-		public readonly static TokenRole SizeofKeywordRole = new TokenRole ("sizeof");
-		
+		public readonly static TokenRole SizeofKeywordRole = new TokenRole("sizeof");
+
 		public CSharpTokenNode SizeOfToken {
-			get { return GetChildByRole (SizeofKeywordRole); }
+			get { return GetChildByRole(SizeofKeywordRole); }
 		}
-		
+
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
-		
+
 		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
+			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
-		
+
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
-		
-		public SizeOfExpression ()
+
+		public SizeOfExpression()
 		{
 		}
-		
-		public SizeOfExpression (AstType type)
+
+		public SizeOfExpression(AstType type)
 		{
-			AddChild (type, Roles.Type);
+			AddChild(type, Roles.Type);
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitSizeOfExpression (this);
+			visitor.VisitSizeOfExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitSizeOfExpression (this);
+			return visitor.VisitSizeOfExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitSizeOfExpression (this, data);
+			return visitor.VisitSizeOfExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			SizeOfExpression o = other as SizeOfExpression;

@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Immutable;
+
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -33,32 +34,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class CSharpModifierToken : CSharpTokenNode
 	{
 		Modifiers modifier;
-		
+
 		public Modifiers Modifier {
 			get { return modifier; }
-			set { 
+			set {
 				ThrowIfFrozen();
-				this.modifier = value; 
+				this.modifier = value;
 			}
 		}
 
 		public override TextLocation EndLocation {
 			get {
-				return new TextLocation (StartLocation.Line, StartLocation.Column + GetModifierLength (Modifier));
+				return new TextLocation(StartLocation.Line, StartLocation.Column + GetModifierLength(Modifier));
 			}
 		}
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
-			return GetModifierName (Modifier);
+			return GetModifierName(Modifier);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			CSharpModifierToken o = other as CSharpModifierToken;
 			return o != null && this.modifier == o.modifier;
 		}
-		
+
 		// Not worth using a dictionary for such few elements.
 		// This table is sorted in the order that modifiers should be output when generating code.
 		public static ImmutableArray<Modifiers> AllModifiers { get; } = ImmutableArray.Create(
@@ -72,15 +73,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Modifiers.Async,
 			Modifiers.Any
 		);
-		
-		public CSharpModifierToken (TextLocation location, Modifiers modifier) : base (location, null)
+
+		public CSharpModifierToken(TextLocation location, Modifiers modifier) : base(location, null)
 		{
 			this.Modifier = modifier;
 		}
-		
+
 		public static string GetModifierName(Modifiers modifier)
 		{
-			switch (modifier) {
+			switch (modifier)
+			{
 				case Modifiers.Private:
 					return "private";
 				case Modifiers.Internal:
@@ -127,7 +129,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static int GetModifierLength(Modifiers modifier)
 		{
-			switch (modifier) {
+			switch (modifier)
+			{
 				case Modifiers.Private:
 					return "private".Length;
 				case Modifiers.Internal:
@@ -171,10 +174,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					throw new NotSupportedException("Invalid value for Modifiers");
 			}
 		}
-		
+
 		public static Modifiers GetModifierValue(string modifier)
 		{
-			switch (modifier) {
+			switch (modifier)
+			{
 				case "private":
 					return Modifiers.Private;
 				case "internal":

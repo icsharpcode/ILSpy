@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public const decimal field2 = decimal.One;
 		public const decimal field3 = decimal.MaxValue;
 		public const decimal field4 = decimal.MinValue;
-		
+
 		public static int Main()
 		{
 			Console.WriteLine(field1);

@@ -36,7 +36,7 @@ namespace ICSharpCode.TreeView
 		{
 			return PreOrder(new T[] { root }, recursion);
 		}
-		
+
 		/// <summary>
 		/// Converts a tree data structure into a flat list by traversing it in pre-order.
 		/// </summary>
@@ -46,21 +46,28 @@ namespace ICSharpCode.TreeView
 		public static IEnumerable<T> PreOrder<T>(IEnumerable<T> input, Func<T, IEnumerable<T>> recursion)
 		{
 			Stack<IEnumerator<T>> stack = new Stack<IEnumerator<T>>();
-			try {
+			try
+			{
 				stack.Push(input.GetEnumerator());
-				while (stack.Count > 0) {
-					while (stack.Peek().MoveNext()) {
+				while (stack.Count > 0)
+				{
+					while (stack.Peek().MoveNext())
+					{
 						T element = stack.Peek().Current;
 						yield return element;
 						IEnumerable<T> children = recursion(element);
-						if (children != null) {
+						if (children != null)
+						{
 							stack.Push(children.GetEnumerator());
 						}
 					}
 					stack.Pop().Dispose();
 				}
-			} finally {
-				while (stack.Count > 0) {
+			}
+			finally
+			{
+				while (stack.Count > 0)
+				{
 					stack.Pop().Dispose();
 				}
 			}

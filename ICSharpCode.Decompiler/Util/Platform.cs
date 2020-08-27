@@ -27,7 +27,8 @@ namespace ICSharpCode.Decompiler.Util
 	{
 		public static StringComparer FileNameComparer {
 			get {
-				switch (Environment.OSVersion.Platform) {
+				switch (Environment.OSVersion.Platform)
+				{
 					case PlatformID.Unix:
 					case PlatformID.MacOSX:
 						return StringComparer.Ordinal;

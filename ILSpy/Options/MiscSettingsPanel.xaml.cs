@@ -24,7 +24,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// <summary>
 	/// Interaction logic for MiscSettingsPanel.xaml
 	/// </summary>
-	[ExportOptionPage(Title =nameof(Properties.Resources.Misc), Order = 30)]
+	[ExportOptionPage(Title = nameof(Properties.Resources.Misc), Order = 30)]
 	public partial class MiscSettingsPanel : UserControl, IOptionPage
 	{
 		public MiscSettingsPanel()

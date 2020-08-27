@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -61,7 +62,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				&& NumberOfCompilerGeneratedTypeParameters == other.NumberOfCompilerGeneratedTypeParameters
 				&& IsStaticLocalFunction == other.IsStaticLocalFunction;
 		}
-		
+
 		public override int GetHashCode()
 		{
 			return baseMethod.GetHashCode();
@@ -94,7 +95,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				baseMethod.Specialize(substitution),
 				Name, IsStaticLocalFunction, NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedTypeParameters);
 		}
-		
+
 		IMember IMember.Specialize(TypeParameterSubstitution substitution)
 		{
 			return Specialize(substitution);

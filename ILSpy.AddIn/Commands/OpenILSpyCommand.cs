@@ -6,8 +6,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using Microsoft.VisualStudio.Shell;
+
 using Mono.Cecil;
+
 using DTEConstants = EnvDTE.Constants;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
@@ -60,8 +63,10 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			if (parameters == null)
 				return;
 
-			foreach (string assemblyFileName in parameters.AssemblyFileNames) {
-				if (!File.Exists(assemblyFileName)) {
+			foreach (string assemblyFileName in parameters.AssemblyFileNames)
+			{
+				if (!File.Exists(assemblyFileName))
+				{
 					owner.ShowMessage("Could not find assembly '{0}', please ensure the project and all references were built correctly!", assemblyFileName);
 					return;
 				}
@@ -76,14 +81,17 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			var dict = new Dictionary<string, DetectedReference>();
-			foreach (var reference in parentProject.MetadataReferences) {
-				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
+			foreach (var reference in parentProject.MetadataReferences)
+			{
+				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display))
+				{
 					string assemblyName = assemblyDef.Name.Name;
 					string resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
 					dict.Add(assemblyName, new DetectedReference(assemblyName, resolvedAssemblyFile, false));
 				}
 			}
-			foreach (var projectReference in parentProject.ProjectReferences) {
+			foreach (var projectReference in parentProject.ProjectReferences)
+			{
 				var roslynProject = owner.Workspace.CurrentSolution.GetProject(projectReference.ProjectId);
 				var project = FindProject(owner.DTE.Solution.Projects.OfType<EnvDTE.Project>(), roslynProject.FilePath);
 				if (roslynProject != null && project != null)
@@ -97,8 +105,10 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			foreach (var project in projects) {
-				switch (project.Kind) {
+			foreach (var project in projects)
+			{
+				switch (project.Kind)
+				{
 					case DTEConstants.vsProjectKindSolutionItems:
 						// This is a solution folder -> search in sub-projects
 						var subProject = FindProject(

@@ -28,18 +28,21 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.CSharp;
 using Microsoft.DiaSymReader.Tools;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
@@ -81,20 +84,25 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			string ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
 			string outputFile = Path.Combine(Path.GetDirectoryName(sourceFileName), Path.GetFileNameWithoutExtension(sourceFileName));
 			string otherOptions = " ";
-			if (options.HasFlag(AssemblerOptions.Force32Bit)) {
+			if (options.HasFlag(AssemblerOptions.Force32Bit))
+			{
 				outputFile += ".32";
 				otherOptions += "/32BitPreferred ";
 			}
-			if (options.HasFlag(AssemblerOptions.Library)) {
+			if (options.HasFlag(AssemblerOptions.Library))
+			{
 				outputFile += ".dll";
 				otherOptions += "/dll ";
-			} else {
+			}
+			else
+			{
 				outputFile += ".exe";
 				otherOptions += "/exe ";
 			}
 
 
-			if (options.HasFlag(AssemblerOptions.UseDebug)) {
+			if (options.HasFlag(AssemblerOptions.UseDebug))
+			{
 				otherOptions += "/debug ";
 			}
 
@@ -121,10 +129,12 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static string Disassemble(string sourceFileName, string outputFile, AssemblerOptions asmOptions)
 		{
-			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler)) {
+			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler))
+			{
 				using (var peFileStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read))
 				using (var peFile = new PEFile(sourceFileName, peFileStream))
-				using (var writer = new StringWriter()) {
+				using (var writer = new StringWriter())
+				{
 					var metadata = peFile.Metadata;
 					var output = new PlainTextOutput(writer);
 					ReflectionDisassembler rd = new ReflectionDisassembler(output, CancellationToken.None);
@@ -186,7 +196,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 
 		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NETCoreApp, new Version(3, 1)).GetReferenceAssemblyPath(".NETCoreApp, Version = v3.1");
-		
+
 		static readonly string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
 			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
 		static readonly string thisAsmPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
@@ -217,7 +227,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		static IEnumerable<MetadataReference> GetDefaultReferences()
 		{
-			foreach (var reference in Directory.EnumerateFiles(coreRefAsmPath, "*.dll")) {
+			foreach (var reference in Directory.EnumerateFiles(coreRefAsmPath, "*.dll"))
+			{
 				yield return MetadataReference.CreateFromFile(reference);
 			}
 		}
@@ -231,16 +242,20 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static List<string> GetPreprocessorSymbols(CompilerOptions flags)
 		{
 			var preprocessorSymbols = new List<string>();
-			if (flags.HasFlag(CompilerOptions.UseDebug)) {
+			if (flags.HasFlag(CompilerOptions.UseDebug))
+			{
 				preprocessorSymbols.Add("DEBUG");
 			}
-			if (flags.HasFlag(CompilerOptions.Optimize)) {
+			if (flags.HasFlag(CompilerOptions.Optimize))
+			{
 				preprocessorSymbols.Add("OPT");
 			}
-			if (flags.HasFlag(CompilerOptions.ReferenceCore)) {
+			if (flags.HasFlag(CompilerOptions.ReferenceCore))
+			{
 				preprocessorSymbols.Add("NETCORE");
 			}
-			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
+			if (flags.HasFlag(CompilerOptions.UseRoslyn))
+			{
 				preprocessorSymbols.Add("ROSLYN");
 				preprocessorSymbols.Add("CS60");
 				preprocessorSymbols.Add("CS70");
@@ -252,12 +267,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				preprocessorSymbols.Add("VB14");
 				preprocessorSymbols.Add("VB15");
 
-				if (flags.HasFlag(CompilerOptions.Preview)) {
+				if (flags.HasFlag(CompilerOptions.Preview))
+				{
 					preprocessorSymbols.Add("CS90");
 				}
-			} else if (flags.HasFlag(CompilerOptions.UseMcs)) {
+			}
+			else if (flags.HasFlag(CompilerOptions.UseMcs))
+			{
 				preprocessorSymbols.Add("MCS");
-			} else {
+			}
+			else
+			{
 				preprocessorSymbols.Add("LEGACY_CSC");
 				preprocessorSymbols.Add("LEGACY_VBC");
 			}
@@ -267,28 +287,35 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static CompilerResults CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };
-			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)""")) {
+			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)"""))
+			{
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
 			}
 
 			var preprocessorSymbols = GetPreprocessorSymbols(flags);
 
-			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
+			if (flags.HasFlag(CompilerOptions.UseRoslyn))
+			{
 				var parseOptions = new CSharpParseOptions(
 					preprocessorSymbols: preprocessorSymbols.ToArray(),
 					languageVersion: flags.HasFlag(CompilerOptions.Preview) ? Microsoft.CodeAnalysis.CSharp.LanguageVersion.Preview : Microsoft.CodeAnalysis.CSharp.LanguageVersion.CSharp8
 				);
 				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f, encoding: Encoding.UTF8));
-				if (flags.HasFlag(CompilerOptions.ReferenceCore)) {
+				if (flags.HasFlag(CompilerOptions.ReferenceCore))
+				{
 					syntaxTrees = syntaxTrees.Concat(new[] { SyntaxFactory.ParseSyntaxTree(targetFrameworkAttributeSnippet) });
 				}
 				IEnumerable<MetadataReference> references;
-				if (flags.HasFlag(CompilerOptions.ReferenceCore)) {
+				if (flags.HasFlag(CompilerOptions.ReferenceCore))
+				{
 					references = coreDefaultReferences.Value;
-				} else {
+				}
+				else
+				{
 					references = defaultReferences.Value;
 				}
-				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic)) {
+				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
+				{
 					references = references.Concat(visualBasic.Value);
 				}
 				var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(sourceFileName),
@@ -306,41 +333,54 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				if (flags.HasFlag(CompilerOptions.GeneratePdb))
 					pdbName = Path.ChangeExtension(outputFileName, ".pdb");
 				var emitResult = compilation.Emit(results.PathToAssembly, pdbName);
-				if (!emitResult.Success) {
+				if (!emitResult.Success)
+				{
 					StringBuilder b = new StringBuilder("Compiler error:");
-					foreach (var diag in emitResult.Diagnostics) {
+					foreach (var diag in emitResult.Diagnostics)
+					{
 						b.AppendLine(diag.ToString());
 					}
 					throw new Exception(b.ToString());
 				}
 				return results;
-			} else if (flags.HasFlag(CompilerOptions.UseMcs)) {
+			}
+			else if (flags.HasFlag(CompilerOptions.UseMcs))
+			{
 				CompilerResults results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 				string testBasePath = RoundtripAssembly.TestDir;
-				if (!Directory.Exists(testBasePath)) {
+				if (!Directory.Exists(testBasePath))
+				{
 					Assert.Ignore($"Compilation with mcs ignored: test directory '{testBasePath}' needs to be checked out separately." + Environment.NewLine +
 			  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{testBasePath}\"");
 				}
 				string mcsPath = Path.Combine(testBasePath, @"mcs\2.6.4\bin\gmcs.bat");
 				string otherOptions = " -unsafe -o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+ " : "- ");
 
-				if (flags.HasFlag(CompilerOptions.Library)) {
+				if (flags.HasFlag(CompilerOptions.Library))
+				{
 					otherOptions += "-t:library ";
-				} else {
+				}
+				else
+				{
 					otherOptions += "-t:exe ";
 				}
 
-				if (flags.HasFlag(CompilerOptions.UseDebug)) {
+				if (flags.HasFlag(CompilerOptions.UseDebug))
+				{
 					otherOptions += "-g ";
 				}
 
-				if (flags.HasFlag(CompilerOptions.Force32Bit)) {
+				if (flags.HasFlag(CompilerOptions.Force32Bit))
+				{
 					otherOptions += "-platform:x86 ";
-				} else {
+				}
+				else
+				{
 					otherOptions += "-platform:anycpu ";
 				}
-				if (preprocessorSymbols.Count > 0) {
+				if (preprocessorSymbols.Count > 0)
+				{
 					otherOptions += " \"-d:" + string.Join(";", preprocessorSymbols) + "\" ";
 				}
 
@@ -364,35 +404,43 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				Console.WriteLine("errors: " + errorTask.Result);
 				Assert.AreEqual(0, process.ExitCode, "mcs failed");
 				return results;
-			} else {
+			}
+			else
+			{
 				var provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 				CompilerParameters options = new CompilerParameters();
 				options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);
 				options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-");
 				string debugOption = " /debug";
-				if (flags.HasFlag(CompilerOptions.GeneratePdb)) {
+				if (flags.HasFlag(CompilerOptions.GeneratePdb))
+				{
 					debugOption += ":full";
 					options.IncludeDebugInformation = true;
 				}
 				options.CompilerOptions += (flags.HasFlag(CompilerOptions.UseDebug) ? debugOption : "");
 				options.CompilerOptions += (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
-				if (preprocessorSymbols.Count > 0) {
+				if (preprocessorSymbols.Count > 0)
+				{
 					options.CompilerOptions += " /d:" + string.Join(";", preprocessorSymbols);
 				}
-				if (outputFileName != null) {
+				if (outputFileName != null)
+				{
 					options.OutputAssembly = outputFileName;
 				}
 				options.ReferencedAssemblies.Add("System.dll");
 				options.ReferencedAssemblies.Add("System.Core.dll");
 				options.ReferencedAssemblies.Add("System.Xml.dll");
 				options.ReferencedAssemblies.Add("Microsoft.CSharp.dll");
-				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic)) {
+				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
+				{
 					options.ReferencedAssemblies.Add("Microsoft.VisualBasic.dll");
 				}
 				CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
-				if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
+				if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning))
+				{
 					StringBuilder b = new StringBuilder("Compiler error:");
-					foreach (var error in results.Errors) {
+					foreach (var error in results.Errors)
+					{
 						b.AppendLine(error.ToString());
 					}
 					throw new Exception(b.ToString());
@@ -403,13 +451,19 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		internal static DecompilerSettings GetSettings(CompilerOptions cscOptions)
 		{
-			if (cscOptions.HasFlag(CompilerOptions.UseRoslyn)) {
-				if (cscOptions.HasFlag(CompilerOptions.Preview)) {
+			if (cscOptions.HasFlag(CompilerOptions.UseRoslyn))
+			{
+				if (cscOptions.HasFlag(CompilerOptions.Preview))
+				{
 					return new DecompilerSettings(CSharp.LanguageVersion.Latest);
-				} else {
+				}
+				else
+				{
 					return new DecompilerSettings(CSharp.LanguageVersion.CSharp8_0);
 				}
-			} else {
+			}
+			else
+			{
 				return new DecompilerSettings(CSharp.LanguageVersion.CSharp5);
 			}
 		}
@@ -421,7 +475,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			List<EmbeddedText> embeddedTexts = new List<EmbeddedText>();
 			List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
 
-			foreach (KeyValuePair<string, string> file in sourceFiles) {
+			foreach (KeyValuePair<string, string> file in sourceFiles)
+			{
 				var sourceText = SourceText.From(file.Value, new UTF8Encoding(false), SourceHashAlgorithm.Sha256);
 				syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceText, parseOptions, file.Key));
 				embeddedTexts.Add(EmbeddedText.FromSource(file.Key, sourceText));
@@ -437,11 +492,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					deterministic: true
 				));
 			using (FileStream peStream = File.Open(assemblyName + ".dll", FileMode.OpenOrCreate, FileAccess.ReadWrite))
-			using (FileStream pdbStream = File.Open(assemblyName + ".pdb", FileMode.OpenOrCreate, FileAccess.ReadWrite)) {
+			using (FileStream pdbStream = File.Open(assemblyName + ".pdb", FileMode.OpenOrCreate, FileAccess.ReadWrite))
+			{
 				var emitResult = compilation.Emit(peStream, pdbStream, options: new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb, pdbFilePath: assemblyName + ".pdb"), embeddedTexts: embeddedTexts);
-				if (!emitResult.Success) {
+				if (!emitResult.Success)
+				{
 					StringBuilder b = new StringBuilder("Compiler error:");
-					foreach (var diag in emitResult.Diagnostics) {
+					foreach (var diag in emitResult.Diagnostics)
+					{
 						b.AppendLine(diag.ToString());
 					}
 					throw new Exception(b.ToString());
@@ -490,7 +548,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			if (settings == null)
 				settings = new DecompilerSettings();
-			using (var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read)) {
+			using (var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read))
+			{
 				var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
 				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
 					module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
@@ -526,13 +585,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			Assert.AreEqual(0, result1, "Exit code != 0; did the test case crash?" + Environment.NewLine + error1);
 			Assert.AreEqual(0, result2, "Exit code != 0; did the decompiled code crash?" + Environment.NewLine + error2);
 
-			if (output1 != output2 || error1 != error2) {
+			if (output1 != output2 || error1 != error2)
+			{
 				StringBuilder b = new StringBuilder();
 				b.AppendLine($"Test {testFileName} failed: output does not match.");
-				if (decompiledCodeFile != null) {
+				if (decompiledCodeFile != null)
+				{
 					b.AppendLine($"Decompiled code in {decompiledCodeFile}:line 1");
 				}
-				if (error1 != error2) {
+				if (error1 != error2)
+				{
 					b.AppendLine("Got different error output.");
 					b.AppendLine("Original error:");
 					b.AppendLine(error1);
@@ -541,25 +603,30 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					b.AppendLine(error2);
 					b.AppendLine();
 				}
-				if (output1 != output2) {
+				if (output1 != output2)
+				{
 					string outputFileName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(testFileName));
 					File.WriteAllText(outputFileName + ".original.out", output1);
 					File.WriteAllText(outputFileName + ".decompiled.out", output2);
 					int diffLine = 0;
 					string lastHeader = null;
 					Tuple<string, string> errorItem = null;
-					foreach (var pair in output1.Replace("\r", "").Split('\n').Zip(output2.Replace("\r", "").Split('\n'), Tuple.Create)) {
+					foreach (var pair in output1.Replace("\r", "").Split('\n').Zip(output2.Replace("\r", "").Split('\n'), Tuple.Create))
+					{
 						diffLine++;
-						if (pair.Item1 != pair.Item2) {
+						if (pair.Item1 != pair.Item2)
+						{
 							errorItem = pair;
 							break;
 						}
-						if (pair.Item1.EndsWith(":", StringComparison.Ordinal)) {
+						if (pair.Item1.EndsWith(":", StringComparison.Ordinal))
+						{
 							lastHeader = pair.Item1;
 						}
 					}
 					b.AppendLine($"Output differs; first difference in line {diffLine}");
-					if (lastHeader != null) {
+					if (lastHeader != null)
+					{
 						b.AppendLine(lastHeader);
 					}
 					b.AppendLine($"{outputFileName}.original.out:line {diffLine}");
@@ -573,12 +640,18 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		internal static void RepeatOnIOError(Action action, int numTries = 5)
 		{
-			for (int i = 0; i < numTries - 1; i++) {
-				try {
+			for (int i = 0; i < numTries - 1; i++)
+			{
+				try
+				{
 					action();
 					return;
-				} catch (IOException) {
-				} catch (UnauthorizedAccessException) {
+				}
+				catch (IOException)
+				{
+				}
+				catch (UnauthorizedAccessException)
+				{
 					// potential virus scanner problem
 				}
 				Thread.Sleep(10);

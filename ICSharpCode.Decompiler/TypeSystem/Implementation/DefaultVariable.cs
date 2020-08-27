@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly IType type;
 		readonly object constantValue;
 		readonly bool isConst;
-		
+
 		public DefaultVariable(IType type, string name)
 		{
 			if (type == null)
@@ -39,32 +39,32 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.type = type;
 			this.name = name;
 		}
-		
+
 		public DefaultVariable(IType type, string name,
-		                       bool isConst = false, object constantValue = null)
+							   bool isConst = false, object constantValue = null)
 			: this(type, name)
 		{
 			this.isConst = isConst;
 			this.constantValue = constantValue;
 		}
-		
+
 		public string Name {
 			get { return name; }
 		}
-		
+
 		public IType Type {
 			get { return type; }
 		}
-		
+
 		public bool IsConst {
 			get { return isConst; }
 		}
-		
+
 		public object GetConstantValue(bool throwOnInvalidMetadata)
 		{
 			return constantValue;
 		}
-		
+
 		public SymbolKind SymbolKind {
 			get { return SymbolKind.Variable; }
 		}

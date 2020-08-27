@@ -33,21 +33,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public bool ConditionalReturnInThrow()
 		{
-			try {
-				if (B(0)) {
+			try
+			{
+				if (B(0))
+				{
 					return B(1);
 				}
-			} catch {
+			}
+			catch
+			{
 			}
 			return false;
 		}
 
 		public bool SimpleTryCatchException()
 		{
-			try {
+			try
+			{
 				Console.WriteLine("Try");
 				return B(new Random().Next());
-			} catch (Exception) {
+			}
+			catch (Exception)
+			{
 				Console.WriteLine("CatchException");
 			}
 			return false;
@@ -55,10 +62,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public bool SimpleTryCatchExceptionWithName()
 		{
-			try {
+			try
+			{
 				Console.WriteLine("Try");
 				return B(new Random().Next());
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				Console.WriteLine("CatchException ex: " + ex.ToString());
 			}
 			return false;
@@ -67,10 +77,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if CS60
 		public bool SimpleTryCatchExceptionWithNameAndCondition()
 		{
-			try {
+			try
+			{
 				Console.WriteLine("Try");
 				return B(new Random().Next());
-			} catch (Exception ex) when (ex.Message.Contains("test")) {
+			}
+			catch (Exception ex) when (ex.Message.Contains("test"))
+			{
 				Console.WriteLine("CatchException ex: " + ex.ToString());
 			}
 			return false;
@@ -78,10 +91,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public bool SimpleTryCatchExceptionWithNameAndConditionWithOr()
 		{
-			try {
+			try
+			{
 				Console.WriteLine("Try");
 				return B(new Random().Next());
-			} catch (Exception ex) when (ex is ArgumentException || ex is IOException) {
+			}
+			catch (Exception ex) when (ex is ArgumentException || ex is IOException)
+			{
 				Console.WriteLine("CatchException ex: " + ex.ToString());
 			}
 			return false;
@@ -89,10 +105,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async Task<bool> SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr()
 		{
-			try {
+			try
+			{
 				Console.WriteLine("Try");
 				return await T();
-			} catch (Exception ex) when (ex is ArgumentException || ex is IOException) {
+			}
+			catch (Exception ex) when (ex is ArgumentException || ex is IOException)
+			{
 				Console.WriteLine("CatchException ex: " + ex.ToString());
 			}
 			return false;
@@ -101,9 +120,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void CatchWhenWithConditionWithoutExceptionVar()
 		{
 			int num = 0;
-			try {
+			try
+			{
 				throw new Exception();
-			} catch (Exception) when (num == 0) {
+			}
+			catch (Exception) when (num == 0)
+			{
 				Console.WriteLine("jo");
 			}
 		}
@@ -112,9 +134,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public bool SimpleTryFinally()
 		{
-			try {
+			try
+			{
 				Console.WriteLine("Try");
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 			return false;
@@ -122,42 +147,60 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void MethodEndingWithEndFinally()
 		{
-			try {
+			try
+			{
 				throw null;
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine();
 			}
 		}
 
 		public void MethodEndingWithRethrow()
 		{
-			try {
+			try
+			{
 				throw null;
-			} catch {
+			}
+			catch
+			{
 				throw;
 			}
 		}
 
 		public void TryCatchFinally()
 		{
-			try {
+			try
+			{
 				Console.WriteLine("Try");
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				Console.WriteLine(ex.Message);
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 		}
 
 		public void TryCatchMultipleHandlers()
 		{
-			try {
+			try
+			{
 				Console.WriteLine("Try");
-			} catch (InvalidOperationException ex) {
+			}
+			catch (InvalidOperationException ex)
+			{
 				Console.WriteLine(ex.Message);
-			} catch (SystemException ex2) {
+			}
+			catch (SystemException ex2)
+			{
 				Console.WriteLine(ex2.Message);
-			} catch {
+			}
+			catch
+			{
 				Console.WriteLine("other");
 			}
 		}
@@ -179,10 +222,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void NoUsingStatementBecauseTheVariableIsAssignedTo()
 		{
 			CancellationTokenSource cancellationTokenSource = null;
-			try {
+			try
+			{
 				cancellationTokenSource = new CancellationTokenSource();
-			} finally {
-				if (cancellationTokenSource != null) {
+			}
+			finally
+			{
+				if (cancellationTokenSource != null)
+				{
 					cancellationTokenSource.Dispose();
 				}
 			}
@@ -190,8 +237,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ThrowInFinally()
 		{
-			try {
-			} finally {
+			try
+			{
+			}
+			finally
+			{
 				throw new Exception();
 			}
 		}
@@ -214,14 +264,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		//}
 		public bool EarlyExitInLoopTry()
 		{
-			while (true) {
-				try {
-					if (!B(0)) {
+			while (true)
+			{
+				try
+				{
+					if (!B(0))
+					{
 						return false;
 					}
 
 					Console.WriteLine();
-				} catch {
+				}
+				catch
+				{
 				}
 			}
 		}
@@ -229,14 +284,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public bool ComplexConditionalReturnInThrow()
 		{
-			try {
-				if (B(0)) {
-					if (B(1)) {
+			try
+			{
+				if (B(0))
+				{
+					if (B(1))
+					{
 						Console.WriteLine("0 && 1");
 						return B(2);
 					}
 
-					if (B(3)) {
+					if (B(3))
+					{
 						Console.WriteLine("0 && 3");
 						return !B(2);
 					}
@@ -246,22 +305,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 				Console.WriteLine("End Try");
 
-			} catch {
-				try {
-					try {
-						if (((B(0) || B(1)) && B(2)) || B(3)) {
+			}
+			catch
+			{
+				try
+				{
+					try
+					{
+						if (((B(0) || B(1)) && B(2)) || B(3))
+						{
 							return B(4) && !B(5);
 						}
-						if (B(6) || B(7)) {
+						if (B(6) || B(7))
+						{
 							return B(8) || B(9);
 						}
-					} catch {
+					}
+					catch
+					{
 						Console.WriteLine("Catch2");
 					}
 					return B(10) && B(11);
-				} catch {
+				}
+				catch
+				{
 					Console.WriteLine("Catch");
-				} finally {
+				}
+				finally
+				{
 					Console.WriteLine("Finally");
 				}
 			}
@@ -271,12 +342,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void AppropriateLockExit()
 		{
 			int num = 0;
-			lock (this) {
-				if (num <= 256) {
+			lock (this)
+			{
+				if (num <= 256)
+				{
 					Console.WriteLine(0);
-				} else if (num <= 1024) {
+				}
+				else if (num <= 1024)
+				{
 					Console.WriteLine(1);
-				} else if (num <= 16384) {
+				}
+				else if (num <= 16384)
+				{
 					Console.WriteLine(2);
 				}
 			}
@@ -284,10 +361,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ReassignExceptionVar()
 		{
-			try {
+			try
+			{
 				Console.WriteLine("ReassignExceptionVar");
-			} catch (Exception innerException) {
-				if (innerException.InnerException != null) {
+			}
+			catch (Exception innerException)
+			{
+				if (innerException.InnerException != null)
+				{
 					innerException = innerException.InnerException;
 				}
 				Console.WriteLine(innerException);
@@ -297,9 +378,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int UseExceptionVarOutsideCatch()
 		{
 			Exception ex2;
-			try {
+			try
+			{
 				return 1;
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				ex2 = ex;
 			}
 			Console.WriteLine(ex2 != null);
@@ -308,9 +392,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void GenericException<TException>(int input) where TException : Exception
 		{
-			try {
+			try
+			{
 				Console.WriteLine(input);
-			} catch (TException val) {
+			}
+			catch (TException val)
+			{
 				Console.WriteLine(val.Message);
 				throw;
 			}
@@ -318,14 +405,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void GenericException2<T>() where T : Exception
 		{
-			try {
+			try
+			{
 				Console.WriteLine("CatchT");
 #if ROSLYN
-			} catch (T val) {
+			}
+			catch (T val)
+			{
 				Console.WriteLine("{0} {1}", val, val.ToString());
 			}
 #else
-			} catch (T arg) {
+			}
+			catch (T arg)
+			{
 				Console.WriteLine("{0} {1}", arg, arg.ToString());
 			}
 #endif
@@ -334,9 +426,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if CS60
 		public void GenericExceptionWithCondition<TException>(int input) where TException : Exception
 		{
-			try {
+			try
+			{
 				Console.WriteLine(input);
-			} catch (TException val) when (val.Message.Contains("Test")) {
+			}
+			catch (TException val) when (val.Message.Contains("Test"))
+			{
 				Console.WriteLine(val.Message);
 				throw;
 			}
@@ -344,9 +439,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void GenericException2WithCondition<TException>(int input) where TException : Exception
 		{
-			try {
+			try
+			{
 				Console.WriteLine(input);
-			} catch (TException val) when (val.Message.Contains("Test")) {
+			}
+			catch (TException val) when (val.Message.Contains("Test"))
+			{
 				Console.WriteLine("{0} {1}", val, val.ToString());
 			}
 		}

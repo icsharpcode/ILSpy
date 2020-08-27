@@ -16,9 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows;
 
 namespace ICSharpCode.TreeView
 {
@@ -50,16 +50,20 @@ namespace ICSharpCode.TreeView
 
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
-			if (e.Key == Key.Enter) {
+			if (e.Key == Key.Enter)
+			{
 				Commit();
-			} else if (e.Key == Key.Escape) {
+			}
+			else if (e.Key == Key.Escape)
+			{
 				Node.IsEditing = false;
 			}
 		}
 
 		protected override void OnLostKeyboardFocus(KeyboardFocusChangedEventArgs e)
 		{
-			if (Node.IsEditing) {
+			if (Node.IsEditing)
+			{
 				Commit();
 			}
 		}
@@ -68,11 +72,13 @@ namespace ICSharpCode.TreeView
 
 		void Commit()
 		{
-			if (!committing) {
+			if (!committing)
+			{
 				committing = true;
 
 				Node.IsEditing = false;
-				if (!Node.SaveEditText(Text)) {
+				if (!Node.SaveEditText(Text))
+				{
 					Item.Focus();
 				}
 				Node.RaisePropertyChanged(nameof(Text));

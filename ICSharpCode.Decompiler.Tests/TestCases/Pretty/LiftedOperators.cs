@@ -30,54 +30,67 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void BoolBasic(bool? a, bool? b)
 		{
-			if (a == b) {
+			if (a == b)
+			{
 				Console.WriteLine();
 			}
-			if (a != b) {
+			if (a != b)
+			{
 				Console.WriteLine();
 			}
 		}
 
 		public static void BoolComplex(bool? a, Func<bool> x)
 		{
-			if (a == x()) {
+			if (a == x())
+			{
 				Console.WriteLine();
 			}
-			if (a != x()) {
+			if (a != x())
+			{
 				Console.WriteLine();
 			}
 
-			if (x() == a) {
+			if (x() == a)
+			{
 				Console.WriteLine();
 			}
-			if (x() != a) {
+			if (x() != a)
+			{
 				Console.WriteLine();
 			}
-			if (a ?? x()) {
+			if (a ?? x())
+			{
 				Console.WriteLine();
 			}
 		}
 
 		public static void BoolConst(bool? a)
 		{
-			if (a == true) {
+			if (a == true)
+			{
 				Console.WriteLine();
 			}
-			if (a != true) {
+			if (a != true)
+			{
 				Console.WriteLine();
 			}
-			if (a == false) {
+			if (a == false)
+			{
 				Console.WriteLine();
 			}
-			if (a != false) {
+			if (a != false)
+			{
 				Console.WriteLine();
 			}
-			if (a ?? true) {
+			if (a ?? true)
+			{
 				Console.WriteLine();
 			}
 #if !ROSLYN
 			// Roslyn 3 (VS2019) started optimizing this to "a.GetValueOrDefault()"
-			if (a ?? false) {
+			if (a ?? false)
+			{
 				Console.WriteLine();
 			}
 #endif
@@ -87,7 +100,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Console.WriteLine(a == b);
 			Console.WriteLine(a != b);
-			
+
 			Console.WriteLine(a & b);
 			Console.WriteLine(a | b);
 			Console.WriteLine(a ^ b);
@@ -105,7 +118,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			Console.WriteLine(x() == a);
 			Console.WriteLine(x() != a);
-			
+
 			//Console.WriteLine(a & x()); // we currently can't tell the order
 			//Console.WriteLine(a | x()); // of the operands in bool [&|] bool?
 			Console.WriteLine(a ^ x());
@@ -136,82 +149,104 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void IntBasic(int? a, int? b)
 		{
-			if (a == b) {
+			if (a == b)
+			{
 				Console.WriteLine();
 			}
-			if (a != b) {
+			if (a != b)
+			{
 				Console.WriteLine();
 			}
-			if (a > b) {
+			if (a > b)
+			{
 				Console.WriteLine();
 			}
-			if (a < b) {
+			if (a < b)
+			{
 				Console.WriteLine();
 			}
-			if (a >= b) {
+			if (a >= b)
+			{
 				Console.WriteLine();
 			}
-			if (a <= b) {
+			if (a <= b)
+			{
 				Console.WriteLine();
 			}
-			
-			if (!(a > b)) {
+
+			if (!(a > b))
+			{
 				Console.WriteLine();
 			}
-			if (!(a <= b)) {
+			if (!(a <= b))
+			{
 				Console.WriteLine();
 			}
 		}
 
 		public static void IntComplex(int? a, Func<int> x)
 		{
-			if (a == x()) {
+			if (a == x())
+			{
 				Console.WriteLine();
 			}
-			if (a != x()) {
+			if (a != x())
+			{
 				Console.WriteLine();
 			}
-			if (a > x()) {
-				Console.WriteLine();
-			}
-
-			if (x() == a) {
-				Console.WriteLine();
-			}
-			if (x() != a) {
-				Console.WriteLine();
-			}
-			if (x() > a) {
+			if (a > x())
+			{
 				Console.WriteLine();
 			}
 
-			if (!(a > x())) {
+			if (x() == a)
+			{
 				Console.WriteLine();
 			}
-			if (!(a <= x())) {
+			if (x() != a)
+			{
+				Console.WriteLine();
+			}
+			if (x() > a)
+			{
+				Console.WriteLine();
+			}
+
+			if (!(a > x()))
+			{
+				Console.WriteLine();
+			}
+			if (!(a <= x()))
+			{
 				Console.WriteLine();
 			}
 		}
 
 		public static void IntConst(int? a)
 		{
-			if (a == 2) {
+			if (a == 2)
+			{
 				Console.WriteLine();
 			}
-			if (a != 2) {
+			if (a != 2)
+			{
 				Console.WriteLine();
 			}
-			if (a > 2) {
+			if (a > 2)
+			{
 				Console.WriteLine();
 			}
 
-			if (2 == a) {
+			if (2 == a)
+			{
 				Console.WriteLine();
 			}
-			if (2 != a) {
+			if (2 != a)
+			{
 				Console.WriteLine();
 			}
-			if (2 > a) {
+			if (2 > a)
+			{
 				Console.WriteLine();
 			}
 		}
@@ -221,7 +256,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(a == b);
 			Console.WriteLine(a != b);
 			Console.WriteLine(a > b);
-			
+
 			Console.WriteLine(!(a > b));
 			Console.WriteLine(!(a >= b));
 
@@ -328,36 +363,45 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void NumberBasic(decimal? a, decimal? b)
 		{
-			if (a == b) {
+			if (a == b)
+			{
 				Console.WriteLine();
 			}
 #if ROSLYN
 			// Roslyn 2.9 started invoking op_Equality even if the source code says 'a != b'
-			if (!(a == b)) {
+			if (!(a == b))
+			{
 				Console.WriteLine();
 			}
 #else
-			if (a != b) {
+			if (a != b)
+			{
 				Console.WriteLine();
 			}
 #endif
-			if (a > b) {
+			if (a > b)
+			{
 				Console.WriteLine();
 			}
-			if (a < b) {
+			if (a < b)
+			{
 				Console.WriteLine();
 			}
-			if (a >= b) {
+			if (a >= b)
+			{
 				Console.WriteLine();
 			}
-			if (a <= b) {
+			if (a <= b)
+			{
 				Console.WriteLine();
 			}
 
-			if (!(a > b)) {
+			if (!(a > b))
+			{
 				Console.WriteLine();
 			}
-			if (!(a < b)) {
+			if (!(a < b))
+			{
 				Console.WriteLine();
 			}
 		}
@@ -502,10 +546,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CompareWithImplictCast(int? a, long? b)
 		{
-			if (a < b) {
+			if (a < b)
+			{
 				Console.WriteLine();
 			}
-			if (a == b) {
+			if (a == b)
+			{
 				Console.WriteLine();
 			}
 			// TODO: unnecessary cast
@@ -519,7 +565,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CompareWithSignChange(int? a, int? b)
 		{
-			if ((uint?)a < (uint?)b) {
+			if ((uint?)a < (uint?)b)
+			{
 				Console.WriteLine();
 			}
 			// TODO: unnecessary cast
@@ -530,32 +577,41 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void StructBasic(TS? a, TS? b)
 		{
-			if (a == b) {
+			if (a == b)
+			{
 				Console.WriteLine();
 			}
-			if (a != b) {
+			if (a != b)
+			{
 				Console.WriteLine();
 			}
-			if (a > b) {
+			if (a > b)
+			{
 				Console.WriteLine();
 			}
-			if (a < b) {
+			if (a < b)
+			{
 				Console.WriteLine();
 			}
-			if (a >= b) {
+			if (a >= b)
+			{
 				Console.WriteLine();
 			}
-			if (a <= b) {
+			if (a <= b)
+			{
 				Console.WriteLine();
 			}
 
-			if (!(a == b)) {
+			if (!(a == b))
+			{
 				Console.WriteLine();
 			}
-			if (!(a != b)) {
+			if (!(a != b))
+			{
 				Console.WriteLine();
 			}
-			if (!(a > b)) {
+			if (!(a > b))
+			{
 				Console.WriteLine();
 			}
 		}
@@ -785,7 +841,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CheckedCasts(int? i4, long? i8, float? f)
 		{
-			checked {
+			checked
+			{
 				Print((byte?)i4);
 				Print((short?)i4);
 				Print((uint?)i4);

@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -36,69 +37,69 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		TextLocation location;
 		string keyword = string.Empty;
-		
+
 		public string Keyword {
 			get { return keyword; }
-			set { 
+			set {
 				if (value == null)
 					throw new ArgumentNullException();
 				ThrowIfFrozen();
-				keyword = value; 
+				keyword = value;
 			}
 		}
-		
+
 		public KnownTypeCode KnownTypeCode {
 			get { return GetTypeCodeForPrimitiveType(this.Keyword); }
 		}
-		
+
 		public PrimitiveType()
 		{
 		}
-		
+
 		public PrimitiveType(string keyword)
 		{
 			this.Keyword = keyword;
 		}
-		
+
 		public PrimitiveType(string keyword, TextLocation location)
 		{
 			this.Keyword = keyword;
 			this.location = location;
 		}
-		
+
 		public override TextLocation StartLocation {
 			get {
 				return location;
 			}
 		}
-		
+
 		internal void SetStartLocation(TextLocation value)
 		{
 			ThrowIfFrozen();
 			this.location = value;
 		}
-		
+
 		public override TextLocation EndLocation {
 			get {
-				return new TextLocation (location.Line, location.Column + keyword.Length);
+				return new TextLocation(location.Line, location.Column + keyword.Length);
 			}
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitPrimitiveType (this);
+			visitor.VisitPrimitiveType(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitPrimitiveType (this);
+			return visitor.VisitPrimitiveType(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitPrimitiveType (this, data);
+			return visitor.VisitPrimitiveType(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			PrimitiveType o = other as PrimitiveType;
@@ -109,22 +110,26 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return Keyword;
 		}
-		
+
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
 		{
 			KnownTypeCode typeCode = GetTypeCodeForPrimitiveType(this.Keyword);
-			if (typeCode == KnownTypeCode.None) {
+			if (typeCode == KnownTypeCode.None)
+			{
 				if (this.Keyword == "__arglist")
 					return SpecialType.ArgList;
 				return new UnknownType(null, this.Keyword);
-			} else {
+			}
+			else
+			{
 				return KnownTypeReference.Get(typeCode);
 			}
 		}
-		
+
 		public static KnownTypeCode GetTypeCodeForPrimitiveType(string keyword)
 		{
-			switch (keyword) {
+			switch (keyword)
+			{
 				case "string":
 					return KnownTypeCode.String;
 				case "int":

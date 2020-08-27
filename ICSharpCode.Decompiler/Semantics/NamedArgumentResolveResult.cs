@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
@@ -32,23 +33,23 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// This field can be null.
 		/// </summary>
 		public readonly IParameterizedMember Member;
-		
+
 		/// <summary>
 		/// Gets the parameter.
 		/// This field can be null.
 		/// </summary>
 		public readonly IParameter Parameter;
-		
+
 		/// <summary>
 		/// Gets the parameter name.
 		/// </summary>
 		public readonly string ParameterName;
-		
+
 		/// <summary>
 		/// Gets the argument passed to the parameter.
 		/// </summary>
 		public readonly ResolveResult Argument;
-		
+
 		public NamedArgumentResolveResult(IParameter parameter, ResolveResult argument, IParameterizedMember member = null)
 			: base(argument.Type)
 		{
@@ -61,7 +62,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.ParameterName = parameter.Name;
 			this.Argument = argument;
 		}
-		
+
 		public NamedArgumentResolveResult(string parameterName, ResolveResult argument)
 			: base(argument.Type)
 		{
@@ -72,10 +73,10 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.ParameterName = parameterName;
 			this.Argument = argument;
 		}
-		
+
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{
-			return new [] { Argument };
+			return new[] { Argument };
 		}
 	}
 }

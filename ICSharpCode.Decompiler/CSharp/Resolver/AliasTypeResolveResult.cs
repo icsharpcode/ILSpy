@@ -40,8 +40,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			get;
 			private set;
 		}
-		
-		public AliasTypeResolveResult(string alias, TypeResolveResult underlyingResult) : base (underlyingResult.Type)
+
+		public AliasTypeResolveResult(string alias, TypeResolveResult underlyingResult) : base(underlyingResult.Type)
 		{
 			this.Alias = alias;
 		}

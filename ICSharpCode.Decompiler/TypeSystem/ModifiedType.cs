@@ -107,12 +107,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			return elementType.GetProperties(filter, options);
 		}
-		
+
 		public override IType VisitChildren(TypeVisitor visitor)
 		{
 			var newElementType = elementType.AcceptVisitor(visitor);
 			var newModifier = modifier.AcceptVisitor(visitor);
-			if (newModifier != modifier || newElementType != elementType) {
+			if (newModifier != modifier || newElementType != elementType)
+			{
 				return new ModifiedType(newModifier, newElementType, kind == TypeKind.ModReq);
 			}
 			return this;
@@ -133,7 +134,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override int GetHashCode()
 		{
-			unchecked {
+			unchecked
+			{
 				return (int)kind ^ (elementType.GetHashCode() * 1344795899) ^ (modifier.GetHashCode() * 901375117);
 			}
 		}

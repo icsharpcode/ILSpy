@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -40,8 +41,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool ShowExpander => !type.IsSealed && base.ShowExpander;
 
-		public override object Text
-		{
+		public override object Text {
 			get { return Language.TypeToString(type, includeNamespace: true) + type.MetadataToken.ToSuffixString(); }
 		}
 
@@ -51,18 +51,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(type.Name)) {
+			if (settings.SearchTermMatches(type.Name))
+			{
 				if (type.DeclaringType != null && (settings.ShowApiLevel != ApiVisibility.All || !settings.Language.ShowMember(type)))
 					return FilterResult.Hidden;
 				else
 					return FilterResult.Match;
-			} else
+			}
+			else
 				return FilterResult.Recurse;
 		}
-		
+
 		public override bool IsPublicAPI {
 			get {
-				switch (type.Accessibility) {
+				switch (type.Accessibility)
+				{
 					case Accessibility.Public:
 					case Accessibility.Internal:
 					case Accessibility.ProtectedOrInternal:

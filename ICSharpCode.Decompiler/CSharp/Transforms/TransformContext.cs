@@ -18,6 +18,7 @@
 
 using System.Collections.Immutable;
 using System.Threading;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
 

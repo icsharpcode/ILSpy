@@ -18,15 +18,16 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
-using System.Linq;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
@@ -53,9 +54,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<ImportScopeEntry>();
 			ImportScopeEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.ImportScopes) {
+			foreach (var row in metadata.ImportScopes)
+			{
 				ImportScopeEntry entry = new ImportScopeEntry(module, metadata, isEmbedded, row);
-				if (entry.RID == scrollTarget) {
+				if (entry.RID == scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -65,7 +68,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 1) {
+			if (scrollTargetEntry.RID > 1)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 

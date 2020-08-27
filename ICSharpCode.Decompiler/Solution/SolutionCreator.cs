@@ -42,19 +42,23 @@ namespace ICSharpCode.Decompiler.Solution
 		/// <exception cref="InvalidOperationException">Thrown when <paramref name="projects"/> contains no items.</exception>
 		public static void WriteSolutionFile(string targetFile, IEnumerable<ProjectItem> projects)
 		{
-			if (string.IsNullOrWhiteSpace(targetFile)) {
+			if (string.IsNullOrWhiteSpace(targetFile))
+			{
 				throw new ArgumentException("The target file cannot be null or empty.", nameof(targetFile));
 			}
 
-			if (projects == null) {
+			if (projects == null)
+			{
 				throw new ArgumentNullException(nameof(projects));
 			}
 
-			if (!projects.Any()) {
+			if (!projects.Any())
+			{
 				throw new InvalidOperationException("At least one project is expected.");
 			}
 
-			using (var writer = new StreamWriter(targetFile)) {
+			using (var writer = new StreamWriter(targetFile))
+			{
 				WriteSolutionFile(writer, projects, targetFile);
 			}
 
@@ -88,7 +92,8 @@ namespace ICSharpCode.Decompiler.Solution
 
 		private static void WriteProjects(TextWriter writer, IEnumerable<ProjectItem> projects, string solutionFilePath)
 		{
-			foreach (var project in projects) {
+			foreach (var project in projects)
+			{
 				var projectRelativePath = GetRelativePath(solutionFilePath, project.FilePath);
 				var typeGuid = project.TypeGuid.ToString("B").ToUpperInvariant();
 				var projectGuid = project.Guid.ToString("B").ToUpperInvariant();
@@ -105,11 +110,13 @@ namespace ICSharpCode.Decompiler.Solution
 			platforms.Sort();
 
 			writer.WriteLine("\tGlobalSection(SolutionConfigurationPlatforms) = preSolution");
-			foreach (var platform in platforms) {
+			foreach (var platform in platforms)
+			{
 				writer.WriteLine($"\t\tDebug|{platform} = Debug|{platform}");
 			}
 
-			foreach (var platform in platforms) {
+			foreach (var platform in platforms)
+			{
 				writer.WriteLine($"\t\tRelease|{platform} = Release|{platform}");
 			}
 
@@ -125,15 +132,18 @@ namespace ICSharpCode.Decompiler.Solution
 		{
 			writer.WriteLine("\tGlobalSection(ProjectConfigurationPlatforms) = postSolution");
 
-			foreach (var project in projects) {
+			foreach (var project in projects)
+			{
 				var projectGuid = project.Guid.ToString("B").ToUpperInvariant();
 
-				foreach (var platform in solutionPlatforms) {
+				foreach (var platform in solutionPlatforms)
+				{
 					writer.WriteLine($"\t\t{projectGuid}.Debug|{platform}.ActiveCfg = Debug|{project.PlatformName}");
 					writer.WriteLine($"\t\t{projectGuid}.Debug|{platform}.Build.0 = Debug|{project.PlatformName}");
 				}
 
-				foreach (var platform in solutionPlatforms) {
+				foreach (var platform in solutionPlatforms)
+				{
 					writer.WriteLine($"\t\t{projectGuid}.Release|{platform}.ActiveCfg = Release|{project.PlatformName}");
 					writer.WriteLine($"\t\t{projectGuid}.Release|{platform}.Build.0 = Release|{project.PlatformName}");
 				}
@@ -146,14 +156,16 @@ namespace ICSharpCode.Decompiler.Solution
 		{
 			var projectsMap = projects.ToDictionary(p => p.ProjectName, p => p);
 
-			foreach (var project in projects) {
+			foreach (var project in projects)
+			{
 				XDocument projectDoc = XDocument.Load(project.FilePath);
 
 				var referencesItemGroups = projectDoc.Root
 					.Elements(ProjectFileNamespace + "ItemGroup")
 					.Where(e => e.Elements(ProjectFileNamespace + "Reference").Any());
 
-				foreach (var itemGroup in referencesItemGroups) {
+				foreach (var itemGroup in referencesItemGroups)
+				{
 					FixProjectReferences(project.FilePath, itemGroup, projectsMap);
 				}
 
@@ -163,9 +175,11 @@ namespace ICSharpCode.Decompiler.Solution
 
 		private static void FixProjectReferences(string projectFilePath, XElement itemGroup, IDictionary<string, ProjectItem> projects)
 		{
-			foreach (var item in itemGroup.Elements(ProjectFileNamespace + "Reference").ToList()) {
+			foreach (var item in itemGroup.Elements(ProjectFileNamespace + "Reference").ToList())
+			{
 				var assemblyName = item.Attribute("Include")?.Value;
-				if (assemblyName != null && projects.TryGetValue(assemblyName, out var referencedProject)) {
+				if (assemblyName != null && projects.TryGetValue(assemblyName, out var referencedProject))
+				{
 					item.Remove();
 
 					var projectReference = new XElement(ProjectFileNamespace + "ProjectReference",
@@ -183,14 +197,16 @@ namespace ICSharpCode.Decompiler.Solution
 			Uri fromUri = new Uri(fromFilePath);
 			Uri toUri = new Uri(toFilePath);
 
-			if (fromUri.Scheme != toUri.Scheme) {
+			if (fromUri.Scheme != toUri.Scheme)
+			{
 				return toFilePath;
 			}
 
 			Uri relativeUri = fromUri.MakeRelativeUri(toUri);
 			string relativePath = Uri.UnescapeDataString(relativeUri.ToString());
 
-			if (string.Equals(toUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase)) {
+			if (string.Equals(toUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+			{
 				relativePath = relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 			}
 

@@ -21,14 +21,18 @@
 */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+
 using ICSharpCode.Decompiler.TypeSystem;
+
 using Metadata = ICSharpCode.Decompiler.Metadata;
 
-namespace ILSpy.BamlDecompiler.Baml {
-	internal class BamlContext {
+namespace ILSpy.BamlDecompiler.Baml
+{
+	internal class BamlContext
+	{
 		public IDecompilerTypeSystem TypeSystem { get; }
 		public KnownThings KnownThings { get; }
 
@@ -39,7 +43,8 @@ namespace ILSpy.BamlDecompiler.Baml {
 		public Dictionary<ushort, StringInfoRecord> StringIdMap { get; }
 		public Dictionary<ushort, TypeInfoRecord> TypeIdMap { get; }
 
-		BamlContext(IDecompilerTypeSystem typeSystem) {
+		BamlContext(IDecompilerTypeSystem typeSystem)
+		{
 			this.TypeSystem = typeSystem;
 			KnownThings = new KnownThings(typeSystem);
 
@@ -49,25 +54,31 @@ namespace ILSpy.BamlDecompiler.Baml {
 			TypeIdMap = new Dictionary<ushort, TypeInfoRecord>();
 		}
 
-		public static BamlContext ConstructContext(IDecompilerTypeSystem typeSystem, BamlDocument document, CancellationToken token) {
+		public static BamlContext ConstructContext(IDecompilerTypeSystem typeSystem, BamlDocument document, CancellationToken token)
+		{
 			var ctx = new BamlContext(typeSystem);
 
-			foreach (var record in document) {
+			foreach (var record in document)
+			{
 				token.ThrowIfCancellationRequested();
 
-				if (record is AssemblyInfoRecord assemblyInfo) {
+				if (record is AssemblyInfoRecord assemblyInfo)
+				{
 					if (assemblyInfo.AssemblyId == ctx.AssemblyIdMap.Count)
 						ctx.AssemblyIdMap.Add(assemblyInfo.AssemblyId, assemblyInfo);
 				}
-				else if (record is AttributeInfoRecord attrInfo) {
+				else if (record is AttributeInfoRecord attrInfo)
+				{
 					if (attrInfo.AttributeId == ctx.AttributeIdMap.Count)
 						ctx.AttributeIdMap.Add(attrInfo.AttributeId, attrInfo);
 				}
-				else if (record is StringInfoRecord strInfo) {
+				else if (record is StringInfoRecord strInfo)
+				{
 					if (strInfo.StringId == ctx.StringIdMap.Count)
 						ctx.StringIdMap.Add(strInfo.StringId, strInfo);
 				}
-				else if (record is TypeInfoRecord typeInfo) {
+				else if (record is TypeInfoRecord typeInfo)
+				{
 					if (typeInfo.TypeId == ctx.TypeIdMap.Count)
 						ctx.TypeIdMap.Add(typeInfo.TypeId, typeInfo);
 				}
@@ -76,17 +87,21 @@ namespace ILSpy.BamlDecompiler.Baml {
 			return ctx;
 		}
 
-		public (string FullAssemblyName, IModule Assembly) ResolveAssembly(ushort id) {
+		public (string FullAssemblyName, IModule Assembly) ResolveAssembly(ushort id)
+		{
 			id &= 0xfff;
-			if (!assemblyMap.TryGetValue(id, out var assembly)) {
-				if (AssemblyIdMap.TryGetValue(id, out var assemblyRec)) {
+			if (!assemblyMap.TryGetValue(id, out var assembly))
+			{
+				if (AssemblyIdMap.TryGetValue(id, out var assemblyRec))
+				{
 					var assemblyName = Metadata.AssemblyNameReference.Parse(assemblyRec.AssemblyFullName);
 
 					if (assemblyName.Name == TypeSystem.MainModule.AssemblyName)
 						assembly = (assemblyRec.AssemblyFullName, TypeSystem.MainModule);
 					else
 						assembly = (assemblyRec.AssemblyFullName, TypeSystem.ReferencedModules.FirstOrDefault(m => m.FullAssemblyName == assemblyName.FullName));
-				} else
+				}
+				else
 					assembly = (null, null);
 
 				assemblyMap[id] = assembly;

@@ -25,7 +25,8 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			switch (field.DeclaringType.IsReferenceType) {
+			switch (field.DeclaringType.IsReferenceType)
+			{
 				case true:
 					Debug.Assert(target.ResultType == StackType.O,
 						"Class fields can only be accessed with an object on the stack");
@@ -54,7 +55,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool CanInlineIntoTargetSlot(ILInstruction inst)
 		{
-			switch (inst.OpCode) {
+			switch (inst.OpCode)
+			{
 				case OpCode.LdElema:
 				case OpCode.LdFlda:
 					Debug.Assert(inst.HasDirectFlag(InstructionFlags.MayThrow));
@@ -62,8 +64,8 @@ namespace ICSharpCode.Decompiler.IL
 					// to turn into a delayed exception after the translation to C#.
 					// This is only valid if the value computation doesn't involve any side effects.
 					return SemanticHelper.IsPure(this.Value.Flags);
-					// Note that after inlining such a ldelema/ldflda, the normal inlining rules will
-					// prevent us from inlining an effectful instruction into the value slot.
+				// Note that after inlining such a ldelema/ldflda, the normal inlining rules will
+				// prevent us from inlining an effectful instruction into the value slot.
 				default:
 					return true;
 			}
@@ -74,10 +76,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		void CheckTargetSlot()
 		{
-			switch (this.Target.OpCode) {
+			switch (this.Target.OpCode)
+			{
 				case OpCode.LdElema:
 				case OpCode.LdFlda:
-					if (this.Target.HasDirectFlag(InstructionFlags.MayThrow)) {
+					if (this.Target.HasDirectFlag(InstructionFlags.MayThrow))
+					{
 						Debug.Assert(SemanticHelper.IsPure(this.Value.Flags));
 					}
 					break;

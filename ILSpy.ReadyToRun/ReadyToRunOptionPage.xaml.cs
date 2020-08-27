@@ -19,11 +19,13 @@
 using System.ComponentModel;
 using System.Windows.Controls;
 using System.Xml.Linq;
+
 using ICSharpCode.ILSpy.Options;
+
 using ILSpy.ReadyToRun;
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
-	[ExportOptionPage(Title = nameof(global::ILSpy.ReadyToRun.Properties.Resources.ReadyToRun),   Order = 40)]
+	[ExportOptionPage(Title = nameof(global::ILSpy.ReadyToRun.Properties.Resources.ReadyToRun), Order = 40)]
 	partial class ReadyToRunOptionPage : UserControl, IOptionPage
 	{
 		public ReadyToRunOptionPage()
@@ -89,7 +91,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		public string DisassemblyFormat {
 			get { return disassemblyFormat; }
 			set {
-				if (disassemblyFormat != value) {
+				if (disassemblyFormat != value)
+				{
 					disassemblyFormat = value;
 					OnPropertyChanged(nameof(DisassemblyFormat));
 				}
@@ -100,7 +103,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		protected virtual void OnPropertyChanged(string propertyName)
 		{
-			if (PropertyChanged != null) {
+			if (PropertyChanged != null)
+			{
 				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
 			}
 		}

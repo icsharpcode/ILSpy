@@ -32,11 +32,13 @@ namespace LightJson
 		public JsonArray(params JsonValue[] values)
 			: this()
 		{
-			if (values == null) {
+			if (values == null)
+			{
 				throw new ArgumentNullException(nameof(values));
 			}
 
-			foreach (var value in values) {
+			foreach (var value in values)
+			{
 				this.items.Add(value);
 			}
 		}
@@ -60,9 +62,12 @@ namespace LightJson
 		/// </remarks>
 		public JsonValue this[int index] {
 			get {
-				if (index >= 0 && index < this.items.Count) {
+				if (index >= 0 && index < this.items.Count)
+				{
 					return this.items[index];
-				} else {
+				}
+				else
+				{
 					return JsonValue.Null;
 				}
 			}
@@ -169,7 +174,8 @@ namespace LightJson
 				get {
 					var items = new JsonValue[this.jsonArray.Count];
 
-					for (int i = 0; i < this.jsonArray.Count; i += 1) {
+					for (int i = 0; i < this.jsonArray.Count; i += 1)
+					{
 						items[i] = this.jsonArray[i];
 					}
 

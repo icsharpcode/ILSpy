@@ -17,10 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
+using System.Threading;
+
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
-using System.Threading;
 namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = nameof(Resources.SearchMSDN), Icon = "images/SearchMsdn", Order = 9999)]
@@ -75,7 +76,8 @@ namespace ICSharpCode.ILSpy
 		{
 			if (entity.DeclaringTypeDefinition == null)
 				return false;
-			switch (entity.DeclaringTypeDefinition.Accessibility) {
+			switch (entity.DeclaringTypeDefinition.Accessibility)
+			{
 				case Accessibility.Public:
 				case Accessibility.Protected:
 				case Accessibility.ProtectedOrInternal:
@@ -87,8 +89,10 @@ namespace ICSharpCode.ILSpy
 
 		public void Execute(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes != null) {
-				foreach (ILSpyTreeNode node in context.SelectedTreeNodes) {
+			if (context.SelectedTreeNodes != null)
+			{
+				foreach (ILSpyTreeNode node in context.SelectedTreeNodes)
+				{
 					SearchMsdn(node);
 				}
 			}
@@ -102,7 +106,8 @@ namespace ICSharpCode.ILSpy
 			if (namespaceNode != null)
 				address = string.Format(msdnAddress, namespaceNode.Name);
 
-			if (node is IMemberTreeNode memberNode) {
+			if (node is IMemberTreeNode memberNode)
+			{
 				var member = memberNode.Member;
 				var memberName = string.Empty;
 

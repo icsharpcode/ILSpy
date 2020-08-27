@@ -19,17 +19,19 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Tests.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Semantics
 {
-	using dynamic = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Dynamic;
 	using C = Conversion;
+	using dynamic = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Dynamic;
 
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class ExplicitConversionsTest
@@ -40,8 +42,8 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[OneTimeSetUp]
 		public void SetUp()
 		{
-			compilation = new SimpleCompilation(TypeSystemLoaderTests.TestAssembly, 
-				TypeSystemLoaderTests.Mscorlib, 
+			compilation = new SimpleCompilation(TypeSystemLoaderTests.TestAssembly,
+				TypeSystemLoaderTests.Mscorlib,
 				TypeSystemLoaderTests.SystemCore);
 			conversions = new CSharpConversions(compilation);
 		}

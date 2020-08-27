@@ -65,7 +65,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		internal static AccessOverlayIcon GetOverlayIcon(Accessibility accessibility)
 		{
-			switch (accessibility) {
+			switch (accessibility)
+			{
 				case Accessibility.Public:
 					return AccessOverlayIcon.Public;
 				case Accessibility.Internal:
@@ -100,7 +101,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool IsPublicAPI {
 			get {
-				switch (MethodDefinition.Accessibility) {
+				switch (MethodDefinition.Accessibility)
+				{
 					case Accessibility.Public:
 					case Accessibility.Protected:
 					case Accessibility.ProtectedOrInternal:

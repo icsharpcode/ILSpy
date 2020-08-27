@@ -41,7 +41,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			public bool MoveNext()
 			{
-				if (next) {
+				if (next)
+				{
 					next = false;
 					return true;
 				}
@@ -87,7 +88,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			int x, y;
 			Console.WriteLine("before for");
-			for (x = y = 0; x < 10; x++) {
+			for (x = y = 0; x < 10; x++)
+			{
 				y++;
 				Console.WriteLine("x = " + x + ", y = " + y);
 			}
@@ -97,11 +99,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void DoubleForEachWithSameVariable(IEnumerable<string> enumerable)
 		{
 			Console.WriteLine("DoubleForEachWithSameVariable:");
-			foreach (string current in enumerable) {
+			foreach (string current in enumerable)
+			{
 				Console.WriteLine(current.ToLower());
 			}
 			Console.WriteLine("after first loop");
-			foreach (string current in enumerable) {
+			foreach (string current in enumerable)
+			{
 				Console.WriteLine(current.ToUpper());
 			}
 			Console.WriteLine("after second loop");
@@ -111,8 +115,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("ForeachWithNameCollision:");
 			int current;
-			using (IEnumerator<int> enumerator = inputs.GetEnumerator()) {
-				while (enumerator.MoveNext()) {
+			using (IEnumerator<int> enumerator = inputs.GetEnumerator())
+			{
+				while (enumerator.MoveNext())
+				{
 					current = enumerator.Current;
 					Console.WriteLine(current);
 				}
@@ -125,8 +131,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("ForeachExceptForContinuedUse");
 			int num = 0;
-			using (IEnumerator<int> enumerator = inputs.GetEnumerator()) {
-				while (enumerator.MoveNext()) {
+			using (IEnumerator<int> enumerator = inputs.GetEnumerator())
+			{
+				while (enumerator.MoveNext())
+				{
 					num = enumerator.Current;
 					Console.WriteLine(num);
 				}
@@ -138,15 +146,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("NonGenericForeachWithReturnFallback:");
 			IEnumerator enumerator = e.GetEnumerator();
-			try {
+			try
+			{
 				Console.WriteLine("MoveNext");
-				if (enumerator.MoveNext()) {
+				if (enumerator.MoveNext())
+				{
 					object current = enumerator.Current;
 					Console.WriteLine("current: " + current);
 				}
-			} finally {
+			}
+			finally
+			{
 				IDisposable disposable = enumerator as IDisposable;
-				if (disposable != null) {
+				if (disposable != null)
+				{
 					disposable.Dispose();
 				}
 			}
@@ -156,7 +169,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static object NonGenericForeachWithReturn(IEnumerable enumerable)
 		{
 			Console.WriteLine("NonGenericForeachWithReturn:");
-			foreach (var obj in enumerable) {
+			foreach (var obj in enumerable)
+			{
 				Console.WriteLine("return: " + obj);
 				return obj;
 			}
@@ -168,7 +182,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static int? ForeachWithReturn(IEnumerable<int> enumerable)
 		{
 			Console.WriteLine("ForeachWithReturn:");
-			foreach (var obj in enumerable) {
+			foreach (var obj in enumerable)
+			{
 				Console.WriteLine("return: " + obj);
 				return obj;
 			}
@@ -180,7 +195,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void ForeachWithRefUsage(List<int> items)
 		{
 			Console.WriteLine("ForeachWithRefUsage:");
-			foreach (var item in items) {
+			foreach (var item in items)
+			{
 				var itemToChange = item;
 				Console.WriteLine("item: " + item);
 				Operation(ref itemToChange);
@@ -191,7 +207,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static T FirstOrDefault<T>(IEnumerable<T> items)
 		{
 			T result = default(T);
-			foreach (T item in items) {
+			foreach (T item in items)
+			{
 				result = item;
 				break;
 			}
@@ -202,8 +219,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("NoForeachDueToMultipleCurrentAccess:");
 			T result = default(T);
-			using (IEnumerator<T> enumerator = items.GetEnumerator()) {
-				while (enumerator.MoveNext()) {
+			using (IEnumerator<T> enumerator = items.GetEnumerator())
+			{
+				while (enumerator.MoveNext())
+				{
 					result = enumerator.Current;
 					Console.WriteLine("result: " + result);
 				}
@@ -214,14 +233,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static T NoForeachCallWithSideEffect<T>(CustomClassEnumeratorWithIDisposable<T> items)
 		{
 			Console.WriteLine("NoForeachCallWithSideEffect:");
-			using (CustomClassEnumeratorWithIDisposable<T> enumerator = items.GetEnumerator()) {
-				while (enumerator.MoveNext()) {
+			using (CustomClassEnumeratorWithIDisposable<T> enumerator = items.GetEnumerator())
+			{
+				while (enumerator.MoveNext())
+				{
 					T result = enumerator.Current;
 				}
 				return CallWithSideEffect<T>();
 			}
 		}
-		
+
 		static bool GetBool(string text)
 		{
 			return false;
@@ -231,31 +252,39 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void LoopWithGotoRepeat()
 		{
 			Console.WriteLine("LoopWithGotoRepeat:");
-			try {
+			try
+			{
 				REPEAT:
 				Console.WriteLine("after repeat label");
-				while (GetBool("Loop condition")) {
-					if (GetBool("if1")) {
-						if (GetBool("if3")) {
+				while (GetBool("Loop condition"))
+				{
+					if (GetBool("if1"))
+					{
+						if (GetBool("if3"))
+						{
 							goto REPEAT;
 						}
 						break;
 					}
 				}
 				Console.WriteLine("after loop");
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("finally");
 			}
 			Console.WriteLine("after finally");
 		}
-		
+
 		private static int LoopFollowedByIf()
 		{
 			int num = 0;
-			while (num == 0) {
+			while (num == 0)
+			{
 				num++;
 			}
-			if (num == 0) {
+			if (num == 0)
+			{
 				return -1;
 			}
 			return num;
@@ -263,9 +292,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void Issue1392ForWithNestedSwitchPlusGoto()
 		{
-			for (int i = 0; i < 100; i++) {
+			for (int i = 0; i < 100; i++)
+			{
 				again:
-				switch (i) {
+				switch (i)
+				{
 					case 10:
 						Console.WriteLine("10");
 						break;
@@ -281,13 +312,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		private static void NoForeachDueToVariableAssignment()
 		{
-			try {
+			try
+			{
 				int[] array = new int[] { 1, 2, 3 };
-				for (int i = 0; i < array.Length; i++) {
+				for (int i = 0; i < array.Length; i++)
+				{
 					Console.WriteLine(array[i]);
 					array = null;
 				}
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				Console.WriteLine(ex.GetType() + ": " + ex.Message);
 			}
 		}

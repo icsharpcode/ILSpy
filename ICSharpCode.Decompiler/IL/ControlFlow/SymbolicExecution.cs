@@ -16,13 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -81,7 +82,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		public SymbolicValue AsBool()
 		{
-			if (Type == SymbolicValueType.State) {
+			if (Type == SymbolicValueType.State)
+			{
 				// convert state integer to bool:
 				// if (state + c) = if (state + c != 0) = if (state != -c)
 				return new SymbolicValue(SymbolicValueType.StateInSet, new LongSet(unchecked(-Constant)).Invert());
@@ -109,14 +111,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!stateVariables.Contains(v))
 				stateVariables.Add(v);
 		}
-		
+
 		public IEnumerable<ILVariable> StateVariables { get => stateVariables; }
 
 		static readonly SymbolicValue Failed = new SymbolicValue(SymbolicValueType.Unknown);
 
 		public SymbolicValue Eval(ILInstruction inst)
 		{
-			if (inst is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub && !bni.CheckForOverflow) {
+			if (inst is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub && !bni.CheckForOverflow)
+			{
 				var left = Eval(bni.Left);
 				var right = Eval(bni.Right);
 				if (left.Type != SymbolicValueType.State && left.Type != SymbolicValueType.IntegerConstant)
@@ -124,45 +127,65 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (right.Type != SymbolicValueType.IntegerConstant)
 					return Failed;
 				return new SymbolicValue(left.Type, unchecked(left.Constant - right.Constant));
-			} else if (inst.MatchLdFld(out var target, out var field)) {
+			}
+			else if (inst.MatchLdFld(out var target, out var field))
+			{
 				if (Eval(target).Type != SymbolicValueType.This)
 					return Failed;
 				if (field.MemberDefinition != stateField)
 					return Failed;
 				return new SymbolicValue(SymbolicValueType.State);
-			} else if (inst.MatchLdLoc(out var loadedVariable)) {
+			}
+			else if (inst.MatchLdLoc(out var loadedVariable))
+			{
 				if (stateVariables.Contains(loadedVariable))
 					return new SymbolicValue(SymbolicValueType.State);
 				else if (loadedVariable.Kind == VariableKind.Parameter && loadedVariable.Index < 0)
 					return new SymbolicValue(SymbolicValueType.This);
 				else
 					return Failed;
-			} else if (inst.MatchLdcI4(out var value)) {
+			}
+			else if (inst.MatchLdcI4(out var value))
+			{
 				return new SymbolicValue(SymbolicValueType.IntegerConstant, value);
-			} else if (inst is Comp comp) {
+			}
+			else if (inst is Comp comp)
+			{
 				var left = Eval(comp.Left);
 				var right = Eval(comp.Right);
-				if (left.Type == SymbolicValueType.State && right.Type == SymbolicValueType.IntegerConstant) {
+				if (left.Type == SymbolicValueType.State && right.Type == SymbolicValueType.IntegerConstant)
+				{
 					// bool: (state + left.Constant == right.Constant)
 					LongSet trueSums = SwitchAnalysis.MakeSetWhereComparisonIsTrue(comp.Kind, right.Constant, comp.Sign);
 					// symbolic value is true iff trueSums.Contains(state + left.Constant)
 					LongSet trueStates = trueSums.AddOffset(unchecked(-left.Constant));
 					// symbolic value is true iff trueStates.Contains(state)
 					return new SymbolicValue(SymbolicValueType.StateInSet, trueStates);
-				} else if (left.Type == SymbolicValueType.StateInSet && right.Type == SymbolicValueType.IntegerConstant) {
-					if (comp.Kind == ComparisonKind.Equality && right.Constant == 0) {
+				}
+				else if (left.Type == SymbolicValueType.StateInSet && right.Type == SymbolicValueType.IntegerConstant)
+				{
+					if (comp.Kind == ComparisonKind.Equality && right.Constant == 0)
+					{
 						// comp((x in set) == 0) ==> x not in set
 						return new SymbolicValue(SymbolicValueType.StateInSet, left.ValueSet.Invert());
-					} else if (comp.Kind == ComparisonKind.Inequality && right.Constant != 0) {
+					}
+					else if (comp.Kind == ComparisonKind.Inequality && right.Constant != 0)
+					{
 						// comp((x in set) != 0) => x in set
 						return new SymbolicValue(SymbolicValueType.StateInSet, left.ValueSet);
-					} else {
+					}
+					else
+					{
 						return Failed;
 					}
-				} else {
+				}
+				else
+				{
 					return Failed;
 				}
-			} else {
+			}
+			else
+			{
 				return Failed;
 			}
 		}

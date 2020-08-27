@@ -26,6 +26,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Controls;
 
@@ -123,12 +124,15 @@ namespace ICSharpCode.ILSpy
 			UpdateProgressBar(pg => { pg.Visibility = Visibility.Visible; pg.IsIndeterminate = true; });
 			var list = UniversalAssemblyResolver.EnumerateGac().TakeWhile(_ => !cancelFetchThread).ToList();
 			UpdateProgressBar(pg => { pg.IsIndeterminate = false; pg.Maximum = list.Count; });
-			foreach (var r in list) {
+			foreach (var r in list)
+			{
 				if (cancelFetchThread)
 					break;
-				if (fullNames.Add(r.FullName)) { // filter duplicates
+				if (fullNames.Add(r.FullName))
+				{ // filter duplicates
 					var file = UniversalAssemblyResolver.GetAssemblyInGac(r);
-					if (file != null) {
+					if (file != null)
+					{
 						var entry = new GacEntry(r, file);
 						UpdateProgressBar(pg => { pg.Value++; AddNewEntry(entry); });
 					}
@@ -155,7 +159,8 @@ namespace ICSharpCode.ILSpy
 			string filterString = filterTextBox.Text.Trim();
 			if (filterString.Length == 0)
 				filterMethod = _ => true;
-			else {
+			else
+			{
 				var elements = filterString.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 				filterMethod = entry => elements.All(el => Contains(entry.FullName, el) || Contains(entry.FormattedVersion, el));
 			}

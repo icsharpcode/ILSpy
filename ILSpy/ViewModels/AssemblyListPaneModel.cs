@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Windows;
+
 using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.ViewModels

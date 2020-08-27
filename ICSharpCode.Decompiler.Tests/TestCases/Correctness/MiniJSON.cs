@@ -9,30 +9,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	// taken from https://github.com/Jackyjjc/MiniJSON.cs
 	// Copyright (c) 2013 Calvin Rien.
 	// Licensed under the MIT LICENSE.
-	public class MiniJSONTest {
-	    public static void Main(string[] args) {
-	        var jsonString = "{ \"array\": [1.44,2,3], " +
-	                        "\"object\": {\"key1\":\"value1\", \"key2\":256}, " +
-	                        "\"string\": \"The quick brown fox \\\"jumps\\\" over the lazy dog \", " +
-	                        "\"unicode\": \"\\u3041 Men\u00fa sesi\u00f3n\", " +
-	                        "\"int\": 65536, " +
-	                        "\"float\": 3.1415926, " +
-	                        "\"bool\": true, " +
-	                        "\"null\": null }";
-	
-	        var dict = Json.Deserialize(jsonString) as Dictionary<string,object>;
-	
-	        Console.WriteLine("deserialized: " + dict.GetType());
-			Console.WriteLine("dict['array'][0]: " + ((List<object>) dict["array"])[0]);
-	        Console.WriteLine("dict['string']: " + (string) dict["string"]);
-	        Console.WriteLine("dict['float']: " + (double) dict["float"]); // floats come out as doubles
-	        Console.WriteLine("dict['int']: " + (long) dict["int"]); // ints come out as longs
-	        Console.WriteLine("dict['unicode']: " + (string) dict["unicode"]);
-	
-	        var str = Json.Serialize(dict);
-	
-	        Console.WriteLine("serialized: " + str);
-	    }
+	public class MiniJSONTest
+	{
+		public static void Main(string[] args)
+		{
+			var jsonString = "{ \"array\": [1.44,2,3], " +
+							"\"object\": {\"key1\":\"value1\", \"key2\":256}, " +
+							"\"string\": \"The quick brown fox \\\"jumps\\\" over the lazy dog \", " +
+							"\"unicode\": \"\\u3041 Men\u00fa sesi\u00f3n\", " +
+							"\"int\": 65536, " +
+							"\"float\": 3.1415926, " +
+							"\"bool\": true, " +
+							"\"null\": null }";
+
+			var dict = Json.Deserialize(jsonString) as Dictionary<string, object>;
+
+			Console.WriteLine("deserialized: " + dict.GetType());
+			Console.WriteLine("dict['array'][0]: " + ((List<object>)dict["array"])[0]);
+			Console.WriteLine("dict['string']: " + (string)dict["string"]);
+			Console.WriteLine("dict['float']: " + (double)dict["float"]); // floats come out as doubles
+			Console.WriteLine("dict['int']: " + (long)dict["int"]); // ints come out as longs
+			Console.WriteLine("dict['unicode']: " + (string)dict["unicode"]);
+
+			var str = Json.Serialize(dict);
+
+			Console.WriteLine("serialized: " + str);
+		}
 	}
 
 	public static class Json
@@ -45,7 +47,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static object Deserialize(string json)
 		{
 			// save the string for debug information
-			if (json == null) {
+			if (json == null)
+			{
 				return null;
 			}
 
@@ -93,7 +96,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			public static object Parse(string jsonString)
 			{
-				using (var instance = new Parser(jsonString)) {
+				using (var instance = new Parser(jsonString))
+				{
 					return instance.ParseValue();
 				}
 			}
@@ -112,8 +116,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				json.Read();
 
 				// {
-				while (true) {
-					switch (NextToken) {
+				while (true)
+				{
+					switch (NextToken)
+					{
 						case TOKEN.NONE:
 							return null;
 						case TOKEN.COMMA:
@@ -123,12 +129,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 						case TOKEN.STRING:
 							// name
 							string name = ParseString();
-							if (name == null) {
+							if (name == null)
+							{
 								return null;
 							}
 
 							// :
-							if (NextToken != TOKEN.COLON) {
+							if (NextToken != TOKEN.COLON)
+							{
 								return null;
 							}
 							// ditch the colon
@@ -156,10 +164,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 				// [
 				var parsing = true;
-				while (parsing) {
+				while (parsing)
+				{
 					TOKEN nextToken = NextToken;
 
-					switch (nextToken) {
+					switch (nextToken)
+					{
 						case TOKEN.NONE:
 							return null;
 						case TOKEN.COMMA:
@@ -187,7 +197,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			object ParseByToken(TOKEN token)
 			{
-				switch (token) {
+				switch (token)
+				{
 					case TOKEN.STRING:
 						return ParseString();
 					case TOKEN.NUMBER:
@@ -216,26 +227,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				json.Read();
 
 				bool parsing = true;
-				while (parsing) {
+				while (parsing)
+				{
 
-					if (json.Peek() == -1) {
+					if (json.Peek() == -1)
+					{
 						parsing = false;
 						break;
 					}
 
 					c = NextChar;
-					switch (c) {
+					switch (c)
+					{
 						case '"':
 							parsing = false;
 							break;
 						case '\\':
-							if (json.Peek() == -1) {
+							if (json.Peek() == -1)
+							{
 								parsing = false;
 								break;
 							}
 
 							c = NextChar;
-							switch (c) {
+							switch (c)
+							{
 								case '"':
 								case '\\':
 								case '/':
@@ -259,7 +275,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 								case 'u':
 									var hex = new char[4];
 
-									for (int i = 0; i < 4; i++) {
+									for (int i = 0; i < 4; i++)
+									{
 										hex[i] = NextChar;
 										if (!IsHexDigit(hex[i]))
 											return null;
@@ -282,7 +299,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			{
 				string number = NextWord;
 
-				if (number.IndexOf('.') == -1 && number.IndexOf('E') == -1 && number.IndexOf('e') == -1) {
+				if (number.IndexOf('.') == -1 && number.IndexOf('E') == -1 && number.IndexOf('e') == -1)
+				{
 					long parsedInt;
 					Int64.TryParse(number, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out parsedInt);
 					return parsedInt;
@@ -295,10 +313,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			void EatWhitespace()
 			{
-				while (Char.IsWhiteSpace(PeekChar)) {
+				while (Char.IsWhiteSpace(PeekChar))
+				{
 					json.Read();
 
-					if (json.Peek() == -1) {
+					if (json.Peek() == -1)
+					{
 						break;
 					}
 				}
@@ -320,10 +340,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				get {
 					StringBuilder word = new StringBuilder();
 
-					while (!IsWordBreak(PeekChar)) {
+					while (!IsWordBreak(PeekChar))
+					{
 						word.Append(NextChar);
 
-						if (json.Peek() == -1) {
+						if (json.Peek() == -1)
+						{
 							break;
 						}
 					}
@@ -336,11 +358,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				get {
 					EatWhitespace();
 
-					if (json.Peek() == -1) {
+					if (json.Peek() == -1)
+					{
 						return TOKEN.NONE;
 					}
 
-					switch (PeekChar) {
+					switch (PeekChar)
+					{
 						case '{':
 							return TOKEN.CURLY_OPEN;
 						case '}':
@@ -372,7 +396,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 							return TOKEN.NUMBER;
 					}
 
-					switch (NextWord) {
+					switch (NextWord)
+					{
 						case "false":
 							return TOKEN.FALSE;
 						case "true":
@@ -420,19 +445,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				IDictionary asDict;
 				string asStr;
 
-				if (value == null) {
+				if (value == null)
+				{
 					builder.Append("null");
-				} else if ((asStr = value as string) != null) {
+				}
+				else if ((asStr = value as string) != null)
+				{
 					SerializeString(asStr);
-				} else if (value is bool) {
+				}
+				else if (value is bool)
+				{
 					builder.Append((bool)value ? "true" : "false");
-				} else if ((asList = value as IList) != null) {
+				}
+				else if ((asList = value as IList) != null)
+				{
 					SerializeArray(asList);
-				} else if ((asDict = value as IDictionary) != null) {
+				}
+				else if ((asDict = value as IDictionary) != null)
+				{
 					SerializeObject(asDict);
-				} else if (value is char) {
+				}
+				else if (value is char)
+				{
 					SerializeString(new string((char)value, 1));
-				} else {
+				}
+				else
+				{
 					SerializeOther(value);
 				}
 			}
@@ -443,8 +481,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 				builder.Append('{');
 
-				foreach (object e in obj.Keys) {
-					if (!first) {
+				foreach (object e in obj.Keys)
+				{
+					if (!first)
+					{
 						builder.Append(',');
 					}
 
@@ -465,9 +505,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 				bool first = true;
 
-				for (int i = 0; i < anArray.Count; i++) {
+				for (int i = 0; i < anArray.Count; i++)
+				{
 					object obj = anArray[i];
-					if (!first) {
+					if (!first)
+					{
 						builder.Append(',');
 					}
 
@@ -484,9 +526,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				builder.Append('\"');
 
 				char[] charArray = str.ToCharArray();
-				for (int i = 0; i < charArray.Length; i++) {
+				for (int i = 0; i < charArray.Length; i++)
+				{
 					char c = charArray[i];
-					switch (c) {
+					switch (c)
+					{
 						case '"':
 							builder.Append("\\\"");
 							break;
@@ -510,9 +554,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 							break;
 						default:
 							int codepoint = Convert.ToInt32(c);
-							if ((codepoint >= 32) && (codepoint <= 126)) {
+							if ((codepoint >= 32) && (codepoint <= 126))
+							{
 								builder.Append(c);
-							} else {
+							}
+							else
+							{
 								builder.Append("\\u");
 								builder.Append(codepoint.ToString("x4"));
 							}
@@ -528,21 +575,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				// NOTE: decimals lose precision during serialization.
 				// They always have, I'm just letting you know.
 				// Previously floats and doubles lost precision too.
-				if (value is float) {
+				if (value is float)
+				{
 					builder.Append(((float)value).ToString("R", System.Globalization.CultureInfo.InvariantCulture));
-				} else if (value is int
-					|| value is uint
-					|| value is long
-					|| value is sbyte
-					|| value is byte
-					|| value is short
-					|| value is ushort
-					|| value is ulong) {
+				}
+				else if (value is int
+				  || value is uint
+				  || value is long
+				  || value is sbyte
+				  || value is byte
+				  || value is short
+				  || value is ushort
+				  || value is ulong)
+				{
 					builder.Append(value);
-				} else if (value is double
-					|| value is decimal) {
+				}
+				else if (value is double
+				  || value is decimal)
+				{
 					builder.Append(Convert.ToDouble(value).ToString("R", System.Globalization.CultureInfo.InvariantCulture));
-				} else {
+				}
+				else
+				{
 					SerializeString(value.ToString());
 				}
 			}

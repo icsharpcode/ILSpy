@@ -21,14 +21,18 @@
 */
 
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Baml;
 using ILSpy.BamlDecompiler.Xaml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class OptimizedStaticResourceHandler : IHandler, IDeferHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class OptimizedStaticResourceHandler : IHandler, IDeferHandler
+	{
 		public BamlRecordType Type => BamlRecordType.OptimizedStaticResource;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (OptimizedStaticResourceRecord)((BamlRecordNode)node).Record;
 			var key = XamlResourceKey.FindKeyInSiblings(node);
 
@@ -36,11 +40,13 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			return null;
 		}
 
-		public BamlElement TranslateDefer(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement TranslateDefer(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (OptimizedStaticResourceRecord)((BamlRecordNode)node).Record;
 			var bamlElem = new BamlElement(node);
 			object key;
-			if (record.IsType) {
+			if (record.IsType)
+			{
 				var value = ctx.ResolveType(record.ValueId);
 
 				var typeElem = new XElement(ctx.GetKnownNamespace("TypeExtension", XamlContext.KnownNamespace_Xaml, parent.Xaml));
@@ -48,19 +54,24 @@ namespace ILSpy.BamlDecompiler.Handlers {
 				typeElem.Add(new XElement(ctx.GetPseudoName("Ctor"), ctx.ToString(parent.Xaml, value)));
 				key = typeElem;
 			}
-			else if (record.IsStatic) {
+			else if (record.IsStatic)
+			{
 				string attrName;
-				if (record.ValueId > 0x7fff) {
+				if (record.ValueId > 0x7fff)
+				{
 					bool isKey = true;
 					short bamlId = unchecked((short)-record.ValueId);
-					if (bamlId > 232 && bamlId < 464) {
+					if (bamlId > 232 && bamlId < 464)
+					{
 						bamlId -= 232;
 						isKey = false;
 					}
-					else if (bamlId > 464 && bamlId < 467) {
+					else if (bamlId > 464 && bamlId < 467)
+					{
 						bamlId -= 231;
 					}
-					else if (bamlId > 467 && bamlId < 470) {
+					else if (bamlId > 467 && bamlId < 470)
+					{
 						bamlId -= 234;
 						isKey = false;
 					}
@@ -73,7 +84,8 @@ namespace ILSpy.BamlDecompiler.Handlers {
 					var xmlns = ctx.GetXmlNamespace("http://schemas.microsoft.com/winfx/2006/xaml/presentation");
 					attrName = ctx.ToString(parent.Xaml, xmlns.GetName(name));
 				}
-				else {
+				else
+				{
 					var value = ctx.ResolveProperty(record.ValueId);
 
 					value.DeclaringType.ResolveNamespace(parent.Xaml, ctx);

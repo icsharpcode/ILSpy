@@ -22,6 +22,7 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
@@ -43,35 +44,44 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		{
 			Debug.Assert(analyzedSymbol is IMethod);
 			var scope = context.GetScopeOf((IEntity)analyzedSymbol);
-			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
+			{
 				var mappingInfo = context.Language.GetCodeMappingInfo(type.ParentModule.PEFile, type.MetadataToken);
 				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
-				foreach (var method in methods) {
+				foreach (var method in methods)
+				{
 					if (IsUsedInMethod((IMethod)analyzedSymbol, method, mappingInfo, context))
 						yield return method;
 				}
 
-				foreach (var property in type.Properties) {
-					if (property.CanGet && IsUsedInMethod((IMethod)analyzedSymbol, property.Getter, mappingInfo, context)) {
+				foreach (var property in type.Properties)
+				{
+					if (property.CanGet && IsUsedInMethod((IMethod)analyzedSymbol, property.Getter, mappingInfo, context))
+					{
 						yield return property;
 						continue;
 					}
-					if (property.CanSet && IsUsedInMethod((IMethod)analyzedSymbol, property.Setter, mappingInfo, context)) {
+					if (property.CanSet && IsUsedInMethod((IMethod)analyzedSymbol, property.Setter, mappingInfo, context))
+					{
 						yield return property;
 						continue;
 					}
 				}
 
-				foreach (var @event in type.Events) {
-					if (@event.CanAdd && IsUsedInMethod((IMethod)analyzedSymbol, @event.AddAccessor, mappingInfo, context)) {
+				foreach (var @event in type.Events)
+				{
+					if (@event.CanAdd && IsUsedInMethod((IMethod)analyzedSymbol, @event.AddAccessor, mappingInfo, context))
+					{
 						yield return @event;
 						continue;
 					}
-					if (@event.CanRemove && IsUsedInMethod((IMethod)analyzedSymbol, @event.RemoveAccessor, mappingInfo, context)) {
+					if (@event.CanRemove && IsUsedInMethod((IMethod)analyzedSymbol, @event.RemoveAccessor, mappingInfo, context))
+					{
 						yield return @event;
 						continue;
 					}
-					if (@event.CanInvoke && IsUsedInMethod((IMethod)analyzedSymbol, @event.InvokeAccessor, mappingInfo, context)) {
+					if (@event.CanInvoke && IsUsedInMethod((IMethod)analyzedSymbol, @event.InvokeAccessor, mappingInfo, context))
+					{
 						yield return @event;
 						continue;
 					}
@@ -95,35 +105,49 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var baseMethod = InheritanceHelper.GetBaseMember(analyzedMethod);
 			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
-			while (blob.RemainingBytes > 0) {
+			while (blob.RemainingBytes > 0)
+			{
 				ILOpCode opCode;
-				try {
+				try
+				{
 					opCode = blob.DecodeOpCode();
-					if (!IsSupportedOpCode(opCode)) {
+					if (!IsSupportedOpCode(opCode))
+					{
 						ILParser.SkipOperand(ref blob, opCode);
 						continue;
 					}
-				} catch (BadImageFormatException) {
+				}
+				catch (BadImageFormatException)
+				{
 					return false; // unexpected end of blob
 				}
 				var member = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
-				if (member.IsNil || !member.Kind.IsMemberKind()) continue;
+				if (member.IsNil || !member.Kind.IsMemberKind())
+					continue;
 
 				IMember m;
-				try {
+				try
+				{
 					m = (mainModule.ResolveEntity(member, genericContext) as IMember)?.MemberDefinition;
-				} catch (BadImageFormatException) {
+				}
+				catch (BadImageFormatException)
+				{
 					continue;
 				}
 				if (m == null)
 					continue;
 
-				if (opCode == ILOpCode.Callvirt && baseMethod != null) {
-					if (IsSameMember(baseMethod, m)) {
+				if (opCode == ILOpCode.Callvirt && baseMethod != null)
+				{
+					if (IsSameMember(baseMethod, m))
+					{
 						return true;
 					}
-				} else {
-					if (IsSameMember(analyzedMethod, m)) {
+				}
+				else
+				{
+					if (IsSameMember(analyzedMethod, m))
+					{
 						return true;
 					}
 				}
@@ -134,7 +158,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		static bool IsSupportedOpCode(ILOpCode opCode)
 		{
-			switch (opCode) {
+			switch (opCode)
+			{
 				case ILOpCode.Call:
 				case ILOpCode.Callvirt:
 				case ILOpCode.Ldtoken:

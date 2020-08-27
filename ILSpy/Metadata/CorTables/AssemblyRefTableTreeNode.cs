@@ -48,9 +48,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<AssemblyRefEntry>();
 			AssemblyRefEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.AssemblyReferences) {
+			foreach (var row in metadata.AssemblyReferences)
+			{
 				AssemblyRefEntry entry = new AssemblyRefEntry(module, row);
-				if (scrollTarget == MetadataTokens.GetRowNumber(row)) {
+				if (scrollTarget == MetadataTokens.GetRowNumber(row))
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -59,7 +61,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			view.ItemsSource = list;
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 1) {
+			if (scrollTargetEntry.RID > 1)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 

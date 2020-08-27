@@ -28,7 +28,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public static IEvent Create(IEvent ev, TypeParameterSubstitution substitution)
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution)
-				|| ev.DeclaringType.TypeParameterCount == 0) {
+				|| ev.DeclaringType.TypeParameterCount == 0)
+			{
 				return ev;
 			}
 			if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
@@ -37,36 +38,36 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		readonly IEvent eventDefinition;
-		
+
 		public SpecializedEvent(IEvent eventDefinition, TypeParameterSubstitution substitution)
 			: base(eventDefinition)
 		{
 			this.eventDefinition = eventDefinition;
 			AddSubstitution(substitution);
 		}
-		
+
 		public bool CanAdd {
 			get { return eventDefinition.CanAdd; }
 		}
-		
+
 		public bool CanRemove {
 			get { return eventDefinition.CanRemove; }
 		}
-		
+
 		public bool CanInvoke {
 			get { return eventDefinition.CanInvoke; }
 		}
-		
+
 		IMethod addAccessor, removeAccessor, invokeAccessor;
-		
+
 		public IMethod AddAccessor {
 			get { return WrapAccessor(ref this.addAccessor, eventDefinition.AddAccessor); }
 		}
-		
+
 		public IMethod RemoveAccessor {
 			get { return WrapAccessor(ref this.removeAccessor, eventDefinition.RemoveAccessor); }
 		}
-		
+
 		public IMethod InvokeAccessor {
 			get { return WrapAccessor(ref this.invokeAccessor, eventDefinition.InvokeAccessor); }
 		}

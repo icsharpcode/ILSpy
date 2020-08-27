@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.fullTypeName = new TopLevelTypeName(namespaceName ?? string.Empty, name, typeParameterCount);
 			this.isReferenceType = isReferenceType;
 		}
-		
+
 		/// <summary>
 		/// Creates a new unknown type.
 		/// </summary>
@@ -54,35 +54,38 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public UnknownType(FullTypeName fullTypeName, bool? isReferenceType = null)
 		{
 			this.isReferenceType = isReferenceType;
-			if (fullTypeName.Name == null) {
+			if (fullTypeName.Name == null)
+			{
 				Debug.Assert(fullTypeName == default(FullTypeName));
 				this.namespaceKnown = false;
 				this.fullTypeName = new TopLevelTypeName(string.Empty, "?", 0);
-			} else {
+			}
+			else
+			{
 				this.namespaceKnown = true;
 				this.fullTypeName = fullTypeName;
 			}
 		}
-		
+
 		public override TypeKind Kind {
 			get { return TypeKind.Unknown; }
 		}
-		
+
 		IType ITypeReference.Resolve(ITypeResolveContext context)
 		{
 			if (context == null)
 				throw new ArgumentNullException(nameof(context));
 			return this;
 		}
-		
+
 		public override string Name {
 			get { return fullTypeName.Name; }
 		}
-		
+
 		public override string Namespace {
 			get { return fullTypeName.TopLevelTypeName.Namespace; }
 		}
-		
+
 		public override string ReflectionName {
 			get { return namespaceKnown ? fullTypeName.ReflectionName : "?"; }
 		}
@@ -109,7 +112,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			return (namespaceKnown ? 812571 : 12651) ^ fullTypeName.GetHashCode();
 		}
-		
+
 		public override bool Equals(IType other)
 		{
 			UnknownType o = other as UnknownType;
@@ -117,7 +120,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return false;
 			return this.namespaceKnown == o.namespaceKnown && this.fullTypeName == o.fullTypeName && this.isReferenceType == o.isReferenceType;
 		}
-		
+
 		public override string ToString()
 		{
 			return "[UnknownType " + fullTypeName.ReflectionName + "]";

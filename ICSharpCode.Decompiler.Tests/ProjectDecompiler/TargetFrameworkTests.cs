@@ -17,7 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests

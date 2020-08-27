@@ -33,63 +33,63 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Method; }
 		}
-		
+
 		/// <summary>
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
 		public AstType PrivateImplementationType {
-			get { return GetChildByRole (PrivateImplementationTypeRole); }
-			set { SetChildByRole (PrivateImplementationTypeRole, value); }
+			get { return GetChildByRole(PrivateImplementationTypeRole); }
+			set { SetChildByRole(PrivateImplementationTypeRole, value); }
 		}
-		
+
 		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
-			get { return GetChildrenByRole (Roles.TypeParameter); }
+			get { return GetChildrenByRole(Roles.TypeParameter); }
 		}
-		
+
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
-		
+
 		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole (Roles.Parameter); }
+			get { return GetChildrenByRole(Roles.Parameter); }
 		}
-		
+
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
-		
+
 		public AstNodeCollection<Constraint> Constraints {
-			get { return GetChildrenByRole (Roles.Constraint); }
+			get { return GetChildrenByRole(Roles.Constraint); }
 		}
-		
+
 		public BlockStatement Body {
-			get { return GetChildByRole (Roles.Body); }
-			set { SetChildByRole (Roles.Body, value); }
+			get { return GetChildByRole(Roles.Body); }
+			set { SetChildByRole(Roles.Body, value); }
 		}
-		
+
 		public bool IsExtensionMethod {
 			get {
-				ParameterDeclaration pd = (ParameterDeclaration)GetChildByRole (Roles.Parameter);
+				ParameterDeclaration pd = (ParameterDeclaration)GetChildByRole(Roles.Parameter);
 				return pd != null && pd.HasThisModifier;
 			}
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitMethodDeclaration (this);
+			visitor.VisitMethodDeclaration(this);
 		}
-		
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitMethodDeclaration (this);
+			return visitor.VisitMethodDeclaration(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitMethodDeclaration (this, data);
+			return visitor.VisitMethodDeclaration(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			MethodDeclaration o = other as MethodDeclaration;

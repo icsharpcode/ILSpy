@@ -53,9 +53,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			ClassLayoutEntry scrollTargetEntry = default;
 
-			for (int rid = 1; rid <= length; rid++) {
+			for (int rid = 1; rid <= length; rid++)
+			{
 				ClassLayoutEntry entry = new ClassLayoutEntry(module, ptr, metadataOffset, rid);
-				if (scrollTarget == rid) {
+				if (scrollTarget == rid)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -64,7 +66,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			view.ItemsSource = list;
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -77,7 +80,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public readonly EntityHandle Parent;
 			public readonly uint ClassSize;
 
-			public unsafe ClassLayout(byte *ptr, int typeDefSize)
+			public unsafe ClassLayout(byte* ptr, int typeDefSize)
 			{
 				PackingSize = (ushort)Helpers.GetValue(ptr, 2);
 				ClassSize = (uint)Helpers.GetValue(ptr + 2, 4);

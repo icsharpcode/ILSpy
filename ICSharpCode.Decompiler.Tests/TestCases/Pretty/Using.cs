@@ -62,7 +62,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// roslyn optimizes out the try-finally; mcs has a compiler bug on using(null-literal)
 		public void SimpleUsingNullStatement()
 		{
-			using (null) {
+			using (null)
+			{
 				Console.WriteLine("using (null)");
 			}
 		}
@@ -70,14 +71,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void SimpleUsingExpressionStatement()
 		{
-			using (new MemoryStream()) {
+			using (new MemoryStream())
+			{
 				Console.WriteLine("using-body");
 			}
 		}
 
 		public void SimpleUsingExpressionStatementWithDeclaration()
 		{
-			using (MemoryStream memoryStream = new MemoryStream()) {
+			using (MemoryStream memoryStream = new MemoryStream())
+			{
 				memoryStream.WriteByte(42);
 				Console.WriteLine("using-body: " + memoryStream.Position);
 			}
@@ -86,7 +89,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void UsingStatementThatChangesTheVariable()
 		{
 			CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-			using (cancellationTokenSource) {
+			using (cancellationTokenSource)
+			{
 				cancellationTokenSource = new CancellationTokenSource();
 			}
 			cancellationTokenSource.Cancel();
@@ -94,49 +98,56 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void UsingStatementOnStruct()
 		{
-			using (new UsingStruct(1)) {
+			using (new UsingStruct(1))
+			{
 				Console.WriteLine("using-body");
 			}
 		}
 
 		public void UsingStatementOnStructWithVariable()
 		{
-			using (UsingStruct usingStruct = new UsingStruct(2)) {
+			using (UsingStruct usingStruct = new UsingStruct(2))
+			{
 				Console.WriteLine("using-body: " + usingStruct);
 			}
 		}
 
 		private void UsingStatementOnNullableStruct(UsingStruct? us)
 		{
-			using (us) {
+			using (us)
+			{
 				Console.WriteLine("using-body: " + us.ToString());
 			}
 		}
 
 		public void GenericUsing<T>(T t) where T : IDisposable
 		{
-			using (t) {
+			using (t)
+			{
 				Console.WriteLine(t);
 			}
 		}
 
 		public void GenericStructUsing<T>(T t) where T : struct, IDisposable
 		{
-			using (t) {
+			using (t)
+			{
 				Console.WriteLine(t);
 			}
 		}
 
 		public void GenericClassUsing<T>(T t) where T : class, IDisposable
 		{
-			using (t) {
+			using (t)
+			{
 				Console.WriteLine(t);
 			}
 		}
 
 		public void GenericNullableUsing<T>(T? t) where T : struct, IDisposable
 		{
-			using (t) {
+			using (t)
+			{
 				Console.WriteLine(t);
 			}
 		}
@@ -144,7 +155,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if CS80
 		public void UsingRefStruct1(UsingRefStruct s)
 		{
-			using (s) {
+			using (s)
+			{
 				Console.WriteLine(s.i);
 			}
 		}

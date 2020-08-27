@@ -8,8 +8,10 @@ internal sealed class VBCompoundAssign
 	{
 		double[] array = new double[4];
 		int num = Information.UBound(v);
-		checked {
-			for (int i = 0; i <= num; i += 3) {
+		checked
+		{
+			for (int i = 0; i <= num; i += 3)
+			{
 				array[0] += v[i];
 				array[1] += v[i + 1];
 				array[2] += v[i + 2];

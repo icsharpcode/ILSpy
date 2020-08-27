@@ -22,6 +22,7 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
@@ -39,7 +40,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		{
 			Debug.Assert(analyzedSymbol is ITypeDefinition);
 			var scope = context.GetScopeOf((ITypeDefinition)analyzedSymbol);
-			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
+			{
 				foreach (var result in ScanType((ITypeDefinition)analyzedSymbol, type, context))
 					yield return result;
 			}
@@ -53,14 +55,16 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 			var visitor = new TypeDefinitionUsedVisitor(analyzedEntity, false);
 
-			foreach (var bt in type.DirectBaseTypes) {
+			foreach (var bt in type.DirectBaseTypes)
+			{
 				bt.AcceptVisitor(visitor);
 			}
 
 			if (visitor.Found)
 				yield return type;
 
-			foreach (var member in type.Members) {
+			foreach (var member in type.Members)
+			{
 				visitor.Found = false;
 				VisitMember(visitor, member, context, scanBodies: true);
 				if (visitor.Found)
@@ -71,18 +75,21 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		void VisitMember(TypeDefinitionUsedVisitor visitor, IMember member, AnalyzerContext context, bool scanBodies = false)
 		{
 			member.DeclaringType.AcceptVisitor(visitor);
-			switch (member) {
+			switch (member)
+			{
 				case IField field:
 					field.ReturnType.AcceptVisitor(visitor);
 					break;
 				case IMethod method:
-					foreach (var p in method.Parameters) {
+					foreach (var p in method.Parameters)
+					{
 						p.Type.AcceptVisitor(visitor);
 					}
 
 					method.ReturnType.AcceptVisitor(visitor);
 
-					foreach (var t in method.TypeArguments) {
+					foreach (var t in method.TypeArguments)
+					{
 						t.AcceptVisitor(visitor);
 					}
 
@@ -91,7 +98,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 					break;
 				case IProperty property:
-					foreach (var p in property.Parameters) {
+					foreach (var p in property.Parameters)
+					{
 						p.Type.AcceptVisitor(visitor);
 					}
 
@@ -127,32 +135,40 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var module = (MetadataModule)method.ParentModule;
 			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
-			if (!methodBody.LocalSignature.IsNil) {
-				foreach (var type in module.DecodeLocalSignature(methodBody.LocalSignature, genericContext)) {
+			if (!methodBody.LocalSignature.IsNil)
+			{
+				foreach (var type in module.DecodeLocalSignature(methodBody.LocalSignature, genericContext))
+				{
 					type.AcceptVisitor(visitor);
 
-					if (visitor.Found) return;
+					if (visitor.Found)
+						return;
 				}
 			}
 
 			var blob = methodBody.GetILReader();
 
-			while (!visitor.Found && blob.RemainingBytes > 0) {
+			while (!visitor.Found && blob.RemainingBytes > 0)
+			{
 				var opCode = blob.DecodeOpCode();
-				switch (opCode.GetOperandType()) {
+				switch (opCode.GetOperandType())
+				{
 					case OperandType.Field:
 					case OperandType.Method:
 					case OperandType.Sig:
 					case OperandType.Tok:
 					case OperandType.Type:
 						var member = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
-						if (member.IsNil) continue;
-						switch (member.Kind) {
+						if (member.IsNil)
+							continue;
+						switch (member.Kind)
+						{
 							case HandleKind.TypeReference:
 							case HandleKind.TypeSpecification:
 							case HandleKind.TypeDefinition:
 								module.ResolveType(member, genericContext).AcceptVisitor(visitor);
-								if (visitor.Found) return;
+								if (visitor.Found)
+									return;
 								break;
 
 							case HandleKind.FieldDefinition:
@@ -161,18 +177,21 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.MethodSpecification:
 								VisitMember(visitor, module.ResolveEntity(member, genericContext) as IMember, context);
 
-								if (visitor.Found) return;
+								if (visitor.Found)
+									return;
 								break;
 
 							case HandleKind.StandaloneSignature:
 								var signature = module.DecodeMethodSignature((StandaloneSignatureHandle)member, genericContext);
-								foreach (var type in signature.ParameterTypes) {
+								foreach (var type in signature.ParameterTypes)
+								{
 									type.AcceptVisitor(visitor);
 								}
 
 								signature.ReturnType.AcceptVisitor(visitor);
 
-								if (visitor.Found) return;
+								if (visitor.Found)
+									return;
 								break;
 
 							default:

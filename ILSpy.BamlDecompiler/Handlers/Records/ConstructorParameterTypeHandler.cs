@@ -21,14 +21,18 @@
 */
 
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Baml;
 using ILSpy.BamlDecompiler.Xaml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class ConstructorParameterTypeHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class ConstructorParameterTypeHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.ConstructorParameterType;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (ConstructorParameterTypeRecord)((BamlRecordNode)node).Record;
 
 			var elem = new XElement(ctx.GetKnownNamespace("TypeExtension", XamlContext.KnownNamespace_Xaml, parent.Xaml));

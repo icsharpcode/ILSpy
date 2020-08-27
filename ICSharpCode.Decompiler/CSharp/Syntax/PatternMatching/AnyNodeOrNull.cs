@@ -46,9 +46,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		public override bool DoMatch(INode other, Match match)
 		{
-			if (other == null) {
+			if (other == null)
+			{
 				match.AddNull(this.groupName);
-			} else {
+			}
+			else
+			{
 				match.Add(this.groupName, other);
 			}
 			return true;

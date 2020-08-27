@@ -26,13 +26,15 @@ namespace ICSharpCode.Decompiler.Metadata
 			_provider = provider;
 			_provideBoxingTypeInfo = provideBoxingTypeInfo;
 		}
-		
+
 		public ImmutableArray<CustomAttributeNamedArgument<TType>> DecodeNamedArguments(ref BlobReader valueReader, int count)
 		{
 			var arguments = ImmutableArray.CreateBuilder<CustomAttributeNamedArgument<TType>>(count);
-			for (int i = 0; i < count; i++) {
+			for (int i = 0; i < count; i++)
+			{
 				CustomAttributeNamedArgumentKind kind = (CustomAttributeNamedArgumentKind)valueReader.ReadSerializationTypeCode();
-				if (kind != CustomAttributeNamedArgumentKind.Field && kind != CustomAttributeNamedArgumentKind.Property) {
+				if (kind != CustomAttributeNamedArgumentKind.Field && kind != CustomAttributeNamedArgumentKind.Property)
+				{
 					throw new BadImageFormatException();
 				}
 
@@ -52,14 +54,15 @@ namespace ICSharpCode.Decompiler.Metadata
 			public SerializationTypeCode TypeCode;
 			public SerializationTypeCode ElementTypeCode;
 		}
-		
+
 		private ArgumentTypeInfo DecodeNamedArgumentType(ref BlobReader valueReader, bool isElementType = false)
 		{
 			var info = new ArgumentTypeInfo {
 				TypeCode = valueReader.ReadSerializationTypeCode(),
 			};
 
-			switch (info.TypeCode) {
+			switch (info.TypeCode)
+			{
 				case SerializationTypeCode.Boolean:
 				case SerializationTypeCode.Byte:
 				case SerializationTypeCode.Char:
@@ -85,7 +88,8 @@ namespace ICSharpCode.Decompiler.Metadata
 					break;
 
 				case SerializationTypeCode.SZArray:
-					if (isElementType) {
+					if (isElementType)
+					{
 						// jagged arrays are not allowed.
 						throw new BadImageFormatException();
 					}
@@ -112,14 +116,16 @@ namespace ICSharpCode.Decompiler.Metadata
 		private CustomAttributeTypedArgument<TType> DecodeArgument(ref BlobReader valueReader, ArgumentTypeInfo info)
 		{
 			var outer = info;
-			if (info.TypeCode == SerializationTypeCode.TaggedObject) {
+			if (info.TypeCode == SerializationTypeCode.TaggedObject)
+			{
 				info = DecodeNamedArgumentType(ref valueReader);
 			}
 
 			// PERF_TODO: https://github.com/dotnet/corefx/issues/6533
 			//   Cache /reuse common arguments to avoid boxing (small integers, true, false).
 			object value;
-			switch (info.TypeCode) {
+			switch (info.TypeCode)
+			{
 				case SerializationTypeCode.Boolean:
 					value = valueReader.ReadBoolean();
 					break;
@@ -185,7 +191,8 @@ namespace ICSharpCode.Decompiler.Metadata
 					throw new BadImageFormatException();
 			}
 
-			if (_provideBoxingTypeInfo && outer.TypeCode == SerializationTypeCode.TaggedObject) {
+			if (_provideBoxingTypeInfo && outer.TypeCode == SerializationTypeCode.TaggedObject)
+			{
 				return new CustomAttributeTypedArgument<TType>(outer.Type, new CustomAttributeTypedArgument<TType>(info.Type, value));
 			}
 
@@ -195,15 +202,18 @@ namespace ICSharpCode.Decompiler.Metadata
 		private ImmutableArray<CustomAttributeTypedArgument<TType>>? DecodeArrayArgument(ref BlobReader blobReader, ArgumentTypeInfo info)
 		{
 			int count = blobReader.ReadInt32();
-			if (count == -1) {
+			if (count == -1)
+			{
 				return null;
 			}
 
-			if (count == 0) {
+			if (count == 0)
+			{
 				return ImmutableArray<CustomAttributeTypedArgument<TType>>.Empty;
 			}
 
-			if (count < 0) {
+			if (count < 0)
+			{
 				throw new BadImageFormatException();
 			}
 
@@ -214,7 +224,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			var array = ImmutableArray.CreateBuilder<CustomAttributeTypedArgument<TType>>(count);
 
-			for (int i = 0; i < count; i++) {
+			for (int i = 0; i < count; i++)
+			{
 				array.Add(DecodeArgument(ref blobReader, elementInfo));
 			}
 

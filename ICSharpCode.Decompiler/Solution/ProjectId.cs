@@ -34,7 +34,8 @@ namespace ICSharpCode.Decompiler.Solution
 		/// <exception cref="ArgumentException">Thrown when <paramref name="projectPlatform"/> is null or empty.</exception>
 		public ProjectId(string projectPlatform, Guid projectGuid, Guid typeGuid)
 		{
-			if (string.IsNullOrWhiteSpace(projectPlatform)) {
+			if (string.IsNullOrWhiteSpace(projectPlatform))
+			{
 				throw new ArgumentException("The platform cannot be null or empty.", nameof(projectPlatform));
 			}
 

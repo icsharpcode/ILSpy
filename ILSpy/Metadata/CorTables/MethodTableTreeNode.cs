@@ -23,6 +23,7 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Windows.Controls;
 using System.Windows.Threading;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
@@ -53,9 +54,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<MethodDefEntry>();
 			MethodDefEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.MethodDefinitions) {
+			foreach (var row in metadata.MethodDefinitions)
+			{
 				MethodDefEntry entry = new MethodDefEntry(module, row);
-				if (entry.RID == scrollTarget) {
+				if (entry.RID == scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -65,7 +68,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 1) {
+			if (scrollTargetEntry.RID > 1)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -120,7 +124,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public string SignatureTooltip {
 				get {
-					if (signatureTooltip == null) {
+					if (signatureTooltip == null)
+					{
 						ITextOutput output = new PlainTextOutput();
 						var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
 						((EntityHandle)handle).WriteTo(module, output, context);

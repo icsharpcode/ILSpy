@@ -45,13 +45,15 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
-			
+
 			var list = new List<GenericParamEntry>();
 			GenericParamEntry scrollTargetEntry = default;
 
-			for (int row = 1; row <= module.Metadata.GetTableRowCount(TableIndex.GenericParam); row++) {
+			for (int row = 1; row <= module.Metadata.GetTableRowCount(TableIndex.GenericParam); row++)
+			{
 				GenericParamEntry entry = new GenericParamEntry(module, MetadataTokens.GenericParameterHandle(row));
-				if (entry.RID == this.scrollTarget) {
+				if (entry.RID == this.scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -60,7 +62,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -81,7 +84,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset => metadataOffset
 				+ metadata.GetTableMetadataOffset(TableIndex.GenericParam)
-				+ metadata.GetTableRowSize(TableIndex.GenericParam) * (RID-1);
+				+ metadata.GetTableRowSize(TableIndex.GenericParam) * (RID - 1);
 
 			public int Number => genericParam.Index;
 

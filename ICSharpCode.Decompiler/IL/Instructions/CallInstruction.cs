@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -27,7 +28,8 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public static CallInstruction Create(OpCode opCode, IMethod method)
 		{
-			switch (opCode) {
+			switch (opCode)
+			{
 				case OpCode.Call:
 					return new Call(method);
 				case OpCode.CallVirt:
@@ -40,7 +42,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public readonly IMethod Method;
-		
+
 		/// <summary>
 		/// Gets/Sets whether the call has the 'tail.' prefix.
 		/// </summary>
@@ -79,12 +81,13 @@ namespace ICSharpCode.Decompiler.IL
 		public IParameter GetParameter(int argumentIndex)
 		{
 			int firstParamIndex = (Method.IsStatic || OpCode == OpCode.NewObj) ? 0 : 1;
-			if (argumentIndex < firstParamIndex) {
+			if (argumentIndex < firstParamIndex)
+			{
 				return null; // asking for 'this' parameter
 			}
 			return Method.Parameters[argumentIndex - firstParamIndex];
 		}
-		
+
 		public override StackType ResultType {
 			get {
 				if (OpCode == OpCode.NewObj)
@@ -105,7 +108,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (type.Kind == TypeKind.TypeParameter)
 				return StackType.Ref;
-			switch (type.IsReferenceType) {
+			switch (type.IsReferenceType)
+			{
 				case true:
 					return StackType.O;
 				case false:
@@ -120,11 +124,13 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 			int firstArgument = (OpCode != OpCode.NewObj && !Method.IsStatic) ? 1 : 0;
 			Debug.Assert(Method.Parameters.Count + firstArgument == Arguments.Count);
-			if (firstArgument == 1) {
+			if (firstArgument == 1)
+			{
 				if (!(Arguments[0].ResultType == ExpectedTypeForThisPointer(ConstrainedTo ?? Method.DeclaringType)))
 					Debug.Fail($"Stack type mismatch in 'this' argument in call to {Method.Name}()");
 			}
-			for (int i = 0; i < Method.Parameters.Count; ++i) {
+			for (int i = 0; i < Method.Parameters.Count; ++i)
+			{
 				if (!(Arguments[firstArgument + i].ResultType == Method.Parameters[i].Type.GetStackType()))
 					Debug.Fail($"Stack type mismatch in parameter {i} in call to {Method.Name}()");
 			}
@@ -133,7 +139,8 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
-			if (ConstrainedTo != null) {
+			if (ConstrainedTo != null)
+			{
 				output.Write("constrained[");
 				ConstrainedTo.WriteTo(output);
 				output.Write("].");
@@ -144,14 +151,15 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Method.WriteTo(output);
 			output.Write('(');
-			for (int i = 0; i < Arguments.Count; i++) {
+			for (int i = 0; i < Arguments.Count; i++)
+			{
 				if (i > 0)
 					output.Write(", ");
 				Arguments[i].WriteTo(output, options);
 			}
 			output.Write(')');
 		}
-		
+
 		protected internal sealed override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			CallInstruction o = other as CallInstruction;

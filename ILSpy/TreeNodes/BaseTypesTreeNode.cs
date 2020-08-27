@@ -60,7 +60,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver(),
 				TypeSystemOptions.Default | TypeSystemOptions.Uncached);
 			var t = typeSystem.MainModule.ResolveEntity(handle) as ITypeDefinition;
-			foreach (var td in t.GetAllBaseTypeDefinitions().Reverse().Skip(1)) {
+			foreach (var td in t.GetAllBaseTypeDefinitions().Reverse().Skip(1))
+			{
 				if (t.Kind != TypeKind.Interface || t.Kind == td.Kind)
 					children.Add(new BaseTypesEntryNode(td));
 			}
@@ -69,7 +70,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(EnsureLazyChildren));
-			foreach (ILSpyTreeNode child in this.Children) {
+			foreach (ILSpyTreeNode child in this.Children)
+			{
 				child.Decompile(language, output, options);
 			}
 		}

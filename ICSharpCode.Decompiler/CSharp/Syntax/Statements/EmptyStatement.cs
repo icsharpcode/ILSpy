@@ -36,34 +36,34 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get;
 			set;
 		}
-		
+
 		public override TextLocation StartLocation {
 			get {
 				return Location;
 			}
 		}
-		
+
 		public override TextLocation EndLocation {
 			get {
-				return new TextLocation (Location.Line, Location.Column + 1);
+				return new TextLocation(Location.Line, Location.Column + 1);
 			}
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitEmptyStatement (this);
+			visitor.VisitEmptyStatement(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitEmptyStatement (this);
+			return visitor.VisitEmptyStatement(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitEmptyStatement (this, data);
+			return visitor.VisitEmptyStatement(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			EmptyStatement o = other as EmptyStatement;

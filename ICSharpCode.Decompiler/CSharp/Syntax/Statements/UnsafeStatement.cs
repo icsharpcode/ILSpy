@@ -32,32 +32,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UnsafeStatement : Statement
 	{
-		public static readonly TokenRole UnsafeKeywordRole = new TokenRole ("unsafe");
-		
+		public static readonly TokenRole UnsafeKeywordRole = new TokenRole("unsafe");
+
 		public CSharpTokenNode UnsafeToken {
-			get { return GetChildByRole (UnsafeKeywordRole); }
+			get { return GetChildByRole(UnsafeKeywordRole); }
 		}
-		
+
 		public BlockStatement Body {
-			get { return GetChildByRole (Roles.Body); }
-			set { SetChildByRole (Roles.Body, value); }
+			get { return GetChildByRole(Roles.Body); }
+			set { SetChildByRole(Roles.Body, value); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitUnsafeStatement (this);
+			visitor.VisitUnsafeStatement(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitUnsafeStatement (this);
+			return visitor.VisitUnsafeStatement(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitUnsafeStatement (this, data);
+			return visitor.VisitUnsafeStatement(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			UnsafeStatement o = other as UnsafeStatement;

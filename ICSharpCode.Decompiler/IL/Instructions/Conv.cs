@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Diagnostics;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -89,7 +90,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		ObjectInterior
 	}
-	
+
 	partial class Conv : UnaryInstruction, ILiftableInstruction
 	{
 		/// <summary>
@@ -147,7 +148,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Target type == PrimitiveType.None can happen for implicit conversions to O in invalid IL.
 		/// </remarks>
 		public readonly PrimitiveType TargetType;
-		
+
 		public Conv(ILInstruction argument, PrimitiveType targetType, bool checkForOverflow, Sign inputSign)
 			: this(argument, argument.ResultType, inputSign, targetType, checkForOverflow)
 		{
@@ -180,12 +181,14 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		static ConversionKind GetConversionKind(PrimitiveType targetType, StackType inputType, Sign inputSign)
 		{
-			switch (targetType) {
+			switch (targetType)
+			{
 				case PrimitiveType.I1:
 				case PrimitiveType.I2:
 				case PrimitiveType.U1:
 				case PrimitiveType.U2:
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 						case StackType.I8:
 						case StackType.I:
@@ -198,7 +201,8 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				case PrimitiveType.I4:
 				case PrimitiveType.U4:
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 							return ConversionKind.Nop;
 						case StackType.I:
@@ -212,7 +216,8 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				case PrimitiveType.I8:
 				case PrimitiveType.U8:
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 						case StackType.I:
 							if (inputSign == Sign.None)
@@ -232,7 +237,8 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				case PrimitiveType.I:
 				case PrimitiveType.U:
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 							if (inputSign == Sign.None)
 								return targetType == PrimitiveType.I ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
@@ -252,7 +258,8 @@ namespace ICSharpCode.Decompiler.IL
 							return ConversionKind.Invalid;
 					}
 				case PrimitiveType.R4:
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 						case StackType.I:
 						case StackType.I8:
@@ -266,7 +273,8 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				case PrimitiveType.R:
 				case PrimitiveType.R8:
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 						case StackType.I:
 						case StackType.I8:
@@ -281,7 +289,8 @@ namespace ICSharpCode.Decompiler.IL
 				case PrimitiveType.Ref:
 					// There's no "conv.ref" in IL, but IL allows these conversions implicitly,
 					// whereas we represent them explicitly in the ILAst.
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 						case StackType.I:
 						case StackType.I8:
@@ -295,7 +304,7 @@ namespace ICSharpCode.Decompiler.IL
 					return ConversionKind.Invalid;
 			}
 		}
-		
+
 		public override StackType ResultType {
 			get => IsLifted ? StackType.O : TargetType.GetStackType();
 		}
@@ -308,15 +317,20 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			if (CheckForOverflow) {
+			if (CheckForOverflow)
+			{
 				output.Write(".ovf");
 			}
-			if (InputSign == Sign.Unsigned) {
+			if (InputSign == Sign.Unsigned)
+			{
 				output.Write(".unsigned");
-			} else if (InputSign == Sign.Signed) {
+			}
+			else if (InputSign == Sign.Signed)
+			{
 				output.Write(".signed");
 			}
-			if (IsLifted) {
+			if (IsLifted)
+			{
 				output.Write(".lifted");
 			}
 			output.Write(' ');
@@ -324,7 +338,8 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write("->");
 			output.Write(TargetType);
 			output.Write(' ');
-			switch (Kind) {
+			switch (Kind)
+			{
 				case ConversionKind.SignExtend:
 					output.Write("<sign extend>");
 					break;
@@ -339,7 +354,7 @@ namespace ICSharpCode.Decompiler.IL
 			Argument.WriteTo(output, options);
 			output.Write(')');
 		}
-		
+
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = base.ComputeFlags();
@@ -347,7 +362,7 @@ namespace ICSharpCode.Decompiler.IL
 				flags |= InstructionFlags.MayThrow;
 			return flags;
 		}
-		
+
 		public override ILInstruction UnwrapConv(ConversionKind kind)
 		{
 			if (this.Kind == kind && !IsLifted)

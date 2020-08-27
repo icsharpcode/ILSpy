@@ -36,7 +36,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public unsafe int MultipleExitsOutOfFixedBlock(int[] arr)
 		{
-			fixed (int* ptr = &arr[0]) {
+			fixed (int* ptr = &arr[0])
+			{
 				if (*ptr < 0)
 					return *ptr;
 				if (*ptr == 21)
@@ -49,10 +50,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("outside");
 			return 2;
 		}
-		
+
 		public unsafe void FixMultipleStrings(string text)
 		{
-			fixed (char* ptr = text, userName = Environment.UserName, ptr2 = text) {
+			fixed (char* ptr = text, userName = Environment.UserName, ptr2 = text)
+			{
 				*ptr = 'c';
 				*userName = 'd';
 				*ptr2 = 'e';

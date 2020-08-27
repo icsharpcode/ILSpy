@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
@@ -29,7 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return true;
 				if (node is BlockStatement)
 					return false;
-				foreach (var child in node.Children) {
+				foreach (var child in node.Children)
+				{
 					if (ContainsLocalDeclaration(child))
 						return true;
 				}

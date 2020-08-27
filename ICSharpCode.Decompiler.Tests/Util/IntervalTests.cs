@@ -16,8 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using NUnit.Framework;
 using ICSharpCode.Decompiler.Util;
+
+using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Util
 {
@@ -41,7 +42,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			Assert.IsFalse(default(Interval).Contains(1));
 			Assert.IsFalse(default(Interval).Contains(2));
 		}
-		
+
 		[Test]
 		public void OneToThree()
 		{
@@ -52,7 +53,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			Assert.IsTrue(i.Contains(2));
 			Assert.IsFalse(i.Contains(3));
 		}
-		
+
 		[Test]
 		public void FullInterval()
 		{
@@ -62,7 +63,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			Assert.IsTrue(full.Contains(0));
 			Assert.IsTrue(full.Contains(int.MaxValue));
 		}
-		
+
 		[Test]
 		public void NonNegativeIntegers()
 		{
@@ -75,7 +76,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			Assert.IsFalse(i.Contains(-1000));
 			Assert.IsFalse(i.Contains(int.MinValue));
 		}
-		
+
 		[Test]
 		public void Intersection()
 		{

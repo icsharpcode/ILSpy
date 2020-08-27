@@ -19,6 +19,7 @@
 using System;
 using System.Linq;
 using System.Reflection.Metadata;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -36,26 +37,29 @@ namespace ICSharpCode.Decompiler.Documentation
 	{
 		readonly string typeName;
 		readonly int typeParameterCount;
-		
+
 		public GetPotentiallyNestedClassTypeReference(string typeName, int typeParameterCount)
 		{
 			this.typeName = typeName;
 			this.typeParameterCount = typeParameterCount;
 		}
-		
+
 		public IType Resolve(ITypeResolveContext context)
 		{
 			string[] parts = typeName.Split('.');
-			var assemblies = new [] { context.CurrentModule }.Concat(context.Compilation.Modules);
-			for (int i = parts.Length - 1; i >= 0; i--) {
+			var assemblies = new[] { context.CurrentModule }.Concat(context.Compilation.Modules);
+			for (int i = parts.Length - 1; i >= 0; i--)
+			{
 				string ns = string.Join(".", parts, 0, i);
 				string name = parts[i];
 				int topLevelTPC = (i == parts.Length - 1 ? typeParameterCount : 0);
-				foreach (var asm in assemblies) {
+				foreach (var asm in assemblies)
+				{
 					if (asm == null)
 						continue;
 					ITypeDefinition typeDef = asm.GetTypeDefinition(new TopLevelTypeName(ns, name, topLevelTPC));
-					for (int j = i + 1; j < parts.Length && typeDef != null; j++) {
+					for (int j = i + 1; j < parts.Length && typeDef != null; j++)
+					{
 						int tpc = (j == parts.Length - 1 ? typeParameterCount : 0);
 						typeDef = typeDef.NestedTypes.FirstOrDefault(n => n.Name == parts[j] && n.TypeParameterCount == tpc);
 					}
@@ -67,7 +71,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			if (idx < 0)
 				return new UnknownType("", typeName, typeParameterCount);
 			// give back a guessed namespace/type name
-			return  new UnknownType(typeName.Substring(0, idx), typeName.Substring(idx + 1), typeParameterCount);
+			return new UnknownType(typeName.Substring(0, idx), typeName.Substring(idx + 1), typeParameterCount);
 		}
 
 		/// <summary>
@@ -78,14 +82,16 @@ namespace ICSharpCode.Decompiler.Documentation
 		public EntityHandle ResolveInPEFile(PEFile module)
 		{
 			string[] parts = typeName.Split('.');
-			for (int i = parts.Length - 1; i >= 0; i--) {
+			for (int i = parts.Length - 1; i >= 0; i--)
+			{
 				string ns = string.Join(".", parts, 0, i);
 				string name = parts[i];
 				int topLevelTPC = (i == parts.Length - 1 ? typeParameterCount : 0);
 				var topLevelName = new TopLevelTypeName(ns, name, topLevelTPC);
 				var typeHandle = module.GetTypeDefinition(topLevelName);
 
-				for (int j = i + 1; j < parts.Length && !typeHandle.IsNil; j++) {
+				for (int j = i + 1; j < parts.Length && !typeHandle.IsNil; j++)
+				{
 					int tpc = (j == parts.Length - 1 ? typeParameterCount : 0);
 					var typeDef = module.Metadata.GetTypeDefinition(typeHandle);
 					string lookupName = parts[j] + (tpc > 0 ? "`" + tpc : "");
@@ -95,7 +101,8 @@ namespace ICSharpCode.Decompiler.Documentation
 				if (!typeHandle.IsNil)
 					return typeHandle;
 				FullTypeName typeName = topLevelName;
-				for (int j = i + 1; j < parts.Length; j++) {
+				for (int j = i + 1; j < parts.Length; j++)
+				{
 					int tpc = (j == parts.Length - 1 ? typeParameterCount : 0);
 					typeName = typeName.NestedType(parts[j], tpc);
 				}

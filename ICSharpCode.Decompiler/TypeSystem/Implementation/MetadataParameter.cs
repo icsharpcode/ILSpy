@@ -22,6 +22,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -66,7 +67,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (IsOptional && !HasConstantValueInSignature)
 				b.Add(KnownAttribute.Optional);
 
-			if (!IsOut && !IsIn) {
+			if (!IsOut && !IsIn)
+			{
 				if ((attributes & ParameterAttributes.In) == ParameterAttributes.In)
 					b.Add(KnownAttribute.In);
 				if ((attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
@@ -94,7 +96,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return ReferenceKind.None;
 			if ((attributes & inOut) == ParameterAttributes.Out)
 				return ReferenceKind.Out;
-			if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0) {
+			if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0)
+			{
 				var metadata = module.metadata;
 				var parameterDef = metadata.GetParameter(handle);
 				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly))
@@ -128,7 +131,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public object GetConstantValue(bool throwOnInvalidMetadata)
 		{
-			try {
+			try
+			{
 				var metadata = module.metadata;
 				var parameterDef = metadata.GetParameter(handle);
 				if (IsDecimalConstant)
@@ -140,23 +144,31 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 				var constant = metadata.GetConstant(constantHandle);
 				var blobReader = metadata.GetBlobReader(constant.Value);
-				try {
+				try
+				{
 					return blobReader.ReadConstant(constant.TypeCode);
-				} catch (ArgumentOutOfRangeException) {
+				}
+				catch (ArgumentOutOfRangeException)
+				{
 					throw new BadImageFormatException($"Constant with invalid typecode: {constant.TypeCode}");
 				}
-			} catch (BadImageFormatException) when (!throwOnInvalidMetadata) {
+			}
+			catch (BadImageFormatException) when (!throwOnInvalidMetadata)
+			{
 				return null;
 			}
 		}
 
 		public bool HasConstantValueInSignature {
 			get {
-				if (constantValueInSignatureState == ThreeState.Unknown) {
-					if (IsDecimalConstant) {
+				if (constantValueInSignatureState == ThreeState.Unknown)
+				{
+					if (IsDecimalConstant)
+					{
 						constantValueInSignatureState = ThreeState.From(DecimalConstantHelper.AllowsDecimalConstants(module));
 					}
-					else {
+					else
+					{
 						constantValueInSignatureState = ThreeState.From(!module.metadata.GetParameter(handle).GetDefaultValue().IsNil);
 					}
 				}
@@ -166,7 +178,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool IsDecimalConstant {
 			get {
-				if (decimalConstantState == ThreeState.Unknown) {
+				if (decimalConstantState == ThreeState.Unknown)
+				{
 					var parameterDef = module.metadata.GetParameter(handle);
 					decimalConstantState = ThreeState.From(DecimalConstantHelper.IsDecimalConstant(module, parameterDef.GetCustomAttributes()));
 				}

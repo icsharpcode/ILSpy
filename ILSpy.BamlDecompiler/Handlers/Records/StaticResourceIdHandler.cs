@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ILSpy.BamlDecompiler.Baml;
 using ILSpy.BamlDecompiler.Xaml;
 
@@ -32,7 +33,8 @@ namespace ILSpy.BamlDecompiler.Handlers
 
 			BamlNode found = node;
 			XamlResourceKey key;
-			do {
+			do
+			{
 				key = XamlResourceKey.FindKeyInAncestors(found.Parent, out found);
 			} while (key != null && record.StaticResourceId >= key.StaticResources.Count);
 

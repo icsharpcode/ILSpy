@@ -34,68 +34,69 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UnaryOperatorExpression : Expression
 	{
-		public readonly static TokenRole NotRole = new TokenRole ("!");
-		public readonly static TokenRole BitNotRole = new TokenRole ("~");
-		public readonly static TokenRole MinusRole = new TokenRole ("-");
-		public readonly static TokenRole PlusRole = new TokenRole ("+");
-		public readonly static TokenRole IncrementRole = new TokenRole ("++");
-		public readonly static TokenRole DecrementRole = new TokenRole ("--");
-		public readonly static TokenRole DereferenceRole = new TokenRole ("*");
-		public readonly static TokenRole AddressOfRole = new TokenRole ("&");
-		public readonly static TokenRole AwaitRole = new TokenRole ("await");
-		public readonly static TokenRole NullConditionalRole = new TokenRole ("?");
-		public readonly static TokenRole SuppressNullableWarningRole = new TokenRole ("!");
-		public readonly static TokenRole IndexFromEndRole = new TokenRole ("^");
+		public readonly static TokenRole NotRole = new TokenRole("!");
+		public readonly static TokenRole BitNotRole = new TokenRole("~");
+		public readonly static TokenRole MinusRole = new TokenRole("-");
+		public readonly static TokenRole PlusRole = new TokenRole("+");
+		public readonly static TokenRole IncrementRole = new TokenRole("++");
+		public readonly static TokenRole DecrementRole = new TokenRole("--");
+		public readonly static TokenRole DereferenceRole = new TokenRole("*");
+		public readonly static TokenRole AddressOfRole = new TokenRole("&");
+		public readonly static TokenRole AwaitRole = new TokenRole("await");
+		public readonly static TokenRole NullConditionalRole = new TokenRole("?");
+		public readonly static TokenRole SuppressNullableWarningRole = new TokenRole("!");
+		public readonly static TokenRole IndexFromEndRole = new TokenRole("^");
 
 		public UnaryOperatorExpression()
 		{
 		}
-		
+
 		public UnaryOperatorExpression(UnaryOperatorType op, Expression expression)
 		{
 			this.Operator = op;
 			this.Expression = expression;
 		}
-		
+
 		public UnaryOperatorType Operator {
 			get;
 			set;
 		}
-		
+
 		public CSharpTokenNode OperatorToken {
-			get { return GetChildByRole (GetOperatorRole (Operator)); }
+			get { return GetChildByRole(GetOperatorRole(Operator)); }
 		}
 
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get { return GetChildByRole(Roles.Expression); }
+			set { SetChildByRole(Roles.Expression, value); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitUnaryOperatorExpression (this);
+			visitor.VisitUnaryOperatorExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitUnaryOperatorExpression (this);
+			return visitor.VisitUnaryOperatorExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitUnaryOperatorExpression (this, data);
+			return visitor.VisitUnaryOperatorExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			UnaryOperatorExpression o = other as UnaryOperatorExpression;
 			return o != null && (this.Operator == UnaryOperatorType.Any || this.Operator == o.Operator)
 				&& this.Expression.DoMatch(o.Expression, match);
 		}
-		
+
 		public static TokenRole GetOperatorRole(UnaryOperatorType op)
 		{
-			switch (op) {
+			switch (op)
+			{
 				case UnaryOperatorType.Not:
 					return NotRole;
 				case UnaryOperatorType.BitNot:
@@ -129,10 +130,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					throw new NotSupportedException("Invalid value for UnaryOperatorType");
 			}
 		}
-		
+
 		public static ExpressionType GetLinqNodeType(UnaryOperatorType op, bool checkForOverflow)
 		{
-			switch (op) {
+			switch (op)
+			{
 				case UnaryOperatorType.Not:
 					return ExpressionType.Not;
 				case UnaryOperatorType.BitNot:
@@ -160,14 +162,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 	}
-	
+
 	public enum UnaryOperatorType
 	{
 		/// <summary>
 		/// Any unary operator (used in pattern matching)
 		/// </summary>
 		Any,
-		
+
 		/// <summary>Logical not (!a)</summary>
 		Not,
 		/// <summary>Bitwise not (~a)</summary>

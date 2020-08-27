@@ -31,6 +31,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Search;
@@ -49,7 +50,7 @@ namespace ICSharpCode.ILSpy
 		bool runSearchOnNextShow;
 
 		public static readonly DependencyProperty ResultsProperty =
-			DependencyProperty.Register("Results", typeof(ObservableCollection<SearchResult>), typeof(SearchPane), 
+			DependencyProperty.Register("Results", typeof(ObservableCollection<SearchResult>), typeof(SearchPane),
 				new PropertyMetadata(new ObservableCollection<SearchResult>()));
 		public ObservableCollection<SearchResult> Results {
 			get { return (ObservableCollection<SearchResult>)GetValue(ResultsProperty); }
@@ -82,9 +83,12 @@ namespace ICSharpCode.ILSpy
 
 		void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
-			if (IsVisible) {
+			if (IsVisible)
+			{
 				StartSearch(this.SearchTerm);
-			} else {
+			}
+			else
+			{
 				StartSearch(null);
 				runSearchOnNextShow = true;
 			}
@@ -95,9 +99,12 @@ namespace ICSharpCode.ILSpy
 			if (e.PropertyName != nameof(FilterSettings.ShowApiLevel))
 				return;
 
-			if (IsVisible) {
+			if (IsVisible)
+			{
 				StartSearch(this.SearchTerm);
-			} else {
+			}
+			else
+			{
 				StartSearch(null);
 				runSearchOnNextShow = true;
 			}
@@ -105,9 +112,11 @@ namespace ICSharpCode.ILSpy
 
 		public void Show()
 		{
-			if (!IsVisible) {
+			if (!IsVisible)
+			{
 				DockWorkspace.Instance.ToolPanes.Single(p => p.ContentId == SearchPaneModel.PaneContentId).IsVisible = true;
-				if (runSearchOnNextShow) {
+				if (runSearchOnNextShow)
+				{
 					runSearchOnNextShow = false;
 					StartSearch(this.SearchTerm);
 				}
@@ -140,19 +149,22 @@ namespace ICSharpCode.ILSpy
 			MainWindow.Instance.SessionSettings.SelectedSearchMode = (SearchMode)searchModeComboBox.SelectedIndex;
 			StartSearch(this.SearchTerm);
 		}
-		
+
 		void ListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
 			JumpToSelectedItem();
 			e.Handled = true;
 		}
-		
+
 		void ListBox_KeyDown(object sender, KeyEventArgs e)
 		{
-			if (e.Key == Key.Return) {
+			if (e.Key == Key.Return)
+			{
 				e.Handled = true;
 				JumpToSelectedItem();
-			} else if(e.Key == Key.Up && listBox.SelectedIndex == 0) {
+			}
+			else if (e.Key == Key.Up && listBox.SelectedIndex == 0)
+			{
 				e.Handled = true;
 				listBox.SelectedIndex = -1;
 				searchBox.Focus();
@@ -162,13 +174,18 @@ namespace ICSharpCode.ILSpy
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
 			base.OnKeyDown(e);
-			if (e.Key == Key.T && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
+			if (e.Key == Key.T && e.KeyboardDevice.Modifiers == ModifierKeys.Control)
+			{
 				searchModeComboBox.SelectedIndex = (int)SearchMode.Type;
 				e.Handled = true;
-			} else if (e.Key == Key.M && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
+			}
+			else if (e.Key == Key.M && e.KeyboardDevice.Modifiers == ModifierKeys.Control)
+			{
 				searchModeComboBox.SelectedIndex = (int)SearchMode.Member;
 				e.Handled = true;
-			} else if (e.Key == Key.S && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
+			}
+			else if (e.Key == Key.S && e.KeyboardDevice.Modifiers == ModifierKeys.Control)
+			{
 				searchModeComboBox.SelectedIndex = (int)SearchMode.Literal;
 				e.Handled = true;
 			}
@@ -176,7 +193,8 @@ namespace ICSharpCode.ILSpy
 
 		void SearchBox_PreviewKeyDown(object sender, KeyEventArgs e)
 		{
-			if (e.Key == Key.Down && listBox.HasItems) {
+			if (e.Key == Key.Down && listBox.HasItems)
+			{
 				e.Handled = true;
 				listBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.First));
 				listBox.SelectedIndex = 0;
@@ -190,12 +208,14 @@ namespace ICSharpCode.ILSpy
 
 			var timer = Stopwatch.StartNew();
 			int resultsAdded = 0;
-			while (Results.Count < MAX_RESULTS && timer.ElapsedMilliseconds < MAX_REFRESH_TIME_MS && currentSearch.resultQueue.TryTake(out var result)) {
+			while (Results.Count < MAX_RESULTS && timer.ElapsedMilliseconds < MAX_REFRESH_TIME_MS && currentSearch.resultQueue.TryTake(out var result))
+			{
 				InsertResult(Results, result);
 				++resultsAdded;
 			}
 
-			if (resultsAdded > 0 && Results.Count == MAX_RESULTS) {
+			if (resultsAdded > 0 && Results.Count == MAX_RESULTS)
+			{
 				Results.Add(new SearchResult { Name = Properties.Resources.SearchAbortedMoreThan1000ResultsFound });
 				currentSearch.Cancel();
 			}
@@ -203,7 +223,8 @@ namespace ICSharpCode.ILSpy
 
 		async void StartSearch(string searchTerm)
 		{
-			if (currentSearch != null) {
+			if (currentSearch != null)
+			{
 				currentSearch.Cancel();
 				currentSearch = null;
 			}
@@ -211,38 +232,47 @@ namespace ICSharpCode.ILSpy
 			Results.Clear();
 
 			RunningSearch startedSearch = null;
-			if (!string.IsNullOrEmpty(searchTerm)) {
+			if (!string.IsNullOrEmpty(searchTerm))
+			{
 				MainWindow mainWindow = MainWindow.Instance;
 
 				searchProgressBar.IsIndeterminate = true;
 				startedSearch = new RunningSearch(mainWindow.CurrentAssemblyList.GetAssemblies(), searchTerm,
-					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage, 
+					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage,
 					mainWindow.SessionSettings.FilterSettings.ShowApiLevel);
 				currentSearch = startedSearch;
 
 				await startedSearch.Run();
 			}
 
-			if (currentSearch == startedSearch) { //are we still running the same search
+			if (currentSearch == startedSearch)
+			{ //are we still running the same search
 				searchProgressBar.IsIndeterminate = false;
 			}
 		}
 
 		void InsertResult(IList<SearchResult> results, SearchResult result)
 		{
-			if (results.Count == 0) {
+			if (results.Count == 0)
+			{
 				results.Add(result);
-			} else if (Options.DisplaySettingsPanel.CurrentDisplaySettings.SortResults) {
+			}
+			else if (Options.DisplaySettingsPanel.CurrentDisplaySettings.SortResults)
+			{
 				// Keep results collection sorted by "Fitness" by inserting result into correct place
 				// Inserts in the beginning shifts all elements, but there can be no more than 1000 items.
-				for (int i = 0; i < results.Count; i++) {
-					if (results[i].Fitness < result.Fitness) {
+				for (int i = 0; i < results.Count; i++)
+				{
+					if (results[i].Fitness < result.Fitness)
+					{
 						results.Insert(i, result);
 						return;
 					}
 				}
 				results.Insert(results.Count - 1, result);
-			} else {
+			}
+			else
+			{
 				// Original Code
 				int index = results.BinarySearch(result, 0, results.Count - 1, SearchResult.Comparer);
 				results.Insert(index < 0 ? ~index : index, result);
@@ -251,11 +281,12 @@ namespace ICSharpCode.ILSpy
 
 		void JumpToSelectedItem()
 		{
-			if (listBox.SelectedItem is SearchResult result) {
+			if (listBox.SelectedItem is SearchResult result)
+			{
 				MainWindow.Instance.JumpToReference(result.Reference);
 			}
 		}
-		
+
 		sealed class RunningSearch
 		{
 			readonly CancellationTokenSource cts = new CancellationTokenSource();
@@ -264,7 +295,7 @@ namespace ICSharpCode.ILSpy
 			readonly SearchMode searchMode;
 			readonly Language language;
 			readonly ApiVisibility apiVisibility;
-			public readonly IProducerConsumerCollection<SearchResult> resultQueue = new ConcurrentQueue<SearchResult>(); 
+			public readonly IProducerConsumerCollection<SearchResult> resultQueue = new ConcurrentQueue<SearchResult>();
 
 			public RunningSearch(LoadedAssembly[] assemblies, string searchTerm, SearchMode searchMode, Language language, ApiVisibility apiVisibility)
 			{
@@ -274,37 +305,45 @@ namespace ICSharpCode.ILSpy
 				this.searchMode = searchMode;
 				this.apiVisibility = apiVisibility;
 			}
-			
+
 			public void Cancel()
 			{
 				cts.Cancel();
 			}
-			
+
 			public async Task Run()
 			{
-				try {
+				try
+				{
 					await Task.Factory.StartNew(() => {
 						var searcher = GetSearchStrategy();
-						try {
-							foreach (var loadedAssembly in assemblies) {
+						try
+						{
+							foreach (var loadedAssembly in assemblies)
+							{
 								var module = loadedAssembly.GetPEFileOrNull();
 								if (module == null)
 									continue;
 								searcher.Search(module, cts.Token);
 							}
-						} catch (OperationCanceledException) {
+						}
+						catch (OperationCanceledException)
+						{
 							// ignore cancellation
 						}
 
 					}, cts.Token, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
-				} catch (TaskCanceledException) {
+				}
+				catch (TaskCanceledException)
+				{
 					// ignore cancellation
 				}
 			}
 
 			AbstractSearchStrategy GetSearchStrategy()
 			{
-				if (searchTerm.Length == 1) {
+				if (searchTerm.Length == 1)
+				{
 					if (searchTerm[0].StartsWith("tm:", StringComparison.Ordinal))
 						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(3), resultQueue);
 
@@ -381,7 +420,7 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = nameof(Properties.Resources._View), Header =nameof(Properties.Resources.Search), MenuIcon = "Images/Search", MenuCategory = nameof(Properties.Resources.View), MenuOrder = 100)]
+	[ExportMainMenuCommand(Menu = nameof(Properties.Resources._View), Header = nameof(Properties.Resources.Search), MenuIcon = "Images/Search", MenuCategory = nameof(Properties.Resources.View), MenuOrder = 100)]
 	[ExportToolbarCommand(ToolTip = nameof(Properties.Resources.SearchCtrlShiftFOrCtrlE), ToolbarIcon = "Images/Search", ToolbarCategory = nameof(Properties.Resources.View), ToolbarOrder = 100)]
 	sealed class ShowSearchCommand : CommandWrapper
 	{

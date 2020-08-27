@@ -32,73 +32,73 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 		/// Gets the start offset of the marked text region.
 		/// </summary>
 		int StartOffset { get; }
-		
+
 		/// <summary>
 		/// Gets the end offset of the marked text region.
 		/// </summary>
 		int EndOffset { get; }
-		
+
 		/// <summary>
 		/// Gets the length of the marked region.
 		/// </summary>
 		int Length { get; }
-		
+
 		/// <summary>
 		/// Deletes the text marker.
 		/// </summary>
 		void Delete();
-		
+
 		/// <summary>
 		/// Gets whether the text marker was deleted.
 		/// </summary>
 		bool IsDeleted { get; }
-		
+
 		/// <summary>
 		/// Event that occurs when the text marker is deleted.
 		/// </summary>
 		event EventHandler Deleted;
-		
+
 		/// <summary>
 		/// Gets/Sets the background color.
 		/// </summary>
 		Color? BackgroundColor { get; set; }
-		
+
 		/// <summary>
 		/// Gets/Sets the foreground color.
 		/// </summary>
 		Color? ForegroundColor { get; set; }
-		
+
 		/// <summary>
 		/// Gets/Sets the font weight.
 		/// </summary>
 		FontWeight? FontWeight { get; set; }
-		
+
 		/// <summary>
 		/// Gets/Sets the font style.
 		/// </summary>
 		FontStyle? FontStyle { get; set; }
-		
+
 		/// <summary>
 		/// Gets/Sets the type of the marker. Use TextMarkerType.None for normal markers.
 		/// </summary>
 		TextMarkerTypes MarkerTypes { get; set; }
-		
+
 		/// <summary>
 		/// Gets/Sets the color of the marker.
 		/// </summary>
 		Color MarkerColor { get; set; }
-		
+
 		/// <summary>
 		/// Gets/Sets an object with additional data for this text marker.
 		/// </summary>
 		object Tag { get; set; }
-		
+
 		/// <summary>
 		/// Gets/Sets an object that will be displayed as tooltip in the text editor.
 		/// </summary>
 		object ToolTip { get; set; }
 	}
-	
+
 	[Flags]
 	public enum TextMarkerTypes
 	{
@@ -118,7 +118,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 		/// Dotted underline.
 		/// </summary>
 		DottedUnderline = 0x004,
-		
+
 		/// <summary>
 		/// Horizontal line in the scroll bar.
 		/// </summary>
@@ -136,7 +136,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 		/// </summary>
 		CircleInScrollBar = 0x1000
 	}
-	
+
 	public interface ITextMarkerService
 	{
 		/// <summary>
@@ -144,22 +144,22 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 		/// you need to set one of the Color properties to make it visible.
 		/// </summary>
 		ITextMarker Create(int startOffset, int length);
-		
+
 		/// <summary>
 		/// Gets the list of text markers.
 		/// </summary>
 		IEnumerable<ITextMarker> TextMarkers { get; }
-		
+
 		/// <summary>
 		/// Removes the specified text marker.
 		/// </summary>
 		void Remove(ITextMarker marker);
-		
+
 		/// <summary>
 		/// Removes all text markers that match the condition.
 		/// </summary>
 		void RemoveAll(Predicate<ITextMarker> predicate);
-		
+
 		/// <summary>
 		/// Finds all text markers at the specified offset.
 		/// </summary>

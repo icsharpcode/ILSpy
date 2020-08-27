@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Threading;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -48,10 +49,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			AssemblyList = assemblyList;
 			AnalyzedSymbol = entity;
-			if (entity is ITypeDefinition type) {
+			if (entity is ITypeDefinition type)
+			{
 				typeScope = type;
 				effectiveAccessibility = DetermineEffectiveAccessibility(ref typeScope);
-			} else {
+			}
+			else
+			{
 				typeScope = entity.DeclaringTypeDefinition;
 				effectiveAccessibility = DetermineEffectiveAccessibility(ref typeScope, entity.Accessibility);
 			}
@@ -71,23 +75,31 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public IEnumerable<PEFile> GetAllModules()
 		{
-			foreach (var module in AssemblyList.GetAssemblies()) {
+			foreach (var module in AssemblyList.GetAssemblies())
+			{
 				var file = module.GetPEFileOrNull();
-				if (file == null) continue;
+				if (file == null)
+					continue;
 				yield return file;
 			}
 		}
 
 		public IEnumerable<ITypeDefinition> GetTypesInScope(CancellationToken ct)
 		{
-			if (IsLocal) {
-				foreach (var type in TreeTraversal.PreOrder(typeScope, t => t.NestedTypes)) {
+			if (IsLocal)
+			{
+				foreach (var type in TreeTraversal.PreOrder(typeScope, t => t.NestedTypes))
+				{
 					yield return type;
 				}
-			} else {
-				foreach (var module in GetModulesInScope(ct)) {
+			}
+			else
+			{
+				foreach (var module in GetModulesInScope(ct))
+				{
 					var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
-					foreach (var type in typeSystem.MainModule.TypeDefinitions) {
+					foreach (var type in typeSystem.MainModule.TypeDefinitions)
+					{
 						yield return type;
 					}
 				}
@@ -97,7 +109,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 		static Accessibility DetermineEffectiveAccessibility(ref ITypeDefinition typeScope, Accessibility memberAccessibility = Accessibility.Public)
 		{
 			Accessibility accessibility = memberAccessibility;
-			while (typeScope.DeclaringTypeDefinition != null && !accessibility.LessThanOrEqual(Accessibility.Private)) {
+			while (typeScope.DeclaringTypeDefinition != null && !accessibility.LessThanOrEqual(Accessibility.Private))
+			{
 				accessibility = accessibility.Intersect(typeScope.Accessibility);
 				typeScope = typeScope.DeclaringTypeDefinition;
 			}
@@ -122,9 +135,11 @@ namespace ICSharpCode.ILSpy.Analyzers
 			toWalkFiles.Push(self);
 			checkedFiles.Add(self);
 
-			do {
+			do
+			{
 				PEFile curFile = toWalkFiles.Pop();
-				foreach (var assembly in AssemblyList.GetAssemblies()) {
+				foreach (var assembly in AssemblyList.GetAssemblies())
+				{
 					ct.ThrowIfCancellationRequested();
 					bool found = false;
 					var module = assembly.GetPEFileOrNull();
@@ -133,15 +148,19 @@ namespace ICSharpCode.ILSpy.Analyzers
 					if (checkedFiles.Contains(module))
 						continue;
 					var resolver = assembly.GetAssemblyResolver();
-					foreach (var reference in module.AssemblyReferences) {
-						using (LoadedAssembly.DisableAssemblyLoad(AssemblyList)) {
-							if (resolver.Resolve(reference) == curFile) {
+					foreach (var reference in module.AssemblyReferences)
+					{
+						using (LoadedAssembly.DisableAssemblyLoad(AssemblyList))
+						{
+							if (resolver.Resolve(reference) == curFile)
+							{
 								found = true;
 								break;
 							}
 						}
 					}
-					if (found && checkedFiles.Add(module)) {
+					if (found && checkedFiles.Add(module))
+					{
 						if (ModuleReferencesScopeType(module.Metadata, reflectionTypeScopeName, typeScope.Namespace))
 							yield return module;
 						if (ModuleForwardsScopeType(module.Metadata, reflectionTypeScopeName, typeScope.Namespace))
@@ -161,18 +180,22 @@ namespace ICSharpCode.ILSpy.Analyzers
 			var attributes = self.Metadata.CustomAttributes.Select(h => self.Metadata.GetCustomAttribute(h))
 				.Where(ca => ca.GetAttributeType(self.Metadata).GetFullTypeName(self.Metadata).ToString() == "System.Runtime.CompilerServices.InternalsVisibleToAttribute");
 			var friendAssemblies = new HashSet<string>();
-			foreach (var attribute in attributes) {
+			foreach (var attribute in attributes)
+			{
 				string assemblyName = attribute.DecodeValue(typeProvider).FixedArguments[0].Value as string;
 				assemblyName = assemblyName.Split(',')[0]; // strip off any public key info
 				friendAssemblies.Add(assemblyName);
 			}
 
-			if (friendAssemblies.Count > 0) {
+			if (friendAssemblies.Count > 0)
+			{
 				IEnumerable<LoadedAssembly> assemblies = AssemblyList.GetAssemblies();
 
-				foreach (var assembly in assemblies) {
+				foreach (var assembly in assemblies)
+				{
 					ct.ThrowIfCancellationRequested();
-					if (friendAssemblies.Contains(assembly.ShortName)) {
+					if (friendAssemblies.Contains(assembly.ShortName))
+					{
 						var module = assembly.GetPEFileOrNull();
 						if (module == null)
 							continue;
@@ -186,9 +209,11 @@ namespace ICSharpCode.ILSpy.Analyzers
 		bool ModuleReferencesScopeType(MetadataReader metadata, string typeScopeName, string typeScopeNamespace)
 		{
 			bool hasRef = false;
-			foreach (var h in metadata.TypeReferences) {
+			foreach (var h in metadata.TypeReferences)
+			{
 				var typeRef = metadata.GetTypeReference(h);
-				if (metadata.StringComparer.Equals(typeRef.Name, typeScopeName) && metadata.StringComparer.Equals(typeRef.Namespace, typeScopeNamespace)) {
+				if (metadata.StringComparer.Equals(typeRef.Name, typeScopeName) && metadata.StringComparer.Equals(typeRef.Namespace, typeScopeNamespace))
+				{
 					hasRef = true;
 					break;
 				}
@@ -199,9 +224,11 @@ namespace ICSharpCode.ILSpy.Analyzers
 		bool ModuleForwardsScopeType(MetadataReader metadata, string typeScopeName, string typeScopeNamespace)
 		{
 			bool hasForward = false;
-			foreach (var h in metadata.ExportedTypes) {
+			foreach (var h in metadata.ExportedTypes)
+			{
 				var exportedType = metadata.GetExportedType(h);
-				if (exportedType.IsForwarder && metadata.StringComparer.Equals(exportedType.Name, typeScopeName) && metadata.StringComparer.Equals(exportedType.Namespace, typeScopeNamespace)) {
+				if (exportedType.IsForwarder && metadata.StringComparer.Equals(exportedType.Name, typeScopeName) && metadata.StringComparer.Equals(exportedType.Namespace, typeScopeNamespace))
+				{
 					hasForward = true;
 					break;
 				}

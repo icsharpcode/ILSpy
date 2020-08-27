@@ -10,7 +10,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public static async IAsyncEnumerable<int> CountTo(int until)
 		{
-			for (int i = 0; i < until; i++) {
+			for (int i = 0; i < until; i++)
+			{
 				yield return i;
 				await Task.Delay(10);
 			}
@@ -24,14 +25,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static async IAsyncEnumerator<int> InfiniteLoop()
 		{
-			while (true) {
+			while (true)
+			{
 			}
 			yield break;
 		}
 
 		public static async IAsyncEnumerable<int> InfiniteLoopWithAwait()
 		{
-			while (true) {
+			while (true)
+			{
 				await Task.Delay(10);
 			}
 			yield break;
@@ -39,11 +42,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async IAsyncEnumerable<int> AwaitInFinally()
 		{
-			try {
+			try
+			{
 				Console.WriteLine("try");
 				yield return 1;
 				Console.WriteLine("end try");
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("finally");
 				await Task.Yield();
 				Console.WriteLine("end finally");

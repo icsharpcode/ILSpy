@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static bool? SwitchOverNullableEnum(State? state)
 		{
-			return state switch {
+			return state switch
+			{
 				State.False => false,
 				State.True => true,
 				State.Null => null,
@@ -42,7 +43,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SparseIntegerSwitch(int i)
 		{
 			Console.WriteLine("SparseIntegerSwitch: " + i);
-			return i switch {
+			return i switch
+			{
 				-10000000 => "-10 mln",
 				-100 => "-hundred",
 				-1 => "-1",
@@ -61,7 +63,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static bool SparseIntegerSwitch3(int i)
 		{
 			// not using a switch expression because we'd have to duplicate the 'true' branch
-			switch (i) {
+			switch (i)
+			{
 				case 0:
 				case 10:
 				case 11:
@@ -77,7 +80,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverNullableInt(int? i, int? j)
 		{
-			return (i + j) switch {
+			return (i + j) switch
+			{
 				null => "null",
 				0 => "zero",
 				5 => "five",
@@ -88,7 +92,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchOverInt(int i)
 		{
-			Console.WriteLine(i switch {
+			Console.WriteLine(i switch
+			{
 				0 => "zero",
 				5 => "five",
 				10 => "ten",
@@ -103,7 +108,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SwitchOverString1(string text)
 		{
 			Console.WriteLine("SwitchOverString1: " + text);
-			return text switch {
+			return text switch
+			{
 				"First case" => "Text1",
 				"Second case" => "Text2",
 				"Third case" => "Text3",
@@ -119,7 +125,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Console.WriteLine("SwitchOverString1: " + text);
 			// Cannot use switch expression, because "return Text2;" would need to be duplicated
-			switch (text) {
+			switch (text)
+			{
 				case "First case":
 					return "Text1";
 				case "Second case":

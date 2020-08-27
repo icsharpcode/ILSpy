@@ -165,11 +165,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					let pname = pi.Name
 					let pvalue = pi.GetValue(customers, null)
 					select new HbmParam {
-							Name = pname,
-							Text = new string[1] {
+						Name = pname,
+						Text = new string[1] {
 								(pvalue == null) ? "null" : pvalue.ToString()
 							}
-						}).ToArray();
+					}).ToArray();
 		}
 
 		public object Join()

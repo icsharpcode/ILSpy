@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -26,17 +27,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public ByReferenceType(IType elementType) : base(elementType)
 		{
 		}
-		
+
 		public override TypeKind Kind {
 			get { return TypeKind.ByReference; }
 		}
-		
+
 		public override string NameSuffix {
 			get {
 				return "&";
 			}
 		}
-		
+
 		public override bool? IsReferenceType {
 			get { return null; }
 		}
@@ -47,18 +48,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return elementType.GetHashCode() ^ 91725813;
 		}
-		
+
 		public override bool Equals(IType other)
 		{
 			ByReferenceType a = other as ByReferenceType;
 			return a != null && elementType.Equals(a.elementType);
 		}
-		
+
 		public override IType AcceptVisitor(TypeVisitor visitor)
 		{
 			return visitor.VisitByReferenceType(this);
 		}
-		
+
 		public override IType VisitChildren(TypeVisitor visitor)
 		{
 			IType e = elementType.AcceptVisitor(visitor);
@@ -68,38 +69,38 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new ByReferenceType(e);
 		}
 	}
-	
+
 	[Serializable]
 	public sealed class ByReferenceTypeReference : ITypeReference, ISupportsInterning
 	{
 		readonly ITypeReference elementType;
-		
+
 		public ByReferenceTypeReference(ITypeReference elementType)
 		{
 			if (elementType == null)
 				throw new ArgumentNullException(nameof(elementType));
 			this.elementType = elementType;
 		}
-		
+
 		public ITypeReference ElementType {
 			get { return elementType; }
 		}
-		
+
 		public IType Resolve(ITypeResolveContext context)
 		{
 			return new ByReferenceType(elementType.Resolve(context));
 		}
-		
+
 		public override string ToString()
 		{
 			return elementType.ToString() + "&";
 		}
-		
+
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
 			return elementType.GetHashCode() ^ 91725814;
 		}
-		
+
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
 			ByReferenceTypeReference brt = other as ByReferenceTypeReference;

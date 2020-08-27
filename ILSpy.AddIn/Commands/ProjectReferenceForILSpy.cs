@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using EnvDTE;
+
 using ICSharpCode.Decompiler.Metadata;
+
 using Microsoft.VisualStudio.Shell;
+
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
@@ -35,11 +39,13 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			if (itemData is ProjectItem projectItem) {
+			if (itemData is ProjectItem projectItem)
+			{
 				var properties = Utils.GetProperties(projectItem.Properties, "FusionName", "ResolvedPath");
 				string fusionName = properties[0] as string;
 				string resolvedPath = properties[1] as string;
-				if ((fusionName != null) || (resolvedPath != null)) {
+				if ((fusionName != null) || (resolvedPath != null))
+				{
 					return new ProjectReferenceForILSpy(projectItem, fusionName, resolvedPath);
 				}
 			}
@@ -57,8 +63,10 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			string fileName = projectItem.ContainingProject?.FileName;
-			if (!string.IsNullOrEmpty(fileName)) {
-				if (projectReferences.TryGetValue(projectItem.Name, out DetectedReference path)) {
+			if (!string.IsNullOrEmpty(fileName))
+			{
+				if (projectReferences.TryGetValue(projectItem.Name, out DetectedReference path))
+				{
 					return new ILSpyParameters(new[] { path.AssemblyFile });
 				}
 			}
@@ -72,9 +80,12 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// <returns>Parameters object or <c>null, if not applicable.</c></returns>
 		public ILSpyParameters GetILSpyParameters()
 		{
-			if (resolvedPath != null) {
+			if (resolvedPath != null)
+			{
 				return new ILSpyParameters(new[] { $"{resolvedPath}" });
-			} else if (!string.IsNullOrWhiteSpace(fusionName)) {
+			}
+			else if (!string.IsNullOrWhiteSpace(fusionName))
+			{
 				return new ILSpyParameters(new string[] { UniversalAssemblyResolver.GetAssemblyInGac(Decompiler.Metadata.AssemblyNameReference.Parse(fusionName)) });
 			}
 

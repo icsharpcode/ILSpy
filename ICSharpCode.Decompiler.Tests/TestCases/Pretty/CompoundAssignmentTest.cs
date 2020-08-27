@@ -45,12 +45,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public bool HasIndex;
 			public int Field;
 		}
-		
+
 		public class MutableClass
 		{
 			public int Field;
 			public short ShortField;
-			
+
 			public int Property {
 				get;
 				set;
@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				get;
 				set;
 			}
-			
+
 			public uint this[string name] {
 				get {
 					return 0u;
@@ -500,27 +500,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return new MutableClass();
 		}
-		
+
 		private int[,] Array()
 		{
 			return null;
 		}
-		
+
 		private unsafe int* GetPointer()
 		{
 			return null;
 		}
-		
+
 		public int GetIndex()
 		{
 			return new Random().Next(0, 100);
 		}
-		
+
 		public int[] GetArray()
 		{
 			throw new NotImplementedException();
 		}
-		
+
 		public int GetValue(int value)
 		{
 			return value;
@@ -530,7 +530,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return a == 'A';
 		}
-		
+
 		public void Int32_Local_Add(int i)
 		{
 			i++;
@@ -539,7 +539,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			i += 5;
 			Console.WriteLine(i += 5);
 		}
-		
+
 		public void Int32_Local_Sub(int i)
 		{
 			i--;
@@ -548,61 +548,61 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			i -= 5;
 			Console.WriteLine(i -= 5);
 		}
-		
+
 		public void Int32_Local_Mul(int i)
 		{
 			i *= 5;
 			Console.WriteLine(i *= 5);
 		}
-		
+
 		public void Int32_Local_Div(int i)
 		{
 			i /= 5;
 			Console.WriteLine(i /= 5);
 		}
-		
+
 		public void Int32_Local_Rem(int i)
 		{
 			i %= 5;
 			Console.WriteLine(i %= 5);
 		}
-		
+
 		public void Int32_Local_BitAnd(int i)
 		{
 			i &= 5;
 			Console.WriteLine(i &= 5);
 		}
-		
+
 		public void Int32_Local_BitOr(int i)
 		{
 			i |= 5;
 			Console.WriteLine(i |= 5);
 		}
-		
+
 		public void Int32_Local_BitXor(int i)
 		{
 			i ^= 5;
 			Console.WriteLine(i ^= 5);
 		}
-		
+
 		public void Int32_Local_ShiftLeft(int i)
 		{
 			i <<= 5;
 			Console.WriteLine(i <<= 5);
 		}
-		
+
 		public void Int32_Local_ShiftRight(int i)
 		{
 			i >>= 5;
 			Console.WriteLine(i >>= 5);
 		}
-		
+
 		public void IntegerWithInline(int i)
 		{
 			Console.WriteLine(i += 5);
 			Console.WriteLine(i);
 		}
-		
+
 		public void IntegerField(int i)
 		{
 			Console.WriteLine(test1 += i);
@@ -610,27 +610,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(test1 -= i);
 			Console.WriteLine(test1);
 		}
-		
+
 		public void Array(int i)
 		{
 			Console.WriteLine(array1[i] += i);
 			Console.WriteLine(array1[i * 2] += i * 2);
 		}
-		
+
 		public int ArrayUsageWithMethods()
 		{
 			return GetArray()[GetIndex()]++;
 		}
-		
+
 		public void NestedField()
 		{
-			if (field1.HasIndex) {
+			if (field1.HasIndex)
+			{
 				Console.WriteLine(field1.Field *= 2);
 				field1.Field++;
 				Console.WriteLine(field1.Field++);
 			}
 		}
-		
+
 		public void Enum()
 		{
 			enumField |= MyEnum.Two;
@@ -651,7 +652,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return i + ++j;
 		}
-		
+
 		public int PreIncrementArrayElement(int[] array, int pos)
 		{
 			return --array[pos];
@@ -706,7 +707,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return ++M().Field;
 		}
-		
+
 		public int PostIncrementInstanceField()
 		{
 			return M().Field++;
@@ -731,7 +732,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return ++m.Field;
 		}
-		
+
 		public int PostIncrementInstanceField2(MutableClass m)
 		{
 			return m.Field++;
@@ -4587,9 +4588,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			// The 'chars[i]' result is stored in a temporary, and both branches use the
 			// same temporary. In order to inline the generated value-type temporary, we
 			// need to split it, even though it has the address taken for the ToString() call.
-			if (flag) {
+			if (flag)
+			{
 				strings[1] += chars[i];
-			} else {
+			}
+			else
+			{
 				strings[0] += chars[i];
 			}
 		}

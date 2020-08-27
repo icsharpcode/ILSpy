@@ -17,11 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Windows.Input;
+
 using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = nameof(Resources._File),  Header = nameof(Resources._SaveCode),  MenuIcon = "Images/Save", MenuCategory = nameof(Resources.Save),  MenuOrder = 0)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._File), Header = nameof(Resources._SaveCode), MenuIcon = "Images/Save", MenuCategory = nameof(Resources.Save), MenuOrder = 0)]
 	sealed class SaveCommand : CommandWrapper
 	{
 		public SaveCommand()

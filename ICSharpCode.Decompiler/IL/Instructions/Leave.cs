@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL
 	partial class Leave : ILInstruction, IBranchOrLeaveInstruction
 	{
 		BlockContainer targetContainer;
-		
+
 		public Leave(BlockContainer targetContainer, ILInstruction value = null) : base(OpCode.Leave)
 		{
 			// Note: ILReader will create Leave instructions with targetContainer==null to represent 'endfinally',
@@ -41,18 +41,18 @@ namespace ICSharpCode.Decompiler.IL
 			this.targetContainer = targetContainer;
 			this.Value = value ?? new Nop();
 		}
-		
+
 		protected override InstructionFlags ComputeFlags()
 		{
 			return value.Flags | InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
 		}
-		
+
 		public override InstructionFlags DirectFlags {
 			get {
 				return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
 			}
 		}
-		
+
 		public BlockContainer TargetContainer {
 			get { return targetContainer; }
 			set {
@@ -63,25 +63,25 @@ namespace ICSharpCode.Decompiler.IL
 					targetContainer.LeaveCount++;
 			}
 		}
-		
+
 		protected override void Connected()
 		{
 			base.Connected();
 			if (targetContainer != null)
 				targetContainer.LeaveCount++;
 		}
-		
+
 		protected override void Disconnected()
 		{
 			base.Disconnected();
 			if (targetContainer != null)
 				targetContainer.LeaveCount--;
 		}
-		
+
 		public string TargetLabel {
 			get { return targetContainer?.EntryPoint != null ? targetContainer.EntryPoint.Label : string.Empty; }
 		}
-		
+
 		/// <summary>
 		/// Gets whether the leave instruction is leaving the whole ILFunction.
 		/// (TargetContainer == main container of the function).
@@ -108,12 +108,13 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(targetContainer));
 			Debug.Assert(phase <= ILPhase.InILReader || phase == ILPhase.InAsyncAwait || value.ResultType == targetContainer.ResultType);
 		}
-		
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			if (targetContainer != null) {
+			if (targetContainer != null)
+			{
 				output.Write(' ');
 				output.WriteLocalReference(TargetLabel, targetContainer);
 				output.Write(" (");

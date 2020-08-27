@@ -35,7 +35,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public static object GetDecimalConstantValue(MetadataModule module, CustomAttributeHandleCollection attributeHandles)
 		{
 			var metadata = module.metadata;
-			foreach (var attributeHandle in attributeHandles) {
+			foreach (var attributeHandle in attributeHandles)
+			{
 				var attribute = metadata.GetCustomAttribute(attributeHandle);
 				if (attribute.IsKnownAttribute(metadata, KnownAttribute.DecimalConstant))
 					return TryDecodeDecimalConstantAttribute(module, attribute);
@@ -52,17 +53,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// Both of these invoke the Decimal constructor (int lo, int mid, int hi, bool isNegative, byte scale) with explicit argument conversions if required.
 			if (!(attrValue.FixedArguments[0].Value is byte scale && attrValue.FixedArguments[1].Value is byte sign))
 				return null;
-			unchecked {
+			unchecked
+			{
 				if (attrValue.FixedArguments[2].Value is uint hi
 					&& attrValue.FixedArguments[3].Value is uint mid
-					&& attrValue.FixedArguments[4].Value is uint lo) {
+					&& attrValue.FixedArguments[4].Value is uint lo)
+				{
 					return new decimal((int)lo, (int)mid, (int)hi, sign != 0, scale);
 				}
 			}
 			{
 				if (attrValue.FixedArguments[2].Value is int hi
 					&& attrValue.FixedArguments[3].Value is int mid
-					&& attrValue.FixedArguments[4].Value is int lo) {
+					&& attrValue.FixedArguments[4].Value is int lo)
+				{
 					return new decimal(lo, mid, hi, sign != 0, scale);
 				}
 			}

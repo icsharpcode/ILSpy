@@ -18,6 +18,7 @@
 
 using System.Linq;
 using System.Reflection.Metadata;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -28,7 +29,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!context.Settings.AsyncAwait)
 				return;
-			foreach (var inst in function.Descendants.OfType<CallInstruction>()) {
+			foreach (var inst in function.Descendants.OfType<CallInstruction>())
+			{
 				Run(inst, context);
 			}
 		}
@@ -63,7 +65,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var block = blockContainer.Blocks[0];
 			Call call;
 			ILInstruction returnValue;
-			switch (block.Instructions.Count) {
+			switch (block.Instructions.Count)
+			{
 				case 1:
 					// leave IL_0000 (call Test(ldloc this, ldloc A_1))
 					if (!block.Instructions[0].MatchLeave(blockContainer, out returnValue))
@@ -82,18 +85,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				default:
 					return;
 			}
-			if (call == null || call.Method.IsConstructor) {
+			if (call == null || call.Method.IsConstructor)
+			{
 				return;
 			}
-			if (call.Method.IsStatic || call.Method.Parameters.Count != inst.Method.Parameters.Count) {
+			if (call.Method.IsStatic || call.Method.Parameters.Count != inst.Method.Parameters.Count)
+			{
 				return;
 			}
 			// check if original arguments are only correct ldloc calls
-			for (int i = 0; i < call.Arguments.Count; i++) {
+			for (int i = 0; i < call.Arguments.Count; i++)
+			{
 				var originalArg = call.Arguments[i];
 				if (!originalArg.MatchLdLoc(out ILVariable var) ||
 					var.Kind != VariableKind.Parameter ||
-					var.Index != i - 1) {
+					var.Index != i - 1)
+				{
 					return;
 				}
 			}
@@ -112,7 +119,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool IsDefinedInCurrentOrOuterClass(IMethod method, ITypeDefinition declaringTypeDefinition)
 		{
-			while (declaringTypeDefinition != null) {
+			while (declaringTypeDefinition != null)
+			{
 				if (method.DeclaringTypeDefinition == declaringTypeDefinition)
 					return true;
 				declaringTypeDefinition = declaringTypeDefinition.DeclaringTypeDefinition;

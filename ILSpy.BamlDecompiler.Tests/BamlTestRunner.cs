@@ -22,9 +22,11 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Xml.Linq;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
 using ICSharpCode.Decompiler.Util;
+
 using NUnit.Framework;
 
 namespace ILSpy.BamlDecompiler.Tests
@@ -151,7 +153,8 @@ namespace ILSpy.BamlDecompiler.Tests
 
 		void RunTest(string name, string asmPath, string sourcePath)
 		{
-			using (var fileStream = new FileStream(asmPath, FileMode.Open, FileAccess.Read)) {
+			using (var fileStream = new FileStream(asmPath, FileMode.Open, FileAccess.Read))
+			{
 				var module = new PEFile(asmPath, fileStream);
 				var resolver = new UniversalAssemblyResolver(asmPath, false, module.Reader.DetectTargetFrameworkId());
 				resolver.RemoveSearchDirectory(".");
@@ -168,7 +171,8 @@ namespace ILSpy.BamlDecompiler.Tests
 		void XamlIsEqual(string input1, string input2)
 		{
 			var diff = new StringWriter();
-			if (!CodeComparer.Compare(input1, input2, diff, NormalizeLine)) {
+			if (!CodeComparer.Compare(input1, input2, diff, NormalizeLine))
+			{
 				Assert.Fail(diff.ToString());
 			}
 		}
@@ -180,18 +184,25 @@ namespace ILSpy.BamlDecompiler.Tests
 
 		Stream LoadBaml(Resource res, string name)
 		{
-			if (res.ResourceType != ResourceType.Embedded) return null;
+			if (res.ResourceType != ResourceType.Embedded)
+				return null;
 			Stream s = res.TryOpenStream();
-			if (s == null) return null;
+			if (s == null)
+				return null;
 			s.Position = 0;
 			ResourcesFile resources;
-			try {
+			try
+			{
 				resources = new ResourcesFile(s);
-			} catch (ArgumentException) {
+			}
+			catch (ArgumentException)
+			{
 				return null;
 			}
-			foreach (var entry in resources.OrderBy(e => e.Key)) {
-				if (entry.Key == name) {
+			foreach (var entry in resources.OrderBy(e => e.Key))
+			{
+				if (entry.Key == name)
+				{
 					if (entry.Value is Stream)
 						return (Stream)entry.Value;
 					if (entry.Value is byte[])

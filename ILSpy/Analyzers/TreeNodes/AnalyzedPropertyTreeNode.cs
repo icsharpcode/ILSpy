@@ -18,6 +18,7 @@
 
 using System;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -50,9 +51,11 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			//	this.Children.Add(new AnalyzedPropertyAccessorTreeNode(accessor, null));
 
 			var analyzers = App.ExportProvider.GetExports<IAnalyzer, IAnalyzerMetadata>("Analyzer");
-			foreach (var lazy in analyzers.OrderBy(item => item.Metadata.Order)) {
+			foreach (var lazy in analyzers.OrderBy(item => item.Metadata.Order))
+			{
 				var analyzer = lazy.Value;
-				if (analyzer.Show(analyzedProperty)) {
+				if (analyzer.Show(analyzedProperty))
+				{
 					this.Children.Add(new AnalyzerSearchTreeNode(analyzedProperty, analyzer, lazy.Metadata.Header));
 				}
 			}

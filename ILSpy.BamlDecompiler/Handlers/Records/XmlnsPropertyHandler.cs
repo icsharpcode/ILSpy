@@ -25,16 +25,22 @@ using System.Diagnostics;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
+
 using ILSpy.BamlDecompiler.Baml;
 using ILSpy.BamlDecompiler.Xaml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class XmlnsPropertyHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class XmlnsPropertyHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.XmlnsProperty;
 
-		IEnumerable<string> ResolveCLRNamespaces(IModule assembly, string ns) {
-			foreach (var attr in assembly.GetAssemblyAttributes().Where(a => a.AttributeType.FullName == "System.Windows.Markup.XmlnsDefinitionAttribute")) {
+		IEnumerable<string> ResolveCLRNamespaces(IModule assembly, string ns)
+		{
+			foreach (var attr in assembly.GetAssemblyAttributes().Where(a => a.AttributeType.FullName == "System.Windows.Markup.XmlnsDefinitionAttribute"))
+			{
 				Debug.Assert(attr.FixedArguments.Length == 2);
 
 				var xmlNs = attr.FixedArguments[0].Value;
@@ -46,13 +52,16 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			}
 		}
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (XmlnsPropertyRecord)((BamlRecordNode)node).Record;
-			foreach (var asmId in record.AssemblyIds) {
+			foreach (var asmId in record.AssemblyIds)
+			{
 				var assembly = ctx.Baml.ResolveAssembly(asmId);
 				ctx.XmlNs.Add(new NamespaceMap(record.Prefix, assembly.FullAssemblyName, record.XmlNamespace));
 
-				if (assembly.Assembly?.IsMainModule == true) {
+				if (assembly.Assembly?.IsMainModule == true)
+				{
 					foreach (var clrNs in ResolveCLRNamespaces(assembly.Assembly, record.XmlNamespace))
 						ctx.XmlNs.Add(new NamespaceMap(record.Prefix, assembly.FullAssemblyName, record.XmlNamespace, clrNs));
 				}

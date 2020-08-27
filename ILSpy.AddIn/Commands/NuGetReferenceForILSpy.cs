@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using EnvDTE;
+
 using Microsoft.VisualStudio.Shell;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
@@ -29,9 +31,11 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			if (itemData is ProjectItem projectItem) {
+			if (itemData is ProjectItem projectItem)
+			{
 				var properties = Utils.GetProperties(projectItem.Properties, "Type");
-				if ((properties[0] as string) == "Package") {
+				if ((properties[0] as string) == "Package")
+				{
 					return new NuGetReferenceForILSpy(projectItem);
 				}
 			}
@@ -48,7 +52,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			var properties = Utils.GetProperties(projectItem.Properties, "Name", "Version", "Path");
-			if (properties[0] != null && properties[1] != null && properties[2] != null) {
+			if (properties[0] != null && properties[1] != null && properties[2] != null)
+			{
 				return new ILSpyParameters(new[] { $"{properties[2]}\\{properties[0]}.{properties[1]}.nupkg" });
 			}
 

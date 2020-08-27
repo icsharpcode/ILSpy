@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
@@ -29,42 +30,42 @@ namespace ICSharpCode.Decompiler.Semantics
 	public class ResolveResult
 	{
 		readonly IType type;
-		
+
 		public ResolveResult(IType type)
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 			this.type = type;
 		}
-		
+
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1721:PropertyNamesShouldNotMatchGetMethods",
-		                                                 Justification = "Unrelated to object.GetType()")]
+														 Justification = "Unrelated to object.GetType()")]
 		public IType Type {
 			get { return type; }
 		}
-		
+
 		public virtual bool IsCompileTimeConstant {
 			get { return false; }
 		}
-		
+
 		public virtual object ConstantValue {
 			get { return null; }
 		}
-		
+
 		public virtual bool IsError {
 			get { return false; }
 		}
-		
+
 		public override string ToString()
 		{
 			return "[" + GetType().Name + " " + type + "]";
 		}
-		
+
 		public virtual IEnumerable<ResolveResult> GetChildResults()
 		{
 			return Enumerable.Empty<ResolveResult>();
 		}
-		
+
 		public virtual ResolveResult ShallowClone()
 		{
 			return (ResolveResult)MemberwiseClone();

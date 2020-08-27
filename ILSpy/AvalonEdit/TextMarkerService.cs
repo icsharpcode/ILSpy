@@ -22,6 +22,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
+
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 
@@ -35,7 +36,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 	{
 		TextSegmentCollection<TextMarker> markers;
 		TextView textView;
-		
+
 		public TextMarkerService(TextView textView)
 		{
 			if (textView == null)
@@ -52,25 +53,25 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			else
 				markers = null;
 		}
-		
+
 		#region ITextMarkerService
 		public ITextMarker Create(int startOffset, int length)
 		{
 			if (markers == null)
 				throw new InvalidOperationException("Cannot create a marker when not attached to a document");
-			
+
 			int textLength = textView.Document.TextLength;
 			if (startOffset < 0 || startOffset > textLength)
 				throw new ArgumentOutOfRangeException(nameof(startOffset), startOffset, "Value must be between 0 and " + textLength);
 			if (length < 0 || startOffset + length > textLength)
 				throw new ArgumentOutOfRangeException(nameof(length), length, "length must not be negative and startOffset+length must not be after the end of the document");
-			
+
 			TextMarker m = new TextMarker(this, startOffset, length);
 			markers.Add(m);
 			// no need to mark segment for redraw: the text marker is invisible until a property is set
 			return m;
 		}
-		
+
 		public IEnumerable<ITextMarker> GetMarkersAtOffset(int offset)
 		{
 			if (markers == null)
@@ -78,34 +79,37 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			else
 				return markers.FindSegmentsContaining(offset);
 		}
-		
+
 		public IEnumerable<ITextMarker> TextMarkers {
 			get { return markers ?? Enumerable.Empty<ITextMarker>(); }
 		}
-		
+
 		public void RemoveAll(Predicate<ITextMarker> predicate)
 		{
 			if (predicate == null)
 				throw new ArgumentNullException(nameof(predicate));
-			if (markers != null) {
-				foreach (TextMarker m in markers.ToArray()) {
+			if (markers != null)
+			{
+				foreach (TextMarker m in markers.ToArray())
+				{
 					if (predicate(m))
 						Remove(m);
 				}
 			}
 		}
-		
+
 		public void Remove(ITextMarker marker)
 		{
 			if (marker == null)
 				throw new ArgumentNullException(nameof(marker));
 			TextMarker m = marker as TextMarker;
-			if (markers != null && markers.Remove(m)) {
+			if (markers != null && markers.Remove(m))
+			{
 				Redraw(m);
 				m.OnDeleted();
 			}
 		}
-		
+
 		/// <summary>
 		/// Redraws the specified text segment.
 		/// </summary>
@@ -115,10 +119,10 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			if (RedrawRequested != null)
 				RedrawRequested(this, EventArgs.Empty);
 		}
-		
+
 		public event EventHandler RedrawRequested;
 		#endregion
-		
+
 		#region DocumentColorizingTransformer
 		protected override void ColorizeLine(DocumentLine line)
 		{
@@ -126,9 +130,11 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 				return;
 			int lineStart = line.Offset;
 			int lineEnd = lineStart + line.Length;
-			foreach (TextMarker marker in markers.FindOverlappingSegments(lineStart, line.Length)) {
+			foreach (TextMarker marker in markers.FindOverlappingSegments(lineStart, line.Length))
+			{
 				Brush foregroundBrush = null;
-				if (marker.ForegroundColor != null) {
+				if (marker.ForegroundColor != null)
+				{
 					foregroundBrush = new SolidColorBrush(marker.ForegroundColor.Value);
 					foregroundBrush.Freeze();
 				}
@@ -136,7 +142,8 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 					Math.Max(marker.StartOffset, lineStart),
 					Math.Min(marker.EndOffset, lineEnd),
 					element => {
-						if (foregroundBrush != null) {
+						if (foregroundBrush != null)
+						{
 							element.TextRunProperties.SetForegroundBrush(foregroundBrush);
 						}
 						Typeface tf = element.TextRunProperties.Typeface;
@@ -151,7 +158,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			}
 		}
 		#endregion
-		
+
 		#region IBackgroundRenderer
 		public KnownLayer Layer {
 			get {
@@ -159,7 +166,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 				return KnownLayer.Selection;
 			}
 		}
-		
+
 		public void Draw(ICSharpCode.AvalonEdit.Rendering.TextView textView, DrawingContext drawingContext)
 		{
 			if (textView == null)
@@ -173,14 +180,17 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 				return;
 			int viewStart = visualLines.First().FirstDocumentLine.Offset;
 			int viewEnd = visualLines.Last().LastDocumentLine.EndOffset;
-			foreach (TextMarker marker in markers.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
-				if (marker.BackgroundColor != null) {
+			foreach (TextMarker marker in markers.FindOverlappingSegments(viewStart, viewEnd - viewStart))
+			{
+				if (marker.BackgroundColor != null)
+				{
 					BackgroundGeometryBuilder geoBuilder = new BackgroundGeometryBuilder();
 					geoBuilder.AlignToWholePixels = true;
 					geoBuilder.CornerRadius = 3;
 					geoBuilder.AddSegment(textView, marker);
 					Geometry geometry = geoBuilder.CreateGeometry();
-					if (geometry != null) {
+					if (geometry != null)
+					{
 						Color color = marker.BackgroundColor.Value;
 						SolidColorBrush brush = new SolidColorBrush(color);
 						brush.Freeze();
@@ -188,37 +198,43 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 					}
 				}
 				var underlineMarkerTypes = TextMarkerTypes.SquigglyUnderline | TextMarkerTypes.NormalUnderline | TextMarkerTypes.DottedUnderline;
-				if ((marker.MarkerTypes & underlineMarkerTypes) != 0) {
-					foreach (Rect r in BackgroundGeometryBuilder.GetRectsForSegment(textView, marker)) {
+				if ((marker.MarkerTypes & underlineMarkerTypes) != 0)
+				{
+					foreach (Rect r in BackgroundGeometryBuilder.GetRectsForSegment(textView, marker))
+					{
 						Point startPoint = r.BottomLeft;
 						Point endPoint = r.BottomRight;
-						
+
 						Brush usedBrush = new SolidColorBrush(marker.MarkerColor);
 						usedBrush.Freeze();
-						if ((marker.MarkerTypes & TextMarkerTypes.SquigglyUnderline) != 0) {
+						if ((marker.MarkerTypes & TextMarkerTypes.SquigglyUnderline) != 0)
+						{
 							double offset = 2.5;
-							
+
 							int count = Math.Max((int)((endPoint.X - startPoint.X) / offset) + 1, 4);
-							
+
 							StreamGeometry geometry = new StreamGeometry();
-							
-							using (StreamGeometryContext ctx = geometry.Open()) {
+
+							using (StreamGeometryContext ctx = geometry.Open())
+							{
 								ctx.BeginFigure(startPoint, false, false);
 								ctx.PolyLineTo(CreatePoints(startPoint, endPoint, offset, count).ToArray(), true, false);
 							}
-							
+
 							geometry.Freeze();
-							
+
 							Pen usedPen = new Pen(usedBrush, 1);
 							usedPen.Freeze();
 							drawingContext.DrawGeometry(Brushes.Transparent, usedPen, geometry);
 						}
-						if ((marker.MarkerTypes & TextMarkerTypes.NormalUnderline) != 0) {
+						if ((marker.MarkerTypes & TextMarkerTypes.NormalUnderline) != 0)
+						{
 							Pen usedPen = new Pen(usedBrush, 1);
 							usedPen.Freeze();
 							drawingContext.DrawLine(usedPen, startPoint, endPoint);
 						}
-						if ((marker.MarkerTypes & TextMarkerTypes.DottedUnderline) != 0) {
+						if ((marker.MarkerTypes & TextMarkerTypes.DottedUnderline) != 0)
+						{
 							Pen usedPen = new Pen(usedBrush, 1);
 							usedPen.DashStyle = DashStyles.Dot;
 							usedPen.Freeze();
@@ -228,7 +244,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 				}
 			}
 		}
-		
+
 		IEnumerable<Point> CreatePoints(Point start, Point end, double offset, int count)
 		{
 			for (int i = 0; i < count; i++)
@@ -236,11 +252,11 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 		}
 		#endregion
 	}
-	
+
 	sealed class TextMarker : TextSegment, ITextMarker
 	{
 		readonly TextMarkerService service;
-		
+
 		public TextMarker(TextMarkerService service, int startOffset, int length)
 		{
 			if (service == null)
@@ -250,103 +266,109 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			this.Length = length;
 			this.markerTypes = TextMarkerTypes.None;
 		}
-		
+
 		public event EventHandler Deleted;
-		
+
 		public bool IsDeleted {
 			get { return !this.IsConnectedToCollection; }
 		}
-		
+
 		public void Delete()
 		{
 			service.Remove(this);
 		}
-		
+
 		internal void OnDeleted()
 		{
 			if (Deleted != null)
 				Deleted(this, EventArgs.Empty);
 		}
-		
+
 		void Redraw()
 		{
 			service.Redraw(this);
 		}
-		
+
 		Color? backgroundColor;
-		
+
 		public Color? BackgroundColor {
 			get { return backgroundColor; }
 			set {
-				if (backgroundColor != value) {
+				if (backgroundColor != value)
+				{
 					backgroundColor = value;
 					Redraw();
 				}
 			}
 		}
-		
+
 		Color? foregroundColor;
-		
+
 		public Color? ForegroundColor {
 			get { return foregroundColor; }
 			set {
-				if (foregroundColor != value) {
+				if (foregroundColor != value)
+				{
 					foregroundColor = value;
 					Redraw();
 				}
 			}
 		}
-		
+
 		FontWeight? fontWeight;
-		
+
 		public FontWeight? FontWeight {
 			get { return fontWeight; }
 			set {
-				if (fontWeight != value) {
+				if (fontWeight != value)
+				{
 					fontWeight = value;
 					Redraw();
 				}
 			}
 		}
-		
+
 		FontStyle? fontStyle;
-		
+
 		public FontStyle? FontStyle {
 			get { return fontStyle; }
 			set {
-				if (fontStyle != value) {
+				if (fontStyle != value)
+				{
 					fontStyle = value;
 					Redraw();
 				}
 			}
 		}
-		
+
 		public object Tag { get; set; }
-		
+
 		TextMarkerTypes markerTypes;
-		
+
 		public TextMarkerTypes MarkerTypes {
 			get { return markerTypes; }
 			set {
-				if (markerTypes != value) {
+				if (markerTypes != value)
+				{
 					markerTypes = value;
 					Redraw();
 				}
 			}
 		}
-		
+
 		Color markerColor;
-		
+
 		public Color MarkerColor {
 			get { return markerColor; }
 			set {
-				if (markerColor != value) {
+				if (markerColor != value)
+				{
 					markerColor = value;
 					Redraw();
 				}
 			}
 		}
-		
+
 		public object ToolTip { get; set; }
 	}
 }

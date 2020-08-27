@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy
 			if (this.LanguageVersion == default(LanguageVersion))
 				this.LanguageVersion = language.LanguageVersions.LastOrDefault();
 		}
-		
+
 		public XElement SaveAsXml()
 		{
 			return new XElement(
@@ -52,9 +52,9 @@ namespace ICSharpCode.ILSpy
 				new XElement("LanguageVersion", this.LanguageVersion?.Version)
 			);
 		}
-		
+
 		string searchTerm;
-		
+
 		/// <summary>
 		/// Gets/Sets the search term.
 		/// Only tree nodes containing the search term will be shown.
@@ -62,13 +62,14 @@ namespace ICSharpCode.ILSpy
 		public string SearchTerm {
 			get { return searchTerm; }
 			set {
-				if (searchTerm != value) {
+				if (searchTerm != value)
+				{
 					searchTerm = value;
 					OnPropertyChanged(nameof(SearchTerm));
 				}
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets whether a node with the specified text is matched by the current search term.
 		/// </summary>
@@ -87,7 +88,8 @@ namespace ICSharpCode.ILSpy
 		public ApiVisibility ShowApiLevel {
 			get { return showApiLevel; }
 			set {
-				if (showApiLevel != value) {
+				if (showApiLevel != value)
+				{
 					showApiLevel = value;
 					OnPropertyChanged(nameof(ShowApiLevel));
 				}
@@ -97,7 +99,8 @@ namespace ICSharpCode.ILSpy
 		public bool ApiVisPublicOnly {
 			get { return showApiLevel == ApiVisibility.PublicOnly; }
 			set {
-				if (value == (showApiLevel == ApiVisibility.PublicOnly)) return;
+				if (value == (showApiLevel == ApiVisibility.PublicOnly))
+					return;
 				ShowApiLevel = ApiVisibility.PublicOnly;
 				OnPropertyChanged(nameof(ApiVisPublicOnly));
 				OnPropertyChanged(nameof(ApiVisPublicAndInternal));
@@ -108,7 +111,8 @@ namespace ICSharpCode.ILSpy
 		public bool ApiVisPublicAndInternal {
 			get { return showApiLevel == ApiVisibility.PublicAndInternal; }
 			set {
-				if (value == (showApiLevel == ApiVisibility.PublicAndInternal)) return;
+				if (value == (showApiLevel == ApiVisibility.PublicAndInternal))
+					return;
 				ShowApiLevel = ApiVisibility.PublicAndInternal;
 				OnPropertyChanged(nameof(ApiVisPublicOnly));
 				OnPropertyChanged(nameof(ApiVisPublicAndInternal));
@@ -119,7 +123,8 @@ namespace ICSharpCode.ILSpy
 		public bool ApiVisAll {
 			get { return showApiLevel == ApiVisibility.All; }
 			set {
-				if (value == (showApiLevel == ApiVisibility.All)) return;
+				if (value == (showApiLevel == ApiVisibility.All))
+					return;
 				ShowApiLevel = ApiVisibility.All;
 				OnPropertyChanged(nameof(ApiVisPublicOnly));
 				OnPropertyChanged(nameof(ApiVisPublicAndInternal));
@@ -128,7 +133,7 @@ namespace ICSharpCode.ILSpy
 		}
 
 		Language language;
-		
+
 		/// <summary>
 		/// Gets/Sets the current language.
 		/// </summary>
@@ -139,7 +144,8 @@ namespace ICSharpCode.ILSpy
 		public Language Language {
 			get { return language; }
 			set {
-				if (language != value) {
+				if (language != value)
+				{
 					language = value;
 					OnPropertyChanged();
 				}
@@ -158,7 +164,8 @@ namespace ICSharpCode.ILSpy
 		public LanguageVersion LanguageVersion {
 			get { return languageVersion; }
 			set {
-				if (languageVersion != value) {
+				if (languageVersion != value)
+				{
 					languageVersion = value;
 					OnPropertyChanged();
 				}
@@ -166,14 +173,15 @@ namespace ICSharpCode.ILSpy
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;
-		
+
 		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
-			if (PropertyChanged != null) {
+			if (PropertyChanged != null)
+			{
 				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
 			}
 		}
-		
+
 		public FilterSettings Clone()
 		{
 			FilterSettings f = (FilterSettings)MemberwiseClone();

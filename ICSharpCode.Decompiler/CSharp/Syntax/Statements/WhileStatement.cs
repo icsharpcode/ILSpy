@@ -32,45 +32,45 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class WhileStatement : Statement
 	{
-		public static readonly TokenRole WhileKeywordRole = new TokenRole ("while");
-		
+		public static readonly TokenRole WhileKeywordRole = new TokenRole("while");
+
 		public CSharpTokenNode WhileToken {
-			get { return GetChildByRole (WhileKeywordRole); }
+			get { return GetChildByRole(WhileKeywordRole); }
 		}
-		
+
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
-		
+
 		public Expression Condition {
-			get { return GetChildByRole (Roles.Condition); }
-			set { SetChildByRole (Roles.Condition, value); }
+			get { return GetChildByRole(Roles.Condition); }
+			set { SetChildByRole(Roles.Condition, value); }
 		}
-		
+
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
-		
+
 		public Statement EmbeddedStatement {
-			get { return GetChildByRole (Roles.EmbeddedStatement); }
-			set { SetChildByRole (Roles.EmbeddedStatement, value); }
+			get { return GetChildByRole(Roles.EmbeddedStatement); }
+			set { SetChildByRole(Roles.EmbeddedStatement, value); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitWhileStatement (this);
+			visitor.VisitWhileStatement(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitWhileStatement (this);
+			return visitor.VisitWhileStatement(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitWhileStatement (this, data);
+			return visitor.VisitWhileStatement(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			WhileStatement o = other as WhileStatement;

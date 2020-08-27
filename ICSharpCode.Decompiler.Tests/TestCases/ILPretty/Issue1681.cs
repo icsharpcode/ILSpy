@@ -4,7 +4,7 @@
 	{
 		public int importsClausePosition;
 	}
-	
+
 	internal class Issue1681 : BaseClass
 	{
 		public void Test()

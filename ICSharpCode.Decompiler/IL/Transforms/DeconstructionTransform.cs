@@ -68,7 +68,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!context.Settings.Deconstruction)
 				return;
 
-			try {
+			try
+			{
 				this.context = context;
 				Reset();
 
@@ -76,7 +77,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				if (InlineDeconstructionInitializer(block, pos))
 					return;
-			} finally {
+			}
+			finally
+			{
 				this.context = null;
 				Reset();
 			}
@@ -103,12 +106,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		int FindIndex(ILInstruction inst, out Action<DeconstructInstruction> delayedActions)
 		{
 			delayedActions = null;
-			if (inst.MatchLdLoc(out var v)) {
+			if (inst.MatchLdLoc(out var v))
+			{
 				if (!deconstructionResultsLookup.TryGetValue(v, out int index))
 					return -1;
 				return index;
 			}
-			if (inst.MatchLdFld(out _, out _)) {
+			if (inst.MatchLdFld(out _, out _))
+			{
 				if (!TupleTransform.MatchTupleFieldAccess((LdFlda)((LdObj)inst).Target, out var tupleType, out var target, out int index))
 					return -1;
 				// Item fields are one-based, we use zero-based indexing.
@@ -117,7 +122,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				tupleType = TupleType.FromUnderlyingType(context.TypeSystem, tupleType);
 				if (!target.MatchLdLoca(out v))
 					return -1;
-				if (this.tupleVariable == null) {
+				if (this.tupleVariable == null)
+				{
 					this.tupleVariable = v;
 					this.tupleType = (TupleType)tupleType;
 					this.deconstructionResults = new ILVariable[this.tupleType.Cardinality];
@@ -126,7 +132,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return -1;
 				if (v != tupleVariable || !this.tupleType.Equals(tupleType))
 					return -1;
-				if (this.deconstructionResults[index] == null) {
+				if (this.deconstructionResults[index] == null)
+				{
 					var freshVar = new ILVariable(VariableKind.StackSlot, this.tupleType.ElementTypes[index]) { Name = "E_" + index };
 					delayedActions += _ => context.Function.Variables.Add(freshVar);
 					this.deconstructionResults[index] = freshVar;
@@ -160,11 +167,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			LdLoc loadInst = v.LoadInstructions[0];
 			if (!loadInst.IsDescendantOf(deconstruction.Assignments))
 				return false;
-			if (loadInst.SlotInfo == StObj.TargetSlot) {
+			if (loadInst.SlotInfo == StObj.TargetSlot)
+			{
 				if (value.OpCode == OpCode.LdFlda || value.OpCode == OpCode.LdElema)
 					return false;
 			}
-			if (deconstruction.Init.Count > 0) {
+			if (deconstruction.Init.Count > 0)
+			{
 				var a = deconstruction.Init[0].Variable.LoadInstructions.Single();
 				var b = v.LoadInstructions.Single();
 				if (!b.IsBefore(a))
@@ -198,13 +207,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			context.Step("Deconstruction", block.Instructions[startPos]);
 			DeconstructInstruction replacement = new DeconstructInstruction();
 			IType deconstructedType;
-			if (deconstructMethod == null) {
+			if (deconstructMethod == null)
+			{
 				deconstructedType = this.tupleType;
 				rootTestedOperand = new LdLoc(this.tupleVariable);
-			} else {
-				if (deconstructMethod.IsStatic) {
+			}
+			else
+			{
+				if (deconstructMethod.IsStatic)
+				{
 					deconstructedType = deconstructMethod.Parameters[0].Type;
-				} else {
+				}
+				else
+				{
 					deconstructedType = deconstructMethod.DeclaringType;
 				}
 			}
@@ -214,13 +229,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				IsDeconstructTuple = this.tupleType != null
 			};
 			int index = 0;
-			foreach (ILVariable v in deconstructionResults) {
+			foreach (ILVariable v in deconstructionResults)
+			{
 				var result = v;
-				if (result == null) {
+				if (result == null)
+				{
 					var freshVar = new ILVariable(VariableKind.PatternLocal, this.tupleType.ElementTypes[index]) { Name = "E_" + index };
 					context.Function.Variables.Add(freshVar);
 					result = freshVar;
-				} else {
+				}
+				else
+				{
 					result.Kind = VariableKind.PatternLocal;
 				}
 				replacement.Pattern.SubPatterns.Add(
@@ -232,7 +251,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				index++;
 			}
 			replacement.Conversions = new Block(BlockKind.DeconstructionConversions);
-			foreach (var convInst in conversionStLocs) {
+			foreach (var convInst in conversionStLocs)
+			{
 				replacement.Conversions.Instructions.Add(convInst);
 			}
 			replacement.Assignments = new Block(BlockKind.DeconstructionAssignments);
@@ -257,7 +277,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (call.Arguments.Count < 3)
 				return false;
 			deconstructionResults = new ILVariable[call.Arguments.Count - 1];
-			for (int i = 0; i < deconstructionResults.Length; i++) {
+			for (int i = 0; i < deconstructionResults.Length; i++)
+			{
 				if (!call.Arguments[i + 1].MatchLdLoca(out var v))
 					return false;
 				// TODO v.LoadCount may be 2 if the deconstruction is assigned to a tuple variable
@@ -282,7 +303,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int previousIndex = -1;
 			while (MatchConversion(
 				block.Instructions.ElementAtOrDefault(pos), out var inputInstruction,
-				out var outputVariable, out var info)) {
+				out var outputVariable, out var info))
+			{
 				int index = FindIndex(inputInstruction, out var tupleAccessAdjustment);
 				if (index <= previousIndex)
 					return false;
@@ -323,7 +345,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int previousIndex = -1;
 			int conversionStLocIndex = 0;
 			int startPos = pos;
-			while (MatchAssignment(block.Instructions.ElementAtOrDefault(pos), out var targetType, out var valueInst, out var addAssignment)) {
+			while (MatchAssignment(block.Instructions.ElementAtOrDefault(pos), out var targetType, out var valueInst, out var addAssignment))
+			{
 				int index = FindIndex(valueInst, out var tupleAccessAdjustment);
 				if (index <= previousIndex)
 					return false;
@@ -338,11 +361,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (block.Instructions[pos].MatchStLoc(out var assignmentTarget, out _)
 					&& assignmentTarget.Kind == VariableKind.StackSlot
 					&& assignmentTarget.IsSingleDefinition
-					&& conversionInfo.conv == null) {
+					&& conversionInfo.conv == null)
+				{
 					delayedActions += _ => {
 						assignmentTarget.Type = conversionInfo.inputType;
 					};
-				} else {
+				}
+				else
+				{
 					if (!IsCompatibleImplicitConversion(targetType, conversionInfo))
 						return false;
 				}
@@ -356,13 +382,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			void AddMissingAssignmentsForConversions(int index, ref Action<DeconstructInstruction> delayedActions)
 			{
-				while (conversionStLocIndex < conversionStLocs.Count) {
+				while (conversionStLocIndex < conversionStLocs.Count)
+				{
 					var stLoc = conversionStLocs[conversionStLocIndex];
 					int conversionResultIndex = deconstructionResultsLookup[stLoc.Variable];
 
 					if (conversionResultIndex >= index)
 						break;
-					if (conversionResultIndex > previousIndex) {
+					if (conversionResultIndex > previousIndex)
+					{
 						delayedActions += (DeconstructInstruction deconstructInst) => {
 							var freshVar = context.Function.RegisterVariable(VariableKind.StackSlot, stLoc.Variable.Type);
 							deconstructInst.Assignments.Instructions.Add(new StLoc(stLoc.Variable, new LdLoc(freshVar)));
@@ -382,7 +410,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (inst == null)
 				return false;
 			if (inst.MatchStLoc(out var v, out var value)
-				&& value is Block block && block.MatchInlineAssignBlock(out var call, out valueInst)) {
+				&& value is Block block && block.MatchInlineAssignBlock(out var call, out valueInst))
+			{
 				if (!DeconstructInstruction.IsAssignment(call, context.TypeSystem, out targetType, out _))
 					return false;
 				if (!(v.IsSingleDefinition && v.LoadCount == 0))
@@ -393,13 +422,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					deconstructInst.Assignments.Instructions.Add(call);
 				};
 				return true;
-			} else if (DeconstructInstruction.IsAssignment(inst, context.TypeSystem, out targetType, out valueInst)) {
+			}
+			else if (DeconstructInstruction.IsAssignment(inst, context.TypeSystem, out targetType, out valueInst))
+			{
 				// OK - use the assignment as is
 				addAssignment = (DeconstructInstruction deconstructInst) => {
 					deconstructInst.Assignments.Instructions.Add(inst);
 				};
 				return true;
-			} else {
+			}
+			else
+			{
 				return false;
 			}
 		}
@@ -412,11 +445,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			var inputType = conversionInfo.inputType;
 			var conv = conversionInfo.conv;
-			if (c.IsIdentityConversion || c.IsReferenceConversion) {
+			if (c.IsIdentityConversion || c.IsReferenceConversion)
+			{
 				return conv == null || conv.Kind == ConversionKind.Nop;
 			}
-			if (c.IsNumericConversion) {
-				switch (conv.Kind) {
+			if (c.IsNumericConversion)
+			{
+				switch (conv.Kind)
+				{
 					case ConversionKind.IntToFloat:
 						return inputType.GetSign() == conv.InputSign;
 					case ConversionKind.FloatPrecisionChange:

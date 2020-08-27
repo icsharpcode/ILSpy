@@ -21,13 +21,17 @@
 */
 
 using System.Diagnostics;
+
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class DeferableContentStartHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class DeferableContentStartHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.DeferableContentStart;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (DeferableContentStartRecord)((BamlRecordNode)node).Record;
 
 			Debug.Assert(record.Record == ((BamlBlockNode)parent.Node).Footer);

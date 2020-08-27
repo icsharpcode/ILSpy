@@ -22,6 +22,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Disassembler;
@@ -53,9 +54,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<CustomDebugInformationEntry>();
 			CustomDebugInformationEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.CustomDebugInformation) {
+			foreach (var row in metadata.CustomDebugInformation)
+			{
 				CustomDebugInformationEntry entry = new CustomDebugInformationEntry(module, metadata, isEmbedded, row);
-				if (entry.RID == scrollTarget) {
+				if (entry.RID == scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -65,7 +68,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 1) {
+			if (scrollTargetEntry.RID > 1)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -104,28 +108,36 @@ namespace ICSharpCode.ILSpy.Metadata
 					if (debugInfo.Kind.IsNil)
 						return null;
 					var guid = metadata.GetGuid(debugInfo.Kind);
-					if (KnownGuids.StateMachineHoistedLocalScopes == guid) {
+					if (KnownGuids.StateMachineHoistedLocalScopes == guid)
+					{
 						return "State Machine Hoisted Local Scopes (C# / VB) [" + guid + "]";
 					}
-					if (KnownGuids.DynamicLocalVariables == guid) {
+					if (KnownGuids.DynamicLocalVariables == guid)
+					{
 						return "Dynamic Local Variables (C#) [" + guid + "]";
 					}
-					if (KnownGuids.DefaultNamespaces == guid) {
+					if (KnownGuids.DefaultNamespaces == guid)
+					{
 						return "Default Namespaces (VB) [" + guid + "]";
 					}
-					if (KnownGuids.EditAndContinueLocalSlotMap == guid) {
+					if (KnownGuids.EditAndContinueLocalSlotMap == guid)
+					{
 						return "Edit And Continue Local Slot Map (C# / VB) [" + guid + "]";
 					}
-					if (KnownGuids.EditAndContinueLambdaAndClosureMap == guid) {
+					if (KnownGuids.EditAndContinueLambdaAndClosureMap == guid)
+					{
 						return "Edit And Continue Lambda And Closure Map (C# / VB) [" + guid + "]";
 					}
-					if (KnownGuids.EmbeddedSource == guid) {
+					if (KnownGuids.EmbeddedSource == guid)
+					{
 						return "Embedded Source (C# / VB) [" + guid + "]";
 					}
-					if (KnownGuids.SourceLink == guid) {
+					if (KnownGuids.SourceLink == guid)
+					{
 						return "Source Link (C# / VB) [" + guid + "]";
 					}
-					if (KnownGuids.MethodSteppingInformation == guid) {
+					if (KnownGuids.MethodSteppingInformation == guid)
+					{
 						return "Method Stepping Information (C# / VB) [" + guid + "]";
 					}
 

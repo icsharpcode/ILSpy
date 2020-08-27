@@ -24,14 +24,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public void LockThis()
 		{
-			lock (this) {
+			lock (this)
+			{
 				Console.WriteLine();
 			}
 		}
 
 		public void LockOnType()
 		{
-			lock (typeof(Lock)) {
+			lock (typeof(Lock))
+			{
 				Console.WriteLine();
 			}
 		}

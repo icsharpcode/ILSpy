@@ -18,25 +18,32 @@ public class SequenceOfNestedIfs
 	}
 	public override void CreateMaterials()
 	{
-		if (!_clear) {
-			if (!CheckShader()) {
+		if (!_clear)
+		{
+			if (!CheckShader())
+			{
 				return;
 			}
 			_material = new Material();
 		}
-		if (!_material) {
-			if (!CheckShader()) {
+		if (!_material)
+		{
+			if (!CheckShader())
+			{
 				return;
 			}
 			_material = new Material();
 		}
-		if (!_material) {
-			if (!CheckShader()) {
+		if (!_material)
+		{
+			if (!CheckShader())
+			{
 				return;
 			}
 			_material = new Material();
 		}
-		if (!_material && CheckShader()) {
+		if (!_material && CheckShader())
+		{
 			_material = new Material();
 		}
 	}

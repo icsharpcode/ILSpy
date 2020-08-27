@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			: base(type)
 		{
 		}
-		
+
 		public override bool IsError {
 			get { return this.Type.Kind == TypeKind.Unknown; }
 		}

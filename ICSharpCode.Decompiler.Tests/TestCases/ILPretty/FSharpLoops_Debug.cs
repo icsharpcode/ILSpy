@@ -65,7 +65,8 @@ public static class Program
 
 		public override int GenerateNext(ref IEnumerable<int> next)
 		{
-			switch (pc) {
+			switch (pc)
+			{
 			default:
 				pc = 1;
 				current = 1;
@@ -87,7 +88,8 @@ public static class Program
 
 		public override bool get_CheckClose()
 		{
-			switch (pc) {
+			switch (pc)
+			{
 			default:
 				return false;
 			case 0:
@@ -137,23 +139,28 @@ public static class Program
 	public static int main(string[] argv)
 	{
 		IDisposable disposable;
-		using (Program.disposable()) {
+		using (Program.disposable())
+		{
 			Console.WriteLine("Hello 1");
 			disposable = Program.disposable();
 		}
-		using (disposable) {
+		using (disposable)
+		{
 			IEnumerable<int> seq = getSeq();
-			foreach (int item in seq) {
+			foreach (int item in seq)
+			{
 				Console.WriteLine(item);
 			}
 			FSharpList<int> fSharpList = getList();
-			for (FSharpList<int> tailOrNull = fSharpList.TailOrNull; tailOrNull != null; tailOrNull = fSharpList.TailOrNull) {
+			for (FSharpList<int> tailOrNull = fSharpList.TailOrNull; tailOrNull != null; tailOrNull = fSharpList.TailOrNull)
+			{
 				int headOrDefault = fSharpList.HeadOrDefault;
 				Console.WriteLine(headOrDefault);
 				fSharpList = tailOrNull;
 			}
 			int[] array = getArray();
-			foreach (int value in array) {
+			foreach (int value in array)
+			{
 				Console.WriteLine(value);
 			}
 			return 0;

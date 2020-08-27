@@ -21,15 +21,20 @@
 */
 
 using System.Xml.Linq;
-using ILSpy.BamlDecompiler.Baml;
-using ILSpy.BamlDecompiler.Xaml;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class PropertyTypeReferenceHandler : IHandler {
+using ILSpy.BamlDecompiler.Baml;
+using ILSpy.BamlDecompiler.Xaml;
+
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class PropertyTypeReferenceHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.PropertyTypeReference;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (PropertyTypeReferenceRecord)((BamlRecordNode)node).Record;
 			var attr = ctx.ResolveProperty(record.AttributeId);
 			var type = ctx.ResolveType(record.TypeId);
@@ -40,7 +45,8 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			var elemAttr = ctx.ResolveProperty(record.AttributeId);
 			elem.Xaml = new XElement(elemAttr.ToXName(ctx, null));
 
-			if (attr.ResolvedMember?.FullNameIs("System.Windows.Style", "TargetType") == true) {
+			if (attr.ResolvedMember?.FullNameIs("System.Windows.Style", "TargetType") == true)
+			{
 				parent.Xaml.Element.AddAnnotation(new TargetTypeAnnotation(type));
 			}
 

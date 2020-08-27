@@ -24,15 +24,20 @@ using System.Diagnostics;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace ILSpy.BamlDecompiler.Rewrite {
-	internal class DocumentRewritePass : IRewritePass {
-		public void Run(XamlContext ctx, XDocument document) {
-			foreach (var elem in document.Elements(ctx.GetPseudoName("Document")).ToList()) {
+namespace ILSpy.BamlDecompiler.Rewrite
+{
+	internal class DocumentRewritePass : IRewritePass
+	{
+		public void Run(XamlContext ctx, XDocument document)
+		{
+			foreach (var elem in document.Elements(ctx.GetPseudoName("Document")).ToList())
+			{
 				if (elem.Elements().Count() != 1)
 					continue;
 
 				var docElem = elem.Elements().Single();
-				foreach (var attr in elem.Attributes()) {
+				foreach (var attr in elem.Attributes())
+				{
 					Debug.Assert(attr.IsNamespaceDeclaration);
 					attr.Remove();
 					docElem.Add(attr);

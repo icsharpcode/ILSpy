@@ -21,6 +21,7 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
+
 using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
 namespace ICSharpCode.ILSpy.Docking
@@ -70,16 +71,20 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public DockLayoutSettings(XElement element)
 		{
-			if ((element != null) && element.HasElements) {
+			if ((element != null) && element.HasElements)
+			{
 				rawSettings = element.Elements().FirstOrDefault()?.ToString();
 			}
 		}
 
 		public XElement SaveAsXml()
 		{
-			try {
+			try
+			{
 				return XElement.Parse(rawSettings);
-			} catch (Exception) {
+			}
+			catch (Exception)
+			{
 				return null;
 			}
 		}
@@ -88,15 +93,19 @@ namespace ICSharpCode.ILSpy.Docking
 		{
 			if (!Valid)
 				rawSettings = DefaultLayout;
-			try {
+			try
+			{
 				Deserialize(rawSettings);
-			} catch (Exception) {
+			}
+			catch (Exception)
+			{
 				Deserialize(DefaultLayout);
 			}
 
 			void Deserialize(string settings)
 			{
-				using (StringReader reader = new StringReader(settings)) {
+				using (StringReader reader = new StringReader(settings))
+				{
 					serializer.Deserialize(reader);
 				}
 			}
@@ -104,7 +113,8 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public void Serialize(XmlLayoutSerializer serializer)
 		{
-			using (StringWriter fs = new StringWriter()) {
+			using (StringWriter fs = new StringWriter())
+			{
 				serializer.Serialize(fs);
 				rawSettings = fs.ToString();
 			}

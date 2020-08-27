@@ -47,9 +47,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Print("YieldBreakInTryCatchInTryFinally", YieldBreakInTryCatchInTryFinally().GetEnumerator());
 			Print("YieldBreakInTryFinallyInTryFinally(false)", YieldBreakInTryFinallyInTryFinally(false).GetEnumerator());
 			Print("YieldBreakInTryFinallyInTryFinally(true)", YieldBreakInTryFinallyInTryFinally(true).GetEnumerator());
-			try {
+			try
+			{
 				Print("UnconditionalThrowInTryFinally()", UnconditionalThrowInTryFinally().GetEnumerator());
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				Console.WriteLine(ex.Message);
 			}
 			Print("NestedTryFinallyStartingOnSamePosition", NestedTryFinallyStartingOnSamePosition().GetEnumerator());
@@ -69,7 +72,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		internal static void Print<T>(string name, IEnumerator<T> enumerator)
 		{
 			Console.WriteLine(name + ": Test start");
-			while (enumerator.MoveNext()) {
+			while (enumerator.MoveNext())
+			{
 				Console.WriteLine(name + ": " + enumerator.Current);
 			}
 		}
@@ -112,7 +116,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static IEnumerable<int> YieldReturnInLoop()
 		{
-			for (int i = 0; i < 100; i++) {
+			for (int i = 0; i < 100; i++)
+			{
 				yield return i;
 			}
 		}
@@ -120,9 +125,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static IEnumerable<int> YieldReturnWithTryFinally()
 		{
 			yield return 0;
-			try {
+			try
+			{
 				yield return 1;
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally!");
 			}
 			yield return 2;
@@ -130,14 +138,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static IEnumerable<int> YieldReturnInLock1(object o)
 		{
-			lock (o) {
+			lock (o)
+			{
 				yield return 1;
 			}
 		}
 
 		public static IEnumerable<int> YieldReturnInLock2(object o)
 		{
-			lock (o) {
+			lock (o)
+			{
 				yield return 1;
 				o = null;
 				yield return 2;
@@ -149,28 +159,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("Start of method - 1");
 			yield return "Start of method";
 			Console.WriteLine("Start of method - 2");
-			try {
+			try
+			{
 				Console.WriteLine("Within outer try - 1");
 				yield return "Within outer try";
 				Console.WriteLine("Within outer try - 2");
-				try {
+				try
+				{
 					Console.WriteLine("Within inner try - 1");
 					yield return "Within inner try";
 					Console.WriteLine("Within inner try - 2");
-					if (breakInMiddle) {
+					if (breakInMiddle)
+					{
 						Console.WriteLine("Breaking...");
 						yield break;
 					}
 					Console.WriteLine("End of inner try - 1");
 					yield return "End of inner try";
 					Console.WriteLine("End of inner try - 2");
-				} finally {
+				}
+				finally
+				{
 					Console.WriteLine("Inner Finally");
 				}
 				Console.WriteLine("End of outer try - 1");
 				yield return "End of outer try";
 				Console.WriteLine("End of outer try - 2");
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Outer Finally");
 			}
 			Console.WriteLine("End of method - 1");
@@ -181,11 +198,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static IEnumerable<string> YieldReturnWithTwoNonNestedFinallyBlocks(IEnumerable<string> input)
 		{
 			// outer try-finally block
-			foreach (string line in input) {
+			foreach (string line in input)
+			{
 				// nested try-finally block
-				try {
+				try
+				{
 					yield return line;
-				} finally {
+				}
+				finally
+				{
 					Console.WriteLine("Processed " + line);
 				}
 			}
@@ -196,21 +217,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			yield return "E";
 			yield return "F";
 			// outer try-finally block
-			foreach (string line in input) {
+			foreach (string line in input)
+			{
 				yield return line.ToUpper();
 			}
 		}
 
 		public static IEnumerable<Func<string>> YieldReturnWithAnonymousMethods1(IEnumerable<string> input)
 		{
-			foreach (string line in input) {
+			foreach (string line in input)
+			{
 				yield return () => line;
 			}
 		}
 
 		public static IEnumerable<Func<string>> YieldReturnWithAnonymousMethods2(IEnumerable<string> input)
 		{
-			foreach (string line in input) {
+			foreach (string line in input)
+			{
 				string copy = line;
 				yield return () => copy;
 			}
@@ -218,8 +242,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static IEnumerable<int> GetEvenNumbers(int n)
 		{
-			for (int i = 0; i < n; i++) {
-				if (i % 2 == 0) {
+			for (int i = 0; i < n; i++)
+			{
+				if (i % 2 == 0)
+				{
 					yield return i;
 				}
 			}
@@ -229,20 +255,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static IEnumerable<char> ExceptionHandling()
 		{
 			yield return 'a';
-			try {
+			try
+			{
 				Console.WriteLine("1 - try");
-			} catch (Exception) {
+			}
+			catch (Exception)
+			{
 				Console.WriteLine("1 - catch");
 			}
 			yield return 'b';
-			try {
-				try {
+			try
+			{
+				try
+				{
 					Console.WriteLine("2 - try");
-				} finally {
+				}
+				finally
+				{
 					Console.WriteLine("2 - finally");
 				}
 				yield return 'c';
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("outer finally");
 			}
 		}
@@ -250,22 +285,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static IEnumerable<int> YieldBreakInCatch()
 		{
 			yield return 0;
-			try {
+			try
+			{
 				Console.WriteLine("In Try");
-			} catch {
+			}
+			catch
+			{
 				// yield return is not allowed in catch, but yield break is
 				yield break;
 			}
 			yield return 1;
 		}
-		
+
 		public static IEnumerable<int> YieldBreakInCatchInTryFinally()
 		{
-			try {
+			try
+			{
 				yield return 0;
-				try {
+				try
+				{
 					Console.WriteLine("In Try");
-				} catch {
+				}
+				catch
+				{
 					// yield return is not allowed in catch, but yield break is
 					// Note that pre-roslyn, this code triggers a compiler bug:
 					// If the finally block throws an exception, it ends up getting
@@ -273,43 +315,58 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 					yield break;
 				}
 				yield return 1;
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 		}
 
 		public static IEnumerable<int> YieldBreakInTryCatchInTryFinally()
 		{
-			try {
+			try
+			{
 				yield return 0;
-				try {
+				try
+				{
 					Console.WriteLine("In Try");
 					// same compiler bug as in YieldBreakInCatchInTryFinally
 					yield break;
-				} catch {
+				}
+				catch
+				{
 					Console.WriteLine("Catch");
 				}
 				yield return 1;
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 		}
 
 		public static IEnumerable<int> YieldBreakInTryFinallyInTryFinally(bool b)
 		{
-			try {
+			try
+			{
 				yield return 0;
-				try {
+				try
+				{
 					Console.WriteLine("In Try");
-					if (b) {
+					if (b)
+					{
 						// same compiler bug as in YieldBreakInCatchInTryFinally
 						yield break;
 					}
-				} finally {
+				}
+				finally
+				{
 					Console.WriteLine("Inner Finally");
 				}
 				yield return 1;
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 		}
@@ -318,15 +375,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			yield break;
 		}
-		
+
 		public static IEnumerable<int> UnconditionalThrowInTryFinally()
 		{
 			// Here, MoveNext() doesn't call the finally methods at all
 			// (only indirectly via Dispose())
-			try {
+			try
+			{
 				yield return 0;
 				throw new NotImplementedException();
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 		}
@@ -334,13 +394,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static IEnumerable<int> NestedTryFinallyStartingOnSamePosition()
 		{
 			// The first user IL instruction is already in 2 nested try blocks.
-			try {
-				try {
+			try
+			{
+				try
+				{
 					yield return 0;
-				} finally {
+				}
+				finally
+				{
 					Console.WriteLine("Inner Finally");
 				}
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Outer Finally");
 			}
 		}
@@ -349,15 +415,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static IEnumerable<int> TryFinallyWithTwoExitPoints(bool b)
 		{
 			// Uses goto for multiple non-exceptional exits out of try-finally.
-			try {
-				if (b) {
+			try
+			{
+				if (b)
+				{
 					yield return 1;
 					goto exit1;
-				} else {
+				}
+				else
+				{
 					yield return 2;
 					goto exit2;
 				}
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 			exit1:
@@ -370,15 +442,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 #if !LEGACY_CSC
 		public static IEnumerable<int> YieldBreakInNestedTryFinally()
 		{
-			try {
+			try
+			{
 				yield return 1;
-				try {
+				try
+				{
 					// Compiler bug: pre-Roslyn, the finally blocks will execute in the wrong order
 					yield break;
-				} finally {
+				}
+				finally
+				{
 					Console.WriteLine("Inner Finally");
 				}
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Outer Finally");
 			}
 		}
@@ -388,17 +466,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		// that exception gets caught by the catch block.
 		public static IEnumerable<int> TryFinallyWithTwoExitPointsInNestedTry(bool b)
 		{
-			try {
+			try
+			{
 				yield return 1;
-				try {
+				try
+				{
 					if (b)
 						goto exit1;
 					else
 						goto exit2;
-				} catch {
+				}
+				catch
+				{
 					Console.WriteLine("Catch");
 				}
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 			exit1:
@@ -410,17 +494,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static IEnumerable<int> TryFinallyWithTwoExitPointsInNestedCatch(bool b)
 		{
-			try {
+			try
+			{
 				yield return 1;
-				try {
+				try
+				{
 					Console.WriteLine("Nested Try");
-				} catch {
+				}
+				catch
+				{
 					if (b)
 						goto exit1;
 					else
 						goto exit2;
 				}
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 			exit1:
@@ -434,9 +524,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static IEnumerable<int> LocalInFinally<T>(T a) where T : IDisposable
 		{
 			yield return 1;
-			try {
+			try
+			{
 				yield return 2;
-			} finally {
+			}
+			finally
+			{
 				T val = a;
 				val.Dispose();
 				val.Dispose();
@@ -447,7 +540,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static IEnumerable<T> GenericYield<T>() where T : new()
 		{
 			T val = new T();
-			for (int i = 0; i < 3; i++) {
+			for (int i = 0; i < 3; i++)
+			{
 				yield return val;
 			}
 		}

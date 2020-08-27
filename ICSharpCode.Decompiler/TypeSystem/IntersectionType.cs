@@ -22,6 +22,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -32,21 +33,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public class IntersectionType : AbstractType
 	{
 		readonly ReadOnlyCollection<IType> types;
-		
+
 		public ReadOnlyCollection<IType> Types {
 			get { return types; }
 		}
-		
+
 		private IntersectionType(IType[] types)
 		{
 			Debug.Assert(types.Length >= 2);
 			this.types = Array.AsReadOnly(types);
 		}
-		
+
 		public static IType Create(IEnumerable<IType> types)
 		{
 			IType[] arr = types.Distinct().ToArray();
-			foreach (IType type in arr) {
+			foreach (IType type in arr)
+			{
 				if (type == null)
 					throw new ArgumentNullException();
 			}
@@ -57,15 +59,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			else
 				return new IntersectionType(arr);
 		}
-		
+
 		public override TypeKind Kind {
 			get { return TypeKind.Intersection; }
 		}
-		
+
 		public override string Name {
 			get {
 				StringBuilder b = new StringBuilder();
-				foreach (var t in types) {
+				foreach (var t in types)
+				{
 					if (b.Length > 0)
 						b.Append(" & ");
 					b.Append(t.Name);
@@ -73,11 +76,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return b.ToString();
 			}
 		}
-		
+
 		public override string ReflectionName {
 			get {
 				StringBuilder b = new StringBuilder();
-				foreach (var t in types) {
+				foreach (var t in types)
+				{
 					if (b.Length > 0)
 						b.Append(" & ");
 					b.Append(t.ReflectionName);
@@ -85,10 +89,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return b.ToString();
 			}
 		}
-		
+
 		public override bool? IsReferenceType {
 			get {
-				foreach (var t in types) {
+				foreach (var t in types)
+				{
 					bool? isReferenceType = t.IsReferenceType;
 					if (isReferenceType.HasValue)
 						return isReferenceType.Value;
@@ -96,24 +101,28 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return null;
 			}
 		}
-		
+
 		public override int GetHashCode()
 		{
 			int hashCode = 0;
-			unchecked {
-				foreach (var t in types) {
+			unchecked
+			{
+				foreach (var t in types)
+				{
 					hashCode *= 7137517;
 					hashCode += t.GetHashCode();
 				}
 			}
 			return hashCode;
 		}
-		
+
 		public override bool Equals(IType other)
 		{
 			IntersectionType o = other as IntersectionType;
-			if (o != null && types.Count == o.types.Count) {
-				for (int i = 0; i < types.Count; i++) {
+			if (o != null && types.Count == o.types.Count)
+			{
+				for (int i = 0; i < types.Count; i++)
+				{
 					if (!types[i].Equals(o.types[i]))
 						return false;
 				}
@@ -121,46 +130,46 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return false;
 		}
-		
+
 		public override IEnumerable<IType> DirectBaseTypes {
 			get { return types; }
 		}
-		
+
 		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			return GetMembersHelper.GetMethods(this, FilterNonStatic(filter), options);
 		}
-		
+
 		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
 		}
-		
+
 		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter, GetMemberOptions options)
 		{
 			return GetMembersHelper.GetProperties(this, FilterNonStatic(filter), options);
 		}
-		
+
 		public override IEnumerable<IField> GetFields(Predicate<IField> filter, GetMemberOptions options)
 		{
 			return GetMembersHelper.GetFields(this, FilterNonStatic(filter), options);
 		}
-		
+
 		public override IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter, GetMemberOptions options)
 		{
 			return GetMembersHelper.GetEvents(this, FilterNonStatic(filter), options);
 		}
-		
+
 		public override IEnumerable<IMember> GetMembers(Predicate<IMember> filter, GetMemberOptions options)
 		{
 			return GetMembersHelper.GetMembers(this, FilterNonStatic(filter), options);
 		}
-		
+
 		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			return GetMembersHelper.GetAccessors(this, FilterNonStatic(filter), options);
 		}
-		
+
 		static Predicate<T> FilterNonStatic<T>(Predicate<T> filter) where T : class, IMember
 		{
 			if (filter == null)

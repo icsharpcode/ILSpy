@@ -52,9 +52,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var length = metadata.GetTableRowCount(TableIndex.PropertyMap);
 			byte* ptr = metadata.MetadataPointer;
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
-			for (int rid = 1; rid <= length; rid++) {
+			for (int rid = 1; rid <= length; rid++)
+			{
 				PropertyMapEntry entry = new PropertyMapEntry(module, ptr, metadataOffset, rid);
-				if (entry.RID == this.scrollTarget) {
+				if (entry.RID == this.scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -64,7 +66,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -76,7 +79,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public readonly TypeDefinitionHandle Parent;
 			public readonly PropertyDefinitionHandle PropertyList;
 
-			public unsafe PropertyMap(byte *ptr, int typeDefSize, int propertyDefSize)
+			public unsafe PropertyMap(byte* ptr, int typeDefSize, int propertyDefSize)
 			{
 				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, typeDefSize));
 				PropertyList = MetadataTokens.PropertyDefinitionHandle(Helpers.GetValue(ptr + typeDefSize, propertyDefSize));

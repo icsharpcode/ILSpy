@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get;
 			set;
 		}
-		
+
 		public override TextLocation StartLocation {
 			get {
 				return Location;
@@ -44,25 +44,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		public override TextLocation EndLocation {
 			get {
-				return new TextLocation (Location.Line, Location.Column + "this".Length);
+				return new TextLocation(Location.Line, Location.Column + "this".Length);
 			}
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitThisReferenceExpression (this);
+			visitor.VisitThisReferenceExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitThisReferenceExpression (this);
+			return visitor.VisitThisReferenceExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitThisReferenceExpression (this, data);
+			return visitor.VisitThisReferenceExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ThisReferenceExpression o = other as ThisReferenceExpression;

@@ -18,15 +18,17 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
-using SRM = System.Reflection.Metadata;
+
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
 using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
-using System.Diagnostics;
-using System.Collections.Immutable;
-using ICSharpCode.Decompiler.Metadata;
+
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -176,40 +178,51 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var referencedAssemblies = new List<PEFile>();
 			var assemblyReferenceQueue = new Queue<(bool IsAssembly, PEFile MainModule, object Reference)>();
 			var mainMetadata = mainModule.Metadata;
-			foreach (var h in mainMetadata.GetModuleReferences()) {
+			foreach (var h in mainMetadata.GetModuleReferences())
+			{
 				var moduleRef = mainMetadata.GetModuleReference(h);
 				var moduleName = mainMetadata.GetString(moduleRef.Name);
-				foreach (var fileHandle in mainMetadata.AssemblyFiles) {
+				foreach (var fileHandle in mainMetadata.AssemblyFiles)
+				{
 					var file = mainMetadata.GetAssemblyFile(fileHandle);
-					if (mainMetadata.StringComparer.Equals(file.Name, moduleName) && file.ContainsMetadata) {
+					if (mainMetadata.StringComparer.Equals(file.Name, moduleName) && file.ContainsMetadata)
+					{
 						assemblyReferenceQueue.Enqueue((false, mainModule, moduleName));
 						break;
 					}
 				}
 			}
-			foreach (var refs in mainModule.AssemblyReferences) {
+			foreach (var refs in mainModule.AssemblyReferences)
+			{
 				assemblyReferenceQueue.Enqueue((true, mainModule, refs));
 			}
 			var comparer = KeyComparer.Create(((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
 				reference.IsAssembly ? "A:" + ((AssemblyReference)reference.Reference).FullName :
-				                       "M:" + reference.Reference);
+									   "M:" + reference.Reference);
 			var processedAssemblyReferences = new HashSet<(bool IsAssembly, PEFile Parent, object Reference)>(comparer);
-			while (assemblyReferenceQueue.Count > 0) {
+			while (assemblyReferenceQueue.Count > 0)
+			{
 				var asmRef = assemblyReferenceQueue.Dequeue();
 				if (!processedAssemblyReferences.Add(asmRef))
 					continue;
 				PEFile asm;
-				if (asmRef.IsAssembly) {
+				if (asmRef.IsAssembly)
+				{
 					asm = assemblyResolver.Resolve((AssemblyReference)asmRef.Reference);
-				} else {
+				}
+				else
+				{
 					asm = assemblyResolver.ResolveModule(asmRef.MainModule, (string)asmRef.Reference);
 				}
-				if (asm != null) {
+				if (asm != null)
+				{
 					referencedAssemblies.Add(asm);
 					var metadata = asm.Metadata;
-					foreach (var h in metadata.ExportedTypes) {
+					foreach (var h in metadata.ExportedTypes)
+					{
 						var exportedType = metadata.GetExportedType(h);
-						switch (exportedType.Implementation.Kind) {
+						switch (exportedType.Implementation.Kind)
+						{
 							case SRM.HandleKind.AssemblyReference:
 								assemblyReferenceQueue.Enqueue((true, asm, new AssemblyReference(asm, (SRM.AssemblyReferenceHandle)exportedType.Implementation)));
 								break;
@@ -227,9 +240,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// Other known types are necessary in order for transforms to work (e.g. Task<T> for async transform).
 			// Figure out which known types are missing from our type system so far:
 			var missingKnownTypes = KnownTypeReference.AllKnownTypes.Where(IsMissing).ToList();
-			if (missingKnownTypes.Count > 0) {
+			if (missingKnownTypes.Count > 0)
+			{
 				Init(mainModule.WithOptions(typeSystemOptions), referencedAssembliesWithOptions.Concat(new[] { MinimalCorlib.CreateWithTypes(missingKnownTypes) }));
-			} else {
+			}
+			else
+			{
 				Init(mainModuleWithOptions, referencedAssembliesWithOptions);
 			}
 			this.MainModule = (MetadataModule)base.MainModule;
@@ -239,14 +255,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				var name = knownType.TypeName;
 				if (!mainModule.GetTypeDefinition(name).IsNil)
 					return false;
-				foreach (var file in referencedAssemblies) {
+				foreach (var file in referencedAssemblies)
+				{
 					if (!file.GetTypeDefinition(name).IsNil)
 						return false;
 				}
 				return true;
 			}
 		}
-		
+
 		public new MetadataModule MainModule { get; }
 	}
 }

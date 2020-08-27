@@ -26,6 +26,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
@@ -73,47 +74,64 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.attributes = td.Attributes;
 			this.fullTypeName = td.GetFullTypeName(metadata);
 			// Find DeclaringType + KnownTypeCode:
-			if (fullTypeName.IsNested) {
+			if (fullTypeName.IsNested)
+			{
 				this.DeclaringTypeDefinition = module.GetDefinition(td.GetDeclaringType());
-				
+
 				// Create type parameters:
 				this.TypeParameters = MetadataTypeParameter.Create(module, this.DeclaringTypeDefinition, this, td.GetGenericParameters());
 
 				this.NullableContext = td.GetCustomAttributes().GetNullableContext(metadata) ?? this.DeclaringTypeDefinition.NullableContext;
-			} else {
+			}
+			else
+			{
 				// Create type parameters:
 				this.TypeParameters = MetadataTypeParameter.Create(module, this, td.GetGenericParameters());
 
 				this.NullableContext = td.GetCustomAttributes().GetNullableContext(metadata) ?? module.NullableContext;
 
 				var topLevelTypeName = fullTypeName.TopLevelTypeName;
-				for (int i = 0; i < KnownTypeReference.KnownTypeCodeCount; i++) {
+				for (int i = 0; i < KnownTypeReference.KnownTypeCodeCount; i++)
+				{
 					var ktr = KnownTypeReference.Get((KnownTypeCode)i);
-					if (ktr != null && ktr.TypeName == topLevelTypeName) {
+					if (ktr != null && ktr.TypeName == topLevelTypeName)
+					{
 						this.KnownTypeCode = (KnownTypeCode)i;
 						break;
 					}
 				}
 			}
 			// Find type kind:
-			if ((attributes & TypeAttributes.ClassSemanticsMask) == TypeAttributes.Interface) {
+			if ((attributes & TypeAttributes.ClassSemanticsMask) == TypeAttributes.Interface)
+			{
 				this.Kind = TypeKind.Interface;
-			} else if (td.IsEnum(metadata, out var underlyingType)) {
+			}
+			else if (td.IsEnum(metadata, out var underlyingType))
+			{
 				this.Kind = TypeKind.Enum;
 				this.EnumUnderlyingType = module.Compilation.FindType(underlyingType.ToKnownTypeCode());
-			} else if (td.IsValueType(metadata)) {
-				if (KnownTypeCode == KnownTypeCode.Void) {
+			}
+			else if (td.IsValueType(metadata))
+			{
+				if (KnownTypeCode == KnownTypeCode.Void)
+				{
 					this.Kind = TypeKind.Void;
-				} else {
+				}
+				else
+				{
 					this.Kind = TypeKind.Struct;
 					this.IsByRefLike = (module.TypeSystemOptions & TypeSystemOptions.RefStructs) == TypeSystemOptions.RefStructs
 						&& td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsByRefLike);
 					this.IsReadOnly = (module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) == TypeSystemOptions.ReadOnlyStructsAndParameters
 						&& td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
 				}
-			} else if (td.IsDelegate(metadata)) {
+			}
+			else if (td.IsDelegate(metadata))
+			{
 				this.Kind = TypeKind.Delegate;
-			} else {
+			}
+			else
+			{
 				this.Kind = TypeKind.Class;
 				this.HasExtensionMethods = this.IsStatic
 					&& (module.TypeSystemOptions & TypeSystemOptions.ExtensionMethods) == TypeSystemOptions.ExtensionMethods
@@ -136,7 +154,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var metadata = module.metadata;
 				var nestedTypeCollection = metadata.GetTypeDefinition(handle).GetNestedTypes();
 				var nestedTypeList = new List<ITypeDefinition>(nestedTypeCollection.Length);
-				foreach (TypeDefinitionHandle h in nestedTypeCollection) {
+				foreach (TypeDefinitionHandle h in nestedTypeCollection)
+				{
 					nestedTypeList.Add(module.GetDefinition(h));
 				}
 				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
@@ -166,10 +185,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var metadata = module.metadata;
 				var fieldCollection = metadata.GetTypeDefinition(handle).GetFields();
 				var fieldList = new List<IField>(fieldCollection.Count);
-				foreach (FieldDefinitionHandle h in fieldCollection) {
+				foreach (FieldDefinitionHandle h in fieldCollection)
+				{
 					var field = metadata.GetFieldDefinition(h);
 					var attr = field.Attributes;
-					if (module.IsVisible(attr)) {
+					if (module.IsVisible(attr))
+					{
 						fieldList.Add(module.GetDefinition(h));
 					}
 				}
@@ -187,12 +208,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var metadata = module.metadata;
 				var propertyCollection = metadata.GetTypeDefinition(handle).GetProperties();
 				var propertyList = new List<IProperty>(propertyCollection.Count);
-				foreach (PropertyDefinitionHandle h in propertyCollection) {
+				foreach (PropertyDefinitionHandle h in propertyCollection)
+				{
 					var property = metadata.GetPropertyDefinition(h);
 					var accessors = property.GetAccessors();
 					bool getterVisible = !accessors.Getter.IsNil && module.IsVisible(metadata.GetMethodDefinition(accessors.Getter).Attributes);
 					bool setterVisible = !accessors.Setter.IsNil && module.IsVisible(metadata.GetMethodDefinition(accessors.Setter).Attributes);
-					if (getterVisible || setterVisible) {
+					if (getterVisible || setterVisible)
+					{
 						propertyList.Add(module.GetDefinition(h));
 					}
 				}
@@ -210,13 +233,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var metadata = module.metadata;
 				var eventCollection = metadata.GetTypeDefinition(handle).GetEvents();
 				var eventList = new List<IEvent>(eventCollection.Count);
-				foreach (EventDefinitionHandle h in eventCollection) {
+				foreach (EventDefinitionHandle h in eventCollection)
+				{
 					var ev = metadata.GetEventDefinition(h);
 					var accessors = ev.GetAccessors();
 					if (accessors.Adder.IsNil)
 						continue;
 					var addMethod = metadata.GetMethodDefinition(accessors.Adder);
-					if (module.IsVisible(addMethod.Attributes)) {
+					if (module.IsVisible(addMethod.Attributes))
+					{
 						eventList.Add(module.GetDefinition(h));
 					}
 				}
@@ -235,13 +260,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var methodsCollection = metadata.GetTypeDefinition(handle).GetMethods();
 				var methodsList = new List<IMethod>(methodsCollection.Count);
 				var methodSemantics = module.PEFile.MethodSemanticsLookup;
-				foreach (MethodDefinitionHandle h in methodsCollection) {
+				foreach (MethodDefinitionHandle h in methodsCollection)
+				{
 					var md = metadata.GetMethodDefinition(h);
-					if (methodSemantics.GetSemantics(h).Item2 == 0 && module.IsVisible(md.Attributes)) {
+					if (methodSemantics.GetSemantics(h).Item2 == 0 && module.IsVisible(md.Attributes))
+					{
 						methodsList.Add(module.GetDefinition(h));
 					}
 				}
-				if (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum) {
+				if (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum)
+				{
 					methodsList.Add(FakeMethod.CreateDummyConstructor(Compilation, this, IsAbstract ? Accessibility.Protected : Accessibility.Public));
 				}
 				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
@@ -255,7 +283,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public bool? IsReferenceType {
 			get {
-				switch (Kind) {
+				switch (Kind)
+				{
 					case TypeKind.Struct:
 					case TypeKind.Enum:
 					case TypeKind.Void:
@@ -291,22 +320,30 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var interfaceImplCollection = td.GetInterfaceImplementations();
 				baseTypes = new List<IType>(1 + interfaceImplCollection.Count);
 				IType baseType = null;
-				try {
+				try
+				{
 					EntityHandle baseTypeHandle = td.BaseType;
-					if (!baseTypeHandle.IsNil) {
+					if (!baseTypeHandle.IsNil)
+					{
 						baseType = module.ResolveType(baseTypeHandle, context);
 					}
-				} catch (BadImageFormatException) {
+				}
+				catch (BadImageFormatException)
+				{
 					baseType = SpecialType.UnknownType;
 				}
-				if (baseType != null) {
+				if (baseType != null)
+				{
 					baseTypes.Add(baseType);
-				} else if (Kind == TypeKind.Interface) {
+				}
+				else if (Kind == TypeKind.Interface)
+				{
 					// td.BaseType.IsNil is always true for interfaces,
 					// but the type system expects every interface to derive from System.Object as well.
 					baseTypes.Add(Compilation.FindType(KnownTypeCode.Object));
 				}
-				foreach (var h in interfaceImplCollection) {
+				foreach (var h in interfaceImplCollection)
+				{
 					var iface = metadata.GetInterfaceImplementation(h);
 					baseTypes.Add(module.ResolveType(iface.Interface, context, iface.GetCustomAttributes(), Nullability.Oblivious));
 				}
@@ -338,7 +375,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			#region StructLayoutAttribute
 			LayoutKind layoutKind = LayoutKind.Auto;
-			switch (typeDefinition.Attributes & TypeAttributes.LayoutMask) {
+			switch (typeDefinition.Attributes & TypeAttributes.LayoutMask)
+			{
 				case TypeAttributes.SequentialLayout:
 					layoutKind = LayoutKind.Sequential;
 					break;
@@ -347,7 +385,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					break;
 			}
 			CharSet charSet = CharSet.None;
-			switch (typeDefinition.Attributes & TypeAttributes.StringFormatMask) {
+			switch (typeDefinition.Attributes & TypeAttributes.StringFormatMask)
+			{
 				case TypeAttributes.AnsiClass:
 					charSet = CharSet.Ansi;
 					break;
@@ -360,19 +399,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			var layout = typeDefinition.GetLayout();
 			LayoutKind defaultLayoutKind = Kind == TypeKind.Struct ? LayoutKind.Sequential : LayoutKind.Auto;
-			if (layoutKind != defaultLayoutKind || charSet != CharSet.Ansi || layout.PackingSize > 0 || layout.Size > 0) {
+			if (layoutKind != defaultLayoutKind || charSet != CharSet.Ansi || layout.PackingSize > 0 || layout.Size > 0)
+			{
 				var structLayout = new AttributeBuilder(module, KnownAttribute.StructLayout);
 				structLayout.AddFixedArg(
 					new TopLevelTypeName("System.Runtime.InteropServices", "LayoutKind"),
 					(int)layoutKind);
-				if (charSet != CharSet.Ansi) {
+				if (charSet != CharSet.Ansi)
+				{
 					var charSetType = Compilation.FindType(new TopLevelTypeName("System.Runtime.InteropServices", "CharSet"));
 					structLayout.AddNamedArg("CharSet", charSetType, (int)charSet);
 				}
-				if (layout.PackingSize > 0) {
+				if (layout.PackingSize > 0)
+				{
 					structLayout.AddNamedArg("Pack", KnownTypeCode.Int32, (int)layout.PackingSize);
 				}
-				if (layout.Size > 0) {
+				if (layout.Size > 0)
+				{
 					structLayout.AddNamedArg("Size", KnownTypeCode.Int32, (int)layout.Size);
 				}
 				b.Add(structLayout.Build());
@@ -392,12 +435,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					return defaultMemberName;
 				var metadata = module.metadata;
 				var typeDefinition = metadata.GetTypeDefinition(handle);
-				foreach (var h in typeDefinition.GetCustomAttributes()) {
+				foreach (var h in typeDefinition.GetCustomAttributes())
+				{
 					var a = metadata.GetCustomAttribute(h);
 					if (!a.IsKnownAttribute(metadata, KnownAttribute.DefaultMember))
 						continue;
 					var value = a.DecodeValue(module.TypeProvider);
-					if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is string name) {
+					if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is string name)
+					{
 						defaultMemberName = name;
 						break;
 					}
@@ -409,7 +454,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public Accessibility Accessibility {
 			get {
-				switch (attributes & TypeAttributes.VisibilityMask) {
+				switch (attributes & TypeAttributes.VisibilityMask)
+				{
 					case TypeAttributes.NotPublic:
 					case TypeAttributes.NestedAssembly:
 						return Accessibility.Internal;
@@ -467,7 +513,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(object obj)
 		{
-			if (obj is MetadataTypeDefinition td) {
+			if (obj is MetadataTypeDefinition td)
+			{
 				return handle == td.handle && module.PEFile == td.module.PEFile;
 			}
 			return false;
@@ -487,13 +534,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			const GetMemberOptions opt = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
-			if ((options & opt) == opt) {
+			if ((options & opt) == opt)
+			{
 				return GetFiltered(this.NestedTypes, filter);
-			} else {
+			}
+			else
+			{
 				return GetMembersHelper.GetNestedTypes(this, filter, options);
 			}
 		}
-		
+
 		public IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetNestedTypes(this, typeArguments, filter, options);
@@ -511,7 +561,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IEnumerable<T> ApplyFilter<T>(IEnumerable<T> input, Predicate<T> filter) where T : class
 		{
-			foreach (var member in input) {
+			foreach (var member in input)
+			{
 				if (filter(member))
 					yield return member;
 			}
@@ -521,9 +572,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IMethod>.Instance;
-			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
+			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
+			{
 				return GetFiltered(this.Methods, ExtensionMethods.And(m => !m.IsConstructor, filter));
-			} else {
+			}
+			else
+			{
 				return GetMembersHelper.GetMethods(this, filter, options);
 			}
 		}
@@ -539,19 +593,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IMethod>.Instance;
-			if (ComHelper.IsComImport(this)) {
+			if (ComHelper.IsComImport(this))
+			{
 				IType coClass = ComHelper.GetCoClass(this);
-				using (var busyLock = BusyManager.Enter(this)) {
-					if (busyLock.Success) {
+				using (var busyLock = BusyManager.Enter(this))
+				{
+					if (busyLock.Success)
+					{
 						return coClass.GetConstructors(filter, options)
 							.Select(m => new SpecializedMethod(m, m.Substitution) { DeclaringType = this });
 					}
 				}
 				return EmptyList<IMethod>.Instance;
 			}
-			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
+			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
+			{
 				return GetFiltered(this.Methods, ExtensionMethods.And(m => m.IsConstructor && !m.IsStatic, filter));
-			} else {
+			}
+			else
+			{
 				return GetMembersHelper.GetConstructors(this, filter, options);
 			}
 		}
@@ -560,9 +620,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IProperty>.Instance;
-			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
+			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
+			{
 				return GetFiltered(this.Properties, filter);
-			} else {
+			}
+			else
+			{
 				return GetMembersHelper.GetProperties(this, filter, options);
 			}
 		}
@@ -571,9 +634,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IField>.Instance;
-			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
+			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
+			{
 				return GetFiltered(this.Fields, filter);
-			} else {
+			}
+			else
+			{
 				return GetMembersHelper.GetFields(this, filter, options);
 			}
 		}
@@ -582,9 +648,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IEvent>.Instance;
-			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
+			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
+			{
 				return GetFiltered(this.Events, filter);
-			} else {
+			}
+			else
+			{
 				return GetMembersHelper.GetEvents(this, filter, options);
 			}
 		}
@@ -593,27 +662,34 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IMethod>.Instance;
-			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
+			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
+			{
 				return GetFiltered(this.Members, filter);
-			} else {
+			}
+			else
+			{
 				return GetMembersHelper.GetMembers(this, filter, options);
 			}
 		}
-		
+
 		public IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IMethod>.Instance;
-			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
+			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
+			{
 				return GetFilteredAccessors(filter);
-			} else {
+			}
+			else
+			{
 				return GetMembersHelper.GetAccessors(this, filter, options);
 			}
 		}
 
 		IEnumerable<IMethod> GetFilteredAccessors(Predicate<IMethod> filter)
 		{
-			foreach (var prop in this.Properties) {
+			foreach (var prop in this.Properties)
+			{
 				var getter = prop.Getter;
 				if (getter != null && (filter == null || filter(getter)))
 					yield return getter;
@@ -621,7 +697,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (setter != null && (filter == null || filter(setter)))
 					yield return setter;
 			}
-			foreach (var ev in this.Events) {
+			foreach (var ev in this.Events)
+			{
 				var adder = ev.AddAccessor;
 				if (adder != null && (filter == null || filter(adder)))
 					yield return adder;
@@ -640,7 +717,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			var metadata = module.metadata;
 			var td = metadata.GetTypeDefinition(handle);
-			foreach (var implHandle in td.GetMethodImplementations()) {
+			foreach (var implHandle in td.GetMethodImplementations())
+			{
 				var impl = metadata.GetMethodImplementation(implHandle);
 				if (impl.MethodBody == method)
 					yield return module.ResolveMethod(impl.MethodDeclaration, new GenericContext(this.TypeParameters));
@@ -651,7 +729,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			var metadata = module.metadata;
 			var td = metadata.GetTypeDefinition(handle);
-			foreach (var implHandle in td.GetMethodImplementations()) {
+			foreach (var implHandle in td.GetMethodImplementations())
+			{
 				var impl = metadata.GetMethodImplementation(implHandle);
 				if (impl.MethodBody == method)
 					return true;

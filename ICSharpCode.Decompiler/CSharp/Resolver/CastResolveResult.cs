@@ -48,12 +48,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		//  * CastTests.ExplicitConversion_In_Assignment
 		//  * FindReferencesTest.FindReferencesForOpImplicitInAssignment_ExplicitCast
 		//  * CS0029InvalidConversionIssueTests.ExplicitConversionFromUnknownType
-		
+
 		public CastResolveResult(ConversionResolveResult rr)
 			: base(rr.Type, rr.Input, rr.Conversion, rr.CheckForOverflow)
 		{
 		}
-		
+
 		public CastResolveResult(IType targetType, ResolveResult input, Conversion conversion, bool checkForOverflow)
 			: base(targetType, input, conversion, checkForOverflow)
 		{

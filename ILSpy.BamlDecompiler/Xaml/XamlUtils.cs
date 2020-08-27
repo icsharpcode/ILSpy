@@ -24,9 +24,12 @@ using System.IO;
 using System.Text;
 using System.Xml.Linq;
 
-namespace ILSpy.BamlDecompiler.Xaml {
-	internal static class XamlUtils {
-		public static string Escape(string value) {
+namespace ILSpy.BamlDecompiler.Xaml
+{
+	internal static class XamlUtils
+	{
+		public static string Escape(string value)
+		{
 			if (value.Length == 0)
 				return value;
 			if (value[0] == '{')
@@ -34,16 +37,20 @@ namespace ILSpy.BamlDecompiler.Xaml {
 			return value;
 		}
 
-		public static string ToString(this XamlContext ctx, XElement elem, XamlType type) {
+		public static string ToString(this XamlContext ctx, XElement elem, XamlType type)
+		{
 			type.ResolveNamespace(elem, ctx);
 			return ctx.ToString(elem, type.ToXName(ctx));
 		}
 
-		public static string ToString(this XamlContext ctx, XElement elem, XName name) {
+		public static string ToString(this XamlContext ctx, XElement elem, XName name)
+		{
 			var sb = new StringBuilder();
-			if (name.Namespace != elem.GetDefaultNamespace()) {
+			if (name.Namespace != elem.GetDefaultNamespace())
+			{
 				var prefix = elem.GetPrefixOfNamespace(name.Namespace);
-				if (!string.IsNullOrEmpty(prefix)) {
+				if (!string.IsNullOrEmpty(prefix))
+				{
 					sb.Append(prefix);
 					sb.Append(':');
 				}
@@ -52,9 +59,12 @@ namespace ILSpy.BamlDecompiler.Xaml {
 			return sb.ToString();
 		}
 
-		public static double ReadXamlDouble(this BinaryReader reader, bool scaledInt = false) {
-			if (!scaledInt) {
-				switch (reader.ReadByte()) {
+		public static double ReadXamlDouble(this BinaryReader reader, bool scaledInt = false)
+		{
+			if (!scaledInt)
+			{
+				switch (reader.ReadByte())
+				{
 					case 1:
 						return 0;
 					case 2:
@@ -80,7 +90,8 @@ namespace ILSpy.BamlDecompiler.Xaml {
 		/// </summary>
 		public static StringBuilder EscapeName(StringBuilder sb, string name)
 		{
-			foreach (char ch in name) {
+			foreach (char ch in name)
+			{
 				if (char.IsWhiteSpace(ch) || char.IsControl(ch) || char.IsSurrogate(ch))
 					sb.AppendFormat("\\u{0:x4}", (int)ch);
 				else

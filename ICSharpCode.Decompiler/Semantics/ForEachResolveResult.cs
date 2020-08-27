@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
@@ -30,36 +31,36 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// Gets the semantic tree for the call to GetEnumerator.
 		/// </summary>
 		public readonly ResolveResult GetEnumeratorCall;
-		
+
 		/// <summary>
 		/// Gets the collection type.
 		/// </summary>
 		public readonly IType CollectionType;
-		
+
 		/// <summary>
 		/// Gets the enumerator type.
 		/// </summary>
 		public readonly IType EnumeratorType;
-		
+
 		/// <summary>
 		/// Gets the element type.
 		/// This is the type that would be inferred for an implicitly-typed element variable.
 		/// For explicitly-typed element variables, this type may differ from <c>ElementVariable.Type</c>.
 		/// </summary>
 		public readonly IType ElementType;
-		
+
 		/// <summary>
 		/// Gets the Current property on the IEnumerator.
 		/// Returns null if the property is not found.
 		/// </summary>
 		public readonly IProperty CurrentProperty;
-		
+
 		/// <summary>
 		/// Gets the MoveNext() method on the IEnumerator.
 		/// Returns null if the method is not found.
 		/// </summary>
 		public readonly IMethod MoveNextMethod;
-		
+
 		public ForEachResolveResult(ResolveResult getEnumeratorCall, IType collectionType, IType enumeratorType, IType elementType, IProperty currentProperty, IMethod moveNextMethod, IType voidType)
 			: base(voidType)
 		{

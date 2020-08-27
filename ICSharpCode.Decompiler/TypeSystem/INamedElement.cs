@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// "System.Environment.SpecialFolder" for Environment.SpecialFolder
 		/// </returns>
 		string FullName { get; }
-		
+
 		/// <summary>
 		/// Gets the short name of the class the return type is pointing to.
 		/// </summary>
@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// "SpecialFolder" for Environment.SpecialFolder
 		/// </returns>
 		string Name { get; }
-		
+
 		/// <summary>
 		/// Gets the full reflection name of the element.
 		/// </summary>
@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// "System.Environment+SpecialFolder" for Environment.SpecialFolder
 		/// </returns>
 		string ReflectionName { get; }
-		
+
 		/// <summary>
 		/// Gets the full name of the namespace containing this entity.
 		/// </summary>

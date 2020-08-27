@@ -24,6 +24,7 @@ using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Data;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -106,7 +107,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			var group = new SingleChoiceGroup(GetFlags(flagsType, mask, selectedValue, includeAny ? "<Any>" : null));
 			group.Header = header;
 			group.SelectedFlag = group.Flags.SingleOrDefault(f => f.Value == selectedValue);
-			if (group.SelectedFlag.Name == null) {
+			if (group.SelectedFlag.Name == null)
+			{
 				group.SelectedFlag = defaultFlag;
 			}
 			return group;
@@ -117,7 +119,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			if (neutralItem != null)
 				yield return new Flag(neutralItem, -1, false);
 
-			foreach (var item in flagsType.GetFields(BindingFlags.Static | BindingFlags.Public)) {
+			foreach (var item in flagsType.GetFields(BindingFlags.Static | BindingFlags.Public))
+			{
 				if (item.Name.EndsWith("Mask", StringComparison.Ordinal))
 					continue;
 				int value = (int)CSharpPrimitiveCast.Cast(TypeCode.Int32, item.GetRawConstantValue(), false);

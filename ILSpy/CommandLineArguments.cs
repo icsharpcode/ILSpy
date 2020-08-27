@@ -31,13 +31,15 @@ namespace ICSharpCode.ILSpy
 		public string Language;
 		public bool NoActivate;
 		public string ConfigFile;
-		
+
 		public CommandLineArguments(IEnumerable<string> arguments)
 		{
-			foreach (string arg in arguments) {
+			foreach (string arg in arguments)
+			{
 				if (arg.Length == 0)
 					continue;
-				if (arg[0] == '/') {
+				if (arg[0] == '/')
+				{
 					if (arg.Equals("/singleInstance", StringComparison.OrdinalIgnoreCase))
 						this.SingleInstance = true;
 					else if (arg.Equals("/separate", StringComparison.OrdinalIgnoreCase))
@@ -52,7 +54,9 @@ namespace ICSharpCode.ILSpy
 						this.NoActivate = true;
 					else if (arg.StartsWith("/config:", StringComparison.OrdinalIgnoreCase))
 						this.ConfigFile = arg.Substring("/config:".Length);
-				} else {
+				}
+				else
+				{
 					this.AssembliesToLoad.Add(arg);
 				}
 			}

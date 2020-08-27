@@ -20,7 +20,9 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+
 using ICSharpCode.Decompiler.Tests.Helpers;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
@@ -37,8 +39,10 @@ namespace ICSharpCode.Decompiler.Tests
 				.Where(m => m.GetCustomAttributes(typeof(TestAttribute), false).Any())
 				.Select(m => m.Name)
 				.ToArray();
-			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles()) {
-				if (file.Extension.Equals(".il", StringComparison.OrdinalIgnoreCase)) {
+			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles())
+			{
+				if (file.Extension.Equals(".il", StringComparison.OrdinalIgnoreCase))
+				{
 					var testName = file.Name.Split('.')[0];
 					Assert.Contains(testName, testNames);
 					Assert.IsTrue(File.Exists(Path.Combine(TestCasePath, testName + ".cs")));
@@ -243,7 +247,8 @@ namespace ICSharpCode.Decompiler.Tests
 
 		static void CopyFSharpCoreDll()
 		{
-			lock (copyLock) {
+			lock (copyLock)
+			{
 				if (File.Exists(Path.Combine(TestCasePath, "FSharp.Core.dll")))
 					return;
 				string fsharpCoreDll = Path.Combine(TestCasePath, "..\\..\\..\\ILSpy-tests\\FSharp\\FSharp.Core.dll");

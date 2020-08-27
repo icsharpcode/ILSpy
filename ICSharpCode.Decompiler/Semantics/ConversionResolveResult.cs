@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
@@ -32,12 +33,12 @@ namespace ICSharpCode.Decompiler.Semantics
 	{
 		public readonly ResolveResult Input;
 		public readonly Conversion Conversion;
-		
+
 		/// <summary>
 		/// For numeric conversions, specifies whether overflow checking is enabled.
 		/// </summary>
 		public readonly bool CheckForOverflow;
-		
+
 		public ConversionResolveResult(IType targetType, ResolveResult input, Conversion conversion)
 			: base(targetType)
 		{
@@ -48,20 +49,20 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.Input = input;
 			this.Conversion = conversion;
 		}
-		
+
 		public ConversionResolveResult(IType targetType, ResolveResult input, Conversion conversion, bool checkForOverflow)
 			: this(targetType, input, conversion)
 		{
 			this.CheckForOverflow = checkForOverflow;
 		}
-		
+
 		public override bool IsError {
 			get { return !Conversion.IsValid; }
 		}
-		
+
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{
-			return new [] { Input };
+			return new[] { Input };
 		}
 
 	}

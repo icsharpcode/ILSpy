@@ -38,12 +38,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			ArgIterator argIterator = new ArgIterator(__arglist);
 			Console.WriteLine("Called with {0} arguments", argIterator.GetRemainingCount());
 			int pos = 0;
-			while (argIterator.GetRemainingCount() > 0) {
+			while (argIterator.GetRemainingCount() > 0)
+			{
 				TypedReference tr = argIterator.GetNextArg();
 				object val;
-				try {
+				try
+				{
 					val = __refvalue(tr, object);
-				} catch (Exception ex) {
+				}
+				catch (Exception ex)
+				{
 					val = ex.GetType().Name;
 				}
 				Console.WriteLine("{0} : {1} = {2}", pos++, __reftype(tr).Name, val);

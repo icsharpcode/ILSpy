@@ -18,13 +18,15 @@
 
 using System.Collections.Generic;
 using System.Globalization;
+
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
-	public enum DynamicInvocationType {
+	public enum DynamicInvocationType
+	{
 		/// <summary>
 		/// The invocation is a normal invocation ( 'a(b)' ).
 		/// </summary>
@@ -59,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Arguments for the call. Named arguments will be instances of <see cref="NamedArgumentResolveResult"/>.
 		/// </summary>
-		public readonly IList<ResolveResult> Arguments; 
+		public readonly IList<ResolveResult> Arguments;
 
 		/// <summary>
 		/// Gets the list of initializer statements that are appplied to the result of this invocation.
@@ -70,10 +72,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public readonly IList<ResolveResult> InitializerStatements;
 
-		public DynamicInvocationResolveResult(ResolveResult target, DynamicInvocationType invocationType, IList<ResolveResult> arguments, IList<ResolveResult> initializerStatements = null) : base(SpecialType.Dynamic) {
-			this.Target                = target;
-			this.InvocationType        = invocationType;
-			this.Arguments             = arguments ?? EmptyList<ResolveResult>.Instance;
+		public DynamicInvocationResolveResult(ResolveResult target, DynamicInvocationType invocationType, IList<ResolveResult> arguments, IList<ResolveResult> initializerStatements = null) : base(SpecialType.Dynamic)
+		{
+			this.Target = target;
+			this.InvocationType = invocationType;
+			this.Arguments = arguments ?? EmptyList<ResolveResult>.Instance;
 			this.InitializerStatements = initializerStatements ?? EmptyList<ResolveResult>.Instance;
 		}
 

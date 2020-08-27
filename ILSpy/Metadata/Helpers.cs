@@ -31,7 +31,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+
 using DataGridExtensions;
+
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Controls;
 using ICSharpCode.ILSpy.TextView;
@@ -44,7 +46,8 @@ namespace ICSharpCode.ILSpy.Metadata
 	{
 		public static DataGrid PrepareDataGrid(TabPageModel tabPage, ILSpyTreeNode selectedNode)
 		{
-			if (!(tabPage.Content is DataGrid view && view.Name == "MetadataView")) {
+			if (!(tabPage.Content is DataGrid view && view.Name == "MetadataView"))
+			{
 				view = new MetaDataGrid() {
 					Name = "MetadataView",
 					GridLinesVisibility = DataGridGridLinesVisibility.None,
@@ -111,7 +114,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				Binding = binding,
 				ToolTipBinding = new Binding(e.PropertyName + "Tooltip") { Mode = BindingMode.OneWay }
 			};
-			switch (e.PropertyName) {
+			switch (e.PropertyName)
+			{
 				case "RID":
 				case "Meaning":
 					e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["DefaultFilter"]);
@@ -126,26 +130,31 @@ namespace ICSharpCode.ILSpy.Metadata
 					break;
 				default:
 					e.Cancel = e.PropertyName.Contains("Tooltip");
-					if (!e.Cancel) {
+					if (!e.Cancel)
+					{
 						e.Column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["DefaultFilter"]);
 					}
 					break;
 			}
-			if (!e.Cancel) {
+			if (!e.Cancel)
+			{
 				ApplyAttributes((PropertyDescriptor)e.PropertyDescriptor, binding, e.Column);
 			}
 		}
 
 		static void ApplyAttributes(PropertyDescriptor descriptor, Binding binding, DataGridColumn column)
 		{
-			if (descriptor.PropertyType.IsEnum) {
+			if (descriptor.PropertyType.IsEnum)
+			{
 				binding.Converter = new UnderlyingEnumValueConverter();
 				column.SetTemplate((ControlTemplate)MetadataTableViews.Instance[descriptor.PropertyType.Name + "Filter"]);
 			}
 			var stringFormat = descriptor.Attributes.OfType<StringFormatAttribute>().FirstOrDefault();
-			if (stringFormat != null) {
+			if (stringFormat != null)
+			{
 				binding.StringFormat = stringFormat.Format;
-				if (!descriptor.PropertyType.IsEnum && stringFormat.Format.StartsWith("X", StringComparison.OrdinalIgnoreCase)) {
+				if (!descriptor.PropertyType.IsEnum && stringFormat.Format.StartsWith("X", StringComparison.OrdinalIgnoreCase))
+				{
 					column.SetTemplate((ControlTemplate)MetadataTableViews.Instance["HexFilter"]);
 				}
 			}
@@ -155,7 +164,8 @@ namespace ICSharpCode.ILSpy.Metadata
 		public static unsafe int GetValue(byte* ptr, int size)
 		{
 			int result = 0;
-			for (int i = 0; i < size; i += 2) {
+			for (int i = 0; i < size; i += 2)
+			{
 				result |= ptr[i] << 8 * i;
 				result |= ptr[i + 1] << 8 * (i + 1);
 			}
@@ -210,7 +220,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 			{
 				var t = value.GetType();
-				if (t.IsEnum) {
+				if (t.IsEnum)
+				{
 					return (int)CSharpPrimitiveCast.Cast(TypeCode.Int32, value, false);
 				}
 				return value;

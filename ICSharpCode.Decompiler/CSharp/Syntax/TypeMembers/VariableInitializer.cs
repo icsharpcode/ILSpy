@@ -30,8 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class VariableInitializer : AstNode
 	{
 		#region Null
-		public new static readonly VariableInitializer Null = new NullVariableInitializer ();
-		
+		public new static readonly VariableInitializer Null = new NullVariableInitializer();
+
 		sealed class NullVariableInitializer : VariableInitializer
 		{
 			public override bool IsNull {
@@ -39,22 +39,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return true;
 				}
 			}
-			
-			public override void AcceptVisitor (IAstVisitor visitor)
+
+			public override void AcceptVisitor(IAstVisitor visitor)
 			{
 				visitor.VisitNullNode(this);
 			}
-			
-			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 			{
 				return visitor.VisitNullNode(this);
 			}
-			
-			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 			{
 				return visitor.VisitNullNode(this, data);
 			}
-			
+
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
@@ -67,57 +67,57 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
-		
+
 		sealed class PatternPlaceholder : VariableInitializer, PatternMatching.INode
 		{
 			readonly PatternMatching.Pattern child;
-			
+
 			public PatternPlaceholder(PatternMatching.Pattern child)
 			{
 				this.child = child;
 			}
-			
+
 			public override NodeType NodeType {
 				get { return NodeType.Pattern; }
 			}
-			
-			public override void AcceptVisitor (IAstVisitor visitor)
+
+			public override void AcceptVisitor(IAstVisitor visitor)
 			{
-				visitor.VisitPatternPlaceholder (this, child);
+				visitor.VisitPatternPlaceholder(this, child);
 			}
-				
-			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 			{
-				return visitor.VisitPatternPlaceholder (this, child);
+				return visitor.VisitPatternPlaceholder(this, child);
 			}
-			
+
 			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 			{
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
-			
+
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return child.DoMatch(other, match);
 			}
-			
+
 			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
 		}
 		#endregion
-		
+
 		public override NodeType NodeType {
 			get {
 				return NodeType.Unknown;
 			}
 		}
-		
+
 		public VariableInitializer()
 		{
 		}
-		
+
 		public VariableInitializer(string name, Expression initializer = null)
 		{
 			this.Name = name;
@@ -126,44 +126,44 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public string Name {
 			get {
-				return GetChildByRole (Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value));
+				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}
-		
+
 		public Identifier NameToken {
 			get {
-				return GetChildByRole (Roles.Identifier);
+				return GetChildByRole(Roles.Identifier);
 			}
 			set {
-				SetChildByRole (Roles.Identifier, value);
+				SetChildByRole(Roles.Identifier, value);
 			}
 		}
-		
+
 		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole (Roles.Assign); }
+			get { return GetChildByRole(Roles.Assign); }
 		}
-		
+
 		public Expression Initializer {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get { return GetChildByRole(Roles.Expression); }
+			set { SetChildByRole(Roles.Expression, value); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitVariableInitializer (this);
+			visitor.VisitVariableInitializer(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitVariableInitializer (this);
+			return visitor.VisitVariableInitializer(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitVariableInitializer (this, data);
+			return visitor.VisitVariableInitializer(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

@@ -19,9 +19,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using System.Text.RegularExpressions;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Metadata
@@ -35,7 +36,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			@"|(NuGetFallbackFolder[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)([/\\].*)?[/\\]ref[/\\])" +
 			@"|(shared[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)([/\\].*)?[/\\])" +
 			@"|(packs[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)\\ref([/\\].*)?[/\\])";
-		
+
 		static readonly string RefPathPattern =
 			@"(Reference Assemblies[/\\]Microsoft[/\\]Framework[/\\](?<type>.NETFramework)[/\\]v(?<version>[^/\\]+)[/\\])" +
 			@"|(NuGetFallbackFolder[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)([/\\].*)?[/\\]ref[/\\])" +
@@ -54,27 +55,35 @@ namespace ICSharpCode.Decompiler.Metadata
 			const string TargetFrameworkAttributeName = "System.Runtime.Versioning.TargetFrameworkAttribute";
 			var reader = assembly.GetMetadataReader();
 
-			foreach (var h in reader.GetCustomAttributes(Handle.AssemblyDefinition)) {
-				try {
+			foreach (var h in reader.GetCustomAttributes(Handle.AssemblyDefinition))
+			{
+				try
+				{
 					var attribute = reader.GetCustomAttribute(h);
 					if (attribute.GetAttributeType(reader).GetFullTypeName(reader).ToString() != TargetFrameworkAttributeName)
 						continue;
 					var blobReader = reader.GetBlobReader(attribute.Value);
-					if (blobReader.ReadUInt16() == 0x0001) {
+					if (blobReader.ReadUInt16() == 0x0001)
+					{
 						return blobReader.ReadSerializedString();
 					}
-				} catch (BadImageFormatException) {
+				}
+				catch (BadImageFormatException)
+				{
 					// ignore malformed attributes
 				}
 			}
 
-			foreach (var h in reader.AssemblyReferences) {
-				try {
+			foreach (var h in reader.AssemblyReferences)
+			{
+				try
+				{
 					var r = reader.GetAssemblyReference(h);
 					if (r.PublicKeyOrToken.IsNil)
 						continue;
 					string version;
-					switch (reader.GetString(r.Name)) {
+					switch (reader.GetString(r.Name))
+					{
 						case "netstandard":
 							version = r.Version.ToString(3);
 							return $".NETStandard,Version=v{version}";
@@ -83,29 +92,37 @@ namespace ICSharpCode.Decompiler.Metadata
 							// 4.2.0 => .NET Core 2.0
 							// 4.2.1 => .NET Core 2.1 / 3.0
 							// 4.2.2 => .NET Core 3.1
-							if (r.Version >= new Version(4, 2, 0)) {
+							if (r.Version >= new Version(4, 2, 0))
+							{
 								version = "2.0";
-								if (r.Version >= new Version(4, 2, 1)) {
+								if (r.Version >= new Version(4, 2, 1))
+								{
 									version = "3.0";
 								}
-								if (r.Version >= new Version(4, 2, 2)) {
+								if (r.Version >= new Version(4, 2, 2))
+								{
 									version = "3.1";
 								}
 								return $".NETCoreApp,Version=v{version}";
-							} else {
+							}
+							else
+							{
 								continue;
 							}
 						case "mscorlib":
 							version = r.Version.ToString(2);
 							return $".NETFramework,Version=v{version}";
 					}
-				} catch (BadImageFormatException) {
+				}
+				catch (BadImageFormatException)
+				{
 					// ignore malformed references
 				}
 			}
 
 			// Optionally try to detect target version through assembly path as a fallback (use case: reference assemblies)
-			if (assemblyPath != null) {
+			if (assemblyPath != null)
+			{
 				/*
 				 * Detected path patterns (examples):
 				 * 
@@ -115,20 +132,28 @@ namespace ICSharpCode.Decompiler.Metadata
 				 */
 				var pathMatch = Regex.Match(assemblyPath, PathPattern,
 					RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
-				if (pathMatch.Success) {
+				if (pathMatch.Success)
+				{
 					var type = pathMatch.Groups["type"].Value;
 					var version = pathMatch.Groups["version"].Value;
 					if (string.IsNullOrEmpty(version))
 						version = reader.MetadataVersion;
 
-					if (type == "Microsoft.NET" || type == ".NETFramework") {
+					if (type == "Microsoft.NET" || type == ".NETFramework")
+					{
 						return $".NETFramework,Version=v{version.TrimStart('v').Substring(0, 3)}";
-					} else if (type.IndexOf("netcore", StringComparison.OrdinalIgnoreCase) >= 0) {
+					}
+					else if (type.IndexOf("netcore", StringComparison.OrdinalIgnoreCase) >= 0)
+					{
 						return $".NETCoreApp,Version=v{version}";
-					} else if (type.IndexOf("netstandard", StringComparison.OrdinalIgnoreCase) >= 0) {
+					}
+					else if (type.IndexOf("netstandard", StringComparison.OrdinalIgnoreCase) >= 0)
+					{
 						return $".NETStandard,Version=v{version}";
 					}
-				} else {
+				}
+				else
+				{
 					return $".NETFramework,Version={reader.MetadataVersion.Substring(0, 4)}";
 				}
 			}
@@ -162,8 +187,10 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public void AddMessage(string fullName, MessageKind kind, string message)
 		{
-			lock (loadedAssemblyReferences) {
-				if (!loadedAssemblyReferences.TryGetValue(fullName, out var referenceInfo)) {
+			lock (loadedAssemblyReferences)
+			{
+				if (!loadedAssemblyReferences.TryGetValue(fullName, out var referenceInfo))
+				{
 					referenceInfo = new UnresolvedAssemblyNameReference(fullName);
 					loadedAssemblyReferences.Add(fullName, referenceInfo);
 				}
@@ -173,12 +200,16 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public void AddMessageOnce(string fullName, MessageKind kind, string message)
 		{
-			lock (loadedAssemblyReferences) {
-				if (!loadedAssemblyReferences.TryGetValue(fullName, out var referenceInfo)) {
+			lock (loadedAssemblyReferences)
+			{
+				if (!loadedAssemblyReferences.TryGetValue(fullName, out var referenceInfo))
+				{
 					referenceInfo = new UnresolvedAssemblyNameReference(fullName);
 					loadedAssemblyReferences.Add(fullName, referenceInfo);
 					referenceInfo.Messages.Add((kind, message));
-				} else {
+				}
+				else
+				{
 					var lastMsg = referenceInfo.Messages.LastOrDefault();
 					if (kind != lastMsg.Item1 && message != lastMsg.Item2)
 						referenceInfo.Messages.Add((kind, message));
@@ -188,14 +219,16 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public bool TryGetInfo(string fullName, out UnresolvedAssemblyNameReference info)
 		{
-			lock (loadedAssemblyReferences) {
+			lock (loadedAssemblyReferences)
+			{
 				return loadedAssemblyReferences.TryGetValue(fullName, out info);
 			}
 		}
 
 		public IReadOnlyList<UnresolvedAssemblyNameReference> Entries {
 			get {
-				lock (loadedAssemblyReferences) {
+				lock (loadedAssemblyReferences)
+				{
 					return loadedAssemblyReferences.Values.ToList();
 				}
 			}
@@ -203,7 +236,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public bool HasErrors {
 			get {
-				lock (loadedAssemblyReferences) {
+				lock (loadedAssemblyReferences)
+				{
 					return loadedAssemblyReferences.Any(i => i.Value.HasErrors);
 				}
 			}

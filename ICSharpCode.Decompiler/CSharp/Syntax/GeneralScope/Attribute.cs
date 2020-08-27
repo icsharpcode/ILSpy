@@ -40,20 +40,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
-			set { SetChildByRole (Roles.Type, value); }
+			get { return GetChildByRole(Roles.Type); }
+			set { SetChildByRole(Roles.Type, value); }
 		}
 
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
 
 		public AstNodeCollection<Expression> Arguments {
-			get { return base.GetChildrenByRole (Roles.Argument); }
+			get { return base.GetChildrenByRole(Roles.Argument); }
 		}
 
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
 
 		// HasArgumentList == false: [Empty]
@@ -61,26 +61,26 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get;
 			set;
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitAttribute (this);
+			visitor.VisitAttribute(this);
 		}
-		
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitAttribute (this);
+			return visitor.VisitAttribute(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitAttribute (this, data);
+			return visitor.VisitAttribute(this, data);
 		}
-		
-		protected internal override bool DoMatch (AstNode other, PatternMatching.Match match)
+
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			Attribute o = other as Attribute;
-			return o != null && this.Type.DoMatch (o.Type, match) && this.Arguments.DoMatch (o.Arguments, match);
+			return o != null && this.Type.DoMatch(o.Type, match) && this.Arguments.DoMatch(o.Arguments, match);
 		}
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)

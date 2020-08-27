@@ -22,11 +22,14 @@
 
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class TextHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class TextHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.Text;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (TextRecord)((BamlRecordNode)node).Record;
 
 			parent.Xaml.Element.Add(record.Value);
@@ -35,10 +38,12 @@ namespace ILSpy.BamlDecompiler.Handlers {
 		}
 	}
 
-	internal class TextWithIdHandler : IHandler {
+	internal class TextWithIdHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.TextWithId;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (TextWithIdRecord)((BamlRecordNode)node).Record;
 
 			parent.Xaml.Element.Add(ctx.ResolveString(record.ValueId));

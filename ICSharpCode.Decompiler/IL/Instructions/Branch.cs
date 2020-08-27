@@ -31,22 +31,22 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		readonly int targetILOffset;
 		Block targetBlock;
-		
+
 		public Branch(int targetILOffset) : base(OpCode.Branch)
 		{
 			this.targetILOffset = targetILOffset;
 		}
-		
+
 		public Branch(Block targetBlock) : base(OpCode.Branch)
 		{
 			this.targetBlock = targetBlock ?? throw new ArgumentNullException(nameof(targetBlock));
 			this.targetILOffset = targetBlock.StartILOffset;
 		}
-		
+
 		public int TargetILOffset {
 			get { return targetBlock != null ? targetBlock.StartILOffset : targetILOffset; }
 		}
-		
+
 		public Block TargetBlock {
 			get { return targetBlock; }
 			set {
@@ -57,28 +57,28 @@ namespace ICSharpCode.Decompiler.IL
 					targetBlock.IncomingEdgeCount++;
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets the BlockContainer that contains the target block.
 		/// </summary>
 		public BlockContainer TargetContainer {
 			get { return (BlockContainer)targetBlock?.Parent; }
 		}
-		
+
 		protected override void Connected()
 		{
 			base.Connected();
 			if (targetBlock != null)
 				targetBlock.IncomingEdgeCount++;
 		}
-		
+
 		protected override void Disconnected()
 		{
 			base.Disconnected();
 			if (targetBlock != null)
 				targetBlock.IncomingEdgeCount--;
 		}
-		
+
 		public string TargetLabel {
 			get { return targetBlock != null ? targetBlock.Label : string.Format("IL_{0:x4}", TargetILOffset); }
 		}
@@ -94,7 +94,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		internal static bool GetExecutesFinallyBlock(ILInstruction inst, BlockContainer container)
 		{
-			for (; inst != container; inst = inst.Parent) {
+			for (; inst != container; inst = inst.Parent)
+			{
 				if (inst.Parent is TryFinally && inst.SlotInfo == TryFinally.TryBlockSlot)
 					return true;
 			}
@@ -104,13 +105,14 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			if (phase > ILPhase.InILReader) {
+			if (phase > ILPhase.InILReader)
+			{
 				Debug.Assert(targetBlock.Parent is BlockContainer);
 				Debug.Assert(this.IsDescendantOf(targetBlock.Parent));
 				Debug.Assert(targetBlock.Parent.Children[targetBlock.ChildIndex] == targetBlock);
 			}
 		}
-		
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);

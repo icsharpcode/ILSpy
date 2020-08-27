@@ -37,12 +37,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return NodeType.Unknown;
 			}
 		}
-		
+
 		public FixedVariableInitializer()
 		{
 		}
-		
-		public FixedVariableInitializer (string name, Expression initializer = null)
+
+		public FixedVariableInitializer(string name, Expression initializer = null)
 		{
 			this.Name = name;
 			this.CountExpression = initializer;
@@ -50,54 +50,54 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public string Name {
 			get {
-				return GetChildByRole (Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value));
+				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}
-		
+
 		public Identifier NameToken {
 			get {
-				return GetChildByRole (Roles.Identifier);
+				return GetChildByRole(Roles.Identifier);
 			}
 			set {
-				SetChildByRole (Roles.Identifier, value);
+				SetChildByRole(Roles.Identifier, value);
 			}
 		}
-		
+
 		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole (Roles.LBracket); }
+			get { return GetChildByRole(Roles.LBracket); }
 		}
 
 		public Expression CountExpression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get { return GetChildByRole(Roles.Expression); }
+			set { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole (Roles.RBracket); }
-		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
-		{
-			visitor.VisitFixedVariableInitializer (this);
-		}
-				
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
-		{
-			return visitor.VisitFixedVariableInitializer (this);
+			get { return GetChildByRole(Roles.RBracket); }
 		}
 
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			return visitor.VisitFixedVariableInitializer (this, data);
+			visitor.VisitFixedVariableInitializer(this);
 		}
-		
-		protected internal override bool DoMatch (AstNode other, PatternMatching.Match match)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+		{
+			return visitor.VisitFixedVariableInitializer(this);
+		}
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+		{
+			return visitor.VisitFixedVariableInitializer(this, data);
+		}
+
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			var o = other as FixedVariableInitializer;
-			return o != null && MatchString (this.Name, o.Name) && this.CountExpression.DoMatch (o.CountExpression, match);
+			return o != null && MatchString(this.Name, o.Name) && this.CountExpression.DoMatch(o.CountExpression, match);
 		}
 	}
 }

@@ -31,7 +31,7 @@ namespace ILSpy.BamlDecompiler.Tests.Cases
 		{
 			InitializeComponent();
 		}
-		
+
 		void GridAccessKeyPressed(object sender, AccessKeyPressedEventArgs e)
 		{
 			throw new NotImplementedException();

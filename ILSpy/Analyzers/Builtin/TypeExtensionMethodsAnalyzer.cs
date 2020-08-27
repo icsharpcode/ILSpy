@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers.Builtin
@@ -17,7 +18,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		{
 			Debug.Assert(analyzedSymbol is ITypeDefinition);
 			var scope = context.GetScopeOf((ITypeDefinition)analyzedSymbol);
-			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
+			{
 				foreach (var result in ScanType((ITypeDefinition)analyzedSymbol, type, context))
 					yield return result;
 			}
@@ -28,8 +30,10 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			if (!type.HasExtensionMethods)
 				yield break;
 
-			foreach (IMethod method in type.Methods) {
-				if (!method.IsExtensionMethod) continue;
+			foreach (IMethod method in type.Methods)
+			{
+				if (!method.IsExtensionMethod)
+					continue;
 
 				var firstParamType = method.Parameters[0].Type.GetDefinition();
 				if (firstParamType != null &&

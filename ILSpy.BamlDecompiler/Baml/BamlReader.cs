@@ -26,21 +26,27 @@ using System.IO;
 using System.Text;
 using System.Threading;
 
-namespace ILSpy.BamlDecompiler.Baml {
-	internal class BamlBinaryReader : BinaryReader {
+namespace ILSpy.BamlDecompiler.Baml
+{
+	internal class BamlBinaryReader : BinaryReader
+	{
 		public BamlBinaryReader(Stream stream)
-			: base(stream) {
+			: base(stream)
+		{
 		}
 
 		public int ReadEncodedInt() => Read7BitEncodedInt();
 	}
 
-	internal class BamlReader {
+	internal class BamlReader
+	{
 		const string MSBAML_SIG = "MSBAML";
 
-		internal static bool IsBamlHeader(Stream str) {
+		internal static bool IsBamlHeader(Stream str)
+		{
 			var pos = str.Position;
-			try {
+			try
+			{
 				var rdr = new BinaryReader(str, Encoding.Unicode);
 				int len = (int)(rdr.ReadUInt32() >> 1);
 				if (len != MSBAML_SIG.Length)
@@ -48,12 +54,14 @@ namespace ILSpy.BamlDecompiler.Baml {
 				var sig = new string(rdr.ReadChars(len));
 				return sig == MSBAML_SIG;
 			}
-			finally {
+			finally
+			{
 				str.Position = pos;
 			}
 		}
 
-		static string ReadSignature(Stream str) {
+		static string ReadSignature(Stream str)
+		{
 			var rdr = new BinaryReader(str, Encoding.Unicode);
 			uint len = rdr.ReadUInt32();
 			var sig = new string(rdr.ReadChars((int)(len >> 1)));
@@ -61,27 +69,31 @@ namespace ILSpy.BamlDecompiler.Baml {
 			return sig;
 		}
 
-		public static BamlDocument ReadDocument(Stream str, CancellationToken token) {
+		public static BamlDocument ReadDocument(Stream str, CancellationToken token)
+		{
 			var ret = new BamlDocument();
 			var reader = new BamlBinaryReader(str);
 			ret.Signature = ReadSignature(str);
-			if (ret.Signature != MSBAML_SIG) throw new NotSupportedException();
+			if (ret.Signature != MSBAML_SIG)
+				throw new NotSupportedException();
 			ret.ReaderVersion = new BamlDocument.BamlVersion { Major = reader.ReadUInt16(), Minor = reader.ReadUInt16() };
 			ret.UpdaterVersion = new BamlDocument.BamlVersion { Major = reader.ReadUInt16(), Minor = reader.ReadUInt16() };
 			ret.WriterVersion = new BamlDocument.BamlVersion { Major = reader.ReadUInt16(), Minor = reader.ReadUInt16() };
 			if (ret.ReaderVersion.Major != 0 || ret.ReaderVersion.Minor != 0x60 ||
-			    ret.UpdaterVersion.Major != 0 || ret.UpdaterVersion.Minor != 0x60 ||
-			    ret.WriterVersion.Major != 0 || ret.WriterVersion.Minor != 0x60)
+				ret.UpdaterVersion.Major != 0 || ret.UpdaterVersion.Minor != 0x60 ||
+				ret.WriterVersion.Major != 0 || ret.WriterVersion.Minor != 0x60)
 				throw new NotSupportedException();
 
 			var recs = new Dictionary<long, BamlRecord>();
-			while (str.Position < str.Length) {
+			while (str.Position < str.Length)
+			{
 				token.ThrowIfCancellationRequested();
 
 				long pos = str.Position;
 				var type = (BamlRecordType)reader.ReadByte();
 				BamlRecord rec = null;
-				switch (type) {
+				switch (type)
+				{
 					case BamlRecordType.AssemblyInfo:
 						rec = new AssemblyInfoRecord();
 						break;
@@ -248,7 +260,8 @@ namespace ILSpy.BamlDecompiler.Baml {
 				ret.Add(rec);
 				recs.Add(pos, rec);
 			}
-			for (int i = 0; i < ret.Count; i++) {
+			for (int i = 0; i < ret.Count; i++)
+			{
 				if (ret[i] is IBamlDeferRecord defer)
 					defer.ReadDefer(ret, i, _ => recs[_]);
 			}

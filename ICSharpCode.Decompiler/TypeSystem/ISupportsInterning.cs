@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets a hash code for interning.
 		/// </summary>
 		int GetHashCodeForInterning();
-		
+
 		/// <summary>
 		/// Equality test for interning.
 		/// </summary>

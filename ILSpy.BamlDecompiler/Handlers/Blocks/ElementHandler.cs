@@ -21,14 +21,18 @@
 */
 
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Baml;
 using ILSpy.BamlDecompiler.Xaml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class ElementHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class ElementHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.ElementStart;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (ElementStartRecord)((BamlBlockNode)node).Header;
 			var doc = new BamlElement(node);
 
@@ -39,7 +43,8 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			parent.Xaml.Element.Add(doc.Xaml.Element);
 
 			HandlerMap.ProcessChildren(ctx, (BamlBlockNode)node, doc);
-			if (node.Annotation is XamlResourceKey key && key.KeyNode.Record != node.Record) {
+			if (node.Annotation is XamlResourceKey key && key.KeyNode.Record != node.Record)
+			{
 				var handler = (IDeferHandler)HandlerMap.LookupHandler(key.KeyNode.Record.Type);
 				var keyElem = handler.TranslateDefer(ctx, key.KeyNode, doc);
 

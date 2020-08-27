@@ -91,7 +91,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void CxAssert(bool v)
 		{
-			if (!v) {
+			if (!v)
+			{
 				throw new InvalidOperationException();
 			}
 		}

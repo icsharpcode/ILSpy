@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -36,32 +37,39 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public void Run(AstNode rootNode, TransformContext context)
 		{
 			var renamedSymbols = new Dictionary<ISymbol, string>();
-			foreach (var typeDecl in rootNode.DescendantsAndSelf.OfType<TypeDeclaration>()) {
+			foreach (var typeDecl in rootNode.DescendantsAndSelf.OfType<TypeDeclaration>())
+			{
 				var memberNames = typeDecl.Members.Select(m => {
-				                                          	var type = m.GetChildByRole(EntityDeclaration.PrivateImplementationTypeRole);
-				                                          	return type.IsNull ? m.Name : type + "." + m.Name;
-				                                          }).ToHashSet();
+					var type = m.GetChildByRole(EntityDeclaration.PrivateImplementationTypeRole);
+					return type.IsNull ? m.Name : type + "." + m.Name;
+				}).ToHashSet();
 				// memberNames does not include fields or non-custom events because those
 				// don't have a single name, but a list of VariableInitializers.
-				foreach (var fieldDecl in typeDecl.Members.OfType<FieldDeclaration>()) {
+				foreach (var fieldDecl in typeDecl.Members.OfType<FieldDeclaration>())
+				{
 					if (fieldDecl.Variables.Count != 1)
 						continue;
 					string oldName = fieldDecl.Variables.Single().Name;
 					ISymbol symbol = fieldDecl.GetSymbol();
-					if (memberNames.Contains(oldName) && ((IField)symbol).Accessibility == Accessibility.Private) {
+					if (memberNames.Contains(oldName) && ((IField)symbol).Accessibility == Accessibility.Private)
+					{
 						string newName = PickNewName(memberNames, oldName);
-						if (symbol != null) {
+						if (symbol != null)
+						{
 							fieldDecl.Variables.Single().Name = newName;
 							renamedSymbols[symbol] = newName;
 						}
 					}
 				}
 			}
-			
-			foreach (var node in rootNode.DescendantsAndSelf) {
-				if (node is IdentifierExpression || node is MemberReferenceExpression) {
+
+			foreach (var node in rootNode.DescendantsAndSelf)
+			{
+				if (node is IdentifierExpression || node is MemberReferenceExpression)
+				{
 					ISymbol symbol = node.GetSymbol();
-					if (symbol != null && renamedSymbols.TryGetValue(symbol, out string newName)) {
+					if (symbol != null && renamedSymbols.TryGetValue(symbol, out string newName))
+					{
 						node.GetChildByRole(Roles.Identifier).Name = newName;
 					}
 				}
@@ -72,7 +80,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!memberNames.Contains("m_" + name))
 				return "m_" + name;
-			for (int num = 2;; num++) {
+			for (int num = 2; ; num++)
+			{
 				string newName = name + num;
 				if (!memberNames.Contains(newName))
 					return newName;

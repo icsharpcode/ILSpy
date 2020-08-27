@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			return Volatile.Read(ref location);
 		}
-		
+
 		/// <summary>
 		/// Atomically performs the following operation:
 		/// - If target is null: stores newValue in target and returns newValue.

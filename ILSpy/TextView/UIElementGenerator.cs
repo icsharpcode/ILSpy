@@ -25,7 +25,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 namespace ICSharpCode.ILSpy.TextView
 {
 	using Pair = KeyValuePair<int, Lazy<UIElement>>;
-	
+
 	/// <summary>
 	/// Embeds UIElements in the text output.
 	/// </summary>
@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// The "Lazy" part is used to create UIElements on demand (and thus on the UI thread, not on the decompiler thread).
 		/// </summary>
 		public List<Pair> UIElements;
-		
+
 		public override int GetFirstInterestedOffset(int startOffset)
 		{
 			if (this.UIElements == null)
@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy.TextView
 			else
 				return -1;
 		}
-		
+
 		public override VisualLineElement ConstructElement(int offset)
 		{
 			if (this.UIElements == null)
@@ -63,7 +63,7 @@ namespace ICSharpCode.ILSpy.TextView
 			else
 				return null;
 		}
-		
+
 		int IComparer<Pair>.Compare(Pair x, Pair y)
 		{
 			// Compare (offset,Lazy<UIElement>) pairs by the offset.

@@ -24,23 +24,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ArrayCreateExpression : Expression
 	{
-		public readonly static TokenRole NewKeywordRole = new TokenRole ("new");
+		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
 		public readonly static Role<ArraySpecifier> AdditionalArraySpecifierRole = new Role<ArraySpecifier>("AdditionalArraySpecifier");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", ArrayInitializerExpression.Null);
-		
+
 		public CSharpTokenNode NewToken {
-			get { return GetChildByRole (NewKeywordRole); }
+			get { return GetChildByRole(NewKeywordRole); }
 		}
-		
+
 		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
-			set { SetChildByRole (Roles.Type, value); }
+			get { return GetChildByRole(Roles.Type); }
+			set { SetChildByRole(Roles.Type, value); }
 		}
-		
+
 		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole (Roles.Argument); }
+			get { return GetChildrenByRole(Roles.Argument); }
 		}
-		
+
 		/// <summary>
 		/// Gets additional array ranks (those without size info).
 		/// Empty for "new int[5,1]"; will contain a single element for "new int[5][]".
@@ -48,27 +48,27 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstNodeCollection<ArraySpecifier> AdditionalArraySpecifiers {
 			get { return GetChildrenByRole(AdditionalArraySpecifierRole); }
 		}
-		
+
 		public ArrayInitializerExpression Initializer {
-			get { return GetChildByRole (InitializerRole); }
-			set { SetChildByRole (InitializerRole, value); }
+			get { return GetChildByRole(InitializerRole); }
+			set { SetChildByRole(InitializerRole, value); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitArrayCreateExpression (this);
+			visitor.VisitArrayCreateExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitArrayCreateExpression (this);
+			return visitor.VisitArrayCreateExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitArrayCreateExpression (this, data);
+			return visitor.VisitArrayCreateExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ArrayCreateExpression o = other as ArrayCreateExpression;

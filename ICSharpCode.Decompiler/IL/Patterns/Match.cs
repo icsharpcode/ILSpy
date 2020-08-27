@@ -20,8 +20,8 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.IL.Patterns
 {
-	public class CaptureGroup {}
-	
+	public class CaptureGroup { }
+
 	/// <summary>
 	/// Data holder for the overall pattern matching operation.
 	/// </summary>
@@ -32,9 +32,9 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 	public struct Match
 	{
 		static readonly List<KeyValuePair<CaptureGroup, ILInstruction>> emptyResults = new List<KeyValuePair<CaptureGroup, ILInstruction>>();
-		
+
 		List<KeyValuePair<CaptureGroup, ILInstruction>> results;
-		
+
 		/// <summary>
 		/// Gets whether the match was successful.
 		/// </summary>
@@ -43,15 +43,18 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 				return results != null;
 			}
 			internal set {
-				if (value) {
+				if (value)
+				{
 					if (results == null)
 						results = emptyResults;
-				} else {
+				}
+				else
+				{
 					results = null;
 				}
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets whether the match was successful.
 		/// </summary>
@@ -59,7 +62,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		{
 			return m.Success;
 		}
-		
+
 		/// <summary>
 		/// Gets whether the match failed.
 		/// </summary>
@@ -67,29 +70,31 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		{
 			return !m.Success;
 		}
-		
+
 		internal void Add(CaptureGroup g, ILInstruction n)
 		{
 			if (results == null)
 				results = new List<KeyValuePair<CaptureGroup, ILInstruction>>();
 			results.Add(new KeyValuePair<CaptureGroup, ILInstruction>(g, n));
 		}
-		
+
 		internal int CheckPoint()
 		{
 			return results != null ? results.Count : 0;
 		}
-		
+
 		internal void RestoreCheckPoint(int checkPoint)
 		{
 			if (results != null)
 				results.RemoveRange(checkPoint, results.Count - checkPoint);
 		}
-		
+
 		public IEnumerable<ILInstruction> Get(CaptureGroup captureGroup)
 		{
-			if (results != null) {
-				foreach (var pair in results) {
+			if (results != null)
+			{
+				foreach (var pair in results)
+				{
 					if (pair.Key == captureGroup)
 						yield return pair.Value;
 				}

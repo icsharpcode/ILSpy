@@ -22,6 +22,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Xml.Linq;
+
 using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.Options
@@ -31,9 +32,9 @@ namespace ICSharpCode.ILSpy.Options
 	/// </summary>
 	public partial class OptionsDialog : Window
 	{
-		
+
 		readonly Lazy<UIElement, IOptionsMetadata>[] optionPages;
-		
+
 		public OptionsDialog()
 		{
 			InitializeComponent();
@@ -43,23 +44,25 @@ namespace ICSharpCode.ILSpy.Options
 			var ep = App.ExportProviderFactory.CreateExportProvider();
 			this.optionPages = ep.GetExports<UIElement, IOptionsMetadata>("OptionPages").ToArray();
 			ILSpySettings settings = ILSpySettings.Load();
-			foreach (var optionPage in optionPages.OrderBy(p => p.Metadata.Order)) {
+			foreach (var optionPage in optionPages.OrderBy(p => p.Metadata.Order))
+			{
 				TabItem tabItem = new TabItem();
-				tabItem.Header = MainWindow.GetResourceString( optionPage.Metadata.Title);
+				tabItem.Header = MainWindow.GetResourceString(optionPage.Metadata.Title);
 				tabItem.Content = optionPage.Value;
 				tabControl.Items.Add(tabItem);
-				
+
 				IOptionPage page = optionPage.Value as IOptionPage;
 				if (page != null)
 					page.Load(settings);
 			}
 		}
-		
+
 		void OKButton_Click(object sender, RoutedEventArgs e)
 		{
 			ILSpySettings.Update(
 				delegate (XElement root) {
-					foreach (var optionPage in optionPages) {
+					foreach (var optionPage in optionPages)
+					{
 						IOptionPage page = optionPage.Value as IOptionPage;
 						if (page != null)
 							page.Save(root);
@@ -71,7 +74,8 @@ namespace ICSharpCode.ILSpy.Options
 
 		private void DefaultsButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (MessageBox.Show(Properties.Resources.ResetToDefaultsConfirmationMessage, "ILSpy", MessageBoxButton.YesNo) == MessageBoxResult.Yes) {
+			if (MessageBox.Show(Properties.Resources.ResetToDefaultsConfirmationMessage, "ILSpy", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+			{
 				var page = ((TabItem)tabControl.SelectedItem).Content as IOptionPage;
 				if (page != null)
 					page.LoadDefaults();
@@ -84,34 +88,35 @@ namespace ICSharpCode.ILSpy.Options
 		string Title { get; }
 		int Order { get; }
 	}
-	
+
 	public interface IOptionPage
 	{
 		void Load(ILSpySettings settings);
 		void Save(XElement root);
 		void LoadDefaults();
 	}
-	
+
 	[MetadataAttribute]
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple=false)]
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 	public class ExportOptionPageAttribute : ExportAttribute
 	{
 		public ExportOptionPageAttribute() : base("OptionPages", typeof(UIElement))
 		{ }
-		
+
 		public string Title { get; set; }
-		
+
 		public int Order { get; set; }
 	}
-	
-	[ExportMainMenuCommand(Menu = nameof(Resources._View), Header = nameof(Resources._Options),  MenuCategory = nameof(Resources.Options) ,MenuOrder = 999)]
+
+	[ExportMainMenuCommand(Menu = nameof(Resources._View), Header = nameof(Resources._Options), MenuCategory = nameof(Resources.Options), MenuOrder = 999)]
 	sealed class ShowOptionsCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
 			OptionsDialog dlg = new OptionsDialog();
 			dlg.Owner = MainWindow.Instance;
-			if (dlg.ShowDialog() == true) {
+			if (dlg.ShowDialog() == true)
+			{
 				new RefreshCommand().Execute(parameter);
 			}
 		}

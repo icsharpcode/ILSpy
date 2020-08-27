@@ -41,7 +41,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void TestCase<T>(Func<T, string> target, params T[] args)
 		{
-			foreach (var arg in args) {
+			foreach (var arg in args)
+			{
 				Console.WriteLine(target(arg));
 			}
 		}
@@ -49,26 +50,40 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static string SparseIntegerSwitch(int i)
 		{
 			Console.WriteLine("SparseIntegerSwitch: " + i);
-			switch (i) {
-				case -10000000: return "-10 mln";
-				case -100: return "-hundred";
-				case -1: return "-1";
-				case 0: return "0";
-				case 1: return "1";
-				case 2: return "2";
-				case 4: return "4";
-				case 100: return "hundred";
-				case 10000: return "ten thousand";
-				case 10001: return "ten thousand and one";
-				case int.MaxValue: return "int.MaxValue";
-				default: return "something else";
+			switch (i)
+			{
+				case -10000000:
+					return "-10 mln";
+				case -100:
+					return "-hundred";
+				case -1:
+					return "-1";
+				case 0:
+					return "0";
+				case 1:
+					return "1";
+				case 2:
+					return "2";
+				case 4:
+					return "4";
+				case 100:
+					return "hundred";
+				case 10000:
+					return "ten thousand";
+				case 10001:
+					return "ten thousand and one";
+				case int.MaxValue:
+					return "int.MaxValue";
+				default:
+					return "something else";
 			}
 		}
 
 		public static string ShortSwitchOverString(string text)
 		{
 			Console.WriteLine("ShortSwitchOverString: " + text);
-			switch (text) {
+			switch (text)
+			{
 				case "First case":
 					return "Text";
 				default:
@@ -79,7 +94,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static string ShortSwitchOverString2(string text)
 		{
 			Console.WriteLine("ShortSwitchOverString2: " + text);
-			switch (text) {
+			switch (text)
+			{
 				case "First case":
 					return "Text1";
 				case "Second case":
@@ -94,7 +110,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static string ShortSwitchOverStringNoExplicitDefault(string text)
 		{
 			Console.WriteLine("ShortSwitchOverStringNoExplicitDefault: " + text);
-			switch (text) {
+			switch (text)
+			{
 				case "First case":
 					return "Text1";
 				case "Second case":
@@ -108,7 +125,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static string SwitchOverString1(string text)
 		{
 			Console.WriteLine("SwitchOverString1: " + text);
-			switch (text) {
+			switch (text)
+			{
 				case "First case":
 					return "Text1";
 				case "Second case":
@@ -132,7 +150,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static string SwitchOverString2()
 		{
 			Console.WriteLine("SwitchOverString2:");
-			switch (Environment.UserName) {
+			switch (Environment.UserName)
+			{
 				case "First case":
 					return "Text1";
 				case "Second case":
@@ -163,7 +182,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static string SwitchOverBool(bool b)
 		{
 			Console.WriteLine("SwitchOverBool: " + b);
-			switch (b) {
+			switch (b)
+			{
 				case true:
 					return bool.TrueString;
 				case false:
@@ -178,8 +198,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void SwitchInLoop(int i)
 		{
 			Console.WriteLine("SwitchInLoop: " + i);
-			while (true) {
-				switch (i) {
+			while (true)
+			{
+				switch (i)
+				{
 					case 1:
 						Console.WriteLine("one");
 						break;
@@ -204,7 +226,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void SwitchWithGoto(int i)
 		{
 			Console.WriteLine("SwitchWithGoto: " + i);
-			switch (i) {
+			switch (i)
+			{
 				case 1:
 					Console.WriteLine("one");
 					goto default;

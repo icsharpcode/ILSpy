@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class Accessor : EntityDeclaration
 	{
-		public static readonly new Accessor Null = new NullAccessor ();
+		public static readonly new Accessor Null = new NullAccessor();
 		sealed class NullAccessor : Accessor
 		{
 			public override bool IsNull {
@@ -41,42 +41,43 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return true;
 				}
 			}
-			
-			public override void AcceptVisitor (IAstVisitor visitor)
+
+			public override void AcceptVisitor(IAstVisitor visitor)
 			{
 				visitor.VisitNullNode(this);
 			}
-			
-			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 			{
 				return visitor.VisitNullNode(this);
 			}
-			
-			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 			{
 				return visitor.VisitNullNode(this, data);
 			}
-			
+
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
 		}
-		
+
 		public override NodeType NodeType {
 			get { return NodeType.Unknown; }
 		}
-		
+
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Method; }
 		}
-		
+
 		/// <summary>
 		/// Gets the 'get'/'set'/'init'/'add'/'remove' keyword
 		/// </summary>
 		public CSharpTokenNode Keyword {
 			get {
-				for (AstNode child = this.FirstChild; child != null; child = child.NextSibling) {
+				for (AstNode child = this.FirstChild; child != null; child = child.NextSibling)
+				{
 					if (child.Role == PropertyDeclaration.GetKeywordRole || child.Role == PropertyDeclaration.SetKeywordRole
 						|| child.Role == PropertyDeclaration.InitKeywordRole
 						|| child.Role == CustomEventDeclaration.AddKeywordRole || child.Role == CustomEventDeclaration.RemoveKeywordRole)
@@ -87,27 +88,27 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return CSharpTokenNode.Null;
 			}
 		}
-		
+
 		public BlockStatement Body {
-			get { return GetChildByRole (Roles.Body); }
-			set { SetChildByRole (Roles.Body, value); }
+			get { return GetChildByRole(Roles.Body); }
+			set { SetChildByRole(Roles.Body, value); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitAccessor (this);
+			visitor.VisitAccessor(this);
 		}
-		
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitAccessor (this);
+			return visitor.VisitAccessor(this);
 		}
-		
+
 		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitAccessor (this, data);
+			return visitor.VisitAccessor(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			Accessor o = other as Accessor;

@@ -49,9 +49,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<CustomAttributeEntry>();
 			CustomAttributeEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.CustomAttributes) {
+			foreach (var row in metadata.CustomAttributes)
+			{
 				CustomAttributeEntry entry = new CustomAttributeEntry(module, row);
-				if (scrollTarget == MetadataTokens.GetRowNumber(row)) {
+				if (scrollTarget == MetadataTokens.GetRowNumber(row))
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -61,7 +63,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 

@@ -17,23 +17,25 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
-using System.Threading;
-using System.Text;
-using System.Reflection.Metadata;
-using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
-using ICSharpCode.Decompiler.DebugInfo;
-using System.Collections.Concurrent;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
+
+using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 {
@@ -124,26 +126,29 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
-			using (var writer = new StreamWriter(projectFileName)) {
+			using (var writer = new StreamWriter(projectFileName))
+			{
 				DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
 			}
 		}
 
 		public ProjectId DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			if (string.IsNullOrEmpty(targetDirectory)) {
+			if (string.IsNullOrEmpty(targetDirectory))
+			{
 				throw new InvalidOperationException("Must set TargetDirectory");
 			}
 			this.targetDirectory = targetDirectory;
 			directories.Clear();
 			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
 			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
-			if (StrongNameKeyFile != null) {
+			if (StrongNameKeyFile != null)
+			{
 				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)));
 			}
 
 			projectWriter.Write(projectFileWriter, this, files, moduleDefinition);
-			
+
 			string platformName = TargetServices.GetPlatformName(moduleDefinition);
 			return new ProjectId(platformName, ProjectGuid, ProjectTypeGuids.CSharpWindows);
 		}
@@ -180,7 +185,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (directories.Add(prop))
 				Directory.CreateDirectory(Path.Combine(targetDirectory, prop));
 			string assemblyInfo = Path.Combine(prop, "AssemblyInfo.cs");
-			using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, assemblyInfo))) {
+			using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, assemblyInfo)))
+			{
 				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
 			}
 			return new[] { ("Compile", assemblyInfo) };
@@ -193,9 +199,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				delegate (TypeDefinitionHandle h) {
 					var type = metadata.GetTypeDefinition(h);
 					string file = CleanUpFileName(metadata.GetString(type.Name)) + ".cs";
-					if (string.IsNullOrEmpty(metadata.GetString(type.Namespace))) {
+					if (string.IsNullOrEmpty(metadata.GetString(type.Namespace)))
+					{
 						return file;
-					} else {
+					}
+					else
+					{
 						string dir = CleanUpFileName(metadata.GetString(type.Namespace));
 						if (directories.Add(dir))
 							Directory.CreateDirectory(Path.Combine(targetDirectory, dir));
@@ -212,13 +221,17 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					CancellationToken = cancellationToken
 				},
 				delegate (IGrouping<string, TypeDefinitionHandle> file) {
-					using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, file.Key))) {
-						try {
+					using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, file.Key)))
+					{
+						try
+						{
 							CSharpDecompiler decompiler = CreateDecompiler(ts);
 							decompiler.CancellationToken = cancellationToken;
 							var syntaxTree = decompiler.DecompileTypes(file.ToArray());
 							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
-						} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
+						}
+						catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
+						{
 							throw new DecompilerException(module, $"Error decompiling for '{file.Key}'", innerException);
 						}
 					}
@@ -231,20 +244,26 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		#region WriteResourceFilesInProject
 		protected virtual IEnumerable<(string itemType, string fileName)> WriteResourceFilesInProject(Metadata.PEFile module)
 		{
-			foreach (var r in module.Resources.Where(r => r.ResourceType == Metadata.ResourceType.Embedded)) {
+			foreach (var r in module.Resources.Where(r => r.ResourceType == Metadata.ResourceType.Embedded))
+			{
 				Stream stream = r.TryOpenStream();
 				stream.Position = 0;
 
-				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) {
+				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
+				{
 					bool decodedIntoIndividualFiles;
 					var individualResources = new List<(string itemType, string fileName)>();
-					try {
+					try
+					{
 						var resourcesFile = new ResourcesFile(stream);
-						if (resourcesFile.AllEntriesAreStreams()) {
-							foreach (var (name, value) in resourcesFile) {
+						if (resourcesFile.AllEntriesAreStreams())
+						{
+							foreach (var (name, value) in resourcesFile)
+							{
 								string fileName = Path.Combine(name.Split('/').Select(p => CleanUpFileName(p)).ToArray());
 								string dirName = Path.GetDirectoryName(fileName);
-								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName)) {
+								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
+								{
 									Directory.CreateDirectory(Path.Combine(targetDirectory, dirName));
 								}
 								Stream entryStream = (Stream)value;
@@ -253,28 +272,42 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 									WriteResourceToFile(fileName, (string)name, entryStream));
 							}
 							decodedIntoIndividualFiles = true;
-						} else {
+						}
+						else
+						{
 							decodedIntoIndividualFiles = false;
 						}
-					} catch (BadImageFormatException) {
-						decodedIntoIndividualFiles = false;
-					} catch (EndOfStreamException) {
+					}
+					catch (BadImageFormatException)
+					{
 						decodedIntoIndividualFiles = false;
 					}
-					if (decodedIntoIndividualFiles) {
-						foreach (var entry in individualResources) {
+					catch (EndOfStreamException)
+					{
+						decodedIntoIndividualFiles = false;
+					}
+					if (decodedIntoIndividualFiles)
+					{
+						foreach (var entry in individualResources)
+						{
 							yield return entry;
 						}
-					} else {
+					}
+					else
+					{
 						stream.Position = 0;
 						string fileName = GetFileNameForResource(r.Name);
-						foreach (var entry in WriteResourceToFile(fileName, r.Name, stream)) {
+						foreach (var entry in WriteResourceToFile(fileName, r.Name, stream))
+						{
 							yield return entry;
 						}
 					}
-				} else {
+				}
+				else
+				{
 					string fileName = GetFileNameForResource(r.Name);
-					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write)) {
+					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
+					{
 						stream.Position = 0;
 						stream.CopyTo(fs);
 					}
@@ -285,23 +318,32 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		protected virtual IEnumerable<(string itemType, string fileName)> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 		{
-			if (fileName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) {
+			if (fileName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
+			{
 				string resx = Path.ChangeExtension(fileName, ".resx");
-				try {
+				try
+				{
 					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, resx), FileMode.Create, FileAccess.Write))
-					using (ResXResourceWriter writer = new ResXResourceWriter(fs)) {
-						foreach (var entry in new ResourcesFile(entryStream)) {
+					using (ResXResourceWriter writer = new ResXResourceWriter(fs))
+					{
+						foreach (var entry in new ResourcesFile(entryStream))
+						{
 							writer.AddResource(entry.Key, entry.Value);
 						}
 					}
 					return new[] { ("EmbeddedResource", resx) };
-				} catch (BadImageFormatException) {
+				}
+				catch (BadImageFormatException)
+				{
 					// if the .resources can't be decoded, just save them as-is
-				} catch (EndOfStreamException) {
+				}
+				catch (EndOfStreamException)
+				{
 					// if the .resources can't be decoded, just save them as-is
 				}
 			}
-			using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write)) {
+			using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
+			{
 				entryStream.CopyTo(fs);
 			}
 			return new[] { ("EmbeddedResource", fileName) };
@@ -311,9 +353,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			string[] splitName = fullName.Split('.');
 			string fileName = CleanUpFileName(fullName);
-			for (int i = splitName.Length - 1; i > 0; i--) {
+			for (int i = splitName.Length - 1; i > 0; i--)
+			{
 				string ns = string.Join(".", splitName, 0, i);
-				if (directories.Contains(ns)) {
+				if (directories.Contains(ns))
+				{
 					string name = string.Join(".", splitName, i, splitName.Length - i);
 					fileName = Path.Combine(ns, CleanUpFileName(name));
 					break;
@@ -337,7 +381,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			text = text.Trim();
 			// Whitelist allowed characters, replace everything else:
 			StringBuilder b = new StringBuilder(text.Length);
-			foreach (var c in text) {
+			foreach (var c in text)
+			{
 				if (char.IsLetterOrDigit(c) || c == '-' || c == '_')
 					b.Append(c);
 				else if (c == '.' && b.Length > 0 && b[b.Length - 1] != '.')
@@ -360,7 +405,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		static bool IsReservedFileSystemName(string name)
 		{
-			switch (name.ToUpperInvariant()) {
+			switch (name.ToUpperInvariant())
+			{
 				case "AUX":
 				case "COM1":
 				case "COM2":

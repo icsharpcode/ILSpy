@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
@@ -30,7 +31,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	{
 		public readonly ResolveResult Array;
 		public readonly IList<ResolveResult> Indexes;
-		
+
 		public ArrayAccessResolveResult(IType elementType, ResolveResult array, IList<ResolveResult> indexes) : base(elementType)
 		{
 			if (array == null)
@@ -40,10 +41,10 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.Array = array;
 			this.Indexes = indexes;
 		}
-		
+
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{
-			return new [] { Array }.Concat(Indexes);
+			return new[] { Array }.Concat(Indexes);
 		}
 	}
 }

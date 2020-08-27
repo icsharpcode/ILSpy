@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -21,16 +22,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return FindResult.Stop; // cannot use named arg for operators or accessors
 			if (call.Method is VarArgInstanceMethod)
 				return FindResult.Stop; // CallBuilder doesn't support named args when using varargs
-			if (call.Method.IsConstructor) {
+			if (call.Method.IsConstructor)
+			{
 				IType type = call.Method.DeclaringType;
 				if (type.Kind == TypeKind.Delegate || type.IsAnonymousType())
 					return FindResult.Stop;
 			}
 			if (call.Method.Parameters.Any(p => string.IsNullOrEmpty(p.Name)))
 				return FindResult.Stop; // cannot use named arguments
-			for (int i = child.ChildIndex; i < call.Arguments.Count; i++) {
+			for (int i = child.ChildIndex; i < call.Arguments.Count; i++)
+			{
 				var r = ILInlining.FindLoadInNext(call.Arguments[i], v, expressionBeingMoved, InliningOptions.None);
-				if (r.Type == FindResultType.Found) {
+				if (r.Type == FindResultType.Found)
+				{
 					return FindResult.NamedArgument(r.LoadInst, call.Arguments[i]);
 				}
 			}
@@ -42,29 +46,36 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Debug.Assert(block.Kind == BlockKind.CallWithNamedArgs);
 			var firstArg = ((StLoc)block.Instructions[0]).Value;
 			var r = ILInlining.FindLoadInNext(firstArg, v, expressionBeingMoved, InliningOptions.IntroduceNamedArguments);
-			if (r.Type == FindResultType.Found || r.Type == FindResultType.NamedArgument) {
+			if (r.Type == FindResultType.Found || r.Type == FindResultType.NamedArgument)
+			{
 				return r; // OK, inline into first instruction of block
 			}
 			var call = (CallInstruction)block.FinalInstruction;
-			if (call.IsInstanceCall) {
+			if (call.IsInstanceCall)
+			{
 				// For instance calls, block.Instructions[0] is the argument
 				// for the 'this' pointer. We can only insert at position 1.
-				if (r.Type == FindResultType.Stop) {
+				if (r.Type == FindResultType.Stop)
+				{
 					// error: can't move expressionBeingMoved after block.Instructions[0]
 					return FindResult.Stop;
 				}
 				// Because we always ensure block.Instructions[0] is the 'this' argument,
 				// it's possible that the place we actually need to inline into
 				// is within block.Instructions[1]:
-				if (block.Instructions.Count > 1) {
+				if (block.Instructions.Count > 1)
+				{
 					r = ILInlining.FindLoadInNext(block.Instructions[1], v, expressionBeingMoved, InliningOptions.IntroduceNamedArguments);
-					if (r.Type == FindResultType.Found || r.Type == FindResultType.NamedArgument) {
+					if (r.Type == FindResultType.Found || r.Type == FindResultType.NamedArgument)
+					{
 						return r; // OK, inline into block.Instructions[1]
 					}
 				}
 			}
-			foreach (var arg in call.Arguments) {
-				if (arg.MatchLdLoc(v)) {
+			foreach (var arg in call.Arguments)
+			{
+				if (arg.MatchLdLoc(v))
+				{
 					return FindResult.NamedArgument(arg, arg);
 				}
 			}
@@ -81,14 +92,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Debug.Assert(context.Function == call.Ancestors.OfType<ILFunction>().First());
 			var v = context.Function.RegisterVariable(VariableKind.NamedArgument, arg.ResultType);
 			context.Step($"Introduce named argument '{v.Name}'", arg);
-			if (!(call.Parent is Block namedArgBlock) || namedArgBlock.Kind != BlockKind.CallWithNamedArgs) {
+			if (!(call.Parent is Block namedArgBlock) || namedArgBlock.Kind != BlockKind.CallWithNamedArgs)
+			{
 				// create namedArgBlock:
 				namedArgBlock = new Block(BlockKind.CallWithNamedArgs);
 				call.ReplaceWith(namedArgBlock);
 				namedArgBlock.FinalInstruction = call;
-				if (call.IsInstanceCall) {
+				if (call.IsInstanceCall)
+				{
 					IType thisVarType = call.Method.DeclaringType;
-					if (CallInstruction.ExpectedTypeForThisPointer(thisVarType) == StackType.Ref) {
+					if (CallInstruction.ExpectedTypeForThisPointer(thisVarType) == StackType.Ref)
+					{
 						thisVarType = new ByReferenceType(thisVarType);
 					}
 					var thisArgVar = context.Function.RegisterVariable(VariableKind.NamedArgument, thisVarType, "this_arg");

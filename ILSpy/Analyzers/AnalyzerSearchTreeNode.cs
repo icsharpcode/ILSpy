@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Analyzers.TreeNodes;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -52,27 +53,33 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		protected IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
-			if (symbol is IEntity) {
+			if (symbol is IEntity)
+			{
 				var context = new AnalyzerContext() {
 					CancellationToken = ct,
 					Language = Language,
 					AssemblyList = MainWindow.Instance.CurrentAssemblyList
 				};
-				foreach (var result in analyzer.Analyze(symbol, context)) {
+				foreach (var result in analyzer.Analyze(symbol, context))
+				{
 					yield return SymbolTreeNodeFactory(result);
 				}
-			} else {
+			}
+			else
+			{
 				throw new NotSupportedException("Currently symbols that are not entities are not supported!");
 			}
 		}
 
 		AnalyzerTreeNode SymbolTreeNodeFactory(ISymbol symbol)
 		{
-			if (symbol == null) {
+			if (symbol == null)
+			{
 				throw new ArgumentNullException(nameof(symbol));
 			}
 
-			switch (symbol) {
+			switch (symbol)
+			{
 				case IModule module:
 					return new AnalyzedModuleTreeNode(module) {
 						Language = this.Language
@@ -105,7 +112,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 		protected override void OnIsVisibleChanged()
 		{
 			base.OnIsVisibleChanged();
-			if (!this.IsVisible && threading.IsRunning) {
+			if (!this.IsVisible && threading.IsRunning)
+			{
 				this.LazyLoading = true;
 				threading.Cancel();
 				this.Children.Clear();
@@ -116,11 +124,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			// only cancel a running analysis if user has manually added/removed assemblies
 			bool manualAdd = false;
-			foreach (var asm in addedAssemblies) {
+			foreach (var asm in addedAssemblies)
+			{
 				if (!asm.IsAutoLoaded)
 					manualAdd = true;
 			}
-			if (removedAssemblies.Count > 0 || manualAdd) {
+			if (removedAssemblies.Count > 0 || manualAdd)
+			{
 				this.LazyLoading = true;
 				threading.Cancel();
 				this.Children.Clear();

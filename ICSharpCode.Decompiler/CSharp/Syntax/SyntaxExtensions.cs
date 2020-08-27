@@ -28,7 +28,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static bool IsComparisonOperator(this OperatorType operatorType)
 		{
-			switch (operatorType) {
+			switch (operatorType)
+			{
 				case OperatorType.Equality:
 				case OperatorType.Inequality:
 				case OperatorType.GreaterThan:

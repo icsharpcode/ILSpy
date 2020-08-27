@@ -1,12 +1,14 @@
-﻿using Microsoft.VisualBasic.CompilerServices;
-using System;
+﻿using System;
+
+using Microsoft.VisualBasic.CompilerServices;
 
 [StandardModule]
 internal sealed class Program
 {
 	public static void SelectOnString()
 	{
-		switch (Environment.CommandLine) {
+		switch (Environment.CommandLine)
+		{
 			case "123":
 				Console.WriteLine("a");
 				break;

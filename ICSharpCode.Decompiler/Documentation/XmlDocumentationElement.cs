@@ -22,6 +22,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Xml.Linq;
+
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -89,12 +90,16 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		public IEntity ReferencedEntity {
 			get {
-				if (!referencedEntityInitialized) {
+				if (!referencedEntityInitialized)
+				{
 					string cref = GetAttribute("cref");
-					try {
+					try
+					{
 						if (!string.IsNullOrEmpty(cref) && crefResolver != null)
 							referencedEntity = crefResolver(cref);
-					} catch {
+					}
+					catch
+					{
 						referencedEntity = null;
 					}
 					referencedEntityInitialized = true;
@@ -132,7 +137,8 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		public string TextContent {
 			get {
-				if (textContent == null) {
+				if (textContent == null)
+				{
 					StringBuilder b = new StringBuilder();
 					foreach (var child in this.Children)
 						b.Append(child.TextContent);
@@ -165,38 +171,52 @@ namespace ICSharpCode.Decompiler.Documentation
 		static List<XmlDocumentationElement> CreateElements(IEnumerable<XObject> childObjects, IEntity declaringEntity, Func<string, IEntity> crefResolver, int nestingLevel)
 		{
 			List<XmlDocumentationElement> list = new List<XmlDocumentationElement>();
-			foreach (var child in childObjects) {
+			foreach (var child in childObjects)
+			{
 				var childText = child as XText;
 				var childTag = child as XCData;
 				var childElement = child as XElement;
-				if (childText != null) {
+				if (childText != null)
+				{
 					list.Add(new XmlDocumentationElement(childText.Value, declaringEntity));
-				} else if (childTag != null) {
+				}
+				else if (childTag != null)
+				{
 					list.Add(new XmlDocumentationElement(childTag.Value, declaringEntity));
-				} else if (childElement != null) {
-					if (nestingLevel < 5 && childElement.Name == "inheritdoc") {
+				}
+				else if (childElement != null)
+				{
+					if (nestingLevel < 5 && childElement.Name == "inheritdoc")
+					{
 						string cref = childElement.Attribute("cref").Value;
 						IEntity inheritedFrom = null;
 						string inheritedDocumentation = null;
-						if (cref != null) {
+						if (cref != null)
+						{
 							inheritedFrom = crefResolver(cref);
 							if (inheritedFrom != null)
 								inheritedDocumentation = inheritedFrom.GetDocumentation();
-						} else {
-							foreach (IMember baseMember in InheritanceHelper.GetBaseMembers((IMember)declaringEntity, includeImplementedInterfaces: true)) {
+						}
+						else
+						{
+							foreach (IMember baseMember in InheritanceHelper.GetBaseMembers((IMember)declaringEntity, includeImplementedInterfaces: true))
+							{
 								inheritedDocumentation = baseMember.GetDocumentation();
-								if (inheritedDocumentation != null) {
+								if (inheritedDocumentation != null)
+								{
 									inheritedFrom = baseMember;
 									break;
 								}
 							}
 						}
 
-						if (inheritedDocumentation != null) {
+						if (inheritedDocumentation != null)
+						{
 							var doc = XDocument.Parse(inheritedDocumentation);
 
 							// XPath filter not yet implemented
-							if (childElement.Parent == null && childElement.Attribute("select").Value == null) {
+							if (childElement.Parent == null && childElement.Attribute("select").Value == null)
+							{
 								// Inheriting documentation at the root level
 								List<string> doNotInherit = new List<string>();
 								doNotInherit.Add("overloads");
@@ -212,18 +232,22 @@ namespace ICSharpCode.Decompiler.Documentation
 								list.AddRange(CreateElements(inheritedChildren, inheritedFrom, crefResolver, nestingLevel + 1));
 							}
 						}
-					} else {
+					}
+					else
+					{
 						list.Add(new XmlDocumentationElement(childElement, declaringEntity, crefResolver) { nestingLevel = nestingLevel });
 					}
 				}
 			}
-			if (list.Count > 0 && list[0].IsTextNode) {
+			if (list.Count > 0 && list[0].IsTextNode)
+			{
 				if (string.IsNullOrWhiteSpace(list[0].textContent))
 					list.RemoveAt(0);
 				else
 					list[0].textContent = list[0].textContent.TrimStart();
 			}
-			if (list.Count > 0 && list[list.Count - 1].IsTextNode) {
+			if (list.Count > 0 && list[list.Count - 1].IsTextNode)
+			{
 				if (string.IsNullOrWhiteSpace(list[list.Count - 1].textContent))
 					list.RemoveAt(list.Count - 1);
 				else

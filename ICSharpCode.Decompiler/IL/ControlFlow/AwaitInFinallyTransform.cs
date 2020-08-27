@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -33,7 +34,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
 
 			// analyze all try-catch statements in the function
-			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray()) {
+			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray())
+			{
 				if (!(tryCatch.Parent?.Parent is BlockContainer container))
 					continue;
 				// await in finally uses a single catch block with catch-type object
@@ -44,7 +46,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var block = catchBlockContainer.EntryPoint;
 				if (block.Instructions.Count < 2 || !block.Instructions[0].MatchStLoc(out var globalCopyVar, out var value) || !value.MatchLdLoc(tryCatch.Handlers[0].Variable))
 					continue;
-				if (block.Instructions.Count == 3) {
+				if (block.Instructions.Count == 3)
+				{
 					if (!block.Instructions[1].MatchStLoc(out var globalCopyVarTemp, out value) || !value.MatchLdLoc(globalCopyVar))
 						continue;
 					globalCopyVar = globalCopyVarTemp;
@@ -70,7 +73,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 				void TraverseDominatorTree(ControlFlowNode node)
 				{
-					if (entryPointOfFinallyNode != node) {
+					if (entryPointOfFinallyNode != node)
+					{
 						if (entryPointOfFinallyNode.Dominates(node))
 							additionalBlocksInFinally.Add((Block)node.UserData);
 						else
@@ -80,7 +84,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (node == exitOfFinallyNode)
 						return;
 
-					foreach (var child in node.DominatorTreeChildren) {
+					foreach (var child in node.DominatorTreeChildren)
+					{
 						TraverseDominatorTree(child);
 					}
 				}
@@ -90,7 +95,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 				context.Step("Inline finally block with await", tryCatch.Handlers[0]);
 
-				foreach (var blockToRemove in blocksToRemove) {
+				foreach (var blockToRemove in blocksToRemove)
+				{
 					blockToRemove.Remove();
 				}
 				var finallyContainer = new BlockContainer();
@@ -99,16 +105,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					afterFinally.Instructions.RemoveAt(0);
 				changedContainers.Add(container);
 				var outer = BlockContainer.FindClosestContainer(container.Parent);
-				if (outer != null) changedContainers.Add(outer);
+				if (outer != null)
+					changedContainers.Add(outer);
 				finallyContainer.Blocks.Add(entryPointOfFinally);
 				finallyContainer.AddILRange(entryPointOfFinally);
 				exitOfFinally.Instructions.RemoveRange(tempStore.ChildIndex, 3);
 				exitOfFinally.Instructions.Add(new Leave(finallyContainer));
-				foreach (var branchToFinally in container.Descendants.OfType<Branch>()) {
+				foreach (var branchToFinally in container.Descendants.OfType<Branch>())
+				{
 					if (branchToFinally.TargetBlock == entryPointOfFinally)
 						branchToFinally.ReplaceWith(new Branch(afterFinally));
 				}
-				foreach (var newBlock in additionalBlocksInFinally) {
+				foreach (var newBlock in additionalBlocksInFinally)
+				{
 					newBlock.Remove();
 					finallyContainer.Blocks.Add(newBlock);
 					finallyContainer.AddILRange(newBlock);
@@ -203,15 +212,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (afterFinally.Instructions.Count < 2)
 				return false;
 			ILVariable globalCopyVarSplitted;
-			switch (afterFinally.Instructions[0]) {
+			switch (afterFinally.Instructions[0])
+			{
 				case IfInstruction ifInst:
-					if (ifInst.Condition.MatchCompEquals(out var load, out var ldone) && ldone.MatchLdcI4(1) && load.MatchLdLoc(out var variable)) {
+					if (ifInst.Condition.MatchCompEquals(out var load, out var ldone) && ldone.MatchLdcI4(1) && load.MatchLdLoc(out var variable))
+					{
 						if (!ifInst.TrueInst.MatchBranch(out var targetBlock))
 							return false;
 						blocksToRemove.Add(afterFinally);
 						afterFinally = targetBlock;
 						return true;
-					} else if (ifInst.Condition.MatchCompNotEquals(out load, out ldone) && ldone.MatchLdcI4(1) && load.MatchLdLoc(out variable)) {
+					}
+					else if (ifInst.Condition.MatchCompNotEquals(out load, out ldone) && ldone.MatchLdcI4(1) && load.MatchLdLoc(out variable))
+					{
 						if (!afterFinally.Instructions[1].MatchBranch(out var targetBlock))
 							return false;
 						blocksToRemove.Add(afterFinally);

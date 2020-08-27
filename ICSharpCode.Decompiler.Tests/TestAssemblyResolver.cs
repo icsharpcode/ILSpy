@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Tests
@@ -15,7 +16,8 @@ namespace ICSharpCode.Decompiler.Tests
 			: base(mainAssemblyFileName, false, targetFramework, PEStreamOptions.PrefetchMetadata, MetadataReaderOptions.ApplyWindowsRuntimeProjections)
 		{
 			var assemblyNames = new DirectoryInfo(baseDir).EnumerateFiles("*.dll").Select(f => Path.GetFileNameWithoutExtension(f.Name));
-			foreach (var name in assemblyNames) {
+			foreach (var name in assemblyNames)
+			{
 				localAssemblies.Add(name);
 			}
 		}

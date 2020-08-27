@@ -194,10 +194,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public void NullReferenceException_Field_Deconstruction(out int a)
 		{
-			try {
+			try
+			{
 				AssignmentTargets t0 = null;
 				(t0.IntField, a) = GetSource<int, int>();
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				a = 0;
 				Console.WriteLine(ex.GetType().FullName);
 			}
@@ -205,11 +208,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public void NullReferenceException_RefLocalReferencesField_Deconstruction(out int a)
 		{
-			try {
+			try
+			{
 				AssignmentTargets t0 = null;
 				ref int i = ref t0.IntField;
 				(i, a) = GetSource<int, int>();
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				a = 0;
 				Console.WriteLine(ex.GetType().FullName);
 			}
@@ -217,10 +223,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public void NullReferenceException_RefLocalReferencesArrayElement_Deconstruction(out int a, int[] arr)
 		{
-			try {
+			try
+			{
 				ref int i = ref arr[0];
 				(i, a) = GetSource<int, int>();
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				a = 0;
 				Console.WriteLine(ex.GetType().FullName);
 			}
@@ -238,7 +247,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public void DeconstructTupleListForEachSameVar(List<(string, string)> tuples)
 		{
 			Console.WriteLine("DeconstructTupleListForEachSameVar:");
-			foreach (var tuple in tuples) {
+			foreach (var tuple in tuples)
+			{
 				string a;
 				a = tuple.Item1;
 				a = tuple.Item2;

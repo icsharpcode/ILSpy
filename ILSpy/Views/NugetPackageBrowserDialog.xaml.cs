@@ -56,7 +56,8 @@ namespace ICSharpCode.ILSpy
 
 		void Package_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(Package.SelectedEntries)) {
+			if (e.PropertyName == nameof(Package.SelectedEntries))
+			{
 				OnPropertyChanged(new PropertyChangedEventArgs("HasSelection"));
 			}
 		}

@@ -51,9 +51,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<DocumentEntry>();
 			DocumentEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.Documents) {
+			foreach (var row in metadata.Documents)
+			{
 				DocumentEntry entry = new DocumentEntry(metadata, isEmbedded, row);
-				if (entry.RID == scrollTarget) {
+				if (entry.RID == scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -63,7 +65,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 1) {
+			if (scrollTargetEntry.RID > 1)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Media;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Search;
@@ -72,7 +73,8 @@ namespace ICSharpCode.ILSpy
 
 		public override ImageSource Image {
 			get {
-				if (base.Image == null) {
+				if (base.Image == null)
+				{
 					base.Image = AbstractEntitySearchStrategy.GetIcon(Member);
 				}
 				return base.Image;
@@ -81,7 +83,8 @@ namespace ICSharpCode.ILSpy
 
 		public override ImageSource LocationImage {
 			get {
-				if (base.LocationImage == null) {
+				if (base.LocationImage == null)
+				{
 					base.LocationImage = Member.DeclaringTypeDefinition != null ? TypeTreeNode.GetIcon(Member.DeclaringTypeDefinition) : Images.Namespace;
 				}
 				return base.LocationImage;

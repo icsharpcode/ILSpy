@@ -52,9 +52,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var length = metadata.GetTableRowCount(TableIndex.InterfaceImpl);
 			byte* ptr = metadata.MetadataPointer;
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
-			for (int rid = 1; rid <= length; rid++) {
+			for (int rid = 1; rid <= length; rid++)
+			{
 				InterfaceImplEntry entry = new InterfaceImplEntry(module, ptr, metadataOffset, rid);
-				if (entry.RID == this.scrollTarget) {
+				if (entry.RID == this.scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -64,7 +66,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -76,7 +79,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public readonly EntityHandle Class;
 			public readonly EntityHandle Interface;
 
-			public unsafe InterfaceImpl(byte *ptr, int classSize, int interfaceSize)
+			public unsafe InterfaceImpl(byte* ptr, int classSize, int interfaceSize)
 			{
 				Class = MetadataTokens.TypeDefinitionHandle(Helpers.GetValue(ptr, classSize));
 				Interface = Helpers.FromTypeDefOrRefTag((uint)Helpers.GetValue(ptr + classSize, interfaceSize));

@@ -22,6 +22,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
@@ -51,9 +52,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<LocalConstantEntry>();
 			LocalConstantEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.LocalConstants) {
+			foreach (var row in metadata.LocalConstants)
+			{
 				LocalConstantEntry entry = new LocalConstantEntry(module, metadata, isEmbedded, row);
-				if (entry.RID == scrollTarget) {
+				if (entry.RID == scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -63,7 +66,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 1) {
+			if (scrollTargetEntry.RID > 1)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 

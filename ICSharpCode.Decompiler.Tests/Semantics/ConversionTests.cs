@@ -20,21 +20,23 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Tests.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Semantics
 {
 	// assign short names to the fake reflection types
-	using Null = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Null;
-	using dynamic = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Dynamic;
-	using nuint = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.NUInt;
-	using nint = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.NInt;
 	using C = Conversion;
+	using dynamic = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Dynamic;
+	using nint = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.NInt;
+	using nuint = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.NUInt;
+	using Null = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Null;
 
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public unsafe class ConversionTest

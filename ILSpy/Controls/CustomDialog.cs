@@ -33,8 +33,7 @@ namespace ICSharpCode.ILSpy.Controls
 		/// <summary>
 		/// Gets the index of the button pressed.
 		/// </summary>
-		public int Result
-		{
+		public int Result {
 			get {
 				return result;
 			}
@@ -50,14 +49,16 @@ namespace ICSharpCode.ILSpy.Controls
 			this.cancelButton = cancelButton;
 			this.Text = caption;
 
-			using (Graphics g = this.CreateGraphics()) {
+			using (Graphics g = this.CreateGraphics())
+			{
 				Rectangle screen = Screen.PrimaryScreen.WorkingArea;
 				SizeF size = g.MeasureString(message, label.Font, screen.Width - 20);
 				Size clientSize = size.ToSize();
 				Button[] buttons = new Button[buttonLabels.Length];
 				int[] positions = new int[buttonLabels.Length];
 				int pos = 0;
-				for (int i = 0; i < buttons.Length; i++) {
+				for (int i = 0; i < buttons.Length; i++)
+				{
 					Button newButton = new Button();
 					newButton.FlatStyle = FlatStyle.System;
 					newButton.Tag = i;
@@ -70,37 +71,44 @@ namespace ICSharpCode.ILSpy.Controls
 					buttons[i] = newButton;
 					pos += newButton.Width + 4;
 				}
-				if (acceptButton >= 0) {
+				if (acceptButton >= 0)
+				{
 					AcceptButton = buttons[acceptButton];
 				}
-				if (cancelButton >= 0) {
+				if (cancelButton >= 0)
+				{
 					CancelButton = buttons[cancelButton];
 				}
 
 				pos += 4; // add space before first button
 						  // (we don't start with pos=4 because this space doesn't belong to the button panel)
 
-				if (pos > clientSize.Width) {
+				if (pos > clientSize.Width)
+				{
 					clientSize.Width = pos;
 				}
 				clientSize.Height += panel.Height + 6;
 				this.ClientSize = clientSize;
 				int start = (clientSize.Width - pos) / 2;
-				for (int i = 0; i < buttons.Length; i++) {
+				for (int i = 0; i < buttons.Length; i++)
+				{
 					buttons[i].Location = new Point(start + positions[i], 4);
 				}
 				panel.Controls.AddRange(buttons);
 			}
 			label.Text = message;
-			
+
 			this.ResumeLayout(false);
 		}
 
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
-			if (cancelButton == -1 && e.KeyCode == Keys.Escape) {
+			if (cancelButton == -1 && e.KeyCode == Keys.Escape)
+			{
 				this.Close();
-			} else if (e.KeyCode == Keys.C && e.Control) {
+			}
+			else if (e.KeyCode == Keys.C && e.Control)
+			{
 				Clipboard.SetText(this.Text + Environment.NewLine + label.Text);
 			}
 		}

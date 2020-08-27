@@ -18,8 +18,10 @@
 
 using System;
 using System.IO;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.TextView;
+
 using Microsoft.Win32;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -51,14 +53,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public static ILSpyTreeNode Create(string key, object data)
 		{
 			ILSpyTreeNode result = null;
-			foreach (var factory in App.ExportProvider.GetExportedValues<IResourceNodeFactory>()) {
+			foreach (var factory in App.ExportProvider.GetExportedValues<IResourceNodeFactory>())
+			{
 				result = factory.CreateNode(key, data);
 				if (result != null)
 					return result;
 			}
 			var streamData = data as Stream;
-			if(streamData !=null)
-				result =  new ResourceEntryNode(key, data as Stream);
+			if (streamData != null)
+				result = new ResourceEntryNode(key, data as Stream);
 
 			return result;
 		}
@@ -72,9 +75,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = Path.GetFileName(DecompilerTextView.CleanUpName(key));
-			if (dlg.ShowDialog() == true) {
+			if (dlg.ShowDialog() == true)
+			{
 				data.Position = 0;
-				using (var fs = dlg.OpenFile()) {
+				using (var fs = dlg.OpenFile())
+				{
 					data.CopyTo(fs);
 				}
 			}

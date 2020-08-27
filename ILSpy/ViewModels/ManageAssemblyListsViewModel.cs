@@ -23,6 +23,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.Properties;
@@ -67,10 +68,12 @@ namespace ICSharpCode.ILSpy.ViewModels
 			Dictionary<string, string> foundVersions = new Dictionary<string, string>();
 			Dictionary<string, int> latestRevision = new Dictionary<string, int>();
 
-			foreach (var sdkDir in Directory.GetDirectories(Path.Combine(basePath, "shared"))) {
+			foreach (var sdkDir in Directory.GetDirectories(Path.Combine(basePath, "shared")))
+			{
 				if (sdkDir.EndsWith(".Ref", StringComparison.OrdinalIgnoreCase))
 					continue;
-				foreach (var versionDir in Directory.GetDirectories(sdkDir)) {
+				foreach (var versionDir in Directory.GetDirectories(sdkDir))
+				{
 					var match = Regex.Match(versionDir, @"[/\\](?<name>[A-z0-9.]+)[/\\](?<version>\d+\.\d)+(.(?<revision>\d+))?$");
 					if (!match.Success)
 						continue;
@@ -82,14 +85,16 @@ namespace ICSharpCode.ILSpy.ViewModels
 					if (!latestRevision.TryGetValue(text, out int revision))
 						revision = -1;
 					int newRevision = int.Parse(match.Groups["revision"].Value);
-					if (newRevision > revision) {
+					if (newRevision > revision)
+					{
 						latestRevision[text] = newRevision;
 						foundVersions[text] = versionDir;
 					}
 				}
 			}
 
-			foreach (var pair in foundVersions) {
+			foreach (var pair in foundVersions)
+			{
 				yield return new PreconfiguredAssemblyList(pair.Key + "(." + latestRevision[pair.Key] + ")", pair.Value);
 			}
 		}
@@ -103,7 +108,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public string SelectedAssemblyList {
 			get => selectedAssemblyList;
 			set {
-				if (selectedAssemblyList != value) {
+				if (selectedAssemblyList != value)
+				{
 					selectedAssemblyList = value;
 					RaisePropertyChanged();
 				}
@@ -123,14 +129,17 @@ namespace ICSharpCode.ILSpy.ViewModels
 			CreateListDialog dlg = new CreateListDialog(Resources.NewList);
 			dlg.Owner = parent;
 			dlg.Closing += (s, args) => {
-				if (dlg.DialogResult == true) {
-					if (manager.AssemblyLists.Contains(dlg.ListName)) {
+				if (dlg.DialogResult == true)
+				{
+					if (manager.AssemblyLists.Contains(dlg.ListName))
+					{
 						args.Cancel = true;
 						MessageBox.Show(Resources.ListExistsAlready, null, MessageBoxButton.OK);
 					}
 				}
 			};
-			if (dlg.ShowDialog() == true) {
+			if (dlg.ShowDialog() == true)
+			{
 				manager.CreateList(new AssemblyList(dlg.ListName));
 			}
 		}
@@ -145,14 +154,17 @@ namespace ICSharpCode.ILSpy.ViewModels
 			CreateListDialog dlg = new CreateListDialog(Resources.NewList);
 			dlg.Owner = parent;
 			dlg.Closing += (s, args) => {
-				if (dlg.DialogResult == true) {
-					if (manager.AssemblyLists.Contains(dlg.ListName)) {
+				if (dlg.DialogResult == true)
+				{
+					if (manager.AssemblyLists.Contains(dlg.ListName))
+					{
 						args.Cancel = true;
 						MessageBox.Show(Resources.ListExistsAlready, null, MessageBoxButton.OK);
 					}
 				}
 			};
-			if (dlg.ShowDialog() == true) {
+			if (dlg.ShowDialog() == true)
+			{
 				manager.CloneList(SelectedAssemblyList, dlg.ListName);
 			}
 		}
@@ -176,9 +188,11 @@ namespace ICSharpCode.ILSpy.ViewModels
 			SelectedAssemblyList = null;
 			int index = manager.AssemblyLists.IndexOf(assemblyList);
 			manager.DeleteList(assemblyList);
-			if (manager.AssemblyLists.Count > 0) {
+			if (manager.AssemblyLists.Count > 0)
+			{
 				SelectedAssemblyList = manager.AssemblyLists[Math.Max(0, index - 1)];
-				if (MainWindow.Instance.sessionSettings.ActiveAssemblyList == assemblyList) {
+				if (MainWindow.Instance.sessionSettings.ActiveAssemblyList == assemblyList)
+				{
 					MainWindow.Instance.sessionSettings.ActiveAssemblyList = SelectedAssemblyList;
 				}
 			}
@@ -201,22 +215,27 @@ namespace ICSharpCode.ILSpy.ViewModels
 			dlg.ListName = selectedAssemblyList;
 			dlg.ListNameBox.SelectAll();
 			dlg.Closing += (s, args) => {
-				if (dlg.DialogResult == true) {
-					if (dlg.ListName == selectedAssemblyList) {
+				if (dlg.DialogResult == true)
+				{
+					if (dlg.ListName == selectedAssemblyList)
+					{
 						args.Cancel = true;
 						return;
 					}
-					if (manager.AssemblyLists.Contains(dlg.ListName)) {
+					if (manager.AssemblyLists.Contains(dlg.ListName))
+					{
 						args.Cancel = true;
 						MessageBox.Show(Resources.ListExistsAlready, null, MessageBoxButton.OK);
 					}
 				}
 			};
-			if (dlg.ShowDialog() == true) {
+			if (dlg.ShowDialog() == true)
+			{
 				string assemblyList = SelectedAssemblyList;
 				SelectedAssemblyList = dlg.ListName;
 				manager.RenameList(assemblyList, dlg.ListName);
-				if (MainWindow.Instance.sessionSettings.ActiveAssemblyList == assemblyList) {
+				if (MainWindow.Instance.sessionSettings.ActiveAssemblyList == assemblyList)
+				{
 					MainWindow.Instance.sessionSettings.ActiveAssemblyList = manager.AssemblyLists[manager.AssemblyLists.Count - 1];
 				}
 			}
@@ -225,7 +244,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 		internal static AssemblyList CreateDefaultList(string name, string path = null, string newName = null)
 		{
 			var list = new AssemblyList(newName ?? name);
-			switch (name) {
+			switch (name)
+			{
 				case DotNet4List:
 					AddToListFromGAC("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 					AddToListFromGAC("System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
@@ -279,7 +299,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 					AddToListFromGAC("Microsoft.CSharp, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
 					break;
 				case object _ when path != null:
-					foreach (var file in Directory.GetFiles(path, "*.dll")) {
+					foreach (var file in Directory.GetFiles(path, "*.dll"))
+					{
 						var dllname = Path.GetFileName(file);
 						if (DoIncludeFile(dllname))
 							AddToListFromDirectory(file);
@@ -325,16 +346,20 @@ namespace ICSharpCode.ILSpy.ViewModels
 			dlg.ListName = config.Name;
 			dlg.ListNameBox.SelectAll();
 			dlg.Closing += (s, args) => {
-				if (dlg.DialogResult == true) {
-					if (manager.AssemblyLists.Contains(dlg.ListName)) {
+				if (dlg.DialogResult == true)
+				{
+					if (manager.AssemblyLists.Contains(dlg.ListName))
+					{
 						args.Cancel = true;
 						MessageBox.Show(Properties.Resources.ListExistsAlready, null, MessageBoxButton.OK);
 					}
 				}
 			};
-			if (dlg.ShowDialog() == true) {
+			if (dlg.ShowDialog() == true)
+			{
 				var list = CreateDefaultList(config.Name, config.Path, dlg.ListName);
-				if (list.assemblies.Count > 0) {
+				if (list.assemblies.Count > 0)
+				{
 					manager.CreateList(list);
 				}
 			}

@@ -22,8 +22,10 @@
 
 using System.Xml.Linq;
 
-namespace ILSpy.BamlDecompiler {
-	internal interface IRewritePass {
+namespace ILSpy.BamlDecompiler
+{
+	internal interface IRewritePass
+	{
 		void Run(XamlContext ctx, XDocument document);
 	}
 }

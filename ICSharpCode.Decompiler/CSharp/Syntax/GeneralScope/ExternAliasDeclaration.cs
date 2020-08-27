@@ -39,54 +39,54 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public CSharpTokenNode ExternToken {
-			get { return GetChildByRole (Roles.ExternKeyword); }
+			get { return GetChildByRole(Roles.ExternKeyword); }
 		}
 
 		public CSharpTokenNode AliasToken {
-			get { return GetChildByRole (Roles.AliasKeyword); }
+			get { return GetChildByRole(Roles.AliasKeyword); }
 		}
 
 		public string Name {
 			get {
-				return GetChildByRole (Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value));
+				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}
-		
+
 		public Identifier NameToken {
 			get {
-				return GetChildByRole (Roles.Identifier);
+				return GetChildByRole(Roles.Identifier);
 			}
 			set {
-				SetChildByRole (Roles.Identifier, value);
+				SetChildByRole(Roles.Identifier, value);
 			}
 		}
 
 		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
+			get { return GetChildByRole(Roles.Semicolon); }
 		}
 
-		public override void AcceptVisitor (IAstVisitor visitor)
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitExternAliasDeclaration (this);
-		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
-		{
-			return visitor.VisitExternAliasDeclaration (this);
-		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitExternAliasDeclaration (this, data);
+			visitor.VisitExternAliasDeclaration(this);
 		}
 
-		protected internal override bool DoMatch (AstNode other, PatternMatching.Match match)
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+		{
+			return visitor.VisitExternAliasDeclaration(this);
+		}
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+		{
+			return visitor.VisitExternAliasDeclaration(this, data);
+		}
+
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			var o = other as ExternAliasDeclaration;
-			return o != null && MatchString (this.Name, o.Name);
+			return o != null && MatchString(this.Name, o.Name);
 		}
 	}
 }

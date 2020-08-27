@@ -21,22 +21,29 @@
 */
 
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+
 using ILSpy.BamlDecompiler.Xaml;
 
-namespace ILSpy.BamlDecompiler {
-	internal class XmlnsScope : List<NamespaceMap> {
+namespace ILSpy.BamlDecompiler
+{
+	internal class XmlnsScope : List<NamespaceMap>
+	{
 		public BamlElement Element { get; }
 		public XmlnsScope PreviousScope { get; }
 
-		public XmlnsScope(XmlnsScope prev, BamlElement elem) {
+		public XmlnsScope(XmlnsScope prev, BamlElement elem)
+		{
 			PreviousScope = prev;
 			Element = elem;
 		}
 
-		public string LookupXmlns(string fullAssemblyName, string clrNs) {
-			foreach (var ns in this) {
+		public string LookupXmlns(string fullAssemblyName, string clrNs)
+		{
+			foreach (var ns in this)
+			{
 				if (fullAssemblyName == ns.FullAssemblyName && ns.CLRNamespace == clrNs)
 					return ns.XMLNamespace;
 			}
@@ -45,7 +52,8 @@ namespace ILSpy.BamlDecompiler {
 		}
 	}
 
-	internal class XmlnsDictionary {
+	internal class XmlnsDictionary
+	{
 		Dictionary<string, NamespaceMap> piMappings = new Dictionary<string, NamespaceMap>();
 
 		public XmlnsDictionary() => CurrentScope = null;
@@ -58,25 +66,32 @@ namespace ILSpy.BamlDecompiler {
 
 		public void Add(NamespaceMap map) => CurrentScope.Add(map);
 
-		public void SetPIMapping(string xmlNs, string clrNs, string fullAssemblyName) {
-			if (!piMappings.ContainsKey(xmlNs)) {
+		public void SetPIMapping(string xmlNs, string clrNs, string fullAssemblyName)
+		{
+			if (!piMappings.ContainsKey(xmlNs))
+			{
 				var map = new NamespaceMap(null, fullAssemblyName, xmlNs, clrNs);
 				piMappings[xmlNs] = map;
 			}
 		}
 
-		NamespaceMap PIFixup(NamespaceMap map) {
-			if (piMappings.TryGetValue(map.XMLNamespace, out var piMap)) {
+		NamespaceMap PIFixup(NamespaceMap map)
+		{
+			if (piMappings.TryGetValue(map.XMLNamespace, out var piMap))
+			{
 				map.FullAssemblyName = piMap.FullAssemblyName;
 				map.CLRNamespace = piMap.CLRNamespace;
 			}
 			return map;
 		}
 
-		public NamespaceMap LookupNamespaceFromPrefix(string prefix) {
+		public NamespaceMap LookupNamespaceFromPrefix(string prefix)
+		{
 			var scope = CurrentScope;
-			while (scope != null) {
-				foreach (var ns in scope) {
+			while (scope != null)
+			{
+				foreach (var ns in scope)
+				{
 					if (ns.XmlnsPrefix == prefix)
 						return PIFixup(ns);
 				}
@@ -87,10 +102,13 @@ namespace ILSpy.BamlDecompiler {
 			return null;
 		}
 
-		public NamespaceMap LookupNamespaceFromXmlns(string xmlNs) {
+		public NamespaceMap LookupNamespaceFromXmlns(string xmlNs)
+		{
 			var scope = CurrentScope;
-			while (scope != null) {
-				foreach (var ns in scope) {
+			while (scope != null)
+			{
+				foreach (var ns in scope)
+				{
 					if (ns.XMLNamespace == xmlNs)
 						return ns;
 				}
@@ -101,15 +119,19 @@ namespace ILSpy.BamlDecompiler {
 			return null;
 		}
 
-		public string LookupXmlns(string fullAssemblyName, string clrNs) {
-			foreach (var map in piMappings) {
+		public string LookupXmlns(string fullAssemblyName, string clrNs)
+		{
+			foreach (var map in piMappings)
+			{
 				if (fullAssemblyName == map.Value.FullAssemblyName && map.Value.CLRNamespace == clrNs)
 					return map.Key;
 			}
 
 			var scope = CurrentScope;
-			while (scope != null) {
-				foreach (var ns in scope) {
+			while (scope != null)
+			{
+				foreach (var ns in scope)
+				{
 					if (fullAssemblyName == ns.FullAssemblyName && ns.CLRNamespace == clrNs)
 						return ns.XMLNamespace;
 				}

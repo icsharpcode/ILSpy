@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.Semantics;
@@ -36,11 +37,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
-			if (!context.Settings.ObjectOrCollectionInitializers) return;
+			if (!context.Settings.ObjectOrCollectionInitializers)
+				return;
 			this.context = context;
-			try {
+			try
+			{
 				DoTransform(block, pos);
-			} finally {
+			}
+			finally
+			{
 				this.context = null;
 			}
 		}
@@ -49,11 +54,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			ILInstruction inst = body.Instructions[pos];
 			// Match stloc(v, newobj)
-			if (inst.MatchStLoc(out var v, out var initInst) && (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot)) {
+			if (inst.MatchStLoc(out var v, out var initInst) && (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot))
+			{
 				IType instType;
-				switch (initInst) {
+				switch (initInst)
+				{
 					case NewObj newObjInst:
-						if (newObjInst.ILStackWasEmpty && v.Kind == VariableKind.Local && !context.Function.Method.IsConstructor && !context.Function.Method.IsCompilerGeneratedOrIsInCompilerGeneratedClass()) {
+						if (newObjInst.ILStackWasEmpty && v.Kind == VariableKind.Local && !context.Function.Method.IsConstructor && !context.Function.Method.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+						{
 							// on statement level (no other expressions on IL stack),
 							// prefer to keep local variables (but not stack slots),
 							// unless we are in a constructor (where inlining object initializers might be critical
@@ -71,7 +79,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						instType = newObjInst.Method.DeclaringType;
 						break;
 					case DefaultValue defaultVal:
-						if (defaultVal.ILStackWasEmpty && v.Kind == VariableKind.Local && !context.Function.Method.IsConstructor) {
+						if (defaultVal.ILStackWasEmpty && v.Kind == VariableKind.Local && !context.Function.Method.IsConstructor)
+						{
 							// on statement level (no other expressions on IL stack),
 							// prefer to keep local variables (but not stack slots),
 							// unless we are in a constructor (where inlining object initializers might be critical
@@ -95,7 +104,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// if the method is a setter we're dealing with an object initializer
 				// if the method is named Add and has at least 2 arguments we're dealing with a collection/dictionary initializer
 				while (pos + initializerItemsCount + 1 < body.Instructions.Count
-					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockKind)) {
+					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockKind))
+				{
 					initializerItemsCount++;
 				}
 				// Do not convert the statements into an initializer if there's an incompatible usage of the initializer variable
@@ -107,7 +117,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// We fetch the first unused variable from the list and remove all instructions after its
 				// first usage (i.e. the init store) from the initializer.
 				var index = possibleIndexVariables.Where(info => info.Value.Index > -1).Min(info => (int?)info.Value.Index);
-				if (index != null) {
+				if (index != null)
+				{
 					initializerItemsCount = index.Value - pos - 1;
 				}
 				// The initializer would be empty, there's nothing to do here.
@@ -120,10 +131,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				initializerBlock.FinalInstruction = new LdLoc(finalSlot);
 				initializerBlock.Instructions.Add(new StLoc(finalSlot, initInst.Clone()));
 				// Move all instructions to the initializer block.
-				for (int i = 1; i <= initializerItemsCount; i++) {
-					switch (body.Instructions[i + pos]) {
+				for (int i = 1; i <= initializerItemsCount; i++)
+				{
+					switch (body.Instructions[i + pos])
+					{
 						case CallInstruction call:
-							if (!(call is CallVirt || call is Call)) continue;
+							if (!(call is CallVirt || call is Call))
+								continue;
 							var newCall = call;
 							var newTarget = newCall.Arguments[0];
 							foreach (var load in newTarget.Descendants.OfType<IInstructionWithVariableOperand>())
@@ -172,7 +186,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Include any stores to local variables that are single-assigned and do not reference the initializer-variable
 			// in the list of possible index variables.
 			// Index variables are used to implement dictionary initializers.
-			if (instructions[pos] is StLoc stloc && stloc.Variable.Kind == VariableKind.Local && stloc.Variable.IsSingleDefinition) {
+			if (instructions[pos] is StLoc stloc && stloc.Variable.Kind == VariableKind.Local && stloc.Variable.IsSingleDefinition)
+			{
 				if (!context.Settings.DictionaryInitializers)
 					return false;
 				if (stloc.Value.Descendants.OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && (ld is LdLoc || ld is LdLoca)))
@@ -193,19 +208,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int firstDifferenceIndex = 0;
 			while (firstDifferenceIndex < minLen && newPath[firstDifferenceIndex] == currentPath[firstDifferenceIndex])
 				firstDifferenceIndex++;
-			while (currentPath.Count > firstDifferenceIndex) {
+			while (currentPath.Count > firstDifferenceIndex)
+			{
 				isCollection = false;
 				currentPath.RemoveAt(currentPath.Count - 1);
 				pathStack.Pop();
 			}
-			while (currentPath.Count < newPath.Count) {
+			while (currentPath.Count < newPath.Count)
+			{
 				AccessPathElement newElement = newPath[currentPath.Count];
 				currentPath.Add(newElement);
 				if (isCollection || !pathStack.Peek().Add(newElement))
 					return false;
 				pathStack.Push(new HashSet<AccessPathElement>());
 			}
-			switch (kind) {
+			switch (kind)
+			{
 				case AccessPathKind.Adder:
 					isCollection = true;
 					if (pathStack.Peek().Count != 0)
@@ -268,35 +286,50 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			List<ILInstruction> values = null;
 			IMethod method;
 			var inst = instruction;
-			while (instruction != null) {
-				switch (instruction) {
+			while (instruction != null)
+			{
+				switch (instruction)
+				{
 					case CallInstruction call:
-						if (!(call is CallVirt || call is Call)) goto default;
+						if (!(call is CallVirt || call is Call))
+							goto default;
 						method = call.Method;
-						if (resolveContext != null && !IsMethodApplicable(method, call.Arguments, rootType, resolveContext, settings)) goto default;
+						if (resolveContext != null && !IsMethodApplicable(method, call.Arguments, rootType, resolveContext, settings))
+							goto default;
 						instruction = call.Arguments[0];
-						if (method.IsAccessor) {
+						if (method.IsAccessor)
+						{
 							var property = method.AccessorOwner as IProperty;
-							if (!CanBeUsedInInitializer(property, resolveContext, kind, path)) goto default;
+							if (!CanBeUsedInInitializer(property, resolveContext, kind, path))
+								goto default;
 							var isGetter = method.Equals(property?.Getter);
 							var indices = call.Arguments.Skip(1).Take(call.Arguments.Count - (isGetter ? 1 : 2)).ToArray();
-							if (indices.Length > 0 && settings?.DictionaryInitializers == false) goto default;
-							if (possibleIndexVariables != null) {
+							if (indices.Length > 0 && settings?.DictionaryInitializers == false)
+								goto default;
+							if (possibleIndexVariables != null)
+							{
 								// Mark all index variables as used
-								foreach (var index in indices.OfType<IInstructionWithVariableOperand>()) {
+								foreach (var index in indices.OfType<IInstructionWithVariableOperand>())
+								{
 									if (possibleIndexVariables.TryGetValue(index.Variable, out var info))
 										possibleIndexVariables[index.Variable] = (-1, info.Value);
 								}
 							}
 							path.Insert(0, new AccessPathElement(call.OpCode, method.AccessorOwner, indices));
-						} else {
+						}
+						else
+						{
 							path.Insert(0, new AccessPathElement(call.OpCode, method));
 						}
-						if (values == null) {
-							if (method.IsAccessor) {
+						if (values == null)
+						{
+							if (method.IsAccessor)
+							{
 								kind = AccessPathKind.Setter;
 								values = new List<ILInstruction> { call.Arguments.Last() };
-							} else {
+							}
+							else
+							{
 								kind = AccessPathKind.Adder;
 								values = new List<ILInstruction>(call.Arguments.Skip(1));
 								if (values.Count == 0)
@@ -304,19 +337,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							}
 						}
 						break;
-					case LdObj ldobj: {
-						if (ldobj.Target is LdFlda ldflda && (kind != AccessPathKind.Setter || !ldflda.Field.IsReadOnly)) {
+					case LdObj ldobj:
+					{
+						if (ldobj.Target is LdFlda ldflda && (kind != AccessPathKind.Setter || !ldflda.Field.IsReadOnly))
+						{
 							path.Insert(0, new AccessPathElement(ldobj.OpCode, ldflda.Field));
 							instruction = ldflda.Target;
 							break;
 						}
 						goto default;
 					}
-					case StObj stobj: {
-						if (stobj.Target is LdFlda ldflda) {
+					case StObj stobj:
+					{
+						if (stobj.Target is LdFlda ldflda)
+						{
 							path.Insert(0, new AccessPathElement(stobj.OpCode, ldflda.Field));
 							instruction = ldflda.Target;
-							if (values == null) {
+							if (values == null)
+							{
 								values = new List<ILInstruction>(new[] { stobj.Value });
 								kind = AccessPathKind.Setter;
 							}
@@ -400,9 +438,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static IType GetReturnTypeFromInstruction(ILInstruction instruction)
 		{
-			switch (instruction) {
+			switch (instruction)
+			{
 				case CallInstruction call:
-					if (!(call is CallVirt || call is Call)) goto default;
+					if (!(call is CallVirt || call is Call))
+						goto default;
 					return call.Method.ReturnType;
 				case LdObj ldobj:
 					if (ldobj.Target is LdFlda ldflda)
@@ -427,7 +467,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public override int GetHashCode()
 		{
 			int hashCode = 0;
-			unchecked {
+			unchecked
+			{
 				if (Member != null)
 					hashCode += 1000000007 * Member.GetHashCode();
 			}

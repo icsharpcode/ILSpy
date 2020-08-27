@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -105,11 +106,13 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			for (int i = 0; i < Instructions.Count - 1; i++) {
+			for (int i = 0; i < Instructions.Count - 1; i++)
+			{
 				// only the last instruction may have an unreachable endpoint
 				Debug.Assert(!Instructions[i].HasFlag(InstructionFlags.EndPointUnreachable));
 			}
-			switch (this.Kind) {
+			switch (this.Kind)
+			{
 				case BlockKind.ControlFlow:
 					Debug.Assert(finalInstruction.OpCode == OpCode.Nop);
 					break;
@@ -118,7 +121,8 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case BlockKind.CallWithNamedArgs:
 					Debug.Assert(finalInstruction is CallInstruction);
-					foreach (var inst in Instructions) {
+					foreach (var inst in Instructions)
+					{
 						var stloc = inst as StLoc;
 						Debug.Assert(stloc != null, "Instructions in CallWithNamedArgs must be assignments");
 						Debug.Assert(stloc.Variable.Kind == VariableKind.NamedArgument);
@@ -126,7 +130,8 @@ namespace ICSharpCode.Decompiler.IL
 						Debug.Assert(stloc.Variable.LoadInstructions.Single().Parent == finalInstruction);
 					}
 					var call = (CallInstruction)finalInstruction;
-					if (call.IsInstanceCall) {
+					if (call.IsInstanceCall)
+					{
 						// special case: with instance calls, Instructions[0] must be for the this parameter
 						ILVariable v = ((StLoc)Instructions[0]).Variable;
 						Debug.Assert(call.Arguments[0].MatchLdLoc(v));
@@ -137,7 +142,8 @@ namespace ICSharpCode.Decompiler.IL
 					Debug.Assert(final != null && final.Variable.IsSingleDefinition && final.Variable.Kind == VariableKind.InitializerTarget);
 					IType type = null;
 					Debug.Assert(Instructions[0].MatchStLoc(final.Variable, out var init) && init.MatchNewArr(out type));
-					for (int i = 1; i < Instructions.Count; i++) {
+					for (int i = 1; i < Instructions.Count; i++)
+					{
 						Debug.Assert(Instructions[i].MatchStObj(out ILInstruction target, out _, out var t) && type != null && type.Equals(t));
 						Debug.Assert(target.MatchLdElema(out t, out ILInstruction array) && type.Equals(t));
 						Debug.Assert(array.MatchLdLoc(out ILVariable v) && v == final.Variable);
@@ -153,7 +159,8 @@ namespace ICSharpCode.Decompiler.IL
 					bool condition = Instructions[0].MatchStLoc(final2.Variable, out var init2);
 					Debug.Assert(condition);
 					Debug.Assert(init2 is NewObj || init2 is DefaultValue || (init2 is Block named && named.Kind == BlockKind.CallWithNamedArgs));
-					switch (init2) {
+					switch (init2)
+					{
 						case NewObj newObj:
 							type2 = newObj.Method.DeclaringType;
 							break;
@@ -167,7 +174,8 @@ namespace ICSharpCode.Decompiler.IL
 							Debug.Assert(false);
 							break;
 					}
-					for (int i = 1; i < Instructions.Count; i++) {
+					for (int i = 1; i < Instructions.Count; i++)
+					{
 						Debug.Assert(Instructions[i] is StLoc || AccessPathElement.GetAccessPath(Instructions[i], type2).Kind != IL.Transforms.AccessPathKind.Invalid);
 					}
 					break;
@@ -207,15 +215,18 @@ namespace ICSharpCode.Decompiler.IL
 			output.WriteLine("{");
 			output.Indent();
 			int index = 0;
-			foreach (var inst in Instructions) {
-				if (options.ShowChildIndexInBlock) {
+			foreach (var inst in Instructions)
+			{
+				if (options.ShowChildIndexInBlock)
+				{
 					output.Write("[" + index + "] ");
 					index++;
 				}
 				inst.WriteTo(output, options);
 				output.WriteLine();
 			}
-			if (finalInstruction.OpCode != OpCode.Nop) {
+			if (finalInstruction.OpCode != OpCode.Nop)
+			{
 				output.Write("final: ");
 				finalInstruction.WriteTo(output, options);
 				output.WriteLine();
@@ -256,7 +267,8 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = InstructionFlags.None;
-			foreach (var inst in Instructions) {
+			foreach (var inst in Instructions)
+			{
 				flags |= inst.Flags;
 			}
 			flags |= FinalInstruction.Flags;
@@ -290,7 +302,8 @@ namespace ICSharpCode.Decompiler.IL
 		public void RunTransforms(IEnumerable<IBlockTransform> transforms, BlockTransformContext context)
 		{
 			this.CheckInvariant(ILPhase.Normal);
-			foreach (var transform in transforms) {
+			foreach (var transform in transforms)
+			{
 				context.CancellationToken.ThrowIfCancellationRequested();
 				context.StepStartGroup(transform.GetType().Name);
 				transform.Run(this, context);
@@ -305,9 +318,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public static ILInstruction GetPredecessor(ILInstruction inst)
 		{
-			if (inst.Parent is Block block && inst.ChildIndex > 0) {
+			if (inst.Parent is Block block && inst.ChildIndex > 0)
+			{
 				return block.Instructions[inst.ChildIndex - 1];
-			} else {
+			}
+			else
+			{
 				return null;
 			}
 		}
@@ -318,7 +334,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public static ILInstruction Unwrap(ILInstruction inst)
 		{
-			if (inst is Block block) {
+			if (inst is Block block)
+			{
 				if (block.Instructions.Count == 1 && block.finalInstruction.MatchNop())
 					return block.Instructions[0];
 			}
@@ -332,7 +349,8 @@ namespace ICSharpCode.Decompiler.IL
 		public static Block FindClosestBlock(ILInstruction inst)
 		{
 			var curr = inst;
-			while (curr != null) {
+			while (curr != null)
+			{
 				if (curr is Block)
 					return (Block)curr;
 				curr = curr.Parent;
@@ -365,10 +383,12 @@ namespace ICSharpCode.Decompiler.IL
 			falseInst = null;
 			if (Instructions.Count < 2)
 				return false;
-			if (Instructions[Instructions.Count - 2].MatchIfInstruction(out condition, out trueInst)) {
+			if (Instructions[Instructions.Count - 2].MatchIfInstruction(out condition, out trueInst))
+			{
 				// Swap trueInst<>falseInst for every logic.not in the condition.
 				falseInst = Instructions.Last();
-				while (condition.MatchLogicNot(out var arg)) {
+				while (condition.MatchLogicNot(out var arg))
+				{
 					condition = arg;
 					(trueInst, falseInst) = (falseInst, trueInst);
 				}
@@ -377,7 +397,7 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 	}
-	
+
 	public enum BlockKind
 	{
 		/// <summary>

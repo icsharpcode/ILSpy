@@ -33,15 +33,15 @@ namespace ICSharpCode.ILSpy
 		T current;
 		List<T> back = new List<T>();
 		List<T> forward = new List<T>();
-		
+
 		public bool CanNavigateBack {
 			get { return back.Count > 0; }
 		}
-		
+
 		public bool CanNavigateForward {
 			get { return forward.Count > 0; }
 		}
-		
+
 		public T GoBack()
 		{
 			forward.Add(current);
@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy
 			back.RemoveAt(back.Count - 1);
 			return current;
 		}
-		
+
 		public T GoForward()
 		{
 			back.Add(current);
@@ -63,7 +63,7 @@ namespace ICSharpCode.ILSpy
 			back.RemoveAll(predicate);
 			forward.RemoveAll(predicate);
 		}
-		
+
 		public void Clear()
 		{
 			back.Clear();
@@ -74,15 +74,18 @@ namespace ICSharpCode.ILSpy
 		{
 			current = node;
 		}
-		
+
 		public void Record(T node)
 		{
 			var navigationTime = DateTime.Now;
 			var period = navigationTime - lastNavigationTime;
 
-			if (period.TotalSeconds < NavigationSecondsBeforeNewEntry) {
+			if (period.TotalSeconds < NavigationSecondsBeforeNewEntry)
+			{
 				current = node;
-			} else {
+			}
+			else
+			{
 				if (current != null)
 					back.Add(current);
 

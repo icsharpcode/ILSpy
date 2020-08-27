@@ -45,13 +45,16 @@ namespace ICSharpCode.ILSpy.TextView
 			if (null == foldingManager)
 				return;
 			bool doFold = true;
-			foreach (FoldingSection fm in foldingManager.AllFoldings) {
-				if (fm.IsFolded) {
+			foreach (FoldingSection fm in foldingManager.AllFoldings)
+			{
+				if (fm.IsFolded)
+				{
 					doFold = false;
 					break;
 				}
 			}
-			foreach (FoldingSection fm in foldingManager.AllFoldings) {
+			foreach (FoldingSection fm in foldingManager.AllFoldings)
+			{
 				fm.IsFolded = doFold;
 			}
 		}
@@ -86,11 +89,13 @@ namespace ICSharpCode.ILSpy.TextView
 			TextViewPosition pos = posBox.Value;
 			// look for folding on this line:
 			FoldingSection folding = foldingManager.GetNextFolding(editor.Document.GetOffset(pos.Line, 1));
-			if (folding == null || editor.Document.GetLineByOffset(folding.StartOffset).LineNumber != pos.Line) {
+			if (folding == null || editor.Document.GetLineByOffset(folding.StartOffset).LineNumber != pos.Line)
+			{
 				// no folding found on current line: find innermost folding containing the mouse position
 				folding = foldingManager.GetFoldingsContaining(editor.Document.GetOffset(pos.Line, pos.Column)).LastOrDefault();
 			}
-			if (folding != null) {
+			if (folding != null)
+			{
 				folding.IsFolded = !folding.IsFolded;
 			}
 		}

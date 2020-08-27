@@ -22,8 +22,10 @@
 
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class PropertyWithConverterHandler : PropertyHandler, IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class PropertyWithConverterHandler : PropertyHandler, IHandler
+	{
 		BamlRecordType IHandler.Type => BamlRecordType.PropertyWithConverter;
 	}
 }

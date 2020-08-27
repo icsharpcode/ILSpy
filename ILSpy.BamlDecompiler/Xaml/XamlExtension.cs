@@ -24,25 +24,30 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Linq;
 
-namespace ILSpy.BamlDecompiler.Xaml {
-	internal class XamlExtension {
+namespace ILSpy.BamlDecompiler.Xaml
+{
+	internal class XamlExtension
+	{
 		public XamlType ExtensionType { get; }
 		public object[] Initializer { get; set; }
 		public IDictionary<string, object> NamedArguments { get; }
 
-		public XamlExtension(XamlType type) {
+		public XamlExtension(XamlType type)
+		{
 			ExtensionType = type;
 			NamedArguments = new Dictionary<string, object>();
 		}
 
-		static void WriteObject(StringBuilder sb, XamlContext ctx, XElement ctxElement, object value) {
+		static void WriteObject(StringBuilder sb, XamlContext ctx, XElement ctxElement, object value)
+		{
 			if (value is XamlExtension)
 				sb.Append(((XamlExtension)value).ToString(ctx, ctxElement));
 			else
 				sb.Append(value.ToString());
 		}
 
-		public string ToString(XamlContext ctx, XElement ctxElement) {
+		public string ToString(XamlContext ctx, XElement ctxElement)
+		{
 			var sb = new StringBuilder();
 			sb.Append('{');
 
@@ -53,9 +58,11 @@ namespace ILSpy.BamlDecompiler.Xaml {
 				sb.Append(typeName);
 
 			bool comma = false;
-			if (Initializer != null && Initializer.Length > 0) {
+			if (Initializer != null && Initializer.Length > 0)
+			{
 				sb.Append(' ');
-				for (int i = 0; i < Initializer.Length; i++) {
+				for (int i = 0; i < Initializer.Length; i++)
+				{
 					if (comma)
 						sb.Append(", ");
 					WriteObject(sb, ctx, ctxElement, Initializer[i]);
@@ -63,11 +70,14 @@ namespace ILSpy.BamlDecompiler.Xaml {
 				}
 			}
 
-			if (NamedArguments.Count > 0) {
-				foreach (var kvp in NamedArguments) {
+			if (NamedArguments.Count > 0)
+			{
+				foreach (var kvp in NamedArguments)
+				{
 					if (comma)
 						sb.Append(", ");
-					else {
+					else
+					{
 						sb.Append(' ');
 						comma = true;
 					}

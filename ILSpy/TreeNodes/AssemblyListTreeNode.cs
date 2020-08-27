@@ -24,6 +24,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Windows;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -39,8 +40,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		readonly AssemblyList assemblyList;
 
-		public AssemblyList AssemblyList
-		{
+		public AssemblyList AssemblyList {
 			get { return assemblyList; }
 		}
 
@@ -50,8 +50,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			BindToObservableCollection(assemblyList.assemblies);
 		}
 
-		public override object Text
-		{
+		public override object Text {
 			get { return assemblyList.ListName; }
 		}
 
@@ -59,8 +58,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			this.Children.Clear();
 			this.Children.AddRange(collection.Select(a => new AssemblyTreeNode(a)));
-			collection.CollectionChanged += delegate(object sender, NotifyCollectionChangedEventArgs e) {
-				switch (e.Action) {
+			collection.CollectionChanged += delegate (object sender, NotifyCollectionChangedEventArgs e) {
+				switch (e.Action)
+				{
 					case NotifyCollectionChangedAction.Add:
 						this.Children.InsertRange(e.NewStartingIndex, e.NewItems.Cast<LoadedAssembly>().Select(a => new AssemblyTreeNode(a)));
 						break;
@@ -87,7 +87,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return true;
 			else if (e.Data.GetDataPresent(DataFormats.FileDrop))
 				return true;
-			else {
+			else
+			{
 				e.Effects = DragDropEffects.None;
 				return false;
 			}
@@ -98,22 +99,26 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			string[] files = e.Data.GetData(AssemblyTreeNode.DataFormat) as string[];
 			if (files == null)
 				files = e.Data.GetData(DataFormats.FileDrop) as string[];
-			if (files != null) {
-				lock (assemblyList.assemblies) {
+			if (files != null)
+			{
+				lock (assemblyList.assemblies)
+				{
 					var assemblies = files
 						.Where(file => file != null)
 						.SelectMany(file => OpenAssembly(assemblyList, file))
 						.Where(asm => asm != null)
 						.Distinct()
 						.ToArray();
-					foreach (LoadedAssembly asm in assemblies) {
+					foreach (LoadedAssembly asm in assemblies)
+					{
 						int nodeIndex = assemblyList.assemblies.IndexOf(asm);
 						if (nodeIndex < index)
 							index--;
 						assemblyList.assemblies.RemoveAt(nodeIndex);
 					}
 					Array.Reverse(assemblies);
-					foreach (LoadedAssembly asm in assemblies) {
+					foreach (LoadedAssembly asm in assemblies)
+					{
 						assemblyList.assemblies.Insert(index, asm);
 					}
 					var nodes = assemblies.SelectArray(MainWindow.Instance.FindTreeNode);
@@ -124,15 +129,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		private IEnumerable<LoadedAssembly> OpenAssembly(AssemblyList assemblyList, string file)
 		{
-			if (file.EndsWith(".nupkg")) {
+			if (file.EndsWith(".nupkg"))
+			{
 				LoadedNugetPackage package = new LoadedNugetPackage(file);
 				var selectionDialog = new NugetPackageBrowserDialog(package);
 				selectionDialog.Owner = Application.Current.MainWindow;
 				if (selectionDialog.ShowDialog() != true)
 					yield break;
-				foreach (var entry in selectionDialog.SelectedItems) {
+				foreach (var entry in selectionDialog.SelectedItems)
+				{
 					var nugetAsm = assemblyList.OpenAssembly("nupkg://" + file + ";" + entry.Name, entry.Stream, true);
-					if (nugetAsm != null) {
+					if (nugetAsm != null)
+					{
 						yield return nugetAsm;
 					}
 				}
@@ -147,7 +155,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			language.WriteCommentLine(output, "List: " + assemblyList.ListName);
 			output.WriteLine();
-			foreach (AssemblyTreeNode asm in this.Children) {
+			foreach (AssemblyTreeNode asm in this.Children)
+			{
 				language.WriteCommentLine(output, new string('-', 60));
 				output.WriteLine();
 				asm.Decompile(language, output, options);
@@ -199,7 +208,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (module == null)
 				return null;
 			App.Current.Dispatcher.VerifyAccess();
-			foreach (AssemblyTreeNode node in this.Children) {
+			foreach (AssemblyTreeNode node in this.Children)
+			{
 				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.GetPEFileOrNull()?.FileName == module.FileName)
 					return node;
 			}
@@ -211,7 +221,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (asm == null)
 				return null;
 			App.Current.Dispatcher.VerifyAccess();
-			foreach (AssemblyTreeNode node in this.Children) {
+			foreach (AssemblyTreeNode node in this.Children)
+			{
 				if (node.LoadedAssembly == asm)
 					return node;
 			}
@@ -227,15 +238,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (def == null)
 				return null;
 			var declaringType = def.DeclaringTypeDefinition;
-			if (declaringType != null) {
+			if (declaringType != null)
+			{
 				TypeTreeNode decl = FindTypeNode(declaringType);
-				if (decl != null) {
+				if (decl != null)
+				{
 					decl.EnsureLazyChildren();
 					return decl.Children.OfType<TypeTreeNode>().FirstOrDefault(t => t.TypeDefinition.MetadataToken == def.MetadataToken && !t.IsHidden);
 				}
-			} else {
+			}
+			else
+			{
 				AssemblyTreeNode asm = FindAssemblyNode(def.ParentModule);
-				if (asm != null) {
+				if (asm != null)
+				{
 					return asm.FindTypeNode(def);
 				}
 			}
@@ -255,7 +271,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			ILSpyTreeNode parentNode = typeNode;
 			MethodTreeNode methodNode;
 			parentNode.EnsureLazyChildren();
-			switch (def.AccessorOwner) {
+			switch (def.AccessorOwner)
+			{
 				case IProperty p:
 					parentNode = parentNode.Children.OfType<PropertyTreeNode>().FirstOrDefault(m => m.PropertyDefinition.MetadataToken == p.MetadataToken && !m.IsHidden);
 					if (parentNode == null)

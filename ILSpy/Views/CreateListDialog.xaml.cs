@@ -27,8 +27,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public string ListName
-		{
+		public string ListName {
 			get => ListNameBox.Text;
 			set => ListNameBox.Text = value;
 		}

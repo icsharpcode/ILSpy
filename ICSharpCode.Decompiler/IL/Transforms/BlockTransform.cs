@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL.ControlFlow;
 
@@ -77,16 +78,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (running)
 				throw new InvalidOperationException("Reentrancy detected. Transforms (and the CSharpDecompiler) are neither thread-safe nor re-entrant.");
-			try {
+			try
+			{
 				running = true;
 				var blockContext = new BlockTransformContext(context);
 				Debug.Assert(blockContext.Function == function);
-				foreach (var container in function.Descendants.OfType<BlockContainer>().ToList()) {
+				foreach (var container in function.Descendants.OfType<BlockContainer>().ToList())
+				{
 					context.CancellationToken.ThrowIfCancellationRequested();
 					blockContext.ControlFlowGraph = new ControlFlowGraph(container, context.CancellationToken);
 					VisitBlock(blockContext.ControlFlowGraph.GetNode(container.EntryPoint), blockContext);
 				}
-			} finally {
+			}
+			finally
+			{
 				running = false;
 			}
 		}
@@ -103,7 +108,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// First, process the children in the dominator tree.
 			// The ConditionDetection transform requires dominated blocks to
 			// be already processed.
-			foreach (var child in cfgNode.DominatorTreeChildren) {
+			foreach (var child in cfgNode.DominatorTreeChildren)
+			{
 				VisitBlock(child, context);
 			}
 

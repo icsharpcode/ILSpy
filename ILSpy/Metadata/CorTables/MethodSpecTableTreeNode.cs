@@ -45,23 +45,26 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
 			var metadata = module.Metadata;
-			
+
 			var list = new List<MethodSpecEntry>();
 			MethodSpecEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.GetMethodSpecifications()) {
+			foreach (var row in metadata.GetMethodSpecifications())
+			{
 				MethodSpecEntry entry = new MethodSpecEntry(module, row);
-				if (entry.RID == this.scrollTarget) {
+				if (entry.RID == this.scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
 			}
 
 			view.ItemsSource = list;
-			
+
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -82,7 +85,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset => metadataOffset
 				+ metadata.GetTableMetadataOffset(TableIndex.MethodSpec)
-				+ metadata.GetTableRowSize(TableIndex.MethodSpec) * (RID-1);
+				+ metadata.GetTableRowSize(TableIndex.MethodSpec) * (RID - 1);
 
 			[StringFormat("X8")]
 			public int Method => MetadataTokens.GetToken(methodSpec.Method);
@@ -103,7 +106,8 @@ namespace ICSharpCode.ILSpy.Metadata
 					ITextOutput output = new PlainTextOutput();
 					var signature = methodSpec.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), GenericContext.Empty);
 					bool first = true;
-					foreach (var type in signature) {
+					foreach (var type in signature)
+					{
 						if (first)
 							first = false;
 						else

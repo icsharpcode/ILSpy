@@ -25,13 +25,18 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Xml.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
+
 using ILSpy.BamlDecompiler.Baml;
 using ILSpy.BamlDecompiler.Xaml;
 
-namespace ILSpy.BamlDecompiler {
-	internal class XamlContext {
-		XamlContext(IDecompilerTypeSystem typeSystem) {
+namespace ILSpy.BamlDecompiler
+{
+	internal class XamlContext
+	{
+		XamlContext(IDecompilerTypeSystem typeSystem)
+		{
 			TypeSystem = typeSystem;
 			NodeMap = new Dictionary<BamlRecord, BamlBlockNode>();
 			XmlNs = new XmlnsDictionary();
@@ -51,7 +56,8 @@ namespace ILSpy.BamlDecompiler {
 
 		public XmlnsDictionary XmlNs { get; }
 
-		public static XamlContext Construct(IDecompilerTypeSystem typeSystem, BamlDocument document, CancellationToken token, BamlDecompilerOptions bamlDecompilerOptions) {
+		public static XamlContext Construct(IDecompilerTypeSystem typeSystem, BamlDocument document, CancellationToken token, BamlDecompilerOptions bamlDecompilerOptions)
+		{
 			var ctx = new XamlContext(typeSystem);
 			ctx.CancellationToken = token;
 			ctx.BamlDecompilerOptions = bamlDecompilerOptions ?? new BamlDecompilerOptions();
@@ -65,20 +71,24 @@ namespace ILSpy.BamlDecompiler {
 			return ctx;
 		}
 
-		void BuildNodeMap(BamlBlockNode node) {
+		void BuildNodeMap(BamlBlockNode node)
+		{
 			if (node == null)
 				return;
 
 			NodeMap[node.Header] = node;
 
-			foreach (var child in node.Children) {
+			foreach (var child in node.Children)
+			{
 				if (child is BamlBlockNode childBlock)
 					BuildNodeMap(childBlock);
 			}
 		}
 
-		void BuildPIMappings(BamlDocument document) {
-			foreach (var record in document) {
+		void BuildPIMappings(BamlDocument document)
+		{
+			foreach (var record in document)
+			{
 				var piMap = record as PIMappingRecord;
 				if (piMap == null)
 					continue;
@@ -87,7 +97,8 @@ namespace ILSpy.BamlDecompiler {
 			}
 		}
 
-		public XamlType ResolveType(ushort id) {
+		public XamlType ResolveType(ushort id)
+		{
 			if (typeMap.TryGetValue(id, out var xamlType))
 				return xamlType;
 
@@ -95,12 +106,14 @@ namespace ILSpy.BamlDecompiler {
 			IModule assembly;
 			string fullAssemblyName;
 
-			if (id > 0x7fff) {
+			if (id > 0x7fff)
+			{
 				type = Baml.KnownThings.Types((KnownTypes)(short)-unchecked((short)id));
 				assembly = type.GetDefinition().ParentModule;
 				fullAssemblyName = assembly.FullAssemblyName;
 			}
-			else {
+			else
+			{
 				var typeRec = Baml.TypeIdMap[id];
 				(fullAssemblyName, assembly) = Baml.ResolveAssembly(typeRec.AssemblyId);
 				type = ReflectionHelper.ParseReflectionName(typeRec.TypeFullName).Resolve(new SimpleTypeResolveContext(TypeSystem));
@@ -116,7 +129,8 @@ namespace ILSpy.BamlDecompiler {
 			return xamlType;
 		}
 
-		public XamlProperty ResolveProperty(ushort id) {
+		public XamlProperty ResolveProperty(ushort id)
+		{
 			if (propertyMap.TryGetValue(id, out var xamlProp))
 				return xamlProp;
 
@@ -124,13 +138,15 @@ namespace ILSpy.BamlDecompiler {
 			string name;
 			IMember member;
 
-			if (id > 0x7fff) {
+			if (id > 0x7fff)
+			{
 				var knownProp = Baml.KnownThings.Members((KnownMembers)unchecked((short)-(short)id));
 				type = ResolveType(unchecked((ushort)(short)-(short)knownProp.Parent));
 				name = knownProp.Name;
 				member = knownProp.Property;
 			}
-			else {
+			else
+			{
 				var attrRec = Baml.AttributeIdMap[id];
 				type = ResolveType(attrRec.OwnerTypeId);
 				name = attrRec.Name;
@@ -146,7 +162,8 @@ namespace ILSpy.BamlDecompiler {
 			return xamlProp;
 		}
 
-		public string ResolveString(ushort id) {
+		public string ResolveString(ushort id)
+		{
 			if (id > 0x7fff)
 				return Baml.KnownThings.Strings(unchecked((short)-id));
 			else if (Baml.StringIdMap.ContainsKey(id))
@@ -155,7 +172,8 @@ namespace ILSpy.BamlDecompiler {
 			return null;
 		}
 
-		public XNamespace GetXmlNamespace(string xmlns) {
+		public XNamespace GetXmlNamespace(string xmlns)
+		{
 			if (xmlns == null)
 				return null;
 
@@ -168,13 +186,15 @@ namespace ILSpy.BamlDecompiler {
 		public const string KnownNamespace_Presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
 		public const string KnownNamespace_PresentationOptions = "http://schemas.microsoft.com/winfx/2006/xaml/presentation/options";
 
-		public string TryGetXmlNamespace(IModule assembly, string typeNamespace) {
+		public string TryGetXmlNamespace(IModule assembly, string typeNamespace)
+		{
 			if (assembly == null)
 				return null;
 
 			HashSet<string> possibleXmlNs = new HashSet<string>();
 
-			foreach (var attr in assembly.GetAssemblyAttributes().Where(a => a.AttributeType.FullName == "System.Windows.Markup.XmlnsDefinitionAttribute")) {
+			foreach (var attr in assembly.GetAssemblyAttributes().Where(a => a.AttributeType.FullName == "System.Windows.Markup.XmlnsDefinitionAttribute"))
+			{
 				Debug.Assert(attr.FixedArguments.Length == 2);
 				if (attr.FixedArguments.Length != 2)
 					continue;
@@ -194,7 +214,8 @@ namespace ILSpy.BamlDecompiler {
 			return possibleXmlNs.FirstOrDefault();
 		}
 
-		public XName GetKnownNamespace(string name, string xmlNamespace, XElement context = null) {
+		public XName GetKnownNamespace(string name, string xmlNamespace, XElement context = null)
+		{
 			var xNs = GetXmlNamespace(xmlNamespace);
 			XName xName;
 			if (context != null && xNs == context.GetDefaultNamespace())

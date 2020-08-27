@@ -49,9 +49,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<MemberRefEntry>();
 			MemberRefEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.MemberReferences) {
+			foreach (var row in metadata.MemberReferences)
+			{
 				MemberRefEntry entry = new MemberRefEntry(module, row);
-				if (entry.RID == this.scrollTarget) {
+				if (entry.RID == this.scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -61,7 +63,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 

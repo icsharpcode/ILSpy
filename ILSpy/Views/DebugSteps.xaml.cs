@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.ILSpy.Docking;
@@ -31,7 +32,8 @@ namespace ICSharpCode.ILSpy
 			MainWindow.Instance.SelectionChanged += SelectionChanged;
 			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;
 
-			if (MainWindow.Instance.CurrentLanguage is ILAstLanguage l) {
+			if (MainWindow.Instance.CurrentLanguage is ILAstLanguage l)
+			{
 				l.StepperUpdated += ILAstStepperUpdated;
 				language = l;
 				ILAstStepperUpdated(null, null);
@@ -55,11 +57,14 @@ namespace ICSharpCode.ILSpy
 		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 #if DEBUG
-			if (e.PropertyName == "Language") {
-				if (language != null) {
+			if (e.PropertyName == "Language")
+			{
+				if (language != null)
+				{
 					language.StepperUpdated -= ILAstStepperUpdated;
 				}
-				if (MainWindow.Instance.CurrentLanguage is ILAstLanguage l) {
+				if (MainWindow.Instance.CurrentLanguage is ILAstLanguage l)
+				{
 					l.StepperUpdated += ILAstStepperUpdated;
 					language = l;
 					ILAstStepperUpdated(null, null);
@@ -71,7 +76,8 @@ namespace ICSharpCode.ILSpy
 		private void ILAstStepperUpdated(object sender, EventArgs e)
 		{
 #if DEBUG
-			if (language == null) return;
+			if (language == null)
+				return;
 			Dispatcher.Invoke(() => {
 				tree.ItemsSource = language.Stepper.Steps;
 				lastSelectedStep = int.MaxValue;
@@ -82,21 +88,24 @@ namespace ICSharpCode.ILSpy
 		private void ShowStateAfter_Click(object sender, RoutedEventArgs e)
 		{
 			Stepper.Node n = (Stepper.Node)tree.SelectedItem;
-			if (n == null) return;
+			if (n == null)
+				return;
 			DecompileAsync(n.EndStep);
 		}
 
 		private void ShowStateBefore_Click(object sender, RoutedEventArgs e)
 		{
 			Stepper.Node n = (Stepper.Node)tree.SelectedItem;
-			if (n == null) return;
+			if (n == null)
+				return;
 			DecompileAsync(n.BeginStep);
 		}
 
 		private void DebugStep_Click(object sender, RoutedEventArgs e)
 		{
 			Stepper.Node n = (Stepper.Node)tree.SelectedItem;
-			if (n == null) return;
+			if (n == null)
+				return;
 			DecompileAsync(n.BeginStep, true);
 		}
 
@@ -117,7 +126,8 @@ namespace ICSharpCode.ILSpy
 
 		private void tree_KeyDown(object sender, KeyEventArgs e)
 		{
-			if (e.Key == Key.Enter || e.Key == Key.Return) {
+			if (e.Key == Key.Enter || e.Key == Key.Return)
+			{
 				if (e.KeyboardDevice.Modifiers == ModifierKeys.Shift)
 					ShowStateBefore_Click(sender, e);
 				else

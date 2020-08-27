@@ -29,6 +29,7 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Xml;
 using System.Xml.Linq;
+
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Utils;
@@ -125,7 +126,7 @@ namespace ICSharpCode.ILSpy.TextView
 			block.TextAlignment = TextAlignment.Left;
 			AddBlock(block);
 		}
-		
+
 		public void AddXmlDocumentation(string xmlDocumentation, IEntity declaringEntity, Func<string, IEntity> resolver)
 		{
 			if (xmlDocumentation == null)
@@ -134,7 +135,7 @@ namespace ICSharpCode.ILSpy.TextView
 			var xml = XElement.Parse("<doc>" + xmlDocumentation + "</doc>");
 			AddDocumentationElement(new XmlDocumentationElement(xml, declaringEntity, resolver));
 		}
-		
+
 
 		/// <summary>
 		/// Gets/Sets the name of the parameter that should be shown.
@@ -145,11 +146,13 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (element == null)
 				throw new ArgumentNullException("element");
-			if (element.IsTextNode) {
+			if (element.IsTextNode)
+			{
 				AddText(element.TextContent);
 				return;
 			}
-			switch (element.Name) {
+			switch (element.Name)
+			{
 				case "b":
 					AddSpan(new Bold(), element.Children);
 					break;
@@ -254,20 +257,26 @@ namespace ICSharpCode.ILSpy.TextView
 			else if (type == "bullet")
 				list.MarkerStyle = TextMarkerStyle.Disc;
 			var oldBlockCollection = blockCollection;
-			try {
-				foreach (var itemElement in items) {
-					if (itemElement.Name == "listheader" || itemElement.Name == "item") {
+			try
+			{
+				foreach (var itemElement in items)
+				{
+					if (itemElement.Name == "listheader" || itemElement.Name == "item")
+					{
 						ListItem item = new ListItem();
 						blockCollection = item.Blocks;
 						inlineCollection = null;
-						foreach (var prop in itemElement.Children) {
+						foreach (var prop in itemElement.Children)
+						{
 							AddDocumentationElement(prop);
 						}
 						FlushAddedText(false);
 						list.ListItems.Add(item);
 					}
 				}
-			} finally {
+			}
+			finally
+			{
 				blockCollection = oldBlockCollection;
 			}
 		}
@@ -316,7 +325,8 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			Span span = new Span();
 			span.Inlines.Add("Permission");
-			if (referencedEntity != null) {
+			if (referencedEntity != null)
+			{
 				span.Inlines.Add(" ");
 				span.Inlines.Add(ConvertReference(referencedEntity));
 			}
@@ -343,17 +353,21 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void AddParamRef(string name)
 		{
-			if (name != null) {
+			if (name != null)
+			{
 				AddInline(new Run(name) { FontStyle = FontStyles.Italic });
 			}
 		}
 
 		void AddPreliminary(IEnumerable<XmlDocumentationElement> children)
 		{
-			if (children.Any()) {
+			if (children.Any())
+			{
 				foreach (var child in children)
 					AddDocumentationElement(child);
-			} else {
+			}
+			else
+			{
 				AddText("[This is preliminary documentation and subject to change.]");
 			}
 		}
@@ -361,28 +375,42 @@ namespace ICSharpCode.ILSpy.TextView
 		void AddSee(XmlDocumentationElement element)
 		{
 			IEntity referencedEntity = element.ReferencedEntity;
-			if (referencedEntity != null) {
-				if (element.Children.Any()) {
+			if (referencedEntity != null)
+			{
+				if (element.Children.Any())
+				{
 					Hyperlink link = new Hyperlink();
 					link.Click += (sender, e) => {
 						MainWindow.Instance.JumpToReference(referencedEntity);
 					};
 					AddSpan(link, element.Children);
-				} else {
+				}
+				else
+				{
 					AddInline(ConvertReference(referencedEntity));
 				}
-			} else if (element.GetAttribute("langword") != null) {
+			}
+			else if (element.GetAttribute("langword") != null)
+			{
 				AddInline(new Run(element.GetAttribute("langword")) { FontFamily = GetCodeFont() });
-			} else if (element.GetAttribute("href") != null) {
+			}
+			else if (element.GetAttribute("href") != null)
+			{
 				Uri uri;
-				if (Uri.TryCreate(element.GetAttribute("href"), UriKind.Absolute, out uri)) {
-					if (element.Children.Any()) {
+				if (Uri.TryCreate(element.GetAttribute("href"), UriKind.Absolute, out uri))
+				{
+					if (element.Children.Any())
+					{
 						AddSpan(new Hyperlink { NavigateUri = uri }, element.Children);
-					} else {
+					}
+					else
+					{
 						AddInline(new Hyperlink(new Run(element.GetAttribute("href"))) { NavigateUri = uri });
 					}
 				}
-			} else {
+			}
+			else
+			{
 				// Invalid reference: print the cref value
 				AddText(element.GetAttribute("cref"));
 			}
@@ -390,13 +418,16 @@ namespace ICSharpCode.ILSpy.TextView
 
 		static string GetCref(string cref)
 		{
-			if (cref == null || cref.Trim().Length==0) {
+			if (cref == null || cref.Trim().Length == 0)
+			{
 				return "";
 			}
-			if (cref.Length < 2) {
+			if (cref.Length < 2)
+			{
 				return cref;
 			}
-			if (cref.Substring(1, 1) == ":") {
+			if (cref.Substring(1, 1) == ":")
+			{
 				return cref.Substring(2, cref.Length - 2);
 			}
 			return cref;
@@ -410,7 +441,8 @@ namespace ICSharpCode.ILSpy.TextView
 		public void AddInline(Inline inline)
 		{
 			FlushAddedText(false);
-			if (inlineCollection == null) {
+			if (inlineCollection == null)
+			{
 				var para = new Paragraph();
 				para.Margin = new Thickness(0, 0, 0, 5);
 				inlineCollection = para.Inlines;
@@ -439,7 +471,8 @@ namespace ICSharpCode.ILSpy.TextView
 			var section = new Section();
 			AddBlock(section);
 			var oldBlockCollection = blockCollection;
-			try {
+			try
+			{
 				blockCollection = section.Blocks;
 				inlineCollection = null;
 
@@ -448,7 +481,9 @@ namespace ICSharpCode.ILSpy.TextView
 
 				addChildren();
 				FlushAddedText(false);
-			} finally {
+			}
+			finally
+			{
 				blockCollection = oldBlockCollection;
 				inlineCollection = null;
 			}
@@ -457,13 +492,16 @@ namespace ICSharpCode.ILSpy.TextView
 		void AddParagraph(Paragraph para, IEnumerable<XmlDocumentationElement> children)
 		{
 			AddBlock(para);
-			try {
+			try
+			{
 				inlineCollection = para.Inlines;
 
 				foreach (var child in children)
 					AddDocumentationElement(child);
 				FlushAddedText(false);
-			} finally {
+			}
+			finally
+			{
 				inlineCollection = null;
 			}
 		}
@@ -472,12 +510,15 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			AddInline(span);
 			var oldInlineCollection = inlineCollection;
-			try {
+			try
+			{
 				inlineCollection = span.Inlines;
 				foreach (var child in children)
 					AddDocumentationElement(child);
 				FlushAddedText(false);
-			} finally {
+			}
+			finally
+			{
 				inlineCollection = oldInlineCollection;
 			}
 		}
@@ -502,17 +543,24 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (string.IsNullOrEmpty(textContent))
 				return;
-			for (int i = 0; i < textContent.Length; i++) {
+			for (int i = 0; i < textContent.Length; i++)
+			{
 				char c = textContent[i];
-				if (c == '\n' && IsEmptyLineBefore(textContent, i)) {
+				if (c == '\n' && IsEmptyLineBefore(textContent, i))
+				{
 					AddLineBreak(); // empty line -> line break
-				} else if (char.IsWhiteSpace(c)) {
+				}
+				else if (char.IsWhiteSpace(c))
+				{
 					// any whitespace sequence gets converted to a single space (like HTML)
-					if (!ignoreWhitespace) {
+					if (!ignoreWhitespace)
+					{
 						addedText.Append(' ');
 						ignoreWhitespace = true;
 					}
-				} else {
+				}
+				else
+				{
 					addedText.Append(c);
 					ignoreWhitespace = false;
 				}
@@ -522,7 +570,8 @@ namespace ICSharpCode.ILSpy.TextView
 		bool IsEmptyLineBefore(string text, int i)
 		{
 			// Skip previous whitespace
-			do {
+			do
+			{
 				i--;
 			} while (i >= 0 && (text[i] == ' ' || text[i] == '\r'));
 			// Check if previous non-whitespace char is \n
@@ -531,7 +580,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void TrimEndOfAddedText()
 		{
-			while (addedText.Length > 0 && addedText[addedText.Length - 1] == ' ') {
+			while (addedText.Length > 0 && addedText[addedText.Length - 1] == ' ')
+			{
 				addedText.Length--;
 			}
 		}

@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			TestFloatOp("!>", (a, b) => !(a > b));
 			TestFloatOp("!<=", (a, b) => !(a <= b));
 			TestFloatOp("!>=", (a, b) => !(a >= b));
-			
+
 			TestUInt(0);
 			TestUInt(uint.MaxValue);
 			TestUShort(0);
@@ -50,12 +50,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine(NullIsNot(new OverloadedOperators()));
 			return 0;
 		}
-		
+
 		static void TestFloatOp(string name, Func<float, float, bool> f)
 		{
 			float[] vals = { -1, 0, 3, float.PositiveInfinity, float.NaN };
-			for (int i = 0; i < vals.Length; i++) {
-				for (int j = 0; j < vals.Length; j++) {
+			for (int i = 0; i < vals.Length; i++)
+			{
+				for (int j = 0; j < vals.Length; j++)
+				{
 					Console.WriteLine("Float: {0} {1} {2:r} = {3}",
 						vals[i].ToString("r", CultureInfo.InvariantCulture),
 						name,
@@ -64,12 +66,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				}
 			}
 		}
-		
+
 		static T Id<T>(T arg)
 		{
 			return arg;
 		}
-		
+
 		static void TestUShort(ushort i)
 		{
 			Console.WriteLine("ushort: {0} == ushort.MaxValue = {1}", i, i == ushort.MaxValue);
@@ -77,7 +79,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("ushort: {0} == Id<short>(-1) = {1}", i, i == Id<short>(-1));
 			Console.WriteLine("ushort: {0} == 0x1ffff = {1}", i, i == 0x1ffff);
 		}
-		
+
 		static void TestUInt(uint i)
 		{
 			Console.WriteLine("uint: {0} == uint.MaxValue = {1}", i, i == uint.MaxValue);

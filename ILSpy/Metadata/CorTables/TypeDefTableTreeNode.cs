@@ -53,9 +53,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<TypeDefEntry>();
 			TypeDefEntry scrollTargetEntry = default;
 
-			foreach (var row in metadata.TypeDefinitions) {
+			foreach (var row in metadata.TypeDefinitions)
+			{
 				TypeDefEntry entry = new TypeDefEntry(module, row);
-				if (entry.RID == this.scrollTarget) {
+				if (entry.RID == this.scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -65,7 +67,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -86,7 +89,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Offset => metadataOffset
 				+ metadata.GetTableMetadataOffset(TableIndex.TypeDef)
-				+ metadata.GetTableRowSize(TableIndex.TypeDef) * (RID-1);
+				+ metadata.GetTableRowSize(TableIndex.TypeDef) * (RID - 1);
 
 			[StringFormat("X8")]
 			public TypeAttributes Attributes => typeDef.Attributes;
@@ -119,7 +122,8 @@ namespace ICSharpCode.ILSpy.Metadata
 					var provider = new DisassemblerSignatureTypeProvider(module, output);
 					if (typeDef.BaseType.IsNil)
 						return null;
-					switch (typeDef.BaseType.Kind) {
+					switch (typeDef.BaseType.Kind)
+					{
 						case HandleKind.TypeDefinition:
 							provider.GetTypeFromDefinition(module.Metadata, (TypeDefinitionHandle)typeDef.BaseType, 0)(ILNameSyntax.Signature);
 							return output.ToString();

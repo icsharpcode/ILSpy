@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Media;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -21,16 +22,20 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			this.resultQueue = resultQueue;
 
-			if (terms.Length == 1 && terms[0].Length > 2) {
+			if (terms.Length == 1 && terms[0].Length > 2)
+			{
 				string search = terms[0];
-				if (search.StartsWith("/", StringComparison.Ordinal) && search.Length > 4) {
+				if (search.StartsWith("/", StringComparison.Ordinal) && search.Length > 4)
+				{
 					var regexString = search.Substring(1, search.Length - 1);
 					fullNameSearch = search.Contains("\\.");
 					omitGenerics = !search.Contains("<");
 					if (regexString.EndsWith("/", StringComparison.Ordinal))
 						regexString = regexString.Substring(0, regexString.Length - 1);
 					regex = SafeNewRegex(regexString);
-				} else {
+				}
+				else
+				{
 					fullNameSearch = search.Contains(".");
 					omitGenerics = !search.Contains("<");
 				}
@@ -42,16 +47,20 @@ namespace ICSharpCode.ILSpy.Search
 
 		protected virtual bool IsMatch(string name)
 		{
-			if (regex != null) {
+			if (regex != null)
+			{
 				return regex.IsMatch(name);
 			}
 
-			for (int i = 0; i < searchTerm.Length; ++i) {
+			for (int i = 0; i < searchTerm.Length; ++i)
+			{
 				// How to handle overlapping matches?
 				var term = searchTerm[i];
-				if (string.IsNullOrEmpty(term)) continue;
+				if (string.IsNullOrEmpty(term))
+					continue;
 				string text = name;
-				switch (term[0]) {
+				switch (term[0])
+				{
 					case '+': // must contain
 						term = term.Substring(1);
 						goto default;
@@ -60,16 +69,16 @@ namespace ICSharpCode.ILSpy.Search
 							return false;
 						break;
 					case '=': // exact match
-						{
-							var equalCompareLength = text.IndexOf('`');
-							if (equalCompareLength == -1)
-								equalCompareLength = text.Length;
+					{
+						var equalCompareLength = text.IndexOf('`');
+						if (equalCompareLength == -1)
+							equalCompareLength = text.Length;
 
-							if (term.Length > 1 && String.Compare(term, 1, text, 0, Math.Max(term.Length, equalCompareLength),
-								StringComparison.OrdinalIgnoreCase) != 0)
-								return false;
-						}
-						break;
+						if (term.Length > 1 && String.Compare(term, 1, text, 0, Math.Max(term.Length, equalCompareLength),
+							StringComparison.OrdinalIgnoreCase) != 0)
+							return false;
+					}
+					break;
 					case '~':
 						if (term.Length > 1 && !IsNoncontiguousMatch(text.ToLower(), term.Substring(1).ToLower()))
 							return false;
@@ -85,17 +94,22 @@ namespace ICSharpCode.ILSpy.Search
 
 		bool IsNoncontiguousMatch(string text, string searchTerm)
 		{
-			if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchTerm)) {
+			if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchTerm))
+			{
 				return false;
 			}
 			var textLength = text.Length;
-			if (searchTerm.Length > textLength) {
+			if (searchTerm.Length > textLength)
+			{
 				return false;
 			}
 			var i = 0;
-			for (int searchIndex = 0; searchIndex < searchTerm.Length;) {
-				while (i != textLength) {
-					if (text[i] == searchTerm[searchIndex]) {
+			for (int searchIndex = 0; searchIndex < searchTerm.Length;)
+			{
+				while (i != textLength)
+				{
+					if (text[i] == searchTerm[searchIndex])
+					{
 						// Check if all characters in searchTerm have been matched
 						if (searchTerm.Length == ++searchIndex)
 							return true;
@@ -117,9 +131,12 @@ namespace ICSharpCode.ILSpy.Search
 
 		Regex SafeNewRegex(string unsafePattern)
 		{
-			try {
+			try
+			{
 				return new Regex(unsafePattern, RegexOptions.Compiled);
-			} catch (ArgumentException) {
+			}
+			catch (ArgumentException)
+			{
 				return null;
 			}
 		}

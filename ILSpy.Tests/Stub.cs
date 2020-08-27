@@ -30,7 +30,8 @@ namespace ICSharpCode.ILSpy.Tests
 
 		internal static void SetupApplication()
 		{
-			lock (sync) {
+			lock (sync)
+			{
 				if (Application.Current == null)
 					new Application();
 			}

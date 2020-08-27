@@ -18,6 +18,7 @@
 
 using System;
 using System.Windows.Data;
+
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Docking

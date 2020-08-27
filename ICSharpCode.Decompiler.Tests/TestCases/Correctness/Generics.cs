@@ -37,18 +37,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			return default(T);
 		}
-		
+
 		public static void TestGenericParam<T>()
 		{
 			Console.WriteLine(typeof(T));
 		}
-		
+
 		public static void TestGenericParam<T1, T2>()
 		{
 			Console.WriteLine(typeof(T1) + " " + typeof(T2));
 		}
 	}
-	
+
 	class GenericClass<T>
 	{
 		public void M(out GenericClass<T> self)

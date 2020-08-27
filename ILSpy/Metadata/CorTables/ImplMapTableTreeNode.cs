@@ -54,9 +54,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var length = metadata.GetTableRowCount(TableIndex.ImplMap);
 			byte* ptr = metadata.MetadataPointer;
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
-			for (int rid = 1; rid <= length; rid++) {
+			for (int rid = 1; rid <= length; rid++)
+			{
 				ImplMapEntry entry = new ImplMapEntry(module, ptr, metadataOffset, rid);
-				if (entry.RID == this.scrollTarget) {
+				if (entry.RID == this.scrollTarget)
+				{
 					scrollTargetEntry = entry;
 				}
 				list.Add(entry);
@@ -66,7 +68,8 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 0) {
+			if (scrollTargetEntry.RID > 0)
+			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
 
@@ -80,7 +83,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public readonly StringHandle ImportName;
 			public readonly ModuleReferenceHandle ImportScope;
 
-			public unsafe ImplMap(byte *ptr, int moduleRefSize, int memberForwardedTagRefSize, int stringHandleSize)
+			public unsafe ImplMap(byte* ptr, int moduleRefSize, int memberForwardedTagRefSize, int stringHandleSize)
 			{
 				MappingFlags = (PInvokeAttributes)Helpers.GetValue(ptr, 2);
 				MemberForwarded = Helpers.FromMemberForwardedTag((uint)Helpers.GetValue(ptr + 2, memberForwardedTagRefSize));

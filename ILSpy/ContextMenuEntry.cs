@@ -23,6 +23,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.TreeView;
@@ -35,7 +36,7 @@ namespace ICSharpCode.ILSpy
 		bool IsEnabled(TextViewContext context);
 		void Execute(TextViewContext context);
 	}
-	
+
 	public class TextViewContext
 	{
 		/// <summary>
@@ -43,13 +44,13 @@ namespace ICSharpCode.ILSpy
 		/// Returns null, if context menu does not belong to a tree view.
 		/// </summary>
 		public SharpTreeNode[] SelectedTreeNodes { get; private set; }
-		
+
 		/// <summary>
 		/// Returns the tree view the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a tree view.
 		/// </summary>
 		public SharpTreeView TreeView { get; private set; }
-		
+
 		/// <summary>
 		/// Returns the text view the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a text view.
@@ -73,7 +74,7 @@ namespace ICSharpCode.ILSpy
 		/// Returns null, if there was no reference found.
 		/// </summary>
 		public ReferenceSegment Reference { get; private set; }
-		
+
 		/// <summary>
 		/// Returns the position in TextView the mouse cursor is currently hovering above.
 		/// Returns null, if TextView returns null;
@@ -113,7 +114,7 @@ namespace ICSharpCode.ILSpy
 			};
 		}
 	}
-	
+
 	public interface IContextMenuEntryMetadata
 	{
 		string Icon { get; }
@@ -123,9 +124,9 @@ namespace ICSharpCode.ILSpy
 
 		double Order { get; }
 	}
-	
+
 	[MetadataAttribute]
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple=false)]
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 	public class ExportContextMenuEntryAttribute : ExportAttribute, IContextMenuEntryMetadata
 	{
 		public ExportContextMenuEntryAttribute()
@@ -134,14 +135,14 @@ namespace ICSharpCode.ILSpy
 			// entries default to end of menu unless given specific order position
 			Order = double.MaxValue;
 		}
-		
+
 		public string Icon { get; set; }
 		public string Header { get; set; }
 		public string Category { get; set; }
 		public string InputGestureText { get; set; }
 		public double Order { get; set; }
 	}
-	
+
 	internal class ContextMenuProvider
 	{
 		/// <summary>
@@ -184,7 +185,7 @@ namespace ICSharpCode.ILSpy
 		readonly ListBox listBox;
 		readonly DataGrid dataGrid;
 		readonly Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[] entries;
-		
+
 		private ContextMenuProvider()
 		{
 			entries = App.ExportProvider.GetExports<IContextMenuEntry, IContextMenuEntryMetadata>().ToArray();
@@ -195,7 +196,7 @@ namespace ICSharpCode.ILSpy
 		{
 			this.textView = textView ?? throw new ArgumentNullException(nameof(textView));
 		}
-		
+
 		ContextMenuProvider(SharpTreeView treeView)
 			: this()
 		{
@@ -217,7 +218,8 @@ namespace ICSharpCode.ILSpy
 		void treeView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
 			TextViewContext context = TextViewContext.Create(treeView);
-			if (context.SelectedTreeNodes.Length == 0) {
+			if (context.SelectedTreeNodes.Length == 0)
+			{
 				e.Handled = true; // don't show the menu
 				return;
 			}
@@ -228,7 +230,7 @@ namespace ICSharpCode.ILSpy
 				// hide the context menu.
 				e.Handled = true;
 		}
-		
+
 		void textView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
 			TextViewContext context = TextViewContext.Create(textView: textView);
@@ -265,28 +267,35 @@ namespace ICSharpCode.ILSpy
 		bool ShowContextMenu(TextViewContext context, out ContextMenu menu)
 		{
 			menu = new ContextMenu();
-			foreach (var category in entries.OrderBy(c => c.Metadata.Order).GroupBy(c => c.Metadata.Category)) {
+			foreach (var category in entries.OrderBy(c => c.Metadata.Order).GroupBy(c => c.Metadata.Category))
+			{
 				bool needSeparatorForCategory = menu.Items.Count > 0;
-				foreach (var entryPair in category) {
+				foreach (var entryPair in category)
+				{
 					IContextMenuEntry entry = entryPair.Value;
-					if (entry.IsVisible(context)) {
-						if (needSeparatorForCategory) {
+					if (entry.IsVisible(context))
+					{
+						if (needSeparatorForCategory)
+						{
 							menu.Items.Add(new Separator());
 							needSeparatorForCategory = false;
 						}
 						MenuItem menuItem = new MenuItem();
 						menuItem.Header = MainWindow.GetResourceString(entryPair.Metadata.Header);
 						menuItem.InputGestureText = entryPair.Metadata.InputGestureText;
-						if (!string.IsNullOrEmpty(entryPair.Metadata.Icon)) {
+						if (!string.IsNullOrEmpty(entryPair.Metadata.Icon))
+						{
 							menuItem.Icon = new Image {
 								Width = 16,
 								Height = 16,
 								Source = Images.Load(entryPair.Value, entryPair.Metadata.Icon)
 							};
 						}
-						if (entryPair.Value.IsEnabled(context)) {
+						if (entryPair.Value.IsEnabled(context))
+						{
 							menuItem.Click += delegate { entry.Execute(context); };
-						} else
+						}
+						else
 							menuItem.IsEnabled = false;
 						menu.Items.Add(menuItem);
 					}

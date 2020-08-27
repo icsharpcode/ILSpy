@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
@@ -32,7 +33,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// Type that is being compared with.
 		/// </summary>
 		public readonly IType TargetType;
-		
+
 		public TypeIsResolveResult(ResolveResult input, IType targetType, IType booleanType)
 			: base(booleanType)
 		{

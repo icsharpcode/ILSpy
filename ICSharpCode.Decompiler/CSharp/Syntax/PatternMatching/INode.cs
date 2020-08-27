@@ -29,11 +29,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		INode FirstChild { get; }
 		INode NextSibling { get; }
 		bool IsNull { get; }
-		
+
 		bool DoMatch(INode other, Match match);
 		bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo);
 	}
-	
+
 	public static class PatternExtensions
 	{
 		/// <summary>
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			else
 				return default(PatternMatching.Match);
 		}
-		
+
 		public static bool IsMatch(this INode pattern, INode other)
 		{
 			if (pattern == null)

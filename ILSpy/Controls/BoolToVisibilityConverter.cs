@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy.Controls
 				notVisible = Visibility.Collapsed;
 			if (!(value is bool b))
 				return notVisible;
-			return b ? Visibility.Visible : notVisible; 
+			return b ? Visibility.Visible : notVisible;
 		}
 
 		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

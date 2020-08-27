@@ -4,6 +4,7 @@
 namespace LightJson.Serialization
 {
 	using System.IO;
+
 	using ErrorType = JsonParseException.ErrorType;
 
 	/// <summary>
@@ -51,11 +52,14 @@ namespace LightJson.Serialization
 		{
 			var next = this.reader.Peek();
 
-			if (next == -1 && throwAtEndOfFile) {
+			if (next == -1 && throwAtEndOfFile)
+			{
 				throw new JsonParseException(
 					ErrorType.IncompleteMessage,
 					this.position);
-			} else {
+			}
+			else
+			{
 				return next;
 			}
 		}
@@ -68,15 +72,21 @@ namespace LightJson.Serialization
 		{
 			var next = this.reader.Read();
 
-			if (next == -1) {
+			if (next == -1)
+			{
 				throw new JsonParseException(
 					ErrorType.IncompleteMessage,
 					this.position);
-			} else {
-				if (next == '\n') {
+			}
+			else
+			{
+				if (next == '\n')
+				{
 					this.position.Line += 1;
 					this.position.Column = 0;
-				} else {
+				}
+				else
+				{
 					this.position.Column += 1;
 				}
 
@@ -89,15 +99,21 @@ namespace LightJson.Serialization
 		/// </summary>
 		public void SkipWhitespace()
 		{
-			while (true) {
+			while (true)
+			{
 				char next = this.Peek();
-				if (char.IsWhiteSpace(next)) {
+				if (char.IsWhiteSpace(next))
+				{
 					this.Read();
 					continue;
-				} else if (next == '/') {
+				}
+				else if (next == '/')
+				{
 					this.SkipComment();
 					continue;
-				} else {
+				}
+				else
+				{
 					break;
 				}
 			}
@@ -111,7 +127,8 @@ namespace LightJson.Serialization
 		public void Assert(char next)
 		{
 			var errorPosition = this.position;
-			if (this.Read() != next) {
+			if (this.Read() != next)
+			{
 				throw new JsonParseException(
 					string.Format("Parser expected '{0}'", next),
 					ErrorType.InvalidOrUnexpectedCharacter,
@@ -126,7 +143,8 @@ namespace LightJson.Serialization
 		/// <param name="next">The expected string.</param>
 		public void Assert(string next)
 		{
-			for (var i = 0; i < next.Length; i += 1) {
+			for (var i = 0; i < next.Length; i += 1)
+			{
 				this.Assert(next[i]);
 			}
 		}
@@ -135,7 +153,8 @@ namespace LightJson.Serialization
 		{
 			// First character is the first slash
 			this.Read();
-			switch (this.Peek()) {
+			switch (this.Peek())
+			{
 				case '/':
 					this.SkipLineComment();
 					return;
@@ -157,8 +176,10 @@ namespace LightJson.Serialization
 			// First character is the second '/' of the opening '//'
 			this.Read();
 
-			while (true) {
-				switch (this.reader.Peek()) {
+			while (true)
+			{
+				switch (this.reader.Peek())
+				{
 					case '\n':
 						// Reached the end of the line
 						this.Read();
@@ -181,8 +202,10 @@ namespace LightJson.Serialization
 			this.Read();
 
 			bool foundStar = false;
-			while (true) {
-				switch (this.reader.Peek()) {
+			while (true)
+			{
+				switch (this.reader.Peek())
+				{
 					case '*':
 						this.Read();
 						foundStar = true;
@@ -190,9 +213,12 @@ namespace LightJson.Serialization
 
 					case '/':
 						this.Read();
-						if (foundStar) {
+						if (foundStar)
+						{
 							return;
-						} else {
+						}
+						else
+						{
 							foundStar = false;
 							continue;
 						}

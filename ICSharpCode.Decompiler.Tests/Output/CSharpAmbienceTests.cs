@@ -19,11 +19,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.Tests.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+
 using NUnit.Framework;
 
 using static ICSharpCode.Decompiler.Output.ConversionFlags;
@@ -47,7 +49,8 @@ namespace ICSharpCode.Decompiler.Tests.Output
 
 		ITypeDefinition GetDefinition(Type type)
 		{
-			if (type == null) {
+			if (type == null)
+			{
 				throw new ArgumentNullException(nameof(type));
 			}
 

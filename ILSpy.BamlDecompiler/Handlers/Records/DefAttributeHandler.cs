@@ -21,13 +21,17 @@
 */
 
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class DefAttributeHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class DefAttributeHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.DefAttribute;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (DefAttributeRecord)((BamlRecordNode)node).Record;
 
 			var attrName = ctx.ResolveString(record.NameId);

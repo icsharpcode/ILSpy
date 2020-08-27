@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			Debug.WriteLine(text);
 		}
-		
+
 #if __MonoCS__
 		[Conditional("MCS_DEBUG")]
 #else
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			Debug.WriteLine(format, args);
 		}
-		
+
 #if __MonoCS__
 		[Conditional("MCS_DEBUG")]
 #else
@@ -57,19 +57,23 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 #endif
 		internal static void WriteCollection<T>(string text, IEnumerable<T> lines)
 		{
-			#if DEBUG
+#if DEBUG
 			T[] arr = lines.ToArray();
-			if (arr.Length == 0) {
+			if (arr.Length == 0)
+			{
 				Debug.WriteLine(text + "<empty collection>");
-			} else {
+			}
+			else
+			{
 				Debug.WriteLine(text + (arr[0] != null ? arr[0].ToString() : "<null>"));
-				for (int i = 1; i < arr.Length; i++) {
+				for (int i = 1; i < arr.Length; i++)
+				{
 					Debug.WriteLine(new string(' ', text.Length) + (arr[i] != null ? arr[i].ToString() : "<null>"));
 				}
 			}
-			#endif
+#endif
 		}
-		
+
 #if __MonoCS__
 		[Conditional("MCS_DEBUG")]
 #else
@@ -79,7 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			Debug.Indent();
 		}
-		
+
 #if __MonoCS__
 		[Conditional("MCS_DEBUG")]
 #else

@@ -18,13 +18,14 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = nameof(Resources._View),  Header = nameof(Resources.SortAssembly_listName),  MenuIcon = "Images/Sort", MenuCategory = nameof(Resources.View))]
-	[ExportToolbarCommand(ToolTip = nameof(Resources.SortAssemblyListName),  ToolbarIcon = "Images/Sort",  ToolbarCategory = nameof(Resources.View))]
+	[ExportMainMenuCommand(Menu = nameof(Resources._View), Header = nameof(Resources.SortAssembly_listName), MenuIcon = "Images/Sort", MenuCategory = nameof(Resources.View))]
+	[ExportToolbarCommand(ToolTip = nameof(Resources.SortAssemblyListName), ToolbarIcon = "Images/Sort", ToolbarCategory = nameof(Resources.View))]
 	sealed class SortAssemblyListCommand : SimpleCommand, IComparer<LoadedAssembly>
 	{
 		public override void Execute(object parameter)
@@ -39,8 +40,8 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = nameof(Resources._View),  Header = nameof(Resources._CollapseTreeNodes),  MenuIcon = "Images/CollapseAll", MenuCategory = nameof(Resources.View))]
-	[ExportToolbarCommand(ToolTip = nameof(Resources.CollapseTreeNodes),  ToolbarIcon = "Images/CollapseAll", ToolbarCategory = nameof(Resources.View))]
+	[ExportMainMenuCommand(Menu = nameof(Resources._View), Header = nameof(Resources._CollapseTreeNodes), MenuIcon = "Images/CollapseAll", MenuCategory = nameof(Resources.View))]
+	[ExportToolbarCommand(ToolTip = nameof(Resources.CollapseTreeNodes), ToolbarIcon = "Images/CollapseAll", ToolbarCategory = nameof(Resources.View))]
 	sealed class CollapseAllCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)
@@ -50,7 +51,8 @@ namespace ICSharpCode.ILSpy
 
 			void CollapseChildren(SharpTreeNode node)
 			{
-				foreach (var child in node.Children) {
+				foreach (var child in node.Children)
+				{
 					if (!child.IsExpanded)
 						continue;
 					CollapseChildren(child);

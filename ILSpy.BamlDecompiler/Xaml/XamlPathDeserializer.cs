@@ -94,90 +94,101 @@ namespace ILSpy.BamlDecompiler.Xaml
 			Point pt1, pt2, pt3;
 			IList<Point> pts;
 
-			while (!end) {
+			while (!end)
+			{
 				var b = reader.ReadByte();
 
-				switch ((PathOpCodes)(b & 0xf)) {
-					case PathOpCodes.BeginFigure: {
-							ReadPointBoolBool(reader, b, out pt1, out bool filled, out bool closed);
+				switch ((PathOpCodes)(b & 0xf))
+				{
+					case PathOpCodes.BeginFigure:
+					{
+						ReadPointBoolBool(reader, b, out pt1, out bool filled, out bool closed);
 
-							sb.AppendFormat("M{0} ", pt1);
-							break;
-						}
+						sb.AppendFormat("M{0} ", pt1);
+						break;
+					}
 
-					case PathOpCodes.LineTo: {
-							ReadPointBoolBool(reader, b, out pt1, out bool stroked, out bool smoothJoin);
+					case PathOpCodes.LineTo:
+					{
+						ReadPointBoolBool(reader, b, out pt1, out bool stroked, out bool smoothJoin);
 
-							sb.AppendFormat("L{0} ", pt1);
-							break;
-						}
+						sb.AppendFormat("L{0} ", pt1);
+						break;
+					}
 
-					case PathOpCodes.QuadraticBezierTo: {
-							ReadPointBoolBool(reader, b, out pt1, out bool stroked, out bool smoothJoin);
-							pt2 = ReadPoint(reader);
+					case PathOpCodes.QuadraticBezierTo:
+					{
+						ReadPointBoolBool(reader, b, out pt1, out bool stroked, out bool smoothJoin);
+						pt2 = ReadPoint(reader);
 
-							sb.AppendFormat("Q{0} {1} ", pt1, pt2);
-							break;
-						}
+						sb.AppendFormat("Q{0} {1} ", pt1, pt2);
+						break;
+					}
 
-					case PathOpCodes.BezierTo: {
-							ReadPointBoolBool(reader, b, out pt1, out bool stroked, out bool smoothJoin);
-							pt2 = ReadPoint(reader);
-							pt3 = ReadPoint(reader);
+					case PathOpCodes.BezierTo:
+					{
+						ReadPointBoolBool(reader, b, out pt1, out bool stroked, out bool smoothJoin);
+						pt2 = ReadPoint(reader);
+						pt3 = ReadPoint(reader);
 
-							sb.AppendFormat("C{0} {1} {2} ", pt1, pt2, pt3);
-							break;
-						}
+						sb.AppendFormat("C{0} {1} {2} ", pt1, pt2, pt3);
+						break;
+					}
 
-					case PathOpCodes.PolyLineTo: {
-							pts = ReadPointsBoolBool(reader, b, out bool stroked, out bool smoothJoin);
+					case PathOpCodes.PolyLineTo:
+					{
+						pts = ReadPointsBoolBool(reader, b, out bool stroked, out bool smoothJoin);
 
-							sb.Append('L');
-							foreach (var pt in pts)
-								sb.AppendFormat("{0} ", pt);
-							break;
-						}
+						sb.Append('L');
+						foreach (var pt in pts)
+							sb.AppendFormat("{0} ", pt);
+						break;
+					}
 
-					case PathOpCodes.PolyQuadraticBezierTo: {
-							pts = ReadPointsBoolBool(reader, b, out bool stroked, out bool smoothJoin);
+					case PathOpCodes.PolyQuadraticBezierTo:
+					{
+						pts = ReadPointsBoolBool(reader, b, out bool stroked, out bool smoothJoin);
 
-							sb.Append('Q');
-							foreach (var pt in pts)
-								sb.AppendFormat("{0} ", pt);
-							break;
-						}
+						sb.Append('Q');
+						foreach (var pt in pts)
+							sb.AppendFormat("{0} ", pt);
+						break;
+					}
 
-					case PathOpCodes.PolyBezierTo: {
-							pts = ReadPointsBoolBool(reader, b, out bool stroked, out bool smoothJoin);
+					case PathOpCodes.PolyBezierTo:
+					{
+						pts = ReadPointsBoolBool(reader, b, out bool stroked, out bool smoothJoin);
 
-							sb.Append('C');
-							foreach (var pt in pts)
-								sb.AppendFormat("{0} ", pt);
-							break;
-						}
+						sb.Append('C');
+						foreach (var pt in pts)
+							sb.AppendFormat("{0} ", pt);
+						break;
+					}
 
-					case PathOpCodes.ArcTo: {
-							ReadPointBoolBool(reader, b, out pt1, out bool stroked, out bool smoothJoin);
-							byte b2 = reader.ReadByte();
-							bool largeArc = (b2 & 0x0f) != 0;
-							bool sweepDirection = (b2 & 0xf0) != 0;
-							var size = ReadPoint(reader);
-							double angle = reader.ReadXamlDouble();
+					case PathOpCodes.ArcTo:
+					{
+						ReadPointBoolBool(reader, b, out pt1, out bool stroked, out bool smoothJoin);
+						byte b2 = reader.ReadByte();
+						bool largeArc = (b2 & 0x0f) != 0;
+						bool sweepDirection = (b2 & 0xf0) != 0;
+						var size = ReadPoint(reader);
+						double angle = reader.ReadXamlDouble();
 
-							sb.AppendFormat(CultureInfo.InvariantCulture, "A{0} {2:R} {2} {3} {4}",
-								size, angle, largeArc ? '1' : '0', sweepDirection ? '1' : '0', pt1);
-							break;
-						}
+						sb.AppendFormat(CultureInfo.InvariantCulture, "A{0} {2:R} {2} {3} {4}",
+							size, angle, largeArc ? '1' : '0', sweepDirection ? '1' : '0', pt1);
+						break;
+					}
 					case PathOpCodes.Closed:
 						end = true;
 						break;
 
-					case PathOpCodes.FillRule: {
-							UnpackBools(b, out bool fillRule, out bool b2, out bool b3, out bool b4);
-							if (fillRule)
-								sb.Insert(0, "F1 ");
-							break;
-						}
+					case PathOpCodes.FillRule:
+					{
+						UnpackBools(b, out bool fillRule, out bool b2, out bool b3, out bool b4);
+						if (fillRule)
+							sb.Insert(0, "F1 ");
+						break;
+					}
 				}
 			}
 

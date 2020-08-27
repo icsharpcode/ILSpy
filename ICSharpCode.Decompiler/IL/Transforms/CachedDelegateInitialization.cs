@@ -18,6 +18,7 @@
 
 using System;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -31,17 +32,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			if (!context.Settings.AnonymousMethods)
 				return;
-			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-				if (block.Instructions[i] is IfInstruction inst) {
-					if (CachedDelegateInitializationWithField(inst)) {
+			for (int i = block.Instructions.Count - 1; i >= 0; i--)
+			{
+				if (block.Instructions[i] is IfInstruction inst)
+				{
+					if (CachedDelegateInitializationWithField(inst))
+					{
 						block.Instructions.RemoveAt(i);
 						continue;
 					}
-					if (CachedDelegateInitializationWithLocal(inst)) {
+					if (CachedDelegateInitializationWithLocal(inst))
+					{
 						ILInlining.InlineOneIfPossible(block, i, InliningOptions.Aggressive, context);
 						continue;
 					}
-					if (CachedDelegateInitializationRoslynInStaticWithLocal(inst) || CachedDelegateInitializationRoslynWithLocal(inst)) {
+					if (CachedDelegateInitializationRoslynInStaticWithLocal(inst) || CachedDelegateInitializationRoslynWithLocal(inst))
+					{
 						block.Instructions.RemoveAt(i);
 						continue;
 					}

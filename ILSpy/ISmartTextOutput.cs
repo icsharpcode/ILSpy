@@ -21,6 +21,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
 
@@ -59,7 +60,8 @@ namespace ICSharpCode.ILSpy
 					button.Margin = new Thickness(2);
 					button.Padding = new Thickness(9, 1, 9, 1);
 					button.MinWidth = 73;
-					if (icon != null) {
+					if (icon != null)
+					{
 						button.Content = new StackPanel {
 							Orientation = Orientation.Horizontal,
 							Children = {
@@ -67,7 +69,9 @@ namespace ICSharpCode.ILSpy
 								new TextBlock { Text = text }
 							}
 						};
-					} else {
+					}
+					else
+					{
 						button.Content = text;
 					}
 					button.Click += click;

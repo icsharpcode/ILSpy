@@ -27,18 +27,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class IdentifierExpressionBackreference : PatternMatching.Pattern
 	{
 		readonly string referencedGroupName;
-		
+
 		public string ReferencedGroupName {
 			get { return referencedGroupName; }
 		}
-		
+
 		public IdentifierExpressionBackreference(string referencedGroupName)
 		{
 			if (referencedGroupName == null)
 				throw new ArgumentNullException(nameof(referencedGroupName));
 			this.referencedGroupName = referencedGroupName;
 		}
-		
+
 		public override bool DoMatch(PatternMatching.INode other, PatternMatching.Match match)
 		{
 			IdentifierExpression ident = other as IdentifierExpression;

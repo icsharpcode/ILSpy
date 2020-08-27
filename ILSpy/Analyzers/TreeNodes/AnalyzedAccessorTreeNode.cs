@@ -27,7 +27,8 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		public AnalyzedAccessorTreeNode(IMethod analyzedMethod, string name)
 			: base(analyzedMethod)
 		{
-			if (string.IsNullOrWhiteSpace(name)) {
+			if (string.IsNullOrWhiteSpace(name))
+			{
 				throw new System.ArgumentException("name must be a non-empty string", nameof(name));
 			}
 

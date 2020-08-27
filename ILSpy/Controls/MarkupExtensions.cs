@@ -27,12 +27,12 @@ namespace ICSharpCode.ILSpy.Controls
 	class ControlColor : MarkupExtension
 	{
 		readonly float val;
-		
+
 		/// <summary>
 		/// Amount of highlight (0..1)
 		/// </summary>
 		public float Highlight { get; set; }
-		
+
 		/// <summary>
 		/// val: Color value in the range 105..255.
 		/// </summary>
@@ -42,18 +42,23 @@ namespace ICSharpCode.ILSpy.Controls
 				throw new ArgumentOutOfRangeException(nameof(val));
 			this.val = val;
 		}
-		
+
 		public override object ProvideValue(IServiceProvider serviceProvider)
 		{
-			if (val > 227) {
+			if (val > 227)
+			{
 				return Interpolate(227, SystemColors.ControlLightColor, 255, SystemColors.ControlLightLightColor);
-			} else if (val > 160) {
+			}
+			else if (val > 160)
+			{
 				return Interpolate(160, SystemColors.ControlDarkColor, 227, SystemColors.ControlLightColor);
-			} else {
+			}
+			else
+			{
 				return Interpolate(105, SystemColors.ControlDarkDarkColor, 160, SystemColors.ControlDarkColor);
 			}
 		}
-		
+
 		Color Interpolate(float v1, Color c1, float v2, Color c2)
 		{
 			float v = (val - v1) / (v2 - v1);

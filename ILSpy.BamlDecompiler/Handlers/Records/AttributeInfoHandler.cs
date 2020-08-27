@@ -22,8 +22,10 @@
 
 using ILSpy.BamlDecompiler.Baml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class AttributeInfoHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class AttributeInfoHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.AttributeInfo;
 
 		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) => null;

@@ -27,28 +27,30 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly ICompilation compilation;
 		readonly IType[] knownTypes = new IType[KnownTypeReference.KnownTypeCodeCount];
-		
+
 		public KnownTypeCache(ICompilation compilation)
 		{
 			this.compilation = compilation;
 		}
-		
+
 		public IType FindType(KnownTypeCode typeCode)
 		{
 			IType type = LazyInit.VolatileRead(ref knownTypes[(int)typeCode]);
-			if (type != null) {
+			if (type != null)
+			{
 				return type;
 			}
 			return LazyInit.GetOrSet(ref knownTypes[(int)typeCode], SearchType(typeCode));
 		}
-		
+
 		IType SearchType(KnownTypeCode typeCode)
 		{
 			KnownTypeReference typeRef = KnownTypeReference.Get(typeCode);
 			if (typeRef == null)
 				return SpecialType.UnknownType;
 			var typeName = new TopLevelTypeName(typeRef.Namespace, typeRef.Name, typeRef.TypeParameterCount);
-			foreach (IModule asm in compilation.Modules) {
+			foreach (IModule asm in compilation.Modules)
+			{
 				var typeDef = asm.GetTypeDefinition(typeName);
 				if (typeDef != null)
 					return typeDef;

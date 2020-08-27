@@ -27,9 +27,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	public sealed class DefaultAssemblyReference : IModuleReference, ISupportsInterning
 	{
 		public static readonly IModuleReference CurrentAssembly = new CurrentModuleReference();
-		
+
 		readonly string shortName;
-		
+
 		public DefaultAssemblyReference(string assemblyName)
 		{
 			int pos = assemblyName != null ? assemblyName.IndexOf(',') : -1;
@@ -38,37 +38,39 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			else
 				shortName = assemblyName;
 		}
-		
+
 		public IModule Resolve(ITypeResolveContext context)
 		{
 			IModule current = context.CurrentModule;
 			if (current != null && string.Equals(shortName, current.AssemblyName, StringComparison.OrdinalIgnoreCase))
 				return current;
-			foreach (IModule asm in context.Compilation.Modules) {
+			foreach (IModule asm in context.Compilation.Modules)
+			{
 				if (string.Equals(shortName, asm.AssemblyName, StringComparison.OrdinalIgnoreCase))
 					return asm;
 			}
 			return null;
 		}
-		
+
 		public override string ToString()
 		{
 			return shortName;
 		}
-		
+
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			unchecked {
+			unchecked
+			{
 				return shortName.GetHashCode();
 			}
 		}
-		
+
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
 			DefaultAssemblyReference o = other as DefaultAssemblyReference;
 			return o != null && shortName == o.shortName;
 		}
-		
+
 		[Serializable]
 		sealed class CurrentModuleReference : IModuleReference
 		{

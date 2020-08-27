@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.TreeView;
@@ -43,9 +44,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		internal static bool ActivateItem(SharpTreeNode node, ITypeDefinition def)
 		{
-			if (def != null) {
+			if (def != null)
+			{
 				var assemblyListNode = node.Ancestors().OfType<AssemblyListTreeNode>().FirstOrDefault();
-				if (assemblyListNode != null) {
+				if (assemblyListNode != null)
+				{
 					assemblyListNode.Select(assemblyListNode.FindTypeNode(def));
 					return true;
 				}

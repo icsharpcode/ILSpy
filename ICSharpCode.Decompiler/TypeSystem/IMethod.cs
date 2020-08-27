@@ -69,19 +69,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool IsConstructor { get; }
 		bool IsDestructor { get; }
 		bool IsOperator { get; }
-		
+
 		/// <summary>
 		/// Gets whether the method has a body.
 		/// This property returns <c>false</c> for <c>abstract</c> or <c>extern</c> methods,
 		/// or for <c>partial</c> methods without implementation.
 		/// </summary>
 		bool HasBody { get; }
-		
+
 		/// <summary>
 		/// Gets whether the method is a property/event accessor.
 		/// </summary>
 		bool IsAccessor { get; }
-		
+
 		/// <summary>
 		/// If this method is an accessor, returns the corresponding property/event.
 		/// Otherwise, returns null.
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// A local function doesn't contain compiler-generated method parameters at the end.
 		/// </summary>
 		IMethod ReducedFrom { get; }
-		
+
 		/// <summary>
 		/// Specializes this method with the given substitution.
 		/// If this method is already specialized, the new substitution is composed with the existing substition.

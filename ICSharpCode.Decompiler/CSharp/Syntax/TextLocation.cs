@@ -34,17 +34,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Represents no text location (0, 0).
 		/// </summary>
 		public static readonly TextLocation Empty = new TextLocation(0, 0);
-		
+
 		/// <summary>
 		/// Constant of the minimum line.
 		/// </summary>
-		public const int MinLine   = 1;
-		
+		public const int MinLine = 1;
+
 		/// <summary>
 		/// Constant of the minimum column.
 		/// </summary>
 		public const int MinColumn = 1;
-		
+
 		/// <summary>
 		/// Creates a TextLocation instance.
 		/// </summary>
@@ -53,23 +53,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.line = line;
 			this.column = column;
 		}
-		
+
 		int column, line;
-		
+
 		/// <summary>
 		/// Gets the line number.
 		/// </summary>
 		public int Line {
 			get { return line; }
 		}
-		
+
 		/// <summary>
 		/// Gets the column number.
 		/// </summary>
 		public int Column {
 			get { return column; }
 		}
-		
+
 		/// <summary>
 		/// Gets whether the TextLocation instance is empty.
 		/// </summary>
@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return column < MinLine && line < MinColumn;
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets a string representation for debugging purposes.
 		/// </summary>
@@ -86,24 +86,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return string.Format(CultureInfo.InvariantCulture, "(Line {1}, Col {0})", this.column, this.line);
 		}
-		
+
 		/// <summary>
 		/// Gets a hash code.
 		/// </summary>
 		public override int GetHashCode()
 		{
-			return unchecked (191 * column.GetHashCode() ^ line.GetHashCode());
+			return unchecked(191 * column.GetHashCode() ^ line.GetHashCode());
 		}
-		
+
 		/// <summary>
 		/// Equality test.
 		/// </summary>
 		public override bool Equals(object obj)
 		{
-			if (!(obj is TextLocation)) return false;
+			if (!(obj is TextLocation))
+				return false;
 			return (TextLocation)obj == this;
 		}
-		
+
 		/// <summary>
 		/// Equality test.
 		/// </summary>
@@ -111,7 +112,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return this == other;
 		}
-		
+
 		/// <summary>
 		/// Equality test.
 		/// </summary>
@@ -119,7 +120,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return left.column == right.column && left.line == right.line;
 		}
-		
+
 		/// <summary>
 		/// Inequality test.
 		/// </summary>
@@ -127,7 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return left.column != right.column || left.line != right.line;
 		}
-		
+
 		/// <summary>
 		/// Compares two text locations.
 		/// </summary>
@@ -140,7 +141,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			else
 				return false;
 		}
-		
+
 		/// <summary>
 		/// Compares two text locations.
 		/// </summary>
@@ -153,7 +154,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			else
 				return false;
 		}
-		
+
 		/// <summary>
 		/// Compares two text locations.
 		/// </summary>
@@ -161,7 +162,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return !(left > right);
 		}
-		
+
 		/// <summary>
 		/// Compares two text locations.
 		/// </summary>
@@ -169,7 +170,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return !(left < right);
 		}
-		
+
 		/// <summary>
 		/// Compares two text locations.
 		/// </summary>
@@ -183,33 +184,36 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return 1;
 		}
 	}
-	
+
 	public class TextLocationConverter : TypeConverter
 	{
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 		{
 			return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
 		}
-		
+
 		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
 		{
 			return destinationType == typeof(TextLocation) || base.CanConvertTo(context, destinationType);
 		}
-		
+
 		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
 		{
-			if (value is string) {
+			if (value is string)
+			{
 				string[] parts = ((string)value).Split(';', ',');
-				if (parts.Length == 2) {
+				if (parts.Length == 2)
+				{
 					return new TextLocation(int.Parse(parts[0]), int.Parse(parts[1]));
 				}
 			}
 			return base.ConvertFrom(context, culture, value);
 		}
-		
+
 		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
 		{
-			if (value is TextLocation) {
+			if (value is TextLocation)
+			{
 				var loc = (TextLocation)value;
 				return loc.Line + ";" + loc.Column;
 			}

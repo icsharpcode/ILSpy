@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -47,10 +48,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		internal GenericContext(IEntity context)
 		{
-			if (context is ITypeDefinition td) {
+			if (context is ITypeDefinition td)
+			{
 				this.ClassTypeParameters = td.TypeParameters;
 				this.MethodTypeParameters = null;
-			} else {
+			}
+			else
+			{
 				this.ClassTypeParameters = context.DeclaringTypeDefinition?.TypeParameters;
 				this.MethodTypeParameters = (context as IMethod)?.TypeParameters;
 			}

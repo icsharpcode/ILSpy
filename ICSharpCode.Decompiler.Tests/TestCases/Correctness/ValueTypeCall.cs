@@ -6,7 +6,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	public struct MutValueType : IDisposable
 	{
 		public int val;
-		
+
 		public void Increment()
 		{
 			Console.WriteLine("Inc() called on {0}", val);
@@ -23,35 +23,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			return "MutValueType.ToString() " + (++val);
 		}
 	}
-	
+
 	public struct GenericValueType<T>
 	{
 		T data;
 		int num;
-		
+
 		public GenericValueType(T data)
 		{
 			this.data = data;
 			this.num = 1;
 		}
-		
+
 		public void Call(ref GenericValueType<T> v)
 		{
 			num++;
 			Console.WriteLine("Call #{0}: {1} with v=#{2}", num, data, v.num);
 		}
 	}
-	
+
 	public struct ValueTypeWithReadOnlyMember
 	{
 		public readonly int Member;
-		
+
 		public ValueTypeWithReadOnlyMember(int member)
 		{
 			this.Member = member;
 		}
 	}
-	
+
 	public class ValueTypeCall
 	{
 		public static void Main()
@@ -68,22 +68,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			new ValueTypeCall().InstanceFieldTests();
 			ForEach();
 		}
-		
+
 		static void RefParameter(ref MutValueType m)
 		{
 			m.Increment();
 			m.Increment();
 		}
-		
+
 		static void ValueParameter(MutValueType m)
 		{
 			m.Increment();
 			m.Increment();
 		}
-		
+
 		static readonly MutValueType ReadonlyField = new MutValueType { val = 100 };
 		static MutValueType MutableField = new MutValueType { val = 200 };
-		
+
 		static void Field()
 		{
 			ReadonlyField.Increment();
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			MutValueType localCopy = ReadonlyField;
 			RefParameter(ref localCopy);
 		}
-		
+
 		static void Box()
 		{
 			Console.WriteLine("Box");
@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		MutValueType instanceField;
 		ValueTypeWithReadOnlyMember mutableInstanceFieldWithReadOnlyMember;
-		
+
 		void InstanceFieldTests()
 		{
 			this.instanceField.val = 42;
@@ -145,7 +145,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void Using1()
 		{
 			Console.WriteLine("Using:");
-			using (var x = new MutValueType()) {
+			using (var x = new MutValueType())
+			{
 				x.Increment();
 			}
 		}
@@ -154,9 +155,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("Not using:");
 			var y = new MutValueType();
-			try {
+			try
+			{
 				y.Increment();
-			} finally {
+			}
+			finally
+			{
 				MutValueType x = y;
 				x.Dispose();
 			}
@@ -166,7 +170,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("Using with variable declared outside:");
 			MutValueType z;
-			using (z = new MutValueType()) {
+			using (z = new MutValueType())
+			{
 				z.Increment();
 			}
 		}
@@ -190,7 +195,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void ForEach1(List<MutValueType> list)
 		{
 			Console.WriteLine("ForEach1:");
-			foreach (var val in list) {
+			foreach (var val in list)
+			{
 				val.Increment();
 				val.Increment();
 			}
@@ -200,7 +206,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void ForEachArray1(MutValueType[] list)
 		{
 			Console.WriteLine("ForEachArray1:");
-			foreach (var val in list) {
+			foreach (var val in list)
+			{
 				val.Increment();
 				val.Increment();
 			}

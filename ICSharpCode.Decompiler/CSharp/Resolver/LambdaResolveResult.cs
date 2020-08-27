@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -33,30 +34,30 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		protected LambdaResolveResult() : base(SpecialType.NoType)
 		{
 		}
-		
+
 		/// <summary>
 		/// Gets whether there is a parameter list.
 		/// This property always returns true for C# 3.0-lambdas, but may return false
 		/// for C# 2.0 anonymous methods.
 		/// </summary>
 		public abstract bool HasParameterList { get; }
-		
+
 		/// <summary>
 		/// Gets whether this lambda is using the C# 2.0 anonymous method syntax.
 		/// </summary>
 		public abstract bool IsAnonymousMethod { get; }
-		
+
 		/// <summary>
 		/// Gets whether the lambda parameters are implicitly typed.
 		/// </summary>
 		/// <remarks>This property returns false for anonymous methods without parameter list.</remarks>
 		public abstract bool IsImplicitlyTyped { get; }
-		
+
 		/// <summary>
 		/// Gets whether the lambda is async.
 		/// </summary>
 		public abstract bool IsAsync { get; }
-		
+
 		/// <summary>
 		/// Gets the return type inferred when the parameter types are inferred to be <paramref name="parameterTypes"/>
 		/// </summary>
@@ -65,19 +66,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// Use the <see cref="ReturnType"/> property to retrieve the actual return type as determined by the target delegate type.
 		/// </remarks>
 		public abstract IType GetInferredReturnType(IType[] parameterTypes);
-		
+
 		/// <summary>
 		/// Gets the list of parameters.
 		/// </summary>
 		public abstract IReadOnlyList<IParameter> Parameters { get; }
-		
+
 		/// <summary>
 		/// Gets the return type of the lambda.
 		/// 
 		/// If the lambda is async, the return type includes <code>Task&lt;T&gt;</code>
 		/// </summary>
 		public abstract IType ReturnType { get; }
-		
+
 		/// <summary>
 		/// Gets whether the lambda body is valid for the given parameter types and return type.
 		/// </summary>
@@ -86,16 +87,16 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// otherwise returns <see cref="Conversion.None"/>.
 		/// </returns>
 		public abstract Conversion IsValid(IType[] parameterTypes, IType returnType, CSharpConversions conversions);
-		
+
 		/// <summary>
 		/// Gets the resolve result for the lambda body.
 		/// Returns a resolve result for 'void' for statement lambdas.
 		/// </summary>
 		public abstract ResolveResult Body { get; }
-		
+
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{
-			return new [] { this.Body };
+			return new[] { this.Body };
 		}
 	}
 
@@ -148,24 +149,33 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public override Conversion IsValid(IType[] parameterTypes, IType returnType, CSharpConversions conversions)
 		{
 			// Anonymous method expressions without parameter lists are applicable to any parameter list.
-			if (HasParameterList) {
+			if (HasParameterList)
+			{
 				if (this.Parameters.Count != parameterTypes.Length)
 					return Conversion.None;
-				for (int i = 0; i < parameterTypes.Length; ++i) {
-					if (!conversions.IdentityConversion(parameterTypes[i], this.Parameters[i].Type)) {
-						if (IsImplicitlyTyped) {
+				for (int i = 0; i < parameterTypes.Length; ++i)
+				{
+					if (!conversions.IdentityConversion(parameterTypes[i], this.Parameters[i].Type))
+					{
+						if (IsImplicitlyTyped)
+						{
 							// it's possible that different parameter types also lead to a valid conversion
 							return LambdaConversion.Instance;
-						} else {
+						}
+						else
+						{
 							return Conversion.None;
 						}
 					}
 				}
 			}
 			if (conversions.IdentityConversion(this.ReturnType, returnType)
-				|| conversions.ImplicitConversion(this.InferredReturnType, returnType).IsValid) {
+				|| conversions.ImplicitConversion(this.InferredReturnType, returnType).IsValid)
+			{
 				return LambdaConversion.Instance;
-			} else {
+			}
+			else
+			{
 				return Conversion.None;
 			}
 		}

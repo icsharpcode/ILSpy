@@ -86,14 +86,18 @@ namespace ICSharpCode.Decompiler.Metadata
 				builder.Append("PublicKeyToken=");
 
 				var pk_token = PublicKeyToken;
-				if (pk_token != null && pk_token.Length > 0) {
-					for (int i = 0; i < pk_token.Length; i++) {
+				if (pk_token != null && pk_token.Length > 0)
+				{
+					for (int i = 0; i < pk_token.Length; i++)
+					{
 						builder.Append(pk_token[i].ToString("x2"));
 					}
-				} else
+				}
+				else
 					builder.Append("null");
 
-				if (IsRetargetable) {
+				if (IsRetargetable)
+				{
 					builder.Append(sep);
 					builder.Append("Retargetable=Yes");
 				}
@@ -121,10 +125,12 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			var name = new AssemblyNameReference();
 			var tokens = fullName.Split(',');
-			for (int i = 0; i < tokens.Length; i++) {
+			for (int i = 0; i < tokens.Length; i++)
+			{
 				var token = tokens[i].Trim();
 
-				if (i == 0) {
+				if (i == 0)
+				{
 					name.Name = token;
 					continue;
 				}
@@ -133,7 +139,8 @@ namespace ICSharpCode.Decompiler.Metadata
 				if (parts.Length != 2)
 					throw new ArgumentException("Malformed name");
 
-				switch (parts[0].ToLowerInvariant()) {
+				switch (parts[0].ToLowerInvariant())
+				{
 					case "version":
 						name.Version = new Version(parts[1]);
 						break;
@@ -185,7 +192,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (entry.PublicKeyOrToken.IsNil)
 				return null;
 			var bytes = Metadata.GetBlobBytes(entry.PublicKeyOrToken);
-			if ((entry.Flags & AssemblyFlags.PublicKey) != 0) {
+			if ((entry.Flags & AssemblyFlags.PublicKey) != 0)
+			{
 				return sha1.ComputeHash(bytes).Skip(12).ToArray();
 			}
 			return bytes;

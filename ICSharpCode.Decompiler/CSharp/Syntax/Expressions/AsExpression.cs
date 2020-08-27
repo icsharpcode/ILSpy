@@ -32,47 +32,47 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class AsExpression : Expression
 	{
-		public readonly static TokenRole AsKeywordRole = new TokenRole ("as");
-		
+		public readonly static TokenRole AsKeywordRole = new TokenRole("as");
+
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
+			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
 		}
-		
+
 		public CSharpTokenNode AsToken {
-			get { return GetChildByRole (AsKeywordRole); }
-		}
-		
-		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
-		
-		public AsExpression ()
-		{
-		}
-		
-		public AsExpression (Expression expression, AstType type)
-		{
-			AddChild (expression, Roles.Expression);
-			AddChild (type, Roles.Type);
+			get { return GetChildByRole(AsKeywordRole); }
 		}
 
-		public override void AcceptVisitor (IAstVisitor visitor)
-		{
-			visitor.VisitAsExpression (this);
+		public AstType Type {
+			get { return GetChildByRole(Roles.Type); }
+			set { SetChildByRole(Roles.Type, value); }
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public AsExpression()
 		{
-			return visitor.VisitAsExpression (this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public AsExpression(Expression expression, AstType type)
 		{
-			return visitor.VisitAsExpression (this, data);
+			AddChild(expression, Roles.Expression);
+			AddChild(type, Roles.Type);
 		}
-		
+
+		public override void AcceptVisitor(IAstVisitor visitor)
+		{
+			visitor.VisitAsExpression(this);
+		}
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+		{
+			return visitor.VisitAsExpression(this);
+		}
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+		{
+			return visitor.VisitAsExpression(this, data);
+		}
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			AsExpression o = other as AsExpression;

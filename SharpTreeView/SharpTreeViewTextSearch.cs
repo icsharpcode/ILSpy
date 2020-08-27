@@ -58,7 +58,8 @@ namespace ICSharpCode.TreeView
 		public static SharpTreeViewTextSearch GetInstance(SharpTreeView sharpTreeView)
 		{
 			var textSearch = (SharpTreeViewTextSearch)sharpTreeView.GetValue(TextSearchInstanceProperty);
-			if (textSearch == null) {
+			if (textSearch == null)
+			{
 				textSearch = new SharpTreeViewTextSearch(sharpTreeView);
 				sharpTreeView.SetValue(TextSearchInstancePropertyKey, textSearch);
 			}
@@ -79,19 +80,23 @@ namespace ICSharpCode.TreeView
 			int startIndex = isActive ? lastMatchIndex : Math.Max(0, treeView.SelectedIndex);
 			bool lookBackwards = inputStack.Count > 0 && string.Compare(inputStack.Peek(), nextChar, StringComparison.OrdinalIgnoreCase) == 0;
 			int nextMatchIndex = IndexOfMatch(matchPrefix + nextChar, startIndex, lookBackwards, out bool wasNewCharUsed);
-			if (nextMatchIndex != -1) {
-				if (!isActive || nextMatchIndex != startIndex) {
+			if (nextMatchIndex != -1)
+			{
+				if (!isActive || nextMatchIndex != startIndex)
+				{
 					treeView.SelectedItem = treeView.Items[nextMatchIndex];
 					treeView.FocusNode((SharpTreeNode)treeView.SelectedItem);
 					lastMatchIndex = nextMatchIndex;
 				}
-				if (wasNewCharUsed) {
+				if (wasNewCharUsed)
+				{
 					matchPrefix += nextChar;
 					inputStack.Push(nextChar);
 				}
 				isActive = true;
 			}
-			if (isActive) {
+			if (isActive)
+			{
 				ResetTimeout();
 			}
 			return nextMatchIndex != -1;
@@ -107,21 +112,29 @@ namespace ICSharpCode.TreeView
 			bool fallbackMatch = false;
 			int i = startIndex;
 			var comparisonType = treeView.IsTextSearchCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
-			do {
+			do
+			{
 				var item = (SharpTreeNode)treeView.Items[i];
-				if (item != null && item.Text != null) {
+				if (item != null && item.Text != null)
+				{
 					string text = item.Text.ToString();
-					if (text.StartsWith(needle, comparisonType)) {
+					if (text.StartsWith(needle, comparisonType))
+					{
 						charWasUsed = true;
 						index = i;
 						break;
 					}
-					if (tryBackward) {
-						if (fallbackMatch && matchPrefix != string.Empty) {
-							if (fallbackIndex == -1 && text.StartsWith(matchPrefix, comparisonType)) {
+					if (tryBackward)
+					{
+						if (fallbackMatch && matchPrefix != string.Empty)
+						{
+							if (fallbackIndex == -1 && text.StartsWith(matchPrefix, comparisonType))
+							{
 								fallbackIndex = i;
 							}
-						} else {
+						}
+						else
+						{
 							fallbackMatch = true;
 						}
 					}
@@ -145,10 +158,13 @@ namespace ICSharpCode.TreeView
 
 		void ResetTimeout()
 		{
-			if (timer == null) {
+			if (timer == null)
+			{
 				timer = new DispatcherTimer(DispatcherPriority.Normal);
 				timer.Tick += (sender, e) => ClearState();
-			} else {
+			}
+			else
+			{
 				timer.Stop();
 			}
 			timer.Interval = TimeSpan.FromMilliseconds(GetDoubleClickTime() * 2);

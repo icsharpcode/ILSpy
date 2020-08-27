@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL
 				|| trueInst.HasDirectFlag(InstructionFlags.EndPointUnreachable)
 				|| falseInst.HasDirectFlag(InstructionFlags.EndPointUnreachable));
 		}
-		
+
 		public override StackType ResultType {
 			get {
 				if (trueInst.HasDirectFlag(InstructionFlags.EndPointUnreachable))
@@ -69,23 +69,25 @@ namespace ICSharpCode.Decompiler.IL
 					return trueInst.ResultType;
 			}
 		}
-		
+
 		public override InstructionFlags DirectFlags {
 			get {
 				return InstructionFlags.ControlFlow;
 			}
 		}
-		
+
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.ControlFlow | condition.Flags | SemanticHelper.CombineBranches(trueInst.Flags, falseInst.Flags);
 		}
-		
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
-			if (options.UseLogicOperationSugar) {
-				if (MatchLogicAnd(out var lhs, out var rhs)) {
+			if (options.UseLogicOperationSugar)
+			{
+				if (MatchLogicAnd(out var lhs, out var rhs))
+				{
 					output.Write("logic.and(");
 					lhs.WriteTo(output, options);
 					output.Write(", ");
@@ -93,7 +95,8 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(')');
 					return;
 				}
-				if (MatchLogicOr(out lhs, out rhs)) {
+				if (MatchLogicOr(out lhs, out rhs))
+				{
 					output.Write("logic.or(");
 					lhs.WriteTo(output, options);
 					output.Write(", ");
@@ -107,7 +110,8 @@ namespace ICSharpCode.Decompiler.IL
 			condition.WriteTo(output, options);
 			output.Write(") ");
 			trueInst.WriteTo(output, options);
-			if (falseInst.OpCode != OpCode.Nop) {
+			if (falseInst.OpCode != OpCode.Nop)
+			{
 				output.Write(" else ");
 				falseInst.WriteTo(output, options);
 			}
@@ -123,7 +127,8 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			if (slot == IfInstruction.TrueInstSlot || slot == IfInstruction.FalseInstSlot || slot == NullCoalescingInstruction.FallbackInstSlot)
 				return IsInConditionSlot(inst.Parent);
-			if (inst.Parent is Comp comp) {
+			if (inst.Parent is Comp comp)
+			{
 				if (comp.Left == inst && comp.Right.MatchLdcI4(0))
 					return true;
 				if (comp.Right == inst && comp.Left.MatchLdcI4(0))

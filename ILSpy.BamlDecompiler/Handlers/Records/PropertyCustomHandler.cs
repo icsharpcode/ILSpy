@@ -26,14 +26,18 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Xml.Linq;
+
 using ILSpy.BamlDecompiler.Baml;
 using ILSpy.BamlDecompiler.Xaml;
 
-namespace ILSpy.BamlDecompiler.Handlers {
-	internal class PropertyCustomHandler : IHandler {
+namespace ILSpy.BamlDecompiler.Handlers
+{
+	internal class PropertyCustomHandler : IHandler
+	{
 		public BamlRecordType Type => BamlRecordType.PropertyCustom;
 
-		enum IntegerCollectionType : byte {
+		enum IntegerCollectionType : byte
+		{
 			Unknown,
 			Consecutive,
 			U1,
@@ -41,15 +45,21 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			I4
 		}
 
-		string Deserialize(XamlContext ctx, XElement elem, KnownTypes ser, byte[] value) {
-			using (BinaryReader reader = new BinaryReader(new MemoryStream(value))) {
-				switch (ser) {
-					case KnownTypes.DependencyPropertyConverter: {
-						if (value.Length == 2) {
+		string Deserialize(XamlContext ctx, XElement elem, KnownTypes ser, byte[] value)
+		{
+			using (BinaryReader reader = new BinaryReader(new MemoryStream(value)))
+			{
+				switch (ser)
+				{
+					case KnownTypes.DependencyPropertyConverter:
+					{
+						if (value.Length == 2)
+						{
 							var property = ctx.ResolveProperty(reader.ReadUInt16());
 							return ctx.ToString(elem, property.ToXName(ctx, elem, NeedsFullName(property, ctx, elem)));
 						}
-						else {
+						else
+						{
 							var type = ctx.ResolveType(reader.ReadUInt16());
 							var name = reader.ReadString();
 							var typeName = ctx.ToString(elem, type);
@@ -57,19 +67,23 @@ namespace ILSpy.BamlDecompiler.Handlers {
 						}
 					}
 
-					case KnownTypes.EnumConverter: {
+					case KnownTypes.EnumConverter:
+					{
 						uint enumVal = reader.ReadUInt32();
 						// TODO: Convert to enum names
 						return enumVal.ToString("D", CultureInfo.InvariantCulture);
 					}
 
-					case KnownTypes.BooleanConverter: {
+					case KnownTypes.BooleanConverter:
+					{
 						Debug.Assert(value.Length == 1);
 						return (reader.ReadByte() == 1).ToString(CultureInfo.InvariantCulture);
 					}
 
-					case KnownTypes.XamlBrushSerializer: {
-						switch (reader.ReadByte()) {
+					case KnownTypes.XamlBrushSerializer:
+					{
+						switch (reader.ReadByte())
+						{
 							case 1: // KnownSolidColor
 								return string.Format(CultureInfo.InvariantCulture, "#{0:X8}", reader.ReadUInt32());
 							case 2: // OtherColor
@@ -82,10 +96,12 @@ namespace ILSpy.BamlDecompiler.Handlers {
 						return XamlPathDeserializer.Deserialize(reader);
 
 					case KnownTypes.XamlPoint3DCollectionSerializer:
-					case KnownTypes.XamlVector3DCollectionSerializer: {
+					case KnownTypes.XamlVector3DCollectionSerializer:
+					{
 						var sb = new StringBuilder();
 						var count = reader.ReadUInt32();
-						for (uint i = 0; i < count; i++) {
+						for (uint i = 0; i < count; i++)
+						{
 							sb.AppendFormat(CultureInfo.InvariantCulture, "{0:R},{1:R},{2:R} ",
 								reader.ReadXamlDouble(),
 								reader.ReadXamlDouble(),
@@ -94,10 +110,12 @@ namespace ILSpy.BamlDecompiler.Handlers {
 						return sb.ToString().Trim();
 					}
 
-					case KnownTypes.XamlPointCollectionSerializer: {
+					case KnownTypes.XamlPointCollectionSerializer:
+					{
 						var sb = new StringBuilder();
 						var count = reader.ReadUInt32();
-						for (uint i = 0; i < count; i++) {
+						for (uint i = 0; i < count; i++)
+						{
 							sb.AppendFormat(CultureInfo.InvariantCulture, "{0:R},{1:R} ",
 								reader.ReadXamlDouble(),
 								reader.ReadXamlDouble());
@@ -105,33 +123,39 @@ namespace ILSpy.BamlDecompiler.Handlers {
 						return sb.ToString().Trim();
 					}
 
-					case KnownTypes.XamlInt32CollectionSerializer: {
+					case KnownTypes.XamlInt32CollectionSerializer:
+					{
 						var sb = new StringBuilder();
 						var type = (IntegerCollectionType)reader.ReadByte();
 						var count = reader.ReadInt32();
 
-						switch (type) {
-							case IntegerCollectionType.Consecutive: {
+						switch (type)
+						{
+							case IntegerCollectionType.Consecutive:
+							{
 								var start = reader.ReadInt32();
 								for (int i = 0; i < count; i++)
 									sb.AppendFormat(CultureInfo.InvariantCulture, "{0:D}", start + i);
 							}
-								break;
-							case IntegerCollectionType.U1: {
+							break;
+							case IntegerCollectionType.U1:
+							{
 								for (int i = 0; i < count; i++)
 									sb.AppendFormat(CultureInfo.InvariantCulture, "{0:D}", reader.ReadByte());
 							}
-								break;
-							case IntegerCollectionType.U2: {
+							break;
+							case IntegerCollectionType.U2:
+							{
 								for (int i = 0; i < count; i++)
 									sb.AppendFormat(CultureInfo.InvariantCulture, "{0:D}", reader.ReadUInt16());
 							}
-								break;
-							case IntegerCollectionType.I4: {
+							break;
+							case IntegerCollectionType.I4:
+							{
 								for (int i = 0; i < count; i++)
 									sb.AppendFormat(CultureInfo.InvariantCulture, "{0:D}", reader.ReadInt32());
 							}
-								break;
+							break;
 							default:
 								throw new NotSupportedException(type.ToString());
 						}
@@ -145,7 +169,8 @@ namespace ILSpy.BamlDecompiler.Handlers {
 		private bool NeedsFullName(XamlProperty property, XamlContext ctx, XElement elem)
 		{
 			XElement p = elem.Parent;
-			while (p != null && p.Annotation<XamlType>()?.ResolvedType.FullName != "System.Windows.Style") {
+			while (p != null && p.Annotation<XamlType>()?.ResolvedType.FullName != "System.Windows.Style")
+			{
 				p = p.Parent;
 			}
 			var type = p?.Annotation<TargetTypeAnnotation>()?.Type;
@@ -154,7 +179,8 @@ namespace ILSpy.BamlDecompiler.Handlers {
 			return property.IsAttachedTo(type);
 		}
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) {
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		{
 			var record = (PropertyCustomRecord)((BamlRecordNode)node).Record;
 			var serTypeId = ((short)record.SerializerTypeId & 0xfff);
 			bool valueType = ((short)record.SerializerTypeId & 0x4000) == 0x4000;

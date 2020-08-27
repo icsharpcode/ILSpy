@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -42,7 +43,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
-			foreach (var block in function.Descendants.OfType<Block>()) {
+			foreach (var block in function.Descendants.OfType<Block>())
+			{
 				context.CancellationToken.ThrowIfCancellationRequested();
 
 				RemoveNopInstructions(block);
@@ -60,8 +62,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private static void RemoveNopInstructions(Block block)
 		{
 			// Move ILRanges of special nop instructions to the previous non-nop instruction.
-			for (int i = block.Instructions.Count - 1; i > 0; i--) {
-				if (block.Instructions[i] is Nop nop && nop.Kind == NopKind.Pop) {
+			for (int i = block.Instructions.Count - 1; i > 0; i--)
+			{
+				if (block.Instructions[i] is Nop nop && nop.Kind == NopKind.Pop)
+				{
 					block.Instructions[i - 1].AddILRange(nop);
 				}
 			}
@@ -76,13 +80,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Previously copy propagation did this;
 			// ideally the ILReader would already do this,
 			// for now do this here (even though it's not control-flow related).
-			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-				if (block.Instructions[i] is StLoc stloc && stloc.Variable.IsSingleDefinition && stloc.Variable.LoadCount == 0 && stloc.Variable.Kind == VariableKind.StackSlot) {
+			for (int i = block.Instructions.Count - 1; i >= 0; i--)
+			{
+				if (block.Instructions[i] is StLoc stloc && stloc.Variable.IsSingleDefinition && stloc.Variable.LoadCount == 0 && stloc.Variable.Kind == VariableKind.StackSlot)
+				{
 					context.Step($"Remove dead stack store {stloc.Variable.Name}", stloc);
-					if (aggressive ? SemanticHelper.IsPure(stloc.Value.Flags) : IsSimple(stloc.Value)) {
+					if (aggressive ? SemanticHelper.IsPure(stloc.Value.Flags) : IsSimple(stloc.Value))
+					{
 						Debug.Assert(SemanticHelper.IsPure(stloc.Value.Flags));
 						block.Instructions.RemoveAt(i++);
-					} else {
+					}
+					else
+					{
 						stloc.Value.AddILRange(stloc);
 						stloc.ReplaceWith(stloc.Value);
 					}
@@ -91,7 +100,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			bool IsSimple(ILInstruction inst)
 			{
-				switch (inst.OpCode) {
+				switch (inst.OpCode)
+				{
 					case OpCode.LdLoc:
 					case OpCode.LdStr: // C# 1.0 compiler sometimes emits redundant ldstr in switch-on-string pattern
 						return true;
@@ -110,10 +120,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// (where 'v' has no other uses)
 			// Simplify these to a simple `ret(<inst>)` so that they match the release build version.
 			// 
-			if (block.Instructions.Count == 2 && block.Instructions[1].MatchReturn(out ILInstruction value)) {
+			if (block.Instructions.Count == 2 && block.Instructions[1].MatchReturn(out ILInstruction value))
+			{
 				var ret = (Leave)block.Instructions[1];
 				if (value.MatchLdLoc(out ILVariable v)
-					&& v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out ILInstruction inst)) {
+					&& v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out ILInstruction inst))
+				{
 					context.Step("Inline variable in return block", block);
 					inst.AddILRange(ret.Value);
 					inst.AddILRange(block.Instructions[0]);
@@ -122,17 +134,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 		}
-		
+
 		void SimplifyBranchChains(ILFunction function, ILTransformContext context)
 		{
 			List<(BlockContainer, Block)> blocksToAdd = new List<(BlockContainer, Block)>();
 			HashSet<Block> visitedBlocks = new HashSet<Block>();
-			foreach (var branch in function.Descendants.OfType<Branch>()) {
+			foreach (var branch in function.Descendants.OfType<Branch>())
+			{
 				// Resolve chained branches to the final target:
 				var targetBlock = branch.TargetBlock;
 				visitedBlocks.Clear();
-				while (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0].OpCode == OpCode.Branch) {
-					if (!visitedBlocks.Add(targetBlock)) {
+				while (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0].OpCode == OpCode.Branch)
+				{
+					if (!visitedBlocks.Add(targetBlock))
+					{
 						// prevent infinite loop when branch chain is cyclic
 						break;
 					}
@@ -144,12 +159,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						targetBlock.Instructions.Clear(); // mark the block for deletion
 					targetBlock = branch.TargetBlock;
 				}
-				if (IsBranchToReturnBlock(branch)) {
-					if (aggressivelyDuplicateReturnBlocks) {
+				if (IsBranchToReturnBlock(branch))
+				{
+					if (aggressivelyDuplicateReturnBlocks)
+					{
 						// Replace branches to 'return blocks' with the return instruction
 						context.Step("Replace branch to return with return", branch);
 						branch.ReplaceWith(targetBlock.Instructions[0].Clone());
-					} else if (branch.TargetContainer != branch.Ancestors.OfType<BlockContainer>().First()) {
+					}
+					else if (branch.TargetContainer != branch.Ancestors.OfType<BlockContainer>().First())
+					{
 						// We don't want to always inline the return directly, because this
 						// might force us to place the return within a loop, when it's better
 						// placed outside.
@@ -162,7 +181,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						blocksToAdd.Add((localContainer, blockCopy));
 						branch.TargetBlock = blockCopy;
 					}
-				} else if (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0] is Leave leave && leave.Value.MatchNop()) {
+				}
+				else if (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0] is Leave leave && leave.Value.MatchNop())
+				{
 					context.Step("Replace branch to leave with leave", branch);
 					// Replace branches to 'leave' instruction with the leave instruction
 					var leave2 = leave.Clone();
@@ -173,18 +194,22 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (targetBlock.IncomingEdgeCount == 0)
 					targetBlock.Instructions.Clear(); // mark the block for deletion
 			}
-			foreach (var (container, block) in blocksToAdd) {
+			foreach (var (container, block) in blocksToAdd)
+			{
 				container.Blocks.Add(block);
 			}
 		}
-		
+
 		void CleanUpEmptyBlocks(ILFunction function, ILTransformContext context)
 		{
-			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
-				foreach (var block in container.Blocks) {
+			foreach (var container in function.Descendants.OfType<BlockContainer>())
+			{
+				foreach (var block in container.Blocks)
+				{
 					if (block.Instructions.Count == 0)
 						continue; // block is already marked for deletion
-					while (CombineBlockWithNextBlock(container, block, context)) {
+					while (CombineBlockWithNextBlock(container, block, context))
+					{
 						// repeat combining blocks until it is no longer possible
 						// (this loop terminates because a block is deleted in every iteration)
 					}
@@ -204,8 +229,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!value.MatchLdLoc(out var returnVar))
 				return false;
 			var container = branch.TargetContainer;
-			for (ILInstruction inst = branch; inst != container; inst = inst.Parent) {
-				if (inst.Parent is TryFinally tryFinally && inst.SlotInfo == TryFinally.TryBlockSlot) {
+			for (ILInstruction inst = branch; inst != container; inst = inst.Parent)
+			{
+				if (inst.Parent is TryFinally tryFinally && inst.SlotInfo == TryFinally.TryBlockSlot)
+				{
 					// The branch will trigger the finally block.
 					// Moving the return block into the try is only possible if the finally block doesn't touch the return variable.
 					if (returnVar.IsUsedWithin(tryFinally.FinallyBlock))
@@ -214,7 +241,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			return true;
 		}
-		
+
 		static bool CombineBlockWithNextBlock(BlockContainer container, Block block, ILTransformContext context)
 		{
 			Debug.Assert(container == block.Parent);
@@ -229,7 +256,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false; // don't inline block into itself
 			context.Step("CombineBlockWithNextBlock", br);
 			var targetBlock = br.TargetBlock;
-			if (targetBlock.StartILOffset < block.StartILOffset && IsDeadTrueStore(block)) {
+			if (targetBlock.StartILOffset < block.StartILOffset && IsDeadTrueStore(block))
+			{
 				// The C# compiler generates a dead store for the condition of while (true) loops.
 				block.Instructions.RemoveRange(block.Instructions.Count - 3, 2);
 			}
@@ -248,7 +276,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		private static bool IsDeadTrueStore(Block block)
 		{
-			if (block.Instructions.Count < 3) return false;
+			if (block.Instructions.Count < 3)
+				return false;
 			if (!(block.Instructions.SecondToLastOrDefault() is StLoc deadStore && block.Instructions[block.Instructions.Count - 3] is StLoc tempStore))
 				return false;
 			if (!(deadStore.Variable.LoadCount == 0 && deadStore.Variable.AddressCount == 0))

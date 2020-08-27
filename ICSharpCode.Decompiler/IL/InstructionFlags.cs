@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// is not considered a side effect, and is modeled by separate flags.
 		/// </remarks>
 		SideEffect = 0x40,
-		
+
 		/// <summary>
 		/// The instruction may throw an exception.
 		/// </summary>

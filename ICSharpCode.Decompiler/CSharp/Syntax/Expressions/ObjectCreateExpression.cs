@@ -33,68 +33,70 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ObjectCreateExpression : Expression
 	{
-		public readonly static TokenRole NewKeywordRole = new TokenRole ("new");
+		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
-		
+
 		public CSharpTokenNode NewToken {
-			get { return GetChildByRole (NewKeywordRole); }
+			get { return GetChildByRole(NewKeywordRole); }
 		}
-		
+
 		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
-			set { SetChildByRole (Roles.Type, value); }
+			get { return GetChildByRole(Roles.Type); }
+			set { SetChildByRole(Roles.Type, value); }
 		}
-		
+
 		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
+			get { return GetChildByRole(Roles.LPar); }
 		}
-		
+
 		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole (Roles.Argument); }
+			get { return GetChildrenByRole(Roles.Argument); }
 		}
-		
+
 		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
+			get { return GetChildByRole(Roles.RPar); }
 		}
-		
+
 		public ArrayInitializerExpression Initializer {
-			get { return GetChildByRole (InitializerRole); }
-			set { SetChildByRole (InitializerRole, value); }
+			get { return GetChildByRole(InitializerRole); }
+			set { SetChildByRole(InitializerRole, value); }
 		}
-		
-		public ObjectCreateExpression ()
+
+		public ObjectCreateExpression()
 		{
 		}
-		
-		public ObjectCreateExpression (AstType type, IEnumerable<Expression> arguments = null)
+
+		public ObjectCreateExpression(AstType type, IEnumerable<Expression> arguments = null)
 		{
-			AddChild (type, Roles.Type);
-			if (arguments != null) {
-				foreach (var arg in arguments) {
-					AddChild (arg, Roles.Argument);
+			AddChild(type, Roles.Type);
+			if (arguments != null)
+			{
+				foreach (var arg in arguments)
+				{
+					AddChild(arg, Roles.Argument);
 				}
 			}
 		}
-		
-		public ObjectCreateExpression (AstType type, params Expression[] arguments) : this (type, (IEnumerable<Expression>)arguments)
+
+		public ObjectCreateExpression(AstType type, params Expression[] arguments) : this(type, (IEnumerable<Expression>)arguments)
 		{
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitObjectCreateExpression (this);
+			visitor.VisitObjectCreateExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitObjectCreateExpression (this);
+			return visitor.VisitObjectCreateExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitObjectCreateExpression (this, data);
+			return visitor.VisitObjectCreateExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ObjectCreateExpression o = other as ObjectCreateExpression;

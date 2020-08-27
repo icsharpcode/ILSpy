@@ -20,9 +20,9 @@ using System;
 using System.ComponentModel.Composition;
 using System.IO;
 
-using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ILSpy.BamlDecompiler
 {
@@ -33,7 +33,7 @@ namespace ILSpy.BamlDecompiler
 		{
 			return null;
 		}
-		
+
 		public ILSpyTreeNode CreateNode(string key, object data)
 		{
 			if (key.EndsWith(".baml", StringComparison.OrdinalIgnoreCase) && data is Stream stream)

@@ -26,13 +26,16 @@ using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Resources;
 using System.Runtime.CompilerServices;
+
 using Iced.Intel;
+
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
+
 using ILCompiler.Reflection.ReadyToRun;
 using ILCompiler.Reflection.ReadyToRun.Amd64;
 
@@ -52,9 +55,12 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		{
 			PEFile module = assembly.GetPEFileOrNull();
 			ReadyToRunReaderCacheEntry cacheEntry = GetReader(assembly, module);
-			if (cacheEntry.readyToRunReader == null) {
+			if (cacheEntry.readyToRunReader == null)
+			{
 				WriteCommentLine(output, cacheEntry.failureReason);
-			} else {
+			}
+			else
+			{
 				ReadyToRunReader reader = cacheEntry.readyToRunReader;
 				WriteCommentLine(output, reader.Machine.ToString());
 				WriteCommentLine(output, reader.OperatingSystem.ToString());
@@ -69,18 +75,25 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		{
 			PEFile module = method.ParentModule.PEFile;
 			ReadyToRunReaderCacheEntry cacheEntry = GetReader(module.GetLoadedAssembly(), module);
-			if (cacheEntry.readyToRunReader == null) {
+			if (cacheEntry.readyToRunReader == null)
+			{
 				WriteCommentLine(output, cacheEntry.failureReason);
-			} else {
+			}
+			else
+			{
 				ReadyToRunReader reader = cacheEntry.readyToRunReader;
 				int bitness = -1;
-				if (reader.Machine == Machine.Amd64) {
+				if (reader.Machine == Machine.Amd64)
+				{
 					bitness = 64;
-				} else {
+				}
+				else
+				{
 					Debug.Assert(reader.Machine == Machine.I386);
 					bitness = 32;
 				}
-				if (cacheEntry.methodMap == null) {
+				if (cacheEntry.methodMap == null)
+				{
 					cacheEntry.methodMap = reader.Methods.Values
 						.SelectMany(m => m)
 						.GroupBy(m => m.MethodHandle)
@@ -88,9 +101,12 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				}
 				bool showMetadataTokens = ILSpy.Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens;
 				bool showMetadataTokensInBase10 = ILSpy.Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10;
-				if (cacheEntry.methodMap.TryGetValue(method.MetadataToken, out var methods)) {
-					foreach (var readyToRunMethod in methods) {
-						foreach (RuntimeFunction runtimeFunction in readyToRunMethod.RuntimeFunctions) {
+				if (cacheEntry.methodMap.TryGetValue(method.MetadataToken, out var methods))
+				{
+					foreach (var readyToRunMethod in methods)
+					{
+						foreach (RuntimeFunction runtimeFunction in readyToRunMethod.RuntimeFunctions)
+						{
 							Disassemble(method.ParentModule.PEFile, output, reader, readyToRunMethod, runtimeFunction, bitness, (ulong)runtimeFunction.StartAddress, showMetadataTokens, showMetadataTokensInBase10);
 						}
 					}
@@ -107,34 +123,45 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		{
 			Dictionary<VarLocType, HashSet<(DebugInfo debugInfo, NativeVarInfo varLoc)>> debugInfoDict = new Dictionary<VarLocType, HashSet<(DebugInfo debugInfo, NativeVarInfo varLoc)>>();
 			IReadOnlyList<RuntimeFunction> runTimeList = readyToRunMethod.RuntimeFunctions;
-			foreach (RuntimeFunction runtimeFunction in runTimeList) {
+			foreach (RuntimeFunction runtimeFunction in runTimeList)
+			{
 				DebugInfo debugInfo = runtimeFunction.DebugInfo;
-				if (debugInfo != null && debugInfo.BoundsList.Count > 0) {
-					for (int i = 0; i < debugInfo.VariablesList.Count; ++i) {
+				if (debugInfo != null && debugInfo.BoundsList.Count > 0)
+				{
+					for (int i = 0; i < debugInfo.VariablesList.Count; ++i)
+					{
 						var varLoc = debugInfo.VariablesList[i];
-						try {
+						try
+						{
 							var typeSet = new HashSet<ValueTuple<DebugInfo, NativeVarInfo>>();
 							bool found = debugInfoDict.TryGetValue(varLoc.VariableLocation.VarLocType, out typeSet);
-							if (found) {
+							if (found)
+							{
 								(DebugInfo debugInfo, NativeVarInfo varLoc) newTuple = (debugInfo, varLoc);
 								typeSet.Add(newTuple);
-							} else {
+							}
+							else
+							{
 								typeSet = new HashSet<ValueTuple<DebugInfo, NativeVarInfo>>();
 								debugInfoDict.Add(varLoc.VariableLocation.VarLocType, typeSet);
 								(DebugInfo debugInfo, NativeVarInfo varLoc) newTuple = (debugInfo, varLoc);
 								typeSet.Add(newTuple);
 							}
-						} catch (ArgumentNullException) {
+						}
+						catch (ArgumentNullException)
+						{
 							output.WriteLine("Failed to find hash set of Debug info type");
 						}
 
 						if (varLoc.VariableLocation.VarLocType != VarLocType.VLT_REG && varLoc.VariableLocation.VarLocType != VarLocType.VLT_STK
-							&& varLoc.VariableLocation.VarLocType != VarLocType.VLT_STK_BYREF) {
+							&& varLoc.VariableLocation.VarLocType != VarLocType.VLT_STK_BYREF)
+						{
 							output.WriteLine($"    Variable Number: {varLoc.VariableNumber}");
 							output.WriteLine($"    Start Offset: 0x{varLoc.StartOffset:X}");
 							output.WriteLine($"    End Offset: 0x{varLoc.EndOffset:X}");
 							output.WriteLine($"    Loc Type: {varLoc.VariableLocation.VarLocType}");
-							switch (varLoc.VariableLocation.VarLocType) {
+							switch (varLoc.VariableLocation.VarLocType)
+							{
 								case VarLocType.VLT_REG:
 								case VarLocType.VLT_REG_FP:
 								case VarLocType.VLT_REG_BYREF:
@@ -184,25 +211,31 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		private Dictionary<ulong, UnwindCode> WriteUnwindInfo(RuntimeFunction runtimeFunction, ITextOutput output)
 		{
 			Dictionary<ulong, UnwindCode> unwindCodes = new Dictionary<ulong, UnwindCode>();
-			if (runtimeFunction.UnwindInfo is UnwindInfo amd64UnwindInfo) {
+			if (runtimeFunction.UnwindInfo is UnwindInfo amd64UnwindInfo)
+			{
 				string parsedFlags = "";
-				if ((amd64UnwindInfo.Flags & (int)UnwindFlags.UNW_FLAG_EHANDLER) != 0) {
+				if ((amd64UnwindInfo.Flags & (int)UnwindFlags.UNW_FLAG_EHANDLER) != 0)
+				{
 					parsedFlags += " EHANDLER";
 				}
-				if ((amd64UnwindInfo.Flags & (int)UnwindFlags.UNW_FLAG_UHANDLER) != 0) {
+				if ((amd64UnwindInfo.Flags & (int)UnwindFlags.UNW_FLAG_UHANDLER) != 0)
+				{
 					parsedFlags += " UHANDLER";
 				}
-				if ((amd64UnwindInfo.Flags & (int)UnwindFlags.UNW_FLAG_CHAININFO) != 0) {
+				if ((amd64UnwindInfo.Flags & (int)UnwindFlags.UNW_FLAG_CHAININFO) != 0)
+				{
 					parsedFlags += " CHAININFO";
 				}
-				if (parsedFlags.Length == 0) {
+				if (parsedFlags.Length == 0)
+				{
 					parsedFlags = " NHANDLER";
 				}
 				WriteCommentLine(output, $"UnwindInfo:");
 				WriteCommentLine(output, $"Version:            {amd64UnwindInfo.Version}");
 				WriteCommentLine(output, $"Flags:              0x{amd64UnwindInfo.Flags:X2}{parsedFlags}");
 				WriteCommentLine(output, $"FrameRegister:      {((amd64UnwindInfo.FrameRegister == 0) ? "none" : amd64UnwindInfo.FrameRegister.ToString().ToLower())}");
-				for (int unwindCodeIndex = 0; unwindCodeIndex < amd64UnwindInfo.CountOfUnwindCodes; unwindCodeIndex++) {
+				for (int unwindCodeIndex = 0; unwindCodeIndex < amd64UnwindInfo.CountOfUnwindCodes; unwindCodeIndex++)
+				{
 					unwindCodes.Add((ulong)(amd64UnwindInfo.UnwindCodes[unwindCodeIndex].CodeOffset), amd64UnwindInfo.UnwindCodes[unwindCodeIndex]);
 				}
 			}
@@ -215,18 +248,21 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			WriteCommentLine(output, readyToRunMethod.SignatureString);
 
 			Dictionary<ulong, UnwindCode> unwindInfo = null;
-			if (ReadyToRunOptions.GetIsShowUnwindInfo(null) && bitness == 64) {
+			if (ReadyToRunOptions.GetIsShowUnwindInfo(null) && bitness == 64)
+			{
 				unwindInfo = WriteUnwindInfo(runtimeFunction, output);
 			}
 
 			bool isShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(null);
 			Dictionary<VarLocType, HashSet<ValueTuple<DebugInfo, NativeVarInfo>>> debugInfo = null;
-			if (isShowDebugInfo) {
+			if (isShowDebugInfo)
+			{
 				debugInfo = WriteDebugInfo(readyToRunMethod, output);
 			}
 
 			byte[] codeBytes = new byte[runtimeFunction.Size];
-			for (int i = 0; i < runtimeFunction.Size; i++) {
+			for (int i = 0; i < runtimeFunction.Size; i++)
+			{
 				codeBytes[i] = reader.Image[reader.GetOffset(runtimeFunction.StartAddress) + i];
 			}
 
@@ -236,15 +272,19 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			ulong endRip = decoder.IP + (uint)codeBytes.Length;
 
 			var instructions = new InstructionList();
-			while (decoder.IP < endRip) {
+			while (decoder.IP < endRip)
+			{
 				decoder.Decode(out instructions.AllocUninitializedElement());
 			}
 
 			string disassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(null);
 			Formatter formatter = null;
-			if (disassemblyFormat.Equals(ReadyToRunOptions.intel)) {
+			if (disassemblyFormat.Equals(ReadyToRunOptions.intel))
+			{
 				formatter = new NasmFormatter();
-			} else {
+			}
+			else
+			{
 				Debug.Assert(disassemblyFormat.Equals(ReadyToRunOptions.gas));
 				formatter = new GasFormatter();
 			}
@@ -252,16 +292,25 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			formatter.Options.FirstOperandCharIndex = 10;
 			var tempOutput = new StringOutput();
 			ulong baseInstrIP = instructions[0].IP;
-			foreach (var instr in instructions) {
+			foreach (var instr in instructions)
+			{
 				int byteBaseIndex = (int)(instr.IP - address);
-				if (isShowDebugInfo && runtimeFunction.DebugInfo != null) {
-					foreach (var bound in runtimeFunction.DebugInfo.BoundsList) {
-						if (bound.NativeOffset == byteBaseIndex) {
-							if (bound.ILOffset == (uint)DebugInfoBoundsType.Prolog) {
+				if (isShowDebugInfo && runtimeFunction.DebugInfo != null)
+				{
+					foreach (var bound in runtimeFunction.DebugInfo.BoundsList)
+					{
+						if (bound.NativeOffset == byteBaseIndex)
+						{
+							if (bound.ILOffset == (uint)DebugInfoBoundsType.Prolog)
+							{
 								WriteCommentLine(output, "Prolog");
-							} else if (bound.ILOffset == (uint)DebugInfoBoundsType.Epilog) {
+							}
+							else if (bound.ILOffset == (uint)DebugInfoBoundsType.Epilog)
+							{
 								WriteCommentLine(output, "Epilog");
-							} else {
+							}
+							else
+							{
 								WriteCommentLine(output, $"IL_{bound.ILOffset:x4}");
 							}
 						}
@@ -271,11 +320,13 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				output.Write(instr.IP.ToString("X16"));
 				output.Write(" ");
 				int instrLen = instr.Length;
-				for (int i = 0; i < instrLen; i++) {
+				for (int i = 0; i < instrLen; i++)
+				{
 					output.Write(codeBytes[byteBaseIndex + i].ToString("X2"));
 				}
 				int missingBytes = 10 - instrLen;
-				for (int i = 0; i < missingBytes; i++) {
+				for (int i = 0; i < missingBytes; i++)
+				{
 					output.Write("  ");
 				}
 				output.Write(" ");
@@ -290,7 +341,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		private static void DecorateUnwindInfo(ITextOutput output, Dictionary<ulong, UnwindCode> unwindInfo, ulong baseInstrIP, Instruction instr)
 		{
 			ulong nextInstructionOffset = instr.NextIP - baseInstrIP;
-			if (unwindInfo != null && unwindInfo.ContainsKey(nextInstructionOffset)) {
+			if (unwindInfo != null && unwindInfo.ContainsKey(nextInstructionOffset))
+			{
 				UnwindCode unwindCode = unwindInfo[nextInstructionOffset];
 				output.Write($" ; {unwindCode.UnwindOp}({unwindCode.OpInfoStr})");
 			}
@@ -298,57 +350,74 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		private static void DecorateDebugInfo(ITextOutput output, Instruction instr, Dictionary<VarLocType, HashSet<(DebugInfo debugInfo, NativeVarInfo varLoc)>> debugInfoDict, ulong baseInstrIP)
 		{
-			if (debugInfoDict != null) {
+			if (debugInfoDict != null)
+			{
 				InstructionInfoFactory factory = new InstructionInfoFactory();
 				InstructionInfo info = factory.GetInfo(instr);
 				HashSet<ValueTuple<DebugInfo, NativeVarInfo>> stkSet = new HashSet<ValueTuple<DebugInfo, NativeVarInfo>>();
-				if (debugInfoDict.ContainsKey(VarLocType.VLT_STK)) {
+				if (debugInfoDict.ContainsKey(VarLocType.VLT_STK))
+				{
 					stkSet.UnionWith(debugInfoDict[VarLocType.VLT_STK]);
 				}
-				if (debugInfoDict.ContainsKey(VarLocType.VLT_STK_BYREF)) {
+				if (debugInfoDict.ContainsKey(VarLocType.VLT_STK_BYREF))
+				{
 					stkSet.UnionWith(debugInfoDict[VarLocType.VLT_STK_BYREF]);
 				}
-				if (stkSet != null) {
-					foreach (UsedMemory usedMemInfo in info.GetUsedMemory()) { //for each time a [register +- value] is used
-						foreach ((DebugInfo debugInfo, NativeVarInfo varLoc) tuple in stkSet) { //for each VLT_STK variable
+				if (stkSet != null)
+				{
+					foreach (UsedMemory usedMemInfo in info.GetUsedMemory())
+					{ //for each time a [register +- value] is used
+						foreach ((DebugInfo debugInfo, NativeVarInfo varLoc) tuple in stkSet)
+						{ //for each VLT_STK variable
 							var debugInfo = tuple.debugInfo;
 							var varInfo = tuple.varLoc;
 							int stackOffset = varInfo.VariableLocation.Data2;
 							ulong adjOffset;
 							bool negativeOffset;
-							if (stackOffset < 0) {
+							if (stackOffset < 0)
+							{
 								int absValue = -1 * stackOffset;
 								adjOffset = ulong.MaxValue - (ulong)absValue + 1;
 								negativeOffset = true;
-							} else {
+							}
+							else
+							{
 								adjOffset = (ulong)stackOffset;
 								negativeOffset = false;
 							}
 							if (varInfo.StartOffset < instr.IP - baseInstrIP && varInfo.EndOffset > instr.IP - baseInstrIP &&
 								DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varInfo.VariableLocation.Data1) == usedMemInfo.Base.ToString() &&
-								adjOffset == usedMemInfo.Displacement) {
+								adjOffset == usedMemInfo.Displacement)
+							{
 								output.Write($"; [{usedMemInfo.Base.ToString().ToLower()}{(negativeOffset ? '-' : '+')}{Math.Abs(stackOffset):X}h] = {varInfo.Variable.Type} {varInfo.Variable.Index}");
 							}
 						}
 					}
 				}
 				HashSet<ValueTuple<DebugInfo, NativeVarInfo>> regSet = new HashSet<ValueTuple<DebugInfo, NativeVarInfo>>();
-				if (debugInfoDict.ContainsKey(VarLocType.VLT_REG)) {
+				if (debugInfoDict.ContainsKey(VarLocType.VLT_REG))
+				{
 					regSet.UnionWith(debugInfoDict[VarLocType.VLT_REG]);
 				}
-				if (debugInfoDict.ContainsKey(VarLocType.VLT_REG_BYREF)) {
+				if (debugInfoDict.ContainsKey(VarLocType.VLT_REG_BYREF))
+				{
 					regSet.UnionWith(debugInfoDict[VarLocType.VLT_REG_BYREF]);
 				}
-				if (debugInfoDict.ContainsKey(VarLocType.VLT_REG_FP)) {
+				if (debugInfoDict.ContainsKey(VarLocType.VLT_REG_FP))
+				{
 					regSet.UnionWith(debugInfoDict[VarLocType.VLT_REG_FP]);
 				}
-				if (regSet != null) {
-					foreach (UsedRegister usedMemInfo in info.GetUsedRegisters()) {
-						foreach ((DebugInfo debugInfo, NativeVarInfo varLoc) tuple in regSet) {
+				if (regSet != null)
+				{
+					foreach (UsedRegister usedMemInfo in info.GetUsedRegisters())
+					{
+						foreach ((DebugInfo debugInfo, NativeVarInfo varLoc) tuple in regSet)
+						{
 							var debugInfo = tuple.debugInfo;
 							var varInfo = tuple.varLoc;
 							if (varInfo.StartOffset <= (instr.IP - baseInstrIP) && (instr.IP - baseInstrIP) < varInfo.EndOffset &&
-								DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varInfo.VariableLocation.Data1) == usedMemInfo.Register.ToString()) {
+								DebugInfo.GetPlatformSpecificRegister(debugInfo.Machine, varInfo.VariableLocation.Data1) == usedMemInfo.Register.ToString())
+							{
 								output.Write($"; {usedMemInfo.Register.ToString().ToLower()} = {varInfo.Variable.Type} {varInfo.Variable.Index}");
 							}
 						}
@@ -360,16 +429,22 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		private static void DecorateCallSite(PEFile currentFile, ITextOutput output, ReadyToRunReader reader, bool showMetadataTokens, bool showMetadataTokensInBase10, Instruction instr)
 		{
 			int importCellAddress = (int)instr.IPRelativeMemoryAddress;
-			if (instr.IsCallNearIndirect && reader.ImportCellNames.ContainsKey(importCellAddress)) {
+			if (instr.IsCallNearIndirect && reader.ImportCellNames.ContainsKey(importCellAddress))
+			{
 				output.Write(" ; ");
 				ReadyToRunSignature signature = reader.ImportSignatures[(int)instr.IPRelativeMemoryAddress];
-				switch (signature) {
+				switch (signature)
+				{
 					case MethodDefEntrySignature methodDefSignature:
 						var methodDefToken = MetadataTokens.EntityHandle(unchecked((int)methodDefSignature.MethodDefToken));
-						if (showMetadataTokens) {
-							if (showMetadataTokensInBase10) {
+						if (showMetadataTokens)
+						{
+							if (showMetadataTokensInBase10)
+							{
 								output.WriteReference(currentFile, methodDefToken, $"({MetadataTokens.GetToken(methodDefToken)}) ", "metadata");
-							} else {
+							}
+							else
+							{
 								output.WriteReference(currentFile, methodDefToken, $"({MetadataTokens.GetToken(methodDefToken):X8}) ", "metadata");
 							}
 						}
@@ -377,10 +452,14 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						break;
 					case MethodRefEntrySignature methodRefSignature:
 						var methodRefToken = MetadataTokens.EntityHandle(unchecked((int)methodRefSignature.MethodRefToken));
-						if (showMetadataTokens) {
-							if (showMetadataTokensInBase10) {
+						if (showMetadataTokens)
+						{
+							if (showMetadataTokensInBase10)
+							{
 								output.WriteReference(currentFile, methodRefToken, $"({MetadataTokens.GetToken(methodRefToken)}) ", "metadata");
-							} else {
+							}
+							else
+							{
 								output.WriteReference(currentFile, methodRefToken, $"({MetadataTokens.GetToken(methodRefToken):X8}) ", "metadata");
 							}
 						}
@@ -391,7 +470,9 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						break;
 				}
 				output.WriteLine();
-			} else {
+			}
+			else
+			{
 				output.WriteLine();
 			}
 		}
@@ -404,16 +485,22 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		private ReadyToRunReaderCacheEntry GetReader(LoadedAssembly assembly, PEFile module)
 		{
 			ReadyToRunReaderCacheEntry result;
-			lock (readyToRunReaders) {
-				if (!readyToRunReaders.TryGetValue(module, out result)) {
+			lock (readyToRunReaders)
+			{
+				if (!readyToRunReaders.TryGetValue(module, out result))
+				{
 					result = new ReadyToRunReaderCacheEntry();
-					try {
+					try
+					{
 						result.readyToRunReader = new ReadyToRunReader(new ReadyToRunAssemblyResolver(assembly), new StandaloneAssemblyMetadata(module.Reader), module.Reader, module.FileName);
-						if (result.readyToRunReader.Machine != Machine.Amd64 && result.readyToRunReader.Machine != Machine.I386) {
+						if (result.readyToRunReader.Machine != Machine.Amd64 && result.readyToRunReader.Machine != Machine.I386)
+						{
 							result.failureReason = $"Architecture {result.readyToRunReader.Machine} is not currently supported.";
 							result.readyToRunReader = null;
 						}
-					} catch (BadImageFormatException e) {
+					}
+					catch (BadImageFormatException e)
+					{
 						result.failureReason = e.Message;
 					}
 					readyToRunReaders.Add(module, result);

@@ -31,35 +31,35 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class EnumMemberDeclaration : EntityDeclaration
 	{
 		public static readonly Role<Expression> InitializerRole = new Role<Expression>("Initializer", Expression.Null);
-		
+
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Field; }
 		}
 
 		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole (Roles.Assign); }
+			get { return GetChildByRole(Roles.Assign); }
 		}
 
 		public Expression Initializer {
-			get { return GetChildByRole (InitializerRole); }
-			set { SetChildByRole (InitializerRole, value); }
-		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
-		{
-			visitor.VisitEnumMemberDeclaration (this);
-		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
-		{
-			return visitor.VisitEnumMemberDeclaration (this);
+			get { return GetChildByRole(InitializerRole); }
+			set { SetChildByRole(InitializerRole, value); }
 		}
 
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			return visitor.VisitEnumMemberDeclaration (this, data);
+			visitor.VisitEnumMemberDeclaration(this);
 		}
-		
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+		{
+			return visitor.VisitEnumMemberDeclaration(this);
+		}
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+		{
+			return visitor.VisitEnumMemberDeclaration(this, data);
+		}
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			EnumMemberDeclaration o = other as EnumMemberDeclaration;

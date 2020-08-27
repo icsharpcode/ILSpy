@@ -126,9 +126,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void DynamicThrow()
 		{
-			try {
+			try
+			{
 				throw (Exception)field;
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				Console.WriteLine(ex.ToString());
 				throw;
 			}
@@ -247,7 +250,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void CheckedArithmeticBinaryOperators(dynamic a, dynamic b)
 		{
-			checked {
+			checked
+			{
 				DynamicTests.MemberAccess(a + b);
 				DynamicTests.MemberAccess(a + 1);
 				DynamicTests.MemberAccess(a + null);
@@ -268,7 +272,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void UncheckedArithmeticBinaryOperators(dynamic a, dynamic b)
 		{
-			checked {
+			checked
+			{
 				DynamicTests.MemberAccess(a + b);
 				DynamicTests.MemberAccess(a + 1);
 				DynamicTests.MemberAccess(a + null);
@@ -375,37 +380,44 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void Loops(dynamic list)
 		{
-			foreach (dynamic item in list) {
+			foreach (dynamic item in list)
+			{
 				DynamicTests.UnaryOperators(item);
 			}
 		}
 
 		private static void If(dynamic a, dynamic b)
 		{
-			if (a == b) {
+			if (a == b)
+			{
 				Console.WriteLine("Equal");
 			}
 		}
 
 		private static void If2(dynamic a, dynamic b)
 		{
-			if (a == null || b == null) {
+			if (a == null || b == null)
+			{
 				Console.WriteLine("One is null");
 			}
 		}
 
 		private static void If3(dynamic a, dynamic b)
 		{
-			if (a == null && b == null) {
+			if (a == null && b == null)
+			{
 				Console.WriteLine("Both are null");
 			}
 		}
 
 		private static void If4(dynamic a, dynamic b)
 		{
-			if ((a == null || b == null) && GetDynamic(1) && !(GetDynamic(2) && GetDynamic(3))) {
+			if ((a == null || b == null) && GetDynamic(1) && !(GetDynamic(2) && GetDynamic(3)))
+			{
 				Console.WriteLine("then");
-			} else {
+			}
+			else
+			{
 				Console.WriteLine("else");
 			}
 		}
