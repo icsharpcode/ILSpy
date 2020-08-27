@@ -566,7 +566,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile(sortTypes: true);
 
 				StringWriter output = new StringWriter();
-				var visitor = new CSharpOutputVisitor(output, FormattingOptionsFactory.CreateSharpDevelop());
+				CSharpFormattingOptions formattingPolicy = CreateFormattingPolicyForTests();
+				var visitor = new CSharpOutputVisitor(output, formattingPolicy);
 				syntaxTree.AcceptVisitor(visitor);
 
 				string fileName = Path.GetTempFileName();
@@ -574,6 +575,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 				return fileName;
 			}
+		}
+
+		private static CSharpFormattingOptions CreateFormattingPolicyForTests()
+		{
+			var formattingPolicy = FormattingOptionsFactory.CreateSharpDevelop();
+			formattingPolicy.StatementBraceStyle = BraceStyle.NextLine;
+			formattingPolicy.CatchNewLinePlacement = NewLinePlacement.NewLine;
+			formattingPolicy.ElseNewLinePlacement = NewLinePlacement.NewLine;
+			formattingPolicy.FinallyNewLinePlacement = NewLinePlacement.NewLine;
+			formattingPolicy.SpaceBeforeAnonymousMethodParentheses = true;
+			return formattingPolicy;
 		}
 
 		public static void RunAndCompareOutput(string testFileName, string outputFile, string decompiledOutputFile, string decompiledCodeFile = null)

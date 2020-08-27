@@ -563,8 +563,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteKeyword(AnonymousMethodExpression.DelegateKeywordRole);
 			if (anonymousMethodExpression.HasParameterList)
 			{
-				Space(policy.SpaceBeforeMethodDeclarationParentheses);
-				WriteCommaSeparatedListInParenthesis(anonymousMethodExpression.Parameters, policy.SpaceWithinMethodDeclarationParentheses);
+				Space(policy.SpaceBeforeAnonymousMethodParentheses);
+				WriteCommaSeparatedListInParenthesis(anonymousMethodExpression.Parameters, policy.SpaceWithinAnonymousMethodParentheses);
 			}
 			WriteBlock(anonymousMethodExpression.Body, policy.AnonymousMethodBraceStyle);
 			EndNode(anonymousMethodExpression);
@@ -1407,6 +1407,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			switch (attributeSection.Parent)
 			{
 				case ParameterDeclaration _:
+					if (attributeSection.NextSibling is AttributeSection)
+						Space(policy.SpaceBetweenParameterAttributeSections);
+					else
+						Space();
+					break;
 				case TypeParameterDeclaration _:
 				case ComposedType _:
 					Space();
@@ -1916,14 +1921,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			switchExpression.Expression.AcceptVisitor(this);
 			Space();
 			WriteKeyword(SwitchExpression.SwitchKeywordRole);
-			OpenBrace(BraceStyle.EndOfLine);
+			OpenBrace(policy.StatementBraceStyle);
 			foreach (AstNode node in switchExpression.SwitchSections)
 			{
 				node.AcceptVisitor(this);
 				Comma(node);
 				NewLine();
 			}
-			CloseBrace(BraceStyle.EndOfLine);
+			CloseBrace(policy.StatementBraceStyle);
 			EndNode(switchExpression);
 		}
 

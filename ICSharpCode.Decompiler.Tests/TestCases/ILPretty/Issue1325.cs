@@ -1,11 +1,13 @@
-﻿using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+
+using Microsoft.VisualBasic;
+using Microsoft.VisualBasic.CompilerServices;
+
 [assembly: Embedded]
 [assembly: AssemblyInformationalVersion("1.0.0")]
 [assembly: AssemblyConfiguration("Debug")]

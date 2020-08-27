@@ -353,6 +353,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		#endregion
 
 		#region Spaces
+		public bool SpaceBetweenParameterAttributeSections {
+			get;
+			set;
+		}
+
 		// Methods
 		public bool SpaceBeforeMethodDeclarationParentheses { // tested
 			get;
@@ -730,6 +735,16 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 
 		public bool SpaceAfterConditionalOperatorSeparator { // tested
+			get;
+			set;
+		}
+
+		public bool SpaceBeforeAnonymousMethodParentheses {
+			get;
+			set;
+		}
+
+		public bool SpaceWithinAnonymousMethodParentheses {
 			get;
 			set;
 		}

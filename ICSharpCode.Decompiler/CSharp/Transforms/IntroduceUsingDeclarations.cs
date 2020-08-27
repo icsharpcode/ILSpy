@@ -49,7 +49,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var insertionPoint = rootNode.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
 
 				// Now add using declarations for those namespaces:
-				foreach (string ns in requiredImports.ImportedNamespaces.OrderByDescending(n => n))
+				IOrderedEnumerable<string> sortedImports = requiredImports.ImportedNamespaces
+					.OrderBy(n => n.StartsWith("System", StringComparison.Ordinal))
+					.ThenByDescending(n => n);
+				foreach (string ns in sortedImports)
 				{
 					Debug.Assert(context.RequiredNamespacesSuperset.Contains(ns), $"Should not insert using declaration for namespace that is missing from the superset: {ns}");
 					// we go backwards (OrderByDescending) through the list of namespaces because we insert them backwards

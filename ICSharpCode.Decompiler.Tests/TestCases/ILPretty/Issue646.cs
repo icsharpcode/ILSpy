@@ -1,7 +1,8 @@
-﻿using Microsoft.VisualBasic.CompilerServices;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+
+using Microsoft.VisualBasic.CompilerServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 {

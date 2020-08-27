@@ -5,15 +5,16 @@
 // Architecture: AnyCPU (32-bit preferred)
 // Runtime: .NET 4.0
 
-using Microsoft.FSharp.Collections;
-using Microsoft.FSharp.Core;
-using Microsoft.FSharp.Core.CompilerServices;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+
+using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Core;
+using Microsoft.FSharp.Core.CompilerServices;
 
 [assembly: FSharpInterfaceDataVersion(2, 0, 0)]
 [assembly: AssemblyTitle("ConsoleApplication1")]
