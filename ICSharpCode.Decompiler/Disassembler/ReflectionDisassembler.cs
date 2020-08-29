@@ -303,8 +303,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Unindent();
 		}
 
-		internal static void WriteMetadataToken(ITextOutput output, PEFile module, Handle? handle, int metadataToken, bool spaceAfter, bool spaceBefore, bool showMetadataTokens, bool base10)
+		internal static void WriteMetadataToken(ITextOutput output, PEFile module, Handle? handle,
+			int metadataToken, bool spaceAfter, bool spaceBefore, bool showMetadataTokens, bool base10)
 		{
+			// handle can be null in case of errors, if that's the case, we always want to print a comment,
+			// with the metadataToken.
 			if (showMetadataTokens || handle == null)
 			{
 				if (spaceBefore)
@@ -312,13 +315,15 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write(' ');
 				}
 				output.Write("/* ");
-				if (base10)
+				string format = base10 ? null : "X8";
+				if (handle == null || !handle.Value.IsEntityHandle())
 				{
-					output.WriteReference(module, handle.GetValueOrDefault(), metadataToken.ToString(), "metadata");
+					output.Write(metadataToken.ToString(format));
 				}
 				else
 				{
-					output.WriteReference(module, handle.GetValueOrDefault(), metadataToken.ToString("X8"), "metadata");
+					output.WriteReference(module, handle.GetValueOrDefault(),
+						metadataToken.ToString(format), "metadata");
 				}
 				output.Write(" */");
 				if (spaceAfter)
@@ -332,7 +337,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		void DisassembleMethodBlock(PEFile module, MethodDefinitionHandle handle, GenericContext genericContext)
+		void DisassembleMethodBlock(PEFile module, MethodDefinitionHandle handle,
+			GenericContext genericContext)
 		{
 			var metadata = module.Metadata;
 			var methodDefinition = metadata.GetMethodDefinition(handle);
@@ -362,7 +368,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 				methodBodyDisassembler.Disassemble(module, handle);
 			}
 			var declaringType = metadata.GetTypeDefinition(methodDefinition.GetDeclaringType());
-			CloseBlock("end of method " + DisassemblerHelpers.Escape(metadata.GetString(declaringType.Name)) + "::" + DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name)));
+			CloseBlock("end of method " + DisassemblerHelpers.Escape(metadata.GetString(declaringType.Name))
+				+ "::" + DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name)));
 		}
 
 		#region Write Security Declarations

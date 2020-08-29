@@ -32,6 +32,8 @@ namespace ICSharpCode.Decompiler
 			kind == HandleKind.MethodDefinition || kind == HandleKind.PropertyDefinition
 			|| kind == HandleKind.FieldDefinition || kind == HandleKind.EventDefinition
 			|| kind == HandleKind.MemberReference || kind == HandleKind.MethodSpecification;
+		public static bool IsEntityHandle(this Handle handle) =>
+			handle.IsNil || (byte)handle.Kind < 112;
 
 		public static bool IsValueType(this TypeDefinitionHandle handle, MetadataReader reader)
 		{

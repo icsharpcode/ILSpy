@@ -403,10 +403,15 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			else if (segment.Reference is EntityReference unresolvedEntity)
 			{
-				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Module, unresolvedEntity.Module.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
+				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Module,
+					unresolvedEntity.Module.GetAssemblyResolver(),
+					TypeSystemOptions.Default | TypeSystemOptions.Uncached);
 				try
 				{
-					IEntity resolved = typeSystem.MainModule.ResolveEntity((EntityHandle)unresolvedEntity.Handle);
+					Handle handle = unresolvedEntity.Handle;
+					if (!handle.IsEntityHandle())
+						return null;
+					IEntity resolved = typeSystem.MainModule.ResolveEntity((EntityHandle)handle);
 					if (resolved == null)
 						return null;
 					var document = CreateTooltipForEntity(resolved);
