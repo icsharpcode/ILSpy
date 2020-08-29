@@ -92,10 +92,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public (int, int) AccessRest => (1, 2, 3, 4, 5, 6, 7, 8, 9).Rest;
 
 		public (string, object, Action) TargetTyping => (null, 1, delegate {
+#pragma warning disable format
 		});
+#pragma warning restore format
 
 		public object NotTargetTyping => ((string)null, (object)1, (Action)delegate {
+#pragma warning disable format
 		});
+#pragma warning restore format
 
 		public void UnnamedTupleOut(out (int, string, Action, dynamic) tuple)
 		{
