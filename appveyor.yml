@@ -9,6 +9,7 @@ image: Visual Studio 2019
 install:
 - git submodule update --init --recursive
 - pwsh .\BuildTools\appveyor-install.ps1
+- dotnet tool install dotnet-format --tool-path tools
 
 nuget:
   account_feed: false
@@ -29,6 +30,7 @@ test_script:
 
 after_test:
 - python BuildTools\tidy.py
+- dotnet-format --check --verbosity diagnostic ILSpy.sln
 
 for:
 - branches:
