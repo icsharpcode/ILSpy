@@ -34,9 +34,11 @@ jobs:
         Solution: ILSpy.WithPackage.sln
 
   steps:
+  # force git to use crlf: otherwise dotnet-format --check fails
+  - powershell: git config --global core.autocrlf true
+
   - checkout: self
     submodules: recursive
-
 
   - task: UseDotNet@2
     displayName: 'Install .NET Core 3.1'
