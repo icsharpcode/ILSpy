@@ -50,7 +50,7 @@ jobs:
     inputs:
       command: 'custom'
       custom: 'tool'
-      arguments: 'install dotnet-format --tool-path tools'
+      arguments: 'install dotnet-format --tool-path BuildTools'
 
   - script: pwsh .\BuildTools\pipelines-install.ps1
     displayName: Install
@@ -92,12 +92,8 @@ jobs:
   - script: python BuildTools\tidy.py
     displayName: Tab check
 
-  - task: DotNetCoreCLI@2
+  - script: .\BuildTools\dotnet-format --check --verbosity diagnostic ILSpy.sln
     displayName: dotnet-format check
-    inputs:
-      command: 'custom'
-      custom: 'format'
-      arguments: '--check --verbosity diagnostic ILSpy.sln'
 
   - task: CopyFiles@2
     displayName: Move VSIX to publish directory
