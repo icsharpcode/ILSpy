@@ -6,6 +6,10 @@ configuration:
 
 image: Visual Studio 2019
 
+init:
+# force git to use crlf: otherwise dotnet-format --check fails
+- git config --global core.autocrlf true
+
 install:
 - git submodule update --init --recursive
 - pwsh .\BuildTools\appveyor-install.ps1
