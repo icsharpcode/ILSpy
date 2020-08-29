@@ -22,6 +22,7 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
@@ -53,14 +54,14 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				&& analyzedEntity.MetadataToken == type.MetadataToken)
 				yield break;
 
-			var visitor = new TypeDefinitionUsedVisitor(analyzedEntity, false);
+			var visitor = new TypeDefinitionUsedVisitor(analyzedEntity, topLevelOnly: false);
 
 			foreach (var bt in type.DirectBaseTypes)
 			{
 				bt.AcceptVisitor(visitor);
 			}
 
-			if (visitor.Found)
+			if (visitor.Found || ScanAttributes(visitor, type.GetAttributes()))
 				yield return type;
 
 			foreach (var member in type.Members)
@@ -72,6 +73,31 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
+		bool ScanAttributes(TypeDefinitionUsedVisitor visitor, IEnumerable<IAttribute> attributes)
+		{
+			foreach (var attribute in attributes)
+			{
+				foreach (var fa in attribute.FixedArguments)
+				{
+					if (!fa.Type.IsKnownType(KnownTypeCode.Type))
+						continue;
+					((IType)fa.Value).AcceptVisitor(visitor);
+					if (visitor.Found)
+						return true;
+				}
+
+				foreach (var na in attribute.NamedArguments)
+				{
+					if (!na.Type.IsKnownType(KnownTypeCode.Type))
+						continue;
+					((IType)na.Value).AcceptVisitor(visitor);
+					if (visitor.Found)
+						return true;
+				}
+			}
+			return false;
+		}
+
 		void VisitMember(TypeDefinitionUsedVisitor visitor, IMember member, AnalyzerContext context, bool scanBodies = false)
 		{
 			member.DeclaringType.AcceptVisitor(visitor);
@@ -79,18 +105,37 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			{
 				case IField field:
 					field.ReturnType.AcceptVisitor(visitor);
+
+					if (!visitor.Found)
+						ScanAttributes(visitor, field.GetAttributes());
 					break;
 				case IMethod method:
 					foreach (var p in method.Parameters)
 					{
 						p.Type.AcceptVisitor(visitor);
+						if (!visitor.Found)
+							ScanAttributes(visitor, p.GetAttributes());
 					}
 
+					if (!visitor.Found)
+						ScanAttributes(visitor, method.GetAttributes());
+
 					method.ReturnType.AcceptVisitor(visitor);
+
+					if (!visitor.Found)
+						ScanAttributes(visitor, method.GetReturnTypeAttributes());
 
 					foreach (var t in method.TypeArguments)
 					{
 						t.AcceptVisitor(visitor);
+					}
+
+					foreach (var t in method.TypeParameters)
+					{
+						t.AcceptVisitor(visitor);
+
+						if (!visitor.Found)
+							ScanAttributes(visitor, t.GetAttributes());
 					}
 
 					if (scanBodies && !visitor.Found)
@@ -103,26 +148,65 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 						p.Type.AcceptVisitor(visitor);
 					}
 
+					if (!visitor.Found)
+						ScanAttributes(visitor, property.GetAttributes());
+
 					property.ReturnType.AcceptVisitor(visitor);
 
 					if (scanBodies && !visitor.Found && property.CanGet)
+					{
+						if (!visitor.Found)
+							ScanAttributes(visitor, property.Getter.GetAttributes());
+						if (!visitor.Found)
+							ScanAttributes(visitor, property.Getter.GetReturnTypeAttributes());
+
 						ScanMethodBody(visitor, property.Getter, context.GetMethodBody(property.Getter), context);
+					}
 
 					if (scanBodies && !visitor.Found && property.CanSet)
+					{
+						if (!visitor.Found)
+							ScanAttributes(visitor, property.Setter.GetAttributes());
+						if (!visitor.Found)
+							ScanAttributes(visitor, property.Setter.GetReturnTypeAttributes());
+
 						ScanMethodBody(visitor, property.Setter, context.GetMethodBody(property.Setter), context);
+					}
 
 					break;
 				case IEvent @event:
 					@event.ReturnType.AcceptVisitor(visitor);
 
 					if (scanBodies && !visitor.Found && @event.CanAdd)
+					{
+						if (!visitor.Found)
+							ScanAttributes(visitor, @event.AddAccessor.GetAttributes());
+						if (!visitor.Found)
+							ScanAttributes(visitor, @event.AddAccessor.GetReturnTypeAttributes());
+
 						ScanMethodBody(visitor, @event.AddAccessor, context.GetMethodBody(@event.AddAccessor), context);
+					}
 
 					if (scanBodies && !visitor.Found && @event.CanRemove)
+					{
+						if (!visitor.Found)
+							ScanAttributes(visitor, @event.RemoveAccessor.GetAttributes());
+						if (!visitor.Found)
+							ScanAttributes(visitor, @event.RemoveAccessor.GetReturnTypeAttributes());
+
 						ScanMethodBody(visitor, @event.RemoveAccessor, context.GetMethodBody(@event.RemoveAccessor), context);
+					}
 
 					if (scanBodies && !visitor.Found && @event.CanInvoke)
+					{
+						if (!visitor.Found)
+							ScanAttributes(visitor, @event.InvokeAccessor.GetAttributes());
+						if (!visitor.Found)
+							ScanAttributes(visitor, @event.InvokeAccessor.GetReturnTypeAttributes());
+
 						ScanMethodBody(visitor, @event.InvokeAccessor, context.GetMethodBody(@event.InvokeAccessor), context);
+					}
+
 					break;
 			}
 		}
