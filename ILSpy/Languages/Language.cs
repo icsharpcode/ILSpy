@@ -130,6 +130,10 @@ namespace ICSharpCode.ILSpy
 			var asm = assembly.GetPEFileOrNull();
 			if (asm == null)
 				return null;
+			if (options.FullDecompilation && options.SaveAsProjectDirectory != null)
+			{
+				throw new NotSupportedException($"Language '{Name}' does not support exporting assemblies as projects!");
+			}
 			var metadata = asm.Metadata;
 			if (metadata.IsAssembly)
 			{

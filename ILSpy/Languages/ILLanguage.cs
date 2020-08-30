@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -164,6 +165,11 @@ namespace ICSharpCode.ILSpy
 			var module = assembly.GetPEFileOrNull();
 			var metadata = module.Metadata;
 			var dis = CreateDisassembler(output, options);
+
+			if (options.FullDecompilation && options.SaveAsProjectDirectory != null)
+			{
+				throw new NotSupportedException($"Language '{Name}' does not support exporting assemblies as projects!");
+			}
 
 			// don't automatically load additional assemblies when an assembly node is selected in the tree view
 			using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad(assembly.AssemblyList))

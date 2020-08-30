@@ -113,8 +113,16 @@ namespace ICSharpCode.ILSpy
 					n => WriteProject(n, language, solutionDirectory, ct)))
 					.ConfigureAwait(false);
 
-				await Task.Run(() => SolutionCreator.WriteSolutionFile(solutionFilePath, projects))
-					.ConfigureAwait(false);
+				if (projects.Count == 0)
+				{
+					result.WriteLine();
+					result.WriteLine("Solution could not be created, because none of the selected assemblies could be decompiled into a project.");
+				}
+				else
+				{
+					await Task.Run(() => SolutionCreator.WriteSolutionFile(solutionFilePath, projects))
+						.ConfigureAwait(false);
+				}
 			}
 			catch (AggregateException ae)
 			{
@@ -167,7 +175,22 @@ namespace ICSharpCode.ILSpy
 		void WriteProject(LoadedAssembly loadedAssembly, Language language, string targetDirectory, CancellationToken ct)
 		{
 			targetDirectory = Path.Combine(targetDirectory, loadedAssembly.ShortName);
+
+			if (language.ProjectFileExtension == null)
+			{
+				statusOutput.Add("-------------");
+				statusOutput.Add($"Language '{language.Name}' does not support exporting assemblies as projects!");
+				return;
+			}
+
 			string projectFileName = Path.Combine(targetDirectory, loadedAssembly.ShortName + language.ProjectFileExtension);
+
+			if (File.Exists(targetDirectory))
+			{
+				statusOutput.Add("-------------");
+				statusOutput.Add($"Failed to create a directory '{targetDirectory}':{Environment.NewLine}A file with the same name already exists!");
+				return;
+			}
 
 			if (!Directory.Exists(targetDirectory))
 			{
@@ -177,6 +200,7 @@ namespace ICSharpCode.ILSpy
 				}
 				catch (Exception e)
 				{
+					statusOutput.Add("-------------");
 					statusOutput.Add($"Failed to create a directory '{targetDirectory}':{Environment.NewLine}{e}");
 					return;
 				}
@@ -200,8 +224,14 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 			}
+			catch (NotSupportedException e)
+			{
+				statusOutput.Add("-------------");
+				statusOutput.Add($"Failed to decompile the assembly '{loadedAssembly.FileName}':{Environment.NewLine}{e.Message}");
+			}
 			catch (Exception e) when (!(e is OperationCanceledException))
 			{
+				statusOutput.Add("-------------");
 				statusOutput.Add($"Failed to decompile the assembly '{loadedAssembly.FileName}':{Environment.NewLine}{e}");
 			}
 		}
