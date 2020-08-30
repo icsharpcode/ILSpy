@@ -1006,8 +1006,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				return true;
 			// always use unspecialized member, otherwise type inference fails
 			method = (IMethod)method.MemberDefinition;
-			var parametersInArgumentOrder = argumentList.ArgumentToParameterMap == null ? method.Parameters : argumentList.ArgumentToParameterMap.SelectReadOnlyArray(index => method.Parameters[index]);
-			typeInference.InferTypeArguments(method.TypeParameters, argumentList.Arguments.SelectReadOnlyArray(a => a.ResolveResult), parametersInArgumentOrder.SelectReadOnlyArray(p => p.Type),
+			IReadOnlyList<IType> paramTypesInArgumentOrder;
+			if (argumentList.ArgumentToParameterMap == null)
+				paramTypesInArgumentOrder = method.Parameters.SelectReadOnlyArray(p => p.Type);
+			else
+				paramTypesInArgumentOrder = argumentList.ArgumentToParameterMap
+					.SelectReadOnlyArray(
+						index => index >= 0 ? method.Parameters[index].Type : SpecialType.UnknownType
+					);
+			typeInference.InferTypeArguments(method.TypeParameters,
+				argumentList.Arguments.SelectReadOnlyArray(a => a.ResolveResult), paramTypesInArgumentOrder,
 				out bool success);
 			return success;
 		}
