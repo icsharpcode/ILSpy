@@ -23,6 +23,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -399,6 +400,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (definition == null)
 				return false;
 			if (definition.ParentModule.PEFile != context.PEFile)
+				return false;
+			// We do not want to accidentially transform state-machines and thus destroy them.
+			var token = (TypeDefinitionHandle)definition.MetadataToken;
+			var metadata = definition.ParentModule.PEFile.Metadata;
+			if (YieldReturnDecompiler.IsCompilerGeneratorEnumerator(token, metadata))
+				return false;
+			if (AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(token, metadata))
 				return false;
 			if (!context.Settings.AggressiveScalarReplacementOfAggregates)
 			{
