@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (declaredVariable != null)
 					return declaredVariable;
 				declaredVariable = container.Variable.Function.RegisterVariable(VariableKind.Local, field.Type, field.Name);
-				declaredVariable.HasInitialValue = true;
+				declaredVariable.HasInitialValue = container.Type.IsReferenceType != false || container.Variable.HasInitialValue;
 				declaredVariable.CaptureScope = container.CaptureScope;
 				return declaredVariable;
 			}
@@ -288,9 +288,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					HandleInitBlock(stloc.Parent as Block, stloc.ChildIndex + 1, result, result.Variable);
 					break;
 				case TypeKind.Struct:
-					if (!v.HasInitialValue)
-						return null;
-					if (v.StoreCount != 1)
+					if (v.StoreCount != (v.HasInitialValue ? 1 : 0))
 						return null;
 					Debug.Assert(v.StoreInstructions.Count == 0);
 					result = new DisplayClass(v, definition) { CaptureScope = v.CaptureScope };
