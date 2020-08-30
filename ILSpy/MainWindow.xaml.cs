@@ -618,7 +618,8 @@ namespace ICSharpCode.ILSpy
 
 			ShowAssemblyList(this.assemblyList);
 
-			if (sessionSettings.ActiveAutoLoadedAssembly != null)
+			if (sessionSettings.ActiveAutoLoadedAssembly != null
+				&& File.Exists(sessionSettings.ActiveAutoLoadedAssembly))
 			{
 				this.assemblyList.Open(sessionSettings.ActiveAutoLoadedAssembly, true);
 			}
