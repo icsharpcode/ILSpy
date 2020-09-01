@@ -34,7 +34,10 @@ namespace ILSpy.BamlDecompiler.Rewrite
 {
 	internal class ConnectionIdRewritePass : IRewritePass
 	{
-		static readonly TopLevelTypeName componentConnectorTypeName = new TopLevelTypeName("System.Windows.Markup", "IComponentConnector");
+		static readonly TopLevelTypeName componentConnectorTypeName
+			= new TopLevelTypeName("System.Windows.Markup", "IComponentConnector");
+		static readonly TopLevelTypeName styleConnectorTypeName
+			= new TopLevelTypeName("System.Windows.Markup", "IStyleConnector");
 
 		public void Run(XamlContext ctx, XDocument document)
 		{
@@ -42,7 +45,8 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			ProcessConnectionIds(document.Root, mappings);
 		}
 
-		static void ProcessConnectionIds(XElement element, List<(LongSet key, EventRegistration[] value)> eventMappings)
+		static void ProcessConnectionIds(XElement element,
+			List<(LongSet key, EventRegistration[] value)> eventMappings)
 		{
 			foreach (var child in element.Elements())
 				ProcessConnectionIds(child, eventMappings);
@@ -65,7 +69,9 @@ namespace ILSpy.BamlDecompiler.Rewrite
 		{
 			var result = new List<(LongSet, EventRegistration[])>();
 
-			var xClass = document.Root.Elements().First().Attribute(ctx.GetKnownNamespace("Class", XamlContext.KnownNamespace_Xaml));
+			var xClass = document.Root
+				.Elements().First()
+				.Attribute(ctx.GetKnownNamespace("Class", XamlContext.KnownNamespace_Xaml));
 			if (xClass == null)
 				return result;
 
@@ -73,9 +79,18 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			if (type == null)
 				return result;
 
-			var connectorInterface = ctx.TypeSystem.FindType(componentConnectorTypeName).GetDefinition();
+			DecompileEventMappings(ctx, result, componentConnectorTypeName, type);
+			DecompileEventMappings(ctx, result, styleConnectorTypeName, type);
+
+			return result;
+		}
+
+		void DecompileEventMappings(XamlContext ctx, List<(LongSet, EventRegistration[])> result,
+			FullTypeName connectorTypeName, ITypeDefinition type)
+		{
+			var connectorInterface = ctx.TypeSystem.FindType(connectorTypeName).GetDefinition();
 			if (connectorInterface == null)
-				return result;
+				return;
 			var connect = connectorInterface.GetMethods(m => m.Name == "Connect").SingleOrDefault();
 
 			IMethod method = null;
@@ -87,13 +102,14 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				if (m.ExplicitlyImplementedInterfaceMembers.Any(md => md.MemberDefinition.Equals(connect)))
 				{
 					method = m;
-					metadataEntry = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
+					metadataEntry = module.Metadata
+						.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 					break;
 				}
 			}
 
 			if (method == null || metadataEntry.RelativeVirtualAddress <= 0)
-				return result;
+				return;
 
 			var body = module.Reader.GetMethodBody(metadataEntry.RelativeVirtualAddress);
 			var genericContext = new GenericContext(
@@ -102,7 +118,8 @@ namespace ILSpy.BamlDecompiler.Rewrite
 
 			// decompile method and optimize the switch
 			var ilReader = new ILReader(ctx.TypeSystem.MainModule);
-			var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, body, genericContext, ILFunctionKind.TopLevelFunction, ctx.CancellationToken);
+			var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, body, genericContext,
+				ILFunctionKind.TopLevelFunction, ctx.CancellationToken);
 
 			var context = new ILTransformContext(function, ctx.TypeSystem, null) {
 				CancellationToken = ctx.CancellationToken
@@ -130,11 +147,12 @@ namespace ILSpy.BamlDecompiler.Rewrite
 						continue;
 					if (!comp.Right.MatchLdcI4(out int id))
 						continue;
-					var events = FindEvents(comp.Kind == ComparisonKind.Inequality ? ifInst.FalseInst : ifInst.TrueInst);
+					var events = FindEvents(comp.Kind == ComparisonKind.Inequality
+						? ifInst.FalseInst
+						: ifInst.TrueInst);
 					result.Add((new LongSet(id), events));
 				}
 			}
-			return result;
 		}
 
 		EventRegistration[] FindEvents(ILInstruction inst)
@@ -165,8 +183,11 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			if (call == null || call.OpCode == OpCode.NewObj)
 				return;
 
-			if (IsAddEvent(call, out string eventName, out string handlerName) || IsAddAttachedEvent(call, out eventName, out handlerName))
+			if (IsAddEvent(call, out string eventName, out string handlerName)
+				|| IsAddAttachedEvent(call, out eventName, out handlerName))
+			{
 				events.Add(new EventRegistration { EventName = eventName, MethodName = handlerName });
+			}
 		}
 
 		bool IsAddAttachedEvent(CallInstruction call, out string eventName, out string handlerName)
@@ -182,8 +203,11 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				if (!call.Arguments[1].MatchLdsFld(out IField field))
 					return false;
 				eventName = field.DeclaringType.Name + "." + field.Name;
-				if (eventName.EndsWith("Event", StringComparison.Ordinal) && eventName.Length > "Event".Length)
+				if (eventName.EndsWith("Event", StringComparison.Ordinal)
+					&& eventName.Length > "Event".Length)
+				{
 					eventName = eventName.Remove(eventName.Length - "Event".Length);
+				}
 				var newObj = call.Arguments[2] as NewObj;
 				if (newObj == null || newObj.Arguments.Count != 2)
 					return false;
@@ -205,8 +229,11 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			if (call.Arguments.Count == 2)
 			{
 				var addMethod = call.Method;
-				if (!addMethod.Name.StartsWith("add_", StringComparison.Ordinal) || addMethod.Parameters.Count != 1)
+				if (!addMethod.Name.StartsWith("add_", StringComparison.Ordinal)
+					|| addMethod.Parameters.Count != 1)
+				{
 					return false;
+				}
 				eventName = addMethod.Name.Substring("add_".Length);
 				var newObj = call.Arguments[1] as NewObj;
 				if (newObj == null || newObj.Arguments.Count != 2)
