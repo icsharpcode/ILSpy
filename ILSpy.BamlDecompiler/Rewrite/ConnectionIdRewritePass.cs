@@ -139,13 +139,17 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			var block = function.Body.Children.OfType<Block>().First();
 			var ilSwitch = block.Descendants.OfType<SwitchInstruction>().FirstOrDefault();
 
+			var events = new List<EventRegistration>();
 			if (ilSwitch != null)
 			{
 				foreach (var section in ilSwitch.Sections)
 				{
-					var events = new List<EventRegistration>();
+					events.Clear();
 					FindEvents(section.Body, events);
-					result.Add((section.Labels, events.ToArray()));
+					if (events.Count > 0)
+					{
+						result.Add((section.Labels, events.ToArray()));
+					}
 				}
 			}
 			else
@@ -161,9 +165,12 @@ namespace ILSpy.BamlDecompiler.Rewrite
 					var inst = comp.Kind == ComparisonKind.Inequality
 						? ifInst.FalseInst
 						: ifInst.TrueInst;
-					var events = new List<EventRegistration>();
+					events.Clear();
 					FindEvents(inst, events);
-					result.Add((new LongSet(id), events.ToArray()));
+					if (events.Count > 0)
+					{
+						result.Add((new LongSet(id), events.ToArray()));
+					}
 				}
 			}
 		}
