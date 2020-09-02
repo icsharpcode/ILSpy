@@ -160,6 +160,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		int dynamicTypeIndex = 0;
 		int tupleTypeIndex = 0;
 		int nullabilityTypeIndex = 0;
+		int nativeIntTypeIndex = 0;
 
 		private ApplyAttributeTypeVisitor(ICompilation compilation,
 			bool hasDynamicAttribute, bool[] dynamicAttributeData,
@@ -322,10 +323,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			else if ((ktc == KnownTypeCode.IntPtr || ktc == KnownTypeCode.UIntPtr) && hasNativeIntegersAttribute)
 			{
 				// native integers use the same indexing logic as 'dynamic'
-				if (nativeIntegersAttributeData == null || dynamicTypeIndex > nativeIntegersAttributeData.Length)
+				if (nativeIntegersAttributeData == null || nativeIntTypeIndex >= nativeIntegersAttributeData.Length)
 					newType = (ktc == KnownTypeCode.IntPtr ? SpecialType.NInt : SpecialType.NUInt);
-				else if (nativeIntegersAttributeData[dynamicTypeIndex])
+				else if (nativeIntegersAttributeData[nativeIntTypeIndex])
 					newType = (ktc == KnownTypeCode.IntPtr ? SpecialType.NInt : SpecialType.NUInt);
+				nativeIntTypeIndex++;
 			}
 			if (type.IsReferenceType == true)
 			{

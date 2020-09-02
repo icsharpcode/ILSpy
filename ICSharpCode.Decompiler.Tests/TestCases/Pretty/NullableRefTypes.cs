@@ -18,6 +18,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private (string, string?, string) field_tuple;
 		private string[]?[] field_array;
 		private Dictionary<(string, string?), (int, string[]?, string?[])> field_complex;
+		private dynamic[][,]?[,,][,,,] field_complex_nested_array;
 
 		public (string A, dynamic? B) PropertyNamedTuple {
 			get {

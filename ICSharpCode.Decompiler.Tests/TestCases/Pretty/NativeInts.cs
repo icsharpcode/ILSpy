@@ -35,8 +35,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private long i64;
 		private ulong u64;
 		private (IntPtr, nint, UIntPtr, nuint) tuple_field;
+		private (object, int, IntPtr, nint, UIntPtr, nuint) tuple_field2;
 		private Dictionary<nint, IntPtr> dict1;
 		private Dictionary<IntPtr, nint> dict2;
+		private Dictionary<IntPtr?, nint?> dict3;
+		private Dictionary<IntPtr, nint[]> dict4;
 
 		public void Convert()
 		{
