@@ -347,20 +347,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (initialState != -1)
 				return false;
-			pos--;
-
-			// Check the second-to-last field assignment - this should be the builder field
-			// stfld StateMachine.builder(ldloca stateMachine, call Create())
-			if (pos < 0)
-				return false;
-			if (!MatchStFld(body[pos], stateMachineVar, out var builderField3, out var builderInitialization))
-				return false;
-			if (builderField3 != builderField)
-				return false;
-			if (!(builderInitialization is Call createCall))
-				return false;
-			if (createCall.Method.Name != "Create" || createCall.Arguments.Count != 0)
-				return false;
 
 			int stopPos = pos;
 			pos = 0;
@@ -374,12 +360,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				pos++;
 			}
+			bool builderFieldIsInitialized = false;
 			for (; pos < stopPos; pos++)
 			{
 				// stfld StateMachine.field(ldloca stateMachine, ldvar(param))
 				if (!MatchStFld(body[pos], stateMachineVar, out var field, out var fieldInit))
 					return false;
-				if (fieldInit.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter)
+				if (field == builderField)
+				{
+					// stfld StateMachine.builder(ldloca stateMachine, call Create())
+					if (!(fieldInit is Call { Method: { Name: "Create" }, Arguments: { Count: 0 } }))
+						return false;
+					builderFieldIsInitialized = true;
+				}
+				else if (fieldInit.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter)
 				{
 					// OK, copies parameter into state machine
 					fieldToParameterMap[field] = v;
@@ -395,7 +389,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 
-			return true;
+			return builderFieldIsInitialized;
 		}
 
 		/// <summary>
