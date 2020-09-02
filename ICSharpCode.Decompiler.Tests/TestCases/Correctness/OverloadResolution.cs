@@ -34,6 +34,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			TestIndexer();
 			Issue1281();
 			Issue1747();
+			CallAmbiguousOutParam();
 		}
 
 		#region ConstructorTest
@@ -244,6 +245,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			obj[(object)5] = null;
 			Console.WriteLine(obj[5]);
 			obj[5] = null;
+		}
+		#endregion
+
+		#region Out Parameter
+		static void AmbiguousOutParam(out string a)
+		{
+			a = null;
+			Console.WriteLine("AmbiguousOutParam(out string)");
+		}
+
+		static void AmbiguousOutParam(out int b)
+		{
+			b = 1;
+			Console.WriteLine("AmbiguousOutParam(out int)");
+		}
+
+		static void CallAmbiguousOutParam()
+		{
+			Console.WriteLine("CallAmbiguousOutParam:");
+			string a;
+			int b;
+			AmbiguousOutParam(out a);
+			AmbiguousOutParam(out b);
 		}
 		#endregion
 	}

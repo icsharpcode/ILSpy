@@ -86,6 +86,7 @@
     <Compile Include="Documentation\XmlDocumentationElement.cs" />
     <Compile Include="IL\ControlFlow\AwaitInFinallyTransform.cs" />
     <Compile Include="IL\Transforms\IntroduceNativeIntTypeOnLocals.cs" />
+    <Compile Include="Semantics\OutVarResolveResult.cs" />
     <Compile Include="Solution\ProjectId.cs" />
     <Compile Include="Solution\ProjectItem.cs" />
     <Compile Include="Solution\SolutionCreator.cs" />

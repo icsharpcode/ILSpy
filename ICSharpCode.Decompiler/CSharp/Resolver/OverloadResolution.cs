@@ -649,11 +649,17 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					continue;
 				}
 
-				ByReferenceResolveResult brrr = arguments[i] as ByReferenceResolveResult;
-				if (brrr != null)
+				if (arguments[i] is ByReferenceResolveResult brrr)
 				{
 					if (brrr.ReferenceKind != candidate.Parameters[parameterIndex].ReferenceKind)
 						candidate.AddError(OverloadResolutionErrors.ParameterPassingModeMismatch);
+				}
+				else if (arguments[i] is OutVarResolveResult)
+				{
+					if (candidate.Parameters[parameterIndex].ReferenceKind != ReferenceKind.Out)
+						candidate.AddError(OverloadResolutionErrors.ParameterPassingModeMismatch);
+					// 'out var decl' arguments are compatible with any out parameter
+					continue;
 				}
 				else
 				{
