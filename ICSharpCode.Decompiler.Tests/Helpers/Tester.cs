@@ -464,7 +464,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 			else
 			{
-				var settings= new DecompilerSettings(CSharp.LanguageVersion.CSharp5);
+				var settings = new DecompilerSettings(CSharp.LanguageVersion.CSharp5);
 				if (cscOptions.HasFlag(CompilerOptions.UseMcs))
 				{
 					// we don't recompile with mcs but with roslyn, so we can use ref locals
