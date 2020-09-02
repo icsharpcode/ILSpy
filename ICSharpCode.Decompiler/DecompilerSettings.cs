@@ -92,6 +92,7 @@ namespace ICSharpCode.Decompiler
 				stringInterpolation = false;
 				dictionaryInitializers = false;
 				extensionMethodsInCollectionInitializers = false;
+				useRefLocalsForAccurateOrderOfEvaluation = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7)
 			{
@@ -153,7 +154,7 @@ namespace ICSharpCode.Decompiler
 				|| discards || localFunctions)
 				return CSharp.LanguageVersion.CSharp7;
 			if (awaitInCatchFinally || useExpressionBodyForCalculatedGetterOnlyProperties || nullPropagation
-				|| stringInterpolation || dictionaryInitializers || extensionMethodsInCollectionInitializers)
+				|| stringInterpolation || dictionaryInitializers || extensionMethodsInCollectionInitializers || useRefLocalsForAccurateOrderOfEvaluation)
 				return CSharp.LanguageVersion.CSharp6;
 			if (asyncAwait)
 				return CSharp.LanguageVersion.CSharp5;
@@ -445,7 +446,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile C# 6 ?. and ?[] operators.
 		/// </summary>
 		[Category("C# 6.0 / VS 2015")]
-		[Description("DecompilerSettings.DecompileAndOperators")]
+		[Description("DecompilerSettings.NullPropagation")]
 		public bool NullPropagation {
 			get { return nullPropagation; }
 			set {
@@ -814,6 +815,25 @@ namespace ICSharpCode.Decompiler
 				if (extensionMethodsInCollectionInitializers != value)
 				{
 					extensionMethodsInCollectionInitializers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool useRefLocalsForAccurateOrderOfEvaluation = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 6.0 Extension Add methods in collection initializers.
+		/// Only has an effect if ObjectOrCollectionInitializers is enabled.
+		/// </summary>
+		[Category("C# 6.0 / VS 2015")]
+		[Description("DecompilerSettings.UseRefLocalsForAccurateOrderOfEvaluation")]
+		public bool UseRefLocalsForAccurateOrderOfEvaluation {
+			get { return useRefLocalsForAccurateOrderOfEvaluation; }
+			set {
+				if (useRefLocalsForAccurateOrderOfEvaluation != value)
+				{
+					useRefLocalsForAccurateOrderOfEvaluation = value;
 					OnPropertyChanged();
 				}
 			}

@@ -712,15 +712,6 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Decompile ?. and ?[] operators.
-        /// </summary>
-        public static string DecompilerSettings_DecompileAndOperators {
-            get {
-                return ResourceManager.GetString("DecompilerSettings.DecompileAndOperators", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Decompile anonymous methods/lambdas.
         /// </summary>
         public static string DecompilerSettings_DecompileAnonymousMethodsLambdas {
@@ -1011,6 +1002,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Decompile ?. and ?[] operators.
+        /// </summary>
+        public static string DecompilerSettings_NullPropagation {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.NullPropagation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Object/collection initializer expressions.
         /// </summary>
         public static string DecompilerSettings_ObjectCollectionInitializerExpressions {
@@ -1214,6 +1214,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilerSettings_UsePatternBasedFixedStatement {
             get {
                 return ResourceManager.GetString("DecompilerSettings.UsePatternBasedFixedStatement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use ref locals to accurately represent order of evaluation.
+        /// </summary>
+        public static string DecompilerSettings_UseRefLocalsForAccurateOrderOfEvaluation {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UseRefLocalsForAccurateOrderOfEvaluation", resourceCulture);
             }
         }
         

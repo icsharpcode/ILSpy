@@ -267,9 +267,6 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.AsyncEnumerator" xml:space="preserve">
     <value>Decompile async IAsyncEnumerator methods</value>
   </data>
-  <data name="DecompilerSettings.DecompileAndOperators" xml:space="preserve">
-    <value>Decompile ?. and ?[] operators</value>
-  </data>
   <data name="DecompilerSettings.DecompileAnonymousMethodsLambdas" xml:space="preserve">
     <value>Decompile anonymous methods/lambdas</value>
   </data>
@@ -363,6 +360,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
     <value>Use nint/nuint types</value>
   </data>
+  <data name="DecompilerSettings.NullPropagation" xml:space="preserve">
+    <value>Decompile ?. and ?[] operators</value>
+  </data>
   <data name="DecompilerSettings.NullableReferenceTypes" xml:space="preserve">
     <value>Nullable reference types</value>
   </data>
@@ -434,6 +434,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DecompilerSettings.UsePatternBasedFixedStatement" xml:space="preserve">
     <value>Use pattern-based fixed statement</value>
+  </data>
+  <data name="DecompilerSettings.UseRefLocalsForAccurateOrderOfEvaluation" xml:space="preserve">
+    <value>Use ref locals to accurately represent order of evaluation</value>
   </data>
   <data name="DecompilerSettings.UseSdkStyleProjectFormat" xml:space="preserve">
     <value>Use new SDK style format for generated project files (*.csproj)</value>

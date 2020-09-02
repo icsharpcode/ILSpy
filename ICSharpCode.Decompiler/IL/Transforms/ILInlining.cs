@@ -33,6 +33,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		Aggressive = 1,
 		IntroduceNamedArguments = 2,
 		FindDeconstruction = 4,
+		AllowChangingOrderOfEvaluationForExceptions = 8,
 	}
 
 	/// <summary>
@@ -72,6 +73,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var inst = block.Instructions[pos];
 				if (IsInConstructorInitializer(function, inst))
 					options |= InliningOptions.Aggressive;
+			}
+			if (!context.Settings.UseRefLocalsForAccurateOrderOfEvaluation)
+			{
+				options |= InliningOptions.AllowChangingOrderOfEvaluationForExceptions;
 			}
 			return options;
 		}
@@ -667,8 +672,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// Match found, we can inline
 				if (expr.SlotInfo == StObj.TargetSlot && !((StObj)expr.Parent).CanInlineIntoTargetSlot(expressionBeingMoved))
 				{
-					// special case: the StObj.TargetSlot does not accept some kinds of expressions
-					return FindResult.Stop;
+					if ((options & InliningOptions.AllowChangingOrderOfEvaluationForExceptions) != 0)
+					{
+						// Intentionally change code semantics so that we can avoid a ref local
+						if (expressionBeingMoved is LdFlda ldflda)
+							ldflda.DelayExceptions = true;
+						else if (expressionBeingMoved is LdElema ldelema)
+							ldelema.DelayExceptions = true;
+					}
+					else
+					{
+						// special case: the StObj.TargetSlot does not accept some kinds of expressions
+						return FindResult.Stop;
+					}
 				}
 				return FindResult.Found(expr);
 			}

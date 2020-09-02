@@ -258,9 +258,6 @@
   <data name="DecompilerSettings.AsyncEnumerator" xml:space="preserve">
     <value>反编译异步 IAsyncEnumerator 方法</value>
   </data>
-  <data name="DecompilerSettings.DecompileAndOperators" xml:space="preserve">
-    <value>反编译 ?. 和  ?[] 运算符</value>
-  </data>
   <data name="DecompilerSettings.DecompileAnonymousMethodsLambdas" xml:space="preserve">
     <value>反编译匿名方法或 lambda</value>
   </data>
@@ -347,6 +344,9 @@
   </data>
   <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
     <value>使用 nint/nuint 类型</value>
+  </data>
+  <data name="DecompilerSettings.NullPropagation" xml:space="preserve">
+    <value>反编译 ?. 和  ?[] 运算符</value>
   </data>
   <data name="DecompilerSettings.NullableReferenceTypes" xml:space="preserve">
     <value>可空引用类型</value>
