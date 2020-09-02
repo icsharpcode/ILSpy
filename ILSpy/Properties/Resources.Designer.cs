@@ -1092,6 +1092,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Detect switch on integer even if IL code does not use a jump table.
+        /// </summary>
+        public static string DecompilerSettings_SparseIntegerSwitch {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.SparseIntegerSwitch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Switch expressions.
         /// </summary>
         public static string DecompilerSettings_SwitchExpressions {

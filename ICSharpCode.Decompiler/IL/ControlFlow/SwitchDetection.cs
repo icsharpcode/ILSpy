@@ -134,6 +134,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
+			if (!context.Settings.SparseIntegerSwitch)
+				return;
 			this.context = context;
 
 			analysis.AllowUnreachableCases = context.Settings.RemoveDeadCode;

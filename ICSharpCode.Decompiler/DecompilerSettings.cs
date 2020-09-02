@@ -599,6 +599,21 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool sparseIntegerSwitch = true;
+
+		[Category("C# 1.0 / VS .NET")]
+		[Description("DecompilerSettings.SparseIntegerSwitch")]
+		public bool SparseIntegerSwitch {
+			get { return sparseIntegerSwitch; }
+			set {
+				if (sparseIntegerSwitch != value)
+				{
+					sparseIntegerSwitch = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool usingDeclarations = true;
 
 		[Category("C# 1.0 / VS .NET")]
