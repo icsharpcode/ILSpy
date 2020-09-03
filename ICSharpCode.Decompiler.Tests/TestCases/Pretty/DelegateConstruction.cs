@@ -32,6 +32,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				public string Value;
 			}
 
+			private int x;
+
 			public Action CaptureOfThis()
 			{
 				return delegate {
@@ -132,6 +134,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						DoSomething(data.Value);
 					});
 				});
+			}
+
+			public Func<int, int> Issue2143()
+			{
+				return (int x) => this.x;
 			}
 
 			public Action<object> Bug971_DelegateWithoutParameterList()

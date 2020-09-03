@@ -104,11 +104,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			for (int i = 0; i < list.Count;)
 			{
-				var v = list[i];
-				// Note: we cannot remove display-class locals from the collection,
-				// even if they are unused - which is always the case, if TDCU succeeds,
-				// because they are necessary for PDB generation to produce correct results.
-				if (v.IsDead && v.Kind != VariableKind.DisplayClassLocal)
+				if (ShouldRemoveVariable(list[i]))
 				{
 					RemoveAt(i);
 				}
@@ -116,6 +112,27 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					i++;
 				}
+			}
+
+			static bool ShouldRemoveVariable(ILVariable v)
+			{
+				if (!v.IsDead)
+					return false;
+				// Note: we cannot remove display-class locals from the collection,
+				// even if they are unused - which is always the case, if TDCU succeeds,
+				// because they are necessary for PDB generation to produce correct results.
+				if (v.Kind == VariableKind.DisplayClassLocal)
+					return false;
+				// Do not remove parameter variables, as these are defined even if unused.
+				if (v.Kind == VariableKind.Parameter)
+				{
+					// However, remove unused this-parameters of delegates, expression trees, etc.
+					// These will be replaced with the top-level function's this-parameter.
+					if (v.Index == -1 && v.Function.Kind != ILFunctionKind.TopLevelFunction)
+						return true;
+					return false;
+				}
+				return true;
 			}
 		}
 
