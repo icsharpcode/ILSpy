@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private static void RefCallSiteTests()
 		{
 #if CS70
-			CallWithOut(out dynamic d);
+			CallWithOut(out var d);
 			CallWithIn(in d);
 #else
 			dynamic d;

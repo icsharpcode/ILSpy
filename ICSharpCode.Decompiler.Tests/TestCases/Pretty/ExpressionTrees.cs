@@ -1040,7 +1040,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			await Task.Delay(100);
 #if CS70
-			if (string.IsNullOrEmpty(str) && int.TryParse(str, out int id))
+			if (string.IsNullOrEmpty(str) && int.TryParse(str, out var id))
 			{
 #else
 			int id;

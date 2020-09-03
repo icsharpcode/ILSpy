@@ -26,6 +26,8 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	class OutVarResolveResult : ResolveResult
 	{
+		public static readonly OutVarResolveResult Instance = new OutVarResolveResult();
+
 		public OutVarResolveResult() : base(SpecialType.NoType) { }
 	}
 }

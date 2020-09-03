@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			private static int? GetIntOrNull(string v)
 			{
-				if (int.TryParse(v, out int result))
+				if (int.TryParse(v, out var result))
 				{
 					return result;
 				}

@@ -345,4 +345,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.EqualsLambda = equals;
 		}
 	}
+
+	/// <summary>
+	/// Annotates an out DirectionExpression if the out variable can be declared implicitly typed.
+	/// </summary>
+	public class UseImplicitlyTypedOutAnnotation
+	{
+		public static readonly UseImplicitlyTypedOutAnnotation Instance = new UseImplicitlyTypedOutAnnotation();
+	}
 }
