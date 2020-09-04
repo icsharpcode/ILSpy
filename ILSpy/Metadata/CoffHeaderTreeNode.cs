@@ -93,22 +93,22 @@ namespace ICSharpCode.ILSpy.Metadata
 			{
 				FrameworkElementFactory dataGridFactory = new FrameworkElementFactory(typeof(DataGrid));
 				dataGridFactory.SetValue(DataGrid.ItemsSourceProperty, new[] {
-					new { Value = (flags & 0x0001) != 0, Meaning = "Relocation info stripped from file" },
-					new { Value = (flags & 0x0002) != 0, Meaning = "File is executable" },
-					new { Value = (flags & 0x0004) != 0, Meaning = "Line numbers stripped from file" },
-					new { Value = (flags & 0x0008) != 0, Meaning = "Local symbols stripped from file" },
-					new { Value = (flags & 0x0010) != 0, Meaning = "Aggressively trim working set" },
-					new { Value = (flags & 0x0020) != 0, Meaning = "Large address aware" },
-					new { Value = (flags & 0x0040) != 0, Meaning = "Reserved" },
-					new { Value = (flags & 0x0080) != 0, Meaning = "Bytes of machine words are reversed (Low)" },
-					new { Value = (flags & 0x0100) != 0, Meaning = "32-bit word machine" },
-					new { Value = (flags & 0x0200) != 0, Meaning = "Debugging info stripped from file in .DBG file" },
-					new { Value = (flags & 0x0400) != 0, Meaning = "If image is on removable media, copy and run from the swap file" },
-					new { Value = (flags & 0x0800) != 0, Meaning = "If image is on Net, copy and run from the swap file" },
-					new { Value = (flags & 0x1000) != 0, Meaning = "System" },
-					new { Value = (flags & 0x2000) != 0, Meaning = "DLL" },
-					new { Value = (flags & 0x4000) != 0, Meaning = "File should only be run on a UP machine" },
-					new { Value = (flags & 0x8000) != 0, Meaning = "Bytes of machine words are reversed (High)" },
+					new { Value = (flags & 0x0001) != 0, Meaning = "<0001> Relocation info stripped from file" },
+					new { Value = (flags & 0x0002) != 0, Meaning = "<0002> File is executable" },
+					new { Value = (flags & 0x0004) != 0, Meaning = "<0004> Line numbers stripped from file" },
+					new { Value = (flags & 0x0008) != 0, Meaning = "<0008> Local symbols stripped from file" },
+					new { Value = (flags & 0x0010) != 0, Meaning = "<0010> Aggressively trim working set" },
+					new { Value = (flags & 0x0020) != 0, Meaning = "<0020> Large address aware" },
+					new { Value = (flags & 0x0040) != 0, Meaning = "<0040> Reserved" },
+					new { Value = (flags & 0x0080) != 0, Meaning = "<0080> Bytes of machine words are reversed (Low)" },
+					new { Value = (flags & 0x0100) != 0, Meaning = "<0100> 32-bit word machine" },
+					new { Value = (flags & 0x0200) != 0, Meaning = "<0200> Debugging info stripped from file in .DBG file" },
+					new { Value = (flags & 0x0400) != 0, Meaning = "<0400> If image is on removable media, copy and run from the swap file" },
+					new { Value = (flags & 0x0800) != 0, Meaning = "<0800> If image is on Net, copy and run from the swap file" },
+					new { Value = (flags & 0x1000) != 0, Meaning = "<1000> System" },
+					new { Value = (flags & 0x2000) != 0, Meaning = "<2000> DLL" },
+					new { Value = (flags & 0x4000) != 0, Meaning = "<4000> File should only be run on a UP machine" },
+					new { Value = (flags & 0x8000) != 0, Meaning = "<8000> Bytes of machine words are reversed (High)" },
 				});
 				DataTemplate template = new DataTemplate();
 				template.VisualTree = dataGridFactory;
