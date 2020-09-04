@@ -112,22 +112,22 @@ namespace ICSharpCode.ILSpy.Metadata
 			{
 				FrameworkElementFactory dataGridFactory = new FrameworkElementFactory(typeof(DataGrid));
 				dataGridFactory.SetValue(DataGrid.ItemsSourceProperty, new[] {
-					new { Value = (flags & 0x0001) != 0, Meaning = "Unused" },
-					new { Value = (flags & 0x0002) != 0, Meaning = "Unused" },
-					new { Value = (flags & 0x0004) != 0, Meaning = "Unused" },
-					new { Value = (flags & 0x0008) != 0, Meaning = "Unused" },
-					new { Value = (flags & 0x0010) != 0, Meaning = "Unused" },
-					new { Value = (flags & 0x0020) != 0, Meaning = "ASLR with 64-bit address space" },
-					new { Value = (flags & 0x0040) != 0, Meaning = "DLL can be relocated at load time" },
-					new { Value = (flags & 0x0080) != 0, Meaning = "Code integrity checks are enforced" },
-					new { Value = (flags & 0x0100) != 0, Meaning = "Image is NX compatible" },
-					new { Value = (flags & 0x0200) != 0, Meaning = "Isolation aware, but do not isolate the image" },
-					new { Value = (flags & 0x0400) != 0, Meaning = "Does not use structured exception handling (SEH)" },
-					new { Value = (flags & 0x0800) != 0, Meaning = "Do not bind the image" },
-					new { Value = (flags & 0x1000) != 0, Meaning = "Image should execute in an AppContainer" },
-					new { Value = (flags & 0x2000) != 0, Meaning = "Driver is a WDM Driver" },
-					new { Value = (flags & 0x4000) != 0, Meaning = "Image supports Control Flow Guard" },
-					new { Value = (flags & 0x8000) != 0, Meaning = "Image is Terminal Server aware" },
+					new { Value = (flags & 0x0001) != 0, Meaning = "<0001> Unused" },
+					new { Value = (flags & 0x0002) != 0, Meaning = "<0002> Unused" },
+					new { Value = (flags & 0x0004) != 0, Meaning = "<0004> Unused" },
+					new { Value = (flags & 0x0008) != 0, Meaning = "<0008> Unused" },
+					new { Value = (flags & 0x0010) != 0, Meaning = "<0010> Unused" },
+					new { Value = (flags & 0x0020) != 0, Meaning = "<0020> ASLR with 64-bit address space" },
+					new { Value = (flags & 0x0040) != 0, Meaning = "<0040> DLL can be relocated at load time" },
+					new { Value = (flags & 0x0080) != 0, Meaning = "<0080> Code integrity checks are enforced" },
+					new { Value = (flags & 0x0100) != 0, Meaning = "<0100> Image is NX compatible" },
+					new { Value = (flags & 0x0200) != 0, Meaning = "<0200> Isolation aware, but do not isolate the image" },
+					new { Value = (flags & 0x0400) != 0, Meaning = "<0400> Does not use structured exception handling (SEH)" },
+					new { Value = (flags & 0x0800) != 0, Meaning = "<0800> Do not bind the image" },
+					new { Value = (flags & 0x1000) != 0, Meaning = "<1000> Image should execute in an AppContainer" },
+					new { Value = (flags & 0x2000) != 0, Meaning = "<2000> Driver is a WDM Driver" },
+					new { Value = (flags & 0x4000) != 0, Meaning = "<4000> Image supports Control Flow Guard" },
+					new { Value = (flags & 0x8000) != 0, Meaning = "<8000> Image is Terminal Server aware" },
 				});
 				dataGridFactory.SetValue(DataGrid.GridLinesVisibilityProperty, DataGridGridLinesVisibility.None);
 				DataTemplate template = new DataTemplate();
