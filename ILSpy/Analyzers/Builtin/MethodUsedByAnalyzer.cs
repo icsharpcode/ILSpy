@@ -46,22 +46,26 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var scope = context.GetScopeOf((IEntity)analyzedSymbol);
 			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
 			{
-				var mappingInfo = context.Language.GetCodeMappingInfo(type.ParentModule.PEFile, type.MetadataToken);
+				var parentModule = (MetadataModule)type.ParentModule;
+				var mapping = context.Language.GetCodeMappingInfo(parentModule.PEFile, type.MetadataToken);
 				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
 				foreach (var method in methods)
 				{
-					if (IsUsedInMethod((IMethod)analyzedSymbol, method, mappingInfo, context))
-						yield return method;
+					if (IsUsedInMethod((IMethod)analyzedSymbol, method, context))
+					{
+						var parent = mapping.GetParentMethod((MethodDefinitionHandle)method.MetadataToken);
+						yield return parentModule.GetDefinition(parent);
+					}
 				}
 
 				foreach (var property in type.Properties)
 				{
-					if (property.CanGet && IsUsedInMethod((IMethod)analyzedSymbol, property.Getter, mappingInfo, context))
+					if (property.CanGet && IsUsedInMethod((IMethod)analyzedSymbol, property.Getter, context))
 					{
 						yield return property;
 						continue;
 					}
-					if (property.CanSet && IsUsedInMethod((IMethod)analyzedSymbol, property.Setter, mappingInfo, context))
+					if (property.CanSet && IsUsedInMethod((IMethod)analyzedSymbol, property.Setter, context))
 					{
 						yield return property;
 						continue;
@@ -70,17 +74,17 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 				foreach (var @event in type.Events)
 				{
-					if (@event.CanAdd && IsUsedInMethod((IMethod)analyzedSymbol, @event.AddAccessor, mappingInfo, context))
+					if (@event.CanAdd && IsUsedInMethod((IMethod)analyzedSymbol, @event.AddAccessor, context))
 					{
 						yield return @event;
 						continue;
 					}
-					if (@event.CanRemove && IsUsedInMethod((IMethod)analyzedSymbol, @event.RemoveAccessor, mappingInfo, context))
+					if (@event.CanRemove && IsUsedInMethod((IMethod)analyzedSymbol, @event.RemoveAccessor, context))
 					{
 						yield return @event;
 						continue;
 					}
-					if (@event.CanInvoke && IsUsedInMethod((IMethod)analyzedSymbol, @event.InvokeAccessor, mappingInfo, context))
+					if (@event.CanInvoke && IsUsedInMethod((IMethod)analyzedSymbol, @event.InvokeAccessor, context))
 					{
 						yield return @event;
 						continue;
@@ -89,7 +93,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		bool IsUsedInMethod(IMethod analyzedEntity, IMethod method, CodeMappingInfo mappingInfo, AnalyzerContext context)
+		bool IsUsedInMethod(IMethod analyzedEntity, IMethod method, AnalyzerContext context)
 		{
 			return ScanMethodBody(analyzedEntity, method, context.GetMethodBody(method));
 		}
