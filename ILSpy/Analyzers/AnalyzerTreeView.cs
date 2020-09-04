@@ -42,6 +42,18 @@ namespace ICSharpCode.ILSpy.Analyzers
 			this.BorderThickness = new Thickness(0);
 			ContextMenuProvider.Add(this);
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
+			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
+		}
+
+		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			switch (e.PropertyName)
+			{
+				case "Language":
+				case "LanguageVersion":
+					((AnalyzerRootNode)this.Root).Language = MainWindow.Instance.CurrentLanguage;
+					break;
+			}
 		}
 
 		void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)
