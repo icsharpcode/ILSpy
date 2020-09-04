@@ -43,11 +43,21 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
 			Debug.Assert(analyzedSymbol is IMethod);
-			var scope = context.GetScopeOf((IEntity)analyzedSymbol);
+
+			var analyzedMethod = (IMethod)analyzedSymbol;
+			var mapping = context.Language
+				.GetCodeMappingInfo(analyzedMethod.ParentModule.PEFile,
+					analyzedMethod.DeclaringTypeDefinition.MetadataToken);
+
+			var parentMethod = mapping.GetParentMethod((MethodDefinitionHandle)analyzedMethod.MetadataToken);
+			if (parentMethod != analyzedMethod.MetadataToken)
+				yield return ((MetadataModule)analyzedMethod.ParentModule).GetDefinition(parentMethod);
+
+			var scope = context.GetScopeOf(analyzedMethod);
 			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
 			{
 				var parentModule = (MetadataModule)type.ParentModule;
-				var mapping = context.Language.GetCodeMappingInfo(parentModule.PEFile, type.MetadataToken);
+				mapping = context.Language.GetCodeMappingInfo(parentModule.PEFile, type.MetadataToken);
 				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
 				foreach (var method in methods)
 				{
