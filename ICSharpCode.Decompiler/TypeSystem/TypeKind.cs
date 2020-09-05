@@ -103,5 +103,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// C# 9 <c>nuint</c>
 		/// </summary>
 		NUInt,
+
+		/// <summary>
+		/// C# 9 <c>delegate*</c>
+		/// </summary>
+		FunctionPointer,
 	}
 }

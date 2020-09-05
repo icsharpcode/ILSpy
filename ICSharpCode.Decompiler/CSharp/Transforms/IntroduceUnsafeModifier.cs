@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return base.VisitComposedType(composedType);
 		}
 
-		public override bool VisitFunctionPointerType(FunctionPointerType functionPointerType)
+		public override bool VisitFunctionPointerType(FunctionPointerAstType functionPointerType)
 		{
 			return true;
 		}

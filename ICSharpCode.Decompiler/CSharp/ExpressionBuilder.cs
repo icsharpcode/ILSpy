@@ -1,4 +1,4 @@
-// Copyright (c) 2014 Daniel Grunwald
+﻿// Copyright (c) 2014-2020 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -3888,16 +3888,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return ErrorExpression("calli with instance method signature not supportd");
 			}
-			var ty = new FunctionPointerType();
+			var ty = new FunctionPointerAstType();
 			if (inst.CallingConvention != System.Reflection.Metadata.SignatureCallingConvention.Default)
 			{
 				ty.CallingConvention = inst.CallingConvention.ToString().ToLowerInvariant();
 			}
 			foreach (var parameterType in inst.ParameterTypes)
 			{
-				ty.TypeArguments.Add(astBuilder.ConvertType(parameterType));
+				ty.Parameters.Add(new ParameterDeclaration {
+					Type = astBuilder.ConvertType(parameterType)
+				});
 			}
-			ty.TypeArguments.Add(astBuilder.ConvertType(inst.ReturnType));
+			ty.ReturnType = astBuilder.ConvertType(inst.ReturnType);
 			var functionPointer = Translate(inst.FunctionPointer);
 			var invocation = new InvocationExpression(new CastExpression(ty, functionPointer));
 			foreach (var (arg, paramType) in inst.Arguments.Zip(inst.ParameterTypes))

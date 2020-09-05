@@ -185,7 +185,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				var nullableContext = methodDef.GetCustomAttributes().GetNullableContext(module.metadata) ?? DeclaringTypeDefinition.NullableContext;
 				var signature = methodDef.DecodeSignature(module.TypeProvider, genericContext);
-				(returnType, parameters, mod) = DecodeSignature(module, this, signature, methodDef.GetParameters(), nullableContext, module.OptionsForEntity(this));
+				(returnType, parameters, mod) = DecodeSignature(module, this, signature,
+					methodDef.GetParameters(), nullableContext, module.OptionsForEntity(this));
 			}
 			catch (BadImageFormatException)
 			{
@@ -263,7 +264,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			Debug.Assert(i == parameters.Length);
 			var returnType = ApplyAttributeTypeVisitor.ApplyAttributesToType(signature.ReturnType,
-				module.Compilation, returnTypeAttributes, metadata, typeSystemOptions, nullableContext);
+				module.Compilation, returnTypeAttributes, metadata, typeSystemOptions, nullableContext,
+				isSignatureReturnType: true);
 			return (returnType, parameters, signature.ReturnType as ModifiedType);
 		}
 		#endregion

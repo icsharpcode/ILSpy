@@ -910,6 +910,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Function pointers.
+        /// </summary>
+        public static string DecompilerSettings_FunctionPointers {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.FunctionPointers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Include XML documentation comments in the decompiled code.
         /// </summary>
         public static string DecompilerSettings_IncludeXMLDocumentationCommentsInTheDecompiledCode {

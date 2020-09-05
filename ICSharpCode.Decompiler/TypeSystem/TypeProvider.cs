@@ -62,7 +62,55 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType GetFunctionPointerType(SRM.MethodSignature<IType> signature)
 		{
-			return compilation.FindType(KnownTypeCode.IntPtr);
+			if ((module.TypeSystemOptions & TypeSystemOptions.FunctionPointers) == 0)
+				return compilation.FindType(KnownTypeCode.IntPtr);
+			if (signature.Header.IsInstance)
+			{
+				// pointers to member functions are not supported even in C# 9
+				return compilation.FindType(KnownTypeCode.IntPtr);
+			}
+			IType returnType = signature.ReturnType;
+			bool returnIsRefReadOnly = false;
+			if (returnType is ModifiedType modReturn && modReturn.Modifier.IsKnownType(KnownAttribute.In))
+			{
+				returnType = modReturn.ElementType;
+				returnIsRefReadOnly = true;
+			}
+			var parameterTypes = ImmutableArray.CreateBuilder<IType>(signature.ParameterTypes.Length);
+			var parameterReferenceKinds = ImmutableArray.CreateBuilder<ReferenceKind>(signature.ParameterTypes.Length);
+			foreach (var p in signature.ParameterTypes)
+			{
+				IType paramType = p;
+				ReferenceKind kind = ReferenceKind.None;
+				if (p is ModifiedType modreq)
+				{
+					if (modreq.Modifier.IsKnownType(KnownAttribute.In))
+					{
+						kind = ReferenceKind.In;
+						paramType = modreq.ElementType;
+					}
+					else if (modreq.Modifier.IsKnownType(KnownAttribute.Out))
+					{
+						kind = ReferenceKind.Out;
+						paramType = modreq.ElementType;
+					}
+				}
+				if (paramType is ByReferenceType brt)
+				{
+					paramType = brt.ElementType;
+					if (kind == ReferenceKind.None)
+						kind = ReferenceKind.Ref;
+				}
+				else
+				{
+					kind = ReferenceKind.None;
+				}
+				parameterTypes.Add(paramType);
+				parameterReferenceKinds.Add(kind);
+			}
+			return new FunctionPointerType(signature.Header.CallingConvention,
+				returnType, returnIsRefReadOnly,
+				parameterTypes.MoveToImmutable(), parameterReferenceKinds.MoveToImmutable());
 		}
 
 		public IType GetGenericInstantiation(IType genericType, ImmutableArray<IType> typeArguments)

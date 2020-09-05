@@ -306,6 +306,29 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				return astType;
 			}
+			else if (type is FunctionPointerType fpt)
+			{
+				var astType = new FunctionPointerAstType();
+				for (int i = 0; i < fpt.ParameterTypes.Length; i++)
+				{
+					astType.Parameters.Add(new ParameterDeclaration {
+						ParameterModifier = fpt.ParameterReferenceKinds[i] switch
+						{
+							ReferenceKind.In => ParameterModifier.In,
+							ReferenceKind.Ref => ParameterModifier.Ref,
+							ReferenceKind.Out => ParameterModifier.Out,
+							_ => ParameterModifier.None,
+						},
+						Type = ConvertType(fpt.ParameterTypes[i])
+					});
+				}
+				astType.ReturnType = ConvertType(fpt.ReturnType);
+				if (fpt.ReturnIsRefReadOnly && astType.ReturnType is ComposedType ct && ct.HasRefSpecifier)
+				{
+					ct.HasReadOnlySpecifier = true;
+				}
+				return astType;
+			}
 			else
 			{
 				AstType astType;

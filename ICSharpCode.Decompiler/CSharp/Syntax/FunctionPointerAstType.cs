@@ -25,16 +25,13 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
-using ICSharpCode.Decompiler.CSharp.TypeSystem;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class FunctionPointerType : AstType
+	public class FunctionPointerAstType : AstType
 	{
 		public static readonly TokenRole PointerRole = new TokenRole("*");
 		public static readonly Role<Identifier> CallingConventionRole = new Role<Identifier>("Target", Identifier.Null);
@@ -50,8 +47,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Identifier CallingConventionIdentifier => GetChildByRole(CallingConventionRole);
 
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole(Roles.TypeArgument); }
+		public AstNodeCollection<ParameterDeclaration> Parameters {
+			get { return GetChildrenByRole(Roles.Parameter); }
+		}
+
+		public AstType ReturnType {
+			get { return GetChildByRole(Roles.Type); }
+			set { SetChildByRole(Roles.Type, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -71,8 +73,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			return other is FunctionPointerType o && MatchString(this.CallingConvention, o.CallingConvention)
-				&& this.TypeArguments.DoMatch(o.TypeArguments, match);
+			return other is FunctionPointerAstType o && MatchString(this.CallingConvention, o.CallingConvention)
+				&& this.Parameters.DoMatch(o.Parameters, match)
+				&& this.ReturnType.DoMatch(o.ReturnType, match);
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
@@ -81,4 +84,3 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 }
-
