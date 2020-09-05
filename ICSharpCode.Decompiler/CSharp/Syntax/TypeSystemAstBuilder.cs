@@ -928,8 +928,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				else
 				{
-					if (IsSpecialConstant(underlyingType, constantValue, out var expr))
+					if (!(PrintIntegralValuesAsHex && underlyingType.IsCSharpPrimitiveIntegerType())
+						&& IsSpecialConstant(underlyingType, constantValue, out var expr))
+					{
 						return expr;
+					}
 					if (underlyingType.IsKnownType(KnownTypeCode.Double) || underlyingType.IsKnownType(KnownTypeCode.Single))
 						return ConvertFloatingPointLiteral(underlyingType, constantValue);
 					IType literalType = underlyingType;
