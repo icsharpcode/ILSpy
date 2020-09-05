@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Reflection.Metadata;
-
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -163,7 +161,7 @@ namespace ICSharpCode.Decompiler.IL
 				case CallVirt callVirt:
 					return callVirt.Method.ReturnType;
 				case CallIndirect calli:
-					return calli.ReturnType;
+					return calli.FunctionPointerType.ReturnType;
 				case UserDefinedLogicOperator logicOp:
 					return logicOp.Method.ReturnType;
 				case LdObj ldobj:

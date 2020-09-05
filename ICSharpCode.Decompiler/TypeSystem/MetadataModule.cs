@@ -689,21 +689,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region Decode Standalone Signature
-		public MethodSignature<IType> DecodeMethodSignature(StandaloneSignatureHandle handle, GenericContext genericContext)
+		public (SignatureHeader, FunctionPointerType) DecodeMethodSignature(StandaloneSignatureHandle handle, GenericContext genericContext)
 		{
 			var standaloneSignature = metadata.GetStandaloneSignature(handle);
 			if (standaloneSignature.GetKind() != StandaloneSignatureKind.Method)
 				throw new BadImageFormatException("Expected Method signature");
 			var sig = standaloneSignature.DecodeMethodSignature(TypeProvider, genericContext);
-			return new MethodSignature<IType>(
-				sig.Header,
-				IntroduceTupleTypes(sig.ReturnType),
-				sig.RequiredParameterCount,
-				sig.GenericParameterCount,
-				ImmutableArray.CreateRange(
-					sig.ParameterTypes, IntroduceTupleTypes
-				)
-			);
+			var fpt = FunctionPointerType.FromSignature(sig, this);
+			return (sig.Header, (FunctionPointerType)IntroduceTupleTypes(fpt));
 		}
 
 		public ImmutableArray<IType> DecodeLocalSignature(StandaloneSignatureHandle handle, GenericContext genericContext)

@@ -47,6 +47,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	internal class FunctionPointersWithRefParams
 	{
 		public unsafe delegate*<in byte, ref char, out float, ref readonly int> F1;
+		public unsafe delegate*<ref char, out float, ref int> F2;
+
+		// TODO: re-enable test after https://github.com/dotnet/roslyn/issues/47487 is fixed
+		//public unsafe int CallF1(byte b, char c, out float f)
+		//{
+		//	return F1(1, ref c, out f);
+		//}
+
+		public unsafe void CallF2(byte b, char c, out float f)
+		{
+			F2(ref c, out f) = b;
+		}
 	}
 
 	// TODO: the new calling convention syntax isn't yet available in the released Roslyn version

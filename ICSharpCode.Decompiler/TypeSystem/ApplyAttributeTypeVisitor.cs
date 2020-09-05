@@ -333,9 +333,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				dynamicTypeIndex += type.ParameterReferenceKinds[i] switch
 				{
 					ReferenceKind.None => 1,
-					ReferenceKind.Ref => 2,
-					ReferenceKind.Out => 3,
-					ReferenceKind.In => 3,
+					ReferenceKind.Ref => 1,
+					ReferenceKind.Out => 2, // in/out also count the modreq
+					ReferenceKind.In => 2,
 					_ => throw new NotSupportedException()
 				};
 				parameters[i] = type.ParameterTypes[i].AcceptVisitor(this);
@@ -343,9 +343,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			if (!changed)
 				return type;
-			return new FunctionPointerType(type.CallingConvention,
-				returnType, type.ReturnIsRefReadOnly,
-				parameters.ToImmutableArray(), type.ParameterReferenceKinds);
+			return type.WithSignature(returnType, parameters.ToImmutableArray());
 		}
 
 		public override IType VisitTypeDefinition(ITypeDefinition type)

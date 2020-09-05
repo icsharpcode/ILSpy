@@ -3888,25 +3888,36 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return ErrorExpression("calli with instance method signature not supportd");
 			}
-			var ty = new FunctionPointerAstType();
-			if (inst.CallingConvention != System.Reflection.Metadata.SignatureCallingConvention.Default)
+
+			var functionPointer = Translate(inst.FunctionPointer, typeHint: inst.FunctionPointerType);
+			if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(functionPointer.Type, inst.FunctionPointerType))
 			{
-				ty.CallingConvention = inst.CallingConvention.ToString().ToLowerInvariant();
+				functionPointer = functionPointer.ConvertTo(inst.FunctionPointerType, this);
 			}
-			foreach (var parameterType in inst.ParameterTypes)
+			var fpt = (FunctionPointerType)functionPointer.Type.SkipModifiers();
+			var invocation = new InvocationExpression();
+			invocation.Target = functionPointer;
+			foreach (var (argInst, (paramType, paramRefKind)) in inst.Arguments.Zip(fpt.ParameterTypes.Zip(fpt.ParameterReferenceKinds)))
 			{
-				ty.Parameters.Add(new ParameterDeclaration {
-					Type = astBuilder.ConvertType(parameterType)
-				});
+				var arg = Translate(argInst, typeHint: paramType).ConvertTo(paramType, this, allowImplicitConversion: true);
+				if (paramRefKind != ReferenceKind.None)
+				{
+					arg = ChangeDirectionExpressionTo(arg, paramRefKind);
+				}
+				invocation.Arguments.Add(arg);
 			}
-			ty.ReturnType = astBuilder.ConvertType(inst.ReturnType);
-			var functionPointer = Translate(inst.FunctionPointer);
-			var invocation = new InvocationExpression(new CastExpression(ty, functionPointer));
-			foreach (var (arg, paramType) in inst.Arguments.Zip(inst.ParameterTypes))
+			if (fpt.ReturnType.SkipModifiers() is ByReferenceType brt)
 			{
-				invocation.Arguments.Add(Translate(arg, typeHint: paramType).ConvertTo(paramType, this, allowImplicitConversion: true));
+				var rr = new ResolveResult(brt.ElementType);
+				return new DirectionExpression(
+					FieldDirection.Ref,
+					invocation.WithRR(rr).WithILInstruction(inst)
+				).WithRR(new ByReferenceResolveResult(rr, ReferenceKind.Ref)).WithoutILInstruction();
 			}
-			return invocation.WithRR(new ResolveResult(inst.ReturnType)).WithILInstruction(inst);
+			else
+			{
+				return invocation.WithRR(new ResolveResult(fpt.ReturnType)).WithILInstruction(inst);
+			}
 		}
 
 		protected internal override TranslatedExpression VisitDeconstructInstruction(DeconstructInstruction inst, TranslationContext context)

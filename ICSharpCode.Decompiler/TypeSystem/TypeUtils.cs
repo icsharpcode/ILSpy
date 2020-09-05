@@ -273,6 +273,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case TypeKind.Pointer:
 				case TypeKind.NInt:
 				case TypeKind.NUInt:
+				case TypeKind.FunctionPointer:
 					return StackType.I;
 				case TypeKind.TypeParameter:
 					// Type parameters are always considered StackType.O, even
@@ -340,6 +341,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				case TypeKind.Pointer:
 				case TypeKind.NUInt:
+				case TypeKind.FunctionPointer:
 					return Sign.Unsigned;
 				case TypeKind.NInt:
 					return Sign.Signed;
@@ -421,6 +423,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case TypeKind.ByReference:
 					return PrimitiveType.Ref;
 				case TypeKind.NInt:
+				case TypeKind.FunctionPointer:
 					return PrimitiveType.I;
 				case TypeKind.NUInt:
 					return PrimitiveType.U;

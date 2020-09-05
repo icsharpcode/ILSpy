@@ -130,12 +130,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var rr = memberReferenceExpression.GetResolveResult();
 			if (rr != null)
 			{
-				if (rr.Type is PointerType)
+				if (IsPointer(rr.Type))
 					return true;
 				if (rr is MemberResolveResult mrr && mrr.Member.ReturnType.Kind == TypeKind.Delegate)
 				{
 					var method = mrr.Member.ReturnType.GetDefinition()?.GetDelegateInvokeMethod();
-					if (method != null && (method.ReturnType is PointerType || method.Parameters.Any(p => p.Type is PointerType)))
+					if (method != null && (IsPointer(method.ReturnType) || method.Parameters.Any(p => IsPointer(p.Type))))
 						return true;
 				}
 			}
@@ -149,12 +149,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var rr = identifierExpression.GetResolveResult();
 			if (rr != null)
 			{
-				if (rr.Type is PointerType)
+				if (IsPointer(rr.Type))
 					return true;
 				if (rr is MemberResolveResult mrr && mrr.Member.ReturnType.Kind == TypeKind.Delegate)
 				{
 					var method = mrr.Member.ReturnType.GetDefinition()?.GetDelegateInvokeMethod();
-					if (method != null && (method.ReturnType is PointerType || method.Parameters.Any(p => p.Type is PointerType)))
+					if (method != null && (IsPointer(method.ReturnType) || method.Parameters.Any(p => IsPointer(p.Type))))
 						return true;
 				}
 			}
@@ -166,7 +166,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			bool result = base.VisitStackAllocExpression(stackAllocExpression);
 			var rr = stackAllocExpression.GetResolveResult();
-			if (rr?.Type is PointerType)
+			if (IsPointer(rr?.Type))
 				return true;
 			return result;
 		}
@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			bool result = base.VisitInvocationExpression(invocationExpression);
 			var rr = invocationExpression.GetResolveResult();
-			if (rr != null && rr.Type is PointerType)
+			if (IsPointer(rr?.Type))
 				return true;
 			return result;
 		}
@@ -184,6 +184,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			base.VisitFixedVariableInitializer(fixedVariableInitializer);
 			return true;
+		}
+
+		private bool IsPointer(IType type)
+		{
+			switch (type?.Kind)
+			{
+				case TypeKind.Pointer:
+				case TypeKind.FunctionPointer:
+					return true;
+				case TypeKind.ByReference:
+					return IsPointer(((ByReferenceType)type).ElementType);
+				default:
+					return false;
+			}
 		}
 	}
 }
