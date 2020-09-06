@@ -75,6 +75,14 @@ internal sealed class ExtraUnsafeTests
 			ptr[4 * 0] = 1;
 		}
 	}
+
+	private static void Issue2148(string[] args)
+	{
+		for (int/*pinned*/ i = 0; i < 100; i++)
+		{
+			Console.WriteLine("Hello World!");
+		}
+	}
 }
 
 namespace System.Runtime.CompilerServices

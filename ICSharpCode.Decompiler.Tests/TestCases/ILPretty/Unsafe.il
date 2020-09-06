@@ -593,4 +593,38 @@ lbl:
 	IL_001c: stind.i4
 	IL_001d: ret
 } // end of method pin_ptr_test
+
+.method private hidebysig static 
+	void Issue2148 (
+		string[] args
+	) cil managed 
+{
+	// Header Size: 12 bytes
+	// Code Size: 24 (0x18) bytes
+	// LocalVarSig Token: 0x11000001 RID: 1
+	.maxstack 2
+	.entrypoint
+	.locals init (
+		[0] int32 pinned
+	)
+
+	/* 0x00000264 16           */ IL_0000: ldc.i4.0
+	/* 0x00000265 0A           */ IL_0001: stloc.0
+	/* 0x00000266 2B0E         */ IL_0002: br.s      IL_0012
+	// loop start (head: IL_0012)
+		/* 0x00000268 7201000070   */ IL_0004: ldstr     "Hello World!"
+		/* 0x0000026D 280B00000A   */ IL_0009: call      void [System.Console]System.Console::WriteLine(string)
+		/* 0x00000272 06           */ IL_000E: ldloc.0
+		/* 0x00000273 17           */ IL_000F: ldc.i4.1
+		/* 0x00000274 58           */ IL_0010: add
+		/* 0x00000275 0A           */ IL_0011: stloc.0
+
+		/* 0x00000276 06           */ IL_0012: ldloc.0
+		/* 0x00000277 1F64         */ IL_0013: ldc.i4.s  100
+		/* 0x00000279 32ED         */ IL_0015: blt.s     IL_0004
+	// end loop
+
+	/* 0x0000027B 2A           */ IL_0017: ret
+} // end of method Issue2148
+
 }
