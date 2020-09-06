@@ -535,11 +535,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					return new NullReferenceExpression()
 						.WithILInstruction(this.ILInstructions)
-						.WithRR(new ConstantResolveResult(targetType, null));
+						.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
 				}
 				return new CastExpression(expressionBuilder.ConvertType(targetType), new NullReferenceExpression())
 					.WithILInstruction(this.ILInstructions)
-					.WithRR(new ConstantResolveResult(targetType, null));
+					.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
 			}
 			if (allowImplicitConversion)
 			{

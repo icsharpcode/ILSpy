@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -25,6 +26,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (delegate*<int, void>)(&Overloaded);
 		}
+
+		public static string VarianceTest(object o)
+		{
+			return null;
+		}
+
+		public unsafe delegate*<StringBuilder, object> Variance()
+		{
+			return (delegate*<object, string>)(&VarianceTest);
+		}
+
+#if TODO
+		public unsafe delegate*<void> AddressOfLocalFunction()
+		{
+			return &LocalFunction;
+
+			static void LocalFunction()
+			{
+
+			}
+		}
+#endif
 	}
 
 	internal class FunctionPointersWithDynamicTypes
@@ -94,4 +117,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	//  public delegate* unmanaged[Cdecl]<void> cdecl;
 	//}
 
+	internal class FunctionPointerTypeInference
+	{
+		private static char Test(int i)
+		{
+			return (char)i;
+		}
+
+		public unsafe R GenericMethod<T, R>(delegate*<T, R> f, T arg)
+		{
+			return f(arg);
+		}
+
+		public unsafe void Call()
+		{
+			delegate*<int, char> f = &Test;
+			GenericMethod(f, 0);
+			GenericMethod((delegate*<int, char>)(&Test), 1);
+			GenericMethod<int, char>(null, 2);
+		}
+	}
 }

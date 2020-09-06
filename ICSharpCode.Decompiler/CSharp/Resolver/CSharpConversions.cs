@@ -874,6 +874,27 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return true;
 			if (fromType.Kind == TypeKind.Null && toType.Kind.IsAnyPointer())
 				return true;
+			if (fromType is FunctionPointerType fromFnPtr && toType is FunctionPointerType toFnPtr
+				&& fromFnPtr.CallingConvention == toFnPtr.CallingConvention
+				&& fromFnPtr.ParameterTypes.Length == toFnPtr.ParameterTypes.Length)
+			{
+				// Variance applies to function pointer types
+				const int nestingDepth = 0;
+				if (!(IdentityConversion(fromFnPtr.ReturnType, toFnPtr.ReturnType)
+					|| ImplicitReferenceConversion(fromFnPtr.ReturnType, toFnPtr.ReturnType, nestingDepth)))
+				{
+					return false;
+				}
+				foreach (var (fromPT, toPT) in fromFnPtr.ParameterTypes.Zip(toFnPtr.ParameterTypes))
+				{
+					if (!(IdentityConversion(toPT, fromPT)
+						|| ImplicitReferenceConversion(toPT, fromPT, nestingDepth)))
+					{
+						return false;
+					}
+				}
+				return true;
+			}
 			return false;
 		}
 
