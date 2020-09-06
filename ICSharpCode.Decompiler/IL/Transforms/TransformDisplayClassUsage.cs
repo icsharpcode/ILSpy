@@ -56,6 +56,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public string Name => field.Name;
 
 			public bool CanPropagate { get; private set; }
+			public bool HasInitialValue { get; set; }
 
 			public HashSet<ILInstruction> Initializers { get; } = new HashSet<ILInstruction>();
 
@@ -79,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (declaredVariable != null)
 					return declaredVariable;
 				declaredVariable = container.Variable.Function.RegisterVariable(VariableKind.Local, field.Type, field.Name);
-				declaredVariable.HasInitialValue = container.Type.IsReferenceType != false || container.Variable.HasInitialValue;
+				declaredVariable.HasInitialValue = HasInitialValue;
 				declaredVariable.CaptureScope = container.CaptureScope;
 				return declaredVariable;
 			}
@@ -176,6 +177,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			foreach (var displayClass in displayClasses.Values)
 			{
+				// handle uninitialized fields
+				foreach (var f in displayClass.Type.Fields)
+				{
+					if (displayClass.VariablesToDeclare.ContainsKey(f))
+						continue;
+					var variable = AddVariable(displayClass, null, f);
+					variable.HasInitialValue = true;
+					displayClass.VariablesToDeclare[(IField)f.MemberDefinition] = variable;
+				}
+
 				foreach (var v in displayClass.VariablesToDeclare.Values)
 				{
 					if (v.CanPropagate)
@@ -489,6 +500,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				variable.Propagate(ResolveVariableToPropagate(statement.Value, field.Type));
 				variable.Initializers.Add(statement);
 			}
+			variable.HasInitialValue =
+				result.Type.IsReferenceType != false || result.Variable.HasInitialValue;
 			return variable;
 		}
 
@@ -811,7 +824,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		private bool IsDisplayClassFieldAccess(ILInstruction inst, out ILVariable displayClassVar, out DisplayClass displayClass, out IField field)
+		private bool IsDisplayClassFieldAccess(ILInstruction inst,
+			out ILVariable displayClassVar, out DisplayClass displayClass, out IField field)
 		{
 			displayClass = null;
 			displayClassVar = null;
