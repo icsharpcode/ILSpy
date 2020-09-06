@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 namespace ICSharpCode.Decompiler.Util
@@ -135,6 +136,20 @@ namespace ICSharpCode.Decompiler.Util
 				result[index++] = func(element);
 			}
 			return result;
+		}
+
+		/// <summary>
+		/// Equivalent to <code>collection.Select(func).ToImmutableArray()</code>, but more efficient as it makes
+		/// use of the input collection's known size.
+		/// </summary>
+		public static ImmutableArray<U> SelectImmutableArray<T, U>(this IReadOnlyCollection<T> collection, Func<T, U> func)
+		{
+			var builder = ImmutableArray.CreateBuilder<U>(collection.Count);
+			foreach (var element in collection)
+			{
+				builder.Add(func(element));
+			}
+			return builder.MoveToImmutable();
 		}
 
 		/// <summary>

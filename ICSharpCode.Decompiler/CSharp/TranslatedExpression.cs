@@ -370,7 +370,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 					}
 				}
-				else if (type.Kind != TypeKind.Pointer)
+				else if (!type.Kind.IsAnyPointer())
 				{
 					// If overflow-checking is disabled, the only way to truncate to native size
 					// without throwing an exception in 32-bit mode is to use a pointer type.
@@ -380,7 +380,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			else if (targetUType.IsKnownType(KnownTypeCode.UIntPtr))
 			{ // Conversion to UIntPtr
-				if (type.IsKnownType(KnownTypeCode.UInt32) || type.Kind == TypeKind.Pointer || type.Kind == TypeKind.NUInt)
+				if (type.IsKnownType(KnownTypeCode.UInt32) || type.Kind.IsAnyPointer() || type.Kind == TypeKind.NUInt)
 				{
 					// normal casts work for uint/nuint and pointers (both in checked and unchecked context)
 				}
@@ -409,22 +409,22 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			if (targetType.Kind == TypeKind.Pointer && type.Kind == TypeKind.Enum)
+			if (targetType.Kind.IsAnyPointer() && type.Kind == TypeKind.Enum)
 			{
 				// enum to pointer: C# doesn't allow such casts
 				// -> convert via underlying type
 				return this.ConvertTo(type.GetEnumUnderlyingType(), expressionBuilder, checkForOverflow)
 					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 			}
-			else if (targetUType.Kind == TypeKind.Enum && type.Kind == TypeKind.Pointer)
+			else if (targetUType.Kind == TypeKind.Enum && type.Kind.IsAnyPointer())
 			{
 				// pointer to enum: C# doesn't allow such casts
 				// -> convert via underlying type
 				return this.ConvertTo(targetUType.GetEnumUnderlyingType(), expressionBuilder, checkForOverflow)
 					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 			}
-			if (targetType.Kind == TypeKind.Pointer && type.IsKnownType(KnownTypeCode.Char)
-			   || targetUType.IsKnownType(KnownTypeCode.Char) && type.Kind == TypeKind.Pointer)
+			if (targetType.Kind.IsAnyPointer() && type.IsKnownType(KnownTypeCode.Char)
+			   || targetUType.IsKnownType(KnownTypeCode.Char) && type.Kind.IsAnyPointer())
 			{
 				// char <-> pointer: C# doesn't allow such casts
 				// -> convert via ushort
@@ -529,7 +529,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 				}
 			}
-			if (targetType.Kind == TypeKind.Pointer && (0.Equals(ResolveResult.ConstantValue) || 0u.Equals(ResolveResult.ConstantValue)))
+			if (targetType.Kind.IsAnyPointer() && (0.Equals(ResolveResult.ConstantValue) || 0u.Equals(ResolveResult.ConstantValue)))
 			{
 				if (allowImplicitConversion)
 				{

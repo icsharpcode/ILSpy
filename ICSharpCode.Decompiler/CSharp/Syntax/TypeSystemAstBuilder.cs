@@ -309,6 +309,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			else if (type is FunctionPointerType fpt)
 			{
 				var astType = new FunctionPointerAstType();
+				if (fpt.CallingConvention != System.Reflection.Metadata.SignatureCallingConvention.Default)
+				{
+					astType.CallingConvention = fpt.CallingConvention.ToString().ToLowerInvariant();
+				}
 				for (int i = 0; i < fpt.ParameterTypes.Length; i++)
 				{
 					var paramDecl = new ParameterDeclaration();

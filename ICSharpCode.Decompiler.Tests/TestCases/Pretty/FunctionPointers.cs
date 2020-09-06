@@ -2,6 +2,31 @@
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	public class FunctionPointerAddressOf
+	{
+		public static void Overloaded()
+		{
+		}
+		public static void Overloaded(int a)
+		{
+		}
+
+		public unsafe delegate*<void> GetAddress()
+		{
+			return &Overloaded;
+		}
+
+		public unsafe IntPtr GetAddressAsIntPtr()
+		{
+			return (IntPtr)(delegate*<void>)(&Overloaded);
+		}
+
+		public unsafe void* GetAddressAsVoidPtr()
+		{
+			return (delegate*<int, void>)(&Overloaded);
+		}
+	}
+
 	internal class FunctionPointersWithDynamicTypes
 	{
 		public class D<T, U>
@@ -68,4 +93,5 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	//  public delegate* unmanaged<void> unmanaged;
 	//  public delegate* unmanaged[Cdecl]<void> cdecl;
 	//}
+
 }

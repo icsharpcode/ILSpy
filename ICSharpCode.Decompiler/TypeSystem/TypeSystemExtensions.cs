@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -292,6 +291,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static bool HasReadonlyModifier(this IMethod accessor)
 		{
 			return accessor.ThisIsRefReadOnly && accessor.DeclaringTypeDefinition?.IsReadOnly == false;
+		}
+
+		public static bool IsAnyPointer(this TypeKind typeKind)
+		{
+			return typeKind switch
+			{
+				TypeKind.Pointer => true,
+				TypeKind.FunctionPointer => true,
+				_ => false
+			};
 		}
 
 		#region GetType/Member

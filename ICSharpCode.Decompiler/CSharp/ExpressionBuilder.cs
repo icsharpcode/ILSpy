@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -3869,16 +3870,38 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdFtn(LdFtn inst, TranslationContext context)
 		{
 			ExpressionWithResolveResult delegateRef = new CallBuilder(this, typeSystem, settings).BuildMethodReference(inst.Method, isVirtual: false);
-			return new InvocationExpression(new IdentifierExpression("__ldftn"), delegateRef)
-				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.IntPtr)))
-				.WithILInstruction(inst);
+			if (!inst.Method.IsStatic)
+			{
+				// C# 9 function pointers don't support instance methods
+				return new InvocationExpression(new IdentifierExpression("__ldftn"), delegateRef)
+					.WithRR(new ResolveResult(new PointerType(compilation.FindType(KnownTypeCode.Void))))
+					.WithILInstruction(inst);
+			}
+			// C# 9 function pointer
+			var ftp = new FunctionPointerType(
+				typeSystem.MainModule,
+				SignatureCallingConvention.Default, // TODO
+				inst.Method.ReturnType, inst.Method.ReturnTypeIsRefReadOnly,
+				inst.Method.Parameters.SelectImmutableArray(p => p.Type),
+				inst.Method.Parameters.SelectImmutableArray(p => p.ReferenceKind)
+			);
+			ExpressionWithResolveResult addressOf = new UnaryOperatorExpression(
+				UnaryOperatorType.AddressOf,
+				delegateRef
+			).WithRR(new ResolveResult(SpecialType.NoType)).WithILInstruction(inst);
+			var conversion = Conversion.MethodGroupConversion(
+				inst.Method, isVirtualMethodLookup: false, delegateCapturesFirstArgument: false);
+			return new CastExpression(ConvertType(ftp), addressOf)
+				.WithRR(new ConversionResolveResult(ftp, addressOf.ResolveResult, conversion))
+				.WithoutILInstruction();
 		}
 
 		protected internal override TranslatedExpression VisitLdVirtFtn(LdVirtFtn inst, TranslationContext context)
 		{
+			// C# 9 function pointers don't support instance methods
 			ExpressionWithResolveResult delegateRef = new CallBuilder(this, typeSystem, settings).BuildMethodReference(inst.Method, isVirtual: true);
 			return new InvocationExpression(new IdentifierExpression("__ldvirtftn"), delegateRef)
-				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.IntPtr)))
+				.WithRR(new ResolveResult(new PointerType(compilation.FindType(KnownTypeCode.Void))))
 				.WithILInstruction(inst);
 		}
 
