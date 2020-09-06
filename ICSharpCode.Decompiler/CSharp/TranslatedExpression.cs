@@ -328,7 +328,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			  // Direct cast only works correctly for IntPtr -> long.
 			  // IntPtr -> int works correctly only in checked context.
 			  // Everything else can be worked around by casting via long.
-				if (!(targetType.IsKnownType(KnownTypeCode.Int64) || targetType.Kind == TypeKind.NInt || checkForOverflow && targetType.IsKnownType(KnownTypeCode.Int32)))
+				if (!(targetType.IsKnownType(KnownTypeCode.Int64) || targetType.Kind == TypeKind.NInt
+					|| (checkForOverflow && targetType.IsKnownType(KnownTypeCode.Int32))
+					|| targetType.Kind.IsAnyPointer()))
 				{
 					var convertVia = expressionBuilder.settings.NativeIntegers ? SpecialType.NInt : compilation.FindType(KnownTypeCode.Int64);
 					return this.ConvertTo(convertVia, expressionBuilder, checkForOverflow)
@@ -340,7 +342,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			  // Direct cast only works correctly for UIntPtr -> ulong.
 			  // UIntPtr -> uint works correctly only in checked context.
 			  // Everything else can be worked around by casting via ulong.
-				if (!(targetType.IsKnownType(KnownTypeCode.UInt64) || targetType.Kind == TypeKind.NUInt || checkForOverflow && targetType.IsKnownType(KnownTypeCode.UInt32)))
+				if (!(targetType.IsKnownType(KnownTypeCode.UInt64) || targetType.Kind == TypeKind.NUInt
+					|| (checkForOverflow && targetType.IsKnownType(KnownTypeCode.UInt32))
+					|| targetType.Kind.IsAnyPointer()))
 				{
 					var convertVia = expressionBuilder.settings.NativeIntegers ? SpecialType.NUInt : compilation.FindType(KnownTypeCode.UInt64);
 					return this.ConvertTo(convertVia, expressionBuilder, checkForOverflow)

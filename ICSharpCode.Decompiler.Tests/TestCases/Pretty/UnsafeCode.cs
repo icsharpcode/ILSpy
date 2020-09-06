@@ -509,5 +509,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			int num = value.Integers[index];
 			num.ToString();
 		}
+
+		private unsafe static void* CastToVoidPtr(IntPtr intptr)
+		{
+			return (void*)intptr;
+		}
+
+		private unsafe static void* CastToVoidPtr(UIntPtr intptr)
+		{
+			return (void*)intptr;
+		}
+
+		private unsafe static void* CastToVoidPtr(int* intptr)
+		{
+			return intptr;
+		}
 	}
 }
