@@ -28,6 +28,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		private byte[] byteArray;
+		private ulong uint64Field;
+
+		public int Issue1796a {
+			get {
+				return (int)(uint64Field & 0x7FFFFFFF);
+			}
+			set {
+				uint64Field = ((uint64Field & 0xFFFFFFFF80000000uL) | (ulong)value);
+			}
+		}
+
+		public ushort Issue1796b {
+			get {
+				return (ushort)((uint64Field & 0xFFFF000000000000uL) >> 48);
+			}
+			set {
+				uint64Field = ((uint64Field & 0xFFFFFFFFFFFFuL) | ((ulong)value << 48));
+			}
+		}
 
 		public byte SubtractFrom256(byte b)
 		{
