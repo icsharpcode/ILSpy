@@ -37,7 +37,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return (delegate*<object, string>)(&VarianceTest);
 		}
 
-#if TODO
 		public unsafe delegate*<void> AddressOfLocalFunction()
 		{
 			return &LocalFunction;
@@ -47,7 +46,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			}
 		}
-#endif
 	}
 
 	internal class FunctionPointersWithDynamicTypes

@@ -23,7 +23,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
-using System.Text;
 using System.Text.RegularExpressions;
 
 using ICSharpCode.Decompiler.CSharp;
@@ -44,7 +43,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		struct LocalFunctionInfo
 		{
-			public List<CallInstruction> UseSites;
+			public List<ILInstruction> UseSites;
 			public IMethod Method;
 			public ILFunction Definition;
 			/// <summary>
@@ -80,8 +79,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			// Disable the transform if we are decompiling a display-class or local function method:
 			// This happens if a local function or display class is selected in the ILSpy tree view.
-			if (IsLocalFunctionMethod(function.Method, context) || IsLocalFunctionDisplayClass(function.Method.ParentModule.PEFile, (TypeDefinitionHandle)function.Method.DeclaringTypeDefinition.MetadataToken, context))
+			if (IsLocalFunctionMethod(function.Method, context) || IsLocalFunctionDisplayClass(
+					function.Method.ParentModule.PEFile,
+					(TypeDefinitionHandle)function.Method.DeclaringTypeDefinition.MetadataToken,
+					context)
+				)
+			{
 				return;
+			}
+
 			this.context = context;
 			this.resolveContext = new SimpleTypeResolveContext(function.Method);
 			var localFunctions = new Dictionary<MethodDefinitionHandle, LocalFunctionInfo>();
@@ -103,7 +109,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var thisVar = localFunction.Variables.SingleOrDefault(VariableKindExtensions.IsThis);
 				if (thisVar == null)
 					continue;
-				var compatibleArgument = FindCompatibleArgument(info, info.UseSites.SelectArray(u => u.Arguments[0]), ignoreStructure: true);
+				var compatibleArgument = FindCompatibleArgument(
+					info,
+					info.UseSites.OfType<CallInstruction>().Select(u => u.Arguments[0]).ToArray(),
+					ignoreStructure: true
+				);
 				if (compatibleArgument == null)
 					continue;
 				context.Step($"Replace 'this' with {compatibleArgument}", localFunction);
@@ -181,13 +191,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					foreach (var useSite in info.UseSites)
 					{
 						context.Step($"Transform use-site at IL_{useSite.StartILOffset:x4}", useSite);
-						if (useSite.OpCode == OpCode.NewObj)
+						switch (useSite)
 						{
-							TransformToLocalFunctionReference(info.Definition, useSite);
-						}
-						else
-						{
-							TransformToLocalFunctionInvocation(info.Definition.ReducedMethod, useSite);
+							case NewObj newObj:
+								TransformToLocalFunctionReference(info.Definition, newObj);
+								break;
+							case CallInstruction call:
+								TransformToLocalFunctionInvocation(info.Definition.ReducedMethod, call);
+								break;
+							case LdFtn fnptr:
+								var specializeMethod = info.Definition.ReducedMethod
+									.Specialize(fnptr.Method.Substitution);
+								var replacement = new LdFtn(specializeMethod).WithILRange(fnptr);
+								fnptr.ReplaceWith(replacement);
+								break;
+							default:
+								throw new NotSupportedException();
 						}
 					}
 				}
@@ -210,26 +229,34 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				foreach (var useSite in info.UseSites)
 				{
-					if (useSite is NewObj)
+					switch (useSite)
 					{
-						AddAsArgument(-1, useSite.Arguments[0]);
-					}
-					else
-					{
-						int firstArgumentIndex;
-						if (info.Method.IsStatic)
-						{
-							firstArgumentIndex = 0;
-						}
-						else
-						{
-							firstArgumentIndex = 1;
-							AddAsArgument(-1, useSite.Arguments[0]);
-						}
-						for (int i = useSite.Arguments.Count - 1; i >= firstArgumentIndex; i--)
-						{
-							AddAsArgument(i - firstArgumentIndex, useSite.Arguments[i]);
-						}
+						case NewObj newObj:
+							AddAsArgument(-1, newObj.Arguments[0]);
+							break;
+						case CallInstruction call:
+							int firstArgumentIndex;
+							if (info.Method.IsStatic)
+							{
+								firstArgumentIndex = 0;
+							}
+							else
+							{
+								firstArgumentIndex = 1;
+								AddAsArgument(-1, call.Arguments[0]);
+							}
+							for (int i = call.Arguments.Count - 1; i >= firstArgumentIndex; i--)
+							{
+								AddAsArgument(i - firstArgumentIndex, call.Arguments[i]);
+							}
+							break;
+						case LdFtn _:
+							// &LocalFunction is only possible, if the local function is declared static,
+							// this means that the local function can be declared in the top-level scope.
+							// Thus, there are no closure parameters that need propagation.
+							break;
+						default:
+							throw new NotSupportedException();
 					}
 				}
 
@@ -354,20 +381,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					var callerMethod = useSite.Ancestors.OfType<ILFunction>().First().Method;
 					callerMethod = callerMethod.ReducedFrom ?? callerMethod;
-					IMethod method0;
-					if (useSite.OpCode == OpCode.NewObj)
+					IMethod m;
+					switch (useSite)
 					{
-						method0 = ((LdFtn)useSite.Arguments[1]).Method;
+						case NewObj newObj:
+							m = ((LdFtn)newObj.Arguments[1]).Method;
+							break;
+						case IInstructionWithMethodOperand withMethod:
+							m = withMethod.Method;
+							break;
+						default:
+							throw new NotSupportedException();
 					}
-					else
-					{
-						method0 = useSite.Method;
-					}
-					var totalSkipCount = skipCount + method0.DeclaringType.TypeParameterCount;
-					var methodSkippedArgs = method0.DeclaringType.TypeArguments.Concat(method0.TypeArguments).Take(totalSkipCount);
+					var totalSkipCount = skipCount + m.DeclaringType.TypeParameterCount;
+					var methodSkippedArgs = m.DeclaringType.TypeArguments.Concat(m.TypeArguments).Take(totalSkipCount);
 					Debug.Assert(methodSkippedArgs.SequenceEqual(callerMethod.DeclaringType.TypeArguments.Concat(callerMethod.TypeArguments).Take(totalSkipCount)));
 					Debug.Assert(methodSkippedArgs.All(p => p.Kind == TypeKind.TypeParameter));
-					Debug.Assert(methodSkippedArgs.Select(p => p.Name).SequenceEqual(method0.DeclaringType.TypeParameters.Concat(method0.TypeParameters).Take(totalSkipCount).Select(p => p.Name)));
+					Debug.Assert(methodSkippedArgs.Select(p => p.Name).SequenceEqual(m.DeclaringType.TypeParameters.Concat(m.TypeParameters).Take(totalSkipCount).Select(p => p.Name)));
 				}
 #endif
 			}
@@ -383,19 +413,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					HandleUseSite(call.Method, call);
 				}
-				else if (inst is LdFtn ldftn && !ldftn.Method.IsLocalFunction && ldftn.Parent is NewObj newObj && IsLocalFunctionMethod(ldftn.Method, context) && DelegateConstruction.IsDelegateConstruction(newObj))
+				else if (inst is LdFtn ldftn && !ldftn.Method.IsLocalFunction && IsLocalFunctionMethod(ldftn.Method, context))
 				{
-					HandleUseSite(ldftn.Method, newObj);
+					if (ldftn.Parent is NewObj newObj && DelegateConstruction.IsDelegateConstruction(newObj))
+						HandleUseSite(ldftn.Method, newObj);
+					else
+						HandleUseSite(ldftn.Method, ldftn);
 				}
 			}
 
-			void HandleUseSite(IMethod targetMethod, CallInstruction inst)
+			void HandleUseSite(IMethod targetMethod, ILInstruction inst)
 			{
 				if (!localFunctions.TryGetValue((MethodDefinitionHandle)targetMethod.MetadataToken, out var info))
 				{
 					context.StepStartGroup($"Read local function '{targetMethod.Name}'", inst);
 					info = new LocalFunctionInfo() {
-						UseSites = new List<CallInstruction>() { inst },
+						UseSites = new List<ILInstruction>() { inst },
 						LocalFunctionArguments = new Dictionary<int, List<ILInstruction>>(),
 						Method = (IMethod)targetMethod.MemberDefinition,
 					};
@@ -618,17 +651,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			useSite.ReplaceWith(replacement);
 		}
 
-		void DetermineCaptureAndDeclarationScope(LocalFunctionInfo info, CallInstruction useSite)
+		void DetermineCaptureAndDeclarationScope(LocalFunctionInfo info, ILInstruction useSite)
 		{
-			int firstArgumentIndex = info.Definition.Method.IsStatic ? 0 : 1;
-			for (int i = useSite.Arguments.Count - 1; i >= firstArgumentIndex; i--)
+			switch (useSite)
 			{
-				if (!DetermineCaptureAndDeclarationScope(info, i - firstArgumentIndex, useSite.Arguments[i]))
+				case CallInstruction call:
+					int firstArgumentIndex = info.Definition.Method.IsStatic ? 0 : 1;
+					for (int i = call.Arguments.Count - 1; i >= firstArgumentIndex; i--)
+					{
+						if (!DetermineCaptureAndDeclarationScope(info, i - firstArgumentIndex, call.Arguments[i]))
+							break;
+					}
+					if (firstArgumentIndex > 0)
+					{
+						DetermineCaptureAndDeclarationScope(info, -1, call.Arguments[0]);
+					}
 					break;
-			}
-			if (firstArgumentIndex > 0)
-			{
-				DetermineCaptureAndDeclarationScope(info, -1, useSite.Arguments[0]);
+				case LdFtn _:
+					// &LocalFunction is only possible, if the local function is declared static,
+					// this means that the local function can be declared in the top-level scope.
+					// leave info.DeclarationScope null/unassigned.
+					break;
+				default:
+					throw new NotSupportedException();
 			}
 		}
 
@@ -638,8 +683,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILVariable closureVar;
 			if (parameterIndex >= 0)
 			{
-				if (!(parameterIndex < function.Method.Parameters.Count && IsClosureParameter(function.Method.Parameters[parameterIndex], resolveContext)))
+				if (!(parameterIndex < function.Method.Parameters.Count
+					&& IsClosureParameter(function.Method.Parameters[parameterIndex], resolveContext)))
+				{
 					return false;
+				}
 			}
 			if (!(arg.MatchLdLoc(out closureVar) || arg.MatchLdLoca(out closureVar)))
 			{
