@@ -2205,7 +2205,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			ame.IsAsync = function.IsAsync;
 			ame.Parameters.AddRange(MakeParameters(function.Parameters, function));
 			ame.HasParameterList = ame.Parameters.Count > 0;
-			StatementBuilder builder = new StatementBuilder(typeSystem, this.decompilationContext, function, settings, cancellationToken);
+			var builder = new StatementBuilder(
+				typeSystem,
+				this.decompilationContext,
+				function,
+				settings,
+				statementBuilder.decompileRun,
+				cancellationToken
+			);
 			var body = builder.ConvertAsBlock(function.Body);
 
 			Comment prev = null;

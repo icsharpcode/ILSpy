@@ -1456,7 +1456,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (localSettings.DecompileMemberBodies)
 				{
 					AddDefinesForConditionalAttributes(function, decompileRun);
-					var statementBuilder = new StatementBuilder(typeSystem, decompilationContext, function, localSettings, CancellationToken);
+					var statementBuilder = new StatementBuilder(
+						typeSystem,
+						decompilationContext,
+						function,
+						localSettings,
+						decompileRun,
+						CancellationToken
+					);
 					body = statementBuilder.ConvertAsBlock(function.Body);
 
 					Comment prev = null;

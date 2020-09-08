@@ -297,6 +297,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.DecompileExpressionTrees" xml:space="preserve">
     <value>Decompile expression trees</value>
   </data>
+  <data name="DecompilerSettings.DecompileForEachWithGetEnumeratorExtension" xml:space="preserve">
+    <value>Decompile foreach statements with GetEnumerator extension methods</value>
+  </data>
   <data name="DecompilerSettings.DecompileUseOfTheDynamicType" xml:space="preserve">
     <value>Decompile use of the 'dynamic' type</value>
   </data>

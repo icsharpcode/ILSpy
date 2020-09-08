@@ -24,6 +24,8 @@ using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Semantics;
@@ -37,6 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly ExpressionBuilder exprBuilder;
 		readonly ILFunction currentFunction;
 		readonly IDecompilerTypeSystem typeSystem;
+		internal readonly DecompileRun decompileRun;
 		readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
 
@@ -44,16 +47,28 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal IType currentResultType;
 		internal bool currentIsIterator;
 
-		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, ILFunction currentFunction, DecompilerSettings settings, CancellationToken cancellationToken)
+		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext,
+			ILFunction currentFunction, DecompilerSettings settings, DecompileRun decompileRun,
+			CancellationToken cancellationToken)
 		{
 			Debug.Assert(typeSystem != null && decompilationContext != null);
-			this.exprBuilder = new ExpressionBuilder(this, typeSystem, decompilationContext, currentFunction, settings, cancellationToken);
+			this.exprBuilder = new ExpressionBuilder(
+				this,
+				typeSystem,
+				decompilationContext,
+				currentFunction,
+				settings,
+				cancellationToken
+			);
 			this.currentFunction = currentFunction;
 			this.currentReturnContainer = (BlockContainer)currentFunction.Body;
 			this.currentIsIterator = currentFunction.IsIterator;
-			this.currentResultType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentFunction.ReturnType;
+			this.currentResultType = currentFunction.IsAsync
+				? currentFunction.AsyncReturnType
+				: currentFunction.ReturnType;
 			this.typeSystem = typeSystem;
 			this.settings = settings;
+			this.decompileRun = decompileRun;
 			this.cancellationToken = cancellationToken;
 		}
 
@@ -462,6 +477,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetAsyncEnumerator")
 			}
 		);
+		static readonly InvocationExpression extensionGetEnumeratorPattern = new InvocationExpression(
+			new Choice {
+				new MemberReferenceExpression(new AnyNode("type").ToExpression(), "GetEnumerator"),
+				new MemberReferenceExpression(new AnyNode("type").ToExpression(), "GetAsyncEnumerator")
+			},
+			new AnyNode("collection")
+		);
 		static readonly Expression moveNextConditionPattern = new Choice {
 			new InvocationExpression(new MemberReferenceExpression(new NamedNode("enumerator", new IdentifierExpression(Pattern.AnyString)), "MoveNext")),
 			new UnaryOperatorExpression(UnaryOperatorType.Await, new InvocationExpression(new MemberReferenceExpression(new NamedNode("enumerator", new IdentifierExpression(Pattern.AnyString)), "MoveNextAsync")))
@@ -549,10 +571,38 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return null;
 			}
-			// Check if the using resource matches the GetEnumerator pattern.
-			var m = getEnumeratorPattern.Match(resource);
+			Match m;
+			if (settings.ExtensionMethods && settings.ForEachWithGetEnumeratorExtension)
+			{
+				// Check if the using resource matches the GetEnumerator pattern ...
+				m = getEnumeratorPattern.Match(resource);
+				if (!m.Success)
+				{
+					// ... or the extension GetEnumeratorPattern.
+					m = extensionGetEnumeratorPattern.Match(resource);
+					if (!m.Success)
+						return null;
+					// Validate that the invocation is an extension method invocation.
+					var context = new CSharpTypeResolveContext(
+						typeSystem.MainModule,
+						decompileRun.UsingScope.Resolve(typeSystem)
+					);
+					if (!IntroduceExtensionMethods.CanTransformToExtensionMethodCall(context,
+						(InvocationExpression)resource))
+					{
+						return null;
+					}
+				}
+			}
+			else
+			{
+				// Check if the using resource matches the GetEnumerator pattern.
+				m = getEnumeratorPattern.Match(resource);
+				if (!m.Success)
+					return null;
+			}
 			// The using body must be a BlockContainer.
-			if (!(inst.Body is BlockContainer container) || !m.Success)
+			if (!(inst.Body is BlockContainer container))
 				return null;
 			bool isAsync = ((MemberReferenceExpression)((InvocationExpression)resource).Target).MemberName == "GetAsyncEnumerator";
 			if (isAsync != inst.IsAsync)
@@ -1220,7 +1270,14 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			LocalFunctionDeclarationStatement TranslateFunction(ILFunction function)
 			{
-				var nestedBuilder = new StatementBuilder(typeSystem, exprBuilder.decompilationContext, function, settings, cancellationToken);
+				var nestedBuilder = new StatementBuilder(
+					typeSystem,
+					exprBuilder.decompilationContext,
+					function,
+					settings,
+					decompileRun,
+					cancellationToken
+				);
 				var astBuilder = exprBuilder.astBuilder;
 				var method = (MethodDeclaration)astBuilder.ConvertEntity(function.ReducedMethod);
 				method.Body = nestedBuilder.ConvertAsBlock(function.Body);

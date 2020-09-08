@@ -106,55 +106,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
 		{
 			base.VisitInvocationExpression(invocationExpression);
-			var method = invocationExpression.GetSymbol() as IMethod;
-			if (method == null || !method.IsExtensionMethod || !invocationExpression.Arguments.Any())
-				return;
-			IReadOnlyList<IType> typeArguments;
-			MemberReferenceExpression memberRefExpr;
-			switch (invocationExpression.Target)
+			if (!CanTransformToExtensionMethodCall(resolver, invocationExpression, out var memberRefExpr,
+				out var target, out var firstArgument))
 			{
-				case MemberReferenceExpression mre:
-					typeArguments = mre.TypeArguments.Any() ? method.TypeArguments : EmptyList<IType>.Instance;
-					memberRefExpr = mre;
-					break;
-				case IdentifierExpression ide:
-					typeArguments = ide.TypeArguments.Any() ? method.TypeArguments : EmptyList<IType>.Instance;
-					memberRefExpr = null;
-					break;
-				default:
-					return;
-			}
-
-			var firstArgument = invocationExpression.Arguments.First();
-			if (firstArgument is NamedArgumentExpression)
 				return;
-			var target = firstArgument.GetResolveResult();
-			if (target is ConstantResolveResult crr && crr.ConstantValue == null)
-			{
-				target = new ConversionResolveResult(method.Parameters[0].Type, crr, Conversion.NullLiteralConversion);
 			}
-			ResolveResult[] args = new ResolveResult[invocationExpression.Arguments.Count - 1];
-			string[] argNames = null;
-			int pos = 0;
-			foreach (var arg in invocationExpression.Arguments.Skip(1))
-			{
-				if (arg is NamedArgumentExpression nae)
-				{
-					if (argNames == null)
-					{
-						argNames = new string[args.Length];
-					}
-					argNames[pos] = nae.Name;
-					args[pos] = nae.Expression.GetResolveResult();
-				}
-				else
-				{
-					args[pos] = arg.GetResolveResult();
-				}
-				pos++;
-			}
-			if (!CanTransformToExtensionMethodCall(resolver, method, typeArguments, target, args, argNames))
-				return;
+			var method = (IMethod)invocationExpression.GetSymbol();
 			if (firstArgument is DirectionExpression dirExpr)
 			{
 				if (!context.Settings.RefExtensionMethods || dirExpr.FieldDirection == FieldDirection.Out)
@@ -188,6 +145,70 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					irr.GetArgumentToParameterMap(), irr.InitializerStatements);
 				invocationExpression.AddAnnotation(newResolveResult);
 			}
+		}
+
+		static bool CanTransformToExtensionMethodCall(CSharpResolver resolver,
+			InvocationExpression invocationExpression, out MemberReferenceExpression memberRefExpr,
+			out ResolveResult target,
+			out Expression firstArgument)
+		{
+			var method = invocationExpression.GetSymbol() as IMethod;
+			memberRefExpr = null;
+			target = null;
+			firstArgument = null;
+			if (method == null || !method.IsExtensionMethod || !invocationExpression.Arguments.Any())
+				return false;
+			IReadOnlyList<IType> typeArguments;
+			switch (invocationExpression.Target)
+			{
+				case MemberReferenceExpression mre:
+					typeArguments = mre.TypeArguments.Any() ? method.TypeArguments : EmptyList<IType>.Instance;
+					memberRefExpr = mre;
+					break;
+				case IdentifierExpression ide:
+					typeArguments = ide.TypeArguments.Any() ? method.TypeArguments : EmptyList<IType>.Instance;
+					memberRefExpr = null;
+					break;
+				default:
+					return false;
+			}
+
+			firstArgument = invocationExpression.Arguments.First();
+			if (firstArgument is NamedArgumentExpression)
+				return false;
+			target = firstArgument.GetResolveResult();
+			if (target is ConstantResolveResult crr && crr.ConstantValue == null)
+			{
+				target = new ConversionResolveResult(method.Parameters[0].Type, crr, Conversion.NullLiteralConversion);
+			}
+			ResolveResult[] args = new ResolveResult[invocationExpression.Arguments.Count - 1];
+			string[] argNames = null;
+			int pos = 0;
+			foreach (var arg in invocationExpression.Arguments.Skip(1))
+			{
+				if (arg is NamedArgumentExpression nae)
+				{
+					if (argNames == null)
+					{
+						argNames = new string[args.Length];
+					}
+					argNames[pos] = nae.Name;
+					args[pos] = nae.Expression.GetResolveResult();
+				}
+				else
+				{
+					args[pos] = arg.GetResolveResult();
+				}
+				pos++;
+			}
+			return CanTransformToExtensionMethodCall(resolver, method, typeArguments, target, args, argNames);
+		}
+
+		public static bool CanTransformToExtensionMethodCall(CSharpTypeResolveContext resolveContext,
+			InvocationExpression invocationExpression)
+		{
+			return CanTransformToExtensionMethodCall(new CSharpResolver(resolveContext),
+				invocationExpression, out _, out _, out _);
 		}
 
 		public static bool CanTransformToExtensionMethodCall(CSharpResolver resolver, IMethod method,

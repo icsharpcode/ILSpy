@@ -802,6 +802,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Decompile foreach statements with GetEnumerator extension methods.
+        /// </summary>
+        public static string DecompilerSettings_DecompileForEachWithGetEnumeratorExtension {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.DecompileForEachWithGetEnumeratorExtension", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Decompile use of the &apos;dynamic&apos; type.
         /// </summary>
         public static string DecompilerSettings_DecompileUseOfTheDynamicType {
