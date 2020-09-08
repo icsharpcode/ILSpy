@@ -387,8 +387,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						case NewObj newObj:
 							m = ((LdFtn)newObj.Arguments[1]).Method;
 							break;
-						case IInstructionWithMethodOperand withMethod:
-							m = withMethod.Method;
+						case CallInstruction call:
+							m = call.Method;
+							break;
+						case LdFtn fnptr:
+							m = fnptr.Method;
 							break;
 						default:
 							throw new NotSupportedException();
