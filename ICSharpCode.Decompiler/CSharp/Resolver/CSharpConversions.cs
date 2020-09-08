@@ -870,23 +870,44 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		bool ImplicitPointerConversion(IType fromType, IType toType)
 		{
 			// C# 4.0 spec: §18.4 Pointer conversions
-			if (fromType is PointerType && toType is PointerType && toType.ReflectionName == "System.Void*")
+			if (fromType.Kind.IsAnyPointer() && toType is PointerType && toType.ReflectionName == "System.Void*")
 				return true;
-			if (fromType.Kind == TypeKind.Null && toType is PointerType)
+			if (fromType.Kind == TypeKind.Null && toType.Kind.IsAnyPointer())
 				return true;
+			if (fromType is FunctionPointerType fromFnPtr && toType is FunctionPointerType toFnPtr
+				&& fromFnPtr.CallingConvention == toFnPtr.CallingConvention
+				&& fromFnPtr.ParameterTypes.Length == toFnPtr.ParameterTypes.Length)
+			{
+				// Variance applies to function pointer types
+				const int nestingDepth = 0;
+				if (!(IdentityConversion(fromFnPtr.ReturnType, toFnPtr.ReturnType)
+					|| ImplicitReferenceConversion(fromFnPtr.ReturnType, toFnPtr.ReturnType, nestingDepth)))
+				{
+					return false;
+				}
+				foreach (var (fromPT, toPT) in fromFnPtr.ParameterTypes.Zip(toFnPtr.ParameterTypes))
+				{
+					if (!(IdentityConversion(toPT, fromPT)
+						|| ImplicitReferenceConversion(toPT, fromPT, nestingDepth)))
+					{
+						return false;
+					}
+				}
+				return true;
+			}
 			return false;
 		}
 
 		bool ExplicitPointerConversion(IType fromType, IType toType)
 		{
 			// C# 4.0 spec: §18.4 Pointer conversions
-			if (fromType.Kind == TypeKind.Pointer)
+			if (fromType.Kind.IsAnyPointer())
 			{
-				return toType.Kind == TypeKind.Pointer || IsIntegerType(toType);
+				return toType.Kind.IsAnyPointer() || IsIntegerType(toType);
 			}
 			else
 			{
-				return toType.Kind == TypeKind.Pointer && IsIntegerType(fromType);
+				return toType.Kind.IsAnyPointer() && IsIntegerType(fromType);
 			}
 		}
 

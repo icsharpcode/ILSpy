@@ -1,4 +1,4 @@
-// Copyright (c) 2014 Daniel Grunwald
+﻿// Copyright (c) 2014-2020 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -3902,16 +3903,38 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdFtn(LdFtn inst, TranslationContext context)
 		{
 			ExpressionWithResolveResult delegateRef = new CallBuilder(this, typeSystem, settings).BuildMethodReference(inst.Method, isVirtual: false);
-			return new InvocationExpression(new IdentifierExpression("__ldftn"), delegateRef)
-				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.IntPtr)))
-				.WithILInstruction(inst);
+			if (!inst.Method.IsStatic)
+			{
+				// C# 9 function pointers don't support instance methods
+				return new InvocationExpression(new IdentifierExpression("__ldftn"), delegateRef)
+					.WithRR(new ResolveResult(new PointerType(compilation.FindType(KnownTypeCode.Void))))
+					.WithILInstruction(inst);
+			}
+			// C# 9 function pointer
+			var ftp = new FunctionPointerType(
+				typeSystem.MainModule,
+				SignatureCallingConvention.Default, // TODO
+				inst.Method.ReturnType, inst.Method.ReturnTypeIsRefReadOnly,
+				inst.Method.Parameters.SelectImmutableArray(p => p.Type),
+				inst.Method.Parameters.SelectImmutableArray(p => p.ReferenceKind)
+			);
+			ExpressionWithResolveResult addressOf = new UnaryOperatorExpression(
+				UnaryOperatorType.AddressOf,
+				delegateRef
+			).WithRR(new ResolveResult(SpecialType.NoType)).WithILInstruction(inst);
+			var conversion = Conversion.MethodGroupConversion(
+				inst.Method, isVirtualMethodLookup: false, delegateCapturesFirstArgument: false);
+			return new CastExpression(ConvertType(ftp), addressOf)
+				.WithRR(new ConversionResolveResult(ftp, addressOf.ResolveResult, conversion))
+				.WithoutILInstruction();
 		}
 
 		protected internal override TranslatedExpression VisitLdVirtFtn(LdVirtFtn inst, TranslationContext context)
 		{
+			// C# 9 function pointers don't support instance methods
 			ExpressionWithResolveResult delegateRef = new CallBuilder(this, typeSystem, settings).BuildMethodReference(inst.Method, isVirtual: true);
 			return new InvocationExpression(new IdentifierExpression("__ldvirtftn"), delegateRef)
-				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.IntPtr)))
+				.WithRR(new ResolveResult(new PointerType(compilation.FindType(KnownTypeCode.Void))))
 				.WithILInstruction(inst);
 		}
 
@@ -3921,23 +3944,36 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return ErrorExpression("calli with instance method signature not supportd");
 			}
-			var ty = new FunctionPointerType();
-			if (inst.CallingConvention != System.Reflection.Metadata.SignatureCallingConvention.Default)
+
+			var functionPointer = Translate(inst.FunctionPointer, typeHint: inst.FunctionPointerType);
+			if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(functionPointer.Type, inst.FunctionPointerType))
 			{
-				ty.CallingConvention = inst.CallingConvention.ToString().ToLowerInvariant();
+				functionPointer = functionPointer.ConvertTo(inst.FunctionPointerType, this);
 			}
-			foreach (var parameterType in inst.ParameterTypes)
+			var fpt = (FunctionPointerType)functionPointer.Type.SkipModifiers();
+			var invocation = new InvocationExpression();
+			invocation.Target = functionPointer;
+			foreach (var (argInst, (paramType, paramRefKind)) in inst.Arguments.Zip(fpt.ParameterTypes.Zip(fpt.ParameterReferenceKinds)))
 			{
-				ty.TypeArguments.Add(astBuilder.ConvertType(parameterType));
+				var arg = Translate(argInst, typeHint: paramType).ConvertTo(paramType, this, allowImplicitConversion: true);
+				if (paramRefKind != ReferenceKind.None)
+				{
+					arg = ChangeDirectionExpressionTo(arg, paramRefKind);
+				}
+				invocation.Arguments.Add(arg);
 			}
-			ty.TypeArguments.Add(astBuilder.ConvertType(inst.ReturnType));
-			var functionPointer = Translate(inst.FunctionPointer);
-			var invocation = new InvocationExpression(new CastExpression(ty, functionPointer));
-			foreach (var (arg, paramType) in inst.Arguments.Zip(inst.ParameterTypes))
+			if (fpt.ReturnType.SkipModifiers() is ByReferenceType brt)
 			{
-				invocation.Arguments.Add(Translate(arg, typeHint: paramType).ConvertTo(paramType, this, allowImplicitConversion: true));
+				var rr = new ResolveResult(brt.ElementType);
+				return new DirectionExpression(
+					FieldDirection.Ref,
+					invocation.WithRR(rr).WithILInstruction(inst)
+				).WithRR(new ByReferenceResolveResult(rr, ReferenceKind.Ref)).WithoutILInstruction();
 			}
-			return invocation.WithRR(new ResolveResult(inst.ReturnType)).WithILInstruction(inst);
+			else
+			{
+				return invocation.WithRR(new ResolveResult(fpt.ReturnType)).WithILInstruction(inst);
+			}
 		}
 
 		protected internal override TranslatedExpression VisitDeconstructInstruction(DeconstructInstruction inst, TranslationContext context)

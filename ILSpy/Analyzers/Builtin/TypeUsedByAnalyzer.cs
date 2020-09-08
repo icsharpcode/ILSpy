@@ -16,13 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
@@ -266,13 +262,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 								break;
 
 							case HandleKind.StandaloneSignature:
-								var signature = module.DecodeMethodSignature((StandaloneSignatureHandle)member, genericContext);
-								foreach (var type in signature.ParameterTypes)
-								{
-									type.AcceptVisitor(visitor);
-								}
-
-								signature.ReturnType.AcceptVisitor(visitor);
+								var (_, fpt) = module.DecodeMethodSignature((StandaloneSignatureHandle)member, genericContext);
+								fpt.AcceptVisitor(visitor);
 
 								if (visitor.Found)
 									return;

@@ -333,6 +333,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.ForStatement" xml:space="preserve">
     <value>Transform to for, if possible</value>
   </data>
+  <data name="DecompilerSettings.FunctionPointers" xml:space="preserve">
+    <value>Function pointers</value>
+  </data>
   <data name="DecompilerSettings.IncludeXMLDocumentationCommentsInTheDecompiledCode" xml:space="preserve">
     <value>Include XML documentation comments in the decompiled code</value>
   </data>

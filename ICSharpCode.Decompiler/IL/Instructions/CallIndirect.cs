@@ -16,9 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 
@@ -37,17 +35,8 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly InstructionCollection<ILInstruction> Arguments;
 		public bool IsInstance { get; }
 		public bool HasExplicitThis { get; }
-		public System.Reflection.Metadata.SignatureCallingConvention CallingConvention { get; }
-		public IType ReturnType { get; }
-		public ImmutableArray<IType> ParameterTypes { get; }
+		public FunctionPointerType FunctionPointerType { get; }
 
-		/// <summary>
-		/// A 'final instruction' that gets executed after the <c>Instructions</c> collection.
-		/// Provides the return value for the block.
-		/// </summary>
-		/// <remarks>
-		/// Blocks in containers must have 'Nop' as a final instruction.
-		/// </remarks>
 		public ILInstruction FunctionPointer {
 			get {
 				return functionPointer;
@@ -58,14 +47,12 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public CallIndirect(bool isInstance, bool hasExplicitThis, System.Reflection.Metadata.SignatureCallingConvention callingConvention, IType returnType, ImmutableArray<IType> parameterTypes,
+		public CallIndirect(bool isInstance, bool hasExplicitThis, FunctionPointerType functionPointerType,
 			ILInstruction functionPointer, IEnumerable<ILInstruction> arguments) : base(OpCode.CallIndirect)
 		{
 			this.IsInstance = isInstance;
 			this.HasExplicitThis = hasExplicitThis;
-			this.CallingConvention = callingConvention;
-			this.ReturnType = returnType ?? throw new ArgumentNullException(nameof(returnType));
-			this.ParameterTypes = parameterTypes.ToImmutableArray();
+			this.FunctionPointerType = functionPointerType;
 			this.FunctionPointer = functionPointer;
 			this.Arguments = new InstructionCollection<ILInstruction>(this, 1);
 			this.Arguments.AddRange(arguments);
@@ -73,24 +60,24 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override ILInstruction Clone()
 		{
-			return new CallIndirect(IsInstance, HasExplicitThis, CallingConvention, ReturnType, ParameterTypes,
+			return new CallIndirect(IsInstance, HasExplicitThis, FunctionPointerType,
 				functionPointer.Clone(), this.Arguments.Select(inst => inst.Clone())
 			).WithILRange(this);
 		}
 
-		public override StackType ResultType => ReturnType.GetStackType();
+		public override StackType ResultType => FunctionPointerType.ReturnType.GetStackType();
 
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(Arguments.Count == ParameterTypes.Length + (IsInstance ? 1 : 0));
+			Debug.Assert(Arguments.Count == FunctionPointerType.ParameterTypes.Length + (IsInstance ? 1 : 0));
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
 			output.Write("call.indirect ");
-			ReturnType.WriteTo(output);
+			FunctionPointerType.ReturnType.WriteTo(output);
 			output.Write('(');
 			functionPointer.WriteTo(output, options);
 			int firstArgument = IsInstance ? 1 : 0;
@@ -99,7 +86,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(", ");
 				Arguments[0].WriteTo(output, options);
 			}
-			foreach (var (inst, type) in Arguments.Zip(ParameterTypes, (a, b) => (a, b)))
+			foreach (var (inst, type) in Arguments.Zip(FunctionPointerType.ParameterTypes, (a, b) => (a, b)))
 			{
 				output.Write(", ");
 				inst.WriteTo(output, options);
@@ -161,16 +148,7 @@ namespace ICSharpCode.Decompiler.IL
 				return false;
 			if (HasExplicitThis != other.HasExplicitThis)
 				return false;
-			if (CallingConvention != other.CallingConvention)
-				return false;
-			if (ParameterTypes.Length != other.ParameterTypes.Length)
-				return false;
-			for (int i = 0; i < ParameterTypes.Length; i++)
-			{
-				if (!ParameterTypes[i].Equals(other.ParameterTypes[i]))
-					return false;
-			}
-			return ReturnType.Equals(other.ReturnType);
+			return FunctionPointerType.Equals(other.FunctionPointerType);
 		}
 	}
 }

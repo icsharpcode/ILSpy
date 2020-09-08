@@ -254,6 +254,25 @@ namespace ICSharpCode.ILSpy
 				return type;
 			}
 
+			public override IType VisitFunctionPointerType(FunctionPointerType type)
+			{
+				builder.Append("method ");
+				type.ReturnType.AcceptVisitor(this);
+				builder.Append(" *(");
+				bool first = true;
+				foreach (var p in type.ParameterTypes)
+				{
+					if (first)
+						first = false;
+					else
+						builder.Append(", ");
+
+					p.AcceptVisitor(this);
+				}
+				builder.Append(')');
+				return type;
+			}
+
 			public override IType VisitOtherType(IType type)
 			{
 				WriteType(type);

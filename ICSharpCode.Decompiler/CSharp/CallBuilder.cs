@@ -1197,6 +1197,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					IType argType = NullableType.GetUnderlyingType(arguments[0].Type);
 					operatorCandidates = resolver.GetUserDefinedOperatorCandidates(argType, method.Name);
+					if (method.Name == "op_Explicit")
+					{
+						// For casts, also consider candidates from the target type we are casting to.
+						var hashSet = new HashSet<IParameterizedMember>(operatorCandidates);
+						IType targetType = NullableType.GetUnderlyingType(method.ReturnType);
+						hashSet.UnionWith(
+							resolver.GetUserDefinedOperatorCandidates(targetType, method.Name)
+						);
+						operatorCandidates = hashSet;
+					}
 				}
 				else if (arguments.Length == 2)
 				{

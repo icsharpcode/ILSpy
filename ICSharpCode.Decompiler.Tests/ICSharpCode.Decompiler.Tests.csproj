@@ -95,6 +95,7 @@
     <Compile Include="TestAssemblyResolver.cs" />
     <Compile Include="TestCases\Correctness\DeconstructionTests.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
+    <None Include="TestCases\Pretty\FunctionPointers.cs" />
     <None Include="TestCases\Pretty\UsingVariables.cs" />
     <None Include="TestCases\Pretty\AsyncForeach.cs" />
     <Compile Include="TestCases\Pretty\DeconstructionTests.cs" />

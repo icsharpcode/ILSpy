@@ -459,6 +459,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return ldloc.Variable.IsRefReadOnly;
 				case Call call:
 					return call.Method.ReturnTypeIsRefReadOnly;
+				case CallIndirect calli:
+					return calli.FunctionPointerType.ReturnIsRefReadOnly;
 				case AddressOf _:
 					// C# doesn't allow mutation of value-type temporaries
 					return true;
@@ -557,6 +559,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return true;
 					}
 					break;
+				case OpCode.CallIndirect when loadInst.SlotInfo == CallIndirect.FunctionPointerSlot:
+					return true;
 				case OpCode.LdElema:
 					if (((LdElema)parent).WithSystemIndex)
 					{

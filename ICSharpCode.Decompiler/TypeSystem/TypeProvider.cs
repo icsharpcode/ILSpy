@@ -62,7 +62,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType GetFunctionPointerType(SRM.MethodSignature<IType> signature)
 		{
-			return compilation.FindType(KnownTypeCode.IntPtr);
+			if (signature.Header.IsInstance)
+			{
+				// pointers to member functions are not supported even in C# 9
+				return compilation.FindType(KnownTypeCode.IntPtr);
+			}
+			return FunctionPointerType.FromSignature(signature, module);
 		}
 
 		public IType GetGenericInstantiation(IType genericType, ImmutableArray<IType> typeArguments)

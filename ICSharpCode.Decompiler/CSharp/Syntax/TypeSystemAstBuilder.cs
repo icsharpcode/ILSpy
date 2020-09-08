@@ -306,6 +306,51 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				return astType;
 			}
+			else if (type is FunctionPointerType fpt)
+			{
+				var astType = new FunctionPointerAstType();
+				if (fpt.CallingConvention != System.Reflection.Metadata.SignatureCallingConvention.Default)
+				{
+					astType.CallingConvention = fpt.CallingConvention.ToString().ToLowerInvariant();
+				}
+				for (int i = 0; i < fpt.ParameterTypes.Length; i++)
+				{
+					var paramDecl = new ParameterDeclaration();
+					paramDecl.ParameterModifier = fpt.ParameterReferenceKinds[i] switch
+					{
+						ReferenceKind.In => ParameterModifier.In,
+						ReferenceKind.Ref => ParameterModifier.Ref,
+						ReferenceKind.Out => ParameterModifier.Out,
+						_ => ParameterModifier.None,
+					};
+					IType parameterType = fpt.ParameterTypes[i];
+					if (paramDecl.ParameterModifier != ParameterModifier.None && parameterType is ByReferenceType brt)
+					{
+						paramDecl.Type = ConvertType(brt.ElementType);
+					}
+					else
+					{
+						paramDecl.Type = ConvertType(parameterType);
+					}
+					astType.Parameters.Add(paramDecl);
+				}
+				astType.ReturnType = ConvertType(fpt.ReturnType);
+				if (fpt.ReturnIsRefReadOnly && astType.ReturnType is ComposedType ct && ct.HasRefSpecifier)
+				{
+					ct.HasReadOnlySpecifier = true;
+				}
+				ITypeDefinition treatedAs = fpt.GetDefinition();
+				if (treatedAs != null)
+				{
+					var result = ConvertTypeHelper(treatedAs);
+					result.AddChild(new Comment(astType.ToString(), CommentType.MultiLine), Roles.Comment);
+					return result;
+				}
+				else
+				{
+					return astType;
+				}
+			}
 			else
 			{
 				AstType astType;

@@ -9,9 +9,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 	internal static class NoExtensionMethods
 	{
 		[Extension]
-		internal static Func<T> AsFunc<T>(T value) where T : class
+		internal unsafe static Func<T> AsFunc<T>(T value) where T : class
 		{
-			return new Func<T>(value, __ldftn(Return));
+			return new Func<T>(value, (nint)(delegate*<T, T>)(&Return));
 		}
 
 		[Extension]
@@ -25,9 +25,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 			return Return;
 		}
 
-		internal static Func<object> ExtensionMethodBoundToNull()
+		internal unsafe static Func<object> ExtensionMethodBoundToNull()
 		{
-			return new Func<object>(null, __ldftn(Return));
+			return new Func<object>(null, (nint)(delegate*<object, object>)(&Return));
 		}
 	}
 }

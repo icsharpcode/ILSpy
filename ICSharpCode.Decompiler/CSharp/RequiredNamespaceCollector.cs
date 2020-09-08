@@ -180,6 +180,13 @@ namespace ICSharpCode.Decompiler.CSharp
 						CollectNamespacesForTypeReference(elementType);
 					}
 					break;
+				case FunctionPointerType fnPtrType:
+					CollectNamespacesForTypeReference(fnPtrType.ReturnType);
+					foreach (var paramType in fnPtrType.ParameterTypes)
+					{
+						CollectNamespacesForTypeReference(paramType);
+					}
+					break;
 				default:
 					namespaces.Add(type.Namespace);
 					break;
@@ -341,20 +348,16 @@ namespace ICSharpCode.Decompiler.CSharp
 								}
 								if (sig.GetKind() == StandaloneSignatureKind.Method)
 								{
-									MethodSignature<IType> methodSig;
+									FunctionPointerType fpt;
 									try
 									{
-										methodSig = module.DecodeMethodSignature((StandaloneSignatureHandle)handle, genericContext);
+										(_, fpt) = module.DecodeMethodSignature((StandaloneSignatureHandle)handle, genericContext);
 									}
 									catch (BadImageFormatException)
 									{
 										break;
 									}
-									CollectNamespacesForTypeReference(methodSig.ReturnType);
-									foreach (var paramType in methodSig.ParameterTypes)
-									{
-										CollectNamespacesForTypeReference(paramType);
-									}
+									CollectNamespacesForTypeReference(fpt);
 								}
 								break;
 						}
