@@ -189,6 +189,11 @@ namespace ICSharpCode.Decompiler.Metadata
 			return GetAssemblyInGac(reference) != null;
 		}
 
+		public virtual bool IsSharedAssembly(IAssemblyReference reference)
+		{
+			return targetFrameworkIdentifier == TargetFrameworkIdentifier.NETCoreApp && dotNetCorePathFinder.TryResolveDotNetCoreShared(reference) != null;
+		}
+
 		public string FindAssemblyFile(IAssemblyReference name)
 		{
 			if (name.IsWindowsRuntime)

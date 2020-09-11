@@ -288,6 +288,11 @@ namespace ICSharpCode.ILSpy
 				return parent.universalResolver?.IsGacAssembly(reference) == true;
 			}
 
+			public bool IsSharedAssembly(IAssemblyReference reference)
+			{
+				return parent.universalResolver?.IsSharedAssembly(reference) == true;
+			}
+
 			public PEFile Resolve(Decompiler.Metadata.IAssemblyReference reference)
 			{
 				return parent.LookupReferencedAssembly(reference)?.GetPEFileOrNull();

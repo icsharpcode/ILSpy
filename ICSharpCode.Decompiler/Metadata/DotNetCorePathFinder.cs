@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 			}
 
-			return FallbackToDotNetSharedDirectory(name);
+			return TryResolveDotNetCoreShared(name);
 		}
 
 		internal string GetReferenceAssemblyPath(string targetFramework)
@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		string FallbackToDotNetSharedDirectory(IAssemblyReference name)
+		public string TryResolveDotNetCoreShared(IAssemblyReference name)
 		{
 			if (dotnetBasePath == null)
 				return null;

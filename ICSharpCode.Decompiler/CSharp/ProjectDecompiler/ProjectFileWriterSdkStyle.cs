@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				xml.WriteAttributeString("Include", reference.Name);
 
 				var asembly = project.AssemblyResolver.Resolve(reference);
-				if (asembly != null && !project.AssemblyResolver.IsGacAssembly(reference))
+				if (asembly != null && !project.AssemblyResolver.IsGacAssembly(reference) && !project.AssemblyResolver.IsSharedAssembly(reference))
 				{
 					xml.WriteElementString("HintPath", FileUtility.GetRelativePath(project.TargetDirectory, asembly.FileName));
 				}
