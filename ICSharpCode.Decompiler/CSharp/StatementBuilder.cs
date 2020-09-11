@@ -198,7 +198,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			TranslatedExpression value;
 			if (inst.Value is StringToInt strToInt)
 			{
-				value = exprBuilder.Translate(strToInt.Argument);
+				value = exprBuilder.Translate(strToInt.Argument)
+					.ConvertTo(
+						typeSystem.FindType(KnownTypeCode.String),
+						exprBuilder,
+						allowImplicitConversion: true
+					);
 			}
 			else
 			{
