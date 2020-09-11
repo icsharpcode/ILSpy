@@ -24,6 +24,7 @@ using System.Reflection.PortableExecutable;
 using System.Xml;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 {
@@ -186,7 +187,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				var asembly = project.AssemblyResolver.Resolve(reference);
 				if (asembly != null && !project.AssemblyResolver.IsGacAssembly(reference))
 				{
-					xml.WriteElementString("HintPath", asembly.FileName);
+					xml.WriteElementString("HintPath", FileUtility.GetRelativePath(project.TargetDirectory, asembly.FileName));
 				}
 
 				xml.WriteEndElement();

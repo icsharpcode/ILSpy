@@ -73,6 +73,15 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public Guid ProjectGuid { get; }
 
 		/// <summary>
+		/// The target directory that the decompiled files are written to.
+		/// </summary>
+		/// <remarks>
+		/// This property is set by DecompileProject() and protected so that overridden protected members
+		/// can access it.
+		/// </remarks>
+		public string TargetDirectory { get; protected set; }
+
+		/// <summary>
 		/// Path to the snk file to use for signing.
 		/// <c>null</c> to not sign.
 		/// </summary>
@@ -112,15 +121,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		// per-run members
 		HashSet<string> directories = new HashSet<string>(Platform.FileNameComparer);
 
-		/// <summary>
-		/// The target directory that the decompiled files are written to.
-		/// </summary>
-		/// <remarks>
-		/// This field is set by DecompileProject() and protected so that overridden protected members
-		/// can access it.
-		/// </remarks>
-		protected string targetDirectory;
-
 		readonly IProjectFileWriter projectWriter;
 
 		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
@@ -138,7 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				throw new InvalidOperationException("Must set TargetDirectory");
 			}
-			this.targetDirectory = targetDirectory;
+			TargetDirectory = targetDirectory;
 			directories.Clear();
 			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
 			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
@@ -183,9 +183,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			const string prop = "Properties";
 			if (directories.Add(prop))
-				Directory.CreateDirectory(Path.Combine(targetDirectory, prop));
+				Directory.CreateDirectory(Path.Combine(TargetDirectory, prop));
 			string assemblyInfo = Path.Combine(prop, "AssemblyInfo.cs");
-			using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, assemblyInfo)))
+			using (StreamWriter w = new StreamWriter(Path.Combine(TargetDirectory, assemblyInfo)))
 			{
 				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
 			}
@@ -207,7 +207,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					{
 						string dir = CleanUpFileName(metadata.GetString(type.Namespace));
 						if (directories.Add(dir))
-							Directory.CreateDirectory(Path.Combine(targetDirectory, dir));
+							Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
 						return Path.Combine(dir, file);
 					}
 				}, StringComparer.OrdinalIgnoreCase).ToList();
@@ -221,7 +221,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					CancellationToken = cancellationToken
 				},
 				delegate (IGrouping<string, TypeDefinitionHandle> file) {
-					using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, file.Key)))
+					using (StreamWriter w = new StreamWriter(Path.Combine(TargetDirectory, file.Key)))
 					{
 						try
 						{
@@ -264,7 +264,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 								string dirName = Path.GetDirectoryName(fileName);
 								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
 								{
-									Directory.CreateDirectory(Path.Combine(targetDirectory, dirName));
+									Directory.CreateDirectory(Path.Combine(TargetDirectory, dirName));
 								}
 								Stream entryStream = (Stream)value;
 								entryStream.Position = 0;
@@ -306,7 +306,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				else
 				{
 					string fileName = GetFileNameForResource(r.Name);
-					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
+					using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
 					{
 						stream.Position = 0;
 						stream.CopyTo(fs);
@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				string resx = Path.ChangeExtension(fileName, ".resx");
 				try
 				{
-					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, resx), FileMode.Create, FileAccess.Write))
+					using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, resx), FileMode.Create, FileAccess.Write))
 					using (ResXResourceWriter writer = new ResXResourceWriter(fs))
 					{
 						foreach (var entry in new ResourcesFile(entryStream))
@@ -342,7 +342,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					// if the .resources can't be decoded, just save them as-is
 				}
 			}
-			using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
+			using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
 			{
 				entryStream.CopyTo(fs);
 			}
