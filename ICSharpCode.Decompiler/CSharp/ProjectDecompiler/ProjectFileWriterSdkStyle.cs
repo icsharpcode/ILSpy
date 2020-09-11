@@ -181,11 +181,16 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			foreach (var reference in module.AssemblyReferences.Where(r => !ImplicitReferences.Contains(r.Name)))
 			{
+				if (project.AssemblyResolver.IsSharedAssembly(reference))
+				{
+					continue;
+				}
+
 				xml.WriteStartElement("Reference");
 				xml.WriteAttributeString("Include", reference.Name);
 
 				var asembly = project.AssemblyResolver.Resolve(reference);
-				if (asembly != null && !project.AssemblyResolver.IsGacAssembly(reference) && !project.AssemblyResolver.IsSharedAssembly(reference))
+				if (asembly != null && !project.AssemblyResolver.IsGacAssembly(reference))
 				{
 					xml.WriteElementString("HintPath", FileUtility.GetRelativePath(project.TargetDirectory, asembly.FileName));
 				}
