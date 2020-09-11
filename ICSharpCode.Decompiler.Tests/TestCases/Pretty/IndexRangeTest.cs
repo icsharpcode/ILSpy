@@ -102,6 +102,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(GetList()[GetIndex()]);
 			Console.WriteLine(GetSpan()[GetIndex()]);
 			Console.WriteLine(GetString()[GetIndex()]);
+			Console.WriteLine(GetString()?[GetIndex()]);
 			Console.WriteLine(new CustomList()[GetIndex()]);
 			Console.WriteLine(new CustomList2()[GetIndex()]);
 		}
@@ -112,6 +113,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(GetList()[^GetInt()]);
 			Console.WriteLine(GetSpan()[^GetInt()]);
 			Console.WriteLine(GetString()[^GetInt()]);
+			Console.WriteLine(GetString()?[^GetInt()]);
 			Console.WriteLine(new CustomList()[^GetInt()]);
 			Console.WriteLine(new CustomList2()[^GetInt()]);
 		}
@@ -141,6 +143,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//Console.WriteLine(GetList()[GetRange()]); // fails to compile
 			Console.WriteLine(GetSpan()[GetRange()].ToString());
 			Console.WriteLine(GetString()[GetRange()]);
+			Console.WriteLine(GetString()?[GetRange()]);
 			Console.WriteLine(new CustomList()[GetRange()]);
 			Console.WriteLine(new CustomList2()[GetRange()]);
 		}
@@ -150,6 +153,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//Console.WriteLine(GetList()[GetIndex(1)..GetIndex(2)]); // fails to compile
 			Console.WriteLine(GetSpan()[GetIndex(1)..GetIndex(2)].ToString());
 			Console.WriteLine(GetString()[GetIndex(1)..GetIndex(2)]);
+			Console.WriteLine(GetString()?[GetIndex(1)..GetIndex(2)]);
 			Console.WriteLine(new CustomList()[GetIndex(1)..GetIndex(2)]);
 			Console.WriteLine(new CustomList2()[GetIndex(1)..GetIndex(2)]);
 		}
@@ -159,6 +163,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//Console.WriteLine(GetList()[GetInt()..GetInt()]); // fails to compile
 			Console.WriteLine(GetSpan()[GetInt(1)..GetInt(2)].ToString());
 			Console.WriteLine(GetString()[GetInt(1)..GetInt(2)]);
+			Console.WriteLine(GetString()?[GetInt(1)..GetInt(2)]);
 			Console.WriteLine(new CustomList()[GetInt(1)..GetInt(2)]);
 			Console.WriteLine(new CustomList2()[GetInt(1)..GetInt(2)]);
 		}
@@ -168,6 +173,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//Console.WriteLine(GetList()[^GetInt()..^GetInt()]); // fails to compile
 			Console.WriteLine(GetSpan()[^GetInt(1)..^GetInt(2)].ToString());
 			Console.WriteLine(GetString()[^GetInt(1)..^GetInt(2)]);
+			Console.WriteLine(GetString()?[^GetInt(1)..^GetInt(2)]);
 			Console.WriteLine(new CustomList()[^GetInt(1)..^GetInt(2)]);
 			Console.WriteLine(new CustomList2()[^GetInt(1)..^GetInt(2)]);
 		}
@@ -177,6 +183,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//Console.WriteLine(GetList()[GetInt()..^GetInt()]); // fails to compile
 			Console.WriteLine(GetSpan()[GetInt(1)..^GetInt(2)].ToString());
 			Console.WriteLine(GetString()[GetInt(1)..^GetInt(2)]);
+			Console.WriteLine(GetString()?[GetInt(1)..^GetInt(2)]);
 			Console.WriteLine(new CustomList()[GetInt(1)..^GetInt(2)]);
 			Console.WriteLine(new CustomList2()[GetInt(1)..^GetInt(2)]);
 		}
@@ -186,6 +193,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//Console.WriteLine(GetList()[^GetInt()..GetInt()]);  // fails to compile
 			Console.WriteLine(GetSpan()[^GetInt(1)..GetInt(2)].ToString());
 			Console.WriteLine(GetString()[^GetInt(1)..GetInt(2)]);
+			Console.WriteLine(GetString()?[^GetInt(1)..GetInt(2)]);
 			Console.WriteLine(new CustomList()[^GetInt(1)..GetInt(2)]);
 			Console.WriteLine(new CustomList2()[^GetInt(1)..GetInt(2)]);
 		}
@@ -196,6 +204,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//Console.WriteLine(GetList()[..GetInt()]);  // fails to compile
 			Console.WriteLine(GetSpan()[..GetInt(2)].ToString());
 			Console.WriteLine(GetString()[..GetInt(2)]);
+			Console.WriteLine(GetString()?[..GetInt(2)]);
 			Console.WriteLine(new CustomList()[..GetInt(2)]);
 			Console.WriteLine(new CustomList2()[..GetInt(2)]);
 		}
@@ -206,6 +215,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//Console.WriteLine(GetList()[..^GetInt()]);  // fails to compile
 			Console.WriteLine(GetSpan()[..^GetInt(2)].ToString());
 			Console.WriteLine(GetString()[..^GetInt(2)]);
+			Console.WriteLine(GetString()?[..^GetInt(2)]);
 			Console.WriteLine(new CustomList()[..^GetInt(2)]);
 			Console.WriteLine(new CustomList2()[..^GetInt(2)]);
 		}
@@ -216,6 +226,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//Console.WriteLine(GetList()[GetInt()..]); // fails to compile
 			Console.WriteLine(GetSpan()[GetInt(1)..].ToString());
 			Console.WriteLine(GetString()[GetInt(1)..]);
+			Console.WriteLine(GetString()?[GetInt(1)..]);
 			Console.WriteLine(new CustomList()[GetInt(1)..]);
 			Console.WriteLine(new CustomList2()[GetInt(1)..]);
 		}
@@ -226,6 +237,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//Console.WriteLine(GetList()[^GetInt()..]); // fails to compile
 			Console.WriteLine(GetSpan()[^GetInt(1)..].ToString());
 			Console.WriteLine(GetString()[^GetInt(1)..]);
+			Console.WriteLine(GetString()?[^GetInt(1)..]);
 			Console.WriteLine(new CustomList()[^GetInt(1)..]);
 			Console.WriteLine(new CustomList2()[^GetInt(1)..]);
 		}
@@ -237,7 +249,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(GetString()[1..2]);
 			Console.WriteLine(GetString()[1..^1]);
 			Console.WriteLine(GetString()[^2..^1]);
-			
+
 			Console.WriteLine(GetString()[..1]);
 			Console.WriteLine(GetString()[..^1]);
 			Console.WriteLine(GetString()[1..]);

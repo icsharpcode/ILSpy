@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Diagnostics;
 using System.Linq;
 
@@ -176,15 +175,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// stloc startOffsetVar(call GetOffset(startIndexLoad, ldloc length))
-			if (!block.Instructions[pos].MatchStLoc(out ILVariable startOffsetVar, out ILInstruction startOffsetVarInit))
+			if (!(block.Instructions[pos].MatchStLoc(out ILVariable startOffsetVar, out ILInstruction startOffsetVarInit)
+				&& startOffsetVar.IsSingleDefinition && startOffsetVar.StackType == StackType.I4))
 			{
 				// Not our primary indexing/slicing pattern.
 				// However, we might be dealing with a partially-transformed pattern that needs to be extended.
 				ExtendSlicing();
 				return;
 			}
-			if (!(startOffsetVar.IsSingleDefinition && startOffsetVar.StackType == StackType.I4))
-				return;
 			var startIndexKind = MatchGetOffset(startOffsetVarInit, out ILInstruction startIndexLoad, containerLengthVar, ref containerVar);
 			pos++;
 			if (startOffsetVar.LoadCount == 1)
