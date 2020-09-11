@@ -59,6 +59,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				AutoGenerateColumns = false,
 				CanUserAddRows = false,
 				CanUserDeleteRows = false,
+				GridLinesVisibility = DataGridGridLinesVisibility.None,
 				RowDetailsTemplateSelector = new CharacteristicsDataTemplateSelector(),
 				RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Visible
 			};

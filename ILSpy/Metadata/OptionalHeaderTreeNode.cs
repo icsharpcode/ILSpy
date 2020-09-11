@@ -51,11 +51,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			dataGrid.RowDetailsTemplateSelector = new DllCharacteristicsDataTemplateSelector();
 			dataGrid.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Visible;
 			dataGrid.AutoGenerateColumns = false;
-			dataGrid.Columns.Add(new DataGridCustomTextColumn { Header = "Member", Binding = new Binding("Member") { Mode = BindingMode.OneWay } });
-			dataGrid.Columns.Add(new DataGridCustomTextColumn { Header = "Offset", Binding = new Binding("Offset") { StringFormat = "X8", Mode = BindingMode.OneWay } });
-			dataGrid.Columns.Add(new DataGridCustomTextColumn { Header = "Size", Binding = new Binding("Size") { Mode = BindingMode.OneWay } });
-			dataGrid.Columns.Add(new DataGridCustomTextColumn { Header = "Value", Binding = new Binding(".") { Converter = ByteWidthConverter.Instance, Mode = BindingMode.OneWay } });
-			dataGrid.Columns.Add(new DataGridCustomTextColumn { Header = "Meaning", Binding = new Binding("Meaning") { Mode = BindingMode.OneWay } });
+			dataGrid.Columns.Add(new DataGridTextColumn { Header = "Member", Binding = new Binding("Member") { Mode = BindingMode.OneWay } });
+			dataGrid.Columns.Add(new DataGridTextColumn { Header = "Offset", Binding = new Binding("Offset") { StringFormat = "X8", Mode = BindingMode.OneWay } });
+			dataGrid.Columns.Add(new DataGridTextColumn { Header = "Size", Binding = new Binding("Size") { Mode = BindingMode.OneWay } });
+			dataGrid.Columns.Add(new DataGridTextColumn { Header = "Value", Binding = new Binding(".") { Converter = ByteWidthConverter.Instance, Mode = BindingMode.OneWay } });
+			dataGrid.Columns.Add(new DataGridTextColumn { Header = "Meaning", Binding = new Binding("Meaning") { Mode = BindingMode.OneWay } });
 
 			var headers = module.Reader.PEHeaders;
 			var reader = module.Reader.GetEntireImage().GetReader(headers.PEHeaderStartOffset, 128);

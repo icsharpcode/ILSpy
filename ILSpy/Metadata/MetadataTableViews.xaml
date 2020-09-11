@@ -8,30 +8,31 @@
 			 xmlns:srm="clr-namespace:System.Reflection;assembly=System.Reflection.Metadata"
 			 xmlns:dgx="urn:tom-englert.de/DataGridExtensions">
 
-	<Style x:Key="DataGridCustomTextColumnTextBoxStyle" TargetType="TextBox">
-		<Setter Property="IsReadOnly" Value="True" />
-		<Setter Property="IsReadOnlyCaretVisible" Value="True" />
+	<Style x:Key="DataGridCellStyle" TargetType="{x:Type DataGridCell}">
+		<Setter Property="BorderThickness" Value="0" />
 		<Setter Property="Padding" Value="2" />
-		<Style.Triggers>
-			<MultiTrigger>
-				<MultiTrigger.Conditions>
-					<Condition Property="IsMouseOver" Value="False" />
-					<Condition Property="IsFocused" Value="False" />
-				</MultiTrigger.Conditions>
-				<Setter Property="BorderBrush" Value="Transparent" />
-				<Setter Property="Background" Value="Transparent" />
-			</MultiTrigger>
-			<MultiDataTrigger>
-				<MultiDataTrigger.Conditions>
-					<Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridCell}}" Value="True" />
-					<Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Mode=Self}}" Value="False" />
-					<Condition Binding="{Binding IsFocused, RelativeSource={RelativeSource Mode=Self}}" Value="False" />
-				</MultiDataTrigger.Conditions>
-				<Setter Property="Foreground" Value="White" />
-			</MultiDataTrigger>
-		</Style.Triggers>
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="{x:Type DataGridCell}">
+					<Border x:Name="Bd"
+							BorderBrush="{TemplateBinding BorderBrush}"
+							BorderThickness="{TemplateBinding BorderThickness}"
+							Background="{TemplateBinding Background}"
+							SnapsToDevicePixels="True">
+						<ContentPresenter ContentTemplate="{TemplateBinding ContentTemplate}"
+										  Content="{TemplateBinding Content}"
+										  ContentStringFormat="{TemplateBinding ContentStringFormat}"
+										  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+										  Margin="{TemplateBinding Padding}"
+										  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+										  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+					</Border>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
 	</Style>
-	
+
 	<ControlTemplate x:Key="DefaultFilter">
 		<Grid>
 			<Control Style="{DynamicResource {x:Static dgx:DataGridFilter.IconStyleKey}}" />

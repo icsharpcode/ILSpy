@@ -16,15 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
-using System.Windows.Controls;
 
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Metadata;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -71,43 +65,6 @@ namespace ICSharpCode.ILSpy.Commands
 			}
 			if (selection != null)
 				MainWindow.Instance.JumpToReference(selection);
-		}
-	}
-
-	[ExportContextMenuEntry(Header = nameof(Resources.GoToToken), Order = 10)]
-	class GoToToken : IContextMenuEntry
-	{
-		public void Execute(TextViewContext context)
-		{
-			int token = GetSelectedToken(context.DataGrid, out PEFile module).Value;
-			MainWindow.Instance.JumpToReference(new EntityReference("metadata", module, MetadataTokens.Handle(token)));
-		}
-
-		public bool IsEnabled(TextViewContext context)
-		{
-			return true;
-		}
-
-		public bool IsVisible(TextViewContext context)
-		{
-			return context.DataGrid?.Name == "MetadataView" && GetSelectedToken(context.DataGrid, out _) != null;
-		}
-
-		private int? GetSelectedToken(DataGrid grid, out PEFile module)
-		{
-			module = null;
-			if (grid == null)
-				return null;
-			var cell = grid.CurrentCell;
-			if (!cell.IsValid)
-				return null;
-			Type type = cell.Item.GetType();
-			var property = type.GetProperty(cell.Column.Header.ToString());
-			var moduleField = type.GetField("module", BindingFlags.NonPublic | BindingFlags.Instance);
-			if (property == null || property.PropertyType != typeof(int) || !property.GetCustomAttributes(false).Any(a => a is StringFormatAttribute sf && sf.Format == "X8"))
-				return null;
-			module = (PEFile)moduleField.GetValue(cell.Item);
-			return (int)property.GetValue(cell.Item);
 		}
 	}
 }

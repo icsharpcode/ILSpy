@@ -118,6 +118,7 @@
     <Compile Include="Commands\DisassembleAllCommand.cs" />
     <Compile Include="Commands\ExitCommand.cs" />
     <Compile Include="Commands\CommandWrapper.cs" />
+    <Compile Include="Metadata\GoToTokenCommand.cs" />
     <Compile Include="Commands\ILSpyCommands.cs" />
     <Compile Include="Commands\IProtocolHandler.cs" />
     <Compile Include="Commands\ManageAssemblyListsCommand.cs" />
@@ -173,7 +174,6 @@
       <SubType>Code</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Compile>
-    <Compile Include="Metadata\DataGridCustomTextColumn.cs" />
     <Compile Include="Metadata\DebugTables\LocalConstantTableTreeNode.cs">
       <SubType>Code</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -209,6 +209,7 @@
     <Compile Include="Metadata\FlagsFilterControl.xaml.cs" />
     <Compile Include="Metadata\FlagsTooltip.xaml.cs" />
     <Compile Include="Metadata\HexFilterControl.xaml.cs" />
+    <Compile Include="Metadata\MetaDataGrid.cs" />
     <Compile Include="Metadata\MetadataProtocolHandler.cs" />
     <Compile Include="Metadata\MetadataTableTreeNode.cs" />
     <Compile Include="Metadata\DebugMetadataTreeNode.cs" />
