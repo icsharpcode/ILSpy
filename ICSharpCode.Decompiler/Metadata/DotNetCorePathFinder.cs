@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 			}
 
-			return TryResolveDotNetCoreShared(name);
+			return TryResolveDotNetCoreShared(name, out _);
 		}
 
 		internal string GetReferenceAssemblyPath(string targetFramework)
@@ -188,13 +188,17 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public string TryResolveDotNetCoreShared(IAssemblyReference name)
+		public string TryResolveDotNetCoreShared(IAssemblyReference name, out string runtimePack)
 		{
 			if (dotnetBasePath == null)
-				return null;
-			var basePaths = RuntimePacks.Select(pack => Path.Combine(dotnetBasePath, "shared", pack));
-			foreach (var basePath in basePaths)
 			{
+				runtimePack = null;
+				return null;
+			}
+			foreach (string pack in RuntimePacks)
+			{
+				runtimePack = pack;
+				string basePath = Path.Combine(dotnetBasePath, "shared", pack);
 				if (!Directory.Exists(basePath))
 					continue;
 				var closestVersion = GetClosestVersionFolder(basePath, targetFrameworkVersion);
@@ -207,6 +211,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					return Path.Combine(basePath, closestVersion, name.Name + ".exe");
 				}
 			}
+			runtimePack = null;
 			return null;
 		}
 

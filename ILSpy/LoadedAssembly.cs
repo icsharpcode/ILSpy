@@ -288,9 +288,10 @@ namespace ICSharpCode.ILSpy
 				return parent.universalResolver?.IsGacAssembly(reference) == true;
 			}
 
-			public bool IsSharedAssembly(IAssemblyReference reference)
+			public bool IsSharedAssembly(IAssemblyReference reference, out string runtimePack)
 			{
-				return parent.universalResolver?.IsSharedAssembly(reference) == true;
+				runtimePack = null;
+				return parent.universalResolver?.IsSharedAssembly(reference, out runtimePack) == true;
 			}
 
 			public PEFile Resolve(Decompiler.Metadata.IAssemblyReference reference)

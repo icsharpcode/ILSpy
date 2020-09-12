@@ -85,8 +85,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			PlaceIntoTag("PropertyGroup", xml, () => WriteAssemblyInfo(xml, module, project, projectType));
 			PlaceIntoTag("PropertyGroup", xml, () => WriteProjectInfo(xml, project));
-			PlaceIntoTag("ItemGroup", xml, () => WriteResources(xml, module, files, project));
-			PlaceIntoTag("ItemGroup", xml, () => WriteReferences(xml, module, project));
+			PlaceIntoTag("ItemGroup", xml, () => WriteResources(xml, files));
+			PlaceIntoTag("ItemGroup", xml, () => WriteReferences(xml, module, project, projectType));
 
 			xml.WriteEndElement();
 		}
@@ -111,11 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			// Since we create AssemblyInfo.cs manually, we need to disable the auto-generation
 			xml.WriteElementString("GenerateAssemblyInfo", FalseString);
 
-			// 'Library' is default, so only need to specify output type for executables
-			if (!module.Reader.PEHeaders.IsDll)
-			{
-				WriteOutputType(xml, module.Reader.PEHeaders.PEHeader.Subsystem);
-			}
+			WriteOutputType(xml, module.Reader.PEHeaders.IsDll, module.Reader.PEHeaders.PEHeader.Subsystem, projectType);
 
 			WriteDesktopExtensions(xml, projectType);
 
@@ -143,16 +139,27 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteOutputType(XmlTextWriter xml, Subsystem moduleSubsystem)
+		static void WriteOutputType(XmlTextWriter xml, bool isDll, Subsystem moduleSubsystem, ProjectType projectType)
 		{
-			switch (moduleSubsystem)
+			if (!isDll)
 			{
-				case Subsystem.WindowsGui:
-					xml.WriteElementString("OutputType", "WinExe");
-					break;
-				case Subsystem.WindowsCui:
-					xml.WriteElementString("OutputType", "Exe");
-					break;
+				switch (moduleSubsystem)
+				{
+					case Subsystem.WindowsGui:
+						xml.WriteElementString("OutputType", "WinExe");
+						break;
+					case Subsystem.WindowsCui:
+						xml.WriteElementString("OutputType", "Exe");
+						break;
+				}
+			}
+			else
+			{
+				// 'Library' is default, so only need to specify output type for executables (excludes ProjectType.Web)
+				if (projectType == ProjectType.Web)
+				{
+					xml.WriteElementString("OutputType", "Library");
+				}
 			}
 		}
 
@@ -180,12 +187,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteResources(XmlTextWriter xml, PEFile module, IEnumerable<(string itemType, string fileName)> files, IProjectInfoProvider project)
+		static void WriteResources(XmlTextWriter xml, IEnumerable<(string itemType, string fileName)> files)
 		{
 			// remove phase
-			foreach (var file in files.Where(t => t.itemType == "EmbeddedResource"))
+			foreach (var (itemType, fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
 			{
-				string buildAction = Path.GetExtension(file.fileName).ToUpperInvariant() switch
+				string buildAction = Path.GetExtension(fileName).ToUpperInvariant() switch
 				{
 					".CS" => "Compile",
 					".RESX" => "EmbeddedResource",
@@ -195,27 +202,45 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					continue;
 
 				xml.WriteStartElement(buildAction);
-				xml.WriteAttributeString("Remove", file.fileName);
+				xml.WriteAttributeString("Remove", fileName);
 				xml.WriteEndElement();
 			}
 
 			// include phase
-			foreach (var file in files.Where(t => t.itemType == "EmbeddedResource"))
+			foreach (var (itemType, fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
 			{
-				if (Path.GetExtension(file.fileName) == ".resx")
+				if (Path.GetExtension(fileName) == ".resx")
 					continue;
 
 				xml.WriteStartElement("EmbeddedResource");
-				xml.WriteAttributeString("Include", file.fileName);
+				xml.WriteAttributeString("Include", fileName);
 				xml.WriteEndElement();
 			}
 		}
 
-		static void WriteReferences(XmlTextWriter xml, PEFile module, IProjectInfoProvider project)
+		static void WriteReferences(XmlTextWriter xml, PEFile module, IProjectInfoProvider project, ProjectType projectType)
 		{
+			bool isNetCoreApp = TargetServices.DetectTargetFramework(module).Identifier == ".NETCoreApp";
+			var targetPacks = new HashSet<string>();
+			if (isNetCoreApp)
+			{
+				targetPacks.Add("Microsoft.NETCore.App");
+				switch (projectType)
+				{
+					case ProjectType.WinForms:
+					case ProjectType.Wpf:
+						targetPacks.Add("Microsoft.WindowsDesktop.App");
+						break;
+					case ProjectType.Web:
+						targetPacks.Add("Microsoft.AspNetCore.App");
+						targetPacks.Add("Microsoft.AspNetCore.All");
+						break;
+				}
+			}
+
 			foreach (var reference in module.AssemblyReferences.Where(r => !ImplicitReferences.Contains(r.Name)))
 			{
-				if (project.AssemblyResolver.IsSharedAssembly(reference))
+				if (isNetCoreApp && project.AssemblyResolver.IsSharedAssembly(reference, out string runtimePack) && targetPacks.Contains(runtimePack))
 				{
 					continue;
 				}
