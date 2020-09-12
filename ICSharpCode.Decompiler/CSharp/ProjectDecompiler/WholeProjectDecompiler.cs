@@ -205,7 +205,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					}
 					else
 					{
-						string dir = CleanUpFileName(metadata.GetString(type.Namespace));
+						string dir = CleanUpDirectoryName(metadata.GetString(type.Namespace));
 						if (directories.Add(dir))
 							Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
 						return Path.Combine(dir, file);
@@ -398,6 +398,40 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (IsReservedFileSystemName(name))
 				return name + "_";
 			else if (name == ".")
+				return "_";
+			else
+				return name;
+		}
+
+		/// <summary>
+		/// Cleans up a node name for use as a directory name.
+		/// </summary>
+		public static string CleanUpDirectoryName(string text)
+		{
+			int pos = text.IndexOf(':');
+			if (pos > 0)
+				text = text.Substring(0, pos);
+			pos = text.IndexOf('`');
+			if (pos > 0)
+				text = text.Substring(0, pos);
+			text = text.Trim();
+			// Whitelist allowed characters, replace everything else:
+			StringBuilder b = new StringBuilder(text.Length);
+			foreach (var c in text)
+			{
+				if (char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == '\\')
+					b.Append(c);
+				else if (c == '.' && b.Length > 0 && b[b.Length - 1] != '.')
+					b.Append('\\'); // allow dot, but never two in a row
+				else
+					b.Append('-');
+				if (b.Length >= 200)
+					break; // limit to 200 chars
+			}
+			if (b.Length == 0)
+				b.Append('-');
+			string name = b.ToString();
+			if (name == ".")
 				return "_";
 			else
 				return name;

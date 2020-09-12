@@ -49,6 +49,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			const string ns = "http://schemas.microsoft.com/developer/msbuild/2003";
 			string platformName = TargetServices.GetPlatformName(module);
 			var targetFramework = TargetServices.DetectTargetFramework(module);
+			if (targetFramework.Identifier == ".NETFramework" && targetFramework.VersionNumber == 200)
+				targetFramework = TargetServices.DetectTargetFrameworkNET20(module, project.AssemblyResolver, targetFramework);
 
 			List<Guid> typeGuids = new List<Guid>();
 			if (targetFramework.IsPortableClassLibrary)
