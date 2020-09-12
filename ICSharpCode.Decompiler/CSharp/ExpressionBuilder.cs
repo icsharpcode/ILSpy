@@ -1235,12 +1235,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					new NamedArgumentExpression("origin", right.Expression)
 				}, compilation.FindType(KnownTypeCode.IntPtr), inst);
 			}
-			if (inst.LeftInputType == StackType.Ref && inst.RightInputType.IsIntegerType()
-				&& left.Type is ByReferenceType brt)
+			if (inst.LeftInputType == StackType.Ref && inst.RightInputType.IsIntegerType())
 			{
 				// ref [+-] int
+				var brt = left.Type as ByReferenceType;
+				if (brt == null)
+				{
+					brt = GetReferenceType(left.Type);
+					left = left.ConvertTo(brt, this);
+				}
 				string name = (inst.Operator == BinaryNumericOperator.Sub ? "Subtract" : "Add");
-				ILInstruction offsetInst = PointerArithmeticOffset.Detect(inst.Right, brt.ElementType, inst.CheckForOverflow);
+				ILInstruction offsetInst = PointerArithmeticOffset.Detect(inst.Right, brt?.ElementType, inst.CheckForOverflow);
 				if (offsetInst != null)
 				{
 					if (settings.FixedBuffers && inst.Operator == BinaryNumericOperator.Add && inst.Left is LdFlda ldFlda
@@ -1264,11 +1269,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					return CallUnsafeIntrinsic(name + "ByteOffset", new[] { left.Expression, right.Expression }, brt, inst);
 				}
 			}
-			brt = right.Type as ByReferenceType;
-			if (inst.LeftInputType == StackType.I && inst.RightInputType == StackType.Ref && brt != null
+
+			if (inst.LeftInputType == StackType.I && inst.RightInputType == StackType.Ref
 				&& inst.Operator == BinaryNumericOperator.Add)
 			{
 				// int + ref
+				var brt = right.Type as ByReferenceType;
+				if (brt == null)
+				{
+					brt = GetReferenceType(right.Type);
+					right = right.ConvertTo(brt, this);
+				}
 				ILInstruction offsetInst = PointerArithmeticOffset.Detect(inst.Left, brt.ElementType, inst.CheckForOverflow);
 				if (offsetInst != null)
 				{
@@ -1286,6 +1297,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 			return null;
+
+			ByReferenceType GetReferenceType(IType type)
+			{
+				if (type is PointerType pt)
+				{
+					return new ByReferenceType(pt.ElementType);
+				}
+				else
+				{
+					return new ByReferenceType(compilation.FindType(KnownTypeCode.Byte));
+				}
+			}
 		}
 
 		internal TranslatedExpression CallUnsafeIntrinsic(string name, Expression[] arguments, IType returnType, ILInstruction inst = null, IEnumerable<IType> typeArguments = null)
@@ -1429,7 +1452,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var left = Translate(inst.Left, op.IsBitwise() ? context.TypeHint : null);
 			var right = Translate(inst.Right, op.IsBitwise() ? context.TypeHint : null);
 
-			if (left.Type.Kind == TypeKind.ByReference || right.Type.Kind == TypeKind.ByReference)
+			if (inst.UnderlyingResultType == StackType.Ref)
 			{
 				var ptrResult = HandleManagedPointerArithmetic(inst, left, right);
 				if (ptrResult != null)

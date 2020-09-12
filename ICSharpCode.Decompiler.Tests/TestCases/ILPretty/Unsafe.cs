@@ -65,14 +65,14 @@ internal sealed class ExtraUnsafeTests
 		{
 			if (*ptr <= 0)
 			{
-				ptr[4 * 0] = 1;
+				Unsafe.AddByteOffset(ref *ptr, 4 * 0) = 1;
 				return;
 			}
 			reference = ref *ptr;
 		}
 		fixed (int* ptr = &b[reference])
 		{
-			ptr[4 * 0] = 1;
+			Unsafe.AddByteOffset(ref *ptr, 4 * 0) = 1;
 		}
 	}
 
