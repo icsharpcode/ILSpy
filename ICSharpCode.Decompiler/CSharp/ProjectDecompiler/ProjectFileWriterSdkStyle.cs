@@ -72,11 +72,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			using (XmlTextWriter xmlWriter = new XmlTextWriter(target))
 			{
 				xmlWriter.Formatting = Formatting.Indented;
-				Write(xmlWriter, project, module);
+				Write(xmlWriter, project, files, module);
 			}
 		}
 
-		static void Write(XmlTextWriter xml, IProjectInfoProvider project, PEFile module)
+		static void Write(XmlTextWriter xml, IProjectInfoProvider project, IEnumerable<(string itemType, string fileName)> files, PEFile module)
 		{
 			xml.WriteStartElement("Project");
 
@@ -85,6 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			PlaceIntoTag("PropertyGroup", xml, () => WriteAssemblyInfo(xml, module, project, projectType));
 			PlaceIntoTag("PropertyGroup", xml, () => WriteProjectInfo(xml, project));
+			PlaceIntoTag("ItemGroup", xml, () => WriteResources(xml, module, files, project));
 			PlaceIntoTag("ItemGroup", xml, () => WriteReferences(xml, module, project));
 
 			xml.WriteEndElement();
@@ -176,6 +177,37 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				xml.WriteElementString("SignAssembly", TrueString);
 				xml.WriteElementString("AssemblyOriginatorKeyFile", Path.GetFileName(project.StrongNameKeyFile));
+			}
+		}
+
+		static void WriteResources(XmlTextWriter xml, PEFile module, IEnumerable<(string itemType, string fileName)> files, IProjectInfoProvider project)
+		{
+			// remove phase
+			foreach (var file in files.Where(t => t.itemType == "EmbeddedResource"))
+			{
+				string buildAction = Path.GetExtension(file.fileName).ToUpperInvariant() switch
+				{
+					".CS" => "Compile",
+					".RESX" => "EmbeddedResource",
+					_ => "None"
+				};
+				if (buildAction == "EmbeddedResource")
+					continue;
+
+				xml.WriteStartElement(buildAction);
+				xml.WriteAttributeString("Remove", file.fileName);
+				xml.WriteEndElement();
+			}
+
+			// include phase
+			foreach (var file in files.Where(t => t.itemType == "EmbeddedResource"))
+			{
+				if (Path.GetExtension(file.fileName) == ".resx")
+					continue;
+
+				xml.WriteStartElement("EmbeddedResource");
+				xml.WriteAttributeString("Include", file.fileName);
+				xml.WriteEndElement();
 			}
 		}
 
