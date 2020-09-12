@@ -340,6 +340,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return p - q;
 		}
 
+		public unsafe long Issue2158a(void* p, void* q)
+		{
+			return (long)p - (long)q;
+		}
+
+		public unsafe long Issue2158b(sbyte* p, sbyte* q)
+		{
+			return (long)p - (long)q;
+		}
+
+		public unsafe long Issue2158c(int* p, int* q)
+		{
+			return (long)p - (long)q;
+		}
+
+		public unsafe long Issue2158d(SimpleStruct* p, SimpleStruct* q)
+		{
+			return (long)p - (long)q;
+		}
+
 		public unsafe double FixedMemberAccess(StructWithFixedSizeMembers* m, int i)
 		{
 			return (double)m->Integers[i] + m->Doubles[i];

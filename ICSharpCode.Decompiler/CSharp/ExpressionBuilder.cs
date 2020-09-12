@@ -1152,7 +1152,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		///   int + ptr
 		///   ptr - int
 		/// Returns null if 'inst' is not performing pointer arithmetic.
-		/// This function not handle 'ptr - ptr'!
+		/// 'ptr - ptr' is not handled here, but in HandlePointerSubtraction()!
 		/// </summary>
 		TranslatedExpression? HandlePointerArithmetic(BinaryNumericInstruction inst, TranslatedExpression left, TranslatedExpression right)
 		{

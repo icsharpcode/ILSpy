@@ -748,24 +748,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							return BinaryOperatorResolveResult(rhsType, lhs, op, rhs);
 						}
 
-						if (lhsType is PointerType)
-						{
-							methodGroup = new[] {
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.Int32),
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.UInt32),
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.Int64),
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.UInt64)
-							};
-						}
-						else if (rhsType is PointerType)
-						{
-							methodGroup = new[] {
-								PointerArithmeticOperator(rhsType, KnownTypeCode.Int32, rhsType),
-								PointerArithmeticOperator(rhsType, KnownTypeCode.UInt32, rhsType),
-								PointerArithmeticOperator(rhsType, KnownTypeCode.Int64, rhsType),
-								PointerArithmeticOperator(rhsType, KnownTypeCode.UInt64, rhsType)
-							};
-						}
 						if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
 							return new ErrorResolveResult(SpecialType.NullType);
 					}
@@ -811,28 +793,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						else if (rhsType.Kind == TypeKind.Delegate && TryConvert(ref lhs, rhsType))
 						{
 							return BinaryOperatorResolveResult(rhsType, lhs, op, rhs);
-						}
-
-						if (lhsType is PointerType)
-						{
-							if (rhsType is PointerType)
-							{
-								IType int64 = compilation.FindType(KnownTypeCode.Int64);
-								if (lhsType.Equals(rhsType))
-								{
-									return BinaryOperatorResolveResult(int64, lhs, op, rhs);
-								}
-								else
-								{
-									return new ErrorResolveResult(int64);
-								}
-							}
-							methodGroup = new[] {
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.Int32),
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.UInt32),
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.Int64),
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.UInt64)
-							};
 						}
 
 						if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
