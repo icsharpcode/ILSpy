@@ -377,12 +377,18 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				yield break;
 
 			byte[] appIcon = CreateApplicationIcon(resources);
-			File.WriteAllBytes(Path.Combine(TargetDirectory, "app.ico"), appIcon);
-			yield return ("ApplicationIcon", "app.ico");
+			if (appIcon != null)
+			{
+				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.ico"), appIcon);
+				yield return ("ApplicationIcon", "app.ico");
+			}
 
 			byte[] appManifest = CreateApplicationManifest(resources);
-			File.WriteAllBytes(Path.Combine(TargetDirectory, "app.manifest"), appIcon);
-			yield return ("ApplicationManifest", "app.manifest");
+			if (appManifest != null)
+			{
+				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.manifest"), appManifest);
+				yield return ("ApplicationManifest", "app.manifest");
+			}
 
 			var appConfig = module.FileName + ".config";
 			if (File.Exists(appConfig))
