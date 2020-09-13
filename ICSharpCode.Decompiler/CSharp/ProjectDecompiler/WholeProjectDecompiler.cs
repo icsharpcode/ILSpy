@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -142,6 +143,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			directories.Clear();
 			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
 			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
+			files.AddRange(WriteMiscellaneousFilesInProject(moduleDefinition));
 			if (StrongNameKeyFile != null)
 			{
 				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)));
@@ -365,6 +367,98 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 			return fileName;
 		}
+		#endregion
+
+		#region WriteMiscellaneousFilesInProject
+		const int RT_ICON = 3;
+		const int RT_GROUP_ICON = 14;
+
+		protected virtual IEnumerable<(string itemType, string fileName)> WriteMiscellaneousFilesInProject(PEFile module)
+		{
+			var resources = module.Reader.ReadWin32Resources();
+			if (resources == null)
+				yield break;
+
+			byte[] icon = CreateIcon(resources);
+			File.WriteAllBytes(Path.Combine(TargetDirectory, "app.ico"), icon);
+			yield return ("ApplicationIcon", "app.ico");
+		}
+
+		unsafe static byte[] CreateIcon(Win32ResourceDirectory resources)
+		{
+			var iconGroup = resources.Find(new Win32ResourceName(RT_GROUP_ICON))?.Directories.FirstOrDefault()?.Datas.FirstOrDefault()?.Data;
+			if (iconGroup == null)
+				return null;
+
+			var iconDir = resources.Find(new Win32ResourceName(RT_ICON));
+			if (iconDir == null)
+				return null;
+
+			using var outStream = new MemoryStream();
+			using var writer = new BinaryWriter(outStream);
+			fixed (byte* pIconGroupData = iconGroup)
+			{
+				var pIconGroup = (GRPICONDIR*)pIconGroupData;
+				writer.Write(pIconGroup->idReserved);
+				writer.Write(pIconGroup->idType);
+				writer.Write(pIconGroup->idCount);
+
+				int iconCount = pIconGroup->idCount;
+				uint offset = (2 * 3) + ((uint)iconCount * 0x10);
+				for (int i = 0; i < iconCount; i++)
+				{
+					var pIconEntry = pIconGroup->idEntries + i;
+					writer.Write(pIconEntry->bWidth);
+					writer.Write(pIconEntry->bHeight);
+					writer.Write(pIconEntry->bColorCount);
+					writer.Write(pIconEntry->bReserved);
+					writer.Write(pIconEntry->wPlanes);
+					writer.Write(pIconEntry->wBitCount);
+					writer.Write(pIconEntry->dwBytesInRes);
+					writer.Write(offset);
+					offset += pIconEntry->dwBytesInRes;
+				}
+
+				for (int i = 0; i < iconCount; i++)
+				{
+					var icon = iconDir.FindDirectory(new Win32ResourceName(pIconGroup->idEntries[i].nID))?.Datas.FirstOrDefault()?.Data;
+					if (icon == null)
+						return null;
+					writer.Write(icon);
+				}
+			}
+
+			return outStream.ToArray();
+		}
+
+		[StructLayout(LayoutKind.Sequential, Pack = 2)]
+		unsafe struct GRPICONDIR
+		{
+			public ushort idReserved;
+			public ushort idType;
+			public ushort idCount;
+			private fixed byte _idEntries[1];
+			[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>")]
+			public GRPICONDIRENTRY* idEntries {
+				get {
+					fixed (byte* p = _idEntries)
+						return (GRPICONDIRENTRY*)p;
+				}
+			}
+		};
+
+		[StructLayout(LayoutKind.Sequential, Pack = 2)]
+		struct GRPICONDIRENTRY
+		{
+			public byte bWidth;
+			public byte bHeight;
+			public byte bColorCount;
+			public byte bReserved;
+			public ushort wPlanes;
+			public ushort wBitCount;
+			public uint dwBytesInRes;
+			public short nID;
+		};
 		#endregion
 
 		/// <summary>

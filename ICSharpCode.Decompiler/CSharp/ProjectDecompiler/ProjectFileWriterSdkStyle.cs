@@ -85,6 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			PlaceIntoTag("PropertyGroup", xml, () => WriteAssemblyInfo(xml, module, project, projectType));
 			PlaceIntoTag("PropertyGroup", xml, () => WriteProjectInfo(xml, project));
+			PlaceIntoTag("PropertyGroup", xml, () => WriteMiscellaneousPropertyGroup(xml, files));
 			PlaceIntoTag("ItemGroup", xml, () => WriteResources(xml, files));
 			PlaceIntoTag("ItemGroup", xml, () => WriteReferences(xml, module, project, projectType));
 
@@ -185,6 +186,13 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				xml.WriteElementString("SignAssembly", TrueString);
 				xml.WriteElementString("AssemblyOriginatorKeyFile", Path.GetFileName(project.StrongNameKeyFile));
 			}
+		}
+
+		static void WriteMiscellaneousPropertyGroup(XmlTextWriter xml, IEnumerable<(string itemType, string fileName)> files)
+		{
+			var (itemType, fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationIcon");
+			if (fileName != null)
+				xml.WriteElementString("ApplicationIcon", fileName);
 		}
 
 		static void WriteResources(XmlTextWriter xml, IEnumerable<(string itemType, string fileName)> files)
