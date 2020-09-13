@@ -612,6 +612,7 @@
     <Compile Include="Util\ReferenceComparer.cs" />
     <Compile Include="Util\TreeTraversal.cs" />
     <Compile Include="Util\UnionFind.cs" />
+    <Compile Include="Util\Win32Resources.cs" />
     <None Include="ICSharpCode.Decompiler.nuspec" DependentUpon="ICSharpCode.Decompiler.nuspec.template" />
     <None Include="ICSharpCode.Decompiler.nuspec.template" />
     <None Include="ICSharpCode.Decompiler.ruleset" />
