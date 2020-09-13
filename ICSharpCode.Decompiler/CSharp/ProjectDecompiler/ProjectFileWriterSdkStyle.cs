@@ -193,6 +193,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			var (itemType, fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationIcon");
 			if (fileName != null)
 				xml.WriteElementString("ApplicationIcon", fileName);
+
+			(itemType, fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationManifest");
+			if (fileName != null)
+				xml.WriteElementString("ApplicationManifest", fileName);
 		}
 
 		static void WriteResources(XmlTextWriter xml, IEnumerable<(string itemType, string fileName)> files)

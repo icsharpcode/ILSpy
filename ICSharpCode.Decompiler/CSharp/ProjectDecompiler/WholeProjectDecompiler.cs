@@ -370,18 +370,19 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		#endregion
 
 		#region WriteMiscellaneousFilesInProject
-		const int RT_ICON = 3;
-		const int RT_GROUP_ICON = 14;
-
 		protected virtual IEnumerable<(string itemType, string fileName)> WriteMiscellaneousFilesInProject(PEFile module)
 		{
 			var resources = module.Reader.ReadWin32Resources();
 			if (resources == null)
 				yield break;
 
-			byte[] icon = CreateIcon(resources);
-			File.WriteAllBytes(Path.Combine(TargetDirectory, "app.ico"), icon);
+			byte[] appIcon = CreateApplicationIcon(resources);
+			File.WriteAllBytes(Path.Combine(TargetDirectory, "app.ico"), appIcon);
 			yield return ("ApplicationIcon", "app.ico");
+
+			byte[] appManifest = CreateApplicationManifest(resources);
+			File.WriteAllBytes(Path.Combine(TargetDirectory, "app.manifest"), appIcon);
+			yield return ("ApplicationManifest", "app.manifest");
 
 			var appConfig = module.FileName + ".config";
 			if (File.Exists(appConfig))
@@ -391,7 +392,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		unsafe static byte[] CreateIcon(Win32ResourceDirectory resources)
+		const int RT_ICON = 3;
+		const int RT_GROUP_ICON = 14;
+
+		unsafe static byte[] CreateApplicationIcon(Win32ResourceDirectory resources)
 		{
 			var iconGroup = resources.Find(new Win32ResourceName(RT_GROUP_ICON))?.Directories.FirstOrDefault()?.Datas.FirstOrDefault()?.Data;
 			if (iconGroup == null)
@@ -466,6 +470,13 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			public uint dwBytesInRes;
 			public short nID;
 		};
+
+		const int RT_MANIFEST = 24;
+
+		unsafe static byte[] CreateApplicationManifest(Win32ResourceDirectory resources)
+		{
+			return resources.Find(new Win32ResourceName(RT_MANIFEST))?.Directories.FirstOrDefault()?.Datas.FirstOrDefault()?.Data;
+		}
 		#endregion
 
 		/// <summary>
