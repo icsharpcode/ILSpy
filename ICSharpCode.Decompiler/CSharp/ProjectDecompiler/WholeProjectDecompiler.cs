@@ -382,6 +382,13 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			byte[] icon = CreateIcon(resources);
 			File.WriteAllBytes(Path.Combine(TargetDirectory, "app.ico"), icon);
 			yield return ("ApplicationIcon", "app.ico");
+
+			var appConfig = module.FileName + ".config";
+			if (File.Exists(appConfig))
+			{
+				File.Copy(appConfig, Path.Combine(TargetDirectory, "app.config"));
+				yield return ("ApplicationConfig", Path.GetFileName(appConfig));
+			}
 		}
 
 		unsafe static byte[] CreateIcon(Win32ResourceDirectory resources)
