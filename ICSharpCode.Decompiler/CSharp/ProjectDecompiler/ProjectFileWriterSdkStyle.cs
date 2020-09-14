@@ -197,6 +197,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			(itemType, fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationManifest");
 			if (fileName != null)
 				xml.WriteElementString("ApplicationManifest", fileName);
+
+			if (files.Any(t => t.itemType == "EmbeddedResource"))
+				xml.WriteElementString("RootNamespace", string.Empty);
+			// TODO: We should add CustomToolNamespace for resources, otherwise we should add empty RootNamespace
 		}
 
 		static void WriteResources(XmlTextWriter xml, IEnumerable<(string itemType, string fileName)> files)
