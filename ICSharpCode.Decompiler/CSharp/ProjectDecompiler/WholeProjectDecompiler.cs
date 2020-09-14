@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			files.AddRange(WriteMiscellaneousFilesInProject(moduleDefinition));
 			if (StrongNameKeyFile != null)
 			{
-				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)));
+				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)), overwrite: true);
 			}
 
 			projectWriter.Write(projectFileWriter, this, files, moduleDefinition);
@@ -393,7 +393,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			var appConfig = module.FileName + ".config";
 			if (File.Exists(appConfig))
 			{
-				File.Copy(appConfig, Path.Combine(TargetDirectory, "app.config"));
+				File.Copy(appConfig, Path.Combine(TargetDirectory, "app.config"), overwrite: true);
 				yield return ("ApplicationConfig", Path.GetFileName(appConfig));
 			}
 		}
