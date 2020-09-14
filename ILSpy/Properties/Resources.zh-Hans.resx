@@ -526,7 +526,7 @@
     <value>前进</value>
   </data>
   <data name="GeneratePortable" xml:space="preserve">
-    <value>生成可携带 PDB</value>
+    <value>生成 Portable PDB</value>
   </data>
   <data name="GenerationCompleteInSeconds" xml:space="preserve">
     <value>生成完成，耗时 {0} 秒。</value>
@@ -641,7 +641,7 @@
     <value>其他资源</value>
   </data>
   <data name="PortablePDBPdbAllFiles" xml:space="preserve">
-    <value>可携带 PDB(*.pdb)|*.pdb|所有文件(*.*)|*.*</value>
+    <value>Portable PDB(*.pdb)|*.pdb|所有文件(*.*)|*.*</value>
   </data>
   <data name="ProjectExportFormatChangeSettingHint" xml:space="preserve">
     <value>你可以切换 选项 &gt; 反编译器 &gt; 其他 &gt; 使用新的 SDK 样式(*.csproj)生成项目文件 设置以改变项目格式。</value>
