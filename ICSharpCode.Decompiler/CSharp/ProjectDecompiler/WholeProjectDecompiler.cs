@@ -384,7 +384,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 
 			byte[] appManifest = CreateApplicationManifest(resources);
-			if (appManifest != null)
+			if (appManifest != null && !IsDefaultApplicationManifest(appManifest))
 			{
 				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.manifest"), appManifest);
 				yield return ("ApplicationManifest", "app.manifest");
@@ -403,7 +403,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		unsafe static byte[] CreateApplicationIcon(Win32ResourceDirectory resources)
 		{
-			var iconGroup = resources.Find(new Win32ResourceName(RT_GROUP_ICON))?.Directories.FirstOrDefault()?.Datas.FirstOrDefault()?.Data;
+			var iconGroup = resources.Find(new Win32ResourceName(RT_GROUP_ICON))?.FirstDirectory()?.FirstData()?.Data;
 			if (iconGroup == null)
 				return null;
 
@@ -438,7 +438,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 				for (int i = 0; i < iconCount; i++)
 				{
-					var icon = iconDir.FindDirectory(new Win32ResourceName(pIconGroup->idEntries[i].nID))?.Datas.FirstOrDefault()?.Data;
+					var icon = iconDir.FindDirectory(new Win32ResourceName(pIconGroup->idEntries[i].nID))?.FirstData()?.Data;
 					if (icon == null)
 						return null;
 					writer.Write(icon);
@@ -481,7 +481,41 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		unsafe static byte[] CreateApplicationManifest(Win32ResourceDirectory resources)
 		{
-			return resources.Find(new Win32ResourceName(RT_MANIFEST))?.Directories.FirstOrDefault()?.Datas.FirstOrDefault()?.Data;
+			return resources.Find(new Win32ResourceName(RT_MANIFEST))?.FirstDirectory()?.FirstData()?.Data;
+		}
+
+		static bool IsDefaultApplicationManifest(byte[] appManifest)
+		{
+			const string DEFAULT_APPMANIFEST =
+				"<?xmlversion=\"1.0\"encoding=\"UTF-8\"standalone=\"yes\"?><assemblyxmlns=\"urn:schemas-microsoft-com" +
+				":asm.v1\"manifestVersion=\"1.0\"><assemblyIdentityversion=\"1.0.0.0\"name=\"MyApplication.app\"/><tr" +
+				"ustInfoxmlns=\"urn:schemas-microsoft-com:asm.v2\"><security><requestedPrivilegesxmlns=\"urn:schemas-" +
+				"microsoft-com:asm.v3\"><requestedExecutionLevellevel=\"asInvoker\"uiAccess=\"false\"/></requestedPri" +
+				"vileges></security></trustInfo></assembly>";
+
+			string s = CleanUpApplicationManifest(appManifest);
+			return s == DEFAULT_APPMANIFEST;
+		}
+
+		static string CleanUpApplicationManifest(byte[] appManifest)
+		{
+			bool bom = appManifest.Length >= 3 && appManifest[0] == 0xEF && appManifest[1] == 0xBB && appManifest[2] == 0xBF;
+			string s = Encoding.UTF8.GetString(appManifest, bom ? 3 : 0, appManifest.Length - (bom ? 3 : 0));
+			var sb = new StringBuilder(s.Length);
+			for (int i = 0; i < s.Length; i++)
+			{
+				char c = s[i];
+				switch (c)
+				{
+					case '\t':
+					case '\n':
+					case '\r':
+					case ' ':
+						continue;
+				}
+				sb.Append(c);
+			}
+			return sb.ToString();
 		}
 		#endregion
 

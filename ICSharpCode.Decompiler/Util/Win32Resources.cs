@@ -141,6 +141,16 @@ namespace ICSharpCode.Decompiler.Util
 			}
 			return null;
 		}
+
+		public Win32ResourceDirectory FirstDirectory()
+		{
+			return Directories.Count != 0 ? Directories[0] : null;
+		}
+
+		public Win32ResourceData FirstData()
+		{
+			return Datas.Count != 0 ? Datas[0] : null;
+		}
 	}
 
 	[DebuggerDisplay("Data: {Name}")]
