@@ -225,6 +225,9 @@
   <data name="DebugThisStep" xml:space="preserve">
     <value>调试此步骤</value>
   </data>
+  <data name="DecompilationCompleteInF1Seconds" xml:space="preserve">
+    <value>反编译完成共耗时 {0:F1} 秒。</value>
+  </data>
   <data name="Decompile" xml:space="preserve">
     <value>反编译</value>
   </data>
@@ -234,6 +237,9 @@
   <data name="Decompiler" xml:space="preserve">
     <value>反编译器</value>
   </data>
+  <data name="DecompilerSettings.AggressiveInlining" xml:space="preserve">
+    <value>如果可能，始终内联局部变量</value>
+  </data>
   <data name="DecompilerSettings.AllowExtensionAddMethodsInCollectionInitializerExpressions" xml:space="preserve">
     <value>在集合初始化器表达式中允许扩展 Add 方法</value>
   </data>
@@ -242,6 +248,9 @@
   </data>
   <data name="DecompilerSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls" xml:space="preserve">
     <value>始终强制转换显式接口实现调用的目标</value>
+  </data>
+  <data name="DecompilerSettings.AlwaysQualifyMemberReferences" xml:space="preserve">
+    <value>始终限定成员引用</value>
   </data>
   <data name="DecompilerSettings.AlwaysShowEnumMemberValues" xml:space="preserve">
     <value>始终显示枚举数值</value>
@@ -288,8 +297,14 @@
   <data name="DecompilerSettings.DecompileExpressionTrees" xml:space="preserve">
     <value>反编译表达树</value>
   </data>
+  <data name="DecompilerSettings.DecompileForEachWithGetEnumeratorExtension" xml:space="preserve">
+    <value>反编译使用 GetEnumerator 扩展方法的 foreach 语句</value>
+  </data>
   <data name="DecompilerSettings.DecompileUseOfTheDynamicType" xml:space="preserve">
-    <value>反编译使用 dynamic 类型</value>
+    <value>反编译 dynamic 类型</value>
+  </data>
+  <data name="DecompilerSettings.Deconstruction" xml:space="preserve">
+    <value>检测解构赋值</value>
   </data>
   <data name="DecompilerSettings.DetectAsyncUsingAndForeachStatements" xml:space="preserve">
     <value>检测使用了 await 的 using 和 foreach 块</value>
@@ -301,7 +316,7 @@
     <value>检测 lock 语句</value>
   </data>
   <data name="DecompilerSettings.DetectSwitchOnString" xml:space="preserve">
-    <value>检测 switch 的字符串</value>
+    <value>检测字符串 switch 语句</value>
   </data>
   <data name="DecompilerSettings.DetectTupleComparisons" xml:space="preserve">
     <value>检测元组比较</value>
@@ -321,8 +336,14 @@
   <data name="DecompilerSettings.ForStatement" xml:space="preserve">
     <value>如果可能，转换到 for 块</value>
   </data>
+  <data name="DecompilerSettings.FunctionPointers" xml:space="preserve">
+    <value>函数指针</value>
+  </data>
   <data name="DecompilerSettings.IncludeXMLDocumentationCommentsInTheDecompiledCode" xml:space="preserve">
     <value>在反编译代码中包括 XML 文档注释</value>
+  </data>
+  <data name="DecompilerSettings.InitAccessors" xml:space="preserve">
+    <value>允许 init; 访问器</value>
   </data>
   <data name="DecompilerSettings.InsertUsingDeclarations" xml:space="preserve">
     <value>插入 using 声明</value>
@@ -378,8 +399,17 @@
   <data name="DecompilerSettings.ShowInfoFromDebugSymbolsIfAvailable" xml:space="preserve">
     <value>显示调试符号中的信息(如果可用)</value>
   </data>
+  <data name="DecompilerSettings.SparseIntegerSwitch" xml:space="preserve">
+    <value>检测整型 switch 即使 IL 代码不使用跳转表</value>
+  </data>
+  <data name="DecompilerSettings.SwitchExpressions" xml:space="preserve">
+    <value>switch 表达式</value>
+  </data>
   <data name="DecompilerSettings.UseDiscards" xml:space="preserve">
-    <value>使用丢弃物</value>
+    <value>使用弃元</value>
+  </data>
+  <data name="DecompilerSettings.UseEnhancedUsing" xml:space="preserve">
+    <value>使用增强的 using 变量声明</value>
   </data>
   <data name="DecompilerSettings.UseExpressionBodiedMemberSyntaxForGetOnlyProperties" xml:space="preserve">
     <value>对仅获取属性使用表达式内部成员语法</value>
@@ -414,8 +444,11 @@
   <data name="DecompilerSettings.UsePatternBasedFixedStatement" xml:space="preserve">
     <value>使用基于模式的 fixed 语句</value>
   </data>
+  <data name="DecompilerSettings.UseRefLocalsForAccurateOrderOfEvaluation" xml:space="preserve">
+    <value>使用 ref 局部变量以准确表达求值顺序</value>
+  </data>
   <data name="DecompilerSettings.UseSdkStyleProjectFormat" xml:space="preserve">
-    <value>使用新的 SDK 格式(*.csproj)生成项目文件</value>
+    <value>使用新的 SDK 样式(*.csproj)生成项目文件</value>
   </data>
   <data name="DecompilerSettings.UseStackallocInitializerSyntax" xml:space="preserve">
     <value>使用 stackalloc 初始化器语法</value>
@@ -609,6 +642,15 @@
   </data>
   <data name="PortablePDBPdbAllFiles" xml:space="preserve">
     <value>可携带 PDB(*.pdb)|*.pdb|所有文件(*.*)|*.*</value>
+  </data>
+  <data name="ProjectExportFormatChangeSettingHint" xml:space="preserve">
+    <value>你可以切换 选项 &gt; 反编译器 &gt; 其他 &gt; 使用新的 SDK 样式(*.csproj)生成项目文件 设置以改变项目格式。</value>
+  </data>
+  <data name="ProjectExportFormatNonSDKHint" xml:space="preserve">
+    <value>已生成非 SDK 样式项目。 访问 https://docs.microsoft.com/zh-cn//nuget/resources/check-project-format 了解更多。</value>
+  </data>
+  <data name="ProjectExportFormatSDKHint" xml:space="preserve">
+    <value>已生成 SDK 样式项目。 访问 https://docs.microsoft.com/zh-cn//nuget/resources/check-project-format 了解更多。</value>
   </data>
   <data name="PropertyManuallyMissingReferencesListLoadedAssemblies" xml:space="preserve">
     <value>例如属性 getter/setter 访问。要获得最佳反编译结果，请手动将缺少的引用添加到加载的程序集列表中。</value>
