@@ -40,7 +40,7 @@ internal static class RevisionClass
 	public const string Minor = "2";
 	public const string Build = "0";
 	public const string Revision = "$INSERTREVISION$";
-	public const string VersionName = "preview1";
+	public const string VersionName = "preview2";
 
 	public const string FullVersion = Major + "." + Minor + "." + Build + ".$INSERTREVISION$$INSERTBRANCHPOSTFIX$$INSERTVERSIONNAMEPOSTFIX$";
 }
