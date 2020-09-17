@@ -48,6 +48,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 	}
 
+	internal class FunctionPointersWithCallingConvention
+	{
+		public unsafe delegate*<void> fn_default;
+		// Unmanaged without explicit callconv is only supported with .NET 5,
+		// and emits metadata that cannot be parsed by older SRM versions.
+		//public delegate* unmanaged<void> fn_unmanaged;
+		public unsafe delegate* unmanaged[Cdecl]<void> fn_cdecl;
+		public unsafe delegate* unmanaged[Fastcall]<void> fn_fastcall;
+		public unsafe delegate* unmanaged[Stdcall]<void> fn_stdcall;
+		public unsafe delegate* unmanaged[Thiscall]<void> fn_thiscall;
+	}
+
 	internal class FunctionPointersWithDynamicTypes
 	{
 		public class D<T, U>
@@ -106,14 +118,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			F2(ref c, out f) = b;
 		}
 	}
-
-	// TODO: the new calling convention syntax isn't yet available in the released Roslyn version
-	//internal unsafe class FunctionPointersWithCallingConvention
-	//{
-	//  public delegate*<void> managed;
-	//  public delegate* unmanaged<void> unmanaged;
-	//  public delegate* unmanaged[Cdecl]<void> cdecl;
-	//}
 
 	internal class FunctionPointerTypeInference
 	{

@@ -311,7 +311,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				var astType = new FunctionPointerAstType();
 				if (fpt.CallingConvention != System.Reflection.Metadata.SignatureCallingConvention.Default)
 				{
-					astType.CallingConvention = fpt.CallingConvention.ToString().ToLowerInvariant();
+					string callconvName = fpt.CallingConvention switch
+					{
+						System.Reflection.Metadata.SignatureCallingConvention.Default => "",
+						System.Reflection.Metadata.SignatureCallingConvention.CDecl => "Cdecl",
+						System.Reflection.Metadata.SignatureCallingConvention.StdCall => "Stdcall",
+						System.Reflection.Metadata.SignatureCallingConvention.ThisCall => "Thiscall",
+						System.Reflection.Metadata.SignatureCallingConvention.FastCall => "Fastcall",
+						System.Reflection.Metadata.SignatureCallingConvention.VarArgs => "Varargs",
+						_ => fpt.CallingConvention.ToString()
+					};
+					astType.CallingConvention = new PrimitiveType(callconvName);
 				}
 				for (int i = 0; i < fpt.ParameterTypes.Length; i++)
 				{

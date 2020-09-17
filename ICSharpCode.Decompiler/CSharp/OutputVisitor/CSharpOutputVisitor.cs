@@ -2605,10 +2605,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(functionPointerType);
 			WriteKeyword(Roles.DelegateKeyword);
 			WriteToken(FunctionPointerAstType.PointerRole);
-			if (!functionPointerType.CallingConventionIdentifier.IsNull)
+			if (!functionPointerType.CallingConvention.IsNull)
 			{
 				Space();
-				WriteIdentifier(functionPointerType.CallingConventionIdentifier);
+				WriteKeyword("unmanaged");
+				WriteToken(Roles.LBracket);
+				functionPointerType.CallingConvention.AcceptVisitor(this);
+				WriteToken(Roles.RBracket);
 			}
 			WriteToken(Roles.LChevron);
 			WriteCommaSeparatedList(

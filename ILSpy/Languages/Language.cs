@@ -257,6 +257,11 @@ namespace ICSharpCode.ILSpy
 			public override IType VisitFunctionPointerType(FunctionPointerType type)
 			{
 				builder.Append("method ");
+				if (type.CallingConvention != SignatureCallingConvention.Default)
+				{
+					builder.Append(type.CallingConvention.ToILSyntax());
+					builder.Append(' ');
+				}
 				type.ReturnType.AcceptVisitor(this);
 				builder.Append(" *(");
 				bool first = true;
