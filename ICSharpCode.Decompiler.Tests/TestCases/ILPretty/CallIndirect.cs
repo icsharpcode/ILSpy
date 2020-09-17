@@ -3,6 +3,6 @@ internal class CallIndirect
 {
 	private unsafe void Test(IntPtr f)
 	{
-		((delegate* stdcall<int, void>)f)(42);
+		((delegate* unmanaged[Stdcall]<int, void>)f)(42);
 	}
 }
