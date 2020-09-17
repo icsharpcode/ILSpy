@@ -42,8 +42,8 @@
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="2017.7.26.1241" />
     <PackageReference Include="Microsoft.Build.Locator" Version="1.2.2" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0-2.final" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.8.0-2.final" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0-3.final" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.8.0-3.final" />
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0-preview.8.20407.11" />
 	<PackageReference Include="System.Reflection.Metadata" Version="5.0.0-preview.8.20407.11" />
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
