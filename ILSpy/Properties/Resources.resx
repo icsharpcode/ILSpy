@@ -402,6 +402,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.SparseIntegerSwitch" xml:space="preserve">
     <value>Detect switch on integer even if IL code does not use a jump table</value>
   </data>
+  <data name="DecompilerSettings.StringConcat" xml:space="preserve">
+    <value>Decompile 'string.Concat(a, b)' calls into 'a + b'</value>
+  </data>
   <data name="DecompilerSettings.SwitchExpressions" xml:space="preserve">
     <value>Switch expressions</value>
   </data>

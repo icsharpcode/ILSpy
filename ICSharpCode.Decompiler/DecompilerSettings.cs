@@ -443,6 +443,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool stringConcat = true;
+
+		/// <summary>
+		/// Decompile 'string.Concat(a, b)' calls into 'a + b'.
+		/// </summary>
+		[Category("C# 1.0 / VS .NET")]
+		[Description("DecompilerSettings.StringConcat")]
+		public bool StringConcat {
+			get { return stringConcat; }
+			set {
+				if (stringConcat != value)
+				{
+					stringConcat = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool liftNullables = true;
 
 		/// <summary>

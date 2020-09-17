@@ -1119,6 +1119,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Decompile &apos;string.Concat(a, b)&apos; calls into &apos;a + b&apos;.
+        /// </summary>
+        public static string DecompilerSettings_StringConcat {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.StringConcat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Switch expressions.
         /// </summary>
         public static string DecompilerSettings_SwitchExpressions {
