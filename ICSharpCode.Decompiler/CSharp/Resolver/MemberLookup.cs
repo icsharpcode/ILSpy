@@ -43,7 +43,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (member is IEvent || member is IMethod)
 				return true;
 			IType returnType = member.ReturnType;
-			return returnType.Kind == TypeKind.Dynamic || returnType.Kind == TypeKind.Delegate;
+			return returnType.Kind == TypeKind.Dynamic || returnType.Kind == TypeKind.Delegate
+				|| returnType.Kind == TypeKind.FunctionPointer;
 		}
 		#endregion
 
