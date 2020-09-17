@@ -78,19 +78,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			return syntax => {
 				output.Write("method ");
-				if (signature.Header.IsInstance)
-				{
-					output.Write("instance ");
-				}
-				if (signature.Header.HasExplicitThis)
-				{
-					output.Write("explicit ");
-				}
-				if (signature.Header.CallingConvention != SignatureCallingConvention.Default)
-				{
-					output.Write(signature.Header.CallingConvention.ToILSyntax());
-					output.Write(' ');
-				}
+				signature.Header.WriteTo(output);
 				signature.ReturnType(syntax);
 				output.Write(" *(");
 				for (int i = 0; i < signature.ParameterTypes.Length; i++)

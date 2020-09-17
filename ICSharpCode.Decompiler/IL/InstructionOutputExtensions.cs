@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)entity);
 					methodSignature = md.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new Metadata.GenericContext((MethodDefinitionHandle)entity, module));
-					WriteSignatureHeader(output, methodSignature);
+					methodSignature.Header.WriteTo(output);
 					methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 					output.Write(' ');
 					var declaringType = md.GetDeclaringType();
@@ -223,7 +223,7 @@ namespace ICSharpCode.Decompiler.IL
 					{
 						case MemberReferenceKind.Method:
 							methodSignature = mr.DecodeMethodSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
-							WriteSignatureHeader(output, methodSignature);
+							methodSignature.Header.WriteTo(output);
 							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							output.Write(' ');
 							WriteParent(output, module, metadata, mr.Parent, genericContext, syntax);
@@ -250,7 +250,7 @@ namespace ICSharpCode.Decompiler.IL
 							var methodDefinition = metadata.GetMethodDefinition((MethodDefinitionHandle)ms.Method);
 							var methodName = metadata.GetString(methodDefinition.Name);
 							methodSignature = methodDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
-							WriteSignatureHeader(output, methodSignature);
+							methodSignature.Header.WriteTo(output);
 							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							output.Write(' ');
 							var declaringType = methodDefinition.GetDeclaringType();
@@ -275,7 +275,7 @@ namespace ICSharpCode.Decompiler.IL
 							var memberReference = metadata.GetMemberReference((MemberReferenceHandle)ms.Method);
 							memberName = metadata.GetString(memberReference.Name);
 							methodSignature = memberReference.DecodeMethodSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
-							WriteSignatureHeader(output, methodSignature);
+							methodSignature.Header.WriteTo(output);
 							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							output.Write(' ');
 							WriteParent(output, module, metadata, memberReference.Parent, genericContext, syntax);
@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.IL
 					{
 						case SignatureKind.Method:
 							methodSignature = standaloneSig.DecodeMethodSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
-							WriteSignatureHeader(output, methodSignature);
+							methodSignature.Header.WriteTo(output);
 							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							WriteParameterList(output, methodSignature);
 							break;
@@ -334,33 +334,20 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(")");
 		}
 
-		static void WriteSignatureHeader(ITextOutput output, MethodSignature<Action<ILNameSyntax>> methodSignature)
+		internal static void WriteTo(this in SignatureHeader header, ITextOutput output)
 		{
-			if (methodSignature.Header.HasExplicitThis)
+			if (header.HasExplicitThis)
 			{
 				output.Write("instance explicit ");
 			}
-			else if (methodSignature.Header.IsInstance)
+			else if (header.IsInstance)
 			{
 				output.Write("instance ");
 			}
-			switch (methodSignature.Header.CallingConvention)
+			if (header.CallingConvention != SignatureCallingConvention.Default)
 			{
-				case SignatureCallingConvention.CDecl:
-					output.Write("unmanaged cdecl ");
-					break;
-				case SignatureCallingConvention.StdCall:
-					output.Write("unmanaged stdcall ");
-					break;
-				case SignatureCallingConvention.ThisCall:
-					output.Write("unmanaged thiscall ");
-					break;
-				case SignatureCallingConvention.FastCall:
-					output.Write("unmanaged fastcall ");
-					break;
-				case SignatureCallingConvention.VarArgs:
-					output.Write("vararg ");
-					break;
+				output.Write(header.CallingConvention.ToILSyntax());
+				output.Write(' ');
 			}
 		}
 
