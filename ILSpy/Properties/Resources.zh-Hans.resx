@@ -226,7 +226,7 @@
     <value>调试此步骤</value>
   </data>
   <data name="DecompilationCompleteInF1Seconds" xml:space="preserve">
-    <value>反编译完成共耗时 {0:F1} 秒。</value>
+    <value>反编译完成。耗时 {0:F1} 秒。</value>
   </data>
   <data name="Decompile" xml:space="preserve">
     <value>反编译</value>
@@ -241,7 +241,7 @@
     <value>如果可能，始终内联局部变量</value>
   </data>
   <data name="DecompilerSettings.AllowExtensionAddMethodsInCollectionInitializerExpressions" xml:space="preserve">
-    <value>在集合初始化器表达式中允许扩展 Add 方法</value>
+    <value>允许使用 Add 扩展方法的集合初始化器表达式</value>
   </data>
   <data name="DecompilerSettings.AllowExtensionMethodSyntaxOnRef" xml:space="preserve">
     <value>使用 ref 扩展方法</value>
@@ -289,7 +289,7 @@
     <value>反编译 C# 1.0“public unsafe fixed int arr[10];”成员</value>
   </data>
   <data name="DecompilerSettings.DecompileDecimalConstantAsSimpleLiteralValues" xml:space="preserve">
-    <value>反编译 [DecimalConstant(...)] 作为简单的文本值</value>
+    <value>反编译 [DecimalConstant(...)] 作为简单的字面值</value>
   </data>
   <data name="DecompilerSettings.DecompileEnumeratorsYieldReturn" xml:space="preserve">
     <value>反编译枚举器(yield return)</value>
@@ -402,6 +402,9 @@
   <data name="DecompilerSettings.SparseIntegerSwitch" xml:space="preserve">
     <value>检测整型 switch 即使 IL 代码不使用跳转表</value>
   </data>
+  <data name="DecompilerSettings.StringConcat" xml:space="preserve">
+    <value>反编译 'string.Concat(a, b)' 调用为 'a + b'</value>
+  </data>
   <data name="DecompilerSettings.SwitchExpressions" xml:space="preserve">
     <value>switch 表达式</value>
   </data>
@@ -412,7 +415,7 @@
     <value>使用增强的 using 变量声明</value>
   </data>
   <data name="DecompilerSettings.UseExpressionBodiedMemberSyntaxForGetOnlyProperties" xml:space="preserve">
-    <value>对仅获取属性使用表达式内部成员语法</value>
+    <value>对仅有 getter 访问器的属性使用 Expression-bodied 成员语法</value>
   </data>
   <data name="DecompilerSettings.UseExtensionMethodSyntax" xml:space="preserve">
     <value>使用扩展方法语法</value>
@@ -430,7 +433,7 @@
     <value>如果可能, 请使用 lambda 语法</value>
   </data>
   <data name="DecompilerSettings.UseLiftedOperatorsForNullables" xml:space="preserve">
-    <value>对空变量使用提升运算符</value>
+    <value>对可为空类型使用提升运算符</value>
   </data>
   <data name="DecompilerSettings.UseNamedArguments" xml:space="preserve">
     <value>使用命名参数</value>
@@ -439,7 +442,7 @@
     <value>使用非尾随命名参数</value>
   </data>
   <data name="DecompilerSettings.UseOutVariableDeclarations" xml:space="preserve">
-    <value>使用外部变量声明</value>
+    <value>使用 out 变量声明</value>
   </data>
   <data name="DecompilerSettings.UsePatternBasedFixedStatement" xml:space="preserve">
     <value>使用基于模式的 fixed 语句</value>
@@ -454,7 +457,7 @@
     <value>使用 stackalloc 初始化器语法</value>
   </data>
   <data name="DecompilerSettings.UseStringInterpolation" xml:space="preserve">
-    <value>使用字符串插值</value>
+    <value>使用字符串内插</value>
   </data>
   <data name="DecompilerSettings.UseThrowExpressions" xml:space="preserve">
     <value>使用 throw 表达式</value>
