@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public bool BoolPropertyTest(object x)
 		{
-			return BoolProperty = (x != null);
+			return BoolProperty = x != null;
 		}
 	}
 }

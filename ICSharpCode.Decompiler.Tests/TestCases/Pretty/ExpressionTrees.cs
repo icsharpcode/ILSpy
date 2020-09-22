@@ -607,7 +607,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			2012
 		}.All(set.Add));
 
-			Func<Func<object, object, bool>, bool> sink = (Func<object, object, bool> f) => f(null, null);
+			Func<Func<object, object, bool>, bool> sink = ((Func<object, object, bool> f) => f(null, null));
 			ToCode(X(), () => sink(object.Equals));
 		}
 
@@ -623,7 +623,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void NestedLambda()
 		{
-			Func<Func<int>, int> call = (Func<int> f) => f();
+			Func<Func<int>, int> call = ((Func<int> f) => f());
 			//no params
 			ToCode(X(), () => call(() => 42));
 			//one param

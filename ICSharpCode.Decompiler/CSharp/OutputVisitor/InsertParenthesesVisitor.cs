@@ -425,19 +425,30 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			// assignment is right-associative
 			ParenthesizeIfRequired(assignmentExpression.Left, PrecedenceLevel.Assignment + 1);
-			if (InsertParenthesesForReadability && !(assignmentExpression.Right is DirectionExpression))
-			{
-				ParenthesizeIfRequired(assignmentExpression.Right, PrecedenceLevel.RelationalAndTypeTesting + 1);
-			}
-			else
-			{
-				ParenthesizeIfRequired(assignmentExpression.Right, PrecedenceLevel.Assignment);
-			}
+			HandleAssignmentRHS(assignmentExpression.Right);
 			base.VisitAssignmentExpression(assignmentExpression);
 		}
 
-		// don't need to handle lambdas, they have lowest precedence and unambiguous associativity
+		private void HandleAssignmentRHS(Expression right)
+		{
+			if (InsertParenthesesForReadability && !(right is DirectionExpression))
+			{
+				ParenthesizeIfRequired(right, PrecedenceLevel.Conditional + 1);
+			}
+			else
+			{
+				ParenthesizeIfRequired(right, PrecedenceLevel.Assignment);
+			}
+		}
 
+		public override void VisitVariableInitializer(VariableInitializer variableInitializer)
+		{
+			if (!variableInitializer.Initializer.IsNull)
+				HandleAssignmentRHS(variableInitializer.Initializer);
+			base.VisitVariableInitializer(variableInitializer);
+		}
+
+		// don't need to handle lambdas, they have lowest precedence and unambiguous associativity
 		public override void VisitQueryExpression(QueryExpression queryExpression)
 		{
 			// Query expressions are strange beasts:
