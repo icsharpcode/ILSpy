@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		static PrecedenceLevel GetPrecedence(Expression expr)
 		{
 			// Note: the operator precedence table on MSDN is incorrect
-			if (expr is QueryExpression)
+			if (expr is QueryExpression || expr is LambdaExpression)
 			{
 				// Not part of the table in the C# spec, but we need to ensure that queries within
 				// primary expressions get parenthesized.
@@ -147,14 +147,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						throw new NotSupportedException("Invalid value for BinaryOperatorType");
 				}
 			}
+			if (expr is SwitchExpression)
+				return PrecedenceLevel.Switch;
 			if (expr is IsExpression || expr is AsExpression)
 				return PrecedenceLevel.RelationalAndTypeTesting;
 			if (expr is ConditionalExpression || expr is DirectionExpression)
 				return PrecedenceLevel.Conditional;
-			if (expr is AssignmentExpression || expr is LambdaExpression)
+			if (expr is AssignmentExpression)
 				return PrecedenceLevel.Assignment;
-			if (expr is SwitchExpression)
-				return PrecedenceLevel.Switch;
 			// anything else: primary expression
 			return PrecedenceLevel.Primary;
 		}
@@ -456,17 +456,29 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// However, the end of the query is greedy. So their start sort of has a high precedence,
 			// while their end has a very low precedence. We handle this by checking whether a query is used
 			// as left part of a binary operator, and parenthesize it if required.
-			if (queryExpression.Role == BinaryOperatorExpression.LeftRole)
-				Parenthesize(queryExpression);
-			if (queryExpression.Parent is IsExpression || queryExpression.Parent is AsExpression)
-				Parenthesize(queryExpression);
+			HandleLambdaOrQuery(queryExpression);
+			base.VisitQueryExpression(queryExpression);
+		}
+
+		public override void VisitLambdaExpression(LambdaExpression lambdaExpression)
+		{
+			// Lambdas are greedy in the same way as query expressions.
+			HandleLambdaOrQuery(lambdaExpression);
+			base.VisitLambdaExpression(lambdaExpression);
+		}
+
+		void HandleLambdaOrQuery(Expression expr)
+		{
+			if (expr.Role == BinaryOperatorExpression.LeftRole)
+				Parenthesize(expr);
+			if (expr.Parent is IsExpression || expr.Parent is AsExpression)
+				Parenthesize(expr);
 			if (InsertParenthesesForReadability)
 			{
 				// when readability is desired, always parenthesize query expressions within unary or binary operators
-				if (queryExpression.Parent is UnaryOperatorExpression || queryExpression.Parent is BinaryOperatorExpression)
-					Parenthesize(queryExpression);
+				if (expr.Parent is UnaryOperatorExpression || expr.Parent is BinaryOperatorExpression)
+					Parenthesize(expr);
 			}
-			base.VisitQueryExpression(queryExpression);
 		}
 
 		public override void VisitNamedExpression(NamedExpression namedExpression)

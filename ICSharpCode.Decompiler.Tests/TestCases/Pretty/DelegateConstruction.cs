@@ -247,14 +247,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public static Func<string, string, bool> test0 = ((string a, string b) => string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b));
-		public static Func<string, string, bool> test1 = ((string a, string b) => string.IsNullOrEmpty(a) || !string.IsNullOrEmpty(b));
-		public static Func<string, string, bool> test2 = ((string a, string b) => !string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b));
-		public static Func<string, string, bool> test3 = ((string a, string b) => !string.IsNullOrEmpty(a) || !string.IsNullOrEmpty(b));
-		public static Func<string, string, bool> test4 = ((string a, string b) => string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b));
-		public static Func<string, string, bool> test5 = ((string a, string b) => string.IsNullOrEmpty(a) && !string.IsNullOrEmpty(b));
-		public static Func<string, string, bool> test6 = ((string a, string b) => !string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b));
-		public static Func<string, string, bool> test7 = ((string a, string b) => !string.IsNullOrEmpty(a) && !string.IsNullOrEmpty(b));
+		public static Func<string, string, bool> test0 = (string a, string b) => string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b);
+		public static Func<string, string, bool> test1 = (string a, string b) => string.IsNullOrEmpty(a) || !string.IsNullOrEmpty(b);
+		public static Func<string, string, bool> test2 = (string a, string b) => !string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b);
+		public static Func<string, string, bool> test3 = (string a, string b) => !string.IsNullOrEmpty(a) || !string.IsNullOrEmpty(b);
+		public static Func<string, string, bool> test4 = (string a, string b) => string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b);
+		public static Func<string, string, bool> test5 = (string a, string b) => string.IsNullOrEmpty(a) && !string.IsNullOrEmpty(b);
+		public static Func<string, string, bool> test6 = (string a, string b) => !string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b);
+		public static Func<string, string, bool> test7 = (string a, string b) => !string.IsNullOrEmpty(a) && !string.IsNullOrEmpty(b);
 
 		public static void Test(this string a)
 		{

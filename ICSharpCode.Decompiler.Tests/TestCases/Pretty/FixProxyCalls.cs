@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		protected internal override string Test(string test)
 		{
-			Func<string, string> func = ((string a) => base.Test(a));
+			Func<string, string> func = (string a) => base.Test(a);
 			test = string.Join(test, "aa");
 			return func(test);
 		}
