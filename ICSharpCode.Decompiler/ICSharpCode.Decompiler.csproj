@@ -626,12 +626,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\nrefactory\doc\XML Documentation.html">
-      <Link>Documentation\XML Documentation.html</Link>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="..\doc\Pattern Matching.html">
       <Link>CSharp\Syntax\PatternMatching\Pattern Matching.html</Link>
     </Content>
