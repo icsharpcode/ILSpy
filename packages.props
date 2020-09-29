@@ -5,7 +5,8 @@
     <HumanizerVersion>2.2.0</HumanizerVersion>
     <SystemCollectionsImmutableVersion>5.0.0-preview.8.20407.11</SystemCollectionsImmutableVersion>
     <SystemReflectionMetadataVersion>5.0.0-preview.8.20407.11</SystemReflectionMetadataVersion>
-    <RoslynVersion>3.8.0-3.final</RoslynVersion>
+    <ILAsmVersion>5.0.0-rc.1.20451.14</ILAsmVersion> <!-- Microsoft.NETCore.ILAsm -->
+    <RoslynVersion>3.8.0-3.final</RoslynVersion>     <!-- Microsoft.CodeAnalysis.* -->
     <MonoCecilVersion>0.10.3</MonoCecilVersion>
     <AvalonEditVersion>6.1.0-preview1</AvalonEditVersion>
     <NUnitVersion>3.12.0</NUnitVersion>

@@ -53,6 +53,7 @@
     <PackageReference Include="NUnit" Version="$(NUnitVersion)" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
+    <PackageReference Include="Microsoft.NETCore.ILAsm" Version="$(ILAsmVersion)" />
   </ItemGroup>
 
   <ItemGroup>

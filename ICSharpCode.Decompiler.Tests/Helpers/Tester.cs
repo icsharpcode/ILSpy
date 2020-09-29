@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -41,7 +40,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.CSharp;
-using Microsoft.DiaSymReader.Tools;
 
 using NUnit.Framework;
 
@@ -70,18 +68,31 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		UseDebug = 0x1,
 		Force32Bit = 0x2,
 		Library = 0x4,
+		/// Testing our own disassembler, or working around a bug in ildasm.
 		UseOwnDisassembler = 0x8,
+		/// Work around bug in .NET 5 ilasm (https://github.com/dotnet/runtime/issues/32400)
+		UseLegacyAssembler = 0x10,
 	}
 
 	public static partial class Tester
 	{
 		public static readonly string TestCasePath = Path.Combine(
-	Path.GetDirectoryName(typeof(Tester).Assembly.Location),
-	"../../../TestCases");
+			Path.GetDirectoryName(typeof(Tester).Assembly.Location),
+			"../../../TestCases");
 
 		public static string AssembleIL(string sourceFileName, AssemblerOptions options = AssemblerOptions.UseDebug)
 		{
-			string ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
+			string ilasmPath;
+			if (options.HasFlag(AssemblerOptions.UseLegacyAssembler))
+			{
+				ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
+			}
+			else
+			{
+				ilasmPath = Path.Combine(
+					Path.GetDirectoryName(typeof(Tester).Assembly.Location),
+					"ilasm.exe");
+			}
 			string outputFile = Path.Combine(Path.GetDirectoryName(sourceFileName), Path.GetFileNameWithoutExtension(sourceFileName));
 			string otherOptions = " ";
 			if (options.HasFlag(AssemblerOptions.Force32Bit))

@@ -6,6 +6,12 @@
   .ver 4:0:0:0
 }
 
+.assembly extern System.Console
+{
+  .publickeytoken = (B0 3F 5F 7F 11 D5 0A 3A )
+  .ver 4:0:0:0
+}
+
 .assembly System.Runtime.CompilerServices.Unsafe
 {
   .custom instance void [CORE_ASSEMBLY]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
@@ -495,7 +501,7 @@
 lbl:
     ldloc.0
     ldind.i2
-    call       void [mscorlib]System.Console::WriteLine(uint16)
+    call       void [System.Console]System.Console::WriteLine(uint16)
 
     ldloc.0
     ret
@@ -528,7 +534,7 @@ lbl:
 
 	  IL_000c: ldloc.1
 	  IL_000d: ldc.i4.0
-	  IL_000e: ldelema [mscorlib]System.Byte
+	  IL_000e: ldelema [System.Runtime]System.Byte
 	  IL_0013: stloc.2
 	  IL_0014: br.s IL_0019
 
@@ -566,12 +572,12 @@ lbl:
    */
 	.maxstack 3
 	.locals /* 11000004 */ (
-		[0] int32& pinned modopt([mscorlib]System.Runtime.CompilerServices.IsExplicitlyDereferenced) p
+		[0] int32& pinned modopt([System.Runtime]System.Runtime.CompilerServices.IsExplicitlyDereferenced) p
 	)
 
 	IL_0000: ldarg.1
 	IL_0001: ldc.i4.0
-	IL_0002: ldelema [mscorlib]System.Int32 /* 01000016 */
+	IL_0002: ldelema [System.Runtime]System.Int32 /* 01000016 */
 	IL_0007: stloc.0
 	IL_0008: ldloc.0
 	IL_0009: ldind.i4
@@ -581,7 +587,7 @@ lbl:
 	IL_000d: ldarg.2
 	IL_000e: ldloc.0
 	IL_000f: ldind.i4
-	IL_0010: ldelema [mscorlib]System.Int32 /* 01000016 */
+	IL_0010: ldelema [System.Runtime]System.Int32 /* 01000016 */
 	IL_0015: stloc.0
 
 	IL_0016: ldloc.0
