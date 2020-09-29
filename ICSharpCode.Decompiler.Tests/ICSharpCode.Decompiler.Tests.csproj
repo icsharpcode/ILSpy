@@ -39,16 +39,20 @@
     <DefineConstants>TRACE;NET46;ROSLYN;CS60;CS70;CS71;CS72;CS73</DefineConstants>
   </PropertyGroup>
 
+  <Import Project="..\packages.props" />
+
   <ItemGroup>
-    <PackageReference Include="DiffLib" Version="2017.7.26.1241" />
+    <PackageReference Include="DiffLib" Version="$(DiffLibVersion)" />
     <PackageReference Include="Microsoft.Build.Locator" Version="1.2.2" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0-3.final" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.8.0-3.final" />
+    <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVersion)" />
+    <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(RoslynVersion)" />
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
-    <PackageReference Include="NUnit" Version="3.12.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="$(NUnitAdapterVersion)" />
+    <PackageReference Include="NUnit" Version="$(NUnitVersion)" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.3" />
+    <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
   </ItemGroup>
 
   <ItemGroup>
