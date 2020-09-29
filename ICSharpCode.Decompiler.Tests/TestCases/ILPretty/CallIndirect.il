@@ -23,6 +23,45 @@
         ret
     } // end of method Example::Test
 
+    .method private hidebysig 
+        instance void UnmanagedDefaultCall (
+            native int f
+        ) cil managed 
+    {
+        .maxstack 8
+
+        ldc.i4.s 42
+        ldarg.1
+        calli unmanaged void(int32)
+        ret
+    } // end of method Example::Test
+    
+    .method private hidebysig 
+        instance void CustomCall (
+            native int f
+        ) cil managed 
+    {
+        .maxstack 8
+
+        ldc.i4.s 42
+        ldarg.1
+        calli unmanaged void modreq([System.Private.CoreLib] System.Runtime.CompilerServices.CallConvCustom)(int32)
+        ret
+    } // end of method Example::Test
+    
+    .method private hidebysig 
+        instance void MultipleCustomCall (
+            native int f
+        ) cil managed 
+    {
+        .maxstack 8
+
+        ldc.i4.s 42
+        ldarg.1
+        calli unmanaged void modreq([System.Private.CoreLib] System.Runtime.CompilerServices.CallConvCustom) modreq([System.Private.CoreLib] System.Runtime.CompilerServices.CallConvSuppressGCTransition) (int32)
+        ret
+    } // end of method Example::Test
+
     .method public hidebysig specialname rtspecialname 
         instance void .ctor () cil managed 
     {

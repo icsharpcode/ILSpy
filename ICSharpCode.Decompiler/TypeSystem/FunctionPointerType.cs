@@ -33,10 +33,24 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			IType returnType = signature.ReturnType;
 			bool returnIsRefReadOnly = false;
-			if (returnType is ModifiedType modReturn && modReturn.Modifier.IsKnownType(KnownAttribute.In))
+			var customCallConvs = ImmutableArray.CreateBuilder<IType>();
+			while (returnType is ModifiedType modReturn)
 			{
-				returnType = modReturn.ElementType;
-				returnIsRefReadOnly = true;
+				if (modReturn.Modifier.IsKnownType(KnownAttribute.In))
+				{
+					returnType = modReturn.ElementType;
+					returnIsRefReadOnly = true;
+				}
+				else if (modReturn.Modifier.Name.StartsWith("CallConv", StringComparison.Ordinal)
+					&& modReturn.Modifier.Namespace == "System.Runtime.CompilerServices")
+				{
+					returnType = modReturn.ElementType;
+					customCallConvs.Add(modReturn.Modifier);
+				}
+				else
+				{
+					break;
+				}
 			}
 			var parameterTypes = ImmutableArray.CreateBuilder<IType>(signature.ParameterTypes.Length);
 			var parameterReferenceKinds = ImmutableArray.CreateBuilder<ReferenceKind>(signature.ParameterTypes.Length);
@@ -70,24 +84,27 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				parameterReferenceKinds.Add(kind);
 			}
 			return new FunctionPointerType(
-				module, signature.Header.CallingConvention,
+				module, signature.Header.CallingConvention, customCallConvs.ToImmutable(),
 				returnType, returnIsRefReadOnly,
 				parameterTypes.MoveToImmutable(), parameterReferenceKinds.MoveToImmutable());
 		}
 
 		private readonly MetadataModule module;
 		public readonly SignatureCallingConvention CallingConvention;
+		public readonly ImmutableArray<IType> CustomCallingConventions;
 		public readonly IType ReturnType;
 		public readonly bool ReturnIsRefReadOnly;
 		public readonly ImmutableArray<IType> ParameterTypes;
 		public readonly ImmutableArray<ReferenceKind> ParameterReferenceKinds;
 
-		public FunctionPointerType(MetadataModule module, SignatureCallingConvention callingConvention,
+		public FunctionPointerType(MetadataModule module,
+			SignatureCallingConvention callingConvention, ImmutableArray<IType> customCallingConventions,
 			IType returnType, bool returnIsRefReadOnly,
 			ImmutableArray<IType> parameterTypes, ImmutableArray<ReferenceKind> parameterReferenceKinds)
 		{
 			this.module = module;
 			this.CallingConvention = callingConvention;
+			this.CustomCallingConventions = customCallingConventions;
 			this.ReturnType = returnType;
 			this.ReturnIsRefReadOnly = returnIsRefReadOnly;
 			this.ParameterTypes = parameterTypes;
@@ -146,7 +163,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return this;
 			else
 				return new FunctionPointerType(
-					module, CallingConvention,
+					module, CallingConvention, CustomCallingConventions,
 					r, ReturnIsRefReadOnly,
 					pt != null ? pt.ToImmutableArray() : ParameterTypes,
 					ParameterReferenceKinds);
@@ -156,6 +173,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return other is FunctionPointerType fpt
 				&& CallingConvention == fpt.CallingConvention
+				&& CustomCallingConventions.SequenceEqual(fpt.CustomCallingConventions)
 				&& ReturnType.Equals(fpt.ReturnType)
 				&& ReturnIsRefReadOnly == fpt.ReturnIsRefReadOnly
 				&& ParameterTypes.SequenceEqual(fpt.ParameterTypes)
@@ -166,7 +184,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			unchecked
 			{
-				int hash = ReturnType.GetHashCode();
+				int hash = ReturnType.GetHashCode() ^ CallingConvention.GetHashCode();
 				foreach (var (p, k) in ParameterTypes.Zip(ParameterReferenceKinds))
 				{
 					hash ^= p.GetHashCode() ^ k.GetHashCode();
@@ -178,8 +196,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		internal IType WithSignature(IType returnType, ImmutableArray<IType> parameterTypes)
 		{
-			return new FunctionPointerType(this.module, this.CallingConvention, returnType,
-				this.ReturnIsRefReadOnly, parameterTypes, this.ParameterReferenceKinds);
+			return new FunctionPointerType(this.module,
+				this.CallingConvention, this.CustomCallingConventions,
+				returnType, this.ReturnIsRefReadOnly,
+				parameterTypes, this.ParameterReferenceKinds);
 		}
 	}
 }

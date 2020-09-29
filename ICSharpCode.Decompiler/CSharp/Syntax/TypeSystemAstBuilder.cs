@@ -309,11 +309,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			else if (type is FunctionPointerType fpt)
 			{
 				var astType = new FunctionPointerAstType();
-				if (fpt.CallingConvention != System.Reflection.Metadata.SignatureCallingConvention.Default)
+				if (fpt.CallingConvention == System.Reflection.Metadata.SignatureCallingConvention.Unmanaged)
+				{
+					astType.HasUnmanagedCallingConvention = true;
+				}
+				else if (fpt.CallingConvention != System.Reflection.Metadata.SignatureCallingConvention.Default)
 				{
 					string callconvName = fpt.CallingConvention switch
 					{
-						System.Reflection.Metadata.SignatureCallingConvention.Default => "",
 						System.Reflection.Metadata.SignatureCallingConvention.CDecl => "Cdecl",
 						System.Reflection.Metadata.SignatureCallingConvention.StdCall => "Stdcall",
 						System.Reflection.Metadata.SignatureCallingConvention.ThisCall => "Thiscall",
@@ -321,7 +324,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						System.Reflection.Metadata.SignatureCallingConvention.VarArgs => "Varargs",
 						_ => fpt.CallingConvention.ToString()
 					};
-					astType.CallingConvention = new PrimitiveType(callconvName);
+					astType.HasUnmanagedCallingConvention = true;
+					astType.CallingConventions.Add(new PrimitiveType(callconvName));
+				}
+				foreach (var customCallConv in fpt.CustomCallingConventions)
+				{
+					AstType callConvSyntax;
+					if (customCallConv.Name.StartsWith("CallConv", StringComparison.Ordinal) && customCallConv.Name.Length > 8)
+					{
+						callConvSyntax = new PrimitiveType(customCallConv.Name.Substring(8));
+						if (AddResolveResultAnnotations)
+						{
+							callConvSyntax.AddAnnotation(new TypeResolveResult(customCallConv));
+						}
+					}
+					else
+					{
+						callConvSyntax = ConvertType(customCallConv);
+					}
+					astType.CallingConventions.Add(callConvSyntax);
 				}
 				for (int i = 0; i < fpt.ParameterTypes.Length; i++)
 				{

@@ -586,6 +586,7 @@ namespace ICSharpCode.Decompiler
 				SignatureCallingConvention.ThisCall => "unmanaged thiscall",
 				SignatureCallingConvention.FastCall => "unmanaged fastcall",
 				SignatureCallingConvention.VarArgs => "vararg",
+				SignatureCallingConvention.Unmanaged => "unmanaged",
 				_ => callConv.ToString().ToLowerInvariant()
 			};
 		}
