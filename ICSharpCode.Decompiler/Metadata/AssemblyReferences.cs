@@ -44,8 +44,10 @@ namespace ICSharpCode.Decompiler.Metadata
 
 	public interface IAssemblyResolver
 	{
+#if !VSADDIN
 		PEFile Resolve(IAssemblyReference reference);
 		PEFile ResolveModule(PEFile mainModule, string moduleName);
+#endif
 		bool IsGacAssembly(IAssemblyReference reference);
 	}
 
@@ -169,6 +171,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 	}
 
+#if !VSADDIN
 	public class AssemblyReference : IAssemblyReference
 	{
 		static readonly SHA1 sha1 = SHA1.Create();
@@ -226,4 +229,5 @@ namespace ICSharpCode.Decompiler.Metadata
 			return FullName;
 		}
 	}
+#endif
 }

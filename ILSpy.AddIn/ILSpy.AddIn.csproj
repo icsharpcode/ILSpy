@@ -44,7 +44,7 @@
   <Import Project="..\packages.props" />
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.SDK " Version="15.9.3" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="15.9.3" />
     <!-- Intentionally using an old Roslyn version in the AddIn, so that we stay compatible with old VS versions. -->
     <PackageReference Include="Microsoft.CodeAnalysis" Version="2.4.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.4.0" />
@@ -53,7 +53,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
     <ProjectReference Include="..\ILSpy\ILSpy.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <Private>false</Private>
@@ -61,6 +60,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\ICSharpCode.Decompiler\Metadata\AssemblyReferences.cs" Link="Decompiler\AssemblyReferences.cs" />
+    <Compile Include="..\ICSharpCode.Decompiler\Metadata\DotNetCorePathFinder.cs" Link="Decompiler\DotNetCorePathFinder.cs" />
+    <Compile Include="..\ICSharpCode.Decompiler\Metadata\LightJson\JsonArray.cs" Link="Decompiler\LightJson\JsonArray.cs" />
+    <Compile Include="..\ICSharpCode.Decompiler\Metadata\LightJson\JsonObject.cs" Link="Decompiler\LightJson\JsonObject.cs" />
+    <Compile Include="..\ICSharpCode.Decompiler\Metadata\LightJson\JsonValue.cs" Link="Decompiler\LightJson\JsonValue.cs" />
+    <Compile Include="..\ICSharpCode.Decompiler\Metadata\LightJson\JsonValueType.cs" Link="Decompiler\LightJson\JsonValueType.cs" />
+    <Compile Include="..\ICSharpCode.Decompiler\Metadata\LightJson\Serialization\JsonParseException.cs" Link="Decompiler\LightJson\Serialization\JsonParseException.cs" />
+    <Compile Include="..\ICSharpCode.Decompiler\Metadata\LightJson\Serialization\JsonReader.cs" Link="Decompiler\LightJson\Serialization\JsonReader.cs" />
+    <Compile Include="..\ICSharpCode.Decompiler\Metadata\LightJson\Serialization\TextPosition.cs" Link="Decompiler\LightJson\Serialization\TextPosition.cs" />
+    <Compile Include="..\ICSharpCode.Decompiler\Metadata\LightJson\Serialization\TextScanner.cs" Link="Decompiler\LightJson\Serialization\TextScanner.cs" />
+    <Compile Include="..\ICSharpCode.Decompiler\Metadata\UniversalAssemblyResolver.cs" Link="UniversalAssemblyResolver.cs" />
+    <Compile Include="..\ICSharpCode.Decompiler\Util\EmptyList.cs" Link="Decompiler\EmptyList.cs" />
     <Compile Include="..\ILSpy\NativeMethods.cs" Link="NativeMethods.cs" />
     <Compile Include="Commands\AssemblyReferenceForILSpy.cs" />
     <Compile Include="Commands\NuGetReferenceForILSpy.cs" />
@@ -70,6 +81,7 @@
     <Compile Include="Commands\OpenILSpyCommand.cs" />
     <Compile Include="Commands\OpenProjectOutputCommand.cs" />
     <Compile Include="Commands\OpenReferenceCommand.cs" />
+    <Compile Include="Decompiler\Dummy.cs" />
     <Compile Include="Guids.cs" />
     <Compile Include="ILSpyInstance.cs" />
     <Compile Include="Resources.Designer.cs">
@@ -145,14 +157,14 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
- <ItemGroup>
-   <None Include="ILSpyAddIn.vsct">
-     <SubType>Designer</SubType>
-   </None>
-   <Content Include="zh-Hans\extension.vsixlangpack">
-     <IncludeInVSIX>true</IncludeInVSIX>
-     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-   </Content>
+  <ItemGroup>
+    <None Include="ILSpyAddIn.vsct">
+      <SubType>Designer</SubType>
+    </None>
+    <Content Include="zh-Hans\extension.vsixlangpack">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <VSCTCompile Include="ILSpyAddIn.en-US.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
       <SubType>Designer</SubType>
@@ -187,6 +199,14 @@
 
   <PropertyGroup>
     <UseCodebase>true</UseCodebase>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;VSADDIN</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>TRACE;VSADDIN</DefineConstants>
   </PropertyGroup>
 
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
