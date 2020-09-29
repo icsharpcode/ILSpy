@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 using EnvDTE;
 
 using ICSharpCode.Decompiler.Metadata;
 
 using Microsoft.VisualStudio.Shell;
-
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {

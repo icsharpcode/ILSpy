@@ -3,7 +3,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
