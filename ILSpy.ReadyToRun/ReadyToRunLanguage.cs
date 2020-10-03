@@ -429,7 +429,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		private static void DecorateCallSite(PEFile currentFile, ITextOutput output, ReadyToRunReader reader, bool showMetadataTokens, bool showMetadataTokensInBase10, Instruction instr)
 		{
 			int importCellAddress = (int)instr.IPRelativeMemoryAddress;
-			if (instr.IsCallNearIndirect && reader.ImportCellNames.ContainsKey(importCellAddress))
+			if (instr.IsCallNearIndirect && reader.ImportSignatures.ContainsKey(importCellAddress))
 			{
 				output.Write(" ; ");
 				ReadyToRunSignature signature = reader.ImportSignatures[(int)instr.IPRelativeMemoryAddress];
@@ -466,7 +466,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						methodRefToken.WriteTo(currentFile, output, Decompiler.Metadata.GenericContext.Empty);
 						break;
 					default:
-						output.WriteLine(reader.ImportCellNames[importCellAddress]);
+						output.WriteLine(reader.ImportSignatures[importCellAddress].ToString(new SignatureFormattingOptions()));
 						break;
 				}
 				output.WriteLine();
@@ -512,15 +512,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		private class ReadyToRunAssemblyResolver : ILCompiler.Reflection.ReadyToRun.IAssemblyResolver
 		{
 			private LoadedAssembly loadedAssembly;
+
 			public ReadyToRunAssemblyResolver(LoadedAssembly loadedAssembly)
 			{
 				this.loadedAssembly = loadedAssembly;
 			}
-			public bool Naked => false;
-
-			public bool SignatureBinary => false;
-
-			public bool InlineSignatureBinary => false;
 
 			public IAssemblyMetadata FindAssembly(MetadataReader metadataReader, AssemblyReferenceHandle assemblyReferenceHandle, string parentFile)
 			{
