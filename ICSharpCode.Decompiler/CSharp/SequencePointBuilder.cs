@@ -112,34 +112,43 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public override void VisitBlockStatement(BlockStatement blockStatement)
 		{
-			ILInstruction blockContainer = blockStatement.Annotations.OfType<ILInstruction>().FirstOrDefault();
-			if (blockContainer != null)
+			// enhanced using variables need special-casing here, because we omit the block syntax from the
+			// text output, so we cannot use positions of opening/closing braces here.
+			bool isEnhancedUsing = blockStatement.Parent is UsingStatement us && us.IsEnhanced;
+			if (!isEnhancedUsing)
 			{
-				StartSequencePoint(blockStatement.LBraceToken);
-				int intervalStart;
-				if (blockContainer.Parent is TryCatchHandler handler && !handler.ExceptionSpecifierILRange.IsEmpty)
+				var blockContainer = blockStatement.Annotation<BlockContainer>();
+				if (blockContainer != null)
 				{
-					// if this block container is part of a TryCatchHandler, do not steal the exception-specifier IL range
-					intervalStart = handler.ExceptionSpecifierILRange.End;
+					StartSequencePoint(blockStatement.LBraceToken);
+					int intervalStart;
+					if (blockContainer.Parent is TryCatchHandler handler && !handler.ExceptionSpecifierILRange.IsEmpty)
+					{
+						// if this block container is part of a TryCatchHandler, do not steal the
+						// exception-specifier IL range
+						intervalStart = handler.ExceptionSpecifierILRange.End;
+					}
+					else
+					{
+						intervalStart = blockContainer.StartILOffset;
+					}
+					// The end will be set to the first sequence point candidate location before the first
+					// statement of the function when the seqeunce point is adjusted
+					int intervalEnd = intervalStart + 1;
+
+					Interval interval = new Interval(intervalStart, intervalEnd);
+					List<Interval> intervals = new List<Interval>();
+					intervals.Add(interval);
+					current.Intervals.AddRange(intervals);
+					current.Function = blockContainer.Ancestors.OfType<ILFunction>().FirstOrDefault();
+					EndSequencePoint(blockStatement.LBraceToken.StartLocation, blockStatement.LBraceToken.EndLocation);
 				}
 				else
 				{
-					intervalStart = blockContainer.StartILOffset;
+					// Ideally, we'd be able to address this case. Blocks that are not the top-level function
+					// block have no ILInstruction annotations. It isn't clear to me how to determine the il range.
+					// For now, do not add the opening brace sequence in this case.
 				}
-				// The end will be set to the first sequence point candidate location before the first statement of the function when the seqeunce point is adjusted
-				int intervalEnd = intervalStart + 1;
-
-				Interval interval = new Interval(intervalStart, intervalEnd);
-				List<Interval> intervals = new List<Interval>();
-				intervals.Add(interval);
-				current.Intervals.AddRange(intervals);
-				current.Function = blockContainer.Ancestors.OfType<ILFunction>().FirstOrDefault();
-				EndSequencePoint(blockStatement.LBraceToken.StartLocation, blockStatement.LBraceToken.EndLocation);
-			}
-			else
-			{
-				// Ideally, we'd be able to address this case. Blocks that are not the top-level function block have no ILInstruction annotations. It isn't clear to me how to determine the il range.
-				// For now, do not add the opening brace sequence in this case.
 			}
 
 			foreach (var stmt in blockStatement.Statements)
@@ -147,7 +156,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				VisitAsSequencePoint(stmt);
 			}
 			var implicitReturn = blockStatement.Annotation<ImplicitReturnAnnotation>();
-			if (implicitReturn != null)
+			if (implicitReturn != null && !isEnhancedUsing)
 			{
 				StartSequencePoint(blockStatement.RBraceToken);
 				AddToSequencePoint(implicitReturn.Leave);
@@ -263,7 +272,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			usingStatement.ResourceAcquisition.AcceptVisitor(this);
 			VisitAsSequencePoint(usingStatement.EmbeddedStatement);
 			AddToSequencePoint(usingStatement);
-			EndSequencePoint(usingStatement.StartLocation, usingStatement.RParToken.EndLocation);
+			if (usingStatement.IsEnhanced)
+				EndSequencePoint(usingStatement.StartLocation, usingStatement.ResourceAcquisition.EndLocation);
+			else
+				EndSequencePoint(usingStatement.StartLocation, usingStatement.RParToken.EndLocation);
 		}
 
 		public override void VisitForeachStatement(ForeachStatement foreachStatement)
