@@ -442,7 +442,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (def.RelativeVirtualAddress == 0)
 					return false;
 				var body = file.Reader.GetMethodBody(def.RelativeVirtualAddress);
-				if (!body.LocalSignature.IsNil || body.ExceptionRegions.Length != 0)
+				// some compilers produce ctors with unused local variables
+				// see https://github.com/icsharpcode/ILSpy/issues/2174
+				//if (!body.LocalSignature.IsNil)
+				//	return false;
+				if (body.ExceptionRegions.Length != 0)
 					return false;
 				var reader = body.GetILReader();
 				if (reader.Length < 7)
