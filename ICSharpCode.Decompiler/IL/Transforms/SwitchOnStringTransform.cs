@@ -213,6 +213,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var values = new List<(string, ILInstruction)>();
 			var uniqueValues = new HashSet<string>();
 			int numberOfUniqueMatchesWithCurrentVariable = 0;
+			HashSet<Block> caseBlocks = new HashSet<Block>();
+			caseBlocks.Add((Block)instructions[i].Parent);
 
 			bool AddSwitchSection(string value, ILInstruction inst)
 			{
@@ -308,6 +310,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (!AddSwitchSection(value, block))
 						return false;
 				}
+				caseBlocks.Add(currentCaseBlock);
 				currentCaseBlock = nextCaseBlock as Block;
 			} while (currentCaseBlock != null);
 
@@ -316,7 +319,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			context.Step(nameof(SimplifyCascadingIfStatements), instructions[i]);
 			// if the switchValueVar is used in other places as well, do not eliminate the store.
-			if (switchValueVar.LoadCount > numberOfUniqueMatchesWithCurrentVariable)
+			if (switchValueVar.LoadCount > numberOfUniqueMatchesWithCurrentVariable || !ValidateUsesOfSwitchValueVariable(switchValueVar, caseBlocks))
 			{
 				keepAssignmentBefore = true;
 				removeExtraLoad = false; // prevent loads from being deleted after detecting that
@@ -352,6 +355,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					i--;
 				}
 			}
+			return true;
+		}
+
+		private bool ValidateUsesOfSwitchValueVariable(ILVariable switchValueVar, HashSet<Block> caseBlocks)
+		{
+			foreach (var use in switchValueVar.LoadInstructions)
+			{
+				bool isValid = false;
+				foreach (var caseBlock in caseBlocks)
+				{
+					if (use.IsDescendantOf(caseBlock))
+						isValid = true;
+				}
+				if (!isValid)
+					return false;
+			}
+
 			return true;
 		}
 
