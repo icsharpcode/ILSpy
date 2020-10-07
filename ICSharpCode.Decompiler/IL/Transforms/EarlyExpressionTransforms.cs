@@ -16,11 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -108,39 +104,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				temp.ReplaceWith(replacement);
 			}
-		}
-
-		protected internal override void VisitCall(Call inst)
-		{
-			var expr = HandleCall(inst, context);
-			if (expr != null)
-			{
-				// The resulting expression may trigger further rules, so continue visiting the replacement:
-				expr.AcceptVisitor(this);
-			}
-			else
-			{
-				base.VisitCall(inst);
-			}
-		}
-
-		internal static ILInstruction HandleCall(Call inst, ILTransformContext context)
-		{
-			if (inst.Method.IsConstructor && !inst.Method.IsStatic && inst.Method.DeclaringType.Kind == TypeKind.Struct)
-			{
-				Debug.Assert(inst.Arguments.Count == inst.Method.Parameters.Count + 1);
-				context.Step("Transform call to struct constructor", inst);
-				// call(ref, ...)
-				// => stobj(ref, newobj(...))
-				var newObj = new NewObj(inst.Method);
-				newObj.AddILRange(inst);
-				newObj.Arguments.AddRange(inst.Arguments.Skip(1));
-				newObj.ILStackWasEmpty = inst.ILStackWasEmpty;
-				var expr = new StObj(inst.Arguments[0], newObj, inst.Method.DeclaringType);
-				inst.ReplaceWith(expr);
-				return expr;
-			}
-			return null;
 		}
 	}
 }

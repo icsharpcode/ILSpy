@@ -1528,6 +1528,7 @@ namespace ICSharpCode.Decompiler.IL
 			switch (method.DeclaringType.Kind)
 			{
 				case TypeKind.Array:
+				{
 					var elementType = ((ArrayType)method.DeclaringType).ElementType;
 					if (opCode == OpCode.NewObj)
 						return Push(new NewArr(elementType, arguments));
@@ -1552,6 +1553,21 @@ namespace ICSharpCode.Decompiler.IL
 					}
 					Warn("Unknown method called on array type: " + method.Name);
 					goto default;
+				}
+				case TypeKind.Struct when method.IsConstructor && !method.IsStatic && opCode == OpCode.Call
+					&& method.ReturnType.Kind == TypeKind.Void:
+				{
+					// "call Struct.ctor(target, ...)" doesn't exist in C#,
+					// the next best equivalent is an assignment `*target = new Struct(...);`.
+					// So we represent this call as "stobj Struct(target, newobj Struct.ctor(...))".
+					// This needs to happen early (not as a transform) because the StObj.TargetSlot has
+					// restricted inlining (doesn't accept ldflda when exceptions aren't delayed).
+					var newobj = new NewObj(method);
+					newobj.ILStackWasEmpty = currentStack.IsEmpty;
+					newobj.ConstrainedTo = constrainedPrefix;
+					newobj.Arguments.AddRange(arguments.Skip(1));
+					return new StObj(arguments[0], newobj, method.DeclaringType);
+				}
 				default:
 					var call = CallInstruction.Create(opCode, method);
 					call.ILStackWasEmpty = currentStack.IsEmpty;
