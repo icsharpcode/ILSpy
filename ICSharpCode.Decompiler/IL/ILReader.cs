@@ -1312,7 +1312,8 @@ namespace ICSharpCode.Decompiler.IL
 					return PopPointer();
 				default:
 					// field in unresolved type
-					if (PeekStackType() == StackType.O)
+					var stackType = PeekStackType();
+					if (stackType == StackType.O || stackType == StackType.Unknown)
 						return Pop();
 					else
 						return PopPointer();
