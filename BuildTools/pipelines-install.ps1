@@ -4,7 +4,7 @@ $baseCommit = "d779383cb85003d6dabeb976f0845631e07bf463";
 $baseCommitRev = 1;
 
 # make sure this matches artifacts-only branches list in appveyor.yml!
-$masterBranches = '^(master|release/.+)$';
+$masterBranches = '^refs/heads/(master|release/.+)$';
 
 $globalAssemblyInfoTemplateFile = "ILSpy/Properties/AssemblyInfo.template.cs";
 
@@ -21,7 +21,8 @@ if ($versionName -ne "null") {
 } else {
     $versionName = "";
 }
-if ($env:BUILD_SOURCEBRANCHNAME -match $masterBranches) {
+
+if ($env:BUILD_SOURCEBRANCH -match $masterBranches) {
 	$branch = "";
 } else {
 	$branch = "-$env:BUILD_SOURCEBRANCHNAME";
