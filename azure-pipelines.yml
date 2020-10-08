@@ -52,7 +52,7 @@ jobs:
     inputs:
       command: 'custom'
       custom: 'tool'
-      arguments: 'install dotnet-format --tool-path BuildTools'
+      arguments: 'install dotnet-format --tool-path $(Agent.ToolsDirectory)/dotnet-format'
 
   - script: pwsh .\BuildTools\pipelines-install.ps1
     displayName: Install
@@ -94,7 +94,7 @@ jobs:
   - script: python BuildTools\tidy.py
     displayName: Tab check
 
-  - script: .\BuildTools\dotnet-format --check --verbosity diagnostic ILSpy.sln
+  - script: $(Agent.ToolsDirectory)\dotnet-format\dotnet-format --check --verbosity diagnostic ILSpy.sln
     displayName: dotnet-format check
 
   - task: CopyFiles@2
