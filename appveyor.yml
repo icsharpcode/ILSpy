@@ -45,7 +45,7 @@ for:
 - branches:
     only:
       - master
-      - 5.0.x
+      - /release\/*/
   artifacts:
     - path: ILSpy_binaries.zip
       name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% binaries

@@ -1,10 +1,10 @@
 trigger:
 - master
-- 5.0.x
+- release/*
 
 pr:
 - master
-- 5.0.x
+- release/*
 
 variables:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
