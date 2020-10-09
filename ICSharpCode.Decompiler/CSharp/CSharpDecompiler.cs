@@ -286,8 +286,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					var methodSemantics = module.MethodSemanticsLookup.GetSemantics(methodHandle).Item2;
 					if (methodSemantics != 0 && methodSemantics != System.Reflection.MethodSemanticsAttributes.Other)
 						return true;
-					if (LocalFunctionDecompiler.IsLocalFunctionMethod(module, methodHandle))
-						return settings.LocalFunctions;
+					if (settings.LocalFunctions && LocalFunctionDecompiler.IsLocalFunctionMethod(module, methodHandle))
+						return true;
 					if (settings.AnonymousMethods && methodHandle.HasGeneratedName(metadata) && methodHandle.IsCompilerGenerated(metadata))
 						return true;
 					if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedMainMethod(module, methodHandle))
@@ -299,8 +299,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					name = metadata.GetString(type.Name);
 					if (!type.GetDeclaringType().IsNil)
 					{
-						if (LocalFunctionDecompiler.IsLocalFunctionDisplayClass(module, typeHandle))
-							return settings.LocalFunctions;
+						if (settings.LocalFunctions && LocalFunctionDecompiler.IsLocalFunctionDisplayClass(module, typeHandle))
+							return true;
 						if (settings.AnonymousMethods && IsClosureType(type, metadata))
 							return true;
 						if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(typeHandle, metadata))
