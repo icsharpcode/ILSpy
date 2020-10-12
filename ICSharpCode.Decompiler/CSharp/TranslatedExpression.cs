@@ -502,7 +502,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new ByReferenceResolveResult(elementRR, ReferenceKind.Ref));
 			}
 			if (this.ResolveResult.IsCompileTimeConstant && this.ResolveResult.ConstantValue != null
-				&& NullableType.IsNullable(targetType) && !utype.Equals(targetUType))
+				&& NullableType.IsNullable(targetType) && !utype.Equals(targetUType)
+				&& targetUType.GetStackType().IsIntegerType())
 			{
 				// Casts like `(uint?)-1` are only valid in an explicitly unchecked context, but we
 				// don't have logic to ensure such a context (usually we emit into an implicitly unchecked context).

@@ -3,6 +3,9 @@ $ErrorActionPreference = "Stop"
 $baseCommit = "e17b4bfedf4dc747b105396224cd726bdca500ad";
 $baseCommitRev = 1;
 
+# make sure this matches artifacts-only branches list in appveyor.yml!
+$masterBranches = '^(master|release/.+)$';
+
 $globalAssemblyInfoTemplateFile = "ILSpy/Properties/AssemblyInfo.template.cs";
 
 $versionParts = @{};
@@ -18,10 +21,10 @@ if ($versionName -ne "null") {
 } else {
     $versionName = "";
 }
-if ($env:APPVEYOR_REPO_BRANCH -ne 'master') {
-	$branch = "-$env:APPVEYOR_REPO_BRANCH";
-} else {
+if ($env:APPVEYOR_REPO_BRANCH -match $masterBranches) {
 	$branch = "";
+} else {
+	$branch = "-$env:APPVEYOR_REPO_BRANCH";
 }
 
 $revision = [Int32]::Parse((git rev-list --count "$baseCommit..HEAD")) + $baseCommitRev;

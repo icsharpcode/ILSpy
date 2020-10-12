@@ -65,6 +65,8 @@
     <None Include="TestCases\Correctness\StackTests.il" />
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
+    <None Include="TestCases\ILPretty\UnknownTypes.cs" />
+    <None Include="TestCases\ILPretty\UnknownTypes.il" />
     <None Include="TestCases\ILPretty\EvalOrder.cs" />
     <None Include="TestCases\ILPretty\EvalOrder.il" />
     <None Include="TestCases\ILPretty\CallIndirect.il" />
