@@ -24,6 +24,7 @@ using System.Reflection.PortableExecutable;
 using System.Xml;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 {
@@ -71,20 +72,22 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			using (XmlTextWriter xmlWriter = new XmlTextWriter(target))
 			{
 				xmlWriter.Formatting = Formatting.Indented;
-				Write(xmlWriter, project, module);
+				Write(xmlWriter, project, files, module);
 			}
 		}
 
-		static void Write(XmlTextWriter xml, IProjectInfoProvider project, PEFile module)
+		static void Write(XmlTextWriter xml, IProjectInfoProvider project, IEnumerable<(string itemType, string fileName)> files, PEFile module)
 		{
 			xml.WriteStartElement("Project");
 
 			var projectType = GetProjectType(module);
 			xml.WriteAttributeString("Sdk", GetSdkString(projectType));
 
-			PlaceIntoTag("PropertyGroup", xml, () => WriteAssemblyInfo(xml, module, projectType));
+			PlaceIntoTag("PropertyGroup", xml, () => WriteAssemblyInfo(xml, module, project, projectType));
 			PlaceIntoTag("PropertyGroup", xml, () => WriteProjectInfo(xml, project));
-			PlaceIntoTag("ItemGroup", xml, () => WriteReferences(xml, module, project));
+			PlaceIntoTag("PropertyGroup", xml, () => WriteMiscellaneousPropertyGroup(xml, files));
+			PlaceIntoTag("ItemGroup", xml, () => WriteResources(xml, files));
+			PlaceIntoTag("ItemGroup", xml, () => WriteReferences(xml, module, project, projectType));
 
 			xml.WriteEndElement();
 		}
@@ -102,23 +105,21 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteAssemblyInfo(XmlTextWriter xml, PEFile module, ProjectType projectType)
+		static void WriteAssemblyInfo(XmlTextWriter xml, PEFile module, IProjectInfoProvider project, ProjectType projectType)
 		{
 			xml.WriteElementString("AssemblyName", module.Name);
 
 			// Since we create AssemblyInfo.cs manually, we need to disable the auto-generation
 			xml.WriteElementString("GenerateAssemblyInfo", FalseString);
 
-			// 'Library' is default, so only need to specify output type for executables
-			if (!module.Reader.PEHeaders.IsDll)
-			{
-				WriteOutputType(xml, module.Reader.PEHeaders.PEHeader.Subsystem);
-			}
+			WriteOutputType(xml, module.Reader.PEHeaders.IsDll, module.Reader.PEHeaders.PEHeader.Subsystem, projectType);
 
 			WriteDesktopExtensions(xml, projectType);
 
 			string platformName = TargetServices.GetPlatformName(module);
 			var targetFramework = TargetServices.DetectTargetFramework(module);
+			if (targetFramework.Identifier == ".NETFramework" && targetFramework.VersionNumber == 200)
+				targetFramework = TargetServices.DetectTargetFrameworkNET20(module, project.AssemblyResolver, targetFramework);
 
 			if (targetFramework.Moniker == null)
 			{
@@ -139,16 +140,27 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteOutputType(XmlTextWriter xml, Subsystem moduleSubsystem)
+		static void WriteOutputType(XmlTextWriter xml, bool isDll, Subsystem moduleSubsystem, ProjectType projectType)
 		{
-			switch (moduleSubsystem)
+			if (!isDll)
 			{
-				case Subsystem.WindowsGui:
-					xml.WriteElementString("OutputType", "WinExe");
-					break;
-				case Subsystem.WindowsCui:
-					xml.WriteElementString("OutputType", "Exe");
-					break;
+				switch (moduleSubsystem)
+				{
+					case Subsystem.WindowsGui:
+						xml.WriteElementString("OutputType", "WinExe");
+						break;
+					case Subsystem.WindowsCui:
+						xml.WriteElementString("OutputType", "Exe");
+						break;
+				}
+			}
+			else
+			{
+				// 'Library' is default, so only need to specify output type for executables (excludes ProjectType.Web)
+				if (projectType == ProjectType.Web)
+				{
+					xml.WriteElementString("OutputType", "Library");
+				}
 			}
 		}
 
@@ -176,17 +188,86 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteReferences(XmlTextWriter xml, PEFile module, IProjectInfoProvider project)
+		static void WriteMiscellaneousPropertyGroup(XmlTextWriter xml, IEnumerable<(string itemType, string fileName)> files)
 		{
+			var (itemType, fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationIcon");
+			if (fileName != null)
+				xml.WriteElementString("ApplicationIcon", fileName);
+
+			(itemType, fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationManifest");
+			if (fileName != null)
+				xml.WriteElementString("ApplicationManifest", fileName);
+
+			if (files.Any(t => t.itemType == "EmbeddedResource"))
+				xml.WriteElementString("RootNamespace", string.Empty);
+			// TODO: We should add CustomToolNamespace for resources, otherwise we should add empty RootNamespace
+		}
+
+		static void WriteResources(XmlTextWriter xml, IEnumerable<(string itemType, string fileName)> files)
+		{
+			// remove phase
+			foreach (var (itemType, fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
+			{
+				string buildAction = Path.GetExtension(fileName).ToUpperInvariant() switch
+				{
+					".CS" => "Compile",
+					".RESX" => "EmbeddedResource",
+					_ => "None"
+				};
+				if (buildAction == "EmbeddedResource")
+					continue;
+
+				xml.WriteStartElement(buildAction);
+				xml.WriteAttributeString("Remove", fileName);
+				xml.WriteEndElement();
+			}
+
+			// include phase
+			foreach (var (itemType, fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
+			{
+				if (Path.GetExtension(fileName) == ".resx")
+					continue;
+
+				xml.WriteStartElement("EmbeddedResource");
+				xml.WriteAttributeString("Include", fileName);
+				xml.WriteEndElement();
+			}
+		}
+
+		static void WriteReferences(XmlTextWriter xml, PEFile module, IProjectInfoProvider project, ProjectType projectType)
+		{
+			bool isNetCoreApp = TargetServices.DetectTargetFramework(module).Identifier == ".NETCoreApp";
+			var targetPacks = new HashSet<string>();
+			if (isNetCoreApp)
+			{
+				targetPacks.Add("Microsoft.NETCore.App");
+				switch (projectType)
+				{
+					case ProjectType.WinForms:
+					case ProjectType.Wpf:
+						targetPacks.Add("Microsoft.WindowsDesktop.App");
+						break;
+					case ProjectType.Web:
+						targetPacks.Add("Microsoft.AspNetCore.App");
+						targetPacks.Add("Microsoft.AspNetCore.All");
+						break;
+				}
+			}
+
 			foreach (var reference in module.AssemblyReferences.Where(r => !ImplicitReferences.Contains(r.Name)))
 			{
+				if (isNetCoreApp && project.AssemblyResolver.IsSharedAssembly(reference, out string runtimePack) && targetPacks.Contains(runtimePack))
+				{
+					continue;
+				}
+
 				xml.WriteStartElement("Reference");
 				xml.WriteAttributeString("Include", reference.Name);
 
 				var asembly = project.AssemblyResolver.Resolve(reference);
-				if (asembly != null)
+				if (asembly != null && !project.AssemblyResolver.IsGacAssembly(reference))
 				{
-					xml.WriteElementString("HintPath", asembly.FileName);
+					xml.WriteElementString("HintPath", FileUtility.GetRelativePath(project.TargetDirectory, asembly.FileName));
 				}
 
 				xml.WriteEndElement();

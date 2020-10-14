@@ -43,6 +43,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		Guid ProjectGuid { get; }
 
 		/// <summary>
+		/// Gets the target directory of the project
+		/// </summary>
+		string TargetDirectory { get; }
+
+		/// <summary>
 		/// Gets the name of the key file being used for strong name signing. Can be null if no file is available.
 		/// </summary>
 		string StrongNameKeyFile { get; }
