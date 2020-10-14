@@ -413,6 +413,7 @@
     <Compile Include="TypeSystem\Implementation\NullabilityAnnotatedType.cs" />
     <Compile Include="TypeSystem\TupleType.cs" />
     <Compile Include="TypeSystem\TypeProvider.cs" />
+    <Compile Include="Util\FileUtility.cs" />
     <Compile Include="Util\GraphVizGraph.cs" />
     <Compile Include="Util\KeyComparer.cs" />
     <Compile Include="Util\LongDict.cs" />
