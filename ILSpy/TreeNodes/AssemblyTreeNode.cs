@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -176,7 +175,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			else if (loadResult.Package != null)
 			{
-				LoadChildrenForPackage(loadResult.Package);
+				var package = loadResult.Package;
+				this.Children.AddRange(PackageFolderTreeNode.LoadChildrenForFolder(package.TopLevelFolders, package.TopLevelEntries));
 			}
 		}
 
@@ -215,22 +215,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					this.Children.Add(ns);
 			}
 		}
-
-		private void LoadChildrenForPackage(LoadedPackage package)
-		{
-			foreach (var entry in package.Entries.OrderBy(e => e.Name))
-			{
-				if (entry.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || entry.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-				{
-					var stream = Task.Run(entry.TryOpenStream);
-					this.Children.Add(new AssemblyTreeNode(new LoadedAssembly(AssemblyList, entry.FullName, stream), entry.Name));
-					continue;
-				}
-				this.Children.Add(ResourceTreeNode.Create(entry));
-			}
-		}
-
-		public override bool CanExpandRecursively => true;
 
 		/// <summary>
 		/// Finds the node for a top-level type.

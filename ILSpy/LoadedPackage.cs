@@ -20,6 +20,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Reflection;
 
 using ICSharpCode.Decompiler.Metadata;
 
@@ -37,22 +39,80 @@ namespace ICSharpCode.ILSpy
 
 		public PackageKind Kind { get; }
 
-		public List<PackageEntry> Entries { get; } = new List<PackageEntry>();
+		/// <summary>
+		/// List of all entries, including those in sub-directories within the package.
+		/// </summary>
+		public IReadOnlyList<PackageEntry> Entries { get; }
 
-		public static LoadedPackage FromZipFile(string file)
+		internal IReadOnlyList<PackageEntry> TopLevelEntries { get; }
+		internal IReadOnlyList<PackageFolder> TopLevelFolders { get; }
+
+		public LoadedPackage(PackageKind kind, IEnumerable<PackageEntry> entries)
 		{
-			using (var archive = ZipFile.OpenRead(file))
+			this.Kind = kind;
+			this.Entries = entries.ToArray();
+			var topLevelEntries = new List<PackageEntry>();
+			var folders = new Dictionary<string, PackageFolder>();
+			var rootFolder = new PackageFolder("");
+			folders.Add("", rootFolder);
+			foreach (var entry in this.Entries)
 			{
-				LoadedPackage result = new LoadedPackage();
-				foreach (var entry in archive.Entries)
-				{
-					result.Entries.Add(new ZipFileEntry(file, entry));
-				}
+				var (dirname, filename) = SplitName(entry.Name);
+				GetFolder(dirname).Entries.Add(new FolderEntry(filename, entry));
+			}
+			this.TopLevelEntries = rootFolder.Entries;
+			this.TopLevelFolders = rootFolder.Folders;
+
+			static (string, string) SplitName(string filename)
+			{
+				int pos = filename.LastIndexOfAny(new char[] { '/', '\\' });
+				if (pos == -1)
+					return ("", filename); // file in root
+				else
+					return (filename.Substring(0, pos), filename.Substring(pos + 1));
+			}
+
+			PackageFolder GetFolder(string name)
+			{
+				if (folders.TryGetValue(name, out var result))
+					return result;
+				var (dirname, basename) = SplitName(name);
+				PackageFolder parent = GetFolder(dirname);
+				result = new PackageFolder(basename);
+				parent.Folders.Add(result);
+				folders.Add(name, result);
 				return result;
 			}
 		}
 
-		class ZipFileEntry : PackageEntry
+		public static LoadedPackage FromZipFile(string file)
+		{
+			using var archive = ZipFile.OpenRead(file);
+			return new LoadedPackage(PackageKind.Zip,
+				archive.Entries.Select(entry => new ZipFileEntry(file, entry)));
+		}
+
+		/// <summary>
+		/// Entry inside a package folder. Effectively renames the entry.
+		/// </summary>
+		sealed class FolderEntry : PackageEntry
+		{
+			readonly PackageEntry originalEntry;
+			public override string Name { get; }
+
+			public FolderEntry(string name, PackageEntry originalEntry)
+			{
+				this.Name = name;
+				this.originalEntry = originalEntry;
+			}
+
+			public override ManifestResourceAttributes Attributes => originalEntry.Attributes;
+			public override string FullName => originalEntry.FullName;
+			public override ResourceType ResourceType => originalEntry.ResourceType;
+			public override Stream TryOpenStream() => originalEntry.TryOpenStream();
+		}
+
+		sealed class ZipFileEntry : PackageEntry
 		{
 			readonly string zipFile;
 			public override string Name { get; }
@@ -67,19 +127,17 @@ namespace ICSharpCode.ILSpy
 			public override Stream TryOpenStream()
 			{
 				Debug.WriteLine("Decompress " + Name);
-				using (var archive = ZipFile.OpenRead(zipFile))
+				using var archive = ZipFile.OpenRead(zipFile);
+				var entry = archive.GetEntry(Name);
+				if (entry == null)
+					return null;
+				var memoryStream = new MemoryStream();
+				using (var s = entry.Open())
 				{
-					var entry = archive.GetEntry(Name);
-					if (entry == null)
-						return null;
-					var memoryStream = new MemoryStream();
-					using (var s = entry.Open())
-					{
-						s.CopyTo(memoryStream);
-					}
-					memoryStream.Position = 0;
-					return memoryStream;
+					s.CopyTo(memoryStream);
 				}
+				memoryStream.Position = 0;
+				return memoryStream;
 			}
 		}
 	}
@@ -95,5 +153,21 @@ namespace ICSharpCode.ILSpy
 		/// Gets the full file name for the entry.
 		/// </summary>
 		public abstract string FullName { get; }
+	}
+
+	class PackageFolder
+	{
+		/// <summary>
+		/// Gets the short name of the folder.
+		/// </summary>
+		public string Name { get; }
+
+		public PackageFolder(string name)
+		{
+			this.Name = name;
+		}
+
+		public List<PackageFolder> Folders { get; } = new List<PackageFolder>();
+		public List<PackageEntry> Entries { get; } = new List<PackageEntry>();
 	}
 }
