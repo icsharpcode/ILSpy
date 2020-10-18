@@ -20,9 +20,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Reflection;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy
@@ -35,6 +37,7 @@ namespace ICSharpCode.ILSpy
 		public enum PackageKind
 		{
 			Zip,
+			Bundle,
 		}
 
 		public PackageKind Kind { get; }
@@ -87,9 +90,33 @@ namespace ICSharpCode.ILSpy
 
 		public static LoadedPackage FromZipFile(string file)
 		{
+			Debug.WriteLine($"LoadedPackage.FromZipFile({file})");
 			using var archive = ZipFile.OpenRead(file);
 			return new LoadedPackage(PackageKind.Zip,
 				archive.Entries.Select(entry => new ZipFileEntry(file, entry)));
+		}
+
+		/// <summary>
+		/// Load a .NET single-file bundle.
+		/// </summary>
+		public static LoadedPackage FromBundle(string fileName)
+		{
+			using var memoryMappedFile = MemoryMappedFile.CreateFromFile(fileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
+			var view = memoryMappedFile.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
+			try
+			{
+				if (!SingleFileBundle.IsBundle(view, out long bundleHeaderOffset))
+					return null;
+				var manifest = SingleFileBundle.ReadManifest(view, bundleHeaderOffset);
+				var entries = manifest.Entries.Select(e => new BundleEntry(fileName, view, e)).ToList();
+				var result = new LoadedPackage(PackageKind.Bundle, entries);
+				view = null; // don't dispose the view, we're still using it in the bundle entries
+				return result;
+			}
+			finally
+			{
+				view?.Dispose();
+			}
 		}
 
 		/// <summary>
@@ -138,6 +165,28 @@ namespace ICSharpCode.ILSpy
 				}
 				memoryStream.Position = 0;
 				return memoryStream;
+			}
+		}
+
+		sealed class BundleEntry : PackageEntry
+		{
+			readonly string bundleFile;
+			readonly MemoryMappedViewAccessor view;
+			readonly SingleFileBundle.Entry entry;
+
+			public BundleEntry(string bundleFile, MemoryMappedViewAccessor view, SingleFileBundle.Entry entry)
+			{
+				this.bundleFile = bundleFile;
+				this.view = view;
+				this.entry = entry;
+			}
+
+			public override string Name => entry.RelativePath;
+			public override string FullName => $"bundle://{bundleFile};{Name}";
+
+			public override Stream TryOpenStream()
+			{
+				return new UnmanagedMemoryStream(view.SafeMemoryMappedViewHandle, entry.Offset, entry.Size);
 			}
 		}
 	}

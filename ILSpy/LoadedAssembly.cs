@@ -257,6 +257,12 @@ namespace ICSharpCode.ILSpy
 			{
 				loadAssemblyException = ex;
 			}
+			// If it's not a .NET module, maybe it's a single-file bundle
+			var bundle = LoadedPackage.FromBundle(fileName);
+			if (bundle != null)
+			{
+				return new LoadResult(loadAssemblyException, bundle);
+			}
 			// If it's not a .NET module, maybe it's a zip archive (e.g. .nupkg)
 			try
 			{

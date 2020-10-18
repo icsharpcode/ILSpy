@@ -83,7 +83,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						return Images.AssemblyWarning;
 					var loadResult = LoadedAssembly.GetLoadResultAsync().Result;
 					if (loadResult.Package != null)
-						return Images.NuGet;
+					{
+						return loadResult.Package.Kind switch
+						{
+							LoadedPackage.PackageKind.Zip => Images.NuGet,
+							_ => Images.Library,
+						};
+					}
 					return Images.Assembly;
 				}
 				else
