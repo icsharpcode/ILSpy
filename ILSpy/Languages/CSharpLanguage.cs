@@ -386,6 +386,10 @@ namespace ICSharpCode.ILSpy
 		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			var module = assembly.GetPEFileOrNull();
+			if (module == null)
+			{
+				return null;
+			}
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null)
 			{
 				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options);

@@ -77,6 +77,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			dlg.FileName = Path.GetFileName(DecompilerTextView.CleanUpName(key));
 			if (dlg.ShowDialog() == true)
 			{
+				var data = this.Data;
 				data.Position = 0;
 				using (var fs = dlg.OpenFile())
 				{

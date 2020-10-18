@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		public ResourceTreeNode(Resource r)
 		{
-			if (r.IsNil)
+			if (r == null)
 				throw new ArgumentNullException(nameof(r));
 			this.Resource = r;
 		}

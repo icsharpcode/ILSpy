@@ -69,7 +69,6 @@ namespace ICSharpCode.ILSpy
 	partial class MainWindow : Window
 	{
 		bool refreshInProgress;
-		bool handlingNugetPackageSelection;
 		readonly NavigationHistory<NavigationState> history = new NavigationHistory<NavigationState>();
 		ILSpySettings spySettingsForMainWindow_Loaded;
 		internal SessionSettings sessionSettings;
@@ -335,8 +334,6 @@ namespace ICSharpCode.ILSpy
 				string data = new string((char*)copyData->Buffer, 0, copyData->Size / sizeof(char));
 				if (data.StartsWith("ILSpy:\r\n", StringComparison.Ordinal))
 				{
-					if (handlingNugetPackageSelection)
-						return (IntPtr)1;
 					data = data.Substring(8);
 					List<string> lines = new List<string>();
 					using (StringReader r = new StringReader(data))
@@ -1110,58 +1107,22 @@ namespace ICSharpCode.ILSpy
 			SharpTreeNode lastNode = null;
 			foreach (string file in fileNames)
 			{
-				switch (Path.GetExtension(file))
+				var asm = assemblyList.OpenAssembly(file);
+				if (asm != null)
 				{
-					case ".nupkg":
-						this.handlingNugetPackageSelection = true;
-						try
+					if (loadedAssemblies != null)
+					{
+						loadedAssemblies.Add(asm);
+					}
+					else
+					{
+						var node = assemblyListTreeNode.FindAssemblyNode(asm);
+						if (node != null && focusNode)
 						{
-							LoadedNugetPackage package = new LoadedNugetPackage(file);
-							var selectionDialog = new NugetPackageBrowserDialog(package);
-							selectionDialog.Owner = this;
-							if (selectionDialog.ShowDialog() != true)
-								break;
-							foreach (var entry in selectionDialog.SelectedItems)
-							{
-								var nugetAsm = assemblyList.OpenAssembly("nupkg://" + file + ";" + entry.Name, entry.Stream, true);
-								if (nugetAsm != null)
-								{
-									if (loadedAssemblies != null)
-										loadedAssemblies.Add(nugetAsm);
-									else
-									{
-										var node = assemblyListTreeNode.FindAssemblyNode(nugetAsm);
-										if (node != null && focusNode)
-										{
-											AssemblyTreeView.SelectedItems.Add(node);
-											lastNode = node;
-										}
-									}
-								}
-							}
+							AssemblyTreeView.SelectedItems.Add(node);
+							lastNode = node;
 						}
-						finally
-						{
-							this.handlingNugetPackageSelection = false;
-						}
-						break;
-					default:
-						var asm = assemblyList.OpenAssembly(file);
-						if (asm != null)
-						{
-							if (loadedAssemblies != null)
-								loadedAssemblies.Add(asm);
-							else
-							{
-								var node = assemblyListTreeNode.FindAssemblyNode(asm);
-								if (node != null && focusNode)
-								{
-									AssemblyTreeView.SelectedItems.Add(node);
-									lastNode = node;
-								}
-							}
-						}
-						break;
+					}
 				}
 
 				if (lastNode != null && focusNode)

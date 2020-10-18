@@ -382,7 +382,7 @@
     <Compile Include="Search\LiteralSearchStrategy.cs" />
     <Compile Include="LoadedAssembly.cs" />
     <Compile Include="LoadedAssemblyExtensions.cs" />
-    <Compile Include="LoadedNugetPackage.cs" />
+    <Compile Include="LoadedPackage.cs" />
     <Compile Include="Search\MemberSearchStrategy.cs" />
     <Compile Include="Search\MetadataTokenSearchStrategy.cs" />
     <Compile Include="NativeMethods.cs" />
@@ -390,9 +390,6 @@
     <Compile Include="NavigationState.cs" />
     <Compile Include="Commands\OpenCommand.cs" />
     <Compile Include="Commands\OpenFromGacCommand.cs" />
-    <Compile Include="Views\NugetPackageBrowserDialog.xaml.cs">
-      <DependentUpon>NugetPackageBrowserDialog.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Views\OpenFromGacDialog.xaml.cs">
       <DependentUpon>OpenFromGacDialog.xaml</DependentUpon>
     </Compile>
@@ -581,7 +578,6 @@
     <Page Include="Metadata\MetadataTableViews.xaml" />
     <Page Include="Views\OpenFromGacDialog.xaml" />
     <Page Include="Views\ManageAssemblyListsDialog.xaml" />
-    <Page Include="Views\NugetPackageBrowserDialog.xaml" />
     <Page Include="Options\DecompilerSettingsPanel.xaml" />
     <Page Include="Options\DisplaySettingsPanel.xaml" />
     <Page Include="Options\MiscSettingsPanel.xaml" />
@@ -851,6 +847,10 @@
     <SortResXInput Include="..\ILSpy.AddIn\*.resx" />
     <SortResXInput Include="..\ILSpy.ReadyToRun\Properties\*.resx" />
     <SortResXStamp Include="obj\sort-resx.stamp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\NuGet.png" />
   </ItemGroup>
 
   <Target Name="SortResX" BeforeTargets="BeforeBuild" Inputs="@(SortResXInput)" Outputs="@(SortResXStamp)">

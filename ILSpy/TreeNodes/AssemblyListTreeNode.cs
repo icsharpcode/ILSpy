@@ -17,12 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.IO;
 using System.Linq;
-using System.Reflection.PortableExecutable;
 using System.Windows;
 
 using ICSharpCode.Decompiler;
@@ -105,7 +102,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				{
 					var assemblies = files
 						.Where(file => file != null)
-						.SelectMany(file => OpenAssembly(assemblyList, file))
+						.Select(file => assemblyList.OpenAssembly(file))
 						.Where(asm => asm != null)
 						.Distinct()
 						.ToArray();
@@ -127,28 +124,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		private IEnumerable<LoadedAssembly> OpenAssembly(AssemblyList assemblyList, string file)
-		{
-			if (file.EndsWith(".nupkg"))
-			{
-				LoadedNugetPackage package = new LoadedNugetPackage(file);
-				var selectionDialog = new NugetPackageBrowserDialog(package);
-				selectionDialog.Owner = Application.Current.MainWindow;
-				if (selectionDialog.ShowDialog() != true)
-					yield break;
-				foreach (var entry in selectionDialog.SelectedItems)
-				{
-					var nugetAsm = assemblyList.OpenAssembly("nupkg://" + file + ";" + entry.Name, entry.Stream, true);
-					if (nugetAsm != null)
-					{
-						yield return nugetAsm;
-					}
-				}
-				yield break;
-			}
-			yield return assemblyList.OpenAssembly(file);
-		}
-
 		public Action<SharpTreeNode> Select = delegate { };
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
@@ -166,7 +141,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		#region Find*Node
 		public ILSpyTreeNode FindResourceNode(Resource resource)
 		{
-			if (resource == null || resource.IsNil)
+			if (resource == null)
 				return null;
 			foreach (AssemblyTreeNode node in this.Children)
 			{
