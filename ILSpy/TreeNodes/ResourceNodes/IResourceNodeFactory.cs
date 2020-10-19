@@ -26,6 +26,5 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	public interface IResourceNodeFactory
 	{
 		ILSpyTreeNode CreateNode(Resource resource);
-		ILSpyTreeNode CreateNode(string key, object data);
 	}
 }

@@ -18,6 +18,7 @@
 
 using System.ComponentModel.Composition;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 using ICSharpCode.Decompiler;
@@ -65,7 +66,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			int i = 0;
 			foreach (Image image in this.data.Images)
 			{
-				var node = ResourceEntryNode.Create("Image" + i.ToString(), image);
+				using var s = new MemoryStream();
+				image.Save(s, System.Drawing.Imaging.ImageFormat.Bmp);
+				var node = ResourceEntryNode.Create("Image" + i.ToString(), s.ToArray());
 				if (node != null)
 					Children.Add(node);
 				++i;

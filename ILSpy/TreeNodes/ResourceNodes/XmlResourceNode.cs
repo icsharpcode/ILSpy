@@ -36,20 +36,11 @@ namespace ICSharpCode.ILSpy.Xaml
 
 		public ILSpyTreeNode CreateNode(Resource resource)
 		{
-			Stream stream = resource.TryOpenStream();
-			if (stream == null)
-				return null;
-			return CreateNode(resource.Name, stream);
-		}
-
-		public ILSpyTreeNode CreateNode(string key, object data)
-		{
-			if (!(data is Stream))
-				return null;
+			string key = resource.Name;
 			foreach (string fileExt in xmlFileExtensions)
 			{
 				if (key.EndsWith(fileExt, StringComparison.OrdinalIgnoreCase))
-					return new XmlResourceEntryNode(key, (Stream)data);
+					return new XmlResourceEntryNode(key, resource.TryOpenStream);
 			}
 			return null;
 		}
@@ -59,7 +50,7 @@ namespace ICSharpCode.ILSpy.Xaml
 	{
 		string xml;
 
-		public XmlResourceEntryNode(string key, Stream data)
+		public XmlResourceEntryNode(string key, Func<Stream> data)
 			: base(key, data)
 		{
 		}
@@ -91,7 +82,14 @@ namespace ICSharpCode.ILSpy.Xaml
 							// cache read XAML because stream will be closed after first read
 							if (xml == null)
 							{
-								using (var reader = new StreamReader(Data))
+								using var data = OpenStream();
+								if (data == null)
+								{
+									output.Write("ILSpy: Failed opening resource stream.");
+									output.WriteLine();
+									return output;
+								}
+								using (var reader = new StreamReader(data))
 								{
 									xml = reader.ReadToEnd();
 								}

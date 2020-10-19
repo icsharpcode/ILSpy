@@ -42,7 +42,7 @@ namespace ILSpy.BamlDecompiler
 {
 	public sealed class BamlResourceEntryNode : ResourceEntryNode
 	{
-		public BamlResourceEntryNode(string key, Stream data) : base(key, data)
+		public BamlResourceEntryNode(string key, Func<Stream> data) : base(key, data)
 		{
 		}
 
@@ -74,8 +74,8 @@ namespace ILSpy.BamlDecompiler
 		bool LoadBaml(AvalonEditTextOutput output, CancellationToken cancellationToken)
 		{
 			var asm = this.Ancestors().OfType<AssemblyTreeNode>().FirstOrDefault().LoadedAssembly;
-			Data.Position = 0;
-			XDocument xamlDocument = LoadIntoDocument(asm.GetPEFileOrNull(), asm.GetAssemblyResolver(), Data, cancellationToken);
+			using var data = OpenStream();
+			XDocument xamlDocument = LoadIntoDocument(asm.GetPEFileOrNull(), asm.GetAssemblyResolver(), data, cancellationToken);
 			output.Write(xamlDocument.ToString());
 			return true;
 		}

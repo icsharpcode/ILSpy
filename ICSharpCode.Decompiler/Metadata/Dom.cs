@@ -35,6 +35,23 @@ namespace ICSharpCode.Decompiler.Metadata
 		public abstract Stream TryOpenStream();
 	}
 
+	public class ByteArrayResource : Resource
+	{
+		public override string Name { get; }
+		byte[] data;
+
+		public ByteArrayResource(string name, byte[] data)
+		{
+			this.Name = name ?? throw new ArgumentNullException(nameof(name));
+			this.data = data ?? throw new ArgumentNullException(nameof(data));
+		}
+
+		public override Stream TryOpenStream()
+		{
+			return new MemoryStream(data);
+		}
+	}
+
 	sealed class MetadataResource : Resource
 	{
 		public PEFile Module { get; }

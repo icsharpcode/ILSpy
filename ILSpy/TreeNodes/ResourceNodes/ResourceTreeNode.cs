@@ -119,14 +119,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ILSpyTreeNode Create(Resource resource)
 		{
-			ILSpyTreeNode result = null;
-			foreach (var factory in App.ExportProvider.GetExportedValues<IResourceNodeFactory>())
-			{
-				result = factory.CreateNode(resource);
-				if (result != null)
-					break;
-			}
-			return result ?? new ResourceTreeNode(resource);
+			return ResourceEntryNode.Create(resource);
 		}
 	}
 }
