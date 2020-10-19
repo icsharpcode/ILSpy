@@ -73,9 +73,18 @@
     <Page Include="ReadyToRunOptionPage.xaml" />
   </ItemGroup>
 
+  <Import Project="../packages.props"/>
+
   <ItemGroup>
     <PackageReference Include="Iced" Version="1.8.0" />
     <PackageReference Include="ILCompiler.Reflection.ReadyToRun" Version="1.0.11-alpha" />
+    <!-- ILCompiler.Reflection.ReadyToRun has dependencies on System.Reflection.Metadata and
+         System.Runtime.CompilerServices.Unsafe. Because the AddIn compiles into ILSpy's output
+         directory, we're at risk of overwriting our dependencies with different versions.
+         So ensure NuGet uses consistent versions (from our packages.props) for these.
+         -->
+    <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="$(SystemCompilerServicesUnsafeVersion)" />
   </ItemGroup>
 
   <Target Name="RemoveTransitiveProjectReferences" AfterTargets="IncludeTransitiveProjectReferences">
