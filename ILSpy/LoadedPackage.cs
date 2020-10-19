@@ -186,6 +186,7 @@ namespace ICSharpCode.ILSpy
 
 			public override Stream TryOpenStream()
 			{
+				Debug.WriteLine("Open bundle member " + Name);
 				return new UnmanagedMemoryStream(view.SafeMemoryMappedViewHandle, entry.Offset, entry.Size);
 			}
 		}

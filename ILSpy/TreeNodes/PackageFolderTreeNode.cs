@@ -16,8 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.TreeView;
@@ -51,10 +53,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		internal static IEnumerable<SharpTreeNode> LoadChildrenForFolder(IReadOnlyList<PackageFolder> folders, IReadOnlyList<PackageEntry> entries)
 		{
-			if (folders.Count == 1 && entries.Count == 0)
-			{
-
-			}
 			foreach (var folder in folders.OrderBy(f => f.Name))
 			{
 				string newName = folder.Name;
@@ -69,7 +67,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			foreach (var entry in entries.OrderBy(e => e.Name))
 			{
-				yield return ResourceTreeNode.Create(entry);
+				if (entry.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+				{
+					var asmList = MainWindow.Instance.CurrentAssemblyList;
+					var asm = new LoadedAssembly(asmList, entry.Name, Task.Run(entry.TryOpenStream));
+					yield return new AssemblyTreeNode(asm);
+				}
+				else
+				{
+					yield return ResourceTreeNode.Create(entry);
+				}
 			}
 		}
 
