@@ -725,8 +725,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			// Convert the modified body to C# AST:
-			var whileLoop = (WhileStatement)ConvertAsBlock(container).First();
-			BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
+			var whileLoopBlock = ConvertAsBlock(container);
+			var whileLoop = (WhileStatement)whileLoopBlock.First();
+			var foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
 
 			// Remove the first statement, as it is the foreachVariable = enumerator.Current; statement.
 			Statement firstStatement = foreachBody.Statements.First();
@@ -752,14 +753,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreachStmt.AddAnnotation(new ForeachAnnotation(inst.ResourceExpression, conditionInst, singleGetter));
 			foreachStmt.CopyAnnotationsFrom(whileLoop);
 			// If there was an optional return statement, return it as well.
-			if (optionalReturnAfterLoop != null)
+			// If there were labels or any other statements in the whileLoopBlock, move them after the foreach
+			// loop.
+			if (optionalReturnAfterLoop != null || whileLoopBlock.Statements.Count > 1)
 			{
-				return new BlockStatement {
+				var block = new BlockStatement {
 					Statements = {
-						foreachStmt,
-						optionalReturnAfterLoop.AcceptVisitor(this)
+						foreachStmt
 					}
 				};
+				if (optionalReturnAfterLoop != null)
+				{
+					block.Statements.Add(optionalReturnAfterLoop.AcceptVisitor(this));
+				}
+				if (whileLoopBlock.Statements.Count > 1)
+				{
+					block.Statements.AddRange(whileLoopBlock.Statements
+						.Skip(1)
+						.SkipWhile(s => s.Annotations.Any(a => a == optionalReturnAfterLoop))
+						.Select(SyntaxExtensions.Detach));
+				}
+				return block;
 			}
 			return foreachStmt;
 		}
@@ -1327,7 +1341,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					else
 					{
-						blockStatement.Add(stmt);
+						blockStatement.Add(stmt.Detach());
 					}
 				}
 				if (block.FinalInstruction.OpCode != OpCode.Nop)
