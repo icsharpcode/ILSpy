@@ -190,7 +190,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public TranslatedExpression Build(CallInstruction inst)
 		{
-			if (inst is NewObj newobj && IL.Transforms.DelegateConstruction.IsDelegateConstruction(newobj))
+			if (inst is NewObj newobj && IL.Transforms.DelegateConstruction.MatchDelegateConstruction(newobj, out _, out _, out _))
 			{
 				return HandleDelegateConstruction(newobj);
 			}

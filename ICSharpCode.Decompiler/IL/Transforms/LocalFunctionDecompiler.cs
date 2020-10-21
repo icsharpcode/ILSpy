@@ -418,7 +418,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				else if (inst is LdFtn ldftn && !ldftn.Method.IsLocalFunction && IsLocalFunctionMethod(ldftn.Method, context))
 				{
-					if (ldftn.Parent is NewObj newObj && DelegateConstruction.IsDelegateConstruction(newObj))
+					if (ldftn.Parent is NewObj newObj && DelegateConstruction.MatchDelegateConstruction(newObj, out _, out _, out _))
 						HandleUseSite(ldftn.Method, newObj);
 					else
 						HandleUseSite(ldftn.Method, ldftn);

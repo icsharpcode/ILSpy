@@ -49,26 +49,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				foreach (var inst in function.Descendants)
 				{
 					cancellationToken.ThrowIfCancellationRequested();
-					if (inst is NewObj call)
+					if (!MatchDelegateConstruction(inst, out var targetMethod, out var target,
+						out var delegateType, allowTransformed: false))
+						continue;
+					context.StepStartGroup($"TransformDelegateConstruction {inst.StartILOffset}", inst);
+					ILFunction f = TransformDelegateConstruction(inst, targetMethod, target, delegateType);
+					if (f != null && target is IInstructionWithVariableOperand instWithVar)
 					{
-						context.StepStartGroup($"TransformDelegateConstruction {call.StartILOffset}", call);
-						ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
-						if (f != null && target is IInstructionWithVariableOperand instWithVar)
+						if (instWithVar.Variable.Kind == VariableKind.Local)
 						{
-							if (instWithVar.Variable.Kind == VariableKind.Local)
+							instWithVar.Variable.Kind = VariableKind.DisplayClassLocal;
+						}
+						if (instWithVar.Variable.IsSingleDefinition && instWithVar.Variable.StoreInstructions.SingleOrDefault() is StLoc store)
+						{
+							if (store.Value is NewObj)
 							{
-								instWithVar.Variable.Kind = VariableKind.DisplayClassLocal;
-							}
-							if (instWithVar.Variable.IsSingleDefinition && instWithVar.Variable.StoreInstructions.SingleOrDefault() is StLoc store)
-							{
-								if (store.Value is NewObj)
-								{
-									instWithVar.Variable.CaptureScope = BlockContainer.FindClosestContainer(store);
-								}
+								instWithVar.Variable.CaptureScope = BlockContainer.FindClosestContainer(store);
 							}
 						}
-						context.StepEndGroup();
 					}
+					context.StepEndGroup();
 				}
 			}
 			finally
@@ -79,15 +79,34 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		internal static bool IsDelegateConstruction(NewObj inst, bool allowTransformed = false)
+		internal static bool MatchDelegateConstruction(ILInstruction inst, out IMethod targetMethod,
+			out ILInstruction target, out IType delegateType, bool allowTransformed = false)
 		{
-			if (inst == null || inst.Arguments.Count != 2)
-				return false;
-			var opCode = inst.Arguments[1].OpCode;
-			if (!(opCode == OpCode.LdFtn || opCode == OpCode.LdVirtFtn || (allowTransformed && opCode == OpCode.ILFunction)))
-				return false;
-			var typeKind = inst.Method.DeclaringType.Kind;
-			return typeKind == TypeKind.Delegate || typeKind == TypeKind.Unknown;
+			targetMethod = null;
+			target = null;
+			delegateType = null;
+			switch (inst)
+			{
+				case NewObj call:
+					if (call.Arguments.Count != 2)
+						return false;
+					target = call.Arguments[0];
+					var opCode = call.Arguments[1].OpCode;
+					delegateType = call.Method.DeclaringType;
+					if (!(opCode == OpCode.LdFtn || opCode == OpCode.LdVirtFtn
+						|| (allowTransformed && opCode == OpCode.ILFunction)))
+						return false;
+					targetMethod = ((IInstructionWithMethodOperand)call.Arguments[1]).Method;
+					break;
+				case LdVirtDelegate ldVirtDelegate:
+					target = ldVirtDelegate.Argument;
+					targetMethod = ldVirtDelegate.Method;
+					delegateType = ldVirtDelegate.Type;
+					break;
+				default:
+					return false;
+			}
+			return delegateType.Kind == TypeKind.Delegate || delegateType.Kind == TypeKind.Unknown;
 		}
 
 		static bool IsAnonymousMethod(ITypeDefinition decompiledTypeDefinition, IMethod method)
@@ -142,19 +161,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return new GenericContext(classTypeParameters, methodTypeParameters);
 		}
 
-		ILFunction TransformDelegateConstruction(NewObj value, out ILInstruction target)
+		ILFunction TransformDelegateConstruction(
+			ILInstruction value, IMethod targetMethod, 
+			ILInstruction target, IType delegateType)
 		{
-			target = null;
-			if (!IsDelegateConstruction(value))
-				return null;
-			var targetMethod = ((IInstructionWithMethodOperand)value.Arguments[1]).Method;
 			if (!IsAnonymousMethod(decompilationContext.CurrentTypeDefinition, targetMethod))
 				return null;
 			if (targetMethod.MetadataToken.IsNil)
 				return null;
 			if (LocalFunctionDecompiler.IsLocalFunctionMethod(targetMethod, context))
 				return null;
-			target = value.Arguments[0];
 			if (!ValidateDelegateTarget(target))
 				return null;
 			var handle = (MethodDefinitionHandle)targetMethod.MetadataToken;
@@ -172,7 +188,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var ilReader = context.CreateILReader();
 			var body = context.PEFile.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
 			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, ILFunctionKind.Delegate, context.CancellationToken);
-			function.DelegateType = value.Method.DeclaringType;
+			function.DelegateType = delegateType;
 			// Embed the lambda into the parent function's ILAst, so that "Show steps" can show
 			// how the lambda body is being transformed.
 			value.ReplaceWith(function);
@@ -194,7 +210,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			nestedContext.StepEndGroup();
 			function.AddILRange(target);
 			function.AddILRange(value);
-			function.AddILRange(value.Arguments[1]);
+			if (value is Call call)
+				function.AddILRange(call.Arguments[1]);
 			return function;
 		}
 

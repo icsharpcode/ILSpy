@@ -379,7 +379,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var name = metadata.GetString(type.Name);
 			if (!type.Name.IsGeneratedName(metadata) || !type.IsCompilerGenerated(metadata))
 				return false;
-			if (name.Contains("DisplayClass") || name.Contains("AnonStorey"))
+			if (name.Contains("DisplayClass") || name.Contains("AnonStorey") || name.Contains("Closure$"))
 				return true;
 			return type.BaseType.IsKnownType(metadata, KnownTypeCode.Object) && !type.GetInterfaceImplementations().Any();
 		}

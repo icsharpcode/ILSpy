@@ -312,7 +312,9 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsGeneratedName(this StringHandle handle, MetadataReader metadata)
 		{
-			return !handle.IsNil && metadata.GetString(handle).StartsWith("<", StringComparison.Ordinal);
+			return !handle.IsNil
+				&& (metadata.GetString(handle).StartsWith("<", StringComparison.Ordinal)
+				|| metadata.GetString(handle).Contains("$"));
 		}
 
 		public static bool HasGeneratedName(this MethodDefinitionHandle handle, MetadataReader metadata)

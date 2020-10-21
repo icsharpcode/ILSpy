@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!storeInst.MatchStsFld(out IField field2, out ILInstruction value) || !field.Equals(field2) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return false;
-			if (!DelegateConstruction.IsDelegateConstruction(value.UnwrapConv(ConversionKind.Invalid) as NewObj, true))
+			if (!DelegateConstruction.MatchDelegateConstruction(value.UnwrapConv(ConversionKind.Invalid) as NewObj, out _, out _, out _, true))
 				return false;
 			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
 			if (nextInstruction == null)
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var storeInst = trueInst.Instructions.Last();
 			if (!storeInst.MatchStLoc(v, out ILInstruction value))
 				return false;
-			if (!DelegateConstruction.IsDelegateConstruction(value as NewObj, true))
+			if (!DelegateConstruction.MatchDelegateConstruction(value as NewObj, out _, out _, out _, true))
 				return false;
 			// do not transform if there are other stores/loads of this variable
 			if (v.StoreCount != 2 || v.StoreInstructions.Count != 2 || v.LoadCount != 2 || v.AddressCount != 0)
@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!stobj.Target.MatchLdsFlda(out var field1) || !ldobj.Target.MatchLdsFlda(out var field2) || !field1.Equals(field2))
 				return false;
-			if (!DelegateConstruction.IsDelegateConstruction((NewObj)stobj.Value, true))
+			if (!DelegateConstruction.MatchDelegateConstruction((NewObj)stobj.Value, out _, out _, out _, true))
 				return false;
 			context.Step("CachedDelegateInitializationRoslynInStaticWithLocal", inst);
 			storeBeforeIf.Value = stobj.Value;
@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!stobj.Target.MatchLdFlda(out var _, out var field1) || !ldobj.Target.MatchLdFlda(out var __, out var field2) || !field1.Equals(field2))
 				return false;
-			if (!DelegateConstruction.IsDelegateConstruction((NewObj)stobj.Value, true))
+			if (!DelegateConstruction.MatchDelegateConstruction((NewObj)stobj.Value, out _, out _, out _, true))
 				return false;
 			context.Step("CachedDelegateInitializationRoslynWithLocal", inst);
 			storeBeforeIf.Value = stobj.Value;

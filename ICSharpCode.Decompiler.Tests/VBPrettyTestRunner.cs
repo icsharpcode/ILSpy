@@ -96,6 +96,12 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(options: options | CompilerOptions.Library);
 		}
 
+		[Test]
+		public void Issue2192([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		{
+			Run(options: options | CompilerOptions.Library);
+		}
+
 		void Run([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug, DecompilerSettings settings = null)
 		{
 			var vbFile = Path.Combine(TestCasePath, testName + ".vb");

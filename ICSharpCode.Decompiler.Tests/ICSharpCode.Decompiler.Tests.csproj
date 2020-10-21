@@ -105,6 +105,7 @@
     <Compile Include="TestAssemblyResolver.cs" />
     <Compile Include="TestCases\Correctness\DeconstructionTests.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
+    <Compile Include="TestCases\VBPretty\Issue2192.cs" />
     <Compile Include="Util\FileUtilityTests.cs" />
     <None Include="TestCases\Pretty\FunctionPointers.cs" />
     <None Include="TestCases\Pretty\CS9_ExtensionGetEnumerator.cs" />
@@ -135,6 +136,7 @@
     <None Include="TestCases\Ugly\NoExtensionMethods.Expected.cs" />
     <Compile Include="TestCases\Ugly\NoExtensionMethods.cs" />
     <None Include="TestCases\VBPretty\Issue1906.vb" />
+    <None Include="TestCases\VBPretty\Issue2192.vb" />
     <None Include="TestCases\VBPretty\Select.vb" />
     <None Include="TestCases\VBPretty\VBCompoundAssign.cs" />
     <Compile Include="TestCases\Pretty\ThrowExpressions.cs" />
