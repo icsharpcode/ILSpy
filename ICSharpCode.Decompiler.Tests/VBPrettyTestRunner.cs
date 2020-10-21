@@ -54,14 +54,22 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
-			CompilerOptions.UseRoslyn,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslyn,
+			CompilerOptions.UseRoslyn1_3_2,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn1_3_2,
+			CompilerOptions.UseRoslyn2_10_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
 		static readonly CompilerOptions[] roslynOnlyOptions =
 		{
-			CompilerOptions.UseRoslyn,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslyn,
+			CompilerOptions.UseRoslyn1_3_2,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn1_3_2,
+			CompilerOptions.UseRoslyn2_10_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
 		[Test, Ignore("Implement VB async/await")]

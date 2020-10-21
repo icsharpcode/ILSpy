@@ -20,7 +20,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private void Test(string text, C c)
 		{
-#if ROSLYN
+#if CS70
 			_ = c.Name;
 #else
 			string name = c.Name;
@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private void Test2(string text, C c)
 		{
-#if ROSLYN
+#if CS70
 			_ = c.Text;
 #else
 			string text2 = c.Text;

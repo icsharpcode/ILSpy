@@ -1,16 +1,30 @@
-﻿using System;
+﻿// Copyright (c) 2015 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.VisualBasic;
-using Microsoft.VisualBasic;
+using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
@@ -26,77 +40,115 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			var preprocessorSymbols = GetPreprocessorSymbols(flags).Select(symbol => new KeyValuePair<string, object>(symbol, 1)).ToList();
 
-			if (flags.HasFlag(CompilerOptions.UseRoslyn))
+			if (!flags.HasFlag(CompilerOptions.UseMcs))
 			{
-				var parseOptions = new VisualBasicParseOptions(preprocessorSymbols: preprocessorSymbols, languageVersion: LanguageVersion.Latest);
-				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
-				var references = defaultReferences.Value;
-				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
-				{
-					references = references.Concat(visualBasic.Value);
-				}
-				var compilation = VisualBasicCompilation.Create(Path.GetFileNameWithoutExtension(sourceFileName),
-					syntaxTrees, references,
-					new VisualBasicCompilationOptions(
-					flags.HasFlag(CompilerOptions.Library) ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication,
-					platform: flags.HasFlag(CompilerOptions.Force32Bit) ? Platform.X86 : Platform.AnyCpu,
-					optimizationLevel: flags.HasFlag(CompilerOptions.Optimize) ? OptimizationLevel.Release : OptimizationLevel.Debug,
-					deterministic: true
-				));
 				CompilerResults results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
-				var emitResult = compilation.Emit(results.PathToAssembly);
-				if (!emitResult.Success)
+
+				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch
 				{
-					StringBuilder b = new StringBuilder("Compiler error:");
-					foreach (var diag in emitResult.Diagnostics)
+					0 => ("legacy", "11"),
+					CompilerOptions.UseRoslyn1_3_2 => ("1.3.2", "14"),
+					CompilerOptions.UseRoslyn2_10_0 => ("2.10.0", "latest"),
+					_ => (RoslynLatestVersion, flags.HasFlag(CompilerOptions.Preview) ? "preview" : "latest")
+				};
+
+				var vbcPath = roslynToolset.GetVBCompiler(roslynVersion);
+
+				IEnumerable<string> references;
+				if ((flags & CompilerOptions.UseRoslynMask) != 0)
+				{
+					if (flags.HasFlag(CompilerOptions.ReferenceCore))
 					{
-						b.AppendLine(diag.ToString());
+						references = coreDefaultReferences.Value.Select(r => "-r:\"" + r + "\"");
 					}
-					throw new Exception(b.ToString());
+					else
+					{
+						references = roslynDefaultReferences.Value.Select(r => "-r:\"" + r + "\"");
+					}
 				}
+				else
+				{
+					references = defaultReferences.Value.Select(r => "-r:\"" + r + "\"");
+				}
+				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
+				{
+					if ((flags & CompilerOptions.UseRoslynMask) != 0)
+					{
+						references = references.Concat(visualBasic.Value.Select(r => "-r:\"" + r + "\""));
+					}
+					else
+					{
+						references = references.Concat(new[] { "-r:\"Microsoft.VisualBasic.dll\"" });
+					}
+				}
+				string otherOptions = $"-noconfig " +
+					"-optioninfer+ -optionexplicit+ " +
+					$"-langversion:{languageVersion} " +
+					$"/optimize{(flags.HasFlag(CompilerOptions.Optimize) ? "+ " : "- ")}";
+
+				// note: the /shared switch is undocumented. It allows us to use the VBCSCompiler.exe compiler
+				// server to speed up testing
+				if (roslynVersion != "legacy")
+				{
+					otherOptions += "/shared ";
+				}
+
+				if (flags.HasFlag(CompilerOptions.Library))
+				{
+					otherOptions += "-t:library ";
+				}
+				else
+				{
+					otherOptions += "-t:exe ";
+				}
+
+				if (flags.HasFlag(CompilerOptions.GeneratePdb))
+				{
+					otherOptions += "-debug:full ";
+				}
+				else
+				{
+					otherOptions += "-debug- ";
+				}
+
+				if (flags.HasFlag(CompilerOptions.Force32Bit))
+				{
+					otherOptions += "-platform:x86 ";
+				}
+				else
+				{
+					otherOptions += "-platform:anycpu ";
+				}
+				if (preprocessorSymbols.Count > 0)
+				{
+					otherOptions += " \"-d:" + string.Join(",", preprocessorSymbols.Select(kv => kv.Key + "=" + kv.Value)) + "\" ";
+				}
+
+				ProcessStartInfo info = new ProcessStartInfo(vbcPath);
+				info.Arguments = $"{otherOptions}{string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}";
+				info.RedirectStandardError = true;
+				info.RedirectStandardOutput = true;
+				info.UseShellExecute = false;
+
+				Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
+
+				Process process = Process.Start(info);
+
+				var outputTask = process.StandardOutput.ReadToEndAsync();
+				var errorTask = process.StandardError.ReadToEndAsync();
+
+				Task.WaitAll(outputTask, errorTask);
+				process.WaitForExit();
+
+				Console.WriteLine("output: " + outputTask.Result);
+				Console.WriteLine("errors: " + errorTask.Result);
+				Assert.AreEqual(0, process.ExitCode, "vbc failed");
 				return results;
-			}
-			else if (flags.HasFlag(CompilerOptions.UseMcs))
-			{
-				throw new NotSupportedException("Cannot use mcs for VB");
 			}
 			else
 			{
-				var provider = new VBCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
-				CompilerParameters options = new CompilerParameters();
-				options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);
-				options.CompilerOptions = "/optimize" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-");
-				options.CompilerOptions += (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "");
-				options.CompilerOptions += (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
-				options.CompilerOptions += " /optioninfer+ /optionexplicit+";
-				if (preprocessorSymbols.Count > 0)
-				{
-					options.CompilerOptions += " /d:" + string.Join(",", preprocessorSymbols.Select(p => $"{p.Key}={p.Value}"));
-				}
-				if (outputFileName != null)
-				{
-					options.OutputAssembly = outputFileName;
-				}
-
-				options.ReferencedAssemblies.Add("System.dll");
-				options.ReferencedAssemblies.Add("System.Core.dll");
-				options.ReferencedAssemblies.Add("System.Xml.dll");
-				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
-				{
-					options.ReferencedAssemblies.Add("Microsoft.VisualBasic.dll");
-				}
-				CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
-				if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning))
-				{
-					StringBuilder b = new StringBuilder("Compiler error:");
-					foreach (var error in results.Errors)
-					{
-						b.AppendLine(error.ToString());
-					}
-					throw new Exception(b.ToString());
-				}
-				return results;
+				throw new NotSupportedException("Cannot use mcs for VB");
 			}
 		}
 	}

@@ -195,22 +195,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void LocalVariable_NoConversion_Custom()
 		{
-			var (myInt3, x) = GetSource<MyInt?, MyInt>();
+			var (myInt3, myInt4) = GetSource<MyInt?, MyInt>();
 			Console.WriteLine(myInt3);
-			Console.WriteLine(x);
+			Console.WriteLine(myInt4);
 		}
 
 		public void LocalVariable_NoConversion_Tuple()
 		{
-			var (myInt, x) = GetTuple<MyInt?, MyInt>();
+			var (myInt, myInt2) = GetTuple<MyInt?, MyInt>();
 			Console.WriteLine(myInt);
-			Console.WriteLine(x);
+			Console.WriteLine(myInt2);
 		}
 
 		public void LocalVariable_NoConversion_Custom_DiscardFirst()
 		{
-			var (_, x, value) = GetSource<MyInt?, MyInt, int>();
-			Console.WriteLine(x);
+			var (_, myInt3, value) = GetSource<MyInt?, MyInt, int>();
+			Console.WriteLine(myInt3);
 			Console.WriteLine(value);
 		}
 
@@ -224,16 +224,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void LocalVariable_NoConversion_Custom_DiscardLast()
 		{
-			var (myInt3, x, _) = GetSource<MyInt?, MyInt, int>();
+			var (myInt3, myInt4, _) = GetSource<MyInt?, MyInt, int>();
 			Console.WriteLine(myInt3);
-			Console.WriteLine(x);
+			Console.WriteLine(myInt4);
 		}
 
 		public void LocalVariable_NoConversion_Tuple_DiscardLast()
 		{
-			var (myInt, x, _) = GetTuple<MyInt?, MyInt, int>();
+			var (myInt, myInt2, _) = GetTuple<MyInt?, MyInt, int>();
 			Console.WriteLine(myInt);
-			Console.WriteLine(x);
+			Console.WriteLine(myInt2);
 		}
 
 		public void LocalVariable_NoConversion_Custom_DiscardSecond()
@@ -321,11 +321,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void LocalVariable_NoConversion_ComplexValue_Custom()
 		{
-			var (myInt3, x) = new DeconstructionSource<MyInt?, MyInt> {
+			var (myInt3, myInt4) = new DeconstructionSource<MyInt?, MyInt> {
 				Dummy = 3
 			};
 			Console.WriteLine(myInt3);
-			Console.WriteLine(x);
+			Console.WriteLine(myInt4);
 		}
 
 		public void Property_NoConversion_Custom()
@@ -581,17 +581,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void DeconstructDictionaryForEach(Dictionary<string, int> dictionary)
 		{
-			foreach (var (str, num2) in dictionary)
+			foreach (var (text2, num2) in dictionary)
 			{
-				Console.WriteLine(str + ": " + num2);
+				Console.WriteLine(text2 + ": " + num2);
 			}
 		}
 
 		public void DeconstructTupleListForEach(List<(string, int)> tuples)
 		{
-			foreach (var (str, num) in tuples)
+			foreach (var (text, num) in tuples)
 			{
-				Console.WriteLine(str + ": " + num);
+				Console.WriteLine(text + ": " + num);
 			}
 		}
 	}

@@ -29,7 +29,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		[Obsolete("Property")]
+#if CS70
 		[field: Obsolete("Field")]
+#endif
 		public int PropertyWithAttributeOnBackingField {
 			get;
 			set;
