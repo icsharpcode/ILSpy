@@ -44,6 +44,7 @@
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="$(DiffLibVersion)" />
     <PackageReference Include="Microsoft.Build.Locator" Version="1.2.2" />
+    <PackageReference Include="NuGet.Protocol" Version="5.7.0" />
     <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVersion)" />
     <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
@@ -98,6 +99,7 @@
     <Compile Include="..\ILSpy\DebugInfo\DebugInfoUtils.cs" Link="DebugInfoUtils.cs" />
     <Compile Include="..\ILSpy\DebugInfo\PortableDebugInfoProvider.cs" Link="PortableDebugInfoProvider.cs" />
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
+    <Compile Include="Helpers\RoslynToolset.cs" />
     <Compile Include="Output\InsertParenthesesVisitorTests.cs" />
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
     <Compile Include="TestAssemblyResolver.cs" />

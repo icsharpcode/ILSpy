@@ -9,7 +9,7 @@ internal sealed class _003CPrivateImplementationDetails_003E
 	private struct __StaticArrayInitTypeSize_003D12
 	{
 	}
-	internal static readonly __StaticArrayInitTypeSize_003D12 E429CCA3F703A39CC5954A6572FEC9086135B34E/* Not supported: data(01 00 00 00 02 00 00 00 03 00 00 00) */;
+	internal static readonly __StaticArrayInitTypeSize_003D12 _4636993D3E1DA4E9D6B8F87B79E8F7C6D018580D52661950EABC3845C5897A4D/* Not supported: data(01 00 00 00 02 00 00 00 03 00 00 00) */;
 }
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly

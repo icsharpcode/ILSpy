@@ -444,7 +444,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 
-#if ROSLYN
+#if CS70
 		public static Func<string> Issue1773d((int Integer, string String) data)
 		{
 			(int Integer, string RenamedString) valueTuple = data;

@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public MyInt My {
 				get {
 					Console.WriteLine($"{id}.get_My()");
-					return default;
+					return default(MyInt);
 				}
 				set {
 					Console.WriteLine($"{id}.set_My({value})");
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public MyInt? NMy {
 				get {
 					Console.WriteLine($"{id}.get_NMy()");
-					return default;
+					return default(MyInt?);
 				}
 				set {
 					Console.WriteLine($"{id}.set_NMy({value})");
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public int IntProperty {
 				get {
 					Console.WriteLine($"{id}.get_IntProperty()");
-					return default;
+					return default(int);
 				}
 				set {
 					Console.WriteLine($"{id}.set_IntProperty({value})");
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public uint UIntProperty {
 				get {
 					Console.WriteLine($"{id}.get_UIntProperty()");
-					return default;
+					return default(uint);
 				}
 				set {
 					Console.WriteLine($"{id}.set_UIntProperty({value})");

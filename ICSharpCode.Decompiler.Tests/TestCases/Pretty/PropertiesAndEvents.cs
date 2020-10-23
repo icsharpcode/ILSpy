@@ -194,6 +194,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if ROSLYN
 		// Legacy csc has a bug where EventHandler<dynamic> is only used for the backing field
 		public event EventHandler<dynamic> DynamicAutoEvent;
+#endif
+#if CS73
 		public event EventHandler<(int A, string B)> AutoEventWithTuple;
 #endif
 #if CS80

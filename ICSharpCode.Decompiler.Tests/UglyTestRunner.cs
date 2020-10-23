@@ -59,16 +59,16 @@ namespace ICSharpCode.Decompiler.Tests
 
 		static readonly CompilerOptions[] roslynOnlyOptions =
 		{
-			CompilerOptions.UseRoslyn,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
 		static readonly CompilerOptions[] defaultOptions =
 		{
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
-			CompilerOptions.UseRoslyn,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
 		[Test]

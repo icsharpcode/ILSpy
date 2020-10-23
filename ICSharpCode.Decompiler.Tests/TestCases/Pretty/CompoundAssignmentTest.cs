@@ -4775,10 +4775,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void Issue1552StmtUseLater(CustomStruct a, CustomStruct b)
 		{
-			CustomStruct lhs = a + b;
-			++lhs;
+			CustomStruct customStruct = a + b;
+			++customStruct;
 			Console.WriteLine();
-			Console.WriteLine(lhs * b);
+			Console.WriteLine(customStruct * b);
 		}
 
 		public void Issue1552Decimal(decimal a)

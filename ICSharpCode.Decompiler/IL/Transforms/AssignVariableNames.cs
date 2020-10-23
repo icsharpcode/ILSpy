@@ -464,6 +464,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (call is NewObj)
 						break;
 					IMethod m = call.Method;
+					if (ExcludeMethodFromCandidates(m))
+						break;
 					if (m.Name.StartsWith("get_", StringComparison.OrdinalIgnoreCase) && m.Parameters.Count == 0)
 					{
 						// use name from properties, but not from indexers
@@ -494,6 +496,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return CleanUpVariableName(field.Name);
 				case CallInstruction call:
 					IMethod m = call.Method;
+					if (ExcludeMethodFromCandidates(m))
+						return null;
 					if (m.Parameters.Count == 1 && i == call.Arguments.Count - 1)
 					{
 						// argument might be value of a setter
@@ -510,10 +514,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (p != null && !string.IsNullOrEmpty(p.Name))
 						return CleanUpVariableName(p.Name);
 					break;
-				case Leave ret:
+				case Leave _:
 					return "result";
 			}
 			return null;
+		}
+
+		static bool ExcludeMethodFromCandidates(IMethod m)
+		{
+			if (m.SymbolKind == SymbolKind.Operator)
+				return true;
+			if (m.Name == "ToString")
+				return true;
+			if (m.Name == "Concat" && m.DeclaringType.IsKnownType(KnownTypeCode.String))
+				return true;
+			return false;
 		}
 
 		static string GetNameByType(IType type)

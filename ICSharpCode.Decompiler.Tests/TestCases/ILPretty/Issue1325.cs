@@ -24,11 +24,11 @@ namespace Issue1325
 		}
 		public static void TestCode(Test t, int i)
 		{
-			string str = "";
-			str += File.ReadAllText("Test.txt");
-			str += "asdf";
-			t.set_Parameterized(i, str);
-			t.Unparameterized = str + "asdf";
+			string text = "";
+			text += File.ReadAllText("Test.txt");
+			text += "asdf";
+			t.set_Parameterized(i, text);
+			t.Unparameterized = text + "asdf";
 		}
 	}
 

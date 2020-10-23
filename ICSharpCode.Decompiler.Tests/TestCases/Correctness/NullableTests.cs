@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("NRE before GetInt:");
 			try
 			{
-#if CS60
+#if CS70
 				ref int i = ref c.intField;
 				i = GetValue<int>();
 #endif
@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("NRE before GetInt (with struct):");
 			try
 			{
-#if CS60
+#if CS70
 				ref SomeStruct s = ref c.structField;
 				s.IntField = GetValue<int>();
 #endif
@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("GetArray with ref:");
 			try
 			{
-#if CS60
+#if CS70
 				ref int elem = ref GetArray<int>()[GetIndex()];
 				elem = GetValue<int>();
 #endif

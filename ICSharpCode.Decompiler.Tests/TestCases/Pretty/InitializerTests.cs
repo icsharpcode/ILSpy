@@ -431,7 +431,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			}
 		};
 
-#if ROSLYN
+#if CS73
 		public static ReadOnlySpan<byte> StaticData1 => new byte[1] {
 			0
 		};
