@@ -16,7 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Reflection.Metadata;
 
@@ -217,7 +219,17 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 			if (!methodBody.LocalSignature.IsNil)
 			{
-				foreach (var type in module.DecodeLocalSignature(methodBody.LocalSignature, genericContext))
+				ImmutableArray<IType> localSignature;
+				try
+				{
+					localSignature = module.DecodeLocalSignature(methodBody.LocalSignature, genericContext);
+				}
+				catch (BadImageFormatException)
+				{
+					// Issue #2197: ignore invalid local signatures
+					localSignature = ImmutableArray<IType>.Empty;
+				}
+				foreach (var type in localSignature)
 				{
 					type.AcceptVisitor(visitor);
 
