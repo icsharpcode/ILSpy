@@ -13,7 +13,7 @@ init:
 install:
 - git submodule update --init --recursive
 - pwsh .\BuildTools\appveyor-install.ps1
-- dotnet tool install dotnet-format --tool-path BuildTools
+- dotnet tool install dotnet-format --tool-path BuildTools --version 4.1.131201
 
 nuget:
   account_feed: false

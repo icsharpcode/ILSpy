@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		ILFunction TransformDelegateConstruction(
-			ILInstruction value, IMethod targetMethod, 
+			ILInstruction value, IMethod targetMethod,
 			ILInstruction target, IType delegateType)
 		{
 			if (!IsAnonymousMethod(decompilationContext.CurrentTypeDefinition, targetMethod))

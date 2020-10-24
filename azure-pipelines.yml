@@ -52,7 +52,7 @@ jobs:
     inputs:
       command: 'custom'
       custom: 'tool'
-      arguments: 'install dotnet-format --tool-path $(Agent.ToolsDirectory)/dotnet-format'
+      arguments: 'install dotnet-format --tool-path $(Agent.ToolsDirectory)/dotnet-format --version 4.1.131201'
 
   - script: pwsh .\BuildTools\pipelines-install.ps1
     displayName: Install
