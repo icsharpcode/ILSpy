@@ -18,6 +18,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+#if CS90
+using System.Runtime.InteropServices;
+#endif
 
 namespace LocalFunctions
 {
@@ -836,5 +839,15 @@ namespace LocalFunctions
 				}
 			}
 		}
+
+#if CS90
+		public void Issue2196()
+		{
+			EnumWindows(IntPtr.Zero, IntPtr.Zero);
+
+			[DllImport("user32.dll", CallingConvention = CallingConvention.StdCall, EntryPoint = "EnumWindows")]
+			static extern int EnumWindows(IntPtr hWnd, IntPtr lParam);
+		}
+#endif
 	}
 }

@@ -56,16 +56,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					ILFunction f = TransformDelegateConstruction(inst, targetMethod, target, delegateType);
 					if (f != null && target is IInstructionWithVariableOperand instWithVar)
 					{
-						if (instWithVar.Variable.Kind == VariableKind.Local)
+						var v = instWithVar.Variable;
+						if (v.Kind == VariableKind.Local)
 						{
-							instWithVar.Variable.Kind = VariableKind.DisplayClassLocal;
+							v.Kind = VariableKind.DisplayClassLocal;
 						}
-						if (instWithVar.Variable.IsSingleDefinition && instWithVar.Variable.StoreInstructions.SingleOrDefault() is StLoc store)
+						if (v.IsSingleDefinition
+							&& v.StoreInstructions.SingleOrDefault() is StLoc store
+							&& store.Value is NewObj)
 						{
-							if (store.Value is NewObj)
-							{
-								instWithVar.Variable.CaptureScope = BlockContainer.FindClosestContainer(store);
-							}
+							v.CaptureScope = BlockContainer.FindClosestContainer(store);
 						}
 					}
 					context.StepEndGroup();
@@ -116,9 +116,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(method.HasGeneratedName()
 				|| method.Name.Contains("$")
 				|| method.IsCompilerGeneratedOrIsInCompilerGeneratedClass()
-				|| TransformDisplayClassUsage.IsPotentialClosure(decompiledTypeDefinition, method.DeclaringTypeDefinition)
+				|| TransformDisplayClassUsage.IsPotentialClosure(
+					decompiledTypeDefinition, method.DeclaringTypeDefinition)
 				|| ContainsAnonymousType(method)))
+			{
 				return false;
+			}
 			return true;
 		}
 

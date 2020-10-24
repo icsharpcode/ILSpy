@@ -1289,25 +1289,35 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			LocalFunctionDeclarationStatement TranslateFunction(ILFunction function)
 			{
-				var nestedBuilder = new StatementBuilder(
-					typeSystem,
-					exprBuilder.decompilationContext,
-					function,
-					settings,
-					decompileRun,
-					cancellationToken
-				);
 				var astBuilder = exprBuilder.astBuilder;
 				var method = (MethodDeclaration)astBuilder.ConvertEntity(function.ReducedMethod);
-				method.Body = nestedBuilder.ConvertAsBlock(function.Body);
 
-				Comment prev = null;
-				foreach (string warning in function.Warnings)
+				if (function.Method.HasBody)
 				{
-					method.Body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
-				}
+					var nestedBuilder = new StatementBuilder(
+						typeSystem,
+						exprBuilder.decompilationContext,
+						function,
+						settings,
+						decompileRun,
+						cancellationToken
+					);
 
-				CSharpDecompiler.CleanUpMethodDeclaration(method, method.Body, function);
+					method.Body = nestedBuilder.ConvertAsBlock(function.Body);
+
+					Comment prev = null;
+					foreach (string warning in function.Warnings)
+					{
+						method.Body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
+					}
+				}
+				else
+				{
+					method.Modifiers |= Modifiers.Extern;
+				}
+				
+
+				CSharpDecompiler.CleanUpMethodDeclaration(method, method.Body, function, function.Method.HasBody);
 				CSharpDecompiler.RemoveAttribute(method, KnownAttribute.CompilerGenerated);
 				var stmt = new LocalFunctionDeclarationStatement(method);
 				stmt.AddAnnotation(new MemberResolveResult(null, function.ReducedMethod));
