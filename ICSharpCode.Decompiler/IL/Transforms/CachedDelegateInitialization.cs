@@ -51,6 +51,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						block.Instructions.RemoveAt(i);
 						continue;
 					}
+					if (CachedDelegateInitializationVB(inst))
+					{
+						continue;
+					}
 				}
 			}
 		}
@@ -187,6 +191,49 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			context.Step("CachedDelegateInitializationRoslynWithLocal", inst);
 			storeBeforeIf.Value = stobj.Value;
+			return true;
+		}
+
+		/// <summary>
+		/// if (comp.i4(comp.o(ldobj delegateType(ldsflda CachedAnonMethodDelegate) != ldnull) == ldc.i4 0)) Block {
+		/// 	stloc s(stobj(ldflda(CachedAnonMethodDelegate), DelegateConstruction))
+		/// } else Block {
+		/// 	stloc s(ldobj System.Action(ldsflda $I4-1))
+		/// }
+		/// =>
+		///	stloc s(DelegateConstruction)
+		/// </summary>
+		bool CachedDelegateInitializationVB(IfInstruction inst)
+		{
+			if (!(inst.TrueInst is Block trueInst && inst.FalseInst is Block falseInst))
+				return false;
+			if (trueInst.Instructions.Count != 1 || falseInst.Instructions.Count != 1)
+				return false;
+			if (!(trueInst.Instructions[0].MatchStLoc(out var s, out var trueInitValue)
+				&& falseInst.Instructions[0].MatchStLoc(s, out var falseInitValue)))
+			{
+				return false;
+			}
+			if (s.Kind != VariableKind.StackSlot || s.StoreCount != 2 || s.LoadCount != 1)
+				return false;
+			if (!(trueInitValue is StObj stobj) || !(falseInitValue is LdObj ldobj))
+				return false;
+			if (!(stobj.Value is NewObj delegateConstruction))
+				return false;
+			if (!stobj.Target.MatchLdsFlda(out var field1)
+				|| !ldobj.Target.MatchLdsFlda(out var field2)
+				|| !field1.Equals(field2))
+			{
+				return false;
+			}
+			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !right.MatchLdNull())
+				return false;
+			if (!ldobj.Match(left).Success)
+				return false;
+			if (!DelegateConstruction.MatchDelegateConstruction(delegateConstruction, out _, out _, out _, true))
+				return false;
+			context.Step("CachedDelegateInitializationVB", inst);
+			inst.ReplaceWith(new StLoc(s, delegateConstruction));
 			return true;
 		}
 	}

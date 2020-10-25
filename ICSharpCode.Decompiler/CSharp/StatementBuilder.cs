@@ -1315,7 +1315,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					method.Modifiers |= Modifiers.Extern;
 				}
-				
 
 				CSharpDecompiler.CleanUpMethodDeclaration(method, method.Body, function, function.Method.HasBody);
 				CSharpDecompiler.RemoveAttribute(method, KnownAttribute.CompilerGenerated);
