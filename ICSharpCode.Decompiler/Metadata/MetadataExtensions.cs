@@ -78,6 +78,20 @@ namespace ICSharpCode.Decompiler.Metadata
 				$"PublicKeyToken={publicKey}";
 		}
 
+		public static bool TryGetFullAssemblyName(this MetadataReader reader, out string assemblyName)
+		{
+			try
+			{
+				assemblyName = GetFullAssemblyName(reader);
+				return true;
+			}
+			catch (BadImageFormatException)
+			{
+				assemblyName = null;
+				return false;
+			}
+		}
+
 		public static string GetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader)
 		{
 			string publicKey = "null";
@@ -99,6 +113,20 @@ namespace ICSharpCode.Decompiler.Metadata
 				$"Version={reference.Version}, " +
 				$"Culture={(reference.Culture.IsNil ? "neutral" : reader.GetString(reference.Culture))}, " +
 				$"PublicKeyToken={publicKey}{properties}";
+		}
+
+		public static bool TryGetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader, out string assemblyName)
+		{
+			try
+			{
+				assemblyName = GetFullAssemblyName(reference, reader);
+				return true;
+			}
+			catch (BadImageFormatException)
+			{
+				assemblyName = null;
+				return false;
+			}
 		}
 
 		public static string ToHexString(this IEnumerable<byte> bytes, int estimatedLength)

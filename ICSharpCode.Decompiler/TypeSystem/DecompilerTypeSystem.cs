@@ -185,16 +185,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var mainMetadata = mainModule.Metadata;
 			foreach (var h in mainMetadata.GetModuleReferences())
 			{
-				var moduleRef = mainMetadata.GetModuleReference(h);
-				var moduleName = mainMetadata.GetString(moduleRef.Name);
-				foreach (var fileHandle in mainMetadata.AssemblyFiles)
+				try
 				{
-					var file = mainMetadata.GetAssemblyFile(fileHandle);
-					if (mainMetadata.StringComparer.Equals(file.Name, moduleName) && file.ContainsMetadata)
+					var moduleRef = mainMetadata.GetModuleReference(h);
+					var moduleName = mainMetadata.GetString(moduleRef.Name);
+					foreach (var fileHandle in mainMetadata.AssemblyFiles)
 					{
-						assemblyReferenceQueue.Enqueue((false, mainModule, moduleName));
-						break;
+						var file = mainMetadata.GetAssemblyFile(fileHandle);
+						if (mainMetadata.StringComparer.Equals(file.Name, moduleName) && file.ContainsMetadata)
+						{
+							assemblyReferenceQueue.Enqueue((false, mainModule, moduleName));
+							break;
+						}
 					}
+				}
+				catch (BadImageFormatException)
+				{
 				}
 			}
 			foreach (var refs in mainModule.AssemblyReferences)

@@ -142,9 +142,13 @@ namespace ICSharpCode.ILSpy
 				{
 					WriteCommentLine(output, metadata.GetString(name.Name) + " [WinRT]");
 				}
+				else if (metadata.TryGetFullAssemblyName(out string assemblyName))
+				{
+					WriteCommentLine(output, assemblyName);
+				}
 				else
 				{
-					WriteCommentLine(output, metadata.GetFullAssemblyName());
+					WriteCommentLine(output, "ERR: Could not read assembly name");
 				}
 			}
 			else

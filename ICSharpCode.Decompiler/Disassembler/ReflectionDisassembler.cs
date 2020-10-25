@@ -639,8 +639,18 @@ namespace ICSharpCode.Decompiler.Disassembler
 			string currentFullAssemblyName = null;
 			if (module.Metadata.IsAssembly)
 			{
-				currentAssemblyName = module.Metadata.GetString(module.Metadata.GetAssemblyDefinition().Name);
-				currentFullAssemblyName = module.Metadata.GetFullAssemblyName();
+				try
+				{
+					currentAssemblyName = module.Metadata.GetString(module.Metadata.GetAssemblyDefinition().Name);
+				}
+				catch (BadImageFormatException)
+				{
+					currentAssemblyName = "<ERR: invalid assembly name>";
+				}
+				if (!module.Metadata.TryGetFullAssemblyName(out currentFullAssemblyName))
+				{
+					currentFullAssemblyName = "<ERR: invalid assembly name>";
+				}
 			}
 			int count = blob.ReadCompressedInteger();
 			for (int i = 0; i < count; i++)

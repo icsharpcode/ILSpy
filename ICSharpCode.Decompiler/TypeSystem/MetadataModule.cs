@@ -63,13 +63,28 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (metadata.IsAssembly)
 			{
 				var asmdef = metadata.GetAssemblyDefinition();
-				this.AssemblyName = metadata.GetString(asmdef.Name);
-				this.FullAssemblyName = metadata.GetFullAssemblyName();
+				try
+				{
+					this.AssemblyName = metadata.GetString(asmdef.Name);
+					this.FullAssemblyName = metadata.GetFullAssemblyName();
+				}
+				catch (BadImageFormatException)
+				{
+					this.AssemblyName = "<ERR: invalid assembly name>";
+					this.FullAssemblyName = "<ERR: invalid assembly name>";
+				}
 			}
 			else
 			{
-				var moddef = metadata.GetModuleDefinition();
-				this.AssemblyName = metadata.GetString(moddef.Name);
+				try
+				{
+					var moddef = metadata.GetModuleDefinition();
+					this.AssemblyName = metadata.GetString(moddef.Name);
+				}
+				catch (BadImageFormatException)
+				{
+					this.AssemblyName = "<ERR: invalid assembly name>";
+				}
 				this.FullAssemblyName = this.AssemblyName;
 			}
 			var customAttrs = metadata.GetModuleDefinition().GetCustomAttributes();

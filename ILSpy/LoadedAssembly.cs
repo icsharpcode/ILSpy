@@ -378,16 +378,24 @@ namespace ICSharpCode.ILSpy
 			{
 				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies())
 				{
-					var module = loaded.GetPEFileOrNull();
-					var reader = module?.Metadata;
-					if (reader == null || !reader.IsAssembly)
-						continue;
-					var asmDef = reader.GetAssemblyDefinition();
-					var asmDefName = loaded.GetTargetFrameworkIdAsync().Result + ";" + (isWinRT ? reader.GetString(asmDef.Name) : reader.GetFullAssemblyName());
-					if (key.Equals(asmDefName, StringComparison.OrdinalIgnoreCase))
+					try
 					{
-						LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.FullName, MessageKind.Info, "Success - Found in Assembly List");
-						return loaded;
+						var module = loaded.GetPEFileOrNull();
+						var reader = module?.Metadata;
+						if (reader == null || !reader.IsAssembly)
+							continue;
+						var asmDef = reader.GetAssemblyDefinition();
+						var asmDefName = loaded.GetTargetFrameworkIdAsync().Result + ";"
+							+ (isWinRT ? reader.GetString(asmDef.Name) : reader.GetFullAssemblyName());
+						if (key.Equals(asmDefName, StringComparison.OrdinalIgnoreCase))
+						{
+							LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.FullName, MessageKind.Info, "Success - Found in Assembly List");
+							return loaded;
+						}
+					}
+					catch (BadImageFormatException)
+					{
+						continue;
 					}
 				}
 

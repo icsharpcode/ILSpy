@@ -185,8 +185,32 @@ namespace ICSharpCode.Decompiler.Metadata
 		public bool IsWindowsRuntime => (entry.Flags & AssemblyFlags.WindowsRuntime) != 0;
 		public bool IsRetargetable => (entry.Flags & AssemblyFlags.Retargetable) != 0;
 
-		public string Name => Metadata.GetString(entry.Name);
-		public string FullName => entry.GetFullAssemblyName(Metadata);
+		public string Name {
+			get {
+				try
+				{
+					return Metadata.GetString(entry.Name);
+				}
+				catch (BadImageFormatException)
+				{
+					return $"AR:{Handle}";
+				}
+			}
+		}
+
+		public string FullName {
+			get {
+				try
+				{
+					return entry.GetFullAssemblyName(Metadata);
+				}
+				catch (BadImageFormatException)
+				{
+					return $"fullname(AR:{Handle})";
+				}
+			}
+		}
+
 		public Version Version => entry.Version;
 		public string Culture => Metadata.GetString(entry.Culture);
 		byte[] IAssemblyReference.PublicKeyToken => GetPublicKeyToken();

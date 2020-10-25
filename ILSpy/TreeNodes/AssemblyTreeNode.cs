@@ -96,10 +96,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					tooltip = new TextBlock();
 					var module = LoadedAssembly.GetPEFileOrNull();
 					var metadata = module?.Metadata;
-					if (metadata?.IsAssembly == true)
+					if (metadata?.IsAssembly == true && metadata.TryGetFullAssemblyName(out var assemblyName))
 					{
 						tooltip.Inlines.Add(new Bold(new Run("Name: ")));
-						tooltip.Inlines.Add(new Run(metadata.GetFullAssemblyName()));
+						tooltip.Inlines.Add(new Run(assemblyName));
 						tooltip.Inlines.Add(new LineBreak());
 					}
 					tooltip.Inlines.Add(new Bold(new Run("Location: ")));
