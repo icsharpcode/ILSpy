@@ -146,7 +146,7 @@ namespace ICSharpCode.ILSpy
 		ICompilation typeSystem;
 
 		/// <summary>
-		/// Gets a type system containing all types from this assembly + primitve types from mscorlib.
+		/// Gets a type system containing all types from this assembly + primitive types from mscorlib.
 		/// Returns null in case of load errors.
 		/// </summary>
 		/// <remarks>
@@ -154,30 +154,34 @@ namespace ICSharpCode.ILSpy
 		/// </remarks>
 		public ICompilation GetTypeSystemOrNull()
 		{
-			if (typeSystem != null)
-				return typeSystem;
-			var module = GetPEFileOrNull();
-			if (module == null)
-				return null;
-			return typeSystem = new SimpleCompilation(
-				module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
-				MinimalCorlib.Instance);
+			return LazyInitializer.EnsureInitialized(ref this.typeSystem, () => {
+				var module = GetPEFileOrNull();
+				if (module == null)
+					return null;
+				return new SimpleCompilation(
+					module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
+					MinimalCorlib.Instance);
+			});
 		}
 
+		readonly object typeSystemWithOptionsLockObj = new object();
 		ICompilation typeSystemWithOptions;
 		TypeSystemOptions currentTypeSystemOptions;
 
 		public ICompilation GetTypeSystemOrNull(TypeSystemOptions options)
 		{
-			if (typeSystemWithOptions != null && options == currentTypeSystemOptions)
-				return typeSystemWithOptions;
-			var module = GetPEFileOrNull();
-			if (module == null)
-				return null;
-			currentTypeSystemOptions = options;
-			return typeSystemWithOptions = new SimpleCompilation(
-				module.WithOptions(options | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
-				MinimalCorlib.Instance);
+			lock (typeSystemWithOptionsLockObj)
+			{
+				if (typeSystemWithOptions != null && options == currentTypeSystemOptions)
+					return typeSystemWithOptions;
+				var module = GetPEFileOrNull();
+				if (module == null)
+					return null;
+				currentTypeSystemOptions = options;
+				return typeSystemWithOptions = new SimpleCompilation(
+					module.WithOptions(options | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
+					MinimalCorlib.Instance);
+			}
 		}
 
 		public AssemblyList AssemblyList => assemblyList;
