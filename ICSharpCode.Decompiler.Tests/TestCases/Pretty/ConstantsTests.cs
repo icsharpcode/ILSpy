@@ -1,9 +1,20 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class ConstantsTests
 	{
+		public IntPtr? NullableIntPtr()
+		{
+			return null;
+		}
+
+		public UIntPtr? NullableUIntPtr()
+		{
+			return null;
+		}
+
 		public ulong Issue1308(ulong u = 8uL)
 		{
 			Test((u & 0xFFFFFFFFu) != 0);

@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 				}
 			}
-			if (targetUType.IsKnownType(KnownTypeCode.IntPtr))
+			if (targetUType.IsKnownType(KnownTypeCode.IntPtr) && utype.GetStackType().IsIntegerType())
 			{ // Conversion to IntPtr
 				if (type.IsKnownType(KnownTypeCode.Int32) || type.Kind == TypeKind.NInt)
 				{
@@ -382,7 +382,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 				}
 			}
-			else if (targetUType.IsKnownType(KnownTypeCode.UIntPtr))
+			else if (targetUType.IsKnownType(KnownTypeCode.UIntPtr) && utype.GetStackType().IsIntegerType())
 			{ // Conversion to UIntPtr
 				if (type.IsKnownType(KnownTypeCode.UInt32) || type.Kind.IsAnyPointer() || type.Kind == TypeKind.NUInt)
 				{
