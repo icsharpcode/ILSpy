@@ -41,7 +41,9 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Represents a file loaded into ILSpy.
 	/// 
-	/// Note: the file is not necessarily an assembly.
+	/// Note: this class is misnamed.
+	/// The file is not necessarily an assembly, nor is it necessarily loaded.
+	/// 
 	/// A LoadedAssembly can refer to:
 	///   * a .NET module (single-file) loaded into ILSpy
 	///   * a non-existant file
@@ -79,15 +81,25 @@ namespace ICSharpCode.ILSpy
 		readonly AssemblyList assemblyList;
 		readonly string fileName;
 		readonly string shortName;
+		readonly IAssemblyResolver providedAssemblyResolver;
 
-		public LoadedAssembly(AssemblyList assemblyList, string fileName, Task<Stream> stream = null)
+		public LoadedAssembly ParentBundle { get; }
+
+		public LoadedAssembly(AssemblyList assemblyList, string fileName, Task<Stream> stream = null, IAssemblyResolver assemblyResolver = null)
 		{
 			this.assemblyList = assemblyList ?? throw new ArgumentNullException(nameof(assemblyList));
 			this.fileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
+			this.providedAssemblyResolver = assemblyResolver;
 
 			this.loadingTask = Task.Run(() => LoadAsync(stream)); // requires that this.fileName is set
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 			this.resolver = new MyAssemblyResolver(this);
+		}
+
+		public LoadedAssembly(LoadedAssembly bundle, string fileName, Task<Stream> stream, IAssemblyResolver assemblyResolver = null)
+			: this(bundle.assemblyList, fileName, stream, assemblyResolver)
+		{
+			this.ParentBundle = bundle;
 		}
 
 		/// <summary>
@@ -265,12 +277,14 @@ namespace ICSharpCode.ILSpy
 			var bundle = LoadedPackage.FromBundle(fileName);
 			if (bundle != null)
 			{
+				bundle.LoadedAssembly = this;
 				return new LoadResult(loadAssemblyException, bundle);
 			}
 			// If it's not a .NET module, maybe it's a zip archive (e.g. .nupkg)
 			try
 			{
 				var zip = LoadedPackage.FromZipFile(fileName);
+				zip.LoadedAssembly = this;
 				return new LoadResult(loadAssemblyException, zip);
 			}
 			catch (InvalidDataException)
@@ -364,24 +378,19 @@ namespace ICSharpCode.ILSpy
 				this.parent = parent;
 			}
 
-			public bool IsGacAssembly(IAssemblyReference reference)
+			public PEFile Resolve(IAssemblyReference reference)
 			{
-				return parent.universalResolver?.IsGacAssembly(reference) == true;
-			}
-
-			public bool IsSharedAssembly(IAssemblyReference reference, out string runtimePack)
-			{
-				runtimePack = null;
-				return parent.universalResolver?.IsSharedAssembly(reference, out runtimePack) == true;
-			}
-
-			public PEFile Resolve(Decompiler.Metadata.IAssemblyReference reference)
-			{
+				var module = parent.providedAssemblyResolver?.Resolve(reference);
+				if (module != null)
+					return module;
 				return parent.LookupReferencedAssembly(reference)?.GetPEFileOrNull();
 			}
 
 			public PEFile ResolveModule(PEFile mainModule, string moduleName)
 			{
+				var module = parent.providedAssemblyResolver?.ResolveModule(mainModule, moduleName);
+				if (module != null)
+					return module;
 				return parent.LookupReferencedModule(mainModule, moduleName)?.GetPEFileOrNull();
 			}
 		}
@@ -391,6 +400,11 @@ namespace ICSharpCode.ILSpy
 		public IAssemblyResolver GetAssemblyResolver()
 		{
 			return resolver;
+		}
+
+		public AssemblyReferenceClassifier GetAssemblyReferenceClassifier()
+		{
+			return universalResolver;
 		}
 
 		/// <summary>
@@ -439,6 +453,8 @@ namespace ICSharpCode.ILSpy
 		MyUniversalResolver universalResolver;
 
 		/// <summary>
+		/// 0) if we're inside a package, look for filename.dll in parent directories
+		///    (this step already happens in MyAssemblyResolver; not in LookupReferencedAssembly)
 		/// 1) try to find exact match by tfm + full asm name in loaded assemblies
 		/// 2) try to find match in search paths
 		/// 3) if a.deps.json is found: search %USERPROFILE%/.nuget/packages/* as well

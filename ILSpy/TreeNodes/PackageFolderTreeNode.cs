@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.TreeView;
@@ -48,12 +47,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			this.Children.AddRange(LoadChildrenForFolder(folder.Folders, folder.Entries));
+			this.Children.AddRange(LoadChildrenForFolder(folder));
 		}
 
-		internal static IEnumerable<SharpTreeNode> LoadChildrenForFolder(IReadOnlyList<PackageFolder> folders, IReadOnlyList<PackageEntry> entries)
+		internal static IEnumerable<SharpTreeNode> LoadChildrenForFolder(PackageFolder root)
 		{
-			foreach (var folder in folders.OrderBy(f => f.Name))
+			foreach (var folder in root.Folders.OrderBy(f => f.Name))
 			{
 				string newName = folder.Name;
 				var subfolder = folder;
@@ -65,13 +64,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				}
 				yield return new PackageFolderTreeNode(subfolder, newName);
 			}
-			foreach (var entry in entries.OrderBy(e => e.Name))
+			foreach (var entry in root.Entries.OrderBy(e => e.Name))
 			{
 				if (entry.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
 				{
-					var asmList = MainWindow.Instance.CurrentAssemblyList;
-					var asm = new LoadedAssembly(asmList, entry.Name, Task.Run(entry.TryOpenStream));
-					yield return new AssemblyTreeNode(asm);
+					var asm = root.ResolveFileName(entry.Name);
+					if (asm != null)
+					{
+						yield return new AssemblyTreeNode(asm);
+					}
+					else
+					{
+						yield return ResourceTreeNode.Create(entry);
+					}
 				}
 				else
 				{

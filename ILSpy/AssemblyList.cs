@@ -204,7 +204,7 @@ namespace ICSharpCode.ILSpy
 					return asm;
 			}
 
-			var newAsm = new LoadedAssembly(this, file, Task.FromResult(stream));
+			var newAsm = new LoadedAssembly(this, file, stream: Task.FromResult(stream));
 			newAsm.IsAutoLoaded = isAutoLoaded;
 			lock (assemblies)
 			{
@@ -227,7 +227,7 @@ namespace ICSharpCode.ILSpy
 				return null;
 
 			var index = this.assemblies.IndexOf(target);
-			var newAsm = new LoadedAssembly(this, file, Task.FromResult(stream));
+			var newAsm = new LoadedAssembly(this, file, stream: Task.FromResult(stream));
 			newAsm.IsAutoLoaded = target.IsAutoLoaded;
 			lock (assemblies)
 			{

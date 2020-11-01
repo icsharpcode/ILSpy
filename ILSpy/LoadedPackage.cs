@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -23,6 +24,7 @@ using System.IO.Compression;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
@@ -40,6 +42,11 @@ namespace ICSharpCode.ILSpy
 			Bundle,
 		}
 
+		/// <summary>
+		/// Gets the LoadedAssembly instance representing this bundle.
+		/// </summary>
+		internal LoadedAssembly LoadedAssembly { get; set; }
+
 		public PackageKind Kind { get; }
 
 		/// <summary>
@@ -47,8 +54,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public IReadOnlyList<PackageEntry> Entries { get; }
 
-		internal IReadOnlyList<PackageEntry> TopLevelEntries { get; }
-		internal IReadOnlyList<PackageFolder> TopLevelFolders { get; }
+		internal PackageFolder RootFolder { get; }
 
 		public LoadedPackage(PackageKind kind, IEnumerable<PackageEntry> entries)
 		{
@@ -56,15 +62,14 @@ namespace ICSharpCode.ILSpy
 			this.Entries = entries.ToArray();
 			var topLevelEntries = new List<PackageEntry>();
 			var folders = new Dictionary<string, PackageFolder>();
-			var rootFolder = new PackageFolder("");
+			var rootFolder = new PackageFolder(this, null, "");
 			folders.Add("", rootFolder);
 			foreach (var entry in this.Entries)
 			{
 				var (dirname, filename) = SplitName(entry.Name);
 				GetFolder(dirname).Entries.Add(new FolderEntry(filename, entry));
 			}
-			this.TopLevelEntries = rootFolder.Entries;
-			this.TopLevelFolders = rootFolder.Folders;
+			this.RootFolder = rootFolder;
 
 			static (string, string) SplitName(string filename)
 			{
@@ -81,7 +86,7 @@ namespace ICSharpCode.ILSpy
 					return result;
 				var (dirname, basename) = SplitName(name);
 				PackageFolder parent = GetFolder(dirname);
-				result = new PackageFolder(basename);
+				result = new PackageFolder(this, parent, basename);
 				parent.Folders.Add(result);
 				folders.Add(name, result);
 				return result;
@@ -205,19 +210,72 @@ namespace ICSharpCode.ILSpy
 		public abstract string FullName { get; }
 	}
 
-	class PackageFolder
+	class PackageFolder : IAssemblyResolver
 	{
 		/// <summary>
 		/// Gets the short name of the folder.
 		/// </summary>
 		public string Name { get; }
 
-		public PackageFolder(string name)
+		readonly LoadedPackage package;
+		readonly PackageFolder parent;
+
+		internal PackageFolder(LoadedPackage package, PackageFolder parent, string name)
 		{
+			this.package = package;
+			this.parent = parent;
 			this.Name = name;
 		}
 
 		public List<PackageFolder> Folders { get; } = new List<PackageFolder>();
 		public List<PackageEntry> Entries { get; } = new List<PackageEntry>();
+
+		public PEFile Resolve(IAssemblyReference reference)
+		{
+			var asm = ResolveFileName(reference.Name + ".dll");
+			if (asm != null)
+			{
+				return asm.GetPEFileOrNull();
+			}
+			return parent?.Resolve(reference);
+		}
+
+		public PEFile ResolveModule(PEFile mainModule, string moduleName)
+		{
+			var asm = ResolveFileName(moduleName + ".dll");
+			if (asm != null)
+			{
+				return asm.GetPEFileOrNull();
+			}
+			return parent?.ResolveModule(mainModule, moduleName);
+		}
+
+		readonly Dictionary<string, LoadedAssembly> assemblies = new Dictionary<string, LoadedAssembly>(StringComparer.OrdinalIgnoreCase);
+
+		internal LoadedAssembly ResolveFileName(string name)
+		{
+			if (package.LoadedAssembly == null)
+				return null;
+			lock (assemblies)
+			{
+				if (assemblies.TryGetValue(name, out var asm))
+					return asm;
+				var entry = Entries.FirstOrDefault(e => string.Equals(name, e.Name, StringComparison.OrdinalIgnoreCase));
+				if (entry != null)
+				{
+					asm = new LoadedAssembly(
+						package.LoadedAssembly, entry.Name,
+						assemblyResolver: this,
+						stream: Task.Run(entry.TryOpenStream)
+					);
+				}
+				else
+				{
+					asm = null;
+				}
+				assemblies.Add(name, asm);
+				return asm;
+			}
+		}
 	}
 }

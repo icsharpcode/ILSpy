@@ -30,7 +30,6 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
 
 using Microsoft.Build.Locator;
-using Microsoft.Win32;
 
 using NUnit.Framework;
 
@@ -199,7 +198,7 @@ namespace ICSharpCode.Decompiler.Tests
 							settings.UseSdkStyleProjectFormat = false;
 						}
 
-						var decompiler = new TestProjectDecompiler(projectGuid, resolver, settings);
+						var decompiler = new TestProjectDecompiler(projectGuid, resolver, resolver, settings);
 
 						if (snkFilePath != null)
 						{
@@ -318,8 +317,8 @@ namespace ICSharpCode.Decompiler.Tests
 
 		class TestProjectDecompiler : WholeProjectDecompiler
 		{
-			public TestProjectDecompiler(Guid projecGuid, IAssemblyResolver resolver, DecompilerSettings settings)
-				: base(settings, projecGuid, resolver, debugInfoProvider: null)
+			public TestProjectDecompiler(Guid projecGuid, IAssemblyResolver resolver, AssemblyReferenceClassifier assemblyReferenceClassifier, DecompilerSettings settings)
+				: base(settings, projecGuid, resolver, assemblyReferenceClassifier, debugInfoProvider: null)
 			{
 			}
 		}

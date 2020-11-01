@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						w.WriteStartElement("Reference");
 						w.WriteAttributeString("Include", r.Name);
 						var asm = project.AssemblyResolver.Resolve(r);
-						if (asm != null && !project.AssemblyResolver.IsGacAssembly(r))
+						if (asm != null && !project.AssemblyReferenceClassifier.IsGacAssembly(r))
 						{
 							w.WriteElementString("HintPath", asm.FileName);
 						}

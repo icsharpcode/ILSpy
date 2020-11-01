@@ -25,6 +25,7 @@ using System.Windows;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -182,13 +183,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (module == null)
 				return null;
-			App.Current.Dispatcher.VerifyAccess();
-			foreach (AssemblyTreeNode node in this.Children)
-			{
-				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.GetPEFileOrNull()?.FileName == module.FileName)
-					return node;
-			}
-			return null;
+			return FindAssemblyNode(module.GetLoadedAssembly());
 		}
 
 		public AssemblyTreeNode FindAssemblyNode(LoadedAssembly asm)
@@ -196,10 +191,24 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (asm == null)
 				return null;
 			App.Current.Dispatcher.VerifyAccess();
-			foreach (AssemblyTreeNode node in this.Children)
+			if (asm.ParentBundle != null)
 			{
-				if (node.LoadedAssembly == asm)
-					return node;
+				var bundle = FindAssemblyNode(asm.ParentBundle);
+				if (bundle == null)
+					return null;
+				foreach (var node in TreeTraversal.PreOrder(bundle.Children, r => (r as PackageFolderTreeNode)?.Children).OfType<AssemblyTreeNode>())
+				{
+					if (node.LoadedAssembly == asm)
+						return node;
+				}
+			}
+			else
+			{
+				foreach (AssemblyTreeNode node in this.Children)
+				{
+					if (node.LoadedAssembly == asm)
+						return node;
+				}
 			}
 			return null;
 		}

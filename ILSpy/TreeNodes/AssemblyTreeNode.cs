@@ -182,7 +182,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			else if (loadResult.Package != null)
 			{
 				var package = loadResult.Package;
-				this.Children.AddRange(PackageFolderTreeNode.LoadChildrenForFolder(package.TopLevelFolders, package.TopLevelEntries));
+				this.Children.AddRange(PackageFolderTreeNode.LoadChildrenForFolder(package.RootFolder));
 			}
 		}
 
@@ -460,13 +460,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (var node in context.SelectedTreeNodes)
 			{
 				var la = ((AssemblyTreeNode)node).LoadedAssembly;
+				var resolver = la.GetAssemblyResolver();
 				var module = la.GetPEFileOrNull();
 				if (module != null)
 				{
 					var metadata = module.Metadata;
 					foreach (var assyRef in metadata.AssemblyReferences)
 					{
-						la.LookupReferencedAssembly(new AssemblyReference(module, assyRef));
+						resolver.Resolve(new AssemblyReference(module, assyRef));
 					}
 				}
 			}
