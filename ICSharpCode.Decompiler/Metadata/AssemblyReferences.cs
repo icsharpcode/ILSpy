@@ -48,8 +48,28 @@ namespace ICSharpCode.Decompiler.Metadata
 		PEFile Resolve(IAssemblyReference reference);
 		PEFile ResolveModule(PEFile mainModule, string moduleName);
 #endif
-		bool IsGacAssembly(IAssemblyReference reference);
-		bool IsSharedAssembly(IAssemblyReference reference, out string runtimePack);
+	}
+
+	public class AssemblyReferenceClassifier
+	{
+		/// <summary>
+		/// For GAC assembly references, the WholeProjectDecompiler will omit the HintPath in the
+		/// generated .csproj file.
+		/// </summary>
+		public virtual bool IsGacAssembly(IAssemblyReference reference)
+		{
+			return UniversalAssemblyResolver.GetAssemblyInGac(reference) != null;
+		}
+
+		/// <summary>
+		/// For .NET Core framework references, the WholeProjectDecompiler will omit the
+		/// assembly reference if the runtimePack is already included as an SDK.
+		/// </summary>
+		public virtual bool IsSharedAssembly(IAssemblyReference reference, out string runtimePack)
+		{
+			runtimePack = null;
+			return false;
+		}
 	}
 
 	public interface IAssemblyReference

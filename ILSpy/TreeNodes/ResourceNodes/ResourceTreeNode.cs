@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		public ResourceTreeNode(Resource r)
 		{
-			if (r.IsNil)
+			if (r == null)
 				throw new ArgumentNullException(nameof(r));
 			this.Resource = r;
 		}
@@ -85,6 +85,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				{
 					s.Position = 0;
 					AvalonEditTextOutput output = new AvalonEditTextOutput();
+					output.Title = Resource.Name;
 					output.Write(FileReader.OpenStream(s, Encoding.UTF8).ReadToEnd());
 					string ext;
 					if (type == FileType.Xml)
@@ -119,14 +120,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ILSpyTreeNode Create(Resource resource)
 		{
-			ILSpyTreeNode result = null;
-			foreach (var factory in App.ExportProvider.GetExportedValues<IResourceNodeFactory>())
-			{
-				result = factory.CreateNode(resource);
-				if (result != null)
-					break;
-			}
-			return result ?? new ResourceTreeNode(resource);
+			return ResourceEntryNode.Create(resource);
 		}
 	}
 }

@@ -24,7 +24,6 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
@@ -40,31 +39,74 @@ using ICSharpCode.ILSpy.Options;
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>
-	/// Represents an assembly loaded into ILSpy.
+	/// Represents a file loaded into ILSpy.
+	/// 
+	/// Note: this class is misnamed.
+	/// The file is not necessarily an assembly, nor is it necessarily loaded.
+	/// 
+	/// A LoadedAssembly can refer to:
+	///   * a .NET module (single-file) loaded into ILSpy
+	///   * a non-existant file
+	///   * a file of unknown format that could not be loaded
+	///   * a .nupkg file or .NET core bundle
+	///   * a file that is still being loaded in the background
 	/// </summary>
 	[DebuggerDisplay("[LoadedAssembly {shortName}]")]
 	public sealed class LoadedAssembly
 	{
+		/// <summary>
+		/// Maps from PEFile (successfully loaded .NET module) back to the LoadedAssembly instance
+		/// that was used to load the module.
+		/// </summary>
 		internal static readonly ConditionalWeakTable<PEFile, LoadedAssembly> loadedAssemblies = new ConditionalWeakTable<PEFile, LoadedAssembly>();
 
-		readonly Task<PEFile> assemblyTask;
+		public sealed class LoadResult
+		{
+			public PEFile PEFile { get; }
+			public PEFileNotSupportedException PEFileLoadException { get; }
+			public LoadedPackage Package { get; }
+
+			public LoadResult(PEFile peFile)
+			{
+				this.PEFile = peFile ?? throw new ArgumentNullException(nameof(peFile));
+			}
+			public LoadResult(PEFileNotSupportedException peFileLoadException, LoadedPackage package)
+			{
+				this.PEFileLoadException = peFileLoadException ?? throw new ArgumentNullException(nameof(peFileLoadException));
+				this.Package = package ?? throw new ArgumentNullException(nameof(package));
+			}
+		}
+
+		readonly Task<LoadResult> loadingTask;
 		readonly AssemblyList assemblyList;
 		readonly string fileName;
 		readonly string shortName;
+		readonly IAssemblyResolver providedAssemblyResolver;
 
-		public LoadedAssembly(AssemblyList assemblyList, string fileName, Stream stream = null)
+		public LoadedAssembly ParentBundle { get; }
+
+		public LoadedAssembly(AssemblyList assemblyList, string fileName, Task<Stream> stream = null, IAssemblyResolver assemblyResolver = null)
 		{
 			this.assemblyList = assemblyList ?? throw new ArgumentNullException(nameof(assemblyList));
 			this.fileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
+			this.providedAssemblyResolver = assemblyResolver;
 
-			this.assemblyTask = Task.Factory.StartNew(LoadAssembly, stream); // requires that this.fileName is set
+			this.loadingTask = Task.Run(() => LoadAsync(stream)); // requires that this.fileName is set
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 			this.resolver = new MyAssemblyResolver(this);
+		}
+
+		public LoadedAssembly(LoadedAssembly bundle, string fileName, Task<Stream> stream, IAssemblyResolver assemblyResolver = null)
+			: this(bundle.assemblyList, fileName, stream, assemblyResolver)
+		{
+			this.ParentBundle = bundle;
 		}
 
 		/// <summary>
 		/// Returns a target framework identifier in the form '&lt;framework&gt;Version=v&lt;version&gt;'.
 		/// Returns an empty string if no TargetFrameworkAttribute was found or the file doesn't contain an assembly header, i.e., is only a module.
+		/// 
+		/// Throws an exception if the file does not contain any .NET metadata (e.g. file of unknown format).
 		/// </summary>
 		public async Task<string> GetTargetFrameworkIdAsync()
 		{
@@ -77,11 +119,23 @@ namespace ICSharpCode.ILSpy
 		IDebugInfoProvider debugInfoProvider;
 
 		/// <summary>
+		/// Gets the <see cref="LoadResult"/>.
+		/// </summary>
+		public Task<LoadResult> GetLoadResultAsync()
+		{
+			return loadingTask;
+		}
+
+		/// <summary>
 		/// Gets the <see cref="PEFile"/>.
 		/// </summary>
-		public Task<PEFile> GetPEFileAsync()
+		public async Task<PEFile> GetPEFileAsync()
 		{
-			return assemblyTask;
+			var loadResult = await loadingTask.ConfigureAwait(false);
+			if (loadResult.PEFile != null)
+				return loadResult.PEFile;
+			else
+				throw loadResult.PEFileLoadException;
 		}
 
 		/// <summary>
@@ -104,7 +158,7 @@ namespace ICSharpCode.ILSpy
 		ICompilation typeSystem;
 
 		/// <summary>
-		/// Gets a type system containing all types from this assembly + primitve types from mscorlib.
+		/// Gets a type system containing all types from this assembly + primitive types from mscorlib.
 		/// Returns null in case of load errors.
 		/// </summary>
 		/// <remarks>
@@ -112,30 +166,34 @@ namespace ICSharpCode.ILSpy
 		/// </remarks>
 		public ICompilation GetTypeSystemOrNull()
 		{
-			if (typeSystem != null)
-				return typeSystem;
-			var module = GetPEFileOrNull();
-			if (module == null)
-				return null;
-			return typeSystem = new SimpleCompilation(
-				module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
-				MinimalCorlib.Instance);
+			return LazyInitializer.EnsureInitialized(ref this.typeSystem, () => {
+				var module = GetPEFileOrNull();
+				if (module == null)
+					return null;
+				return new SimpleCompilation(
+					module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
+					MinimalCorlib.Instance);
+			});
 		}
 
+		readonly object typeSystemWithOptionsLockObj = new object();
 		ICompilation typeSystemWithOptions;
 		TypeSystemOptions currentTypeSystemOptions;
 
 		public ICompilation GetTypeSystemOrNull(TypeSystemOptions options)
 		{
-			if (typeSystemWithOptions != null && options == currentTypeSystemOptions)
-				return typeSystemWithOptions;
-			var module = GetPEFileOrNull();
-			if (module == null)
-				return null;
-			currentTypeSystemOptions = options;
-			return typeSystemWithOptions = new SimpleCompilation(
-				module.WithOptions(options | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
-				MinimalCorlib.Instance);
+			lock (typeSystemWithOptionsLockObj)
+			{
+				if (typeSystemWithOptions != null && options == currentTypeSystemOptions)
+					return typeSystemWithOptions;
+				var module = GetPEFileOrNull();
+				if (module == null)
+					return null;
+				currentTypeSystemOptions = options;
+				return typeSystemWithOptions = new SimpleCompilation(
+					module.WithOptions(options | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
+					MinimalCorlib.Instance);
+			}
 		}
 
 		public AssemblyList AssemblyList => assemblyList;
@@ -176,15 +234,66 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public bool IsLoaded => assemblyTask.IsCompleted;
+		public bool IsLoaded => loadingTask.IsCompleted;
 
-		public bool HasLoadError => assemblyTask.IsFaulted;
+		public bool HasLoadError => loadingTask.IsFaulted;
 
 		public bool IsAutoLoaded { get; set; }
 
 		public string PdbFileOverride { get; set; }
 
-		PEFile LoadAssembly(object state)
+		async Task<LoadResult> LoadAsync(Task<Stream> streamTask)
+		{
+			// runs on background thread
+			if (streamTask != null)
+			{
+				var stream = await streamTask;
+				// Read the module from a precrafted stream
+				if (!stream.CanSeek)
+				{
+					var memoryStream = new MemoryStream();
+					stream.CopyTo(memoryStream);
+					stream.Close();
+					memoryStream.Position = 0;
+					stream = memoryStream;
+				}
+				var streamOptions = stream is MemoryStream ? PEStreamOptions.PrefetchEntireImage : PEStreamOptions.Default;
+				return LoadAssembly(stream, streamOptions);
+			}
+			// Read the module from disk
+			PEFileNotSupportedException loadAssemblyException;
+			try
+			{
+				using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+				{
+					return LoadAssembly(fileStream, PEStreamOptions.PrefetchEntireImage);
+				}
+			}
+			catch (PEFileNotSupportedException ex)
+			{
+				loadAssemblyException = ex;
+			}
+			// If it's not a .NET module, maybe it's a single-file bundle
+			var bundle = LoadedPackage.FromBundle(fileName);
+			if (bundle != null)
+			{
+				bundle.LoadedAssembly = this;
+				return new LoadResult(loadAssemblyException, bundle);
+			}
+			// If it's not a .NET module, maybe it's a zip archive (e.g. .nupkg)
+			try
+			{
+				var zip = LoadedPackage.FromZipFile(fileName);
+				zip.LoadedAssembly = this;
+				return new LoadResult(loadAssemblyException, zip);
+			}
+			catch (InvalidDataException)
+			{
+				throw loadAssemblyException;
+			}
+		}
+
+		LoadResult LoadAssembly(Stream stream, PEStreamOptions streamOptions)
 		{
 			MetadataReaderOptions options;
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections)
@@ -196,21 +305,7 @@ namespace ICSharpCode.ILSpy
 				options = MetadataReaderOptions.None;
 			}
 
-			PEFile module;
-			// runs on background thread
-			if (state is Stream stream)
-			{
-				// Read the module from a precrafted stream
-				var streamOptions = stream is MemoryStream ? PEStreamOptions.PrefetchEntireImage : PEStreamOptions.Default;
-				module = new PEFile(fileName, stream, streamOptions, metadataOptions: options);
-			}
-			else
-			{
-				// Read the module from disk (by default)
-				stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-				module = new PEFile(fileName, stream, PEStreamOptions.PrefetchEntireImage,
-					metadataOptions: options);
-			}
+			PEFile module = new PEFile(fileName, stream, streamOptions, metadataOptions: options);
 
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols)
 			{
@@ -234,7 +329,7 @@ namespace ICSharpCode.ILSpy
 			{
 				loadedAssemblies.Add(module, this);
 			}
-			return module;
+			return new LoadResult(module);
 		}
 
 		[ThreadStatic]
@@ -283,24 +378,19 @@ namespace ICSharpCode.ILSpy
 				this.parent = parent;
 			}
 
-			public bool IsGacAssembly(IAssemblyReference reference)
+			public PEFile Resolve(IAssemblyReference reference)
 			{
-				return parent.universalResolver?.IsGacAssembly(reference) == true;
-			}
-
-			public bool IsSharedAssembly(IAssemblyReference reference, out string runtimePack)
-			{
-				runtimePack = null;
-				return parent.universalResolver?.IsSharedAssembly(reference, out runtimePack) == true;
-			}
-
-			public PEFile Resolve(Decompiler.Metadata.IAssemblyReference reference)
-			{
+				var module = parent.providedAssemblyResolver?.Resolve(reference);
+				if (module != null)
+					return module;
 				return parent.LookupReferencedAssembly(reference)?.GetPEFileOrNull();
 			}
 
 			public PEFile ResolveModule(PEFile mainModule, string moduleName)
 			{
+				var module = parent.providedAssemblyResolver?.ResolveModule(mainModule, moduleName);
+				if (module != null)
+					return module;
 				return parent.LookupReferencedModule(mainModule, moduleName)?.GetPEFileOrNull();
 			}
 		}
@@ -310,6 +400,11 @@ namespace ICSharpCode.ILSpy
 		public IAssemblyResolver GetAssemblyResolver()
 		{
 			return resolver;
+		}
+
+		public AssemblyReferenceClassifier GetAssemblyReferenceClassifier()
+		{
+			return universalResolver;
 		}
 
 		/// <summary>
@@ -358,6 +453,8 @@ namespace ICSharpCode.ILSpy
 		MyUniversalResolver universalResolver;
 
 		/// <summary>
+		/// 0) if we're inside a package, look for filename.dll in parent directories
+		///    (this step already happens in MyAssemblyResolver; not in LookupReferencedAssembly)
 		/// 1) try to find exact match by tfm + full asm name in loaded assemblies
 		/// 2) try to find match in search paths
 		/// 3) if a.deps.json is found: search %USERPROFILE%/.nuget/packages/* as well
@@ -532,9 +629,10 @@ namespace ICSharpCode.ILSpy
 			return asm;
 		}
 
+		[Obsolete("Use GetPEFileAsync() or GetLoadResultAsync() instead")]
 		public Task ContinueWhenLoaded(Action<Task<PEFile>> onAssemblyLoaded, TaskScheduler taskScheduler)
 		{
-			return this.assemblyTask.ContinueWith(onAssemblyLoaded, default(CancellationToken), TaskContinuationOptions.RunContinuationsAsynchronously, taskScheduler);
+			return this.GetPEFileAsync().ContinueWith(onAssemblyLoaded, default(CancellationToken), TaskContinuationOptions.RunContinuationsAsynchronously, taskScheduler);
 		}
 
 		/// <summary>
@@ -543,8 +641,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public void WaitUntilLoaded()
 		{
-			assemblyTask.Wait();
+			loadingTask.Wait();
 		}
-
 	}
 }

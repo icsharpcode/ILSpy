@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			var metadata = Metadata;
 			foreach (var h in metadata.ManifestResources)
 			{
-				yield return new Resource(this, h);
+				yield return new MetadataResource(this, h);
 			}
 		}
 

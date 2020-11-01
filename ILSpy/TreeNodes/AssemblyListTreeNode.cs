@@ -17,17 +17,15 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.IO;
 using System.Linq;
-using System.Reflection.PortableExecutable;
 using System.Windows;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -105,7 +103,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				{
 					var assemblies = files
 						.Where(file => file != null)
-						.SelectMany(file => OpenAssembly(assemblyList, file))
+						.Select(file => assemblyList.OpenAssembly(file))
 						.Where(asm => asm != null)
 						.Distinct()
 						.ToArray();
@@ -127,28 +125,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		private IEnumerable<LoadedAssembly> OpenAssembly(AssemblyList assemblyList, string file)
-		{
-			if (file.EndsWith(".nupkg"))
-			{
-				LoadedNugetPackage package = new LoadedNugetPackage(file);
-				var selectionDialog = new NugetPackageBrowserDialog(package);
-				selectionDialog.Owner = Application.Current.MainWindow;
-				if (selectionDialog.ShowDialog() != true)
-					yield break;
-				foreach (var entry in selectionDialog.SelectedItems)
-				{
-					var nugetAsm = assemblyList.OpenAssembly("nupkg://" + file + ";" + entry.Name, entry.Stream, true);
-					if (nugetAsm != null)
-					{
-						yield return nugetAsm;
-					}
-				}
-				yield break;
-			}
-			yield return assemblyList.OpenAssembly(file);
-		}
-
 		public Action<SharpTreeNode> Select = delegate { };
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
@@ -166,7 +142,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		#region Find*Node
 		public ILSpyTreeNode FindResourceNode(Resource resource)
 		{
-			if (resource == null || resource.IsNil)
+			if (resource == null)
 				return null;
 			foreach (AssemblyTreeNode node in this.Children)
 			{
@@ -207,13 +183,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (module == null)
 				return null;
-			App.Current.Dispatcher.VerifyAccess();
-			foreach (AssemblyTreeNode node in this.Children)
-			{
-				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.GetPEFileOrNull()?.FileName == module.FileName)
-					return node;
-			}
-			return null;
+			return FindAssemblyNode(module.GetLoadedAssembly());
 		}
 
 		public AssemblyTreeNode FindAssemblyNode(LoadedAssembly asm)
@@ -221,10 +191,24 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (asm == null)
 				return null;
 			App.Current.Dispatcher.VerifyAccess();
-			foreach (AssemblyTreeNode node in this.Children)
+			if (asm.ParentBundle != null)
 			{
-				if (node.LoadedAssembly == asm)
-					return node;
+				var bundle = FindAssemblyNode(asm.ParentBundle);
+				if (bundle == null)
+					return null;
+				foreach (var node in TreeTraversal.PreOrder(bundle.Children, r => (r as PackageFolderTreeNode)?.Children).OfType<AssemblyTreeNode>())
+				{
+					if (node.LoadedAssembly == asm)
+						return node;
+				}
+			}
+			else
+			{
+				foreach (AssemblyTreeNode node in this.Children)
+				{
+					if (node.LoadedAssembly == asm)
+						return node;
+				}
 			}
 			return null;
 		}

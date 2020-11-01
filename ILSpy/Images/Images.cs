@@ -20,11 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace ICSharpCode.ILSpy
 {
@@ -50,6 +47,7 @@ namespace ICSharpCode.ILSpy
 		public static readonly ImageSource Namespace = Load("Namespace");
 
 		public static readonly ImageSource ReferenceFolder = Load("ReferenceFolder");
+		public static readonly ImageSource NuGet = Load(null, "Images/NuGet.png");
 
 		public static readonly ImageSource SubTypes = Load("SubTypes");
 		public static readonly ImageSource SuperTypes = Load("SuperTypes");

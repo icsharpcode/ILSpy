@@ -56,29 +56,22 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
-			var assemblyListNode = parentAssembly.Parent as AssemblyListTreeNode;
-			if (assemblyListNode != null)
+			if (parentAssembly.Parent is AssemblyListTreeNode assemblyListNode)
 			{
-				assemblyListNode.Select(assemblyListNode.FindAssemblyNode(parentAssembly.LoadedAssembly.LookupReferencedAssembly(r)));
+				var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
+				assemblyListNode.Select(assemblyListNode.FindAssemblyNode(resolver.Resolve(r)));
 				e.Handled = true;
 			}
 		}
 
 		protected override void LoadChildren()
 		{
-			var assemblyListNode = parentAssembly.Parent as AssemblyListTreeNode;
-			if (assemblyListNode != null)
+			var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
+			var module = resolver.Resolve(r);
+			if (module != null)
 			{
-				var refNode = assemblyListNode.FindAssemblyNode(parentAssembly.LoadedAssembly.LookupReferencedAssembly(r));
-				if (refNode != null)
-				{
-					var module = refNode.LoadedAssembly.GetPEFileOrNull();
-					if (module != null)
-					{
-						foreach (var childRef in module.AssemblyReferences)
-							this.Children.Add(new AssemblyReferenceTreeNode(childRef, refNode));
-					}
-				}
+				foreach (var childRef in module.AssemblyReferences)
+					this.Children.Add(new AssemblyReferenceTreeNode(childRef, parentAssembly));
 			}
 		}
 

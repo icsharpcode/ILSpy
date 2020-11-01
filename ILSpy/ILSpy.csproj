@@ -52,6 +52,8 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="$(AvalonEditVersion)" />
+    <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="$(SystemCompilerServicesUnsafeVersion)" />
     <PackageReference Include="Dirkster.AvalonDock" Version="3.6.1" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="16.3.7" />
     <PackageReference Include="System.Composition" Version="1.3.0" />
@@ -69,7 +71,7 @@
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
   </ItemGroup>
-    
+
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml" />
   </ItemGroup>
@@ -213,6 +215,7 @@
     <Compile Include="Metadata\MetadataProtocolHandler.cs" />
     <Compile Include="Metadata\MetadataTableTreeNode.cs" />
     <Compile Include="Metadata\DebugMetadataTreeNode.cs" />
+    <Compile Include="TreeNodes\PackageFolderTreeNode.cs" />
     <Compile Include="ViewModels\LegacyToolPaneModel.cs" />
     <Compile Include="ViewModels\ManageAssemblyListsViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
@@ -382,7 +385,7 @@
     <Compile Include="Search\LiteralSearchStrategy.cs" />
     <Compile Include="LoadedAssembly.cs" />
     <Compile Include="LoadedAssemblyExtensions.cs" />
-    <Compile Include="LoadedNugetPackage.cs" />
+    <Compile Include="LoadedPackage.cs" />
     <Compile Include="Search\MemberSearchStrategy.cs" />
     <Compile Include="Search\MetadataTokenSearchStrategy.cs" />
     <Compile Include="NativeMethods.cs" />
@@ -390,9 +393,6 @@
     <Compile Include="NavigationState.cs" />
     <Compile Include="Commands\OpenCommand.cs" />
     <Compile Include="Commands\OpenFromGacCommand.cs" />
-    <Compile Include="Views\NugetPackageBrowserDialog.xaml.cs">
-      <DependentUpon>NugetPackageBrowserDialog.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Views\OpenFromGacDialog.xaml.cs">
       <DependentUpon>OpenFromGacDialog.xaml</DependentUpon>
     </Compile>
@@ -581,7 +581,6 @@
     <Page Include="Metadata\MetadataTableViews.xaml" />
     <Page Include="Views\OpenFromGacDialog.xaml" />
     <Page Include="Views\ManageAssemblyListsDialog.xaml" />
-    <Page Include="Views\NugetPackageBrowserDialog.xaml" />
     <Page Include="Options\DecompilerSettingsPanel.xaml" />
     <Page Include="Options\DisplaySettingsPanel.xaml" />
     <Page Include="Options\MiscSettingsPanel.xaml" />
@@ -840,8 +839,8 @@
     <VCToolsVersionPropsFileNameDefault>Microsoft.VCToolsVersion.default.props</VCToolsVersionPropsFileNameDefault>
     <!-- This is necessary as long as AppVeyor does not offer Visual Studio 2019 RC or later -->
     <VCToolsVersionPropsFileNameVS2019Preview>Microsoft.VCToolsVersion.v142.default.props</VCToolsVersionPropsFileNameVS2019Preview>
-    <VCToolsVersionPropsFile>$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameDefault)</VCToolsVersionPropsFile> 
-    <VCToolsVersionPropsFile Condition="!Exists('$(VCToolsVersionPropsFile)')">$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameVS2019Preview)</VCToolsVersionPropsFile> 
+    <VCToolsVersionPropsFile>$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameDefault)</VCToolsVersionPropsFile>
+    <VCToolsVersionPropsFile Condition="!Exists('$(VCToolsVersionPropsFile)')">$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameVS2019Preview)</VCToolsVersionPropsFile>
   </PropertyGroup>
 
   <Import Project="$(VCToolsVersionPropsFile)" Condition="Exists('$(VCToolsVersionPropsFile)')" />
@@ -851,6 +850,10 @@
     <SortResXInput Include="..\ILSpy.AddIn\*.resx" />
     <SortResXInput Include="..\ILSpy.ReadyToRun\Properties\*.resx" />
     <SortResXStamp Include="obj\sort-resx.stamp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\NuGet.png" />
   </ItemGroup>
 
   <Target Name="SortResX" BeforeTargets="BeforeBuild" Inputs="@(SortResXInput)" Outputs="@(SortResXStamp)">

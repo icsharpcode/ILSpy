@@ -32,6 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		IAssemblyResolver AssemblyResolver { get; }
 
+		AssemblyReferenceClassifier AssemblyReferenceClassifier { get; }
+
 		/// <summary>
 		/// Gets the C# language version of the project.
 		/// </summary>

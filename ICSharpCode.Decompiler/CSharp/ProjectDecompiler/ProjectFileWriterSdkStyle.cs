@@ -256,7 +256,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			foreach (var reference in module.AssemblyReferences.Where(r => !ImplicitReferences.Contains(r.Name)))
 			{
-				if (isNetCoreApp && project.AssemblyResolver.IsSharedAssembly(reference, out string runtimePack) && targetPacks.Contains(runtimePack))
+				if (isNetCoreApp && project.AssemblyReferenceClassifier.IsSharedAssembly(reference, out string runtimePack) && targetPacks.Contains(runtimePack))
 				{
 					continue;
 				}
@@ -265,7 +265,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				xml.WriteAttributeString("Include", reference.Name);
 
 				var asembly = project.AssemblyResolver.Resolve(reference);
-				if (asembly != null && !project.AssemblyResolver.IsGacAssembly(reference))
+				if (asembly != null && !project.AssemblyReferenceClassifier.IsGacAssembly(reference))
 				{
 					xml.WriteElementString("HintPath", FileUtility.GetRelativePath(project.TargetDirectory, asembly.FileName));
 				}

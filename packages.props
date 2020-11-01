@@ -1,10 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
-  <!-- Centrally define the versions of the NuGet packages we use -->
+  <!-- Centrally define the versions of the NuGet packages we use.
+       Note: when updating these, ensure to also adjust the binding redirects in app.config.template appropriately.
+   -->
   <PropertyGroup>
     <HumanizerVersion>2.2.0</HumanizerVersion>
     <SystemCollectionsImmutableVersion>5.0.0-preview.8.20407.11</SystemCollectionsImmutableVersion>
     <SystemReflectionMetadataVersion>5.0.0-preview.8.20407.11</SystemReflectionMetadataVersion>
+    <SystemCompilerServicesUnsafeVersion>4.7.1</SystemCompilerServicesUnsafeVersion>
     <ILAsmVersion>5.0.0-rc.2.20475.5</ILAsmVersion>  <!-- Microsoft.NETCore.ILAsm -->
     <RoslynVersion>3.8.0-4.final</RoslynVersion>     <!-- Microsoft.CodeAnalysis.* -->
     <MonoCecilVersion>0.10.3</MonoCecilVersion>

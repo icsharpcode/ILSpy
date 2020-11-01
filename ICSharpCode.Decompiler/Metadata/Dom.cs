@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
-using System.Security.Cryptography;
-using System.Text;
 
-using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -32,13 +27,38 @@ namespace ICSharpCode.Decompiler.Metadata
 		AssemblyLinked,
 	}
 
-	public struct Resource : IEquatable<Resource>
+	public abstract class Resource
+	{
+		public virtual ResourceType ResourceType => ResourceType.Embedded;
+		public virtual ManifestResourceAttributes Attributes => ManifestResourceAttributes.Public;
+		public abstract string Name { get; }
+		public abstract Stream TryOpenStream();
+	}
+
+	public class ByteArrayResource : Resource
+	{
+		public override string Name { get; }
+		byte[] data;
+
+		public ByteArrayResource(string name, byte[] data)
+		{
+			this.Name = name ?? throw new ArgumentNullException(nameof(name));
+			this.data = data ?? throw new ArgumentNullException(nameof(data));
+		}
+
+		public override Stream TryOpenStream()
+		{
+			return new MemoryStream(data);
+		}
+	}
+
+	sealed class MetadataResource : Resource
 	{
 		public PEFile Module { get; }
 		public ManifestResourceHandle Handle { get; }
 		public bool IsNil => Handle.IsNil;
 
-		public Resource(PEFile module, ManifestResourceHandle handle) : this()
+		public MetadataResource(PEFile module, ManifestResourceHandle handle)
 		{
 			this.Module = module ?? throw new ArgumentNullException(nameof(module));
 			this.Handle = handle;
@@ -46,14 +66,14 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		ManifestResource This() => Module.Metadata.GetManifestResource(Handle);
 
-		public bool Equals(Resource other)
+		public bool Equals(MetadataResource other)
 		{
 			return Module == other.Module && Handle == other.Handle;
 		}
 
 		public override bool Equals(object obj)
 		{
-			if (obj is Resource res)
+			if (obj is MetadataResource res)
 				return Equals(res);
 			return false;
 		}
@@ -63,14 +83,11 @@ namespace ICSharpCode.Decompiler.Metadata
 			return unchecked(982451629 * Module.GetHashCode() + 982451653 * MetadataTokens.GetToken(Handle));
 		}
 
-		public static bool operator ==(Resource lhs, Resource rhs) => lhs.Equals(rhs);
-		public static bool operator !=(Resource lhs, Resource rhs) => !lhs.Equals(rhs);
+		public override string Name => Module.Metadata.GetString(This().Name);
 
-		public string Name => Module.Metadata.GetString(This().Name);
-
-		public ManifestResourceAttributes Attributes => This().Attributes;
+		public override ManifestResourceAttributes Attributes => This().Attributes;
 		public bool HasFlag(ManifestResourceAttributes flag) => (Attributes & flag) == flag;
-		public ResourceType ResourceType => GetResourceType();
+		public override ResourceType ResourceType => GetResourceType();
 
 		ResourceType GetResourceType()
 		{
@@ -81,7 +98,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return ResourceType.Linked;
 		}
 
-		public unsafe Stream TryOpenStream()
+		public override unsafe Stream TryOpenStream()
 		{
 			if (ResourceType != ResourceType.Embedded)
 				return null;

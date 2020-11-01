@@ -163,28 +163,7 @@ namespace ICSharpCode.ILSpy
 
 		public LoadedAssembly Open(string assemblyUri, bool isAutoLoaded = false)
 		{
-			if (assemblyUri.StartsWith("nupkg://", StringComparison.OrdinalIgnoreCase))
-			{
-				string fileName = assemblyUri.Substring("nupkg://".Length);
-				int separator = fileName.LastIndexOf(';');
-				string componentName = null;
-				if (separator > -1)
-				{
-					componentName = fileName.Substring(separator + 1);
-					fileName = fileName.Substring(0, separator);
-					LoadedNugetPackage package = new LoadedNugetPackage(fileName);
-					var entry = package.Entries.FirstOrDefault(e => e.Name == componentName);
-					if (entry != null)
-					{
-						return OpenAssembly(assemblyUri, entry.Stream, true);
-					}
-				}
-				return null;
-			}
-			else
-			{
-				return OpenAssembly(assemblyUri, isAutoLoaded);
-			}
+			return OpenAssembly(assemblyUri, isAutoLoaded);
 		}
 
 		/// <summary>
@@ -225,7 +204,7 @@ namespace ICSharpCode.ILSpy
 					return asm;
 			}
 
-			var newAsm = new LoadedAssembly(this, file, stream);
+			var newAsm = new LoadedAssembly(this, file, stream: Task.FromResult(stream));
 			newAsm.IsAutoLoaded = isAutoLoaded;
 			lock (assemblies)
 			{
@@ -248,7 +227,7 @@ namespace ICSharpCode.ILSpy
 				return null;
 
 			var index = this.assemblies.IndexOf(target);
-			var newAsm = new LoadedAssembly(this, file, stream);
+			var newAsm = new LoadedAssembly(this, file, stream: Task.FromResult(stream));
 			newAsm.IsAutoLoaded = target.IsAutoLoaded;
 			lock (assemblies)
 			{
