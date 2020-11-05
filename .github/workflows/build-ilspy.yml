@@ -27,6 +27,7 @@ jobs:
             channel: store
     env:
       BuildPlatform: Any CPU
+      StagingDirectory: buildartefacts 
     steps:
     - name: Force git to use crlf, otherwise dotnet-format --check fails
       run: git config --global core.autocrlf true
@@ -42,10 +43,21 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
       with:
        vs-version: '[16.6,16.9)'
+
     - name: Install dotnet-format
-      run: dotnet tool install dotnet-format --version 4.1.131201
+      run: dotnet tool install dotnet-format --global --version 4.1.131201
     - name: Pipelines PS
       run: pwsh .\BuildTools\pipelines-install.ps1
+
     - name: Restore the application
-      run: msbuild ${{ matrix.solution }} /t:Restore /p:Configuration=${{ matrix.configuration }}
+      run: msbuild ${{ matrix.solution }} /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
+
+    - name: Build
+      run: msbuild ${{ matrix.solution }} /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /p:AppxPackageDir="$env:StagingDirectory\${{ matrix.channel }}\\" 
+
+    - name: Tab check
+      run: python BuildTools\tidy.py
+
+    - name: dotnet-format check
+      run: dotnet-format --check --verbosity diagnostic ILSpy.sln
 
