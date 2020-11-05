@@ -188,7 +188,7 @@ Remarks:
 			foreach (var path in ReferencePaths) {
 				resolver.AddSearchDirectory(path);
 			}
-			var decompiler = new WholeProjectDecompiler(GetSettings(), resolver, TryLoadPDB(module));
+			var decompiler = new WholeProjectDecompiler(GetSettings(), resolver, resolver, TryLoadPDB(module));
 			decompiler.DecompileProject(module, outputDirectory);
 			return 0;
 		}
