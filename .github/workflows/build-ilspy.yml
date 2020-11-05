@@ -55,9 +55,18 @@ jobs:
     - name: Build
       run: msbuild ${{ matrix.solution }} /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /p:AppxPackageDir="$env:StagingDirectory\${{ matrix.channel }}\\" 
 
+    - name: Execute unit tests
+      run: dotnet test ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net472\ICSharpCode.Decompiler.Tests.exe ILSpy.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.Tests.exe ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.BamlDecompiler.Tests.exe
+      
     - name: Tab check
       run: python BuildTools\tidy.py
 
     - name: dotnet-format check
       run: dotnet-format --check --verbosity diagnostic ILSpy.sln
 
+    - name: Upload build artifacts
+      if: matrix.channel == 'store'
+      uses: actions/upload-artifact@v2
+      with:
+        name: MSIX Package
+        path: $env:StagingDirectory\${{ matrix.channel }}
