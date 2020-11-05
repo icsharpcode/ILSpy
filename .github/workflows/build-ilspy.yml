@@ -43,7 +43,7 @@ jobs:
       with:
        vs-version: '[16.6,16.9)'
     - name: Install dotnet-format
-      run: dotnet install dotnet-format --version 4.1.131201
+      run: dotnet tool install dotnet-format --version 4.1.131201
     - name: Pipelines PS
       run: pwsh .\BuildTools\pipelines-install.ps1
     - name: Restore the application
