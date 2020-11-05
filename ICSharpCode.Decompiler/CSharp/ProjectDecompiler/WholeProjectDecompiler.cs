@@ -362,7 +362,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			string fileName = CleanUpFileName(fullName);
 			for (int i = splitName.Length - 1; i > 0; i--)
 			{
-				string ns = string.Join(".", splitName, 0, i);
+				string ns = string.Join("\\", splitName, 0, i);
 				if (directories.Contains(ns))
 				{
 					string name = string.Join(".", splitName, i, splitName.Length - i);
