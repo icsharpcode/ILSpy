@@ -27,8 +27,11 @@ jobs:
             channel: store
     env:
       BuildPlatform: Any CPU
-      StagingDirectory: buildartefacts 
+      StagingDirectory: buildartifacts 
+
     steps:
+    - run: mkdir -p $env:StagingDirectory
+      
     - name: Force git to use crlf, otherwise dotnet-format --check fails
       run: git config --global core.autocrlf true
     - uses: actions/checkout@v2
@@ -53,7 +56,7 @@ jobs:
       run: msbuild ${{ matrix.solution }} /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
 
     - name: Build
-      run: msbuild ${{ matrix.solution }} /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /p:AppxPackageDir="$env:StagingDirectory\${{ matrix.channel }}\\" 
+      run: msbuild ${{ matrix.solution }} /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /p:AppxPackageDir="${{ $env:StagingDirectory }}\${{ matrix.channel }}\" 
 
     - name: Execute unit tests
       run: dotnet test ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net472\ICSharpCode.Decompiler.Tests.exe ILSpy.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.Tests.exe ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.BamlDecompiler.Tests.exe
@@ -64,9 +67,10 @@ jobs:
     - name: dotnet-format check
       run: dotnet-format --check --verbosity diagnostic ILSpy.sln
 
+    # https://github.com/actions/upload-artifact
     - name: Upload build artifacts
       if: matrix.channel == 'store'
       uses: actions/upload-artifact@v2
       with:
         name: MSIX Package
-        path: $env:StagingDirectory\${{ matrix.channel }}
+        path: ${{ $env:StagingDirectory }}\${{ matrix.channel }}
