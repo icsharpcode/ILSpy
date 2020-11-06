@@ -77,21 +77,21 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: MSIX Store Package
-        path: ${{ env.StagingDirectory }}\${{ matrix.channel }}
+        path: ${{ env.StagingDirectory }}\${{ matrix.channel }}\*.*
 
     - name: Upload VSIX release build artifacts
       if: matrix.channel == 'zip' && matrix.configuration == 'release'
       uses: actions/upload-artifact@v2
       with:
-        name: VSIX
-        path: ILSpy.Addin\**\*.vsix
+        name: VS Addin
+        path: ILSpy.Addin\bin\Release\net472\*.vsix
 
     - name: Upload NuGet release build artifacts
       if: matrix.channel == 'zip' && matrix.configuration == 'release'
       uses: actions/upload-artifact@v2
       with:
-        name: nupkg
-        path: ICSharpCode.Decompiler\**\ICSharpCode.Decompiler*.nupkg
+        name: NuGet Package
+        path: ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg
 
     - name: Upload zip release build artifacts
       if: matrix.channel == 'zip' && matrix.configuration == 'release'
