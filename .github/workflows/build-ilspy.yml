@@ -2,9 +2,9 @@ name: Build ILSpy
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, release/** ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, release/** ]
 
 jobs:
   Build:
@@ -56,7 +56,7 @@ jobs:
       run: msbuild ${{ matrix.solution }} /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
 
     - name: Build
-      run: msbuild ${{ matrix.solution }} /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /p:AppxPackageDir="${{ $env:StagingDirectory }}\${{ matrix.channel }}\" 
+      run: msbuild ${{ matrix.solution }} /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /p:AppxPackageDir="${{ env.StagingDirectory }}\${{ matrix.channel }}\" 
 
     - name: Execute unit tests
       run: dotnet test ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net472\ICSharpCode.Decompiler.Tests.exe ILSpy.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.Tests.exe ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.BamlDecompiler.Tests.exe
@@ -68,9 +68,16 @@ jobs:
       run: dotnet-format --check --verbosity diagnostic ILSpy.sln
 
     # https://github.com/actions/upload-artifact
-    - name: Upload build artifacts
+    - name: Upload store build artifacts
       if: matrix.channel == 'store'
       uses: actions/upload-artifact@v2
       with:
-        name: MSIX Package
-        path: ${{ $env:StagingDirectory }}\${{ matrix.channel }}
+        name: MSIX Store Package
+        path: ${{ env.StagingDirectory }}\${{ matrix.channel }}
+
+    - name: Upload zip release build artifacts
+      if: matrix.channel == 'zip' && matrix.configuration == 'release'
+      uses: actions/upload-artifact@v2
+      with:
+        name: VSIX
+        path: ILSpy.Addin\**\*.vsix
