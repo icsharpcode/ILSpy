@@ -66,7 +66,11 @@ jobs:
 
     - name: dotnet-format check
       run: dotnet-format --check --verbosity diagnostic ILSpy.sln
-
+    
+    - name: Zip ILSpy
+      if: matrix.channel == 'zip' && matrix.configuration == 'release'
+      run: 7z a -tzip $env:StagingDirectory\ILSpy.zip ILSpy/bin/${{ matrix.configuration }}/net472/*.*
+      
     # https://github.com/actions/upload-artifact
     - name: Upload store build artifacts
       if: matrix.channel == 'store'
@@ -75,9 +79,23 @@ jobs:
         name: MSIX Store Package
         path: ${{ env.StagingDirectory }}\${{ matrix.channel }}
 
-    - name: Upload zip release build artifacts
+    - name: Upload VSIX release build artifacts
       if: matrix.channel == 'zip' && matrix.configuration == 'release'
       uses: actions/upload-artifact@v2
       with:
         name: VSIX
         path: ILSpy.Addin\**\*.vsix
+
+    - name: Upload NuGet release build artifacts
+      if: matrix.channel == 'zip' && matrix.configuration == 'release'
+      uses: actions/upload-artifact@v2
+      with:
+        name: nupkg
+        path: ICSharpCode.Decompiler\**\ICSharpCode.Decompiler*.nupkg
+
+    - name: Upload zip release build artifacts
+      if: matrix.channel == 'zip' && matrix.configuration == 'release'
+      uses: actions/upload-artifact@v2
+      with:
+        name: ILSpy
+        path: ${{ env.StagingDirectory }}\ILSpy.zip
