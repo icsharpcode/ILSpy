@@ -83,7 +83,7 @@ namespace ICSharpCode.ILSpy
 		{
 			var selectedNodes = context.SelectedTreeNodes;
 			return selectedNodes?.Any() == true
-				&& selectedNodes.All(n => n is AssemblyTreeNode asm && !asm.LoadedAssembly.HasLoadError);
+				&& selectedNodes.All(n => n is AssemblyTreeNode asm && asm.LoadedAssembly.IsLoadedAsValidAssembly);
 		}
 	}
 

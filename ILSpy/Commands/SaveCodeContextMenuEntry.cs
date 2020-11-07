@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
-using System.Windows.Input;
 
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -75,7 +74,7 @@ namespace ICSharpCode.ILSpy.TextView
 					{
 						var assemblies = selectedNodes.OfType<AssemblyTreeNode>()
 							.Select(n => n.LoadedAssembly)
-							.Where(a => !a.HasLoadError).ToArray();
+							.Where(a => a.IsLoadedAsValidAssembly).ToArray();
 						SolutionWriter.CreateSolution(textView, selectedPath, currentLanguage, assemblies);
 					}
 					return;

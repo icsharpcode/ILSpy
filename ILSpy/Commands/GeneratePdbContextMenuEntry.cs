@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy
 		{
 			return context.SelectedTreeNodes?.Length == 1
 				&& context.SelectedTreeNodes?.FirstOrDefault() is AssemblyTreeNode tn
-				&& !tn.LoadedAssembly.HasLoadError;
+				&& tn.LoadedAssembly.IsLoadedAsValidAssembly;
 		}
 
 		internal static void GeneratePdbForAssembly(LoadedAssembly assembly)

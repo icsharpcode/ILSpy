@@ -234,8 +234,24 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
+		/// <summary>
+		/// Gets whether loading finished for this file (either successfully or unsuccessfully).
+		/// </summary>
 		public bool IsLoaded => loadingTask.IsCompleted;
 
+		/// <summary>
+		/// Gets whether this file was loaded successfully as an assembly (not as a bundle).
+		/// </summary>
+		public bool IsLoadedAsValidAssembly {
+			get {
+				return loadingTask.Status == TaskStatus.RanToCompletion && loadingTask.Result.PEFile != null;
+			}
+		}
+
+		/// <summary>
+		/// Gets whether loading failed (file does not exist, unknown file format).
+		/// Returns false for valid assemblies and valid bundles.
+		/// </summary>
 		public bool HasLoadError => loadingTask.IsFaulted;
 
 		public bool IsAutoLoaded { get; set; }

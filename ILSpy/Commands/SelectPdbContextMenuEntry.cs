@@ -56,7 +56,8 @@ namespace ICSharpCode.ILSpy
 		public bool IsVisible(TextViewContext context)
 		{
 			return context.SelectedTreeNodes?.Length == 1
-				&& context.SelectedTreeNodes?.FirstOrDefault() is AssemblyTreeNode;
+				&& context.SelectedTreeNodes?.FirstOrDefault() is AssemblyTreeNode asm
+				&& asm.LoadedAssembly.IsLoadedAsValidAssembly;
 		}
 	}
 }

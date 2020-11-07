@@ -338,6 +338,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool Save(TabPageModel tabPage)
 		{
+			if (!LoadedAssembly.IsLoadedAsValidAssembly)
+				return false;
 			Language language = this.Language;
 			if (string.IsNullOrEmpty(language.ProjectFileExtension))
 				return false;
@@ -445,7 +447,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (context.SelectedTreeNodes == null)
 				return false;
-			return context.SelectedTreeNodes.All(n => n is AssemblyTreeNode);
+			return context.SelectedTreeNodes.All(n => n is AssemblyTreeNode asm && asm.LoadedAssembly.IsLoadedAsValidAssembly);
 		}
 
 		public bool IsEnabled(TextViewContext context)
