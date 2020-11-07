@@ -49,8 +49,8 @@ jobs:
 
     - name: Install dotnet-format
       run: dotnet tool install dotnet-format --global --version 4.1.131201
-    - name: Pipelines PS
-      run: pwsh .\BuildTools\pipelines-install.ps1
+    - name: Get Version PS
+      run: pwsh .\BuildTools\ghactions-install.ps1
 
     - name: Restore the application
       run: msbuild ${{ matrix.solution }} /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
