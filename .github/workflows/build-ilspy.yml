@@ -69,7 +69,7 @@ jobs:
     
     - name: Zip ILSpy
       if: matrix.channel == 'zip' && matrix.configuration == 'release'
-      run: 7z a -tzip $env:StagingDirectory\ILSpy.zip .\ILSpy\bin\${{ matrix.configuration }}\net472\*
+      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net472\*
       
     # https://github.com/actions/upload-artifact
     - name: Upload store build artifacts
@@ -98,4 +98,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ILSpy
-        path: ${{ env.StagingDirectory }}\ILSpy.zip
+        path: ${{ env.StagingDirectory }}\ILSpy_binaries.zip
