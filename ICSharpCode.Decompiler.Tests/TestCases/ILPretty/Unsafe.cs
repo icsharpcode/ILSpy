@@ -83,6 +83,21 @@ internal sealed class ExtraUnsafeTests
 			Console.WriteLine("Hello World!");
 		}
 	}
+
+	private unsafe static void Issue2189()
+	{
+		fixed (int* ptr = &Unsafe.AsRef<int>((int*)Unsafe.AsPointer(ref SomeStruct.instance.mtfhist)))
+		{
+			int num = *ptr;
+		}
+	}
+	private unsafe static void PinUnmanagedPtr(int* A_0)
+	{
+		fixed (int* ptr = &Unsafe.AsRef<int>(A_0))
+		{
+			int num = *ptr;
+		}
+	}
 }
 
 namespace System.Runtime.CompilerServices

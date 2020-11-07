@@ -609,7 +609,6 @@ lbl:
 	// Code Size: 24 (0x18) bytes
 	// LocalVarSig Token: 0x11000001 RID: 1
 	.maxstack 2
-	.entrypoint
 	.locals init (
 		[0] int32 pinned
 	)
@@ -632,5 +631,54 @@ lbl:
 
 	/* 0x0000027B 2A           */ IL_0017: ret
 } // end of method Issue2148
+
+
+.method private hidebysig static 
+	void Issue2189 () cil managed 
+{
+	.maxstack 2
+	.locals init (
+    [0] int32,
+		[1] int32& pinned
+	)
+
+	IL_0000: ldsflda valuetype [CORE_ASSEMBLY]SomeStruct [CORE_ASSEMBLY]SomeStruct::'instance'
+	IL_0005: ldflda uint32 [CORE_ASSEMBLY]SomeStruct::mtfhist
+	IL_000a: conv.u
+	IL_000b: stloc.1
+
+  ldloc.1
+  ldind.i4
+  stloc.0
+
+	IL_0185: ldc.i4.0
+	IL_0186: conv.i
+	IL_0187: stloc.1
+	IL_0188: ret
+
+} // end of method Issue2189
+
+.method private hidebysig static 
+	void PinUnmanagedPtr (int32*) cil managed 
+{
+	.maxstack 2
+	.locals init (
+    [0] int32,
+		[1] int32& pinned
+	)
+
+	ldarg.0
+	stloc.1
+
+  ldloc.1
+  ldind.i4
+  stloc.0
+
+	ldc.i4.0
+	conv.i
+	stloc.1
+	ret
+
+} // end of method Issue2189
 
 }

@@ -1118,10 +1118,46 @@ namespace ICSharpCode.Decompiler.CSharp
 							.WithRR(new ResolveResult(inst.Variable.Type));
 					}
 				}
+				if (initExpr.GetResolveResult()?.Type.Kind == TypeKind.Pointer
+					&& !IsAddressOfMoveableVar(initExpr)
+					&& !IsFixedSizeBuffer(initExpr)
+					&& refType is ByReferenceType brt)
+				{
+					// C# doesn't allow pinning an already-unmanaged pointer
+					//   fixed (int* ptr = existing_ptr) {} -> invalid
+					//   fixed (int* ptr = &existing_ptr->field) {} -> invalid
+					//   fixed (int* ptr = &local_var) {} -> invalid
+					// We work around this by instead doing:
+					//   fixed (int* ptr = &Unsafe.AsRef<int>(existing_ptr))
+					var asRefCall = exprBuilder.CallUnsafeIntrinsic(
+						name: "AsRef",
+						arguments: new Expression[] { initExpr },
+						returnType: brt.ElementType,
+						typeArguments: new IType[] { brt.ElementType }
+					);
+					initExpr = new UnaryOperatorExpression(UnaryOperatorType.AddressOf, asRefCall)
+							.WithRR(new ResolveResult(inst.Variable.Type));
+				}
 			}
 			fixedStmt.Variables.Add(new VariableInitializer(inst.Variable.Name, initExpr).WithILVariable(inst.Variable));
 			fixedStmt.EmbeddedStatement = Convert(inst.Body);
 			return fixedStmt.WithILInstruction(inst);
+		}
+
+		private static bool IsAddressOfMoveableVar(Expression initExpr)
+		{
+			if (initExpr is UnaryOperatorExpression { Operator: UnaryOperatorType.AddressOf } uoe)
+			{
+				var inst = uoe.Expression.Annotation<ILInstruction>();
+				return !(inst != null && PointerArithmeticOffset.IsFixedVariable(inst));
+			}
+			return false;
+		}
+
+		private static bool IsFixedSizeBuffer(Expression initExpr)
+		{
+			var mrr = initExpr.GetResolveResult() as MemberResolveResult;
+			return mrr?.Member is IField f && CSharpDecompiler.IsFixedField(f, out _, out _);
 		}
 
 		protected internal override TranslatedStatement VisitBlock(Block block)
