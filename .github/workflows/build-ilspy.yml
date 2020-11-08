@@ -38,6 +38,7 @@ jobs:
       with:
         submodules: true
         fetch-depth: 0
+
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
@@ -53,8 +54,13 @@ jobs:
 
     - name: Install dotnet-format
       run: dotnet tool install dotnet-format --global --version 4.1.131201
+
     - name: Get Version PS
-      run: pwsh .\BuildTools\ghactions-install.ps1
+      id: version
+      run: |
+        pwsh .\BuildTools\ghactions-install.ps1
+        echo ::set-output name=ilspy_version::${ILSPY_VERSION_NUMBER}
+        echo "${{ steps.version.outputs.ilspy_version }}"
 
     - name: Restore the application
       run: msbuild ${{ matrix.solution }} /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
@@ -104,7 +110,7 @@ jobs:
       if: matrix.channel == 'zip' && matrix.configuration == 'release'
       uses: actions/upload-artifact@v2
       with:
-        name: ILSpy ${{ env.ILSPY_VERSION_NUMBER }}
+        name: ILSpy ${{ steps.version.outputs.ilspy_version }}
         path: ${{ env.StagingDirectory }}\ILSpy_binaries.zip
 
     - name: Push to Github Packages
