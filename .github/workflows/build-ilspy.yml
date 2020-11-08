@@ -42,6 +42,10 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '3.1.x'
+        source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
       with:
@@ -102,3 +106,9 @@ jobs:
       with:
         name: ILSpy ${{ env.ILSPY_VERSION_NUMBER }}
         path: ${{ env.StagingDirectory }}\ILSpy_binaries.zip
+
+    - name: Push to Github Packages
+      if: github.ref == 'refs/heads/master' && success()
+      run: dotnet nuget push ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg --no-symbols --skip-duplicate
+      env:
+        NUGET_AUTH_TOKEN: ${{ github.token }}
