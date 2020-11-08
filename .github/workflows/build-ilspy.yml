@@ -60,7 +60,6 @@ jobs:
       run: |
         pwsh .\BuildTools\ghactions-install.ps1
         echo "::set-output name=ilspy_version::%ILSPY_VERSION_NUMBER%"
-        echo "${{ steps.version.outputs.ilspy_version }}"
 
     - name: Restore the application
       run: msbuild ${{ matrix.solution }} /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
@@ -71,21 +70,25 @@ jobs:
         ReleaseChannel: ${{ matrix.channel }}
 
     - name: Execute unit tests
-      run: dotnet test ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net472\ICSharpCode.Decompiler.Tests.exe ILSpy.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.Tests.exe ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.BamlDecompiler.Tests.exe
-      
-    - name: Tab check
+      run: dotnet test $env:Tests1 $env:Tests2 $env:Tests3
+      env:
+        Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net472\ICSharpCode.Decompiler.Tests.exe
+        Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.Tests.exe
+        Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.BamlDecompiler.Tests.exe
+
+    - name: Style - tab check
       run: python BuildTools\tidy.py
 
-    - name: dotnet-format check
+    - name: Style - dotnet-format check
       run: dotnet-format --check --verbosity diagnostic ILSpy.sln
     
-    - name: Zip ILSpy
+    - name: Zip ILSpy Release
       if: matrix.channel == 'zip' && matrix.configuration == 'release'
       # run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net472\*
       run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net472\*.dll .\ILSpy\bin\${{ matrix.configuration }}\net472\*.exe .\ILSpy\bin\${{ matrix.configuration }}\net472\*.config .\ILSpy\bin\${{ matrix.configuration }}\net472\*\ILSpy.resources.dll .\ILSpy\bin\${{ matrix.configuration }}\net472\*\ILSpy.ReadyToRun.Plugin.resources.dll
       
     # https://github.com/actions/upload-artifact
-    - name: Upload store build artifacts
+    - name: Upload Store build artifacts
       if: matrix.channel == 'store'
       uses: actions/upload-artifact@v2
       with:
