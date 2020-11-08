@@ -55,11 +55,12 @@ jobs:
     - name: Install dotnet-format
       run: dotnet tool install dotnet-format --global --version 4.1.131201
 
-    - name: Get Version PS
+    - name: Get Version
       id: version
+      shell: pwsh
       run: |
-        pwsh .\BuildTools\ghactions-install.ps1
-        Write-Output "::set-output name=ilspy_version::$env:ILSPY_VERSION_NUMBER"
+        .\BuildTools\ghactions-install.ps1
+        Get-ChildItem Env: | Where-Object {$_.Name -Match "^ILSPY_"} | %{ echo "::set-output name=$($_.Name)::$($_.Value)" }
 
     - name: Restore the application
       run: msbuild ${{ matrix.solution }} /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
@@ -113,7 +114,7 @@ jobs:
       if: matrix.channel == 'zip' && matrix.configuration == 'release'
       uses: actions/upload-artifact@v2
       with:
-        name: ILSpy ${{ steps.version.outputs.ilspy_version }}
+        name: ILSpy ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }}
         path: ${{ env.StagingDirectory }}\ILSpy_binaries.zip
 
     - name: Push to Github Packages
