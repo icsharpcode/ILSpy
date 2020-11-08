@@ -57,6 +57,8 @@ jobs:
 
     - name: Build
       run: msbuild ${{ matrix.solution }} /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /p:AppxPackageDir="${{ github.workspace }}\${{ env.StagingDirectory }}\${{ matrix.channel }}\" 
+      env:
+        ReleaseChannel: ${{ env.channel }}
 
     - name: Execute unit tests
       run: dotnet test ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net472\ICSharpCode.Decompiler.Tests.exe ILSpy.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.Tests.exe ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.BamlDecompiler.Tests.exe
