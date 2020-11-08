@@ -59,7 +59,7 @@ jobs:
       id: version
       run: |
         pwsh .\BuildTools\ghactions-install.ps1
-        echo "::set-output name=ilspy_version::%ILSPY_VERSION_NUMBER%"
+        Write-Output "::set-output name=ilspy_version::$env:ILSPY_VERSION_NUMBER"
 
     - name: Restore the application
       run: msbuild ${{ matrix.solution }} /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
