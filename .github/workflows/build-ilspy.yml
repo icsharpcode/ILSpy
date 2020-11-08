@@ -59,7 +59,7 @@ jobs:
       id: version
       run: |
         pwsh .\BuildTools\ghactions-install.ps1
-        echo ::set-output name=ilspy_version::${ILSPY_VERSION_NUMBER}
+        echo "::set-output name=ilspy_version::%ILSPY_VERSION_NUMBER%"
         echo "${{ steps.version.outputs.ilspy_version }}"
 
     - name: Restore the application
