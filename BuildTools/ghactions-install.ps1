@@ -27,23 +27,20 @@ Write-Host "GITHUB_REF: '$env:GITHUB_REF'";
 if ($env:GITHUB_REF -match $masterBranches) {
 	$branch = "";
 	$suffix = "";
+} elseif ($env:GITHUB_REF -match '^refs/pull/(\d+)/merge$') {
+	$branch = "";
+	$suffix = "-pr" + $Matches[1];
+} elseif ($env:GITHUB_REF -match '^refs/heads/(.+)$') {
+	$branch = "-" + $Matches[1];
+	$suffix = "";
 } else {
-	if ($env:GITHUB_REF -match '^refs/pull/(\d+)/merge$') {
-		$branch = "";
-		$suffix = "-pr" + $Matches[1];
-	} else {
-		if ($env:GITHUB_REF -match '^refs/heads/(.+)$') {
-			$branch = "-" + $Matches[1];
-			$suffix = "";
-		} else {
-			$branch = "";
-			$suffix = "";
-		}
-	}
+	$branch = "";
+	$suffix = "";
 }
 
 $revision = [Int32]::Parse((git rev-list --count "$baseCommit..HEAD")) + $baseCommitRev;
 
 $newVersion="$major.$minor.$build.$revision";
 $env:ILSPY_VERSION_NUMBER="$newVersion$branch$versionName$suffix";
+$env:ILSPY_VERSION_NUMBER | Out-File "ILSPY_VERSION"
 Write-Host "new version: $newVersion$branch$versionName$suffix";
