@@ -1168,6 +1168,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// e.g. DelegateDeclaration
 					return entityDecl;
 				}
+				bool isRecord = settings.RecordClasses && typeDef.IsRecord;
 				foreach (var type in typeDef.NestedTypes)
 				{
 					if (!type.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, type.MetadataToken, settings))
@@ -1205,6 +1206,31 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				foreach (var method in typeDef.Methods)
 				{
+					if (isRecord)
+					{
+						// Some members in records are always compiler-generated and lead to a
+						// "duplicate definition" error if we emit the generated code.
+						if ((method.Name == "op_Equality" || method.Name == "op_Inequality")
+							&& method.Parameters.Count == 2
+							&& method.Parameters.All(p => p.Type.GetDefinition() == typeDef))
+						{
+							// Don't emit comparison operators into C# record definition
+							// Note: user can declare additional operator== as long as they have
+							// different parameter types.
+							continue;
+						}
+						if (method.Name == "Equals" && method.Parameters.Count == 1 && method.Parameters[0].Type.IsKnownType(KnownTypeCode.Object))
+						{
+							// override bool Equals(object? obj)
+							// Note: the "virtual bool Equals(R? other)" overload can be customized
+							continue;
+						}
+						if (method.Name == "<Clone>$" && method.Parameters.Count == 0)
+						{
+							// Method name cannot be expressed in C#
+							continue;
+						}
+					}
 					if (!method.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, method.MetadataToken, settings))
 					{
 						var memberDecl = DoDecompile(method, decompileRun, decompilationContext.WithCurrentMember(method));
