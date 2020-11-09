@@ -135,12 +135,13 @@ namespace ICSharpCode.Decompiler
 				initAccessors = false;
 				functionPointers = false;
 				forEachWithGetEnumeratorExtension = false;
+				recordClasses = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension)
+			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension || recordClasses)
 				return CSharp.LanguageVersion.Preview;
 			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement
 				|| staticLocalFunctions || ranges || switchExpressions)
@@ -201,6 +202,24 @@ namespace ICSharpCode.Decompiler
 				if (initAccessors != value)
 				{
 					initAccessors = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool recordClasses = true;
+
+		/// <summary>
+		/// Use C# 9 <c>init;</c> property accessors.
+		/// </summary>
+		[Category("C# 9.0 (experimental)")]
+		[Description("DecompilerSettings.RecordClasses")]
+		public bool RecordClasses {
+			get { return recordClasses; }
+			set {
+				if (recordClasses != value)
+				{
+					recordClasses = value;
 					OnPropertyChanged();
 				}
 			}

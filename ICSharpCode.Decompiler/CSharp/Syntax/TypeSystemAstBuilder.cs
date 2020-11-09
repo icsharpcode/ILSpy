@@ -213,6 +213,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// If disabled, emits "set /*init*/;" instead.
 		/// </summary>
 		public bool SupportInitAccessors { get; set; }
+
+		/// <summary>
+		/// Controls whether C# 9 "record" class types are supported.
+		/// </summary>
+		public bool SupportRecordClasses { get; set; }
 		#endregion
 
 		#region Convert Type
@@ -1744,6 +1749,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					}
 				default:
 					classType = ClassType.Class;
+					if (SupportRecordClasses && typeDefinition.IsRecord)
+					{
+						classType = ClassType.RecordClass;
+					}
 					break;
 			}
 

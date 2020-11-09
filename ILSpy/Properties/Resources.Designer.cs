@@ -1065,6 +1065,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Records.
+        /// </summary>
+        public static string DecompilerSettings_RecordClasses {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.RecordClasses", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Remove dead and side effect free code (use with caution!).
         /// </summary>
         public static string DecompilerSettings_RemoveDeadAndSideEffectFreeCodeUseWithCaution {

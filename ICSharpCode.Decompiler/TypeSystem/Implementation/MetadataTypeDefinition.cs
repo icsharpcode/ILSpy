@@ -24,11 +24,8 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
 
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -736,6 +733,39 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					return true;
 			}
 			return false;
+		}
+		#endregion
+
+		#region IsRecord
+		byte isRecord = ThreeState.Unknown;
+
+		public bool IsRecord {
+			get {
+				if (isRecord == ThreeState.Unknown)
+				{
+					isRecord = ThreeState.From(ComputeIsRecord());
+				}
+				return isRecord == ThreeState.True;
+			}
+		}
+
+		private bool ComputeIsRecord()
+		{
+			if (Kind != TypeKind.Class)
+				return false;
+			var metadata = module.metadata;
+			var typeDef = metadata.GetTypeDefinition(handle);
+			bool opEquality = false;
+			bool opInequality = false;
+			bool clone = false;
+			foreach (var methodHandle in typeDef.GetMethods())
+			{
+				var method = metadata.GetMethodDefinition(methodHandle);
+				opEquality |= metadata.StringComparer.Equals(method.Name, "op_Equality");
+				opInequality |= metadata.StringComparer.Equals(method.Name, "op_Inequality");
+				clone |= metadata.StringComparer.Equals(method.Name, "<Clone>$");
+			}
+			return opEquality & opInequality & clone;
 		}
 		#endregion
 	}

@@ -18,14 +18,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -415,6 +412,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			typeSystemAstBuilder.AddResolveResultAnnotations = true;
 			typeSystemAstBuilder.UseNullableSpecifierForValueTypes = settings.LiftNullables;
 			typeSystemAstBuilder.SupportInitAccessors = settings.InitAccessors;
+			typeSystemAstBuilder.SupportRecordClasses = settings.RecordClasses;
 			return typeSystemAstBuilder;
 		}
 

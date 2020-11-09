@@ -80,6 +80,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						case ClassType.Enum:
 							writer.WriteKeyword(Roles.EnumKeyword, "enum");
 							break;
+						case ClassType.RecordClass:
+							writer.WriteKeyword(Roles.RecordKeyword, "record");
+							break;
 						default:
 							throw new Exception("Invalid value for ClassType");
 					}

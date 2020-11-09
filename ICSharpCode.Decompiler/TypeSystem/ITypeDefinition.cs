@@ -73,5 +73,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// This serves as default nullability for members of the type that do not have a [Nullable] attribute.
 		/// </summary>
 		Nullability NullableContext { get; }
+
+		/// <summary>
+		/// Gets whether the type has the necessary members to be considered a C# 9 record type.
+		/// </summary>
+		bool IsRecord { get; }
 	}
 }

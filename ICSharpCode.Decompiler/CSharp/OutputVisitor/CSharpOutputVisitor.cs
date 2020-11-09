@@ -1480,6 +1480,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					WriteKeyword(Roles.StructKeyword);
 					braceStyle = policy.StructBraceStyle;
 					break;
+				case ClassType.RecordClass:
+					WriteKeyword(Roles.RecordKeyword);
+					braceStyle = policy.ClassBraceStyle;
+					break;
 				default:
 					WriteKeyword(Roles.ClassKeyword);
 					braceStyle = policy.ClassBraceStyle;
