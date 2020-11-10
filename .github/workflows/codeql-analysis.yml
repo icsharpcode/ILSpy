@@ -39,7 +39,7 @@ jobs:
     - name: Install dependencies
       run: dotnet restore Frontends.sln
     - name: Build
-      run: dotnet build Frontends.sln --configuration Debug --no-restore
+      run: dotnet build Frontends.sln --configuration Release --no-restore
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
