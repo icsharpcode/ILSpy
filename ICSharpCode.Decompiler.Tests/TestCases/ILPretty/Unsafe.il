@@ -77,21 +77,21 @@
   .method public hidebysig static !!T ReadUnaligned<T>(void* source) cil managed aggressiveinlining
   {
         .maxstack 1
-        ldarg.0        
+        ldarg.0
         unaligned. 0x1
         ldobj !!T
         ret
   } // end of method Unsafe::ReadUnaligned
-  
+
   .method public hidebysig static !!T ReadUnaligned<T>(uint8& source) cil managed aggressiveinlining
   {
         .maxstack 1
-        ldarg.0        
+        ldarg.0
         unaligned. 0x1
         ldobj !!T
         ret
   } // end of method Unsafe::ReadUnaligned
-  
+
   .method public hidebysig static void Write<T>(void* destination,
                                                  !!T 'value') cil managed aggressiveinlining
   {
@@ -118,7 +118,7 @@
   {
         .maxstack 2
         ldarg.0
-        ldarg.1        
+        ldarg.1
         unaligned. 0x01
         stobj !!T
         ret
@@ -153,6 +153,12 @@
         conv.u
         ret
   } // end of method Unsafe::AsPointer
+
+  .method public hidebysig static void SkipInit<T> ([out] !!T& 'value') cil managed aggressiveinlining
+  {
+        .maxstack 0
+        ret
+  } // end of method Unsafe::SkipInit
 
   .method public hidebysig static int32 SizeOf<T>() cil managed aggressiveinlining
   {
@@ -255,7 +261,7 @@
   .method public hidebysig static !!T& AsRef<T>(void* source) cil managed aggressiveinlining
   {
 // For .NET Core the roundtrip via a local is no longer needed see:
-// https://github.com/dotnet/coreclr/issues/13341
+// https://github.com/dotnet/runtime/issues/8730
 // and
 // https://github.com/dotnet/coreclr/pull/11218
 #ifdef netcoreapp
@@ -336,7 +342,27 @@
         ret
   } // end of method Unsafe::Add
 
+  .method public hidebysig static !!T& Add<T>(!!T& source, native uint elementOffset) cil managed aggressiveinlining
+  {
+        .maxstack 3
+        ldarg.0
+        ldarg.1
+        sizeof !!T
+        mul
+        add
+        ret
+  } // end of method Unsafe::Add
+
   .method public hidebysig static !!T& AddByteOffset<T>(!!T& source, native int byteOffset) cil managed aggressiveinlining
+  {
+        .maxstack 2
+        ldarg.0
+        ldarg.1
+        add
+        ret
+  } // end of method Unsafe::AddByteOffset
+
+  .method public hidebysig static !!T& AddByteOffset<T>(!!T& source, native uint byteOffset) cil managed aggressiveinlining
   {
         .maxstack 2
         ldarg.0
@@ -380,7 +406,27 @@
         ret
   } // end of method Unsafe::Subtract
 
+  .method public hidebysig static !!T& Subtract<T>(!!T& source, native uint elementOffset) cil managed aggressiveinlining
+  {
+        .maxstack 3
+        ldarg.0
+        ldarg.1
+        sizeof !!T
+        mul
+        sub
+        ret
+  } // end of method Unsafe::Subtract
+
   .method public hidebysig static !!T& SubtractByteOffset<T>(!!T& source, native int byteOffset) cil managed aggressiveinlining
+  {
+        .maxstack 2
+        ldarg.0
+        ldarg.1
+        sub
+        ret
+  } // end of method Unsafe::SubtractByteOffset
+
+  .method public hidebysig static !!T& SubtractByteOffset<T>(!!T& source, native uint byteOffset) cil managed aggressiveinlining
   {
         .maxstack 2
         ldarg.0
@@ -404,7 +450,7 @@
         ldarg.0
         ldarg.1
         ceq
-        ret 
+        ret
   } // end of method Unsafe::AreSame
 
   .method public hidebysig static bool IsAddressGreaterThan<T>(!!T& left, !!T& right) cil managed aggressiveinlining
@@ -413,7 +459,7 @@
         ldarg.0
         ldarg.1
         cgt.un
-        ret 
+        ret
   } // end of method Unsafe::IsAddressGreaterThan
 
   .method public hidebysig static bool IsAddressLessThan<T>(!!T& left, !!T& right) cil managed aggressiveinlining
@@ -422,8 +468,26 @@
         ldarg.0
         ldarg.1
         clt.un
-        ret 
+        ret
   } // end of method Unsafe::IsAddressLessThan
+
+  .method public hidebysig static bool IsNullRef<T>(!!T& source) cil managed aggressiveinlining
+  {
+        .maxstack 2
+        ldarg.0
+        ldc.i4.0
+        conv.u
+        ceq
+        ret
+  } // end of method Unsafe::IsNullRef
+
+  .method public hidebysig static !!T& NullRef<T>() cil managed aggressiveinlining
+  {
+        .maxstack 1
+        ldc.i4.0
+        conv.u
+        ret
+  } // end of method Unsafe::NullRef
 
 } // end of class System.Runtime.CompilerServices.Unsafe
 
