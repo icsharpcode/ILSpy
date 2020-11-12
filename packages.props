@@ -5,10 +5,10 @@
    -->
   <PropertyGroup>
     <HumanizerVersion>2.2.0</HumanizerVersion>
-    <SystemCollectionsImmutableVersion>5.0.0-rc.2.20475.5</SystemCollectionsImmutableVersion>
-    <SystemReflectionMetadataVersion>5.0.0-rc.2.20475.5</SystemReflectionMetadataVersion>
-    <SystemCompilerServicesUnsafeVersion>4.7.1</SystemCompilerServicesUnsafeVersion>
-    <ILAsmVersion>5.0.0-rc.2.20475.5</ILAsmVersion>  <!-- Microsoft.NETCore.ILAsm -->
+    <SystemCollectionsImmutableVersion>5.0.0</SystemCollectionsImmutableVersion>
+    <SystemReflectionMetadataVersion>5.0.0</SystemReflectionMetadataVersion>
+    <SystemCompilerServicesUnsafeVersion>5.0.0</SystemCompilerServicesUnsafeVersion>
+    <ILAsmVersion>5.0.0</ILAsmVersion>  <!-- Microsoft.NETCore.ILAsm -->
     <RoslynVersion>3.8.0-5.final</RoslynVersion>     <!-- Microsoft.CodeAnalysis.* -->
     <MonoCecilVersion>0.10.3</MonoCecilVersion>
     <AvalonEditVersion>6.1.0-preview1</AvalonEditVersion>
