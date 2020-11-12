@@ -389,19 +389,19 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool AreSame<T>(ref T left, ref T right)
 		{
-			return (ref left) == (ref right);
+			return Unsafe.AreSame(ref left, ref right);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool IsAddressGreaterThan<T>(ref T left, ref T right)
 		{
-			return (ref left) > (ref right);
+			return Unsafe.IsAddressGreaterThan(ref left, ref right);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool IsAddressLessThan<T>(ref T left, ref T right)
 		{
-			return (ref left) < (ref right);
+			return Unsafe.IsAddressLessThan(ref left, ref right);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
