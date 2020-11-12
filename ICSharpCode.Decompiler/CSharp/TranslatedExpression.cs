@@ -330,7 +330,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			  // Everything else can be worked around by casting via long.
 				if (!(targetType.IsKnownType(KnownTypeCode.Int64) || targetType.Kind == TypeKind.NInt
 					|| (checkForOverflow && targetType.IsKnownType(KnownTypeCode.Int32))
-					|| targetType.Kind.IsAnyPointer()))
+					|| targetType.Kind.IsAnyPointer() || targetType.Kind == TypeKind.ByReference))
 				{
 					var convertVia = expressionBuilder.settings.NativeIntegers ? SpecialType.NInt : compilation.FindType(KnownTypeCode.Int64);
 					return this.ConvertTo(convertVia, expressionBuilder, checkForOverflow)
@@ -344,7 +344,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			  // Everything else can be worked around by casting via ulong.
 				if (!(targetType.IsKnownType(KnownTypeCode.UInt64) || targetType.Kind == TypeKind.NUInt
 					|| (checkForOverflow && targetType.IsKnownType(KnownTypeCode.UInt32))
-					|| targetType.Kind.IsAnyPointer()))
+					|| targetType.Kind.IsAnyPointer() || targetType.Kind == TypeKind.ByReference))
 				{
 					var convertVia = expressionBuilder.settings.NativeIntegers ? SpecialType.NUInt : compilation.FindType(KnownTypeCode.UInt64);
 					return this.ConvertTo(convertVia, expressionBuilder, checkForOverflow)

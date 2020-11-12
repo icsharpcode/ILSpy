@@ -2448,7 +2448,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else
 				{
-					var translatedTarget = Translate(target, memberDeclaringType);
+					IType targetTypeHint = memberDeclaringType;
+					if (CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType) == StackType.Ref)
+					{
+						if (target.ResultType == StackType.Ref)
+						{
+							targetTypeHint = new ByReferenceType(targetTypeHint);
+						}
+						else
+						{
+							targetTypeHint = new PointerType(targetTypeHint);
+						}
+					}
+					var translatedTarget = Translate(target, targetTypeHint);
 					if (CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType) == StackType.Ref)
 					{
 						// When accessing members on value types, ensure we use a reference of the correct type,
@@ -2541,6 +2553,14 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitLdObj(LdObj inst, TranslationContext context)
 		{
+			IType loadType = inst.Type;
+			bool loadTypeUsedInGeneric = inst.UnalignedPrefix != 0 || inst.Target.ResultType == StackType.Ref;
+			if (context.TypeHint.Kind != TypeKind.Unknown
+				&& TypeUtils.IsCompatibleTypeForMemoryAccess(context.TypeHint, loadType)
+				&& !(loadTypeUsedInGeneric && context.TypeHint.Kind.IsAnyPointer()))
+			{
+				loadType = context.TypeHint;
+			}
 			if (inst.UnalignedPrefix != 0)
 			{
 				// Use one of: Unsafe.ReadUnaligned<T>(void*)
@@ -2557,12 +2577,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				return CallUnsafeIntrinsic(
 					name: "ReadUnaligned",
 					arguments: new Expression[] { pointer },
-					returnType: inst.Type,
+					returnType: loadType,
 					inst: inst,
-					typeArguments: new IType[] { inst.Type }
+					typeArguments: new IType[] { loadType }
 				);
 			}
-			var result = LdObj(inst.Target, inst.Type);
+			var result = LdObj(inst.Target, loadType);
 			//if (target.Type.IsSmallIntegerType() && loadType.IsSmallIntegerType() && target.Type.GetSign() != loadType.GetSign())
 			//	return result.ConvertTo(loadType, this);
 			return result.WithILInstruction(inst);
@@ -2570,7 +2590,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		ExpressionWithResolveResult LdObj(ILInstruction address, IType loadType)
 		{
-			var target = Translate(address);
+			IType addressTypeHint = address.ResultType == StackType.Ref ? new ByReferenceType(loadType) : (IType)new PointerType(loadType);
+			var target = Translate(address, typeHint: addressTypeHint);
 			if (TypeUtils.IsCompatiblePointerTypeForMemoryAccess(target.Type, loadType))
 			{
 				ExpressionWithResolveResult result;
@@ -2637,7 +2658,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				return UnalignedStObj(inst);
 			}
 
-			var pointer = Translate(inst.Target);
+			IType pointerTypeHint = inst.Target.ResultType == StackType.Ref ? new ByReferenceType(inst.Type) : (IType)new PointerType(inst.Type);
+			var pointer = Translate(inst.Target, typeHint: pointerTypeHint);
 			TranslatedExpression target;
 			TranslatedExpression value = default;
 			// Cast pointer type if necessary:
