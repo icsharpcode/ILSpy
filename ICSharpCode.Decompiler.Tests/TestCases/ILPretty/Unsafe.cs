@@ -98,6 +98,59 @@ internal sealed class ExtraUnsafeTests
 			int num = *ptr;
 		}
 	}
+	private static ref float AddressTypeMismatch(ref int A_0)
+	{
+		return ref Unsafe.As<int, float>(ref A_0);
+	}
+	private unsafe static ref float AddressTypeMismatch(int* A_0)
+	{
+		return ref *(float*)A_0;
+	}
+	private static float LoadWithTypeMismatch(ref int A_0)
+	{
+		return Unsafe.As<int, float>(ref A_0);
+	}
+	private unsafe static float LoadWithTypeMismatch(int* A_0)
+	{
+		return *(float*)A_0;
+	}
+	private static void StoreWithTypeMismatch(ref int A_0)
+	{
+		Unsafe.As<int, float>(ref A_0) = 1f;
+	}
+	private unsafe static void StoreWithTypeMismatch(int* A_0)
+	{
+		*(float*)A_0 = 1f;
+	}
+	private static ref float AddressOfFieldTypeMismatch(ref int A_0)
+	{
+		return ref Unsafe.As<int, SomeStruct>(ref A_0).float_field;
+	}
+	private unsafe static ref float AddressOfFieldTypeMismatch(int* A_0)
+	{
+		return ref ((SomeStruct*)A_0)->float_field;
+	}
+	private static float LoadOfFieldTypeMismatch(ref int A_0)
+	{
+		return Unsafe.As<int, SomeStruct>(ref A_0).float_field;
+	}
+	private unsafe static float LoadOfFieldTypeMismatch(int* A_0)
+	{
+		return ((SomeStruct*)A_0)->float_field;
+	}
+	private static void StoreOfFieldTypeMismatch(ref int A_0)
+	{
+		Unsafe.As<int, SomeStruct>(ref A_0).float_field = 1f;
+	}
+	private unsafe static void StoreOfFieldTypeMismatch(int* A_0)
+	{
+		((SomeStruct*)A_0)->float_field = 1f;
+	}
+}
+internal struct SomeStruct
+{
+	public int int_field;
+	public float float_field;
 }
 
 namespace System.Runtime.CompilerServices
@@ -113,13 +166,13 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static T ReadUnaligned<T>(void* source)
 		{
-			return *(T*)source;
+			return Unsafe.ReadUnaligned<T>(source);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static T ReadUnaligned<T>(ref byte source)
+		public static T ReadUnaligned<T>(ref byte source)
 		{
-			return *(T*)(&source);
+			return Unsafe.ReadUnaligned<T>(ref source);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -131,13 +184,13 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe static void WriteUnaligned<T>(void* destination, T value)
 		{
-			*(T*)destination = value;
+			Unsafe.WriteUnaligned(destination, value);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static void WriteUnaligned<T>(ref byte destination, T value)
+		public static void WriteUnaligned<T>(ref byte destination, T value)
 		{
-			*(T*)(&destination) = value;
+			Unsafe.WriteUnaligned(ref destination, value);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

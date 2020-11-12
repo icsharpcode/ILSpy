@@ -681,4 +681,105 @@ lbl:
 
 } // end of method Issue2189
 
+
+.method private hidebysig static 
+	float32& AddressTypeMismatch (int32&) cil managed
+{
+	ldarg.0
+	ret
 }
+.method private hidebysig static 
+	float32& AddressTypeMismatch (int32*) cil managed
+{
+	ldarg.0
+	ret
+}
+
+.method private hidebysig static 
+	float32 LoadWithTypeMismatch (int32&) cil managed
+{
+	ldarg.0
+	ldind.r4
+	ret
+}
+.method private hidebysig static 
+	float32 LoadWithTypeMismatch (int32*) cil managed
+{
+	ldarg.0
+	ldind.r4
+	ret
+}
+
+.method private hidebysig static 
+	void StoreWithTypeMismatch (int32&) cil managed
+{
+	ldarg.0
+	ldc.r4 1
+  stind.r4
+	ret
+}
+.method private hidebysig static 
+	void StoreWithTypeMismatch (int32*) cil managed
+{
+	ldarg.0
+	ldc.r4 1
+  stind.r4
+	ret
+}
+
+.method private hidebysig static 
+	float32& AddressOfFieldTypeMismatch (int32&) cil managed
+{
+	ldarg.0
+  ldflda float32 SomeStruct::float_field
+	ret
+}
+.method private hidebysig static 
+	float32& AddressOfFieldTypeMismatch (int32*) cil managed
+{
+	ldarg.0
+  ldflda float32 SomeStruct::float_field
+	ret
+}
+
+.method private hidebysig static 
+	float32 LoadOfFieldTypeMismatch (int32&) cil managed
+{
+	ldarg.0
+  ldfld float32 SomeStruct::float_field
+	ret
+}
+.method private hidebysig static 
+	float32 LoadOfFieldTypeMismatch (int32*) cil managed
+{
+	ldarg.0
+  ldfld float32 SomeStruct::float_field
+	ret
+}
+
+.method private hidebysig static 
+	void StoreOfFieldTypeMismatch (int32&) cil managed
+{
+	ldarg.0
+	ldc.r4 1
+  stfld float32 SomeStruct::float_field
+	ret
+}
+.method private hidebysig static 
+	void StoreOfFieldTypeMismatch (int32*) cil managed
+{
+	ldarg.0
+	ldc.r4 1
+  stfld float32 SomeStruct::float_field
+	ret
+}
+
+} // class ExtraUnsafeTests
+
+.class  private sequential ansi sealed beforefieldinit SomeStruct
+	extends [mscorlib]System.ValueType
+{
+	// Fields
+	.field public int32 int_field
+	.field public float32 float_field
+} // end of class SomeStruct
