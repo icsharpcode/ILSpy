@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					var asm = root.ResolveFileName(entry.Name);
 					if (asm != null)
 					{
-						yield return new AssemblyTreeNode(asm);
+						yield return new AssemblyTreeNode(asm, entry);
 					}
 					else
 					{

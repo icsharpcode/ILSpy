@@ -47,17 +47,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		readonly Dictionary<string, NamespaceTreeNode> namespaces = new Dictionary<string, NamespaceTreeNode>();
 		readonly Dictionary<TypeDefinitionHandle, TypeTreeNode> typeDict = new Dictionary<TypeDefinitionHandle, TypeTreeNode>();
 		ICompilation typeSystem;
-		string textOverride;
 
 		public AssemblyTreeNode(LoadedAssembly assembly) : this(assembly, null)
 		{
 		}
 
-		private AssemblyTreeNode(LoadedAssembly assembly, string textOverride)
+		internal AssemblyTreeNode(LoadedAssembly assembly, PackageEntry packageEntry)
 		{
 			this.LoadedAssembly = assembly ?? throw new ArgumentNullException(nameof(assembly));
 			this.LazyLoading = true;
-			this.textOverride = textOverride;
+			this.PackageEntry = packageEntry;
 			Init();
 		}
 
@@ -67,13 +66,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public LoadedAssembly LoadedAssembly { get; }
 
+		/// <summary>
+		/// If this assembly was loaded from a bundle; this property returns the bundle entry that the
+		/// assembly was loaded from.
+		/// </summary>
+		public PackageEntry PackageEntry { get; }
+
 		public override bool IsAutoLoaded {
 			get {
 				return LoadedAssembly.IsAutoLoaded;
 			}
 		}
 
-		public override object Text => textOverride ?? LoadedAssembly.Text;
+		public override object Text => LoadedAssembly.Text;
 
 		public override object Icon {
 			get {
@@ -255,7 +260,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool CanDrag(SharpTreeNode[] nodes)
 		{
 			// prohibit dragging assemblies nested in nuget packages
-			return nodes.All(n => n is AssemblyTreeNode { textOverride: null });
+			return nodes.All(n => n is AssemblyTreeNode { PackageEntry: null });
 		}
 
 		public override void StartDrag(DependencyObject dragSource, SharpTreeNode[] nodes)
@@ -266,7 +271,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool CanDelete()
 		{
 			// prohibit deleting assemblies nested in nuget packages
-			return textOverride == null;
+			return PackageEntry == null;
 		}
 
 		public override void Delete()
