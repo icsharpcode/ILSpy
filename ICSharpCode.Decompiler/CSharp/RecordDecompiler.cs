@@ -69,6 +69,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				case "<Clone>$" when method.Parameters.Count == 0:
 					// Always generated; Method name cannot be expressed in C#
 					return true;
+				case "ToString" when method.Parameters.Count == 0:
+					return IsGeneratedToString(method);
 				default:
 					return false;
 			}
@@ -96,6 +98,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (!(property.IsVirtual || property.IsOverride))
 				return false;
+			if (property.IsSealed)
+				return false;
 			var getter = property.Getter;
 			if (!(getter != null && !property.CanSet))
 				return false;
@@ -109,7 +113,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!attrs[0].AttributeType.IsKnownType(KnownAttribute.CompilerGenerated))
 				return false;
 			var body = DecompileBody(getter);
-			if (!(body?.SingleInstruction() is Leave leave))
+			if (body == null || body.Instructions.Count != 1)
+				return false;
+			if (!(body.Instructions.Single() is Leave leave))
 				return false;
 			// leave IL_0000 (call GetTypeFromHandle(ldtypetoken R))
 			if (!TransformExpressionTrees.MatchGetTypeFromHandle(leave.Value, out IType ty))
@@ -117,7 +123,74 @@ namespace ICSharpCode.Decompiler.CSharp
 			return IsRecordType(ty);
 		}
 
-		BlockContainer DecompileBody(IMethod method)
+		private bool IsGeneratedToString(IMethod method)
+		{
+			Debug.Assert(method.Name == "ToString");
+			if (!method.IsOverride)
+				return false;
+			if (method.IsSealed)
+				return false;
+			if (method.GetAttributes().Any() || method.GetReturnTypeAttributes().Any())
+				return false;
+			var body = DecompileBody(method);
+			if (body == null)
+				return false;
+			// stloc stringBuilder(newobj StringBuilder..ctor())
+			if (!body.Instructions[0].MatchStLoc(out var stringBuilder, out var stringBuilderInit))
+				return false;
+			if (!(stringBuilderInit is NewObj { Arguments: { Count: 0 }, Method: { DeclaringTypeDefinition: { Name: "StringBuilder", Namespace: "System.Text" } } }))
+				return false;
+			// callvirt Append(ldloc stringBuilder, ldstr "R")
+			if (!MatchAppendCallWithValue(body.Instructions[1], recordTypeDef.Name))
+				return false;
+			// callvirt Append(ldloc stringBuilder, ldstr " { ")
+			if (!MatchAppendCallWithValue(body.Instructions[2], " { "))
+				return false;
+			// if (callvirt PrintMembers(ldloc this, ldloc stringBuilder)) { trueInst }
+			if (!body.Instructions[3].MatchIfInstruction(out var condition, out var trueInst))
+				return true;
+			if (!(condition is CallVirt { Method: { Name: "PrintMembers" } } printMembersCall))
+				return false;
+			if (printMembersCall.Arguments.Count != 2)
+				return false;
+			if (!printMembersCall.Arguments[0].MatchLdThis())
+				return false;
+			if (!printMembersCall.Arguments[1].MatchLdLoc(stringBuilder))
+				return false;
+			// trueInst: callvirt Append(ldloc stringBuilder, ldstr " ")
+			if (!MatchAppendCallWithValue(Block.Unwrap(trueInst), " "))
+				return false;
+			// callvirt Append(ldloc stringBuilder, ldstr "}")
+			if (!MatchAppendCallWithValue(body.Instructions[4], "}"))
+				return false;
+			// leave IL_0000 (callvirt ToString(ldloc stringBuilder))
+			if (!(body.Instructions[5] is Leave leave))
+				return false;
+			if (!(leave.Value is CallVirt { Method: { Name: "ToString" } } toStringCall))
+				return false;
+			if (toStringCall.Arguments.Count != 1)
+				return false;
+			return toStringCall.Arguments[0].MatchLdLoc(stringBuilder);
+
+			bool MatchAppendCall(ILInstruction inst, out string val)
+			{
+				val = null;
+				if (!(inst is CallVirt { Method: { Name: "Append" } } call))
+					return false;
+				if (call.Arguments.Count != 2)
+					return false;
+				if (!call.Arguments[0].MatchLdLoc(stringBuilder))
+					return false;
+				return call.Arguments[1].MatchLdStr(out val);
+			}
+
+			bool MatchAppendCallWithValue(ILInstruction inst, string val)
+			{
+				return MatchAppendCall(inst, out string tmp) && tmp == val;
+			}
+		}
+
+		Block DecompileBody(IMethod method)
 		{
 			if (method == null || method.MetadataToken.IsNil)
 				return null;
@@ -134,12 +207,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			var body = typeSystem.MainModule.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
 			var ilReader = new ILReader(typeSystem.MainModule);
 			var il = ilReader.ReadIL(methodDefHandle, body, genericContext, ILFunctionKind.TopLevelFunction, cancellationToken);
-			var settings = new DecompilerSettings(LanguageVersion.CSharp2);
-			il.RunTransforms(CSharpDecompiler.EarlyILTransforms(),
+			var settings = new DecompilerSettings(LanguageVersion.CSharp1);
+			var transforms = CSharpDecompiler.GetILTransforms();
+			// Remove the last couple transforms -- we don't need variable names etc. here
+			int lastBlockTransform = transforms.FindLastIndex(t => t is BlockILTransform);
+			transforms.RemoveRange(lastBlockTransform + 1, transforms.Count - (lastBlockTransform + 1));
+			il.RunTransforms(transforms,
 				new ILTransformContext(il, typeSystem, debugInfo: null, settings) {
 					CancellationToken = cancellationToken
 				});
-			return (BlockContainer)il.Body;
+			if (il.Body is BlockContainer container)
+			{
+				return container.EntryPoint;
+			}
+			else if (il.Body is Block block)
+			{
+				return block;
+			}
+			else
+			{
+				return null;
+			}
 		}
 	}
 }
