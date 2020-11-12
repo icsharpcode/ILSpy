@@ -17,8 +17,8 @@
     <dependencies>
       <group targetFramework=".NETStandard2.0">
         <dependency id="Humanizer.Core" version="2.2.0" />
-        <dependency id="System.Collections.Immutable" version="5.0.0-preview.8.20371.14" />
-        <dependency id="System.Reflection.Metadata" version="5.0.0-preview.8.20371.14" />
+        <dependency id="System.Collections.Immutable" version="5.0.0" />
+        <dependency id="System.Reflection.Metadata" version="5.0.0" />
       </group>
     </dependencies>
   </metadata>
