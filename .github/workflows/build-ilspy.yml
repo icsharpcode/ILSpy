@@ -1,0 +1,128 @@
+name: Build ILSpy
+
+on:
+  push:
+    branches: '**'
+  pull_request:
+    branches: [ master, release/** ]
+
+jobs:
+  Build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - configuration: debug
+            solution: ilspy.sln
+            channel: zip
+          - configuration: release
+            solution: ilspy.sln
+            channel: zip
+          - configuration: release
+            solution: ilspy.withpackage.sln
+            channel: ci
+          - configuration: release
+            solution: ilspy.withpackage.sln
+            channel: store
+    env:
+      BuildPlatform: Any CPU
+      StagingDirectory: buildartifacts 
+
+    steps:
+    - run: mkdir -p $env:StagingDirectory
+      
+    - name: Force git to use crlf, otherwise dotnet-format --check fails
+      run: git config --global core.autocrlf true
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+        fetch-depth: 0
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.x'
+        source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+      with:
+       vs-version: '[16.6,16.9)'
+
+    - name: Install dotnet-format
+      run: dotnet tool install dotnet-format --global --version 4.1.131201
+
+    - name: Get Version
+      id: version
+      shell: pwsh
+      run: |
+        .\BuildTools\ghactions-install.ps1
+        Get-ChildItem Env: | Where-Object {$_.Name -Match "^ILSPY_"} | %{ echo "::set-output name=$($_.Name)::$($_.Value)" }
+
+    - name: Restore the application
+      run: msbuild ${{ matrix.solution }} /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
+
+    - name: Build
+      run: msbuild ${{ matrix.solution }} /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /p:AppxPackageDir="${{ github.workspace }}\${{ env.StagingDirectory }}\${{ matrix.channel }}\" 
+      env:
+        ReleaseChannel: ${{ matrix.channel }}
+
+    - name: Execute unit tests
+      run: dotnet test $env:Tests1 $env:Tests2 $env:Tests3
+      env:
+        Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net472\ICSharpCode.Decompiler.Tests.exe
+        Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.Tests.exe
+        Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net472\ILSpy.BamlDecompiler.Tests.exe
+
+    - name: Style - tab check
+      run: python BuildTools\tidy.py
+
+    - name: Style - dotnet-format check
+      run: dotnet-format --check --verbosity diagnostic ILSpy.sln
+    
+    - name: Zip ILSpy Release
+      if: matrix.channel == 'zip'
+      # run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net472\*
+      run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net472\*.dll .\ILSpy\bin\${{ matrix.configuration }}\net472\*.exe .\ILSpy\bin\${{ matrix.configuration }}\net472\*.config .\ILSpy\bin\${{ matrix.configuration }}\net472\*\ILSpy.resources.dll .\ILSpy\bin\${{ matrix.configuration }}\net472\*\ILSpy.ReadyToRun.Plugin.resources.dll
+      
+    # https://github.com/actions/upload-artifact
+    - name: Upload Store build artifacts
+      if: matrix.channel == 'store'
+      uses: actions/upload-artifact@v2
+      with:
+        name: MSIX Store Package
+        path: ${{ env.StagingDirectory }}\${{ matrix.channel }}\*.*
+        if-no-files-found: error
+
+    - name: Upload VSIX release build artifacts
+      if: matrix.channel == 'zip' && matrix.configuration == 'release'
+      uses: actions/upload-artifact@v2
+      with:
+        name: ILSpy VS Addin ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
+        path: ILSpy.Addin\bin\${{ matrix.configuration }}\net472\*.vsix
+        if-no-files-found: error
+
+    - name: Upload NuGet release build artifacts
+      if: matrix.channel == 'zip' && matrix.configuration == 'release'
+      uses: actions/upload-artifact@v2
+      with:
+        name: ICSharpCode.Decompiler NuGet Package (${{ matrix.configuration }})
+        path: ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg
+        if-no-files-found: error
+
+    - name: Upload zip release build artifacts
+      if: matrix.channel == 'zip'
+      uses: actions/upload-artifact@v2
+      with:
+        name: ILSpy ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
+        path: ${{ env.StagingDirectory }}\ILSpy_binaries.zip
+        if-no-files-found: error
+
+    - name: Push to Github Packages
+      if: github.ref == 'refs/heads/master' && success() && matrix.channel == 'zip' && matrix.configuration == 'release'
+      run: dotnet nuget push ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg --no-symbols --skip-duplicate
+      env:
+        NUGET_AUTH_TOKEN: ${{ github.token }}
