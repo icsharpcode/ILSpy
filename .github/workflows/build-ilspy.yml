@@ -95,13 +95,15 @@ jobs:
       with:
         name: MSIX Store Package
         path: ${{ env.StagingDirectory }}\${{ matrix.channel }}\*.*
+        if-no-files-found: error
 
     - name: Upload VSIX release build artifacts
       if: matrix.channel == 'zip' && matrix.configuration == 'release'
       uses: actions/upload-artifact@v2
       with:
         name: ILSpy VS Addin ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
-        path: ILSpy.Addin\bin\Release\net472\*.vsix
+        path: ILSpy.Addin\bin\${{ matrix.configuration }}\net472\*.vsix
+        if-no-files-found: error
 
     - name: Upload NuGet release build artifacts
       if: matrix.channel == 'zip' && matrix.configuration == 'release'
@@ -109,6 +111,7 @@ jobs:
       with:
         name: ICSharpCode.Decompiler NuGet Package (${{ matrix.configuration }})
         path: ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg
+        if-no-files-found: error
 
     - name: Upload zip release build artifacts
       if: matrix.channel == 'zip'
@@ -116,6 +119,7 @@ jobs:
       with:
         name: ILSpy ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ${{ env.StagingDirectory }}\ILSpy_binaries.zip
+        if-no-files-found: error
 
     - name: Push to Github Packages
       if: github.ref == 'refs/heads/master' && success() && matrix.channel == 'zip' && matrix.configuration == 'release'
