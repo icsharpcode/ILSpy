@@ -5,6 +5,7 @@ using System;
 using System.Collections.Immutable;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace ICSharpCode.Decompiler
@@ -49,8 +50,11 @@ namespace ICSharpCode.Decompiler
 			{
 				if (*ptr == 0x8b && bundleSignature.SequenceEqual(new ReadOnlySpan<byte>(ptr, bundleSignature.Length)))
 				{
-					bundleHeaderOffset = *(long*)(ptr - sizeof(long));
-					return true;
+					bundleHeaderOffset = Unsafe.ReadUnaligned<long>(ptr - sizeof(long));
+					if (bundleHeaderOffset > 0 && bundleHeaderOffset < size)
+					{
+						return true;
+					}
 				}
 			}
 
