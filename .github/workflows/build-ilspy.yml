@@ -84,7 +84,7 @@ jobs:
       run: dotnet-format --check --verbosity diagnostic ILSpy.sln
     
     - name: Zip ILSpy Release
-      if: matrix.channel == 'zip' && matrix.configuration == 'release'
+      if: matrix.channel == 'zip'
       # run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net472\*
       run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net472\*.dll .\ILSpy\bin\${{ matrix.configuration }}\net472\*.exe .\ILSpy\bin\${{ matrix.configuration }}\net472\*.config .\ILSpy\bin\${{ matrix.configuration }}\net472\*\ILSpy.resources.dll .\ILSpy\bin\${{ matrix.configuration }}\net472\*\ILSpy.ReadyToRun.Plugin.resources.dll
       
@@ -100,25 +100,25 @@ jobs:
       if: matrix.channel == 'zip' && matrix.configuration == 'release'
       uses: actions/upload-artifact@v2
       with:
-        name: VS Addin
+        name: ILSpy VS Addin ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ILSpy.Addin\bin\Release\net472\*.vsix
 
     - name: Upload NuGet release build artifacts
       if: matrix.channel == 'zip' && matrix.configuration == 'release'
       uses: actions/upload-artifact@v2
       with:
-        name: NuGet Package
+        name: ICSharpCode.Decompiler NuGet Package (${{ matrix.configuration }})
         path: ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg
 
     - name: Upload zip release build artifacts
-      if: matrix.channel == 'zip' && matrix.configuration == 'release'
+      if: matrix.channel == 'zip'
       uses: actions/upload-artifact@v2
       with:
-        name: ILSpy ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }}
+        name: ILSpy ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ${{ env.StagingDirectory }}\ILSpy_binaries.zip
 
     - name: Push to Github Packages
-      if: github.ref == 'refs/heads/master' && success()
+      if: github.ref == 'refs/heads/master' && success() && matrix.channel == 'zip' && matrix.configuration == 'release'
       run: dotnet nuget push ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg --no-symbols --skip-duplicate
       env:
         NUGET_AUTH_TOKEN: ${{ github.token }}
