@@ -43,8 +43,7 @@ namespace ICSharpCode.ILSpy
 
 			using (context.TreeView.LockUpdates())
 			{
-				assembly.PdbFileOverride = dlg.FileName;
-				assembly.AssemblyList.ReloadAssembly(assembly);
+				assembly.LoadDebugInfo(dlg.FileName);
 			}
 
 			MainWindow.Instance.SelectNode(MainWindow.Instance.FindNodeByPath(new[] { assembly.FileName }, true));

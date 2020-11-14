@@ -27,20 +27,27 @@ namespace ICSharpCode.Decompiler.PdbProvider
 	class PortableDebugInfoProvider : IDebugInfoProvider
 	{
 		string pdbFileName;
+		string moduleFileName;
 
 		internal MetadataReaderProvider Provider { get; }
 
 		internal bool IsEmbedded => pdbFileName == null;
 
-		public PortableDebugInfoProvider(string pdbFileName, MetadataReaderProvider provider)
+		public PortableDebugInfoProvider(string pdbFileName, MetadataReaderProvider provider,
+			string moduleFileName)
 		{
 			this.pdbFileName = pdbFileName;
-			this.Provider = provider;
+			this.moduleFileName = moduleFileName;
+			this.Provider = provider ?? throw new ArgumentNullException(nameof(provider));
 		}
 
-		public string Description => pdbFileName == null ? "Embedded in this assembly" : $"Loaded from portable PDB: {pdbFileName}";
+		public string Description => pdbFileName == null
+			? "Embedded in this assembly"
+			: $"Loaded from portable PDB: {pdbFileName}";
 
-		public IList<Decompiler.DebugInfo.SequencePoint> GetSequencePoints(MethodDefinitionHandle method)
+		public string SourceFileName => pdbFileName ?? moduleFileName;
+
+		public IList<DebugInfo.SequencePoint> GetSequencePoints(MethodDefinitionHandle method)
 		{
 			var metadata = Provider.GetMetadataReader();
 			var debugInfo = metadata.GetMethodDebugInformation(method);

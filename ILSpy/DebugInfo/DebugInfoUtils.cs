@@ -37,12 +37,15 @@ namespace ICSharpCode.Decompiler.PdbProvider
 				// try to open portable pdb file/embedded pdb info:
 				if (TryOpenPortablePdb(module, out var provider, out var pdbFileName))
 				{
-					return new PortableDebugInfoProvider(pdbFileName, provider);
+					return new PortableDebugInfoProvider(pdbFileName, provider, module.FileName);
 				}
 				else
 				{
 					// search for pdb in same directory as dll
-					pdbFileName = Path.Combine(Path.GetDirectoryName(module.FileName), Path.GetFileNameWithoutExtension(module.FileName) + ".pdb");
+					pdbFileName = Path.Combine(
+						Path.GetDirectoryName(module.FileName),
+						Path.GetFileNameWithoutExtension(module.FileName) + ".pdb"
+					);
 					if (File.Exists(pdbFileName))
 					{
 						return new MonoCecilDebugInfoProvider(module, pdbFileName);
@@ -75,14 +78,15 @@ namespace ICSharpCode.Decompiler.PdbProvider
 			{
 				stream.Position = 0;
 				var provider = MetadataReaderProvider.FromPortablePdbStream(stream);
-				return new PortableDebugInfoProvider(pdbFileName, provider);
+				return new PortableDebugInfoProvider(pdbFileName, provider, module.FileName);
 			}
 		}
 
 		const string LegacyPDBPrefix = "Microsoft C/C++ MSF 7.00";
 		static readonly byte[] buffer = new byte[LegacyPDBPrefix.Length];
 
-		static bool TryOpenPortablePdb(PEFile module, out MetadataReaderProvider provider, out string pdbFileName)
+		static bool TryOpenPortablePdb(PEFile module,
+			out MetadataReaderProvider provider, out string pdbFileName)
 		{
 			provider = null;
 			pdbFileName = null;
@@ -91,12 +95,14 @@ namespace ICSharpCode.Decompiler.PdbProvider
 			{
 				if (entry.IsPortableCodeView)
 				{
-					return reader.TryOpenAssociatedPortablePdb(module.FileName, OpenStream, out provider, out pdbFileName);
+					return reader.TryOpenAssociatedPortablePdb(module.FileName, OpenStream,
+						out provider, out pdbFileName);
 				}
 				if (entry.Type == DebugDirectoryEntryType.CodeView)
 				{
 					string pdbDirectory = Path.GetDirectoryName(module.FileName);
-					pdbFileName = Path.Combine(pdbDirectory, Path.GetFileNameWithoutExtension(module.FileName) + ".pdb");
+					pdbFileName = Path.Combine(
+						pdbDirectory, Path.GetFileNameWithoutExtension(module.FileName) + ".pdb");
 					if (File.Exists(pdbFileName))
 					{
 						Stream stream = OpenStream(pdbFileName);

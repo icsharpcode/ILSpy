@@ -124,9 +124,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					}
 					tooltip.Inlines.Add(new Bold(new Run("Location: ")));
 					tooltip.Inlines.Add(new Run(LoadedAssembly.FileName));
-					tooltip.Inlines.Add(new LineBreak());
 					if (module != null)
 					{
+						tooltip.Inlines.Add(new LineBreak());
 						tooltip.Inlines.Add(new Bold(new Run("Architecture: ")));
 						tooltip.Inlines.Add(new Run(Language.GetPlatformDisplayName(module)));
 						string runtimeName = Language.GetRuntimeDisplayName(module);

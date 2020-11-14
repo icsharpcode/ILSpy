@@ -50,6 +50,7 @@ namespace ICSharpCode.Decompiler.PdbProvider
 			}
 
 			this.Description = description ?? $"Loaded from PDB file: {pdbFileName}";
+			this.SourceFileName = pdbFileName;
 
 			var image = module.Reader.GetEntireImage();
 			this.debugInfo = new Dictionary<SRM.MethodDefinitionHandle, (IList<SequencePoint> SequencePoints, IList<Variable> Variables)>();
@@ -96,6 +97,8 @@ namespace ICSharpCode.Decompiler.PdbProvider
 		}
 
 		public string Description { get; }
+
+		public string SourceFileName { get; }
 
 		public IList<SequencePoint> GetSequencePoints(SRM.MethodDefinitionHandle handle)
 		{

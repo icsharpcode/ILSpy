@@ -252,9 +252,8 @@ namespace ICSharpCode.ILSpy
 		public LoadedAssembly ReloadAssembly(LoadedAssembly target)
 		{
 			var index = this.assemblies.IndexOf(target);
-			var newAsm = new LoadedAssembly(this, target.FileName);
+			var newAsm = new LoadedAssembly(this, target.FileName, pdbFileName: target.PdbFileName);
 			newAsm.IsAutoLoaded = target.IsAutoLoaded;
-			newAsm.PdbFileOverride = target.PdbFileOverride;
 			lock (assemblies)
 			{
 				this.assemblies.Remove(target);

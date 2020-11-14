@@ -85,10 +85,12 @@ namespace ICSharpCode.ILSpy
 
 		public LoadedAssembly ParentBundle { get; }
 
-		public LoadedAssembly(AssemblyList assemblyList, string fileName, Task<Stream> stream = null, IAssemblyResolver assemblyResolver = null)
+		public LoadedAssembly(AssemblyList assemblyList, string fileName,
+			Task<Stream> stream = null, IAssemblyResolver assemblyResolver = null, string pdbFileName = null)
 		{
 			this.assemblyList = assemblyList ?? throw new ArgumentNullException(nameof(assemblyList));
 			this.fileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
+			this.PdbFileName = pdbFileName;
 			this.providedAssemblyResolver = assemblyResolver;
 
 			this.loadingTask = Task.Run(() => LoadAsync(stream)); // requires that this.fileName is set
@@ -256,7 +258,10 @@ namespace ICSharpCode.ILSpy
 
 		public bool IsAutoLoaded { get; set; }
 
-		public string PdbFileOverride { get; set; }
+		/// <summary>
+		/// Gets the PDB file name or null, if no PDB was found or it's embedded.
+		/// </summary>
+		public string PdbFileName { get; private set; }
 
 		async Task<LoadResult> LoadAsync(Task<Stream> streamTask)
 		{
@@ -323,11 +328,21 @@ namespace ICSharpCode.ILSpy
 
 			PEFile module = new PEFile(fileName, stream, streamOptions, metadataOptions: options);
 
+			debugInfoProvider = LoadDebugInfo(module);
+			lock (loadedAssemblies)
+			{
+				loadedAssemblies.Add(module, this);
+			}
+			return new LoadResult(module);
+		}
+
+		IDebugInfoProvider LoadDebugInfo(PEFile module)
+		{
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols)
 			{
 				try
 				{
-					debugInfoProvider = DebugInfoUtils.FromFile(module, PdbFileOverride)
+					return DebugInfoUtils.FromFile(module, PdbFileName)
 						?? DebugInfoUtils.LoadSymbols(module);
 				}
 				catch (IOException)
@@ -341,11 +356,15 @@ namespace ICSharpCode.ILSpy
 					// ignore any errors during symbol loading
 				}
 			}
-			lock (loadedAssemblies)
-			{
-				loadedAssemblies.Add(module, this);
-			}
-			return new LoadResult(module);
+			return null;
+		}
+
+		public async Task<IDebugInfoProvider> LoadDebugInfo(string fileName)
+		{
+			this.PdbFileName = fileName;
+			var assembly = await GetPEFileAsync().ConfigureAwait(false);
+			debugInfoProvider = await Task.Run(() => LoadDebugInfo(assembly));
+			return debugInfoProvider;
 		}
 
 		[ThreadStatic]
