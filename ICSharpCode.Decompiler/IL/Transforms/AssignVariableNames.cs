@@ -477,6 +477,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return CleanUpVariableName(m.Name.Substring(3));
 					}
 					break;
+				case DynamicInvokeMemberInstruction dynInvokeMember:
+					if (dynInvokeMember.Name.StartsWith("Get", StringComparison.OrdinalIgnoreCase)
+						&& dynInvokeMember.Name.Length >= 4 && char.IsUpper(dynInvokeMember.Name[3]))
+					{
+						// use name from Get-methods
+						return CleanUpVariableName(dynInvokeMember.Name.Substring(3));
+					}
+					break;
 			}
 			return null;
 		}
