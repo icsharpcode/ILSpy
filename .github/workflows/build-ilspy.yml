@@ -124,5 +124,3 @@ jobs:
     - name: Push to Github Packages
       if: github.ref == 'refs/heads/master' && success() && matrix.channel == 'zip' && matrix.configuration == 'release'
       run: dotnet nuget push ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg --no-symbols --skip-duplicate
-      env:
-        NUGET_AUTH_TOKEN: ${{ github.token }}
