@@ -6,7 +6,7 @@ platforms:
 - DotNetCore
 packages:
 - id: ICSharpCode.Decompiler
-  version: 6.2.0.6124
+  version: 7.0.0.6225-preview1
 ---
 
 Setup: load the references required to work with the decompiler
