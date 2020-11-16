@@ -36,8 +36,11 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.x
+    - uses: nuget/setup-nuget@v1
+      with:
+        nuget-version: 'latest'
     - name: Install dependencies
-      run: dotnet restore Frontends.sln
+      run: nuget restore Frontends.sln
     - name: Build
       run: dotnet build Frontends.sln --configuration Release --no-restore
 
