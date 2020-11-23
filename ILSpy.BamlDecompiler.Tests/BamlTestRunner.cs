@@ -142,6 +142,12 @@ namespace ILSpy.BamlDecompiler.Tests
 			RunTest("cases/issue2097");
 		}
 
+		[Test]
+		public void Issue2116()
+		{
+			RunTest("cases/issue2116");
+		}
+
 		#region RunTest
 		void RunTest(string name)
 		{
