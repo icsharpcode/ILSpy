@@ -247,6 +247,19 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		bool highlightCurrentLine = false;
+
+		public bool HighlightCurrentLine {
+			get { return highlightCurrentLine; }
+			set {
+				if (highlightCurrentLine != value)
+				{
+					highlightCurrentLine = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool hideEmptyMetadataTables = true;
 
 		public bool HideEmptyMetadataTables {
@@ -277,6 +290,7 @@ namespace ICSharpCode.ILSpy.Options
 			this.IndentationTabSize = s.indentationTabSize;
 			this.IndentationSize = s.indentationSize;
 			this.HighlightMatchingBraces = s.highlightMatchingBraces;
+			this.HighlightCurrentLine = s.highlightCurrentLine;
 			this.HideEmptyMetadataTables = s.HideEmptyMetadataTables;
 		}
 	}

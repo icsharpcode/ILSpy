@@ -543,6 +543,9 @@ Are you sure you want to continue?</value>
   <data name="HideEmptyMetadataTables" xml:space="preserve">
     <value>Hide empty metadata tables from tree view</value>
   </data>
+  <data name="HighlightCurrentLine" xml:space="preserve">
+    <value>Hightlight current line</value>
+  </data>
   <data name="HighlightMatchingBraces" xml:space="preserve">
     <value>Highlight matching braces</value>
   </data>

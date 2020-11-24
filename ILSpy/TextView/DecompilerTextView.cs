@@ -156,6 +156,7 @@ namespace ICSharpCode.ILSpy.TextView
 				.RegisterCommands(Application.Current.MainWindow.CommandBindings);
 
 			ShowLineMargin();
+			SetHighlightCurrentLine();
 
 			// add marker service & margin
 			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
@@ -180,9 +181,13 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void CurrentDisplaySettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == "ShowLineNumbers")
+			if (e.PropertyName == nameof(DisplaySettings.ShowLineNumbers))
 			{
 				ShowLineMargin();
+			}
+			else if (e.PropertyName == nameof(DisplaySettings.HighlightCurrentLine))
+			{
+				SetHighlightCurrentLine();
 			}
 		}
 
@@ -195,6 +200,11 @@ namespace ICSharpCode.ILSpy.TextView
 					margin.Visibility = DisplaySettingsPanel.CurrentDisplaySettings.ShowLineNumbers ? Visibility.Visible : Visibility.Collapsed;
 				}
 			}
+		}
+
+		void SetHighlightCurrentLine()
+		{
+			textEditor.Options.HighlightCurrentLine = DisplaySettingsPanel.CurrentDisplaySettings.HighlightCurrentLine;
 		}
 
 		#endregion
