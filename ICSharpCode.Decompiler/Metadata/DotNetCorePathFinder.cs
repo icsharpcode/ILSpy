@@ -44,7 +44,15 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				var parts = fullName.Split('/');
 				this.Name = parts[0];
-				this.Version = parts[1];
+				if (parts.Length > 1)
+				{
+					this.Version = parts[1];
+				}
+				else
+				{
+					this.Version = "<UNKNOWN>";
+				}
+
 				this.Type = type;
 				this.Path = path;
 				this.RuntimeComponents = runtimeComponents ?? Empty<string>.Array;
