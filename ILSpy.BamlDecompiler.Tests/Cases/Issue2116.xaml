@@ -5,5 +5,8 @@
       <Style x:Key="TestStyle2" BasedOn="{StaticResource {x:Static local:Issue2116.StyleKey1}}" />
     </ResourceDictionary>
   </FrameworkElement.Resources>
-  <Grid Style="{StaticResource {x:Static local:Issue2116.StyleKey1}}" />
+	<Grid>
+	  <Grid Style="{StaticResource TestStyle1}" />
+	  <Grid Style="{StaticResource {x:Static local:Issue2116.StyleKey1}}" />
+	</Grid>
 </UserControl>
