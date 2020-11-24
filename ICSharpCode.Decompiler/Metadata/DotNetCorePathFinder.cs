@@ -47,11 +47,12 @@ namespace ICSharpCode.Decompiler.Metadata
 				if (parts.Length > 1)
 				{
 					this.Version = parts[1];
-				} else
+				}
+				else
 				{
 					this.Version = "<UNKNOWN>";
 				}
-				
+
 				this.Type = type;
 				this.Path = path;
 				this.RuntimeComponents = runtimeComponents ?? Empty<string>.Array;
