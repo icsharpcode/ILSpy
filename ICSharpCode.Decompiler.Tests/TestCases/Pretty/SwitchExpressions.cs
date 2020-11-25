@@ -22,6 +22,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public static class SwitchExpressions
 	{
+		public class ImplicitlyCastToString
+		{
+			public static implicit operator string(ImplicitlyCastToString val)
+			{
+				return "foo";
+			}
+		}
+
 		public enum State
 		{
 			False,
@@ -145,6 +153,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				default:
 					return "Default";
 			}
+		}
+
+		public static string Issue2222()
+		{
+			return (string)new ImplicitlyCastToString() switch
+			{
+				"foo" => "foo",
+				"bar" => "bar",
+				"quux" => "quux",
+				_ => "default",
+			};
 		}
 	}
 }

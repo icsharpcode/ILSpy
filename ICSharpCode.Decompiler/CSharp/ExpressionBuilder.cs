@@ -3627,7 +3627,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.ConvertTo(
 						typeSystem.FindType(KnownTypeCode.String),
 						this,
-						allowImplicitConversion: true
+						allowImplicitConversion: false // switch-expression does not support implicit conversions
 					);
 			}
 			else
