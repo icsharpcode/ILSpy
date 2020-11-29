@@ -49,7 +49,6 @@
   <Import Project="..\packages.props" />
 
   <ItemGroup>
-    <PackageReference Include="Humanizer.Core" Version="$(HumanizerVersion)" />
     <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVersion)" />
     <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0">
@@ -75,6 +74,8 @@
     <Compile Include="CSharp\Syntax\Expressions\SwitchExpression.cs" />
     <Compile Include="CSharp\Syntax\FunctionPointerAstType.cs" />
     <Compile Include="CSharp\Syntax\VariableDesignation.cs" />
+    <Compile Include="Humanizer\Vocabularies.cs" />
+    <Compile Include="Humanizer\Vocabulary.cs" />
     <Compile Include="IL\Transforms\DeconstructionTransform.cs" />
     <Compile Include="IL\Transforms\FixLoneIsInst.cs" />
     <Compile Include="IL\Instructions\DeconstructInstruction.cs" />
@@ -633,6 +634,7 @@
     <Content Include="..\doc\Pattern Matching.html">
       <Link>CSharp\Syntax\PatternMatching\Pattern Matching.html</Link>
     </Content>
+    <Content Include="Humanizer\LICENSE" />
   </ItemGroup>
 
   <ItemGroup>
