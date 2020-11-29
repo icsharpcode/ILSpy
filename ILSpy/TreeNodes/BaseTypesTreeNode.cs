@@ -21,8 +21,6 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Windows.Threading;
 
-using Humanizer.Localisation;
-
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;

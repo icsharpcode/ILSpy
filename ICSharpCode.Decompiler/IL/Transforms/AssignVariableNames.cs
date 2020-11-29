@@ -22,7 +22,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 
-using Humanizer;
+using Humanizer.Inflections;
 
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -785,7 +785,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private static bool IsPlural(string baseName, ref string proposedName)
 		{
-			var newName = baseName.Singularize(inputIsKnownToBePlural: false);
+			var newName = Vocabularies.Default.Singularize(baseName, inputIsKnownToBePlural: false);
 			if (newName == baseName)
 				return false;
 			proposedName = newName;
