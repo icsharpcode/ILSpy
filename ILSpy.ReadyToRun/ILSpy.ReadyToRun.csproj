@@ -52,6 +52,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="ReadyToRunDisassembler.cs" />
     <Compile Include="ReadyToRunLanguage.cs" />
     <Compile Include="ReadyToRunOptionPage.xaml.cs">
       <DependentUpon>ReadyToRunOptionPage.xaml</DependentUpon>
@@ -73,11 +74,11 @@
     <Page Include="ReadyToRunOptionPage.xaml" />
   </ItemGroup>
 
-  <Import Project="../packages.props"/>
+  <Import Project="../packages.props" />
 
   <ItemGroup>
     <PackageReference Include="Iced" Version="1.8.0" />
-    <PackageReference Include="ILCompiler.Reflection.ReadyToRun" Version="1.0.12-alpha" />
+    <PackageReference Include="ILCompiler.Reflection.ReadyToRun" Version="1.0.13-alpha" />
     <!-- ILCompiler.Reflection.ReadyToRun has dependencies on System.Reflection.Metadata and
          System.Runtime.CompilerServices.Unsafe. Because the AddIn compiles into ILSpy's output
          directory, we're at risk of overwriting our dependencies with different versions.
