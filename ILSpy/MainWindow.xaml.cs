@@ -1286,10 +1286,20 @@ namespace ICSharpCode.ILSpy
 		}
 		#endregion
 
-		internal void NavigateTo(RequestNavigateEventArgs e, bool recordHistory = true)
+		internal void NavigateTo(RequestNavigateEventArgs e, bool recordHistory = true, bool inNewTabPage = false)
 		{
 			if (e.Uri.Scheme == "resource")
 			{
+				if (inNewTabPage)
+				{
+					DockWorkspace.Instance.TabPages.Add(
+						new TabPageModel() {
+							Language = CurrentLanguage,
+							LanguageVersion = CurrentLanguageVersion
+						});
+					DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
+				}
+
 				if (e.Uri.Host == "aboutpage")
 				{
 					RecordHistory();

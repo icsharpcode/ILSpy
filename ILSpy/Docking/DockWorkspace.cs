@@ -26,6 +26,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Navigation;
 using System.Windows.Threading;
 
 using ICSharpCode.AvalonEdit.Highlighting;
@@ -96,7 +97,13 @@ namespace ICSharpCode.ILSpy.Docking
 					this.sessionSettings.FilterSettings.LanguageVersion = value.LanguageVersion;
 					var state = value.GetState();
 					if (state != null)
-						MainWindow.Instance.SelectNodes(state.DecompiledNodes);
+					{
+						if (state.DecompiledNodes != null)
+							MainWindow.Instance.SelectNodes(state.DecompiledNodes);
+						else
+							MainWindow.Instance.NavigateTo(new RequestNavigateEventArgs(state.ViewedUri, null));
+					}
+
 					RaisePropertyChanged(nameof(ActiveTabPage));
 				}
 			}

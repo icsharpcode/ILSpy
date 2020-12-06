@@ -44,7 +44,10 @@ namespace ICSharpCode.ILSpy
 	{
 		public override void Execute(object parameter)
 		{
-			MainWindow.Instance.NavigateTo(new RequestNavigateEventArgs(new Uri("resource://aboutpage"), null));
+			MainWindow.Instance.NavigateTo(
+				new RequestNavigateEventArgs(new Uri("resource://aboutpage"), null),
+				inNewTabPage: true
+			);
 		}
 
 		static readonly Uri UpdateUrl = new Uri("https://ilspy.net/updates.xml");
@@ -54,7 +57,10 @@ namespace ICSharpCode.ILSpy
 
 		public static void Display(DecompilerTextView textView)
 		{
-			AvalonEditTextOutput output = new AvalonEditTextOutput() { Title = Resources.About, EnableHyperlinks = true };
+			AvalonEditTextOutput output = new AvalonEditTextOutput() {
+				Title = Resources.About,
+				EnableHyperlinks = true
+			};
 			output.WriteLine(Resources.ILSpyVersion + RevisionClass.FullVersion);
 			if (WindowsVersionHelper.HasPackageIdentity)
 			{

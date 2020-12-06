@@ -75,6 +75,7 @@ namespace ICSharpCode.ILSpy.TextView
 		FoldingManager foldingManager;
 		ILSpyTreeNode[] decompiledNodes;
 		Uri currentAddress;
+		string currentTitle;
 
 		DefinitionLookup definitionLookup;
 		TextSegmentCollection<ReferenceSegment> references;
@@ -163,6 +164,16 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
 
 			ContextMenuProvider.Add(this);
+
+			this.DataContextChanged += DecompilerTextView_DataContextChanged;
+		}
+
+		private void DecompilerTextView_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+		{
+			if (this.DataContext is PaneModel model)
+			{
+				model.Title = currentTitle ?? ILSpy.Properties.Resources.NewTab;
+			}
 		}
 
 		void RemoveEditCommand(RoutedUICommand command)
@@ -664,8 +675,12 @@ namespace ICSharpCode.ILSpy.TextView
 				this.nextDecompilationRun.TaskCompletionSource.TrySetCanceled();
 				this.nextDecompilationRun = null;
 			}
-			if (nodes != null && string.IsNullOrEmpty(textOutput.Title))
+			if (nodes != null && (string.IsNullOrEmpty(textOutput.Title) 
+				|| textOutput.Title == Properties.Resources.NewTab))
+			{
 				textOutput.Title = string.Join(", ", nodes.Select(n => n.Text));
+			}
+
 			ShowOutput(textOutput, highlighting);
 			decompiledNodes = nodes;
 		}
@@ -746,6 +761,7 @@ namespace ICSharpCode.ILSpy.TextView
 				model.Title = textOutput.Title;
 			}
 			currentAddress = textOutput.Address;
+			currentTitle = textOutput.Title;
 		}
 		#endregion
 
