@@ -55,7 +55,7 @@
     <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="$(SystemCompilerServicesUnsafeVersion)" />
     <PackageReference Include="Dirkster.AvalonDock" Version="3.6.1" />
-    <PackageReference Include="Microsoft.VisualStudio.Composition" Version="16.3.7" />
+    <PackageReference Include="Microsoft.VisualStudio.Composition" Version="16.9.6-alpha" />
     <PackageReference Include="System.Composition" Version="1.3.0" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
     <PackageReference Include="OSVersionHelper" Version="1.0.11" />
