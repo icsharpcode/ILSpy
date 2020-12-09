@@ -41,6 +41,8 @@ if ($env:GITHUB_REF -match $masterBranches) {
 $revision = [Int32]::Parse((git rev-list --count "$baseCommit..HEAD")) + $baseCommitRev;
 
 $newVersion="$major.$minor.$build.$revision";
-$env:ILSPY_VERSION_NUMBER="$newVersion$branch$versionName$suffix";
+$ilspyVersionNumber = "$newVersion$branch$versionName$suffix";
+$ilspyVersionNumber = $ilspyVersionNumber.Replace("/", "-");
+$env:ILSPY_VERSION_NUMBER="$ilspyVersionNumber";
 $env:ILSPY_VERSION_NUMBER | Out-File "ILSPY_VERSION"
-Write-Host "new version: $newVersion$branch$versionName$suffix";
+Write-Host "new version: $ilspyVersionNumber";
