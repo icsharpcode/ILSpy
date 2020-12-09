@@ -675,7 +675,7 @@ namespace ICSharpCode.ILSpy.TextView
 				this.nextDecompilationRun.TaskCompletionSource.TrySetCanceled();
 				this.nextDecompilationRun = null;
 			}
-			if (nodes != null && (string.IsNullOrEmpty(textOutput.Title) 
+			if (nodes != null && (string.IsNullOrEmpty(textOutput.Title)
 				|| textOutput.Title == Properties.Resources.NewTab))
 			{
 				textOutput.Title = string.Join(", ", nodes.Select(n => n.Text));
