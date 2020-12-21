@@ -110,6 +110,13 @@ jobs:
         path: ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg
         if-no-files-found: error
 
+    - name: Publish NuGet
+      if: github.ref == 'refs/heads/master' && matrix.channel == 'zip' && matrix.configuration == 'release'
+      run: |
+        dotnet nuget push "ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg" \
+          --api-key ${{ secrets.GITHUB_TOKEN }} \
+          --source https://nuget.pkg.github.com/${{ github.repository_owner }}
+      
     - name: Upload zip release build artifacts
       if: matrix.channel == 'zip'
       uses: actions/upload-artifact@v2
