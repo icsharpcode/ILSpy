@@ -8,6 +8,7 @@
 		<owners>Daniel Grunwald, SharpDevelop</owners>
 		<license type="expression">MIT</license>
 		<projectUrl>https://github.com/icsharpcode/ILSpy/</projectUrl>
+		<repository type="git" url="https://github.com/icsharpcode/ILSpy.git" />
 		<icon>images\DecompilerNuGetPackageIcon.png</icon>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>ICSharpCode.Decompiler is the decompiler engine used in ILSpy.</description>
