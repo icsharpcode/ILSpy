@@ -35,12 +35,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly ITypeDefinition recordTypeDef;
 		readonly CancellationToken cancellationToken;
 		readonly List<IMember> orderedMembers;
+		readonly bool isInheritedRecord;
 
 		public RecordDecompiler(IDecompilerTypeSystem dts, ITypeDefinition recordTypeDef, CancellationToken cancellationToken)
 		{
 			this.typeSystem = dts;
 			this.recordTypeDef = recordTypeDef;
 			this.cancellationToken = cancellationToken;
+			this.isInheritedRecord = recordTypeDef.DirectBaseTypes.Any(b => b.Kind == TypeKind.Class && !b.IsKnownType(KnownTypeCode.Object));
 			this.orderedMembers = DetectMemberOrder(recordTypeDef);
 		}
 
@@ -178,6 +180,29 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (builder.Type.ReflectionName != "System.Text.StringBuilder")
 				return false;
 			int pos = 0;
+			if (isInheritedRecord)
+			{
+				// if (call PrintMembers(ldloc this, ldloc builder)) Block IL_000f {
+				//   callvirt Append(ldloc builder, ldstr ", ")
+				// }
+				if (!body.Instructions[pos].MatchIfInstruction(out var condition, out var trueInst))
+					return false;
+				if (!(condition is CallInstruction { Method: { Name: "PrintMembers" } } call))
+					return false;
+				if (call.Arguments.Count != 2)
+					return false;
+				if (!call.Arguments[0].MatchLdThis())
+					return false;
+				if (!call.Arguments[1].MatchLdLoc(builder))
+					return false;
+				// trueInst = callvirt Append(ldloc builder, ldstr ", ")
+				trueInst = Block.Unwrap(trueInst);
+				if (!MatchStringBuilderAppend(trueInst, builder, out var val))
+					return false;
+				if (!(val.MatchLdStr(out string text) && text == ", "))
+					return false;
+				pos++;
+			}
 			bool needsComma = false;
 			foreach (var member in orderedMembers)
 			{
@@ -229,7 +254,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			// leave IL_0000 (ldc.i4 1)
 			return body.Instructions[pos].MatchReturn(out var retVal)
-				&& retVal.MatchLdcI4(orderedMembers.Count > 0 ? 1 : 0);
+				&& retVal.MatchLdcI4(needsComma ? 1 : 0);
 
 
 			bool MatchStringBuilderAppendConstant(out string text)
