@@ -1,5 +1,23 @@
-﻿
+﻿// Copyright (c) 2020 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -16,12 +34,29 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly IDecompilerTypeSystem typeSystem;
 		readonly ITypeDefinition recordTypeDef;
 		readonly CancellationToken cancellationToken;
+		readonly List<IMember> orderedMembers;
 
 		public RecordDecompiler(IDecompilerTypeSystem dts, ITypeDefinition recordTypeDef, CancellationToken cancellationToken)
 		{
 			this.typeSystem = dts;
 			this.recordTypeDef = recordTypeDef;
 			this.cancellationToken = cancellationToken;
+			this.orderedMembers = DetectMemberOrder(recordTypeDef);
+		}
+
+		static List<IMember> DetectMemberOrder(ITypeDefinition recordTypeDef)
+		{
+			// For records, the order of members is important:
+			// Equals/GetHashCode/PrintMembers must agree on an order of fields+properties.
+			// The IL metadata has the order of fields and the order of properties, but we
+			// need to detect the correct interleaving.
+			// We could try to detect this from the PrintMembers body, but let's initially
+			// restrict ourselves to the common case where the record only uses properties.
+			if (recordTypeDef.Fields.All(f => f.Name.StartsWith("<", StringComparison.Ordinal) && f.Name.EndsWith("BackingField", StringComparison.Ordinal)))
+			{
+				return recordTypeDef.Properties.ToList<IMember>();
+			}
+			return null;
 		}
 
 		bool IsRecordType(IType type)
@@ -69,6 +104,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				case "<Clone>$" when method.Parameters.Count == 0:
 					// Always generated; Method name cannot be expressed in C#
 					return true;
+				case "PrintMembers":
+					return IsGeneratedPrintMembers(method);
 				case "ToString" when method.Parameters.Count == 0:
 					return IsGeneratedToString(method);
 				default:
@@ -122,10 +159,107 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			return IsRecordType(ty);
 		}
+		private bool IsGeneratedPrintMembers(IMethod method)
+		{
+			Debug.Assert(method.Name == "PrintMembers");
+			if (method.Parameters.Count != 1)
+				return false;
+			if (!method.IsOverridable)
+				return false;
+			if (method.GetAttributes().Any() || method.GetReturnTypeAttributes().Any())
+				return false;
+			if (orderedMembers == null)
+				return false;
+			var body = DecompileBody(method);
+			if (body == null)
+				return false;
+			var variables = body.Ancestors.OfType<ILFunction>().Single().Variables;
+			var builder = variables.Single(v => v.Kind == VariableKind.Parameter && v.Index == 0);
+			if (builder.Type.ReflectionName != "System.Text.StringBuilder")
+				return false;
+			int pos = 0;
+			bool needsComma = false;
+			foreach (var member in orderedMembers)
+			{
+				if (member.Name == "EqualityContract")
+				{
+					continue; // EqualityContract is never printed
+				}
+				/* 
+				callvirt Append(ldloc builder, ldstr "A")
+				callvirt Append(ldloc builder, ldstr " = ")
+				callvirt Append(ldloc builder, constrained[System.Int32].callvirt ToString(addressof System.Int32(call get_A(ldloc this))))
+				callvirt Append(ldloc builder, ldstr ", ")
+				callvirt Append(ldloc builder, ldstr "B")
+				callvirt Append(ldloc builder, ldstr " = ")
+				callvirt Append(ldloc builder, constrained[System.Int32].callvirt ToString(ldflda B(ldloc this)))
+				leave IL_0000 (ldc.i4 1) */
+				if (!MatchStringBuilderAppendConstant(out string text))
+					return false;
+				string expectedText = (needsComma ? ", " : "") + member.Name + " = ";
+				if (text != expectedText)
+					return false;
+				if (!MatchStringBuilderAppend(body.Instructions[pos], builder, out var val))
+					return false;
+				if (val is CallInstruction { Method: { Name: "ToString", IsStatic: false } } toStringCall)
+				{
+					if (toStringCall.Arguments.Count != 1)
+						return false;
+					val = toStringCall.Arguments[0];
+					if (val is AddressOf addressOf)
+					{
+						val = addressOf.Value;
+					}
+				}
+				if (val is CallInstruction getterCall && member is IProperty property)
+				{
+					if (!getterCall.Method.MemberDefinition.Equals(property.Getter.MemberDefinition))
+						return false;
+					if (getterCall.Arguments.Count != 1)
+						return false;
+					if (!getterCall.Arguments[0].MatchLdThis())
+						return false;
+				}
+				else
+				{
+					return false;
+				}
+				pos++;
+				needsComma = true;
+			}
+			// leave IL_0000 (ldc.i4 1)
+			return body.Instructions[pos].MatchReturn(out var retVal)
+				&& retVal.MatchLdcI4(orderedMembers.Count > 0 ? 1 : 0);
+
+
+			bool MatchStringBuilderAppendConstant(out string text)
+			{
+				text = null;
+				while (MatchStringBuilderAppend(body.Instructions[pos], builder, out var val) && val.MatchLdStr(out string valText))
+				{
+					text += valText;
+					pos++;
+				}
+				return text != null;
+			}
+		}
+
+		private bool MatchStringBuilderAppend(ILInstruction inst, ILVariable sb, out ILInstruction val)
+		{
+			val = null;
+			if (!(inst is CallVirt { Method: { Name: "Append", DeclaringType: { Namespace: "System.Text", Name: "StringBuilder" } } } call))
+				return false;
+			if (call.Arguments.Count != 2)
+				return false;
+			if (!call.Arguments[0].MatchLdLoc(sb))
+				return false;
+			val = call.Arguments[1];
+			return true;
+		}
 
 		private bool IsGeneratedToString(IMethod method)
 		{
-			Debug.Assert(method.Name == "ToString");
+			Debug.Assert(method.Name == "ToString" && method.Parameters.Count == 0);
 			if (!method.IsOverride)
 				return false;
 			if (method.IsSealed)
