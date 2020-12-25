@@ -244,7 +244,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "NullableAttribute":
 							return (options & TypeSystemOptions.NullabilityAnnotations) != 0;
 						case "NullableContextAttribute":
-							return (options & TypeSystemOptions.NullabilityAnnotations) != 0 && (target == SymbolKind.TypeDefinition || target == SymbolKind.Method);
+							return (options & TypeSystemOptions.NullabilityAnnotations) != 0
+								&& (target == SymbolKind.TypeDefinition || target == SymbolKind.Method || target == SymbolKind.Accessor);
 						default:
 							return false;
 					}
