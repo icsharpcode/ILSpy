@@ -170,6 +170,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public bool MethodIsGenerated(IMethod method)
 		{
+			if (method.IsConstructor && method.Parameters.Count == 1
+				&& IsRecordType(method.Parameters[0].Type))
+			{
+				return IsGeneratedCopyConstructor(method);
+			}
 			switch (method.Name)
 			{
 				// Some members in records are always compiler-generated and lead to a
@@ -224,6 +229,68 @@ namespace ICSharpCode.Decompiler.CSharp
 				default:
 					return false;
 			}
+		}
+
+		private bool IsGeneratedCopyConstructor(IMethod method)
+		{
+			/* 
+				call BaseClass..ctor(ldloc this, ldloc original)
+				stfld <X>k__BackingField(ldloc this, ldfld <X>k__BackingField(ldloc original))
+				leave IL_0000 (nop)
+			 */
+			Debug.Assert(method.IsConstructor && method.Parameters.Count == 1);
+			if (method.GetAttributes().Any() || method.GetReturnTypeAttributes().Any())
+				return false;
+			if (orderedMembers == null)
+				return false;
+			var body = DecompileBody(method);
+			if (body == null)
+				return false;
+			var variables = body.Ancestors.OfType<ILFunction>().Single().Variables;
+			var other = variables.Single(v => v.Kind == VariableKind.Parameter && v.Index == 0);
+			Debug.Assert(IsRecordType(other.Type));
+			int pos = 0;
+			// First instruction is the base constructor call
+			if (!(body.Instructions[pos] is Call { Method: { IsConstructor: true } } baseCtorCall))
+				return false;
+			if (!object.Equals(baseCtorCall.Method.DeclaringType, baseClass))
+				return false;
+			if (baseCtorCall.Arguments.Count != (isInheritedRecord ? 2 : 1))
+				return false;
+			if (!baseCtorCall.Arguments[0].MatchLdThis())
+				return false;
+			if (isInheritedRecord)
+			{
+				if (!baseCtorCall.Arguments[1].MatchLdLoc(other))
+					return false;
+			}
+			pos++;
+			// Then all the fields are copied over
+			foreach (var member in orderedMembers)
+			{
+				if (!(member is IField field))
+				{
+					if (!autoPropertyToBackingField.TryGetValue((IProperty)member, out field))
+						continue;
+				}
+				if (pos >= body.Instructions.Count)
+					return false;
+				if (!body.Instructions[pos].MatchStFld(out var lhsTarget, out var lhsField, out var valueInst))
+					return false;
+				if (!lhsTarget.MatchLdThis())
+					return false;
+				if (!lhsField.Equals(field))
+					return false;
+
+				if (!valueInst.MatchLdFld(out var rhsTarget, out var rhsField))
+					return false;
+				if (!rhsTarget.MatchLdThis())
+					return false;
+				if (!rhsField.Equals(field))
+					return false;
+				pos++;
+			}
+			return body.Instructions[pos] is Leave;
 		}
 
 		private bool IsGeneratedEqualityContract(IProperty property)
