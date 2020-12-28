@@ -103,6 +103,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return;
 			}
 
+			if (entry.Value is MemoryStream ms)
+			{
+				Children.Add(ResourceEntryNode.Create(entry.Key, ms.ToArray()));
+				return;
+			}
+
 			if (entry.Value == null)
 			{
 				otherEntries.Add(new SerializedObjectRepresentation(entry.Key, "null", ""));
