@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				"vararg", "variant", "vector", "virtual", "void", "wchar", "winapi", "with", "wrapper",
 
 				// These are not listed as keywords in spec, but ILAsm treats them as such
-				"property", "type", "flags", "callconv", "strict",
+				"property", "type", "flags", "codelabel", "callconv", "strict",
 				// ILDasm uses these keywords for unsigned integers
 				"uint8", "uint16", "uint32", "uint64"
 			);
