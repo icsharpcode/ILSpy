@@ -284,7 +284,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (!valueInst.MatchLdFld(out var rhsTarget, out var rhsField))
 					return false;
-				if (!rhsTarget.MatchLdThis())
+				if (!rhsTarget.MatchLdLoc(other))
 					return false;
 				if (!rhsField.Equals(field))
 					return false;
@@ -824,6 +824,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Remove the last couple transforms -- we don't need variable names etc. here
 			int lastBlockTransform = transforms.FindLastIndex(t => t is BlockILTransform);
 			transforms.RemoveRange(lastBlockTransform + 1, transforms.Count - (lastBlockTransform + 1));
+			// Use CombineExitsTransform so that "return other != null && ...;" is a single statement even in release builds
+			transforms.Add(new CombineExitsTransform());
 			il.RunTransforms(transforms,
 				new ILTransformContext(il, typeSystem, debugInfo: null, settings) {
 					CancellationToken = cancellationToken
