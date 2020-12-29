@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Use C# 9 <c>nint</c>/<c>nuint</c> types.
 		/// </summary>
-		[Category("C# 9.0 (experimental)")]
+		[Category("C# 9.0 / VS 2019.8")]
 		[Description("DecompilerSettings.NativeIntegers")]
 		public bool NativeIntegers {
 			get { return nativeIntegers; }
@@ -194,7 +194,7 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Use C# 9 <c>init;</c> property accessors.
 		/// </summary>
-		[Category("C# 9.0 (experimental)")]
+		[Category("C# 9.0 / VS 2019.8")]
 		[Description("DecompilerSettings.InitAccessors")]
 		public bool InitAccessors {
 			get { return initAccessors; }
@@ -210,9 +210,9 @@ namespace ICSharpCode.Decompiler
 		bool recordClasses = true;
 
 		/// <summary>
-		/// Use C# 9 <c>init;</c> property accessors.
+		/// Use C# 9 <c>record</c> classes.
 		/// </summary>
-		[Category("C# 9.0 (experimental)")]
+		[Category("C# 9.0 / VS 2019.8")]
 		[Description("DecompilerSettings.RecordClasses")]
 		public bool RecordClasses {
 			get { return recordClasses; }
@@ -231,7 +231,7 @@ namespace ICSharpCode.Decompiler
 		/// Use C# 9 <c>delegate* unmanaged</c> types.
 		/// If this option is disabled, function pointers will instead be decompiled with type `IntPtr`.
 		/// </summary>
-		[Category("C# 9.0 (experimental)")]
+		[Category("C# 9.0 / VS 2019.8")]
 		[Description("DecompilerSettings.FunctionPointers")]
 		public bool FunctionPointers {
 			get { return functionPointers; }
@@ -629,7 +629,7 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Support GetEnumerator extension methods in foreach.
 		/// </summary>
-		[Category("C# 9.0 (experimental)")]
+		[Category("C# 9.0 / VS 2019.8")]
 		[Description("DecompilerSettings.DecompileForEachWithGetEnumeratorExtension")]
 		public bool ForEachWithGetEnumeratorExtension {
 			get { return forEachWithGetEnumeratorExtension; }
