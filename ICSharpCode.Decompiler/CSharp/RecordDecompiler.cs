@@ -152,12 +152,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			// need to detect the correct interleaving.
 			// We could try to detect this from the PrintMembers body, but let's initially
 			// restrict ourselves to the common case where the record only uses properties.
-			if (recordTypeDef.Fields.All(backingFieldToAutoProperty.ContainsKey))
-			{
-				return recordTypeDef.Properties.ToList<IMember>();
-			}
-			return null;
+			return recordTypeDef.Properties.Concat<IMember>(
+				recordTypeDef.Fields.Where(f => !backingFieldToAutoProperty.ContainsKey(f))
+			).ToList();
 		}
+
+		/// <summary>
+		/// Gets the fields and properties of the record type, interleaved as necessary to
+		/// maintain Equals/ToString/etc. semantics.
+		/// </summary>
+		public IEnumerable<IMember> FieldsAndProperties => orderedMembers;
 
 		bool IsRecordType(IType type)
 		{
@@ -420,6 +424,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (getterCall.Arguments.Count != 1)
 						return false;
 					if (!getterCall.Arguments[0].MatchLdThis())
+						return false;
+				}
+				else if (val.MatchLdFld(out var target, out var field) || val.MatchLdFlda(out target, out field))
+				{
+					if (!target.MatchLdThis())
+						return false;
+					if (!field.MemberDefinition.Equals(member))
 						return false;
 				}
 				else

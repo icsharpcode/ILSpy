@@ -4,6 +4,15 @@
 	{
 	}
 
+	public record Fields
+	{
+		public int A;
+		public double B = 1.0;
+		public object C;
+		public dynamic D;
+		public string S = "abc";
+	}
+
 	public record Properties
 	{
 		public int A { 

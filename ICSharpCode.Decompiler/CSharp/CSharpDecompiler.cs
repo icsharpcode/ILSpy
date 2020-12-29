@@ -1179,24 +1179,28 @@ namespace ICSharpCode.Decompiler.CSharp
 						typeDecl.Members.Add(nestedType);
 					}
 				}
-				foreach (var field in typeDef.Fields)
+				// With C# 9 records, the relative order of fields and properties matters:
+				IEnumerable<IMember> fieldsAndProperties = recordDecompiler?.FieldsAndProperties
+					?? typeDef.Fields.Concat<IMember>(typeDef.Properties);
+				foreach (var fieldOrProperty in fieldsAndProperties)
 				{
-					if (!field.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, field.MetadataToken, settings))
+					if (fieldOrProperty.MetadataToken.IsNil || MemberIsHidden(module.PEFile, fieldOrProperty.MetadataToken, settings))
+					{
+						continue;
+					}
+					if (fieldOrProperty is IField field)
 					{
 						if (typeDef.Kind == TypeKind.Enum && !field.IsConst)
 							continue;
 						var memberDecl = DoDecompile(field, decompileRun, decompilationContext.WithCurrentMember(field));
 						typeDecl.Members.Add(memberDecl);
 					}
-				}
-				foreach (var property in typeDef.Properties)
-				{
-					if (recordDecompiler?.PropertyIsGenerated(property) == true)
+					else if (fieldOrProperty is IProperty property)
 					{
-						continue;
-					}
-					if (!property.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, property.MetadataToken, settings))
-					{
+						if (recordDecompiler?.PropertyIsGenerated(property) == true)
+						{
+							continue;
+						}
 						var propDecl = DoDecompile(property, decompileRun, decompilationContext.WithCurrentMember(property));
 						typeDecl.Members.Add(propDecl);
 					}
