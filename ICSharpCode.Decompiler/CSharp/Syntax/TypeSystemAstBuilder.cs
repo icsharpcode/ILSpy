@@ -1804,7 +1804,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					else if (SupportRecordClasses && typeDefinition.IsRecord
 						&& baseType.Name == "IEquatable" && baseType.Namespace == "System"
 						&& baseType.TypeArguments.Count == 1
-						&& baseType.TypeArguments[0].Equals(typeDefinition))
+						&& baseType.TypeArguments[0].Equals(typeDefinition.AsParameterizedType()))
 					{
 						// omit "IEquatable<R>" in records
 						continue;

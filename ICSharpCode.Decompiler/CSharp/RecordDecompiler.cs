@@ -53,9 +53,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void DetectAutomaticProperties()
 		{
-			foreach (var p in recordTypeDef.Properties)
+			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
+			foreach (var property in recordTypeDef.Properties)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
+				var p = (IProperty)property.Specialize(subst);
 				if (IsAutoProperty(p, out var field))
 				{
 					backingFieldToAutoProperty.Add(field, p);
@@ -152,8 +154,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			// need to detect the correct interleaving.
 			// We could try to detect this from the PrintMembers body, but let's initially
 			// restrict ourselves to the common case where the record only uses properties.
-			return recordTypeDef.Properties.Concat<IMember>(
-				recordTypeDef.Fields.Where(f => !backingFieldToAutoProperty.ContainsKey(f))
+			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
+			return recordTypeDef.Properties.Select(p => p.Specialize(subst)).Concat(
+				recordTypeDef.Fields.Select(f => (IField)f.Specialize(subst)).Where(f => !backingFieldToAutoProperty.ContainsKey(f))
 			).ToList();
 		}
 
@@ -417,9 +420,15 @@ namespace ICSharpCode.Decompiler.CSharp
 						val = addressOf.Value;
 					}
 				}
+				else if (val is Box box)
+				{
+					if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(box.Type, member.ReturnType))
+						return false;
+					val = box.Argument;
+				}
 				if (val is CallInstruction getterCall && member is IProperty property)
 				{
-					if (!getterCall.Method.MemberDefinition.Equals(property.Getter.MemberDefinition))
+					if (!getterCall.Method.Equals(property.Getter))
 						return false;
 					if (getterCall.Arguments.Count != 1)
 						return false;
@@ -430,7 +439,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					if (!target.MatchLdThis())
 						return false;
-					if (!field.MemberDefinition.Equals(member))
+					if (!field.Equals(member))
 						return false;
 				}
 				else

@@ -13,6 +13,18 @@
 		public string S = "abc";
 	}
 
+	public record Pair<A, B>
+	{
+		public A First {
+			get; 
+			init; 
+		}
+		public B Second { 
+			get; 
+			init; 
+		}
+	}
+
 	public record Properties
 	{
 		public int A { 
@@ -40,5 +52,11 @@
 		{
 			B = 42;
 		}
+	}
+}
+namespace System.Runtime.CompilerServices
+{
+	internal class IsExternalInit
+	{
 	}
 }
