@@ -33,7 +33,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Class,
 		Struct,
 		Interface,
-		Enum
+		Enum,
+		/// <summary>
+		/// C# 9 'record'
+		/// </summary>
+		RecordClass,
 	}
 
 	/// <summary>
@@ -63,6 +67,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						return GetChildByRole(Roles.InterfaceKeyword);
 					case ClassType.Enum:
 						return GetChildByRole(Roles.EnumKeyword);
+					case ClassType.RecordClass:
+						return GetChildByRole(Roles.RecordKeyword);
 					default:
 						return CSharpTokenNode.Null;
 				}

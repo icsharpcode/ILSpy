@@ -213,6 +213,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// If disabled, emits "set /*init*/;" instead.
 		/// </summary>
 		public bool SupportInitAccessors { get; set; }
+
+		/// <summary>
+		/// Controls whether C# 9 "record" class types are supported.
+		/// </summary>
+		public bool SupportRecordClasses { get; set; }
 		#endregion
 
 		#region Convert Type
@@ -1744,6 +1749,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					}
 				default:
 					classType = ClassType.Class;
+					if (SupportRecordClasses && typeDefinition.IsRecord)
+					{
+						classType = ClassType.RecordClass;
+					}
 					break;
 			}
 
@@ -1774,22 +1783,30 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				foreach (IType baseType in typeDefinition.DirectBaseTypes)
 				{
-					// if the declared type is an enum, replace all references to System.Enum with the enum-underlying type
 					if (typeDefinition.Kind == TypeKind.Enum && baseType.IsKnownType(KnownTypeCode.Enum))
 					{
+						// if the declared type is an enum, replace all references to System.Enum with the enum-underlying type
 						if (!typeDefinition.EnumUnderlyingType.IsKnownType(KnownTypeCode.Int32))
 						{
 							decl.BaseTypes.Add(ConvertType(typeDefinition.EnumUnderlyingType));
 						}
-						// if the declared type is a struct, ignore System.ValueType
 					}
 					else if ((typeDefinition.Kind == TypeKind.Struct || typeDefinition.Kind == TypeKind.Void) && baseType.IsKnownType(KnownTypeCode.ValueType))
 					{
+						// if the declared type is a struct, ignore System.ValueType
 						continue;
-						// always ignore System.Object
 					}
 					else if (baseType.IsKnownType(KnownTypeCode.Object))
 					{
+						// always ignore System.Object
+						continue;
+					}
+					else if (SupportRecordClasses && typeDefinition.IsRecord
+						&& baseType.Name == "IEquatable" && baseType.Namespace == "System"
+						&& baseType.TypeArguments.Count == 1
+						&& baseType.TypeArguments[0].Equals(typeDefinition.AsParameterizedType()))
+					{
+						// omit "IEquatable<R>" in records
 						continue;
 					}
 					else

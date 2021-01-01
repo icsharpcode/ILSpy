@@ -18,14 +18,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -415,6 +412,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			typeSystemAstBuilder.AddResolveResultAnnotations = true;
 			typeSystemAstBuilder.UseNullableSpecifierForValueTypes = settings.LiftNullables;
 			typeSystemAstBuilder.SupportInitAccessors = settings.InitAccessors;
+			typeSystemAstBuilder.SupportRecordClasses = settings.RecordClasses;
 			return typeSystemAstBuilder;
 		}
 
@@ -1170,6 +1168,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					// e.g. DelegateDeclaration
 					return entityDecl;
 				}
+				bool isRecord = settings.RecordClasses && typeDef.IsRecord;
+				RecordDecompiler recordDecompiler = isRecord ? new RecordDecompiler(typeSystem, typeDef, CancellationToken) : null;
 				foreach (var type in typeDef.NestedTypes)
 				{
 					if (!type.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, type.MetadataToken, settings))
@@ -1179,20 +1179,28 @@ namespace ICSharpCode.Decompiler.CSharp
 						typeDecl.Members.Add(nestedType);
 					}
 				}
-				foreach (var field in typeDef.Fields)
+				// With C# 9 records, the relative order of fields and properties matters:
+				IEnumerable<IMember> fieldsAndProperties = recordDecompiler?.FieldsAndProperties
+					?? typeDef.Fields.Concat<IMember>(typeDef.Properties);
+				foreach (var fieldOrProperty in fieldsAndProperties)
 				{
-					if (!field.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, field.MetadataToken, settings))
+					if (fieldOrProperty.MetadataToken.IsNil || MemberIsHidden(module.PEFile, fieldOrProperty.MetadataToken, settings))
+					{
+						continue;
+					}
+					if (fieldOrProperty is IField field)
 					{
 						if (typeDef.Kind == TypeKind.Enum && !field.IsConst)
 							continue;
 						var memberDecl = DoDecompile(field, decompileRun, decompilationContext.WithCurrentMember(field));
 						typeDecl.Members.Add(memberDecl);
 					}
-				}
-				foreach (var property in typeDef.Properties)
-				{
-					if (!property.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, property.MetadataToken, settings))
+					else if (fieldOrProperty is IProperty property)
 					{
+						if (recordDecompiler?.PropertyIsGenerated(property) == true)
+						{
+							continue;
+						}
 						var propDecl = DoDecompile(property, decompileRun, decompilationContext.WithCurrentMember(property));
 						typeDecl.Members.Add(propDecl);
 					}
@@ -1207,6 +1215,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				foreach (var method in typeDef.Methods)
 				{
+					if (recordDecompiler?.MethodIsGenerated(method) == true)
+					{
+						continue;
+					}
 					if (!method.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, method.MetadataToken, settings))
 					{
 						var memberDecl = DoDecompile(method, decompileRun, decompilationContext.WithCurrentMember(method));

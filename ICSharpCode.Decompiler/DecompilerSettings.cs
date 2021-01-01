@@ -135,12 +135,13 @@ namespace ICSharpCode.Decompiler
 				initAccessors = false;
 				functionPointers = false;
 				forEachWithGetEnumeratorExtension = false;
+				recordClasses = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension)
+			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension || recordClasses)
 				return CSharp.LanguageVersion.Preview;
 			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement
 				|| staticLocalFunctions || ranges || switchExpressions)
@@ -175,7 +176,7 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Use C# 9 <c>nint</c>/<c>nuint</c> types.
 		/// </summary>
-		[Category("C# 9.0 (experimental)")]
+		[Category("C# 9.0 / VS 2019.8")]
 		[Description("DecompilerSettings.NativeIntegers")]
 		public bool NativeIntegers {
 			get { return nativeIntegers; }
@@ -193,7 +194,7 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Use C# 9 <c>init;</c> property accessors.
 		/// </summary>
-		[Category("C# 9.0 (experimental)")]
+		[Category("C# 9.0 / VS 2019.8")]
 		[Description("DecompilerSettings.InitAccessors")]
 		public bool InitAccessors {
 			get { return initAccessors; }
@@ -206,13 +207,31 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool recordClasses = true;
+
+		/// <summary>
+		/// Use C# 9 <c>record</c> classes.
+		/// </summary>
+		[Category("C# 9.0 / VS 2019.8")]
+		[Description("DecompilerSettings.RecordClasses")]
+		public bool RecordClasses {
+			get { return recordClasses; }
+			set {
+				if (recordClasses != value)
+				{
+					recordClasses = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool functionPointers = true;
 
 		/// <summary>
 		/// Use C# 9 <c>delegate* unmanaged</c> types.
 		/// If this option is disabled, function pointers will instead be decompiled with type `IntPtr`.
 		/// </summary>
-		[Category("C# 9.0 (experimental)")]
+		[Category("C# 9.0 / VS 2019.8")]
 		[Description("DecompilerSettings.FunctionPointers")]
 		public bool FunctionPointers {
 			get { return functionPointers; }
@@ -610,7 +629,7 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Support GetEnumerator extension methods in foreach.
 		/// </summary>
-		[Category("C# 9.0 (experimental)")]
+		[Category("C# 9.0 / VS 2019.8")]
 		[Description("DecompilerSettings.DecompileForEachWithGetEnumeratorExtension")]
 		public bool ForEachWithGetEnumeratorExtension {
 			get { return forEachWithGetEnumeratorExtension; }

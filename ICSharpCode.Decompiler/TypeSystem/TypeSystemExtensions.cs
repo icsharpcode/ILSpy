@@ -616,5 +616,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return null;
 		}
+
+		/// <summary>
+		/// When given a generic type definition, returns the self-parameterized type
+		/// (i.e. the type of "this" within the type definition).
+		/// When given a non-generic type definition, returns that definition unchanged.
+		/// </summary>
+		public static IType AsParameterizedType(this ITypeDefinition td)
+		{
+			if (td.TypeParameterCount == 0)
+			{
+				return td;
+			}
+			else
+			{
+				return new ParameterizedType(td, td.TypeArguments);
+			}
+		}
 	}
 }
