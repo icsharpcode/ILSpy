@@ -148,7 +148,8 @@ namespace ICSharpCode.ILSpy
 		{
 			try
 			{
-				return GetPEFileAsync().GetAwaiter().GetResult();
+				var loadResult = loadingTask.GetAwaiter().GetResult();
+				return loadResult.PEFile;
 			}
 			catch (Exception ex)
 			{
