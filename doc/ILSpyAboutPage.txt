@@ -3,7 +3,7 @@ ILSpy is the open-source .NET assembly browser and decompiler.
 Website: https://ilspy.net/
 Found a bug? https://github.com/icsharpcode/ILSpy/issues/new/choose
 
-Copyright 2011-2020 AlphaSierraPapa for the ILSpy team
+Copyright 2011-2021 AlphaSierraPapa for the ILSpy team
 Current and past contributors: https://github.com/icsharpcode/ILSpy/graphs/contributors
 
 ILSpy is distributed under the MIT License.
