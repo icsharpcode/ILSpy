@@ -245,7 +245,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 							return (options & TypeSystemOptions.NullabilityAnnotations) != 0;
 						case "NullableContextAttribute":
 							return (options & TypeSystemOptions.NullabilityAnnotations) != 0
-								&& (target == SymbolKind.TypeDefinition || target == SymbolKind.Method || target == SymbolKind.Accessor);
+								&& (target == SymbolKind.TypeDefinition || IsMethodLike(target));
 						default:
 							return false;
 					}
@@ -254,6 +254,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				default:
 					return false;
 			}
+		}
+
+		static bool IsMethodLike(SymbolKind kind)
+		{
+			return kind switch
+			{
+				SymbolKind.Method => true,
+				SymbolKind.Operator => true,
+				SymbolKind.Constructor => true,
+				SymbolKind.Destructor => true,
+				SymbolKind.Accessor => true,
+				_ => false
+			};
 		}
 		#endregion
 

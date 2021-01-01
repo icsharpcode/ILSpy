@@ -16,30 +16,30 @@
 	public record Pair<A, B>
 	{
 		public A First {
-			get; 
-			init; 
+			get;
+			init;
 		}
-		public B Second { 
-			get; 
-			init; 
+		public B Second {
+			get;
+			init;
 		}
 	}
 
 	public record Properties
 	{
-		public int A { 
-			get; 
+		public int A {
+			get;
 			set;
 		}
 		public int B {
 			get;
 		}
 		public int C => 43;
-		public object O { 
-			get; 
+		public object O {
+			get;
 			set;
 		}
-		public string S { 
+		public string S {
 			get;
 			set;
 		}
@@ -51,6 +51,33 @@
 		public Properties()
 		{
 			B = 42;
+		}
+	}
+
+	public abstract record WithNestedRecords
+	{
+		public record A : WithNestedRecords
+		{
+			public override string AbstractProp => "A";
+		}
+
+		public record B : WithNestedRecords
+		{
+			public override string AbstractProp => "B";
+
+			public int? Value {
+				get;
+				set;
+			}
+		}
+
+		public record DerivedGeneric<T> : Pair<T, T?> where T : struct
+		{
+			public bool Flag;
+		}
+
+		public abstract string AbstractProp {
+			get;
 		}
 	}
 }

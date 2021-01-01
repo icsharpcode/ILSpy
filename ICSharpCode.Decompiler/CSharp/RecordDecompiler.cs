@@ -198,7 +198,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				case "Equals" when method.Parameters.Count == 1:
 				{
 					IType paramType = method.Parameters[0].Type;
-					if (paramType.IsKnownType(KnownTypeCode.Object))
+					if (paramType.IsKnownType(KnownTypeCode.Object) && method.IsOverride)
 					{
 						// override bool Equals(object? obj): always generated
 						return true;
@@ -207,6 +207,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						// virtual bool Equals(R? other): generated unless user-declared
 						return IsGeneratedEquals(method);
+					}
+					else if (isInheritedRecord && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(paramType, baseClass) && method.IsOverride)
+					{
+						// override bool Equals(BaseClass? obj): always generated
+						return true;
 					}
 					else
 					{
@@ -247,6 +252,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			 */
 			Debug.Assert(method.IsConstructor && method.Parameters.Count == 1);
 			if (method.GetAttributes().Any() || method.GetReturnTypeAttributes().Any())
+				return false;
+			if (method.Accessibility != Accessibility.Protected)
 				return false;
 			if (orderedMembers == null)
 				return false;
@@ -345,6 +352,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (method.GetAttributes().Any() || method.GetReturnTypeAttributes().Any())
 				return false;
+			if (method.Accessibility != Accessibility.Protected)
+				return false;
 			if (orderedMembers == null)
 				return false;
 			var body = DecompileBody(method);
@@ -357,18 +366,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			int pos = 0;
 			if (isInheritedRecord)
 			{
+				// Special case: inherited record adding no new members
+				if (body.Instructions[pos].MatchReturn(out var returnValue)
+					&& IsBaseCall(returnValue) && !orderedMembers.Any(IsPrintedMember))
+				{
+					return true;
+				}
 				// if (call PrintMembers(ldloc this, ldloc builder)) Block IL_000f {
 				//   callvirt Append(ldloc builder, ldstr ", ")
 				// }
 				if (!body.Instructions[pos].MatchIfInstruction(out var condition, out var trueInst))
 					return false;
-				if (!(condition is CallInstruction { Method: { Name: "PrintMembers" } } call))
-					return false;
-				if (call.Arguments.Count != 2)
-					return false;
-				if (!call.Arguments[0].MatchLdThis())
-					return false;
-				if (!call.Arguments[1].MatchLdLoc(builder))
+				if (!IsBaseCall(condition))
 					return false;
 				// trueInst = callvirt Append(ldloc builder, ldstr ", ")
 				trueInst = Block.Unwrap(trueInst);
@@ -377,22 +386,25 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (!(val.MatchLdStr(out string text) && text == ", "))
 					return false;
 				pos++;
+
+				bool IsBaseCall(ILInstruction inst)
+				{
+					if (!(inst is CallInstruction { Method: { Name: "PrintMembers" } } call))
+						return false;
+					if (call.Arguments.Count != 2)
+						return false;
+					if (!call.Arguments[0].MatchLdThis())
+						return false;
+					if (!call.Arguments[1].MatchLdLoc(builder))
+						return false;
+					return true;
+				}
 			}
 			bool needsComma = false;
 			foreach (var member in orderedMembers)
 			{
-				if (member.IsStatic)
-				{
-					continue; // static fields/properties are not printed
-				}
-				if (member.Name == "EqualityContract")
-				{
-					continue; // EqualityContract is never printed
-				}
-				if (member.IsExplicitInterfaceImplementation)
-				{
-					continue; // explicit interface impls are not printed
-				}
+				if (!IsPrintedMember(member))
+					continue;
 				cancellationToken.ThrowIfCancellationRequested();
 				/* 
 				callvirt Append(ldloc builder, ldstr "A")
@@ -453,6 +465,26 @@ namespace ICSharpCode.Decompiler.CSharp
 			return body.Instructions[pos].MatchReturn(out var retVal)
 				&& retVal.MatchLdcI4(needsComma ? 1 : 0);
 
+			bool IsPrintedMember(IMember member)
+			{
+				if (member.IsStatic)
+				{
+					return false; // static fields/properties are not printed
+				}
+				if (member.Name == "EqualityContract")
+				{
+					return false; // EqualityContract is never printed
+				}
+				if (member.IsExplicitInterfaceImplementation)
+				{
+					return false; // explicit interface impls are not printed
+				}
+				if (member.IsOverride)
+				{
+					return false; // override is not printed (again), the virtual base property was already printed
+				}
+				return true;
+			}
 
 			bool MatchStringBuilderAppendConstant(out string text)
 			{
@@ -573,7 +605,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			int pos = 0;
 			if (isInheritedRecord)
 			{
-				return false; // TODO: implement this case
+				// call BaseClass::Equals(ldloc this, ldloc other)
+				if (pos >= conditions.Count)
+					return false;
+				if (!(conditions[pos] is Call { Method: { Name: "Equals" } } call))
+					return false;
+				if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(call.Method.DeclaringType, baseClass))
+					return false;
+				if (call.Arguments.Count != 2)
+					return false;
+				if (!call.Arguments[0].MatchLdThis())
+					return false;
+				if (!call.Arguments[1].MatchLdLoc(other))
+					return false;
+				pos++;
 			}
 			else
 			{
