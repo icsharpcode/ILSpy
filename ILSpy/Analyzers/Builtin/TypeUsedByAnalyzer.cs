@@ -77,23 +77,34 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			{
 				foreach (var fa in attribute.FixedArguments)
 				{
-					if (!fa.Type.IsKnownType(KnownTypeCode.Type))
-						continue;
-					((IType)fa.Value).AcceptVisitor(visitor);
+					CheckAttributeValue(fa.Value);
 					if (visitor.Found)
 						return true;
 				}
 
 				foreach (var na in attribute.NamedArguments)
 				{
-					if (!na.Type.IsKnownType(KnownTypeCode.Type))
-						continue;
-					((IType)na.Value).AcceptVisitor(visitor);
+					CheckAttributeValue(na.Value);
 					if (visitor.Found)
 						return true;
 				}
 			}
 			return false;
+
+			void CheckAttributeValue(object value)
+			{
+				if (value is IType typeofType)
+				{
+					typeofType.AcceptVisitor(visitor);
+				}
+				else if (value is ImmutableArray<CustomAttributeTypedArgument<IType>> arr)
+				{
+					foreach (var element in arr)
+					{
+						CheckAttributeValue(element.Value);
+					}
+				}
+			}
 		}
 
 		void VisitMember(TypeDefinitionUsedVisitor visitor, IMember member, AnalyzerContext context, bool scanBodies = false)
