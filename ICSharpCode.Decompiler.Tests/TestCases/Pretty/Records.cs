@@ -54,6 +54,28 @@
 		}
 	}
 
+	public class WithExpressionTests
+	{
+		public Fields Test(Fields input)
+		{
+			return input with {
+				A = 42,
+				B = 3.141,
+				C = input
+			};
+		}
+		public Fields Test2(Fields input)
+		{
+			return input with {
+				A = 42,
+				B = 3.141,
+				C = input with {
+					A = 43
+				}
+			};
+		}
+	}
+
 	public abstract record WithNestedRecords
 	{
 		public record A : WithNestedRecords

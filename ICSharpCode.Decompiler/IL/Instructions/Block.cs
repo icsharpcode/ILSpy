@@ -158,7 +158,10 @@ namespace ICSharpCode.Decompiler.IL
 					IType type2 = null;
 					bool condition = Instructions[0].MatchStLoc(final2.Variable, out var init2);
 					Debug.Assert(condition);
-					Debug.Assert(init2 is NewObj || init2 is DefaultValue || (init2 is Block named && named.Kind == BlockKind.CallWithNamedArgs));
+					Debug.Assert(init2 is NewObj
+						|| init2 is DefaultValue
+						|| (init2 is CallInstruction ci && TransformCollectionAndObjectInitializers.IsRecordCloneMethodCall(ci))
+						|| (init2 is Block named && named.Kind == BlockKind.CallWithNamedArgs));
 					switch (init2)
 					{
 						case NewObj newObj:
@@ -454,5 +457,6 @@ namespace ICSharpCode.Decompiler.IL
 		/// <see cref="DeconstructInstruction"/>
 		/// </summary>
 		DeconstructionAssignments,
+		WithInitializer,
 	}
 }

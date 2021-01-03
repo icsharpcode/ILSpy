@@ -691,6 +691,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			VisitChildren(placeholder);
 		}
+
+		public virtual void VisitWithInitializerExpression(WithInitializerExpression withInitializerExpression)
+		{
+			VisitChildren(withInitializerExpression);
+		}
 	}
 
 	/// <summary>
@@ -1359,6 +1364,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren(placeholder);
 		}
+
+		public virtual T VisitWithInitializerExpression(WithInitializerExpression withInitializerExpression)
+		{
+			return VisitChildren(withInitializerExpression);
+		}
 	}
 
 	/// <summary>
@@ -2026,6 +2036,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual S VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern, T data)
 		{
 			return VisitChildren(placeholder, data);
+		}
+
+		public virtual S VisitWithInitializerExpression(WithInitializerExpression withInitializerExpression, T data)
+		{
+			return VisitChildren(withInitializerExpression, data);
 		}
 	}
 }

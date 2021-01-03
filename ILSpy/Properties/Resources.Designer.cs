@@ -1335,6 +1335,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &apos;with&apos; initializer expressions.
+        /// </summary>
+        public static string DecompilerSettings_WithExpressions {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.WithExpressions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The settings selected below are applied to the decompiler output in combination with the selection in the language drop-down. Selecting a lower language version in the drop-down will deactivate all selected options of the higher versions. Note that some settings implicitly depend on each other, e.g.: LINQ expressions cannot be introduced without first transforming static calls to extension method calls..
         /// </summary>
         public static string DecompilerSettingsPanelLongText {
@@ -1567,7 +1576,7 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("HighlightCurrentLine", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Highlight matching braces.
         /// </summary>

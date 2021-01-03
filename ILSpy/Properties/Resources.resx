@@ -474,6 +474,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.VBSpecificOptions" xml:space="preserve">
     <value>VB-specific options</value>
   </data>
+  <data name="DecompilerSettings.WithExpressions" xml:space="preserve">
+    <value>'with' initializer expressions</value>
+  </data>
   <data name="DecompilerSettingsPanelLongText" xml:space="preserve">
     <value>The settings selected below are applied to the decompiler output in combination with the selection in the language drop-down. Selecting a lower language version in the drop-down will deactivate all selected options of the higher versions. Note that some settings implicitly depend on each other, e.g.: LINQ expressions cannot be introduced without first transforming static calls to extension method calls.</value>
   </data>

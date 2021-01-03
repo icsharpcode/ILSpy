@@ -171,6 +171,10 @@ namespace ICSharpCode.ILSpy
 				case "stackalloc":
 					color = typeKeywordsColor;
 					break;
+				case "with":
+					if (role == WithInitializerExpression.WithKeywordRole)
+						color = typeKeywordsColor;
+					break;
 				case "try":
 				case "throw":
 				case "catch":

@@ -63,6 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		void VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression);
 		void VisitUncheckedExpression(UncheckedExpression uncheckedExpression);
 		void VisitUndocumentedExpression(UndocumentedExpression undocumentedExpression);
+		void VisitWithInitializerExpression(WithInitializerExpression withInitializerExpression);
 
 		void VisitQueryExpression(QueryExpression queryExpression);
 		void VisitQueryContinuationClause(QueryContinuationClause queryContinuationClause);
@@ -209,6 +210,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression);
 		S VisitUncheckedExpression(UncheckedExpression uncheckedExpression);
 		S VisitUndocumentedExpression(UndocumentedExpression undocumentedExpression);
+		S VisitWithInitializerExpression(WithInitializerExpression withInitializerExpression);
 
 		S VisitQueryExpression(QueryExpression queryExpression);
 		S VisitQueryContinuationClause(QueryContinuationClause queryContinuationClause);
@@ -355,6 +357,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression, T data);
 		S VisitUncheckedExpression(UncheckedExpression uncheckedExpression, T data);
 		S VisitUndocumentedExpression(UndocumentedExpression undocumentedExpression, T data);
+		S VisitWithInitializerExpression(WithInitializerExpression withInitializerExpression, T data);
 
 		S VisitQueryExpression(QueryExpression queryExpression, T data);
 		S VisitQueryContinuationClause(QueryContinuationClause queryContinuationClause, T data);

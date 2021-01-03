@@ -54,114 +54,135 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			ILInstruction inst = body.Instructions[pos];
 			// Match stloc(v, newobj)
-			if (inst.MatchStLoc(out var v, out var initInst) && (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot))
+			if (!inst.MatchStLoc(out var v, out var initInst) || v.Kind != VariableKind.Local && v.Kind != VariableKind.StackSlot)
+				return false;
+			IType instType;
+			var blockKind = BlockKind.CollectionInitializer;
+			var insertionPos = initInst.ChildIndex;
+			var siblings = initInst.Parent.Children;
+			switch (initInst)
 			{
-				IType instType;
-				switch (initInst)
-				{
-					case NewObj newObjInst:
-						if (newObjInst.ILStackWasEmpty && v.Kind == VariableKind.Local && !context.Function.Method.IsConstructor && !context.Function.Method.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
-						{
-							// on statement level (no other expressions on IL stack),
-							// prefer to keep local variables (but not stack slots),
-							// unless we are in a constructor (where inlining object initializers might be critical
-							// for the base ctor call) or a compiler-generated delegate method, which might be used in a query expression.
-							return false;
-						}
-						// Do not try to transform delegate construction.
-						// DelegateConstruction transform cannot deal with this.
-						if (DelegateConstruction.MatchDelegateConstruction(newObjInst, out _, out _, out _) || TransformDisplayClassUsage.IsPotentialClosure(context, newObjInst))
-							return false;
-						// Cannot build a collection/object initializer attached to an AnonymousTypeCreateExpression:s 
-						// anon = new { A = 5 } { 3,4,5 } is invalid syntax.
-						if (newObjInst.Method.DeclaringType.ContainsAnonymousType())
-							return false;
-						instType = newObjInst.Method.DeclaringType;
-						break;
-					case DefaultValue defaultVal:
-						if (defaultVal.ILStackWasEmpty && v.Kind == VariableKind.Local && !context.Function.Method.IsConstructor)
-						{
-							// on statement level (no other expressions on IL stack),
-							// prefer to keep local variables (but not stack slots),
-							// unless we are in a constructor (where inlining object initializers might be critical
-							// for the base ctor call)
-							return false;
-						}
-						instType = defaultVal.Type;
-						break;
-					default:
-						return false;
-				}
-				int initializerItemsCount = 0;
-				var blockKind = BlockKind.CollectionInitializer;
-				possibleIndexVariables = new Dictionary<ILVariable, (int Index, ILInstruction Value)>();
-				currentPath = new List<AccessPathElement>();
-				isCollection = false;
-				pathStack = new Stack<HashSet<AccessPathElement>>();
-				pathStack.Push(new HashSet<AccessPathElement>());
-				// Detect initializer type by scanning the following statements
-				// each must be a callvirt with ldloc v as first argument
-				// if the method is a setter we're dealing with an object initializer
-				// if the method is named Add and has at least 2 arguments we're dealing with a collection/dictionary initializer
-				while (pos + initializerItemsCount + 1 < body.Instructions.Count
-					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockKind))
-				{
-					initializerItemsCount++;
-				}
-				// Do not convert the statements into an initializer if there's an incompatible usage of the initializer variable
-				// directly after the possible initializer.
-				if (IsMethodCallOnVariable(body.Instructions[pos + initializerItemsCount + 1], v))
-					return false;
-				// Calculate the correct number of statements inside the initializer:
-				// All index variables that were used in the initializer have Index set to -1.
-				// We fetch the first unused variable from the list and remove all instructions after its
-				// first usage (i.e. the init store) from the initializer.
-				var index = possibleIndexVariables.Where(info => info.Value.Index > -1).Min(info => (int?)info.Value.Index);
-				if (index != null)
-				{
-					initializerItemsCount = index.Value - pos - 1;
-				}
-				// The initializer would be empty, there's nothing to do here.
-				if (initializerItemsCount <= 0)
-					return false;
-				context.Step("CollectionOrObjectInitializer", inst);
-				// Create a new block and final slot (initializer target variable)
-				var initializerBlock = new Block(blockKind);
-				ILVariable finalSlot = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
-				initializerBlock.FinalInstruction = new LdLoc(finalSlot);
-				initializerBlock.Instructions.Add(new StLoc(finalSlot, initInst.Clone()));
-				// Move all instructions to the initializer block.
-				for (int i = 1; i <= initializerItemsCount; i++)
-				{
-					switch (body.Instructions[i + pos])
+				case NewObj newObjInst:
+					if (newObjInst.ILStackWasEmpty && v.Kind == VariableKind.Local
+						&& !context.Function.Method.IsConstructor
+						&& !context.Function.Method.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 					{
-						case CallInstruction call:
-							if (!(call is CallVirt || call is Call))
-								continue;
-							var newCall = call;
-							var newTarget = newCall.Arguments[0];
-							foreach (var load in newTarget.Descendants.OfType<IInstructionWithVariableOperand>())
-								if ((load is LdLoc || load is LdLoca) && load.Variable == v)
-									load.Variable = finalSlot;
-							initializerBlock.Instructions.Add(newCall);
-							break;
-						case StObj stObj:
-							var newStObj = stObj;
-							foreach (var load in newStObj.Target.Descendants.OfType<IInstructionWithVariableOperand>())
-								if ((load is LdLoc || load is LdLoca) && load.Variable == v)
-									load.Variable = finalSlot;
-							initializerBlock.Instructions.Add(newStObj);
-							break;
-						case StLoc stLoc:
-							var newStLoc = stLoc;
-							initializerBlock.Instructions.Add(newStLoc);
-							break;
+						// on statement level (no other expressions on IL stack),
+						// prefer to keep local variables (but not stack slots),
+						// unless we are in a constructor (where inlining object initializers might be critical
+						// for the base ctor call) or a compiler-generated delegate method, which might be used in a query expression.
+						return false;
 					}
-				}
-				initInst.ReplaceWith(initializerBlock);
-				body.Instructions.RemoveRange(pos + 1, initializerItemsCount);
-				ILInlining.InlineIfPossible(body, pos, context);
+					// Do not try to transform delegate construction.
+					// DelegateConstruction transform cannot deal with this.
+					if (DelegateConstruction.MatchDelegateConstruction(newObjInst, out _, out _, out _)
+						|| TransformDisplayClassUsage.IsPotentialClosure(context, newObjInst))
+						return false;
+					// Cannot build a collection/object initializer attached to an AnonymousTypeCreateExpression
+					// anon = new { A = 5 } { 3,4,5 } is invalid syntax.
+					if (newObjInst.Method.DeclaringType.ContainsAnonymousType())
+						return false;
+					instType = newObjInst.Method.DeclaringType;
+					break;
+				case DefaultValue defaultVal:
+					if (defaultVal.ILStackWasEmpty && v.Kind == VariableKind.Local && !context.Function.Method.IsConstructor)
+					{
+						// on statement level (no other expressions on IL stack),
+						// prefer to keep local variables (but not stack slots),
+						// unless we are in a constructor (where inlining object initializers might be 
+						// critical for the base ctor call)
+						return false;
+					}
+					instType = defaultVal.Type;
+					break;
+				case CallInstruction ci when context.Settings.WithExpressions && IsRecordCloneMethodCall(ci):
+					instType = ci.Method.DeclaringType;
+					blockKind = BlockKind.WithInitializer;
+					initInst = ci.Arguments.Single();
+					break;
+				default:
+					return false;
 			}
+			int initializerItemsCount = 0;
+			possibleIndexVariables = new Dictionary<ILVariable, (int Index, ILInstruction Value)>();
+			currentPath = new List<AccessPathElement>();
+			isCollection = false;
+			pathStack = new Stack<HashSet<AccessPathElement>>();
+			pathStack.Push(new HashSet<AccessPathElement>());
+			// Detect initializer type by scanning the following statements
+			// each must be a callvirt with ldloc v as first argument
+			// if the method is a setter we're dealing with an object initializer
+			// if the method is named Add and has at least 2 arguments we're dealing with a collection/dictionary initializer
+			while (pos + initializerItemsCount + 1 < body.Instructions.Count
+				&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockKind))
+			{
+				initializerItemsCount++;
+			}
+			// Do not convert the statements into an initializer if there's an incompatible usage of the initializer variable
+			// directly after the possible initializer.
+			if (IsMethodCallOnVariable(body.Instructions[pos + initializerItemsCount + 1], v))
+				return false;
+			// Calculate the correct number of statements inside the initializer:
+			// All index variables that were used in the initializer have Index set to -1.
+			// We fetch the first unused variable from the list and remove all instructions after its
+			// first usage (i.e. the init store) from the initializer.
+			var index = possibleIndexVariables.Where(info => info.Value.Index > -1).Min(info => (int?)info.Value.Index);
+			if (index != null)
+			{
+				initializerItemsCount = index.Value - pos - 1;
+			}
+			// The initializer would be empty, there's nothing to do here.
+			if (initializerItemsCount <= 0)
+				return false;
+			context.Step("CollectionOrObjectInitializer", inst);
+			// Create a new block and final slot (initializer target variable)
+			var initializerBlock = new Block(blockKind);
+			ILVariable finalSlot = context.Function.RegisterVariable(VariableKind.InitializerTarget, instType);
+			initializerBlock.FinalInstruction = new LdLoc(finalSlot);
+			initializerBlock.Instructions.Add(new StLoc(finalSlot, initInst));
+			// Move all instructions to the initializer block.
+			for (int i = 1; i <= initializerItemsCount; i++)
+			{
+				switch (body.Instructions[i + pos])
+				{
+					case CallInstruction call:
+						if (!(call is CallVirt || call is Call))
+							continue;
+						var newCall = call;
+						var newTarget = newCall.Arguments[0];
+						foreach (var load in newTarget.Descendants.OfType<IInstructionWithVariableOperand>())
+							if ((load is LdLoc || load is LdLoca) && load.Variable == v)
+								load.Variable = finalSlot;
+						initializerBlock.Instructions.Add(newCall);
+						break;
+					case StObj stObj:
+						var newStObj = stObj;
+						foreach (var load in newStObj.Target.Descendants.OfType<IInstructionWithVariableOperand>())
+							if ((load is LdLoc || load is LdLoca) && load.Variable == v)
+								load.Variable = finalSlot;
+						initializerBlock.Instructions.Add(newStObj);
+						break;
+					case StLoc stLoc:
+						var newStLoc = stLoc;
+						initializerBlock.Instructions.Add(newStLoc);
+						break;
+				}
+			}
+			body.Instructions.RemoveRange(pos + 1, initializerItemsCount);
+			siblings[insertionPos] = initializerBlock;
+			ILInlining.InlineIfPossible(body, pos, context);
+			return true;
+		}
+
+		internal static bool IsRecordCloneMethodCall(CallInstruction ci)
+		{
+			if (ci.Method.DeclaringTypeDefinition?.IsRecord != true)
+				return false;
+			if (ci.Method.Name != "<Clone>$")
+				return false;
+			if (ci.Arguments.Count != 1)
+				return false;
+
 			return true;
 		}
 
@@ -234,7 +255,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (values.Count != 1 || !IsValidObjectInitializerTarget(currentPath))
 						return false;
-					blockKind = BlockKind.ObjectInitializer;
+					if (blockKind != BlockKind.ObjectInitializer && blockKind != BlockKind.WithInitializer)
+						blockKind = BlockKind.ObjectInitializer;
 					return true;
 				default:
 					return false;

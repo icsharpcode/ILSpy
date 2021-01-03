@@ -214,6 +214,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				get;
 				set;
 			}
+
+#if CS90
+			public Fields Value7 {
+				get;
+				set;
+			}
+#endif
 		}
 
 		public class OtherItem
@@ -277,6 +284,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				z = _z;
 			}
 		}
+
+#if CS90
+		public record Fields
+		{
+			public int A;
+			public double B = 1.0;
+			public object C;
+			public dynamic D;
+			public string S = "abc";
+			public Item I;
+		}
+#endif
 		#endregion
 
 		#region Field initializer tests
@@ -1547,6 +1566,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			return null;
 		}
 
+#if CS90
+		private Fields RecordWithNestedClass(Fields input)
+		{
+			return input with {
+				A = 42,
+				I = new Item {
+					Value7 = input with {
+						A = 43
+					}
+				}
+			}
+		}
+#endif
 		#endregion
 
 		#region Collection initializer
