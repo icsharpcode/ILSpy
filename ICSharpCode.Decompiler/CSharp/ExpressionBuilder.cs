@@ -790,7 +790,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				// Reference comparison using Unsafe intrinsics
 				Debug.Assert(!inst.IsLifted);
-				(string methodName, bool negate) = inst.Kind switch {
+				(string methodName, bool negate) = inst.Kind switch
+				{
 					ComparisonKind.Equality => ("AreSame", false),
 					ComparisonKind.Inequality => ("AreSame", true),
 					ComparisonKind.LessThan => ("IsAddressLessThan", false),
