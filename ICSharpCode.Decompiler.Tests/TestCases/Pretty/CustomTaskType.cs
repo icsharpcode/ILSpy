@@ -114,11 +114,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static Func<ValueTask<int>> AsyncLambda()
 		{
-			return async () => await GetIntegerSumAsync(new int[3] {
-				1,
-				2,
-				3
-			});
+			return async () => await GetIntegerSumAsync(new int[3] { 1, 2, 3 });
 		}
 
 		public static Func<ValueTask<int>> AsyncDelegate()

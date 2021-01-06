@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2018 Siegfried Pammer
+﻿#pragma warning disable format
+// Copyright (c) 2018 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -56,33 +57,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe string SimpleStackAllocBool()
 		{
-			bool* ptr = stackalloc bool[4] {
-				false,
-				true,
-				false,
-				true
-			};
+			bool* ptr = stackalloc bool[4] { false, true, false, true };
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 		}
 
 		public unsafe string DoNotInlineTest()
 		{
-			bool* ptr = stackalloc bool[4] {
-				false,
-				true,
-				false,
-				true
-			};
+			bool* ptr = stackalloc bool[4] { false, true, false, true };
 			return UsePointer((byte*)ptr);
 		}
 
 		public unsafe string SimpleStackAllocByte()
 		{
-			byte* ptr = stackalloc byte[2] {
-				0,
-				1
-			};
+			byte* ptr = stackalloc byte[2] { 0, 1 };
 			Console.WriteLine(*ptr);
 			return UsePointer(ptr);
 		}
@@ -90,61 +78,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe string SimpleStackAllocPrimesAsBytes()
 		{
 			byte* ptr = stackalloc byte[55] {
-				1,
-				2,
-				3,
-				5,
-				7,
-				11,
-				13,
-				17,
-				19,
-				23,
-				29,
-				31,
-				37,
-				41,
-				43,
-				47,
-				53,
-				59,
-				61,
-				67,
-				71,
-				73,
-				79,
-				83,
-				89,
-				97,
-				101,
-				103,
-				107,
-				109,
-				113,
-				127,
-				131,
-				137,
-				139,
-				149,
-				151,
-				157,
-				163,
-				167,
-				173,
-				179,
-				181,
-				191,
-				193,
-				197,
-				199,
-				211,
-				223,
-				227,
-				229,
-				233,
-				239,
-				241,
-				251
+				1, 2, 3, 5, 7, 11, 13, 17, 19, 23,
+				29, 31, 37, 41, 43, 47, 53, 59, 61, 67,
+				71, 73, 79, 83, 89, 97, 101, 103, 107, 109,
+				113, 127, 131, 137, 139, 149, 151, 157, 163, 167,
+				173, 179, 181, 191, 193, 197, 199, 211, 223, 227,
+				229, 233, 239, 241, 251
 			};
 			Console.WriteLine(*ptr);
 			return UsePointer(ptr);
@@ -152,12 +91,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe string SimpleStackAllocChar()
 		{
-			char* ptr = stackalloc char[4] {
-				'1',
-				'2',
-				'3',
-				'4'
-			};
+			char* ptr = stackalloc char[4] { '1', '2', '3', '4' };
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 		}
@@ -165,32 +99,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe string SimpleStackAllocCharAlphabet()
 		{
 			char* ptr = stackalloc char[26] {
-				'A',
-				'B',
-				'C',
-				'D',
-				'E',
-				'F',
-				'G',
-				'H',
-				'I',
-				'J',
-				'K',
-				'L',
-				'M',
-				'N',
-				'O',
-				'P',
-				'Q',
-				'R',
-				'S',
-				'T',
-				'U',
-				'V',
-				'W',
-				'X',
-				'Y',
-				'Z'
+				'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+				'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+				'U', 'V', 'W', 'X', 'Y', 'Z'
 			};
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
@@ -198,58 +109,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe string SimpleStackAllocSByte()
 		{
-			sbyte* ptr = stackalloc sbyte[3] {
-				1,
-				2,
-				3
-			};
+			sbyte* ptr = stackalloc sbyte[3] { 1, 2, 3 };
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 		}
 
 		public unsafe string SimpleStackAllocInt16()
 		{
-			short* ptr = stackalloc short[3] {
-				1,
-				2,
-				3
-			};
+			short* ptr = stackalloc short[3] { 1, 2, 3 };
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 		}
 
 		public unsafe string SimpleStackAllocUInt16()
 		{
-			ushort* ptr = stackalloc ushort[3] {
-				1,
-				2,
-				3
-			};
+			ushort* ptr = stackalloc ushort[3] { 1, 2, 3 };
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 		}
 
 		public unsafe string SimpleStackAllocInt32()
 		{
-			int* ptr = stackalloc int[3] {
-				1,
-				2,
-				3
-			};
+			int* ptr = stackalloc int[3] { 1, 2, 3 };
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 		}
 
 		public unsafe string SimpleStackAllocInt32(int a, int b, int c)
 		{
-			int* ptr = stackalloc int[6] {
-				1,
-				a,
-				2,
-				b,
-				3,
-				c
-			};
+			int* ptr = stackalloc int[6] { 1, a, 2, b, 3, c };
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 		}
@@ -257,23 +145,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe string SimpleStackAllocInt32Fibonacci()
 		{
 			int* ptr = stackalloc int[17] {
-				1,
-				1,
-				2,
-				3,
-				5,
-				8,
-				13,
-				21,
-				34,
-				55,
-				89,
-				144,
-				233,
-				377,
-				610,
-				987,
-				1597
+				1, 1, 2, 3, 5, 8, 13, 21, 34, 55,
+				89, 144, 233, 377, 610, 987, 1597
 			};
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
@@ -281,47 +154,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe string SimpleStackAllocUInt32()
 		{
-			uint* ptr = stackalloc uint[3] {
-				1u,
-				2u,
-				3u
-			};
+			uint* ptr = stackalloc uint[3] { 1u, 2u, 3u };
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 		}
 
 		public unsafe string SimpleStackAllocInt64()
 		{
-			long* ptr = stackalloc long[3] {
-				1L,
-				2L,
-				3L
-			};
+			long* ptr = stackalloc long[3] { 1L, 2L, 3L };
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 		}
 
 		public unsafe string SimpleStackAllocUInt64()
 		{
-			ulong* ptr = stackalloc ulong[3] {
-				1uL,
-				2uL,
-				3uL
-			};
+			ulong* ptr = stackalloc ulong[3] { 1uL, 2uL, 3uL };
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 		}
 
 		public unsafe string SimpleStackAllocInt32NonConstant(int a, int b, int c)
 		{
-			int* ptr = stackalloc int[6] {
-				0,
-				1,
-				0,
-				a,
-				b,
-				c
-			};
+			int* ptr = stackalloc int[6] { 0, 1, 0, a, b, c };
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 		}
@@ -370,12 +224,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public string GetSpan2()
 		{
-			Span<int> span = stackalloc int[4] {
-				1,
-				2,
-				3,
-				4
-			};
+			Span<int> span = stackalloc int[4] { 1, 2, 3, 4 };
 			return UseSpan(span);
 		}
 
@@ -387,22 +236,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public string GetSpan4()
 		{
-			Span<decimal> span = stackalloc decimal[4] {
-				1m,
-				2m,
-				3m,
-				4m
-			};
+			Span<decimal> span = stackalloc decimal[4] { 1m, 2m, 3m, 4m };
 			return UseSpan(span);
 		}
 
 		public void Issue2103a()
 		{
-			Span<byte> span = stackalloc byte[3] {
-				1,
-				2,
-				3
-			};
+			Span<byte> span = stackalloc byte[3] { 1, 2, 3 };
 			Console.WriteLine(span[2] + span[0]);
 		}
 
@@ -414,11 +254,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void Issue2103c()
 		{
-			Console.WriteLine((stackalloc byte[3] {
-				1,
-				2,
-				3
-			})[2]);
+			Console.WriteLine((stackalloc byte[3] { 1, 2, 3 })[2]);
 		}
 
 		public void Issue2103d()

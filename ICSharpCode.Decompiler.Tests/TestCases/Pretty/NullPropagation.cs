@@ -32,10 +32,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public readonly MyStruct ReadonlyStructField;
 			public string Text;
 			public MyClass Field;
-			public MyClass Property {
-				get;
-				set;
-			}
+			public MyClass Property { get; set; }
 			public MyClass this[int index] => null;
 			public MyClass Method(int arg)
 			{

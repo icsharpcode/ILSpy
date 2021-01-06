@@ -87,15 +87,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public interface T06_IIndexerInInterface
 	{
-		int this[string s, string s2] {
-			set;
-		}
+		int this[string s, string s2] { set; }
 	}
 	public interface T07_IMyInterface_IndexerInterfaceExplicitImplementation
 	{
-		int this[string s] {
-			get;
-		}
+		int this[string s] { get; }
 	}
 	public class T07_MyClass_IndexerInterfaceExplicitImplementation : T07_IMyInterface_IndexerInterfaceExplicitImplementation
 	{
@@ -111,9 +107,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public interface T08_IMyInterface_IndexerInterfaceImplementation
 	{
-		int this[string s] {
-			get;
-		}
+		int this[string s] { get; }
 	}
 	public class T08_MyClass_IndexerInterfaceImplementation : T08_IMyInterface_IndexerInterfaceImplementation
 	{
@@ -134,12 +128,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public abstract class T09_MyClass_IndexerAbstract
 	{
-		public abstract int this[string s, string s2] {
-			set;
-		}
-		protected abstract string this[int index] {
-			get;
-		}
+		public abstract int this[string s, string s2] { set; }
+		protected abstract string this[int index] { get; }
 	}
 	public class T09_MyClass_MethodExplicit : T09_IMyInterface_MethodExplicit
 	{
@@ -178,17 +168,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public interface T13_IMyInterface_PropertyInterface
 	{
-		int MyProperty {
-			get;
-			set;
-		}
+		int MyProperty { get; set; }
 	}
 	public interface T14_IMyInterface_PropertyInterfaceExplicitImplementation
 	{
-		int MyProperty {
-			get;
-			set;
-		}
+		int MyProperty { get; set; }
 	}
 	public class T14_MyClass_PropertyInterfaceExplicitImplementation : T14_IMyInterface_PropertyInterfaceExplicitImplementation
 	{
@@ -202,10 +186,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public interface T15_IMyInterface_PropertyInterfaceImplementation
 	{
-		int MyProperty {
-			get;
-			set;
-		}
+		int MyProperty { get; set; }
 	}
 	public class T15_MyClass_PropertyInterfaceImplementation : T15_IMyInterface_PropertyInterfaceImplementation
 	{
@@ -504,9 +485,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public interface T24_IA_HideMembers2a
 	{
-		int this[int i] {
-			get;
-		}
+		int this[int i] { get; }
 	}
 
 	public class T25_G_HideMembers3<T>

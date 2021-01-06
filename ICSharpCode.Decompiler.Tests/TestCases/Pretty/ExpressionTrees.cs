@@ -35,15 +35,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public static X StaticField;
 			public X InstanceField;
 
-			public static X StaticProperty {
-				get;
-				set;
-			}
+			public static X StaticProperty { get; set; }
 
-			public X InstanceProperty {
-				get;
-				set;
-			}
+			public X InstanceProperty { get; set; }
 
 			public static bool GenericMethod<Y>()
 			{
@@ -98,142 +92,67 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public class Administrator
 		{
-			public int ID {
-				get;
-				set;
-			}
+			public int ID { get; set; }
 
-			public string TrueName {
-				get;
-				set;
-			}
+			public string TrueName { get; set; }
 
-			public string Phone {
-				get;
-				set;
-			}
+			public string Phone { get; set; }
 		}
 
 		public class Contract
 		{
-			public int ID {
-				get;
-				set;
-			}
+			public int ID { get; set; }
 
-			public string ContractNo {
-				get;
-				set;
-			}
+			public string ContractNo { get; set; }
 
-			public string HouseAddress {
-				get;
-				set;
-			}
+			public string HouseAddress { get; set; }
 
-			public DateTime SigningTime {
-				get;
-				set;
-			}
+			public DateTime SigningTime { get; set; }
 
-			public string BuyerName {
-				get;
-				set;
-			}
+			public string BuyerName { get; set; }
 
-			public string BuyerTelephone {
-				get;
-				set;
-			}
+			public string BuyerTelephone { get; set; }
 
-			public string Customer {
-				get;
-				set;
-			}
+			public string Customer { get; set; }
 
-			public string CustTelephone {
-				get;
-				set;
-			}
+			public string CustTelephone { get; set; }
 
-			public int AdminID {
-				get;
-				set;
-			}
+			public int AdminID { get; set; }
 
-			public int StoreID {
-				get;
-				set;
-			}
+			public int StoreID { get; set; }
 		}
 
 		public class Database
 		{
-			public IQueryable<Contract> Contracts {
-				get;
-				set;
-			}
+			public IQueryable<Contract> Contracts { get; set; }
 
-			public IQueryable<Loan> Loan {
-				get;
-				set;
-			}
+			public IQueryable<Loan> Loan { get; set; }
 
-			public IQueryable<Administrator> Administrator {
-				get;
-				set;
-			}
+			public IQueryable<Administrator> Administrator { get; set; }
 
-			public IQueryable<Store> Store {
-				get;
-				set;
-			}
+			public IQueryable<Store> Store { get; set; }
 		}
 
 		public class Loan
 		{
-			public string ContractNo {
-				get;
-				set;
-			}
+			public string ContractNo { get; set; }
 
-			public DateTime? ShenDate {
-				get;
-				set;
-			}
+			public DateTime? ShenDate { get; set; }
 
-			public DateTime? LoanDate {
-				get;
-				set;
-			}
+			public DateTime? LoanDate { get; set; }
 
-			public string Credit {
-				get;
-				set;
-			}
+			public string Credit { get; set; }
 
-			public string LoanBank {
-				get;
-				set;
-			}
+			public string LoanBank { get; set; }
 
-			public string Remarks {
-				get;
-				set;
-			}
+			public string Remarks { get; set; }
 		}
 
 		public class Store
 		{
-			public int ID {
-				get;
-				set;
-			}
+			public int ID { get; set; }
 
-			public string Name {
-				get;
-				set;
-			}
+			public string Name { get; set; }
 		}
 
 		internal class MyClass
@@ -266,10 +185,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 
-			public static int StaticProperty {
-				get;
-				set;
-			}
+			public static int StaticProperty { get; set; }
 
 #if CS60
 			public int ReadonlyProperty => 0;
@@ -281,10 +197,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 
-			public int Property {
-				get;
-				set;
-			}
+			public int Property { get; set; }
 		}
 
 		internal class SimpleTypeWithCtor
@@ -435,23 +348,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ArrayIndex()
 		{
-			ToCode(X(), () => (new int[3] {
-			3,
-			4,
-			5
-		})[0 + (int)(DateTime.Now.Ticks % 3)]);
+			ToCode(X(), () => (new int[3] { 3, 4, 5 })[0 + (int)(DateTime.Now.Ticks % 3)]);
 		}
 
 		public void ArrayLengthAndDoubles()
 		{
-			ToCode(X(), () => new double[3] {
-			1.0,
-			2.01,
-			3.5
-		}.Concat(new double[2] {
-			1.0,
-			2.0
-		}).ToArray().Length);
+			ToCode(X(), () => new double[3] { 1.0, 2.01, 3.5 }.Concat(new double[2] { 1.0, 2.0 }).ToArray().Length);
 		}
 
 		public void AsOperator()
@@ -488,37 +390,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void ListInitializer()
 		{
 			ToCode(X(), () => new Dictionary<int, int> {
-			{
-				1,
-				1
-			},
-			{
-				2,
-				2
-			},
-			{
-				3,
-				4
-			}
-		}.Count == 3);
+				{ 1, 1 },
+				{ 2, 2 },
+				{ 3, 4 }
+			}.Count == 3);
 		}
 
 		public void ListInitializer2()
 		{
-			ToCode(X(), () => new List<int>(50) {
-			1,
-			2,
-			3
-		}.Count == 3);
+			ToCode(X(), () => new List<int>(50) { 1, 2, 3 }.Count == 3);
 		}
 
 		public void ListInitializer3()
 		{
-			ToCode(X(), () => new List<int> {
-			1,
-			2,
-			3
-		}.Count == 3);
+			ToCode(X(), () => new List<int> { 1, 2, 3 }.Count == 3);
 		}
 
 		public void LiteralCharAndProperty()
@@ -582,30 +467,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void MethodGroupAsExtensionMethod()
 		{
-			ToCode(X(), (Expression<Func<Func<bool>>>)(() => ((IEnumerable<int>)new int[4] {
-			2000,
-			2004,
-			2008,
-			2012
-		}).Any));
+			ToCode(X(), (Expression<Func<Func<bool>>>)(() => ((IEnumerable<int>)new int[4] { 2000, 2004, 2008, 2012 }).Any));
 		}
 
 		public void MethodGroupConstant()
 		{
-			ToCode(X(), () => Array.TrueForAll(new int[4] {
-			2000,
-			2004,
-			2008,
-			2012
-		}, DateTime.IsLeapYear));
+			ToCode(X(), () => Array.TrueForAll(new int[4] { 2000, 2004, 2008, 2012 }, DateTime.IsLeapYear));
 
 			HashSet<int> set = new HashSet<int>();
-			ToCode(X(), () => new int[4] {
-			2000,
-			2004,
-			2008,
-			2012
-		}.All(set.Add));
+			ToCode(X(), () => new int[4] { 2000, 2004, 2008, 2012 }.All(set.Add));
 
 			Func<Func<object, object, bool>, bool> sink = (Func<object, object, bool> f) => f(null, null);
 			ToCode(X(), () => sink(object.Equals));
@@ -627,15 +497,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//no params
 			ToCode(X(), () => call(() => 42));
 			//one param
-			ToCode(X(), () => new int[2] {
-				37,
-				42
-			}.Select((int x) => x * 2));
+			ToCode(X(), () => new int[2] { 37, 42 }.Select((int x) => x * 2));
 			//two params
-			ToCode(X(), () => new int[2] {
-				37,
-				42
-			}.Select((int x, int i) => x * 2));
+			ToCode(X(), () => new int[2] { 37, 42 }.Select((int x, int i) => x * 2));
 		}
 
 		public void CurriedLambda()
@@ -677,15 +541,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void NewArrayAndExtensionMethod()
 		{
-			ToCode(X(), () => new double[3] {
-			1.0,
-			2.01,
-			3.5
-		}.SequenceEqual(new double[3] {
-			1.0,
-			2.01,
-			3.5
-		}));
+			ToCode(X(), () => new double[3] { 1.0, 2.01, 3.5 }.SequenceEqual(new double[3] { 1.0, 2.01, 3.5 }));
 		}
 
 		public void NewMultiDimArray()
@@ -982,31 +838,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ArrayInitializer()
 		{
-			Test<Func<int[]>>(() => new int[3] {
-				1,
-				2,
-				3
-			}, () => new int[3] {
-				1,
-				2,
-				3
-			});
+			Test<Func<int[]>>(() => new int[3] { 1, 2, 3 }, () => new int[3] { 1, 2, 3 });
 			Test<Func<int[]>>(() => new int[3], () => new int[3]);
 			Test<Func<int[,]>>(() => new int[3, 5], () => new int[3, 5]);
 			Test<Func<int[][]>>(() => new int[3][], () => new int[3][]);
-			Test<Func<int[][]>>(() => new int[1][] {
-				new int[3] {
-					1,
-					2,
-					3
-				}
-			}, () => new int[1][] {
-				new int[3] {
-					1,
-					2,
-					3
-				}
-			});
+			Test<Func<int[][]>>(() => new int[1][] { new int[3] { 1, 2, 3 } }, () => new int[1][] { new int[3] { 1, 2, 3 } });
 		}
 
 		public static void AnonymousTypes()

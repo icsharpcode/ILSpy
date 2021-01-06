@@ -139,23 +139,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		private static int[] numbers = new int[10] {
-			1,
-			3,
-			7,
-			15,
-			31,
-			63,
-			127,
-			255,
-			511,
-			1023
-		};
-
-		private static string[] strings = new string[2] {
-			"Hello",
-			"World"
-		};
+		private static int[] numbers = new int[10] { 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023 };
+		private static string[] strings = new string[2] { "Hello", "World" };
 
 		private static string NullString = "";
 

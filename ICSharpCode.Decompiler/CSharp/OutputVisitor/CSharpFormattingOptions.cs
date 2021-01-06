@@ -30,7 +30,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	public enum BraceStyle
 	{
-		DoNotChange,
 		EndOfLine,
 		EndOfLineWithoutSpace,
 		NextLine,
@@ -41,14 +40,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 	public enum PropertyFormatting
 	{
-		AllowOneLine,
-		ForceOneLine,
-		ForceNewLine
+		SingleLine,
+		MultipleLines
 	}
 
 	public enum Wrapping
 	{
-		DoNotChange,
 		DoNotWrap,
 		WrapAlways,
 		WrapIfTooLong
@@ -167,10 +164,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 
 
-		public PropertyFormatting AutoPropertyFormatting { // tested
-			get;
-			set;
-		}
+		public PropertyFormatting AutoPropertyFormatting { get; set; }
 
 		public PropertyFormatting SimplePropertyFormatting { // tested
 			get;

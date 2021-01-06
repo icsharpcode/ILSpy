@@ -45,10 +45,7 @@ namespace Issue1325
 				throw new NotImplementedException();
 			}
 		}
-		public string Unparameterized {
-			get;
-			set;
-		}
+		public string Unparameterized { get; set; }
 	}
 }
 namespace Microsoft.VisualBasic

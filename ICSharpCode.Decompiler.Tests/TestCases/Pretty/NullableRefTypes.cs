@@ -75,10 +75,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private int field3;
 		private int? field4;
 
-		public string? Property {
-			get;
-			set;
-		}
+		public string? Property { get; set; }
 		public event EventHandler? Event;
 
 		public static int? NullConditionalOperator(T02_EverythingIsNullableInHere? x)
@@ -98,10 +95,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private int field3;
 		private int? field4;
 
-		public string Property {
-			get;
-			set;
-		}
+		public string Property { get; set; }
 		public event EventHandler Event;
 	}
 

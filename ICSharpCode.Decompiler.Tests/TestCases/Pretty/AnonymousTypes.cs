@@ -24,8 +24,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		private void SimpleTypes()
 		{
-			var value = new {
-			};
+			var value = new { };
 			var anon = new {
 				X = 5
 			};
@@ -82,19 +81,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			};
 #if ROSLYN && OPT
-			var obj = new[] {
-				array,
-				array
-			};
+			var obj = new[] { array, array };
 
 			Console.WriteLine(array[0].X);
 			Console.WriteLine(array[1].X);
 			Console.WriteLine(obj.Length);
 #else
-			var array2 = new[] {
-				array,
-				array
-			};
+			var array2 = new[] { array, array };
 
 			Console.WriteLine(array[0].X);
 			Console.WriteLine(array[1].X);

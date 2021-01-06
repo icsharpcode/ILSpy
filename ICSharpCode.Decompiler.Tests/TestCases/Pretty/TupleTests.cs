@@ -41,10 +41,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public struct GenericStruct<T>
 		{
 			public T Field;
-			public T Property {
-				get;
-				set;
-			}
+			public T Property { get; set; }
 		}
 
 		public ValueTuple VT0;

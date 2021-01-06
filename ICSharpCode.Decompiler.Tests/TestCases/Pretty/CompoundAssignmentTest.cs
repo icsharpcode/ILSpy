@@ -51,20 +51,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public int Field;
 			public short ShortField;
 
-			public int Property {
-				get;
-				set;
-			}
+			public int Property { get; set; }
 
-			public byte ByteProperty {
-				get;
-				set;
-			}
+			public byte ByteProperty { get; set; }
 
-			public bool BoolProperty {
-				get;
-				set;
-			}
+			public bool BoolProperty { get; set; }
 
 			public uint this[string name] {
 				get {
@@ -93,51 +84,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public CustomClass CustomClassField;
 			public CustomStruct CustomStructField;
 
-			public byte ByteProp {
-				get;
-				set;
-			}
-			public sbyte SbyteProp {
-				get;
-				set;
-			}
-			public short ShortProp {
-				get;
-				set;
-			}
-			public ushort UshortProp {
-				get;
-				set;
-			}
-			public int IntProp {
-				get;
-				set;
-			}
-			public uint UintProp {
-				get;
-				set;
-			}
-			public long LongProp {
-				get;
-				set;
-			}
-			public ulong UlongProp {
-				get;
-				set;
-			}
-			public string StringProp {
-				get;
-				set;
-			}
+			public byte ByteProp { get; set; }
+			public sbyte SbyteProp { get; set; }
+			public short ShortProp { get; set; }
+			public ushort UshortProp { get; set; }
+			public int IntProp { get; set; }
+			public uint UintProp { get; set; }
+			public long LongProp { get; set; }
+			public ulong UlongProp { get; set; }
+			public string StringProp { get; set; }
 
-			public CustomClass CustomClassProp {
-				get;
-				set;
-			}
-			public CustomStruct CustomStructProp {
-				get;
-				set;
-			}
+			public CustomClass CustomClassProp { get; set; }
+			public CustomStruct CustomStructProp { get; set; }
 
 			public static CustomClass operator +(CustomClass lhs, CustomClass rhs)
 			{
@@ -205,42 +163,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public ulong UlongField;
 			public CustomClass CustomClassField;
 
-			public CustomClass CustomClassProp {
-				get;
-				set;
-			}
-			public byte ByteProp {
-				get;
-				set;
-			}
-			public sbyte SbyteProp {
-				get;
-				set;
-			}
-			public short ShortProp {
-				get;
-				set;
-			}
-			public ushort UshortProp {
-				get;
-				set;
-			}
-			public int IntProp {
-				get;
-				set;
-			}
-			public uint UintProp {
-				get;
-				set;
-			}
-			public long LongProp {
-				get;
-				set;
-			}
-			public ulong UlongProp {
-				get;
-				set;
-			}
+			public CustomClass CustomClassProp { get; set; }
+			public byte ByteProp { get; set; }
+			public sbyte SbyteProp { get; set; }
+			public short ShortProp { get; set; }
+			public ushort UshortProp { get; set; }
+			public int IntProp { get; set; }
+			public uint UintProp { get; set; }
+			public long LongProp { get; set; }
+			public ulong UlongProp { get; set; }
 
 			public static CustomStruct operator +(CustomStruct lhs, CustomStruct rhs)
 			{
@@ -306,46 +237,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public long LongField;
 			public ulong UlongField;
 
-			public CustomClass CustomClassProp {
-				get;
-				set;
-			}
-			public CustomStruct CustomStructProp {
-				get;
-				set;
-			}
-			public byte ByteProp {
-				get;
-				set;
-			}
-			public sbyte SbyteProp {
-				get;
-				set;
-			}
-			public short ShortProp {
-				get;
-				set;
-			}
-			public ushort UshortProp {
-				get;
-				set;
-			}
-			public int IntProp {
-				get;
-				set;
-			}
-			public uint UintProp {
-				get;
-				set;
-			}
-			public long LongProp {
-				get;
-				set;
-			}
-			public ulong UlongProp {
-				get;
-				set;
-			}
+			public CustomClass CustomClassProp { get; set; }
+			public CustomStruct CustomStructProp { get; set; }
+			public byte ByteProp { get; set; }
+			public sbyte SbyteProp { get; set; }
+			public short ShortProp { get; set; }
+			public ushort UshortProp { get; set; }
+			public int IntProp { get; set; }
+			public uint UintProp { get; set; }
+			public long LongProp { get; set; }
+			public ulong UlongProp { get; set; }
 		}
 
 		private int test1;
@@ -369,61 +270,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private static long longField;
 		private static ulong ulongField;
 
-		private static CustomClass CustomClassProp {
-			get;
-			set;
-		}
-		private static CustomStruct CustomStructProp {
-			get;
-			set;
-		}
-		private static byte ByteProp {
-			get;
-			set;
-		}
-		private static sbyte SbyteProp {
-			get;
-			set;
-		}
-		private static short ShortProp {
-			get;
-			set;
-		}
-		private static ushort UshortProp {
-			get;
-			set;
-		}
-		private static int IntProp {
-			get;
-			set;
-		}
-		private static uint UintProp {
-			get;
-			set;
-		}
-		private static long LongProp {
-			get;
-			set;
-		}
-		private static ulong UlongProp {
-			get;
-			set;
-		}
+		private static CustomClass CustomClassProp { get; set; }
+		private static CustomStruct CustomStructProp { get; set; }
+		private static byte ByteProp { get; set; }
+		private static sbyte SbyteProp { get; set; }
+		private static short ShortProp { get; set; }
+		private static ushort UshortProp { get; set; }
+		private static int IntProp { get; set; }
+		private static uint UintProp { get; set; }
+		private static long LongProp { get; set; }
+		private static ulong UlongProp { get; set; }
 
-		public static int StaticProperty {
-			get;
-			set;
-		}
+		public static int StaticProperty { get; set; }
 
-		public static ShortEnum StaticShortProperty {
-			get;
-			set;
-		}
+		public static ShortEnum StaticShortProperty { get; set; }
 
-		public static string StaticStringProperty {
-			get;
-			set;
-		}
+		public static string StaticStringProperty { get; set; }
 
 		private static CustomStruct2 GetStruct()
 		{

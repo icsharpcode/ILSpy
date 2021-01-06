@@ -1736,7 +1736,8 @@ namespace ICSharpCode.Decompiler
 				{
 					csharpFormattingOptions = FormattingOptionsFactory.CreateAllman();
 					csharpFormattingOptions.IndentSwitchBody = false;
-					csharpFormattingOptions.ArrayInitializerWrapping = Wrapping.WrapAlways;
+					csharpFormattingOptions.ArrayInitializerWrapping = Wrapping.WrapIfTooLong;
+					csharpFormattingOptions.AutoPropertyFormatting = PropertyFormatting.SingleLine;
 				}
 				return csharpFormattingOptions;
 			}

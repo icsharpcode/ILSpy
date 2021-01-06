@@ -167,11 +167,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static Func<Task<int>> AsyncLambda()
 		{
-			return async () => await GetIntegerSumAsync(new int[3] {
-				1,
-				2,
-				3
-			});
+			return async () => await GetIntegerSumAsync(new int[3] { 1, 2, 3 });
 		}
 
 		public static Func<Task<int>> AsyncDelegate()
@@ -252,10 +248,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 	public struct HopToThreadPoolAwaitable : INotifyCompletion
 	{
-		public bool IsCompleted {
-			get;
-			set;
-		}
+		public bool IsCompleted { get; set; }
 
 		public HopToThreadPoolAwaitable GetAwaiter()
 		{

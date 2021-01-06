@@ -15,38 +15,18 @@
 
 	public record Pair<A, B>
 	{
-		public A First {
-			get;
-			init;
-		}
-		public B Second {
-			get;
-			init;
-		}
+		public A First { get; init; }
+		public B Second { get; init; }
 	}
 
 	public record Properties
 	{
-		public int A {
-			get;
-			set;
-		}
-		public int B {
-			get;
-		}
+		public int A { get; set; }
+		public int B { get; }
 		public int C => 43;
-		public object O {
-			get;
-			set;
-		}
-		public string S {
-			get;
-			set;
-		}
-		public dynamic D {
-			get;
-			set;
-		}
+		public object O { get; set; }
+		public string S { get; set; }
+		public dynamic D { get; set; }
 
 		public Properties()
 		{
@@ -87,10 +67,7 @@
 		{
 			public override string AbstractProp => "B";
 
-			public int? Value {
-				get;
-				set;
-			}
+			public int? Value { get; set; }
 		}
 
 		public record DerivedGeneric<T> : Pair<T, T?> where T : struct
@@ -98,9 +75,7 @@
 			public bool Flag;
 		}
 
-		public abstract string AbstractProp {
-			get;
-		}
+		public abstract string AbstractProp { get; }
 	}
 }
 namespace System.Runtime.CompilerServices

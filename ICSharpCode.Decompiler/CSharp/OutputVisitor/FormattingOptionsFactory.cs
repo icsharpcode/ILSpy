@@ -72,8 +72,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				PropertyBraceStyle = BraceStyle.EndOfLine,
 				PropertyGetBraceStyle = BraceStyle.EndOfLine,
 				PropertySetBraceStyle = BraceStyle.EndOfLine,
-				SimpleGetBlockFormatting = PropertyFormatting.AllowOneLine,
-				SimpleSetBlockFormatting = PropertyFormatting.AllowOneLine,
+				SimpleGetBlockFormatting = PropertyFormatting.SingleLine,
+				SimpleSetBlockFormatting = PropertyFormatting.SingleLine,
 
 				EventBraceStyle = BraceStyle.EndOfLine,
 				EventAddBraceStyle = BraceStyle.EndOfLine,
@@ -151,8 +151,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				SpaceAfterTypecast = false,
 
 				AlignEmbeddedStatements = true,
-				SimplePropertyFormatting = PropertyFormatting.AllowOneLine,
-				AutoPropertyFormatting = PropertyFormatting.AllowOneLine,
+				SimplePropertyFormatting = PropertyFormatting.SingleLine,
+				AutoPropertyFormatting = PropertyFormatting.SingleLine,
 				EmptyLineFormatting = EmptyLineFormatting.DoNotIndent,
 				SpaceBeforeMethodDeclarationParameterComma = false,
 				SpaceAfterMethodDeclarationParameterComma = true,
@@ -186,12 +186,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				AlignToFirstMethodCallArgument = false,
 				AlignToFirstMethodDeclarationParameter = true,
 				KeepCommentsAtFirstColumn = true,
-				ChainedMethodCallWrapping = Wrapping.DoNotChange,
-				MethodCallArgumentWrapping = Wrapping.DoNotChange,
+				ChainedMethodCallWrapping = Wrapping.DoNotWrap,
+				MethodCallArgumentWrapping = Wrapping.DoNotWrap,
 				NewLineAferMethodCallOpenParentheses = NewLinePlacement.DoNotCare,
 				MethodCallClosingParenthesesOnNewLine = NewLinePlacement.DoNotCare,
 
-				IndexerArgumentWrapping = Wrapping.DoNotChange,
+				IndexerArgumentWrapping = Wrapping.DoNotWrap,
 				NewLineAferIndexerOpenBracket = NewLinePlacement.DoNotCare,
 				IndexerClosingBracketOnNewLine = NewLinePlacement.DoNotCare,
 
@@ -240,8 +240,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				PropertyBraceStyle = BraceStyle.EndOfLine,
 				PropertyGetBraceStyle = BraceStyle.EndOfLine,
 				PropertySetBraceStyle = BraceStyle.EndOfLine,
-				SimpleGetBlockFormatting = PropertyFormatting.AllowOneLine,
-				SimpleSetBlockFormatting = PropertyFormatting.AllowOneLine,
+				SimpleGetBlockFormatting = PropertyFormatting.SingleLine,
+				SimpleSetBlockFormatting = PropertyFormatting.SingleLine,
 
 				EventBraceStyle = BraceStyle.EndOfLine,
 				EventAddBraceStyle = BraceStyle.EndOfLine,
@@ -323,8 +323,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				SpaceAfterTypecast = false,
 
 				AlignEmbeddedStatements = true,
-				SimplePropertyFormatting = PropertyFormatting.AllowOneLine,
-				AutoPropertyFormatting = PropertyFormatting.AllowOneLine,
+				SimplePropertyFormatting = PropertyFormatting.SingleLine,
+				AutoPropertyFormatting = PropertyFormatting.SingleLine,
 				EmptyLineFormatting = EmptyLineFormatting.DoNotIndent,
 				SpaceBeforeMethodDeclarationParameterComma = false,
 				SpaceAfterMethodDeclarationParameterComma = true,
@@ -353,12 +353,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				MinimumBlankLinesInsideRegion = 1,
 
 				KeepCommentsAtFirstColumn = true,
-				ChainedMethodCallWrapping = Wrapping.DoNotChange,
-				MethodCallArgumentWrapping = Wrapping.DoNotChange,
+				ChainedMethodCallWrapping = Wrapping.DoNotWrap,
+				MethodCallArgumentWrapping = Wrapping.DoNotWrap,
 				NewLineAferMethodCallOpenParentheses = NewLinePlacement.DoNotCare,
 				MethodCallClosingParenthesesOnNewLine = NewLinePlacement.DoNotCare,
 
-				IndexerArgumentWrapping = Wrapping.DoNotChange,
+				IndexerArgumentWrapping = Wrapping.DoNotWrap,
 				NewLineAferIndexerOpenBracket = NewLinePlacement.DoNotCare,
 				IndexerClosingBracketOnNewLine = NewLinePlacement.DoNotCare,
 
@@ -389,7 +389,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 			baseOptions.FinallyNewLinePlacement = NewLinePlacement.NewLine;
 			baseOptions.WhileNewLinePlacement = NewLinePlacement.DoNotCare;
-			baseOptions.ArrayInitializerWrapping = Wrapping.DoNotChange;
+			baseOptions.ArrayInitializerWrapping = Wrapping.DoNotWrap;
 			baseOptions.IndentBlocksInsideExpressions = true;
 
 			return baseOptions;

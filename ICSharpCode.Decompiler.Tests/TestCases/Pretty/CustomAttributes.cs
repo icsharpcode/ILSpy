@@ -139,12 +139,8 @@ namespace CustomAttributes
 			"text",
 			null,
 			typeof(int),
-			new object[] {
-				1
-			},
-			new int[] {
-				1
-			}
+			new object[] { 1 },
+			new int[] { 1 }
 		})]
 		public static void BoxedLiteralsArray()
 		{

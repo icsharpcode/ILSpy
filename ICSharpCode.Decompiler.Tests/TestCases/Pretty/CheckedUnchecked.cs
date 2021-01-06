@@ -93,10 +93,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ArrayInitializerChecked()
 		{
-			TestHelp(new int[2] {
-				1,
-				2
-			}, (int[] n) => checked(new int[2] {
+			TestHelp(new int[2] { 1, 2 }, (int[] n) => checked(new int[2] {
 				n[0] + 1,
 				n[1] + 1
 			}));

@@ -49,10 +49,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private class DeconstructionSource<T, T2>
 		{
-			public int Dummy {
-				get;
-				set;
-			}
+			public int Dummy { get; set; }
 
 			public void Deconstruct(out T a, out T2 b)
 			{
@@ -63,10 +60,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private class DeconstructionSource<T, T2, T3>
 		{
-			public int Dummy {
-				get;
-				set;
-			}
+			public int Dummy { get; set; }
 
 			public void Deconstruct(out T a, out T2 b, out T3 c)
 			{
@@ -97,70 +91,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public MyInt? NullableMyIntField;
 
-			public int Int {
-				get;
-				set;
-			}
+			public int Int { get; set; }
 
-			public long Long {
-				get;
-				set;
-			}
+			public long Long { get; set; }
 
-			public float Float {
-				get;
-				set;
-			}
+			public float Float { get; set; }
 
-			public double Double {
-				get;
-				set;
-			}
+			public double Double { get; set; }
 
-			public decimal Decimal {
-				get;
-				set;
-			}
+			public decimal Decimal { get; set; }
 
-			public string String {
-				get;
-				set;
-			}
+			public string String { get; set; }
 
-			public object Object {
-				get;
-				set;
-			}
+			public object Object { get; set; }
 
-			public dynamic Dynamic {
-				get;
-				set;
-			}
+			public dynamic Dynamic { get; set; }
 
-			public int? NInt {
-				get;
-				set;
-			}
+			public int? NInt { get; set; }
 
-			public MyInt My {
-				get;
-				set;
-			}
+			public MyInt My { get; set; }
 
-			public MyInt? NMy {
-				get;
-				set;
-			}
+			public MyInt? NMy { get; set; }
 
-			public static MyInt StaticMy {
-				get;
-				set;
-			}
+			public static MyInt StaticMy { get; set; }
 
-			public static MyInt? StaticNMy {
-				get;
-				set;
-			}
+			public static MyInt? StaticNMy { get; set; }
 		}
 
 		private DeconstructionSource<T, T2> GetSource<T, T2>()

@@ -24,16 +24,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public interface IA
 		{
-			int Property1 {
-				get;
-			}
-			int Property2 {
-				set;
-			}
-			int Property3 {
-				get;
-				set;
-			}
+			int Property1 { get; }
+			int Property2 { set; }
+			int Property3 { get; set; }
 
 			event EventHandler MyEvent;
 			void Method();

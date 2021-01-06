@@ -257,10 +257,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 		public struct DataItem
 		{
-			public int Property {
-				get;
-				set;
-			}
+			public int Property { get; set; }
 
 			public void TestCall()
 			{

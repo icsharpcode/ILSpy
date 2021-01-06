@@ -95,10 +95,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			a = new OptionalArguments("Hallo");
 			b = new OptionalArguments(10);
 			c = new OptionalArguments(10) {
-				{
-					"Test",
-					10
-				},
+				{ "Test", 10 },
 				"Test2"
 			};
 		}

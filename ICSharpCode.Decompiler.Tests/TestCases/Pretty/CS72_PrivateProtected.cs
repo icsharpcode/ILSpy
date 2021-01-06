@@ -20,9 +20,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class CS72_PrivateProtected
 	{
-		private protected int Property {
-			get;
-		}
+		private protected int Property { get; }
 
 		private protected void Method()
 		{

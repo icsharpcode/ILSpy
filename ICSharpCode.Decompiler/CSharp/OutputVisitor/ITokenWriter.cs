@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 	public abstract class DecoratingTokenWriter : TokenWriter
 	{
-		TokenWriter decoratedWriter;
+		readonly TokenWriter decoratedWriter;
 
 		protected DecoratingTokenWriter(TokenWriter decoratedWriter)
 		{

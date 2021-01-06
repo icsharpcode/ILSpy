@@ -29,10 +29,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			public readonly PropertyInfo Property;
 
-			public int Set {
-				get;
-				set;
-			}
+			public int Set { get; set; }
 
 			public SetProperty(PropertyInfo property)
 			{

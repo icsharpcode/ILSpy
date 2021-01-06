@@ -34,10 +34,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 #endif
 
-			public dynamic Property {
-				get;
-				set;
-			}
+			public dynamic Property { get; set; }
 
 			public void Method(dynamic a)
 			{
@@ -47,10 +44,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static dynamic field;
 		private static object objectField;
-		public dynamic Property {
-			get;
-			set;
-		}
+		public dynamic Property { get; set; }
 
 		public DynamicTests()
 		{

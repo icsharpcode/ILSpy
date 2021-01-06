@@ -29,7 +29,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// get/set/add/remove
+	/// get/set/init/add/remove
 	/// </summary>
 	public class Accessor : EntityDeclaration
 	{

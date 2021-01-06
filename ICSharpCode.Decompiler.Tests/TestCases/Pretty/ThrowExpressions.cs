@@ -67,20 +67,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public int? NullableIntField;
 			public Data DataField;
 			public Data? NullableDataField;
-			public int IntProperty {
-				get;
-				set;
-			}
-			public int? NullableIntProperty {
-				get;
-				set;
-			}
-			public Data DataProperty {
-				get;
-			}
-			public Data? NullableDataProperty {
-				get;
-			}
+			public int IntProperty { get; set; }
+			public int? NullableIntProperty { get; set; }
+			public Data DataProperty { get; }
+			public Data? NullableDataProperty { get; }
 		}
 
 		public struct Data
@@ -89,34 +79,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public int? NullableIntField;
 			public MoreData DataField;
 			public MoreData? NullableDataField;
-			public int IntProperty {
-				get;
-				set;
-			}
-			public int? NullableIntProperty {
-				get;
-				set;
-			}
-			public MoreData DataProperty {
-				get;
-			}
-			public MoreData? NullableDataProperty {
-				get;
-			}
+			public int IntProperty { get; set; }
+			public int? NullableIntProperty { get; set; }
+			public MoreData DataProperty { get; }
+			public MoreData? NullableDataProperty { get; }
 		}
 
 		public struct MoreData
 		{
 			public int IntField;
 			public int? NullableIntField;
-			public int IntProperty {
-				get;
-				set;
-			}
-			public int? NullableIntProperty {
-				get;
-				set;
-			}
+			public int IntProperty { get; set; }
+			public int? NullableIntProperty { get; set; }
 		}
 
 		public static int IntField;
@@ -129,33 +103,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public Data? NullableDataField;
 		public DataObject DataObjectField;
 
-		public static int IntProperty {
-			get;
-		}
-		public static int? NullableIntProperty {
-			get;
-		}
-		public static object ObjProperty {
-			get;
-		}
-		public int InstIntProperty {
-			get;
-		}
-		public int? InstNullableIntProperty {
-			get;
-		}
-		public object InstObjProperty {
-			get;
-		}
-		public Data DataProperty {
-			get;
-		}
-		public Data? NullableDataProperty {
-			get;
-		}
-		public DataObject DataObjectProperty {
-			get;
-		}
+		public static int IntProperty { get; }
+		public static int? NullableIntProperty { get; }
+		public static object ObjProperty { get; }
+		public int InstIntProperty { get; }
+		public int? InstNullableIntProperty { get; }
+		public object InstObjProperty { get; }
+		public Data DataProperty { get; }
+		public Data? NullableDataProperty { get; }
+		public DataObject DataObjectProperty { get; }
 
 		public static int ReturnIntField()
 		{

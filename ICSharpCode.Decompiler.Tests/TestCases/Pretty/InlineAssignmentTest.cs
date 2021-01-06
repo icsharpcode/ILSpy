@@ -28,20 +28,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private int[] field3;
 		private short field4;
 
-		public int InstanceProperty {
-			get;
-			set;
-		}
+		public int InstanceProperty { get; set; }
 
-		public static int StaticProperty {
-			get;
-			set;
-		}
+		public static int StaticProperty { get; set; }
 
-		public bool BoolProperty {
-			get;
-			set;
-		}
+		public bool BoolProperty { get; set; }
 
 		public void SimpleInlineWithLocals()
 		{
