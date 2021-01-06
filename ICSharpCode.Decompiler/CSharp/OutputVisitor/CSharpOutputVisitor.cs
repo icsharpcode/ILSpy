@@ -2420,7 +2420,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (indexerDeclaration.ExpressionBody.IsNull)
 			{
 				bool isSingleLine =
-					(indexerDeclaration.Getter.IsNull || indexerDeclaration.Getter.Body.IsNull)
+					(policy.AutoPropertyFormatting == PropertyFormatting.SingleLine)
+					&& (indexerDeclaration.Getter.IsNull || indexerDeclaration.Getter.Body.IsNull)
 					&& (indexerDeclaration.Setter.IsNull || indexerDeclaration.Setter.Body.IsNull);
 				OpenBrace(isSingleLine ? BraceStyle.EndOfLine : policy.PropertyBraceStyle, newLine: !isSingleLine);
 				if (isSingleLine)
@@ -2560,7 +2561,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (propertyDeclaration.ExpressionBody.IsNull)
 			{
 				bool isSingleLine =
-					(propertyDeclaration.Getter.IsNull || propertyDeclaration.Getter.Body.IsNull)
+					(policy.AutoPropertyFormatting == PropertyFormatting.SingleLine)
+					&& (propertyDeclaration.Getter.IsNull || propertyDeclaration.Getter.Body.IsNull)
 					&& (propertyDeclaration.Setter.IsNull || propertyDeclaration.Setter.Body.IsNull);
 				OpenBrace(isSingleLine ? BraceStyle.EndOfLine : policy.PropertyBraceStyle, newLine: !isSingleLine);
 				if (isSingleLine)
