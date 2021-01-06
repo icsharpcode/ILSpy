@@ -30,10 +30,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class IntroduceQueryExpressions : IAstTransform
 	{
+		TransformContext context;
+
 		public void Run(AstNode rootNode, TransformContext context)
 		{
 			if (!context.Settings.QueryExpressions)
 				return;
+			this.context = context;
 			DecompileQueries(rootNode);
 			// After all queries were decompiled, detect degenerate queries (queries not property terminated with 'select' or 'group')
 			// and fix them, either by adding a degenerate select, or by combining them with another query.
@@ -76,9 +79,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		void DecompileQueries(AstNode node)
 		{
-			QueryExpression query = DecompileQuery(node as InvocationExpression);
+			Expression query = DecompileQuery(node as InvocationExpression);
 			if (query != null)
+			{
+				if (node.Parent is ExpressionStatement && CanUseDiscardAssignment())
+					query = new AssignmentExpression(new IdentifierExpression("_"), query);
 				node.ReplaceWith(query);
+			}
+
 			AstNode next;
 			for (AstNode child = (query ?? node).FirstChild; child != null; child = next)
 			{
@@ -86,6 +94,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				next = child.NextSibling;
 				DecompileQueries(child);
 			}
+		}
+
+		bool CanUseDiscardAssignment()
+		{
+			// TODO : check whether there exists a variable named '_' in scope.
+			return context.Settings.Discards;
 		}
 
 		QueryExpression DecompileQuery(InvocationExpression invocation)
