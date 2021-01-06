@@ -258,12 +258,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							query.Clauses.Add(MakeFromClause(element1, source1.Detach()));
 							QueryJoinClause joinClause = new QueryJoinClause();
 							joinClause.JoinIdentifier = element2.Name;    // join elementName2
+							joinClause.JoinIdentifierToken.CopyAnnotationsFrom(element2);
 							joinClause.InExpression = source2.Detach();  // in source2
 							joinClause.OnExpression = key1.Detach();     // on key1
 							joinClause.EqualsExpression = key2.Detach(); // equals key2
 							if (mre.MemberName == "GroupJoin")
 							{
 								joinClause.IntoIdentifier = p2.Name; // into p2.Name
+								joinClause.IntoIdentifierToken.CopyAnnotationsFrom(p2);
 							}
 							joinClause.AddAnnotation(new QueryJoinClauseAnnotation(outerLambda.Annotation<IL.ILFunction>(), innerLambda.Annotation<IL.ILFunction>()));
 							query.Clauses.Add(joinClause);

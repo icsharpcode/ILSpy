@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler
 					return;
 			}
 
-			var localDefinition = GetCurrentLocalDefinition();
+			var localDefinition = GetCurrentLocalDefinition(identifier);
 			if (localDefinition != null)
 			{
 				output.WriteLocalReference(name, localDefinition, isDefinition: true);
@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 
-		object GetCurrentLocalDefinition()
+		object GetCurrentLocalDefinition(Identifier id)
 		{
 			AstNode node = nodeStack.Peek();
 			if (node is Identifier && node.Parent != null)
@@ -178,6 +178,13 @@ namespace ICSharpCode.Decompiler
 			if (node is ParameterDeclaration || node is VariableInitializer || node is CatchClause || node is VariableDesignation)
 			{
 				var variable = node.Annotation<ILVariableResolveResult>()?.Variable;
+				if (variable != null)
+					return variable;
+			}
+
+			if (id.Role == QueryJoinClause.IntoIdentifierRole || id.Role == QueryJoinClause.JoinIdentifierRole)
+			{
+				var variable = id.Annotation<ILVariableResolveResult>()?.Variable;
 				if (variable != null)
 					return variable;
 			}
