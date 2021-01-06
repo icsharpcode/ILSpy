@@ -407,7 +407,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		string SearchDirectory(IAssemblyReference name, string directory)
 		{
-			var extensions = name.IsWindowsRuntime ? new[] { ".winmd", ".dll" } : new[] { ".exe", ".dll" };
+			var extensions = name.IsWindowsRuntime ? new[] { ".winmd", ".dll" } : new[] { ".dll", ".exe" };
 			foreach (var extension in extensions)
 			{
 				string file = Path.Combine(directory, name.Name + extension);
