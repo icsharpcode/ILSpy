@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			static bool IsLowerCase(string name)
 			{
-				return name.Length > 0 && char.ToLowerInvariant(name[0]) == name[0];
+				return name.Length > 0 && char.ToLower(name[0]) == name[0];
 			}
 		}
 
