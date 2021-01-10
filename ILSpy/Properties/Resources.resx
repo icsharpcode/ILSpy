@@ -450,6 +450,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.UsePatternBasedFixedStatement" xml:space="preserve">
     <value>Use pattern-based fixed statement</value>
   </data>
+  <data name="DecompilerSettings.UsePrimaryConstructorSyntax" xml:space="preserve">
+    <value>Use primary constructor  syntax with records</value>
+  </data>
   <data name="DecompilerSettings.UseRefLocalsForAccurateOrderOfEvaluation" xml:space="preserve">
     <value>Use ref locals to accurately represent order of evaluation</value>
   </data>

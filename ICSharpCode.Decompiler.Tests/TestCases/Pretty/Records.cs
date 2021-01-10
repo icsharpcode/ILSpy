@@ -1,8 +1,10 @@
 ﻿namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	public record Empty
-	{
-	}
+	public record Base(string A);
+
+	public record Derived(int B) : Base(B.ToString());
+
+	public record Empty;
 
 	public record Fields
 	{
@@ -17,6 +19,18 @@
 	{
 		public A First { get; init; }
 		public B Second { get; init; }
+	}
+
+	public record PairWithPrimaryCtor<A, B>(A First, B Second);
+
+	public record PrimaryCtor(int A, string B);
+	public record PrimaryCtorWithField(int A, string B)
+	{
+		public double C;
+	}
+	public record PrimaryCtorWithProperty(int A, string B)
+	{
+		public double C { get; init; }
 	}
 
 	public record Properties

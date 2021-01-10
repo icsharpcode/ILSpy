@@ -33,22 +33,28 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		readonly IDecompilerTypeSystem typeSystem;
 		readonly ITypeDefinition recordTypeDef;
+		readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
 		readonly List<IMember> orderedMembers;
 		readonly bool isInheritedRecord;
+		readonly IMethod primaryCtor;
 		readonly IType baseClass;
 		readonly Dictionary<IField, IProperty> backingFieldToAutoProperty = new Dictionary<IField, IProperty>();
 		readonly Dictionary<IProperty, IField> autoPropertyToBackingField = new Dictionary<IProperty, IField>();
+		readonly Dictionary<IParameter, IProperty> primaryCtorParameterToAutoProperty = new Dictionary<IParameter, IProperty>();
+		readonly Dictionary<IProperty, IParameter> autoPropertyToPrimaryCtorParameter = new Dictionary<IProperty, IParameter>();
 
-		public RecordDecompiler(IDecompilerTypeSystem dts, ITypeDefinition recordTypeDef, CancellationToken cancellationToken)
+		public RecordDecompiler(IDecompilerTypeSystem dts, ITypeDefinition recordTypeDef, DecompilerSettings settings, CancellationToken cancellationToken)
 		{
 			this.typeSystem = dts;
 			this.recordTypeDef = recordTypeDef;
+			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 			this.baseClass = recordTypeDef.DirectBaseTypes.FirstOrDefault(b => b.Kind == TypeKind.Class);
 			this.isInheritedRecord = !baseClass.IsKnownType(KnownTypeCode.Object);
 			DetectAutomaticProperties();
 			this.orderedMembers = DetectMemberOrder(recordTypeDef, backingFieldToAutoProperty);
+			this.primaryCtor = DetectPrimaryConstructor();
 		}
 
 		void DetectAutomaticProperties()
@@ -146,6 +152,62 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		IMethod DetectPrimaryConstructor()
+		{
+			if (!settings.UsePrimaryConstructorSyntax)
+				return null;
+
+			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
+			foreach (var method in recordTypeDef.Methods)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				if (method.IsStatic || !method.IsConstructor)
+					continue;
+				var m = method.Specialize(subst);
+				if (IsPrimaryConstructor(m))
+					return method;
+			}
+
+			return null;
+
+			bool IsPrimaryConstructor(IMethod method)
+			{
+				Debug.Assert(method.IsConstructor);
+				var body = DecompileBody(method);
+				if (body == null)
+					return false;
+
+				if (method.Parameters.Count == 0)
+					return false;
+
+				if (body.Instructions.Count != method.Parameters.Count + 2)
+					return false;
+
+				for (int i = 0; i < body.Instructions.Count - 2; i++)
+				{
+					if (!body.Instructions[i].MatchStFld(out var target, out var field, out var valueInst))
+						return false;
+					if (!target.MatchLdThis())
+						return false;
+					if (!valueInst.MatchLdLoc(out var value))
+						return false;
+					if (!(value.Kind == VariableKind.Parameter && value.Index == i))
+						return false;
+					if (!backingFieldToAutoProperty.TryGetValue(field, out var property))
+						return false;
+					primaryCtorParameterToAutoProperty.Add(method.Parameters[i], property);
+					autoPropertyToPrimaryCtorParameter.Add(property, method.Parameters[i]);
+				}
+
+				var baseCtorCall = body.Instructions.SecondToLastOrDefault() as CallInstruction;
+				if (baseCtorCall == null)
+					return false;
+
+				var returnInst = body.Instructions.LastOrDefault();
+				return returnInst != null && returnInst.MatchReturn(out var retVal) && retVal.MatchNop();
+			}
+		}
+
 		static List<IMember> DetectMemberOrder(ITypeDefinition recordTypeDef, Dictionary<IField, IProperty> backingFieldToAutoProperty)
 		{
 			// For records, the order of members is important:
@@ -166,6 +228,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public IEnumerable<IMember> FieldsAndProperties => orderedMembers;
 
+		/// <summary>
+		/// Gets the detected primary constructor. Returns null, if there was no primary constructor detected.
+		/// </summary>
+		public IMethod PrimaryConstructor => primaryCtor;
+
 		bool IsRecordType(IType type)
 		{
 			return type.GetDefinition() == recordTypeDef
@@ -177,11 +244,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public bool MethodIsGenerated(IMethod method)
 		{
-			if (method.IsConstructor && method.Parameters.Count == 1
-				&& IsRecordType(method.Parameters[0].Type))
+			if (method.IsConstructor)
 			{
-				return IsGeneratedCopyConstructor(method);
+				if (method.Parameters.Count == 1
+					&& IsRecordType(method.Parameters[0].Type))
+				{
+					return IsGeneratedCopyConstructor(method);
+				}
 			}
+
 			switch (method.Name)
 			{
 				// Some members in records are always compiler-generated and lead to a
@@ -227,6 +298,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					return IsGeneratedPrintMembers(method);
 				case "ToString" when method.Parameters.Count == 0:
 					return IsGeneratedToString(method);
+				case "Deconstruct" when primaryCtor != null && method.Parameters.Count == primaryCtor.Parameters.Count:
+					return IsGeneratedDeconstruct(method);
 				default:
 					return false;
 			}
@@ -239,8 +312,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				case "EqualityContract":
 					return IsGeneratedEqualityContract(property);
 				default:
-					return false;
+					return IsPropertyDeclaredByPrimaryConstructor(property);
 			}
+		}
+
+		public bool IsPropertyDeclaredByPrimaryConstructor(IProperty property)
+		{
+			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
+			return primaryCtor != null
+				&& autoPropertyToPrimaryCtorParameter.ContainsKey((IProperty)property.Specialize(subst));
 		}
 
 		private bool IsGeneratedCopyConstructor(IMethod method)
@@ -779,18 +859,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool Visit(ILInstruction inst)
 			{
 				if (inst is BinaryNumericInstruction
-				{
-					Operator: BinaryNumericOperator.Add,
-					CheckForOverflow: false,
-					Left: BinaryNumericInstruction
 					{
-						Operator: BinaryNumericOperator.Mul,
+						Operator: BinaryNumericOperator.Add,
 						CheckForOverflow: false,
-						Left: var left,
-						Right: LdcI4 { Value: -1521134295 }
-					},
-					Right: var right
-				})
+						Left: BinaryNumericInstruction
+						{
+							Operator: BinaryNumericOperator.Mul,
+							CheckForOverflow: false,
+							Left: var left,
+							Right: LdcI4 { Value: -1521134295 }
+						},
+						Right: var right
+					})
 				{
 					if (!Visit(left))
 						return false;
@@ -834,18 +914,70 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		bool IsGeneratedDeconstruct(IMethod method)
+		{
+			Debug.Assert(method.Name == "Deconstruct" && method.Parameters.Count == primaryCtor.Parameters.Count);
+
+			if (!method.ReturnType.IsKnownType(KnownTypeCode.Void))
+				return false;
+
+			for (int i = 0; i < method.Parameters.Count; i++)
+			{
+				var deconstruct = method.Parameters[i];
+				var ctor = primaryCtor.Parameters[i];
+
+				if (!deconstruct.IsOut)
+					return false;
+
+				if (!ctor.Type.Equals(((ByReferenceType)deconstruct.Type).ElementType))
+					return false;
+
+				if (ctor.Name != deconstruct.Name)
+					return false;
+			}
+
+			var body = DecompileBody(method);
+			if (body == null || body.Instructions.Count != method.Parameters.Count + 1)
+				return false;
+
+			for (int i = 0; i < body.Instructions.Count - 1; i++)
+			{
+				// stobj T(ldloc parameter, call getter(ldloc this))
+				if (!body.Instructions[i].MatchStObj(out var targetInst, out var getter, out _))
+					return false;
+				if (!targetInst.MatchLdLoc(out var target))
+					return false;
+				if (!(target.Kind == VariableKind.Parameter && target.Index == i))
+					return false;
+
+				if (getter is not Call call || call.Arguments.Count != 1)
+					return false;
+				if (!call.Arguments[0].MatchLdThis())
+					return false;
+
+				if (!call.Method.IsAccessor)
+					return false;
+				var autoProperty = (IProperty)call.Method.AccessorOwner;
+				if (!autoPropertyToBackingField.ContainsKey(autoProperty))
+					return false;
+			}
+
+			var returnInst = body.Instructions.LastOrDefault();
+			return returnInst != null && returnInst.MatchReturn(out var retVal) && retVal.MatchNop();
+		}
+
 		bool MatchMemberAccess(ILInstruction inst, out ILInstruction target, out IMember member)
 		{
 			target = null;
 			member = null;
 			if (inst is CallVirt
-			{
-				Method:
 				{
-					AccessorKind: System.Reflection.MethodSemanticsAttributes.Getter,
-					AccessorOwner: IProperty property
-				}
-			} call)
+					Method:
+					{
+						AccessorKind: System.Reflection.MethodSemanticsAttributes.Getter,
+						AccessorOwner: IProperty property
+					}
+				} call)
 			{
 				if (call.Arguments.Count != 1)
 					return false;

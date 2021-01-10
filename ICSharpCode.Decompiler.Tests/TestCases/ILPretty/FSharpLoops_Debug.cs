@@ -53,15 +53,18 @@ public static class Program
 		[DebuggerNonUserCode]
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		[CompilerGenerated]
-		public int pc = pc;
+		public int pc;
 
 		[DebuggerNonUserCode]
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		[CompilerGenerated]
-		public int current = current;
+		public int current;
 
 		public getSeq_00405(int pc, int current)
 		{
+			this.pc = pc;
+			this.current = current;
+			base._002Ector();
 		}
 
 		public override int GenerateNext(ref IEnumerable<int> next)

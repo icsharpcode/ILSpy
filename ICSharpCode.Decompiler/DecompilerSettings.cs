@@ -137,6 +137,7 @@ namespace ICSharpCode.Decompiler
 				forEachWithGetEnumeratorExtension = false;
 				recordClasses = false;
 				withExpressions = false;
+				usePrimaryConstructorSyntax = false;
 			}
 		}
 
@@ -239,6 +240,24 @@ namespace ICSharpCode.Decompiler
 				if (withExpressions != value)
 				{
 					withExpressions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool usePrimaryConstructorSyntax = true;
+
+		/// <summary>
+		/// Use primary constructor syntax with records.
+		/// </summary>
+		[Category("C# 9.0 / VS 2019.8")]
+		[Description("DecompilerSettings.UsePrimaryConstructorSyntax")]
+		public bool UsePrimaryConstructorSyntax {
+			get { return usePrimaryConstructorSyntax; }
+			set {
+				if (usePrimaryConstructorSyntax != value)
+				{
+					usePrimaryConstructorSyntax = value;
 					OnPropertyChanged();
 				}
 			}

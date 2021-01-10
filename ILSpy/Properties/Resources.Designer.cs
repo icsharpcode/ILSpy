@@ -1263,6 +1263,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use primary constructor  syntax with records.
+        /// </summary>
+        public static string DecompilerSettings_UsePrimaryConstructorSyntax {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UsePrimaryConstructorSyntax", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use ref locals to accurately represent order of evaluation.
         /// </summary>
         public static string DecompilerSettings_UseRefLocalsForAccurateOrderOfEvaluation {

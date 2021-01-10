@@ -75,6 +75,7 @@
     <Compile Include="CSharp\Syntax\Expressions\SwitchExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\WithInitializerExpression.cs" />
     <Compile Include="CSharp\Syntax\FunctionPointerAstType.cs" />
+    <Compile Include="CSharp\Syntax\InvocationAstType.cs" />
     <Compile Include="CSharp\Syntax\VariableDesignation.cs" />
     <Compile Include="Humanizer\Vocabularies.cs" />
     <Compile Include="Humanizer\Vocabulary.cs" />

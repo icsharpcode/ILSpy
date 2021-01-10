@@ -117,6 +117,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			VisitChildren(functionPointerType);
 		}
 
+		public virtual void VisitInvocationType(InvocationAstType invocationType)
+		{
+			VisitChildren(invocationType);
+		}
+
 		public virtual void VisitAttribute(Attribute attribute)
 		{
 			VisitChildren(attribute);
@@ -790,6 +795,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren(functionPointerType);
 		}
 
+		public virtual T VisitInvocationType(InvocationAstType invocationType)
+		{
+			return VisitChildren(invocationType);
+		}
+
 		public virtual T VisitAttribute(Attribute attribute)
 		{
 			return VisitChildren(attribute);
@@ -1461,6 +1471,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual S VisitFunctionPointerType(FunctionPointerAstType functionPointerType, T data)
 		{
 			return VisitChildren(functionPointerType, data);
+		}
+
+		public virtual S VisitInvocationType(InvocationAstType invocationType, T data)
+		{
+			return VisitChildren(invocationType, data);
 		}
 
 		public virtual S VisitAttribute(Attribute attribute, T data)

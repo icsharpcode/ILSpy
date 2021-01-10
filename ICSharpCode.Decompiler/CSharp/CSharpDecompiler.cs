@@ -1169,7 +1169,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					return entityDecl;
 				}
 				bool isRecord = settings.RecordClasses && typeDef.IsRecord;
-				RecordDecompiler recordDecompiler = isRecord ? new RecordDecompiler(typeSystem, typeDef, CancellationToken) : null;
+				RecordDecompiler recordDecompiler = isRecord ? new RecordDecompiler(typeSystem, typeDef, settings, CancellationToken) : null;
+				if (recordDecompiler != null)
+					decompileRun.RecordDecompilers.Add(typeDef, recordDecompiler);
+
+				if (recordDecompiler?.PrimaryConstructor != null)
+				{
+					foreach (var p in recordDecompiler.PrimaryConstructor.Parameters)
+						typeDecl.PrimaryConstructorParameters.Add(typeSystemAstBuilder.ConvertParameter(p));
+				}
+
 				foreach (var type in typeDef.NestedTypes)
 				{
 					if (!type.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, type.MetadataToken, settings))
