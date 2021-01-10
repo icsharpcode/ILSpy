@@ -99,7 +99,7 @@ namespace ICSharpCode.ILSpy.TextView
 		TextSegmentCollection<ReferenceSegment> references = new TextSegmentCollection<ReferenceSegment>();
 
 		/// <summary>Stack of the fold markers that are open but not closed yet</summary>
-		Stack<NewFolding> openFoldings = new Stack<NewFolding>();
+		Stack<(NewFolding, int startLine)> openFoldings = new Stack<(NewFolding, int startLine)>();
 
 		/// <summary>List of all foldings that were written to the output</summary>
 		internal readonly List<NewFolding> Foldings = new List<NewFolding>();
@@ -315,19 +315,20 @@ namespace ICSharpCode.ILSpy.TextView
 		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false)
 		{
 			WriteIndent();
-			openFoldings.Push(
+			openFoldings.Push((
 				new NewFolding {
 					StartOffset = this.TextLength,
 					Name = collapsedText,
 					DefaultClosed = defaultCollapsed
-				});
+				}, lineNumber));
 		}
 
 		public void MarkFoldEnd()
 		{
-			NewFolding f = openFoldings.Pop();
+			var (f, startLine) = openFoldings.Pop();
 			f.EndOffset = this.TextLength;
-			this.Foldings.Add(f);
+			if (startLine != lineNumber)
+				this.Foldings.Add(f);
 		}
 
 		public void AddUIElement(Func<UIElement> element)
