@@ -717,6 +717,14 @@ namespace ICSharpCode.ILSpy
 			{
 				flags &= ~ConversionFlags.UseNullableSpecifierForValueTypes;
 			}
+			if (settings.RecordClasses)
+			{
+				flags |= ConversionFlags.SupportRecordClasses;
+			}
+			if (settings.InitAccessors)
+			{
+				flags |= ConversionFlags.SupportInitAccessors;
+			}
 			if (entity is IMethod m && m.IsLocalFunction)
 			{
 				writer.WriteIdentifier(Identifier.Create("(local)"));

@@ -97,6 +97,14 @@ namespace ICSharpCode.Decompiler.Output
 		/// Use <c>T?</c> instead of <c>Nullable&lt;T&gt;</c>.
 		/// </summary>
 		UseNullableSpecifierForValueTypes = 0x8000,
+		/// <summary>
+		/// Support <c>init</c> accessors.
+		/// </summary>
+		SupportInitAccessors = 0x10000,
+		/// <summary>
+		/// Support <c>record</c> classes.
+		/// </summary>
+		SupportRecordClasses = 0x20000,
 
 		StandardConversionFlags = ShowParameterNames |
 			ShowAccessibility |
