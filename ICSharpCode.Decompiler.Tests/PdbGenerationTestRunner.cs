@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.Tests
 			foreach (var file in document.Descendants("file"))
 			{
 				file.Attribute("checksum").Remove();
-				file.Attribute("embeddedSourceLength").Remove();
+				file.Attribute("embeddedSourceLength")?.Remove();
 				file.ReplaceNodes(new XCData(file.Value.Replace("\uFEFF", "")));
 			}
 			document.Save(fileName, SaveOptions.None);
