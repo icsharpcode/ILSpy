@@ -16,5 +16,6 @@
 		<NUnitAdapterVersion>3.13.0</NUnitAdapterVersion>
 		<MoqVersion>4.14.1</MoqVersion>
 		<DiffLibVersion>2017.7.26.1241</DiffLibVersion>
+		<DSRConverterXmlVersion>1.1.0-beta2-20115-01</DSRConverterXmlVersion>
 	</PropertyGroup>
 </Project>
