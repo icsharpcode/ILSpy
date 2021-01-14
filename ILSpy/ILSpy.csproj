@@ -120,6 +120,7 @@
     <Compile Include="Commands\DisassembleAllCommand.cs" />
     <Compile Include="Commands\ExitCommand.cs" />
     <Compile Include="Commands\CommandWrapper.cs" />
+    <Compile Include="Metadata\DebugDirectoryTreeNode.cs" />
     <Compile Include="Metadata\GoToTokenCommand.cs" />
     <Compile Include="Commands\ILSpyCommands.cs" />
     <Compile Include="Commands\IProtocolHandler.cs" />

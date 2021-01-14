@@ -71,6 +71,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.Children.Add(new CoffHeaderTreeNode(module));
 			this.Children.Add(new OptionalHeaderTreeNode(module));
 			this.Children.Add(new DataDirectoriesTreeNode(module));
+			this.Children.Add(new DebugDirectoryTreeNode(module));
 			if (ShowTable(TableIndex.Module))
 				this.Children.Add(new ModuleTableTreeNode(module));
 			if (ShowTable(TableIndex.TypeRef))
