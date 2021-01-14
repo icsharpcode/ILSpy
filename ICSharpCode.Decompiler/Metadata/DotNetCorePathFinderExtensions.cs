@@ -132,16 +132,20 @@ namespace ICSharpCode.Decompiler.Metadata
 				 */
 				var pathMatch = Regex.Match(assemblyPath, PathPattern,
 					RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
+				string version;
 				if (pathMatch.Success)
 				{
 					var type = pathMatch.Groups["type"].Value;
-					var version = pathMatch.Groups["version"].Value;
+					version = pathMatch.Groups["version"].Value;
 					if (string.IsNullOrEmpty(version))
 						version = reader.MetadataVersion;
+					if (string.IsNullOrEmpty(version))
+						version = "4.0";
+					version = version.TrimStart('v');
 
 					if (type == "Microsoft.NET" || type == ".NETFramework")
 					{
-						return $".NETFramework,Version=v{version.TrimStart('v').Substring(0, 3)}";
+						return $".NETFramework,Version=v{version.Substring(0, Math.Min(3, version.Length))}";
 					}
 					else if (type.IndexOf("netcore", StringComparison.OrdinalIgnoreCase) >= 0)
 					{
@@ -154,7 +158,11 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 				else
 				{
-					return $".NETFramework,Version={reader.MetadataVersion.Substring(0, 4)}";
+					version = reader.MetadataVersion;
+					if (string.IsNullOrEmpty(version))
+						version = "4.0";
+					version = version.TrimStart('v');
+					return $".NETFramework,Version=v{version.Substring(0, Math.Min(3, version.Length))}";
 				}
 			}
 
