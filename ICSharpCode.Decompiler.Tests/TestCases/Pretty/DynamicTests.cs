@@ -172,6 +172,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			field.Call((dynamic)"Hello World");
 		}
 
+		private void StaticCallWithDynamicArgument(dynamic d)
+		{
+			M3(d + 5);
+		}
+
+		private static void StaticCallWithDynamicArgumentInStaticContext(dynamic d)
+		{
+			DynamicTests.M3(d + 5);
+		}
+
 		private static void DynamicCallWithString()
 		{
 			field.Call("Hello World");
