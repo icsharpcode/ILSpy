@@ -3813,7 +3813,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Expression targetExpr;
 			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
-			if (inst.BinderFlags.HasFlag(CSharpBinderFlags.InvokeSimpleName))
+			if (inst.BinderFlags.HasFlag(CSharpBinderFlags.InvokeSimpleName) && target.Expression is ThisReferenceExpression)
 			{
 				targetExpr = new IdentifierExpression(inst.Name);
 				((IdentifierExpression)targetExpr).TypeArguments.AddRange(inst.TypeArguments.Select(ConvertType));
