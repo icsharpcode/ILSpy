@@ -162,45 +162,65 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		{
 			public List<NativeVarInfoRecord> records;
 			public int i;
-			public Dictionary<string, Dictionary<int, Variable>> registerRelativeVariables;
-			public Dictionary<string, Variable> registerVariables;
+			public Dictionary<string, Dictionary<int, HashSet<Variable>>> registerRelativeVariables;
+			public Dictionary<string, HashSet<Variable>> registerVariables;
 
 			public DebugInfoHelper()
 			{
-				this.registerRelativeVariables = new Dictionary<string, Dictionary<int, Variable>>();
-				this.registerVariables = new Dictionary<string, Variable>();
+				this.registerRelativeVariables = new Dictionary<string, Dictionary<int, HashSet<Variable>>>();
+				this.registerVariables = new Dictionary<string, HashSet<Variable>>();
 			}
 
 			public void Update(ulong codeOffset)
 			{
+				HashSet<Variable> variables;
 				while (i < records.Count && records[i].codeOffset == codeOffset)
 				{
 					if (records[i].isRegRelative)
 					{
+						Dictionary<int, HashSet<Variable>> offsetToVariableMap;
 						if (records[i].isStart)
 						{
-							Dictionary<int, Variable> offsetToVariableMap;
 							if (!this.registerRelativeVariables.TryGetValue(records[i].register, out offsetToVariableMap))
 							{
-								offsetToVariableMap = new Dictionary<int, Variable>();
+								offsetToVariableMap = new Dictionary<int, HashSet<Variable>>();
 								this.registerRelativeVariables.Add(records[i].register, offsetToVariableMap);
 							}
-							offsetToVariableMap.Add(records[i].registerOffset, records[i].variable);
+							if (!offsetToVariableMap.TryGetValue(records[i].registerOffset, out variables))
+							{
+								variables = new HashSet<Variable>();
+								offsetToVariableMap.Add(records[i].registerOffset, variables);
+							}
+							variables.Add(records[i].variable);
 						}
 						else
 						{
-							this.registerRelativeVariables[records[i].register].Remove(records[i].registerOffset);
+							offsetToVariableMap = this.registerRelativeVariables[records[i].register];
+							variables = offsetToVariableMap[records[i].registerOffset];
+							variables.Remove(records[i].variable);
 						}
 					}
 					else
 					{
 						if (records[i].isStart)
 						{
-							this.registerVariables.Add(records[i].register, records[i].variable);
+							if (!this.registerVariables.TryGetValue(records[i].register, out variables))
+							{
+								variables = new HashSet<Variable>();
+								this.registerVariables.Add(records[i].register, variables);
+							}
+							variables.Add(records[i].variable);
 						}
 						else
 						{
-							this.registerVariables.Remove(records[i].register);
+							// If the optimizing compiler decides that two variables will always have the same value within a basic block
+							// It might assign the same location for two variables.
+
+							// The compiler also generates potentially wrong 1 byte long debug info record for arguments in prolog.
+							// These record might describe the same variable in overlapping ranges.
+							// See https://cshung.github.io/posts/debug-info-debugging/ for the investigation.
+							variables = this.registerVariables[records[i].register];
+							variables.Remove(records[i].variable);
 						}
 					}
 					i++;
@@ -219,7 +239,13 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 					for (int i = 0; i < debugInfo.VariablesList.Count; ++i)
 					{
 						var varLoc = debugInfo.VariablesList[i];
-
+						if (varLoc.StartOffset == varLoc.EndOffset)
+						{
+							// This could happen if the compiler is generating bogus variable info mapping record that covers 0 instructions
+							// See https://github.com/dotnet/runtime/issues/47202
+							Debug.Assert(false);
+							continue;
+						}
 						switch (varLoc.VariableLocation.VarLocType)
 						{
 							case VarLocType.VLT_STK:
@@ -344,32 +370,40 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		{
 			if (debugRecords != null)
 			{
-
+				HashSet<Variable> variables;
 				InstructionInfoFactory factory = new InstructionInfoFactory();
 				InstructionInfo info = factory.GetInfo(instr);
 				ulong codeOffset = instr.IP - baseInstrIP;
 				debugRecords.Update(codeOffset);
-				Variable variable = null;
 				foreach (UsedMemory usedMemInfo in info.GetUsedMemory())
 				{
 					string baseRegister = usedMemInfo.Base.ToString();
 					int displacement;
 					unchecked
 					{ displacement = (int)usedMemInfo.Displacement; }
-					Dictionary<int, Variable> offsetToVariableMap;
+					Dictionary<int, HashSet<Variable>> offsetToVariableMap;
 					if (debugRecords.registerRelativeVariables.TryGetValue(usedMemInfo.Base.ToString(), out offsetToVariableMap))
 					{
-						if (offsetToVariableMap.TryGetValue(displacement, out variable))
+						if (offsetToVariableMap.TryGetValue(displacement, out variables))
 						{
-							output.Write($"; [{usedMemInfo.Base.ToString().ToLower()}{(displacement < 0 ? '-' : '+')}{Math.Abs(displacement):X}h] = {variable.Type} {variable.Index}");
+							output.Write($";");
+							foreach (Variable variable in variables)
+							{
+								output.Write($" [{usedMemInfo.Base.ToString().ToLower()}{(displacement < 0 ? '-' : '+')}{Math.Abs(displacement):X}h] = {variable.Type} {variable.Index}");
+							}
 						}
 					}
 				}
 				foreach (UsedRegister usedMemInfo in info.GetUsedRegisters())
 				{
-					if (debugRecords.registerVariables.TryGetValue(usedMemInfo.Register.ToString(), out variable))
+					// TODO, if the code is accessing EAX but the debug info maps to RAX, then this match is going to fail.
+					if (debugRecords.registerVariables.TryGetValue(usedMemInfo.Register.ToString(), out variables))
 					{
-						output.Write($"; {usedMemInfo.Register.ToString().ToLower()} = {variable.Type} {variable.Index}");
+						output.Write($";");
+						foreach (Variable variable in variables)
+						{
+							output.Write($" {usedMemInfo.Register.ToString().ToLower()} = {variable.Type} {variable.Index}");
+						}
 					}
 				}
 			}

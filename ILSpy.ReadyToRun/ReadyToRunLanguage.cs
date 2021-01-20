@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// #define STRESS
+#define STRESS
 
 using System;
 using System.Collections.Generic;
@@ -154,10 +154,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				bool showMetadataTokens = ILSpy.Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens;
 				bool showMetadataTokensInBase10 = ILSpy.Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10;
 #if STRESS
+				ITextOutput originalOutput = output;
 				output = new DummyOutput();
 				{
 					foreach (var readyToRunMethod in reader.Methods)
-					{ 
+					{
 #else
 				if (cacheEntry.methodMap.TryGetValue(method.MetadataToken, out var methods))
 				{
@@ -170,6 +171,10 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						}
 					}
 				}
+#if STRESS
+				output = originalOutput;
+				output.WriteLine("Passed");
+#endif
 			}
 		}
 
