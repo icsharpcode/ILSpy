@@ -202,7 +202,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						var v = function.RegisterVariable(
 							VariableKind.StackSlot,
 							type,
-							AssignVariableNames.GenerateVariableName(function, type, stmt.Expression.Annotations.OfType<ILInstruction>().Where(AssignVariableNames.IsSupportedInstruction).FirstOrDefault())
+							AssignVariableNames.GenerateVariableName(function, type,
+								stmt.Expression.Annotations.OfType<ILInstruction>()
+									.Where(AssignVariableNames.IsSupportedInstruction).FirstOrDefault(),
+								mustResolveConflicts: true)
 						);
 						stmt.Expression = new AssignmentExpression(
 							new IdentifierExpression(v.Name).WithRR(new ILVariableResolveResult(v, v.Type)),
