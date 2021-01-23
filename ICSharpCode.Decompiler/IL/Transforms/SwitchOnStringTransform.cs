@@ -1180,7 +1180,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (target.Instructions.Count != 2)
 				return false;
 			if (!target.Instructions[0].MatchIfInstruction(out var condition, out var bodyBranch))
-				return false;
+			{
+				// Special case: sometimes we don't have an if, because bodyBranch==exitBranch
+				// and the C# compiler optimized out the if.
+				// Example:
+				//  Block IL_0063 (incoming: 1) {
+				//   call op_Equality(ldloc V_4, ldstr "rowno")
+				//   leave IL_0000(nop)
+				// }
+				condition = target.Instructions[0];
+				bodyBranch = target.Instructions[1];
+			}
 			ILInstruction exitBranch = target.Instructions[1];
 			// Handle negated conditions first:
 			while (condition.MatchLogicNot(out var expr))
