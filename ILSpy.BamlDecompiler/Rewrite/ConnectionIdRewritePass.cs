@@ -213,7 +213,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			@event = null;
 			if (!b.FinalInstruction.MatchNop())
 			{
-				pos = int.MaxValue;
+				pos = b.Instructions.Count;
 				return false;
 			}
 			var instr = b.Instructions;
