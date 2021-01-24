@@ -23,6 +23,14 @@
 namespace ILSpy.BamlDecompiler
 {
 	/// <summary>
+	/// Represents a field assignment of a XAML code-behind class.
+	/// </summary>
+	internal sealed class FieldAssignment
+	{
+		public string FieldName;
+	}
+
+	/// <summary>
 	/// Represents an event registration of a XAML code-behind class.
 	/// </summary>
 	internal sealed class EventRegistration

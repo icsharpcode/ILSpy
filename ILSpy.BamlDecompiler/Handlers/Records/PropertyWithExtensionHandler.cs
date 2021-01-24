@@ -85,7 +85,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 						name = res.Item1 + "." + res.Item2;
 					else
 						name = res.Item1 + "." + res.Item3;
-					var xmlns = ctx.GetXmlNamespace("http://schemas.microsoft.com/winfx/2006/xaml/presentation");
+					var xmlns = ctx.GetXmlNamespace(XamlContext.KnownNamespace_Presentation);
 					attrName = ctx.ToString(parent.Xaml, xmlns.GetName(name));
 				}
 				else
