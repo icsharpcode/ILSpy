@@ -72,6 +72,10 @@ namespace ILSpy.BamlDecompiler.Rewrite
 						}
 					}
 				}
+				else
+				{
+					element.Add(new XComment($"Unknown connection ID: {annotation.Id}"));
+				}
 			}
 		}
 
