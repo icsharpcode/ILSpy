@@ -177,13 +177,16 @@ namespace ILSpy.BamlDecompiler.Rewrite
 
 		void FindEvents(ILInstruction inst, List<EventRegistration> events)
 		{
+			EventRegistration @event;
 			switch (inst)
 			{
 				case Block b:
-					if (MatchEventSetterCreation(b, out var @event))
+					for (int i = 0; i < b.Instructions.Count;)
 					{
-						events.Add(@event);
-						break;
+						if (MatchEventSetterCreation(b, ref i, out @event))
+							events.Add(@event);
+						else
+							i++;
 					}
 					foreach (var node in b.Instructions)
 					{
@@ -205,15 +208,17 @@ namespace ILSpy.BamlDecompiler.Rewrite
 		// callvirt set_Event(ldloc v, ldsfld eventName)
 		// callvirt set_Handler(ldloc v, newobj RoutedEventHandler..ctor(ldloc this, ldftn eventHandler))
 		// callvirt Add(callvirt get_Setters(castclass System.Windows.Style(ldloc target)), ldloc v)
-		// leave IL_0007 (nop)
-		bool MatchEventSetterCreation(Block b, out EventRegistration @event)
+		bool MatchEventSetterCreation(Block b, ref int pos, out EventRegistration @event)
 		{
 			@event = null;
-			var instr = b.Instructions;
-			if (instr.Count != 5 || !b.FinalInstruction.MatchNop())
+			if (!b.FinalInstruction.MatchNop())
+			{
+				pos = int.MaxValue;
 				return false;
+			}
+			var instr = b.Instructions;
 			// stloc v(newobj EventSetter..ctor())
-			if (!instr.ElementAt(0).MatchStLoc(out var v, out var initializer))
+			if (!instr[pos + 0].MatchStLoc(out var v, out var initializer))
 				return false;
 			if (!(initializer is NewObj newObj
 				&& newObj.Method.DeclaringType.FullName == "System.Windows.EventSetter"
@@ -222,7 +227,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				return false;
 			}
 			//callvirt set_Event(ldloc v, ldsfld eventName)
-			if (!(instr.ElementAt(1) is CallVirt setEventCall && setEventCall.Arguments.Count == 2))
+			if (!(instr[pos + 1] is CallVirt setEventCall && setEventCall.Arguments.Count == 2))
 				return false;
 			if (!setEventCall.Method.IsAccessor)
 				return false;
@@ -238,7 +243,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				eventName = eventName.Remove(eventName.Length - "Event".Length);
 			}
 			// callvirt set_Handler(ldloc v, newobj RoutedEventHandler..ctor(ldloc this, ldftn eventHandler))
-			if (!(instr.ElementAt(2) is CallVirt setHandlerCall && setHandlerCall.Arguments.Count == 2))
+			if (!(instr[pos + 2] is CallVirt setHandlerCall && setHandlerCall.Arguments.Count == 2))
 				return false;
 			if (!setHandlerCall.Method.IsAccessor)
 				return false;
@@ -250,7 +255,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				return false;
 			@event = new EventRegistration { EventName = eventName, MethodName = handlerName };
 			// callvirt Add(callvirt get_Setters(castclass System.Windows.Style(ldloc target)), ldloc v)
-			if (!(instr.ElementAt(3) is CallVirt addCall && addCall.Arguments.Count == 2))
+			if (!(instr[pos + 3] is CallVirt addCall && addCall.Arguments.Count == 2))
 				return false;
 			if (addCall.Method.Name != "Add")
 				return false;
@@ -268,6 +273,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				return false;
 			if (!addCall.Arguments[1].MatchLdLoc(v))
 				return false;
+			pos += 4;
 			return true;
 		}
 
