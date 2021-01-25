@@ -411,7 +411,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverImplicitString(ImplicitString s)
 		{
-			switch (s)
+			// we emit an explicit cast, because the rules used by the C# compiler are counter-intuitive:
+			// The C# compiler does *not* take the type of the switch labels into account at all.
+			switch ((string)s)
 			{
 				case "First case":
 					return "Text1";

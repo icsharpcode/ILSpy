@@ -205,7 +205,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					.ConvertTo(
 						typeSystem.FindType(KnownTypeCode.String),
 						exprBuilder,
-						allowImplicitConversion: true
+						// switch statement does support implicit conversions in general, however, the rules are
+						// not very intuitive and in order to prevent bugs, we emit an explicit cast.
+						allowImplicitConversion: false
 					);
 				type = exprBuilder.compilation.FindType(KnownTypeCode.String);
 			}
