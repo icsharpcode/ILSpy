@@ -37,6 +37,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public class ImplicitString
+		{
+			private readonly string s;
+
+			public ImplicitString(string s)
+			{
+				this.s = s;
+			}
+
+			public static implicit operator string(ImplicitString v)
+			{
+				return v.s;
+			}
+		}
+
+		public class ExplicitString
+		{
+			private readonly string s;
+
+			public ExplicitString(string s)
+			{
+				this.s = s;
+			}
+
+			public static explicit operator string(ExplicitString v)
+			{
+				return v.s;
+			}
+		}
+
 		public enum State
 		{
 			False,
@@ -351,6 +381,68 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Console.WriteLine("SwitchOverString2:");
 			switch (Environment.UserName)
+			{
+				case "First case":
+					return "Text1";
+				case "Second case":
+					return "Text2";
+				case "Third case":
+					return "Text3";
+				case "Fourth case":
+					return "Text4";
+				case "Fifth case":
+					return "Text5";
+				case "Sixth case":
+					return "Text6";
+				case "Seventh case":
+					return "Text7";
+				case "Eighth case":
+					return "Text8";
+				case "Ninth case":
+					return "Text9";
+				case "Tenth case":
+					return "Text10";
+				case "Eleventh case":
+					return "Text11";
+				default:
+					return "Default";
+			}
+		}
+
+		public static string SwitchOverImplicitString(ImplicitString s)
+		{
+			switch (s)
+			{
+				case "First case":
+					return "Text1";
+				case "Second case":
+					return "Text2";
+				case "Third case":
+					return "Text3";
+				case "Fourth case":
+					return "Text4";
+				case "Fifth case":
+					return "Text5";
+				case "Sixth case":
+					return "Text6";
+				case "Seventh case":
+					return "Text7";
+				case "Eighth case":
+					return "Text8";
+				case "Ninth case":
+					return "Text9";
+				case "Tenth case":
+					return "Text10";
+				case "Eleventh case":
+					return "Text11";
+				default:
+					return "Default";
+			}
+		}
+
+		public static string SwitchOverExplicitString(ExplicitString s)
+		{
+			switch ((string)s)
 			{
 				case "First case":
 					return "Text1";

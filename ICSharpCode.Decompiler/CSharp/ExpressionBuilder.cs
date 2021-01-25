@@ -3642,6 +3642,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitSwitchInstruction(SwitchInstruction inst, TranslationContext context)
 		{
 			TranslatedExpression value;
+			IType type;
 			if (inst.Value is StringToInt strToInt)
 			{
 				value = Translate(strToInt.Argument)
@@ -3650,11 +3651,13 @@ namespace ICSharpCode.Decompiler.CSharp
 						this,
 						allowImplicitConversion: false // switch-expression does not support implicit conversions
 					);
+				type = compilation.FindType(KnownTypeCode.String);
 			}
 			else
 			{
 				strToInt = null;
 				value = Translate(inst.Value);
+				type = value.Type;
 			}
 
 			IL.SwitchSection defaultSection = inst.GetDefaultSection();
@@ -3683,7 +3686,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				else
 				{
 					long val = section.Labels.Values.Single();
-					var rr = statementBuilder.CreateTypedCaseLabel(val, value.Type, strToInt?.Map).Single();
+					var rr = statementBuilder.CreateTypedCaseLabel(val, type, strToInt?.Map).Single();
 					ses.Pattern = astBuilder.ConvertConstantValue(rr);
 				}
 				ses.Body = TranslateSectionBody(section);

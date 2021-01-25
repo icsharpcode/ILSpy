@@ -144,12 +144,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			// unpack nullable type, if necessary:
 			// we need to do this in all cases, because there are nullable bools and enum types as well.
 			type = NullableType.GetUnderlyingType(type);
+
 			if (type.IsKnownType(KnownTypeCode.Boolean))
 			{
 				value = i != 0;
 			}
-			else if (type.IsKnownType(KnownTypeCode.String) && map != null)
+			else if (map != null)
 			{
+				Debug.Assert(type.IsKnownType(KnownTypeCode.String));
 				var keys = map.Where(entry => entry.Value == i).Select(entry => entry.Key);
 				foreach (var key in keys)
 					yield return new ConstantResolveResult(type, key);
@@ -196,6 +198,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			caseLabelMapping = new Dictionary<Block, ConstantResolveResult>();
 
 			TranslatedExpression value;
+			IType type;
 			if (inst.Value is StringToInt strToInt)
 			{
 				value = exprBuilder.Translate(strToInt.Argument)
@@ -204,11 +207,13 @@ namespace ICSharpCode.Decompiler.CSharp
 						exprBuilder,
 						allowImplicitConversion: true
 					);
+				type = exprBuilder.compilation.FindType(KnownTypeCode.String);
 			}
 			else
 			{
 				strToInt = null;
 				value = exprBuilder.Translate(inst.Value);
+				type = value.Type;
 			}
 
 			IL.SwitchSection defaultSection = inst.GetDefaultSection();
@@ -229,7 +234,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else
 				{
-					var values = section.Labels.Values.SelectMany(i => CreateTypedCaseLabel(i, value.Type, strToInt?.Map)).ToArray();
+					var values = section.Labels.Values.SelectMany(i => CreateTypedCaseLabel(i, type, strToInt?.Map)).ToArray();
 					if (section.HasNullLabel)
 					{
 						astSection.CaseLabels.Add(new CaseLabel(new NullReferenceExpression()));
