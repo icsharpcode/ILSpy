@@ -97,10 +97,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				remove {
 				}
 			}
+			public int Finalize()
+			{
+				return 0;
+			}
 			void IA.Method()
 			{
 				throw new NotImplementedException();
 			}
+		}
+
+		internal interface IInterfacesCannotDeclareDtors
+		{
+			int Finalize();
 		}
 	}
 }

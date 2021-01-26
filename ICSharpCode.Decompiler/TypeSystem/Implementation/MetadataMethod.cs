@@ -82,8 +82,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			else if ((attributes & finalizerAttributes) == finalizerAttributes)
 			{
-				string name = this.Name;
-				if (name == "Finalize" && Parameters.Count == 0)
+				if (Name == "Finalize" && Parameters.Count == 0 && ReturnType.IsKnownType(KnownTypeCode.Void)
+					&& (DeclaringTypeDefinition as MetadataTypeDefinition)?.Kind == TypeKind.Class)
 				{
 					this.symbolKind = SymbolKind.Destructor;
 				}
