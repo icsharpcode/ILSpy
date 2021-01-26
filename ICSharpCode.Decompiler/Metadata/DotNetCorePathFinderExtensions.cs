@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					var blobReader = reader.GetBlobReader(attribute.Value);
 					if (blobReader.ReadUInt16() == 0x0001)
 					{
-						return blobReader.ReadSerializedString();
+						return blobReader.ReadSerializedString()?.Replace(" ", "");
 					}
 				}
 				catch (BadImageFormatException)
