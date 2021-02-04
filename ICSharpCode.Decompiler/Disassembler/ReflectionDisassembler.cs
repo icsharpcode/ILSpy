@@ -769,7 +769,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			switch (typeName)
 			{
 				case "string":
-					output.Write("'" + DisassemblerHelpers.EscapeString(value.ToString()).Replace("'", "\'") + "'");
+					output.Write("'" + DisassemblerHelpers.EscapeString(value.ToString()).Replace("'", "\\'") + "'");
 					break;
 				case "type":
 					var info = ((PrimitiveTypeCode Code, string Name))value;
