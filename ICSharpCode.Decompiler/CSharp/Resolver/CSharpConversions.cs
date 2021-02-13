@@ -1103,6 +1103,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
+		static IType UnderlyingTypeForConversion(IType type)
+		{
+			if (type.Kind == TypeKind.ByReference)
+			{
+				type = ((ByReferenceType)type).ElementType;
+			}
+			return NullableType.GetUnderlyingType(type);
+		}
+
 		List<OperatorInfo> GetApplicableConversionOperators(ResolveResult fromResult, IType fromType, IType toType, bool isExplicit)
 		{
 			// Find the candidate operators:
@@ -1112,13 +1121,17 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			else
 				opFilter = m => m.IsStatic && m.IsOperator && m.Name == "op_Implicit" && m.Parameters.Count == 1;
 
-			var operators = NullableType.GetUnderlyingType(fromType).GetMethods(opFilter)
-				.Concat(NullableType.GetUnderlyingType(toType).GetMethods(opFilter)).Distinct();
+			var operators = UnderlyingTypeForConversion(fromType).GetMethods(opFilter)
+				.Concat(UnderlyingTypeForConversion(toType).GetMethods(opFilter)).Distinct();
 			// Determine whether one of them is applicable:
 			List<OperatorInfo> result = new List<OperatorInfo>();
 			foreach (IMethod op in operators)
 			{
 				IType sourceType = op.Parameters[0].Type;
+				if (sourceType.Kind == TypeKind.ByReference && op.Parameters[0].IsIn && fromType.Kind != TypeKind.ByReference)
+				{
+					sourceType = ((ByReferenceType)sourceType).ElementType;
+				}
 				IType targetType = op.ReturnType;
 				// Try if the operator is applicable:
 				bool isApplicable;

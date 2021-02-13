@@ -35,6 +35,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Issue1281();
 			Issue1747();
 			CallAmbiguousOutParam();
+			CallWithInParam();
 		}
 
 		#region ConstructorTest
@@ -269,6 +270,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			AmbiguousOutParam(out a);
 			AmbiguousOutParam(out b);
 		}
+		#endregion
+
+		#region In Parameter
+		static void CallWithInParam()
+		{
+			Console.WriteLine("OverloadSetWithInParam:");
+#if CS72
+			OverloadSetWithInParam(1);
+			OverloadSetWithInParam(2L);
+			int i = 3;
+			OverloadSetWithInParam(in i);
+#endif
+		}
+
+#if CS72
+		static void OverloadSetWithInParam(in int i)
+		{
+			Console.WriteLine("in int " + i);
+		}
+		static void OverloadSetWithInParam(long l)
+		{
+			Console.WriteLine("long " + l);
+		}
+#endif
 		#endregion
 	}
 

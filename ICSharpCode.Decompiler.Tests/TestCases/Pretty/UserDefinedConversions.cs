@@ -131,4 +131,51 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 	}
+
+#if CS72
+	internal class T03ConversionWithInArgument
+	{
+		private struct T
+		{
+			private byte dummy;
+
+			public static implicit operator T(in int val)
+			{
+				return default(T);
+			}
+
+			public static explicit operator T(in long val)
+			{
+				return default(T);
+			}
+		}
+
+		private struct U
+		{
+			private byte dummy;
+
+			public static implicit operator T(in U u)
+			{
+				return default(T);
+			}
+
+			public static explicit operator int(in U u)
+			{
+				return 0;
+			}
+		}
+
+		private void UseT(T t)
+		{
+		}
+
+		private int Test(int i, long l, U u)
+		{
+			UseT(i);
+			UseT((T)l);
+			UseT(u);
+			return (int)u;
+		}
+	}
+#endif
 }

@@ -1154,6 +1154,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				argument = argument.ConvertTo(method.Parameters[0].Type, expressionBuilder);
 				conv = conversions.ImplicitConversion(argument.Type, targetType);
 			}
+			if (argument.Expression is DirectionExpression { FieldDirection: FieldDirection.In, Expression: var lvalueExpr })
+			{
+				// `(TargetType)(in arg)` is invalid syntax.
+				// Also, `f(in arg)` is invalid when there's an implicit conversion involved.
+				argument = argument.UnwrapChild(lvalueExpr);
+			}
 			return new CastExpression(expressionBuilder.ConvertType(targetType), argument.Expression)
 				.WithRR(new ConversionResolveResult(targetType, argument.ResolveResult, conv));
 		}
