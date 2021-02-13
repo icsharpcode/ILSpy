@@ -271,6 +271,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					extOr.AllowOptionalParameters = allowOptionalParameters;
 					extOr.IsExtensionMethodInvocation = true;
 					extOr.CheckForOverflow = checkForOverflow;
+					extOr.AllowImplicitIn = allowImplicitIn;
 
 					foreach (var g in extensionMethods)
 					{

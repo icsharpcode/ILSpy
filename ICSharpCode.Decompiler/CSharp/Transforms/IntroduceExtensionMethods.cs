@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -180,6 +179,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (target is ConstantResolveResult crr && crr.ConstantValue == null)
 			{
 				target = new ConversionResolveResult(method.Parameters[0].Type, crr, Conversion.NullLiteralConversion);
+			}
+			else if (target is ByReferenceResolveResult brrr)
+			{
+				target = brrr.ElementResult;
 			}
 			ResolveResult[] args = new ResolveResult[invocationExpression.Arguments.Count - 1];
 			string[] argNames = null;

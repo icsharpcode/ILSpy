@@ -2158,12 +2158,17 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (method.Parameters.Count == 0)
 				return false;
 			IType thisParameterType = method.Parameters[0].Type;
+			if (thisParameterType.Kind == TypeKind.ByReference)
+			{
+				// extension method with `this in` or `this ref`
+				thisParameterType = ((ByReferenceType)thisParameterType).ElementType;
+			}
 			if (useTypeInference && method.TypeParameters.Count > 0)
 			{
 				// We need to infer type arguments from targetType:
 				TypeInference ti = new TypeInference(compilation, conversions);
 				ResolveResult[] arguments = { new ResolveResult(targetType) };
-				IType[] parameterTypes = { method.Parameters[0].Type };
+				IType[] parameterTypes = { thisParameterType };
 				var inferredTypes = ti.InferTypeArguments(method.TypeParameters, arguments, parameterTypes, out _);
 				var substitution = new TypeParameterSubstitution(null, inferredTypes);
 				// Validate that the types that could be inferred (aren't unknown) satisfy the constraints:
