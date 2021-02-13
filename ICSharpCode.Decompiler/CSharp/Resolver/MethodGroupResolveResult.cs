@@ -233,6 +233,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 															bool allowExtensionMethods = true,
 															bool allowExpandingParams = true,
 															bool allowOptionalParameters = true,
+															bool allowImplicitIn = true,
 															bool checkForOverflow = false, CSharpConversions conversions = null)
 		{
 			Log.WriteLine("Performing overload resolution for " + this);
@@ -243,6 +244,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			or.AllowExpandingParams = allowExpandingParams;
 			or.AllowOptionalParameters = allowOptionalParameters;
 			or.CheckForOverflow = checkForOverflow;
+			or.AllowImplicitIn = allowImplicitIn;
 
 			or.AddMethodLists(methodLists);
 

@@ -1283,7 +1283,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					args[i] = new ResolveResult(parameterType);
 				}
 			}
-			var or = rr.PerformOverloadResolution(compilation, args, allowExpandingParams: false, allowOptionalParameters: false, conversions: this);
+			var or = rr.PerformOverloadResolution(
+				compilation, args,
+				allowExpandingParams: false,
+				allowOptionalParameters: false,
+				allowImplicitIn: false,
+				conversions: this
+			);
 			if (or.FoundApplicableCandidate)
 			{
 				IMethod method = (IMethod)or.GetBestCandidateWithSubstitutedTypeArguments();

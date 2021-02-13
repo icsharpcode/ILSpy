@@ -184,6 +184,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public bool AllowOptionalParameters { get; set; }
 
 		/// <summary>
+		/// Gets/Sets whether a value argument can be passed to an `in` reference parameter.
+		/// </summary>
+		public bool AllowImplicitIn { get; set; } = true;
+
+		/// <summary>
 		/// Gets/Sets whether ConversionResolveResults created by this OverloadResolution
 		/// instance apply overflow checking.
 		/// The default value is false.
@@ -649,22 +654,32 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					continue;
 				}
 
+				ReferenceKind paramRefKind = candidate.Parameters[parameterIndex].ReferenceKind;
 				if (arguments[i] is ByReferenceResolveResult brrr)
 				{
-					if (brrr.ReferenceKind != candidate.Parameters[parameterIndex].ReferenceKind)
+					if (brrr.ReferenceKind != paramRefKind)
 						candidate.AddError(OverloadResolutionErrors.ParameterPassingModeMismatch);
 				}
 				else if (arguments[i] is OutVarResolveResult)
 				{
-					if (candidate.Parameters[parameterIndex].ReferenceKind != ReferenceKind.Out)
+					if (paramRefKind != ReferenceKind.Out)
 						candidate.AddError(OverloadResolutionErrors.ParameterPassingModeMismatch);
 					// 'out var decl' arguments are compatible with any out parameter
 					continue;
 				}
 				else
 				{
-					if (candidate.Parameters[parameterIndex].ReferenceKind != ReferenceKind.None)
+					if (paramRefKind == ReferenceKind.In && AllowImplicitIn
+						&& candidate.ParameterTypes[parameterIndex].SkipModifiers() is ByReferenceType brt)
+					{
+						// Treat the parameter as if it was not declared "in" for the following steps
+						// (applicability + better function member)
+						candidate.ParameterTypes[parameterIndex] = brt.ElementType;
+					}
+					else if (paramRefKind != ReferenceKind.None)
+					{
 						candidate.AddError(OverloadResolutionErrors.ParameterPassingModeMismatch);
+					}
 				}
 				IType parameterType = candidate.ParameterTypes[parameterIndex];
 				Conversion c = conversions.ImplicitConversion(arguments[i], parameterType);

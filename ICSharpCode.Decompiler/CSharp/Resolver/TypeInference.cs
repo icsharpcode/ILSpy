@@ -578,9 +578,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							args[i] = new ResolveResult(parameterType);
 						}
 					}
-					var or = mgrr.PerformOverloadResolution(compilation,
-															args,
-															allowExpandingParams: false, allowOptionalParameters: false);
+					var or = mgrr.PerformOverloadResolution(
+						compilation, args,
+						allowExpandingParams: false,
+						allowOptionalParameters: false,
+						allowImplicitIn: false
+					);
 					if (or.FoundApplicableCandidate && or.BestCandidateAmbiguousWith == null)
 					{
 						IType returnType = or.GetBestCandidateWithSubstitutedTypeArguments().ReturnType;
