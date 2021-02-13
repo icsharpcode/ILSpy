@@ -643,10 +643,11 @@
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
+  <ItemGroup>
+    <UpdateAssemblyInfoStamp Include="obj\update-assemblyinfo-last-commit-hash.txt" />
+  </ItemGroup>
+
   <Target Name="ILSpyUpdateAssemblyInfo" BeforeTargets="BeforeBuild">
-    <ItemGroup>
-      <UpdateAssemblyInfoStamp Include="obj\update-assemblyinfo-last-commit-hash.txt" />
-    </ItemGroup>
     <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
       <UpdateAssemblyInfo>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/update-assemblyinfo.ps1 $(Configuration)</UpdateAssemblyInfo>
       <GitRevParse>git rev-parse HEAD^^{commit}</GitRevParse>
@@ -663,6 +664,10 @@
     </Exec>
     <Exec WorkingDirectory=".." Command="$(UpdateAssemblyInfo)" Timeout="60000" Condition="'$(CommitHash)'!='$(LastCommitHash)'" />
     <WriteLinesToFile Lines="$(CommitHash)" File="@(UpdateAssemblyInfoStamp)" Overwrite="true" Condition="'$(CommitHash)'!='$(LastCommitHash)'" />
+  </Target>
+
+  <Target Name="CleanUpdateAssemblyInfo" BeforeTargets="BeforeClean">
+    <Delete Files="@(UpdateAssemblyInfoStamp)" />
   </Target>
 
 </Project>

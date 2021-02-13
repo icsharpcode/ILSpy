@@ -5,6 +5,7 @@
 	</startup>
 	<runtime>
 		<AppContextSwitchOverrides value="Switch.System.Windows.DoNotScaleForDpiChanges=false;Switch.System.IO.UseLegacyPathHandling=false;Switch.System.IO.BlockLongPaths=false" />
+		<gcServer enabled="true" />
 		<assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
 			<!-- The redirects allow using AddIns with a different ILSpy version than they were compiled against. -->
 			<!-- No guarantee they'll work correctly, though (there might be breaking API changes in ILSpy). -->
