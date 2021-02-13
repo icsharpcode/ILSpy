@@ -488,9 +488,14 @@ namespace ICSharpCode.ILSpy
 			return resolver;
 		}
 
+		private MyUniversalResolver GetUniversalResolver()
+		{
+			return LazyInitializer.EnsureInitialized(ref this.universalResolver, () => new MyUniversalResolver(this));
+		}
+
 		public AssemblyReferenceClassifier GetAssemblyReferenceClassifier()
 		{
-			return universalResolver;
+			return GetUniversalResolver();
 		}
 
 		/// <summary>
@@ -582,12 +587,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 
-				if (universalResolver == null)
-				{
-					universalResolver = new MyUniversalResolver(this);
-				}
-
-				file = universalResolver.FindAssemblyFile(fullName);
+				file = GetUniversalResolver().FindAssemblyFile(fullName);
 
 				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies())
 				{
