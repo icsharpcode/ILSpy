@@ -102,7 +102,6 @@
     <Compile Include="CSharp\Syntax\ComposedType.cs" />
     <Compile Include="CSharp\Syntax\CSharpModifierToken.cs" />
     <Compile Include="CSharp\Syntax\CSharpTokenNode.cs" />
-    <Compile Include="CSharp\Syntax\CSharpUtil.cs" />
     <Compile Include="CSharp\Syntax\DepthFirstAstVisitor.cs" />
     <Compile Include="CSharp\Syntax\DocumentationReference.cs" />
     <Compile Include="CSharp\Syntax\Expressions\AnonymousMethodExpression.cs" />

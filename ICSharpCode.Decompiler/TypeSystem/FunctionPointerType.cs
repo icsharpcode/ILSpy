@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new FunctionPointerType(
 					module, CallingConvention, CustomCallingConventions,
 					r, ReturnIsRefReadOnly,
-					pt != null ? pt.ToImmutableArray() : ParameterTypes,
+					pt.ToImmutableArray(),
 					ParameterReferenceKinds);
 		}
 

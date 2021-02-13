@@ -266,17 +266,17 @@ namespace ICSharpCode.Decompiler.Util
 			if (End == long.MinValue)
 			{
 				if (Start == long.MinValue)
-					return string.Format("[long.MinValue..long.MaxValue]", End);
+					return "[long.MinValue..long.MaxValue]";
 				else
-					return string.Format("[{0}..long.MaxValue]", Start);
+					return $"[{Start}..long.MaxValue]";
 			}
 			else if (Start == long.MinValue)
 			{
-				return string.Format("[long.MinValue..{0})", End);
+				return $"[long.MinValue..{End})";
 			}
 			else
 			{
-				return string.Format("[{0}..{1})", Start, End);
+				return $"[{Start}..{End})";
 			}
 		}
 

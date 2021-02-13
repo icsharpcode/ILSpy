@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -351,7 +350,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (ta == null)
 				return this;
 			else
-				return new ParameterizedType(g, ta ?? typeArguments);
+				return new ParameterizedType(g, ta);
 		}
 	}
 
