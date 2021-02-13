@@ -172,22 +172,19 @@ namespace ICSharpCode.ILSpy
 			}
 
 			// don't automatically load additional assemblies when an assembly node is selected in the tree view
-			using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad(assembly.AssemblyList))
+			dis.AssemblyResolver = module.GetAssemblyResolver(loadOnDemand: options.FullDecompilation);
+			dis.DebugInfo = module.GetDebugInfoOrNull();
+			if (options.FullDecompilation)
+				dis.WriteAssemblyReferences(metadata);
+			if (metadata.IsAssembly)
+				dis.WriteAssemblyHeader(module);
+			output.WriteLine();
+			dis.WriteModuleHeader(module);
+			if (options.FullDecompilation)
 			{
-				dis.AssemblyResolver = module.GetAssemblyResolver();
-				dis.DebugInfo = module.GetDebugInfoOrNull();
-				if (options.FullDecompilation)
-					dis.WriteAssemblyReferences(metadata);
-				if (metadata.IsAssembly)
-					dis.WriteAssemblyHeader(module);
 				output.WriteLine();
-				dis.WriteModuleHeader(module);
-				if (options.FullDecompilation)
-				{
-					output.WriteLine();
-					output.WriteLine();
-					dis.WriteModuleContents(module);
-				}
+				output.WriteLine();
+				dis.WriteModuleContents(module);
 			}
 			return null;
 		}

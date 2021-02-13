@@ -147,16 +147,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 						continue;
 					if (checkedFiles.Contains(module))
 						continue;
-					var resolver = assembly.GetAssemblyResolver();
+					var resolver = assembly.GetAssemblyResolver(loadOnDemand: false);
 					foreach (var reference in module.AssemblyReferences)
 					{
-						using (LoadedAssembly.DisableAssemblyLoad(AssemblyList))
+						if (resolver.Resolve(reference) == curFile)
 						{
-							if (resolver.Resolve(reference) == curFile)
-							{
-								found = true;
-								break;
-							}
+							found = true;
+							break;
 						}
 					}
 					if (found && checkedFiles.Add(module))

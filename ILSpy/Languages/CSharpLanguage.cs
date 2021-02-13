@@ -404,86 +404,83 @@ namespace ICSharpCode.ILSpy
 				base.DecompileAssembly(assembly, output, options);
 
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
-				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad(assembly.AssemblyList))
+				IAssemblyResolver assemblyResolver = assembly.GetAssemblyResolver(loadOnDemand: options.FullDecompilation);
+				var typeSystem = new DecompilerTypeSystem(module, assemblyResolver, options.DecompilerSettings);
+				var globalType = typeSystem.MainModule.TypeDefinitions.FirstOrDefault();
+				if (globalType != null)
 				{
-					IAssemblyResolver assemblyResolver = assembly.GetAssemblyResolver();
-					var typeSystem = new DecompilerTypeSystem(module, assemblyResolver, options.DecompilerSettings);
-					var globalType = typeSystem.MainModule.TypeDefinitions.FirstOrDefault();
-					if (globalType != null)
+					output.Write("// Global type: ");
+					output.WriteReference(globalType, globalType.FullName);
+					output.WriteLine();
+				}
+				var metadata = module.Metadata;
+				var corHeader = module.Reader.PEHeaders.CorHeader;
+				var entrypointHandle = MetadataTokenHelpers.EntityHandleOrNil(corHeader.EntryPointTokenOrRelativeVirtualAddress);
+				if (!entrypointHandle.IsNil && entrypointHandle.Kind == HandleKind.MethodDefinition)
+				{
+					var entrypoint = typeSystem.MainModule.ResolveMethod(entrypointHandle, new Decompiler.TypeSystem.GenericContext());
+					if (entrypoint != null)
 					{
-						output.Write("// Global type: ");
-						output.WriteReference(globalType, globalType.FullName);
+						output.Write("// Entry point: ");
+						output.WriteReference(entrypoint, entrypoint.DeclaringType.FullName + "." + entrypoint.Name);
 						output.WriteLine();
 					}
-					var metadata = module.Metadata;
-					var corHeader = module.Reader.PEHeaders.CorHeader;
-					var entrypointHandle = MetadataTokenHelpers.EntityHandleOrNil(corHeader.EntryPointTokenOrRelativeVirtualAddress);
-					if (!entrypointHandle.IsNil && entrypointHandle.Kind == HandleKind.MethodDefinition)
-					{
-						var entrypoint = typeSystem.MainModule.ResolveMethod(entrypointHandle, new Decompiler.TypeSystem.GenericContext());
-						if (entrypoint != null)
-						{
-							output.Write("// Entry point: ");
-							output.WriteReference(entrypoint, entrypoint.DeclaringType.FullName + "." + entrypoint.Name);
-							output.WriteLine();
-						}
-					}
-					output.WriteLine("// Architecture: " + GetPlatformDisplayName(module));
-					if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.ILOnly) == 0)
-					{
-						output.WriteLine("// This assembly contains unmanaged code.");
-					}
-					string runtimeName = GetRuntimeDisplayName(module);
-					if (runtimeName != null)
-					{
-						output.WriteLine("// Runtime: " + runtimeName);
-					}
-					if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.StrongNameSigned) != 0)
-					{
-						output.WriteLine("// This assembly is signed with a strong name key.");
-					}
-					if (module.Reader.ReadDebugDirectory().Any(d => d.Type == DebugDirectoryEntryType.Reproducible))
-					{
-						output.WriteLine("// This assembly was compiled using the /deterministic option.");
-					}
-					if (metadata.IsAssembly)
-					{
-						var asm = metadata.GetAssemblyDefinition();
-						if (asm.HashAlgorithm != AssemblyHashAlgorithm.None)
-							output.WriteLine("// Hash algorithm: " + asm.HashAlgorithm.ToString().ToUpper());
-						if (!asm.PublicKey.IsNil)
-						{
-							output.Write("// Public key: ");
-							var reader = metadata.GetBlobReader(asm.PublicKey);
-							while (reader.RemainingBytes > 0)
-								output.Write(reader.ReadByte().ToString("x2"));
-							output.WriteLine();
-						}
-					}
-					var debugInfo = assembly.GetDebugInfoOrNull();
-					if (debugInfo != null)
-					{
-						output.WriteLine("// Debug info: " + debugInfo.Description);
-					}
-					output.WriteLine();
-
-					CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings);
-					decompiler.CancellationToken = options.CancellationToken;
-					if (options.EscapeInvalidIdentifiers)
-					{
-						decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
-					}
-					SyntaxTree st;
-					if (options.FullDecompilation)
-					{
-						st = decompiler.DecompileWholeModuleAsSingleFile();
-					}
-					else
-					{
-						st = decompiler.DecompileModuleAndAssemblyAttributes();
-					}
-					WriteCode(output, options.DecompilerSettings, st, decompiler.TypeSystem);
 				}
+				output.WriteLine("// Architecture: " + GetPlatformDisplayName(module));
+				if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.ILOnly) == 0)
+				{
+					output.WriteLine("// This assembly contains unmanaged code.");
+				}
+				string runtimeName = GetRuntimeDisplayName(module);
+				if (runtimeName != null)
+				{
+					output.WriteLine("// Runtime: " + runtimeName);
+				}
+				if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.StrongNameSigned) != 0)
+				{
+					output.WriteLine("// This assembly is signed with a strong name key.");
+				}
+				if (module.Reader.ReadDebugDirectory().Any(d => d.Type == DebugDirectoryEntryType.Reproducible))
+				{
+					output.WriteLine("// This assembly was compiled using the /deterministic option.");
+				}
+				if (metadata.IsAssembly)
+				{
+					var asm = metadata.GetAssemblyDefinition();
+					if (asm.HashAlgorithm != AssemblyHashAlgorithm.None)
+						output.WriteLine("// Hash algorithm: " + asm.HashAlgorithm.ToString().ToUpper());
+					if (!asm.PublicKey.IsNil)
+					{
+						output.Write("// Public key: ");
+						var reader = metadata.GetBlobReader(asm.PublicKey);
+						while (reader.RemainingBytes > 0)
+							output.Write(reader.ReadByte().ToString("x2"));
+						output.WriteLine();
+					}
+				}
+				var debugInfo = assembly.GetDebugInfoOrNull();
+				if (debugInfo != null)
+				{
+					output.WriteLine("// Debug info: " + debugInfo.Description);
+				}
+				output.WriteLine();
+
+				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings);
+				decompiler.CancellationToken = options.CancellationToken;
+				if (options.EscapeInvalidIdentifiers)
+				{
+					decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+				}
+				SyntaxTree st;
+				if (options.FullDecompilation)
+				{
+					st = decompiler.DecompileWholeModuleAsSingleFile();
+				}
+				else
+				{
+					st = decompiler.DecompileModuleAndAssemblyAttributes();
+				}
+				WriteCode(output, options.DecompilerSettings, st, decompiler.TypeSystem);
 				return null;
 			}
 		}
