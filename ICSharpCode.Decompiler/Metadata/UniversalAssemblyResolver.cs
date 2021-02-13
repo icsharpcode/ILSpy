@@ -24,6 +24,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
@@ -202,6 +203,16 @@ namespace ICSharpCode.Decompiler.Metadata
 				return null;
 			}
 			return new PEFile(moduleFileName, new FileStream(moduleFileName, FileMode.Open, FileAccess.Read), streamOptions, metadataOptions);
+		}
+
+		public Task<PEFile> ResolveAsync(IAssemblyReference name)
+		{
+			return Task.Run(() => Resolve(name));
+		}
+
+		public Task<PEFile> ResolveModuleAsync(PEFile mainModule, string moduleName)
+		{
+			return Task.Run(() => ResolveModule(mainModule, moduleName));
 		}
 #endif
 

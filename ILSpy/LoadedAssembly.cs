@@ -158,6 +158,24 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
+		/// <summary>
+		/// Gets the <see cref="PEFile"/>.
+		/// Returns null in case of load errors.
+		/// </summary>
+		public async Task<PEFile> GetPEFileOrNullAsync()
+		{
+			try
+			{
+				var loadResult = await loadingTask.ConfigureAwait(false);
+				return loadResult.PEFile;
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Trace.TraceError(ex.ToString());
+				return null;
+			}
+		}
+
 		ICompilation typeSystem;
 
 		/// <summary>
@@ -428,6 +446,38 @@ namespace ICSharpCode.ILSpy
 				if (module != null)
 					return module;
 				return parent.LookupReferencedModule(mainModule, moduleName)?.GetPEFileOrNull();
+			}
+
+			public async Task<PEFile> ResolveAsync(IAssemblyReference reference)
+			{
+				if (parent.providedAssemblyResolver != null)
+				{
+					var module = await parent.providedAssemblyResolver.ResolveAsync(reference).ConfigureAwait(false);
+					if (module != null)
+						return module;
+				}
+				var asm = parent.LookupReferencedAssembly(reference);
+				if (asm != null)
+				{
+					return await asm.GetPEFileOrNullAsync().ConfigureAwait(false);
+				}
+				return null;
+			}
+
+			public async Task<PEFile> ResolveModuleAsync(PEFile mainModule, string moduleName)
+			{
+				if (parent.providedAssemblyResolver != null)
+				{
+					var module = await parent.providedAssemblyResolver.ResolveModuleAsync(mainModule, moduleName).ConfigureAwait(false);
+					if (module != null)
+						return module;
+				}
+				var asm = parent.LookupReferencedModule(mainModule, moduleName);
+				if (asm != null)
+				{
+					return await asm.GetPEFileOrNullAsync().ConfigureAwait(false);
+				}
+				return null;
 			}
 		}
 
