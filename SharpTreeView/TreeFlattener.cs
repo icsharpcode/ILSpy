@@ -47,8 +47,7 @@ namespace ICSharpCode.TreeView
 
 		public void RaiseCollectionChanged(NotifyCollectionChangedEventArgs e)
 		{
-			if (CollectionChanged != null)
-				CollectionChanged(this, e);
+			CollectionChanged?.Invoke(this, e);
 		}
 
 		public void NodesInserted(int index, IEnumerable<SharpTreeNode> nodes)

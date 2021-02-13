@@ -17,12 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -134,7 +132,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.MethodSpecification:
 							case HandleKind.MemberReference:
 								var m = (mainModule.ResolveEntity(member, genericContext) as IMember)?.MemberDefinition;
-								if (m.MetadataToken == analyzedMethod.MetadataToken && m.ParentModule.PEFile == analyzedMethod.ParentModule.PEFile)
+								if (m != null && m.MetadataToken == analyzedMethod.MetadataToken && m.ParentModule.PEFile == analyzedMethod.ParentModule.PEFile)
 								{
 									return true;
 								}

@@ -174,7 +174,7 @@ namespace ILSpy.BamlDecompiler.Xaml
 						var size = ReadPoint(reader);
 						double angle = reader.ReadXamlDouble();
 
-						sb.AppendFormat(CultureInfo.InvariantCulture, "A{0} {2:R} {2} {3} {4}",
+						sb.AppendFormat(CultureInfo.InvariantCulture, "A{0} {1:R} {2} {3} {4}",
 							size, angle, largeArc ? '1' : '0', sweepDirection ? '1' : '0', pt1);
 						break;
 					}

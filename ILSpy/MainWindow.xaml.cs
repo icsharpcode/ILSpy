@@ -783,8 +783,7 @@ namespace ICSharpCode.ILSpy
 					nd => nd.AncestorsAndSelf().OfType<AssemblyTreeNode>().Any(
 						a => oldAssemblies.Contains(a.LoadedAssembly))));
 			}
-			if (CurrentAssemblyListChanged != null)
-				CurrentAssemblyListChanged(this, e);
+			CurrentAssemblyListChanged?.Invoke(this, e);
 		}
 
 		void LoadInitialAssemblies()

@@ -57,8 +57,8 @@ namespace ILSpy.BamlDecompiler
 						AvalonEditTextOutput output = new AvalonEditTextOutput();
 						try
 						{
-							if (LoadBaml(output, token))
-								highlighting = HighlightingManager.Instance.GetDefinitionByExtension(".xml");
+							LoadBaml(output, token);
+							highlighting = HighlightingManager.Instance.GetDefinitionByExtension(".xml");
 						}
 						catch (Exception ex)
 						{
@@ -71,13 +71,12 @@ namespace ILSpy.BamlDecompiler
 			return true;
 		}
 
-		bool LoadBaml(AvalonEditTextOutput output, CancellationToken cancellationToken)
+		void LoadBaml(AvalonEditTextOutput output, CancellationToken cancellationToken)
 		{
-			var asm = this.Ancestors().OfType<AssemblyTreeNode>().FirstOrDefault().LoadedAssembly;
+			var asm = this.Ancestors().OfType<AssemblyTreeNode>().First().LoadedAssembly;
 			using var data = OpenStream();
 			XDocument xamlDocument = LoadIntoDocument(asm.GetPEFileOrNull(), asm.GetAssemblyResolver(), data, cancellationToken);
 			output.Write(xamlDocument.ToString());
-			return true;
 		}
 
 		internal static XDocument LoadIntoDocument(PEFile module, IAssemblyResolver assemblyResolver,

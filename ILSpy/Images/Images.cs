@@ -251,7 +251,7 @@ namespace ICSharpCode.ILSpy
 						baseImage = Images.Literal;
 						break;
 					case MemberIcon.EnumValue:
-						baseImage = Images.Literal;
+						baseImage = Images.EnumValue;
 						break;
 					case MemberIcon.Property:
 						baseImage = Images.Property;

@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Microsoft.VisualStudio.Shell;
 
@@ -93,10 +90,15 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			foreach (var projectReference in parentProject.ProjectReferences)
 			{
 				var roslynProject = owner.Workspace.CurrentSolution.GetProject(projectReference.ProjectId);
-				var project = FindProject(owner.DTE.Solution.Projects.OfType<EnvDTE.Project>(), roslynProject.FilePath);
-				if (roslynProject != null && project != null)
-					dict.Add(roslynProject.AssemblyName,
-						new DetectedReference(roslynProject.AssemblyName, Utils.GetProjectOutputAssembly(project, roslynProject), true));
+				if (roslynProject != null)
+				{
+					var project = FindProject(owner.DTE.Solution.Projects.OfType<EnvDTE.Project>(), roslynProject.FilePath);
+					if (project != null)
+					{
+						dict.Add(roslynProject.AssemblyName,
+							new DetectedReference(roslynProject.AssemblyName, Utils.GetProjectOutputAssembly(project, roslynProject), true));
+					}
+				}
 			}
 			return dict;
 		}

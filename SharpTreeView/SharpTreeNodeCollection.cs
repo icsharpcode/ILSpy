@@ -47,8 +47,7 @@ namespace ICSharpCode.TreeView
 			try
 			{
 				parent.OnChildrenChanged(e);
-				if (CollectionChanged != null)
-					CollectionChanged(this, e);
+				CollectionChanged?.Invoke(this, e);
 			}
 			finally
 			{

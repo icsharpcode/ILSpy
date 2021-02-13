@@ -116,8 +116,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 		internal void Redraw(ISegment segment)
 		{
 			textView.Redraw(segment, DispatcherPriority.Normal);
-			if (RedrawRequested != null)
-				RedrawRequested(this, EventArgs.Empty);
+			RedrawRequested?.Invoke(this, EventArgs.Empty);
 		}
 
 		public event EventHandler RedrawRequested;
@@ -280,8 +279,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 
 		internal void OnDeleted()
 		{
-			if (Deleted != null)
-				Deleted(this, EventArgs.Empty);
+			Deleted?.Invoke(this, EventArgs.Empty);
 		}
 
 		void Redraw()

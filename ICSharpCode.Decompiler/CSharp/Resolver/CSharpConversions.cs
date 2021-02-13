@@ -826,7 +826,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					case TypeCode.UInt16:
 						return val >= UInt16.MinValue && val <= UInt16.MaxValue;
 					case TypeCode.UInt32:
-						return val >= 0;
 					case TypeCode.UInt64:
 						return val >= 0;
 				}

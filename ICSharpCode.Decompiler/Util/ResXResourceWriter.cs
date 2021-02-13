@@ -60,7 +60,6 @@ namespace ICSharpCode.Decompiler.Util
 		public static readonly string ByteArraySerializedObjectMimeType = "application/x-microsoft.net.object.bytearray.base64";
 		public static readonly string DefaultSerializedObjectMimeType = BinSerializedObjectMimeType;
 		public static readonly string ResMimeType = "text/microsoft-resx";
-		public static readonly string ResourceSchema = schema;
 		public static readonly string SoapSerializedObjectMimeType = "application/x-microsoft.net.object.soap.base64";
 		public static readonly string Version = "2.0";
 		#endregion  // Static Fields

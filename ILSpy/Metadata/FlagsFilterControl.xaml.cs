@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -43,7 +41,10 @@ namespace ICSharpCode.ILSpy.Metadata
 			base.OnApplyTemplate();
 
 			listBox = Template.FindName("ListBox", this) as ListBox;
-			listBox.ItemsSource = FlagGroup.GetFlags(FlagsType, neutralItem: "<All>");
+			if (listBox != null)
+			{
+				listBox.ItemsSource = FlagGroup.GetFlags(FlagsType, neutralItem: "<All>");
+			}
 
 			var filter = Filter;
 
