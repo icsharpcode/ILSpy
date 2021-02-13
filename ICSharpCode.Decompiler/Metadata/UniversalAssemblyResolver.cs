@@ -67,7 +67,6 @@ namespace ICSharpCode.Decompiler.Metadata
 		readonly string baseDirectory;
 		readonly List<string> directories = new List<string>();
 		static readonly List<string> gac_paths = GetGacPaths();
-		HashSet<string> targetFrameworkSearchPaths;
 		static readonly DecompilerRuntime decompilerRuntime;
 
 		public void AddSearchDirectory(string directory)
@@ -87,9 +86,9 @@ namespace ICSharpCode.Decompiler.Metadata
 			return directories.ToArray();
 		}
 
-		string targetFramework;
-		TargetFrameworkIdentifier targetFrameworkIdentifier;
-		Version targetFrameworkVersion;
+		readonly string targetFramework;
+		readonly TargetFrameworkIdentifier targetFrameworkIdentifier;
+		readonly Version targetFrameworkVersion;
 
 		/// <summary>
 		/// Creates a new instance of the <see cref="UniversalAssemblyResolver"/>.
@@ -301,26 +300,20 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		void AddTargetFrameworkSearchPathIfExists(string path)
-		{
-			if (targetFrameworkSearchPaths == null)
-			{
-				targetFrameworkSearchPaths = new HashSet<string>();
-			}
-			if (Directory.Exists(path))
-				targetFrameworkSearchPaths.Add(path);
-		}
-
 		/// <summary>
 		/// This only works on Windows
 		/// </summary>
 		string ResolveSilverlight(IAssemblyReference name, Version version)
 		{
-			AddTargetFrameworkSearchPathIfExists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft Silverlight"));
-			AddTargetFrameworkSearchPathIfExists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft Silverlight"));
+			string[] targetFrameworkSearchPaths = {
+				Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft Silverlight"),
+				Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft Silverlight")
+			};
 
 			foreach (var baseDirectory in targetFrameworkSearchPaths)
 			{
+				if (!Directory.Exists(baseDirectory))
+					continue;
 				var versionDirectory = Path.Combine(baseDirectory, FindClosestVersionDirectory(baseDirectory, version));
 				var file = SearchDirectory(name, versionDirectory);
 				if (file != null)
