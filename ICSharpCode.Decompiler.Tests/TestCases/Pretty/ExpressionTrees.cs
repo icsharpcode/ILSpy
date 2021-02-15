@@ -894,6 +894,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Test<Func<string, string, string>>((string a, string b) => a ?? b, (string a, string b) => a ?? b);
 			Test<Func<int?, int>>((int? a) => a ?? 1, (int? a) => a ?? 1);
 		}
+
+		public void NullableLifting(Guid? a, Guid? b)
+		{
+			ToCode(null, () => a == b);
+			ToCode(null, () => (Guid)a == (Guid)b);
+		}
 	}
 
 	internal static class Extensions
