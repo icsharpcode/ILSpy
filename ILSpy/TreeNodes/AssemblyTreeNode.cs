@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -460,10 +461,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return true;
 		}
 
-		public void Execute(TextViewContext context)
+		public async void Execute(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes == null)
 				return;
+			var tasks = new List<Task>();
 			foreach (var node in context.SelectedTreeNodes)
 			{
 				var la = ((AssemblyTreeNode)node).LoadedAssembly;
@@ -474,10 +476,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					var metadata = module.Metadata;
 					foreach (var assyRef in metadata.AssemblyReferences)
 					{
-						resolver.Resolve(new AssemblyReference(module, assyRef));
+						tasks.Add(resolver.ResolveAsync(new AssemblyReference(module, assyRef)));
 					}
 				}
 			}
+			await Task.WhenAll(tasks);
 			MainWindow.Instance.RefreshDecompiledView();
 		}
 	}

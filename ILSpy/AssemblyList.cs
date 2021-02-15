@@ -329,7 +329,7 @@ namespace ICSharpCode.ILSpy
 				return null;
 			var newAsm = new LoadedAssembly(this, target.FileName, pdbFileName: target.PdbFileName);
 			newAsm.IsAutoLoaded = target.IsAutoLoaded;
-			lock (assemblies)
+			lock (lockObj)
 			{
 				this.assemblies.Remove(target);
 				this.assemblies.Insert(index, newAsm);
@@ -340,7 +340,7 @@ namespace ICSharpCode.ILSpy
 		public void Unload(LoadedAssembly assembly)
 		{
 			App.Current.Dispatcher.VerifyAccess();
-			lock (assemblies)
+			lock (lockObj)
 			{
 				assemblies.Remove(assembly);
 				byFilename.Remove(assembly.FileName);
@@ -350,7 +350,7 @@ namespace ICSharpCode.ILSpy
 
 		static bool gcRequested;
 
-		void RequestGC()
+		static void RequestGC()
 		{
 			if (gcRequested)
 				return;
@@ -370,7 +370,7 @@ namespace ICSharpCode.ILSpy
 		public void Sort(int index, int count, IComparer<LoadedAssembly> comparer)
 		{
 			App.Current.Dispatcher.VerifyAccess();
-			lock (assemblies)
+			lock (lockObj)
 			{
 				List<LoadedAssembly> list = new List<LoadedAssembly>(assemblies);
 				list.Sort(index, Math.Min(count, list.Count - index), comparer);
