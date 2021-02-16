@@ -62,14 +62,14 @@ namespace ICSharpCode.ILSpy
 		public sealed class LoadResult
 		{
 			public PEFile PEFile { get; }
-			public PEFileNotSupportedException PEFileLoadException { get; }
+			public Exception PEFileLoadException { get; }
 			public LoadedPackage Package { get; }
 
 			public LoadResult(PEFile peFile)
 			{
 				this.PEFile = peFile ?? throw new ArgumentNullException(nameof(peFile));
 			}
-			public LoadResult(PEFileNotSupportedException peFileLoadException, LoadedPackage package)
+			public LoadResult(Exception peFileLoadException, LoadedPackage package)
 			{
 				this.PEFileLoadException = peFileLoadException ?? throw new ArgumentNullException(nameof(peFileLoadException));
 				this.Package = package ?? throw new ArgumentNullException(nameof(package));
@@ -299,7 +299,7 @@ namespace ICSharpCode.ILSpy
 				return LoadAssembly(stream, streamOptions);
 			}
 			// Read the module from disk
-			PEFileNotSupportedException loadAssemblyException;
+			Exception loadAssemblyException;
 			try
 			{
 				using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
@@ -308,6 +308,10 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 			catch (PEFileNotSupportedException ex)
+			{
+				loadAssemblyException = ex;
+			}
+			catch (BadImageFormatException ex)
 			{
 				loadAssemblyException = ex;
 			}
