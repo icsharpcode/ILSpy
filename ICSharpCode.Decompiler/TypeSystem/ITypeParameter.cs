@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 
@@ -43,7 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// inner.TypeParameters[0].Owner will be the outer class, because the same
 		/// ITypeParameter instance is used both on Outer`1 and Outer`1+Inner.
 		/// </remarks>
-		IEntity Owner { get; }
+		IEntity? Owner { get; }
 
 		/// <summary>
 		/// Gets the index of the type parameter in the type parameter list of the owning method/class.
@@ -112,7 +114,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public IType Type { get; }
 		public IReadOnlyList<IAttribute> Attributes { get; }
 
-		public TypeConstraint(IType type, IReadOnlyList<IAttribute> attributes = null)
+		public TypeConstraint(IType type, IReadOnlyList<IAttribute>? attributes = null)
 		{
 			this.Type = type ?? throw new ArgumentNullException(nameof(type));
 			this.Attributes = attributes ?? EmptyList<IAttribute>.Instance;

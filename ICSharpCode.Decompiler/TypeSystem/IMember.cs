@@ -16,7 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
+#nullable enable
+
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -40,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <returns>
 		/// Returns the resolved member, or <c>null</c> if the member could not be found.
 		/// </returns>
-		IMember Resolve(ITypeResolveContext context);
+		IMember? Resolve(ITypeResolveContext context);
 	}
 
 	/// <summary>
@@ -119,6 +120,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets whether the members are considered equal when applying the specified type normalization.
 		/// </summary>
-		bool Equals(IMember obj, TypeVisitor typeNormalization);
+		bool Equals(IMember? obj, TypeVisitor typeNormalization);
 	}
 }

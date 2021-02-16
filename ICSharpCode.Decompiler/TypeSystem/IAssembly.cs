@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.Metadata;
@@ -40,7 +42,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Resolves this metadata module.
 		/// </summary>
-		IModule Resolve(ITypeResolveContext context);
+		IModule? Resolve(ITypeResolveContext context);
 	}
 
 	/// <summary>
@@ -51,7 +53,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the underlying metadata file. May return null, if the IAssembly was not created from a PE file.
 		/// </summary>
-		PEFile PEFile { get; }
+		PEFile? PEFile { get; }
 
 		/// <summary>
 		/// Gets whether this assembly is the main assembly of the compilation.
@@ -97,7 +99,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the type definition for a top-level type.
 		/// </summary>
 		/// <remarks>This method uses ordinal name comparison, not the compilation's name comparer.</remarks>
-		ITypeDefinition GetTypeDefinition(TopLevelTypeName topLevelTypeName);
+		ITypeDefinition? GetTypeDefinition(TopLevelTypeName topLevelTypeName);
 
 		/// <summary>
 		/// Gets all non-nested types in the assembly.

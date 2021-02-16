@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
@@ -53,19 +55,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the current module.
 		/// This property may return null if this context does not specify any module.
 		/// </summary>
-		IModule CurrentModule { get; }
+		IModule? CurrentModule { get; }
 
 		/// <summary>
 		/// Gets the current type definition.
 		/// </summary>
-		ITypeDefinition CurrentTypeDefinition { get; }
+		ITypeDefinition? CurrentTypeDefinition { get; }
 
 		/// <summary>
 		/// Gets the current member.
 		/// </summary>
-		IMember CurrentMember { get; }
+		IMember? CurrentMember { get; }
 
-		ITypeResolveContext WithCurrentTypeDefinition(ITypeDefinition typeDefinition);
-		ITypeResolveContext WithCurrentMember(IMember member);
+		ITypeResolveContext WithCurrentTypeDefinition(ITypeDefinition? typeDefinition);
+		ITypeResolveContext WithCurrentMember(IMember? member);
 	}
 }

@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -49,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the parent namespace.
 		/// Returns null if this is the root namespace.
 		/// </summary>
-		INamespace ParentNamespace { get; }
+		INamespace? ParentNamespace { get; }
 
 		/// <summary>
 		/// Gets the child namespaces in this namespace.
@@ -73,7 +75,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <remarks>
 		/// This method uses the compilation's current string comparer.
 		/// </remarks>
-		INamespace GetChildNamespace(string name);
+		INamespace? GetChildNamespace(string name);
 
 		/// <summary>
 		/// Gets the type with the specified short name and type parameter count.
@@ -82,6 +84,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <remarks>
 		/// This method uses the compilation's current string comparer.
 		/// </remarks>
-		ITypeDefinition GetTypeDefinition(string name, int typeParameterCount);
+		ITypeDefinition? GetTypeDefinition(string name, int typeParameterCount);
 	}
 }

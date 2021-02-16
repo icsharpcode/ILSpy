@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -34,4 +36,3 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool IsWithinLambdaExpression { get; }
 	}
 }
-

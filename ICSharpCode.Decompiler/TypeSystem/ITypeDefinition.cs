@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -60,7 +62,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets/Sets the declaring type (incl. type arguments, if any).
 		/// This property will return null for top-level types.
 		/// </summary>
-		new IType DeclaringType { get; } // solves ambiguity between IType.DeclaringType and IEntity.DeclaringType
+		new IType? DeclaringType { get; } // solves ambiguity between IType.DeclaringType and IEntity.DeclaringType
 
 		/// <summary>
 		/// Gets whether this type contains extension methods.

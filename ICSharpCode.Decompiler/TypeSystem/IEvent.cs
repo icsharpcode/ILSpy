@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	public interface IEvent : IMember
@@ -24,8 +26,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool CanRemove { get; }
 		bool CanInvoke { get; }
 
-		IMethod AddAccessor { get; }
-		IMethod RemoveAccessor { get; }
-		IMethod InvokeAccessor { get; }
+		IMethod? AddAccessor { get; }
+		IMethod? RemoveAccessor { get; }
+		IMethod? InvokeAccessor { get; }
 	}
 }

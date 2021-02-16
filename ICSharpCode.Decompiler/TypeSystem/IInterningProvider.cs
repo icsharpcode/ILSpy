@@ -16,7 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -47,52 +50,57 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// 
 		/// If the object is freezable, it will be frozen.
 		/// </summary>
-		public abstract ISupportsInterning Intern(ISupportsInterning obj);
+		[return: NotNullIfNotNull("obj")]
+		public abstract ISupportsInterning? Intern(ISupportsInterning? obj);
 
 		/// <summary>
 		/// Interns the specified object.
 		/// 
 		/// If the object is freezable, it will be frozen.
 		/// </summary>
-		public T Intern<T>(T obj) where T : class, ISupportsInterning
+		[return: NotNullIfNotNull("obj")]
+		public T? Intern<T>(T? obj) where T : class, ISupportsInterning
 		{
-			ISupportsInterning input = obj;
-			return (T)Intern(input);
+			ISupportsInterning? input = obj;
+			return (T?)Intern(input);
 		}
 
 		/// <summary>
 		/// Interns the specified string.
 		/// </summary>
-		public abstract string Intern(string text);
+		[return: NotNullIfNotNull("text")]
+		public abstract string? Intern(string? text);
 
 		/// <summary>
 		/// Inters a boxed value type.
 		/// </summary>
-		public abstract object InternValue(object obj);
+		[return: NotNullIfNotNull("obj")]
+		public abstract object? InternValue(object? obj);
 
 		/// <summary>
 		/// Interns the given list. Uses reference equality to compare the list elements.
 		/// </summary>
-		public abstract IList<T> InternList<T>(IList<T> list) where T : class;
+		[return: NotNullIfNotNull("list")]
+		public abstract IList<T>? InternList<T>(IList<T>? list) where T : class;
 
 		sealed class DummyInterningProvider : InterningProvider
 		{
-			public override ISupportsInterning Intern(ISupportsInterning obj)
+			public override ISupportsInterning? Intern(ISupportsInterning? obj)
 			{
 				return obj;
 			}
 
-			public override string Intern(string text)
+			public override string? Intern(string? text)
 			{
 				return text;
 			}
 
-			public override object InternValue(object obj)
+			public override object? InternValue(object? obj)
 			{
 				return obj;
 			}
 
-			public override IList<T> InternList<T>(IList<T> list)
+			public override IList<T>? InternList<T>(IList<T>? list)
 			{
 				return list;
 			}

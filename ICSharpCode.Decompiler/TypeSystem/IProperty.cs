@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
@@ -26,8 +28,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool CanGet { get; }
 		bool CanSet { get; }
 
-		IMethod Getter { get; }
-		IMethod Setter { get; }
+		IMethod? Getter { get; }
+		IMethod? Setter { get; }
 
 		bool IsIndexer { get; }
 

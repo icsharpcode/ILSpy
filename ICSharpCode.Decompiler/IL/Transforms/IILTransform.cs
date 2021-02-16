@@ -16,16 +16,15 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -44,16 +43,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public ILFunction Function { get; }
 		public IDecompilerTypeSystem TypeSystem { get; }
-		public IDebugInfoProvider DebugInfo { get; }
+		public IDebugInfoProvider? DebugInfo { get; }
 		public DecompilerSettings Settings { get; }
 		public CancellationToken CancellationToken { get; set; }
 		public Stepper Stepper { get; set; }
 		public Metadata.PEFile PEFile => TypeSystem.MainModule.PEFile;
 
-		internal DecompileRun DecompileRun { get; set; }
-		internal ResolvedUsingScope UsingScope => DecompileRun?.UsingScope.Resolve(TypeSystem);
+		internal DecompileRun? DecompileRun { get; set; }
+		internal ResolvedUsingScope? UsingScope => DecompileRun?.UsingScope.Resolve(TypeSystem);
 
-		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, IDebugInfoProvider debugInfo, DecompilerSettings settings = null)
+		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, IDebugInfoProvider? debugInfo, DecompilerSettings? settings = null)
 		{
 			this.Function = function ?? throw new ArgumentNullException(nameof(function));
 			this.TypeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
@@ -62,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Stepper = new Stepper();
 		}
 
-		public ILTransformContext(ILTransformContext context, ILFunction function = null)
+		public ILTransformContext(ILTransformContext context, ILFunction? function = null)
 		{
 			this.Function = function ?? context.Function;
 			this.TypeSystem = context.TypeSystem;
@@ -89,13 +88,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Unlike <c>context.Stepper.Step()</c>, calls to this method are only compiled in debug builds.
 		/// </summary>
 		[Conditional("STEP")]
-		internal void Step(string description, ILInstruction near)
+		internal void Step(string description, ILInstruction? near)
 		{
 			Stepper.Step(description, near);
 		}
 
 		[Conditional("STEP")]
-		internal void StepStartGroup(string description, ILInstruction near = null)
+		internal void StepStartGroup(string description, ILInstruction? near = null)
 		{
 			Stepper.StartGroup(description, near);
 		}

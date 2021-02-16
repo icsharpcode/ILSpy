@@ -15,6 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+#nullable enable
 
 using System;
 using System.Collections.Generic;
@@ -162,7 +163,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		internal const int KnownTypeCodeCount = (int)KnownTypeCode.Range + 1;
 
-		static readonly KnownTypeReference[] knownTypeReferences = new KnownTypeReference[KnownTypeCodeCount] {
+		static readonly KnownTypeReference?[] knownTypeReferences = new KnownTypeReference?[KnownTypeCodeCount] {
 			null, // None
 			new KnownTypeReference(KnownTypeCode.Object,   TypeKind.Class, "System", "Object", baseType: KnownTypeCode.None),
 			new KnownTypeReference(KnownTypeCode.DBNull,   TypeKind.Class, "System", "DBNull"),
@@ -231,7 +232,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the known type reference for the specified type code.
 		/// Returns null for KnownTypeCode.None.
 		/// </summary>
-		public static KnownTypeReference Get(KnownTypeCode typeCode)
+		public static KnownTypeReference? Get(KnownTypeCode typeCode)
 		{
 			return knownTypeReferences[(int)typeCode];
 		}
@@ -299,7 +300,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the C# primitive type name from the known type code.
 		/// Returns null if there is no primitive name for the specified type.
 		/// </summary>
-		public static string GetCSharpNameByTypeCode(KnownTypeCode knownTypeCode)
+		public static string? GetCSharpNameByTypeCode(KnownTypeCode knownTypeCode)
 		{
 			switch (knownTypeCode)
 			{

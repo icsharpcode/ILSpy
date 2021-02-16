@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -90,6 +92,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the owner of this parameter.
 		/// May return null; for example when parameters belong to lambdas or anonymous methods.
 		/// </summary>
-		IParameterizedMember Owner { get; }
+		IParameterizedMember? Owner { get; }
 	}
 }

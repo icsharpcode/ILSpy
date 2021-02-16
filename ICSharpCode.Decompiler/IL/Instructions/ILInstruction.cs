@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -94,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public bool IsDescendantOf(ILInstruction possibleAncestor)
 		{
-			for (ILInstruction ancestor = this; ancestor != null; ancestor = ancestor.Parent)
+			for (ILInstruction? ancestor = this; ancestor != null; ancestor = ancestor.Parent)
 			{
 				if (ancestor == possibleAncestor)
 					return true;
@@ -102,33 +104,33 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 
-		public ILInstruction GetCommonParent(ILInstruction other)
+		public ILInstruction? GetCommonParent(ILInstruction other)
 		{
 			if (other == null)
 				throw new ArgumentNullException(nameof(other));
 
-			ILInstruction a = this;
-			ILInstruction b = other;
+			ILInstruction? a = this;
+			ILInstruction? b = other;
 
 			int levelA = a.CountAncestors();
 			int levelB = b.CountAncestors();
 
 			while (levelA > levelB)
 			{
-				a = a.Parent;
+				a = a!.Parent;
 				levelA--;
 			}
 
 			while (levelB > levelA)
 			{
-				b = b.Parent;
+				b = b!.Parent;
 				levelB--;
 			}
 
 			while (a != b)
 			{
-				a = a.Parent;
-				b = b.Parent;
+				a = a!.Parent;
+				b = b!.Parent;
 			}
 
 			return a;
@@ -153,13 +155,13 @@ namespace ICSharpCode.Decompiler.IL
 
 			while (levelA > levelB)
 			{
-				a = a.Parent;
+				a = a.Parent!;
 				levelA--;
 			}
 
 			while (levelB > levelA)
 			{
-				b = b.Parent;
+				b = b.Parent!;
 				levelB--;
 			}
 
@@ -172,8 +174,8 @@ namespace ICSharpCode.Decompiler.IL
 
 			while (a.Parent != b.Parent)
 			{
-				a = a.Parent;
-				b = b.Parent;
+				a = a.Parent!;
+				b = b.Parent!;
 			}
 
 			// now a and b have the same parent or are both root nodes
@@ -183,7 +185,7 @@ namespace ICSharpCode.Decompiler.IL
 		private int CountAncestors()
 		{
 			int level = 0;
-			for (ILInstruction ancestor = this; ancestor != null; ancestor = ancestor.Parent)
+			for (ILInstruction? ancestor = this; ancestor != null; ancestor = ancestor.Parent)
 			{
 				level++;
 			}
@@ -240,7 +242,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected private void MakeDirty()
 		{
 #if DEBUG
-			for (ILInstruction inst = this; inst != null && !inst.IsDirty; inst = inst.parent)
+			for (ILInstruction? inst = this; inst != null && !inst.IsDirty; inst = inst.parent)
 			{
 				inst.IsDirty = true;
 			}
@@ -289,7 +291,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected void InvalidateFlags()
 		{
-			for (ILInstruction inst = this; inst != null && inst.flags != invalidFlags; inst = inst.parent)
+			for (ILInstruction? inst = this; inst != null && inst.flags != invalidFlags; inst = inst.parent)
 				inst.flags = invalidFlags;
 		}
 
@@ -425,7 +427,7 @@ namespace ICSharpCode.Decompiler.IL
 			internal ChildrenCollection(ILInstruction inst)
 			{
 				Debug.Assert(inst != null);
-				this.inst = inst;
+				this.inst = inst!;
 			}
 
 			public int Count {
@@ -485,7 +487,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public struct ChildrenEnumerator : IEnumerator<ILInstruction>
 		{
-			ILInstruction inst;
+			ILInstruction? inst;
 			readonly int end;
 			int pos;
 
@@ -494,7 +496,7 @@ namespace ICSharpCode.Decompiler.IL
 				Debug.Assert(inst != null);
 				this.inst = inst;
 				this.pos = -1;
-				this.end = inst.GetChildCount();
+				this.end = inst!.GetChildCount();
 #if DEBUG
 				inst.StartEnumerator();
 #endif
@@ -502,7 +504,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			public ILInstruction Current {
 				get {
-					return inst.GetChild(pos);
+					return inst!.GetChild(pos);
 				}
 			}
 
@@ -556,7 +558,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public void ReplaceWith(ILInstruction replacement)
 		{
-			Debug.Assert(parent.GetChild(ChildIndex) == this);
+			Debug.Assert(parent!.GetChild(ChildIndex) == this);
 			if (replacement == this)
 				return;
 			parent.SetChild(ChildIndex, replacement);
@@ -621,7 +623,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IEnumerable<ILInstruction> Ancestors {
 			get {
-				for (ILInstruction node = this; node != null; node = node.Parent)
+				for (ILInstruction? node = this; node != null; node = node.Parent)
 				{
 					yield return node;
 				}
@@ -683,7 +685,7 @@ namespace ICSharpCode.Decompiler.IL
 				child.ReleaseRef();
 		}
 
-		ILInstruction parent;
+		ILInstruction? parent;
 
 		/// <summary>
 		/// Gets the parent of this ILInstruction.
@@ -709,7 +711,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// 
 		/// Note that is it is possible (though unusual) for a stale position to reference an orphaned node.
 		/// </remarks>
-		public ILInstruction Parent {
+		public ILInstruction? Parent {
 			get { return parent; }
 		}
 
@@ -732,7 +734,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// 
 		/// Precondition: this node must not be orphaned.
 		/// </remarks>
-		public SlotInfo SlotInfo {
+		public SlotInfo? SlotInfo {
 			get {
 				if (parent == null)
 					return null;
@@ -748,7 +750,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="newValue">New child</param>
 		/// <param name="index">Index of the field in the Children collection</param>
 		protected internal void SetChildInstruction<T>(ref T childPointer, T newValue, int index)
-			where T : ILInstruction
+			where T : ILInstruction?
 		{
 			T oldValue = childPointer;
 			Debug.Assert(oldValue == GetChild(index));
@@ -861,7 +863,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// If the method returns true, it adds the capture groups (if any) to the match.
 		/// If the method returns false, the match object may remain in a partially-updated state and
 		/// needs to be restored before it can be reused.</returns>
-		protected internal abstract bool PerformMatch(ILInstruction other, ref Match match);
+		protected internal abstract bool PerformMatch(ILInstruction? other, ref Match match);
 
 		/// <summary>
 		/// Attempts matching this instruction against a list of other instructions (or a part of said list).
