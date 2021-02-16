@@ -76,9 +76,6 @@ jobs:
 
     - name: Style - tab check
       run: python BuildTools\tidy.py
-
-    - name: Style - dotnet-format check
-      run: dotnet-format --check --verbosity diagnostic ILSpy.sln
     
     - name: Zip ILSpy Release
       if: matrix.channel == 'zip'

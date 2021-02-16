@@ -94,9 +94,6 @@ jobs:
   - script: python BuildTools\tidy.py
     displayName: Tab check
 
-  - script: $(Agent.ToolsDirectory)\dotnet-format\dotnet-format --check --verbosity diagnostic ILSpy.sln
-    displayName: dotnet-format check
-
   - task: CopyFiles@2
     displayName: Move VSIX to publish directory
     inputs:
