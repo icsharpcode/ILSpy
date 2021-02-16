@@ -251,7 +251,7 @@ namespace ICSharpCode.ILSpy
 			{
 				return parent.ResolveAsync(reference);
 			}
-			return null;
+			return Task.FromResult<PEFile>(null);
 		}
 
 		public PEFile ResolveModule(PEFile mainModule, string moduleName)
@@ -275,7 +275,7 @@ namespace ICSharpCode.ILSpy
 			{
 				return parent.ResolveModuleAsync(mainModule, moduleName);
 			}
-			return null;
+			return Task.FromResult<PEFile>(null);
 		}
 
 		readonly Dictionary<string, LoadedAssembly> assemblies = new Dictionary<string, LoadedAssembly>(StringComparer.OrdinalIgnoreCase);
