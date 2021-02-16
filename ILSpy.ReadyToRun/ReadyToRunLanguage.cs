@@ -106,7 +106,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
-			PEFile module = assembly.GetPEFileOrNull();
+			PEFile module = assembly.GetPEFileAsync().GetAwaiter().GetResult();
 			ReadyToRunReaderCacheEntry cacheEntry = GetReader(assembly, module);
 			if (cacheEntry.readyToRunReader == null)
 			{

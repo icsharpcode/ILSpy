@@ -162,7 +162,7 @@ namespace ICSharpCode.ILSpy
 		{
 			output.WriteLine("// " + assembly.FileName);
 			output.WriteLine();
-			var module = assembly.GetPEFileOrNull();
+			var module = assembly.GetPEFileAsync().GetAwaiter().GetResult();
 			var metadata = module.Metadata;
 			var dis = CreateDisassembler(output, options);
 
