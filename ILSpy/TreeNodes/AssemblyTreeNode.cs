@@ -90,8 +90,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					var loadResult = LoadedAssembly.GetLoadResultAsync().Result;
 					if (loadResult.Package != null)
 					{
-						return loadResult.Package.Kind switch
-						{
+						return loadResult.Package.Kind switch {
 							LoadedPackage.PackageKind.Zip => Images.NuGet,
 							_ => Images.Library,
 						};
@@ -316,30 +315,57 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			try
 			{
-				LoadedAssembly.WaitUntilLoaded(); // necessary so that load errors are passed on to the caller
-			}
-			catch (AggregateException ex)
-			{
-				language.WriteCommentLine(output, LoadedAssembly.FileName);
-				switch (ex.InnerException)
+				var loadResult = LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
+				if (loadResult.PEFile != null)
 				{
-					case BadImageFormatException badImage:
-						HandleException(badImage, "This file does not contain a managed assembly.");
-						return;
-					case FileNotFoundException fileNotFound:
-						HandleException(fileNotFound, "The file was not found.");
-						return;
-					case DirectoryNotFoundException dirNotFound:
-						HandleException(dirNotFound, "The directory was not found.");
-						return;
-					case PEFileNotSupportedException notSupported:
-						HandleException(notSupported, notSupported.Message);
-						return;
-					default:
-						throw;
+					language.DecompileAssembly(LoadedAssembly, output, options);
+				}
+				else if (loadResult.Package != null)
+				{
+					output.WriteLine("// " + LoadedAssembly.FileName);
+					DecompilePackage(loadResult.Package, output);
+				}
+				else
+				{
+					LoadedAssembly.GetPEFileOrNullAsync().GetAwaiter().GetResult();
 				}
 			}
-			language.DecompileAssembly(LoadedAssembly, output, options);
+			catch (BadImageFormatException badImage)
+			{
+				HandleException(badImage, "This file does not contain a managed assembly.");
+			}
+			catch (FileNotFoundException fileNotFound)
+			{
+				HandleException(fileNotFound, "The file was not found.");
+			}
+			catch (DirectoryNotFoundException dirNotFound)
+			{
+				HandleException(dirNotFound, "The directory was not found.");
+			}
+			catch (PEFileNotSupportedException notSupported)
+			{
+				HandleException(notSupported, notSupported.Message);
+			}
+		}
+
+		private void DecompilePackage(LoadedPackage package, ITextOutput output)
+		{
+			switch (package.Kind)
+			{
+				case LoadedPackage.PackageKind.Zip:
+					output.WriteLine("// File format: .zip file");
+					break;
+				case LoadedPackage.PackageKind.Bundle:
+					var header = package.BundleHeader;
+					output.WriteLine($"// File format: .NET bundle {header.MajorVersion}.{header.MinorVersion}");
+					break;
+			}
+			output.WriteLine();
+			output.WriteLine("Entries:");
+			foreach (var entry in package.Entries)
+			{
+				output.WriteLine("  " + entry.Name);
+			}
 		}
 
 		public override bool Save(TabPageModel tabPage)

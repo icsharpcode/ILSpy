@@ -49,6 +49,8 @@ namespace ICSharpCode.ILSpy
 
 		public PackageKind Kind { get; }
 
+		internal SingleFileBundle.Header BundleHeader { get; set; }
+
 		/// <summary>
 		/// List of all entries, including those in sub-directories within the package.
 		/// </summary>
@@ -115,6 +117,7 @@ namespace ICSharpCode.ILSpy
 				var manifest = SingleFileBundle.ReadManifest(view, bundleHeaderOffset);
 				var entries = manifest.Entries.Select(e => new BundleEntry(fileName, view, e)).ToList();
 				var result = new LoadedPackage(PackageKind.Bundle, entries);
+				result.BundleHeader = manifest;
 				view = null; // don't dispose the view, we're still using it in the bundle entries
 				return result;
 			}
@@ -210,7 +213,7 @@ namespace ICSharpCode.ILSpy
 		public abstract string FullName { get; }
 	}
 
-	class PackageFolder : IAssemblyResolver
+	sealed class PackageFolder : IAssemblyResolver
 	{
 		/// <summary>
 		/// Gets the short name of the folder.
