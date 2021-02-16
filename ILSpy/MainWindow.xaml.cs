@@ -749,7 +749,7 @@ namespace ICSharpCode.ILSpy
 			history.Clear();
 			this.assemblyList = assemblyList;
 
-			assemblyList.assemblies.CollectionChanged += assemblyList_Assemblies_CollectionChanged;
+			assemblyList.CollectionChanged += assemblyList_Assemblies_CollectionChanged;
 
 			assemblyListTreeNode = new AssemblyListTreeNode(assemblyList);
 			assemblyListTreeNode.FilterSettings = sessionSettings.FilterSettings.Clone();

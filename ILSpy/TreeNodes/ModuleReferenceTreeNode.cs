@@ -71,8 +71,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var assemblyListNode = parentAssembly.Parent as AssemblyListTreeNode;
 			if (assemblyListNode != null && containsMetadata)
 			{
-				assemblyListNode.Select(assemblyListNode.FindAssemblyNode(parentAssembly.LoadedAssembly.LookupReferencedModule(parentAssembly.LoadedAssembly.GetPEFileOrNull(), metadata.GetString(reference.Name))));
-				e.Handled = true;
+				var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
+				var mainModule = parentAssembly.LoadedAssembly.GetPEFileOrNull();
+				if (mainModule != null)
+				{
+					assemblyListNode.Select(assemblyListNode.FindAssemblyNode(resolver.ResolveModule(mainModule, metadata.GetString(reference.Name))));
+					e.Handled = true;
+				}
 			}
 		}
 

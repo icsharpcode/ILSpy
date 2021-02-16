@@ -358,7 +358,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			if (dlg.ShowDialog() == true)
 			{
 				var list = CreateDefaultList(config.Name, config.Path, dlg.ListName);
-				if (list.assemblies.Count > 0)
+				if (list.Count > 0)
 				{
 					manager.CreateList(list);
 				}

@@ -212,17 +212,17 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		private class ReadyToRunAssemblyResolver : ILCompiler.Reflection.ReadyToRun.IAssemblyResolver
 		{
-			private LoadedAssembly loadedAssembly;
+			private Decompiler.Metadata.IAssemblyResolver assemblyResolver;
 
 			public ReadyToRunAssemblyResolver(LoadedAssembly loadedAssembly)
 			{
-				this.loadedAssembly = loadedAssembly;
+				assemblyResolver = loadedAssembly.GetAssemblyResolver();
 			}
 
 			public IAssemblyMetadata FindAssembly(MetadataReader metadataReader, AssemblyReferenceHandle assemblyReferenceHandle, string parentFile)
 			{
-				LoadedAssembly loadedAssembly = this.loadedAssembly.LookupReferencedAssembly(new Decompiler.Metadata.AssemblyReference(metadataReader, assemblyReferenceHandle));
-				PEReader reader = loadedAssembly?.GetPEFileOrNull()?.Reader;
+				PEFile module = assemblyResolver.Resolve(new Decompiler.Metadata.AssemblyReference(metadataReader, assemblyReferenceHandle));
+				PEReader reader = module?.Reader;
 				return reader == null ? null : new StandaloneAssemblyMetadata(reader);
 			}
 

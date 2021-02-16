@@ -240,6 +240,20 @@ namespace ICSharpCode.ILSpy
 			return parent?.Resolve(reference);
 		}
 
+		public Task<PEFile> ResolveAsync(IAssemblyReference reference)
+		{
+			var asm = ResolveFileName(reference.Name + ".dll");
+			if (asm != null)
+			{
+				return asm.GetPEFileOrNullAsync();
+			}
+			if (parent != null)
+			{
+				return parent.ResolveAsync(reference);
+			}
+			return null;
+		}
+
 		public PEFile ResolveModule(PEFile mainModule, string moduleName)
 		{
 			var asm = ResolveFileName(moduleName + ".dll");
@@ -248,6 +262,20 @@ namespace ICSharpCode.ILSpy
 				return asm.GetPEFileOrNull();
 			}
 			return parent?.ResolveModule(mainModule, moduleName);
+		}
+
+		public Task<PEFile> ResolveModuleAsync(PEFile mainModule, string moduleName)
+		{
+			var asm = ResolveFileName(moduleName + ".dll");
+			if (asm != null)
+			{
+				return asm.GetPEFileOrNullAsync();
+			}
+			if (parent != null)
+			{
+				return parent.ResolveModuleAsync(mainModule, moduleName);
+			}
+			return null;
 		}
 
 		readonly Dictionary<string, LoadedAssembly> assemblies = new Dictionary<string, LoadedAssembly>(StringComparer.OrdinalIgnoreCase);

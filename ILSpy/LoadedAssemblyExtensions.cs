@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
@@ -31,9 +26,9 @@ namespace ICSharpCode.ILSpy
 			return Mono.Cecil.ModuleDefinition.ReadModule(new UnmanagedMemoryStream(image.Pointer, image.Length));
 		}
 
-		public static IAssemblyResolver GetAssemblyResolver(this PEFile file)
+		public static IAssemblyResolver GetAssemblyResolver(this PEFile file, bool loadOnDemand = true)
 		{
-			return GetLoadedAssembly(file).GetAssemblyResolver();
+			return GetLoadedAssembly(file).GetAssemblyResolver(loadOnDemand);
 		}
 
 		public static IDebugInfoProvider GetDebugInfoOrNull(this PEFile file)

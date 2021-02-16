@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Windows;
@@ -45,17 +44,17 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public AssemblyListTreeNode(AssemblyList assemblyList)
 		{
 			this.assemblyList = assemblyList ?? throw new ArgumentNullException(nameof(assemblyList));
-			BindToObservableCollection(assemblyList.assemblies);
+			BindToObservableCollection(assemblyList);
 		}
 
 		public override object Text {
 			get { return assemblyList.ListName; }
 		}
 
-		void BindToObservableCollection(ObservableCollection<LoadedAssembly> collection)
+		void BindToObservableCollection(AssemblyList collection)
 		{
 			this.Children.Clear();
-			this.Children.AddRange(collection.Select(a => new AssemblyTreeNode(a)));
+			this.Children.AddRange(collection.GetAssemblies().Select(a => new AssemblyTreeNode(a)));
 			collection.CollectionChanged += delegate (object sender, NotifyCollectionChangedEventArgs e) {
 				switch (e.Action)
 				{
@@ -70,7 +69,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						throw new NotImplementedException();
 					case NotifyCollectionChangedAction.Reset:
 						this.Children.Clear();
-						this.Children.AddRange(collection.Select(a => new AssemblyTreeNode(a)));
+						this.Children.AddRange(collection.GetAssemblies().Select(a => new AssemblyTreeNode(a)));
 						break;
 					default:
 						throw new NotSupportedException("Invalid value for NotifyCollectionChangedAction");
@@ -99,29 +98,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				files = e.Data.GetData(DataFormats.FileDrop) as string[];
 			if (files != null)
 			{
-				lock (assemblyList.assemblies)
-				{
-					var assemblies = files
-						.Where(file => file != null)
-						.Select(file => assemblyList.OpenAssembly(file))
-						.Where(asm => asm != null)
-						.Distinct()
-						.ToArray();
-					foreach (LoadedAssembly asm in assemblies)
-					{
-						int nodeIndex = assemblyList.assemblies.IndexOf(asm);
-						if (nodeIndex < index)
-							index--;
-						assemblyList.assemblies.RemoveAt(nodeIndex);
-					}
-					Array.Reverse(assemblies);
-					foreach (LoadedAssembly asm in assemblies)
-					{
-						assemblyList.assemblies.Insert(index, asm);
-					}
-					var nodes = assemblies.SelectArray(MainWindow.Instance.FindTreeNode);
-					MainWindow.Instance.SelectNodes(nodes);
-				}
+				var assemblies = files
+					.Where(file => file != null)
+					.Select(file => assemblyList.OpenAssembly(file))
+					.Where(asm => asm != null)
+					.Distinct()
+					.ToArray();
+				assemblyList.Move(assemblies, index);
+				var nodes = assemblies.SelectArray(MainWindow.Instance.FindTreeNode);
+				MainWindow.Instance.SelectNodes(nodes);
 			}
 		}
 

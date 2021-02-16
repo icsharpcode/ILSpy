@@ -23,6 +23,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
@@ -47,6 +48,8 @@ namespace ICSharpCode.Decompiler.Metadata
 #if !VSADDIN
 		PEFile Resolve(IAssemblyReference reference);
 		PEFile ResolveModule(PEFile mainModule, string moduleName);
+		Task<PEFile> ResolveAsync(IAssemblyReference reference);
+		Task<PEFile> ResolveModuleAsync(PEFile mainModule, string moduleName);
 #endif
 	}
 

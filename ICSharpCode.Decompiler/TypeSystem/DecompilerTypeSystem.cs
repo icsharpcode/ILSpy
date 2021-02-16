@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -181,7 +182,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<PEFile>();
-			var assemblyReferenceQueue = new Queue<(bool IsAssembly, PEFile MainModule, object Reference)>();
+			var assemblyReferenceQueue = new Queue<(bool IsAssembly, PEFile MainModule, object Reference, Task<PEFile> ResolveTask)>();
+			var comparer = KeyComparer.Create(((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
+				reference.IsAssembly ? "A:" + ((AssemblyReference)reference.Reference).FullName :
+									   "M:" + reference.Reference);
+			var assemblyReferencesInQueue = new HashSet<(bool IsAssembly, PEFile Parent, object Reference)>(comparer);
 			var mainMetadata = mainModule.Metadata;
 			foreach (var h in mainMetadata.GetModuleReferences())
 			{
@@ -194,7 +199,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						var file = mainMetadata.GetAssemblyFile(fileHandle);
 						if (mainMetadata.StringComparer.Equals(file.Name, moduleName) && file.ContainsMetadata)
 						{
-							assemblyReferenceQueue.Enqueue((false, mainModule, moduleName));
+							AddToQueue(false, mainModule, moduleName);
 							break;
 						}
 					}
@@ -205,26 +210,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			foreach (var refs in mainModule.AssemblyReferences)
 			{
-				assemblyReferenceQueue.Enqueue((true, mainModule, refs));
+				AddToQueue(true, mainModule, refs);
 			}
-			var comparer = KeyComparer.Create(((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
-				reference.IsAssembly ? "A:" + ((AssemblyReference)reference.Reference).FullName :
-									   "M:" + reference.Reference);
-			var processedAssemblyReferences = new HashSet<(bool IsAssembly, PEFile Parent, object Reference)>(comparer);
 			while (assemblyReferenceQueue.Count > 0)
 			{
 				var asmRef = assemblyReferenceQueue.Dequeue();
-				if (!processedAssemblyReferences.Add(asmRef))
-					continue;
-				PEFile asm;
-				if (asmRef.IsAssembly)
-				{
-					asm = assemblyResolver.Resolve((AssemblyReference)asmRef.Reference);
-				}
-				else
-				{
-					asm = assemblyResolver.ResolveModule(asmRef.MainModule, (string)asmRef.Reference);
-				}
+				var asm = asmRef.ResolveTask.GetAwaiter().GetResult();
 				if (asm != null)
 				{
 					referencedAssemblies.Add(asm);
@@ -235,11 +226,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						switch (exportedType.Implementation.Kind)
 						{
 							case SRM.HandleKind.AssemblyReference:
-								assemblyReferenceQueue.Enqueue((true, asm, new AssemblyReference(asm, (SRM.AssemblyReferenceHandle)exportedType.Implementation)));
+								AddToQueue(true, asm, new AssemblyReference(asm, (SRM.AssemblyReferenceHandle)exportedType.Implementation));
 								break;
 							case SRM.HandleKind.AssemblyFile:
 								var file = metadata.GetAssemblyFile((SRM.AssemblyFileHandle)exportedType.Implementation);
-								assemblyReferenceQueue.Enqueue((false, asm, metadata.GetString(file.Name)));
+								AddToQueue(false, asm, metadata.GetString(file.Name));
 								break;
 						}
 					}
@@ -260,6 +251,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				Init(mainModuleWithOptions, referencedAssembliesWithOptions);
 			}
 			this.MainModule = (MetadataModule)base.MainModule;
+
+			void AddToQueue(bool isAssembly, PEFile mainModule, object reference)
+			{
+				if (assemblyReferencesInQueue.Add((isAssembly, mainModule, reference)))
+				{
+					// Immediately start loading the referenced module as we add the entry to the queue.
+					// This allows loading multiple modules in parallel.
+					Task<PEFile> asm;
+					if (isAssembly)
+					{
+						asm = assemblyResolver.ResolveAsync((AssemblyReference)reference);
+					}
+					else
+					{
+						asm = assemblyResolver.ResolveModuleAsync(mainModule, (string)reference);
+					}
+					assemblyReferenceQueue.Enqueue((isAssembly, mainModule, reference, asm));
+				}
+			}
 
 			bool IsMissing(KnownTypeReference knownType)
 			{

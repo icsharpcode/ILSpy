@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Xml.Linq;
@@ -165,7 +164,7 @@ namespace ICSharpCode.ILSpy
 			if (!AssemblyLists.Contains(ManageAssemblyListsViewModel.DotNet4List))
 			{
 				AssemblyList dotnet4 = ManageAssemblyListsViewModel.CreateDefaultList(ManageAssemblyListsViewModel.DotNet4List);
-				if (dotnet4.assemblies.Count > 0)
+				if (dotnet4.Count > 0)
 				{
 					CreateList(dotnet4);
 				}
@@ -174,7 +173,7 @@ namespace ICSharpCode.ILSpy
 			if (!AssemblyLists.Contains(ManageAssemblyListsViewModel.DotNet35List))
 			{
 				AssemblyList dotnet35 = ManageAssemblyListsViewModel.CreateDefaultList(ManageAssemblyListsViewModel.DotNet35List);
-				if (dotnet35.assemblies.Count > 0)
+				if (dotnet35.Count > 0)
 				{
 					CreateList(dotnet35);
 				}
@@ -183,7 +182,7 @@ namespace ICSharpCode.ILSpy
 			if (!AssemblyLists.Contains(ManageAssemblyListsViewModel.ASPDotNetMVC3List))
 			{
 				AssemblyList mvc = ManageAssemblyListsViewModel.CreateDefaultList(ManageAssemblyListsViewModel.ASPDotNetMVC3List);
-				if (mvc.assemblies.Count > 0)
+				if (mvc.Count > 0)
 				{
 					CreateList(mvc);
 				}
