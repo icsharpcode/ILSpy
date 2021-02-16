@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.IO;
 using System.Linq;
@@ -36,7 +38,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 		}
 
-		public AssemblyResolutionException(IAssemblyReference reference, Exception innerException)
+		public AssemblyResolutionException(IAssemblyReference reference, Exception? innerException)
 			: base($"Failed to resolve assembly: '{reference}'", innerException)
 		{
 			this.Reference = reference;
@@ -46,10 +48,10 @@ namespace ICSharpCode.Decompiler.Metadata
 	public interface IAssemblyResolver
 	{
 #if !VSADDIN
-		PEFile Resolve(IAssemblyReference reference);
-		PEFile ResolveModule(PEFile mainModule, string moduleName);
-		Task<PEFile> ResolveAsync(IAssemblyReference reference);
-		Task<PEFile> ResolveModuleAsync(PEFile mainModule, string moduleName);
+		PEFile? Resolve(IAssemblyReference reference);
+		PEFile? ResolveModule(PEFile mainModule, string moduleName);
+		Task<PEFile?> ResolveAsync(IAssemblyReference reference);
+		Task<PEFile?> ResolveModuleAsync(PEFile mainModule, string moduleName);
 #endif
 	}
 
@@ -68,7 +70,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// For .NET Core framework references, the WholeProjectDecompiler will omit the
 		/// assembly reference if the runtimePack is already included as an SDK.
 		/// </summary>
-		public virtual bool IsSharedAssembly(IAssemblyReference reference, out string runtimePack)
+		public virtual bool IsSharedAssembly(IAssemblyReference reference, out string? runtimePack)
 		{
 			runtimePack = null;
 			return false;
@@ -79,9 +81,9 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		string Name { get; }
 		string FullName { get; }
-		Version Version { get; }
-		string Culture { get; }
-		byte[] PublicKeyToken { get; }
+		Version? Version { get; }
+		string? Culture { get; }
+		byte[]? PublicKeyToken { get; }
 
 		bool IsWindowsRuntime { get; }
 		bool IsRetargetable { get; }
@@ -89,9 +91,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 	public class AssemblyNameReference : IAssemblyReference
 	{
-		string fullName;
+		string? fullName;
 
-		public string Name { get; private set; }
+		public string Name { get; private set; } = string.Empty;
 
 		public string FullName {
 			get {
@@ -132,11 +134,11 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public Version Version { get; private set; }
+		public Version? Version { get; private set; }
 
-		public string Culture { get; private set; }
+		public string? Culture { get; private set; }
 
-		public byte[] PublicKeyToken { get; private set; }
+		public byte[]? PublicKeyToken { get; private set; }
 
 		public bool IsWindowsRuntime { get; private set; }
 
@@ -234,11 +236,11 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public Version Version => entry.Version;
+		public Version? Version => entry.Version;
 		public string Culture => Metadata.GetString(entry.Culture);
-		byte[] IAssemblyReference.PublicKeyToken => GetPublicKeyToken();
+		byte[]? IAssemblyReference.PublicKeyToken => GetPublicKeyToken();
 
-		public byte[] GetPublicKeyToken()
+		public byte[]? GetPublicKeyToken()
 		{
 			if (entry.PublicKeyOrToken.IsNil)
 				return null;

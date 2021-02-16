@@ -16,13 +16,15 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace ICSharpCode.Decompiler.Util
 {
 	public static class LazyInit
 	{
-		public static T VolatileRead<T>(ref T location) where T : class
+		public static T VolatileRead<T>(ref T location) where T : class?
 		{
 			return Volatile.Read(ref location);
 		}
@@ -32,9 +34,10 @@ namespace ICSharpCode.Decompiler.Util
 		/// - If target is null: stores newValue in target and returns newValue.
 		/// - If target is not null: returns target.
 		/// </summary>
-		public static T GetOrSet<T>(ref T target, T newValue) where T : class
+		[return: NotNullIfNotNull("newValue")]
+		public static T? GetOrSet<T>(ref T? target, T? newValue) where T : class
 		{
-			T oldValue = Interlocked.CompareExchange(ref target, newValue, null);
+			T? oldValue = Interlocked.CompareExchange(ref target, newValue, null);
 			return oldValue ?? newValue;
 		}
 	}

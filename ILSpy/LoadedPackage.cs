@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -45,7 +47,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets the LoadedAssembly instance representing this bundle.
 		/// </summary>
-		internal LoadedAssembly LoadedAssembly { get; set; }
+		internal LoadedAssembly? LoadedAssembly { get; set; }
 
 		public PackageKind Kind { get; }
 
@@ -106,7 +108,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Load a .NET single-file bundle.
 		/// </summary>
-		public static LoadedPackage FromBundle(string fileName)
+		public static LoadedPackage? FromBundle(string fileName)
 		{
 			using var memoryMappedFile = MemoryMappedFile.CreateFromFile(fileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
 			var view = memoryMappedFile.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
@@ -144,7 +146,7 @@ namespace ICSharpCode.ILSpy
 			public override ManifestResourceAttributes Attributes => originalEntry.Attributes;
 			public override string FullName => originalEntry.FullName;
 			public override ResourceType ResourceType => originalEntry.ResourceType;
-			public override Stream TryOpenStream() => originalEntry.TryOpenStream();
+			public override Stream? TryOpenStream() => originalEntry.TryOpenStream();
 		}
 
 		sealed class ZipFileEntry : PackageEntry
@@ -159,7 +161,7 @@ namespace ICSharpCode.ILSpy
 				this.Name = entry.FullName;
 			}
 
-			public override Stream TryOpenStream()
+			public override Stream? TryOpenStream()
 			{
 				Debug.WriteLine("Decompress " + Name);
 				using var archive = ZipFile.OpenRead(zipFile);
@@ -221,9 +223,9 @@ namespace ICSharpCode.ILSpy
 		public string Name { get; }
 
 		readonly LoadedPackage package;
-		readonly PackageFolder parent;
+		readonly PackageFolder? parent;
 
-		internal PackageFolder(LoadedPackage package, PackageFolder parent, string name)
+		internal PackageFolder(LoadedPackage package, PackageFolder? parent, string name)
 		{
 			this.package = package;
 			this.parent = parent;
@@ -233,7 +235,7 @@ namespace ICSharpCode.ILSpy
 		public List<PackageFolder> Folders { get; } = new List<PackageFolder>();
 		public List<PackageEntry> Entries { get; } = new List<PackageEntry>();
 
-		public PEFile Resolve(IAssemblyReference reference)
+		public PEFile? Resolve(IAssemblyReference reference)
 		{
 			var asm = ResolveFileName(reference.Name + ".dll");
 			if (asm != null)
@@ -243,7 +245,7 @@ namespace ICSharpCode.ILSpy
 			return parent?.Resolve(reference);
 		}
 
-		public Task<PEFile> ResolveAsync(IAssemblyReference reference)
+		public Task<PEFile?> ResolveAsync(IAssemblyReference reference)
 		{
 			var asm = ResolveFileName(reference.Name + ".dll");
 			if (asm != null)
@@ -254,10 +256,10 @@ namespace ICSharpCode.ILSpy
 			{
 				return parent.ResolveAsync(reference);
 			}
-			return Task.FromResult<PEFile>(null);
+			return Task.FromResult<PEFile?>(null);
 		}
 
-		public PEFile ResolveModule(PEFile mainModule, string moduleName)
+		public PEFile? ResolveModule(PEFile mainModule, string moduleName)
 		{
 			var asm = ResolveFileName(moduleName + ".dll");
 			if (asm != null)
@@ -267,7 +269,7 @@ namespace ICSharpCode.ILSpy
 			return parent?.ResolveModule(mainModule, moduleName);
 		}
 
-		public Task<PEFile> ResolveModuleAsync(PEFile mainModule, string moduleName)
+		public Task<PEFile?> ResolveModuleAsync(PEFile mainModule, string moduleName)
 		{
 			var asm = ResolveFileName(moduleName + ".dll");
 			if (asm != null)
@@ -278,12 +280,12 @@ namespace ICSharpCode.ILSpy
 			{
 				return parent.ResolveModuleAsync(mainModule, moduleName);
 			}
-			return Task.FromResult<PEFile>(null);
+			return Task.FromResult<PEFile?>(null);
 		}
 
-		readonly Dictionary<string, LoadedAssembly> assemblies = new Dictionary<string, LoadedAssembly>(StringComparer.OrdinalIgnoreCase);
+		readonly Dictionary<string, LoadedAssembly?> assemblies = new Dictionary<string, LoadedAssembly?>(StringComparer.OrdinalIgnoreCase);
 
-		internal LoadedAssembly ResolveFileName(string name)
+		internal LoadedAssembly? ResolveFileName(string name)
 		{
 			if (package.LoadedAssembly == null)
 				return null;

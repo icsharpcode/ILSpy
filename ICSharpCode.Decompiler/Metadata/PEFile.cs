@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -121,7 +123,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			Reader.Dispose();
 		}
 
-		Dictionary<TopLevelTypeName, TypeDefinitionHandle> typeLookup;
+		Dictionary<TopLevelTypeName, TypeDefinitionHandle>? typeLookup;
 
 		/// <summary>
 		/// Finds the top-level-type with the specified name.
@@ -152,7 +154,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				return default;
 		}
 
-		Dictionary<FullTypeName, ExportedTypeHandle> typeForwarderLookup;
+		Dictionary<FullTypeName, ExportedTypeHandle>? typeForwarderLookup;
 
 		/// <summary>
 		/// Finds the type forwarder with the specified name.
@@ -176,7 +178,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				return default;
 		}
 
-		MethodSemanticsLookup methodSemanticsLookup;
+		MethodSemanticsLookup? methodSemanticsLookup;
 
 		internal MethodSemanticsLookup MethodSemanticsLookup {
 			get {

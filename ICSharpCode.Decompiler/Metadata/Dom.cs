@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Immutable;
 using System.IO;
 using System.Reflection;
@@ -32,7 +34,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		public virtual ResourceType ResourceType => ResourceType.Embedded;
 		public virtual ManifestResourceAttributes Attributes => ManifestResourceAttributes.Public;
 		public abstract string Name { get; }
-		public abstract Stream TryOpenStream();
+		public abstract Stream? TryOpenStream();
 	}
 
 	public class ByteArrayResource : Resource
@@ -98,12 +100,16 @@ namespace ICSharpCode.Decompiler.Metadata
 			return ResourceType.Linked;
 		}
 
-		public override unsafe Stream TryOpenStream()
+		public override unsafe Stream? TryOpenStream()
 		{
 			if (ResourceType != ResourceType.Embedded)
 				return null;
 			var headers = Module.Reader.PEHeaders;
+			if (headers.CorHeader == null)
+				return null;
 			var resources = headers.CorHeader.ResourcesDirectory;
+			if (resources.RelativeVirtualAddress == 0)
+				return null;
 			var sectionData = Module.Reader.GetSectionData(resources.RelativeVirtualAddress);
 			if (sectionData.Length == 0)
 				throw new BadImageFormatException("RVA could not be found in any section!");
@@ -231,7 +237,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 	public class GenericContext
 	{
-		readonly MetadataReader metadata;
+		readonly MetadataReader? metadata;
 		readonly TypeDefinitionHandle declaringType;
 		readonly MethodDefinitionHandle method;
 
@@ -268,7 +274,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		public string GetGenericTypeParameterName(int index)
 		{
 			GenericParameterHandle genericParameter = GetGenericTypeParameterHandleOrNull(index);
-			if (genericParameter.IsNil)
+			if (genericParameter.IsNil || metadata == null)
 				return index.ToString();
 			return metadata.GetString(metadata.GetGenericParameter(genericParameter).Name);
 		}
@@ -276,23 +282,27 @@ namespace ICSharpCode.Decompiler.Metadata
 		public string GetGenericMethodTypeParameterName(int index)
 		{
 			GenericParameterHandle genericParameter = GetGenericMethodTypeParameterHandleOrNull(index);
-			if (genericParameter.IsNil)
+			if (genericParameter.IsNil || metadata == null)
 				return index.ToString();
 			return metadata.GetString(metadata.GetGenericParameter(genericParameter).Name);
 		}
 
 		public GenericParameterHandle GetGenericTypeParameterHandleOrNull(int index)
 		{
-			GenericParameterHandleCollection genericParameters;
-			if (declaringType.IsNil || index < 0 || index >= (genericParameters = metadata.GetTypeDefinition(declaringType).GetGenericParameters()).Count)
+			if (declaringType.IsNil || index < 0 || metadata == null)
+				return MetadataTokens.GenericParameterHandle(0);
+			var genericParameters = metadata.GetTypeDefinition(declaringType).GetGenericParameters();
+			if (index >= genericParameters.Count)
 				return MetadataTokens.GenericParameterHandle(0);
 			return genericParameters[index];
 		}
 
 		public GenericParameterHandle GetGenericMethodTypeParameterHandleOrNull(int index)
 		{
-			GenericParameterHandleCollection genericParameters;
-			if (method.IsNil || index < 0 || index >= (genericParameters = metadata.GetMethodDefinition(method).GetGenericParameters()).Count)
+			if (method.IsNil || index < 0 || metadata == null)
+				return MetadataTokens.GenericParameterHandle(0);
+			var genericParameters = metadata.GetMethodDefinition(method).GetGenericParameters();
+			if (index >= genericParameters.Count)
 				return MetadataTokens.GenericParameterHandle(0);
 			return genericParameters[index];
 		}

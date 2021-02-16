@@ -35,6 +35,8 @@ using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Options;
 
+#nullable enable
+
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>
@@ -61,9 +63,9 @@ namespace ICSharpCode.ILSpy
 
 		public sealed class LoadResult
 		{
-			public PEFile PEFile { get; }
-			public Exception PEFileLoadException { get; }
-			public LoadedPackage Package { get; }
+			public PEFile? PEFile { get; }
+			public Exception? PEFileLoadException { get; }
+			public LoadedPackage? Package { get; }
 
 			public LoadResult(PEFile peFile)
 			{
@@ -80,12 +82,12 @@ namespace ICSharpCode.ILSpy
 		readonly AssemblyList assemblyList;
 		readonly string fileName;
 		readonly string shortName;
-		readonly IAssemblyResolver providedAssemblyResolver;
+		readonly IAssemblyResolver? providedAssemblyResolver;
 
-		public LoadedAssembly ParentBundle { get; }
+		public LoadedAssembly? ParentBundle { get; }
 
 		public LoadedAssembly(AssemblyList assemblyList, string fileName,
-			Task<Stream> stream = null, IAssemblyResolver assemblyResolver = null, string pdbFileName = null)
+			Task<Stream?>? stream = null, IAssemblyResolver? assemblyResolver = null, string? pdbFileName = null)
 		{
 			this.assemblyList = assemblyList ?? throw new ArgumentNullException(nameof(assemblyList));
 			this.fileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
@@ -96,7 +98,7 @@ namespace ICSharpCode.ILSpy
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 		}
 
-		public LoadedAssembly(LoadedAssembly bundle, string fileName, Task<Stream> stream, IAssemblyResolver assemblyResolver = null)
+		public LoadedAssembly(LoadedAssembly bundle, string fileName, Task<Stream?>? stream, IAssemblyResolver assemblyResolver = null)
 			: this(bundle.assemblyList, fileName, stream, assemblyResolver)
 		{
 			this.ParentBundle = bundle;
@@ -116,7 +118,7 @@ namespace ICSharpCode.ILSpy
 
 		public ReferenceLoadInfo LoadedAssemblyReferencesInfo { get; } = new ReferenceLoadInfo();
 
-		IDebugInfoProvider debugInfoProvider;
+		IDebugInfoProvider? debugInfoProvider;
 
 		/// <summary>
 		/// Gets the <see cref="LoadResult"/>.
@@ -135,14 +137,14 @@ namespace ICSharpCode.ILSpy
 			if (loadResult.PEFile != null)
 				return loadResult.PEFile;
 			else
-				throw loadResult.PEFileLoadException;
+				throw loadResult.PEFileLoadException!;
 		}
 
 		/// <summary>
 		/// Gets the <see cref="PEFile"/>.
 		/// Returns null in case of load errors.
 		/// </summary>
-		public PEFile GetPEFileOrNull()
+		public PEFile? GetPEFileOrNull()
 		{
 			try
 			{
@@ -160,7 +162,7 @@ namespace ICSharpCode.ILSpy
 		/// Gets the <see cref="PEFile"/>.
 		/// Returns null in case of load errors.
 		/// </summary>
-		public async Task<PEFile> GetPEFileOrNullAsync()
+		public async Task<PEFile?> GetPEFileOrNullAsync()
 		{
 			try
 			{
@@ -174,7 +176,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		ICompilation typeSystem;
+		ICompilation? typeSystem;
 
 		/// <summary>
 		/// Gets a type system containing all types from this assembly + primitive types from mscorlib.
@@ -183,7 +185,7 @@ namespace ICSharpCode.ILSpy
 		/// <remarks>
 		/// This is an uncached type system.
 		/// </remarks>
-		public ICompilation GetTypeSystemOrNull()
+		public ICompilation? GetTypeSystemOrNull()
 		{
 			return LazyInitializer.EnsureInitialized(ref this.typeSystem, () => {
 				var module = GetPEFileOrNull();
@@ -196,10 +198,10 @@ namespace ICSharpCode.ILSpy
 		}
 
 		readonly object typeSystemWithOptionsLockObj = new object();
-		ICompilation typeSystemWithOptions;
-		TypeSystemOptions currentTypeSystemOptions;
+		ICompilation? typeSystemWithOptions;
+		TypeSystemOptions? currentTypeSystemOptions;
 
-		public ICompilation GetTypeSystemOrNull(TypeSystemOptions options)
+		public ICompilation? GetTypeSystemOrNull(TypeSystemOptions options)
 		{
 			lock (typeSystemWithOptionsLockObj)
 			{
@@ -225,9 +227,9 @@ namespace ICSharpCode.ILSpy
 			get {
 				if (IsLoaded && !HasLoadError)
 				{
-					PEFile module = GetPEFileOrNull();
+					PEFile? module = GetPEFileOrNull();
 					var metadata = module?.Metadata;
-					string versionOrInfo = null;
+					string? versionOrInfo = null;
 					if (metadata != null)
 					{
 						if (metadata.IsAssembly)
@@ -278,14 +280,14 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets the PDB file name or null, if no PDB was found or it's embedded.
 		/// </summary>
-		public string PdbFileName { get; private set; }
+		public string? PdbFileName { get; private set; }
 
-		async Task<LoadResult> LoadAsync(Task<Stream> streamTask)
+		async Task<LoadResult> LoadAsync(Task<Stream?>? streamTask)
 		{
 			// runs on background thread
-			if (streamTask != null)
+			var stream = streamTask != null ? await streamTask.ConfigureAwait(false) : null;
+			if (stream != null)
 			{
-				var stream = await streamTask;
 				// Read the module from a precrafted stream
 				if (!stream.CanSeek)
 				{
@@ -357,7 +359,7 @@ namespace ICSharpCode.ILSpy
 			return new LoadResult(module);
 		}
 
-		IDebugInfoProvider LoadDebugInfo(PEFile module)
+		IDebugInfoProvider? LoadDebugInfo(PEFile module)
 		{
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols)
 			{
@@ -380,7 +382,7 @@ namespace ICSharpCode.ILSpy
 			return null;
 		}
 
-		public async Task<IDebugInfoProvider> LoadDebugInfo(string fileName)
+		public async Task<IDebugInfoProvider?> LoadDebugInfo(string fileName)
 		{
 			this.PdbFileName = fileName;
 			var assembly = await GetPEFileAsync().ConfigureAwait(false);
@@ -393,7 +395,7 @@ namespace ICSharpCode.ILSpy
 			readonly LoadedAssembly parent;
 			readonly bool loadOnDemand;
 
-			readonly IAssemblyResolver providedAssemblyResolver;
+			readonly IAssemblyResolver? providedAssemblyResolver;
 			readonly AssemblyList assemblyList;
 			readonly LoadedAssembly[] alreadyLoadedAssemblies;
 			readonly Task<string> tfmTask;
@@ -416,13 +418,13 @@ namespace ICSharpCode.ILSpy
 				this.referenceLoadInfo = parent.LoadedAssemblyReferencesInfo;
 			}
 
-			public PEFile Resolve(IAssemblyReference reference)
+			public PEFile? Resolve(IAssemblyReference reference)
 			{
 				return ResolveAsync(reference).GetAwaiter().GetResult();
 			}
 
-			Dictionary<string, PEFile> asmLookupByFullName;
-			Dictionary<string, PEFile> asmLookupByShortName;
+			Dictionary<string, PEFile>? asmLookupByFullName;
+			Dictionary<string, PEFile>? asmLookupByShortName;
 
 			/// <summary>
 			/// 0) if we're inside a package, look for filename.dll in parent directories
@@ -436,9 +438,9 @@ namespace ICSharpCode.ILSpy
 			/// 8) search C:\Windows\Microsoft.NET\Framework64\v4.0.30319
 			/// 9) try to find match by asm name (no tfm/version) in loaded assemblies
 			/// </summary>
-			public async Task<PEFile> ResolveAsync(IAssemblyReference reference)
+			public async Task<PEFile?> ResolveAsync(IAssemblyReference reference)
 			{
-				PEFile module;
+				PEFile? module;
 				// 0) if we're inside a package, look for filename.dll in parent directories
 				if (providedAssemblyResolver != null)
 				{
@@ -527,7 +529,9 @@ namespace ICSharpCode.ILSpy
 					try
 					{
 						var module = await loaded.GetPEFileOrNullAsync().ConfigureAwait(false);
-						var reader = module?.Metadata;
+						if (module == null)
+							continue;
+						var reader = module.Metadata;
 						if (reader == null || !reader.IsAssembly)
 							continue;
 						var asmDef = reader.GetAssemblyDefinition();
@@ -547,12 +551,12 @@ namespace ICSharpCode.ILSpy
 				return result;
 			}
 
-			public PEFile ResolveModule(PEFile mainModule, string moduleName)
+			public PEFile? ResolveModule(PEFile mainModule, string moduleName)
 			{
 				return ResolveModuleAsync(mainModule, moduleName).GetAwaiter().GetResult();
 			}
 
-			public async Task<PEFile> ResolveModuleAsync(PEFile mainModule, string moduleName)
+			public async Task<PEFile?> ResolveModuleAsync(PEFile mainModule, string moduleName)
 			{
 				if (providedAssemblyResolver != null)
 				{
@@ -608,7 +612,7 @@ namespace ICSharpCode.ILSpy
 
 		private MyUniversalResolver GetUniversalResolver()
 		{
-			return LazyInitializer.EnsureInitialized(ref this.universalResolver, () => new MyUniversalResolver(this));
+			return LazyInitializer.EnsureInitialized(ref this.universalResolver, () => new MyUniversalResolver(this))!;
 		}
 
 		public AssemblyReferenceClassifier GetAssemblyReferenceClassifier()
@@ -619,7 +623,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Returns the debug info for this assembly. Returns null in case of load errors or no debug info is available.
 		/// </summary>
-		public IDebugInfoProvider GetDebugInfoOrNull()
+		public IDebugInfoProvider? GetDebugInfoOrNull()
 		{
 			if (GetPEFileOrNull() == null)
 				return null;
@@ -634,7 +638,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		MyUniversalResolver universalResolver;
+		MyUniversalResolver? universalResolver;
 
 		/// <summary>
 		/// Wait until the assembly is loaded.

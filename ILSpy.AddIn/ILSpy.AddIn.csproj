@@ -14,6 +14,7 @@
     <Description>ILSpy</Description>
     <Version>1.7.1.0</Version>
     <FileVersion>1.7.1.0</FileVersion>
+    <LangVersion>9.0</LangVersion>
 
     <EnableDefaultItems>False</EnableDefaultItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

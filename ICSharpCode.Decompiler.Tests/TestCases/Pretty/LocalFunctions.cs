@@ -134,6 +134,7 @@ namespace LocalFunctions
 						}
 					}
 				}
+				Console.WriteLine(t2);
 				return StaticInvokeAsFunc(MixedLocalFunction2Delegate<T1>) + StaticInvokeAsFunc(MixedLocalFunction2Delegate<T2>) + StaticInvokeAsFunc(StaticMethod1<decimal>) + StaticInvokeAsFunc(StaticMethod1<int>) + StaticInvokeAsFunc(NonStaticMethod3) + StaticInvokeAsFunc(StaticMethod5<T1>) + new Func<object, int>(StaticMethod4<object>)(null) + StaticInvokeAsFunc2<object>(StaticMethod4<object>) + new Func<Func<object, int>, int>(StaticInvokeAsFunc2<object>)(StaticMethod4<object>);
 				int NonStaticMethod3()
 				{
