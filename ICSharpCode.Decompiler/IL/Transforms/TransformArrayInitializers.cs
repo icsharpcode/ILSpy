@@ -258,9 +258,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (otherLoadOfV == null)
 					return false;
 				finalStore = otherLoadOfV.Parent.Extract();
-				value = ((StLoc)finalStore.StoreInstructions[0]).Value;
 				if (finalStore == null)
 					return false;
+				value = ((StLoc)finalStore.StoreInstructions[0]).Value;
 			}
 			var fd = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
 			if (!fd.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
