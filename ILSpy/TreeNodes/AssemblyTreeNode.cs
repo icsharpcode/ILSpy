@@ -90,7 +90,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					var loadResult = LoadedAssembly.GetLoadResultAsync().Result;
 					if (loadResult.Package != null)
 					{
-						return loadResult.Package.Kind switch {
+						return loadResult.Package.Kind switch
+						{
 							LoadedPackage.PackageKind.Zip => Images.NuGet,
 							_ => Images.Library,
 						};
