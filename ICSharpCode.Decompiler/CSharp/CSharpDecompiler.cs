@@ -23,6 +23,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -329,8 +330,29 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						if (settings.AnonymousMethods && IsAnonymousMethodCacheField(field, metadata))
 							return true;
-						if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field, metadata))
+						if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field, metadata, out var propertyName))
+						{
+							if (!settings.GetterOnlyAutomaticProperties && IsGetterOnlyProperty(propertyName))
+								return false;
+
+							bool IsGetterOnlyProperty(string propertyName)
+							{
+								var properties = metadata.GetTypeDefinition(field.GetDeclaringType()).GetProperties();
+								foreach (var p in properties)
+								{
+									var pd = metadata.GetPropertyDefinition(p);
+									string name = metadata.GetString(pd.Name);
+									if (!metadata.StringComparer.Equals(pd.Name, propertyName))
+										continue;
+									PropertyAccessors accessors = pd.GetAccessors();
+									return !accessors.Getter.IsNil && accessors.Setter.IsNil;
+								}
+								return false;
+							}
+
 							return true;
+						}
+
 						if (settings.SwitchStatementOnString && IsSwitchOnStringCache(field, metadata))
 							return true;
 					}
@@ -359,10 +381,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			return metadata.GetString(field.Name).StartsWith("<>f__switch", StringComparison.Ordinal);
 		}
 
-		static bool IsAutomaticPropertyBackingField(SRM.FieldDefinition field, MetadataReader metadata)
+		static readonly Regex automaticPropertyBackingFieldRegex = new Regex(@"^<(.*)>k__BackingField$",
+			RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+		static bool IsAutomaticPropertyBackingField(SRM.FieldDefinition field, MetadataReader metadata, out string propertyName)
 		{
+			propertyName = null;
 			var name = metadata.GetString(field.Name);
-			return name.StartsWith("<", StringComparison.Ordinal) && name.EndsWith("BackingField", StringComparison.Ordinal);
+			var m = automaticPropertyBackingFieldRegex.Match(name);
+			if (m.Success)
+			{
+				propertyName = m.Groups[1].Value;
+				return true;
+			}
+			return false;
 		}
 
 		static bool IsAnonymousMethodCacheField(SRM.FieldDefinition field, MetadataReader metadata)

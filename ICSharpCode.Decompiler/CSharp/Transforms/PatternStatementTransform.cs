@@ -103,7 +103,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override AstNode VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
 		{
-			if (context.Settings.AutomaticProperties)
+			if (context.Settings.AutomaticProperties
+				&& (!propertyDeclaration.Setter.IsNull || context.Settings.GetterOnlyAutomaticProperties))
 			{
 				AstNode result = TransformAutomaticProperty(propertyDeclaration);
 				if (result != null)
@@ -738,6 +739,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (field != null && IsBackingFieldOfAutomaticProperty(field, out var property)
 					&& CanTransformToAutomaticProperty(property) && currentMethod.AccessorOwner != property)
 				{
+					if (!property.CanSet && !context.Settings.GetterOnlyAutomaticProperties)
+						return null;
 					parent.RemoveAnnotations<MemberResolveResult>();
 					parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, property));
 					return Identifier.Create(property.Name);

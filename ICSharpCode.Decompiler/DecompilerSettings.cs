@@ -93,6 +93,7 @@ namespace ICSharpCode.Decompiler
 				dictionaryInitializers = false;
 				extensionMethodsInCollectionInitializers = false;
 				useRefLocalsForAccurateOrderOfEvaluation = false;
+				getterOnlyAutomaticProperties = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7)
 			{
@@ -159,7 +160,8 @@ namespace ICSharpCode.Decompiler
 				|| discards || localFunctions)
 				return CSharp.LanguageVersion.CSharp7;
 			if (awaitInCatchFinally || useExpressionBodyForCalculatedGetterOnlyProperties || nullPropagation
-				|| stringInterpolation || dictionaryInitializers || extensionMethodsInCollectionInitializers || useRefLocalsForAccurateOrderOfEvaluation)
+				|| stringInterpolation || dictionaryInitializers || extensionMethodsInCollectionInitializers
+				|| useRefLocalsForAccurateOrderOfEvaluation || getterOnlyAutomaticProperties)
 				return CSharp.LanguageVersion.CSharp6;
 			if (asyncAwait)
 				return CSharp.LanguageVersion.CSharp5;
@@ -567,6 +569,24 @@ namespace ICSharpCode.Decompiler
 				if (automaticProperties != value)
 				{
 					automaticProperties = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool getterOnlyAutomaticProperties = true;
+
+		/// <summary>
+		/// Decompile getter-only automatic properties
+		/// </summary>
+		[Category("C# 6.0 / VS 2015")]
+		[Description("DecompilerSettings.GetterOnlyAutomaticProperties")]
+		public bool GetterOnlyAutomaticProperties {
+			get { return getterOnlyAutomaticProperties; }
+			set {
+				if (getterOnlyAutomaticProperties != value)
+				{
+					getterOnlyAutomaticProperties = value;
 					OnPropertyChanged();
 				}
 			}

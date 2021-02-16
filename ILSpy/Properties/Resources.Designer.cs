@@ -928,6 +928,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Decompile getter-only automatic properties.
+        /// </summary>
+        public static string DecompilerSettings_GetterOnlyAutomaticProperties {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.GetterOnlyAutomaticProperties", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Include XML documentation comments in the decompiled code.
         /// </summary>
         public static string DecompilerSettings_IncludeXMLDocumentationCommentsInTheDecompiledCode {

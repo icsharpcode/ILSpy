@@ -339,6 +339,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.FunctionPointers" xml:space="preserve">
     <value>Function pointers</value>
   </data>
+  <data name="DecompilerSettings.GetterOnlyAutomaticProperties" xml:space="preserve">
+    <value>Decompile getter-only automatic properties</value>
+  </data>
   <data name="DecompilerSettings.IncludeXMLDocumentationCommentsInTheDecompiledCode" xml:space="preserve">
     <value>Include XML documentation comments in the decompiled code</value>
   </data>

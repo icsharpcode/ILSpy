@@ -292,7 +292,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			// It feels a bit hacky, though.
 			if (settings.AutomaticProperties
 				&& PatternStatementTransform.IsBackingFieldOfAutomaticProperty(field, out var property)
-				&& decompilationContext.CurrentMember != property)
+				&& decompilationContext.CurrentMember != property
+				&& (property.CanSet || settings.GetterOnlyAutomaticProperties))
 			{
 				requireTarget = RequiresQualifier(property, target);
 			}
