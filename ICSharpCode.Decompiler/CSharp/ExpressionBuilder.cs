@@ -2818,8 +2818,22 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(inst);
 				if (inst.ResultType == StackType.Ref)
 				{
-					// convert pointer back to ref
-					return result.ConvertTo(new ByReferenceType(elementType), this);
+					// `target.field` has pointer-type.
+					if (inst.SlotInfo == PinnedRegion.InitSlot || inst.Parent is Conv { TargetType: IL.PrimitiveType.U })
+					{
+						// Convert pointer to ref if we're in a context where we're going to convert
+						// the ref back to a pointer.
+						return result.ConvertTo(new ByReferenceType(elementType), this);
+					}
+					else
+					{
+						// We can't use `ref *target.field` unless `target` is non-movable,
+						// but we can use `ref target.field[0]`.
+						var arrayAccess = new IndexerExpression(result, new PrimitiveExpression(0))
+							.WithRR(new ResolveResult(elementType));
+						return new DirectionExpression(FieldDirection.Ref, arrayAccess)
+							.WithoutILInstruction().WithRR(new ByReferenceResolveResult(arrayAccess.ResolveResult, ReferenceKind.Ref));
+					}
 				}
 				else
 				{
