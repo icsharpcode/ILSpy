@@ -1297,16 +1297,20 @@ namespace ICSharpCode.Decompiler.CSharp
 						fieldAccess.RemoveAnnotations<ResolveResult>();
 						var result = fieldAccess.WithRR(new MemberResolveResult(mrr.TargetResult, mrr.Member, new PointerType(elementType)))
 							.WithILInstruction(inst);
-						TranslatedExpression expr = new IndexerExpression(result.Expression, Translate(offsetInst).Expression)
+						right = TranslateArrayIndex(offsetInst);
+						TranslatedExpression expr = new IndexerExpression(result.Expression, right.Expression)
 							.WithILInstruction(inst)
 							.WithRR(new ResolveResult(elementType));
 						return new DirectionExpression(FieldDirection.Ref, expr)
 							.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, ReferenceKind.Ref));
 					}
-					return CallUnsafeIntrinsic(name, new[] { left.Expression, Translate(offsetInst).Expression }, brt, inst);
+					right = Translate(offsetInst);
+					right = ConvertArrayIndex(right, inst.RightInputType, allowIntPtr: true);
+					return CallUnsafeIntrinsic(name, new[] { left.Expression, right.Expression }, brt, inst);
 				}
 				else
 				{
+					right = ConvertArrayIndex(right, inst.RightInputType, allowIntPtr: true);
 					return CallUnsafeIntrinsic(name + "ByteOffset", new[] { left.Expression, right.Expression }, brt, inst);
 				}
 			}
@@ -1324,13 +1328,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				ILInstruction offsetInst = PointerArithmeticOffset.Detect(inst.Left, brt.ElementType, inst.CheckForOverflow);
 				if (offsetInst != null)
 				{
+					left = Translate(offsetInst);
+					left = ConvertArrayIndex(left, inst.LeftInputType, allowIntPtr: true);
 					return CallUnsafeIntrinsic("Add", new[] {
-						new NamedArgumentExpression("elementOffset", Translate(offsetInst)),
+						new NamedArgumentExpression("elementOffset", left),
 						new NamedArgumentExpression("source", right)
 					}, brt, inst);
 				}
 				else
 				{
+					left = ConvertArrayIndex(left, inst.LeftInputType, allowIntPtr: true);
 					return CallUnsafeIntrinsic("AddByteOffset", new[] {
 						new NamedArgumentExpression("byteOffset", left.Expression),
 						new NamedArgumentExpression("source", right)
@@ -2921,11 +2928,31 @@ namespace ICSharpCode.Decompiler.CSharp
 		TranslatedExpression TranslateArrayIndex(ILInstruction i)
 		{
 			var input = Translate(i);
-			if (i.ResultType == StackType.I4 && input.Type.IsSmallIntegerType() && input.Type.Kind != TypeKind.Enum)
+			return ConvertArrayIndex(input, i.ResultType, allowIntPtr: false);
+		}
+
+		TranslatedExpression ConvertArrayIndex(TranslatedExpression input, StackType stackType, bool allowIntPtr)
+		{
+			if (input.Type.GetSize() > stackType.GetSize())
 			{
-				return input; // we don't need a cast, just let small integers be promoted to int
+				// truncate oversized result
+				return input.ConvertTo(FindType(stackType, input.Type.GetSign()), this);
 			}
-			IType targetType = FindArithmeticType(i.ResultType, input.Type.GetSign());
+			if (input.Type.IsCSharpPrimitiveIntegerType() || input.Type.IsCSharpNativeIntegerType())
+			{
+				// can be used as array index as-is
+				return input;
+			}
+			if (allowIntPtr && (input.Type.IsKnownType(KnownTypeCode.IntPtr) || input.Type.IsKnownType(KnownTypeCode.UIntPtr)))
+			{
+				return input;
+			}
+			if (stackType != StackType.I4 && input.Type.GetStackType() == StackType.I4)
+			{
+				// prefer casting to int if that's big enough
+				stackType = StackType.I4;
+			}
+			IType targetType = FindArithmeticType(stackType, input.Type.GetSign());
 			return input.ConvertTo(targetType, this);
 		}
 

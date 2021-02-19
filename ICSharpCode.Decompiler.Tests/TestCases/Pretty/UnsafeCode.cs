@@ -537,6 +537,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 
+		private unsafe static int Issue2305(StructWithFixedSizeMembers value, StringComparison s)
+		{
+			return value.Integers[(int)s];
+		}
+
 		private unsafe static void* CastToVoidPtr(IntPtr intptr)
 		{
 			return (void*)intptr;
