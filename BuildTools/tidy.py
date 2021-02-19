@@ -16,7 +16,7 @@ def main():
 	dirs_to_check = (
 		os.path.join(root_dir, subdir)
 		for subdir in ('ICSharpCode.Decompiler', 'ICSharpCode.Decompiler.Tests', 'ILSpy', 'ILSpy.BamlDecompiler'))
-	format_result = subprocess.call(['dotnet', 'format', '--check', '--verbosity', 'detailed', os.path.join(root_dir, 'ILSpy.sln')])
+	format_result = subprocess.call(['dotnet-format', '--check', '--verbosity', 'detailed', os.path.join(root_dir, 'ILSpy.sln')])
 	ok = format_result == 0
 	for dir in dirs_to_check:
 		for root, dirs, files in os.walk(dir):
