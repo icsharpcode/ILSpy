@@ -313,9 +313,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			if (referencedAssemblies == null)
 				return ResolveModuleUncached(handle);
-			int row = MetadataTokens.GetRowNumber(handle);
-			if (row == -1)
-				row = GetRowNumberByMetadataReader(handle);
+			int row = GetRowNumber(handle);
 			Debug.Assert(row != 0);
 			if (row >= referencedAssemblies.Length)
 				HandleOutOfRange(handle);
@@ -326,9 +324,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref referencedAssemblies[row], module);
 		}
 
-		int GetRowNumberByMetadataReader(AssemblyReferenceHandle handle)
+		int GetRowNumber(AssemblyReferenceHandle handle)
 		{
-			return MetadataTokens.GetRowNumber(metadata, handle);
+			var row = MetadataTokens.GetRowNumber(handle);
+			if (row == -1 )
+				row = MetadataTokens.GetRowNumber(metadata, handle);
+			return row;
 		}
 
 		IModule ResolveModuleUncached(AssemblyReferenceHandle handle)
