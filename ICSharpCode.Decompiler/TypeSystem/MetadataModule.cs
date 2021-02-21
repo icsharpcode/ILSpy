@@ -324,14 +324,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref referencedAssemblies[row], module);
 		}
 
-		int GetRowNumber(AssemblyReferenceHandle handle)
-		{
-			var row = MetadataTokens.GetRowNumber(handle);
-			if (row == -1 )
-				row = MetadataTokens.GetRowNumber(metadata, handle);
-			return row;
-		}
-
 		IModule ResolveModuleUncached(AssemblyReferenceHandle handle)
 		{
 			var asmRef = new Metadata.AssemblyReference(metadata, handle);
