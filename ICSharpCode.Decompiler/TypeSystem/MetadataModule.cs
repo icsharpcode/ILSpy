@@ -313,7 +313,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			if (referencedAssemblies == null)
 				return ResolveModuleUncached(handle);
-			int row = MetadataTokens.GetRowNumber(handle);
+			int row = metadata.GetRowNumber(handle);
 			Debug.Assert(row != 0);
 			if (row >= referencedAssemblies.Length)
 				HandleOutOfRange(handle);
