@@ -42,7 +42,10 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.ElementResult = elementResult;
 		}
 
-		public ByReferenceResolveResult(IType elementType, ReferenceKind kind)
+		/// <remarks>
+		/// Should only be used for temporary ResolveResults in TypeInference and CSharpConversions, etc.
+		/// </remarks>
+		internal ByReferenceResolveResult(IType elementType, ReferenceKind kind)
 			: base(new ByReferenceType(elementType))
 		{
 			this.ReferenceKind = kind;

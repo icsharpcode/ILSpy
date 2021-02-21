@@ -180,10 +180,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				target = new ConversionResolveResult(method.Parameters[0].Type, crr, Conversion.NullLiteralConversion);
 			}
-			else if (target is ByReferenceResolveResult brrr)
+			else if (firstArgument is DirectionExpression de)
 			{
-				target = brrr.ElementResult;
+				target = de.Expression.GetResolveResult();
 			}
+			Debug.Assert(target != null);
 			ResolveResult[] args = new ResolveResult[invocationExpression.Arguments.Count - 1];
 			string[] argNames = null;
 			int pos = 0;
