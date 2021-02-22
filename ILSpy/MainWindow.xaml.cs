@@ -36,6 +36,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Threading;
 
+using AvalonDock.Layout.Serialization;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
@@ -51,8 +53,6 @@ using ICSharpCode.TreeView;
 using Microsoft.Win32;
 
 using OSVersionHelper;
-
-using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
 namespace ICSharpCode.ILSpy
 {

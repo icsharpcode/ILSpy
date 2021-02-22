@@ -22,7 +22,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 
-using Xceed.Wpf.AvalonDock.Layout.Serialization;
+using AvalonDock.Layout.Serialization;
 
 namespace ICSharpCode.ILSpy.Docking
 {
