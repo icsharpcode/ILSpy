@@ -41,20 +41,29 @@ namespace ILSpy.BamlDecompiler.Rewrite
 
 		public void Run(XamlContext ctx, XDocument document)
 		{
-			var mappings = DecompileEventMappings(ctx, document);
-			ProcessConnectionIds(document.Root, mappings);
+			var connections = DecompileConnections(ctx, document);
+			ProcessConnectionIds(ctx, document.Root, connections);
 		}
 
-		static void ProcessConnectionIds(XElement element,
-			List<(LongSet key, EventRegistration[] value)> eventMappings)
+		static void ProcessConnectionIds(XamlContext ctx, XElement element,
+			(List<(LongSet key, FieldAssignment value)> fieldAssignments,
+			List<(LongSet key, EventRegistration[] value)> eventMappings) connections)
 		{
 			foreach (var child in element.Elements())
-				ProcessConnectionIds(child, eventMappings);
+				ProcessConnectionIds(ctx, child, connections);
 
+			var fieldAssignments = connections.fieldAssignments;
+			var eventMappings = connections.eventMappings;
 			foreach (var annotation in element.Annotations<BamlConnectionId>())
 			{
 				int index;
-				if ((index = eventMappings.FindIndex(item => item.key.Contains(annotation.Id))) > -1)
+				if ((index = fieldAssignments.FindIndex(item => item.key.Contains(annotation.Id))) > -1)
+				{
+					var xName = ctx.GetKnownNamespace("Name", XamlContext.KnownNamespace_Xaml, element);
+					if (element.Attribute("Name") is null && element.Attribute(xName) is null)
+						element.Add(new XAttribute(xName, fieldAssignments[index].value.FieldName));
+				}
+				else if ((index = eventMappings.FindIndex(item => item.key.Contains(annotation.Id))) > -1)
 				{
 					foreach (var entry in eventMappings[index].value)
 					{
@@ -72,31 +81,37 @@ namespace ILSpy.BamlDecompiler.Rewrite
 						}
 					}
 				}
+				else
+				{
+					element.Add(new XComment($"Unknown connection ID: {annotation.Id}"));
+				}
 			}
 		}
 
-		List<(LongSet, EventRegistration[])> DecompileEventMappings(XamlContext ctx, XDocument document)
+		(List<(LongSet, FieldAssignment)>, List<(LongSet, EventRegistration[])>) DecompileConnections
+			(XamlContext ctx, XDocument document)
 		{
-			var result = new List<(LongSet, EventRegistration[])>();
+			var fieldAssignments = new List<(LongSet key, FieldAssignment value)>();
+			var eventMappings = new List<(LongSet, EventRegistration[])>();
 
 			var xClass = document.Root
 				.Elements().First()
 				.Attribute(ctx.GetKnownNamespace("Class", XamlContext.KnownNamespace_Xaml));
 			if (xClass == null)
-				return result;
+				return (fieldAssignments, eventMappings);
 
 			var type = ctx.TypeSystem.FindType(new FullTypeName(xClass.Value)).GetDefinition();
 			if (type == null)
-				return result;
+				return (fieldAssignments, eventMappings);
 
-			DecompileEventMappings(ctx, result, componentConnectorTypeName, type);
-			DecompileEventMappings(ctx, result, styleConnectorTypeName, type);
+			DecompileConnections(ctx, fieldAssignments, eventMappings, componentConnectorTypeName, type);
+			DecompileConnections(ctx, fieldAssignments, eventMappings, styleConnectorTypeName, type);
 
-			return result;
+			return (fieldAssignments, eventMappings);
 		}
 
-		void DecompileEventMappings(XamlContext ctx, List<(LongSet, EventRegistration[])> result,
-			FullTypeName connectorTypeName, ITypeDefinition type)
+		void DecompileConnections(XamlContext ctx, List<(LongSet, FieldAssignment)> fieldAssignments,
+			List<(LongSet, EventRegistration[])> eventMappings, FullTypeName connectorTypeName, ITypeDefinition type)
 		{
 			var connectorInterface = ctx.TypeSystem.FindType(connectorTypeName).GetDefinition();
 			if (connectorInterface == null)
@@ -144,11 +159,19 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			{
 				foreach (var section in ilSwitch.Sections)
 				{
-					events.Clear();
-					FindEvents(section.Body, events);
-					if (events.Count > 0)
+					var field = FindField(section.Body);
+					if (!(field is null))
 					{
-						result.Add((section.Labels, events.ToArray()));
+						fieldAssignments.Add((section.Labels, field));
+					}
+					else
+					{
+						events.Clear();
+						FindEvents(section.Body, events);
+						if (events.Count > 0)
+						{
+							eventMappings.Add((section.Labels, events.ToArray()));
+						}
 					}
 				}
 			}
@@ -165,25 +188,66 @@ namespace ILSpy.BamlDecompiler.Rewrite
 					var inst = comp.Kind == ComparisonKind.Inequality
 						? ifInst.FalseInst
 						: ifInst.TrueInst;
-					events.Clear();
-					FindEvents(inst, events);
-					if (events.Count > 0)
+
+					var field = FindField(inst);
+					if (!(field is null))
 					{
-						result.Add((new LongSet(id), events.ToArray()));
+						fieldAssignments.Add((new LongSet(id), field));
+					}
+					else
+					{
+						events.Clear();
+						FindEvents(inst, events);
+						if (events.Count > 0)
+						{
+							eventMappings.Add((new LongSet(id), events.ToArray()));
+						}
 					}
 				}
 			}
 		}
 
-		void FindEvents(ILInstruction inst, List<EventRegistration> events)
+		FieldAssignment FindField(ILInstruction inst)
 		{
 			switch (inst)
 			{
 				case Block b:
-					if (MatchEventSetterCreation(b, out var @event))
+					var t = b.Instructions.FirstOrDefault();
+					if (!(t is null) && MatchFieldAssignment(t, out var field))
+						return field;
+					return null;
+				case Branch br:
+					return FindField(br.TargetBlock);
+				default:
+					if (MatchFieldAssignment(inst, out field))
+						return field;
+					return null;
+			}
+		}
+
+		bool MatchFieldAssignment(ILInstruction inst, out FieldAssignment field)
+		{
+			field = null;
+			if (!inst.MatchStFld(out _, out var fld, out var value) || !value.MatchCastClass(out var arg, out _)
+				|| !(arg.MatchLdLoc(out var t) && t.Kind == VariableKind.Parameter && t.Index == 1))
+				return false;
+
+			field = new FieldAssignment { FieldName = fld.Name };
+			return true;
+		}
+
+		void FindEvents(ILInstruction inst, List<EventRegistration> events)
+		{
+			EventRegistration @event;
+			switch (inst)
+			{
+				case Block b:
+					for (int i = 0; i < b.Instructions.Count;)
 					{
-						events.Add(@event);
-						break;
+						if (MatchEventSetterCreation(b, ref i, out @event))
+							events.Add(@event);
+						else
+							i++;
 					}
 					foreach (var node in b.Instructions)
 					{
@@ -205,15 +269,17 @@ namespace ILSpy.BamlDecompiler.Rewrite
 		// callvirt set_Event(ldloc v, ldsfld eventName)
 		// callvirt set_Handler(ldloc v, newobj RoutedEventHandler..ctor(ldloc this, ldftn eventHandler))
 		// callvirt Add(callvirt get_Setters(castclass System.Windows.Style(ldloc target)), ldloc v)
-		// leave IL_0007 (nop)
-		bool MatchEventSetterCreation(Block b, out EventRegistration @event)
+		bool MatchEventSetterCreation(Block b, ref int pos, out EventRegistration @event)
 		{
 			@event = null;
-			var instr = b.Instructions;
-			if (instr.Count != 5 || !b.FinalInstruction.MatchNop())
+			if (!b.FinalInstruction.MatchNop())
+			{
+				pos = b.Instructions.Count;
 				return false;
+			}
+			var instr = b.Instructions;
 			// stloc v(newobj EventSetter..ctor())
-			if (!instr.ElementAt(0).MatchStLoc(out var v, out var initializer))
+			if (!instr[pos + 0].MatchStLoc(out var v, out var initializer))
 				return false;
 			if (!(initializer is NewObj newObj
 				&& newObj.Method.DeclaringType.FullName == "System.Windows.EventSetter"
@@ -222,7 +288,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				return false;
 			}
 			//callvirt set_Event(ldloc v, ldsfld eventName)
-			if (!(instr.ElementAt(1) is CallVirt setEventCall && setEventCall.Arguments.Count == 2))
+			if (!(instr[pos + 1] is CallVirt setEventCall && setEventCall.Arguments.Count == 2))
 				return false;
 			if (!setEventCall.Method.IsAccessor)
 				return false;
@@ -238,7 +304,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				eventName = eventName.Remove(eventName.Length - "Event".Length);
 			}
 			// callvirt set_Handler(ldloc v, newobj RoutedEventHandler..ctor(ldloc this, ldftn eventHandler))
-			if (!(instr.ElementAt(2) is CallVirt setHandlerCall && setHandlerCall.Arguments.Count == 2))
+			if (!(instr[pos + 2] is CallVirt setHandlerCall && setHandlerCall.Arguments.Count == 2))
 				return false;
 			if (!setHandlerCall.Method.IsAccessor)
 				return false;
@@ -250,7 +316,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				return false;
 			@event = new EventRegistration { EventName = eventName, MethodName = handlerName };
 			// callvirt Add(callvirt get_Setters(castclass System.Windows.Style(ldloc target)), ldloc v)
-			if (!(instr.ElementAt(3) is CallVirt addCall && addCall.Arguments.Count == 2))
+			if (!(instr[pos + 3] is CallVirt addCall && addCall.Arguments.Count == 2))
 				return false;
 			if (addCall.Method.Name != "Add")
 				return false;
@@ -268,6 +334,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				return false;
 			if (!addCall.Arguments[1].MatchLdLoc(v))
 				return false;
+			pos += 4;
 			return true;
 		}
 
