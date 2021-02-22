@@ -8,9 +8,10 @@
 		<SystemCollectionsImmutableVersion>5.0.0</SystemCollectionsImmutableVersion>
 		<SystemReflectionMetadataVersion>5.0.0</SystemReflectionMetadataVersion>
 		<SystemCompilerServicesUnsafeVersion>5.0.0</SystemCompilerServicesUnsafeVersion>
+		<SystemCompositionVersion>5.0.1</SystemCompositionVersion>
 		<ILAsmVersion>5.0.0</ILAsmVersion> <!-- Microsoft.NETCore.ILAsm -->
 		<RoslynVersion>3.8.0</RoslynVersion> <!-- Microsoft.CodeAnalysis.* -->
-		<MonoCecilVersion>0.10.3</MonoCecilVersion>
+		<MonoCecilVersion>0.11.3</MonoCecilVersion>
 		<AvalonEditVersion>6.1.0-preview1</AvalonEditVersion>
 		<NUnitVersion>3.12.0</NUnitVersion>
 		<NUnitAdapterVersion>3.13.0</NUnitAdapterVersion>

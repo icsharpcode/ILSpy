@@ -39,7 +39,7 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="$(AvalonEditVersion)" />
-    <PackageReference Include="System.Composition" Version="1.3.0" />
+    <PackageReference Include="System.Composition" Version="$(SystemCompositionVersion)" />
   </ItemGroup>
 
   <ItemGroup>
