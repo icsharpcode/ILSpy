@@ -22,6 +22,7 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -366,6 +367,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!block.Instructions[0].MatchIfInstruction(out ILInstruction condition, out ILInstruction trueInst))
 				return false;
+			var falseInst = block.Instructions[1];
+			if (condition is Comp comp && comp.Right.MatchLdcI(0))
+			{
+				if (comp.Kind == ComparisonKind.Equality)
+				{
+					// if (len == 0): effectively negates the condition
+					condition = comp.Left;
+					ExtensionMethods.Swap(ref trueInst, ref falseInst);
+				}
+				else if (comp.Kind == ComparisonKind.Inequality)
+				{
+					// if (len != 0): comparison is redundant (equivalent to implicit non-zero check)
+					condition = comp.Left;
+				}
+				else
+				{
+					return false;
+				}
+			}
 			condition = condition.UnwrapConv(ConversionKind.Truncate);
 			if (condition.MatchLdLen(StackType.I, out ILInstruction array))
 			{
@@ -392,7 +412,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!IsNullSafeArrayToPointerNotNullAndNotEmptyBlock(notNullAndNotEmptyBlock, v, p, targetBlock))
 				return false;
-			return block.Instructions[1].MatchBranch(nullOrEmptyBlock);
+			return falseInst.MatchBranch(nullOrEmptyBlock);
 		}
 
 		bool IsNullSafeArrayToPointerNotNullAndNotEmptyBlock(Block block, ILVariable v, ILVariable p, Block targetBlock)
