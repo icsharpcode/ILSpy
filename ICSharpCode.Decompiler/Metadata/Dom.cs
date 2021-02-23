@@ -191,6 +191,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		public FullTypeName GetPrimitiveType(PrimitiveTypeCode typeCode)
 		{
 			var ktr = KnownTypeReference.Get(typeCode.ToKnownTypeCode());
+			if (ktr == null)
+				return default;
 			return new TopLevelTypeName(ktr.Namespace, ktr.Name, ktr.TypeParameterCount);
 		}
 
