@@ -40,19 +40,9 @@ internal sealed class ExtraUnsafeTests
 
 	public unsafe static byte[] Issue1292(int val, byte[] arr)
 	{
-		//The blocks IL_0019 are reachable both inside and outside the pinned region starting at IL_0013. ILSpy has duplicated these blocks in order to place them both within and outside the `fixed` statement.
-		byte[] array;
-		if ((array = arr) != null && array.Length != 0)
+		fixed (byte* ptr = arr)
 		{
-			fixed (byte* ptr = &array[0])
-			{
-				*(int*)ptr = val;
-			}
-		}
-		else
-		{
-			/*pinned*/ref byte reference = ref *(byte*)null;
-			*(int*)Unsafe.AsPointer(ref reference) = val;
+			*(int*)ptr = val;
 		}
 		return arr;
 	}
