@@ -100,9 +100,14 @@ namespace ICSharpCode.ILSpy.Docking
 					if (state != null)
 					{
 						if (state.DecompiledNodes != null)
-							MainWindow.Instance.SelectNodes(state.DecompiledNodes);
+						{
+							MainWindow.Instance.SelectNodes(state.DecompiledNodes,
+								inNewTabPage: false, setFocus: true, changingActiveTab: true);
+						}
 						else
+						{
 							MainWindow.Instance.NavigateTo(new RequestNavigateEventArgs(state.ViewedUri, null));
+						}
 					}
 
 					RaisePropertyChanged(nameof(ActiveTabPage));

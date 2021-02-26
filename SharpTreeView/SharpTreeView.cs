@@ -825,7 +825,8 @@ namespace ICSharpCode.TreeView
 
 		public void SetSelectedNodes(IEnumerable<SharpTreeNode> nodes)
 		{
-			this.SetSelectedItems(nodes.ToList());
+			bool success = this.SetSelectedItems(nodes.ToList());
+			Debug.Assert(success);
 		}
 	}
 }

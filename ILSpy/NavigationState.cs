@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy
@@ -30,17 +31,20 @@ namespace ICSharpCode.ILSpy
 	{
 		private readonly HashSet<SharpTreeNode> treeNodes;
 
-		public IEnumerable<SharpTreeNode> TreeNodes { get { return treeNodes; } }
+		public IEnumerable<SharpTreeNode> TreeNodes => treeNodes;
 		public ViewState ViewState { get; private set; }
+		public TabPageModel TabPage { get; private set; }
 
-		public NavigationState(ViewState viewState)
+		public NavigationState(TabPageModel tabPage, ViewState viewState)
 		{
+			this.TabPage = tabPage;
 			this.treeNodes = new HashSet<SharpTreeNode>((IEnumerable<SharpTreeNode>)viewState.DecompiledNodes ?? Array.Empty<SharpTreeNode>());
 			ViewState = viewState;
 		}
 
-		public NavigationState(IEnumerable<SharpTreeNode> treeNodes)
+		public NavigationState(TabPageModel tabPage, IEnumerable<SharpTreeNode> treeNodes)
 		{
+			this.TabPage = tabPage;
 			this.treeNodes = new HashSet<SharpTreeNode>(treeNodes);
 		}
 
