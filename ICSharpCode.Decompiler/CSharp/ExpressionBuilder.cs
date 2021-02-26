@@ -2487,9 +2487,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (ShouldUseBaseReference())
 				{
+					var baseReferenceType = resolver.CurrentTypeDefinition.DirectBaseTypes
+						.FirstOrDefault(t => t.Kind != TypeKind.Interface);
 					return new BaseReferenceExpression()
 						.WithILInstruction(target)
-						.WithRR(new ThisResolveResult(memberDeclaringType, nonVirtualInvocation));
+						.WithRR(new ThisResolveResult(baseReferenceType ?? memberDeclaringType, nonVirtualInvocation));
 				}
 				else
 				{
