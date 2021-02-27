@@ -610,9 +610,20 @@ namespace ICSharpCode.ILSpy
 			return new MyAssemblyResolver(this, loadOnDemand);
 		}
 
-		private MyUniversalResolver GetUniversalResolver()
+		private UniversalAssemblyResolver GetUniversalResolver()
 		{
-			return LazyInitializer.EnsureInitialized(ref this.universalResolver, () => new MyUniversalResolver(this))!;
+			return LazyInitializer.EnsureInitialized(ref this.universalResolver, () => {
+				var targetFramework = this.GetTargetFrameworkIdAsync().Result;
+
+				var readerOptions = DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections
+					? MetadataReaderOptions.ApplyWindowsRuntimeProjections
+					: MetadataReaderOptions.None;
+
+				var rootedPath = Path.IsPathRooted(this.FileName) ? this.FileName : null;
+
+				return new UniversalAssemblyResolver(rootedPath, throwOnError: false, targetFramework,
+					PEStreamOptions.PrefetchEntireImage, readerOptions);
+			})!;
 		}
 
 		public AssemblyReferenceClassifier GetAssemblyReferenceClassifier()
@@ -630,15 +641,7 @@ namespace ICSharpCode.ILSpy
 			return debugInfoProvider;
 		}
 
-		class MyUniversalResolver : UniversalAssemblyResolver
-		{
-			public MyUniversalResolver(LoadedAssembly assembly)
-				: base(assembly.FileName, false, assembly.GetTargetFrameworkIdAsync().Result, PEStreamOptions.PrefetchEntireImage, DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections ? MetadataReaderOptions.ApplyWindowsRuntimeProjections : MetadataReaderOptions.None)
-			{
-			}
-		}
-
-		MyUniversalResolver? universalResolver;
+		UniversalAssemblyResolver? universalResolver;
 
 		/// <summary>
 		/// Wait until the assembly is loaded.
