@@ -62,7 +62,11 @@ namespace ICSharpCode.ILSpy
 				EnableHyperlinks = true
 			};
 			output.WriteLine(Resources.ILSpyVersion + RevisionClass.FullVersion);
-			if (WindowsVersionHelper.HasPackageIdentity)
+			bool hasPackageIdentity = false;
+#if NET472
+			hasPackageIdentity = WindowsVersionHelper.HasPackageIdentity;
+#endif
+			if (hasPackageIdentity)
 			{
 				output.WriteLine($"Package Name: {WindowsVersionHelper.GetPackageFamilyName()}");
 			}

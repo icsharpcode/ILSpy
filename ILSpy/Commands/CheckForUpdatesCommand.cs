@@ -28,11 +28,12 @@ namespace ICSharpCode.ILSpy
 	{
 		public override bool CanExecute(object parameter)
 		{
+#if NET472
 			if (WindowsVersionHelper.HasPackageIdentity)
 			{
 				return false;
 			}
-
+#endif
 			return base.CanExecute(parameter);
 		}
 

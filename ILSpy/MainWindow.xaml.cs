@@ -678,12 +678,13 @@ namespace ICSharpCode.ILSpy
 
 		public async Task ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings, bool forceCheck = false)
 		{
+#if NET472
 			// Don't check for updates if we're in an MSIX since they work differently
 			if (WindowsVersionHelper.HasPackageIdentity)
 			{
 				return;
 			}
-
+#endif
 			string downloadUrl;
 			if (forceCheck)
 			{

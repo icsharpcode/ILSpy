@@ -3,7 +3,7 @@
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
     <AssemblyName>ILSpy.BamlDecompiler.Plugin</AssemblyName>
     <LangVersion>8.0</LangVersion>
 

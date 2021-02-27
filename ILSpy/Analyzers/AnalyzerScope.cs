@@ -23,11 +23,12 @@ using System.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
+	using ICSharpCode.Decompiler.TypeSystem;
+
 	public class AnalyzerScope
 	{
 		readonly ITypeDefinition typeScope;

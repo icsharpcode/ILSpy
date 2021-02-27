@@ -5,11 +5,12 @@ using System.Threading;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Search
 {
+	using ICSharpCode.Decompiler.TypeSystem;
+
 	abstract class AbstractEntitySearchStrategy : AbstractSearchStrategy
 	{
 		protected readonly Language language;

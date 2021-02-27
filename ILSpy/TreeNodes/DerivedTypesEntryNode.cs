@@ -21,10 +21,11 @@ using System.Linq;
 using System.Threading;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
+	using ICSharpCode.Decompiler.TypeSystem;
+
 	class DerivedTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		readonly AssemblyList list;

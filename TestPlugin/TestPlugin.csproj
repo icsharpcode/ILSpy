@@ -2,7 +2,7 @@
 <Project Sdk="MSBuild.Sdk.Extras">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
     <AssemblyName>Test.Plugin</AssemblyName>
 
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>

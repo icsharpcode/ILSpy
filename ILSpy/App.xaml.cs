@@ -94,6 +94,7 @@ namespace ICSharpCode.ILSpy
 				var discovery = new AttributedPartDiscoveryV1(Resolver.DefaultInstance);
 				var catalog = ComposableCatalog.Create(Resolver.DefaultInstance);
 				var pluginDir = Path.GetDirectoryName(typeof(App).Module.FullyQualifiedName);
+#if NET472
 				if (pluginDir != null)
 				{
 					foreach (var plugin in Directory.GetFiles(pluginDir, "*.Plugin.dll"))
@@ -111,6 +112,7 @@ namespace ICSharpCode.ILSpy
 						}
 					}
 				}
+#endif
 				// Add the built-in parts
 				var createdParts = await discovery.CreatePartsAsync(Assembly.GetExecutingAssembly());
 				catalog = catalog.AddParts(createdParts);

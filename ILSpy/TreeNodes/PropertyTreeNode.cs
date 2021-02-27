@@ -23,12 +23,13 @@ using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.TypeSystem;
 
 using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
+	using ICSharpCode.Decompiler.TypeSystem;
+
 	/// <summary>
 	/// Represents a property in the TreeView.
 	/// </summary>
