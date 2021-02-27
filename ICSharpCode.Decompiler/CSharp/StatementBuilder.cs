@@ -390,6 +390,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out string label))
 			{
 				label = "end_" + inst.TargetLabel;
+				if (!duplicateLabels.TryGetValue(label, out int count))
+				{
+					duplicateLabels.Add(label, 1);
+				}
+				else
+				{
+					duplicateLabels[label]++;
+					label += "_" + (count + 1);
+				}
 				endContainerLabels.Add(inst.TargetContainer, label);
 			}
 			return new GotoStatement(label).WithILInstruction(inst);
