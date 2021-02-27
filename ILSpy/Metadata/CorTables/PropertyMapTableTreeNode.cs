@@ -111,7 +111,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
-			public int EventList => MetadataTokens.GetToken(propertyMap.PropertyList);
+			public int PropertyList => MetadataTokens.GetToken(propertyMap.PropertyList);
 
 			public string PropertyListTooltip {
 				get {
