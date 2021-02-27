@@ -58,15 +58,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		IEnumerable<ILSpyTreeNode> FetchChildren(CancellationToken cancellationToken)
 		{
 			// FetchChildren() runs on the main thread; but the enumerator will be consumed on a background thread
-			var assemblies = list.GetAssemblies().Select(node => node.GetPEFileOrNull()).Where(asm => asm != null).ToArray();
-			return FindDerivedTypes(list, type, assemblies, cancellationToken);
+			return FindDerivedTypes(list, type, cancellationToken);
 		}
 
 		internal static IEnumerable<DerivedTypesEntryNode> FindDerivedTypes(AssemblyList list, ITypeDefinition type,
-			PEFile[] assemblies, CancellationToken cancellationToken)
+			CancellationToken cancellationToken)
 		{
 			var definitionMetadata = type.ParentModule.PEFile.Metadata;
 			var metadataToken = (SRM.TypeDefinitionHandle)type.MetadataToken;
+			var assemblies = list.GetAllAssemblies().GetAwaiter().GetResult()
+				.Select(node => node.GetPEFileOrNull()).Where(asm => asm != null).ToArray();
 			foreach (var module in assemblies)
 			{
 				var metadata = module.Metadata;

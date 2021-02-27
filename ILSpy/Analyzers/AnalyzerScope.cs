@@ -181,7 +181,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 			if (friendAssemblies.Count > 0)
 			{
-				IEnumerable<LoadedAssembly> assemblies = AssemblyList.GetAssemblies();
+				IEnumerable<LoadedAssembly> assemblies = AssemblyList.GetAllAssemblies()
+					.GetAwaiter().GetResult();
 
 				foreach (var assembly in assemblies)
 				{
