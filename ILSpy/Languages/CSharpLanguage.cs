@@ -688,13 +688,13 @@ namespace ICSharpCode.ILSpy
 				case HandleKind.EventDefinition:
 					var ed = metadata.GetEventDefinition((EventDefinitionHandle)handle);
 					declaringType = metadata.GetMethodDefinition(ed.GetAccessors().GetAny()).GetDeclaringType();
-					if (fullName)
+					if (fullName && !declaringType.IsNil)
 						return ToCSharpString(metadata, declaringType, fullName, omitGenerics) + "." + metadata.GetString(ed.Name);
 					return metadata.GetString(ed.Name);
 				case HandleKind.PropertyDefinition:
 					var pd = metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle);
 					declaringType = metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
-					if (fullName)
+					if (fullName && !declaringType.IsNil)
 						return ToCSharpString(metadata, declaringType, fullName, omitGenerics) + "." + metadata.GetString(pd.Name);
 					return metadata.GetString(pd.Name);
 				default:
