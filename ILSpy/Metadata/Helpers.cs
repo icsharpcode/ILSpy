@@ -69,6 +69,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				DataGridFilter.SetIsAutoFilterEnabled(view, true);
 				DataGridFilter.SetContentFilterFactory(view, new RegexContentFilterFactory());
 			}
+			DataGridFilter.GetFilter(view).Clear();
 			view.RowDetailsTemplateSelector = null;
 			view.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Collapsed;
 			((MetaDataGrid)view).SelectedTreeNode = selectedNode;
