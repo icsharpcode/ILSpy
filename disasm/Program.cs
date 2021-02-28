@@ -1,13 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection.PortableExecutable;
 using System.Text;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
+
 using NDesk.Options;
 
 class Program
@@ -18,20 +20,21 @@ class Program
 		var settings = new DecompilerSettings(languageVersion);
 
 		bool show_help = false;
-		List<string> names = new List<string> ();
+		List<string> names = new List<string>();
 
-		var p = new OptionSet () {
+		var p = new OptionSet() {
 			{ "decompile",  "Decompile assembly to source code", v => settings.ProduceSourceCode = v != null },
 			{ "?|h|help",  "show this message and exit", v => show_help = v != null },
 		};
 
 		List<string> extra = null;
-		try {
-			extra = p.Parse (args);
+		try
+		{
+			extra = p.Parse(args);
 		}
 		catch (OptionException e)
 		{
-			Console.Write ($"Error: {e.Message}");
+			Console.Write($"Error: {e.Message}");
 			show_help = true;
 		}
 		show_help = extra == null || extra.Count == 0;
@@ -58,7 +61,7 @@ class Program
 			string relFile = Path.GetFileNameWithoutExtension(file_);
 
 			string decompiledDir = Path.Combine(inputDir, relFile);
-			if (settings.ProduceSourceCode)	//If not producing code, specify directory anyway, just to see if something outputs into it.
+			if (settings.ProduceSourceCode) //If not producing code, specify directory anyway, just to see if something outputs into it.
 			{
 				if (!Directory.Exists(decompiledDir))
 				{
@@ -67,7 +70,7 @@ class Program
 			}
 
 			if (settings.ProduceSourceCode)
-			{ 
+			{
 				Console.Write($"Decompiling {file}... ");
 			}
 
