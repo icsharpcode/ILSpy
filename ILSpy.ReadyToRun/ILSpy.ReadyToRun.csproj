@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
-    <TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
+    <TargetFramework>net472</TargetFramework>
     <AssemblyName>ILSpy.ReadyToRun.Plugin</AssemblyName>
     <LangVersion>8.0</LangVersion>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>

@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
+    <TargetFramework>net472</TargetFramework>
     <LangVersion>8.0</LangVersion>
 
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
