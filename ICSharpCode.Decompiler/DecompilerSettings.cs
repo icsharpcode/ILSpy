@@ -1765,6 +1765,22 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
+		bool produceSourceCode = true;
+
+		/// <summary>
+		/// Produce readable source/IL code out of compiled assembly
+		/// </summary>
+		public bool ProduceSourceCode {
+			get { return produceSourceCode; }
+			set {
+				if (produceSourceCode != value)
+				{
+					produceSourceCode = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 
 		CSharpFormattingOptions csharpFormattingOptions;
 

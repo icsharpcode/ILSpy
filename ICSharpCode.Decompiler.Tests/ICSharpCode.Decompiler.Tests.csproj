@@ -103,7 +103,6 @@
     <Compile Include="Helpers\RoslynToolset.cs" />
     <Compile Include="Output\InsertParenthesesVisitorTests.cs" />
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
-    <Compile Include="TestAssemblyResolver.cs" />
     <Compile Include="TestCases\Correctness\DeconstructionTests.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
     <None Include="TestCases\ILPretty\Issue2260SwitchString.cs" />

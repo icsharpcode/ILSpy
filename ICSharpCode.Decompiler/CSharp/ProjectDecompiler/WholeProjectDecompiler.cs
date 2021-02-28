@@ -53,6 +53,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		LanguageVersion? languageVersion;
 
+		/// <summary>
+		/// Latest proposed standard to be used with current compilation of ilSpy.
+		/// 
+		/// Let's limit the roundtrip tests to C# 8.0 for now; because 9.0 is still in preview
+		/// and the generated project doesn't build as-is.
+		/// </summary>
+		public const LanguageVersion defaultLanguageVersion = LanguageVersion.CSharp8_0;
+
 		public LanguageVersion LanguageVersion {
 			get { return languageVersion ?? Settings.GetMinimumRequiredVersion(); }
 			set {
@@ -109,7 +117,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 		}
 
-		protected WholeProjectDecompiler(
+		public WholeProjectDecompiler(
 			DecompilerSettings settings,
 			Guid projectGuid,
 			IAssemblyResolver assemblyResolver,

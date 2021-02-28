@@ -1,18 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
-using ICSharpCode.Decompiler.Metadata;
-
-namespace ICSharpCode.Decompiler.Tests
+namespace ICSharpCode.Decompiler.Metadata
 {
-	sealed class TestAssemblyResolver : UniversalAssemblyResolver
+	public class LocalAssemblyResolver : UniversalAssemblyResolver
 	{
 		readonly HashSet<string> localAssemblies = new HashSet<string>();
 
-		public TestAssemblyResolver(string mainAssemblyFileName, string baseDir, string targetFramework)
+		public LocalAssemblyResolver(string mainAssemblyFileName, string baseDir, string targetFramework)
 			: base(mainAssemblyFileName, false, targetFramework, PEStreamOptions.PrefetchMetadata, MetadataReaderOptions.ApplyWindowsRuntimeProjections)
 		{
 			var assemblyNames = new DirectoryInfo(baseDir).EnumerateFiles("*.dll").Select(f => Path.GetFileNameWithoutExtension(f.Name));
