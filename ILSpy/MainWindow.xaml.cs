@@ -52,8 +52,6 @@ using ICSharpCode.TreeView;
 
 using Microsoft.Win32;
 
-using OSVersionHelper;
-
 namespace ICSharpCode.ILSpy
 {
 	class MainWindowDataContext
@@ -678,13 +676,12 @@ namespace ICSharpCode.ILSpy
 
 		public async Task ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings, bool forceCheck = false)
 		{
-#if NET472
 			// Don't check for updates if we're in an MSIX since they work differently
-			if (WindowsVersionHelper.HasPackageIdentity)
+			if (StorePackageHelper.HasPackageIdentity)
 			{
 				return;
 			}
-#endif
+
 			string downloadUrl;
 			if (forceCheck)
 			{

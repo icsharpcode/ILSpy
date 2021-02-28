@@ -19,8 +19,6 @@
 
 using ICSharpCode.ILSpy.Properties;
 
-using OSVersionHelper;
-
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(Menu = nameof(Resources._Help), Header = nameof(Resources._CheckUpdates), MenuOrder = 5000)]
@@ -28,12 +26,11 @@ namespace ICSharpCode.ILSpy
 	{
 		public override bool CanExecute(object parameter)
 		{
-#if NET472
-			if (WindowsVersionHelper.HasPackageIdentity)
+			if (StorePackageHelper.HasPackageIdentity)
 			{
 				return false;
 			}
-#endif
+
 			return base.CanExecute(parameter);
 		}
 
