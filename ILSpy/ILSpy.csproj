@@ -63,6 +63,9 @@
     <EmbeddedResource Include="TextView\CSharp-Mode.xshd" />
     <EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
     <EmbeddedResource Include="TextView\Asm-Mode.xshd" />
+    <Compile Remove="Properties\AssemblyInfo.template.cs" />
+    <None Remove="Properties\launchSettings.json" />
+    <None Remove="Properties\app.config.template" />
   </ItemGroup>
 
   <ItemGroup>
@@ -89,8 +92,6 @@
     <SortResXInput Include="Properties\*.resx" />
     <SortResXInput Include="..\ILSpy.AddIn\*.resx" />
     <SortResXInput Include="..\ILSpy.ReadyToRun\Properties\*.resx" />
-    <Compile Remove="Properties\AssemblyInfo.template.cs" />
-    <None Remove="Properties\launchSettings.json" />
     <SortResXStamp Include="obj\sort-resx.stamp" />
   </ItemGroup>
 
