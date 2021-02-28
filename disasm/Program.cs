@@ -12,8 +12,8 @@ using NDesk.Options;
 
 class Program
 {
-    static int Main(string[] args)
-    {
+	static int Main(string[] args)
+	{
 		const LanguageVersion languageVersion = WholeProjectDecompiler.defaultLanguageVersion;
 		var settings = new DecompilerSettings(languageVersion);
 
@@ -45,19 +45,19 @@ class Program
 		}
 
 		foreach (string file_ in extra)
-        {
-            if (!File.Exists(file_))
-            {
-                Console.WriteLine($"Error: File '{file_}' does not exists.");
-                return 2;
-            }
+		{
+			if (!File.Exists(file_))
+			{
+				Console.WriteLine($"Error: File '{file_}' does not exists.");
+				return 2;
+			}
 
-            string path = Path.GetFullPath(file_);
-            string inputDir = Path.GetDirectoryName(path);
-            string file = Path.GetFileName(file_);
-            string relFile = Path.GetFileNameWithoutExtension(file_);
+			string path = Path.GetFullPath(file_);
+			string inputDir = Path.GetDirectoryName(path);
+			string file = Path.GetFileName(file_);
+			string relFile = Path.GetFileNameWithoutExtension(file_);
 
-            string decompiledDir = Path.Combine(inputDir, relFile);
+			string decompiledDir = Path.Combine(inputDir, relFile);
 			if (settings.ProduceSourceCode)	//If not producing code, specify directory anyway, just to see if something outputs into it.
 			{
 				if (!Directory.Exists(decompiledDir))
@@ -72,28 +72,26 @@ class Program
 			}
 
 			Stopwatch w = Stopwatch.StartNew();
-            using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read))
-            {
-                PEFile module = new PEFile(path, fileStream, PEStreamOptions.PrefetchEntireImage);
-                var resolver = new LocalAssemblyResolver(path, inputDir, module.Reader.DetectTargetFrameworkId());
-                resolver.AddSearchDirectory(inputDir);
-                resolver.RemoveSearchDirectory(".");
+			using FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+			PEFile module = new PEFile(path, fileStream, PEStreamOptions.PrefetchEntireImage);
+			var resolver = new LocalAssemblyResolver(path, inputDir, module.Reader.DetectTargetFrameworkId());
+			resolver.AddSearchDirectory(inputDir);
+			resolver.RemoveSearchDirectory(".");
 
-				// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
-				var projectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
-				var decompiler = new WholeProjectDecompiler(settings, projectGuid, resolver, resolver, debugInfoProvider: null);
+			// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
+			var projectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
+			var decompiler = new WholeProjectDecompiler(settings, projectGuid, resolver, resolver, debugInfoProvider: null);
 
-				decompiler.DecompileProject(module, decompiledDir);
+			decompiler.DecompileProject(module, decompiledDir);
 
-				if (settings.ProduceSourceCode)
-				{
-					Console.WriteLine($"ok.");
-					Console.WriteLine($"Used time: {w.Elapsed.TotalSeconds:f2} sec");
-				}
+			if (settings.ProduceSourceCode)
+			{
+				Console.WriteLine($"ok.");
+				Console.WriteLine($"Used time: {w.Elapsed.TotalSeconds:f2} sec");
 			}
-        }
-        return 0;
-    }
+		}
+		return 0;
+	}
 
 	public static string ByteArrayToString(byte[] ba)
 	{
@@ -103,4 +101,3 @@ class Program
 		return hex.ToString();
 	}
 }
-
