@@ -11,6 +11,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{F45DB999-7E7
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy", "ILSpy\ILSpy.csproj", "{1E85EFF9-E370-4683-83E4-8A3D063FF791}"
+	ProjectSection(ProjectDependencies) = postProject
+		{984CC812-9470-4A13-AFF9-CC44068D666C} = {984CC812-9470-4A13-AFF9-CC44068D666C}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.TreeView", "SharpTreeView\ICSharpCode.TreeView.csproj", "{DDE2A481-8271-4EAC-A330-8FA6A38D13D1}"
 EndProject
