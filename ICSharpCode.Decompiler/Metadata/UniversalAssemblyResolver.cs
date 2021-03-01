@@ -88,6 +88,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		readonly string targetFramework;
+		readonly string runtimePack;
 		readonly TargetFrameworkIdentifier targetFrameworkIdentifier;
 		readonly Version targetFrameworkVersion;
 
@@ -109,16 +110,20 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// "Silverlight", if the string doesn't match any of these, the resolver falls back to ".NET Framework",
 		/// which is "classic" .NET &lt;= 4.8.
 		/// </param>
+		/// <param name="runtimePack">
+		/// Identifier of the runtime pack this assembly was compiled for.
+		/// If omitted, falling back to "Microsoft.NETCore.App" and this is ignored in case of classic .NET</param>
 		/// <param name="streamOptions">Options used for the <see cref="PEReader"/>.</param>
 		/// <param name="metadataOptions">Options used for the <see cref="MetadataReader"/>.</param>
 		public UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, string targetFramework,
-			PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
+			string runtimePack = null, PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 		{
 			this.mainAssemblyFileName = mainAssemblyFileName;
 			this.throwOnError = throwOnError;
 			this.streamOptions = streamOptions;
 			this.metadataOptions = metadataOptions;
 			this.targetFramework = targetFramework ?? string.Empty;
+			this.runtimePack = runtimePack ?? "Microsoft.NETCore.App";
 			(targetFrameworkIdentifier, targetFrameworkVersion) = ParseTargetFramework(this.targetFramework);
 
 			if (mainAssemblyFileName != null)
@@ -228,7 +233,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				return FindWindowsMetadataFile(name);
 			}
 
-			string file = null;
+			string file;
 			switch (targetFrameworkIdentifier)
 			{
 				case TargetFrameworkIdentifier.NETCoreApp:
@@ -238,9 +243,9 @@ namespace ICSharpCode.Decompiler.Metadata
 					if (dotNetCorePathFinder == null)
 					{
 						if (mainAssemblyFileName == null)
-							dotNetCorePathFinder = new DotNetCorePathFinder(targetFrameworkIdentifier, targetFrameworkVersion);
+							dotNetCorePathFinder = new DotNetCorePathFinder(targetFrameworkIdentifier, targetFrameworkVersion, runtimePack);
 						else
-							dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, targetFrameworkIdentifier, targetFrameworkVersion);
+							dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, runtimePack, targetFrameworkIdentifier, targetFrameworkVersion);
 						foreach (var directory in directories)
 						{
 							dotNetCorePathFinder.AddSearchDirectory(directory);

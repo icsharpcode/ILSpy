@@ -116,6 +116,12 @@ namespace ICSharpCode.ILSpy
 			return assembly.DetectTargetFrameworkId() ?? string.Empty;
 		}
 
+		public async Task<string> GetRuntimePackAsync()
+		{
+			var assembly = await GetPEFileAsync().ConfigureAwait(false);
+			return assembly.DetectRuntimePack() ?? string.Empty;
+		}
+
 		public ReferenceLoadInfo LoadedAssemblyReferencesInfo { get; } = new ReferenceLoadInfo();
 
 		IDebugInfoProvider? debugInfoProvider;
@@ -614,6 +620,7 @@ namespace ICSharpCode.ILSpy
 		{
 			return LazyInitializer.EnsureInitialized(ref this.universalResolver, () => {
 				var targetFramework = this.GetTargetFrameworkIdAsync().Result;
+				var runtimePack = this.GetRuntimePackAsync().Result;
 
 				var readerOptions = DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections
 					? MetadataReaderOptions.ApplyWindowsRuntimeProjections
@@ -622,7 +629,7 @@ namespace ICSharpCode.ILSpy
 				var rootedPath = Path.IsPathRooted(this.FileName) ? this.FileName : null;
 
 				return new UniversalAssemblyResolver(rootedPath, throwOnError: false, targetFramework,
-					PEStreamOptions.PrefetchEntireImage, readerOptions);
+					runtimePack, PEStreamOptions.PrefetchEntireImage, readerOptions);
 			})!;
 		}
 
