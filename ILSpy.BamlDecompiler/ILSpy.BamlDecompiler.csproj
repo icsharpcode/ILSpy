@@ -27,6 +27,10 @@
   <Import Project="..\packages.props" />
 
   <ItemGroup>
+    <Compile Remove="Baml\KnownThings.gen.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="$(AvalonEditVersion)" />
     <PackageReference Include="System.Composition" Version="$(SystemCompositionVersion)" />
   </ItemGroup>
