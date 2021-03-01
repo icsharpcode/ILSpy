@@ -13,7 +13,7 @@ namespace ICSharpCode.Decompiler.Tests
 		readonly HashSet<string> localAssemblies = new HashSet<string>();
 
 		public TestAssemblyResolver(string mainAssemblyFileName, string baseDir, string targetFramework)
-			: base(mainAssemblyFileName, false, targetFramework, PEStreamOptions.PrefetchMetadata, MetadataReaderOptions.ApplyWindowsRuntimeProjections)
+			: base(mainAssemblyFileName, false, targetFramework, null, PEStreamOptions.PrefetchMetadata, MetadataReaderOptions.ApplyWindowsRuntimeProjections)
 		{
 			var assemblyNames = new DirectoryInfo(baseDir).EnumerateFiles("*.dll").Select(f => Path.GetFileNameWithoutExtension(f.Name));
 			foreach (var name in assemblyNames)
