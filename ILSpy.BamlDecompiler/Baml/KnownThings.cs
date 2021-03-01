@@ -70,7 +70,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		public IModule FrameworkAssembly => assemblies[0];
 		IModule ResolveAssembly(string name)
 		{
-			IModule module = typeSystem.Modules.FirstOrDefault(m => m.FullAssemblyName == name);
+			IModule module = typeSystem.Modules.FirstOrDefault(m => m.AssemblyName == name);
 			if (module == null)
 				throw new Exception("Could not resolve known assembly '" + name + "'!");
 			return module;
