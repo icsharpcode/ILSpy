@@ -4,24 +4,6 @@ using System.IO;
 
 namespace ICSharpCode.Decompiler.Console
 {
-	[AttributeUsage(AttributeTargets.Class)]
-	public sealed class ProjectOptionRequiresOutputDirectoryValidationAttribute : ValidationAttribute
-	{
-		public ProjectOptionRequiresOutputDirectoryValidationAttribute()
-		{
-		}
-
-		protected override ValidationResult IsValid(object value, ValidationContext context)
-		{
-			if (value is ILSpyCmdProgram obj) {
-				if (obj.CreateCompilableProjectFlag && string.IsNullOrEmpty(obj.OutputDirectory)) {
-					return new ValidationResult("--project cannot be used unless --outputdir is also specified");
-				}
-			}
-			return ValidationResult.Success;
-		}
-	}
-
 	[AttributeUsage(AttributeTargets.Property)]
 	public sealed class FileExistsOrNullAttribute : ValidationAttribute
 	{

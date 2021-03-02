@@ -14,32 +14,34 @@ using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.PdbProvider;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
+using System.Diagnostics;
+using McMaster.Extensions.CommandLineUtils.HelpText;
 // ReSharper disable All
 
 namespace ICSharpCode.Decompiler.Console
 {
-	[Command(Name = "ilspycmd", Description = "dotnet tool for decompiling .NET assemblies and generating portable PDBs",
-		ExtendedHelpText = @"
-Remarks:
-  -o is valid with every option and required when using -p.
-")]
+	[Command(Name = "ilspycmd", Description = "dotnet tool for decompiling .NET assemblies and generating portable PDBs")]
 	[HelpOption("-h|--help")]
-	[ProjectOptionRequiresOutputDirectoryValidation]
-	class ILSpyCmdProgram
+	public class ILSpyCmdProgram
 	{
 		public static int Main(string[] args) => CommandLineApplication.Execute<ILSpyCmdProgram>(args);
 
 		[FileExists]
-		[Required]
-		[Argument(0, "Assembly file name", "The assembly that is being decompiled. This argument is mandatory.")]
+		[Argument(0, "Assembly file name", "Assembly to decompile")]
 		public string InputAssemblyName { get; }
 
 		[DirectoryExists]
 		[Option("-o|--outputdir <directory>", "The output directory, if omitted decompiler output is written to standard out.", CommandOptionType.SingleValue)]
 		public string OutputDirectory { get; }
 
-		[Option("-p|--project", "Decompile assembly as compilable project. This requires the output directory option.", CommandOptionType.NoValue)]
-		public bool CreateCompilableProjectFlag { get; }
+		[Option("-p|--project", "Decompile assembly as compilable project. If outputdir is omitted - saved to assembly folder", CommandOptionType.NoValue)]
+		public bool WholeProjectDecompile { get; set;  }
+		
+		//[Option("-c|--crc", "Calculate assembly internal checksum", CommandOptionType.NoValue)]
+		public bool CalculateChecksum { get; set; }
+
+		[Option("-f|--file", "Decompile assembly into single file.", CommandOptionType.NoValue)]
+		public bool DecompileToFile { get; }
 
 		[Option("-t|--type <type-name>", "The fully qualified name of the type to decompile.", CommandOptionType.SingleValue)]
 		public string TypeName { get; }
@@ -78,11 +80,22 @@ Remarks:
 
 		private int OnExecute(CommandLineApplication app)
 		{
+			if (InputAssemblyName == null)
+			{
+				app.HelpTextGenerator.Generate(app, System.Console.Out);
+				return 2;
+			}
+			
 			TextWriter output = System.Console.Out;
 			bool outputDirectorySpecified = !string.IsNullOrEmpty(OutputDirectory);
 
 			try {
-				if (CreateCompilableProjectFlag) {
+				if (!(DecompileToFile || ShowILCodeFlag || ShowILSequencePointsFlag || CreateDebugInfoFlag || ShowVersion))
+				{
+					WholeProjectDecompile = true;
+				}
+				
+				if (WholeProjectDecompile || CalculateChecksum) {
 					return DecompileAsProject(InputAssemblyName, OutputDirectory);
 				} else if (EntityTypes.Any()) {
 					var values = EntityTypes.SelectMany(v => v.Split(',', ';')).ToArray();
@@ -183,13 +196,44 @@ Remarks:
 
 		int DecompileAsProject(string assemblyFileName, string outputDirectory)
 		{
+			string path = Path.GetFullPath(assemblyFileName);
+			if (outputDirectory == null)
+			{
+				string inputDir = Path.GetDirectoryName(path);
+				string relFile = Path.GetFileNameWithoutExtension(path);
+				outputDirectory = Path.Combine(inputDir, relFile);
+			}
+
+			if (WholeProjectDecompile)
+			{
+				if (!Directory.Exists(outputDirectory))
+				{
+					Directory.CreateDirectory(outputDirectory);
+				}
+			}
+
+			if (WholeProjectDecompile)
+			{
+				string file = Path.GetFileName(path);
+				System.Console.Write($"Decompiling {file}... ");
+			}
+
+			Stopwatch w = Stopwatch.StartNew();
+			
 			var module = new PEFile(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Reader.DetectTargetFrameworkId());
-			foreach (var path in ReferencePaths) {
-				resolver.AddSearchDirectory(path);
+			foreach (var refpath in ReferencePaths) {
+				resolver.AddSearchDirectory(refpath);
 			}
 			var decompiler = new WholeProjectDecompiler(GetSettings(), resolver, resolver, TryLoadPDB(module));
 			decompiler.DecompileProject(module, outputDirectory);
+
+			if (WholeProjectDecompile)
+			{
+				System.Console.WriteLine($"ok.");
+				System.Console.WriteLine($"Used time: {w.Elapsed.TotalSeconds:f2} sec");
+			}
+
 			return 0;
 		}
 
