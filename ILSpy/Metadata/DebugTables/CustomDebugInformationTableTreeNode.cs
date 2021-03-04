@@ -17,11 +17,15 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.DebugInfo;
@@ -51,6 +55,10 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
+
+			view.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.VisibleWhenSelected;
+			view.RowDetailsTemplateSelector = new CustomDebugInformationDetailsTemplateSelector();
+
 			var list = new List<CustomDebugInformationEntry>();
 			CustomDebugInformationEntry scrollTargetEntry = default;
 
@@ -76,6 +84,24 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
+		class CustomDebugInformationDetailsTemplateSelector : DataTemplateSelector
+		{
+			public override DataTemplate SelectTemplate(object item, DependencyObject container)
+			{
+				var entry = (CustomDebugInformationEntry)item;
+				switch (entry.kind)
+				{
+					case CustomDebugInformationEntry.CustomDebugInformationKind.StateMachineHoistedLocalScopes:
+					case CustomDebugInformationEntry.CustomDebugInformationKind.CompilationMetadataReferences:
+					case CustomDebugInformationEntry.CustomDebugInformationKind.CompilationOptions:
+					case CustomDebugInformationEntry.CustomDebugInformationKind.TupleElementNames:
+						return (DataTemplate)MetadataTableViews.Instance["CustomDebugInformationDetailsDataGrid"];
+					default:
+						return (DataTemplate)MetadataTableViews.Instance["CustomDebugInformationDetailsTextBlob"];
+				}
+			}
+		}
+
 		struct CustomDebugInformationEntry
 		{
 			readonly int? offset;
@@ -83,10 +109,81 @@ namespace ICSharpCode.ILSpy.Metadata
 			readonly MetadataReader metadata;
 			readonly CustomDebugInformationHandle handle;
 			readonly CustomDebugInformation debugInfo;
+			internal readonly CustomDebugInformationKind kind;
+
+			internal enum CustomDebugInformationKind
+			{
+				None,
+				Unknown,
+				StateMachineHoistedLocalScopes,
+				DynamicLocalVariables,
+				DefaultNamespaces,
+				EditAndContinueLocalSlotMap,
+				EditAndContinueLambdaAndClosureMap,
+				EmbeddedSource,
+				SourceLink,
+				MethodSteppingInformation,
+				CompilationOptions,
+				CompilationMetadataReferences,
+				TupleElementNames
+			}
+
+			static CustomDebugInformationKind GetKind(MetadataReader metadata, GuidHandle h)
+			{
+				if (h.IsNil)
+					return CustomDebugInformationKind.None;
+				var guid = metadata.GetGuid(h);
+				if (KnownGuids.StateMachineHoistedLocalScopes == guid)
+				{
+					return CustomDebugInformationKind.StateMachineHoistedLocalScopes;
+				}
+				if (KnownGuids.DynamicLocalVariables == guid)
+				{
+					return CustomDebugInformationKind.StateMachineHoistedLocalScopes;
+				}
+				if (KnownGuids.DefaultNamespaces == guid)
+				{
+					return CustomDebugInformationKind.StateMachineHoistedLocalScopes;
+				}
+				if (KnownGuids.EditAndContinueLocalSlotMap == guid)
+				{
+					return CustomDebugInformationKind.EditAndContinueLocalSlotMap;
+				}
+				if (KnownGuids.EditAndContinueLambdaAndClosureMap == guid)
+				{
+					return CustomDebugInformationKind.EditAndContinueLambdaAndClosureMap;
+				}
+				if (KnownGuids.EmbeddedSource == guid)
+				{
+					return CustomDebugInformationKind.EmbeddedSource;
+				}
+				if (KnownGuids.SourceLink == guid)
+				{
+					return CustomDebugInformationKind.SourceLink;
+				}
+				if (KnownGuids.MethodSteppingInformation == guid)
+				{
+					return CustomDebugInformationKind.MethodSteppingInformation;
+				}
+				if (KnownGuids.CompilationOptions == guid)
+				{
+					return CustomDebugInformationKind.CompilationOptions;
+				}
+				if (KnownGuids.CompilationMetadataReferences == guid)
+				{
+					return CustomDebugInformationKind.CompilationMetadataReferences;
+				}
+				if (KnownGuids.TupleElementNames == guid)
+				{
+					return CustomDebugInformationKind.TupleElementNames;
+				}
+
+				return CustomDebugInformationKind.Unknown;
+			}
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
-			public object Offset => offset == null ? "n/a" : (object)offset;
+			public object Offset => offset == null ? "n/a" : offset;
 
 			[StringFormat("X8")]
 			public int Parent => MetadataTokens.GetToken(debugInfo.Parent);
@@ -100,48 +197,46 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			[StringFormat("X8")]
-			public int Kind => MetadataTokens.GetHeapOffset(debugInfo.Kind);
-
-			public string KindTooltip {
+			public string Kind {
 				get {
-					if (debugInfo.Kind.IsNil)
-						return null;
-					var guid = metadata.GetGuid(debugInfo.Kind);
-					if (KnownGuids.StateMachineHoistedLocalScopes == guid)
+					Guid guid;
+					if (kind != CustomDebugInformationKind.None)
 					{
-						return "State Machine Hoisted Local Scopes (C# / VB) [" + guid + "]";
+						guid = metadata.GetGuid(debugInfo.Kind);
 					}
-					if (KnownGuids.DynamicLocalVariables == guid)
+					else
 					{
-						return "Dynamic Local Variables (C#) [" + guid + "]";
+						guid = Guid.Empty;
 					}
-					if (KnownGuids.DefaultNamespaces == guid)
+					switch (kind)
 					{
-						return "Default Namespaces (VB) [" + guid + "]";
+						case CustomDebugInformationKind.None:
+							return null;
+						case CustomDebugInformationKind.StateMachineHoistedLocalScopes:
+							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - State Machine Hoisted Local Scopes (C# / VB) [{guid}]";
+						case CustomDebugInformationKind.DynamicLocalVariables:
+							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Dynamic Local Variables (C#) [{guid}]";
+						case CustomDebugInformationKind.DefaultNamespaces:
+							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Default Namespaces (VB) [{guid}]";
+						case CustomDebugInformationKind.EditAndContinueLocalSlotMap:
+							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Edit And Continue Local Slot Map (C# / VB) [{guid}]";
+						case CustomDebugInformationKind.EditAndContinueLambdaAndClosureMap:
+							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Edit And Continue Lambda And Closure Map (C# / VB) [{guid}]";
+						case CustomDebugInformationKind.EmbeddedSource:
+							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Embedded Source (C# / VB) [{guid}]";
+						case CustomDebugInformationKind.SourceLink:
+							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Source Link (C# / VB) [{guid}]";
+						case CustomDebugInformationKind.MethodSteppingInformation:
+							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Method Stepping Information (C# / VB) [{guid}]";
+						case CustomDebugInformationKind.CompilationOptions:
+							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Compilation Options (C# / VB) [{ guid}]";
+						case CustomDebugInformationKind.CompilationMetadataReferences:
+							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Compilation Metadata References (C# / VB) [{ guid}]";
+						case CustomDebugInformationKind.TupleElementNames:
+							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Tuple Element Names (C#) [{ guid}]";
+						default:
+							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Unknown [{guid}]";
 					}
-					if (KnownGuids.EditAndContinueLocalSlotMap == guid)
-					{
-						return "Edit And Continue Local Slot Map (C# / VB) [" + guid + "]";
-					}
-					if (KnownGuids.EditAndContinueLambdaAndClosureMap == guid)
-					{
-						return "Edit And Continue Lambda And Closure Map (C# / VB) [" + guid + "]";
-					}
-					if (KnownGuids.EmbeddedSource == guid)
-					{
-						return "Embedded Source (C# / VB) [" + guid + "]";
-					}
-					if (KnownGuids.SourceLink == guid)
-					{
-						return "Source Link (C# / VB) [" + guid + "]";
-					}
-					if (KnownGuids.MethodSteppingInformation == guid)
-					{
-						return "Method Stepping Information (C# / VB) [" + guid + "]";
-					}
-
-					return $"Unknown [" + guid + "]";
 				}
 			}
 
@@ -156,6 +251,75 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
+			object rowDetails;
+
+			public object RowDetails {
+				get {
+					if (rowDetails != null)
+						return rowDetails;
+
+					if (debugInfo.Value.IsNil)
+						return null;
+
+					var reader = metadata.GetBlobReader(debugInfo.Value);
+					ArrayList list;
+
+					switch (kind)
+					{
+						case CustomDebugInformationKind.None:
+							return null;
+						case CustomDebugInformationKind.StateMachineHoistedLocalScopes:
+							list = new ArrayList();
+
+							while (reader.RemainingBytes > 0)
+							{
+								uint offset = reader.ReadUInt32();
+								uint length = reader.ReadUInt32();
+								list.Add(new { StartOffset = offset, Length = length });
+							}
+
+							return rowDetails = list;
+						case CustomDebugInformationKind.SourceLink:
+							return reader.ReadUTF8(reader.RemainingBytes);
+						case CustomDebugInformationKind.CompilationOptions:
+							list = new ArrayList();
+
+							while (reader.RemainingBytes > 0)
+							{
+								string name = reader.ReadUTF8StringNullTerminated();
+								string value = reader.ReadUTF8StringNullTerminated();
+								list.Add(new { Name = name, Value = value });
+							}
+
+							return rowDetails = list;
+						case CustomDebugInformationKind.CompilationMetadataReferences:
+							list = new ArrayList();
+
+							while (reader.RemainingBytes > 0)
+							{
+								string fileName = reader.ReadUTF8StringNullTerminated();
+								string aliases = reader.ReadUTF8StringNullTerminated();
+								byte flags = reader.ReadByte();
+								uint timestamp = reader.ReadUInt32();
+								uint fileSize = reader.ReadUInt32();
+								Guid guid = reader.ReadGuid();
+								list.Add(new { FileName = fileName, Aliases = aliases, Flags = flags, Timestamp = timestamp, FileSize = fileSize, Guid = guid });
+							}
+
+							return rowDetails = list;
+						case CustomDebugInformationKind.TupleElementNames:
+							list = new ArrayList();
+							while (reader.RemainingBytes > 0)
+							{
+								list.Add(new { ElementName = reader.ReadUTF8StringNullTerminated() });
+							}
+							return rowDetails = list;
+						default:
+							return reader.ToHexString();
+					}
+				}
+			}
+
 			public CustomDebugInformationEntry(PEFile module, MetadataReader metadata, bool isEmbedded, CustomDebugInformationHandle handle)
 			{
 				this.offset = isEmbedded ? null : (int?)metadata.GetTableMetadataOffset(TableIndex.CustomDebugInformation)
@@ -164,6 +328,8 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = metadata;
 				this.handle = handle;
 				this.debugInfo = metadata.GetCustomDebugInformation(handle);
+				this.rowDetails = null;
+				this.kind = GetKind(metadata, debugInfo.Kind);
 			}
 		}
 
