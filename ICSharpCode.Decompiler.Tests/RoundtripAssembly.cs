@@ -257,7 +257,7 @@ namespace ICSharpCode.Decompiler.Tests
 			return Path.Combine(vsPath, "msbuild.exe");
 		}
 
-		static void Compile(string projectFile, string outputDir)
+		public static void Compile(string projectFile, string outputDir)
 		{
 			var info = new ProcessStartInfo(FindMSBuild());
 			info.Arguments = $"/nologo /v:minimal /restore /p:OutputPath=\"{outputDir}\" \"{projectFile}\"";

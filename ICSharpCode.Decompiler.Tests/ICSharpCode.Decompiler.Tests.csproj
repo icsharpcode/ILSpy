@@ -99,6 +99,7 @@
     <Compile Include="..\ICSharpCode.Decompiler.PdbProvider.Cecil\MonoCecilDebugInfoProvider.cs" Link="MonoCecilDebugInfoProvider.cs" />
     <Compile Include="..\ILSpy\DebugInfo\DebugInfoUtils.cs" Link="DebugInfoUtils.cs" />
     <Compile Include="..\ILSpy\DebugInfo\PortableDebugInfoProvider.cs" Link="PortableDebugInfoProvider.cs" />
+    <Compile Include="ChecksumTest.cs" />
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="Helpers\RoslynToolset.cs" />
     <Compile Include="Output\InsertParenthesesVisitorTests.cs" />
