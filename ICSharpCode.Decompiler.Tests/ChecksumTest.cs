@@ -84,7 +84,9 @@ namespace ICSharpCode.Decompiler.Tests
 						xml.WriteElementString("OutputType", "Exe");
 						xml.WriteElementString("TargetFramework", targetFramework);
 						xml.WriteElementString("Deterministic", "true");
-						xml.WriteElementString("PathMap", "\"$(EnlistmentRoot)\"=C:\\ILSpy\\");
+						xml.WriteElementString("PathMap",
+							"$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./"
+						);
 					});
 				}
 
