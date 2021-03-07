@@ -35,6 +35,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.Tests", "ILSpy.Tests\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.ReadyToRun", "ILSpy.ReadyToRun\ILSpy.ReadyToRun.csproj", "{0313F581-C63B-43BB-AA9B-07615DABD8A3}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.Console", "ICSharpCode.Decompiler.Console\ICSharpCode.Decompiler.Console.csproj", "{35FBA61E-A13D-4BDA-B210-C1E2B3B7F2FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,10 @@ Global
 		{0313F581-C63B-43BB-AA9B-07615DABD8A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0313F581-C63B-43BB-AA9B-07615DABD8A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0313F581-C63B-43BB-AA9B-07615DABD8A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35FBA61E-A13D-4BDA-B210-C1E2B3B7F2FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35FBA61E-A13D-4BDA-B210-C1E2B3B7F2FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35FBA61E-A13D-4BDA-B210-C1E2B3B7F2FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35FBA61E-A13D-4BDA-B210-C1E2B3B7F2FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

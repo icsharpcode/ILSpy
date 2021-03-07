@@ -4,24 +4,15 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
-  <!--
-    Can retarget by adding file like this:
-    
-      retarget.props
-
-      <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-        <PropertyGroup>
-          <TargetFrameworks>net472</TargetFrameworks>
-        </PropertyGroup>
-      </Project>
-
-    Solution re-open is needed after change.
-    
-    (Easier to test with one .exe only)
--->
-  <Import Project="retarget.props" Condition="Exists('retarget.props')" />
-  <PropertyGroup Condition="!Exists('retarget.props')">
+  <PropertyGroup Condition="'$(SolutionName)' != 'ILSpy'">
     <TargetFrameworks>netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <!-- Easier to run as exe file, could use also ReadyToRun, but can be as this for now -->
+  <PropertyGroup Condition="'$(SolutionName)' == 'ILSpy'">
+    <TargetFrameworks>net472</TargetFrameworks>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -30,7 +21,7 @@
     <IsPackable>true</IsPackable>
     <AssemblyName>ilspycmd</AssemblyName>
     <ToolCommandName>ilspycmd</ToolCommandName>
-    <Version>7.0.0.6372-preview3</Version>
+    <Version>7.0.0.6373</Version>
     <Description>Command-line decompiler using the ILSpy decompilation engine</Description>
     <Copyright>Copyright 2011-2021 AlphaSierraPapa</Copyright>
     <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
@@ -40,7 +31,6 @@
     <Company />
     <AssemblyVersion>7.0.0.0</AssemblyVersion>
     <FileVersion>7.0.0.0</FileVersion>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>ILSpy Team</Authors>
   </PropertyGroup>
 
