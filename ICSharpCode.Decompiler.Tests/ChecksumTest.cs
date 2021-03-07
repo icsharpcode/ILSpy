@@ -83,10 +83,16 @@ namespace ICSharpCode.Decompiler.Tests
 					PlaceIntoTag("PropertyGroup", xml, () => {
 						xml.WriteElementString("OutputType", "Exe");
 						xml.WriteElementString("TargetFramework", targetFramework);
+
+						// This should improve to produce identical dll, but does not work in all cases.
 						xml.WriteElementString("Deterministic", "true");
 						xml.WriteElementString("PathMap",
 							"$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./"
 						);
+
+						xml.WriteElementString("SignAssembly", "true");
+						xml.WriteElementString("AssemblyOriginatorKeyFile", "../../../ICSharpCode.Decompiler/ICSharpCode.Decompiler.snk");
+						xml.WriteElementString("DelaySign", "false");
 					});
 				}
 
