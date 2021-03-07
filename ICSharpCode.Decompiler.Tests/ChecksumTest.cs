@@ -50,10 +50,10 @@ namespace ICSharpCode.Decompiler.Tests
 				}
 			}
 			catch (Exception)
-			{ 
+			{
 			}
 		}
-		
+
 		[Test]
 		public void Test1()
 		{
