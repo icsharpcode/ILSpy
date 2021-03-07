@@ -85,10 +85,11 @@ namespace ICSharpCode.Decompiler.Tests
 						xml.WriteElementString("TargetFramework", targetFramework);
 
 						// This should improve to produce identical dll, but does not work in all cases.
-						xml.WriteElementString("Deterministic", "true");
-						xml.WriteElementString("PathMap",
-							"$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./"
-						);
+						// Use without this code, just so we would compare binary different assemblies
+						//xml.WriteElementString("Deterministic", "true");
+						//xml.WriteElementString("PathMap",
+						//	"$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./"
+						//);
 
 						xml.WriteElementString("SignAssembly", "true");
 						xml.WriteElementString("AssemblyOriginatorKeyFile", "../../../ICSharpCode.Decompiler/ICSharpCode.Decompiler.snk");
