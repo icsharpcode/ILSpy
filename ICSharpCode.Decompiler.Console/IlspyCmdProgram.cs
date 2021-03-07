@@ -1,21 +1,21 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using McMaster.Extensions.CommandLineUtils;
-using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.Disassembler;
-using System.Threading;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
-using ICSharpCode.Decompiler.DebugInfo;
-using ICSharpCode.Decompiler.PdbProvider;
+using System.Threading;
+
+using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
-using System.Diagnostics;
-using McMaster.Extensions.CommandLineUtils.HelpText;
+using ICSharpCode.Decompiler.DebugInfo;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.PdbProvider;
+using ICSharpCode.Decompiler.TypeSystem;
+
+using McMaster.Extensions.CommandLineUtils;
 // ReSharper disable All
 
 namespace ICSharpCode.Decompiler.Console
