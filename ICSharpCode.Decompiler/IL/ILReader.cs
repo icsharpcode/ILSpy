@@ -575,10 +575,26 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Decodes the specified method body and returns an ILFunction.
 		/// </summary>
-		public ILFunction ReadIL(MethodDefinitionHandle method, MethodBodyBlock body, GenericContext genericContext = default, ILFunctionKind kind = ILFunctionKind.TopLevelFunction, CancellationToken cancellationToken = default)
+		public ILFunction ReadIL(MethodDefinitionHandle method, MethodBodyBlock body, GenericContext genericContext = default, 
+			ILFunctionKind kind = ILFunctionKind.TopLevelFunction, CancellationToken cancellationToken = default,
+			IncrementalChecksum checksumcalc = null)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			Init(method, body, genericContext);
+
+			if (checksumcalc != null && checksumcalc.Enabled)
+			{
+				var bytes = body.GetILBytes();
+
+				if (bytes != null)
+				{
+					checksumcalc.AppendString(this.method.FullName);
+					checksumcalc.AppendAndLogBinaryData(bytes);
+				}
+
+				return null;
+			}
+
 			ReadInstructions(cancellationToken);
 			var blockBuilder = new BlockBuilder(body, variableByExceptionHandler);
 			blockBuilder.CreateBlocks(mainContainer, instructionBuilder, isBranchTarget, cancellationToken);

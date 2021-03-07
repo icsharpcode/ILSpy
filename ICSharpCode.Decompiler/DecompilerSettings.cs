@@ -1781,6 +1781,11 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		/// <summary>
+		/// Checksum calculator, always will have valid instance even if checksum is not calculated
+		/// </summary>
+		public IncrementalChecksum checksumCalc = new IncrementalChecksum();
+
 
 		CSharpFormattingOptions csharpFormattingOptions;
 

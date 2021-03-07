@@ -42,10 +42,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public CSharpOutputVisitor(TextWriter textWriter, CSharpFormattingOptions formattingPolicy)
 		{
-			if (textWriter == null)
-			{
-				throw new ArgumentNullException(nameof(textWriter));
-			}
 			if (formattingPolicy == null)
 			{
 				throw new ArgumentNullException(nameof(formattingPolicy));

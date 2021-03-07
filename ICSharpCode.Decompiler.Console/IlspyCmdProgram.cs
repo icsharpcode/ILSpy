@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using System.Security.Cryptography;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp;
@@ -37,8 +38,11 @@ namespace ICSharpCode.Decompiler.Console
 		[Option("-p|--project", "Decompile assembly as compilable project. If outputdir is omitted - saved to assembly folder", CommandOptionType.NoValue)]
 		public bool WholeProjectDecompile { get; set; }
 
-		//[Option("-c|--crc", "Calculate assembly internal checksum", CommandOptionType.NoValue)]
+		[Option("-c|-crc|--crc", "Calculate assembly internal checksum", CommandOptionType.NoValue)]
 		public bool CalculateChecksum { get; set; }
+
+		[Option("-crclog|--crclog", "Write log on checksum calculation", CommandOptionType.NoValue)]
+		public bool ChecksumWriteLog { get; set; }
 
 		[Option("-f|--file", "Decompile assembly into single file.", CommandOptionType.NoValue)]
 		public bool DecompileToFile { get; }
@@ -91,7 +95,7 @@ namespace ICSharpCode.Decompiler.Console
 
 			try
 			{
-				if (!(DecompileToFile || ShowILCodeFlag || ShowILSequencePointsFlag || CreateDebugInfoFlag || ShowVersion))
+				if (!(DecompileToFile || ShowILCodeFlag || ShowILSequencePointsFlag || CreateDebugInfoFlag || ShowVersion || CalculateChecksum))
 				{
 					WholeProjectDecompile = true;
 				}
@@ -249,13 +253,38 @@ namespace ICSharpCode.Decompiler.Console
 			{
 				resolver.AddSearchDirectory(refpath);
 			}
-			var decompiler = new WholeProjectDecompiler(GetSettings(), resolver, resolver, TryLoadPDB(module));
+
+			var settings = GetSettings();
+			if (CalculateChecksum)
+			{
+				settings.checksumCalc.EnableChecksumCalculation(HashAlgorithmName.SHA256);
+			}
+
+			if (ChecksumWriteLog)
+			{ 
+				settings.checksumCalc.EnableChecksumLog(assemblyFileName);
+			}
+
+			settings.ProduceSourceCode = WholeProjectDecompile;
+
+			var decompiler = new WholeProjectDecompiler(settings, resolver, resolver, TryLoadPDB(module));
 			decompiler.DecompileProject(module, outputDirectory);
 
 			if (WholeProjectDecompile)
 			{
 				System.Console.WriteLine($"ok.");
 				System.Console.WriteLine($"Used time: {w.Elapsed.TotalSeconds:f2} sec");
+			}
+
+			if (CalculateChecksum)
+			{
+				System.Console.WriteLine($"'{Path.GetFileName(assemblyFileName)}' checksum:");
+				System.Console.WriteLine($"    '{settings.checksumCalc.GetHashString()}'");
+			}
+			
+			if (ChecksumWriteLog)
+			{
+				settings.checksumCalc.Dispose();
 			}
 
 			return 0;

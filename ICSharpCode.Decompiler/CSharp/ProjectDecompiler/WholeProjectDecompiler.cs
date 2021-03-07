@@ -131,10 +131,17 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
-			using (var writer = new StreamWriter(projectFileName))
+			if (!Settings.ProduceSourceCode)
 			{
-				DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
+				DecompileProject(moduleDefinition, targetDirectory, null, cancellationToken);
+			}
+			else
+			{
+				string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
+				using (var writer = new StreamWriter(projectFileName))
+				{
+					DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
+				}
 			}
 		}
 
@@ -149,12 +156,15 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
 			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
 			files.AddRange(WriteMiscellaneousFilesInProject(moduleDefinition));
-			if (StrongNameKeyFile != null)
+			if (Settings.ProduceSourceCode && StrongNameKeyFile != null)
 			{
 				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)), overwrite: true);
 			}
 
-			projectWriter.Write(projectFileWriter, this, files, moduleDefinition);
+			if (Settings.ProduceSourceCode)
+			{ 
+				projectWriter.Write(projectFileWriter, this, files, moduleDefinition);
+			}
 
 			string platformName = TargetServices.GetPlatformName(moduleDefinition);
 			return new ProjectId(platformName, ProjectGuid, ProjectTypeGuids.CSharpWindows);
@@ -189,10 +199,41 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			SyntaxTree syntaxTree = decompiler.DecompileModuleAndAssemblyAttributes();
 
 			const string prop = "Properties";
-			if (directories.Add(prop))
-				Directory.CreateDirectory(Path.Combine(TargetDirectory, prop));
+
+			if (Settings.ProduceSourceCode)
+			{
+				if (directories.Add(prop))
+					Directory.CreateDirectory(Path.Combine(TargetDirectory, prop));
+			}
+
 			string assemblyInfo = Path.Combine(prop, "AssemblyInfo.cs");
-			using (StreamWriter w = new StreamWriter(Path.Combine(TargetDirectory, assemblyInfo)))
+
+			var checksumCalc = Settings.checksumCalc;
+			if (checksumCalc.Enabled)
+			{
+				var settings = Settings;
+
+				foreach (var node in syntaxTree.Children)
+				{
+					AttributeSection asection = node as AttributeSection;
+					if (asection == null)
+					{
+						continue;
+					}
+
+					foreach (var attr in asection.Attributes)
+					{
+						checksumCalc.AppendString(attr.ToString());
+					}
+				}
+
+				if (!Settings.ProduceSourceCode)
+				{ 
+					return new[] { ("Compile", assemblyInfo) };
+				}
+			}
+
+			using (var w = new StreamWriter(Path.Combine(TargetDirectory, assemblyInfo)))
 			{
 				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
 			}
@@ -213,22 +254,28 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					else
 					{
 						string dir = CleanUpDirectoryName(metadata.GetString(type.Namespace));
-						if (directories.Add(dir))
-							Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
+						if (Settings.ProduceSourceCode)
+						{
+							if (directories.Add(dir))
+								Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
+						}
 						return Path.Combine(dir, file);
 					}
 				}, StringComparer.OrdinalIgnoreCase).ToList();
 			int total = files.Count;
 			var progress = ProgressIndicator;
 			DecompilerTypeSystem ts = new DecompilerTypeSystem(module, AssemblyResolver, Settings);
-			Parallel.ForEach(
-				Partitioner.Create(files, loadBalance: true),
-				new ParallelOptions {
-					MaxDegreeOfParallelism = this.MaxDegreeOfParallelism,
-					CancellationToken = cancellationToken
-				},
+			Action<IGrouping<string, TypeDefinitionHandle>> processType =
 				delegate (IGrouping<string, TypeDefinitionHandle> file) {
-					using (StreamWriter w = new StreamWriter(Path.Combine(TargetDirectory, file.Key)))
+
+					StreamWriter w = null;
+
+					if (Settings.ProduceSourceCode)
+					{
+						w = new StreamWriter(Path.Combine(TargetDirectory, file.Key));
+					}
+
+					using (w)
 					{
 						try
 						{
@@ -243,7 +290,31 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						}
 					}
 					progress?.Report(new DecompilationProgress(total, file.Key));
-				});
+				};
+
+			bool checksumCalculateEnabled = Settings.checksumCalc.Enabled;
+			if (checksumCalculateEnabled)
+			{
+				foreach (var gt in files)
+				{
+					processType(gt);
+				}
+
+				Settings.checksumCalc.Enabled = false;
+			}
+
+			if (Settings.ProduceSourceCode)
+			{
+				Parallel.ForEach(
+					Partitioner.Create(files, loadBalance: true),
+					new ParallelOptions {
+						MaxDegreeOfParallelism = this.MaxDegreeOfParallelism,
+						CancellationToken = cancellationToken
+					}, processType);
+			}
+
+			Settings.checksumCalc.Enabled = checksumCalculateEnabled;
+
 			return files.Select(f => ("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
 		}
 		#endregion
@@ -312,11 +383,22 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				}
 				else
 				{
+					stream.Position = 0;
 					string fileName = GetFileNameForResource(r.Name);
-					using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
+
+					var checksumCalc = Settings.checksumCalc;
+					if (checksumCalc.Enabled)
 					{
-						stream.Position = 0;
-						stream.CopyTo(fs);
+						checksumCalc.AppendStreamData(fileName, stream);
+					}
+
+					if (Settings.ProduceSourceCode)
+					{
+						using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
+						{
+							stream.Position = 0;
+							stream.CopyTo(fs);
+						}
 					}
 					yield return ("EmbeddedResource", fileName);
 				}
@@ -330,14 +412,28 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				string resx = Path.ChangeExtension(fileName, ".resx");
 				try
 				{
-					using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, resx), FileMode.Create, FileAccess.Write))
-					using (ResXResourceWriter writer = new ResXResourceWriter(fs))
+					if (Settings.ProduceSourceCode)
+					{
+						using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, resx), FileMode.Create, FileAccess.Write))
+						using (ResXResourceWriter writer = new ResXResourceWriter(fs))
+						{
+							foreach (var entry in new ResourcesFile(entryStream))
+							{
+								writer.AddResource(entry.Key, entry.Value);
+							}
+						}
+					}
+
+					var checksumCalc = Settings.checksumCalc;
+					if(checksumCalc.Enabled)
 					{
 						foreach (var entry in new ResourcesFile(entryStream))
 						{
-							writer.AddResource(entry.Key, entry.Value);
+							checksumCalc.AppendString(entry.Key);
+							checksumCalc.AppendString(entry.Value.ToString());
 						}
 					}
+
 					return new[] { ("EmbeddedResource", resx) };
 				}
 				catch (BadImageFormatException)
@@ -349,10 +445,16 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					// if the .resources can't be decoded, just save them as-is
 				}
 			}
-			using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
+
+			Settings.checksumCalc.AppendStreamData(fileName, entryStream);
+			if (Settings.ProduceSourceCode)
 			{
-				entryStream.CopyTo(fs);
+				using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
+				{
+					entryStream.CopyTo(fs);
+				}
 			}
+
 			return new[] { ("EmbeddedResource", fileName) };
 		}
 
@@ -374,6 +476,22 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		}
 		#endregion
 
+		protected void WriteAllBytes(string filename, byte[] buf)
+		{
+			if (Settings.ProduceSourceCode)
+			{
+				File.WriteAllBytes(Path.Combine(TargetDirectory, filename), buf);
+			}
+
+			var checksumCalc = Settings.checksumCalc;
+			if (checksumCalc.Enabled)
+			{
+				checksumCalc.AppendString(filename);
+				checksumCalc.AppendBinaryData(buf);
+			}
+		}
+
+
 		#region WriteMiscellaneousFilesInProject
 		protected virtual IEnumerable<(string itemType, string fileName)> WriteMiscellaneousFilesInProject(PEFile module)
 		{
@@ -384,21 +502,24 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			byte[] appIcon = CreateApplicationIcon(resources);
 			if (appIcon != null)
 			{
-				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.ico"), appIcon);
+				WriteAllBytes("app.ico", appIcon);
 				yield return ("ApplicationIcon", "app.ico");
 			}
 
 			byte[] appManifest = CreateApplicationManifest(resources);
 			if (appManifest != null && !IsDefaultApplicationManifest(appManifest))
 			{
-				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.manifest"), appManifest);
+				WriteAllBytes("app.manifest", appManifest);
 				yield return ("ApplicationManifest", "app.manifest");
 			}
 
 			var appConfig = module.FileName + ".config";
 			if (File.Exists(appConfig))
 			{
-				File.Copy(appConfig, Path.Combine(TargetDirectory, "app.config"), overwrite: true);
+				if (Settings.ProduceSourceCode)
+				{
+					File.Copy(appConfig, Path.Combine(TargetDirectory, "app.config"), overwrite: true);
+				}
 				yield return ("ApplicationConfig", Path.GetFileName(appConfig));
 			}
 		}

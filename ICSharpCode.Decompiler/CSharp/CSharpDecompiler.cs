@@ -1468,7 +1468,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					entityDecl.AddChild(body, Roles.Body);
 					return;
 				}
-				var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody, cancellationToken: CancellationToken);
+
+				var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody, cancellationToken: CancellationToken,
+					checksumcalc: settings.checksumCalc);
+
+				if (!settings.ProduceSourceCode)
+					return;
+
 				function.CheckInvariant(ILPhase.Normal);
 
 				if (entityDecl != null)
