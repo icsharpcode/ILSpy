@@ -126,6 +126,58 @@ namespace ICSharpCode.Decompiler.Tests
 			);
 		}
 
+		[Test]
+		public void FunctionNameChanges()
+		{
+			GenerateCheckumProject(CallerName(), false,
+				(w) => {
+					w.WriteLine(
+					@"public class MyTestClass{ 
+						void function1()
+						{
+							Console.WriteLine(""Test1"");
+						}
+					};");
+				},
+
+				(w) => {
+					w.WriteLine(
+						@"public class MyTestClass{ 
+						void function2()
+						{
+							Console.WriteLine(""Test1"");
+						}
+					};");
+				}
+			);
+		}
+
+		[Test]
+		public void ClassNameChanges()
+		{
+			GenerateCheckumProject(CallerName(), false,
+				(w) => {
+					w.WriteLine(
+					@"public class MyTestClass1{ 
+						void function1()
+						{
+							Console.WriteLine(""Test1"");
+						}
+					};");
+				},
+
+				(w) => {
+					w.WriteLine(
+					@"public class MyTestClass2{ 
+						void function1()
+						{
+							Console.WriteLine(""Test1"");
+						}
+					};");
+				}
+			);
+		}
+
 
 		public void GenerateCheckumProject(string title, bool expectEqual,
 			Action<PlainTextOutput> v1gen,
