@@ -340,10 +340,15 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 							{
 								string fileName = Path.Combine(name.Split('/').Select(p => CleanUpFileName(p)).ToArray());
 								string dirName = Path.GetDirectoryName(fileName);
-								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
+
+								if (Settings.ProduceSourceCode)
 								{
-									Directory.CreateDirectory(Path.Combine(TargetDirectory, dirName));
+									if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
+									{
+										Directory.CreateDirectory(Path.Combine(TargetDirectory, dirName));
+									}
 								}
+
 								Stream entryStream = (Stream)value;
 								entryStream.Position = 0;
 								individualResources.AddRange(
