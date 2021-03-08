@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 		}
 
-		protected WholeProjectDecompiler(
+		public WholeProjectDecompiler(
 			DecompilerSettings settings,
 			Guid projectGuid,
 			IAssemblyResolver assemblyResolver,

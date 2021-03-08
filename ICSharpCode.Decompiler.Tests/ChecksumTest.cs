@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
@@ -54,15 +55,135 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 
-		[Test]
-		public void Test1()
+		void AssertEqual(Tuple<String, String> tuple)
 		{
-			GenerateCheckumProject("basic", "net472");
-			GenerateCheckumProject("basic", "netcoreapp3.1");
+			Assert.AreEqual(tuple.Item1, tuple.Item2);
 		}
 
-		public void GenerateCheckumProject(string title, string targetFramework)
+		void AssertNotEqual(Tuple<String, String> tuple)
 		{
+			Assert.AreNotEqual(tuple.Item1, tuple.Item2);
+		}
+
+		const string net472 = "net472";
+		const string netcoreapp = "netcoreapp3.1";
+
+		[Test]
+		public void Basic_Net472()
+		{
+			AssertEqual(GenerateCheckumProject(CallerName(), net472, (writer) => { } ));
+		}
+
+		[Test]
+		public void Basic_NetCore()
+		{
+			AssertEqual(GenerateCheckumProject(CallerName(), netcoreapp, (writer) => { }));
+		}
+
+		public static string CallerName([CallerMemberName] string callerName = "")
+		{
+			return callerName;
+		}
+
+		[Test]
+		public void StringDataChanges_Net472()
+		{
+			StringDataChanges(net472);
+		}
+
+		[Test]
+		public void StringDataChanges_NetCore()
+		{
+			StringDataChanges(netcoreapp);
+		}
+
+		public void StringDataChanges(string framework)
+		{
+			// To do: Include strings into hash logic
+			AssertEqual(GenerateCheckumProject(CallerName(), framework, 
+				(w) => {
+					w.WriteLine(
+					@"public class MyTestClass{ 
+						void function1()
+						{
+							Console.WriteLine(""Test1"");
+						}
+					};");
+				},
+
+				(w) => {
+					w.WriteLine(
+						@"public class MyTestClass{ 
+						void function1()
+						{
+							Console.WriteLine(""Test2"");
+						}
+					};");
+				}
+			));
+		}
+
+		[Test]
+		public void CodeDataChanges_Net472()
+		{
+			CodeDataChanges(net472);
+		}
+
+		[Test]
+		public void CodeDataChanges_NetCore()
+		{
+			CodeDataChanges(netcoreapp);
+		}
+
+		public void CodeDataChanges(string framework)
+		{
+			AssertNotEqual(GenerateCheckumProject(CallerName(), framework,
+				(w) => {
+					w.WriteLine(
+					@"public class MyTestClass{ 
+						void function1()
+						{
+							Console.WriteLine(""Test1"");
+						}
+					};");
+				},
+
+				(w) => {
+					w.WriteLine(
+						@"public class MyTestClass{ 
+						void function1()
+						{
+							Console.WriteLine(""Test1"");
+							Console.WriteLine(""Test1"");
+						}
+					};");
+				}
+			));
+		}
+
+
+		public Tuple<String, String> GenerateCheckumProject(string title, string targetFramework, 
+			Action<PlainTextOutput> v1gen,
+			Action<PlainTextOutput> v2gen = null
+		)
+		{
+			if (v2gen == null)
+			{
+				v2gen = v1gen;
+			}
+			
+			string dirV1 = null, dirV2 = null;
+			string outext;
+
+			if (targetFramework.StartsWith("netcore"))
+			{
+				outext = ".dll";
+			}
+			else
+			{ 
+				outext = ".exe";
+			}
+
 			foreach (bool first in new[] { true, false })
 			{
 				string dirName = $"{title}_{targetFramework}_" + ((first) ? "v1" : "v2");
@@ -70,6 +191,15 @@ namespace ICSharpCode.Decompiler.Tests
 				if (!Directory.Exists(dir))
 				{
 					Directory.CreateDirectory(dir);
+				}
+
+				if (first)
+				{
+					dirV1 = dir;
+				}
+				else
+				{ 
+					dirV2 = dir;
 				}
 
 				string csproj = Path.Combine(dir, "test.csproj");
@@ -94,6 +224,9 @@ namespace ICSharpCode.Decompiler.Tests
 						xml.WriteElementString("SignAssembly", "true");
 						xml.WriteElementString("AssemblyOriginatorKeyFile", "../../../ICSharpCode.Decompiler/ICSharpCode.Decompiler.snk");
 						xml.WriteElementString("DelaySign", "false");
+
+						xml.WriteElementString("AppendTargetFrameworkToOutputPath", "false");
+						xml.WriteElementString("OutputPath", "bin");
 					});
 				}
 
@@ -111,10 +244,20 @@ class Program
 	}
 }
 ");
+					if (first)
+						v1gen(cscode);
+					else
+						v2gen(cscode);
+
 				}
 
 				RoundtripAssembly.Compile(csproj, outdir);
 			}
+
+			string binV1 = Path.Combine(dirV1, "bin", "test" + outext);
+			string binV2 = Path.Combine(dirV2, "bin", "test" + outext);
+
+			return new Tuple<string, string>(AssemblyCheckumCalculator.Calculate(binV1), AssemblyCheckumCalculator.Calculate(binV2));
 		}
 
 		static void PlaceIntoTag(string tagName, XmlTextWriter xml, Action content)
