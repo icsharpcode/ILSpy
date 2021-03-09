@@ -79,12 +79,12 @@ namespace ILSpy.BamlDecompiler
 			output.Write(xamlDocument.ToString());
 		}
 
-		internal static XDocument LoadIntoDocument(PEFile module, IAssemblyResolver assemblyResolver,
-			Stream stream, CancellationToken cancellationToken)
+		public static XDocument LoadIntoDocument(PEFile module, IAssemblyResolver assemblyResolver,
+			Stream stream, CancellationToken cancellationToken, List<string> assemblyReferences = null)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			var document = BamlReader.ReadDocument(stream, cancellationToken);
-			var xaml = new XamlDecompiler().Decompile(new BamlDecompilerTypeSystem(module, assemblyResolver), document, cancellationToken, new BamlDecompilerOptions(), null);
+			var xaml = new XamlDecompiler().Decompile(new BamlDecompilerTypeSystem(module, assemblyResolver), document, cancellationToken, new BamlDecompilerOptions(), assemblyReferences);
 			return xaml;
 		}
 
