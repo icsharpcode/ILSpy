@@ -76,7 +76,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 1)
+			if (scrollTargetEntry?.RID > 1)
 			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		struct CustomDebugInformationEntry
+		class CustomDebugInformationEntry
 		{
 			readonly int? offset;
 			readonly PEFile module;
@@ -197,8 +197,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
+			string kindString;
+
 			public string Kind {
 				get {
+					if (kindString != null)
+						return kindString;
+
 					Guid guid;
 					if (kind != CustomDebugInformationKind.None)
 					{
@@ -211,32 +216,47 @@ namespace ICSharpCode.ILSpy.Metadata
 					switch (kind)
 					{
 						case CustomDebugInformationKind.None:
-							return null;
+							kindString = "";
+							break;
 						case CustomDebugInformationKind.StateMachineHoistedLocalScopes:
-							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - State Machine Hoisted Local Scopes (C# / VB) [{guid}]";
+							kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - State Machine Hoisted Local Scopes (C# / VB) [{guid}]";
+							break;
 						case CustomDebugInformationKind.DynamicLocalVariables:
-							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Dynamic Local Variables (C#) [{guid}]";
+							kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Dynamic Local Variables (C#) [{guid}]";
+							break;
 						case CustomDebugInformationKind.DefaultNamespaces:
-							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Default Namespaces (VB) [{guid}]";
+							kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Default Namespaces (VB) [{guid}]";
+							break;
 						case CustomDebugInformationKind.EditAndContinueLocalSlotMap:
-							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Edit And Continue Local Slot Map (C# / VB) [{guid}]";
+							kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Edit And Continue Local Slot Map (C# / VB) [{guid}]";
+							break;
 						case CustomDebugInformationKind.EditAndContinueLambdaAndClosureMap:
-							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Edit And Continue Lambda And Closure Map (C# / VB) [{guid}]";
+							kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Edit And Continue Lambda And Closure Map (C# / VB) [{guid}]";
+							break;
 						case CustomDebugInformationKind.EmbeddedSource:
-							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Embedded Source (C# / VB) [{guid}]";
+							kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Embedded Source (C# / VB) [{guid}]";
+							break;
 						case CustomDebugInformationKind.SourceLink:
-							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Source Link (C# / VB) [{guid}]";
+							kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Source Link (C# / VB) [{guid}]";
+							break;
 						case CustomDebugInformationKind.MethodSteppingInformation:
-							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Method Stepping Information (C# / VB) [{guid}]";
+							kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Method Stepping Information (C# / VB) [{guid}]";
+							break;
 						case CustomDebugInformationKind.CompilationOptions:
-							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Compilation Options (C# / VB) [{ guid}]";
+							kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Compilation Options (C# / VB) [{ guid}]";
+							break;
 						case CustomDebugInformationKind.CompilationMetadataReferences:
-							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Compilation Metadata References (C# / VB) [{ guid}]";
+							kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Compilation Metadata References (C# / VB) [{ guid}]";
+							break;
 						case CustomDebugInformationKind.TupleElementNames:
-							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Tuple Element Names (C#) [{ guid}]";
+							kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Tuple Element Names (C#) [{ guid}]";
+							break;
 						default:
-							return $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Unknown [{guid}]";
+							kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - Unknown [{guid}]";
+							break;
 					}
+
+					return kindString;
 				}
 			}
 
@@ -328,7 +348,6 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.metadata = metadata;
 				this.handle = handle;
 				this.debugInfo = metadata.GetCustomDebugInformation(handle);
-				this.rowDetails = null;
 				this.kind = GetKind(metadata, debugInfo.Kind);
 			}
 		}
