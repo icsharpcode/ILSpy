@@ -126,6 +126,13 @@ namespace ICSharpCode.ILSpy
 				// could be used to log the errors directly. Used at the end so that it does not prevent the export provider setup.
 				config.ThrowOnErrors();
 			}
+			catch (CompositionFailedException ex) when (ex.InnerException is AggregateException agex)
+			{
+				foreach (var inner in agex.InnerExceptions)
+				{
+					StartupExceptions.Add(new ExceptionData { Exception = inner });
+				}
+			}
 			catch (Exception ex)
 			{
 				StartupExceptions.Add(new ExceptionData { Exception = ex });
