@@ -191,7 +191,7 @@ namespace ICSharpCode.ILSpy
 		[ThreadStatic]
 		static bool showingError;
 
-		static void UnhandledException(Exception exception)
+		internal static void UnhandledException(Exception exception)
 		{
 			Debug.WriteLine(exception.ToString());
 			for (Exception ex = exception; ex != null; ex = ex.InnerException)
