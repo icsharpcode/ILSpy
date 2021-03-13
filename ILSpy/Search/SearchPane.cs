@@ -269,7 +269,7 @@ namespace ICSharpCode.ILSpy
 						return;
 					}
 				}
-				results.Insert(results.Count - 1, result);
+				results.Add(result);
 			}
 			else
 			{
