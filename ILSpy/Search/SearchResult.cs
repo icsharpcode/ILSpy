@@ -29,7 +29,8 @@ namespace ICSharpCode.ILSpy
 {
 	public class SearchResult
 	{
-		public static readonly IComparer<SearchResult> Comparer = new SearchResultComparer();
+		public static readonly IComparer<SearchResult> ComparerByName = new SearchResultNameComparer();
+		public static readonly IComparer<SearchResult> ComparerByFitness = new SearchResultFitnessComparer();
 
 		public virtual object Reference {
 			get {
@@ -57,11 +58,20 @@ namespace ICSharpCode.ILSpy
 			return Name;
 		}
 
-		class SearchResultComparer : IComparer<SearchResult>
+		class SearchResultNameComparer : IComparer<SearchResult>
 		{
 			public int Compare(SearchResult x, SearchResult y)
 			{
 				return StringComparer.Ordinal.Compare(x?.Name ?? "", y?.Name ?? "");
+			}
+		}
+
+		class SearchResultFitnessComparer : IComparer<SearchResult>
+		{
+			public int Compare(SearchResult x, SearchResult y)
+			{
+				//elements with higher Fitness come first
+				return Comparer<float>.Default.Compare(y?.Fitness ?? 0, x?.Fitness ?? 0);
 			}
 		}
 	}

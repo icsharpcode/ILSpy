@@ -93,6 +93,25 @@ namespace ICSharpCode.ILSpy
 			}
 			return ~start;
 		}
+
+		public static void InsertSorted<T>(this IList<T> list, T item, IComparer<T> comparer)
+		{
+			if (list == null)
+				throw new ArgumentNullException(nameof(list));
+			if (comparer == null)
+				throw new ArgumentNullException(nameof(comparer));
+
+			if (list.Count == 0)
+			{
+				list.Add(item);
+			}
+			else
+			{
+				int index = list.BinarySearch(item, 0, list.Count, comparer);
+				list.Insert(index < 0 ? ~index : index, item);
+			}
+		}
+
 		/*
 		public static bool IsCustomAttribute(this TypeDefinition type)
 		{
