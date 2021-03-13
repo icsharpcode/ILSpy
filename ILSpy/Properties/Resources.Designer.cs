@@ -1587,7 +1587,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Hightlight current line.
+        ///   Looks up a localized string similar to Highlight current line.
         /// </summary>
         public static string HighlightCurrentLine {
             get {
