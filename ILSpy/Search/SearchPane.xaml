@@ -12,7 +12,7 @@
 			<RowDefinition />
 		</Grid.RowDefinitions>
 		<Border BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Margin="0">
-			<Grid Height="23">
+			<Grid>
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="*" />
 					<ColumnDefinition Width="Auto" />

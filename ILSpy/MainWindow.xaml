@@ -16,6 +16,7 @@
 	MinHeight="200"
 	UseLayoutRounding="True"
 	TextOptions.TextFormattingMode="Display"
+	Style="{StaticResource {x:Static styles:ResourceKeys.WindowStyle}}"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" d:DesignHeight="500" d:DesignWidth="500"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
 	xmlns:styles="urn:TomsToolbox.Wpf.Styles"

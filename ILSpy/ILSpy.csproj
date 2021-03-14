@@ -61,7 +61,7 @@
     <PackageReference Include="OSVersionHelper" Version="1.1.24" />
     <PackageReference Include="DataGridExtensions" Version="2.5.1" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
-    <PackageReference Include="TomsToolbox.Wpf.Styles" Version="2.4.0" />
+    <PackageReference Include="TomsToolbox.Wpf.Styles" Version="2.4.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -520,6 +520,7 @@
     <Page Include="Metadata\FlagsFilterControl.xaml" />
     <Page Include="Metadata\FlagsTooltip.xaml" />
     <Page Include="Metadata\HexFilterControl.xaml" />
+    <Page Include="themes\LightTheme.xaml" />
     <Page Include="Views\CreateListDialog.xaml" />
     <Page Include="Views\DebugSteps.xaml" />
     <Page Include="Images\Assembly.xaml" />
@@ -835,6 +836,9 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="Options\DecompilerSettingsPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="themes\LightTheme.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

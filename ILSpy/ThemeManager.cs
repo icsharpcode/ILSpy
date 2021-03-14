@@ -23,10 +23,9 @@ namespace ICSharpCode.ILSpy
 
 				_themeDictionaryContainer.MergedDictionaries.Clear();
 
-				if (value)
-				{
-					_themeDictionaryContainer.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("themes/DarkTheme.xaml", UriKind.Relative) });
-				}
+				string theme = value ? "Dark" : "Light";
+
+				_themeDictionaryContainer.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri($"themes/{theme}Theme.xaml", UriKind.Relative) });
 			}
 		}
 	}

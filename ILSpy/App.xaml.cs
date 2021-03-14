@@ -69,7 +69,7 @@ namespace ICSharpCode.ILSpy
 			}
 			InitializeComponent();
 
-			Resources.RegisterDefault();
+			Resources.RegisterDefaultStyles();
 
 			if (!System.Diagnostics.Debugger.IsAttached)
 			{
