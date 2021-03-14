@@ -142,6 +142,13 @@ namespace ICSharpCode.ILSpy
 			{
 				ShowAssemblyList(sessionSettings.ActiveAssemblyList);
 			}
+
+			if (e.PropertyName == nameof(SessionSettings.IsDarkMode))
+			{
+				// update syntax highlighting and force reload (AvalonEdit does not automatically refresh on highlighting change)
+				DecompilerTextView.RegisterHighlighting();
+				DecompileSelectedNodes(DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
+			}
 		}
 
 		void SetWindowBounds(Rect bounds)

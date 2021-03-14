@@ -219,6 +219,9 @@ Are you sure you want to continue?</value>
   <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
     <value>DEBUG -- Dump PDB as XML</value>
   </data>
+  <data name="DarkMode" xml:space="preserve">
+    <value>Dark Mode</value>
+  </data>
   <data name="DebugSteps" xml:space="preserve">
     <value>Debug Steps</value>
   </data>

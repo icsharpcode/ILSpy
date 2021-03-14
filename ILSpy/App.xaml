@@ -1,17 +1,19 @@
 ﻿<Application x:Class="ICSharpCode.ILSpy.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:styles="urn:TomsToolbox.Wpf.Styles"
              StartupUri="MainWindow.xaml">
 	<Application.Resources>
-		<Style x:Key="DialogWindow" TargetType="{x:Type Window}">
+		<Style x:Key="DialogWindow" TargetType="{x:Type Window}" BasedOn="{StaticResource {x:Static styles:ResourceKeys.WindowStyle}}">
 			<Setter Property="ShowInTaskbar" Value="False"/>
 			<Setter Property="UseLayoutRounding" Value="True"/>
 			<Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
 		</Style>
-		
-		<Style TargetType="{x:Type Button}">
+
+		<Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Static styles:ResourceKeys.ButtonStyle}}">
 			<Setter Property="MinWidth" Value="73" />
 			<Setter Property="Padding" Value="9,1,9,1" />
 		</Style>
+
 	</Application.Resources>
 </Application>

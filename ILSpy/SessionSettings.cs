@@ -61,6 +61,7 @@ namespace ICSharpCode.ILSpy
 			this.TopPaneSplitterPosition = FromString((string)doc.Element("TopPaneSplitterPosition"), 0.3);
 			this.BottomPaneSplitterPosition = FromString((string)doc.Element("BottomPaneSplitterPosition"), 0.3);
 			this.SelectedSearchMode = FromString((string)doc.Element("SelectedSearchMode"), SearchMode.TypeAndMember);
+			this.IsDarkMode = FromString((string)doc.Element(nameof(IsDarkMode)), false);
 
 			this.DockLayout = new DockLayoutSettings(doc.Element("DockLayout"));
 		}
@@ -74,6 +75,14 @@ namespace ICSharpCode.ILSpy
 
 		public FilterSettings FilterSettings { get; private set; }
 		public SearchMode SelectedSearchMode { get; set; }
+
+		public bool IsDarkMode {
+			get => ThemeManager.Current.IsDarkMode;
+			set {
+				ThemeManager.Current.IsDarkMode = value;
+				OnPropertyChanged();
+			}
+		}
 
 		public string[] ActiveTreeViewPath;
 		public string ActiveAutoLoadedAssembly;
@@ -122,6 +131,7 @@ namespace ICSharpCode.ILSpy
 			doc.Add(new XElement("TopPaneSplitterPosition", ToString(this.TopPaneSplitterPosition)));
 			doc.Add(new XElement("BottomPaneSplitterPosition", ToString(this.BottomPaneSplitterPosition)));
 			doc.Add(new XElement("SelectedSearchMode", ToString(this.SelectedSearchMode)));
+			doc.Add(new XElement(nameof(IsDarkMode), ToString(this.IsDarkMode)));
 
 			var dockLayoutElement = new XElement("DockLayout");
 			if (DockLayout.Valid)

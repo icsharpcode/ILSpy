@@ -87,41 +87,7 @@ namespace ICSharpCode.ILSpy.TextView
 		#region Constructor
 		public DecompilerTextView()
 		{
-			HighlightingManager.Instance.RegisterHighlighting(
-				"ILAsm", new string[] { ".il" },
-				delegate {
-					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "ILAsm-Mode.xshd"))
-					{
-						using (XmlTextReader reader = new XmlTextReader(s))
-						{
-							return HighlightingLoader.Load(reader, HighlightingManager.Instance);
-						}
-					}
-				});
-
-			HighlightingManager.Instance.RegisterHighlighting(
-				"C#", new string[] { ".cs" },
-				delegate {
-					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "CSharp-Mode.xshd"))
-					{
-						using (XmlTextReader reader = new XmlTextReader(s))
-						{
-							return HighlightingLoader.Load(reader, HighlightingManager.Instance);
-						}
-					}
-				});
-
-			HighlightingManager.Instance.RegisterHighlighting(
-				"Asm", new string[] { ".s", ".asm" },
-				delegate {
-					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "Asm-Mode.xshd"))
-					{
-						using (XmlTextReader reader = new XmlTextReader(s))
-						{
-							return HighlightingLoader.Load(reader, HighlightingManager.Instance);
-						}
-					}
-				});
+			RegisterHighlighting();
 
 			InitializeComponent();
 
@@ -1190,6 +1156,14 @@ namespace ICSharpCode.ILSpy.TextView
 
 		ViewState IHaveState.GetState() => GetState();
 
+		public static void RegisterHighlighting()
+		{
+			HighlightingManager.Instance.RegisterHighlighting("ILAsm", new[] { ".il" }, "ILAsm-Mode");
+			HighlightingManager.Instance.RegisterHighlighting("C#", new[] { ".cs" }, "CSharp-Mode");
+			HighlightingManager.Instance.RegisterHighlighting("Asm", new[] { ".s", ".asm" }, "Asm-Mode");
+		}
+
+
 		public void Dispose()
 		{
 			DisplaySettingsPanel.CurrentDisplaySettings.PropertyChanged -= CurrentDisplaySettings_PropertyChanged;
@@ -1272,6 +1246,35 @@ namespace ICSharpCode.ILSpy.TextView
 					&& HorizontalOffset == vs.HorizontalOffset;
 			}
 			return false;
+		}
+	}
+
+	static class ExtensionMethods
+	{
+		public static void RegisterHighlighting(
+			this HighlightingManager manager,
+			string name,
+			string[] extensions,
+			string resourceName)
+		{
+			if (ThemeManager.Current.IsDarkMode)
+			{
+				resourceName += "-Dark";
+			}
+
+			resourceName += ".xshd";
+
+			manager.RegisterHighlighting(
+				name, extensions,
+				delegate {
+					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), resourceName))
+					{
+						using (XmlTextReader reader = new XmlTextReader(s))
+						{
+							return HighlightingLoader.Load(reader, manager);
+						}
+					}
+				});
 		}
 	}
 }
