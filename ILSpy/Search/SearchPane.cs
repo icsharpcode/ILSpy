@@ -49,6 +49,7 @@ namespace ICSharpCode.ILSpy
 		const int MAX_REFRESH_TIME_MS = 10; // More means quicker forward of data, less means better responsibility
 		RunningSearch currentSearch;
 		bool runSearchOnNextShow;
+		IComparer<SearchResult> resultsComparer;
 
 		public static readonly DependencyProperty ResultsProperty =
 			DependencyProperty.Register("Results", typeof(ObservableCollection<SearchResult>), typeof(SearchPane),
@@ -211,7 +212,7 @@ namespace ICSharpCode.ILSpy
 			int resultsAdded = 0;
 			while (Results.Count < MAX_RESULTS && timer.ElapsedMilliseconds < MAX_REFRESH_TIME_MS && currentSearch.resultQueue.TryTake(out var result))
 			{
-				InsertResult(Results, result);
+				Results.InsertSorted(result, resultsComparer);
 				++resultsAdded;
 			}
 
@@ -230,6 +231,9 @@ namespace ICSharpCode.ILSpy
 				currentSearch = null;
 			}
 
+			resultsComparer = DisplaySettingsPanel.CurrentDisplaySettings.SortResults ?
+				SearchResult.ComparerByFitness :
+				SearchResult.ComparerByName;
 			Results.Clear();
 
 			RunningSearch startedSearch = null;
@@ -250,15 +254,6 @@ namespace ICSharpCode.ILSpy
 			{ //are we still running the same search
 				searchProgressBar.IsIndeterminate = false;
 			}
-		}
-
-		void InsertResult(IList<SearchResult> results, SearchResult result)
-		{
-			var comparer = DisplaySettingsPanel.CurrentDisplaySettings.SortResults ?
-				SearchResult.ComparerByFitness :
-				SearchResult.ComparerByName;
-
-			results.InsertSorted(result, comparer);
 		}
 
 		void JumpToSelectedItem()
