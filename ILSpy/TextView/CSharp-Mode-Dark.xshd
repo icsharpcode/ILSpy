@@ -30,15 +30,15 @@
 	<Color name="GetSetAddRemove" foreground="#FF559CD6" exampleText="int Prop { get; set; }"/>
 	<Color name="TrueFalse" foreground="#FF00A0FF" exampleText="b = false; a = true;"/>
 	<Color name="TypeKeywords" foreground="#FF559CD6" exampleText="if (x is int) { a = x as int; type = typeof(int); size = sizeof(int); c = new object(); }"/>
-	<Color name="AttributeKeywords" foreground="Navy" exampleText="[assembly: AssemblyVersion(&quot;1.0.0.*&quot;)]" />
+	<Color name="AttributeKeywords" foreground="#FFD69D85" exampleText="[assembly: AssemblyVersion(&quot;1.0.0.*&quot;)]" />
 	
 	<!-- Colors used for semantic highlighting -->
-	<Color name="ReferenceTypes" foreground="#004085" exampleText="System.#{#Uri#}# uri;"/>
-	<Color name="InterfaceTypes" foreground="#004085" exampleText="System.#{#IDisposable#}# obj;"/>
-	<Color name="TypeParameters" foreground="#004085" exampleText="class MyList&lt;#{#T#}#&gt; { }"/>
-	<Color name="DelegateTypes" foreground="#004085" exampleText="System.#{#Action#}#; action;"/>
-	<Color name="ValueTypes" fontWeight="bold" foreground="#004085" exampleText="System.#{#DateTime#}# date;"/>
-	<Color name="EnumTypes" fontWeight="bold" foreground="#004085" exampleText="System.#{#ConsoleKey#}# key;"/>
+	<Color name="ReferenceTypes" foreground="#569CD6" exampleText="System.#{#Uri#}# uri;"/>
+	<Color name="InterfaceTypes" foreground="#569CD6" exampleText="System.#{#IDisposable#}# obj;"/>
+	<Color name="TypeParameters" foreground="#569CD6" exampleText="class MyList&lt;#{#T#}#&gt; { }"/>
+	<Color name="DelegateTypes" foreground="#569CD6" exampleText="System.#{#Action#}#; action;"/>
+	<Color name="ValueTypes" fontWeight="bold" foreground="#569CD6" exampleText="System.#{#DateTime#}# date;"/>
+	<Color name="EnumTypes" fontWeight="bold" foreground="#569CD6" exampleText="System.#{#ConsoleKey#}# key;"/>
 	<Color name="MethodCall" foreground="#FFdcdcaa" fontWeight="bold" exampleText="o.#{#ToString#}#();"/>
 	<Color name="FieldAccess" fontStyle="italic" exampleText="return this.#{#name#}#;"/>
 	<Color name="InactiveCode" foreground="Gray" exampleText="#{#Deactivated by #if#}#"/>
