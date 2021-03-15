@@ -129,6 +129,15 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
 
+			textEditor.SetResourceReference(FoldingMargin.FoldingMarkerBackgroundBrushProperty,
+				SystemColors.WindowBrushKey);
+			textEditor.SetResourceReference(FoldingMargin.SelectedFoldingMarkerBackgroundBrushProperty,
+				SystemColors.WindowBrushKey);
+			textEditor.SetResourceReference(FoldingMargin.FoldingMarkerBrushProperty,
+				SystemColors.ControlDarkBrushKey);
+			textEditor.SetResourceReference(FoldingMargin.SelectedFoldingMarkerBrushProperty,
+				SystemColors.ControlTextBrushKey);
+
 			ContextMenuProvider.Add(this);
 
 			this.DataContextChanged += DecompilerTextView_DataContextChanged;
