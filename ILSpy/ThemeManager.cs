@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace ICSharpCode.ILSpy
 {
@@ -27,6 +28,23 @@ namespace ICSharpCode.ILSpy
 
 				_themeDictionaryContainer.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri($"themes/{theme}Theme.xaml", UriKind.Relative) });
 			}
+		}
+
+		public Button CreateButton()
+		{
+			return new Button {
+				Style = CreateButtonStyle()
+			};
+		}
+
+		public Style CreateButtonStyle()
+		{
+			return new Style(typeof(Button), (Style)Application.Current.FindResource(typeof(Button)));
+		}
+
+		public Style CreateToolBarButtonStyle()
+		{
+			return new Style(typeof(Button), (Style)Application.Current.FindResource(ToolBar.ButtonStyleKey));
 		}
 	}
 }

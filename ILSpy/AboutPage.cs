@@ -134,7 +134,7 @@ namespace ICSharpCode.ILSpy
 
 		static void AddUpdateCheckButton(StackPanel stackPanel, DecompilerTextView textView)
 		{
-			Button button = new Button();
+			Button button = ThemeManager.Current.CreateButton();
 			button.Content = Resources.CheckUpdates;
 			button.Cursor = Cursors.Arrow;
 			stackPanel.Children.Add(button);
@@ -186,7 +186,7 @@ namespace ICSharpCode.ILSpy
 					});
 				if (availableVersion.DownloadUrl != null)
 				{
-					Button button = new Button();
+					Button button = ThemeManager.Current.CreateButton();
 					button.Content = Resources.Download;
 					button.Cursor = Cursors.Arrow;
 					button.Click += delegate {

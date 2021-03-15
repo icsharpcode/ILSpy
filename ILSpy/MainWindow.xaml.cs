@@ -198,6 +198,7 @@ namespace ICSharpCode.ILSpy
 		Button MakeToolbarItem(Lazy<ICommand, IToolbarCommandMetadata> command)
 		{
 			return new Button {
+				Style = ThemeManager.Current.CreateToolBarButtonStyle(),
 				Command = CommandWrapper.Unwrap(command.Value),
 				ToolTip = Properties.Resources.ResourceManager.GetString(command.Metadata.ToolTip),
 				Tag = command.Metadata.Tag,
