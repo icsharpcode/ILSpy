@@ -18,14 +18,14 @@
 						<Border Width="1" Height="1" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
 					</VisualBrush.Visual>
 				</VisualBrush>
-				<VisualBrush Opacity=".1">
+				<VisualBrush Opacity=".15">
 					<VisualBrush.Visual>
-						<Border Width="1" Height="1" Background="#FFFF3F"/>
+						<Border Width="1" Height="1" Background="#CCCC33"/>
 					</VisualBrush.Visual>
 				</VisualBrush>
 			</AlternationConverter>
 			<Style x:Key="alternatingWithBinding"
-				   TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+				   TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource {x:Type ListViewItem}}">
 				<Setter Property="Background"
 						Value="{Binding RelativeSource={RelativeSource Self},
 					 Path=(ItemsControl.AlternationIndex),
