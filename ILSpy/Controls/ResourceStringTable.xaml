@@ -13,8 +13,16 @@
 	<Grid Margin="5,0,0,0">
 		<Grid.Resources>
 			<AlternationConverter x:Key="BackgroundConverter">
-				<SolidColorBrush Color="White"></SolidColorBrush>
-				<SolidColorBrush Color="Beige"></SolidColorBrush>
+				<VisualBrush>
+					<VisualBrush.Visual>
+						<Border Width="1" Height="1" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
+					</VisualBrush.Visual>
+				</VisualBrush>
+				<VisualBrush Opacity=".1">
+					<VisualBrush.Visual>
+						<Border Width="1" Height="1" Background="#FFFF3F"/>
+					</VisualBrush.Visual>
+				</VisualBrush>
 			</AlternationConverter>
 			<Style x:Key="alternatingWithBinding"
 				   TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource {x:Type ListBoxItem}}">
@@ -35,27 +43,26 @@
 		<ListView Name="resourceListView"
 			  FontFamily="Segoe UI"
 			  FontSize="9pt"
-			  Foreground="Black"
 			  Grid.Row="1"
 			  AlternationCount="2"
 			  ItemContainerStyle="{StaticResource alternatingWithBinding}"
 			  local:SortableGridViewColumn.SortMode="Automatic">
-		<ListView.View>
-			<GridView AllowsColumnReorder="False">
-				<GridView.Columns>
-					<local:SortableGridViewColumn DisplayMemberBinding="{Binding Key}" SortBy="Key">
-						<GridViewColumnHeader Content="{x:Static properties:Resources.Name}"
+			<ListView.View>
+				<GridView AllowsColumnReorder="False">
+					<GridView.Columns>
+						<local:SortableGridViewColumn DisplayMemberBinding="{Binding Key}" SortBy="Key">
+							<GridViewColumnHeader Content="{x:Static properties:Resources.Name}"
 											  HorizontalContentAlignment="Left"
 											  FontWeight="Bold" />
-					</local:SortableGridViewColumn>
+						</local:SortableGridViewColumn>
 						<local:SortableGridViewColumn DisplayMemberBinding="{Binding Value}" SortBy="Value">
-						<GridViewColumnHeader Content="{x:Static properties:Resources.Value}"
+							<GridViewColumnHeader Content="{x:Static properties:Resources.Value}"
 											  HorizontalContentAlignment="Left"
 											  FontWeight="Bold" />
-					</local:SortableGridViewColumn>
-				</GridView.Columns>
-			</GridView>
-		</ListView.View>
-	</ListView>
+						</local:SortableGridViewColumn>
+					</GridView.Columns>
+				</GridView>
+			</ListView.View>
+		</ListView>
 	</Grid>
 </UserControl>
