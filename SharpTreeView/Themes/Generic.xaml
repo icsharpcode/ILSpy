@@ -179,13 +179,20 @@
                     <Border Background="Transparent">
                         <Border Background="{TemplateBinding Background}">
                             <Default:SharpTreeNodeView x:Name="nodeView"
-                                                       Foreground="{TemplateBinding Foreground}"
                                                        HorizontalAlignment="Left" />
                         </Border>
                     </Border>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsSelected"
-                                 Value="True">
+						<DataTrigger Binding="{Binding IsAutoLoaded}" 
+						             Value="True">
+							<Setter Property="Foreground" Value="SteelBlue" />
+						</DataTrigger>
+	                    <DataTrigger Binding="{Binding IsPublicAPI}" 
+	                                 Value="False">
+							<Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+						</DataTrigger>
+	                    <Trigger Property="IsSelected"
+	                             Value="True">
                             <Setter TargetName="nodeView"
                                     Property="TextBackground"
                                     Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
