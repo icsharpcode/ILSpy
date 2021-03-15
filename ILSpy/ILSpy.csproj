@@ -846,6 +846,8 @@
   <ItemGroup>
     <None Include="Search\SearchPane.xaml" />
     <None Include="@(Resource)" />
+    <EmbeddedResource Include="TextView\XML-Mode-Dark.xshd" />
+    <EmbeddedResource Include="TextView\XML-Mode.xshd" />
   </ItemGroup>
 
   <PropertyGroup>
