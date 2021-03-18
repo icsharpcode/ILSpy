@@ -162,17 +162,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			{
 				foreach (var section in ilSwitch.Sections)
 				{
-					var field = FindField(section.Body);
-					if (!(field is null))
-					{
-						fieldAssignments.Add((section.Labels, field));
-					}
-					events.Clear();
-					FindEvents(section.Body, events);
-					if (events.Count > 0)
-					{
-						eventMappings.Add((section.Labels, events.ToArray()));
-					}
+					Add(section.Labels, section.Body);
 				}
 			}
 			else
@@ -189,17 +179,22 @@ namespace ILSpy.BamlDecompiler.Rewrite
 						? ifInst.FalseInst
 						: ifInst.TrueInst;
 
-					var field = FindField(inst);
-					if (!(field is null))
-					{
-						fieldAssignments.Add((new LongSet(id), field));
-					}
-					events.Clear();
-					FindEvents(inst, events);
-					if (events.Count > 0)
-					{
-						eventMappings.Add((new LongSet(id), events.ToArray()));
-					}
+					Add(new LongSet(id), inst);
+				}
+			}
+
+			void Add(LongSet ids, ILInstruction inst)
+			{
+				var field = FindField(inst);
+				if (!(field is null))
+				{
+					fieldAssignments.Add((ids, field));
+				}
+				events.Clear();
+				FindEvents(inst, events);
+				if (events.Count > 0)
+				{
+					eventMappings.Add((ids, events.ToArray()));
 				}
 			}
 		}
