@@ -91,7 +91,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					{
 						return package.Package.Kind == LoadedPackage.PackageKind.Zip ? Images.NuGet : Images.Library;
 					}
-					else if (loadResult is LoadedAssembly.LoadResult.Successful successful)
+					else if (loadResult is LoadedAssembly.LoadResult.Successful)
 					{
 						return Images.Assembly;
 					}
@@ -156,15 +156,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		async void Init()
 		{
-			try
+			var loadResult = await this.LoadedAssembly.GetLoadResultAsync();
+			if (loadResult.IsOK)
 			{
-				await this.LoadedAssembly.GetLoadResultAsync();
 				RaisePropertyChanged(nameof(Text)); // shortname might have changed
 			}
-			catch
+			else
 			{
 				RaisePropertyChanged(nameof(ShowExpander)); // cannot expand assemblies with load error
 			}
+
 			// change from "Loading" icon to final icon
 			RaisePropertyChanged(nameof(Icon));
 			RaisePropertyChanged(nameof(ExpandedIcon));
@@ -173,16 +174,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			LoadedAssembly.LoadResult loadResult;
-			try
-			{
-				loadResult = LoadedAssembly.GetLoadResultAsync().Result;
-			}
-			catch
+			LoadedAssembly.LoadResult loadResult = LoadedAssembly.GetLoadResultAsync().Result;
+			if (!loadResult.IsOK )
 			{
 				// if we crashed on loading, then we don't have any children
 				return;
 			}
+
 			try
 			{
 				if (loadResult is LoadedAssembly.LoadResult.Successful success)

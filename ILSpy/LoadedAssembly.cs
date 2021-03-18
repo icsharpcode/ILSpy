@@ -70,6 +70,9 @@ namespace ICSharpCode.ILSpy
 
 			public FileInfo File { get; }
 
+			public bool IsOK     => this is Successful || this is PackageFallback;
+			public bool IsFailed => this is Failed || this is FileNotFound;
+
 			/// <summary>The specified PE file was successfully loaded.</summary>
 			public sealed class Successful : LoadResult
 			{
@@ -205,7 +208,7 @@ namespace ICSharpCode.ILSpy
 			}
 			else
 			{
-				throw new InvalidOperationException(message: "Unexpected LoadResult type.");
+				throw new InvalidOperationException(message: "Unexpected LoadResult type: " + loadResult?.GetType().FullName);
 			}
 		}
 
@@ -413,11 +416,10 @@ namespace ICSharpCode.ILSpy
 				zip.LoadedAssembly = this;
 				return new LoadResult.PackageFallback(loadAssemblyException, zip);
 			}
-			catch (InvalidDataException)
+			catch (InvalidDataException ex)
 			{
 				// Wrap the exception to preserve the stack-trace.
-				throw new InvalidOperationException("Could not load ");
-				throw loadAssemblyException;
+				return new LoadResult.Failed(new FileInfo(this.fileName), peFileLoadException: loadAssemblyException, packageLoadException: ex);
 			}
 		}
 
