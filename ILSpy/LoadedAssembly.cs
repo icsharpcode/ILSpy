@@ -61,20 +61,62 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		internal static readonly ConditionalWeakTable<PEFile, LoadedAssembly> loadedAssemblies = new ConditionalWeakTable<PEFile, LoadedAssembly>();
 
-		public sealed class LoadResult
+		public class LoadResult
 		{
-			public PEFile? PEFile { get; }
-			public Exception? PEFileLoadException { get; }
-			public LoadedPackage? Package { get; }
-
-			public LoadResult(PEFile peFile)
+			private LoadResult(FileInfo file)
 			{
-				this.PEFile = peFile ?? throw new ArgumentNullException(nameof(peFile));
+				this.File = file ?? throw new ArgumentNullException(nameof(file));
 			}
-			public LoadResult(Exception peFileLoadException, LoadedPackage package)
+
+			public FileInfo File { get; }
+
+			/// <summary>The specified PE file was successfully loaded.</summary>
+			public sealed class Successful : LoadResult
 			{
-				this.PEFileLoadException = peFileLoadException ?? throw new ArgumentNullException(nameof(peFileLoadException));
-				this.Package = package ?? throw new ArgumentNullException(nameof(package));
+				public Successful(PEFile peFile)
+					: base(file: new FileInfo(peFile.FileName))
+				{
+					this.PEFile = peFile ?? throw new ArgumentNullException(nameof(peFile));
+				}
+
+				public PEFile PEFile { get; }
+			}
+
+			/// <summary>The specified filename was not found in the filesystem.</summary>
+			public sealed class FileNotFound : LoadResult
+			{
+				public FileNotFound(FileInfo file)
+					: base(file)
+				{
+				}
+			}
+
+			/// <summary>The specified file could not be loaded as a PE file, so it was loaded as a package instead.</summary>
+			public sealed class PackageFallback : LoadResult
+			{
+				public PackageFallback(Exception peFileLoadException, LoadedPackage package)
+					: base(file: package.File)
+				{
+					this.PEFileLoadException = peFileLoadException ?? throw new ArgumentNullException(nameof(peFileLoadException));
+					this.Package             = package             ?? throw new ArgumentNullException(nameof(package));
+				}
+
+				public Exception     PEFileLoadException { get; }
+				public LoadedPackage Package             { get; }
+			}
+
+			/// <summary>The specified file could not be loaded as a PE file, nor could it be loaded as a package either.</summary>
+			public sealed class Failed : LoadResult
+			{
+				public Failed(FileInfo file, Exception peFileLoadException, Exception packageLoadException)
+					: base(file: file)
+				{
+					this.PEFileLoadException  = peFileLoadException  ?? throw new ArgumentNullException(nameof(peFileLoadException));
+					this.PackageLoadException = packageLoadException ?? throw new ArgumentNullException(nameof(packageLoadException));
+				}
+
+				public Exception PEFileLoadException  { get; }
+				public Exception PackageLoadException { get; }
 			}
 		}
 
@@ -135,15 +177,36 @@ namespace ICSharpCode.ILSpy
 		}
 
 		/// <summary>
-		/// Gets the <see cref="PEFile"/>.
+		/// Gets the <see cref="PEFile"/>, otherwise throws a <see cref="FileNotFoundException"/> - or <see cref="InvalidOperationException"/> that wraps the originally thrown exception.
 		/// </summary>
+		/// <exception cref="FileNotFoundException"></exception>
+		/// <exception cref="InvalidOperationException"></exception>
 		public async Task<PEFile> GetPEFileAsync()
 		{
-			var loadResult = await loadingTask.ConfigureAwait(false);
-			if (loadResult.PEFile != null)
-				return loadResult.PEFile;
+			LoadResult loadResult = await loadingTask.ConfigureAwait(false);
+			if (loadResult is LoadResult.Successful success)
+			{
+				return success.PEFile;
+			}
+			else if (loadResult is LoadResult.FileNotFound)
+			{
+				string fileName = loadResult.File.FullName;
+				throw new FileNotFoundException(message: "The assembly or package file \"" + fileName + "\" could not be found.", fileName: fileName);
+			}
+			else if (loadResult is LoadResult.PackageFallback package)
+			{
+				string fileName = loadResult.File.FullName;
+				throw new InvalidOperationException(message: "The file \"" + fileName + "\" was loaded as a package, not a PE file.", innerException: package.PEFileLoadException);
+			}
+			else if (loadResult is LoadResult.Failed failed)
+			{
+				string fileName = loadResult.File.FullName;
+				throw new InvalidOperationException(message: "The assembly or package file \"" + fileName + "\" could not be loaded.", innerException: failed.PackageLoadException);
+			}
 			else
-				throw loadResult.PEFileLoadException!;
+			{
+				throw new InvalidOperationException(message: "Unexpected LoadResult type.");
+			}
 		}
 
 		/// <summary>
@@ -155,7 +218,11 @@ namespace ICSharpCode.ILSpy
 			try
 			{
 				var loadResult = loadingTask.GetAwaiter().GetResult();
-				return loadResult.PEFile;
+				if (loadResult is LoadResult.Successful success)
+				{
+					return success.PEFile;
+				}
+				return null;
 			}
 			catch (Exception ex)
 			{
@@ -172,8 +239,11 @@ namespace ICSharpCode.ILSpy
 		{
 			try
 			{
-				var loadResult = await loadingTask.ConfigureAwait(false);
-				return loadResult.PEFile;
+				if (await loadingTask.ConfigureAwait(false) is LoadResult.Successful success)
+				{
+					return success.PEFile;
+				}
+				return null;
 			}
 			catch (Exception ex)
 			{
@@ -271,7 +341,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public bool IsLoadedAsValidAssembly {
 			get {
-				return loadingTask.Status == TaskStatus.RanToCompletion && loadingTask.Result.PEFile != null;
+				return loadingTask.Status == TaskStatus.RanToCompletion && loadingTask.Result is LoadResult.Successful;
 			}
 		}
 
@@ -310,7 +380,12 @@ namespace ICSharpCode.ILSpy
 			Exception loadAssemblyException;
 			try
 			{
-				using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+				FileInfo fileInfo = new FileInfo(this.fileName);
+				if (!fileInfo.Exists)
+				{
+					return new LoadResult.FileNotFound(fileInfo);
+				}
+				using (var fileStream = new FileStream(this.fileName, FileMode.Open, FileAccess.Read))
 				{
 					return LoadAssembly(fileStream, PEStreamOptions.PrefetchEntireImage);
 				}
@@ -323,22 +398,25 @@ namespace ICSharpCode.ILSpy
 			{
 				loadAssemblyException = ex;
 			}
+
 			// If it's not a .NET module, maybe it's a single-file bundle
-			var bundle = LoadedPackage.FromBundle(fileName);
+			var bundle = LoadedPackage.FromBundle(this.fileName);
 			if (bundle != null)
 			{
 				bundle.LoadedAssembly = this;
-				return new LoadResult(loadAssemblyException, bundle);
+				return new LoadResult.PackageFallback(loadAssemblyException, bundle);
 			}
 			// If it's not a .NET module, maybe it's a zip archive (e.g. .nupkg)
 			try
 			{
-				var zip = LoadedPackage.FromZipFile(fileName);
+				var zip = LoadedPackage.FromZipFile(this.fileName);
 				zip.LoadedAssembly = this;
-				return new LoadResult(loadAssemblyException, zip);
+				return new LoadResult.PackageFallback(loadAssemblyException, zip);
 			}
 			catch (InvalidDataException)
 			{
+				// Wrap the exception to preserve the stack-trace.
+				throw new InvalidOperationException("Could not load ");
 				throw loadAssemblyException;
 			}
 		}
@@ -362,7 +440,8 @@ namespace ICSharpCode.ILSpy
 			{
 				loadedAssemblies.Add(module, this);
 			}
-			return new LoadResult(module);
+
+			return new LoadResult.Successful(module);
 		}
 
 		IDebugInfoProvider? LoadDebugInfo(PEFile module)
