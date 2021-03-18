@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
-             xmlns:ae="clr-namespace:ICSharpCode.AvalonEdit;assembly=ICSharpCode.AvalonEdit">
+             xmlns:ae="clr-namespace:ICSharpCode.AvalonEdit;assembly=ICSharpCode.AvalonEdit"
+             xmlns:folding="clr-namespace:ICSharpCode.AvalonEdit.Folding;assembly=ICSharpCode.AvalonEdit">
 	<UserControl.Resources>
 		<BooleanToVisibilityConverter x:Key="boolToVisibility" />
 	</UserControl.Resources>
@@ -11,7 +12,12 @@
 			<Grid>
 				<ae:TextEditor Name="textEditor" AutomationProperties.Name="Decompilation"  FontFamily="Consolas" FontSize="10pt" IsReadOnly="True"
 				               Background="{DynamicResource {x:Static SystemColors.InfoBrushKey}}"
-				               Foreground="{DynamicResource {x:Static SystemColors.InfoTextBrushKey}}">
+				               Foreground="{DynamicResource {x:Static SystemColors.InfoTextBrushKey}}"
+				               folding:FoldingMargin.FoldingMarkerBackgroundBrush="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+				               folding:FoldingMargin.SelectedFoldingMarkerBackgroundBrush="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+				               folding:FoldingMargin.FoldingMarkerBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+				               folding:FoldingMargin.SelectedFoldingMarkerBrush="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
+				               >
 					<ae:TextEditor.Resources>
 						<!-- prevent App-wide button style from applying to the buttons in the search box -->
 						<Style TargetType="{x:Type Button}" />
