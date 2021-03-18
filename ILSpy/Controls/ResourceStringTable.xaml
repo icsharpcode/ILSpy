@@ -13,16 +13,8 @@
 	<Grid Margin="5,0,0,0">
 		<Grid.Resources>
 			<AlternationConverter x:Key="BackgroundConverter">
-				<VisualBrush>
-					<VisualBrush.Visual>
-						<Border Width="1" Height="1" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
-					</VisualBrush.Visual>
-				</VisualBrush>
-				<VisualBrush Opacity=".15">
-					<VisualBrush.Visual>
-						<Border Width="1" Height="1" Background="#CCCC33"/>
-					</VisualBrush.Visual>
-				</VisualBrush>
+				<SolidColorBrush Color="Transparent" />
+				<SolidColorBrush Color="#CCCC33" Opacity="0.15" />
 			</AlternationConverter>
 			<Style x:Key="alternatingWithBinding"
 				   TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource {x:Type ListViewItem}}">
