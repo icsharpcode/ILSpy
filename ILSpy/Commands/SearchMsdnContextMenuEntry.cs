@@ -102,19 +102,16 @@ namespace ICSharpCode.ILSpy
 		{
 			var address = string.Empty;
 
-			var namespaceNode = node as NamespaceTreeNode;
-			if (namespaceNode != null)
+			if (node is NamespaceTreeNode namespaceNode)
+			{
 				address = string.Format(msdnAddress, namespaceNode.Name);
-
-			if (node is IMemberTreeNode memberNode)
+			}
+			else if (node is IMemberTreeNode memberNode)
 			{
 				var member = memberNode.Member;
-				var memberName = string.Empty;
-
-				if (member.DeclaringType == null)
-					memberName = member.FullName;
-				else
-					memberName = string.Format("{0}.{1}", member.DeclaringType.FullName, member.Name);
+				var memberName = member.ReflectionName.Replace('`', '-').Replace('+', '.');
+				if (memberName.EndsWith("..ctor", System.StringComparison.Ordinal))
+					memberName = memberName.Substring(0, memberName.Length - 5) + "-ctor";
 
 				address = string.Format(msdnAddress, memberName);
 			}
