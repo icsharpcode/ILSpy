@@ -56,13 +56,13 @@ namespace ICSharpCode.ILSpy
 				if (node is EventTreeNode eventNode && (!eventNode.IsPublicAPI || !IsAccessible(eventNode.EventDefinition)))
 					return false;
 
-				if (node is FieldTreeNode fieldNode && (!fieldNode.IsPublicAPI || !IsAccessible(fieldNode.FieldDefinition)))
+				if (node is FieldTreeNode fieldNode && (!fieldNode.IsPublicAPI || !IsAccessible(fieldNode.FieldDefinition) || IsDelegateOrEnumMember(fieldNode.FieldDefinition)))
 					return false;
 
 				if (node is PropertyTreeNode propertyNode && (!propertyNode.IsPublicAPI || !IsAccessible(propertyNode.PropertyDefinition)))
 					return false;
 
-				if (node is MethodTreeNode methodNode && (!methodNode.IsPublicAPI || !IsAccessible(methodNode.MethodDefinition)))
+				if (node is MethodTreeNode methodNode && (!methodNode.IsPublicAPI || !IsAccessible(methodNode.MethodDefinition) || IsDelegateOrEnumMember(methodNode.MethodDefinition)))
 					return false;
 
 				if (node is NamespaceTreeNode namespaceNode && string.IsNullOrEmpty(namespaceNode.Name))
@@ -81,6 +81,20 @@ namespace ICSharpCode.ILSpy
 				case Accessibility.Public:
 				case Accessibility.Protected:
 				case Accessibility.ProtectedOrInternal:
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		bool IsDelegateOrEnumMember(IMember member)
+		{
+			if (member.DeclaringTypeDefinition == null)
+				return false;
+			switch (member.DeclaringTypeDefinition.Kind)
+			{
+				case TypeKind.Delegate:
+				case TypeKind.Enum:
 					return true;
 				default:
 					return false;
