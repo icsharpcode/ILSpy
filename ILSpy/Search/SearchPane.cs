@@ -34,6 +34,7 @@ using System.Windows.Threading;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -48,6 +49,7 @@ namespace ICSharpCode.ILSpy
 		const int MAX_REFRESH_TIME_MS = 10; // More means quicker forward of data, less means better responsibility
 		RunningSearch currentSearch;
 		bool runSearchOnNextShow;
+		IComparer<SearchResult> resultsComparer;
 
 		public static readonly DependencyProperty ResultsProperty =
 			DependencyProperty.Register("Results", typeof(ObservableCollection<SearchResult>), typeof(SearchPane),
@@ -210,7 +212,7 @@ namespace ICSharpCode.ILSpy
 			int resultsAdded = 0;
 			while (Results.Count < MAX_RESULTS && timer.ElapsedMilliseconds < MAX_REFRESH_TIME_MS && currentSearch.resultQueue.TryTake(out var result))
 			{
-				InsertResult(Results, result);
+				Results.InsertSorted(result, resultsComparer);
 				++resultsAdded;
 			}
 
@@ -229,6 +231,9 @@ namespace ICSharpCode.ILSpy
 				currentSearch = null;
 			}
 
+			resultsComparer = DisplaySettingsPanel.CurrentDisplaySettings.SortResults ?
+				SearchResult.ComparerByFitness :
+				SearchResult.ComparerByName;
 			Results.Clear();
 
 			RunningSearch startedSearch = null;
@@ -248,34 +253,6 @@ namespace ICSharpCode.ILSpy
 			if (currentSearch == startedSearch)
 			{ //are we still running the same search
 				searchProgressBar.IsIndeterminate = false;
-			}
-		}
-
-		void InsertResult(IList<SearchResult> results, SearchResult result)
-		{
-			if (results.Count == 0)
-			{
-				results.Add(result);
-			}
-			else if (Options.DisplaySettingsPanel.CurrentDisplaySettings.SortResults)
-			{
-				// Keep results collection sorted by "Fitness" by inserting result into correct place
-				// Inserts in the beginning shifts all elements, but there can be no more than 1000 items.
-				for (int i = 0; i < results.Count; i++)
-				{
-					if (results[i].Fitness < result.Fitness)
-					{
-						results.Insert(i, result);
-						return;
-					}
-				}
-				results.Add(result);
-			}
-			else
-			{
-				// Original Code
-				int index = results.BinarySearch(result, 0, results.Count - 1, SearchResult.Comparer);
-				results.Insert(index < 0 ? ~index : index, result);
 			}
 		}
 
