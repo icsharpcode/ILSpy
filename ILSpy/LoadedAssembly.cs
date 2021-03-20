@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 		}
 
-		public LoadedAssembly(LoadedAssembly bundle, string fileName, Task<Stream?>? stream, IAssemblyResolver assemblyResolver = null)
+		public LoadedAssembly(LoadedAssembly bundle, string fileName, Task<Stream?>? stream, IAssemblyResolver? assemblyResolver = null)
 			: this(bundle.assemblyList, fileName, stream, assemblyResolver)
 		{
 			this.ParentBundle = bundle;
