@@ -13,8 +13,8 @@
 	<Grid Margin="5,0,0,0">
 		<Grid.Resources>
 			<AlternationConverter x:Key="BackgroundConverter">
-				<SolidColorBrush Color="White"></SolidColorBrush>
-				<SolidColorBrush Color="Beige"></SolidColorBrush>
+				<SolidColorBrush Color="Transparent" />
+				<SolidColorBrush Color="#CCCC33" Opacity="0.15" />
 			</AlternationConverter>
 			<Style x:Key="alternatingWithBinding"
 				   TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource {x:Type ListBoxItem}}">

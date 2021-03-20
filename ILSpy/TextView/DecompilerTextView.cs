@@ -54,6 +54,7 @@ using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.themes;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -460,14 +461,15 @@ namespace ICSharpCode.ILSpy.TextView
 				};
 				viewer.Document = document;
 				Border border = new Border {
-					Background = SystemColors.ControlBrush,
-					BorderBrush = SystemColors.ControlDarkBrush,
 					BorderThickness = new Thickness(1),
 					MaxHeight = 400,
 					Child = viewer
 				};
+				border.SetResourceReference(Border.BackgroundProperty, SystemColors.ControlBrushKey);
+				border.SetResourceReference(Border.BorderBrushProperty, SystemColors.ControlDarkBrushKey);
+
 				this.Child = border;
-				viewer.Foreground = SystemColors.InfoTextBrush;
+				viewer.SetResourceReference(ForegroundProperty, SystemColors.InfoTextBrushKey);
 				document.TextAlignment = TextAlignment.Left;
 				document.FontSize = fontSize;
 				document.FontFamily = SystemFonts.SmallCaptionFontFamily;
@@ -926,8 +928,9 @@ namespace ICSharpCode.ILSpy.TextView
 					{
 						if (reference.Equals(r.Reference))
 						{
+
 							var mark = textMarkerService.Create(r.StartOffset, r.Length);
-							mark.BackgroundColor = r.IsDefinition ? Colors.LightSeaGreen : Colors.GreenYellow;
+							mark.BackgroundColor = (Color)(r.IsDefinition ? FindResource(ResourceKeys.TextMarkerDefinitionBackgroundColor) : FindResource(ResourceKeys.TextMarkerBackgroundColor));
 							localReferenceMarks.Add(mark);
 						}
 					}

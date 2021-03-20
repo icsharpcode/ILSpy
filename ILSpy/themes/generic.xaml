@@ -1,7 +1,7 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
->
+	xmlns:themes="clr-namespace:ICSharpCode.ILSpy.themes">
 	<ResourceDictionary.MergedDictionaries>
 		<ResourceDictionary Source="../Controls/SearchBoxStyle.xaml" />
 	</ResourceDictionary.MergedDictionaries>
@@ -26,4 +26,7 @@
 			      Data            = "M 5,5 L 10,10 L 15,5 L 5,5"/>
 		</StackPanel>
 	</DataTemplate>
+
+	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerBackgroundColor}">GreenYellow</Color>
+	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerDefinitionBackgroundColor}">LightSeaGreen</Color>
 </ResourceDictionary>
