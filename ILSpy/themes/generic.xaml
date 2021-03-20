@@ -29,4 +29,5 @@
 
 	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerBackgroundColor}">GreenYellow</Color>
 	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerDefinitionBackgroundColor}">LightSeaGreen</Color>
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.LinkTextForegroundBrush}">Blue</SolidColorBrush>
 </ResourceDictionary>

@@ -132,6 +132,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 			ContextMenuProvider.Add(this);
 
+			textEditor.TextArea.TextView.SetResourceReference(ICSharpCode.AvalonEdit.Rendering.TextView.LinkTextForegroundBrushProperty, ResourceKeys.LinkTextForegroundBrush);
+
 			this.DataContextChanged += DecompilerTextView_DataContextChanged;
 		}
 
