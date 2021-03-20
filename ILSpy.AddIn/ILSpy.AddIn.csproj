@@ -1,7 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project>
-  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
-
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
@@ -12,8 +9,10 @@
     <Version>1.7.1.0</Version>
     <FileVersion>1.7.1.0</FileVersion>
     <LangVersion>9.0</LangVersion>
+    <RuntimeIdentifiers>win</RuntimeIdentifiers>
 
     <EnableDefaultItems>False</EnableDefaultItems>
+    <SkipVSIXDefaultItems>true</SkipVSIXDefaultItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>TRACE;VSADDIN</DefineConstants>
 
@@ -50,6 +49,7 @@
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="2.4.0" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="16.8.3038" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
+    <PackageReference Include="VSIX-SdkProjectAdapter" Version="1.1.0" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
@@ -120,22 +120,9 @@
     </EmbeddedResource>
   </ItemGroup>
 
-  <!--
-  BEGIN WORKAROUND:
-  Nuget packages do not get added to the vsix automatically.
-  (related to https://github.com/icsharpcode/ILSpy/issues/511)
-  -->
   <PropertyGroup>
     <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\$(TargetFramework)\</ILSpyBuildPath>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Content Include="$(OutputPath)Mono.Cecil.dll">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <VSIXSubPath>\</VSIXSubPath>
-    </Content>
-  </ItemGroup>
-  <!-- END WORKAROUND -->
 
   <ItemGroup>
     <Content Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)ILSpy.exe.config">
@@ -200,9 +187,5 @@
   <PropertyGroup>
     <UseCodebase>true</UseCodebase>
   </PropertyGroup>
-
-  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
-
-  <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')" />
 
 </Project>
