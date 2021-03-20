@@ -4,6 +4,28 @@
 	<ResourceDictionary.MergedDictionaries>
 		<ResourceDictionary Source="/AvalonDock.Themes.VS2013;component/lighttheme.xaml" />
 	</ResourceDictionary.MergedDictionaries>
+
+	<Color x:Key="{x:Static SystemColors.ControlLightLightColorKey}">#FCFCFC</Color>
+	<Color x:Key="{x:Static SystemColors.ControlLightColorKey}">#D8D8E0</Color>
+	<Color x:Key="{x:Static SystemColors.ControlColorKey}">#F5F5F5</Color>
+	<Color x:Key="{x:Static SystemColors.ControlDarkColorKey}">#C2C3C9</Color>
+	<Color x:Key="{x:Static SystemColors.ControlDarkDarkColorKey}">#686868</Color>
+	<Color x:Key="{x:Static SystemColors.ControlTextColorKey}">#1E1E1E</Color>
+	<Color x:Key="{x:Static SystemColors.GrayTextColorKey}">#717171</Color>
+	<Color x:Key="{x:Static SystemColors.HighlightColorKey}">#3399FF</Color>
+	<Color x:Key="{x:Static SystemColors.HighlightTextColorKey}">#FFFFFF</Color>
+	<Color x:Key="{x:Static SystemColors.MenuColorKey}">#F6F6F6</Color>
+	<Color x:Key="{x:Static SystemColors.MenuBarColorKey}">#F6F6F6</Color>
+	<Color x:Key="{x:Static SystemColors.MenuTextColorKey}">#1E1E1E</Color>
+	<Color x:Key="{x:Static SystemColors.WindowColorKey}">#FFFFFF</Color>
+	<Color x:Key="{x:Static SystemColors.WindowTextColorKey}">#1E1E1E</Color>
+	<Color x:Key="{x:Static SystemColors.ActiveCaptionColorKey}">#EEEEF2</Color>
+	<Color x:Key="{x:Static SystemColors.ActiveBorderColorKey}">#007ACC</Color>
+	<Color x:Key="{x:Static SystemColors.ActiveCaptionTextColorKey}">#1E1E1E</Color>
+	<Color x:Key="{x:Static SystemColors.InactiveCaptionColorKey}">#EEEEF2</Color>
+	<Color x:Key="{x:Static SystemColors.InactiveBorderColorKey}">#CCCEDB</Color>
+	<Color x:Key="{x:Static SystemColors.InactiveCaptionTextColorKey}">#1E1E1E</Color>
+
 	<SolidColorBrush x:Key="{x:Static SystemColors.ControlLightLightBrushKey}" Color="#FCFCFC" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.ControlLightBrushKey}" Color="#D8D8E0" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="#F5F5F5" />
@@ -24,6 +46,7 @@
 	<SolidColorBrush x:Key="{x:Static SystemColors.InactiveCaptionBrushKey}" Color="#EEEEF2" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.InactiveBorderBrushKey}" Color="#CCCEDB" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.InactiveCaptionTextBrushKey}" Color="#1E1E1E" />
+
 	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.BorderBrush}" Color="#CCCEDB" />
 	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.DisabledBrush}" Color="#EEEEF2" />
 </ResourceDictionary>

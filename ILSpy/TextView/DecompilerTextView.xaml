@@ -3,12 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
              xmlns:ae="clr-namespace:ICSharpCode.AvalonEdit;assembly=ICSharpCode.AvalonEdit"
-             xmlns:folding="clr-namespace:ICSharpCode.AvalonEdit.Folding;assembly=ICSharpCode.AvalonEdit">
+             xmlns:folding="clr-namespace:ICSharpCode.AvalonEdit.Folding;assembly=ICSharpCode.AvalonEdit"
+             xmlns:styles="urn:TomsToolbox.Wpf.Styles">
 	<UserControl.Resources>
 		<BooleanToVisibilityConverter x:Key="boolToVisibility" />
+		<SolidColorBrush x:Key="waitAdornerBackgoundBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" Opacity=".75"/>
 	</UserControl.Resources>
 	<Grid>
-		<Border BorderThickness="1,1,0,1" BorderBrush="#FF828790">
+		<Border BorderThickness="1,1,0,1" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
 			<Grid>
 				<ae:TextEditor Name="textEditor" AutomationProperties.Name="Decompilation"  FontFamily="Consolas" FontSize="10pt" IsReadOnly="True"
 				               Background="{DynamicResource {x:Static SystemColors.InfoBrushKey}}"
@@ -20,10 +22,33 @@
 				               >
 					<ae:TextEditor.Resources>
 						<!-- prevent App-wide button style from applying to the buttons in the search box -->
-						<Style TargetType="{x:Type Button}" />
+						<Style TargetType="{x:Type Button}">
+							<Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+							<Setter Property="BorderBrush" Value="{DynamicResource {x:Static styles:ResourceKeys.BorderBrush}}" />
+							<Setter Property="HorizontalContentAlignment" Value="Center" />
+							<Setter Property="VerticalContentAlignment" Value="Center" />
+							<Setter Property="Template">
+								<Setter.Value>
+									<ControlTemplate TargetType="Button">
+										<Border BorderThickness="1" 
+										        Background="{TemplateBinding Background}"
+										        BorderBrush="{TemplateBinding BorderBrush}"
+										        Padding="{TemplateBinding Padding}">
+											<ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+											                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+										</Border>
+									</ControlTemplate>
+								</Setter.Value>
+							</Setter>
+							<Style.Triggers>
+								<Trigger Property="IsMouseOver" Value="True">
+									<Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" />
+								</Trigger>
+							</Style.Triggers>
+						</Style>
 					</ae:TextEditor.Resources>
 				</ae:TextEditor>
-				<Border Name="waitAdorner" Background="#C0FFFFFF" Visibility="Collapsed">
+				<Border Name="waitAdorner" Background="{StaticResource waitAdornerBackgoundBrush}" Visibility="Collapsed">
 					<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 						<TextBlock FontSize="14pt" Text="{x:Static properties:Resources.Decompiling}"/>
 						<ProgressBar Name="progressBar" Height="16" Margin="0, 4" />
