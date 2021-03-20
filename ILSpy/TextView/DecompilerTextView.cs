@@ -54,11 +54,14 @@ using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
-using ICSharpCode.ILSpy.themes;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
 using Microsoft.Win32;
+
+using TomsToolbox.Wpf;
+
+using ResourceKeys = ICSharpCode.ILSpy.themes.ResourceKeys;
 
 namespace ICSharpCode.ILSpy.TextView
 {
@@ -120,8 +123,16 @@ namespace ICSharpCode.ILSpy.TextView
 			DisplaySettingsPanel.CurrentDisplaySettings.PropertyChanged += CurrentDisplaySettings_PropertyChanged;
 
 			// SearchPanel
-			SearchPanel.Install(textEditor.TextArea)
-				.RegisterCommands(Application.Current.MainWindow.CommandBindings);
+			SearchPanel searchPanel = SearchPanel.Install(textEditor.TextArea);
+			searchPanel.RegisterCommands(Application.Current.MainWindow.CommandBindings);
+			searchPanel.Loaded += (_, _) => {
+				// HACK: fix the hardcoded but misaligned margin of the search text box.
+				var textBox = searchPanel.VisualDescendants().OfType<TextBox>().FirstOrDefault();
+				if (textBox != null)
+				{
+					textBox.Margin = new Thickness(3);
+				}
+			};
 
 			ShowLineMargin();
 			SetHighlightCurrentLine();
