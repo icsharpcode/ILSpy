@@ -52,7 +52,7 @@
 	<SolidColorBrush x:Key="{x:Static SystemColors.InactiveBorderBrushKey}" Color="#434346" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.InactiveCaptionTextBrushKey}" Color="#F1F1F1" />
 
-	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.BorderBrush}" Color="#3F3F46" />
+	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.BorderBrush}" Color="#9E9E9E" />
 	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.DisabledBrush}" Color="#2D2D30" />
 	<Color x:Key="{x:Static themes:ResourceKeys.TextMarkerBackgroundColor}">MediumVioletRed</Color>
 	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.LinkTextForegroundBrush}">CornflowerBlue</SolidColorBrush>

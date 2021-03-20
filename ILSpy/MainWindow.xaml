@@ -32,7 +32,7 @@
 				ShowRoot="False"
 				AllowDropOrder="True"
 				AllowDrop="True"
-				BorderThickness="0,1,1,1" Visibility="Visible" />
+				BorderThickness="0" Visibility="Visible" />
 
 		<DataTemplate x:Key="AssemblyListPaneTemplate">
 			<ContentControl Content="{StaticResource AssemblyTreeView}" />

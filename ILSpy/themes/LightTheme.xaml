@@ -47,6 +47,6 @@
 	<SolidColorBrush x:Key="{x:Static SystemColors.InactiveBorderBrushKey}" Color="#CCCEDB" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.InactiveCaptionTextBrushKey}" Color="#1E1E1E" />
 
-	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.BorderBrush}" Color="#CCCEDB" />
+	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.BorderBrush}" Color="#686868" />
 	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.DisabledBrush}" Color="#EEEEF2" />
 </ResourceDictionary>
