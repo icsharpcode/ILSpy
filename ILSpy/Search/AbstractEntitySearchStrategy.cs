@@ -77,9 +77,9 @@ namespace ICSharpCode.ILSpy.Search
 				return 0;
 			}
 
-			// Constructors always have the same name in IL:
+			// Constructors and destructors always have the same name in IL:
 			// Use type name instead
-			if (text == ".cctor" || text == ".ctor")
+			if (member.SymbolKind == SymbolKind.Constructor || member.SymbolKind == SymbolKind.Destructor)
 			{
 				text = member.DeclaringType.Name;
 			}
