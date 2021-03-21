@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					CanUserAddRows = false,
 					CanUserDeleteRows = false,
 					CanUserReorderColumns = false,
-					RowHeaderWidth = 0,
+					HeadersVisibility = DataGridHeadersVisibility.Column,
 					EnableColumnVirtualization = true,
 					EnableRowVirtualization = true,
 					RowHeight = 20,
