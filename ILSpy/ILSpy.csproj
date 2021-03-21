@@ -212,9 +212,28 @@
     </Compile>
     <Compile Include="Metadata\FlagsFilterControl.xaml.cs" />
     <Compile Include="Metadata\FlagsTooltip.xaml.cs" />
+    <Compile Include="Metadata\Heaps\GuidHeapTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\Heaps\BlobHeapTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\Heaps\UserStringHeapTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
+    <Compile Include="Metadata\Heaps\StringHeapTreeNode.cs">
+      <SubType>Code</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Compile>
     <Compile Include="Metadata\HexFilterControl.xaml.cs" />
     <Compile Include="Metadata\MetaDataGrid.cs" />
     <Compile Include="Metadata\MetadataProtocolHandler.cs" />
+    <Compile Include="Metadata\DebugMetadataTablesTreeNode.cs" />
+    <Compile Include="Metadata\MetadataTablesTreeNode.cs" />
+    <Compile Include="Metadata\MetadataHeapTreeNode.cs" />
     <Compile Include="Metadata\MetadataTableTreeNode.cs" />
     <Compile Include="Metadata\DebugMetadataTreeNode.cs" />
     <Compile Include="ThemeManager.cs" />

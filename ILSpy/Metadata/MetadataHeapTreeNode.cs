@@ -16,35 +16,53 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.ComponentModel.Composition;
-using System.Linq;
+using System;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
+using System.Windows.Controls;
+using System.Windows.Threading;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	[Export(typeof(IProtocolHandler))]
-	class MetadataProtocolHandler : IProtocolHandler
+	internal abstract class MetadataHeapTreeNode : ILSpyTreeNode
 	{
-		public ILSpyTreeNode Resolve(string protocol, PEFile module, Handle handle, out bool newTabPage)
+		protected PEFile module;
+		protected MetadataReader metadata;
+		protected int scrollTarget;
+
+		public HandleKind Kind { get; }
+
+		public MetadataHeapTreeNode(HandleKind kind, PEFile module, MetadataReader metadata)
 		{
-			newTabPage = true;
-			if (protocol != "metadata")
-				return null;
-			var assemblyTreeNode = MainWindow.Instance.FindTreeNode(module) as AssemblyTreeNode;
-			if (assemblyTreeNode == null)
-				return null;
-			var mxNode = assemblyTreeNode.Children.OfType<MetadataTreeNode>().FirstOrDefault();
-			if (mxNode != null)
-			{
-				mxNode.EnsureLazyChildren();
-				var node = mxNode.FindNodeByHandleKind(handle.Kind);
-				node?.ScrollTo(handle);
-				return node;
-			}
-			return null;
+			this.module = module;
+			this.Kind = kind;
+			this.metadata = metadata;
+		}
+
+		internal void ScrollTo(Handle handle)
+		{
+			//this.scrollTarget = MetadataTokens.GetHeapOffset((EntityHandle)handle);
+		}
+
+		protected void ScrollItemIntoView(DataGrid view, object item)
+		{
+			view.Loaded += View_Loaded;
+			view.Dispatcher.BeginInvoke((Action)(() => view.SelectItem(item)), DispatcherPriority.Background);
+		}
+
+		private void View_Loaded(object sender, System.Windows.RoutedEventArgs e)
+		{
+			DataGrid view = (DataGrid)sender;
+			var sv = view.FindVisualChild<ScrollViewer>();
+			sv.ScrollToVerticalOffset(scrollTarget - 1);
+			view.Loaded -= View_Loaded;
+			this.scrollTarget = default;
 		}
 	}
 }
