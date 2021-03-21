@@ -54,13 +54,14 @@
     <PackageReference Include="AvalonEdit" Version="$(AvalonEditVersion)" />
     <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="$(SystemCompilerServicesUnsafeVersion)" />
-    <PackageReference Include="Dirkster.AvalonDock" Version="4.50.1" />
+    <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.50.1" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="16.9.6-alpha" />
     <PackageReference Include="System.Composition" Version="$(SystemCompositionVersion)" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
     <PackageReference Include="OSVersionHelper" Version="1.1.24" />
     <PackageReference Include="DataGridExtensions" Version="2.5.1" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
+    <PackageReference Include="TomsToolbox.Wpf.Styles" Version="2.4.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -216,6 +217,8 @@
     <Compile Include="Metadata\MetadataProtocolHandler.cs" />
     <Compile Include="Metadata\MetadataTableTreeNode.cs" />
     <Compile Include="Metadata\DebugMetadataTreeNode.cs" />
+    <Compile Include="ThemeManager.cs" />
+    <Compile Include="themes\ResourceKeys.cs" />
     <Compile Include="TreeNodes\PackageFolderTreeNode.cs" />
     <Compile Include="ViewModels\LegacyToolPaneModel.cs" />
     <Compile Include="ViewModels\ManageAssemblyListsViewModel.cs" />
@@ -471,6 +474,9 @@
     <EmbeddedResource Include="TextView\CSharp-Mode.xshd" />
     <EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
     <EmbeddedResource Include="TextView\Asm-Mode.xshd" />
+    <EmbeddedResource Include="TextView\CSharp-Mode-Dark.xshd" />
+    <EmbeddedResource Include="TextView\ILAsm-Mode-Dark.xshd" />
+    <EmbeddedResource Include="TextView\Asm-Mode-Dark.xshd" />
     <None Include="app.config" />
     <None Include="app.manifest" />
     <None Include="Properties\app.config.template" />
@@ -511,9 +517,11 @@
     <Page Include="Controls\ResourceObjectTable.xaml" />
     <Page Include="Controls\ResourceStringTable.xaml" />
     <Page Include="Controls\SearchBoxStyle.xaml" />
+    <Page Include="themes\DarkTheme.xaml" />
     <Page Include="Metadata\FlagsFilterControl.xaml" />
     <Page Include="Metadata\FlagsTooltip.xaml" />
     <Page Include="Metadata\HexFilterControl.xaml" />
+    <Page Include="themes\LightTheme.xaml" />
     <Page Include="Views\CreateListDialog.xaml" />
     <Page Include="Views\DebugSteps.xaml" />
     <Page Include="Images\Assembly.xaml" />
@@ -593,6 +601,9 @@
 
   <ItemGroup>
     <Page Update="@(Page)" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Update="themes\DarkTheme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Metadata\FlagsFilterControl.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -828,11 +839,16 @@
     <Page Update="Options\DecompilerSettingsPanel.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="themes\LightTheme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>
     <None Include="Search\SearchPane.xaml" />
     <None Include="@(Resource)" />
+    <EmbeddedResource Include="TextView\XML-Mode-Dark.xshd" />
+    <EmbeddedResource Include="TextView\XML-Mode.xshd" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -855,6 +871,7 @@
 
   <ItemGroup>
     <Resource Include="Images\NuGet.png" />
+    <Resource Include="Images\DarkMode.png" />
   </ItemGroup>
 
   <Target Name="SortResX" BeforeTargets="BeforeBuild" Inputs="@(SortResXInput)" Outputs="@(SortResXStamp)">

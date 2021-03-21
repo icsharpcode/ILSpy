@@ -64,4 +64,8 @@
     <Compile Include="TreeTraversal.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="TomsToolbox.Wpf.Styles" Version="2.4.2" />
+  </ItemGroup>
+
 </Project>

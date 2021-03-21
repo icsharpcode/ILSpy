@@ -33,6 +33,8 @@ using ICSharpCode.ILSpy.Options;
 
 using Microsoft.VisualStudio.Composition;
 
+using TomsToolbox.Wpf.Styles;
+
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>
@@ -66,6 +68,8 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 			InitializeComponent();
+
+			Resources.RegisterDefaultStyles();
 
 			if (!System.Diagnostics.Debugger.IsAttached)
 			{

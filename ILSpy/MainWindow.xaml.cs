@@ -142,6 +142,13 @@ namespace ICSharpCode.ILSpy
 			{
 				ShowAssemblyList(sessionSettings.ActiveAssemblyList);
 			}
+
+			if (e.PropertyName == nameof(SessionSettings.IsDarkMode))
+			{
+				// update syntax highlighting and force reload (AvalonEdit does not automatically refresh on highlighting change)
+				DecompilerTextView.RegisterHighlighting();
+				DecompileSelectedNodes(DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
+			}
 		}
 
 		void SetWindowBounds(Rect bounds)
@@ -191,6 +198,7 @@ namespace ICSharpCode.ILSpy
 		Button MakeToolbarItem(Lazy<ICommand, IToolbarCommandMetadata> command)
 		{
 			return new Button {
+				Style = ThemeManager.Current.CreateToolBarButtonStyle(),
 				Command = CommandWrapper.Unwrap(command.Value),
 				ToolTip = Properties.Resources.ResourceManager.GetString(command.Metadata.ToolTip),
 				Tag = command.Metadata.Tag,

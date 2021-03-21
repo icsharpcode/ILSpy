@@ -59,6 +59,10 @@ using ICSharpCode.ILSpy.ViewModels;
 
 using Microsoft.Win32;
 
+using TomsToolbox.Wpf;
+
+using ResourceKeys = ICSharpCode.ILSpy.themes.ResourceKeys;
+
 namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
@@ -87,41 +91,7 @@ namespace ICSharpCode.ILSpy.TextView
 		#region Constructor
 		public DecompilerTextView()
 		{
-			HighlightingManager.Instance.RegisterHighlighting(
-				"ILAsm", new string[] { ".il" },
-				delegate {
-					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "ILAsm-Mode.xshd"))
-					{
-						using (XmlTextReader reader = new XmlTextReader(s))
-						{
-							return HighlightingLoader.Load(reader, HighlightingManager.Instance);
-						}
-					}
-				});
-
-			HighlightingManager.Instance.RegisterHighlighting(
-				"C#", new string[] { ".cs" },
-				delegate {
-					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "CSharp-Mode.xshd"))
-					{
-						using (XmlTextReader reader = new XmlTextReader(s))
-						{
-							return HighlightingLoader.Load(reader, HighlightingManager.Instance);
-						}
-					}
-				});
-
-			HighlightingManager.Instance.RegisterHighlighting(
-				"Asm", new string[] { ".s", ".asm" },
-				delegate {
-					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "Asm-Mode.xshd"))
-					{
-						using (XmlTextReader reader = new XmlTextReader(s))
-						{
-							return HighlightingLoader.Load(reader, HighlightingManager.Instance);
-						}
-					}
-				});
+			RegisterHighlighting();
 
 			InitializeComponent();
 
@@ -153,8 +123,16 @@ namespace ICSharpCode.ILSpy.TextView
 			DisplaySettingsPanel.CurrentDisplaySettings.PropertyChanged += CurrentDisplaySettings_PropertyChanged;
 
 			// SearchPanel
-			SearchPanel.Install(textEditor.TextArea)
-				.RegisterCommands(Application.Current.MainWindow.CommandBindings);
+			SearchPanel searchPanel = SearchPanel.Install(textEditor.TextArea);
+			searchPanel.RegisterCommands(Application.Current.MainWindow.CommandBindings);
+			searchPanel.Loaded += (_, _) => {
+				// HACK: fix the hardcoded but misaligned margin of the search text box.
+				var textBox = searchPanel.VisualDescendants().OfType<TextBox>().FirstOrDefault();
+				if (textBox != null)
+				{
+					textBox.Margin = new Thickness(3);
+				}
+			};
 
 			ShowLineMargin();
 			SetHighlightCurrentLine();
@@ -164,6 +142,8 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
 
 			ContextMenuProvider.Add(this);
+
+			textEditor.TextArea.TextView.SetResourceReference(ICSharpCode.AvalonEdit.Rendering.TextView.LinkTextForegroundBrushProperty, ResourceKeys.LinkTextForegroundBrush);
 
 			this.DataContextChanged += DecompilerTextView_DataContextChanged;
 		}
@@ -494,14 +474,15 @@ namespace ICSharpCode.ILSpy.TextView
 				};
 				viewer.Document = document;
 				Border border = new Border {
-					Background = SystemColors.ControlBrush,
-					BorderBrush = SystemColors.ControlDarkBrush,
 					BorderThickness = new Thickness(1),
 					MaxHeight = 400,
 					Child = viewer
 				};
+				border.SetResourceReference(Border.BackgroundProperty, SystemColors.ControlBrushKey);
+				border.SetResourceReference(Border.BorderBrushProperty, SystemColors.ControlDarkBrushKey);
+
 				this.Child = border;
-				viewer.Foreground = SystemColors.InfoTextBrush;
+				viewer.SetResourceReference(ForegroundProperty, SystemColors.InfoTextBrushKey);
 				document.TextAlignment = TextAlignment.Left;
 				document.FontSize = fontSize;
 				document.FontFamily = SystemFonts.SmallCaptionFontFamily;
@@ -960,8 +941,9 @@ namespace ICSharpCode.ILSpy.TextView
 					{
 						if (reference.Equals(r.Reference))
 						{
+
 							var mark = textMarkerService.Create(r.StartOffset, r.Length);
-							mark.BackgroundColor = r.IsDefinition ? Colors.LightSeaGreen : Colors.GreenYellow;
+							mark.BackgroundColor = (Color)(r.IsDefinition ? FindResource(ResourceKeys.TextMarkerDefinitionBackgroundColor) : FindResource(ResourceKeys.TextMarkerBackgroundColor));
 							localReferenceMarks.Add(mark);
 						}
 					}
@@ -1190,6 +1172,15 @@ namespace ICSharpCode.ILSpy.TextView
 
 		ViewState IHaveState.GetState() => GetState();
 
+		public static void RegisterHighlighting()
+		{
+			HighlightingManager.Instance.RegisterHighlighting("ILAsm", new[] { ".il" }, "ILAsm-Mode");
+			HighlightingManager.Instance.RegisterHighlighting("C#", new[] { ".cs" }, "CSharp-Mode");
+			HighlightingManager.Instance.RegisterHighlighting("Asm", new[] { ".s", ".asm" }, "Asm-Mode");
+			HighlightingManager.Instance.RegisterHighlighting("xml", new[] { ".xml", ".baml" }, "XML-Mode");
+		}
+
+
 		public void Dispose()
 		{
 			DisplaySettingsPanel.CurrentDisplaySettings.PropertyChanged -= CurrentDisplaySettings_PropertyChanged;
@@ -1272,6 +1263,35 @@ namespace ICSharpCode.ILSpy.TextView
 					&& HorizontalOffset == vs.HorizontalOffset;
 			}
 			return false;
+		}
+	}
+
+	static class ExtensionMethods
+	{
+		public static void RegisterHighlighting(
+			this HighlightingManager manager,
+			string name,
+			string[] extensions,
+			string resourceName)
+		{
+			if (ThemeManager.Current.IsDarkMode)
+			{
+				resourceName += "-Dark";
+			}
+
+			resourceName += ".xshd";
+
+			manager.RegisterHighlighting(
+				name, extensions,
+				delegate {
+					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), resourceName))
+					{
+						using (XmlTextReader reader = new XmlTextReader(s))
+						{
+							return HighlightingLoader.Load(reader, manager);
+						}
+					}
+				});
 		}
 	}
 }

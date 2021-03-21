@@ -547,7 +547,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (!loadedAssm.HasLoadError)
 				{
 					loadedAssm.IsAutoLoaded = false;
-					node.RaisePropertyChanged(nameof(node.Foreground));
+					node.RaisePropertyChanged(nameof(ILSpyTreeNode.IsAutoLoaded));
 				}
 			}
 			MainWindow.Instance.CurrentAssemblyList.RefreshSave();
