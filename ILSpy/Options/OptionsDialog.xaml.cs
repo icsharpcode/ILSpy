@@ -21,12 +21,26 @@ using System.ComponentModel.Composition;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Media;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.Options
 {
+	public class TabItemViewModel
+	{
+		public TabItemViewModel(string header, UIElement content)
+		{
+			Header = header;
+			Content = content;
+		}
+
+		public string Header { get; }
+		public UIElement Content { get; }
+	}
+
 	/// <summary>
 	/// Interaction logic for OptionsDialog.xaml
 	/// </summary>
@@ -46,9 +60,8 @@ namespace ICSharpCode.ILSpy.Options
 			ILSpySettings settings = ILSpySettings.Load();
 			foreach (var optionPage in optionPages.OrderBy(p => p.Metadata.Order))
 			{
-				TabItem tabItem = new TabItem();
-				tabItem.Header = MainWindow.GetResourceString(optionPage.Metadata.Title);
-				tabItem.Content = optionPage.Value;
+				var tabItem = new TabItemViewModel(MainWindow.GetResourceString(optionPage.Metadata.Title), optionPage.Value);
+
 				tabControl.Items.Add(tabItem);
 
 				IOptionPage page = optionPage.Value as IOptionPage;
@@ -76,7 +89,7 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			if (MessageBox.Show(Properties.Resources.ResetToDefaultsConfirmationMessage, "ILSpy", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
 			{
-				var page = ((TabItem)tabControl.SelectedItem).Content as IOptionPage;
+				var page = tabControl.SelectedValue as IOptionPage;
 				if (page != null)
 					page.LoadDefaults();
 			}
