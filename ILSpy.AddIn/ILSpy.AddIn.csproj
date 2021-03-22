@@ -1,10 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project>
-  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
-
-  <PropertyGroup>
-    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
-  </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
@@ -21,6 +15,7 @@
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>Key.snk</AssemblyOriginatorKeyFile>
+    <DefineConstants>TRACE;VSADDIN</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -50,6 +45,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis" Version="2.4.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.4.0" />
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="2.4.0" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="16.8.3038" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
   </ItemGroup>
 
@@ -129,7 +125,6 @@
   <PropertyGroup>
     <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\$(TargetFramework)\</ILSpyBuildPath>
   </PropertyGroup>
-
   <ItemGroup>
     <Content Include="$(OutputPath)Mono.Cecil.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
@@ -202,16 +197,7 @@
     <UseCodebase>true</UseCodebase>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE;VSADDIN</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>TRACE;VSADDIN</DefineConstants>
-  </PropertyGroup>
-
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
 
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')" />
-
 </Project>
