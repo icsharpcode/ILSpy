@@ -35,8 +35,6 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 
-using OSVersionHelper;
-
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(Menu = nameof(Resources._Help), Header = nameof(Resources._About), MenuOrder = 99999)]
@@ -62,9 +60,10 @@ namespace ICSharpCode.ILSpy
 				EnableHyperlinks = true
 			};
 			output.WriteLine(Resources.ILSpyVersion + RevisionClass.FullVersion);
-			if (WindowsVersionHelper.HasPackageIdentity)
+
+			if (StorePackageHelper.HasPackageIdentity)
 			{
-				output.WriteLine($"Package Name: {WindowsVersionHelper.GetPackageFamilyName()}");
+				output.WriteLine($"Package Name: {StorePackageHelper.GetPackageFamilyName()}");
 			}
 			else
 			{// if we're running in an MSIX, updates work differently
@@ -300,7 +299,7 @@ namespace ICSharpCode.ILSpy
 			UpdateSettings s = new UpdateSettings(spySettings);
 
 			// If we're in an MSIX package, updates work differently
-			if (s.AutomaticUpdateCheckEnabled && !WindowsVersionHelper.HasPackageIdentity)
+			if (s.AutomaticUpdateCheckEnabled && !StorePackageHelper.HasPackageIdentity)
 			{
 				// perform update check if we never did one before;
 				// or if the last check wasn't in the past 7 days

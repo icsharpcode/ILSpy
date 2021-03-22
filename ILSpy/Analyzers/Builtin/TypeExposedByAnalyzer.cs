@@ -24,10 +24,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers.Builtin
 {
+	using ICSharpCode.Decompiler.TypeSystem;
+
 	/// <summary>
 	/// Finds all entities that expose a type.
 	/// </summary>

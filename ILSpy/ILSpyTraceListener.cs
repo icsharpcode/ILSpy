@@ -31,8 +31,10 @@ namespace ICSharpCode.ILSpy
 		[Conditional("DEBUG")]
 		public static void Install()
 		{
+#if NET472
 			Debug.Listeners.Clear();
 			Debug.Listeners.Add(new ILSpyTraceListener());
+#endif
 		}
 
 		public ILSpyTraceListener()

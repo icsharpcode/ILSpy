@@ -20,10 +20,11 @@ using System;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
+	using ICSharpCode.Decompiler.TypeSystem;
+
 	/// <summary>
 	/// Represents an event in the TreeView.
 	/// </summary>
