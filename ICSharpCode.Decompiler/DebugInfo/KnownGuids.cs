@@ -18,6 +18,9 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		public static readonly Guid EmbeddedSource = new Guid("0e8a571b-6926-466e-b4ad-8ab04611f5fe");
 		public static readonly Guid SourceLink = new Guid("CC110556-A091-4D38-9FEC-25AB9A351A6A");
 		public static readonly Guid MethodSteppingInformation = new Guid("54FD2AC5-E925-401A-9C2A-F94F171072F8");
+		public static readonly Guid CompilationOptions = new Guid("B5FEEC05-8CD0-4A83-96DA-466284BB4BD8");
+		public static readonly Guid CompilationMetadataReferences = new Guid("7E4D4708-096E-4C5C-AEDA-CB10BA6A740D");
+		public static readonly Guid TupleElementNames = new Guid("ED9FDF71-8879-4747-8ED3-FE5EDE3CE710");
 
 		public static readonly Guid HashAlgorithmSHA1 = new Guid("ff1816ec-aa5e-4d10-87f7-6f4963833460");
 		public static readonly Guid HashAlgorithmSHA256 = new Guid("8829d00f-11b8-4213-878b-770e8597ac16");

@@ -459,6 +459,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return ldloc.Variable.IsRefReadOnly;
 				case Call call:
 					return call.Method.ReturnTypeIsRefReadOnly;
+				case CallVirt call:
+					return call.Method.ReturnTypeIsRefReadOnly;
 				case CallIndirect calli:
 					return calli.FunctionPointerType.ReturnIsRefReadOnly;
 				case AddressOf _:

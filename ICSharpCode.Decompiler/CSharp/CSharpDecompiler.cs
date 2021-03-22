@@ -430,7 +430,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			settings.LoadInMemory = true;
 			var file = LoadPEFile(fileName, settings);
 			var resolver = new UniversalAssemblyResolver(fileName, settings.ThrowOnAssemblyResolveErrors,
-				file.DetectTargetFrameworkId(),
+				file.DetectTargetFrameworkId(), file.DetectRuntimePack(),
 				settings.LoadInMemory ? PEStreamOptions.PrefetchMetadata : PEStreamOptions.Default,
 				settings.ApplyWindowsRuntimeProjections ? MetadataReaderOptions.ApplyWindowsRuntimeProjections : MetadataReaderOptions.None);
 			return new DecompilerTypeSystem(file, resolver);
@@ -1473,15 +1473,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (entityDecl != null)
 				{
-					int i = 0;
-					var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
-					foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter))
-					{
-						if (parameters.TryGetValue(i, out var v))
-							parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
-						i++;
-					}
-					entityDecl.AddAnnotation(function);
+					AddAnnotationsToDeclaration(method, entityDecl, function);
 				}
 
 				var localSettings = settings.Clone();
@@ -1539,6 +1531,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				throw new DecompilerException(module, method, innerException);
 			}
+		}
+
+		internal static void AddAnnotationsToDeclaration(IMethod method, EntityDeclaration entityDecl, ILFunction function)
+		{
+			int i = 0;
+			var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
+			foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter))
+			{
+				if (parameters.TryGetValue(i, out var v))
+					parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
+				i++;
+			}
+			entityDecl.AddAnnotation(function);
 		}
 
 		internal static void CleanUpMethodDeclaration(EntityDeclaration entityDecl, BlockStatement body, ILFunction function, bool decompileBody = true)

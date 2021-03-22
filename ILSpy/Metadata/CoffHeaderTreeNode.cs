@@ -111,6 +111,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					new { Value = (flags & 0x4000) != 0, Meaning = "<4000> File should only be run on a UP machine" },
 					new { Value = (flags & 0x8000) != 0, Meaning = "<8000> Bytes of machine words are reversed (High)" },
 				});
+				dataGridFactory.SetValue(DataGrid.GridLinesVisibilityProperty, DataGridGridLinesVisibility.None);
 				DataTemplate template = new DataTemplate();
 				template.VisualTree = dataGridFactory;
 				return template;

@@ -12,7 +12,7 @@
 		<ILAsmVersion>5.0.0</ILAsmVersion> <!-- Microsoft.NETCore.ILAsm -->
 		<RoslynVersion>3.8.0</RoslynVersion> <!-- Microsoft.CodeAnalysis.* -->
 		<MonoCecilVersion>0.11.3</MonoCecilVersion>
-		<AvalonEditVersion>6.1.0-preview1</AvalonEditVersion>
+		<AvalonEditVersion>6.1.1</AvalonEditVersion>
 		<NUnitVersion>3.12.0</NUnitVersion>
 		<NUnitAdapterVersion>3.13.0</NUnitAdapterVersion>
 		<MoqVersion>4.14.1</MoqVersion>

@@ -137,6 +137,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("No inlining");
 				Console.WriteLine(field.GetHashCode());
 			}
+
+			public void RefReadonlyCallVirt(RefLocalsAndReturns provider)
+			{
+				ref readonly NormalStruct readonlyRefInstance = ref provider.GetReadonlyRefInstance<NormalStruct>();
+				Console.WriteLine("No inlining");
+				readonlyRefInstance.Method();
+			}
 		}
 
 		private static int[] numbers = new int[10] { 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023 };
@@ -152,6 +159,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		public static ref readonly T GetReadonlyRef<T>()
+		{
+			throw new NotImplementedException();
+		}
+
+		public ref readonly T GetReadonlyRefInstance<T>()
 		{
 			throw new NotImplementedException();
 		}

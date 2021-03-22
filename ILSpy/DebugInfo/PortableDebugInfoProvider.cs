@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.DebugInfo;
@@ -28,8 +29,8 @@ namespace ICSharpCode.Decompiler.PdbProvider
 	{
 		string pdbFileName;
 		string moduleFileName;
-
-		internal MetadataReaderProvider Provider { get; }
+		readonly MetadataReaderProvider provider;
+		bool hasError;
 
 		internal bool IsEmbedded => pdbFileName == null;
 
@@ -38,20 +39,54 @@ namespace ICSharpCode.Decompiler.PdbProvider
 		{
 			this.pdbFileName = pdbFileName;
 			this.moduleFileName = moduleFileName;
-			this.Provider = provider ?? throw new ArgumentNullException(nameof(provider));
+			this.provider = provider ?? throw new ArgumentNullException(nameof(provider));
 		}
 
-		public string Description => pdbFileName == null
-			? "Embedded in this assembly"
-			: $"Loaded from portable PDB: {pdbFileName}";
+		public string Description {
+			get {
+				if (pdbFileName == null)
+				{
+					if (hasError)
+						return "Error while loading the PDB stream embedded in this assembly";
+					return "Embedded in this assembly";
+				}
+				else
+				{
+					if (hasError)
+						return $"Error while loading portable PDB: {pdbFileName}";
+					return $"Loaded from portable PDB: {pdbFileName}";
+				}
+			}
+		}
+
+		internal MetadataReader GetMetadataReader()
+		{
+			try
+			{
+				hasError = false;
+				return provider.GetMetadataReader();
+			}
+			catch (BadImageFormatException)
+			{
+				hasError = true;
+				return null;
+			}
+			catch (IOException)
+			{
+				hasError = true;
+				return null;
+			}
+		}
 
 		public string SourceFileName => pdbFileName ?? moduleFileName;
 
 		public IList<DebugInfo.SequencePoint> GetSequencePoints(MethodDefinitionHandle method)
 		{
-			var metadata = Provider.GetMetadataReader();
+			var metadata = GetMetadataReader();
 			var debugInfo = metadata.GetMethodDebugInformation(method);
-			var sequencePoints = new List<Decompiler.DebugInfo.SequencePoint>();
+			var sequencePoints = new List<DebugInfo.SequencePoint>();
+			if (metadata == null)
+				return sequencePoints;
 
 			foreach (var point in debugInfo.GetSequencePoints())
 			{
@@ -82,8 +117,10 @@ namespace ICSharpCode.Decompiler.PdbProvider
 
 		public IList<Variable> GetVariables(MethodDefinitionHandle method)
 		{
-			var metadata = Provider.GetMetadataReader();
+			var metadata = GetMetadataReader();
 			var variables = new List<Variable>();
+			if (metadata == null)
+				return variables;
 
 			foreach (var h in metadata.GetLocalScopes(method))
 			{
@@ -100,8 +137,10 @@ namespace ICSharpCode.Decompiler.PdbProvider
 
 		public bool TryGetName(MethodDefinitionHandle method, int index, out string name)
 		{
-			var metadata = Provider.GetMetadataReader();
+			var metadata = GetMetadataReader();
 			name = null;
+			if (metadata == null)
+				return false;
 
 			foreach (var h in metadata.GetLocalScopes(method))
 			{

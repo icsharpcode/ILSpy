@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpy
 		{
 			output.AddUIElement(
 				delegate {
-					Button button = new Button();
+					Button button = ThemeManager.Current.CreateButton();
 					button.Cursor = Cursors.Arrow;
 					button.Margin = new Thickness(2);
 					button.Padding = new Thickness(9, 1, 9, 1);

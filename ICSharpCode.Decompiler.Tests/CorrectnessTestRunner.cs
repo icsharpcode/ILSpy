@@ -332,6 +332,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void DynamicTests([ValueSource(nameof(noMonoOptions))] CompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
+		[Test]
 		public void MiniJSON([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			if (options.HasFlag(CompilerOptions.UseMcs))

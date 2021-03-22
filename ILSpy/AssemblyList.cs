@@ -110,6 +110,48 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
+		/// <summary>
+		/// Gets all loaded assemblies recursively, including assemblies found in bundles or packages.
+		/// </summary>
+		public async Task<IList<LoadedAssembly>> GetAllAssemblies()
+		{
+			var assemblies = GetAssemblies();
+			var results = new List<LoadedAssembly>(assemblies.Length);
+
+			foreach (var asm in assemblies)
+			{
+				var result = await asm.GetLoadResultAsync();
+				if (result.Package != null)
+				{
+					AddDescendants(result.Package.RootFolder);
+				}
+				else if (result.PEFile != null)
+				{
+					results.Add(asm);
+				}
+			}
+
+			void AddDescendants(PackageFolder folder)
+			{
+				foreach (var subFolder in folder.Folders)
+				{
+					AddDescendants(subFolder);
+				}
+
+				foreach (var entry in folder.Entries)
+				{
+					if (!entry.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+						continue;
+					var asm = folder.ResolveFileName(entry.Name);
+					if (asm == null)
+						continue;
+					results.Add(asm);
+				}
+			}
+
+			return results;
+		}
+
 		public int Count {
 			get {
 				lock (lockObj)
@@ -233,6 +275,7 @@ namespace ICSharpCode.ILSpy
 		/// </remarks>
 		public LoadedAssembly OpenAssembly(string file, bool isAutoLoaded = false)
 		{
+			file = Path.GetFullPath(file);
 			return OpenAssembly(file, () => {
 				var newAsm = new LoadedAssembly(this, file);
 				newAsm.IsAutoLoaded = isAutoLoaded;
@@ -245,6 +288,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public LoadedAssembly OpenAssembly(string file, Stream stream, bool isAutoLoaded = false)
 		{
+			file = Path.GetFullPath(file);
 			return OpenAssembly(file, () => {
 				var newAsm = new LoadedAssembly(this, file, stream: Task.FromResult(stream));
 				newAsm.IsAutoLoaded = isAutoLoaded;
@@ -254,7 +298,6 @@ namespace ICSharpCode.ILSpy
 
 		LoadedAssembly OpenAssembly(string file, Func<LoadedAssembly> load)
 		{
-			file = Path.GetFullPath(file);
 			bool isUIThread = App.Current.Dispatcher.Thread == Thread.CurrentThread;
 
 			LoadedAssembly asm;

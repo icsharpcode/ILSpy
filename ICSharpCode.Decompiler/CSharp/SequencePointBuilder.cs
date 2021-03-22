@@ -462,6 +462,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (inst.ILRangeIsEmpty)
 				return false;
+			if (inst.Parent == null)
+				return false;
 			return !(inst is BlockContainer || inst is Block);
 		}
 

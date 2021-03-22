@@ -219,7 +219,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		static readonly RoslynToolset roslynToolset = new RoslynToolset();
 
-		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NETCoreApp, new Version(3, 1)).GetReferenceAssemblyPath(".NETCoreApp, Version = v3.1");
+		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NETCoreApp,
+			new Version(3, 1), "Microsoft.NETCore.App")
+				.GetReferenceAssemblyPath(".NETCoreApp, Version = v3.1");
 
 		static readonly string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
 			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
@@ -628,7 +630,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			{
 				var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
 				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
-					module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
+					module.Reader.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchMetadata);
 				resolver.AddSearchDirectory(Path.GetDirectoryName(typeof(Span<>).Assembly.Location));
 				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
 				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings);

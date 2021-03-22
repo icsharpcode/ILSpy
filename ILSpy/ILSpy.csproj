@@ -41,13 +41,14 @@
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
     <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="$(SystemCompilerServicesUnsafeVersion)" />
-    <PackageReference Include="Dirkster.AvalonDock" Version="4.50.1" />
+    <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.50.1" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="16.9.6-alpha" />
     <PackageReference Include="System.Composition" Version="$(SystemCompositionVersion)" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
     <PackageReference Include="OSVersionHelper" Version="1.1.24" />
     <PackageReference Include="DataGridExtensions" Version="2.5.0" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
+    <PackageReference Include="TomsToolbox.Wpf.Styles" Version="2.4.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -59,10 +60,16 @@
       <Link>license.txt</Link>
     </EmbeddedResource>
     <Resource Include="Images\NuGet.png" />
+    <Resource Include="Images\DarkMode.png" />
     <Resource Include="Images\ILSpy.ico" />
     <EmbeddedResource Include="TextView\CSharp-Mode.xshd" />
     <EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
     <EmbeddedResource Include="TextView\Asm-Mode.xshd" />
+    <EmbeddedResource Include="TextView\XML-Mode.xshd" />
+    <EmbeddedResource Include="TextView\CSharp-Mode-Dark.xshd" />
+    <EmbeddedResource Include="TextView\ILAsm-Mode-Dark.xshd" />
+    <EmbeddedResource Include="TextView\Asm-Mode-Dark.xshd" />
+    <EmbeddedResource Include="TextView\XML-Mode-Dark.xshd" />
     <Compile Remove="Properties\AssemblyInfo.template.cs" />
     <None Remove="Properties\launchSettings.json" />
     <None Remove="Properties\app.config.template" />

@@ -108,10 +108,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			[StringFormat("X8")]
 			public int ConstantList => MetadataTokens.GetToken(localScope.GetLocalConstants().FirstOrDefault());
 
-			[StringFormat("X8")]
 			public int StartOffset => localScope.StartOffset;
 
-			[StringFormat("X8")]
 			public int Length => localScope.Length;
 
 			public LocalScopeEntry(PEFile module, MetadataReader metadata, bool isEmbedded, LocalScopeHandle handle)

@@ -541,6 +541,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Dark Mode.
+        /// </summary>
+        public static string DarkMode {
+            get {
+                return ResourceManager.GetString("DarkMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to DEBUG -- Decompile All.
         /// </summary>
         public static string DEBUGDecompile {
@@ -1587,7 +1596,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Hightlight current line.
+        ///   Looks up a localized string similar to Highlight current line.
         /// </summary>
         public static string HighlightCurrentLine {
             get {

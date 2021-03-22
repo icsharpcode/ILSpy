@@ -76,13 +76,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public IEnumerable<PEFile> GetAllModules()
 		{
-			foreach (var module in AssemblyList.GetAssemblies())
-			{
-				var file = module.GetPEFileOrNull();
-				if (file == null)
-					continue;
-				yield return file;
-			}
+			return AssemblyList.GetAllAssemblies().GetAwaiter().GetResult()
+				.Select(asm => asm.GetPEFileOrNull());
 		}
 
 		public IEnumerable<ITypeDefinition> GetTypesInScope(CancellationToken ct)
@@ -139,7 +134,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			do
 			{
 				PEFile curFile = toWalkFiles.Pop();
-				foreach (var assembly in AssemblyList.GetAssemblies())
+				foreach (var assembly in AssemblyList.GetAllAssemblies().GetAwaiter().GetResult())
 				{
 					ct.ThrowIfCancellationRequested();
 					bool found = false;
@@ -187,7 +182,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 			if (friendAssemblies.Count > 0)
 			{
-				IEnumerable<LoadedAssembly> assemblies = AssemblyList.GetAssemblies();
+				IEnumerable<LoadedAssembly> assemblies = AssemblyList.GetAllAssemblies()
+					.GetAwaiter().GetResult();
 
 				foreach (var assembly in assemblies)
 				{

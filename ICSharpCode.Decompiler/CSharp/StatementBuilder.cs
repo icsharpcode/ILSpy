@@ -390,6 +390,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out string label))
 			{
 				label = "end_" + inst.TargetLabel;
+				if (!duplicateLabels.TryGetValue(label, out int count))
+				{
+					duplicateLabels.Add(label, 1);
+				}
+				else
+				{
+					duplicateLabels[label]++;
+					label += "_" + (count + 1);
+				}
 				endContainerLabels.Add(inst.TargetContainer, label);
 			}
 			return new GotoStatement(label).WithILInstruction(inst);
@@ -1359,6 +1368,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					method.Modifiers |= Modifiers.Extern;
 				}
 
+				CSharpDecompiler.AddAnnotationsToDeclaration(function.ReducedMethod, method, function);
 				CSharpDecompiler.CleanUpMethodDeclaration(method, method.Body, function, function.Method.HasBody);
 				CSharpDecompiler.RemoveAttribute(method, KnownAttribute.CompilerGenerated);
 				var stmt = new LocalFunctionDeclarationStatement(method);

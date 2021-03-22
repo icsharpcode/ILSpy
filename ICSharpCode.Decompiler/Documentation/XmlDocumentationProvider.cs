@@ -271,8 +271,8 @@ namespace ICSharpCode.Decompiler.Documentation
 			char prevChar = '\0';
 
 			// buffers for use with Decoder:
-			byte[] input = new byte[1];
-			char[] output = new char[1];
+			readonly byte[] input = new byte[1];
+			readonly char[] output = new char[2];
 
 			public LinePositionMapper(FileStream fs, Encoding encoding)
 			{
@@ -289,7 +289,7 @@ namespace ICSharpCode.Decompiler.Documentation
 					if (b < 0)
 						throw new EndOfStreamException();
 					input[0] = (byte)b;
-					decoder.Convert(input, 0, 1, output, 0, 1, false, out int bytesUsed, out int charsUsed, out _);
+					decoder.Convert(input, 0, 1, output, 0, output.Length, false, out int bytesUsed, out int charsUsed, out _);
 					Debug.Assert(bytesUsed == 1);
 					if (charsUsed == 1)
 					{

@@ -219,6 +219,9 @@ Are you sure you want to continue?</value>
   <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
     <value>DEBUG -- Dump PDB as XML</value>
   </data>
+  <data name="DarkMode" xml:space="preserve">
+    <value>Dark Mode</value>
+  </data>
   <data name="DebugSteps" xml:space="preserve">
     <value>Debug Steps</value>
   </data>
@@ -556,7 +559,7 @@ Are you sure you want to continue?</value>
     <value>Hide empty metadata tables from tree view</value>
   </data>
   <data name="HighlightCurrentLine" xml:space="preserve">
-    <value>Hightlight current line</value>
+    <value>Highlight current line</value>
   </data>
   <data name="HighlightMatchingBraces" xml:space="preserve">
     <value>Highlight matching braces</value>

@@ -22,18 +22,20 @@
 
 using System;
 
-namespace ILSpy.BamlDecompiler.Baml {
-	internal partial class KnownThings {
+namespace ILSpy.BamlDecompiler.Baml
+{
+	internal partial class KnownThings
+	{
 		// Auto-generated. Do not modify.
 
 		void InitAssemblies()
 		{
-			assemblies[0] = ResolveAssembly("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-			assemblies[1] = ResolveAssembly("System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-			assemblies[2] = ResolveAssembly("WindowsBase, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-			assemblies[3] = ResolveAssembly("PresentationCore, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-			assemblies[4] = ResolveAssembly("PresentationFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-			assemblies[5] = ResolveAssembly("System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
+			assemblies[0] = ResolveAssembly("mscorlib");
+			assemblies[1] = ResolveAssembly("System");
+			assemblies[2] = ResolveAssembly("WindowsBase");
+			assemblies[3] = ResolveAssembly("PresentationCore");
+			assemblies[4] = ResolveAssembly("PresentationFramework");
+			assemblies[5] = ResolveAssembly("System.Xml");
 		}
 
 		void InitTypes()

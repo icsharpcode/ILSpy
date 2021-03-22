@@ -35,7 +35,7 @@
 						</ItemsPanelTemplate>
 					</GroupStyle.Panel>
 					<GroupStyle.ContainerStyle>
-						<Style TargetType="{x:Type GroupItem}">
+						<Style TargetType="{x:Type GroupItem}" BasedOn="{StaticResource {x:Type GroupItem}}">
 							<Setter Property="Template">
 								<Setter.Value>
 									<ControlTemplate>

@@ -216,10 +216,21 @@ namespace ICSharpCode.Decompiler.DebugInfo
 					methodBody = null;
 					localSignatureRowId = 0;
 				}
-				if (sequencePoints?.Count > 0)
-					sequencePointBlobs.Add(method, (document, EncodeSequencePoints(metadata, localSignatureRowId, sequencePoints)));
+
+				// Check if sequence points were already processed - ILFunction gets defined in C# twice:
+				// This may happen if a compiler-generated function gets transformed into a lambda expression,
+				// but its method definition is not removed from the syntax tree.
+				if (!sequencePointBlobs.ContainsKey(method))
+				{
+					if (sequencePoints?.Count > 0)
+						sequencePointBlobs.Add(method, (document, EncodeSequencePoints(metadata, localSignatureRowId, sequencePoints)));
+					else
+						sequencePointBlobs.Add(method, (default, default));
+				}
 				else
-					sequencePointBlobs.Add(method, (default, default));
+				{
+					Debug.Assert(false, "Duplicate sequence point definition detected: " + MetadataTokens.GetToken(method).ToString("X8"));
+				}
 			}
 		}
 

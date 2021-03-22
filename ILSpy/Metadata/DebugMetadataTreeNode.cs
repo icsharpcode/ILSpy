@@ -64,24 +64,11 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		protected override void LoadChildren()
 		{
-			if (ShowTable(TableIndex.Document))
-				this.Children.Add(new DocumentTableTreeNode(this.module, this.provider, isEmbedded));
-			if (ShowTable(TableIndex.MethodDebugInformation))
-				this.Children.Add(new MethodDebugInformationTableTreeNode(this.module, this.provider, isEmbedded));
-			if (ShowTable(TableIndex.LocalScope))
-				this.Children.Add(new LocalScopeTableTreeNode(this.module, this.provider, isEmbedded));
-			if (ShowTable(TableIndex.LocalVariable))
-				this.Children.Add(new LocalVariableTableTreeNode(this.module, this.provider, isEmbedded));
-			if (ShowTable(TableIndex.LocalConstant))
-				this.Children.Add(new LocalConstantTableTreeNode(this.module, this.provider, isEmbedded));
-			if (ShowTable(TableIndex.ImportScope))
-				this.Children.Add(new ImportScopeTableTreeNode(this.module, this.provider, isEmbedded));
-			if (ShowTable(TableIndex.StateMachineMethod))
-				this.Children.Add(new StateMachineMethodTableTreeNode(this.module, this.provider, isEmbedded));
-			if (ShowTable(TableIndex.CustomDebugInformation))
-				this.Children.Add(new CustomDebugInformationTableTreeNode(this.module, this.provider, isEmbedded));
-
-			bool ShowTable(TableIndex table) => !DisplaySettingsPanel.CurrentDisplaySettings.HideEmptyMetadataTables || this.provider.GetTableRowCount(table) > 0;
+			this.Children.Add(new DebugMetadataTablesTreeNode(module, this.isEmbedded, this.provider));
+			this.Children.Add(new StringHeapTreeNode(module, this.provider));
+			this.Children.Add(new UserStringHeapTreeNode(module, this.provider));
+			this.Children.Add(new GuidHeapTreeNode(module, this.provider));
+			this.Children.Add(new BlobHeapTreeNode(module, this.provider));
 		}
 
 		public MetadataTableTreeNode FindNodeByHandleKind(HandleKind kind)

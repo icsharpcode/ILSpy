@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 		}
 
-		public LoadedAssembly(LoadedAssembly bundle, string fileName, Task<Stream?>? stream, IAssemblyResolver assemblyResolver = null)
+		public LoadedAssembly(LoadedAssembly bundle, string fileName, Task<Stream?>? stream, IAssemblyResolver? assemblyResolver = null)
 			: this(bundle.assemblyList, fileName, stream, assemblyResolver)
 		{
 			this.ParentBundle = bundle;
@@ -114,6 +114,12 @@ namespace ICSharpCode.ILSpy
 		{
 			var assembly = await GetPEFileAsync().ConfigureAwait(false);
 			return assembly.DetectTargetFrameworkId() ?? string.Empty;
+		}
+
+		public async Task<string> GetRuntimePackAsync()
+		{
+			var assembly = await GetPEFileAsync().ConfigureAwait(false);
+			return assembly.DetectRuntimePack() ?? string.Empty;
 		}
 
 		public ReferenceLoadInfo LoadedAssemblyReferencesInfo { get; } = new ReferenceLoadInfo();
@@ -610,9 +616,21 @@ namespace ICSharpCode.ILSpy
 			return new MyAssemblyResolver(this, loadOnDemand);
 		}
 
-		private MyUniversalResolver GetUniversalResolver()
+		private UniversalAssemblyResolver GetUniversalResolver()
 		{
-			return LazyInitializer.EnsureInitialized(ref this.universalResolver, () => new MyUniversalResolver(this))!;
+			return LazyInitializer.EnsureInitialized(ref this.universalResolver, () => {
+				var targetFramework = this.GetTargetFrameworkIdAsync().Result;
+				var runtimePack = this.GetRuntimePackAsync().Result;
+
+				var readerOptions = DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections
+					? MetadataReaderOptions.ApplyWindowsRuntimeProjections
+					: MetadataReaderOptions.None;
+
+				var rootedPath = Path.IsPathRooted(this.FileName) ? this.FileName : null;
+
+				return new UniversalAssemblyResolver(rootedPath, throwOnError: false, targetFramework,
+					runtimePack, PEStreamOptions.PrefetchEntireImage, readerOptions);
+			})!;
 		}
 
 		public AssemblyReferenceClassifier GetAssemblyReferenceClassifier()
@@ -630,15 +648,7 @@ namespace ICSharpCode.ILSpy
 			return debugInfoProvider;
 		}
 
-		class MyUniversalResolver : UniversalAssemblyResolver
-		{
-			public MyUniversalResolver(LoadedAssembly assembly)
-				: base(assembly.FileName, false, assembly.GetTargetFrameworkIdAsync().Result, PEStreamOptions.PrefetchEntireImage, DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections ? MetadataReaderOptions.ApplyWindowsRuntimeProjections : MetadataReaderOptions.None)
-			{
-			}
-		}
-
-		MyUniversalResolver? universalResolver;
+		UniversalAssemblyResolver? universalResolver;
 
 		/// <summary>
 		/// Wait until the assembly is loaded.

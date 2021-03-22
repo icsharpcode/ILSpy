@@ -33,6 +33,8 @@ using ICSharpCode.ILSpy.Options;
 
 using Microsoft.VisualStudio.Composition;
 
+using TomsToolbox.Wpf.Styles;
+
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>
@@ -66,6 +68,8 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 			InitializeComponent();
+
+			Resources.RegisterDefaultStyles();
 
 			if (!System.Diagnostics.Debugger.IsAttached)
 			{
@@ -128,6 +132,13 @@ namespace ICSharpCode.ILSpy
 				// could be used to log the errors directly. Used at the end so that it does not prevent the export provider setup.
 				config.ThrowOnErrors();
 			}
+			catch (CompositionFailedException ex) when (ex.InnerException is AggregateException agex)
+			{
+				foreach (var inner in agex.InnerExceptions)
+				{
+					StartupExceptions.Add(new ExceptionData { Exception = inner });
+				}
+			}
 			catch (Exception ex)
 			{
 				StartupExceptions.Add(new ExceptionData { Exception = ex });
@@ -186,7 +197,7 @@ namespace ICSharpCode.ILSpy
 		[ThreadStatic]
 		static bool showingError;
 
-		static void UnhandledException(Exception exception)
+		internal static void UnhandledException(Exception exception)
 		{
 			Debug.WriteLine(exception.ToString());
 			for (Exception ex = exception; ex != null; ex = ex.InnerException)
