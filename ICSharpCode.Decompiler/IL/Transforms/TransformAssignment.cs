@@ -19,9 +19,9 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -384,7 +384,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				context.Step($"Compound assignment (dynamic binary)", compoundStore);
 				finalizeMatch?.Invoke(context);
-				newInst = new DynamicCompoundAssign(dynamicBinaryOp.Operation, dynamicBinaryOp.BinderFlags, target, dynamicBinaryOp.LeftArgumentInfo, dynamicBinaryOp.Right, dynamicBinaryOp.RightArgumentInfo, targetKind);
+				newInst = new DynamicCompoundAssign(ToCompound(dynamicBinaryOp.Operation), dynamicBinaryOp.BinderFlags, target, dynamicBinaryOp.LeftArgumentInfo, dynamicBinaryOp.Right, dynamicBinaryOp.RightArgumentInfo, targetKind);
+
+				static ExpressionType ToCompound(ExpressionType from)
+				{
+					return from switch
+					{
+						ExpressionType.Add => ExpressionType.AddAssign,
+						ExpressionType.AddChecked => ExpressionType.AddAssignChecked,
+						ExpressionType.And => ExpressionType.AndAssign,
+						ExpressionType.Divide => ExpressionType.DivideAssign,
+						ExpressionType.ExclusiveOr => ExpressionType.ExclusiveOrAssign,
+						ExpressionType.LeftShift => ExpressionType.LeftShiftAssign,
+						ExpressionType.Modulo => ExpressionType.ModuloAssign,
+						ExpressionType.Multiply => ExpressionType.MultiplyAssign,
+						ExpressionType.MultiplyChecked => ExpressionType.MultiplyAssignChecked,
+						ExpressionType.Or => ExpressionType.OrAssign,
+						ExpressionType.Power => ExpressionType.PowerAssign,
+						ExpressionType.RightShift => ExpressionType.RightShiftAssign,
+						ExpressionType.Subtract => ExpressionType.SubtractAssign,
+						ExpressionType.SubtractChecked => ExpressionType.SubtractAssignChecked,
+						_ => from
+					};
+				}
 			}
 			else if (setterValue is Call concatCall && UserDefinedCompoundAssign.IsStringConcat(concatCall.Method))
 			{
