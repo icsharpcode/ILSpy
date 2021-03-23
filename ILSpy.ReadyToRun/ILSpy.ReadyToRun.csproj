@@ -2,12 +2,16 @@
 <Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
     <AssemblyName>ILSpy.ReadyToRun.Plugin</AssemblyName>
     <LangVersion>8.0</LangVersion>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <NeutralResourcesLanguage>en-US</NeutralResourcesLanguage>
     <UseWpf>true</UseWpf>
+  </PropertyGroup>
+  
+  <Import Project="..\multitargeting.props" Condition="Exists('..\multitargeting.props')" />
+  <PropertyGroup Condition="!Exists('..\multitargeting.props')">
+    <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
+  </PropertyGroup>
+</Project>
