@@ -32,6 +32,8 @@ namespace ICSharpCode.ILSpy
 			return new DrawingImage(LoadDrawingGroup(null, "Images/" + icon));
 		}
 
+		public static readonly ImageSource ILSpyIcon = new BitmapImage(new Uri("pack://application:,,,/ILSpy;component/images/ILSpy.ico"));
+
 		public static readonly ImageSource ViewCode = Load("ViewCode");
 		public static readonly ImageSource Save = Load("Save");
 		public static readonly ImageSource OK = Load("OK");

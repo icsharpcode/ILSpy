@@ -111,7 +111,8 @@ namespace ICSharpCode.ILSpy
 			this.sessionSettings = new SessionSettings(spySettings);
 			this.AssemblyListManager = new AssemblyListManager(spySettings);
 
-			this.Icon = new BitmapImage(new Uri("pack://application:,,,/ILSpy;component/images/ILSpy.ico"));
+			// Make sure Images are initialized on the UI thread.
+			//this.Icon = Images.ILSpyIcon;
 
 			this.DataContext = new MainWindowDataContext {
 				Workspace = DockWorkspace.Instance,
