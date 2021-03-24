@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -35,7 +36,6 @@ using Microsoft.VisualStudio.Composition;
 
 using TomsToolbox.Wpf.Styles;
 
-using System.Runtime.Loader;
 
 namespace ICSharpCode.ILSpy
 {
