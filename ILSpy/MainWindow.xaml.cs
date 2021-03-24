@@ -112,7 +112,7 @@ namespace ICSharpCode.ILSpy
 			this.AssemblyListManager = new AssemblyListManager(spySettings);
 
 			// Make sure Images are initialized on the UI thread.
-			//this.Icon = Images.ILSpyIcon;
+			this.Icon = Images.ILSpyIcon;
 
 			this.DataContext = new MainWindowDataContext {
 				Workspace = DockWorkspace.Instance,

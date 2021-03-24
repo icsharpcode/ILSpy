@@ -29,7 +29,13 @@ namespace ICSharpCode.ILSpy
 	{
 		static ImageSource Load(string icon)
 		{
-			return new DrawingImage(LoadDrawingGroup(null, "Images/" + icon));
+			var image = new DrawingImage(LoadDrawingGroup(null, "Images/" + icon));
+			if (image.CanFreeze)
+			{
+				image.Freeze();
+			}
+
+			return image;
 		}
 
 		public static readonly ImageSource ILSpyIcon = new BitmapImage(new Uri("pack://application:,,,/ILSpy;component/images/ILSpy.ico"));
@@ -103,7 +109,12 @@ namespace ICSharpCode.ILSpy
 			Uri uri = GetUri(part, icon + ".xaml");
 			if (ResourceExists(uri))
 			{
-				return new DrawingImage(LoadDrawingGroup(part, icon));
+				var image = new DrawingImage(LoadDrawingGroup(part, icon));
+				if (image.CanFreeze)
+				{
+					image.Freeze();
+				}
+				return image;
 			}
 			return LoadImage(part, icon + ".png");
 		}
@@ -112,7 +123,10 @@ namespace ICSharpCode.ILSpy
 		{
 			Uri uri = GetUri(part, icon);
 			BitmapImage image = new BitmapImage(uri);
-			image.Freeze();
+			if (image.CanFreeze)
+			{
+				image.Freeze();
+			}
 			return image;
 		}
 
@@ -383,7 +397,10 @@ namespace ICSharpCode.ILSpy
 				}
 
 				var image = new DrawingImage(group);
-				image.Freeze();
+				if (image.CanFreeze)
+				{
+					image.Freeze();
+				}
 				return image;
 			}
 		}
