@@ -61,6 +61,9 @@ namespace ICSharpCode.ILSpy
 			};
 			output.WriteLine(Resources.ILSpyVersion + RevisionClass.FullVersion);
 
+			string prodVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(Uri).Assembly.Location).ProductVersion;
+			output.WriteLine(Resources.NETFrameworkVersion + prodVersion);
+
 			if (StorePackageHelper.HasPackageIdentity)
 			{
 				output.WriteLine($"Package Name: {StorePackageHelper.GetPackageFamilyName()}");

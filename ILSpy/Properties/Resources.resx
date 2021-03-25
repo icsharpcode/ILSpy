@@ -609,6 +609,9 @@ Are you sure you want to continue?</value>
   <data name="Misc" xml:space="preserve">
     <value>Misc</value>
   </data>
+  <data name="NETFrameworkVersion" xml:space="preserve">
+    <value>.NET version </value>
+  </data>
   <data name="Name" xml:space="preserve">
     <value>Name</value>
   </data>

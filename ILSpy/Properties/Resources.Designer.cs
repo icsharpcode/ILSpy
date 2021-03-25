@@ -1777,6 +1777,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to .NET version .
+        /// </summary>
+        public static string NETFrameworkVersion {
+            get {
+                return ResourceManager.GetString("NETFrameworkVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to New list.
         /// </summary>
         public static string NewList {
