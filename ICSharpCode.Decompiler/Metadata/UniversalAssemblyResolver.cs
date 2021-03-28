@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				decompilerRuntime = DecompilerRuntime.Mono;
 		}
 
-		DotNetCorePathFinder dotNetCorePathFinder;
+		readonly Lazy<DotNetCorePathFinder> dotNetCorePathFinder;
 		readonly bool throwOnError;
 		readonly PEStreamOptions streamOptions;
 		readonly MetadataReaderOptions metadataOptions;
@@ -73,13 +73,19 @@ namespace ICSharpCode.Decompiler.Metadata
 		public void AddSearchDirectory(string directory)
 		{
 			directories.Add(directory);
-			dotNetCorePathFinder?.AddSearchDirectory(directory);
+			if (dotNetCorePathFinder.IsValueCreated)
+			{
+				dotNetCorePathFinder.Value.AddSearchDirectory(directory);
+			}
 		}
 
 		public void RemoveSearchDirectory(string directory)
 		{
 			directories.Remove(directory);
-			dotNetCorePathFinder?.RemoveSearchDirectory(directory);
+			if (dotNetCorePathFinder.IsValueCreated)
+			{
+				dotNetCorePathFinder.Value.RemoveSearchDirectory(directory);
+			}
 		}
 
 		public string[] GetSearchDirectories()
@@ -125,7 +131,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.targetFramework = targetFramework ?? string.Empty;
 			this.runtimePack = runtimePack ?? "Microsoft.NETCore.App";
 			(targetFrameworkIdentifier, targetFrameworkVersion) = ParseTargetFramework(this.targetFramework);
-
+			this.dotNetCorePathFinder = new Lazy<DotNetCorePathFinder>(InitDotNetCorePathFinder);
 			if (mainAssemblyFileName != null)
 			{
 				string baseDirectory = Path.GetDirectoryName(mainAssemblyFileName);
@@ -223,7 +229,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public override bool IsSharedAssembly(IAssemblyReference reference, out string runtimePack)
 		{
-			return dotNetCorePathFinder.TryResolveDotNetCoreShared(reference, out runtimePack) != null;
+			return dotNetCorePathFinder.Value.TryResolveDotNetCoreShared(reference, out runtimePack) != null;
 		}
 
 		public string FindAssemblyFile(IAssemblyReference name)
@@ -240,18 +246,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				case TargetFrameworkIdentifier.NETStandard:
 					if (IsZeroOrAllOnes(targetFrameworkVersion))
 						goto default;
-					if (dotNetCorePathFinder == null)
-					{
-						if (mainAssemblyFileName == null)
-							dotNetCorePathFinder = new DotNetCorePathFinder(targetFrameworkIdentifier, targetFrameworkVersion, runtimePack);
-						else
-							dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, runtimePack, targetFrameworkIdentifier, targetFrameworkVersion);
-						foreach (var directory in directories)
-						{
-							dotNetCorePathFinder.AddSearchDirectory(directory);
-						}
-					}
-					file = dotNetCorePathFinder.TryResolveDotNetCore(name);
+					file = dotNetCorePathFinder.Value.TryResolveDotNetCore(name);
 					if (file != null)
 						return file;
 					goto default;
@@ -265,6 +260,20 @@ namespace ICSharpCode.Decompiler.Metadata
 				default:
 					return ResolveInternal(name);
 			}
+		}
+
+		DotNetCorePathFinder InitDotNetCorePathFinder()
+		{
+			DotNetCorePathFinder dotNetCorePathFinder;
+			if (mainAssemblyFileName == null)
+				dotNetCorePathFinder = new DotNetCorePathFinder(targetFrameworkIdentifier, targetFrameworkVersion, runtimePack);
+			else
+				dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, runtimePack, targetFrameworkIdentifier, targetFrameworkVersion);
+			foreach (var directory in directories)
+			{
+				dotNetCorePathFinder.AddSearchDirectory(directory);
+			}
+			return dotNetCorePathFinder;
 		}
 
 		string FindWindowsMetadataFile(IAssemblyReference name)
