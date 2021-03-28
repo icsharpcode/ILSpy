@@ -12,7 +12,7 @@
     <RuntimeIdentifiers>win</RuntimeIdentifiers>
 
     <EnableDefaultItems>False</EnableDefaultItems>
-    <SkipVSIXDefaultItems>true</SkipVSIXDefaultItems>
+    <SkipVSIXDefaults>true</SkipVSIXDefaults>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>TRACE;VSADDIN</DefineConstants>
 
@@ -49,7 +49,7 @@
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="2.4.0" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="16.8.3038" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
-    <PackageReference Include="VSIX-SdkProjectAdapter" Version="1.1.0" PrivateAssets="All" />
+    <PackageReference Include="VSIX-SdkProjectAdapter" Version="2.0.0" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
