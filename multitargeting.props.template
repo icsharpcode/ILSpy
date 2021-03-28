@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy this file to multitargeting.props and in global.json, change to framework 5.0.100
+-->
+<Project>
+  <PropertyGroup>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
+  </PropertyGroup>
+</Project>

@@ -9,16 +9,18 @@ namespace ICSharpCode.ILSpy
 			get {
 #if NET472
 				return WindowsVersionHelper.HasPackageIdentity;
-#endif
+#else
 				return false;
+#endif
 			}
 		}
 		public static string GetPackageFamilyName()
 		{
 #if NET472
 			return WindowsVersionHelper.GetPackageFamilyName();
-#endif
+#else
 			return "";
+#endif
 		}
 	}
 }

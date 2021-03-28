@@ -2,7 +2,6 @@
 <Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
     <OutputType>WinExe</OutputType>
     <LangVersion>9.0</LangVersion>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
@@ -17,6 +16,11 @@
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  
+  <Import Project="..\multitargeting.props" Condition="Exists('..\multitargeting.props')" />
+  <PropertyGroup Condition="!Exists('..\multitargeting.props')">
+    <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -49,6 +53,7 @@
     <PackageReference Include="DataGridExtensions" Version="2.5.0" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
     <PackageReference Include="TomsToolbox.Wpf.Styles" Version="2.4.3" />
+    <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
