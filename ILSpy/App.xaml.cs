@@ -33,7 +33,7 @@ using System.Windows.Threading;
 using ICSharpCode.ILSpy.Options;
 
 using Microsoft.VisualStudio.Composition;
-
+using TomsToolbox.Wpf.Interactivity;
 using TomsToolbox.Wpf.Styles;
 
 
@@ -71,6 +71,8 @@ namespace ICSharpCode.ILSpy
 			}
 			InitializeComponent();
 
+			// Disable glass-frame/DWM-composition to workaround https://github.com/Dirkster99/AvalonDock/issues/258
+			CustomNonClientAreaBehavior.DisableGlassFrameProperty.OverrideMetadata(typeof(Window), new FrameworkPropertyMetadata(true));
 			Resources.RegisterDefaultStyles();
 
 			if (!System.Diagnostics.Debugger.IsAttached)
