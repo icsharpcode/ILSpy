@@ -33,9 +33,9 @@ using System.Windows.Threading;
 using ICSharpCode.ILSpy.Options;
 
 using Microsoft.VisualStudio.Composition;
+
 using TomsToolbox.Wpf.Interactivity;
 using TomsToolbox.Wpf.Styles;
-
 
 namespace ICSharpCode.ILSpy
 {
