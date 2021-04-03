@@ -107,7 +107,9 @@ Remarks:
 						foreach (var assembly in assemblyName.Split(' '))
 						{
 							CheckFileExists(assembly);
-							var res = DecompileAsProject(assembly, OutputDirectory, out var po);
+							var outputDir = OutputDirectory + "/" + Path.GetFileNameWithoutExtension(assembly);
+							if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
+							var res = DecompileAsProject(assembly, outputDir, out var po);
 							if (res != 0) return res;
 							projects.Add(po);
 						}
