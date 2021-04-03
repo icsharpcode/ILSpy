@@ -35,7 +35,7 @@ Remarks:
 		[Argument(0, "Assembly file name", "The assembly that is being decompiled. This argument is mandatory.")]
 		public string InputAssemblyName { get; }
 
-		[DirectoryExists]
+		// [DirectoryExists]
 		[Option("-o|--outputdir <directory>", "The output directory, if omitted decompiler output is written to standard out.", CommandOptionType.SingleValue)]
 		public string OutputDirectory { get; }
 
@@ -102,13 +102,17 @@ Remarks:
 					{
 						// multiple assemblies can be separated by spaces
 						// when provided with a sln output path write a solution with the decompiled projs
-						var assemblyName = InputAssemblyName.Replace("\"", "");
 						var projects = new List<DecompiledProjectOutput>();
-						foreach (var assembly in assemblyName.Split(' '))
+						string[] assemblies = InputAssemblyName.Replace("\"", "").Split(' ');
+						string[] outputDirs = OutputDirectory.Replace("\"", "").Split(' ');
+						if (assemblies.Length != outputDirs.Length && outputDirs.Length != 1)
+							throw new Exception("Output directories must either match assemblies count or be exactly one");
+						for (var index = 0; index < assemblies.Length; index++)
 						{
+							var assembly = assemblies[index];
 							CheckFileExists(assembly);
-							var outputDir = OutputDirectory + "/" + Path.GetFileNameWithoutExtension(assembly);
-							if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
+							var outputDir = outputDirs[index & outputDirs.Length];
+							if (!Directory.Exists(outputDir)) throw new Exception("Output Directory " + outputDir + " does not exist");
 							var res = DecompileAsProject(assembly, outputDir, out var po);
 							if (res != 0) return res;
 							projects.Add(po);
