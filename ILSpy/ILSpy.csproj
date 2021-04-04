@@ -52,7 +52,7 @@
     <PackageReference Include="OSVersionHelper" Version="1.1.24" />
     <PackageReference Include="DataGridExtensions" Version="2.5.0" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
-    <PackageReference Include="TomsToolbox.Wpf.Styles" Version="2.5.1" />
+    <PackageReference Include="TomsToolbox.Wpf.Styles" Version="2.5.2" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
   </ItemGroup>
 

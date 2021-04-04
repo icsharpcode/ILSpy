@@ -71,8 +71,6 @@ namespace ICSharpCode.ILSpy
 			}
 			InitializeComponent();
 
-			// Disable glass-frame/DWM-composition to workaround https://github.com/Dirkster99/AvalonDock/issues/258
-			CustomNonClientAreaBehavior.DisableGlassFrameProperty.OverrideMetadata(typeof(Window), new FrameworkPropertyMetadata(true));
 			Resources.RegisterDefaultStyles();
 
 			if (!System.Diagnostics.Debugger.IsAttached)
