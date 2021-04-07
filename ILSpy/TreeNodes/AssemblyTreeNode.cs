@@ -85,18 +85,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get {
 				if (LoadedAssembly.IsLoaded)
 				{
-					if (LoadedAssembly.HasLoadError)
-						return Images.AssemblyWarning;
+					if (LoadedAssembly.HasLoadError) return Images.AssemblyWarning;
 					var loadResult = LoadedAssembly.GetLoadResultAsync().Result;
-					if (loadResult.Package != null)
+					if (loadResult is LoadedAssembly.LoadResult.PackageFallback package)
 					{
-						return loadResult.Package.Kind switch
-						{
-							LoadedPackage.PackageKind.Zip => Images.NuGet,
-							_ => Images.Library,
-						};
+						return package.Package.Kind == LoadedPackage.PackageKind.Zip ? Images.NuGet : Images.Library;
 					}
-					return Images.Assembly;
+					else if (loadResult is LoadedAssembly.LoadResult.Successful)
+					{
+						return Images.Assembly;
+					}
+					else
+					{
+						return Images.AssemblyWarning;
+					}
 				}
 				else
 				{
@@ -154,15 +156,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		async void Init()
 		{
-			try
+			var loadResult = await this.LoadedAssembly.GetLoadResultAsync();
+			if (loadResult.IsOK)
 			{
-				await this.LoadedAssembly.GetLoadResultAsync();
 				RaisePropertyChanged(nameof(Text)); // shortname might have changed
 			}
-			catch
+			else
 			{
 				RaisePropertyChanged(nameof(ShowExpander)); // cannot expand assemblies with load error
 			}
+
 			// change from "Loading" icon to final icon
 			RaisePropertyChanged(nameof(Icon));
 			RaisePropertyChanged(nameof(ExpandedIcon));
@@ -171,26 +174,26 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			LoadedAssembly.LoadResult loadResult;
-			try
-			{
-				loadResult = LoadedAssembly.GetLoadResultAsync().Result;
-			}
-			catch
+			LoadedAssembly.LoadResult loadResult = LoadedAssembly.GetLoadResultAsync().Result;
+			if (!loadResult.IsOK )
 			{
 				// if we crashed on loading, then we don't have any children
 				return;
 			}
+
 			try
 			{
-				if (loadResult.PEFile != null)
+				if (loadResult is LoadedAssembly.LoadResult.Successful success)
 				{
-					LoadChildrenForPEFile(loadResult.PEFile);
+					LoadChildrenForPEFile(success.PEFile);
 				}
-				else if (loadResult.Package != null)
+				else if (loadResult is LoadedAssembly.LoadResult.PackageFallback package)
 				{
-					var package = loadResult.Package;
-					this.Children.AddRange(PackageFolderTreeNode.LoadChildrenForFolder(package.RootFolder));
+					this.Children.AddRange(PackageFolderTreeNode.LoadChildrenForFolder(package.Package.RootFolder));
+				}
+				else
+				{
+					throw new InvalidOperationException("Unexpected LoadResult type: " + loadResult?.GetType().FullName);
 				}
 			}
 			catch (Exception ex)
@@ -324,19 +327,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			try
 			{
-				var loadResult = LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
-				if (loadResult.PEFile != null)
+				var loadResult = this.LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
+				if (loadResult is LoadedAssembly.LoadResult.Successful success)
 				{
-					language.DecompileAssembly(LoadedAssembly, output, options);
+					language.DecompileAssembly(this.LoadedAssembly, output, options);
 				}
-				else if (loadResult.Package != null)
+				else if (loadResult is LoadedAssembly.LoadResult.PackageFallback package)
 				{
-					output.WriteLine("// " + LoadedAssembly.FileName);
-					DecompilePackage(loadResult.Package, output);
+					output.WriteLine("// " + this.LoadedAssembly.FileName);
+					DecompilePackage(package.Package, output);
 				}
 				else
 				{
-					LoadedAssembly.GetPEFileOrNullAsync().GetAwaiter().GetResult();
+					this.LoadedAssembly.GetPEFileOrNullAsync().GetAwaiter().GetResult();
 				}
 			}
 			catch (BadImageFormatException badImage)

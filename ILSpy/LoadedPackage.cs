@@ -43,6 +43,8 @@ namespace ICSharpCode.ILSpy
 			Zip,
 			Bundle,
 		}
+		
+		public FileInfo File { get; }
 
 		/// <summary>
 		/// Gets the LoadedAssembly instance representing this bundle.
@@ -60,8 +62,9 @@ namespace ICSharpCode.ILSpy
 
 		internal PackageFolder RootFolder { get; }
 
-		public LoadedPackage(PackageKind kind, IEnumerable<PackageEntry> entries)
+		public LoadedPackage(FileInfo file, PackageKind kind, IEnumerable<PackageEntry> entries)
 		{
+			this.File = file ?? throw new ArgumentNullException(nameof(file));
 			this.Kind = kind;
 			this.Entries = entries.ToArray();
 			var topLevelEntries = new List<PackageEntry>();
@@ -101,7 +104,7 @@ namespace ICSharpCode.ILSpy
 		{
 			Debug.WriteLine($"LoadedPackage.FromZipFile({file})");
 			using var archive = ZipFile.OpenRead(file);
-			return new LoadedPackage(PackageKind.Zip,
+			return new LoadedPackage(new FileInfo(file), PackageKind.Zip,
 				archive.Entries.Select(entry => new ZipFileEntry(file, entry)));
 		}
 
@@ -118,7 +121,7 @@ namespace ICSharpCode.ILSpy
 					return null;
 				var manifest = SingleFileBundle.ReadManifest(view, bundleHeaderOffset);
 				var entries = manifest.Entries.Select(e => new BundleEntry(fileName, view, e)).ToList();
-				var result = new LoadedPackage(PackageKind.Bundle, entries);
+				var result = new LoadedPackage(new FileInfo(fileName), PackageKind.Bundle, entries);
 				result.BundleHeader = manifest;
 				view = null; // don't dispose the view, we're still using it in the bundle entries
 				return result;

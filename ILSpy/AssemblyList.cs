@@ -121,11 +121,11 @@ namespace ICSharpCode.ILSpy
 			foreach (var asm in assemblies)
 			{
 				var result = await asm.GetLoadResultAsync();
-				if (result.Package != null)
+				if (result is LoadedAssembly.LoadResult.PackageFallback package)
 				{
-					AddDescendants(result.Package.RootFolder);
+					AddDescendants(package.Package.RootFolder);
 				}
-				else if (result.PEFile != null)
+				else if (result is LoadedAssembly.LoadResult.Successful)
 				{
 					results.Add(asm);
 				}
