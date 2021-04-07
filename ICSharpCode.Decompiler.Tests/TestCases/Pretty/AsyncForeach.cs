@@ -29,11 +29,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			int sum = 0;
 			await foreach (int item in items.WithCancellation(token))
 			{
-				if (token.IsCancellationRequested)
+				if (!token.IsCancellationRequested)
 				{
-					break;
+					sum += item;
+					continue;
 				}
-				sum += item;
+				break;
 			}
 			return sum;
 		}

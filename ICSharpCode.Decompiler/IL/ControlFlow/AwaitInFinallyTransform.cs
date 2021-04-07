@@ -38,218 +38,303 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				if (!(tryCatch.Parent?.Parent is BlockContainer container))
 					continue;
+				// 	} catch exceptionVariable : 02000078 System.Object when (ldc.i4 1) BlockContainer {
+				// 		Block IL_004a (incoming: 1) {
+				// 			stloc objectVariable(ldloc exceptionVariable)
+				// 			br finallyBlock
+				// 		}
+				// 
+				// 	}
+				// }
+				// 
+				// Block finallyBlock (incoming: 2) {
+				// 	if (comp.o(ldloc b == ldnull)) br afterFinallyBlock
+				// 	br finallyBlockContinuation
+				// }
+				// 
+				// Block finallyBlockContinuation (incoming: 1) {
+				// 	await(addressof System.Threading.Tasks.ValueTask(callvirt DisposeAsync(ldloc b)))
+				// 	br afterFinallyBlock
+				// }
+				// 
+				// Block afterFinallyBlock (incoming: 2) {
+				// 	stloc V_1(ldloc objectVariable)
+				// 	if (comp.o(ldloc V_1 == ldnull)) br IL_00ea
+				// 	br IL_00cf
+				// }
+
 				// await in finally uses a single catch block with catch-type object
-				if (tryCatch.Handlers.Count != 1 || !(tryCatch.Handlers[0].Body is BlockContainer catchBlockContainer) || !tryCatch.Handlers[0].Variable.Type.IsKnownType(KnownTypeCode.Object))
-					continue;
-				// and consists of an assignment to a temporary that is used outside the catch block
-				// and a jump to the finally block
-				var block = catchBlockContainer.EntryPoint;
-				if (block.Instructions.Count < 2 || !block.Instructions[0].MatchStLoc(out var globalCopyVar, out var value) || !value.MatchLdLoc(tryCatch.Handlers[0].Variable))
-					continue;
-				if (block.Instructions.Count == 3)
+				if (tryCatch.Handlers.Count != 1)
 				{
-					if (!block.Instructions[1].MatchStLoc(out var globalCopyVarTemp, out value) || !value.MatchLdLoc(globalCopyVar))
-						continue;
-					globalCopyVar = globalCopyVarTemp;
+					continue;
 				}
-				if (!block.Instructions[block.Instructions.Count - 1].MatchBranch(out var entryPointOfFinally))
+				var handler = tryCatch.Handlers[0];
+				var exceptionVariable = handler.Variable;
+				if (handler.Body is not BlockContainer catchBlockContainer)
+					continue;
+				if (!exceptionVariable.Type.IsKnownType(KnownTypeCode.Object))
+					continue;
+				// Matches the await finally pattern:
+				// [stloc V_3(ldloc E_100)	- copy exception variable to a temporary]
+				// stloc V_6(ldloc V_3)	- store exception in 'global' object variable
+				// br IL_0075				- jump out of catch block to the head of the finallyBlock
+				var catchBlockEntry = catchBlockContainer.EntryPoint;
+				ILVariable objectVariable;
+				switch (catchBlockEntry.Instructions.Count)
+				{
+					case 2:
+						if (!catchBlockEntry.Instructions[0].MatchStLoc(out objectVariable, out var value))
+							continue;
+						if (!value.MatchLdLoc(exceptionVariable))
+							continue;
+						break;
+					case 3:
+						if (!catchBlockEntry.Instructions[0].MatchStLoc(out var temporaryVariable, out value))
+							continue;
+						if (!value.MatchLdLoc(exceptionVariable))
+							continue;
+						if (!catchBlockEntry.Instructions[1].MatchStLoc(out objectVariable, out value))
+							continue;
+						if (!value.MatchLdLoc(temporaryVariable))
+							continue;
+						break;
+					default:
+						continue;
+				}
+				if (!catchBlockEntry.Instructions[catchBlockEntry.Instructions.Count - 1].MatchBranch(out var entryPointOfFinally))
 					continue;
 				// globalCopyVar should only be used once, at the end of the finally-block
-				if (globalCopyVar.LoadCount != 1 || globalCopyVar.StoreCount > 2)
+				if (objectVariable.LoadCount != 1 || objectVariable.StoreCount > 2)
 					continue;
-				var tempStore = globalCopyVar.LoadInstructions[0].Parent as StLoc;
-				if (tempStore == null || !MatchExceptionCaptureBlock(tempStore, out var exitOfFinally, out var afterFinally, out var blocksToRemove))
+
+				var beforeExceptionCaptureBlock = (Block)LocalFunctionDecompiler.GetStatement(objectVariable.LoadInstructions[0])?.Parent;
+				if (beforeExceptionCaptureBlock == null)
 					continue;
-				if (!MatchAfterFinallyBlock(ref afterFinally, blocksToRemove, out bool removeFirstInstructionInAfterFinally))
+
+				var (afterFinallyBlock, capturePatternStart, objectVariableCopy) = FindBlockAfterFinally(context, beforeExceptionCaptureBlock, objectVariable);
+				if (afterFinallyBlock == null || capturePatternStart == null)
 					continue;
+
+				var initOfIdentifierVariable = tryCatch.Parent.Children.ElementAtOrDefault(tryCatch.ChildIndex - 1) as StLoc;
+				if (initOfIdentifierVariable == null || !initOfIdentifierVariable.Value.MatchLdcI4(0))
+					continue;
+
+				var identifierVariable = initOfIdentifierVariable.Variable;
+
+				context.StepStartGroup("Inline finally block with await", tryCatch.Handlers[0]);
 				var cfg = new ControlFlowGraph(container, context.CancellationToken);
-				var exitOfFinallyNode = cfg.GetNode(exitOfFinally);
-				var entryPointOfFinallyNode = cfg.GetNode(entryPointOfFinally);
-
-				var additionalBlocksInFinally = new HashSet<Block>();
-				var invalidExits = new List<ControlFlowNode>();
-
-				TraverseDominatorTree(entryPointOfFinallyNode);
-
-				void TraverseDominatorTree(ControlFlowNode node)
-				{
-					if (entryPointOfFinallyNode != node)
-					{
-						if (entryPointOfFinallyNode.Dominates(node))
-							additionalBlocksInFinally.Add((Block)node.UserData);
-						else
-							invalidExits.Add(node);
-					}
-
-					if (node == exitOfFinallyNode)
-						return;
-
-					foreach (var child in node.DominatorTreeChildren)
-					{
-						TraverseDominatorTree(child);
-					}
-				}
-
-				if (invalidExits.Any())
-					continue;
-
-				context.Step("Inline finally block with await", tryCatch.Handlers[0]);
-
-				foreach (var blockToRemove in blocksToRemove)
-				{
-					blockToRemove.Remove();
-				}
-				var finallyContainer = new BlockContainer();
-				entryPointOfFinally.Remove();
-				if (removeFirstInstructionInAfterFinally)
-					afterFinally.Instructions.RemoveAt(0);
 				changedContainers.Add(container);
-				var outer = BlockContainer.FindClosestContainer(container.Parent);
-				if (outer != null)
-					changedContainers.Add(outer);
-				finallyContainer.Blocks.Add(entryPointOfFinally);
-				finallyContainer.AddILRange(entryPointOfFinally);
-				exitOfFinally.Instructions.RemoveRange(tempStore.ChildIndex, 3);
-				exitOfFinally.Instructions.Add(new Leave(finallyContainer));
-				foreach (var branchToFinally in container.Descendants.OfType<Branch>())
+
+				context.StepStartGroup("Move blocks to state assignments");
+				Dictionary<int, Block> identifierValueTargets = new Dictionary<int, Block>();
+
+				foreach (var load in identifierVariable.LoadInstructions.ToArray())
 				{
-					if (branchToFinally.TargetBlock == entryPointOfFinally)
-						branchToFinally.ReplaceWith(new Branch(afterFinally));
+					var statement = LocalFunctionDecompiler.GetStatement(load);
+					var block = (Block)statement.Parent;
+
+					if (!statement.MatchIfInstruction(out var cond, out var branchToTarget))
+					{
+						block.Instructions.RemoveAt(statement.ChildIndex);
+						continue;
+					}
+
+					if (block.Instructions.LastOrDefault() is not Branch otherBranch)
+					{
+						block.Instructions.RemoveAt(statement.ChildIndex);
+						continue;
+					}
+
+					if (cond.MatchCompEquals(out var left, out var right)
+						&& left == load && right.MatchLdcI4(out int value)
+						&& branchToTarget.MatchBranch(out var targetBlock))
+					{
+						identifierValueTargets.Add(value, targetBlock);
+						block.Instructions.RemoveAt(statement.ChildIndex);
+					}
+					else if (cond.MatchCompNotEquals(out left, out right)
+						&& left == load && right.MatchLdcI4(out value))
+					{
+						identifierValueTargets.Add(value, otherBranch.TargetBlock);
+						block.Instructions.RemoveAt(statement.ChildIndex + 1);
+						statement.ReplaceWith(otherBranch);
+					}
+					else
+					{
+						block.Instructions.RemoveAt(statement.ChildIndex);
+					}
 				}
-				foreach (var newBlock in additionalBlocksInFinally)
+
+				var removedBlocks = new List<Block>();
+
+				foreach (var store in identifierVariable.StoreInstructions.OfType<StLoc>().ToArray())
 				{
-					newBlock.Remove();
-					finallyContainer.Blocks.Add(newBlock);
-					finallyContainer.AddILRange(newBlock);
+					if (!store.Value.MatchLdcI4(out int value))
+						continue;
+					var statement = LocalFunctionDecompiler.GetStatement(store);
+					var parent = (Block)statement.Parent;
+					if (value <= 0)
+					{
+						parent.Instructions.RemoveAt(statement.ChildIndex);
+						continue;
+					}
+					if (!identifierValueTargets.TryGetValue(value, out var targetBlock))
+					{
+						store.ReplaceWith(new Nop() { Comment = $"Could not find matching block for id {value}" });
+						continue;
+					}
+					var targetContainer = BlockContainer.FindClosestContainer(statement);
+					context.Step($"Move block with id={value} {targetBlock.Label} to IL_{store.StartILOffset}", statement);
+					parent.Instructions.RemoveAt(statement.ChildIndex + 1);
+					store.ReplaceWith(new Branch(targetBlock));
+
+					MoveDominatedBlocksToContainer(targetBlock, null, cfg, targetContainer, removedBlocks);
 				}
+
+
+				context.StepEndGroup(keepIfEmpty: true);
+
+				var finallyContainer = new BlockContainer().WithILRange(catchBlockContainer);
 				tryCatch.ReplaceWith(new TryFinally(tryCatch.TryBlock, finallyContainer).WithILRange(tryCatch.TryBlock));
+
+				context.Step("Move blocks into finally", finallyContainer);
+				MoveDominatedBlocksToContainer(entryPointOfFinally, beforeExceptionCaptureBlock, cfg, finallyContainer, removedBlocks);
+
+				if (beforeExceptionCaptureBlock.Instructions.Count >= 3)
+				{
+					if (beforeExceptionCaptureBlock.Instructions.SecondToLastOrDefault().MatchIfInstruction(out var cond, out var brInst)
+						&& beforeExceptionCaptureBlock.Instructions.LastOrDefault() is Branch branch
+						&& beforeExceptionCaptureBlock.Instructions[beforeExceptionCaptureBlock.Instructions.Count - 3].MatchStLoc(objectVariableCopy, out var value)
+						&& value.MatchLdLoc(objectVariable))
+					{
+						if (cond.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(objectVariableCopy))
+						{
+							context.Step("Simplify end of finally", beforeExceptionCaptureBlock);
+							beforeExceptionCaptureBlock.Instructions.RemoveRange(beforeExceptionCaptureBlock.Instructions.Count - 3, 2);
+							branch.ReplaceWith(new Leave(finallyContainer).WithILRange(branch));
+						}
+						else if (cond.MatchCompNotEqualsNull(out arg) && arg.MatchLdLoc(objectVariableCopy))
+						{
+							context.Step("Simplify end of finally", beforeExceptionCaptureBlock);
+							beforeExceptionCaptureBlock.Instructions.RemoveRange(beforeExceptionCaptureBlock.Instructions.Count - 3, 2);
+							branch.ReplaceWith(new Leave(finallyContainer).WithILRange(branch));
+						}
+					}
+				}
+
+				foreach (var branch in container.Descendants.OfType<Branch>())
+				{
+					if (branch.TargetBlock == entryPointOfFinally && branch.IsDescendantOf(tryCatch.TryBlock))
+					{
+						context.Step("branch to finally => branch after finally", branch);
+						branch.ReplaceWith(new Branch(afterFinallyBlock).WithILRange(branch));
+					}
+					else if (branch.TargetBlock == capturePatternStart)
+					{
+						if (branch.IsDescendantOf(finallyContainer))
+						{
+							context.Step("branch out of finally container => leave finally container", branch);
+							branch.ReplaceWith(new Leave(finallyContainer).WithILRange(branch));
+						}
+					}
+				}
+
+				context.StepEndGroup(keepIfEmpty: true);
 			}
+
+			context.Step("Clean up", function);
 
 			// clean up all modified containers
 			foreach (var container in changedContainers)
 				container.SortBlocks(deleteUnreachableBlocks: true);
-		}
 
-		/// <summary>
-		/// Block finallyHead (incoming: 2) {
-		///		[body of finally]
-		/// 	stloc V_4(ldloc V_1)
-		/// 	if (comp(ldloc V_4 == ldnull)) br afterFinally
-		/// 	br typeCheckBlock
-		/// }
-		/// 
-		/// Block typeCheckBlock (incoming: 1) {
-		/// 	stloc S_110(isinst System.Exception(ldloc V_4))
-		/// 	if (comp(ldloc S_110 != ldnull)) br captureBlock
-		/// 	br throwBlock
-		/// }
-		/// 
-		/// Block throwBlock (incoming: 1) {
-		/// 	throw(ldloc V_4)
-		/// }
-		/// 
-		/// Block captureBlock (incoming: 1) {
-		/// 	callvirt Throw(call Capture(ldloc S_110))
-		/// 	br afterFinally
-		/// }
-		/// 
-		/// Block afterFinally (incoming: 2) {
-		/// 	stloc V_1(ldnull)
-		/// 	[after finally]
-		/// }
-		/// </summary>
-		static bool MatchExceptionCaptureBlock(StLoc tempStore, out Block endOfFinally, out Block afterFinally, out List<Block> blocksToRemove)
-		{
-			afterFinally = null;
-			endOfFinally = (Block)tempStore.Parent;
-			blocksToRemove = new List<Block>();
-			int count = endOfFinally.Instructions.Count;
-			if (tempStore.ChildIndex != count - 3)
-				return false;
-			if (!(endOfFinally.Instructions[count - 2] is IfInstruction ifInst))
-				return false;
-			if (!endOfFinally.Instructions.Last().MatchBranch(out var typeCheckBlock))
-				return false;
-			if (!ifInst.TrueInst.MatchBranch(out afterFinally))
-				return false;
-			// match typeCheckBlock
-			if (typeCheckBlock.Instructions.Count != 3)
-				return false;
-			if (!typeCheckBlock.Instructions[0].MatchStLoc(out var castStore, out var cast)
-				|| !cast.MatchIsInst(out var arg, out var type) || !type.IsKnownType(KnownTypeCode.Exception) || !arg.MatchLdLoc(tempStore.Variable))
-				return false;
-			if (!typeCheckBlock.Instructions[1].MatchIfInstruction(out var cond, out var jumpToCaptureBlock))
-				return false;
-			if (!cond.MatchCompNotEqualsNull(out arg) || !arg.MatchLdLoc(castStore))
-				return false;
-			if (!typeCheckBlock.Instructions[2].MatchBranch(out var throwBlock))
-				return false;
-			if (!jumpToCaptureBlock.MatchBranch(out var captureBlock))
-				return false;
-			// match throwBlock
-			if (throwBlock.Instructions.Count != 1 || !throwBlock.Instructions[0].MatchThrow(out arg) || !arg.MatchLdLoc(tempStore.Variable))
-				return false;
-			// match captureBlock
-			if (captureBlock.Instructions.Count != 2)
-				return false;
-			if (!captureBlock.Instructions[1].MatchBranch(afterFinally))
-				return false;
-			if (!(captureBlock.Instructions[0] is CallVirt callVirt) || callVirt.Method.FullName != "System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw" || callVirt.Arguments.Count != 1)
-				return false;
-			if (!(callVirt.Arguments[0] is Call call) || call.Method.FullName != "System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture" || call.Arguments.Count != 1)
-				return false;
-			if (!call.Arguments[0].MatchLdLoc(castStore))
-				return false;
-			blocksToRemove.Add(typeCheckBlock);
-			blocksToRemove.Add(throwBlock);
-			blocksToRemove.Add(captureBlock);
-			return true;
-		}
+			((BlockContainer)function.Body).SortBlocks(deleteUnreachableBlocks: true);
 
-		static bool MatchAfterFinallyBlock(ref Block afterFinally, List<Block> blocksToRemove, out bool removeFirstInstructionInAfterFinally)
-		{
-			removeFirstInstructionInAfterFinally = false;
-			if (afterFinally.Instructions.Count < 2)
-				return false;
-			ILVariable globalCopyVarSplitted;
-			switch (afterFinally.Instructions[0])
+			void MoveDominatedBlocksToContainer(Block newEntryPoint, Block endBlock, ControlFlowGraph graph,
+				BlockContainer targetContainer, List<Block> removedBlocks)
 			{
-				case IfInstruction ifInst:
-					if (ifInst.Condition.MatchCompEquals(out var load, out var ldone) && ldone.MatchLdcI4(1) && load.MatchLdLoc(out var variable))
+				var node = graph.GetNode(newEntryPoint);
+				var endNode = endBlock == null ? null : graph.GetNode(endBlock);
+
+				MoveBlock(newEntryPoint, targetContainer);
+
+				foreach (var n in graph.cfg)
+				{
+					Block block = (Block)n.UserData;
+
+					if (node.Dominates(n))
 					{
-						if (!ifInst.TrueInst.MatchBranch(out var targetBlock))
-							return false;
-						blocksToRemove.Add(afterFinally);
-						afterFinally = targetBlock;
-						return true;
+						if (endNode != null && endNode != n && endNode.Dominates(n))
+							continue;
+
+						if (block.Parent == targetContainer)
+							continue;
+
+						if (!removedBlocks.Contains(block))
+						{
+							MoveBlock(block, targetContainer);
+						}
 					}
-					else if (ifInst.Condition.MatchCompNotEquals(out load, out ldone) && ldone.MatchLdcI4(1) && load.MatchLdLoc(out variable))
-					{
-						if (!afterFinally.Instructions[1].MatchBranch(out var targetBlock))
-							return false;
-						blocksToRemove.Add(afterFinally);
-						afterFinally = targetBlock;
-						return true;
-					}
-					return false;
-				case LdLoc ldLoc:
-					if (ldLoc.Variable.LoadCount != 1 || ldLoc.Variable.StoreCount != 1)
-						return false;
-					if (!afterFinally.Instructions[1].MatchStLoc(out globalCopyVarSplitted, out var ldnull) || !ldnull.MatchLdNull())
-						return false;
-					removeFirstInstructionInAfterFinally = true;
-					break;
-				case StLoc stloc:
-					globalCopyVarSplitted = stloc.Variable;
-					if (!stloc.Value.MatchLdNull())
-						return false;
-					break;
-				default:
-					return false;
+				}
 			}
-			if (globalCopyVarSplitted.StoreCount != 1 || globalCopyVarSplitted.LoadCount != 0)
-				return false;
-			return true;
+
+			void MoveBlock(Block block, BlockContainer target)
+			{
+				context.Step($"Move {block.Label} to container at IL_{target.StartILOffset:x4}", target);
+				block.Remove();
+				target.Blocks.Add(block);
+			}
+		}
+
+		static (Block, Block, ILVariable) FindBlockAfterFinally(ILTransformContext context, Block block, ILVariable objectVariable)
+		{
+			int count = block.Instructions.Count;
+			if (count < 3)
+				return default;
+
+			if (!block.Instructions[count - 3].MatchStLoc(out var objectVariableCopy, out var value))
+				return default;
+
+			if (!value.MatchLdLoc(objectVariable))
+				return default;
+
+			if (!block.Instructions[count - 2].MatchIfInstruction(out var cond, out var afterExceptionCaptureBlockBranch))
+				return default;
+
+			if (!afterExceptionCaptureBlockBranch.MatchBranch(out var afterExceptionCaptureBlock))
+				return default;
+
+			if (!block.Instructions[count - 1].MatchBranch(out var exceptionCaptureBlock))
+				return default;
+
+			if (cond.MatchCompEqualsNull(out var arg))
+			{
+				if (!arg.MatchLdLoc(objectVariableCopy))
+					return default;
+			}
+			else if (cond.MatchCompNotEqualsNull(out arg))
+			{
+				if (!arg.MatchLdLoc(objectVariableCopy))
+					return default;
+				(afterExceptionCaptureBlock, exceptionCaptureBlock) = (exceptionCaptureBlock, afterExceptionCaptureBlock);
+			}
+			else
+			{
+				return default;
+			}
+
+			if (!AwaitInCatchTransform.MatchExceptionCaptureBlock(context, exceptionCaptureBlock,
+				ref objectVariableCopy, out var store, out _, out _))
+			{
+				return default;
+			}
+
+			var exceptionCaptureBlockStart = LocalFunctionDecompiler.GetStatement(store);
+			if (exceptionCaptureBlockStart == null)
+				return default;
+
+
+			return (afterExceptionCaptureBlock, (Block)exceptionCaptureBlockStart.Parent, objectVariableCopy);
 		}
 	}
 }

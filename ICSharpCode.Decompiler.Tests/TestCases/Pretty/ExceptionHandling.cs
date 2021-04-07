@@ -448,6 +448,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("{0} {1}", val, val.ToString());
 			}
 		}
+
+		public void XXX1()
+		{
+			try
+			{
+				Console.WriteLine();
+			}
+			catch (Exception ex) when (ex.Data.IsFixedSize)
+			{
+				Console.WriteLine(ex.ToString());
+				throw ex;
+			}
+		}
+
+		public void XXX2()
+		{
+			try
+			{
+				Console.WriteLine();
+			}
+			catch (Exception ex) when (ex is InternalBufferOverflowException)
+			{
+				Console.WriteLine(ex.ToString());
+				throw ex;
+			}
+		}
 #endif
 	}
 }
