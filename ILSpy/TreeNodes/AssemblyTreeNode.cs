@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				{
 					if (LoadedAssembly.HasLoadError)
 						return Images.AssemblyWarning;
-					var loadResult = LoadedAssembly.GetLoadResultAsync().Result;
+					var loadResult = LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
 					if (loadResult.Package != null)
 					{
 						return loadResult.Package.Kind switch
@@ -174,7 +174,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			LoadedAssembly.LoadResult loadResult;
 			try
 			{
-				loadResult = LoadedAssembly.GetLoadResultAsync().Result;
+				loadResult = LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
 			}
 			catch
 			{
