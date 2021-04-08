@@ -1046,7 +1046,11 @@ namespace ICSharpCode.ILSpy
 					break;
 				case EntityReference unresolvedEntity:
 					string protocol = unresolvedEntity.Protocol ?? "decompile";
-					PEFile file = unresolvedEntity.Module;
+					PEFile file = unresolvedEntity.ResolveAssembly(assemblyList);
+					if (file == null)
+					{
+						break;
+					}
 					if (protocol != "decompile")
 					{
 						var protocolHandlers = App.ExportProvider.GetExports<IProtocolHandler>();

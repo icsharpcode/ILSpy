@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 				MessageBox.Show(Properties.Resources.CannotAnalyzeMissingRef, "ILSpy");
 				return;
 			}
-			MainWindow.Instance.JumpToReference(this.Member);
+			MainWindow.Instance.JumpToReference(new EntityReference(this.Member.ParentModule.PEFile.FileName, this.Member.MetadataToken));
 		}
 
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)

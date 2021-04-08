@@ -404,8 +404,9 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			else if (segment.Reference is EntityReference unresolvedEntity)
 			{
-				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Module,
-					unresolvedEntity.Module.GetAssemblyResolver(),
+				var module = unresolvedEntity.ResolveAssembly(MainWindow.Instance.CurrentAssemblyList);
+				var typeSystem = new DecompilerTypeSystem(module,
+					module.GetAssemblyResolver(),
 					TypeSystemOptions.Default | TypeSystemOptions.Uncached);
 				try
 				{

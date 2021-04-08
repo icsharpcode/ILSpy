@@ -27,20 +27,26 @@ namespace ICSharpCode.ILSpy
 	[DebuggerDisplay("EntityReference Module={Module}, Handle={Handle}, Protocol={Protocol}")]
 	public class EntityReference
 	{
-		public PEFile Module { get; }
+		public string Module { get; }
 		public Handle Handle { get; }
 		public string Protocol { get; }
 
-		public EntityReference(PEFile module, Handle handle)
+		public EntityReference(string moduleFileName, Handle handle)
 		{
-			this.Module = module ?? throw new ArgumentNullException(nameof(module));
+			this.Module = moduleFileName;
 			this.Handle = handle;
+			this.Protocol = "decompile";
 		}
 
-		public EntityReference(string protocol, PEFile module, Handle handle)
-			: this(module, handle)
+		public EntityReference(string protocol, string moduleFileName, Handle handle)
+			: this(moduleFileName, handle)
 		{
 			this.Protocol = protocol ?? "decompile";
+		}
+
+		public PEFile ResolveAssembly(AssemblyList context)
+		{
+			return context.FindAssembly(Module)?.GetPEFileOrNull();
 		}
 	}
 }
