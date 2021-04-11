@@ -11,23 +11,11 @@
     <LangVersion>9.0</LangVersion>
     <RuntimeIdentifiers>win</RuntimeIdentifiers>
 
-    <EnableDefaultItems>False</EnableDefaultItems>
-    <SkipVSIXDefaults>true</SkipVSIXDefaults>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>TRACE;VSADDIN</DefineConstants>
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>Key.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <DebugType>full</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <DebugType>pdbonly</DebugType>
-    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(AppVeyor)' != ''">
@@ -49,7 +37,7 @@
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="2.4.0" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="16.8.3038" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
-    <PackageReference Include="VSIX-SdkProjectAdapter" Version="2.0.0" PrivateAssets="All" />
+    <PackageReference Include="VSIX-SdkProjectAdapter" Version="3.0.0" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
@@ -73,50 +61,18 @@
     <Compile Include="..\ICSharpCode.Decompiler\Metadata\UniversalAssemblyResolver.cs" Link="UniversalAssemblyResolver.cs" />
     <Compile Include="..\ICSharpCode.Decompiler\Util\EmptyList.cs" Link="Decompiler\EmptyList.cs" />
     <Compile Include="..\ILSpy\NativeMethods.cs" Link="NativeMethods.cs" />
-    <Compile Include="Commands\AssemblyReferenceForILSpy.cs" />
-    <Compile Include="Commands\NuGetReferenceForILSpy.cs" />
-    <Compile Include="Commands\ProjectItemForILSpy.cs" />
-    <Compile Include="Commands\ProjectReferenceForILSpy.cs" />
-    <Compile Include="Commands\OpenCodeItemCommand.cs" />
-    <Compile Include="Commands\OpenILSpyCommand.cs" />
-    <Compile Include="Commands\OpenProjectOutputCommand.cs" />
-    <Compile Include="Commands\OpenReferenceCommand.cs" />
-    <Compile Include="Decompiler\Dummy.cs" />
-    <Compile Include="Guids.cs" />
-    <Compile Include="ILSpyInstance.cs" />
-    <Compile Include="Resources.Designer.cs">
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="ILSpyAddInPackage.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PkgCmdID.cs" />
-    <Compile Include="SyntaxNodeExtensions.cs" />
-    <Compile Include="AssemblyFileFinder.cs" />
-    <Compile Include="Utils.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Resources.resx">
+    <EmbeddedResource Update="Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="VSPackage.en-US.resx">
-      <MergeWithCTO>true</MergeWithCTO>
-      <LogicalName>VSPackage.en-US.resources</LogicalName>
-      <DependentUpon>VSPackage.resx</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="VSPackage.resx">
-      <MergeWithCTO>true</MergeWithCTO>
-      <ManifestResourceName>VSPackage</ManifestResourceName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="VSPackage.zh-Hans.resx">
-      <MergeWithCTO>true</MergeWithCTO>
-      <LogicalName>VSPackage.zh-Hans.resources</LogicalName>
-      <DependentUpon>VSPackage.resx</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
 
@@ -139,40 +95,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="source.extension.vsixmanifest.template" />
-    <None Include="source.extension.vsixmanifest">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ILSpyAddIn.vsct">
-      <SubType>Designer</SubType>
-    </None>
+    <None Remove="**\extension.vsixlangpack"/>
     <Content Include="zh-Hans\extension.vsixlangpack">
       <IncludeInVSIX>true</IncludeInVSIX>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <VSCTCompile Include="ILSpyAddIn.en-US.vsct">
-      <ResourceName>Menus.ctmenu</ResourceName>
-      <SubType>Designer</SubType>
-      <DependentUpon>ILSpyAddIn.vsct</DependentUpon>
-    </VSCTCompile>
-    <VSCTCompile Include="ILSpyAddIn.zh-Hans.vsct">
-      <ResourceName>Menus.ctmenu</ResourceName>
-      <SubType>Designer</SubType>
-      <DependentUpon>ILSpyAddIn.vsct</DependentUpon>
-    </VSCTCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Key.snk" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Properties\launchSettings.json" />
-    <None Include="Resources\Images.png" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <None Remove="**\*.ico"/>
     <Content Include="ILSpy-Large.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
@@ -183,9 +114,5 @@
     </Content>
     <Content Include="Resources\Package.ico" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <UseCodebase>true</UseCodebase>
-  </PropertyGroup>
 
 </Project>
