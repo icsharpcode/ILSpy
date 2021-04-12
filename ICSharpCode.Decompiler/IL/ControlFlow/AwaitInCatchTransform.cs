@@ -66,6 +66,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var cfg = new ControlFlowGraph(container, context.CancellationToken);
 				if (transformableCatchBlocks.Count > 0)
 					changedContainers.Add(container);
+				SwitchInstruction switchInstructionOpt = null;
 				foreach (var result in transformableCatchBlocks)
 				{
 					removedBlocks.Clear();
@@ -74,28 +75,34 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					context.StepStartGroup($"Inline catch block with await (at {result.Handler.Variable.Name})", result.Handler);
 
 					// Remove the IfInstruction from the jump table and eliminate all branches to the block.
-					if (result.JumpTableEntry is IfInstruction jumpTableEntry)
+					switch (result.JumpTableEntry)
 					{
-						var jumpTableBlock = (Block)jumpTableEntry.Parent;
-						context.Step("Remove jump-table entry", result.JumpTableEntry);
-						jumpTableBlock.Instructions.RemoveAt(result.JumpTableEntry.ChildIndex);
+						case IfInstruction jumpTableEntry:
+							var jumpTableBlock = (Block)jumpTableEntry.Parent;
+							context.Step("Remove jump-table entry", result.JumpTableEntry);
+							jumpTableBlock.Instructions.RemoveAt(result.JumpTableEntry.ChildIndex);
 
-						foreach (var branch in tryCatch.Descendants.OfType<Branch>())
-						{
-							if (branch.TargetBlock == jumpTableBlock)
+							foreach (var branch in tryCatch.Descendants.OfType<Branch>())
 							{
-								if (result.NextBlockOrExitContainer is BlockContainer exitContainer)
+								if (branch.TargetBlock == jumpTableBlock)
 								{
-									context.Step("branch jumpTableBlock => leave exitContainer", branch);
-									branch.ReplaceWith(new Leave(exitContainer));
-								}
-								else
-								{
-									context.Step("branch jumpTableBlock => branch nextBlock", branch);
-									branch.ReplaceWith(new Branch((Block)result.NextBlockOrExitContainer));
+									if (result.NextBlockOrExitContainer is BlockContainer exitContainer)
+									{
+										context.Step("branch jumpTableBlock => leave exitContainer", branch);
+										branch.ReplaceWith(new Leave(exitContainer));
+									}
+									else
+									{
+										context.Step("branch jumpTableBlock => branch nextBlock", branch);
+										branch.ReplaceWith(new Branch((Block)result.NextBlockOrExitContainer));
+									}
 								}
 							}
-						}
+							break;
+						case SwitchSection jumpTableEntry:
+							Debug.Assert(switchInstructionOpt == null || jumpTableEntry.Parent == switchInstructionOpt);
+							switchInstructionOpt = (SwitchInstruction)jumpTableEntry.Parent;
+							break;
 					}
 
 					// Add the real catch block entry-point to the block container
@@ -169,6 +176,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 
 					context.StepEndGroup(keepIfEmpty: true);
+				}
+
+				if (switchInstructionOpt != null && switchInstructionOpt.Parent is Block b && b.IncomingEdgeCount > 0)
+				{
+					var defaultSection = switchInstructionOpt.GetDefaultSection();
+
+					foreach (var branch in container.Descendants.OfType<Branch>())
+					{
+						if (branch.TargetBlock != b)
+							continue;
+						branch.ReplaceWith(defaultSection.Body.Clone());
+					}
 				}
 			}
 
@@ -275,6 +294,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!catchBlock.Instructions.Last().MatchBranch(out var jumpTableStartBlock))
 				return false;
 			var identifierVariableAssignment = catchBlock.Instructions.SecondToLastOrDefault();
+			if (identifierVariableAssignment == null)
+				return false;
 			if (!identifierVariableAssignment.MatchStLoc(out identifierVariable, out value) || !value.MatchLdcI4(out id))
 				return false;
 			// analyze jump table:
