@@ -7,10 +7,8 @@
 	xmlns:avalondock="https://github.com/Dirkster99/AvalonDock"
 	xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
 	xmlns:docking="clr-namespace:ICSharpCode.ILSpy.Docking"
-	xmlns:textview="clr-namespace:ICSharpCode.ILSpy.TextView"
 	xmlns:analyzers="clr-namespace:ICSharpCode.ILSpy.Analyzers"
 	xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
-	xmlns:viewmodels="clr-namespace:ICSharpCode.ILSpy.ViewModels"
 	Title="ILSpy"
 	MinWidth="250"
 	MinHeight="200"
@@ -62,6 +60,8 @@
 
 		<styles:InvertGrayEffect x:Key="InvertGrayEffect" />
 
+		<controls:CultureSelectionConverter x:Key="cultureSelectionConverter" />
+
 	</Window.Resources>
 
 	<Window.CommandBindings>
@@ -102,6 +102,12 @@
 				<MenuItem Header="{x:Static properties:Resources.Show_publiconlyTypesMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.FilterSettings.ApiVisPublicOnly}" />
 				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.FilterSettings.ApiVisPublicAndInternal}" />
 				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.FilterSettings.ApiVisAll}" />
+				<Separator/>
+				<MenuItem Header="Language">
+					<MenuItem Header="{x:Static properties:Resources.UILanguage_System}" IsCheckable="True" IsChecked="{Binding SessionSettings.CurrentCulture, Converter={StaticResource cultureSelectionConverter}, ConverterParameter={x:Null}}" />
+					<MenuItem Header="English" IsCheckable="True" IsChecked="{Binding SessionSettings.CurrentCulture, Converter={StaticResource cultureSelectionConverter}, ConverterParameter=en-US}" />
+					<MenuItem Header="中文" IsCheckable="True" IsChecked="{Binding SessionSettings.CurrentCulture, Converter={StaticResource cultureSelectionConverter}, ConverterParameter=zh-Hans}" />
+				</MenuItem>
 			</MenuItem>
 			<MenuItem Header="{x:Static properties:Resources._Window}" />
 		</Menu>

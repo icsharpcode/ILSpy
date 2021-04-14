@@ -121,7 +121,10 @@ namespace ICSharpCode.ILSpy
 			};
 
 			AssemblyListManager.CreateDefaultAssemblyLists();
-
+			if (!string.IsNullOrEmpty(sessionSettings.CurrentCulture))
+			{
+				System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(sessionSettings.CurrentCulture);
+			}
 			DockWorkspace.Instance.LoadSettings(sessionSettings);
 			InitializeComponent();
 			InitToolPanes();
@@ -137,16 +140,19 @@ namespace ICSharpCode.ILSpy
 
 		private void SessionSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == "ActiveAssemblyList")
+			switch (e.PropertyName)
 			{
-				ShowAssemblyList(sessionSettings.ActiveAssemblyList);
-			}
-
-			if (e.PropertyName == nameof(SessionSettings.IsDarkMode))
-			{
-				// update syntax highlighting and force reload (AvalonEdit does not automatically refresh on highlighting change)
-				DecompilerTextView.RegisterHighlighting();
-				DecompileSelectedNodes(DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
+				case nameof(SessionSettings.ActiveAssemblyList):
+					ShowAssemblyList(sessionSettings.ActiveAssemblyList);
+					break;
+				case nameof(SessionSettings.IsDarkMode):
+					// update syntax highlighting and force reload (AvalonEdit does not automatically refresh on highlighting change)
+					DecompilerTextView.RegisterHighlighting();
+					DecompileSelectedNodes(DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState);
+					break;
+				case nameof(SessionSettings.CurrentCulture):
+					MessageBox.Show(Properties.Resources.SettingsChangeRestartRequired, "ILSpy");
+					break;
 			}
 		}
 

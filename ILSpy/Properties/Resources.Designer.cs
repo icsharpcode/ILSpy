@@ -2220,6 +2220,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to You must restart ILSpy for the change to take effect..
+        /// </summary>
+        public static string SettingsChangeRestartRequired {
+            get {
+                return ResourceManager.GetString("SettingsChangeRestartRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Shell.
         /// </summary>
         public static string Shell {
@@ -2459,6 +2468,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string Type {
             get {
                 return ResourceManager.GetString("Type", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to System.
+        /// </summary>
+        public static string UILanguage_System {
+            get {
+                return ResourceManager.GetString("UILanguage_System", resourceCulture);
             }
         }
         

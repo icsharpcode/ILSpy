@@ -768,6 +768,9 @@ Do you want to continue?</value>
   <data name="SelectVersionDropdownTooltip" xml:space="preserve">
     <value>Select version of language to output</value>
   </data>
+  <data name="SettingsChangeRestartRequired" xml:space="preserve">
+    <value>You must restart ILSpy for the change to take effect.</value>
+  </data>
   <data name="Shell" xml:space="preserve">
     <value>Shell</value>
   </data>
@@ -848,6 +851,9 @@ Do you want to continue?</value>
   </data>
   <data name="Type" xml:space="preserve">
     <value>Type</value>
+  </data>
+  <data name="UILanguage_System" xml:space="preserve">
+    <value>System</value>
   </data>
   <data name="UpdateILSpyFound" xml:space="preserve">
     <value>No update for ILSpy found.</value>
