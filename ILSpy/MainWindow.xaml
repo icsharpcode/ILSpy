@@ -226,6 +226,7 @@
 							<Setter Property="CanHide" Value="{Binding Model.IsCloseable}" />
 							<Setter Property="HideCommand" Value="{Binding Model.CloseCommand}" />
 							<Setter Property="CanClose" Value="{Binding Model.IsCloseable}" />
+							<Setter Property="CloseCommand" Value="{Binding Model.CloseCommand}" />
 						</Style>
 					</docking:PaneStyleSelector.ToolPaneStyle>
 					<docking:PaneStyleSelector.TabPageStyle>
