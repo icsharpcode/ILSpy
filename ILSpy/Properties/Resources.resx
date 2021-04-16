@@ -201,6 +201,9 @@ Are you sure you want to continue?</value>
   <data name="CopyName" xml:space="preserve">
     <value>Copy FQ Name</value>
   </data>
+  <data name="CouldNotUseSdkStyleProjectFormat" xml:space="preserve">
+    <value>Could not use SDK-style project format, because no compatible target-framework moniker was found.</value>
+  </data>
   <data name="Create" xml:space="preserve">
     <value>Create</value>
   </data>

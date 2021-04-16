@@ -625,6 +625,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					return false;
 			}
 		}
+
+		public static bool CanUseSdkStyleProjectFormat(PEFile module)
+		{
+			return TargetServices.DetectTargetFramework(module).Moniker != null;
+		}
 	}
 
 	public readonly struct DecompilationProgress

@@ -523,6 +523,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Could not use SDK-style project format, because no compatible target-framework moniker was found..
+        /// </summary>
+        public static string CouldNotUseSdkStyleProjectFormat {
+            get {
+                return ResourceManager.GetString("CouldNotUseSdkStyleProjectFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Create.
         /// </summary>
         public static string Create {
