@@ -19,7 +19,6 @@
 #nullable enable
 
 using System;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -29,19 +28,31 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	public sealed class AssemblyResolutionException : FileNotFoundException
+	public sealed class ResolutionException : Exception
 	{
-		public IAssemblyReference Reference { get; }
+		public IAssemblyReference? Reference { get; }
 
-		public AssemblyResolutionException(IAssemblyReference reference)
-			: this(reference, null)
+		public string? ModuleName { get; }
+
+		public string? MainModuleFullPath { get; }
+
+		public string? ResolvedFullPath { get; }
+
+		public ResolutionException(IAssemblyReference reference, string? resolvedPath, Exception? innerException)
+			: base($"Failed to resolve assembly: '{reference}'{Environment.NewLine}" +
+				  $"Resolve result: {resolvedPath ?? "<not found>"}", innerException)
 		{
+			this.Reference = reference ?? throw new ArgumentNullException(nameof(reference));
+			this.ResolvedFullPath = resolvedPath;
 		}
 
-		public AssemblyResolutionException(IAssemblyReference reference, Exception? innerException)
-			: base($"Failed to resolve assembly: '{reference}'", innerException)
+		public ResolutionException(string mainModule, string moduleName, string? resolvedPath, Exception? innerException)
+			: base($"Failed to resolve module: '{moduleName} of {mainModule}'{Environment.NewLine}" +
+				  $"Resolve result: {resolvedPath ?? "<not found>"}", innerException)
 		{
-			this.Reference = reference;
+			this.MainModuleFullPath = mainModule ?? throw new ArgumentNullException(nameof(mainModule));
+			this.ModuleName = moduleName ?? throw new ArgumentNullException(nameof(moduleName));
+			this.ResolvedFullPath = resolvedPath;
 		}
 	}
 

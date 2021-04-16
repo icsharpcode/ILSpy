@@ -194,26 +194,41 @@ namespace ICSharpCode.Decompiler.Metadata
 		public PEFile Resolve(IAssemblyReference name)
 		{
 			var file = FindAssemblyFile(name);
-			if (file == null)
-			{
-				if (throwOnError)
-					throw new AssemblyResolutionException(name);
-				return null;
-			}
-			return new PEFile(file, new FileStream(file, FileMode.Open, FileAccess.Read), streamOptions, metadataOptions);
+			return CreatePEFileFromFileName(file, ex => new ResolutionException(name, file, ex));
 		}
 
 		public PEFile ResolveModule(PEFile mainModule, string moduleName)
 		{
 			string baseDirectory = Path.GetDirectoryName(mainModule.FileName);
 			string moduleFileName = Path.Combine(baseDirectory, moduleName);
-			if (!File.Exists(moduleFileName))
+			return CreatePEFileFromFileName(moduleFileName, ex => new ResolutionException(mainModule.FileName, moduleName, moduleFileName, ex));
+		}
+
+		private PEFile CreatePEFileFromFileName(string fileName, Func<Exception?, Exception> makeException)
+		{
+			if (fileName == null)
 			{
 				if (throwOnError)
-					throw new Exception($"Module {moduleName} could not be found!");
+					throw makeException(null);
 				return null;
 			}
-			return new PEFile(moduleFileName, new FileStream(moduleFileName, FileMode.Open, FileAccess.Read), streamOptions, metadataOptions);
+
+			try
+			{
+				FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+				return new PEFile(fileName, stream, streamOptions, metadataOptions);
+			}
+			catch (BadImageFormatException ex)
+			{
+				if (throwOnError)
+					throw makeException(ex);
+			}
+			catch (IOException ex)
+			{
+				if (throwOnError)
+					throw makeException(ex);
+			}
+			return null;
 		}
 
 		public Task<PEFile> ResolveAsync(IAssemblyReference name)
@@ -401,7 +416,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 
 			if (throwOnError)
-				throw new AssemblyResolutionException(name);
+				throw new ResolutionException(name, null, null);
 			return null;
 		}
 
