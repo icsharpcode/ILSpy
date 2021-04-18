@@ -45,6 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Conditional,
 		Obsolete,
 		IsReadOnly,
+		SpecialName,
 		DebuggerHidden,
 		DebuggerStepThrough,
 
@@ -119,6 +120,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Diagnostics", nameof(ConditionalAttribute)),
 			new TopLevelTypeName("System", nameof(ObsoleteAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", "IsReadOnlyAttribute"),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(SpecialNameAttribute)),
 			new TopLevelTypeName("System.Diagnostics", nameof(DebuggerHiddenAttribute)),
 			new TopLevelTypeName("System.Diagnostics", nameof(DebuggerStepThroughAttribute)),
 			// Assembly attributes:

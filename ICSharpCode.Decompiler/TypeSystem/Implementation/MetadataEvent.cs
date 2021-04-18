@@ -113,6 +113,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var b = new AttributeListBuilder(module);
 			var metadata = module.metadata;
 			var eventDef = metadata.GetEventDefinition(handle);
+
+			// SpecialName
+			if ((eventDef.Attributes & (EventAttributes.SpecialName | EventAttributes.RTSpecialName)) == EventAttributes.SpecialName)
+			{
+				b.Add(KnownAttribute.SpecialName);
+			}
+
 			b.Add(eventDef.GetCustomAttributes(), SymbolKind.Event);
 			return b.Build();
 		}
