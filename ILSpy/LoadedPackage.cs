@@ -213,6 +213,7 @@ namespace ICSharpCode.ILSpy
 						throw new InvalidDataException($"Corrupted single-file entry '${entry.RelativePath}'. Declared decompressed size '${entry.Size}' is not the same as actual decompressed size '${decompressedStream.Length}'.");
 					}
 
+					decompressedStream.Seek(0, SeekOrigin.Begin);
 					return decompressedStream;
 				}
 			}
