@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// falls back to using <see cref="Environment.CurrentDirectory"/>.
 		/// </param>
 		/// <param name="throwOnError">
-		/// If <see langword="true"/> an <see cref="AssemblyResolutionException"/> is thrown, in case the
+		/// If <see langword="true"/> an <see cref="ResolutionException"/> is thrown, in case the
 		/// assembly reference cannot be resolved.
 		/// </param>
 		/// <param name="targetFramework">
