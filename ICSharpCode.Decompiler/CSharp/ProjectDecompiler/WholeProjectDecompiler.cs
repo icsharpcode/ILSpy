@@ -206,13 +206,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				delegate (TypeDefinitionHandle h) {
 					var type = metadata.GetTypeDefinition(h);
 					string file = CleanUpFileName(metadata.GetString(type.Name)) + ".cs";
-					if (string.IsNullOrEmpty(metadata.GetString(type.Namespace)))
+					string ns = metadata.GetString(type.Namespace);
+					if (string.IsNullOrEmpty(ns))
 					{
 						return file;
 					}
 					else
 					{
-						string dir = CleanUpDirectoryName(metadata.GetString(type.Namespace));
+						string dir = CleanUpDirectoryName(ns);
 						if (directories.Add(dir))
 							Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
 						return Path.Combine(dir, file);
@@ -360,9 +361,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			string[] splitName = fullName.Split('.');
 			string fileName = CleanUpFileName(fullName);
+			string separator = Path.DirectorySeparatorChar.ToString();
 			for (int i = splitName.Length - 1; i > 0; i--)
 			{
-				string ns = string.Join("\\", splitName, 0, i);
+				string ns = string.Join(separator, splitName, 0, i);
 				if (directories.Contains(ns))
 				{
 					string name = string.Join(".", splitName, i, splitName.Length - i);
@@ -565,33 +567,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		public static string CleanUpDirectoryName(string text)
 		{
-			int pos = text.IndexOf(':');
-			if (pos > 0)
-				text = text.Substring(0, pos);
-			pos = text.IndexOf('`');
-			if (pos > 0)
-				text = text.Substring(0, pos);
-			text = text.Trim();
-			// Whitelist allowed characters, replace everything else:
-			StringBuilder b = new StringBuilder(text.Length);
-			foreach (var c in text)
-			{
-				if (char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == '\\')
-					b.Append(c);
-				else if (c == '.' && b.Length > 0 && b[b.Length - 1] != '.')
-					b.Append('\\'); // allow dot, but never two in a row
-				else
-					b.Append('-');
-				if (b.Length >= 200)
-					break; // limit to 200 chars
-			}
-			if (b.Length == 0)
-				b.Append('-');
-			string name = b.ToString();
-			if (name == ".")
-				return "_";
-			else
-				return name;
+			return CleanUpFileName(text).Replace('.', Path.DirectorySeparatorChar);
 		}
 
 		static bool IsReservedFileSystemName(string name)
