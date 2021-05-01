@@ -585,6 +585,9 @@ Are you sure you want to continue?</value>
   <data name="InsertUsingDeclarations" xml:space="preserve">
     <value>Insert using declarations</value>
   </data>
+  <data name="Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
   <data name="ListDeleteConfirmation" xml:space="preserve">
     <value>Are you sure that you want to delete the selected assembly list?</value>
   </data>
