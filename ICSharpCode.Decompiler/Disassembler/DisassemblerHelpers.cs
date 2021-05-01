@@ -120,6 +120,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (identifier[0] == '.')
 				return identifier == ".ctor" || identifier == ".cctor";
 
+			if (identifier.Contains(".."))
+				return false;
+
 			if (Metadata.ILOpCodeExtensions.ILKeywords.Contains(identifier))
 				return false;
 
