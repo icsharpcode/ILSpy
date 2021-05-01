@@ -52,6 +52,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 	public static class DisassemblerHelpers
 	{
+		static readonly char[] _validNonLetterIdentifierCharacter = new char[] { '_', '$', '@', '?', '`', '.' };
+
 		public static string OffsetToString(int offset)
 		{
 			return string.Format("IL_{0:x4}", offset);
@@ -104,39 +106,36 @@ namespace ICSharpCode.Decompiler.Disassembler
 		}
 
 		static bool IsValidIdentifierCharacter(char c)
-		{
-			return c == '_' || c == '$' || c == '@' || c == '?' || c == '`';
-		}
+			=> char.IsLetterOrDigit(c) || _validNonLetterIdentifierCharacter.IndexOf(c) >= 0;
 
 		static bool IsValidIdentifier(string identifier)
 		{
 			if (string.IsNullOrEmpty(identifier))
 				return false;
-			if (!(char.IsLetter(identifier[0]) || IsValidIdentifierCharacter(identifier[0])))
-			{
-				// As a special case, .ctor and .cctor are valid despite starting with a dot
+
+			if (char.IsDigit(identifier[0]))
+				return false;
+
+			// As a special case, .ctor and .cctor are valid despite starting with a dot
+			if (identifier[0] == '.')
 				return identifier == ".ctor" || identifier == ".cctor";
-			}
-			for (int i = 1; i < identifier.Length; i++)
-			{
-				if (!(char.IsLetterOrDigit(identifier[i]) || IsValidIdentifierCharacter(identifier[i]) || identifier[i] == '.'))
-					return false;
-			}
-			return true;
+
+			if (Metadata.ILOpCodeExtensions.ILKeywords.Contains(identifier))
+				return false;
+
+			return identifier.All(IsValidIdentifierCharacter);
 		}
 
 		public static string Escape(string identifier)
 		{
-			if (IsValidIdentifier(identifier) && !Metadata.ILOpCodeExtensions.ILKeywords.Contains(identifier))
+			if (IsValidIdentifier(identifier))
 			{
 				return identifier;
 			}
-			else
-			{
-				// The ECMA specification says that ' inside SQString should be ecaped using an octal escape sequence,
-				// but we follow Microsoft's ILDasm and use \'.
-				return "'" + EscapeString(identifier).Replace("'", "\\'") + "'";
-			}
+
+			// The ECMA specification says that ' inside SQString should be ecaped using an octal escape sequence,
+			// but we follow Microsoft's ILDasm and use \'.
+			return $"'{EscapeString(identifier).Replace("'", "\\'")}'";
 		}
 
 		public static void WriteParameterReference(ITextOutput writer, MetadataReader metadata, MethodDefinitionHandle handle, int sequence)
@@ -278,7 +277,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public static string EscapeString(string str)
 		{
-			StringBuilder sb = new StringBuilder();
+			var sb = new StringBuilder();
 			foreach (char ch in str)
 			{
 				switch (ch)
@@ -317,7 +316,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						// print control characters and uncommon white spaces as numbers
 						if (char.IsControl(ch) || char.IsSurrogate(ch) || (char.IsWhiteSpace(ch) && ch != ' '))
 						{
-							sb.Append("\\u" + ((int)ch).ToString("x4"));
+							sb.AppendFormat("\\u{0:x4}", (int)ch);
 						}
 						else
 						{
