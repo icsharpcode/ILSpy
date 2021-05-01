@@ -201,6 +201,9 @@
   <data name="CopyName" xml:space="preserve">
     <value>复制完全限定名称</value>
   </data>
+  <data name="CouldNotUseSdkStyleProjectFormat" xml:space="preserve">
+    <value>无法使用SDK-style项目格式， 因为发现有不兼容目标框架别名</value>
+  </data>
   <data name="Create" xml:space="preserve">
     <value>创建</value>
   </data>
@@ -218,6 +221,9 @@
   </data>
   <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
     <value>调试 -- PDB 转储为 XML</value>
+  </data>
+  <data name="DarkMode" xml:space="preserve">
+    <value>深色</value>
   </data>
   <data name="DebugSteps" xml:space="preserve">
     <value>调试步骤</value>
@@ -339,6 +345,9 @@
   <data name="DecompilerSettings.FunctionPointers" xml:space="preserve">
     <value>函数指针</value>
   </data>
+  <data name="DecompilerSettings.GetterOnlyAutomaticProperties" xml:space="preserve">
+    <value>反编译 getter-only 自动属性</value>
+  </data>
   <data name="DecompilerSettings.IncludeXMLDocumentationCommentsInTheDecompiledCode" xml:space="preserve">
     <value>在反编译代码中包括 XML 文档注释</value>
   </data>
@@ -383,6 +392,9 @@
   </data>
   <data name="DecompilerSettings.ReadOnlyMethods" xml:space="preserve">
     <value>只读方法</value>
+  </data>
+  <data name="DecompilerSettings.RecordClasses" xml:space="preserve">
+    <value>记录</value>
   </data>
   <data name="DecompilerSettings.RemoveDeadAndSideEffectFreeCodeUseWithCaution" xml:space="preserve">
     <value>删除死代码和无副作用的代码(请谨慎使用)</value>
@@ -447,6 +459,9 @@
   <data name="DecompilerSettings.UsePatternBasedFixedStatement" xml:space="preserve">
     <value>使用基于模式的 fixed 语句</value>
   </data>
+  <data name="DecompilerSettings.UsePrimaryConstructorSyntax" xml:space="preserve">
+    <value>使用带有记录的主构造器语法</value>
+  </data>
   <data name="DecompilerSettings.UseRefLocalsForAccurateOrderOfEvaluation" xml:space="preserve">
     <value>使用 ref 局部变量以准确表达求值顺序</value>
   </data>
@@ -470,6 +485,9 @@
   </data>
   <data name="DecompilerSettings.VBSpecificOptions" xml:space="preserve">
     <value>VB 特定选项</value>
+  </data>
+  <data name="DecompilerSettings.WithExpressions" xml:space="preserve">
+    <value>'with' 初始化器表达式</value>
   </data>
   <data name="DecompilerSettingsPanelLongText" xml:space="preserve">
     <value>下面选择的设置将与语言下拉列表中的选择一起应用于反编译程序输出。在下拉列表中选择较低的语言版本将停用较高版本的所有选定选项。请注意, 某些设置隐式依赖于彼此, 例如: 如果不首先将静态调用转换为扩展方法调用, 则无法引入 LINQ 表达式。</value>
@@ -543,6 +561,9 @@
   <data name="HideEmptyMetadataTables" xml:space="preserve">
     <value>在树视图中隐藏空的元数据表</value>
   </data>
+  <data name="HighlightCurrentLine" xml:space="preserve">
+    <value>高亮当前行</value>
+  </data>
   <data name="HighlightMatchingBraces" xml:space="preserve">
     <value>高亮配对的大括号</value>
   </data>
@@ -563,6 +584,9 @@
   </data>
   <data name="InsertUsingDeclarations" xml:space="preserve">
     <value>插入使用声明</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>语言</value>
   </data>
   <data name="ListDeleteConfirmation" xml:space="preserve">
     <value>是否删除选中的程序集列表？</value>
@@ -590,6 +614,9 @@
   </data>
   <data name="Misc" xml:space="preserve">
     <value>杂项</value>
+  </data>
+  <data name="NETFrameworkVersion" xml:space="preserve">
+    <value>.Net 版本</value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>名称</value>
@@ -747,6 +774,9 @@
   <data name="SelectVersionDropdownTooltip" xml:space="preserve">
     <value>选择输出语言的版本</value>
   </data>
+  <data name="SettingsChangeRestartRequired" xml:space="preserve">
+    <value>你必须重启ILSpy才能使得更改生效。</value>
+  </data>
   <data name="Shell" xml:space="preserve">
     <value>Shell</value>
   </data>
@@ -827,6 +857,9 @@
   </data>
   <data name="Type" xml:space="preserve">
     <value>类型</value>
+  </data>
+  <data name="UILanguage_System" xml:space="preserve">
+    <value>系统</value>
   </data>
   <data name="UpdateILSpyFound" xml:space="preserve">
     <value>找不到 ILSpy 的更新。</value>

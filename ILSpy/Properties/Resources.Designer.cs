@@ -2650,5 +2650,11 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("Window_ResetLayout", resourceCulture);
             }
         }
+ 
+        public static string Language {
+            get {
+                return ResourceManager.GetString("Language", resourceCulture);
+            }
+          }
     }
 }
