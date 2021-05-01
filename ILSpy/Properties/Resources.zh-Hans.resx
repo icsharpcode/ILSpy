@@ -954,4 +954,34 @@
   <data name="_Window" xml:space="preserve">
     <value>窗口(_W)</value>
   </data>
+  <data name="DarkMode" xml:space="preserve">
+    <value>深色</value>
+  </data>
+  <data name="CouldNotUseSdkStyleProjectFormat" xml:space="preserve">
+    <value>无法使用SDK-style项目格式， 因为发现有不兼容目标框架别名</value>
+  </data>
+  <data name="DecompilerSettings.GetterOnlyAutomaticProperties" xml:space="preserve">
+    <value>反编译 getter-only 自动属性</value>
+  </data>
+  <data name="DecompilerSettings.RecordClasses" xml:space="preserve">
+    <value>记录</value>
+  </data>
+  <data name="DecompilerSettings.UsePrimaryConstructorSyntax" xml:space="preserve">
+    <value>使用带有记录的主构造器语法</value>
+  </data>
+  <data name="DecompilerSettings.WithExpressions" xml:space="preserve">
+    <value>'with' 初始化器表达式</value>
+  </data>
+  <data name="HighlightCurrentLine" xml:space="preserve">
+    <value>高亮当前行</value>
+  </data>
+  <data name="NETFrameworkVersion" xml:space="preserve">
+    <value>.Net 版本</value>
+  </data>
+  <data name="SettingsChangeRestartRequired" xml:space="preserve">
+    <value>你必须重启ILSpy才能使得更改生效。</value>
+  </data>
+  <data name="UILanguage_System" xml:space="preserve">
+    <value>系统</value>
+  </data>
 </root>
