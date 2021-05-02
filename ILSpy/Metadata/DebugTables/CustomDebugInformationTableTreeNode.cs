@@ -183,7 +183,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
-			public object Offset => offset == null ? "n/a" : offset;
+			public object Offset => offset == null ? null : offset;
 
 			[StringFormat("X8")]
 			public int Parent => MetadataTokens.GetToken(debugInfo.Parent);
