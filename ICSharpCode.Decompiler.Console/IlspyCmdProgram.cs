@@ -103,15 +103,15 @@ Remarks:
 						// multiple assemblies can be separated by spaces
 						// when provided with a sln output path write a solution with the decompiled projs
 						var projects = new List<DecompiledProjectOutput>();
-						string[] assemblies = InputAssemblyName.Replace("\"", "").Split(' ');
-						string[] outputDirs = OutputDirectory.Replace("\"", "").Split(' ');
+						string[] assemblies = InputAssemblyName.Replace("\"", "").Split('|');
+						string[] outputDirs = OutputDirectory.Replace("\"", "").Split('|');
 						if (assemblies.Length != outputDirs.Length && outputDirs.Length != 1)
 							throw new Exception("Output directories must either match assemblies count or be exactly one");
 						for (var index = 0; index < assemblies.Length; index++)
 						{
 							var assembly = assemblies[index];
 							CheckFileExists(assembly);
-							var outputDir = outputDirs[index & outputDirs.Length];
+							var outputDir = outputDirs[index];
 							if (!Directory.Exists(outputDir)) throw new Exception("Output Directory " + outputDir + " does not exist");
 							var res = DecompileAsProject(assembly, outputDir, out var po);
 							if (res != 0) return res;
