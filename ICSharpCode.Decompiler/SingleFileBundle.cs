@@ -99,6 +99,7 @@ namespace ICSharpCode.Decompiler
 		{
 			public long Offset;
 			public long Size;
+			public long CompressedSize; // 0 if not compressed, otherwise the compressed size in the bundle
 			public FileType Type;
 			public string RelativePath; // Path of an embedded file, relative to the Bundle source-directory.
 		}
@@ -128,7 +129,9 @@ namespace ICSharpCode.Decompiler
 			using var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true);
 			header.MajorVersion = reader.ReadUInt32();
 			header.MinorVersion = reader.ReadUInt32();
-			if (header.MajorVersion < 1 || header.MajorVersion > 2)
+
+			// Major versions 3, 4 and 5 were skipped to align bundle versioning with .NET versioning scheme
+			if (header.MajorVersion < 1 || header.MajorVersion > 6)
 			{
 				throw new InvalidDataException($"Unsupported manifest version: {header.MajorVersion}.{header.MinorVersion}");
 			}
@@ -145,17 +148,18 @@ namespace ICSharpCode.Decompiler
 			var entries = ImmutableArray.CreateBuilder<Entry>(header.FileCount);
 			for (int i = 0; i < header.FileCount; i++)
 			{
-				entries.Add(ReadEntry(reader));
+				entries.Add(ReadEntry(reader, header.MajorVersion));
 			}
 			header.Entries = entries.MoveToImmutable();
 			return header;
 		}
 
-		private static Entry ReadEntry(BinaryReader reader)
+		private static Entry ReadEntry(BinaryReader reader, uint bundleMajorVersion)
 		{
 			Entry entry;
 			entry.Offset = reader.ReadInt64();
 			entry.Size = reader.ReadInt64();
+			entry.CompressedSize = bundleMajorVersion >= 6 ? reader.ReadInt64() : 0;
 			entry.Type = (FileType)reader.ReadByte();
 			entry.RelativePath = reader.ReadString();
 			return entry;
