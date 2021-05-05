@@ -270,7 +270,7 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				this.DefinitionLookup.AddDefinition((module, handle), this.TextLength);
 			}
-			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = new EntityReference(protocol, module, handle), IsDefinition = isDefinition });
+			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = new EntityReference(protocol, module.FileName, handle), IsDefinition = isDefinition });
 		}
 
 		public void WriteReference(IType type, string text, bool isDefinition = false)

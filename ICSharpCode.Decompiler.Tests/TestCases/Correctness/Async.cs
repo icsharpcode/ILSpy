@@ -34,18 +34,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public async Task Run()
 		{
+			Console.WriteLine("SimpleBoolTaskMethod:");
 			await SimpleBoolTaskMethod();
+			Console.WriteLine("StreamCopyTo:");
 			StreamCopyTo(new MemoryStream(new byte[1024]), 16);
+			Console.WriteLine("StreamCopyToWithConfigureAwait:");
 			StreamCopyToWithConfigureAwait(new MemoryStream(new byte[1024]), 16);
+			Console.WriteLine("AwaitInForEach:");
 			await AwaitInForEach(Enumerable.Range(0, 100).Select(i => Task.FromResult(i)));
+			Console.WriteLine("TaskMethodWithoutAwaitButWithExceptionHandling:");
 			await TaskMethodWithoutAwaitButWithExceptionHandling();
 #if CS60
+			Console.WriteLine($"{nameof(AwaitCatch)}:");
 			await AwaitCatch(Task.FromResult(1));
+			Console.WriteLine($"{nameof(AwaitMultipleCatchBlocks)}:");
 			await AwaitMultipleCatchBlocks(Task.FromResult(1));
+			Console.WriteLine($"{nameof(AwaitMultipleCatchBlocks2)}:");
 			await AwaitMultipleCatchBlocks2(Task.FromResult(1));
+			Console.WriteLine($"{nameof(AwaitInComplexFinally)}:");
 			Console.WriteLine(await AwaitInComplexFinally());
 			try
 			{
+				Console.WriteLine($"{nameof(AwaitFinally)}:");
 				await AwaitFinally(Task.FromResult(2));
 			}
 			catch (Exception ex)
@@ -53,13 +63,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				Console.WriteLine(ex + " caught!");
 			}
 #endif
+			Console.WriteLine("NestedAwait:");
 			await NestedAwait(Task.FromResult(Task.FromResult(5)));
+			Console.WriteLine("AwaitWithStack:");
 			await AwaitWithStack(Task.FromResult(3));
+			Console.WriteLine("AwaitWithStack2:");
 			await AwaitWithStack2(Task.FromResult(4));
 #if CS60
+			Console.WriteLine($"{nameof(AwaitInCatch)}:");
 			await AwaitInCatch(Task.FromResult(1), Task.FromResult(2));
+			Console.WriteLine($"{nameof(AwaitInFinally)}:");
 			await AwaitInFinally(Task.FromResult(2), Task.FromResult(4));
+			Console.WriteLine($"{nameof(AwaitInCatchAndFinally)}:");
 			await AwaitInCatchAndFinally(Task.FromResult(3), Task.FromResult(6), Task.FromResult(9));
+			Console.WriteLine($"{nameof(AwaitInFinallyInUsing)}:");
 			Console.WriteLine(await AwaitInFinallyInUsing(Task.FromResult<IDisposable>(new StringWriter()), Task.FromResult(6), Task.FromResult(9)));
 #endif
 		}

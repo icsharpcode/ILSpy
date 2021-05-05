@@ -404,8 +404,9 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			else if (segment.Reference is EntityReference unresolvedEntity)
 			{
-				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Module,
-					unresolvedEntity.Module.GetAssemblyResolver(),
+				var module = unresolvedEntity.ResolveAssembly(MainWindow.Instance.CurrentAssemblyList);
+				var typeSystem = new DecompilerTypeSystem(module,
+					module.GetAssemblyResolver(),
 					TypeSystemOptions.Default | TypeSystemOptions.Uncached);
 				try
 				{
@@ -1074,6 +1075,7 @@ namespace ICSharpCode.ILSpy.TextView
 				delegate {
 					try
 					{
+						bool originalProjectFormatSetting = context.Options.DecompilerSettings.UseSdkStyleProjectFormat;
 						context.Options.EscapeInvalidIdentifiers = true;
 						Stopwatch stopwatch = new Stopwatch();
 						stopwatch.Start();
@@ -1100,11 +1102,16 @@ namespace ICSharpCode.ILSpy.TextView
 						if (context.Options.SaveAsProjectDirectory != null)
 						{
 							output.WriteLine();
-							if (context.Options.DecompilerSettings.UseSdkStyleProjectFormat)
+							bool useSdkStyleProjectFormat = context.Options.DecompilerSettings.UseSdkStyleProjectFormat;
+							if (useSdkStyleProjectFormat)
 								output.WriteLine(Properties.Resources.ProjectExportFormatSDKHint);
 							else
 								output.WriteLine(Properties.Resources.ProjectExportFormatNonSDKHint);
 							output.WriteLine(Properties.Resources.ProjectExportFormatChangeSettingHint);
+							if (originalProjectFormatSetting != useSdkStyleProjectFormat)
+							{
+								output.WriteLine(Properties.Resources.CouldNotUseSdkStyleProjectFormat);
+							}
 						}
 						output.WriteLine();
 						output.AddButton(null, Properties.Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });

@@ -446,6 +446,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			#endregion
 
+			// SpecialName
+			if ((def.Attributes & (MethodAttributes.SpecialName | MethodAttributes.RTSpecialName)) == MethodAttributes.SpecialName
+				&& SymbolKind == SymbolKind.Method)
+			{
+				b.Add(KnownAttribute.SpecialName);
+			}
+
 			b.Add(def.GetCustomAttributes(), symbolKind);
 			b.AddSecurityAttributes(def.GetDeclarativeSecurityAttributes());
 

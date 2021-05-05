@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2021 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -14,42 +14,28 @@
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-// DEALINGS IN THE SOFTWARE.
+// DEALINGS IN THE SOFTWARE
 
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+using System;
+using System.Globalization;
+using System.Windows.Data;
 
-namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
+namespace ICSharpCode.ILSpy.Controls
 {
-	internal class AsyncForeach
+	public class CultureSelectionConverter : IValueConverter
 	{
-		public async Task<int> SumIntegers(IAsyncEnumerable<int> items, CancellationToken token)
+		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			int sum = 0;
-			await foreach (int item in items.WithCancellation(token))
-			{
-				if (!token.IsCancellationRequested)
-				{
-					sum += item;
-					continue;
-				}
-				break;
-			}
-			return sum;
+			if (value is string s)
+				return s.Equals(parameter);
+			return value == parameter;
 		}
 
-		public async Task<int> MaxInteger(IAsyncEnumerable<int> items)
+		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			int max = int.MinValue;
-			await foreach (int item in items)
-			{
-				if (item > max)
-				{
-					max = item;
-				}
-			}
-			return max;
+			if ((bool)value)
+				return parameter;
+			return Binding.DoNothing;
 		}
 	}
 }

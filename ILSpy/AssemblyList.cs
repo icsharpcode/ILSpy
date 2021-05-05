@@ -120,7 +120,16 @@ namespace ICSharpCode.ILSpy
 
 			foreach (var asm in assemblies)
 			{
-				var result = await asm.GetLoadResultAsync();
+				LoadedAssembly.LoadResult result;
+				try
+				{
+					result = await asm.GetLoadResultAsync();
+				}
+				catch
+				{
+					results.Add(asm);
+					continue;
+				}
 				if (result.Package != null)
 				{
 					AddDescendants(result.Package.RootFolder);

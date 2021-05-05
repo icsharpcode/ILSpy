@@ -62,6 +62,8 @@ namespace ICSharpCode.ILSpy
 			this.BottomPaneSplitterPosition = FromString((string)doc.Element("BottomPaneSplitterPosition"), 0.3);
 			this.SelectedSearchMode = FromString((string)doc.Element("SelectedSearchMode"), SearchMode.TypeAndMember);
 			this.IsDarkMode = FromString((string)doc.Element(nameof(IsDarkMode)), false);
+			string currentCulture = (string)doc.Element(nameof(CurrentCulture));
+			this.CurrentCulture = string.IsNullOrEmpty(currentCulture) ? null : currentCulture;
 
 			this.DockLayout = new DockLayoutSettings(doc.Element("DockLayout"));
 		}
@@ -86,6 +88,19 @@ namespace ICSharpCode.ILSpy
 
 		public string[] ActiveTreeViewPath;
 		public string ActiveAutoLoadedAssembly;
+
+		string currentCulture;
+
+		public string CurrentCulture {
+			get { return currentCulture; }
+			set {
+				if (currentCulture != value)
+				{
+					currentCulture = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		public string ActiveAssemblyList {
 			get => activeAssemblyList;
@@ -132,6 +147,10 @@ namespace ICSharpCode.ILSpy
 			doc.Add(new XElement("BottomPaneSplitterPosition", ToString(this.BottomPaneSplitterPosition)));
 			doc.Add(new XElement("SelectedSearchMode", ToString(this.SelectedSearchMode)));
 			doc.Add(new XElement(nameof(IsDarkMode), ToString(this.IsDarkMode)));
+			if (this.CurrentCulture != null)
+			{
+				doc.Add(new XElement(nameof(CurrentCulture), this.CurrentCulture));
+			}
 
 			var dockLayoutElement = new XElement("DockLayout");
 			if (DockLayout.Valid)

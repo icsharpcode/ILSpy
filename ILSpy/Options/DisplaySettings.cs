@@ -291,7 +291,7 @@ namespace ICSharpCode.ILSpy.Options
 			this.IndentationSize = s.indentationSize;
 			this.HighlightMatchingBraces = s.highlightMatchingBraces;
 			this.HighlightCurrentLine = s.highlightCurrentLine;
-			this.HideEmptyMetadataTables = s.HideEmptyMetadataTables;
+			this.HideEmptyMetadataTables = s.hideEmptyMetadataTables;
 		}
 	}
 }

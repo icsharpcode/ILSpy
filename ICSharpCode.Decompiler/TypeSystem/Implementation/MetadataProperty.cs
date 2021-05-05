@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -205,6 +206,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				b.Add(KnownAttribute.IndexerName, KnownTypeCode.String, Name);
 			}
+
+			// SpecialName
+			if ((propertyDef.Attributes & (PropertyAttributes.SpecialName | PropertyAttributes.RTSpecialName)) == PropertyAttributes.SpecialName)
+			{
+				b.Add(KnownAttribute.SpecialName);
+			}
+
 			b.Add(propertyDef.GetCustomAttributes(), symbolKind);
 			return b.Build();
 		}

@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				decompilerRuntime = DecompilerRuntime.Mono;
 		}
 
-		DotNetCorePathFinder dotNetCorePathFinder;
+		readonly Lazy<DotNetCorePathFinder> dotNetCorePathFinder;
 		readonly bool throwOnError;
 		readonly PEStreamOptions streamOptions;
 		readonly MetadataReaderOptions metadataOptions;
@@ -73,13 +73,19 @@ namespace ICSharpCode.Decompiler.Metadata
 		public void AddSearchDirectory(string directory)
 		{
 			directories.Add(directory);
-			dotNetCorePathFinder?.AddSearchDirectory(directory);
+			if (dotNetCorePathFinder.IsValueCreated)
+			{
+				dotNetCorePathFinder.Value.AddSearchDirectory(directory);
+			}
 		}
 
 		public void RemoveSearchDirectory(string directory)
 		{
 			directories.Remove(directory);
-			dotNetCorePathFinder?.RemoveSearchDirectory(directory);
+			if (dotNetCorePathFinder.IsValueCreated)
+			{
+				dotNetCorePathFinder.Value.RemoveSearchDirectory(directory);
+			}
 		}
 
 		public string[] GetSearchDirectories()
@@ -101,7 +107,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// falls back to using <see cref="Environment.CurrentDirectory"/>.
 		/// </param>
 		/// <param name="throwOnError">
-		/// If <see langword="true"/> an <see cref="AssemblyResolutionException"/> is thrown, in case the
+		/// If <see langword="true"/> an <see cref="ResolutionException"/> is thrown, in case the
 		/// assembly reference cannot be resolved.
 		/// </param>
 		/// <param name="targetFramework">
@@ -125,7 +131,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.targetFramework = targetFramework ?? string.Empty;
 			this.runtimePack = runtimePack ?? "Microsoft.NETCore.App";
 			(targetFrameworkIdentifier, targetFrameworkVersion) = ParseTargetFramework(this.targetFramework);
-
+			this.dotNetCorePathFinder = new Lazy<DotNetCorePathFinder>(InitDotNetCorePathFinder);
 			if (mainAssemblyFileName != null)
 			{
 				string baseDirectory = Path.GetDirectoryName(mainAssemblyFileName);
@@ -188,26 +194,41 @@ namespace ICSharpCode.Decompiler.Metadata
 		public PEFile Resolve(IAssemblyReference name)
 		{
 			var file = FindAssemblyFile(name);
-			if (file == null)
-			{
-				if (throwOnError)
-					throw new AssemblyResolutionException(name);
-				return null;
-			}
-			return new PEFile(file, new FileStream(file, FileMode.Open, FileAccess.Read), streamOptions, metadataOptions);
+			return CreatePEFileFromFileName(file, ex => new ResolutionException(name, file, ex));
 		}
 
 		public PEFile ResolveModule(PEFile mainModule, string moduleName)
 		{
 			string baseDirectory = Path.GetDirectoryName(mainModule.FileName);
 			string moduleFileName = Path.Combine(baseDirectory, moduleName);
-			if (!File.Exists(moduleFileName))
+			return CreatePEFileFromFileName(moduleFileName, ex => new ResolutionException(mainModule.FileName, moduleName, moduleFileName, ex));
+		}
+
+		private PEFile CreatePEFileFromFileName(string fileName, Func<Exception?, Exception> makeException)
+		{
+			if (fileName == null)
 			{
 				if (throwOnError)
-					throw new Exception($"Module {moduleName} could not be found!");
+					throw makeException(null);
 				return null;
 			}
-			return new PEFile(moduleFileName, new FileStream(moduleFileName, FileMode.Open, FileAccess.Read), streamOptions, metadataOptions);
+
+			try
+			{
+				FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+				return new PEFile(fileName, stream, streamOptions, metadataOptions);
+			}
+			catch (BadImageFormatException ex)
+			{
+				if (throwOnError)
+					throw makeException(ex);
+			}
+			catch (IOException ex)
+			{
+				if (throwOnError)
+					throw makeException(ex);
+			}
+			return null;
 		}
 
 		public Task<PEFile> ResolveAsync(IAssemblyReference name)
@@ -223,7 +244,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public override bool IsSharedAssembly(IAssemblyReference reference, out string runtimePack)
 		{
-			return dotNetCorePathFinder.TryResolveDotNetCoreShared(reference, out runtimePack) != null;
+			return dotNetCorePathFinder.Value.TryResolveDotNetCoreShared(reference, out runtimePack) != null;
 		}
 
 		public string FindAssemblyFile(IAssemblyReference name)
@@ -240,18 +261,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				case TargetFrameworkIdentifier.NETStandard:
 					if (IsZeroOrAllOnes(targetFrameworkVersion))
 						goto default;
-					if (dotNetCorePathFinder == null)
-					{
-						if (mainAssemblyFileName == null)
-							dotNetCorePathFinder = new DotNetCorePathFinder(targetFrameworkIdentifier, targetFrameworkVersion, runtimePack);
-						else
-							dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, runtimePack, targetFrameworkIdentifier, targetFrameworkVersion);
-						foreach (var directory in directories)
-						{
-							dotNetCorePathFinder.AddSearchDirectory(directory);
-						}
-					}
-					file = dotNetCorePathFinder.TryResolveDotNetCore(name);
+					file = dotNetCorePathFinder.Value.TryResolveDotNetCore(name);
 					if (file != null)
 						return file;
 					goto default;
@@ -265,6 +275,20 @@ namespace ICSharpCode.Decompiler.Metadata
 				default:
 					return ResolveInternal(name);
 			}
+		}
+
+		DotNetCorePathFinder InitDotNetCorePathFinder()
+		{
+			DotNetCorePathFinder dotNetCorePathFinder;
+			if (mainAssemblyFileName == null)
+				dotNetCorePathFinder = new DotNetCorePathFinder(targetFrameworkIdentifier, targetFrameworkVersion, runtimePack);
+			else
+				dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, runtimePack, targetFrameworkIdentifier, targetFrameworkVersion);
+			foreach (var directory in directories)
+			{
+				dotNetCorePathFinder.AddSearchDirectory(directory);
+			}
+			return dotNetCorePathFinder;
 		}
 
 		string FindWindowsMetadataFile(IAssemblyReference name)
@@ -392,7 +416,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 
 			if (throwOnError)
-				throw new AssemblyResolutionException(name);
+				throw new ResolutionException(name, null, null);
 			return null;
 		}
 

@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpy.Commands
 		public void Execute(TextViewContext context)
 		{
 			int token = GetSelectedToken(context.DataGrid, out PEFile module).Value;
-			MainWindow.Instance.JumpToReference(new EntityReference("metadata", module, MetadataTokens.Handle(token)));
+			MainWindow.Instance.JumpToReference(new EntityReference("metadata", module.FileName, MetadataTokens.Handle(token)));
 		}
 
 		public bool IsEnabled(TextViewContext context)

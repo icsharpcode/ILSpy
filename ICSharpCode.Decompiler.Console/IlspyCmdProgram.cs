@@ -181,12 +181,13 @@ Remarks:
 			return 0;
 		}
 
-		DecompilerSettings GetSettings()
+		DecompilerSettings GetSettings(PEFile module)
 		{
 			return new DecompilerSettings(LanguageVersion) {
 				ThrowOnAssemblyResolveErrors = false,
 				RemoveDeadCode = RemoveDeadCode,
-				RemoveDeadStores = RemoveDeadStores
+				RemoveDeadStores = RemoveDeadStores,
+				UseSdkStyleProjectFormat = WholeProjectDecompiler.CanUseSdkStyleProjectFormat(module),
 			};
 		}
 
@@ -197,7 +198,7 @@ Remarks:
 			foreach (var path in ReferencePaths) {
 				resolver.AddSearchDirectory(path);
 			}
-			return new CSharpDecompiler(assemblyFileName, resolver, GetSettings()) {
+			return new CSharpDecompiler(assemblyFileName, resolver, GetSettings(module)) {
 				DebugInfoProvider = TryLoadPDB(module)
 			};
 		}
@@ -234,7 +235,7 @@ Remarks:
 			foreach (var path in ReferencePaths) {
 				resolver.AddSearchDirectory(path);
 			}
-			var decompiler = new WholeProjectDecompiler(GetSettings(), resolver, resolver, TryLoadPDB(module));
+			var decompiler = new WholeProjectDecompiler(GetSettings(module), resolver, resolver, TryLoadPDB(module));
 			var res = decompiler.DecompileProject(module, outputDirectory);
 			result = new DecompiledProjectOutput() {ProjectId = res.proj, ProjectPath = res.path};
 			return 0;
@@ -267,7 +268,7 @@ Remarks:
 
 			using (FileStream stream = new FileStream(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write)) {
 				var decompiler = GetDecompiler(assemblyFileName);
-				PortablePdbWriter.WritePdb(module, decompiler, GetSettings(), stream);
+				PortablePdbWriter.WritePdb(module, decompiler, GetSettings(module), stream);
 			}
 
 			return 0;

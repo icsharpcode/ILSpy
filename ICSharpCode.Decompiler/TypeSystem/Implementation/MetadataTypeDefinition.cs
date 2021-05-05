@@ -370,6 +370,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if ((typeDefinition.Attributes & TypeAttributes.Import) != 0)
 				b.Add(KnownAttribute.ComImport);
 
+			// SpecialName
+			if ((typeDefinition.Attributes & (TypeAttributes.SpecialName | TypeAttributes.RTSpecialName)) == TypeAttributes.SpecialName)
+			{
+				b.Add(KnownAttribute.SpecialName);
+			}
+
 			#region StructLayoutAttribute
 			LayoutKind layoutKind = LayoutKind.Auto;
 			switch (typeDefinition.Attributes & TypeAttributes.LayoutMask)

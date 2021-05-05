@@ -39,28 +39,33 @@ as well as [third party notices](doc/third-party-notices.txt) for included open-
 How to build
 ------------
 
-Windows:
-- Install Visual Studio (documented version: 16.4) with the following components:
-  - Workload ".NET Desktop Development". This includes by default .NET Framework 4.8 SDK and the .NET Framework 4.7.2 targeting pack, as well as the [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download/dotnet-core/3.1) (ILSpy.csproj targets .NET 4.7.2, and ILSpy.sln uses SDK-style projects).
-  - Workload "Visual Studio extension development" (ILSpy.sln contains a VS extension project)
-  - Individual Component "MSVC v142 - VS 2019 C++ x64/x86 build tools (v14.23)" (or similar)
-    - The VC++ toolset is optional; if present it is used for `editbin.exe` to modify the stack size used by ILSpy.exe from 1MB to 16MB, because the decompiler makes heavy use of recursion, where small stack sizes lead to problems in very complex methods.
-- Check out the ILSpy repository using git.
+#### Windows:
+
+- Clone the ILSpy repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
-- Open ILSpy.sln in Visual Studio.
-  - NuGet package restore will automatically download further dependencies
-  - Run project "ILSpy" for the ILSpy UI
-  - Use the Visual Studio "Test Explorer" to see/run the tests
+- Install Visual Studio (documented version: 16.9). You can install the necessary components in one of 3 ways:
+  - Follow Microsoft's instructions for [importing a configuration](https://docs.microsoft.com/en-us/visualstudio/install/import-export-installation-configurations?view=vs-2019#import-a-configuration), and import the .vsconfig file located at the root of the solution.
+  - Alternatively, you can open the ILSpy solution (ILSpy.sln) and Visual Studio will [prompt you to install the missing components](https://docs.microsoft.com/en-us/visualstudio/install/import-export-installation-configurations?view=vs-2019#automatically-install-missing-components).
+  - Finally, you can manually install the necessary components via the Visual Studio Installer. The workloads/components are as follows:
+    - Workload ".NET Desktop Development". This workload includes the .NET Framework 4.8 SDK and the .NET Framework 4.7.2 targeting pack, as well as the [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download/dotnet-core/3.1) (ILSpy.csproj targets .NET 4.7.2, and ILSpy.sln uses SDK-style projects). _Note: The optional components of this workload are not required for ILSpy_
+    - Workload "Visual Studio extension development" (ILSpy.sln contains a VS extension project) _Note: The optional components of this workload are not required for ILSpy_
+    - Individual Component "MSVC v142 - VS 2019 C++ x64/x86 build tools (v14.23)" (or similar)
+      - _The VC++ toolset is optional_; if present it is used for `editbin.exe` to modify the stack size used by ILSpy.exe from 1MB to 16MB, because the decompiler makes heavy use of recursion, where small stack sizes lead to problems in very complex methods.
+  - Open ILSpy.sln in Visual Studio.
+    - NuGet package restore will automatically download further dependencies
+    - Run project "ILSpy" for the ILSpy UI
+    - Use the Visual Studio "Test Explorer" to see/run the tests
 
 **Note:** Visual Studio 16.3 and later include a version of the .NET Core SDK that is managed by the Visual Studio installer - once you update, it may get upgraded too.
 Please note that ILSpy is only compatible with the .NET Core 3.1 SDK and Visual Studio will refuse to load some projects in the solution (and unit tests will fail). 
 If this problem occurs, please manually install the .NET Core 3.1 SDK from [here](https://dotnet.microsoft.com/download/dotnet-core/3.1).
 
-Unix / Mac:
+#### Unix / Mac:
+
 - Make sure .NET Core 2.1 LTS Runtime is installed (you can get it here: https://get.dot.net).
 - Make sure [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download/dotnet-core/3.1) is installed.
 - Make sure [PowerShell](https://github.com/PowerShell/PowerShell) is installed (formerly known as PowerShell Core)
-- Check out the repository using git.
+- Clone the repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Use `dotnet build Frontends.sln` to build the non-Windows flavors of ILSpy (.NET Core Global Tool and PowerShell Core).
 
