@@ -556,5 +556,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return intptr;
 		}
+
+		public unsafe void ConditionalPointer(bool a, int* ptr)
+		{
+			UsePointer(a ? ptr : null);
+		}
 	}
 }
