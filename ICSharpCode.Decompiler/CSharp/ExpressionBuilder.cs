@@ -3542,6 +3542,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					rr = castRR;
 				}
 			}
+			else if (typeHint.Kind.IsAnyPointer() && (object.Equals(rr.ConstantValue, 0) || object.Equals(rr.ConstantValue, 0u)))
+			{
+				rr = new ConstantResolveResult(typeHint, null);
+			}
 			return rr;
 		}
 
@@ -3634,7 +3638,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (!success || targetType.GetStackType() != inst.ResultType)
 					{
 						// Figure out the target type based on inst.ResultType.
-						if (inst.ResultType == StackType.Ref)
+						if (context.TypeHint.Kind != TypeKind.Unknown && context.TypeHint.GetStackType() == inst.ResultType)
+						{
+							targetType = context.TypeHint;
+						}
+						else if (inst.ResultType == StackType.Ref)
 						{
 							// targetType should be a ref-type
 							if (trueBranch.Type.Kind == TypeKind.ByReference)
@@ -3653,7 +3661,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 						else
 						{
-							targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+							targetType = FindType(inst.ResultType, context.TypeHint.GetSign());
 						}
 					}
 				}
