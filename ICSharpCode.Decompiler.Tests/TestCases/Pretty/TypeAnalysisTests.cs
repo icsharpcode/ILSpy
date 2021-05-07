@@ -306,5 +306,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (string)(object)a;
 		}
+
+		public static bool CompareLast32Bits(long a, long b)
+		{
+			return (int)a == (int)b;
+		}
+
+		public static bool Last32BitsAreZero(long a)
+		{
+			return (int)a == 0;
+		}
 	}
 }

@@ -198,7 +198,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public TranslatedExpression TranslateCondition(ILInstruction condition, bool negate = false)
 		{
+			Debug.Assert(condition.ResultType == StackType.I4);
 			var expr = Translate(condition, compilation.FindType(KnownTypeCode.Boolean));
+			if (expr.Type.GetStackType().GetSize() > 4)
+			{
+				expr = expr.ConvertTo(FindType(StackType.I4, expr.Type.GetSign()), this);
+			}
 			return expr.ConvertToBoolean(this, negate);
 		}
 
@@ -3618,6 +3623,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			// We can only correctly translate it to C# if the rhs is of type boolean:
 			if (op != BinaryOperatorType.Any && (rhs.Type.IsKnownType(KnownTypeCode.Boolean) || IfInstruction.IsInConditionSlot(inst)))
 			{
+				if (rhs.Type.GetStackType().GetSize() > 4)
+				{
+					rhs = rhs.ConvertTo(FindType(StackType.I4, rhs.Type.GetSign()), this);
+				}
 				rhs = rhs.ConvertToBoolean(this);
 				return new BinaryOperatorExpression(condition, op, rhs)
 					.WithILInstruction(inst)
