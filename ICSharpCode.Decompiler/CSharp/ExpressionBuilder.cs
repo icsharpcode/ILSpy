@@ -373,10 +373,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitIsInst(IsInst inst, TranslationContext context)
 		{
 			var arg = Translate(inst.Argument);
-			if (inst.Type.IsReferenceType == false)
+			if (inst.Type.IsReferenceType != true)
 			{
 				// isinst with a value type results in an expression of "boxed value type",
 				// which is not supported in C#.
+				// It's also not supported for unconstrained generic types.
 				// Note that several other instructions special-case isinst arguments:
 				//  unbox.any T(isinst T(expr)) ==> "expr as T" for nullable value types and class-constrained generic types
 				//  comp(isinst T(expr) != null) ==> "expr is T"
