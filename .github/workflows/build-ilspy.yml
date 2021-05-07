@@ -48,7 +48,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Install dotnet-format
-      run: dotnet tool install dotnet-format --global --version 4.1.131201
+      run: dotnet tool install dotnet-format --global --version 5.1.225507
 
     - name: Get Version
       id: version

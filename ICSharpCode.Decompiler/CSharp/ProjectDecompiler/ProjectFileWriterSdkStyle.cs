@@ -208,8 +208,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			// remove phase
 			foreach (var (itemType, fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
 			{
-				string buildAction = Path.GetExtension(fileName).ToUpperInvariant() switch
-				{
+				string buildAction = Path.GetExtension(fileName).ToUpperInvariant() switch {
 					".CS" => "Compile",
 					".RESX" => "EmbeddedResource",
 					_ => "None"

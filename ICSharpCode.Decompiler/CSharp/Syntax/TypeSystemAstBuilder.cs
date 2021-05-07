@@ -320,8 +320,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				else if (fpt.CallingConvention != System.Reflection.Metadata.SignatureCallingConvention.Default)
 				{
-					string callconvName = fpt.CallingConvention switch
-					{
+					string callconvName = fpt.CallingConvention switch {
 						System.Reflection.Metadata.SignatureCallingConvention.CDecl => "Cdecl",
 						System.Reflection.Metadata.SignatureCallingConvention.StdCall => "Stdcall",
 						System.Reflection.Metadata.SignatureCallingConvention.ThisCall => "Thiscall",
@@ -352,8 +351,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				for (int i = 0; i < fpt.ParameterTypes.Length; i++)
 				{
 					var paramDecl = new ParameterDeclaration();
-					paramDecl.ParameterModifier = fpt.ParameterReferenceKinds[i] switch
-					{
+					paramDecl.ParameterModifier = fpt.ParameterReferenceKinds[i] switch {
 						ReferenceKind.In => ParameterModifier.In,
 						ReferenceKind.Ref => ParameterModifier.Ref,
 						ReferenceKind.Out => ParameterModifier.Out,
@@ -1976,8 +1974,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility);
 			if (accessor.HasReadonlyModifier())
 				decl.Modifiers |= Modifiers.Readonly;
-			TokenRole keywordRole = kind switch
-			{
+			TokenRole keywordRole = kind switch {
 				MethodSemanticsAttributes.Getter => PropertyDeclaration.GetKeywordRole,
 				MethodSemanticsAttributes.Setter => PropertyDeclaration.SetKeywordRole,
 				MethodSemanticsAttributes.Adder => CustomEventDeclaration.AddKeywordRole,

@@ -388,8 +388,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				static ExpressionType ToCompound(ExpressionType from)
 				{
-					return from switch
-					{
+					return from switch {
 						ExpressionType.Add => ExpressionType.AddAssign,
 						ExpressionType.AddChecked => ExpressionType.AddAssignChecked,
 						ExpressionType.And => ExpressionType.AndAssign,
