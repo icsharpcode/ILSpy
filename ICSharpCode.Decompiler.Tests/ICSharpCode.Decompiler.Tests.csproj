@@ -191,7 +191,7 @@
     <Compile Include="TestCases\Pretty\CustomAttributeConflicts.cs" />
     <Compile Include="TestCases\Pretty\DynamicTests.cs" />
     <Compile Include="TestCases\Pretty\Issue1080.cs" />
-    <Compile Include="TestCases\Pretty\MemberTests.cs" />
+    <None Include="TestCases\Pretty\MemberTests.cs" />
     <Compile Include="TestCases\Pretty\NamedArguments.cs" />
     <Compile Include="TestCases\Pretty\QualifierTests.cs" />
     <Compile Include="TestCases\Pretty\RefLocalsAndReturns.cs" />

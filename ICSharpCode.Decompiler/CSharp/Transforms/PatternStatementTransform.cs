@@ -986,7 +986,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!ev.PrivateImplementationType.IsNull)
 				return null;
-			if (!ev.Modifiers.HasFlag(Modifiers.Abstract))
+			const Modifiers withoutBody = Modifiers.Abstract | Modifiers.Extern;
+			if ((ev.Modifiers & withoutBody) == 0 && ev.GetSymbol() is IEvent symbol && symbol.DeclaringType.Kind != TypeKind.Interface)
 			{
 				if (!CheckAutomaticEventV4AggressivelyInlined(ev) && !CheckAutomaticEventV4(ev) && !CheckAutomaticEventV2(ev) && !CheckAutomaticEventV4MCS(ev))
 					return null;
