@@ -2004,14 +2004,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			switchExpression.Expression.AcceptVisitor(this);
 			Space();
 			WriteKeyword(SwitchExpression.SwitchKeywordRole);
-			OpenBrace(policy.StatementBraceStyle);
+			OpenBrace(policy.ArrayInitializerBraceStyle);
 			foreach (AstNode node in switchExpression.SwitchSections)
 			{
 				node.AcceptVisitor(this);
 				Comma(node);
 				NewLine();
 			}
-			CloseBrace(policy.StatementBraceStyle);
+			CloseBrace(policy.ArrayInitializerBraceStyle);
 			EndNode(switchExpression);
 		}
 
