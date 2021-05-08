@@ -576,7 +576,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			VisitILFunction(function);
 			context.Step($"ResetHasInitialValueFlag", function);
-			foreach (var f in TreeTraversal.PostOrder(function, f => f.LocalFunctions))
+			foreach (var f in function.Descendants.OfType<ILFunction>())
 			{
 				RemoveDeadVariableInit.ResetHasInitialValueFlag(f, context);
 				f.CapturedVariables.RemoveWhere(v => v.IsDead);
