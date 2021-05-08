@@ -151,7 +151,6 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case BlockKind.CollectionInitializer:
 				case BlockKind.ObjectInitializer:
-				case BlockKind.WithInitializer:
 					var final2 = finalInstruction as LdLoc;
 					Debug.Assert(final2 != null);
 					var initVar2 = final2.Variable;
@@ -161,7 +160,6 @@ namespace ICSharpCode.Decompiler.IL
 					Debug.Assert(condition);
 					Debug.Assert(init2 is NewObj
 						|| init2 is DefaultValue
-						|| (init2 is CallInstruction ci && TransformCollectionAndObjectInitializers.IsRecordCloneMethodCall(ci))
 						|| (init2 is CallInstruction c && c.Method.FullNameIs("System.Activator", "CreateInstance") && c.Method.TypeArguments.Count == 1)
 						|| (init2 is Block named && named.Kind == BlockKind.CallWithNamedArgs));
 					switch (init2)
