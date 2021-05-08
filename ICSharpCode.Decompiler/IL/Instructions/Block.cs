@@ -151,6 +151,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case BlockKind.CollectionInitializer:
 				case BlockKind.ObjectInitializer:
+				case BlockKind.WithInitializer:
 					var final2 = finalInstruction as LdLoc;
 					Debug.Assert(final2 != null);
 					var initVar2 = final2.Variable;
@@ -161,6 +162,7 @@ namespace ICSharpCode.Decompiler.IL
 					Debug.Assert(init2 is NewObj
 						|| init2 is DefaultValue
 						|| (init2 is CallInstruction ci && TransformCollectionAndObjectInitializers.IsRecordCloneMethodCall(ci))
+						|| (init2 is CallInstruction c && c.Method.FullNameIs("System.Activator", "CreateInstance") && c.Method.TypeArguments.Count == 1)
 						|| (init2 is Block named && named.Kind == BlockKind.CallWithNamedArgs));
 					switch (init2)
 					{
@@ -173,13 +175,19 @@ namespace ICSharpCode.Decompiler.IL
 						case Block callWithNamedArgs when callWithNamedArgs.Kind == BlockKind.CallWithNamedArgs:
 							type2 = ((CallInstruction)callWithNamedArgs.FinalInstruction).Method.ReturnType;
 							break;
+						case CallInstruction ci2 when TransformCollectionAndObjectInitializers.IsRecordCloneMethodCall(ci2):
+							type2 = ci2.Method.DeclaringType;
+							break;
+						case Call c2 when c2.Method.FullNameIs("System.Activator", "CreateInstance") && c2.Method.TypeArguments.Count == 1:
+							type2 = c2.Method.TypeArguments[0];
+							break;
 						default:
 							Debug.Assert(false);
 							break;
 					}
 					for (int i = 1; i < Instructions.Count; i++)
 					{
-						Debug.Assert(Instructions[i] is StLoc || AccessPathElement.GetAccessPath(Instructions[i], type2).Kind != IL.Transforms.AccessPathKind.Invalid);
+						Debug.Assert(Instructions[i] is StLoc || AccessPathElement.GetAccessPath(Instructions[i], type2).Kind != AccessPathKind.Invalid);
 					}
 					break;
 				case BlockKind.DeconstructionConversions:

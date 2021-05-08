@@ -3161,6 +3161,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					expr = TranslateCallWithNamedArgs(callWithNamedArgs);
 					initObjRR = new InitializedObjectResolveResult(expr.Type);
 					break;
+				case Call c when c.Method.FullNameIs("System.Activator", "CreateInstance") && c.Method.TypeArguments.Count == 1:
+					IType type = c.Method.TypeArguments[0];
+					initObjRR = new InitializedObjectResolveResult(type);
+					expr = new ObjectCreateExpression(ConvertType(type))
+						.WithILInstruction(c)
+						.WithRR(new TypeResolveResult(type));
+					break;
 				default:
 					throw new ArgumentException("given Block is invalid!");
 			}
