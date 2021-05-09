@@ -859,18 +859,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool Visit(ILInstruction inst)
 			{
 				if (inst is BinaryNumericInstruction
-				{
-					Operator: BinaryNumericOperator.Add,
-					CheckForOverflow: false,
-					Left: BinaryNumericInstruction
 					{
-						Operator: BinaryNumericOperator.Mul,
+						Operator: BinaryNumericOperator.Add,
 						CheckForOverflow: false,
-						Left: var left,
-						Right: LdcI4 { Value: -1521134295 }
-					},
-					Right: var right
-				})
+						Left: BinaryNumericInstruction
+						{
+							Operator: BinaryNumericOperator.Mul,
+							CheckForOverflow: false,
+							Left: var left,
+							Right: LdcI4 { Value: -1521134295 }
+						},
+						Right: var right
+					})
 				{
 					if (!Visit(left))
 						return false;
@@ -971,13 +971,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			target = null;
 			member = null;
 			if (inst is CallVirt
-			{
-				Method:
 				{
-					AccessorKind: System.Reflection.MethodSemanticsAttributes.Getter,
-					AccessorOwner: IProperty property
-				}
-			} call)
+					Method:
+					{
+						AccessorKind: System.Reflection.MethodSemanticsAttributes.Getter,
+						AccessorOwner: IProperty property
+					}
+				} call)
 			{
 				if (call.Arguments.Count != 1)
 					return false;

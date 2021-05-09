@@ -198,7 +198,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public TranslatedExpression TranslateCondition(ILInstruction condition, bool negate = false)
 		{
+			Debug.Assert(condition.ResultType == StackType.I4);
 			var expr = Translate(condition, compilation.FindType(KnownTypeCode.Boolean));
+			if (expr.Type.GetStackType().GetSize() > 4)
+			{
+				expr = expr.ConvertTo(FindType(StackType.I4, expr.Type.GetSign()), this);
+			}
 			return expr.ConvertToBoolean(this, negate);
 		}
 
@@ -368,10 +373,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitIsInst(IsInst inst, TranslationContext context)
 		{
 			var arg = Translate(inst.Argument);
-			if (inst.Type.IsReferenceType == false)
+			if (inst.Type.IsReferenceType != true)
 			{
 				// isinst with a value type results in an expression of "boxed value type",
 				// which is not supported in C#.
+				// It's also not supported for unconstrained generic types.
 				// Note that several other instructions special-case isinst arguments:
 				//  unbox.any T(isinst T(expr)) ==> "expr as T" for nullable value types and class-constrained generic types
 				//  comp(isinst T(expr) != null) ==> "expr is T"
@@ -792,8 +798,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				// Reference comparison using Unsafe intrinsics
 				Debug.Assert(!inst.IsLifted);
-				(string methodName, bool negate) = inst.Kind switch
-				{
+				(string methodName, bool negate) = inst.Kind switch {
 					ComparisonKind.Equality => ("AreSame", false),
 					ComparisonKind.Inequality => ("AreSame", true),
 					ComparisonKind.LessThan => ("IsAddressLessThan", false),
@@ -3156,6 +3161,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					expr = TranslateCallWithNamedArgs(callWithNamedArgs);
 					initObjRR = new InitializedObjectResolveResult(expr.Type);
 					break;
+				case Call c when c.Method.FullNameIs("System.Activator", "CreateInstance") && c.Method.TypeArguments.Count == 1:
+					IType type = c.Method.TypeArguments[0];
+					initObjRR = new InitializedObjectResolveResult(type);
+					expr = new ObjectCreateExpression(ConvertType(type))
+						.WithILInstruction(c)
+						.WithRR(new TypeResolveResult(type));
+					break;
 				default:
 					throw new ArgumentException("given Block is invalid!");
 			}
@@ -3618,6 +3630,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			// We can only correctly translate it to C# if the rhs is of type boolean:
 			if (op != BinaryOperatorType.Any && (rhs.Type.IsKnownType(KnownTypeCode.Boolean) || IfInstruction.IsInConditionSlot(inst)))
 			{
+				if (rhs.Type.GetStackType().GetSize() > 4)
+				{
+					rhs = rhs.ConvertTo(FindType(StackType.I4, rhs.Type.GetSign()), this);
+				}
 				rhs = rhs.ConvertToBoolean(this);
 				return new BinaryOperatorExpression(condition, op, rhs)
 					.WithILInstruction(inst)

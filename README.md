@@ -21,14 +21,16 @@ Aside from the WPF UI ILSpy (downloadable via Releases, see also [plugins](https
 Features
 -------
 
- * Decompilation to C#
+ * Decompilation to C# (check out the [language support status](https://github.com/icsharpcode/ILSpy/issues/829))
  * Whole-project decompilation (csproj, not sln!)
- * Search for types/methods/properties (substring)
+ * Search for types/methods/properties (learn about the [options](https://github.com/icsharpcode/ILSpy/wiki/Search-Options))
  * Hyperlink-based type/method/property navigation
  * Base/Derived types navigation, history
+ * Assembly metadata explorer ([feature walkthrough](https://github.com/icsharpcode/ILSpy/wiki/Metadata-Explorer))
  * BAML to XAML decompiler
- * Extensible via [plugins](https://github.com/icsharpcode/ILSpy/wiki/Plugins) (MEF)
- * Check out the [language support status](https://github.com/icsharpcode/ILSpy/issues/829)
+ * ReadyToRun binary support for .NET Core (see the [tutorial](https://github.com/icsharpcode/ILSpy/wiki/ILSpy.ReadyToRun))
+ * Extensible via [plugins](https://github.com/icsharpcode/ILSpy/wiki/Plugins)
+ * Additional features in DEBUG builds ([for the devs](https://github.com/icsharpcode/ILSpy/wiki/Additional-Features-in-DEBUG-Builds))
 
 License
 -------

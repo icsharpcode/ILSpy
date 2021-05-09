@@ -44,6 +44,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			TestUShort(0);
 			TestUShort(ushort.MaxValue);
 
+			Console.WriteLine("Issue2398:");
+			Issue2398(0x100000000);
+
+			Console.WriteLine("OverloadedOperators:");
 			Console.WriteLine(IsNotNull(new OverloadedOperators()));
 			Console.WriteLine(IsNull(new OverloadedOperators()));
 			Console.WriteLine(NullIs(new OverloadedOperators()));
@@ -86,6 +90,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("uint: {0} == Id(uint.MaxValue) = {1}", i, i == Id(uint.MaxValue));
 			Console.WriteLine("uint: {0} == -1 = {1}", i, i == -1);
 			Console.WriteLine("uint: {0} == Id(-1) = {1}", i, i == Id(-1));
+		}
+
+		static void Issue2398(long value)
+		{
+			if ((int)value != 0)
+				Console.WriteLine("TRUE");
 		}
 
 		static bool IsNull(OverloadedOperators oo)

@@ -561,5 +561,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			UsePointer(a ? ptr : null);
 		}
+
+		public unsafe void UseArrayOfPointers(int*[] arr)
+		{
+			for (int i = 0; i < arr.Length; i++)
+			{
+				arr[i] = null;
+			}
+		}
+
+		public unsafe void PassNullPointer1()
+		{
+			PointerReferenceExpression(null);
+		}
+
+		public unsafe void PassNullPointer2()
+		{
+			UseArrayOfPointers(null);
+		}
 	}
 }

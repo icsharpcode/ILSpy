@@ -138,8 +138,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		private static bool IsConstant(ILInstruction inst)
 		{
-			return inst.OpCode switch
-			{
+			return inst.OpCode switch {
 				OpCode.LdcDecimal => true,
 				OpCode.LdcF4 => true,
 				OpCode.LdcF8 => true,

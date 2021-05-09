@@ -351,6 +351,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var loopContainer = forStatement.Annotation<IL.BlockContainer>();
 			if (itemVariable == null || indexVariable == null || arrayVariable == null)
 				return null;
+			if (arrayVariable.Type.Kind != TypeKind.Array)
+				return null;
 			if (!VariableCanBeUsedAsForeachLocal(itemVariable, forStatement))
 				return null;
 			if (indexVariable.StoreCount != 2 || indexVariable.LoadCount != 3 || indexVariable.AddressCount != 0)
@@ -462,6 +464,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				lowerBounds[i] = indexVariable;
 				i++;
 			}
+			if (collection.Type.Kind != TypeKind.Array)
+				return false;
 			var m2 = foreachVariableOnMultArrayAssignPattern.Match(stmt);
 			if (!m2.Success)
 				return false;
@@ -986,7 +990,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!ev.PrivateImplementationType.IsNull)
 				return null;
-			if (!ev.Modifiers.HasFlag(Modifiers.Abstract))
+			const Modifiers withoutBody = Modifiers.Abstract | Modifiers.Extern;
+			if ((ev.Modifiers & withoutBody) == 0 && ev.GetSymbol() is IEvent symbol && symbol.DeclaringType.Kind != TypeKind.Interface)
 			{
 				if (!CheckAutomaticEventV4AggressivelyInlined(ev) && !CheckAutomaticEventV4(ev) && !CheckAutomaticEventV2(ev) && !CheckAutomaticEventV4MCS(ev))
 					return null;

@@ -269,6 +269,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		}
 
+		public class NonEnumerableArrayLike
+		{
+			private readonly int length;
+
+			public Item this[int index] {
+				get {
+					return null;
+				}
+			}
+
+			public int Length {
+				get {
+					return length;
+				}
+			}
+		}
+
 		private IEnumerable<string> alternatives;
 		private object someObject;
 
@@ -466,6 +483,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			foreach (string text in array)
 			{
 				Console.WriteLine(text.ToLower() + text.ToUpper());
+			}
+		}
+
+		public void ForOverNonArray(NonEnumerableArrayLike array)
+		{
+			for (int i = 0; i < array.Length; i++)
+			{
+				Item item = array[i];
+				Console.WriteLine(item.ToString() + item.ToString());
 			}
 		}
 

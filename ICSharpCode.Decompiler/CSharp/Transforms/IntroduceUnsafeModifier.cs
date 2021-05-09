@@ -130,14 +130,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var rr = memberReferenceExpression.GetResolveResult();
 			if (rr != null)
 			{
-				if (IsPointer(rr.Type))
+				if (IsUnsafeType(rr.Type))
 					return true;
-				if (rr is MemberResolveResult mrr && mrr.Member.ReturnType.Kind == TypeKind.Delegate)
-				{
-					var method = mrr.Member.ReturnType.GetDefinition()?.GetDelegateInvokeMethod();
-					if (method != null && (IsPointer(method.ReturnType) || method.Parameters.Any(p => IsPointer(p.Type))))
-						return true;
-				}
 			}
 
 			return result;
@@ -149,14 +143,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var rr = identifierExpression.GetResolveResult();
 			if (rr != null)
 			{
-				if (IsPointer(rr.Type))
+				if (IsUnsafeType(rr.Type))
 					return true;
-				if (rr is MemberResolveResult mrr && mrr.Member.ReturnType.Kind == TypeKind.Delegate)
-				{
-					var method = mrr.Member.ReturnType.GetDefinition()?.GetDelegateInvokeMethod();
-					if (method != null && (IsPointer(method.ReturnType) || method.Parameters.Any(p => IsPointer(p.Type))))
-						return true;
-				}
 			}
 
 			return result;
@@ -166,7 +154,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			bool result = base.VisitStackAllocExpression(stackAllocExpression);
 			var rr = stackAllocExpression.GetResolveResult();
-			if (IsPointer(rr?.Type))
+			if (IsUnsafeType(rr?.Type))
 				return true;
 			return result;
 		}
@@ -175,8 +163,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			bool result = base.VisitInvocationExpression(invocationExpression);
 			var rr = invocationExpression.GetResolveResult();
-			if (IsPointer(rr?.Type))
+			if (IsUnsafeType(rr?.Type))
 				return true;
+			if ((rr as MemberResolveResult)?.Member is IParameterizedMember pm)
+			{
+				if (pm.Parameters.Any(p => IsUnsafeType(p.Type)))
+					return true;
+			}
 			return result;
 		}
 
@@ -186,7 +179,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		private bool IsPointer(IType type)
+		private bool IsUnsafeType(IType type)
+		{
+			if (type?.Kind == TypeKind.Delegate)
+			{
+				// Using a delegate which involves pointers in its signature needs the unsafe modifier
+				// https://github.com/icsharpcode/ILSpy/issues/949
+				IMethod invoke = type.GetDelegateInvokeMethod();
+				if (invoke != null && (ContainsPointer(invoke.ReturnType) || invoke.Parameters.Any(p => ContainsPointer(p.Type))))
+					return true;
+			}
+			return ContainsPointer(type);
+		}
+
+		private bool ContainsPointer(IType type)
 		{
 			switch (type?.Kind)
 			{
@@ -194,7 +200,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case TypeKind.FunctionPointer:
 					return true;
 				case TypeKind.ByReference:
-					return IsPointer(((ByReferenceType)type).ElementType);
+				case TypeKind.Array:
+					return IsUnsafeType(((Decompiler.TypeSystem.Implementation.TypeWithElementType)type).ElementType);
 				default:
 					return false;
 			}

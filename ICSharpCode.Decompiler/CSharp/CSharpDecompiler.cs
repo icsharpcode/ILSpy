@@ -1735,13 +1735,20 @@ namespace ICSharpCode.Decompiler.CSharp
 					getter = ((IndexerDeclaration)propertyDecl).Getter;
 					setter = ((IndexerDeclaration)propertyDecl).Setter;
 				}
-				if (property.CanGet && property.Getter.HasBody)
+
+				bool getterHasBody = property.CanGet && property.Getter.HasBody;
+				bool setterHasBody = property.CanSet && property.Setter.HasBody;
+				if (getterHasBody)
 				{
 					DecompileBody(property.Getter, getter, decompileRun, decompilationContext);
 				}
-				if (property.CanSet && property.Setter.HasBody)
+				if (setterHasBody)
 				{
 					DecompileBody(property.Setter, setter, decompileRun, decompilationContext);
+				}
+				if (!getterHasBody && !setterHasBody && !property.IsAbstract && property.DeclaringType.Kind != TypeKind.Interface)
+				{
+					propertyDecl.Modifiers |= Modifiers.Extern;
 				}
 				var accessorHandle = (MethodDefinitionHandle)(property.Getter ?? property.Setter).MetadataToken;
 				var accessor = metadata.GetMethodDefinition(accessorHandle);
@@ -1768,13 +1775,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					eventDecl.Name = ev.Name.Substring(lastDot + 1);
 				}
-				if (ev.CanAdd && ev.AddAccessor.HasBody)
+				bool adderHasBody = ev.CanAdd && ev.AddAccessor.HasBody;
+				bool removerHasBody = ev.CanRemove && ev.RemoveAccessor.HasBody;
+				if (adderHasBody)
 				{
 					DecompileBody(ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompileRun, decompilationContext);
 				}
-				if (ev.CanRemove && ev.RemoveAccessor.HasBody)
+				if (removerHasBody)
 				{
 					DecompileBody(ev.RemoveAccessor, ((CustomEventDeclaration)eventDecl).RemoveAccessor, decompileRun, decompilationContext);
+				}
+				if (!adderHasBody && !removerHasBody && !ev.IsAbstract && ev.DeclaringType.Kind != TypeKind.Interface)
+				{
+					eventDecl.Modifiers |= Modifiers.Extern;
 				}
 				var accessor = metadata.GetMethodDefinition((MethodDefinitionHandle)(ev.AddAccessor ?? ev.RemoveAccessor).MetadataToken);
 				if (accessor.HasFlag(System.Reflection.MethodAttributes.Virtual) == accessor.HasFlag(System.Reflection.MethodAttributes.NewSlot))

@@ -54,8 +54,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		static bool IsUsedAsNativeInt(LdLoc load)
 		{
-			return load.Parent switch
-			{
+			return load.Parent switch {
 				BinaryNumericInstruction { UnderlyingResultType: StackType.I } => true,
 				BitNot { UnderlyingResultType: StackType.I } => true,
 				CallInstruction call => call.GetParameter(load.ChildIndex)?.Type.IsCSharpNativeIntegerType() ?? false,

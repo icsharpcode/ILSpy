@@ -330,8 +330,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var parameters = new IType[type.ParameterTypes.Length];
 			for (int i = 0; i < parameters.Length; i++)
 			{
-				dynamicTypeIndex += type.ParameterReferenceKinds[i] switch
-				{
+				dynamicTypeIndex += type.ParameterReferenceKinds[i] switch {
 					ReferenceKind.None => 1,
 					ReferenceKind.Ref => 1,
 					ReferenceKind.Out => 2, // in/out also count the modreq

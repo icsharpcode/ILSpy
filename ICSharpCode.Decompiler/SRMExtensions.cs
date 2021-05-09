@@ -580,8 +580,7 @@ namespace ICSharpCode.Decompiler
 
 		public static string ToILSyntax(this SignatureCallingConvention callConv)
 		{
-			return callConv switch
-			{
+			return callConv switch {
 				SignatureCallingConvention.Default => "default",
 				SignatureCallingConvention.CDecl => "unmanaged cdecl",
 				SignatureCallingConvention.StdCall => "unmanaged stdcall",

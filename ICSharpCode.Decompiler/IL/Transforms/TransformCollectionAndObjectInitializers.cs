@@ -95,6 +95,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					instType = defaultVal.Type;
 					break;
+				case Call c when c.Method.FullNameIs("System.Activator", "CreateInstance") && c.Method.TypeArguments.Count == 1:
+					instType = c.Method.TypeArguments[0];
+					blockKind = BlockKind.ObjectInitializer;
+					break;
 				case CallInstruction ci when context.Settings.WithExpressions && IsRecordCloneMethodCall(ci):
 					instType = ci.Method.DeclaringType;
 					blockKind = BlockKind.WithInitializer;

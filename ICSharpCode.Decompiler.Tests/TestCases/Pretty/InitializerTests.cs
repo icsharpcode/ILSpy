@@ -226,6 +226,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			public Item I;
 		}
 #endif
+
+		public interface IData
+		{
+			int Property { get; set; }
+		}
 		#endregion
 
 		#region Field initializer tests
@@ -1036,6 +1041,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			}
 		}
 #endif
+
+		private TData GenericObjectInitializer<TData>() where TData : IData, new()
+		{
+			return new TData {
+				Property = 42
+			};
+		}
 		#endregion
 
 		#region Collection initializer

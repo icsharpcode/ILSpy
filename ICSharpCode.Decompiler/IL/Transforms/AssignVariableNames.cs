@@ -582,8 +582,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				type = NullableType.GetUnderlyingType(((TypeWithElementType)type).ElementType);
 			}
 
-			string name = type.Kind switch
-			{
+			string name = type.Kind switch {
 				TypeKind.Array => "array",
 				TypeKind.Pointer => "ptr",
 				TypeKind.TypeParameter => "val",
