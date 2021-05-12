@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -49,8 +48,6 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Documentation;
-using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
@@ -405,6 +402,8 @@ namespace ICSharpCode.ILSpy.TextView
 			else if (segment.Reference is EntityReference unresolvedEntity)
 			{
 				var module = unresolvedEntity.ResolveAssembly(MainWindow.Instance.CurrentAssemblyList);
+				if (module == null)
+					return null;
 				var typeSystem = new DecompilerTypeSystem(module,
 					module.GetAssemblyResolver(),
 					TypeSystemOptions.Default | TypeSystemOptions.Uncached);

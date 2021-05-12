@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.Reflection.Metadata;
 using System.Windows;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -41,7 +40,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 				MessageBox.Show(Properties.Resources.CannotAnalyzeMissingRef, "ILSpy");
 				return;
 			}
-			MainWindow.Instance.JumpToReference(new EntityReference(this.Member.ParentModule.PEFile.FileName, this.Member.MetadataToken));
+			MainWindow.Instance.JumpToReference(new EntityReference(this.Member.ParentModule.PEFile, this.Member.MetadataToken));
 		}
 
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)

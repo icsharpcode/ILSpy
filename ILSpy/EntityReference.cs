@@ -15,8 +15,8 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+#nullable enable
 
-using System;
 using System.Diagnostics;
 using System.Reflection.Metadata;
 
@@ -27,6 +27,7 @@ namespace ICSharpCode.ILSpy
 	[DebuggerDisplay("EntityReference Module={Module}, Handle={Handle}, Protocol={Protocol}")]
 	public class EntityReference
 	{
+		readonly PEFile? peFile;
 		public string Module { get; }
 		public Handle Handle { get; }
 		public string Protocol { get; }
@@ -38,15 +39,23 @@ namespace ICSharpCode.ILSpy
 			this.Protocol = "decompile";
 		}
 
-		public EntityReference(string protocol, string moduleFileName, Handle handle)
+		public EntityReference(string? protocol, string moduleFileName, Handle handle)
 			: this(moduleFileName, handle)
 		{
 			this.Protocol = protocol ?? "decompile";
 		}
 
-		public PEFile ResolveAssembly(AssemblyList context)
+		public EntityReference(PEFile module, Handle handle, string protocol = "decompile")
 		{
-			return context.FindAssembly(Module)?.GetPEFileOrNull();
+			this.peFile = module;
+			this.Module = module.FileName;
+			this.Handle = handle;
+			this.Protocol = protocol;
+		}
+
+		public PEFile? ResolveAssembly(AssemblyList context)
+		{
+			return peFile ?? context.FindAssembly(Module)?.GetPEFileOrNull();
 		}
 	}
 }
