@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -70,17 +72,17 @@ namespace ICSharpCode.ILSpy.TextView
 	{
 		readonly ReferenceElementGenerator referenceElementGenerator;
 		readonly UIElementGenerator uiElementGenerator;
-		readonly List<VisualLineElementGenerator> activeCustomElementGenerators = new List<VisualLineElementGenerator>();
-		RichTextColorizer activeRichTextColorizer;
-		BracketHighlightRenderer bracketHighlightRenderer;
-		FoldingManager foldingManager;
-		ILSpyTreeNode[] decompiledNodes;
-		Uri currentAddress;
-		string currentTitle;
+		readonly List<VisualLineElementGenerator?> activeCustomElementGenerators = new List<VisualLineElementGenerator?>();
+		readonly BracketHighlightRenderer bracketHighlightRenderer;
+		RichTextColorizer? activeRichTextColorizer;
+		FoldingManager? foldingManager;
+		ILSpyTreeNode[]? decompiledNodes;
+		Uri? currentAddress;
+		string? currentTitle;
 
-		DefinitionLookup definitionLookup;
-		TextSegmentCollection<ReferenceSegment> references;
-		CancellationTokenSource currentCancellationTokenSource;
+		DefinitionLookup? definitionLookup;
+		TextSegmentCollection<ReferenceSegment>? references;
+		CancellationTokenSource? currentCancellationTokenSource;
 
 		readonly TextMarkerService textMarkerService;
 		readonly List<ITextMarker> localReferenceMarks = new List<ITextMarker>();
@@ -198,8 +200,8 @@ namespace ICSharpCode.ILSpy.TextView
 		#endregion
 
 		#region Tooltip support
-		ToolTip toolTip;
-		Popup popupToolTip;
+		ToolTip? toolTip;
+		Popup? popupToolTip;
 
 		void TextViewMouseHover(object sender, MouseEventArgs e)
 		{
@@ -216,7 +218,7 @@ namespace ICSharpCode.ILSpy.TextView
 			ReferenceSegment seg = referenceElementGenerator.References.FindSegmentsContaining(offset).FirstOrDefault();
 			if (seg == null)
 				return;
-			object content = GenerateTooltip(seg);
+			object? content = GenerateTooltip(seg);
 
 			if (content != null)
 			{
@@ -329,7 +331,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		double GetDistanceToPopup(MouseEventArgs e)
 		{
-			Point p = popupToolTip.Child.PointFromScreen(PointToScreen(e.GetPosition(this)));
+			Point p = popupToolTip!.Child.PointFromScreen(PointToScreen(e.GetPosition(this)));
 			Size size = popupToolTip.Child.RenderSize;
 			double x = 0;
 			if (p.X < 0)
@@ -375,7 +377,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		object GenerateTooltip(ReferenceSegment segment)
+		object? GenerateTooltip(ReferenceSegment segment)
 		{
 			if (segment.Reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo code)
 			{
@@ -428,7 +430,7 @@ namespace ICSharpCode.ILSpy.TextView
 			return null;
 		}
 
-		static FlowDocument CreateTooltipForEntity(IEntity resolved)
+		static FlowDocument? CreateTooltipForEntity(IEntity resolved)
 		{
 			Language currentLanguage = MainWindow.Instance.CurrentLanguage;
 			DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), currentLanguage.SyntaxHighlighting);
@@ -454,7 +456,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			return renderer.CreateDocument();
 
-			IEntity ResolveReference(string idString)
+			IEntity? ResolveReference(string idString)
 			{
 				return MainWindow.FindEntityInRelevantAssemblies(idString, MainWindow.Instance.CurrentAssemblyList.GetAssemblies());
 			}
@@ -561,7 +563,7 @@ namespace ICSharpCode.ILSpy.TextView
 					taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Indeterminate;
 				}
 			}
-			CancellationTokenSource previousCancellationTokenSource = currentCancellationTokenSource;
+			CancellationTokenSource? previousCancellationTokenSource = currentCancellationTokenSource;
 			var myCancellationTokenSource = new CancellationTokenSource();
 			currentCancellationTokenSource = myCancellationTokenSource;
 			// cancel the previous only after current was set to the new one (avoid that the old one still finishes successfully)
@@ -633,7 +635,7 @@ namespace ICSharpCode.ILSpy.TextView
 			ShowNodes(textOutput, null);
 		}
 
-		public void ShowNode(AvalonEditTextOutput textOutput, ILSpyTreeNode node, IHighlightingDefinition highlighting = null)
+		public void ShowNode(AvalonEditTextOutput textOutput, ILSpyTreeNode node, IHighlightingDefinition? highlighting = null)
 		{
 			ShowNodes(textOutput, new[] { node }, highlighting);
 		}
@@ -642,7 +644,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// Shows the given output in the text view.
 		/// Cancels any currently running decompilation tasks.
 		/// </summary>
-		public void ShowNodes(AvalonEditTextOutput textOutput, ILSpyTreeNode[] nodes, IHighlightingDefinition highlighting = null)
+		public void ShowNodes(AvalonEditTextOutput textOutput, ILSpyTreeNode[]? nodes, IHighlightingDefinition? highlighting = null)
 		{
 			// Cancel the decompilation task:
 			if (currentCancellationTokenSource != null)
@@ -669,7 +671,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// <summary>
 		/// Shows the given output in the text view.
 		/// </summary>
-		void ShowOutput(AvalonEditTextOutput textOutput, IHighlightingDefinition highlighting = null, DecompilerTextViewState state = null)
+		void ShowOutput(AvalonEditTextOutput textOutput, IHighlightingDefinition? highlighting = null, DecompilerTextViewState? state = null)
 		{
 			Debug.WriteLine("Showing {0} characters of output", textOutput.TextLength);
 			Stopwatch w = Stopwatch.StartNew();
@@ -753,7 +755,7 @@ namespace ICSharpCode.ILSpy.TextView
 		// more than 75M characters can get us into trouble with memory usage
 		public const int ExtendedOutputLengthLimit = 75000000;
 
-		DecompilationContext nextDecompilationRun;
+		DecompilationContext? nextDecompilationRun;
 
 		[Obsolete("Use DecompileAsync() instead")]
 		public void Decompile(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
@@ -797,7 +799,7 @@ namespace ICSharpCode.ILSpy.TextView
 			public readonly ILSpy.Language Language;
 			public readonly ILSpyTreeNode[] TreeNodes;
 			public readonly DecompilationOptions Options;
-			public readonly TaskCompletionSource<object> TaskCompletionSource = new TaskCompletionSource<object>();
+			public readonly TaskCompletionSource<object?> TaskCompletionSource = new TaskCompletionSource<object?>();
 
 			public DecompilationContext(ILSpy.Language language, ILSpyTreeNode[] treeNodes, DecompilationOptions options)
 			{
@@ -1139,7 +1141,7 @@ namespace ICSharpCode.ILSpy.TextView
 		}
 		#endregion
 
-		internal ReferenceSegment GetReferenceSegmentAtMousePosition()
+		internal ReferenceSegment? GetReferenceSegmentAtMousePosition()
 		{
 			if (referenceElementGenerator.References == null)
 				return null;
@@ -1161,7 +1163,7 @@ namespace ICSharpCode.ILSpy.TextView
 			return position;
 		}
 
-		public DecompilerTextViewState GetState()
+		public DecompilerTextViewState? GetState()
 		{
 			if (decompiledNodes == null && currentAddress == null)
 				return null;
@@ -1176,7 +1178,7 @@ namespace ICSharpCode.ILSpy.TextView
 			return state;
 		}
 
-		ViewState IHaveState.GetState() => GetState();
+		ViewState? IHaveState.GetState() => GetState();
 
 		public static void RegisterHighlighting()
 		{
@@ -1197,6 +1199,8 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (lineNumber <= 0 || lineNumber > textEditor.Document.LineCount)
 				return;
+			if (foldingManager == null)
+				return;
 
 			var line = textEditor.Document.GetLineByNumber(lineNumber);
 
@@ -1216,7 +1220,7 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.ScrollTo(lineNumber, 0);
 		}
 
-		public FoldingManager FoldingManager {
+		public FoldingManager? FoldingManager {
 			get {
 				return foldingManager;
 			}
@@ -1227,10 +1231,10 @@ namespace ICSharpCode.ILSpy.TextView
 	[DebuggerDisplay("Nodes = {DecompiledNodes}, ViewedUri = {ViewedUri}")]
 	public class ViewState : IEquatable<ViewState>
 	{
-		public HashSet<ILSpyTreeNode> DecompiledNodes;
-		public Uri ViewedUri;
+		public HashSet<ILSpyTreeNode>? DecompiledNodes;
+		public Uri? ViewedUri;
 
-		public virtual bool Equals(ViewState other)
+		public virtual bool Equals(ViewState? other)
 		{
 			return other != null
 				&& ViewedUri == other.ViewedUri
@@ -1240,7 +1244,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 	public class DecompilerTextViewState : ViewState
 	{
-		private List<Tuple<int, int>> ExpandedFoldings;
+		private List<Tuple<int, int>>? ExpandedFoldings;
 		private int FoldingsChecksum;
 		public double VerticalOffset;
 		public double HorizontalOffset;
@@ -1259,7 +1263,7 @@ namespace ICSharpCode.ILSpy.TextView
 					folding.DefaultClosed = !ExpandedFoldings.Any(f => f.Item1 == folding.StartOffset && f.Item2 == folding.EndOffset);
 		}
 
-		public override bool Equals(ViewState other)
+		public override bool Equals(ViewState? other)
 		{
 			if (other is DecompilerTextViewState vs)
 			{
