@@ -12,5 +12,7 @@ namespace CrossAssemblyDep
 				name = value;
 			}
 		}
+
+		public T Convert<T>(T input) { return input; }
 	}
 }

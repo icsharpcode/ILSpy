@@ -8,6 +8,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public interface IInterface
 		{
 			string Name { get; set; }
+			T Convert<T>(T input);
 		}
 
 		public class DerivedClass : BaseClass, IInterface
