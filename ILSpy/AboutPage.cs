@@ -34,6 +34,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.Themes;
 
 namespace ICSharpCode.ILSpy
 {

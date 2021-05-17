@@ -20,11 +20,11 @@
 	<Color x:Key="{x:Static SystemColors.WindowColorKey}">#FFFFFF</Color>
 	<Color x:Key="{x:Static SystemColors.WindowTextColorKey}">#1E1E1E</Color>
 	<Color x:Key="{x:Static SystemColors.ActiveCaptionColorKey}">#EEEEF2</Color>
-	<Color x:Key="{x:Static SystemColors.ActiveBorderColorKey}">#007ACC</Color>
+	<Color x:Key="{x:Static SystemColors.ActiveBorderColorKey}">#71BDE2</Color>
 	<Color x:Key="{x:Static SystemColors.ActiveCaptionTextColorKey}">#1E1E1E</Color>
 	<Color x:Key="{x:Static SystemColors.InactiveCaptionColorKey}">#EEEEF2</Color>
 	<Color x:Key="{x:Static SystemColors.InactiveBorderColorKey}">#CCCEDB</Color>
-	<Color x:Key="{x:Static SystemColors.InactiveCaptionTextColorKey}">#1E1E1E</Color>
+	<Color x:Key="{x:Static SystemColors.InactiveCaptionTextColorKey}">#808080</Color>
 
 	<SolidColorBrush x:Key="{x:Static SystemColors.ControlLightLightBrushKey}" Color="#FCFCFC" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.ControlLightBrushKey}" Color="#D8D8E0" />
@@ -41,11 +41,11 @@
 	<SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#FFFFFF" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.WindowTextBrushKey}" Color="#1E1E1E" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.ActiveCaptionBrushKey}" Color="#EEEEF2" />
-	<SolidColorBrush x:Key="{x:Static SystemColors.ActiveBorderBrushKey}" Color="#007ACC" />
+	<SolidColorBrush x:Key="{x:Static SystemColors.ActiveBorderBrushKey}" Color="#71BDE2" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.ActiveCaptionTextBrushKey}" Color="#1E1E1E" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.InactiveCaptionBrushKey}" Color="#EEEEF2" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.InactiveBorderBrushKey}" Color="#CCCEDB" />
-	<SolidColorBrush x:Key="{x:Static SystemColors.InactiveCaptionTextBrushKey}" Color="#1E1E1E" />
+	<SolidColorBrush x:Key="{x:Static SystemColors.InactiveCaptionTextBrushKey}" Color="#808080" />
 
 	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.BorderBrush}" Color="#CCCEDB" />
 	<SolidColorBrush x:Key="{x:Static styles:ResourceKeys.DisabledBrush}" Color="#EEEEF2" />

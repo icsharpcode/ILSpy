@@ -27,6 +27,7 @@ using System.Windows;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Themes;
 
 namespace ICSharpCode.ILSpy
 {

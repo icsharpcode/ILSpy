@@ -24,6 +24,7 @@ using System.Windows.Media;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.Themes;
 
 namespace ICSharpCode.ILSpy
 {

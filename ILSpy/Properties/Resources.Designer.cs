@@ -1677,6 +1677,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Language.
+        /// </summary>
+        public static string Language {
+            get {
+                return ResourceManager.GetString("Language", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Are you sure that you want to delete the selected assembly list?.
         /// </summary>
         public static string ListDeleteConfirmation {
@@ -2454,6 +2463,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Style the window title bar.
+        /// </summary>
+        public static string StyleTheWindowTitleBar {
+            get {
+                return ResourceManager.GetString("StyleTheWindowTitleBar", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tab size:.
         /// </summary>
         public static string TabSize {
@@ -2650,11 +2668,5 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("Window_ResetLayout", resourceCulture);
             }
         }
- 
-        public static string Language {
-            get {
-                return ResourceManager.GetString("Language", resourceCulture);
-            }
-          }
     }
 }

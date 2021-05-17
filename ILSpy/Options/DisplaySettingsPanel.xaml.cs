@@ -123,6 +123,7 @@ namespace ICSharpCode.ILSpy.Options
 			s.HighlightMatchingBraces = (bool?)e.Attribute("HighlightMatchingBraces") ?? true;
 			s.HighlightCurrentLine = (bool?)e.Attribute("HighlightCurrentLine") ?? false;
 			s.HideEmptyMetadataTables = (bool?)e.Attribute("HideEmptyMetadataTables") ?? true;
+			s.StyleWindowTitleBar = (bool?)e.Attribute("StyleWindowTitleBar") ?? false;
 
 			return s;
 		}
@@ -149,6 +150,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("HighlightMatchingBraces", s.HighlightMatchingBraces);
 			section.SetAttributeValue("HighlightCurrentLine", s.HighlightCurrentLine);
 			section.SetAttributeValue("HideEmptyMetadataTables", s.HideEmptyMetadataTables);
+			section.SetAttributeValue("StyleWindowTitleBar", s.StyleWindowTitleBar);
 
 			XElement existingElement = root.Element("DisplaySettings");
 			if (existingElement != null)

@@ -273,6 +273,19 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		private bool styleWindowTitleBar;
+
+		public bool StyleWindowTitleBar {
+			get { return styleWindowTitleBar; }
+			set {
+				if (styleWindowTitleBar != value)
+				{
+					styleWindowTitleBar = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public void CopyValues(DisplaySettings s)
 		{
 			this.SelectedFont = s.selectedFont;
@@ -292,6 +305,7 @@ namespace ICSharpCode.ILSpy.Options
 			this.HighlightMatchingBraces = s.highlightMatchingBraces;
 			this.HighlightCurrentLine = s.highlightCurrentLine;
 			this.HideEmptyMetadataTables = s.hideEmptyMetadataTables;
+			this.StyleWindowTitleBar = s.styleWindowTitleBar;
 		}
 	}
 }
