@@ -24,19 +24,57 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class MemberTests
 	{
+#if CS72
+		public interface IC
+		{
+			int MMM(in int x);
+		}
+
+		public class C : IC
+		{
+			public int MMM(in int x)
+			{
+				return x;
+			}
+		}
+
+		public interface IC2
+		{
+			object MMM(in object x);
+			int MMM2(ref int x);
+		}
+
+		public class C2 : IC2
+		{
+			public object MMM(in dynamic x)
+			{
+				return x;
+			}
+
+			public int MMM2(in int x)
+			{
+				return x;
+			}
+
+			int IC2.MMM2(ref int x)
+			{
+				return MMM2(in x);
+			}
+		}
+#endif
 		public class IndexerNonDefaultName
 		{
 			[IndexerName("Foo")]
 #if ROSLYN
 			public int this[int index] => 0;
 #else
-			#pragma warning disable format
+#pragma warning disable format
 			public int this[int index] {
 				get {
 					return 0;
 				}
 			}
-			#pragma warning restore format
+#pragma warning restore format
 #endif
 		}
 

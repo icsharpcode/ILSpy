@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -284,6 +285,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					var methodSemantics = module.MethodSemanticsLookup.GetSemantics(methodHandle).Item2;
 					if (methodSemantics != 0 && methodSemantics != System.Reflection.MethodSemanticsAttributes.Other)
 						return true;
+					if (IsInterfaceImplementationRuntimeHelper(module, methodHandle, methodSemantics))
+						return true;
 					if (settings.LocalFunctions && LocalFunctionDecompiler.IsLocalFunctionMethod(module, methodHandle))
 						return true;
 					if (settings.AnonymousMethods && methodHandle.HasGeneratedName(metadata) && methodHandle.IsCompilerGenerated(metadata))
@@ -374,6 +377,135 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			return false;
+		}
+
+		static bool IsInterfaceImplementationRuntimeHelper(PEFile module, MethodDefinitionHandle handle, System.Reflection.MethodSemanticsAttributes methodSemantics)
+		{
+			var metadata = module.Metadata;
+			var method = metadata.GetMethodDefinition(handle);
+			if ((method.Attributes & System.Reflection.MethodAttributes.Static) != 0)
+				return false;
+			string rawName = metadata.GetString(method.Name);
+			int dot = rawName.LastIndexOf('.');
+			if (dot < 0)
+				return false;
+			string name = rawName.Substring(dot + 1);
+			if (handle.GetMethodImplementations(metadata).Length == 0)
+				return false;
+			if (method.RelativeVirtualAddress == 0)
+				return false;
+			var signature = metadata.GetBlobReader(method.Signature);
+			(int genericParameterCount, int parameterCount) = SignatureBlobComparer.ReadParameterCount(ref signature);
+			if (genericParameterCount == -1 || parameterCount == -1)
+				return false;
+			signature.Reset();
+
+			int maximumMethodSize = 4 * (parameterCount + 1) + 5 + 1;
+
+			var body = module.Reader.GetMethodBody(method.RelativeVirtualAddress);
+			var reader = body.GetILReader();
+
+			if (reader.RemainingBytes > maximumMethodSize)
+				return false;
+
+			for (int i = 0; i < parameterCount + 1; i++)
+			{
+				int index;
+				switch (reader.DecodeOpCode())
+				{
+					case ILOpCode.Ldarg:
+						index = reader.ReadUInt16();
+						if (index != i)
+							return false;
+						break;
+					case ILOpCode.Ldarg_s:
+						index = reader.ReadByte();
+						if (index != i)
+							return false;
+						break;
+					case ILOpCode.Ldarg_0:
+						if (i != 0)
+							return false;
+						break;
+					case ILOpCode.Ldarg_1:
+						if (i != 1)
+							return false;
+						break;
+					case ILOpCode.Ldarg_2:
+						if (i != 2)
+							return false;
+						break;
+					case ILOpCode.Ldarg_3:
+						if (i != 3)
+							return false;
+						break;
+					default:
+						return false;
+				}
+			}
+
+			if (reader.DecodeOpCode() != ILOpCode.Call)
+				return false;
+
+			EntityHandle targetHandle = MetadataTokenHelpers.EntityHandleOrNil(reader.ReadInt32());
+			if (targetHandle.IsNil)
+				return false;
+
+			if (reader.DecodeOpCode() != ILOpCode.Ret)
+				return false;
+
+			if (reader.RemainingBytes != 0)
+				return false;
+
+			BlobReader signature2;
+			string otherName;
+
+			switch (targetHandle.Kind)
+			{
+				case HandleKind.MethodDefinition:
+					if (genericParameterCount != 0)
+						return false;
+					var methodDef = metadata.GetMethodDefinition((MethodDefinitionHandle)targetHandle);
+					signature2 = metadata.GetBlobReader(methodDef.Signature);
+					otherName = metadata.GetString(methodDef.Name);
+					break;
+				case HandleKind.MethodSpecification:
+					if (genericParameterCount == 0)
+						return false;
+					var methodSpec = metadata.GetMethodSpecification((MethodSpecificationHandle)targetHandle);
+					var instantiation = methodSpec.DecodeSignature(MetadataExtensions.MinimalSignatureTypeProvider, default);
+					switch (methodSpec.Method.Kind)
+					{
+						case HandleKind.MethodDefinition:
+							var methodSpecDef = metadata.GetMethodDefinition((MethodDefinitionHandle)methodSpec.Method);
+							signature2 = metadata.GetBlobReader(methodSpecDef.Signature);
+							otherName = metadata.GetString(methodSpecDef.Name);
+							break;
+						case HandleKind.MemberReference:
+							var methodSpecRef = metadata.GetMemberReference((MemberReferenceHandle)methodSpec.Method);
+							if (methodSpecRef.GetKind() != MemberReferenceKind.Method)
+								return false;
+							signature2 = metadata.GetBlobReader(methodSpecRef.Signature);
+							otherName = metadata.GetString(methodSpecRef.Name);
+							break;
+						default:
+							return false;
+					}
+					break;
+				case HandleKind.MemberReference:
+					var methodRef = metadata.GetMemberReference((MemberReferenceHandle)targetHandle);
+					if (methodRef.GetKind() != MemberReferenceKind.Method)
+						return false;
+					signature2 = metadata.GetBlobReader(methodRef.Signature);
+					otherName = metadata.GetString(methodRef.Name);
+					break;
+				default:
+					return false;
+			}
+
+			if (otherName != name)
+				return false;
+			return SignatureBlobComparer.EqualsMethodSignature(signature, signature2, metadata, metadata);
 		}
 
 		static bool IsSwitchOnStringCache(SRM.FieldDefinition field, MetadataReader metadata)
