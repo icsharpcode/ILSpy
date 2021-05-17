@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace ICSharpCode.ILSpy.themes
+namespace ICSharpCode.ILSpy.Themes
 {
 	public static class ResourceKeys
 	{

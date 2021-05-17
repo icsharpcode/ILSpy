@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpy.Themes
 {
 	internal class ThemeManager
 	{

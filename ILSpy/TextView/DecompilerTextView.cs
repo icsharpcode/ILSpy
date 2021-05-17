@@ -53,6 +53,7 @@ using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -60,7 +61,7 @@ using Microsoft.Win32;
 
 using TomsToolbox.Wpf;
 
-using ResourceKeys = ICSharpCode.ILSpy.themes.ResourceKeys;
+using ResourceKeys = ICSharpCode.ILSpy.Themes.ResourceKeys;
 
 namespace ICSharpCode.ILSpy.TextView
 {

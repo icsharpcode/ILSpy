@@ -46,6 +46,7 @@ using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.TreeView;
