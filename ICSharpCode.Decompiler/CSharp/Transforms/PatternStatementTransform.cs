@@ -630,7 +630,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			if (field == null || !NameCouldBeBackingFieldOfAutomaticProperty(field.Name, out _))
 				return null;
-			if (propertyDeclaration.Setter.HasModifier(Modifiers.Readonly))
+			if (propertyDeclaration.Setter.HasModifier(Modifiers.Readonly) || (propertyDeclaration.HasModifier(Modifiers.Readonly) && !propertyDeclaration.Setter.IsNull))
 				return null;
 			if (field.IsCompilerGenerated() && field.DeclaringTypeDefinition == property.DeclaringTypeDefinition)
 			{
@@ -638,6 +638,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				RemoveCompilerGeneratedAttribute(propertyDeclaration.Setter.Attributes);
 				propertyDeclaration.Getter.Body = null;
 				propertyDeclaration.Setter.Body = null;
+				propertyDeclaration.Modifiers &= ~Modifiers.Readonly;
 				propertyDeclaration.Getter.Modifiers &= ~Modifiers.Readonly;
 
 				// Add C# 7.3 attributes on backing field:

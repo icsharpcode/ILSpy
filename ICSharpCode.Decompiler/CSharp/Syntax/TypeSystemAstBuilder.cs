@@ -1972,7 +1972,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			if (this.ShowAccessibility && accessor.Accessibility != ownerAccessibility)
 				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility);
-			if (accessor.HasReadonlyModifier())
+			if (this.ShowModifiers && accessor.HasReadonlyModifier())
 				decl.Modifiers |= Modifiers.Readonly;
 			TokenRole keywordRole = kind switch {
 				MethodSemanticsAttributes.Getter => PropertyDeclaration.GetKeywordRole,
@@ -2035,13 +2035,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		static void MergeReadOnlyModifiers(EntityDeclaration decl, Accessor accessor1, Accessor accessor2)
 		{
-			if (accessor1.HasModifier(Modifiers.Readonly) && accessor2.HasModifier(Modifiers.Readonly))
+			if (accessor1.HasModifier(Modifiers.Readonly) && accessor2.IsNull)
+			{
+				accessor1.Modifiers &= ~Modifiers.Readonly;
+				decl.Modifiers |= Modifiers.Readonly;
+			}
+			else if (accessor1.HasModifier(Modifiers.Readonly) && accessor2.HasModifier(Modifiers.Readonly))
 			{
 				accessor1.Modifiers &= ~Modifiers.Readonly;
 				accessor2.Modifiers &= ~Modifiers.Readonly;
 				decl.Modifiers |= Modifiers.Readonly;
 			}
 		}
+
 		IndexerDeclaration ConvertIndexer(IProperty indexer)
 		{
 			IndexerDeclaration decl = new IndexerDeclaration();
