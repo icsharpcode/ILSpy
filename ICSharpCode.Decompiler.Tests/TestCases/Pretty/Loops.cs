@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -611,6 +612,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			for (int i = 0; i < array.Length; i++)
 			{
 				array[i].ToLower();
+			}
+		}
+
+		private static void AppendNamePart(string part, StringBuilder name)
+		{
+			foreach (char c in part)
+			{
+				if (c == '\\')
+				{
+					name.Append('\\');
+				}
+				name.Append(c);
 			}
 		}
 

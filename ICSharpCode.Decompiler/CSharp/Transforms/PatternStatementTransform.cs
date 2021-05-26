@@ -348,10 +348,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var itemVariable = m.Get<IdentifierExpression>("itemVariable").Single().GetILVariable();
 			var indexVariable = m.Get<IdentifierExpression>("indexVariable").Single().GetILVariable();
 			var arrayVariable = m.Get<IdentifierExpression>("arrayVariable").Single().GetILVariable();
-			var loopContainer = forStatement.Annotation<IL.BlockContainer>();
 			if (itemVariable == null || indexVariable == null || arrayVariable == null)
 				return null;
-			if (arrayVariable.Type.Kind != TypeKind.Array)
+			if (arrayVariable.Type.Kind != TypeKind.Array && !arrayVariable.Type.IsKnownType(KnownTypeCode.String))
 				return null;
 			if (!VariableCanBeUsedAsForeachLocal(itemVariable, forStatement))
 				return null;
