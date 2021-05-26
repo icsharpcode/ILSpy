@@ -19,6 +19,7 @@
 #nullable enable
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -81,7 +82,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// For .NET Core framework references, the WholeProjectDecompiler will omit the
 		/// assembly reference if the runtimePack is already included as an SDK.
 		/// </summary>
-		public virtual bool IsSharedAssembly(IAssemblyReference reference, out string? runtimePack)
+		public virtual bool IsSharedAssembly(IAssemblyReference reference, [NotNullWhen(true)] out string? runtimePack)
 		{
 			runtimePack = null;
 			return false;

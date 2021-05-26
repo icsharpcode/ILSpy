@@ -72,6 +72,7 @@
     <Compile Include="..\ICSharpCode.Decompiler\Metadata\LightJson\Serialization\TextScanner.cs" Link="Decompiler\LightJson\Serialization\TextScanner.cs" />
     <Compile Include="..\ICSharpCode.Decompiler\Metadata\UniversalAssemblyResolver.cs" Link="UniversalAssemblyResolver.cs" />
     <Compile Include="..\ICSharpCode.Decompiler\Util\EmptyList.cs" Link="Decompiler\EmptyList.cs" />
+    <Compile Include="..\ICSharpCode.Decompiler\Util\NullAttributes.cs" Link="NullAttributes.cs" />
     <Compile Include="..\ILSpy\NativeMethods.cs" Link="NativeMethods.cs" />
     <Compile Include="Commands\AssemblyReferenceForILSpy.cs" />
     <Compile Include="Commands\NuGetReferenceForILSpy.cs" />
