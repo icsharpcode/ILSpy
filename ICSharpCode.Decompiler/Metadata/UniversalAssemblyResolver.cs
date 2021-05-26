@@ -483,19 +483,17 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			if (reference.PublicKeyToken == null)
 				return null;
+			if (version == null)
+				return null;
 
 			string? path;
 			if (decompilerRuntime == DecompilerRuntime.Mono)
 			{
 				path = GetMonoMscorlibBasePath(version);
 			}
-			else if (version != null)
-			{
-				path = GetMscorlibBasePath(version, reference.PublicKeyToken.ToHexString(8));
-			}
 			else
 			{
-				path = null;
+				path = GetMscorlibBasePath(version, reference.PublicKeyToken.ToHexString(8));
 			}
 
 			if (path == null)
@@ -565,7 +563,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		string? GetMonoMscorlibBasePath(Version? version)
+		string? GetMonoMscorlibBasePath(Version version)
 		{
 			var path = Directory.GetParent(typeof(object).Module.FullyQualifiedName).Parent.FullName;
 			if (version.Major == 1)
@@ -683,12 +681,13 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			var gac_folder = new StringBuilder()
 				.Append(prefix)
-				.Append(reference.Version)
-				.Append("__");
-
-			for (int i = 0; i < reference.PublicKeyToken.Length; i++)
-				gac_folder.Append(reference.PublicKeyToken[i].ToString("x2"));
-
+				.Append(reference.Version);
+			if (reference.PublicKeyToken != null)
+			{
+				gac_folder.Append("__");
+				for (int i = 0; i < reference.PublicKeyToken.Length; i++)
+					gac_folder.Append(reference.PublicKeyToken[i].ToString("x2"));
+			}
 			return Path.Combine(
 				Path.Combine(
 					Path.Combine(gac, reference.Name), gac_folder.ToString()),
