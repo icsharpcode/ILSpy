@@ -1200,7 +1200,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					bool isLifted = NullableType.IsNullable(argumentType);
 					return (() => underlyingType.IsKnownType(KnownTypeCode.Boolean)
 						? Comp.LogicNot(argument(), isLifted)
-						: new BitNot(argument(), isLifted, underlyingType.GetStackType()), argumentType);
+						: (ILInstruction)new BitNot(argument(), isLifted, underlyingType.GetStackType()), argumentType);
 				case 2:
 					if (!MatchGetMethodFromHandle(invocation.Arguments[1], out var method))
 						return (null, SpecialType.UnknownType);
