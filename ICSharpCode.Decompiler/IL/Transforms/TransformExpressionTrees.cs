@@ -499,7 +499,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case 2:
 					if (op == BinaryNumericOperator.ShiftLeft || op == BinaryNumericOperator.ShiftRight)
 					{
-						if (!rightType.IsKnownType(KnownTypeCode.Int32))
+						if (!NullableType.GetUnderlyingType(rightType).IsKnownType(KnownTypeCode.Int32))
 							return (null, SpecialType.UnknownType);
 					}
 					else
@@ -507,7 +507,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (!rightType.Equals(leftType))
 							return (null, SpecialType.UnknownType);
 					}
-					return (() => new BinaryNumericInstruction(op, left(), right(), isChecked == true, leftType.GetSign()), leftType);
+					return (() => new BinaryNumericInstruction(op, left(), right(),
+						NullableType.GetUnderlyingType(leftType).GetStackType(),
+						NullableType.GetUnderlyingType(rightType).GetStackType(),
+						isChecked == true,
+						leftType.GetSign(),
+						isLifted: NullableType.IsNullable(leftType) || NullableType.IsNullable(rightType)), leftType);
 				case 3:
 					if (!MatchGetMethodFromHandle(invocation.Arguments[2], out method))
 						return (null, SpecialType.UnknownType);
@@ -1188,10 +1193,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var (argument, argumentType) = ConvertInstruction(invocation.Arguments[0]);
 			if (argument == null)
 				return (null, SpecialType.UnknownType);
+			var underlyingType = NullableType.GetUnderlyingType(argumentType);
 			switch (invocation.Arguments.Count)
 			{
 				case 1:
-					return (() => argumentType.IsKnownType(KnownTypeCode.Boolean) ? Comp.LogicNot(argument()) : (ILInstruction)new BitNot(argument()), argumentType);
+					bool isLifted = NullableType.IsNullable(argumentType);
+					return (() => underlyingType.IsKnownType(KnownTypeCode.Boolean)
+						? Comp.LogicNot(argument(), isLifted)
+						: new BitNot(argument(), isLifted, underlyingType.GetStackType()), argumentType);
 				case 2:
 					if (!MatchGetMethodFromHandle(invocation.Arguments[1], out var method))
 						return (null, SpecialType.UnknownType);
@@ -1292,6 +1301,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case 1:
 					ILInstruction left;
 					var underlyingType = NullableType.GetUnderlyingType(argumentType);
+
 					switch (underlyingType.GetStackType())
 					{
 						case StackType.I4:
@@ -1315,7 +1325,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						default:
 							return (null, SpecialType.UnknownType);
 					}
-					return (() => new BinaryNumericInstruction(op, left, argument(), isChecked == true, argumentType.GetSign()), argumentType);
+					return (() => new BinaryNumericInstruction(op, left, argument(),
+						underlyingType.GetStackType(),
+						underlyingType.GetStackType(),
+						isChecked == true,
+						argumentType.GetSign(),
+						isLifted: NullableType.IsNullable(argumentType)), argumentType);
 				case 2:
 					if (!MatchGetMethodFromHandle(invocation.Arguments[1], out var method))
 						return (null, SpecialType.UnknownType);

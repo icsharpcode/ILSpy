@@ -223,6 +223,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return new Comp(ComparisonKind.Equality, Sign.None, arg, new LdcI4(0));
 		}
+
+		public static Comp LogicNot(ILInstruction arg, bool isLifted)
+		{
+			var liftingKind = isLifted ? ComparisonLiftingKind.ThreeValuedLogic : ComparisonLiftingKind.None;
+			return new Comp(ComparisonKind.Equality, liftingKind, StackType.I4, Sign.None, arg, new LdcI4(0));
+		}
 	}
 }
 
