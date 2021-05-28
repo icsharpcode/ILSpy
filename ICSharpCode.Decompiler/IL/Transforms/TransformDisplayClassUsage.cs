@@ -652,8 +652,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					.FirstOrDefault(t => t.IsThis() && t.Type.GetDefinition() == decompilationContext.CurrentTypeDefinition);
 				if (thisVar == null)
 				{
-					thisVar = new ILVariable(VariableKind.Parameter, decompilationContext.CurrentTypeDefinition, -1) { Name = "this" };
+					thisVar = new ILVariable(VariableKind.Parameter, decompilationContext.CurrentTypeDefinition, -1) {
+						Name = "this", StateMachineField = thisField
+					};
 					function.Variables.Add(thisVar);
+				}
+				else if (thisVar.StateMachineField != null && displayClass.VariablesToDeclare.ContainsKey(thisVar.StateMachineField))
+				{
+					// "this" was already added previously, no need to add it twice.
+					return displayClass;
 				}
 				VariableToDeclare variableToDeclare = new VariableToDeclare(displayClass, thisField, thisVar);
 				displayClass.VariablesToDeclare.Add(thisField, variableToDeclare);
