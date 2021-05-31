@@ -900,6 +900,50 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(null, () => a == b);
 			ToCode(null, () => (Guid)a == (Guid)b);
 		}
+
+		public void NullableLifting_UnaryOperators()
+		{
+			ToCode(null, (int? a) => -a);
+			ToCode(null, (int? a) => ~a);
+			ToCode(null, (byte? a) => -(int?)a);
+			ToCode(null, (byte? a) => ~(int?)a);
+			ToCode(null, (short? a) => -(int?)a);
+			ToCode(null, (short? a) => ~(int?)a);
+			ToCode(null, (long? a) => -a);
+			ToCode(null, (long? a) => ~a);
+			ToCode(null, (uint? a) => -(long?)a);
+			ToCode(null, (uint? a) => ~a);
+			ToCode(null, (sbyte? a) => -(int?)a);
+			ToCode(null, (sbyte? a) => ~(int?)a);
+			ToCode(null, (ushort? a) => -(int?)a);
+			ToCode(null, (ushort? a) => ~(int?)a);
+			ToCode(null, (ulong? a) => ~a);
+			ToCode(null, (bool? a) => !a);
+		}
+
+		public void NullableLifting_Arithmetic_BinaryOperators()
+		{
+			ToCode(null, (int? a) => a + (int?)1);
+			ToCode(null, (int? a) => a + a);
+			ToCode(null, (int? a) => a - (int?)1);
+			ToCode(null, (int? a) => a - a);
+			ToCode(null, (int? a) => a * (int?)2);
+			ToCode(null, (int? a) => a * a);
+			ToCode(null, (int? a) => a / (int?)2);
+			ToCode(null, (int? a) => a / a);
+			ToCode(null, (int? a) => a % (int?)2);
+			ToCode(null, (int? a) => a % a);
+			ToCode(null, (int? a) => a << (int?)2);
+			ToCode(null, (int? a) => a << a);
+			ToCode(null, (int? a) => a >> (int?)2);
+			ToCode(null, (int? a) => a >> a);
+			ToCode(null, (int? a) => a ^ (int?)2);
+			ToCode(null, (int? a) => a ^ a);
+			ToCode(null, (int? a) => a | (int?)2);
+			ToCode(null, (int? a) => a | a);
+			ToCode(null, (int? a) => a & (int?)2);
+			ToCode(null, (int? a) => a & a);
+		}
 	}
 
 	internal static class Extensions

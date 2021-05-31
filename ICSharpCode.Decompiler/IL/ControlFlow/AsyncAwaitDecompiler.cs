@@ -815,9 +815,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void CheckSetResultAndExit(BlockContainer blockContainer, Block block, ref int pos)
 		{
+			// [optional] call Complete(ldflda <>t__builder(ldloc this)) (Roslyn >=3.9)
 			// call SetResult(ldflda <>t__builder(ldloc this), ldloc result)
 			// [optional] call Complete(ldflda <>t__builder(ldloc this))
 			// leave IL_0000
+			MatchCompleteCall(block, ref pos);
 			if (!MatchCall(block.Instructions[pos], "SetResult", out var args))
 				throw new SymbolicAnalysisFailedException();
 			if (!IsBuilderOrPromiseFieldOnThis(args[0]))
@@ -846,12 +848,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					break;
 			}
 			pos++;
-			if (MatchCall(block.Instructions[pos], "Complete", out args))
-			{
-				if (!(args.Count == 1 && IsBuilderFieldOnThis(args[0])))
-					throw new SymbolicAnalysisFailedException();
-				pos++;
-			}
+			MatchCompleteCall(block, ref pos);
 			if (!block.Instructions[pos].MatchLeave(blockContainer))
 				throw new SymbolicAnalysisFailedException();
 		}
@@ -913,6 +910,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 			MatchHoistedLocalCleanup(catchBlock, ref pos);
+			// [optional] call Complete(ldfld <>t__builder(ldloc this))
+			MatchCompleteCall(catchBlock, ref pos);
+
 			// call SetException(ldfld <>t__builder(ldloc this), ldloc exception)
 			if (!MatchCall(catchBlock.Instructions[pos], "SetException", out var args))
 				throw new SymbolicAnalysisFailedException();
@@ -925,12 +925,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			pos++;
 			// [optional] call Complete(ldfld <>t__builder(ldloc this))
-			if (MatchCall(catchBlock.Instructions[pos], "Complete", out args))
-			{
-				if (!(args.Count == 1 && IsBuilderFieldOnThis(args[0])))
-					throw new SymbolicAnalysisFailedException();
-				pos++;
-			}
+			MatchCompleteCall(catchBlock, ref pos);
 
 			// leave IL_0000
 			if (!catchBlock.Instructions[pos].MatchLeave((BlockContainer)moveNextFunction.Body))
@@ -938,6 +933,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			blocksAnalyzed[catchBlock.ChildIndex] = true;
 			if (!blocksAnalyzed.All(b => b))
 				throw new SymbolicAnalysisFailedException();
+		}
+
+		private void MatchCompleteCall(Block block, ref int pos)
+		{
+			if (MatchCall(block.Instructions[pos], "Complete", out var args))
+			{
+				if (!(args.Count == 1 && IsBuilderFieldOnThis(args[0])))
+					throw new SymbolicAnalysisFailedException();
+				pos++;
+			}
 		}
 
 		bool IsBuilderFieldOnThis(ILInstruction inst)

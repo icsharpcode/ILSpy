@@ -22,7 +22,6 @@ using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler.Metadata;
@@ -37,7 +36,7 @@ namespace ICSharpCode.ILSpy.Commands
 		public void Execute(TextViewContext context)
 		{
 			int token = GetSelectedToken(context.DataGrid, out PEFile module).Value;
-			MainWindow.Instance.JumpToReference(new EntityReference("metadata", module.FileName, MetadataTokens.Handle(token)));
+			MainWindow.Instance.JumpToReference(new EntityReference(module, MetadataTokens.Handle(token), protocol: "metadata"));
 		}
 
 		public bool IsEnabled(TextViewContext context)

@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -257,7 +258,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Find an assembly that was previously opened.
 		/// </summary>
-		public LoadedAssembly FindAssembly(string file)
+		public LoadedAssembly? FindAssembly(string file)
 		{
 			file = Path.GetFullPath(file);
 			lock (lockObj)
@@ -295,7 +296,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Opens an assembly from a stream.
 		/// </summary>
-		public LoadedAssembly OpenAssembly(string file, Stream stream, bool isAutoLoaded = false)
+		public LoadedAssembly OpenAssembly(string file, Stream? stream, bool isAutoLoaded = false)
 		{
 			file = Path.GetFullPath(file);
 			return OpenAssembly(file, () => {
@@ -339,7 +340,7 @@ namespace ICSharpCode.ILSpy
 		/// Replace the assembly object model from a crafted stream, without disk I/O
 		/// Returns null if it is not already loaded.
 		/// </summary>
-		public LoadedAssembly HotReplaceAssembly(string file, Stream stream)
+		public LoadedAssembly? HotReplaceAssembly(string file, Stream stream)
 		{
 			App.Current.Dispatcher.VerifyAccess();
 			file = Path.GetFullPath(file);
@@ -351,7 +352,7 @@ namespace ICSharpCode.ILSpy
 				if (index < 0)
 					return null;
 
-				var newAsm = new LoadedAssembly(this, file, stream: Task.FromResult(stream));
+				var newAsm = new LoadedAssembly(this, file, stream: Task.FromResult<Stream?>(stream));
 				newAsm.IsAutoLoaded = target.IsAutoLoaded;
 
 				Debug.Assert(newAsm.FileName == file);
@@ -361,7 +362,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public LoadedAssembly ReloadAssembly(string file)
+		public LoadedAssembly? ReloadAssembly(string file)
 		{
 			App.Current.Dispatcher.VerifyAccess();
 			file = Path.GetFullPath(file);
@@ -373,7 +374,7 @@ namespace ICSharpCode.ILSpy
 			return ReloadAssembly(target);
 		}
 
-		public LoadedAssembly ReloadAssembly(LoadedAssembly target)
+		public LoadedAssembly? ReloadAssembly(LoadedAssembly target)
 		{
 			App.Current.Dispatcher.VerifyAccess();
 			var index = this.assemblies.IndexOf(target);

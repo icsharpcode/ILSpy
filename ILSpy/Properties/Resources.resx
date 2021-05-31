@@ -849,6 +849,9 @@ Do you want to continue?</value>
   <data name="StringTable" xml:space="preserve">
     <value>String Table</value>
   </data>
+  <data name="StyleTheWindowTitleBar" xml:space="preserve">
+    <value>Style the window title bar</value>
+  </data>
   <data name="TabSize" xml:space="preserve">
     <value>Tab size:</value>
   </data>

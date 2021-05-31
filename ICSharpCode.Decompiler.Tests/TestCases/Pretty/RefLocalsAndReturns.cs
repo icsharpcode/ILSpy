@@ -98,6 +98,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			}
 
+			public readonly int ReadOnlyPropertyWithOnlyGetter {
+				get {
+					Console.WriteLine("No inlining");
+					return 1;
+				}
+			}
+
 			public ref int RefProperty => ref arr[0];
 			public ref readonly int RefReadonlyProperty => ref arr[0];
 			public readonly ref int ReadonlyRefProperty => ref arr[0];

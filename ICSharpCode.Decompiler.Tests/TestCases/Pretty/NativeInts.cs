@@ -200,5 +200,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			intptr = intPtr;
 			i = num + 1;
 		}
+
+		public nint NegateUnsigned(nuint x)
+		{
+			return (nint)(0 - x);
+		}
 	}
 }
