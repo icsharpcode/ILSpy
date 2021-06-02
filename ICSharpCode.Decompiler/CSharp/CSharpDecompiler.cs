@@ -117,7 +117,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				},
 				// re-run DetectExitPoints after loop detection
-				new DetectExitPoints(canIntroduceExitForReturn: true),
+				new DetectExitPoints(canIntroduceExitForReturn: false),
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
 						new ConditionDetection(),
@@ -159,6 +159,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new TransformDisplayClassUsage(),
 				new HighLevelLoopTransform(),
 				new ReduceNestingTransform(),
+				new RemoveRedundantReturn(),
 				new IntroduceDynamicTypeOnLocals(),
 				new IntroduceNativeIntTypeOnLocals(),
 				new AssignVariableNames(),

@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -76,7 +75,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			else if (slot == TryInstruction.TryBlockSlot
 			  || slot == TryCatchHandler.BodySlot
 			  || slot == TryCatch.HandlerSlot
-			  || slot == PinnedRegion.BodySlot)
+			  || slot == PinnedRegion.BodySlot
+			  || slot == UsingInstruction.BodySlot
+			  || slot == LockInstruction.BodySlot)
 			{
 				return GetExit(inst.Parent);
 			}

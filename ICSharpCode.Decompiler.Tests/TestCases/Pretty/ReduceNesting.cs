@@ -198,17 +198,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					case 1:
 						Console.WriteLine("case 1");
 						return;
-				}
-
-				if (B(1))
-				{
-					Console.WriteLine(1);
+					default:
+						if (B(1))
+						{
+							Console.WriteLine(1);
+						}
+						return;
 				}
 			}
-			else
-			{
-				Console.WriteLine("else");
-			}
+			Console.WriteLine("else");
 		}
 
 		// nesting should not be reduced as maximum nesting level is 1
@@ -348,12 +346,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 				Console.WriteLine();
 
-				if (B(1))
+				if (!B(1))
 				{
-					for (int i = 0; i < 10; i++)
-					{
-						Console.WriteLine(i);
-					}
+					return;
+				}
+				for (int i = 0; i < 10; i++)
+				{
+					Console.WriteLine(i);
 				}
 			}
 			catch

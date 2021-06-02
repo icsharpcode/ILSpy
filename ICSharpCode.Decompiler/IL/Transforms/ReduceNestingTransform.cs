@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.IL
 				var inst = block.Instructions[i];
 
 				// the next instruction to be executed. Transformations will change the next instruction, so this is a method instead of a variable
-				ILInstruction NextInsn() => i + 1 < block.Instructions.Count ? block.Instructions[i + 1] : nextInstruction;
+				ILInstruction NextInsn() => block.Instructions.ElementAtOrDefault(i + 1) ?? nextInstruction;
 
 				switch (inst)
 				{
@@ -103,10 +103,14 @@ namespace ICSharpCode.Decompiler.IL
 						// visit the contents of the container
 						Visit(container, continueTarget);
 
+						if (container.Kind == ContainerKind.Switch)
+						{
+							RemoveRedundantReturn.ReturnToBreak(block, container, context);
+						}
 						// reduce nesting in switch blocks
 						if (container.Kind == ContainerKind.Switch &&
-								CanDuplicateExit(NextInsn(), continueTarget, out var keywordExit1) &&
-								ReduceSwitchNesting(block, container, keywordExit1))
+							CanDuplicateExit(NextInsn(), continueTarget, out var keywordExit1) &&
+							ReduceSwitchNesting(block, container, keywordExit1))
 						{
 							RemoveRedundantExit(block, nextInstruction);
 						}

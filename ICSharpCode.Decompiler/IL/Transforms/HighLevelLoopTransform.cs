@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.Util;
@@ -39,18 +38,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			this.context = context;
 
-			foreach (var loop in function.Descendants.OfType<BlockContainer>())
+			foreach (var block in function.Descendants.OfType<Block>())
 			{
-				if (loop.Kind != ContainerKind.Loop)
-					continue;
-				if (MatchWhileLoop(loop, out var condition, out var loopBody))
+				for (int i = 0; i < block.Instructions.Count; i++)
 				{
-					if (context.Settings.ForStatement)
-						MatchForLoop(loop, condition, loopBody);
-					continue;
+					var loop = block.Instructions[i] as BlockContainer;
+					if (loop == null || loop.Kind != ContainerKind.Loop)
+						continue;
+					// convert a "return" to a "break" so that we can match the high-level
+					// loop patterns
+					RemoveRedundantReturn.ReturnToBreak(block, loop, context);
+					if (MatchWhileLoop(loop, out var condition, out var loopBody))
+					{
+						if (context.Settings.ForStatement)
+							MatchForLoop(loop, condition, loopBody);
+						continue;
+					}
+					if (context.Settings.DoWhileStatement && MatchDoWhileLoop(loop))
+						continue;
 				}
-				if (context.Settings.DoWhileStatement && MatchDoWhileLoop(loop))
-					continue;
 			}
 		}
 
