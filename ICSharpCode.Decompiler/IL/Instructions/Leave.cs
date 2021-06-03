@@ -83,11 +83,15 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		/// <summary>
-		/// Gets whether the leave instruction is leaving the whole ILFunction.
+		/// Gets whether the leave instruction is directly leaving the whole ILFunction.
 		/// (TargetContainer == main container of the function).
 		/// 
 		/// This is only valid for functions returning void (representing value-less "return;"),
 		/// and for iterators (representing "yield break;").
+		/// 
+		/// Note: returns false for leave instructions that indirectly leave the function
+		/// (e.g. leaving a try block, and the try-finally construct is immediately followed
+		/// by another leave instruction)
 		/// </summary>
 		public bool IsLeavingFunction {
 			get { return targetContainer?.Parent is ILFunction; }

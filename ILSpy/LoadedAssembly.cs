@@ -473,7 +473,7 @@ namespace ICSharpCode.ILSpy
 					return module;
 				}
 
-				string file = parent.GetUniversalResolver().FindAssemblyFile(reference);
+				string? file = parent.GetUniversalResolver().FindAssemblyFile(reference);
 
 				if (file != null)
 				{

@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -73,7 +75,7 @@ namespace ICSharpCode.Decompiler.IL
 		public struct Enumerator : IEnumerator<T>
 		{
 #if DEBUG
-			ILInstruction parentInstruction;
+			ILInstruction? parentInstruction;
 #endif
 			readonly List<T> list;
 			int pos;
@@ -140,7 +142,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Runs in O(1) if the item can be found using the Parent/ChildIndex properties.
 		/// Otherwise, runs in O(N).
 		/// </remarks>
-		public int IndexOf(T item)
+		public int IndexOf(T? item)
 		{
 			if (item == null)
 			{
@@ -163,7 +165,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// This method searches the list.
 		/// Usually it's more efficient to test item.Parent instead!
 		/// </remarks>
-		public bool Contains(T item)
+		public bool Contains(T? item)
 		{
 			return IndexOf(item) >= 0;
 		}
@@ -395,7 +397,7 @@ namespace ICSharpCode.Decompiler.IL
 			return list[0];
 		}
 
-		public T FirstOrDefault()
+		public T? FirstOrDefault()
 		{
 			return list.Count > 0 ? list[0] : null;
 		}
@@ -405,17 +407,17 @@ namespace ICSharpCode.Decompiler.IL
 			return list[list.Count - 1];
 		}
 
-		public T LastOrDefault()
+		public T? LastOrDefault()
 		{
 			return list.Count > 0 ? list[list.Count - 1] : null;
 		}
 
-		public T SecondToLastOrDefault()
+		public T? SecondToLastOrDefault()
 		{
 			return list.Count > 1 ? list[list.Count - 2] : null;
 		}
 
-		public T ElementAtOrDefault(int index)
+		public T? ElementAtOrDefault(int index)
 		{
 			if (index >= 0 && index < list.Count)
 				return list[index];
