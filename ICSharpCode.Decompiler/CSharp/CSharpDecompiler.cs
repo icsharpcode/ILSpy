@@ -94,6 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
 				new DetectCatchWhenConditionBlocks(), // must run after inlining but before loop detection
 				new DetectExitPoints(canIntroduceExitForReturn: false),
+				new LdLocaDupInitObjTransform(),
 				new EarlyExpressionTransforms(),
 				// RemoveDeadVariableInit must run after EarlyExpressionTransforms so that stobj(ldloca V, ...)
 				// is already collapsed into stloc(V, ...).

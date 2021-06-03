@@ -281,5 +281,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return ulong.MaxValue.ToString();
 		}
+
+		public static void M4()
+		{
+			Test(default(DateTime).GetType());
+			Test(default(DateTime).ToString());
+		}
+
+		public static void Test(object x)
+		{
+		}
 	}
 }
