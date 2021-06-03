@@ -103,10 +103,6 @@ namespace ICSharpCode.Decompiler.IL
 						// visit the contents of the container
 						Visit(container, continueTarget);
 
-						if (container.Kind == ContainerKind.Switch)
-						{
-							RemoveRedundantReturn.ReturnToBreak(block, container, context);
-						}
 						// reduce nesting in switch blocks
 						if (container.Kind == ContainerKind.Switch &&
 							CanDuplicateExit(NextInsn(), continueTarget, out var keywordExit1) &&

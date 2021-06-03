@@ -52,13 +52,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		static readonly Nop ExitNotYetDetermined = new Nop { Comment = "ExitNotYetDetermined" };
 		static readonly Nop NoExit = new Nop { Comment = "NoExit" };
 
-		bool canIntroduceExitForReturn;
-
-		public DetectExitPoints(bool canIntroduceExitForReturn)
-		{
-			this.canIntroduceExitForReturn = canIntroduceExitForReturn;
-		}
-
 		/// <summary>
 		/// Gets the next instruction after <paramref name="inst"/> is executed.
 		/// Returns NoExit when the next instruction cannot be identified;
@@ -214,12 +207,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		static ILInstruction ChooseExit(List<ILInstruction> potentialExits)
 		{
 			ILInstruction first = potentialExits[0];
-			if (first is Leave l && l.IsLeavingFunction)
+			if (first is Leave { IsLeavingFunction: true })
 			{
 				for (int i = 1; i < potentialExits.Count; i++)
 				{
 					var exit = potentialExits[i];
-					if (!(exit is Leave l2 && l2.IsLeavingFunction))
+					if (!(exit is Leave { IsLeavingFunction: true }))
 						return exit;
 				}
 			}
@@ -256,9 +249,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// we can't introduce any additional exits
 				return false;
 			}
-			if (inst is Leave l && l.IsLeavingFunction)
+			if (inst is Leave { IsLeavingFunction: true })
 			{
-				return canIntroduceExitForReturn;
+				// Only convert 'return;' to an exit in a context where we can turn it into 'break;'.
+				// In other contexts we risk turning it into 'goto'.
+				return currentContainer.Kind != ContainerKind.Normal;
 			}
 			else
 			{
