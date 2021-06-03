@@ -18,7 +18,6 @@
 
 #nullable enable
 
-using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler.IL.Transforms;
@@ -59,26 +58,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			bool result = false;
 			switch (inst)
 			{
-				case BlockContainer c:
-					if (c.Kind != ContainerKind.Normal)
+				case BlockContainer c when c.Kind == ContainerKind.Normal:
+					// body of try block, or similar: recurse into last instruction in container
+					// Note: no need to handle loops/switches here; those already were handled by DetectExitPoints
+					Block lastBlock = c.Blocks.Last();
+					if (lastBlock.Instructions.Last() is Leave { IsLeavingFunction: true, Value: Nop } leave)
 					{
-						// loop or switch: turn all "return" into "break"
-						result |= ReturnToLeaveInContainer(c);
+						leave.TargetContainer = c;
+						result = true;
 					}
-					else
+					else if (ConvertReturnToFallthrough(lastBlock.Instructions.Last()))
 					{
-						// body of try block, or similar: recurse into last instruction in container
-						Block lastBlock = c.Blocks.Last();
-						if (lastBlock.Instructions.Last() is Leave { IsLeavingFunction: true, Value: Nop } leave)
-						{
-							leave.TargetContainer = c;
-							result = true;
-						}
-						else if (ConvertReturnToFallthrough(lastBlock.Instructions.Last()))
-						{
-							lastBlock.Instructions.Add(new Leave(c));
-							result = true;
-						}
+						lastBlock.Instructions.Add(new Leave(c));
+						result = true;
 					}
 					break;
 				case TryCatch tryCatch:
@@ -118,68 +110,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 			return result;
-		}
-
-		/// <summary>
-		/// Transforms
-		///   loop { ... if (x) return; .. }
-		/// to
-		///   loop { ... if (x) break; .. } return;
-		/// </summary>
-		internal static void ReturnToBreak(Block parentBlock, BlockContainer loopOrSwitch, ILTransformContext context)
-		{
-			Debug.Assert(loopOrSwitch.Parent == parentBlock);
-			// This transform is only possible when the loop/switch doesn't already use "break;"
-			if (loopOrSwitch.LeaveCount != 0)
-				return;
-			// loopOrSwitch with LeaveCount==0 has unreachable exit point and thus must be last in block.
-			Debug.Assert(parentBlock.Instructions.Last() == loopOrSwitch);
-			var nearestFunction = parentBlock.Ancestors.OfType<ILFunction>().First();
-			if (nearestFunction.Body is BlockContainer functionContainer)
-			{
-				context.Step("pull return out of loop/switch: " + loopOrSwitch.EntryPoint.Label, loopOrSwitch);
-				if (ReturnToLeaveInContainer(loopOrSwitch))
-				{
-					// insert a return after the loop
-					parentBlock.Instructions.Add(new Leave(functionContainer));
-				}
-			}
-		}
-
-		private static bool ReturnToLeaveInContainer(BlockContainer c)
-		{
-			bool result = false;
-			foreach (var block in c.Blocks)
-			{
-				result |= ReturnToLeave(block, c);
-			}
-			return result;
-		}
-
-		private static bool ReturnToLeave(ILInstruction inst, BlockContainer c)
-		{
-			if (inst is Leave { IsLeavingFunction: true, Value: Nop } leave)
-			{
-				leave.TargetContainer = c;
-				return true;
-			}
-			else if (inst is BlockContainer nested && nested.Kind != ContainerKind.Normal)
-			{
-				return false;
-			}
-			else if (inst is ILFunction)
-			{
-				return false;
-			}
-			else
-			{
-				bool b = false;
-				foreach (var child in inst.Children)
-				{
-					b |= ReturnToLeave(child, c);
-				}
-				return b;
-			}
 		}
 	}
 }
