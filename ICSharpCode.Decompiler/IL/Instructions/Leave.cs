@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2014 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -32,9 +33,9 @@ namespace ICSharpCode.Decompiler.IL
 	/// </remarks>
 	partial class Leave : ILInstruction, IBranchOrLeaveInstruction
 	{
-		BlockContainer targetContainer;
+		BlockContainer? targetContainer;
 
-		public Leave(BlockContainer targetContainer, ILInstruction value = null) : base(OpCode.Leave)
+		public Leave(BlockContainer? targetContainer, ILInstruction? value = null) : base(OpCode.Leave)
 		{
 			// Note: ILReader will create Leave instructions with targetContainer==null to represent 'endfinally',
 			// the targetContainer will then be filled in by BlockBuilder
@@ -54,7 +55,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public BlockContainer TargetContainer {
-			get { return targetContainer; }
+			get { return targetContainer!; }
 			set {
 				if (targetContainer != null && IsConnected)
 					targetContainer.LeaveCount--;
@@ -109,8 +110,8 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(targetContainer));
-			Debug.Assert(phase <= ILPhase.InILReader || phase == ILPhase.InAsyncAwait || value.ResultType == targetContainer.ResultType);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(targetContainer!));
+			Debug.Assert(phase <= ILPhase.InILReader || phase == ILPhase.InAsyncAwait || value.ResultType == targetContainer!.ResultType);
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)

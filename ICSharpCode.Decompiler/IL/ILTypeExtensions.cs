@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2014 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -145,12 +146,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// 
 		/// Returns SpecialType.UnknownType for unsupported instructions.
 		/// </summary>
-		public static IType InferType(this ILInstruction inst, ICompilation compilation)
+		public static IType InferType(this ILInstruction inst, ICompilation? compilation)
 		{
 			switch (inst)
 			{
 				case NewObj newObj:
-					return newObj.Method.DeclaringType;
+					return newObj.Method.DeclaringType ?? SpecialType.UnknownType;
 				case NewArr newArr:
 					if (compilation != null)
 						return new ArrayType(compilation, newArr.Type, newArr.Indices.Count);

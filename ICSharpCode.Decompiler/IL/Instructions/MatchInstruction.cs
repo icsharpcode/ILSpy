@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2020 Siegfried Pammer
+﻿#nullable enable
+// Copyright (c) 2020 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -18,10 +19,9 @@
 
 using System;
 using System.Diagnostics;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 
 using ICSharpCode.Decompiler.TypeSystem;
-
 namespace ICSharpCode.Decompiler.IL
 {
 	partial class MatchInstruction : ILInstruction
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public MatchInstruction(ILVariable variable, ILInstruction testedOperand)
+		public MatchInstruction(ILVariable variable, ILInstruction? testedOperand)
 			: this(variable, method: null, testedOperand)
 		{
 		}
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// (even if the pattern fails to match!).
 		/// The pattern matching instruction evaluates to 1 (as I4) if the pattern matches, or 0 otherwise.
 		/// </summary>
-		public static bool IsPatternMatch(ILInstruction inst, out ILInstruction testedOperand)
+		public static bool IsPatternMatch(ILInstruction? inst, [NotNullWhen(true)] out ILInstruction? testedOperand)
 		{
 			switch (inst)
 			{
@@ -185,8 +185,8 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(SubPatterns.Count >= NumPositionalPatterns);
 			foreach (var subPattern in SubPatterns)
 			{
-				if (!IsPatternMatch(subPattern, out ILInstruction operand))
-					Debug.Fail("Sub-Pattern must be a valid pattern");
+				if (!IsPatternMatch(subPattern, out ILInstruction? operand))
+					throw new InvalidOperationException("Sub-Pattern must be a valid pattern");
 				// the first child is TestedOperand
 				int subPatternIndex = subPattern.ChildIndex - 1;
 				if (subPatternIndex < NumPositionalPatterns)

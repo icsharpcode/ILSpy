@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2020 Siegfried Pammer
+﻿#nullable enable
+// Copyright (c) 2020 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -47,9 +48,9 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(')');
 		}
 
-		MatchInstruction FindMatch()
+		MatchInstruction? FindMatch()
 		{
-			for (ILInstruction inst = this; inst != null; inst = inst.Parent)
+			for (ILInstruction? inst = this; inst != null; inst = inst.Parent)
 			{
 				if (inst.Parent is MatchInstruction match && inst != match.TestedOperand)
 					return match;
@@ -61,7 +62,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var matchInst = FindMatch();
 			Debug.Assert(matchInst != null && (matchInst.IsDeconstructCall || matchInst.IsDeconstructTuple));
-			Debug.Assert(Argument.MatchLdLoc(matchInst.Variable));
+			Debug.Assert(Argument.MatchLdLoc(matchInst!.Variable));
 			var outParamType = matchInst.GetDeconstructResultType(this.Index);
 			Debug.Assert(outParamType.GetStackType() == ResultType);
 		}

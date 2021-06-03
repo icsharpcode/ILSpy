@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.OpCode = opCode;
 		}
 
-		protected void ValidateChild(ILInstruction inst)
+		protected void ValidateChild(ILInstruction? inst)
 		{
 			if (inst == null)
 				throw new ArgumentNullException(nameof(inst));
