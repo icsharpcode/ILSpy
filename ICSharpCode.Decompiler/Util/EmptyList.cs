@@ -15,6 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+#nullable enable
 
 using System;
 using System.Collections;
@@ -91,11 +92,11 @@ namespace ICSharpCode.Decompiler.Util
 		}
 
 		T IEnumerator<T>.Current {
-			get { return default(T); }
+			get { throw new NotSupportedException(); }
 		}
 
 		object IEnumerator.Current {
-			get { return default(T); }
+			get { throw new NotSupportedException(); }
 		}
 
 		void IDisposable.Dispose()

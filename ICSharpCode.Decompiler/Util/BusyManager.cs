@@ -15,6 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+#nullable enable
 
 using System;
 using System.Collections.Generic;
@@ -36,9 +37,9 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			public static readonly BusyLock Failed = new BusyLock(null);
 
-			readonly List<object> objectList;
+			readonly List<object?>? objectList;
 
-			internal BusyLock(List<object> objectList)
+			internal BusyLock(List<object?>? objectList)
 			{
 				this.objectList = objectList;
 			}
@@ -56,13 +57,13 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
-		[ThreadStatic] static List<object> _activeObjects;
+		[ThreadStatic] static List<object?>? _activeObjects;
 
-		public static BusyLock Enter(object obj)
+		public static BusyLock Enter(object? obj)
 		{
-			List<object> activeObjects = _activeObjects;
+			List<object?>? activeObjects = _activeObjects;
 			if (activeObjects == null)
-				activeObjects = _activeObjects = new List<object>();
+				activeObjects = _activeObjects = new List<object?>();
 			for (int i = 0; i < activeObjects.Count; i++)
 			{
 				if (activeObjects[i] == obj)

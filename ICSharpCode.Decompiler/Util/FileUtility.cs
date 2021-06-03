@@ -16,7 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 
@@ -28,9 +31,10 @@ namespace ICSharpCode.Decompiler.Util
 		/// Gets the normalized version of fileName.
 		/// Slashes are replaced with backslashes, backreferences "." and ".." are 'evaluated'.
 		/// </summary>
-		public static string NormalizePath(string fileName)
+		[return: NotNullIfNotNull("fileName")]
+		public static string? NormalizePath(string? fileName)
 		{
-			if (string.IsNullOrEmpty(fileName))
+			if (fileName == null || fileName.Length == 0)
 				return fileName;
 
 			int i;
@@ -169,14 +173,14 @@ namespace ICSharpCode.Decompiler.Util
 				&& (fileName[1] == '\\' || fileName[1] == '/');
 		}
 
-		public static bool IsEqualFileName(string fileName1, string fileName2)
+		public static bool IsEqualFileName(string? fileName1, string? fileName2)
 		{
 			return string.Equals(NormalizePath(fileName1),
 								 NormalizePath(fileName2),
 								 StringComparison.OrdinalIgnoreCase);
 		}
 
-		public static bool IsBaseDirectory(string baseDirectory, string testDirectory)
+		public static bool IsBaseDirectory(string? baseDirectory, string? testDirectory)
 		{
 			if (baseDirectory == null || testDirectory == null)
 				return false;
@@ -189,9 +193,10 @@ namespace ICSharpCode.Decompiler.Util
 			return testDirectory.StartsWith(baseDirectory, StringComparison.OrdinalIgnoreCase);
 		}
 
-		static string AddTrailingSeparator(string input)
+		[return: NotNullIfNotNull("input")]
+		static string? AddTrailingSeparator(string? input)
 		{
-			if (string.IsNullOrEmpty(input))
+			if (input == null || input.Length == 0)
 				return input;
 			if (input[input.Length - 1] == Path.DirectorySeparatorChar || input[input.Length - 1] == Path.AltDirectorySeparatorChar)
 				return input;
@@ -212,9 +217,9 @@ namespace ICSharpCode.Decompiler.Util
 		/// Converts a given absolute path and a given base path to a path that leads
 		/// from the base path to the absoulte path. (as a relative path)
 		/// </summary>
-		public static string GetRelativePath(string baseDirectoryPath, string absPath)
+		public static string GetRelativePath(string? baseDirectoryPath, string absPath)
 		{
-			if (string.IsNullOrEmpty(baseDirectoryPath))
+			if (baseDirectoryPath == null || baseDirectoryPath.Length == 0)
 			{
 				return absPath;
 			}
@@ -252,7 +257,8 @@ namespace ICSharpCode.Decompiler.Util
 			return erg.ToString();
 		}
 
-		public static string TrimPath(string path, int max_chars)
+		[return: NotNullIfNotNull("path")]
+		public static string? TrimPath(string? path, int max_chars)
 		{
 			const char ellipsis = '\u2026'; // HORIZONTAL ELLIPSIS
 			const int ellipsisLength = 2;
