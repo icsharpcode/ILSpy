@@ -1310,7 +1310,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (operatorName == null)
 				return EmptyList<IMethod>.Instance;
 			TypeCode c = ReflectionHelper.GetTypeCode(type);
-			if (TypeCode.Boolean <= c && c <= TypeCode.Decimal || c == TypeCode.String)
+			if (TypeCode.Boolean <= c && c <= TypeCode.Decimal)
 			{
 				// The .NET framework contains some of C#'s built-in operators as user-defined operators.
 				// However, we must not use those as user-defined operators (we would skip numeric promotion).

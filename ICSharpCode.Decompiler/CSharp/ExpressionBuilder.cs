@@ -930,16 +930,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(inst);
 			}
 
-			OperatorResolveResult rr;
-			if (left.Type.IsKnownType(KnownTypeCode.String) && right.Type.IsKnownType(KnownTypeCode.String))
-			{
-				rr = null; // it's a string comparison by-value, which is not a reference comparison
-			}
-			else
-			{
-				rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
-					as OperatorResolveResult;
-			}
+			OperatorResolveResult rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult) as OperatorResolveResult;
 			if (rr == null || rr.IsError || rr.UserDefinedOperatorMethod != null
 				|| NullableType.GetUnderlyingType(rr.Operands[0].Type).GetStackType() != inst.InputType
 				|| !rr.Type.IsKnownType(KnownTypeCode.Boolean))
@@ -1021,7 +1012,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (lhs.Type.Kind == TypeKind.Null)
 				ExtensionMethods.Swap(ref lhs, ref rhs);
 			return rhs.Type.Kind == TypeKind.Null
-				&& (lhs.Type.Kind == TypeKind.Delegate || lhs.Type.IsKnownType(KnownTypeCode.String));
+				&& (lhs.Type.Kind == TypeKind.Delegate || lhs.Type.IsKnownType(KnownTypeCode.String))
+				&& lhs.Type.GetDefinition() != decompilationContext.CurrentTypeDefinition;
 		}
 
 		ExpressionWithResolveResult CreateBuiltinBinaryOperator(
