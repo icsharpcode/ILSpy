@@ -282,7 +282,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return ulong.MaxValue.ToString();
 		}
 
-		public static void M4()
+		public static void InliningDefaultValue()
 		{
 			Test(default(DateTime).GetType());
 			Test(default(DateTime).ToString());

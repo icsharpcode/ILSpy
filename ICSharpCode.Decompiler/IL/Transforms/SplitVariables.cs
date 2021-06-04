@@ -103,7 +103,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			switch (addressLoadingInstruction.Parent)
 			{
-				case LdObj ldobj:
+				case LdObj _:
+				case StObj stobj when stobj.Target == addressLoadingInstruction:
 					return AddressUse.Immediate;
 				case LdFlda ldflda:
 					return DetermineAddressUse(ldflda, targetVar);
