@@ -61,10 +61,10 @@ namespace ICSharpCode.Decompiler.IL
 		void AdditionalInvariants()
 		{
 			var matchInst = FindMatch();
-			Debug.Assert(matchInst != null && (matchInst.IsDeconstructCall || matchInst.IsDeconstructTuple));
-			Debug.Assert(Argument.MatchLdLoc(matchInst!.Variable));
+			DebugAssert(matchInst != null && (matchInst.IsDeconstructCall || matchInst.IsDeconstructTuple));
+			DebugAssert(Argument.MatchLdLoc(matchInst.Variable));
 			var outParamType = matchInst.GetDeconstructResultType(this.Index);
-			Debug.Assert(outParamType.GetStackType() == ResultType);
+			DebugAssert(outParamType.GetStackType() == ResultType);
 		}
 	}
 }

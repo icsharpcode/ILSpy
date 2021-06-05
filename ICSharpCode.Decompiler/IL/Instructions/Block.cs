@@ -124,10 +124,10 @@ namespace ICSharpCode.Decompiler.IL
 					foreach (var inst in Instructions)
 					{
 						var stloc = inst as StLoc;
-						Debug.Assert(stloc != null, "Instructions in CallWithNamedArgs must be assignments");
-						Debug.Assert(stloc!.Variable.Kind == VariableKind.NamedArgument);
-						Debug.Assert(stloc.Variable.IsSingleDefinition && stloc.Variable.LoadCount == 1);
-						Debug.Assert(stloc.Variable.LoadInstructions.Single().Parent == finalInstruction);
+						DebugAssert(stloc != null, "Instructions in CallWithNamedArgs must be assignments");
+						DebugAssert(stloc.Variable.Kind == VariableKind.NamedArgument);
+						DebugAssert(stloc.Variable.IsSingleDefinition && stloc.Variable.LoadCount == 1);
+						DebugAssert(stloc.Variable.LoadInstructions.Single().Parent == finalInstruction);
 					}
 					var call = (CallInstruction)finalInstruction;
 					if (call.IsInstanceCall)
@@ -144,9 +144,9 @@ namespace ICSharpCode.Decompiler.IL
 					Debug.Assert(Instructions[0].MatchStLoc(final!.Variable, out var init) && init.MatchNewArr(out type));
 					for (int i = 1; i < Instructions.Count; i++)
 					{
-						Debug.Assert(Instructions[i].MatchStObj(out ILInstruction? target, out _, out var t) && type != null && type.Equals(t));
-						Debug.Assert(target.MatchLdElema(out t, out ILInstruction? array) && type!.Equals(t));
-						Debug.Assert(array.MatchLdLoc(out ILVariable? v) && v == final.Variable);
+						DebugAssert(Instructions[i].MatchStObj(out ILInstruction? target, out _, out var t) && type != null && type.Equals(t));
+						DebugAssert(target.MatchLdElema(out t, out ILInstruction? array) && type.Equals(t));
+						DebugAssert(array.MatchLdLoc(out ILVariable? v) && v == final.Variable);
 					}
 					break;
 				case BlockKind.CollectionInitializer:

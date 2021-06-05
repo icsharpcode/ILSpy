@@ -26,14 +26,14 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public List<(string? Key, int Value)> Map { get; }
 
-		public StringToInt(ILInstruction? argument, List<(string? Key, int Value)> map)
+		public StringToInt(ILInstruction argument, List<(string? Key, int Value)> map)
 			: base(OpCode.StringToInt)
 		{
 			this.Argument = argument;
 			this.Map = map;
 		}
 
-		public StringToInt(ILInstruction? argument, string?[] map)
+		public StringToInt(ILInstruction argument, string?[] map)
 			: this(argument, ArrayToDictionary(map))
 		{
 		}

@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL
 		public int NumPositionalPatterns {
 			get {
 				if (IsDeconstructCall)
-					return method.Parameters.Count - (method.IsStatic ? 1 : 0);
+					return method!.Parameters.Count - (method.IsStatic ? 1 : 0);
 				else if (IsDeconstructTuple)
 					return TupleType.GetTupleElementTypes(variable.Type).Length;
 				else
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public MatchInstruction(ILVariable variable, ILInstruction? testedOperand)
+		public MatchInstruction(ILVariable variable, ILInstruction testedOperand)
 			: this(variable, method: null, testedOperand)
 		{
 		}
@@ -153,9 +153,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (this.IsDeconstructCall)
 			{
-				int firstOutParam = (method.IsStatic ? 1 : 0);
-				var outParamType = this.Method.Parameters[firstOutParam + index].Type;
-				if (!(outParamType is ByReferenceType brt))
+				int firstOutParam = (method!.IsStatic ? 1 : 0);
+				var outParamType = method.Parameters[firstOutParam + index].Type;
+				if (outParamType is not ByReferenceType brt)
 					throw new InvalidOperationException("deconstruct out param must be by reference");
 				return brt.ElementType;
 			}
@@ -210,8 +210,11 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		internal static bool IsDeconstructMethod(IMethod method)
+		internal static bool IsDeconstructMethod(IMethod? method)
 		{
+			if (method == null
+				)
+				return false;
 			if (method.Name != "Deconstruct")
 				return false;
 			if (method.ReturnType.Kind != TypeKind.Void)
@@ -260,7 +263,10 @@ namespace ICSharpCode.Decompiler.IL
 			if (IsDeconstructCall)
 			{
 				output.Write(".deconstruct[");
-				method.WriteTo(output);
+				if (method == null)
+					output.Write("<null>");
+				else
+					method.WriteTo(output);
 				output.Write(']');
 			}
 			if (IsDeconstructTuple)

@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 using ICSharpCode.Decompiler.IL.Patterns;
@@ -68,6 +69,16 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(!this.IsDescendantOf(inst), "ILAst must form a tree");
 			// If a call to ReplaceWith() triggers the "ILAst must form a tree" assertion,
 			// make sure to read the remarks on the ReplaceWith() method.
+		}
+
+		internal static void DebugAssert([DoesNotReturnIf(false)] bool b)
+		{
+			Debug.Assert(b);
+		}
+
+		internal static void DebugAssert([DoesNotReturnIf(false)] bool b, string msg)
+		{
+			Debug.Assert(b, msg);
 		}
 
 		[Conditional("DEBUG")]
@@ -494,7 +505,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			internal ChildrenEnumerator(ILInstruction inst)
 			{
-				Debug.Assert(inst != null);
+				DebugAssert(inst != null);
 				this.inst = inst;
 				this.pos = -1;
 				this.end = inst!.GetChildCount();
@@ -951,7 +962,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	public interface IInstructionWithMethodOperand
 	{
-		IMethod Method { get; }
+		IMethod? Method { get; }
 	}
 
 	public interface ILiftableInstruction

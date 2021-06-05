@@ -145,7 +145,7 @@ namespace ICSharpCode.Decompiler.IL
 		public DynamicConvertInstruction(CSharpBinderFlags binderFlags, IType type, IType? context, ILInstruction argument)
 			: base(OpCode.DynamicConvertInstruction, binderFlags, context)
 		{
-			Type = type;
+			this.type = type;
 			Argument = argument;
 		}
 
