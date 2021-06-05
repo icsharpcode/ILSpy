@@ -543,7 +543,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				argumentList.Arguments.ToList(), argumentList.ArgumentNames);
 
 			if (((AssignmentExpression)assignment).Left is IndexerExpression indexer && !indexer.Target.IsNull)
-				indexer.Target.ReplaceWith(n => null);
+				indexer.Target.Remove();
 
 			if (value != null)
 				return assignment;

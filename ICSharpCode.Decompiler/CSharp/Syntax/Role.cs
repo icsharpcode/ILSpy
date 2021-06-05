@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Threading;
 
@@ -64,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// Represents the role a node plays within its parent.
 	/// All nodes with this role have type T.
 	/// </summary>
-	public class Role<T> : Role where T : class
+	public class Role<T> : Role where T : class?
 	{
 		readonly string name; // helps with debugging the AST
 		readonly T nullObject;
@@ -86,21 +88,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return node is T;
 		}
 
+		[Obsolete("Use the other overload explicitly specifying the nullObject.")]
 		public Role(string name)
 		{
 			if (name == null)
 				throw new ArgumentNullException(nameof(name));
 			this.name = name;
+			this.nullObject = null!;
 		}
 
 		public Role(string name, T nullObject)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			if (nullObject == null)
-				throw new ArgumentNullException(nameof(nullObject));
+			this.name = name ?? throw new ArgumentNullException(nameof(name));
 			this.nullObject = nullObject;
-			this.name = name;
 		}
 
 		public override string ToString()

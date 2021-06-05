@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class LocalFunctionDeclarationStatement : Statement
 	{
-		public static readonly Role<MethodDeclaration> MethodDeclarationRole = new Role<MethodDeclaration>("Method");
+		public static readonly Role<MethodDeclaration> MethodDeclarationRole = new Role<MethodDeclaration>("Method", null);
 
 		public MethodDeclaration Declaration {
 			get { return GetChildByRole(MethodDeclarationRole); }
