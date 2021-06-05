@@ -234,6 +234,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilationCompleteInF1Seconds" xml:space="preserve">
     <value>Decompilation complete in {0:F1} seconds.</value>
   </data>
+  <data name="DecompilationWasCancelled" xml:space="preserve">
+    <value>Decompilation was cancelled.</value>
+  </data>
   <data name="Decompile" xml:space="preserve">
     <value>Decompile</value>
   </data>
@@ -537,6 +540,9 @@ Are you sure you want to continue?</value>
   <data name="ExpandUsingDeclarationsAfterDecompilation" xml:space="preserve">
     <value>Expand using declarations after decompilation</value>
   </data>
+  <data name="ExtractPackageEntry" xml:space="preserve">
+    <value>Extract package entry</value>
+  </data>
   <data name="Folding" xml:space="preserve">
     <value>Folding</value>
   </data>
@@ -657,6 +663,9 @@ Please disable all filters that might hide the item (i.e. activate "View &gt; Sh
   </data>
   <data name="OpenListDialog__Open" xml:space="preserve">
     <value>_Open</value>
+  </data>
+  <data name="OperationWasCancelled" xml:space="preserve">
+    <value>Operation was cancelled.</value>
   </data>
   <data name="Options" xml:space="preserve">
     <value>Options</value>
