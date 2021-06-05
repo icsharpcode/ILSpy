@@ -257,7 +257,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var otherLoadOfV = v.LoadInstructions.FirstOrDefault(l => !(l.Parent is Cpblk));
 				if (otherLoadOfV == null)
 					return false;
-				finalStore = otherLoadOfV.Parent.Extract();
+				finalStore = otherLoadOfV.Parent.Extract(context);
 				if (finalStore == null)
 					return false;
 				value = ((StLoc)finalStore.StoreInstructions[0]).Value;

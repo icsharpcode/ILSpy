@@ -24,6 +24,7 @@ using System.Diagnostics;
 using System.Threading;
 
 using ICSharpCode.Decompiler.IL.Patterns;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -899,9 +900,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// If extraction is not possible, the ILAst is left unmodified and the function returns null.
 		/// May return null if extraction is not possible.
 		/// </summary>
-		public ILVariable Extract()
+		public ILVariable Extract(ILTransformContext context)
 		{
-			return Transforms.ExtractionContext.Extract(this);
+			return Transforms.ExtractionContext.Extract(this, context);
 		}
 
 		/// <summary>

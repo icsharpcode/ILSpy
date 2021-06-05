@@ -412,18 +412,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public ILVariable RegisterVariable(VariableKind kind, IType type, string? name = null)
 		{
-			return RegisterVariable(kind, type, type.GetStackType(), name);
-		}
-
-		public ILVariable RegisterVariable(VariableKind kind, StackType stackType, string? name = null)
-		{
-			var type = Method.Compilation.FindType(stackType.ToKnownTypeCode());
-			return RegisterVariable(kind, type, stackType, name);
-		}
-
-		ILVariable RegisterVariable(VariableKind kind, IType type, StackType stackType, string? name = null)
-		{
-			var variable = new ILVariable(kind, type, stackType);
+			var variable = new ILVariable(kind, type);
 			if (string.IsNullOrWhiteSpace(name))
 			{
 				name = "I_" + (helperVariableCount++);
