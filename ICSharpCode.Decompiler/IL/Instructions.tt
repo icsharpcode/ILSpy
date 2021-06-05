@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 <#@ template debug="false" hostspecific="false" language="C#" #>
 <#@ assembly name="System.Core" #>
 <#@ import namespace="System.Linq" #>
@@ -32,7 +34,7 @@
 			AbstractBaseClass, CustomArguments(("left", null), ("right", null)), HasFlag("InstructionFlags.None")),
 		new OpCode("CallInstruction", "Instruction with a list of arguments.",
 			AbstractBaseClass, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}),
-			CustomWriteTo, MayThrow, SideEffect),
+			CustomConstructor, CustomWriteTo, MayThrow, SideEffect),
 		new OpCode("PatternInstruction", "Base class for pattern matching in ILAst.", AbstractBaseClass, ResultType("Unknown")) { Namespace = "ICSharpCode.Decompiler.IL.Patterns" },
 		new OpCode("CompoundAssignmentInstruction", "Common instruction for compound assignments.",
 			AbstractBaseClass, CustomConstructor, CustomArguments(("target", null), ("value", null))),
@@ -68,7 +70,7 @@
 				new ChildInfo("init") { CanInlineInto = true },
 				new ChildInfo("body")
 			}),
-			CustomInvariant("Debug.Assert(Variable.Kind == VariableKind.PinnedRegionLocal);")),
+			CustomInvariant("DebugAssert(Variable.Kind == VariableKind.PinnedRegionLocal);")),
 		new OpCode("binary", "Common instruction for add, sub, mul, div, rem, bit.and, bit.or, bit.xor, shl and shr.",
 			CustomClassName("BinaryNumericInstruction"), Binary, CustomWriteTo, CustomConstructor, CustomComputeFlags,
 			MatchCondition("CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && IsLifted == o.IsLifted")),
@@ -215,11 +217,11 @@
 		new OpCode("ldnull", "Loads the null reference.",
 			CustomClassName("LdNull"), NoArguments, ResultType("O")),
 		new OpCode("ldftn", "Load method pointer",
-			CustomClassName("LdFtn"), NoArguments, HasMethodOperand, ResultType("I")),
+			CustomClassName("LdFtn"), NoArguments, HasMethodOperand(), ResultType("I")),
 		new OpCode("ldvirtftn", "Load method pointer",
-			CustomClassName("LdVirtFtn"), Unary, HasMethodOperand, MayThrow, ResultType("I")),
+			CustomClassName("LdVirtFtn"), Unary, HasMethodOperand(), MayThrow, ResultType("I")),
 		new OpCode("ldvirtdelegate", "Virtual delegate construction",
-			CustomClassName("LdVirtDelegate"), Unary, HasTypeOperand, HasMethodOperand,
+			CustomClassName("LdVirtDelegate"), Unary, HasTypeOperand, HasMethodOperand(),
 			MayThrow, ResultType("O")),
 		new OpCode("ldtypetoken", "Loads runtime representation of metadata token",
 			CustomClassName("LdTypeToken"), NoArguments, HasTypeOperand, ResultType("O")),
@@ -287,7 +289,7 @@
 				+ "The input must be an object reference (O)." + Environment.NewLine
 				+ "If the input is an array/string, evaluates to a reference to the first element/character, or to a null reference if the array is null or empty." + Environment.NewLine
 				+ "Otherwise, uses the GetPinnableReference method to get the reference, or evaluates to a null reference if the input is null." + Environment.NewLine,
-			CustomArguments(("argument", new[] { "O" })), ResultType("Ref"), HasMethodOperand),
+			CustomArguments(("argument", new[] { "O" })), ResultType("Ref"), HasMethodOperand(nullable: true)),
 		new OpCode("string.to.int", "Maps a string value to an integer. This is used in switch(string).",
 			CustomArguments(("argument", new[] { "O" })), CustomConstructor, CustomWriteTo, ResultType("I4")),
 
@@ -297,7 +299,7 @@
 
 		new OpCode("user.logic.operator", "Use of user-defined &amp;&amp; or || operator.",
 			CustomClassName("UserDefinedLogicOperator"),
-			HasMethodOperand, ResultType("O"),
+			HasMethodOperand(), ResultType("O"),
 			CustomChildren(new []{
 				new ChildInfo("left") { CanInlineInto = true },
 				new ChildInfo("right") { CanInlineInto = false } // only executed depending on value of left
@@ -337,7 +339,7 @@
 			CustomClassName("DynamicIsEventInstruction"), Dynamic, CustomArguments(("argument", new[] { "O" })), CustomWriteTo),
 
 		new OpCode("match", "ILAst representation of C# patterns",
-			CustomClassName("MatchInstruction"), HasVariableOperand("Store"), HasMethodOperand,
+			CustomClassName("MatchInstruction"), HasVariableOperand("Store"), HasMethodOperand(nullable: true),
 			BoolFlag("IsDeconstructCall"), BoolFlag("IsDeconstructTuple"), BoolFlag("CheckType"), BoolFlag("CheckNotNull"),
 			CustomChildren(new []{
 				new ChildInfo("testedOperand") { CanInlineInto = true },
@@ -371,8 +373,8 @@
 	};
 #>
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -437,7 +439,7 @@ namespace <#=opCode.Namespace#>
 		}
 <#	} #>
 <#		if (opCode.GeneratePerformMatch) { #>
-		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
 			var o = other as <#=opCode.Name#>;
 			return <#=string.Join(" && ", opCode.PerformMatchConditions)#>;
@@ -637,10 +639,15 @@ namespace ICSharpCode.Decompiler.IL
 		public string TypeName;
 		public string Name;
 		public string FieldName;
+		public bool IsReferenceType = true;
 		
 		public override string ToString()
 		{
-			return "out " + TypeName + " " + Name;
+			if (IsReferenceType) {
+				return "[NotNullWhen(true)] out " + TypeName + "? " + Name;
+			} else {
+				return "out " + TypeName + " " + Name;
+			}
 		}
 	}
 	
@@ -866,7 +873,7 @@ namespace ICSharpCode.Decompiler.IL
 						opCode.WriteArguments.Add("output.Write(\", \");");
 					opCode.WriteArguments.Add("this." + arg + ".WriteTo(output, options);");
 					opCode.Members.Add("public static readonly SlotInfo " + children[i].SlotName + " = " + children[i].GetSlotInit() + ";");
-					opCode.Members.Add("ILInstruction " + arg + ";");
+					opCode.Members.Add("ILInstruction " + arg + " = null!;");
 					opCode.Members.Add("public ILInstruction " + argProp + " {" + Environment.NewLine
 						+ "\tget { return this." + arg + "; }" + Environment.NewLine
 						+ "\tset {" + Environment.NewLine
@@ -885,7 +892,7 @@ namespace ICSharpCode.Decompiler.IL
 							checkString += " || ";
 						checkString += arg + ".ResultType == " + expectedTypeCode;
 					}
-					opCode.Invariants.Add("Debug.Assert(" + checkString + ");");
+					opCode.Invariants.Add("DebugAssert(" + checkString + ");");
 				}
 			}
 			opCode.WriteArguments.Add("output.Write(')');");
@@ -1008,8 +1015,7 @@ namespace ICSharpCode.Decompiler.IL
 		Action<OpCode> action = opCode => {
 			opCode.ConstructorParameters.Add("ILVariable variable");
 			opCode.Members.Add("ILVariable variable;");
-			opCode.ConstructorBody.Add("Debug.Assert(variable != null);");
-			opCode.ConstructorBody.Add("this.variable = variable;");
+			opCode.ConstructorBody.Add("this.variable = variable ?? throw new ArgumentNullException(nameof(variable));");
 			opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILVariable", Name = "variable", FieldName = "Variable" });
 			opCode.PerformMatchConditions.Add("variable == o.variable");
 			opCode.GenerateWriteTo = true;
@@ -1019,7 +1025,7 @@ namespace ICSharpCode.Decompiler.IL
 			opCode.Members.Add(@"public ILVariable Variable {
 	get { return variable; }
 	set {
-		Debug.Assert(value != null);
+		DebugAssert(value != null);
 		if (IsConnected)
 			variable.RemoveAccessInstruction(this);
 		variable = value;
@@ -1048,8 +1054,8 @@ protected override void Disconnected()
 }
 ".Replace("Access", accessType));
 			if (generateCheckInvariant) {
-				opCode.Invariants.Add("Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));");
-				opCode.Invariants.Add("Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);");
+				opCode.Invariants.Add("DebugAssert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));");
+				opCode.Invariants.Add("DebugAssert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);");
 			}
 		};
 		if (accessType == "Load") {
@@ -1093,22 +1099,26 @@ protected override void Disconnected()
 		opCode.WriteOperand.Add("type.WriteTo(output);");
 	};
 
-	static Action<OpCode> HasMethodOperand = opCode => {
-		opCode.ConstructorParameters.Add("IMethod method");
-		opCode.Members.Add("readonly IMethod method;");
-		opCode.ConstructorBody.Add("this.method = method;");
-		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IMethod", Name = "method", FieldName = "Method" });
-		opCode.PerformMatchConditions.Add("object.Equals(method, o.method)");
-		opCode.Members.Add("/// <summary>Returns the method operand.</summary>" + Environment.NewLine
-						+ "public IMethod Method { get { return method; } }");
-		opCode.GenerateWriteTo = true;
-		opCode.WriteOperand.Add("if (method != null) {");
-		opCode.WriteOperand.Add("\toutput.Write(' ');");
-		opCode.WriteOperand.Add("\tmethod.WriteTo(output);");
-		opCode.WriteOperand.Add("}");
-		opCode.Interfaces.Add("IInstructionWithMethodOperand");
-	};
-	
+	static Action<OpCode> HasMethodOperand(bool nullable = false)
+	{
+		return opCode => {
+			string n = nullable ? "?" : "";
+			opCode.ConstructorParameters.Add($"IMethod{n} method");
+			opCode.Members.Add($"readonly IMethod{n} method;");
+			opCode.ConstructorBody.Add("this.method = method;");
+			opCode.MatchParameters.Add(new MatchParamInfo { TypeName = $"IMethod{n}", Name = "method", FieldName = "Method", IsReferenceType = !nullable });
+			opCode.PerformMatchConditions.Add("object.Equals(method, o.method)");
+			opCode.Members.Add("/// <summary>Returns the method operand.</summary>" + Environment.NewLine
+							+ $"public IMethod{n} Method => method;");
+			opCode.GenerateWriteTo = true;
+			opCode.WriteOperand.Add("if (method != null) {");
+			opCode.WriteOperand.Add("\toutput.Write(' ');");
+			opCode.WriteOperand.Add("\tmethod.WriteTo(output);");
+			opCode.WriteOperand.Add("}");
+			opCode.Interfaces.Add("IInstructionWithMethodOperand");
+		};
+	}
+
 	static Action<OpCode> HasMemberOperand = opCode => {
 		opCode.ConstructorParameters.Add("IMember member");
 		opCode.Members.Add("readonly IMember member;");
@@ -1139,7 +1149,12 @@ protected override void Disconnected()
 		return opCode => {
 			NoArguments(opCode);
 			opCode.ConstructorParameters.Add(operandType + " value");
-			opCode.MatchParameters.Add(new MatchParamInfo { TypeName = operandType, Name = "value", FieldName = "Value" });
+			opCode.MatchParameters.Add(new MatchParamInfo {
+				TypeName = operandType,
+				Name = "value",
+				FieldName = "Value",
+				IsReferenceType = operandType == "string"
+			});
 			opCode.PerformMatchConditions.Add("this.Value == o.Value");
 			opCode.Members.Add("public readonly " + operandType + " Value;");
 			opCode.ConstructorBody.Add("this.Value = value;");

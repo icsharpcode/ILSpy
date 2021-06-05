@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2016 Siegfried Pammer
+﻿#nullable enable
+// Copyright (c) 2016 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -172,7 +173,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets whether the specific binary instruction is compatible with a compound operation on the specified type.
 		/// </summary>
-		internal static bool IsBinaryCompatibleWithType(BinaryNumericInstruction binary, IType type, DecompilerSettings settings)
+		internal static bool IsBinaryCompatibleWithType(BinaryNumericInstruction binary, IType type, DecompilerSettings? settings)
 		{
 			if (binary.IsLifted)
 			{

@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2020 Siegfried Pammer
+﻿#nullable enable
+// Copyright (c) 2020 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -18,10 +19,9 @@
 
 using System;
 using System.Diagnostics;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 
 using ICSharpCode.Decompiler.TypeSystem;
-
 namespace ICSharpCode.Decompiler.IL
 {
 	partial class MatchInstruction : ILInstruction
@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL
 		public int NumPositionalPatterns {
 			get {
 				if (IsDeconstructCall)
-					return method.Parameters.Count - (method.IsStatic ? 1 : 0);
+					return method!.Parameters.Count - (method.IsStatic ? 1 : 0);
 				else if (IsDeconstructTuple)
 					return TupleType.GetTupleElementTypes(variable.Type).Length;
 				else
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// (even if the pattern fails to match!).
 		/// The pattern matching instruction evaluates to 1 (as I4) if the pattern matches, or 0 otherwise.
 		/// </summary>
-		public static bool IsPatternMatch(ILInstruction inst, out ILInstruction testedOperand)
+		public static bool IsPatternMatch(ILInstruction? inst, [NotNullWhen(true)] out ILInstruction? testedOperand)
 		{
 			switch (inst)
 			{
@@ -153,9 +153,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (this.IsDeconstructCall)
 			{
-				int firstOutParam = (method.IsStatic ? 1 : 0);
-				var outParamType = this.Method.Parameters[firstOutParam + index].Type;
-				if (!(outParamType is ByReferenceType brt))
+				int firstOutParam = (method!.IsStatic ? 1 : 0);
+				var outParamType = method.Parameters[firstOutParam + index].Type;
+				if (outParamType is not ByReferenceType brt)
 					throw new InvalidOperationException("deconstruct out param must be by reference");
 				return brt.ElementType;
 			}
@@ -185,8 +185,8 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(SubPatterns.Count >= NumPositionalPatterns);
 			foreach (var subPattern in SubPatterns)
 			{
-				if (!IsPatternMatch(subPattern, out ILInstruction operand))
-					Debug.Fail("Sub-Pattern must be a valid pattern");
+				if (!IsPatternMatch(subPattern, out ILInstruction? operand))
+					throw new InvalidOperationException("Sub-Pattern must be a valid pattern");
 				// the first child is TestedOperand
 				int subPatternIndex = subPattern.ChildIndex - 1;
 				if (subPatternIndex < NumPositionalPatterns)
@@ -210,8 +210,11 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		internal static bool IsDeconstructMethod(IMethod method)
+		internal static bool IsDeconstructMethod(IMethod? method)
 		{
+			if (method == null
+				)
+				return false;
 			if (method.Name != "Deconstruct")
 				return false;
 			if (method.ReturnType.Kind != TypeKind.Void)
@@ -260,7 +263,10 @@ namespace ICSharpCode.Decompiler.IL
 			if (IsDeconstructCall)
 			{
 				output.Write(".deconstruct[");
-				method.WriteTo(output);
+				if (method == null)
+					output.Write("<null>");
+				else
+					method.WriteTo(output);
 				output.Write(']');
 			}
 			if (IsDeconstructTuple)

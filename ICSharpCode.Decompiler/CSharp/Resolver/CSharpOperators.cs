@@ -128,9 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return null; }
 			}
 
-			IType IEntity.DeclaringType {
-				get { return null; }
-			}
+			public IType DeclaringType => SpecialType.UnknownType;
 
 			IMember IMember.MemberDefinition {
 				get { return this; }

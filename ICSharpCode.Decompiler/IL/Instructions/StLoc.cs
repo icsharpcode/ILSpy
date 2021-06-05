@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2014 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -38,8 +39,8 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
-			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));
+			Debug.Assert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);
 			Debug.Assert(value.ResultType == variable.StackType);
 		}
 	}

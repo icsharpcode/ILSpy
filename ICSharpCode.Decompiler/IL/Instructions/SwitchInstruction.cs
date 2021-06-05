@@ -1,3 +1,4 @@
+#nullable enable
 // Copyright (c) 2014 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -16,7 +17,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Diagnostics;
 using System.Linq;
 
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Sections = new InstructionCollection<SwitchSection>(this, 1);
 		}
 
-		ILInstruction value;
+		ILInstruction value = null!;
 		public ILInstruction Value {
 			get { return this.value; }
 			set {

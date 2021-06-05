@@ -16,13 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class QueryExpression : Expression
 	{
-		public static readonly Role<QueryClause> ClauseRole = new Role<QueryClause>("Clause");
+		public static readonly Role<QueryClause> ClauseRole = new Role<QueryClause>("Clause", null);
 
 		#region Null
 		public new static readonly QueryExpression Null = new NullQueryExpression();
@@ -420,7 +418,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class QueryOrderClause : QueryClause
 	{
 		public static readonly TokenRole OrderbyKeywordRole = new TokenRole("orderby");
-		public static readonly Role<QueryOrdering> OrderingRole = new Role<QueryOrdering>("Ordering");
+		public static readonly Role<QueryOrdering> OrderingRole = new Role<QueryOrdering>("Ordering", null);
 
 		public CSharpTokenNode OrderbyToken {
 			get { return GetChildByRole(OrderbyKeywordRole); }

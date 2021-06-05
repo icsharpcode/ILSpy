@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2016 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2016 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -44,7 +45,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		/// If the method returns true, it adds the capture groups (if any) to the match.
 		/// If the method returns false, the match object remains in a partially-updated state and needs to be restored
 		/// before it can be reused.</returns>
-		internal static bool DoMatch(IReadOnlyList<ILInstruction> patterns, IReadOnlyList<ILInstruction> syntaxList, ref Match match)
+		internal static bool DoMatch(IReadOnlyList<ILInstruction> patterns, IReadOnlyList<ILInstruction?> syntaxList, ref Match match)
 		{
 			ListMatch listMatch = new ListMatch(syntaxList);
 			do
@@ -107,14 +108,14 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		/// <summary>
 		/// The syntax list we are matching against.
 		/// </summary>
-		internal readonly IReadOnlyList<ILInstruction> SyntaxList;
+		internal readonly IReadOnlyList<ILInstruction?> SyntaxList;
 
 		/// <summary>
 		/// The current index in the syntax list.
 		/// </summary>
 		internal int SyntaxIndex;
 
-		ListMatch(IReadOnlyList<ILInstruction> syntaxList)
+		ListMatch(IReadOnlyList<ILInstruction?> syntaxList)
 		{
 			this.SyntaxList = syntaxList;
 			this.SyntaxIndex = 0;
@@ -122,8 +123,8 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 			this.restoreStack = null;
 		}
 
-		List<SavePoint> backtrackingStack;
-		Stack<int> restoreStack;
+		List<SavePoint>? backtrackingStack;
+		Stack<int>? restoreStack;
 
 		void AddSavePoint(SavePoint savepoint)
 		{

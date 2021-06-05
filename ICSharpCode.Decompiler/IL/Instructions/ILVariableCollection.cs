@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2016 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2016 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -128,7 +129,7 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					// However, remove unused this-parameters of delegates, expression trees, etc.
 					// These will be replaced with the top-level function's this-parameter.
-					if (v.Index == -1 && v.Function.Kind != ILFunctionKind.TopLevelFunction)
+					if (v.Index == -1 && v.Function!.Kind != ILFunctionKind.TopLevelFunction)
 						return true;
 					return false;
 				}

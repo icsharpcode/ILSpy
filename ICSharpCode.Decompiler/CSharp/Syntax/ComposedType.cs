@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole ReadonlyRole = new TokenRole("readonly");
 		public static readonly TokenRole NullableRole = new TokenRole("?");
 		public static readonly TokenRole PointerRole = new TokenRole("*");
-		public static readonly Role<ArraySpecifier> ArraySpecifierRole = new Role<ArraySpecifier>("ArraySpecifier");
+		public static readonly Role<ArraySpecifier> ArraySpecifierRole = new Role<ArraySpecifier>("ArraySpecifier", null);
 		public AstNodeCollection<AttributeSection> Attributes {
 			get { return base.GetChildrenByRole(AttributeRole); }
 		}
@@ -299,4 +299,3 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 }
-

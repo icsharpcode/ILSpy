@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2014-2016 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2014-2016 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,14 +17,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
-
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public readonly BlockKind Kind;
 		public readonly InstructionCollection<ILInstruction> Instructions;
-		ILInstruction finalInstruction;
+		ILInstruction finalInstruction = null!;
 
 		/// <summary>
 		/// For blocks in a block container, this field holds
@@ -124,10 +124,10 @@ namespace ICSharpCode.Decompiler.IL
 					foreach (var inst in Instructions)
 					{
 						var stloc = inst as StLoc;
-						Debug.Assert(stloc != null, "Instructions in CallWithNamedArgs must be assignments");
-						Debug.Assert(stloc.Variable.Kind == VariableKind.NamedArgument);
-						Debug.Assert(stloc.Variable.IsSingleDefinition && stloc.Variable.LoadCount == 1);
-						Debug.Assert(stloc.Variable.LoadInstructions.Single().Parent == finalInstruction);
+						DebugAssert(stloc != null, "Instructions in CallWithNamedArgs must be assignments");
+						DebugAssert(stloc.Variable.Kind == VariableKind.NamedArgument);
+						DebugAssert(stloc.Variable.IsSingleDefinition && stloc.Variable.LoadCount == 1);
+						DebugAssert(stloc.Variable.LoadInstructions.Single().Parent == finalInstruction);
 					}
 					var call = (CallInstruction)finalInstruction;
 					if (call.IsInstanceCall)
@@ -140,22 +140,22 @@ namespace ICSharpCode.Decompiler.IL
 				case BlockKind.ArrayInitializer:
 					var final = finalInstruction as LdLoc;
 					Debug.Assert(final != null && final.Variable.IsSingleDefinition && final.Variable.Kind == VariableKind.InitializerTarget);
-					IType type = null;
-					Debug.Assert(Instructions[0].MatchStLoc(final.Variable, out var init) && init.MatchNewArr(out type));
+					IType? type = null;
+					Debug.Assert(Instructions[0].MatchStLoc(final!.Variable, out var init) && init.MatchNewArr(out type));
 					for (int i = 1; i < Instructions.Count; i++)
 					{
-						Debug.Assert(Instructions[i].MatchStObj(out ILInstruction target, out _, out var t) && type != null && type.Equals(t));
-						Debug.Assert(target.MatchLdElema(out t, out ILInstruction array) && type.Equals(t));
-						Debug.Assert(array.MatchLdLoc(out ILVariable v) && v == final.Variable);
+						DebugAssert(Instructions[i].MatchStObj(out ILInstruction? target, out _, out var t) && type != null && type.Equals(t));
+						DebugAssert(target.MatchLdElema(out t, out ILInstruction? array) && type.Equals(t));
+						DebugAssert(array.MatchLdLoc(out ILVariable? v) && v == final.Variable);
 					}
 					break;
 				case BlockKind.CollectionInitializer:
 				case BlockKind.ObjectInitializer:
 					var final2 = finalInstruction as LdLoc;
 					Debug.Assert(final2 != null);
-					var initVar2 = final2.Variable;
+					var initVar2 = final2!.Variable;
 					Debug.Assert(initVar2.StoreCount == 1 && initVar2.Kind == VariableKind.InitializerTarget);
-					IType type2 = null;
+					IType? type2 = null;
 					bool condition = Instructions[0].MatchStLoc(final2.Variable, out var init2);
 					Debug.Assert(condition);
 					Debug.Assert(init2 is NewObj
@@ -300,7 +300,7 @@ namespace ICSharpCode.Decompiler.IL
 		public void Remove()
 		{
 			Debug.Assert(ChildIndex > 0);
-			var container = (BlockContainer)Parent;
+			var container = (BlockContainer)Parent!;
 			Debug.Assert(container.Blocks[ChildIndex] == this);
 			container.Blocks.SwapRemoveAt(ChildIndex);
 		}
@@ -325,7 +325,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets the predecessor of the given instruction.
 		/// Returns null if inst.Parent is not a block.
 		/// </summary>
-		public static ILInstruction GetPredecessor(ILInstruction inst)
+		public static ILInstruction? GetPredecessor(ILInstruction inst)
 		{
 			if (inst.Parent is Block block && inst.ChildIndex > 0)
 			{
@@ -341,7 +341,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// If inst is a block consisting of a single instruction, returns that instruction.
 		/// Otherwise, returns the input instruction.
 		/// </summary>
-		public static ILInstruction Unwrap(ILInstruction inst)
+		[return: NotNullIfNotNull("inst")]
+		public static ILInstruction? Unwrap(ILInstruction? inst)
 		{
 			if (inst is Block block)
 			{
@@ -355,19 +356,19 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets the closest parent Block.
 		/// Returns null, if the instruction is not a descendant of a Block.
 		/// </summary>
-		public static Block FindClosestBlock(ILInstruction inst)
+		public static Block? FindClosestBlock(ILInstruction? inst)
 		{
 			var curr = inst;
 			while (curr != null)
 			{
-				if (curr is Block)
-					return (Block)curr;
+				if (curr is Block b)
+					return b;
 				curr = curr.Parent;
 			}
 			return null;
 		}
 
-		public bool MatchInlineAssignBlock(out CallInstruction call, out ILInstruction value)
+		public bool MatchInlineAssignBlock([NotNullWhen(true)] out CallInstruction? call, [NotNullWhen(true)] out ILInstruction? value)
 		{
 			call = null;
 			value = null;
@@ -385,7 +386,7 @@ namespace ICSharpCode.Decompiler.IL
 			return this.FinalInstruction.MatchLdLoc(tmp);
 		}
 
-		public bool MatchIfAtEndOfBlock(out ILInstruction condition, out ILInstruction trueInst, out ILInstruction falseInst)
+		public bool MatchIfAtEndOfBlock([NotNullWhen(true)] out ILInstruction? condition, [NotNullWhen(true)] out ILInstruction? trueInst, [NotNullWhen(true)] out ILInstruction? falseInst)
 		{
 			condition = null;
 			trueInst = null;

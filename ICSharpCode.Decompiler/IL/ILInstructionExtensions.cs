@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -20,7 +21,7 @@ namespace ICSharpCode.Decompiler.IL
 			return target;
 		}
 
-		public static ILInstruction GetNextSibling(this ILInstruction instruction)
+		public static ILInstruction? GetNextSibling(this ILInstruction? instruction)
 		{
 			if (instruction?.Parent == null)
 				return null;

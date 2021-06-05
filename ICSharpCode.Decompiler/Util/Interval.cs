@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2016 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2016 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -111,7 +112,7 @@ namespace ICSharpCode.Decompiler.Util
 		}
 
 		#region Equals and GetHashCode implementation
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return (obj is Interval) && Equals((Interval)obj);
 		}
@@ -281,7 +282,7 @@ namespace ICSharpCode.Decompiler.Util
 		}
 
 		#region Equals and GetHashCode implementation
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return (obj is LongInterval) && Equals((LongInterval)obj);
 		}
