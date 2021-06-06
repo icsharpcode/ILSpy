@@ -64,7 +64,6 @@ If this problem occurs, please manually install the .NET 5.0 SDK from [here](htt
 
 #### Unix / Mac:
 
-- Make sure .NET Core 2.1 LTS Runtime is installed (you can get it here: https://get.dot.net).
 - Make sure [.NET 5.0 SDK](https://dotnet.microsoft.com/download/dotnet/5.0) is installed.
 - Make sure [PowerShell](https://github.com/PowerShell/PowerShell) is installed (formerly known as PowerShell Core)
 - Clone the repository using git.
