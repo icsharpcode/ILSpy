@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy
 
 		public bool IsVisible(TextViewContext context)
 		{
-			var selectedNodes = context.SelectedTreeNodes.OfType<AssemblyTreeNode>()
+			var selectedNodes = context.SelectedTreeNodes?.OfType<AssemblyTreeNode>()
 				.Where(asm => asm.PackageEntry != null) ?? Enumerable.Empty<AssemblyTreeNode>();
 			return selectedNodes.Any();
 		}
