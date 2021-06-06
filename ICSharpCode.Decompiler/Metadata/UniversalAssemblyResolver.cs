@@ -36,7 +36,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		NETFramework,
 		NETCoreApp,
 		NETStandard,
-		Silverlight
+		Silverlight,
+		NET
 	}
 
 	enum DecompilerRuntime
@@ -186,6 +187,9 @@ namespace ICSharpCode.Decompiler.Metadata
 						}
 						if (!Version.TryParse(versionString, out version))
 							version = null;
+						// .NET 5 or greater still use ".NETCOREAPP" as TargetFrameworkAttribute value...
+						if (version?.Major >= 5 && identifier == TargetFrameworkIdentifier.NETCoreApp)
+							identifier = TargetFrameworkIdentifier.NET;
 						break;
 				}
 			}
@@ -260,6 +264,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			string? file;
 			switch (targetFrameworkIdentifier)
 			{
+				case TargetFrameworkIdentifier.NET:
 				case TargetFrameworkIdentifier.NETCoreApp:
 				case TargetFrameworkIdentifier.NETStandard:
 					if (IsZeroOrAllOnes(targetFrameworkVersion))

@@ -15,10 +15,10 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
-    - name: Setup .NET Core
+    - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.x
+        dotnet-version: 5.0.x
     - name: Install dependencies
       run: dotnet restore Frontends.sln
     - name: Build
