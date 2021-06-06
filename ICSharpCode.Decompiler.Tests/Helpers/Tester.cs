@@ -219,9 +219,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		static readonly RoslynToolset roslynToolset = new RoslynToolset();
 
-		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NETCoreApp,
-			new Version(3, 1), "Microsoft.NETCore.App")
-				.GetReferenceAssemblyPath(".NETCoreApp, Version = v3.1");
+		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NET,
+			new Version(5, 0), "Microsoft.NETCore.App")
+				.GetReferenceAssemblyPath(".NETCoreApp, Version = v5.0");
 
 		static readonly string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
 			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
@@ -257,7 +257,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		const string targetFrameworkAttributeSnippet = @"
 
-[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp, Version = v3.1"", FrameworkDisplayName = """")]
+[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp, Version = v5.0"", FrameworkDisplayName = """")]
 
 ";
 
