@@ -1,9 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
-
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 
     <EnableDefaultItems>false</EnableDefaultItems>
@@ -14,6 +12,11 @@
     <OutputType>Exe</OutputType>
     <StartupObject>ILSpy.BamlDecompiler.Tests.Stub</StartupObject>
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+
+  <Import Project="..\multitargeting.props" Condition="Exists('..\multitargeting.props')" />
+  <PropertyGroup Condition="!Exists('..\multitargeting.props')">
+    <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
