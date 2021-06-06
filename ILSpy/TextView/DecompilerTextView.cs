@@ -1090,7 +1090,7 @@ namespace ICSharpCode.ILSpy.TextView
 							catch (OperationCanceledException)
 							{
 								w.WriteLine();
-								w.WriteLine("Decompiled was cancelled.");
+								w.WriteLine(Properties.Resources.DecompilationWasCancelled);
 								throw;
 							}
 						}
