@@ -386,7 +386,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		static readonly Regex automaticPropertyBackingFieldRegex = new Regex(@"^<(.*)>k__BackingField$",
 			RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-		static bool IsAutomaticPropertyBackingField(SRM.FieldDefinition field, MetadataReader metadata, out string propertyName)
+		static bool IsAutomaticPropertyBackingField(FieldDefinition field, MetadataReader metadata, out string propertyName)
 		{
 			propertyName = null;
 			var name = metadata.GetString(field.Name);
@@ -395,6 +395,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				propertyName = m.Groups[1].Value;
 				return true;
+			}
+			if (name.StartsWith("_", StringComparison.Ordinal))
+			{
+				propertyName = name.Substring(1);
+				return field.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.CompilerGenerated);
 			}
 			return false;
 		}
