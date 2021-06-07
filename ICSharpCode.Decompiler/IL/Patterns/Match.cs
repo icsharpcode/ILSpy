@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2016 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2016 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -33,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 	{
 		static readonly List<KeyValuePair<CaptureGroup, ILInstruction>> emptyResults = new List<KeyValuePair<CaptureGroup, ILInstruction>>();
 
-		List<KeyValuePair<CaptureGroup, ILInstruction>> results;
+		List<KeyValuePair<CaptureGroup, ILInstruction>>? results;
 
 		/// <summary>
 		/// Gets whether the match was successful.

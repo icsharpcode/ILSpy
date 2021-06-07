@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -63,7 +62,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				// Use extraction to turn isInst.Argument into a pure instruction, thus making the emulation possible
 				context.Step("FixLoneIsInst", isInst);
-				isInst.Argument.Extract();
+				isInst.Argument.Extract(context);
 			}
 		}
 	}

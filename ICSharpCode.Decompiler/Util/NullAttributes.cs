@@ -25,5 +25,13 @@ namespace System.Diagnostics.CodeAnalysis
 
 		public bool ReturnValue { get; }
 	}
+
+	[AttributeUsage(AttributeTargets.Parameter, Inherited = false)]
+	internal sealed class DoesNotReturnIfAttribute : Attribute
+	{
+		public DoesNotReturnIfAttribute(bool parameterValue) => ParameterValue = parameterValue;
+
+		public bool ParameterValue { get; }
+	}
 }
 #endif

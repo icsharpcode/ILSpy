@@ -102,6 +102,12 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(options: options | CompilerOptions.Library);
 		}
 
+		[Test]
+		public void VBPropertiesTest([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		{
+			Run(options: options | CompilerOptions.Library);
+		}
+
 		void Run([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug, DecompilerSettings settings = null)
 		{
 			var vbFile = Path.Combine(TestCasePath, testName + ".vb");
@@ -115,7 +121,7 @@ namespace ICSharpCode.Decompiler.Tests
 			var executable = Tester.CompileVB(vbFile, options | CompilerOptions.ReferenceVisualBasic, exeFile);
 			var decompiled = Tester.DecompileCSharp(executable.PathToAssembly, settings);
 
-			CodeAssert.FilesAreEqual(csFile, decompiled);
+			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(options).ToArray());
 		}
 	}
 }

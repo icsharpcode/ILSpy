@@ -233,6 +233,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		}
 		#endregion
 
+		private S s1;
+		private S s2;
+
 		#region Field initializer tests
 		private static V3f[] Issue1336_rg0 = new V3f[3] {
 			new V3f(1f, 1f, 1f),
@@ -903,6 +906,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				Field = 1,
 				Property = 2
 			});
+		}
+
+		public void InliningOfStFldTarget()
+		{
+			s1 = new S {
+				A = 24,
+				B = 42
+			};
+			s2 = new S {
+				A = 42,
+				B = 24
+			};
 		}
 
 		public static void NotAStructInitializer_ExplicitConstructor()

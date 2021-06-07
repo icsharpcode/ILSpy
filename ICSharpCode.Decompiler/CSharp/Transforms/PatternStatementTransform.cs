@@ -592,15 +592,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		bool CanTransformToAutomaticProperty(IProperty property)
+		bool CanTransformToAutomaticProperty(IProperty property, bool accessorsMustBeCompilerGenerated)
 		{
 			if (!property.CanGet)
 				return false;
-			if (!property.Getter.IsCompilerGenerated())
+			if (accessorsMustBeCompilerGenerated && !property.Getter.IsCompilerGenerated())
 				return false;
 			if (property.Setter is IMethod setter)
 			{
-				if (!setter.IsCompilerGenerated())
+				if (accessorsMustBeCompilerGenerated && !setter.IsCompilerGenerated())
 					return false;
 				if (setter.HasReadonlyModifier())
 					return false;
@@ -611,7 +611,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		PropertyDeclaration TransformAutomaticProperty(PropertyDeclaration propertyDeclaration)
 		{
 			IProperty property = propertyDeclaration.GetSymbol() as IProperty;
-			if (!CanTransformToAutomaticProperty(property))
+			if (!CanTransformToAutomaticProperty(property, !property.DeclaringTypeDefinition.Fields.Any(f => f.Name == "_" + property.Name && f.IsCompilerGenerated())))
 				return null;
 			IField field = null;
 			Match m = automaticPropertyPattern.Match(propertyDeclaration);
@@ -741,7 +741,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var mrr = parent.Annotation<MemberResolveResult>();
 				var field = mrr?.Member as IField;
 				if (field != null && IsBackingFieldOfAutomaticProperty(field, out var property)
-					&& CanTransformToAutomaticProperty(property) && currentMethod.AccessorOwner != property)
+					&& CanTransformToAutomaticProperty(property, !(field.IsCompilerGenerated() && field.Name == "_" + property.Name))
+					&& currentMethod.AccessorOwner != property)
 				{
 					if (!property.CanSet && !context.Settings.GetterOnlyAutomaticProperties)
 						return null;

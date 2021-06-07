@@ -168,6 +168,10 @@ namespace ICSharpCode.Decompiler.Metadata
 					identifier = "NETStandard.Library";
 					identifierExt = "netstandard" + version.Major + "." + version.Minor;
 					break;
+				case TargetFrameworkIdentifier.NET:
+					identifier = "Microsoft.NETCore.App";
+					identifierExt = "net" + version.Major + "." + version.Minor;
+					break;
 				default:
 					throw new NotSupportedException();
 			}

@@ -286,5 +286,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("{}, {}", a < b, a > b);
 			Console.WriteLine("{}, {}", a < Environment.GetLogicalDrives().Length, a > (c ?? b));
 		}
+
+		public static Type Issue2231<T>()
+		{
+			return default(T).GetType();
+		}
+
+		public static string Issue2231b<T>()
+		{
+			return default(T).ToString();
+		}
 	}
 }

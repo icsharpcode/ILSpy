@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
+﻿#nullable enable
+// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -32,7 +33,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <param name="root">The root element of the tree.</param>
 		/// <param name="recursion">The function that gets the children of an element.</param>
 		/// <returns>Iterator that enumerates the tree structure in pre-order.</returns>
-		public static IEnumerable<T> PreOrder<T>(T root, Func<T, IEnumerable<T>> recursion)
+		public static IEnumerable<T> PreOrder<T>(T root, Func<T, IEnumerable<T>?> recursion)
 		{
 			return PreOrder(new T[] { root }, recursion);
 		}
@@ -43,7 +44,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <param name="input">The root elements of the forest.</param>
 		/// <param name="recursion">The function that gets the children of an element.</param>
 		/// <returns>Iterator that enumerates the tree structure in pre-order.</returns>
-		public static IEnumerable<T> PreOrder<T>(IEnumerable<T> input, Func<T, IEnumerable<T>> recursion)
+		public static IEnumerable<T> PreOrder<T>(IEnumerable<T> input, Func<T, IEnumerable<T>?> recursion)
 		{
 			Stack<IEnumerator<T>> stack = new Stack<IEnumerator<T>>();
 			try
@@ -55,7 +56,7 @@ namespace ICSharpCode.Decompiler.Util
 					{
 						T element = stack.Peek().Current;
 						yield return element;
-						IEnumerable<T> children = recursion(element);
+						IEnumerable<T>? children = recursion(element);
 						if (children != null)
 						{
 							stack.Push(children.GetEnumerator());
@@ -79,7 +80,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <param name="root">The root element of the tree.</param>
 		/// <param name="recursion">The function that gets the children of an element.</param>
 		/// <returns>Iterator that enumerates the tree structure in post-order.</returns>
-		public static IEnumerable<T> PostOrder<T>(T root, Func<T, IEnumerable<T>> recursion)
+		public static IEnumerable<T> PostOrder<T>(T root, Func<T, IEnumerable<T>?> recursion)
 		{
 			return PostOrder(new T[] { root }, recursion);
 		}
@@ -90,7 +91,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <param name="input">The root elements of the forest.</param>
 		/// <param name="recursion">The function that gets the children of an element.</param>
 		/// <returns>Iterator that enumerates the tree structure in post-order.</returns>
-		public static IEnumerable<T> PostOrder<T>(IEnumerable<T> input, Func<T, IEnumerable<T>> recursion)
+		public static IEnumerable<T> PostOrder<T>(IEnumerable<T> input, Func<T, IEnumerable<T>?> recursion)
 		{
 			Stack<IEnumerator<T>> stack = new Stack<IEnumerator<T>>();
 			try
@@ -101,7 +102,7 @@ namespace ICSharpCode.Decompiler.Util
 					while (stack.Peek().MoveNext())
 					{
 						T element = stack.Peek().Current;
-						IEnumerable<T> children = recursion(element);
+						IEnumerable<T>? children = recursion(element);
 						if (children != null)
 						{
 							stack.Push(children.GetEnumerator());

@@ -107,6 +107,7 @@
     <Compile Include="TestCases\Correctness\DeconstructionTests.cs" />
     <Compile Include="TestCases\Correctness\DynamicTests.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
+    <Compile Include="TestCases\VBPretty\VBPropertiesTest.cs" />
     <None Include="TestCases\ILPretty\Issue2260SwitchString.cs" />
     <None Include="TestCases\Pretty\Records.cs" />
     <Compile Include="TestCases\VBPretty\Issue2192.cs" />
@@ -308,6 +309,7 @@
     <None Include="TestCases\Pretty\Readme.txt" />
     <None Include="TestCases\VBPretty\VBCompoundAssign.vb" />
     <None Include="TestCases\VBPretty\Async.vb" />
+    <None Include="TestCases\VBPretty\VBPropertiesTest.vb" />
   </ItemGroup>
 
   <ItemGroup>

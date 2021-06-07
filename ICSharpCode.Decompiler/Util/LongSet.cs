@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2016 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2016 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -82,7 +83,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <summary>
 		/// Creates a new LongSet the contains the values from the specified intervals.
 		/// </summary>
-		public LongSet(IEnumerable<LongInterval> intervals)
+		public LongSet(IEnumerable<LongInterval>? intervals)
 			: this(MergeOverlapping(intervals.Where(i => !i.IsEmpty).OrderBy(i => i.Start)).ToImmutableArray())
 		{
 		}
@@ -350,7 +351,7 @@ namespace ICSharpCode.Decompiler.Util
 		}
 
 		#region Equals and GetHashCode implementation
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return obj is LongSet && SetEquals((LongSet)obj);
 		}

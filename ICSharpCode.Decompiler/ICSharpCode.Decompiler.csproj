@@ -79,6 +79,7 @@
     <Compile Include="CSharp\Syntax\VariableDesignation.cs" />
     <Compile Include="Humanizer\Vocabularies.cs" />
     <Compile Include="Humanizer\Vocabulary.cs" />
+    <Compile Include="IL\ControlFlow\RemoveRedundantReturn.cs" />
     <Compile Include="IL\Transforms\DeconstructionTransform.cs" />
     <Compile Include="IL\Transforms\FixLoneIsInst.cs" />
     <Compile Include="IL\Instructions\DeconstructInstruction.cs" />
@@ -91,6 +92,7 @@
     <Compile Include="Documentation\XmlDocumentationElement.cs" />
     <Compile Include="IL\ControlFlow\AwaitInFinallyTransform.cs" />
     <Compile Include="IL\Transforms\IntroduceNativeIntTypeOnLocals.cs" />
+    <Compile Include="IL\Transforms\LdLocaDupInitObjTransform.cs" />
     <Compile Include="Metadata\ReferenceLoadInfo.cs" />
     <Compile Include="Semantics\OutVarResolveResult.cs" />
     <Compile Include="SingleFileBundle.cs" />

@@ -622,6 +622,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Decompilation was cancelled..
+        /// </summary>
+        public static string DecompilationWasCancelled {
+            get {
+                return ResourceManager.GetString("DecompilationWasCancelled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Decompile.
         /// </summary>
         public static string Decompile {
@@ -1533,6 +1542,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Extract package entry.
+        /// </summary>
+        public static string ExtractPackageEntry {
+            get {
+                return ResourceManager.GetString("ExtractPackageEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Folding.
         /// </summary>
         public static string Folding {
@@ -1890,6 +1908,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string OpenListDialog__Open {
             get {
                 return ResourceManager.GetString("OpenListDialog__Open", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Operation was cancelled..
+        /// </summary>
+        public static string OperationWasCancelled {
+            get {
+                return ResourceManager.GetString("OperationWasCancelled", resourceCulture);
             }
         }
         

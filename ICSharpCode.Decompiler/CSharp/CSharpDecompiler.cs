@@ -93,7 +93,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				new YieldReturnDecompiler(), // must run after inlining but before loop detection
 				new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
 				new DetectCatchWhenConditionBlocks(), // must run after inlining but before loop detection
-				new DetectExitPoints(canIntroduceExitForReturn: false),
+				new DetectExitPoints(),
+				new LdLocaDupInitObjTransform(),
 				new EarlyExpressionTransforms(),
 				// RemoveDeadVariableInit must run after EarlyExpressionTransforms so that stobj(ldloca V, ...)
 				// is already collapsed into stloc(V, ...).
@@ -117,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				},
 				// re-run DetectExitPoints after loop detection
-				new DetectExitPoints(canIntroduceExitForReturn: true),
+				new DetectExitPoints(),
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
 						new ConditionDetection(),
@@ -159,6 +160,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new TransformDisplayClassUsage(),
 				new HighLevelLoopTransform(),
 				new ReduceNestingTransform(),
+				new RemoveRedundantReturn(),
 				new IntroduceDynamicTypeOnLocals(),
 				new IntroduceNativeIntTypeOnLocals(),
 				new AssignVariableNames(),
@@ -384,7 +386,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		static readonly Regex automaticPropertyBackingFieldRegex = new Regex(@"^<(.*)>k__BackingField$",
 			RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-		static bool IsAutomaticPropertyBackingField(SRM.FieldDefinition field, MetadataReader metadata, out string propertyName)
+		static bool IsAutomaticPropertyBackingField(FieldDefinition field, MetadataReader metadata, out string propertyName)
 		{
 			propertyName = null;
 			var name = metadata.GetString(field.Name);
@@ -393,6 +395,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				propertyName = m.Groups[1].Value;
 				return true;
+			}
+			if (name.StartsWith("_", StringComparison.Ordinal))
+			{
+				propertyName = name.Substring(1);
+				return field.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.CompilerGenerated);
 			}
 			return false;
 		}

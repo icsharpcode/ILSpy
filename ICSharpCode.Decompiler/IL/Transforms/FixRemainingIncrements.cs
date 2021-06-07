@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -73,7 +72,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				else
 				{
 					context.Step($"Fix {call.Method.Name} call at 0x{call.StartILOffset:x4} using new local", call);
-					var newVariable = call.Arguments[0].Extract();
+					var newVariable = call.Arguments[0].Extract(context);
 					if (newVariable == null)
 					{
 						Debug.Fail("Failed to extract argument of remaining increment/decrement");

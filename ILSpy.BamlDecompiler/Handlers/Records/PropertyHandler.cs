@@ -38,6 +38,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 			var elemType = parent.Xaml.Element.Annotation<XamlType>();
 			var xamlProp = ctx.ResolveProperty(record.AttributeId);
 			var value = XamlUtils.Escape(record.Value);
+			xamlProp.DeclaringType.ResolveNamespace(parent.Xaml, ctx);
 
 			parent.Xaml.Element.Add(ConstructXAttribute());
 

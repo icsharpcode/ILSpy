@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.PortableExecutable;
@@ -15,21 +16,21 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		/// <param name="pe"></param>
 		/// <returns></returns>
-		public static unsafe Win32ResourceDirectory ReadWin32Resources(this PEReader pe)
+		public static unsafe Win32ResourceDirectory? ReadWin32Resources(this PEReader pe)
 		{
 			if (pe == null)
 			{
 				throw new ArgumentNullException(nameof(pe));
 			}
 
-			int rva = pe.PEHeaders.PEHeader.ResourceTableDirectory.RelativeVirtualAddress;
+			int rva = pe.PEHeaders.PEHeader?.ResourceTableDirectory.RelativeVirtualAddress ?? 0;
 			if (rva == 0)
 				return null;
 			byte* pRoot = pe.GetSectionData(rva).Pointer;
 			return new Win32ResourceDirectory(pe, pRoot, 0, new Win32ResourceName("Root"));
 		}
 
-		public static Win32ResourceDirectory Find(this Win32ResourceDirectory root, Win32ResourceName type)
+		public static Win32ResourceDirectory? Find(this Win32ResourceDirectory root, Win32ResourceName type)
 		{
 			if (root is null)
 				throw new ArgumentNullException(nameof(root));
@@ -41,7 +42,7 @@ namespace ICSharpCode.Decompiler.Util
 			return root.FindDirectory(type);
 		}
 
-		public static Win32ResourceDirectory Find(this Win32ResourceDirectory root, Win32ResourceName type, Win32ResourceName name)
+		public static Win32ResourceDirectory? Find(this Win32ResourceDirectory root, Win32ResourceName type, Win32ResourceName name)
 		{
 			if (root is null)
 				throw new ArgumentNullException(nameof(root));
@@ -55,7 +56,7 @@ namespace ICSharpCode.Decompiler.Util
 			return root.FindDirectory(type)?.FindDirectory(name);
 		}
 
-		public static Win32ResourceData Find(this Win32ResourceDirectory root, Win32ResourceName type, Win32ResourceName name, Win32ResourceName langId)
+		public static Win32ResourceData? Find(this Win32ResourceDirectory root, Win32ResourceName type, Win32ResourceName name, Win32ResourceName langId)
 		{
 			if (root is null)
 				throw new ArgumentNullException(nameof(root));
@@ -122,7 +123,7 @@ namespace ICSharpCode.Decompiler.Util
 			return new string(pString->NameString, 0, pString->Length);
 		}
 
-		public Win32ResourceDirectory FindDirectory(Win32ResourceName name)
+		public Win32ResourceDirectory? FindDirectory(Win32ResourceName name)
 		{
 			foreach (var directory in Directories)
 			{
@@ -132,7 +133,7 @@ namespace ICSharpCode.Decompiler.Util
 			return null;
 		}
 
-		public Win32ResourceData FindData(Win32ResourceName name)
+		public Win32ResourceData? FindData(Win32ResourceName name)
 		{
 			foreach (var data in Datas)
 			{
@@ -142,12 +143,12 @@ namespace ICSharpCode.Decompiler.Util
 			return null;
 		}
 
-		public Win32ResourceDirectory FirstDirectory()
+		public Win32ResourceDirectory? FirstDirectory()
 		{
 			return Directories.Count != 0 ? Directories[0] : null;
 		}
 
-		public Win32ResourceData FirstData()
+		public Win32ResourceData? FirstData()
 		{
 			return Datas.Count != 0 ? Datas[0] : null;
 		}
@@ -248,7 +249,7 @@ namespace ICSharpCode.Decompiler.Util
 			return _name.GetHashCode();
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			if (!(obj is Win32ResourceName name))
 				return false;

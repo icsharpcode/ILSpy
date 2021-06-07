@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		TypeParameterSubstitution IMember.Substitution => underlyingMethod.Substitution;
 		EntityHandle IEntity.MetadataToken => underlyingMethod.MetadataToken;
 		public string Name => underlyingMethod.Name;
-		IType IEntity.DeclaringType => underlyingMethod.DeclaringType;
+		public IType DeclaringType => underlyingMethod.DeclaringType;
 		ITypeDefinition IEntity.DeclaringTypeDefinition => underlyingMethod.DeclaringTypeDefinition;
 		IModule IEntity.ParentModule => underlyingMethod.ParentModule;
 		Accessibility IEntity.Accessibility => underlyingMethod.Accessibility;
