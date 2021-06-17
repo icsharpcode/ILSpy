@@ -1426,7 +1426,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			//castclass System.Reflection.MethodInfo(call GetMethodFromHandle(ldmembertoken op_Addition))
 			if (!inst.MatchCastClass(out var arg, out var type))
 				return false;
-			if (!type.Equals(context.TypeSystem.FindType(new FullTypeName("System.Reflection.MethodInfo"))))
+			if (type.FullName != "System.Reflection.MethodInfo")
 				return false;
 			if (!(arg is CallInstruction call && call.Method.FullName == "System.Reflection.MethodBase.GetMethodFromHandle"))
 				return false;
@@ -1439,7 +1439,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			//castclass System.Reflection.ConstructorInfo(call GetMethodFromHandle(ldmembertoken op_Addition))
 			if (!inst.MatchCastClass(out var arg, out var type))
 				return false;
-			if (!type.Equals(context.TypeSystem.FindType(new FullTypeName("System.Reflection.ConstructorInfo"))))
+			if (type.FullName != "System.Reflection.ConstructorInfo")
 				return false;
 			if (!(arg is CallInstruction call && call.Method.FullName == "System.Reflection.MethodBase.GetMethodFromHandle"))
 				return false;
