@@ -535,7 +535,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (isCompiledWithMono)
 			{
-				disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "Dispose");
+				disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => ImplementsDisposeMethod(m, "Dispose"));
 				var function = CreateILAst(disposeMethod, context);
 				BlockContainer body = (BlockContainer)function.Body;
 
@@ -558,12 +558,48 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			else
 			{
 				// Non-Mono: analyze try-finally structure in Dispose()
-				disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "System.IDisposable.Dispose");
+				disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => ImplementsDisposeMethod(m, "System.IDisposable.Dispose"));
 				var function = CreateILAst(disposeMethod, context);
 				var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorDispose, stateField);
 				rangeAnalysis.AssignStateRanges(function.Body, LongSet.Universe);
 				finallyMethodToStateRange = rangeAnalysis.finallyMethodToStateRange;
 			}
+
+			bool ImplementsDisposeMethod(MethodDefinitionHandle m, string disposeMethodName)
+			{
+				var def = metadata.GetMethodDefinition(m);
+				var name = metadata.GetString(def.Name);
+				if (name == disposeMethodName)
+					return true;
+				foreach (var i in m.GetMethodImplementations(metadata))
+				{
+					var impl = metadata.GetMethodImplementation(i);
+					switch (impl.MethodDeclaration.Kind)
+					{
+						case HandleKind.MethodDefinition:
+							var md = metadata.GetMethodDefinition((MethodDefinitionHandle)impl.MethodDeclaration);
+							if (!md.GetDeclaringType().GetFullTypeName(metadata).IsKnownType(KnownTypeCode.IDisposable))
+								continue;
+							if (metadata.GetString(md.Name) != "Dispose")
+								continue;
+							return true;
+						case HandleKind.MemberReference:
+							var mr = metadata.GetMemberReference((MemberReferenceHandle)impl.MethodDeclaration);
+							if (mr.GetKind() != MemberReferenceKind.Method)
+								continue;
+							if (!mr.Parent.GetFullTypeName(metadata).IsKnownType(KnownTypeCode.IDisposable))
+								continue;
+							if (metadata.GetString(mr.Name) != "Dispose")
+								continue;
+							return true;
+						default:
+							continue;
+					}
+				}
+				return false;
+			}
+
+
 		}
 
 		[Conditional("DEBUG")]
