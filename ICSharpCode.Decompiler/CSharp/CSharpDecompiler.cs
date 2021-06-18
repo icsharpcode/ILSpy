@@ -419,6 +419,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				return true;
 			return type.BaseType.IsKnownType(metadata, KnownTypeCode.Object) && !type.GetInterfaceImplementations().Any();
 		}
+
+		internal static bool IsTransparentIdentifier(string identifier)
+		{
+			return identifier.StartsWith("<>", StringComparison.Ordinal)
+				&& (identifier.Contains("TransparentIdentifier") || identifier.Contains("TranspIdent"));
+		}
 		#endregion
 
 		static PEFile LoadPEFile(string fileName, DecompilerSettings settings)
