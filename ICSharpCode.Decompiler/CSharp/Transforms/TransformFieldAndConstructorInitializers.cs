@@ -76,10 +76,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					// Ignore casts, those might be added if references are missing.
 					if (target is CastExpression cast)
 						target = cast.Expression;
-					if (target is ThisReferenceExpression)
-						ci.ConstructorInitializerType = ConstructorInitializerType.This;
-					else if (target is BaseReferenceExpression)
-						ci.ConstructorInitializerType = ConstructorInitializerType.Base;
+					if (target is ThisReferenceExpression or BaseReferenceExpression)
+					{
+						if (ctor.DeclaringTypeDefinition == currentCtor.DeclaringTypeDefinition)
+							ci.ConstructorInitializerType = ConstructorInitializerType.This;
+						else
+							ci.ConstructorInitializerType = ConstructorInitializerType.Base;
+					}
 					else
 						return;
 					// Move arguments from invocation to initializer:
