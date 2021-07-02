@@ -10,7 +10,7 @@
 		<SystemCompilerServicesUnsafeVersion>5.0.0</SystemCompilerServicesUnsafeVersion>
 		<SystemCompositionVersion>5.0.1</SystemCompositionVersion>
 		<ILAsmVersion>5.0.0</ILAsmVersion> <!-- Microsoft.NETCore.ILAsm -->
-		<RoslynVersion>3.10.0-3.final</RoslynVersion> <!-- Microsoft.CodeAnalysis.* -->
+		<RoslynVersion>3.11.0-1.final</RoslynVersion> <!-- Microsoft.CodeAnalysis.* -->
 		<MonoCecilVersion>0.11.3</MonoCecilVersion>
 		<AvalonEditVersion>6.1.1</AvalonEditVersion>
 		<NUnitVersion>3.12.0</NUnitVersion>
