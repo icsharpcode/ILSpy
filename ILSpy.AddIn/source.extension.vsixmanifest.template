@@ -10,6 +10,9 @@
   </Metadata>
   <Installation>
     <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0,17.0)" />
+	  <InstallationTarget Id="Microsoft.VisualStudio.Community" Version ="[17.0, 18.0)">
+		  <ProductArchitecture>amd64</ProductArchitecture>
+	  </InstallationTarget>
   </Installation>
   <Dependencies>
     <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
