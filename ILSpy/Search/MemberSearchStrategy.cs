@@ -1,4 +1,21 @@
-﻿using System;
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 
@@ -11,13 +28,9 @@ namespace ICSharpCode.ILSpy.Search
 	{
 		readonly MemberSearchKind searchKind;
 
-		public MemberSearchStrategy(Language language, ApiVisibility apiVisibility, string term, IProducerConsumerCollection<SearchResult> resultQueue, MemberSearchKind searchKind = MemberSearchKind.All)
-			: this(language, apiVisibility, resultQueue, new[] { term }, searchKind)
-		{
-		}
-
-		public MemberSearchStrategy(Language language, ApiVisibility apiVisibility, IProducerConsumerCollection<SearchResult> resultQueue, string[] terms, MemberSearchKind searchKind = MemberSearchKind.All)
-			: base(language, apiVisibility, resultQueue, terms)
+		public MemberSearchStrategy(Language language, ApiVisibility apiVisibility, SearchRequest searchRequest,
+			IProducerConsumerCollection<SearchResult> resultQueue, MemberSearchKind searchKind = MemberSearchKind.All)
+			: base(language, apiVisibility, searchRequest, resultQueue)
 		{
 			this.searchKind = searchKind;
 		}
@@ -39,7 +52,7 @@ namespace ICSharpCode.ILSpy.Search
 					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
 					var type = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					if (!CheckVisibility(type))
+					if (!CheckVisibility(type) || !IsInNamespaceOrAssembly(type))
 						continue;
 					OnFoundResult(type);
 				}
@@ -54,7 +67,7 @@ namespace ICSharpCode.ILSpy.Search
 					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
 					var method = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					if (!CheckVisibility(method))
+					if (!CheckVisibility(method) || !IsInNamespaceOrAssembly(method))
 						continue;
 					OnFoundResult(method);
 				}
@@ -69,7 +82,7 @@ namespace ICSharpCode.ILSpy.Search
 					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
 					var field = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					if (!CheckVisibility(field))
+					if (!CheckVisibility(field) || !IsInNamespaceOrAssembly(field))
 						continue;
 					OnFoundResult(field);
 				}
@@ -84,7 +97,7 @@ namespace ICSharpCode.ILSpy.Search
 					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
 					var property = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					if (!CheckVisibility(property))
+					if (!CheckVisibility(property) || !IsInNamespaceOrAssembly(property))
 						continue;
 					OnFoundResult(property);
 				}
@@ -99,7 +112,7 @@ namespace ICSharpCode.ILSpy.Search
 					if (!IsMatch(languageSpecificName))
 						continue;
 					var @event = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					if (!CheckVisibility(@event))
+					if (!CheckVisibility(@event) || !IsInNamespaceOrAssembly(@event))
 						continue;
 					OnFoundResult(@event);
 				}

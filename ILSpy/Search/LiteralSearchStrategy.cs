@@ -1,7 +1,23 @@
-﻿using System;
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+using System;
 using System.Collections.Concurrent;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 
 using ICSharpCode.Decompiler;
@@ -13,7 +29,6 @@ using ICSharpCode.Decompiler.Util;
 using static System.Reflection.Metadata.PEReaderExtensions;
 
 using ILOpCode = System.Reflection.Metadata.ILOpCode;
-using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.Search
 {
@@ -22,9 +37,11 @@ namespace ICSharpCode.ILSpy.Search
 		readonly TypeCode searchTermLiteralType;
 		readonly object searchTermLiteralValue;
 
-		public LiteralSearchStrategy(Language language, ApiVisibility apiVisibility, IProducerConsumerCollection<SearchResult> resultQueue, params string[] terms)
-			: base(language, apiVisibility, resultQueue, terms)
+		public LiteralSearchStrategy(Language language, ApiVisibility apiVisibility, SearchRequest request,
+			IProducerConsumerCollection<SearchResult> resultQueue)
+			: base(language, apiVisibility, request, resultQueue)
 		{
+			var terms = request.Keywords;
 			if (terms.Length == 1)
 			{
 				var lexer = new Lexer(new LATextReader(new System.IO.StringReader(terms[0])));
@@ -72,7 +89,7 @@ namespace ICSharpCode.ILSpy.Search
 				if (!md.HasBody() || !MethodIsLiteralMatch(module, md))
 					continue;
 				var method = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-				if (!CheckVisibility(method))
+				if (!CheckVisibility(method) || !IsInNamespaceOrAssembly(method))
 					continue;
 				OnFoundResult(method);
 			}
@@ -91,7 +108,7 @@ namespace ICSharpCode.ILSpy.Search
 				if (!IsLiteralMatch(metadata, blob.ReadConstant(constant.TypeCode)))
 					continue;
 				IField field = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-				if (!CheckVisibility(field))
+				if (!CheckVisibility(field) || !IsInNamespaceOrAssembly(field))
 					continue;
 				OnFoundResult(field);
 			}

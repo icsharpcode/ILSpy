@@ -91,6 +91,15 @@ namespace ICSharpCode.ILSpy.Controls
 			base.OnTextChanged(e);
 
 			HasText = this.Text.Length > 0;
+			if (HasText)
+			{
+				HideWatermark();
+			}
+			else
+			{
+				ShowWatermark();
+			}
+
 			if (timer == null)
 			{
 				timer = new DispatcherTimer();
@@ -116,24 +125,29 @@ namespace ICSharpCode.ILSpy.Controls
 		{
 			if (!HasText)
 			{
-				Label wl = (Label)GetTemplateChild("WatermarkLabel");
-				if (wl != null)
-					wl.Visibility = Visibility.Visible;
+				ShowWatermark();
 			}
-
 			base.OnLostFocus(e);
+		}
+
+		private void ShowWatermark()
+		{
+			Label wl = (Label)GetTemplateChild("WatermarkLabel");
+			if (wl != null)
+				wl.Visibility = Visibility.Visible;
 		}
 
 		protected override void OnGotFocus(RoutedEventArgs e)
 		{
-			if (!HasText)
-			{
-				Label wl = (Label)GetTemplateChild("WatermarkLabel");
-				if (wl != null)
-					wl.Visibility = Visibility.Hidden;
-			}
-
+			HideWatermark();
 			base.OnGotFocus(e);
+		}
+
+		private void HideWatermark()
+		{
+			Label wl = (Label)GetTemplateChild("WatermarkLabel");
+			if (wl != null)
+				wl.Visibility = Visibility.Hidden;
 		}
 
 		public override void OnApplyTemplate()

@@ -39,6 +39,33 @@ namespace ICSharpCode.ILSpy.Analyzers
 				}
 			}
 		}
+		string inNamespaceFilter;
+
+		public string InNamespaceFilter {
+			get { return inNamespaceFilter; }
+			set {
+				if (inNamespaceFilter != value)
+				{
+					inNamespaceFilter = value;
+					foreach (var child in this.Children.OfType<AnalyzerTreeNode>())
+						child.InNamespaceFilter = value;
+				}
+			}
+		}
+
+		LoadedAssembly inAssemblyFilter;
+
+		public LoadedAssembly InAssemblyFilter {
+			get { return inAssemblyFilter; }
+			set {
+				if (inAssemblyFilter != value)
+				{
+					inAssemblyFilter = value;
+					foreach (var child in this.Children.OfType<AnalyzerTreeNode>())
+						child.InAssemblyFilter = value;
+				}
+			}
+		}
 
 		public override bool CanDelete()
 		{

@@ -58,7 +58,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 				var context = new AnalyzerContext() {
 					CancellationToken = ct,
 					Language = Language,
-					AssemblyList = MainWindow.Instance.CurrentAssemblyList
+					AssemblyList = MainWindow.Instance.CurrentAssemblyList,
+					InAssemblyFilter = this.InAssemblyFilter,
+					InNamespaceFilter = this.InNamespaceFilter,
 				};
 				foreach (var result in analyzer.Analyze(symbol, context))
 				{
@@ -82,27 +84,39 @@ namespace ICSharpCode.ILSpy.Analyzers
 			{
 				case IModule module:
 					return new AnalyzedModuleTreeNode(module) {
-						Language = this.Language
+						Language = this.Language,
+						InAssemblyFilter = this.InAssemblyFilter,
+						InNamespaceFilter = this.InNamespaceFilter,
 					};
 				case ITypeDefinition td:
 					return new AnalyzedTypeTreeNode(td) {
-						Language = this.Language
+						Language = this.Language,
+						InAssemblyFilter = this.InAssemblyFilter,
+						InNamespaceFilter = this.InNamespaceFilter,
 					};
 				case IField fd:
 					return new AnalyzedFieldTreeNode(fd) {
-						Language = this.Language
+						Language = this.Language,
+						InAssemblyFilter = this.InAssemblyFilter,
+						InNamespaceFilter = this.InNamespaceFilter,
 					};
 				case IMethod md:
 					return new AnalyzedMethodTreeNode(md) {
-						Language = this.Language
+						Language = this.Language,
+						InAssemblyFilter = this.InAssemblyFilter,
+						InNamespaceFilter = this.InNamespaceFilter,
 					};
 				case IProperty pd:
 					return new AnalyzedPropertyTreeNode(pd) {
-						Language = this.Language
+						Language = this.Language,
+						InAssemblyFilter = this.InAssemblyFilter,
+						InNamespaceFilter = this.InNamespaceFilter,
 					};
 				case IEvent ed:
 					return new AnalyzedEventTreeNode(ed) {
-						Language = this.Language
+						Language = this.Language,
+						InAssemblyFilter = this.InAssemblyFilter,
+						InNamespaceFilter = this.InNamespaceFilter,
 					};
 				default:
 					throw new ArgumentOutOfRangeException(nameof(symbol), $"Symbol {symbol.GetType().FullName} is not supported.");

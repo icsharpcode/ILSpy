@@ -17,40 +17,18 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
+using System.Windows.Controls;
 
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.TreeNodes;
-
-namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
+namespace ICSharpCode.ILSpy.Analyzers
 {
-	internal class AnalyzedTypeTreeNode : AnalyzerEntityTreeNode
+	/// <summary>
+	/// Interaction logic for AnalyzerPane.xaml
+	/// </summary>
+	public partial class AnalyzerPane : UserControl
 	{
-		readonly ITypeDefinition analyzedType;
-
-		public AnalyzedTypeTreeNode(ITypeDefinition analyzedType)
+		public AnalyzerPane()
 		{
-			this.analyzedType = analyzedType ?? throw new ArgumentNullException(nameof(analyzedType));
-			this.LazyLoading = true;
+			InitializeComponent();
 		}
-
-		public override object Icon => TypeTreeNode.GetIcon(analyzedType);
-
-		public override object Text => Language.TypeToString(analyzedType, includeNamespace: true);
-
-		protected override void LoadChildren()
-		{
-			var analyzers = App.ExportProvider.GetExports<IAnalyzer, IAnalyzerMetadata>("Analyzer");
-			foreach (var lazy in analyzers.OrderBy(item => item.Metadata.Order))
-			{
-				var analyzer = lazy.Value;
-				if (analyzer.Show(analyzedType))
-				{
-					this.Children.Add(new AnalyzerSearchTreeNode(analyzedType, analyzer, lazy.Metadata.Header) { InAssemblyFilter = this.InAssemblyFilter, InNamespaceFilter = this.InNamespaceFilter });
-				}
-			}
-		}
-
-		public override IEntity Member => analyzedType;
 	}
 }

@@ -43,6 +43,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 		/// </summary>
 		public Language Language { get; internal set; }
 
+		public string InNamespaceFilter { get; internal set; }
+		public LoadedAssembly InAssemblyFilter { get; internal set; }
+
 		public MethodBodyBlock GetMethodBody(IMethod method)
 		{
 			if (!method.HasBody || method.MetadataToken.IsNil)
@@ -61,7 +64,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public AnalyzerScope GetScopeOf(IEntity entity)
 		{
-			return new AnalyzerScope(AssemblyList, entity);
+			return new AnalyzerScope(AssemblyList, InAssemblyFilter, InNamespaceFilter, entity);
 		}
 
 		readonly ConcurrentDictionary<PEFile, DecompilerTypeSystem> typeSystemCache = new ConcurrentDictionary<PEFile, DecompilerTypeSystem>();

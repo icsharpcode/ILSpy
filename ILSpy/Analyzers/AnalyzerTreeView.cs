@@ -43,7 +43,10 @@ namespace ICSharpCode.ILSpy.Analyzers
 			ContextMenuProvider.Add(this);
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
 			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
+			this.paneModel = MainWindow.Instance.AnalyzerPaneModel;
 		}
+
+		AnalyzerPaneModel paneModel;
 
 		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
@@ -124,20 +127,20 @@ namespace ICSharpCode.ILSpy.Analyzers
 			switch (entity)
 			{
 				case ITypeDefinition td:
-					ShowOrFocus(new AnalyzedTypeTreeNode(td));
+					ShowOrFocus(new AnalyzedTypeTreeNode(td) { InAssemblyFilter = this.paneModel.InAssemblyFilter, InNamespaceFilter = this.paneModel.InNamespaceFilter });
 					break;
 				case IField fd:
 					if (!fd.IsConst)
-						ShowOrFocus(new AnalyzedFieldTreeNode(fd));
+						ShowOrFocus(new AnalyzedFieldTreeNode(fd) { InAssemblyFilter = this.paneModel.InAssemblyFilter, InNamespaceFilter = this.paneModel.InNamespaceFilter });
 					break;
 				case IMethod md:
-					ShowOrFocus(new AnalyzedMethodTreeNode(md));
+					ShowOrFocus(new AnalyzedMethodTreeNode(md) { InAssemblyFilter = this.paneModel.InAssemblyFilter, InNamespaceFilter = this.paneModel.InNamespaceFilter });
 					break;
 				case IProperty pd:
-					ShowOrFocus(new AnalyzedPropertyTreeNode(pd));
+					ShowOrFocus(new AnalyzedPropertyTreeNode(pd) { InAssemblyFilter = this.paneModel.InAssemblyFilter, InNamespaceFilter = this.paneModel.InNamespaceFilter });
 					break;
 				case IEvent ed:
-					ShowOrFocus(new AnalyzedEventTreeNode(ed));
+					ShowOrFocus(new AnalyzedEventTreeNode(ed) { InAssemblyFilter = this.paneModel.InAssemblyFilter, InNamespaceFilter = this.paneModel.InNamespaceFilter });
 					break;
 				default:
 					throw new ArgumentOutOfRangeException(nameof(entity), $"Entity {entity.GetType().FullName} is not supported.");

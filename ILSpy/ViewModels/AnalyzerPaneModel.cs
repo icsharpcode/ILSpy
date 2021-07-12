@@ -16,7 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Windows;
+using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
@@ -29,8 +31,55 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			ContentId = PaneContentId;
 			Title = Properties.Resources.Analyze;
+
+			this.ResetFilter = new RelayCommand(DoResetFilter);
 		}
 
 		public override DataTemplate Template => (DataTemplate)MainWindow.Instance.FindResource("AnalyzerPaneTemplate");
+
+		public Visibility FilterVisibility {
+			get {
+				return inAssemblyFilter == null && inNamespaceFilter == null ? Visibility.Collapsed : Visibility.Visible;
+			}
+		}
+
+		string inNamespaceFilter;
+
+		public string InNamespaceFilter {
+			get { return inNamespaceFilter ?? "<all>"; }
+			set {
+				if (inNamespaceFilter != value)
+				{
+					inNamespaceFilter = value;
+					RaisePropertyChanged(nameof(InNamespaceFilter));
+					RaisePropertyChanged(nameof(FilterVisibility));
+				}
+			}
+		}
+
+		LoadedAssembly inAssemblyFilter;
+
+		public LoadedAssembly InAssemblyFilter {
+			get { return inAssemblyFilter; }
+			set {
+				if (inAssemblyFilter != value)
+				{
+					inAssemblyFilter = value;
+					RaisePropertyChanged(nameof(InAssemblyFilter));
+					RaisePropertyChanged(nameof(InAssemblyFilterText));
+					RaisePropertyChanged(nameof(FilterVisibility));
+				}
+			}
+		}
+
+		public string InAssemblyFilterText => InAssemblyFilter?.GetPEFileOrNull()?.FullName;
+
+		public ICommand ResetFilter { get; set; }
+
+		private void DoResetFilter()
+		{
+			this.InAssemblyFilter = null;
+			this.InNamespaceFilter = null;
+		}
 	}
 }

@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 				var analyzer = lazy.Value;
 				if (analyzer.Show(analyzedMethod))
 				{
-					this.Children.Add(new AnalyzerSearchTreeNode(analyzedMethod, analyzer, lazy.Metadata.Header));
+					this.Children.Add(new AnalyzerSearchTreeNode(analyzedMethod, analyzer, lazy.Metadata.Header) { InAssemblyFilter = this.InAssemblyFilter, InNamespaceFilter = this.InNamespaceFilter });
 				}
 			}
 		}

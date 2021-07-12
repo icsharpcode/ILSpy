@@ -24,6 +24,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -268,19 +269,20 @@ namespace ICSharpCode.ILSpy
 		{
 			readonly CancellationTokenSource cts = new CancellationTokenSource();
 			readonly IList<LoadedAssembly> assemblies;
-			readonly string[] searchTerm;
+			readonly SearchRequest searchRequest;
 			readonly SearchMode searchMode;
 			readonly Language language;
 			readonly ApiVisibility apiVisibility;
 			public readonly IProducerConsumerCollection<SearchResult> resultQueue = new ConcurrentQueue<SearchResult>();
 
-			public RunningSearch(IList<LoadedAssembly> assemblies, string searchTerm, SearchMode searchMode, Language language, ApiVisibility apiVisibility)
+			public RunningSearch(IList<LoadedAssembly> assemblies, string searchTerm, SearchMode searchMode,
+				Language language, ApiVisibility apiVisibility)
 			{
 				this.assemblies = assemblies;
-				this.searchTerm = NativeMethods.CommandLineToArgumentArray(searchTerm);
 				this.language = language;
 				this.searchMode = searchMode;
 				this.apiVisibility = apiVisibility;
+				this.searchRequest = SearchRequest.FromInput(searchTerm, searchMode);
 			}
 
 			public void Cancel()
@@ -293,7 +295,9 @@ namespace ICSharpCode.ILSpy
 				try
 				{
 					await Task.Factory.StartNew(() => {
-						var searcher = GetSearchStrategy();
+						var searcher = GetSearchStrategy(searchRequest);
+						if (searcher == null)
+							return;
 						try
 						{
 							foreach (var loadedAssembly in assemblies)
@@ -317,79 +321,37 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 
-			AbstractSearchStrategy GetSearchStrategy()
+			AbstractSearchStrategy GetSearchStrategy(SearchRequest request)
 			{
-				if (searchTerm.Length == 1)
-				{
-					if (searchTerm[0].StartsWith("tm:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(3), resultQueue);
+				if (request.Keywords.Length == 0 && request.RegEx == null)
+					return null;
 
-					if (searchTerm[0].StartsWith("t:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Type);
-
-					if (searchTerm[0].StartsWith("m:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Member);
-
-					if (searchTerm[0].StartsWith("md:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(3), resultQueue, MemberSearchKind.Method);
-
-					if (searchTerm[0].StartsWith("f:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Field);
-
-					if (searchTerm[0].StartsWith("p:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Property);
-
-					if (searchTerm[0].StartsWith("e:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Event);
-
-					if (searchTerm[0].StartsWith("c:", StringComparison.Ordinal))
-						return new LiteralSearchStrategy(language, apiVisibility, resultQueue, searchTerm[0].Substring(2));
-
-					if (searchTerm[0].StartsWith("@", StringComparison.Ordinal))
-						return new MetadataTokenSearchStrategy(language, apiVisibility, resultQueue, searchTerm[0].Substring(1));
-
-					if (searchTerm[0].StartsWith("r:", StringComparison.Ordinal))
-						return new ResourceSearchStrategy(apiVisibility, resultQueue, searchTerm[0].Substring(2));
-
-					if (searchTerm[0].StartsWith("a:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(2), resultQueue, AssemblySearchKind.NameOrFileName);
-
-					if (searchTerm[0].StartsWith("af:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.FilePath);
-
-					if (searchTerm[0].StartsWith("an:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.FullName);
-
-					if (searchTerm[0].StartsWith("n:", StringComparison.Ordinal))
-						return new NamespaceSearchStrategy(searchTerm[0].Substring(2), resultQueue);
-				}
-
-				switch (searchMode)
+				switch (request.Mode)
 				{
 					case SearchMode.TypeAndMember:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue);
 					case SearchMode.Type:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Type);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Type);
 					case SearchMode.Member:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Member);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Member);
 					case SearchMode.Literal:
-						return new LiteralSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
+						return new LiteralSearchStrategy(language, apiVisibility, request, resultQueue);
 					case SearchMode.Method:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Method);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Method);
 					case SearchMode.Field:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Field);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Field);
 					case SearchMode.Property:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Property);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Property);
 					case SearchMode.Event:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Event);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Event);
 					case SearchMode.Token:
-						return new MetadataTokenSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
+						return new MetadataTokenSearchStrategy(language, apiVisibility, request, resultQueue);
 					case SearchMode.Resource:
-						return new ResourceSearchStrategy(apiVisibility, resultQueue, searchTerm);
+						return new ResourceSearchStrategy(apiVisibility, request, resultQueue);
 					case SearchMode.Assembly:
-						return new AssemblySearchStrategy(resultQueue, searchTerm, AssemblySearchKind.NameOrFileName);
+						return new AssemblySearchStrategy(request, resultQueue, AssemblySearchKind.NameOrFileName);
 					case SearchMode.Namespace:
-						return new NamespaceSearchStrategy(resultQueue, searchTerm);
+						return new NamespaceSearchStrategy(request, resultQueue);
 				}
 
 				return null;

@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -45,11 +46,15 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public ITypeDefinition TypeScope => typeScope;
 
 		Accessibility effectiveAccessibility;
+		LoadedAssembly inAssembly;
+		string inNamespace;
 
-		public AnalyzerScope(AssemblyList assemblyList, IEntity entity)
+		public AnalyzerScope(AssemblyList assemblyList, LoadedAssembly inAssembly, string inNamespace, IEntity entity)
 		{
 			AssemblyList = assemblyList;
 			AnalyzedSymbol = entity;
+			this.inAssembly = inAssembly;
+			this.inNamespace = inNamespace;
 			if (entity is ITypeDefinition type)
 			{
 				typeScope = type;
@@ -65,6 +70,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public IEnumerable<PEFile> GetModulesInScope(CancellationToken ct)
 		{
+			if (inAssembly?.GetPEFileOrNull() is PEFile module)
+				return new[] { module };
+
 			if (IsLocal)
 				return new[] { TypeScope.ParentModule.PEFile };
 
@@ -86,7 +94,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 			{
 				foreach (var type in TreeTraversal.PreOrder(typeScope, t => t.NestedTypes))
 				{
-					yield return type;
+					if (inNamespace == null || type.Namespace.IndexOf(inNamespace, StringComparison.OrdinalIgnoreCase) >= 0)
+						yield return type;
 				}
 			}
 			else
@@ -96,7 +105,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 					var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
 					foreach (var type in typeSystem.MainModule.TypeDefinitions)
 					{
-						yield return type;
+						if (inNamespace == null || type.Namespace.IndexOf(inNamespace, StringComparison.OrdinalIgnoreCase) >= 0)
+							yield return type;
 					}
 				}
 			}

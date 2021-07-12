@@ -783,6 +783,9 @@ Do you want to continue?</value>
   <data name="SelectVersionDropdownTooltip" xml:space="preserve">
     <value>Select version of language to output</value>
   </data>
+  <data name="SetSearchAndAnalysisScope" xml:space="preserve">
+    <value>Scope search and analysis to this...</value>
+  </data>
   <data name="SettingsChangeRestartRequired" xml:space="preserve">
     <value>You must restart ILSpy for the change to take effect.</value>
   </data>

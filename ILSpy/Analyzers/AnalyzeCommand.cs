@@ -101,4 +101,46 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 		}
 	}
+
+	[ExportContextMenuEntry(Header = nameof(Resources.SetSearchAndAnalysisScope), Icon = "Images/Search")]
+	class SetSearchAndAnalysisScope : IContextMenuEntry
+	{
+		public void Execute(TextViewContext context)
+		{
+			string term = MainWindow.Instance.SearchPane.SearchTerm ?? "";
+
+			string constraint = "";
+			switch (context.SelectedTreeNodes?.FirstOrDefault())
+			{
+				case NamespaceTreeNode nn:
+					constraint += " innamespace:" + nn.Name;
+					LoadedAssembly loadedAssembly = ((AssemblyTreeNode)nn.Parent).LoadedAssembly;
+					constraint += " inassembly:\"" + loadedAssembly.GetPEFileOrNull().FullName + "\"";
+					ViewModels.AnalyzerPaneModel analyzerPaneModel = MainWindow.Instance.AnalyzerPaneModel;
+					analyzerPaneModel.InNamespaceFilter = nn.Name;
+					analyzerPaneModel.InAssemblyFilter = loadedAssembly;
+					break;
+				case AssemblyTreeNode an:
+					constraint += " inassembly:\"" + an.LoadedAssembly.GetPEFileOrNull().FullName + "\"";
+					MainWindow.Instance.AnalyzerPaneModel.InAssemblyFilter = an.LoadedAssembly;
+					MainWindow.Instance.AnalyzerPaneModel.InNamespaceFilter = null;
+					break;
+			}
+			term += constraint;
+			MainWindow.Instance.SearchPane.SearchTerm = term;
+			MainWindow.Instance.SearchPane.Show();
+			MainWindow.Instance.AnalyzerPaneModel.Show();
+		}
+
+		public bool IsEnabled(TextViewContext context) => true;
+
+		public bool IsVisible(TextViewContext context)
+		{
+			return context.SelectedTreeNodes?.Length == 1
+				&& context.SelectedTreeNodes?.FirstOrDefault() is ILSpyTreeNode n
+				&& ((n is AssemblyTreeNode an && an.LoadedAssembly.IsLoadedAsValidAssembly)
+					|| (n is NamespaceTreeNode)
+				);
+		}
+	}
 }

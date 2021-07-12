@@ -49,10 +49,10 @@
 			<ContentControl Content="{StaticResource SearchPane}" />
 		</DataTemplate>
 
-		<analyzers:AnalyzerTreeView x:Key="AnalyzerTreeView" />
+		<analyzers:AnalyzerPane x:Key="AnalyzerPane" />
 
 		<DataTemplate x:Key="AnalyzerPaneTemplate">
-			<ContentControl Content="{StaticResource AnalyzerTreeView}" />
+			<ContentControl Content="{StaticResource AnalyzerPane}" />
 		</DataTemplate>
 
 		<DataTemplate x:Key="DefaultContentTemplate">

@@ -92,9 +92,22 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
+		public AnalyzerPane AnalyzerPane {
+			get {
+				return FindResource("AnalyzerPane") as AnalyzerPane;
+			}
+		}
+
+		public AnalyzerPaneModel AnalyzerPaneModel {
+			get {
+				return (AnalyzerPaneModel)DockWorkspace.Instance.ToolPanes
+					.FirstOrDefault(t => t.ContentId == ViewModels.AnalyzerPaneModel.PaneContentId);
+			}
+		}
+
 		public AnalyzerTreeView AnalyzerTreeView {
 			get {
-				return FindResource("AnalyzerTreeView") as AnalyzerTreeView;
+				return AnalyzerPane?.TreeView;
 			}
 		}
 

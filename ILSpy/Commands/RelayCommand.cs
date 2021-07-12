@@ -17,40 +17,36 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
+using System.Windows.Input;
 
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.TreeNodes;
-
-namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
+namespace ICSharpCode.ILSpy
 {
-	internal class AnalyzedTypeTreeNode : AnalyzerEntityTreeNode
+	public class RelayCommand : ICommand
 	{
-		readonly ITypeDefinition analyzedType;
+		private readonly Action action;
+		private readonly Func<bool> canExecute;
 
-		public AnalyzedTypeTreeNode(ITypeDefinition analyzedType)
+		public event EventHandler CanExecuteChanged;
+
+		public bool CanExecute(object parameter)
 		{
-			this.analyzedType = analyzedType ?? throw new ArgumentNullException(nameof(analyzedType));
-			this.LazyLoading = true;
+			return canExecute?.Invoke() ?? true;
 		}
 
-		public override object Icon => TypeTreeNode.GetIcon(analyzedType);
-
-		public override object Text => Language.TypeToString(analyzedType, includeNamespace: true);
-
-		protected override void LoadChildren()
+		public void Execute(object parameter)
 		{
-			var analyzers = App.ExportProvider.GetExports<IAnalyzer, IAnalyzerMetadata>("Analyzer");
-			foreach (var lazy in analyzers.OrderBy(item => item.Metadata.Order))
-			{
-				var analyzer = lazy.Value;
-				if (analyzer.Show(analyzedType))
-				{
-					this.Children.Add(new AnalyzerSearchTreeNode(analyzedType, analyzer, lazy.Metadata.Header) { InAssemblyFilter = this.InAssemblyFilter, InNamespaceFilter = this.InNamespaceFilter });
-				}
-			}
+			action();
 		}
 
-		public override IEntity Member => analyzedType;
+		public RelayCommand(Action action)
+		{
+			this.action = action ?? throw new ArgumentNullException(nameof(action));
+		}
+
+		public RelayCommand(Action action, Func<bool> canExecute)
+		{
+			this.action = action ?? throw new ArgumentNullException(nameof(action));
+			this.canExecute = canExecute ?? throw new ArgumentNullException(nameof(canExecute));
+		}
 	}
 }
