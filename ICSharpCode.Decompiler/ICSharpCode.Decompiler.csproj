@@ -19,28 +19,25 @@
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
     <NoWarn>1701;1702;1591;1573</NoWarn>
+
+    <DebugType>embedded</DebugType>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
 
   <!-- HACK: Disable package generation on Unix due to tooling issues. -->
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <IncludeSymbolsInPackage>true</IncludeSymbolsInPackage>
     <NuspecFile>ICSharpCode.Decompiler.nuspec</NuspecFile>
     <NuspecProperties>Configuration=$(Configuration)</NuspecProperties>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <DebugType>portable</DebugType>
-    <DebugSymbols>true</DebugSymbols>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>$(DefineConstants);STEP</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <DebugType>embedded</DebugType>
-    <DebugSymbols>true</DebugSymbols>	
-	<EmbedUntrackedSources>true</EmbedUntrackedSources>
-	<PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
