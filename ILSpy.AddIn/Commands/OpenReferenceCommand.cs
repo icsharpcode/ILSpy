@@ -13,8 +13,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 	{
 		static OpenReferenceCommand instance;
 
-		public OpenReferenceCommand(ILSpyAddInPackage owner)
-			: base(owner, PkgCmdIDList.cmdidOpenReferenceInILSpy)
+		public OpenReferenceCommand(ILSpyAddInPackage owner, uint id)
+			: base(owner, id)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 		}
@@ -98,11 +98,11 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 		}
 
-		internal static void Register(ILSpyAddInPackage owner)
+		internal static void Register(ILSpyAddInPackage owner, uint id)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			instance = new OpenReferenceCommand(owner);
+			instance = new OpenReferenceCommand(owner, id);
 		}
 	}
 

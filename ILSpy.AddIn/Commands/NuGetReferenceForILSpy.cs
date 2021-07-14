@@ -8,6 +8,8 @@ using EnvDTE;
 
 using Microsoft.VisualStudio.Shell;
 
+using VSLangProj;
+
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
 	/// <summary>
@@ -33,8 +35,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 			if (itemData is ProjectItem projectItem)
 			{
-				var properties = Utils.GetProperties(projectItem.Properties, "Type");
-				if ((properties[0] as string) == "Package")
+				var properties = Utils.GetProperties(projectItem.Properties, "Type", "ExtenderCATID");
+				if (((properties[0] as string) == "Package") || ((properties[1] as string) == PrjBrowseObjectCATID.prjCATIDCSharpReferenceBrowseObject))
 				{
 					return new NuGetReferenceForILSpy(projectItem);
 				}

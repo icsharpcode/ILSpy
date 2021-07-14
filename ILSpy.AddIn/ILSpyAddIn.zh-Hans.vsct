@@ -34,7 +34,7 @@
     group; your package should define its own command set in order to avoid collisions  
     with command ids defined by other packages. -->
 
-    
+
     <!--Buttons section. -->
     <!--This section defines the elements the user can interact with, like a menu command or a button 
         or combo box in a toolbar. -->
@@ -49,6 +49,16 @@
 
       <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenReferenceInILSpy" priority="0x0600" type="Button">
         <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyRefGroup" />
+        <Icon guid="guidImages" id="bmpLogo" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>用 ILSpy 打开</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenPackageReferenceInILSpy" priority="0x0600" type="Button">
+        <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyPackageRefGroup" />
         <Icon guid="guidImages" id="bmpLogo" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -84,9 +94,9 @@
           <ButtonText>ILSpy</ButtonText>
         </Strings>
       </Button>
- 
+
     </Buttons>
-  
+
   </Commands>
 
 </CommandTable>
