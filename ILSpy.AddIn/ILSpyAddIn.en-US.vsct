@@ -67,6 +67,16 @@
         </Strings>
       </Button>
 
+      <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenProjectReferenceInILSpy" priority="0x0600" type="Button">
+        <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyProjectRefGroup" />
+        <Icon guid="guidImages" id="bmpLogo" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Open in ILSpy</ButtonText>
+        </Strings>
+      </Button>
+
       <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenProjectOutputInILSpy" priority="0x0600" type="Button">
         <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyProjGroup" />
         <Icon guid="guidImages" id="bmpLogo" />
