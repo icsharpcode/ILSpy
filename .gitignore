@@ -19,3 +19,4 @@ _ReSharper*/
 /ICSharpCode.Decompiler.Tests/TestCases/Correctness/*.exe.config
 /ICSharpCode.Decompiler/ICSharpCode.Decompiler.nuspec
 multitargeting.props
+**/.idea

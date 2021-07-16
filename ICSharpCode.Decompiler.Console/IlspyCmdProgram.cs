@@ -14,6 +14,8 @@ using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.PdbProvider;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
+using ICSharpCode.Decompiler.Solution;
+
 // ReSharper disable All
 
 namespace ICSharpCode.Decompiler.Console
@@ -29,17 +31,19 @@ Remarks:
 	{
 		public static int Main(string[] args) => CommandLineApplication.Execute<ILSpyCmdProgram>(args);
 
-		[FileExists]
 		[Required]
 		[Argument(0, "Assembly file name", "The assembly that is being decompiled. This argument is mandatory.")]
 		public string InputAssemblyName { get; }
 
-		[DirectoryExists]
+		// [DirectoryExists]
 		[Option("-o|--outputdir <directory>", "The output directory, if omitted decompiler output is written to standard out.", CommandOptionType.SingleValue)]
 		public string OutputDirectory { get; }
 
 		[Option("-p|--project", "Decompile assembly as compilable project. This requires the output directory option.", CommandOptionType.NoValue)]
 		public bool CreateCompilableProjectFlag { get; }
+
+		[Option("--sln", "Generate solution with decompiled project(s)", CommandOptionType.SingleValue)]
+		public string SolutionPath { get; }
 
 		[Option("-t|--type <type-name>", "The fully qualified name of the type to decompile.", CommandOptionType.SingleValue)]
 		public string TypeName { get; }
@@ -76,24 +80,64 @@ Remarks:
 		[Option("--no-dead-stores", "Remove dead stores.", CommandOptionType.NoValue)]
 		public bool RemoveDeadStores { get; }
 
+		private struct DecompiledProjectOutput
+		{
+			public ProjectId ProjectId;
+			public string ProjectPath;
+		}
+
 		private int OnExecute(CommandLineApplication app)
 		{
 			TextWriter output = System.Console.Out;
 			bool outputDirectorySpecified = !string.IsNullOrEmpty(OutputDirectory);
 
+			void CheckFileExists(string filePath)
+			{
+				if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+					throw new FileNotFoundException("File not found", filePath);
+			}
+
 			try {
 				if (CreateCompilableProjectFlag) {
-					return DecompileAsProject(InputAssemblyName, OutputDirectory);
+					{
+						// multiple assemblies can be separated by spaces
+						// when provided with a sln output path write a solution with the decompiled projs
+						var projects = new List<DecompiledProjectOutput>();
+						string[] assemblies = InputAssemblyName.Replace("\"", "").Split('|');
+						string[] outputDirs = OutputDirectory.Replace("\"", "").Split('|');
+						if (assemblies.Length != outputDirs.Length && outputDirs.Length != 1)
+							throw new Exception("Output directories must either match assemblies count or be exactly one");
+						for (var index = 0; index < assemblies.Length; index++)
+						{
+							var assembly = assemblies[index];
+							CheckFileExists(assembly);
+							var outputDir = outputDirs[index];
+							if (!Directory.Exists(outputDir)) throw new Exception("Output Directory " + outputDir + " does not exist");
+							var res = DecompileAsProject(assembly, outputDir, out var po);
+							if (res != 0) return res;
+							projects.Add(po);
+						}
+
+						if (!string.IsNullOrWhiteSpace(SolutionPath))
+						{
+							var projectsForSolution = projects.Select(p =>
+								new ProjectItem(p.ProjectPath, p.ProjectId.PlatformName, p.ProjectId.Guid, p.ProjectId.TypeGuid));
+							SolutionCreator.WriteSolutionFile(SolutionPath, projectsForSolution);
+						}
+					}
 				} else if (EntityTypes.Any()) {
+					CheckFileExists(InputAssemblyName);
 					var values = EntityTypes.SelectMany(v => v.Split(',', ';')).ToArray();
 					HashSet<TypeKind> kinds = TypesParser.ParseSelection(values);
-					if (outputDirectorySpecified) {
+					if (outputDirectorySpecified)
+					{
 						string outputName = Path.GetFileNameWithoutExtension(InputAssemblyName);
 						output = File.CreateText(Path.Combine(OutputDirectory, outputName) + ".list.txt");
 					}
 
 					return ListContent(InputAssemblyName, output, kinds);
 				} else if (ShowILCodeFlag || ShowILSequencePointsFlag) {
+					CheckFileExists(InputAssemblyName);
 					if (outputDirectorySpecified) {
 						string outputName = Path.GetFileNameWithoutExtension(InputAssemblyName);
 						output = File.CreateText(Path.Combine(OutputDirectory, outputName) + ".il");
@@ -101,6 +145,7 @@ Remarks:
 
 					return ShowIL(InputAssemblyName, output);
 				} else if (CreateDebugInfoFlag) {
+					CheckFileExists(InputAssemblyName);
 					string pdbFileName = null;
 					if (outputDirectorySpecified) {
 						string outputName = Path.GetFileNameWithoutExtension(InputAssemblyName);
@@ -118,6 +163,7 @@ Remarks:
 					output.WriteLine(vInfo);
 				} else {
 					if (outputDirectorySpecified) {
+						CheckFileExists(InputAssemblyName);
 						string outputName = Path.GetFileNameWithoutExtension(InputAssemblyName);
 						output = File.CreateText(Path.Combine(OutputDirectory,
 							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
@@ -182,7 +228,7 @@ Remarks:
 			return 0;
 		}
 
-		int DecompileAsProject(string assemblyFileName, string outputDirectory)
+		int DecompileAsProject(string assemblyFileName, string outputDirectory, out DecompiledProjectOutput result)
 		{
 			var module = new PEFile(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Reader.DetectTargetFrameworkId());
@@ -190,7 +236,8 @@ Remarks:
 				resolver.AddSearchDirectory(path);
 			}
 			var decompiler = new WholeProjectDecompiler(GetSettings(module), resolver, resolver, TryLoadPDB(module));
-			decompiler.DecompileProject(module, outputDirectory);
+			var res = decompiler.DecompileProject(module, outputDirectory);
+			result = new DecompiledProjectOutput() {ProjectId = res.proj, ProjectPath = res.path};
 			return 0;
 		}
 
