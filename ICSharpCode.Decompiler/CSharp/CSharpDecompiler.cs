@@ -136,6 +136,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							// Inlining must be first, because it doesn't trigger re-runs.
 							// Any other transform that opens up new inlining opportunities should call RequestRerun().
 							new ExpressionTransforms(),
+							new PatternMatchingTransform(),
 							new DynamicIsEventAssignmentTransform(),
 							new TransformAssignment(), // inline and compound assignments
 							new NullCoalescingTransform(),

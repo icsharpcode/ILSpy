@@ -4338,6 +4338,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		protected internal override TranslatedExpression VisitMatchInstruction(MatchInstruction inst, TranslationContext context)
+		{
+			throw new NotImplementedException();
+		}
+
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)
 		{
 			string message = "Error";
