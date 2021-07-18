@@ -24,6 +24,42 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return F() && x is string w && w.Contains("a");
 		}
 
+		public void SimpleTypePatternWithShortcircuitAnd(object x)
+		{
+			if (x is string z && z.Contains("a"))
+			{
+				Console.WriteLine(z);
+			}
+			else
+			{
+				Console.WriteLine();
+			}
+		}
+
+		public void SimpleTypePatternWithShortcircuitOr(object x)
+		{
+			if (!(x is string z) || z.Contains("a"))
+			{
+				Console.WriteLine();
+			}
+			else
+			{
+				Console.WriteLine(z);
+			}
+		}
+
+		public void SimpleTypePatternWithShortcircuitOr2(object x)
+		{
+			if (F() || !(x is string z))
+			{
+				Console.WriteLine();
+			}
+			else
+			{
+				Console.WriteLine(z);
+			}
+		}
+
 		private bool F()
 		{
 			return true;

@@ -4340,7 +4340,44 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitMatchInstruction(MatchInstruction inst, TranslationContext context)
 		{
-			throw new NotImplementedException();
+			var left = Translate(inst.TestedOperand);
+			var right = TranslatePattern(inst);
+
+			return new BinaryOperatorExpression(left, BinaryOperatorType.IsPattern, right)
+				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)))
+				.WithILInstruction(inst);
+		}
+
+		ExpressionWithILInstruction TranslatePattern(ILInstruction pattern)
+		{
+			switch (pattern)
+			{
+				case MatchInstruction matchInstruction:
+					if (!matchInstruction.CheckType)
+						throw new NotImplementedException();
+					if (matchInstruction.IsDeconstructCall)
+						throw new NotImplementedException();
+					if (matchInstruction.IsDeconstructTuple)
+						throw new NotImplementedException();
+					if (matchInstruction.SubPatterns.Any())
+						throw new NotImplementedException();
+					if (matchInstruction.HasDesignator)
+					{
+						SingleVariableDesignation designator = new SingleVariableDesignation { Identifier = matchInstruction.Variable.Name };
+						designator.AddAnnotation(new ILVariableResolveResult(matchInstruction.Variable));
+						return new DeclarationExpression {
+							Type = ConvertType(matchInstruction.Variable.Type),
+							Designation = designator
+						}.WithILInstruction(matchInstruction);
+					}
+					else
+					{
+						return new TypeReferenceExpression(ConvertType(matchInstruction.Variable.Type))
+							.WithILInstruction(matchInstruction);
+					}
+				default:
+					throw new NotImplementedException();
+			}
 		}
 
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)

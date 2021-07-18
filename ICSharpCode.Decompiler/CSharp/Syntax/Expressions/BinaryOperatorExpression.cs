@@ -25,7 +25,6 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -55,6 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole ShiftRightRole = new TokenRole(">>");
 		public readonly static TokenRole NullCoalescingRole = new TokenRole("??");
 		public readonly static TokenRole RangeRole = new TokenRole("..");
+		public readonly static TokenRole IsKeywordRole = IsExpression.IsKeywordRole;
 
 		public readonly static Role<Expression> LeftRole = new Role<Expression>("Left", Expression.Null);
 		public readonly static Role<Expression> RightRole = new Role<Expression>("Right", Expression.Null);
@@ -155,6 +155,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return NullCoalescingRole;
 				case BinaryOperatorType.Range:
 					return RangeRole;
+				case BinaryOperatorType.IsPattern:
+					return IsKeywordRole;
 				default:
 					throw new NotSupportedException("Invalid value for BinaryOperatorType");
 			}
@@ -265,6 +267,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		NullCoalescing,
 		/// <summary>left .. right</summary>
 		/// <remarks>left and right are optional = may be Expression.Null</remarks>
-		Range
+		Range,
+
+		/// <summary>left is right</summary>
+		/// <remarks>right must be a pattern</remarks>
+		IsPattern,
 	}
 }

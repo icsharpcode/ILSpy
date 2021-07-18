@@ -355,6 +355,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case VariableKind.ExceptionStackSlot:
 				case VariableKind.UsingLocal:
 				case VariableKind.ForeachLocal:
+				case VariableKind.PatternLocal:
 					return false;
 				default:
 					return true;

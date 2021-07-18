@@ -18,7 +18,6 @@
 
 #nullable enable
 
-
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 
@@ -32,6 +31,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
+			if (!context.Settings.PatternMatching)
+				return;
 			if (pos + 1 >= block.Instructions.Count)
 				return;
 			if (block.Instructions[pos] is not StLoc
@@ -54,17 +55,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			if (result.LoadInst is not LdLoc)
 				return;
-			if (!result.LoadInst.Parent!.MatchCompNotEqualsNull(out _))
+			bool invertCondition;
+			if (result.LoadInst.Parent!.MatchCompNotEqualsNull(out _))
+			{
+				invertCondition = false;
+
+			}
+			else if (result.LoadInst.Parent!.MatchCompEqualsNull(out _))
+			{
+				invertCondition = true;
+			}
+			else
+			{
 				return;
+			}
 
 			context.Step($"Type pattern matching {v.Name}", block.Instructions[pos]);
-			// call Use(..., match.type[T](V = testedOperand))			
+			// call Use(..., match.type[T](V = testedOperand))
 
 			var target = result.LoadInst.Parent;
-			var matchInstruction = new MatchInstruction(v, testedOperand) {
+			ILInstruction matchInstruction = new MatchInstruction(v, testedOperand) {
 				CheckNotNull = true,
 				CheckType = true
 			};
+			if (invertCondition)
+			{
+				matchInstruction = Comp.LogicNot(matchInstruction);
+			}
 			target.ReplaceWith(matchInstruction.WithILRange(target));
 			block.Instructions.RemoveAt(pos);
 			v.Kind = VariableKind.PatternLocal;

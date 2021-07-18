@@ -89,6 +89,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SplitVariables(),
 				new ILInlining(),
 				new InlineReturnTransform(), // must run before DetectPinnedRegions
+				new RemoveInfeasiblePathTransform(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
 				new YieldReturnDecompiler(), // must run after inlining but before loop detection
 				new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection

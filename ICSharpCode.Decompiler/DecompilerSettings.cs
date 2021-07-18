@@ -1446,6 +1446,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool patternMatching = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 7.0 pattern matching should be detected.
+		/// </summary>
+		[Category("C# 7.0 / VS 2017")]
+		[Description("DecompilerSettings.PatternMatching")]
+		public bool PatternMatching {
+			get { return patternMatching; }
+			set {
+				if (patternMatching != value)
+				{
+					patternMatching = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool staticLocalFunctions = true;
 
 		/// <summary>
