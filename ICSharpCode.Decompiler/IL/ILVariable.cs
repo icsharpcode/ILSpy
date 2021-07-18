@@ -372,6 +372,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IField? StateMachineField;
 
+		/// <summary>
+		/// If enabled, remove dead stores to this variable as if the "Remove dead code" option is enabled.
+		/// </summary>
+		internal bool RemoveIfRedundant;
+
 		public ILVariable(VariableKind kind, IType type, int? index = null)
 		{
 			if (type == null)

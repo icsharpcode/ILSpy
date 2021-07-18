@@ -97,10 +97,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				new DetectExitPoints(),
 				new LdLocaDupInitObjTransform(),
 				new EarlyExpressionTransforms(),
+				new SplitVariables(), // split variables once again, because the stobj(ldloca V, ...) may open up new replacements
 				// RemoveDeadVariableInit must run after EarlyExpressionTransforms so that stobj(ldloca V, ...)
 				// is already collapsed into stloc(V, ...).
 				new RemoveDeadVariableInit(),
-				new SplitVariables(), // split variables once again, because the stobj(ldloca V, ...) may open up new replacements
 				new ControlFlowSimplification(), //split variables may enable new branch to leave inlining
 				new DynamicCallSiteTransform(),
 				new SwitchDetection(),
