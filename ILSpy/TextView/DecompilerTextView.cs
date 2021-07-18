@@ -1134,7 +1134,7 @@ namespace ICSharpCode.ILSpy.TextView
 		}
 
 		/// <summary>
-		/// Cleans up a node name for use as a file name.
+		/// Cleans up a node name for use as a file name and limits the length to 50 characters.
 		/// </summary>
 		internal static string CleanUpName(string text)
 		{

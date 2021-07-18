@@ -45,6 +45,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 	/// </summary>
 	public class WholeProjectDecompiler : IProjectInfoProvider
 	{
+		const int MaxDirectoryNameLength = 200;
+		const int MaxFileNameLength = 50;
+
 		#region Settings
 		/// <summary>
 		/// Gets the setting this instance uses for decompiling.
@@ -202,10 +205,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		IEnumerable<(string itemType, string fileName)> WriteCodeFilesInProject(Metadata.PEFile module, CancellationToken cancellationToken)
 		{
 			var metadata = module.Metadata;
+			int maxFileNameLength = MaxFileNameLength;
+			int maxPathLength = MaxDirectoryNameLength - TargetDirectory.Length;
 			var files = module.Metadata.GetTopLevelTypeDefinitions().Where(td => IncludeTypeWhenDecompilingProject(module, td)).GroupBy(
 				delegate (TypeDefinitionHandle h) {
 					var type = metadata.GetTypeDefinition(h);
-					string file = CleanUpFileName(metadata.GetString(type.Name)) + ".cs";
+					string file = CleanUpFileName(metadata.GetString(type.Name), maxFileNameLength) + ".cs";
 					string ns = metadata.GetString(type.Namespace);
 					if (string.IsNullOrEmpty(ns))
 					{
@@ -213,7 +218,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					}
 					else
 					{
-						string dir = CleanUpDirectoryName(ns);
+						string dir = CleanUpDirectoryName(ns, maxPathLength);
 						if (directories.Add(dir))
 							Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
 						return Path.Combine(dir, file);
@@ -252,7 +257,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		#region WriteResourceFilesInProject
 		protected virtual IEnumerable<(string itemType, string fileName)> WriteResourceFilesInProject(Metadata.PEFile module)
 		{
-			foreach (var r in module.Resources.Where(r => r.ResourceType == Metadata.ResourceType.Embedded))
+			int maxPathLength = MaxDirectoryNameLength + MaxFileNameLength - TargetDirectory.Length;
+			foreach (var r in module.Resources.Where(r => r.ResourceType == ResourceType.Embedded))
 			{
 				Stream stream = r.TryOpenStream();
 				stream.Position = 0;
@@ -268,7 +274,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						{
 							foreach (var (name, value) in resourcesFile)
 							{
-								string fileName = Path.Combine(name.Split('/').Select(p => CleanUpFileName(p)).ToArray());
+								string fileName = CleanUpFileName(name, maxPathLength)
+									.Replace('/', Path.DirectorySeparatorChar);
 								string dirName = Path.GetDirectoryName(fileName);
 								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
 								{
@@ -359,8 +366,16 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		string GetFileNameForResource(string fullName)
 		{
-			string[] splitName = fullName.Split('.');
-			string fileName = CleanUpFileName(fullName);
+			int maxPathLength = MaxFileNameLength + MaxDirectoryNameLength - TargetDirectory.Length;
+			// Clean up the name first and ensure the length does not exceed the maximum length
+			// supported by the OS.
+			fullName = CleanUpDirectoryName(fullName, maxPathLength);
+			// The purpose of the below algorithm is to "maximize" the directory name and "minimize" the file name.
+			// That is, a full name of the form "Namespace1.Namespace2{...}.NamespaceN.ResourceName" is split such that
+			// the directory part Namespace1\Namespace2\... reuses as many existing directories as
+			// possible, and only the remaining name parts are used as prefix for the filename.
+			string[] splitName = fullName.Split(Path.DirectorySeparatorChar);
+			string fileName = fullName;
 			string separator = Path.DirectorySeparatorChar.ToString();
 			for (int i = splitName.Length - 1; i > 0; i--)
 			{
@@ -368,7 +383,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				if (directories.Contains(ns))
 				{
 					string name = string.Join(".", splitName, i, splitName.Length - i);
-					fileName = Path.Combine(ns, CleanUpFileName(name));
+					fileName = Path.Combine(ns, name);
 					break;
 				}
 			}
@@ -527,10 +542,17 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		#endregion
 
 		/// <summary>
-		/// Cleans up a node name for use as a file name.
+		/// Cleans up a node name for use as a file name and limits the length to 50 characters.
 		/// </summary>
 		public static string CleanUpFileName(string text)
 		{
+			return CleanUpFileName(text, MaxFileNameLength);
+		}
+
+		static string CleanUpFileName(string text, int maxPathLength)
+		{
+			if (maxPathLength <= 0)
+				throw new ArgumentException("Must be greater than 0.", nameof(maxPathLength));
 			int pos = text.IndexOf(':');
 			if (pos > 0)
 				text = text.Substring(0, pos);
@@ -548,8 +570,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					b.Append('.'); // allow dot, but never two in a row
 				else
 					b.Append('-');
-				if (b.Length >= 200)
-					break; // limit to 200 chars
+				if (b.Length >= maxPathLength)
+					break; // limit chars to a predefined length
 			}
 			if (b.Length == 0)
 				b.Append('-');
@@ -563,11 +585,16 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		}
 
 		/// <summary>
-		/// Cleans up a node name for use as a directory name.
+		/// Cleans up a node name for use as a directory name and limits the length to 200 characters.
 		/// </summary>
 		public static string CleanUpDirectoryName(string text)
 		{
-			return CleanUpFileName(text).Replace('.', Path.DirectorySeparatorChar);
+			return CleanUpDirectoryName(text, MaxDirectoryNameLength);
+		}
+
+		static string CleanUpDirectoryName(string text, int maxPathLength)
+		{
+			return CleanUpFileName(text, maxPathLength).Replace('.', Path.DirectorySeparatorChar);
 		}
 
 		static bool IsReservedFileSystemName(string name)
