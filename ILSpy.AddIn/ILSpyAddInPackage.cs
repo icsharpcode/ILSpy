@@ -94,9 +94,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 			OpenILSpyCommand.Register(this);
 			OpenProjectOutputCommand.Register(this);
-			OpenReferenceCommand.Register(this, PkgCmdIDList.cmdidOpenReferenceInILSpy);
-			OpenReferenceCommand.Register(this, PkgCmdIDList.cmdidOpenPackageReferenceInILSpy);
-			OpenReferenceCommand.Register(this, PkgCmdIDList.cmdidOpenProjectReferenceInILSpy);
+			OpenReferenceCommand.Register(this);
 			OpenCodeItemCommand.Register(this);
 		}
 		#endregion

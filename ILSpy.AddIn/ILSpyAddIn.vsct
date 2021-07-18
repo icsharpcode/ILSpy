@@ -52,14 +52,6 @@
       <Group guid="guidILSpyAddInCmdSet" id="OpenILSpyRefGroup" priority="0x0200">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_REFERENCE"/>
       </Group>
-
-      <Group guid="guidILSpyAddInCmdSet" id="OpenILSpyPackageRefGroup" priority="0x0200">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PACKAGEREFERENCE"/>
-      </Group>
-      
-      <Group guid="guidILSpyAddInCmdSet" id="OpenILSpyProjectRefGroup" priority="0x0200">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJECTREFERENCE"/>
-      </Group>
     </Groups>
 
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
@@ -72,6 +64,14 @@
       <Bitmap guid="guidImages" href="Resources\Images.png" usedList="bmpLogo, bmpPic1, bmpPic2, bmpPicX, bmpPicArrows"/>
     </Bitmaps>
   </Commands>
+  <CommandPlacements>
+    <CommandPlacement guid="guidILSpyAddInCmdSet" id="OpenILSpyRefGroup" priority="0x0200">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PACKAGEREFERENCE"/>
+    </CommandPlacement>
+    <CommandPlacement guid="guidILSpyAddInCmdSet" id="OpenILSpyRefGroup" priority="0x0200">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJECTREFERENCE"/>
+    </CommandPlacement>
+  </CommandPlacements>
   <Symbols>
     <!-- This is the package guid. -->
     <GuidSymbol name="guidILSpyAddInPkg" value="{a9120dbe-164a-4891-842f-fb7829273838}" />
@@ -89,8 +89,6 @@
       <IDSymbol name="cmdidOpenReferenceInILSpy" value="0x0200" />
       <IDSymbol name="cmdidOpenProjectOutputInILSpy" value="0x0300" />
       <IDSymbol name="cmdidOpenCodeItemInILSpy" value="0x0400" />
-      <IDSymbol name="cmdidOpenPackageReferenceInILSpy" value="0x0500" />
-      <IDSymbol name="cmdidOpenProjectReferenceInILSpy" value="0x0600" />
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{2f654db9-4641-4638-9937-27c6202b2a6a}" >
