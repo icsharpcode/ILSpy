@@ -64,6 +64,14 @@
       <Bitmap guid="guidImages" href="Resources\Images.png" usedList="bmpLogo, bmpPic1, bmpPic2, bmpPicX, bmpPicArrows"/>
     </Bitmaps>
   </Commands>
+  <CommandPlacements>
+    <CommandPlacement guid="guidILSpyAddInCmdSet" id="OpenILSpyRefGroup" priority="0x0200">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PACKAGEREFERENCE"/>
+    </CommandPlacement>
+    <CommandPlacement guid="guidILSpyAddInCmdSet" id="OpenILSpyRefGroup" priority="0x0200">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJECTREFERENCE"/>
+    </CommandPlacement>
+  </CommandPlacements>
   <Symbols>
     <!-- This is the package guid. -->
     <GuidSymbol name="guidILSpyAddInPkg" value="{a9120dbe-164a-4891-842f-fb7829273838}" />
@@ -75,6 +83,8 @@
       <IDSymbol name="OpenILSpyRefGroup" value="0x1020" />
       <IDSymbol name="OpenILSpyProjGroup" value="0x1030" />
       <IDSymbol name="OpenILSpyCodeItemGroup" value="0x1040" />
+      <IDSymbol name="OpenILSpyPackageRefGroup" value="0x1050" />
+      <IDSymbol name="OpenILSpyProjectRefGroup" value="0x1060" />
       <IDSymbol name="cmdidOpenILSpy" value="0x0100" />
       <IDSymbol name="cmdidOpenReferenceInILSpy" value="0x0200" />
       <IDSymbol name="cmdidOpenProjectOutputInILSpy" value="0x0300" />
@@ -88,6 +98,11 @@
       <IDSymbol name="bmpPicX" value="4" />
       <IDSymbol name="bmpPicArrows" value="5" />
       <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidReferenceContext" value="{D309F791-903F-11D0-9EFC-00A0C911004F}">
+      <IDSymbol name="IDM_VS_CTXT_PACKAGEREFERENCE" value="0x04A3"/>
+      <IDSymbol name="IDM_VS_CTXT_PROJECTREFERENCE" value="0x04A7"/>
     </GuidSymbol>
   </Symbols>
 

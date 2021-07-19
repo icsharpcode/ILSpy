@@ -68,14 +68,6 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				return;
 			}
 
-			// Handle NuGet references
-			var nugetRefItem = NuGetReferenceForILSpy.Detect(itemObject);
-			if (nugetRefItem != null)
-			{
-				OpenAssembliesInILSpy(nugetRefItem.GetILSpyParameters());
-				return;
-			}
-
 			// Handle project references
 			var projectRefItem = ProjectReferenceForILSpy.Detect(itemObject);
 			if (projectRefItem != null)
@@ -94,6 +86,14 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				}
 
 				OpenAssembliesInILSpy(projectRefItem.GetILSpyParameters());
+				return;
+			}
+
+			// Handle NuGet references
+			var nugetRefItem = NuGetReferenceForILSpy.Detect(itemObject);
+			if (nugetRefItem != null)
+			{
+				OpenAssembliesInILSpy(nugetRefItem.GetILSpyParameters());
 				return;
 			}
 		}
