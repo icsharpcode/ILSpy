@@ -79,6 +79,24 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Analy_zer.
+        /// </summary>
+        public static string _Analyzer {
+            get {
+                return ResourceManager.GetString("_Analyzer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Assemblies.
+        /// </summary>
+        public static string _Assemblies {
+            get {
+                return ResourceManager.GetString("_Assemblies", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to _Check for Updates.
         /// </summary>
         public static string _CheckUpdates {

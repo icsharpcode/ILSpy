@@ -933,6 +933,12 @@ Do you want to continue?</value>
   <data name="_AddMainList" xml:space="preserve">
     <value>_Add To Main List</value>
   </data>
+  <data name="_Analyzer" xml:space="preserve">
+    <value>Analy_zer</value>
+  </data>
+  <data name="_Assemblies" xml:space="preserve">
+    <value>_Assemblies</value>
+  </data>
   <data name="_CheckUpdates" xml:space="preserve">
     <value>_Check for Updates</value>
   </data>
