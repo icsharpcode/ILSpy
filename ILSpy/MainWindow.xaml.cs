@@ -371,6 +371,29 @@ namespace ICSharpCode.ILSpy
 		}
 		#endregion
 
+		protected override void OnKeyDown(KeyEventArgs e)
+		{
+			base.OnKeyDown(e);
+			if (!e.Handled && e.KeyboardDevice.Modifiers == ModifierKeys.Alt && e.Key == Key.System)
+			{
+				switch (e.SystemKey)
+				{
+					case Key.A:
+						assemblyListComboBox.Focus();
+						e.Handled = true;
+						break;
+					case Key.L:
+						languageComboBox.Focus();
+						e.Handled = true;
+						break;
+					case Key.E: // Alt+V was already taken by _View menu
+						languageVersionComboBox.Focus();
+						e.Handled = true;
+						break;
+				}
+			}
+		}
+
 		public AssemblyList CurrentAssemblyList {
 			get { return assemblyList; }
 		}

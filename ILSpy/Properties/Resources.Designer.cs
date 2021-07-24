@@ -1713,15 +1713,6 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Language.
-        /// </summary>
-        public static string Language {
-            get {
-                return ResourceManager.GetString("Language", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Are you sure that you want to delete the selected assembly list?.
         /// </summary>
         public static string ListDeleteConfirmation {
@@ -2238,7 +2229,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select a list of assemblies.
+        ///   Looks up a localized string similar to Select a list of assemblies (Alt+A).
         /// </summary>
         public static string SelectAssemblyListDropdownTooltip {
             get {
@@ -2247,7 +2238,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select language to decompile to.
+        ///   Looks up a localized string similar to Select language to decompile to (Alt+L).
         /// </summary>
         public static string SelectLanguageDropdownTooltip {
             get {
@@ -2274,7 +2265,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select version of language to output.
+        ///   Looks up a localized string similar to Select version of language to output (Alt+E).
         /// </summary>
         public static string SelectVersionDropdownTooltip {
             get {
@@ -2540,6 +2531,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string Type {
             get {
                 return ResourceManager.GetString("Type", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to UI Language.
+        /// </summary>
+        public static string UILanguage {
+            get {
+                return ResourceManager.GetString("UILanguage", resourceCulture);
             }
         }
         
