@@ -104,6 +104,7 @@ namespace ICSharpCode.Decompiler
 				discards = false;
 				localFunctions = false;
 				deconstruction = false;
+				patternMatching = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_2)
 			{
@@ -157,7 +158,7 @@ namespace ICSharpCode.Decompiler
 				return CSharp.LanguageVersion.CSharp7_2;
 			// C# 7.1 missing
 			if (outVariables || throwExpressions || tupleTypes || tupleConversions
-				|| discards || localFunctions)
+				|| discards || localFunctions || deconstruction || patternMatching)
 				return CSharp.LanguageVersion.CSharp7;
 			if (awaitInCatchFinally || useExpressionBodyForCalculatedGetterOnlyProperties || nullPropagation
 				|| stringInterpolation || dictionaryInitializers || extensionMethodsInCollectionInitializers

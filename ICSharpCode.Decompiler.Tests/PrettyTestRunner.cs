@@ -486,7 +486,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Issue1080([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions);
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp6));
 		}
 
 		[Test]

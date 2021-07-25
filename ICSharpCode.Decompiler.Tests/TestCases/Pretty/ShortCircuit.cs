@@ -320,13 +320,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (!F(1))
 			{
 			}
-			if (F(2) && F(3))
-			{
-			}
 			if (F(4) || F(5))
-			{
-			}
-			if (F(0) && F(1) && !F(2) && (F(3) || F(4)))
 			{
 			}
 			E();
