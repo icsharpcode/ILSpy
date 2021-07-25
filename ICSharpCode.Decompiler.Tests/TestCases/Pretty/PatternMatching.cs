@@ -4,31 +4,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class PatternMatching
 	{
-		public bool SimpleTypePattern(object x)
+		public void SimpleTypePattern(object x)
 		{
-			Use(x is string y);
-			if (x is string z)
+			if (x is string value)
 			{
-				Console.WriteLine(z);
+				Console.WriteLine(value);
 			}
-			return x is string w;
 		}
 
-		public bool SimpleTypePatternWithShortcircuit(object x)
+		public void TypePatternWithShortcircuit(object x)
 		{
-			Use(F() && x is string y && y.Contains("a"));
-			if (F() && x is string z && z.Contains("a"))
+			Use(F() && x is string text && text.Contains("a"));
+			if (F() && x is string text2 && text2.Contains("a"))
 			{
-				Console.WriteLine(z);
+				Console.WriteLine(text2);
 			}
-			return F() && x is string w && w.Contains("a");
 		}
 
-		public void SimpleTypePatternWithShortcircuitAnd(object x)
+		public void TypePatternWithShortcircuitAnd(object x)
 		{
-			if (x is string z && z.Contains("a"))
+			if (x is string text && text.Contains("a"))
 			{
-				Console.WriteLine(z);
+				Console.WriteLine(text);
 			}
 			else
 			{
@@ -36,35 +33,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public void SimpleTypePatternWithShortcircuitOr(object x)
+		public void TypePatternWithShortcircuitOr(object x)
 		{
-			if (!(x is string z) || z.Contains("a"))
+			if (!(x is string text) || text.Contains("a"))
 			{
 				Console.WriteLine();
 			}
 			else
 			{
-				Console.WriteLine(z);
+				Console.WriteLine(text);
 			}
 		}
 
-		public void SimpleTypePatternWithShortcircuitOr2(object x)
+		public void TypePatternWithShortcircuitOr2(object x)
 		{
-			if (F() || !(x is string z))
+			if (F() || !(x is string value))
 			{
 				Console.WriteLine();
 			}
 			else
 			{
-				Console.WriteLine(z);
+				Console.WriteLine(value);
 			}
 		}
 
-		public void SimpleTypePatternValueTypesCondition(object x)
+		public void TypePatternValueTypesCondition(object x)
 		{
-			if (x is int i)
+			if (x is int num)
 			{
-				Console.WriteLine("Integer: " + i);
+				Console.WriteLine("Integer: " + num);
 			}
 			else
 			{
@@ -72,11 +69,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public void SimpleTypePatternValueTypesCondition2()
+		public void TypePatternValueTypesCondition2()
 		{
-			if (GetObject() is int i)
+			if (GetObject() is int num)
 			{
-				Console.WriteLine("Integer: " + i);
+				Console.WriteLine("Integer: " + num);
 			}
 			else
 			{
@@ -84,11 +81,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public void SimpleTypePatternValueTypesWithShortcircuitAnd(object x)
+		public void TypePatternValueTypesWithShortcircuitAnd(object x)
 		{
-			if (x is int i && i.GetHashCode() > 0)
+			if (x is int num && num.GetHashCode() > 0)
 			{
-				Console.WriteLine("Positive integer: " + i);
+				Console.WriteLine("Positive integer: " + num);
 			}
 			else
 			{
@@ -96,36 +93,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public void SimpleTypePatternValueTypesWithShortcircuitOr(object x)
+		public void TypePatternValueTypesWithShortcircuitOr(object x)
 		{
-			if (!(x is int z) || z.GetHashCode() > 0)
+			if (!(x is int value) || value.GetHashCode() > 0)
 			{
 				Console.WriteLine();
 			}
 			else
 			{
-				Console.WriteLine(z);
+				Console.WriteLine(value);
 			}
 		}
 
-		public void SimpleTypePatternValueTypesWithShortcircuitOr2(object x)
+		public void TypePatternValueTypesWithShortcircuitOr2(object x)
 		{
-			if (F() || !(x is int z))
+			if (F() || !(x is int value))
 			{
 				Console.WriteLine();
 			}
 			else
 			{
-				Console.WriteLine(z);
+				Console.WriteLine(value);
 			}
 		}
 
-#if CS71
-		public void SimpleTypePatternGenerics<T>(object x)
+		public void TypePatternGenerics<T>(object x)
 		{
-			if (x is T t)
+			if (x is T val)
 			{
-				Console.WriteLine(typeof(T).FullName + ": " + t);
+				Console.WriteLine(val.GetType().FullName);
 			}
 			else
 			{
@@ -133,11 +129,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public void SimpleTypePatternGenericRefType<T>(object x) where T : class
+		public void TypePatternGenericRefType<T>(object x) where T : class
 		{
-			if (x is T t)
+			if (x is T val)
 			{
-				Console.WriteLine(typeof(T).FullName + ": " + t);
+				Console.WriteLine(val.GetType().FullName);
 			}
 			else
 			{
@@ -145,24 +141,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public void SimpleTypePatternGenericValType<T>(object x) where T : struct
+		public void TypePatternGenericValType<T>(object x) where T : struct
 		{
-			if (x is T t)
+			if (x is T val)
 			{
-				Console.WriteLine(typeof(T).FullName + ": " + t);
+				Console.WriteLine(val.GetType().FullName);
 			}
 			else
 			{
 				Console.WriteLine("not a " + typeof(T).FullName);
 			}
 		}
-#endif
 
-		public void SimpleTypePatternValueTypesWithShortcircuitAndMultiUse(object x)
+		public void TypePatternValueTypesWithShortcircuitAndMultiUse(object x)
 		{
-			if (x is int i && i.GetHashCode() > 0 && i % 2 == 0)
+			if (x is int num && num.GetHashCode() > 0 && num % 2 == 0)
 			{
-				Console.WriteLine("Positive integer: " + i);
+				Console.WriteLine("Positive integer: " + num);
 			}
 			else
 			{
@@ -170,9 +165,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public void SimpleTypePatternValueTypesWithShortcircuitAndMultiUse2(object x)
+		public void TypePatternValueTypesWithShortcircuitAndMultiUse2(object x)
 		{
-			if ((x is int i && i.GetHashCode() > 0 && i % 2 == 0) || F())
+			if ((x is int num && num.GetHashCode() > 0 && num % 2 == 0) || F())
 			{
 				Console.WriteLine("true");
 			}
@@ -182,9 +177,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public void SimpleTypePatternValueTypesWithShortcircuitAndMultiUse3(object x)
+		public void TypePatternValueTypesWithShortcircuitAndMultiUse3(object x)
 		{
-			if (F() || (x is int i && i.GetHashCode() > 0 && i % 2 == 0))
+			if (F() || (x is int num && num.GetHashCode() > 0 && num % 2 == 0))
 			{
 				Console.WriteLine("true");
 			}
@@ -194,9 +189,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public void SimpleTypePatternValueTypes()
+		public void TypePatternValueTypes()
 		{
-			Use(F() && GetObject() is int y && y.GetHashCode() > 0 && y % 2 == 0);
+			Use(F() && GetObject() is int num && num.GetHashCode() > 0 && num % 2 == 0);
 		}
 
 		private bool F()

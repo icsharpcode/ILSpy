@@ -18,6 +18,8 @@
 
 #nullable enable
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	class PatternMatchingRefTypesTransform : IStatementTransform
@@ -41,14 +43,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!context.Settings.PatternMatching)
 				return;
 			int startPos = pos;
-			if (block.Instructions[pos] is not StLoc
-				{
-					Variable: var s,
-					Value: IsInst { Argument: var testedOperand, Type: var type }
-				})
-			{
+			if (!block.Instructions[pos].MatchStLoc(out var s, out var value))
 				return;
+			IType? unboxType;
+			if (value is UnboxAny unboxAny)
+			{
+				// stloc S(unbox.any T(isinst T(testedOperand)))
+				unboxType = unboxAny.Type;
+				value = unboxAny.Argument;
 			}
+			else
+			{
+				unboxType = null;
+			}
+			if (value is not IsInst { Argument: var testedOperand, Type: var type })
+				return;
+			if (type.IsReferenceType != true)
+				return;
+			if (!(unboxType == null || type.Equals(unboxType)))
+				return;
 			if (!s.IsSingleDefinition)
 				return;
 			if (s.Kind is not (VariableKind.Local or VariableKind.StackSlot))

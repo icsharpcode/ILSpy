@@ -28,26 +28,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	class PatternMatchingTransform : IILTransform
 	{
-
-		/// Block {
-		///		...
-		/// 	if (comp.o(isinst T(ldloc testedOperand) == ldnull)) br falseBlock
-		/// 	br unboxBlock
-		/// }
-		/// 
-		/// Block unboxBlock (incoming: 1) {
-		/// 	stloc V(unbox.any T(ldloc testedOperand))
-		/// 	if (nextCondition) br trueBlock
-		/// 	br falseBlock
-		/// }
-		/// =>
-		/// Block {
-		///		...
-		///		if (logic.and(match.type[T].notnull(V = testedOperand), nextCondition)) br trueBlock
-		///		br falseBlock
-		///	}
-		/// 
-		/// -or-
 		/// Block {
 		///		...
 		/// 	if (comp.o(isinst T(ldloc testedOperand) == ldnull)) br falseBlock
@@ -77,28 +57,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						continue;
 					}
-					if (!MatchUnboxBlock(unboxBlock, type, testedOperand.Variable, falseBlock,
-						out var v, out var nextCondition, out var trueBlock, out var inverseNextCondition))
+					if (!MatchUnboxBlock(unboxBlock, type, testedOperand.Variable, out var v))
 					{
 						continue;
 					}
 					context.Step($"PatternMatching with {v.Name}", block);
-					if (inverseNextCondition)
-					{
-						nextCondition = Comp.LogicNot(nextCondition);
-					}
 					var ifInst = (IfInstruction)block.Instructions.SecondToLastOrDefault()!;
-					ILInstruction logicAnd = IfInstruction.LogicAnd(new MatchInstruction(v, testedOperand) {
+					ifInst.Condition = new MatchInstruction(v, testedOperand) {
 						CheckNotNull = true,
 						CheckType = true
-					}, nextCondition);
-					ifInst.Condition = logicAnd;
-					((Branch)ifInst.TrueInst).TargetBlock = trueBlock;
+					};
+					((Branch)ifInst.TrueInst).TargetBlock = unboxBlock;
 					((Branch)block.Instructions.Last()).TargetBlock = falseBlock;
-					unboxBlock.Instructions.Clear();
+					unboxBlock.Instructions.RemoveAt(0);
+					// HACK: condition detection uses StartILOffset of blocks to decide which branch of if-else
+					// should become the then-branch. Change the unboxBlock StartILOffset from an offset inside
+					// the pattern matching machinery to an offset belonging to an instruction in the then-block.
+					unboxBlock.SetILRange(unboxBlock.Instructions[0]);
 					v.Kind = VariableKind.PatternLocal;
 				}
-				container.Blocks.RemoveAll(b => b.Instructions.Count == 0);
 			}
 		}
 
@@ -140,20 +117,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		/// Block unboxBlock (incoming: 1) {
 		/// 	stloc V(unbox.any T(ldloc testedOperand))
-		/// 	if (nextCondition) br trueBlock
-		/// 	br falseBlock
+		/// 	...
 		/// }
-		private bool MatchUnboxBlock(Block unboxBlock, IType type, ILVariable testedOperand, Block falseBlock,
-			[NotNullWhen(true)] out ILVariable? v,
-			[NotNullWhen(true)] out ILInstruction? nextCondition,
-			[NotNullWhen(true)] out Block? trueBlock,
-			out bool inverseCondition)
+		private bool MatchUnboxBlock(Block unboxBlock, IType type, ILVariable testedOperand,
+			[NotNullWhen(true)] out ILVariable? v)
 		{
 			v = null;
-			nextCondition = null;
-			trueBlock = null;
-			inverseCondition = false;
-			if (unboxBlock.IncomingEdgeCount != 1 || unboxBlock.Instructions.Count != 3)
+			if (unboxBlock.IncomingEdgeCount != 1)
 				return false;
 
 			if (!unboxBlock.Instructions[0].MatchStLoc(out v, out var value))
@@ -161,22 +131,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(value.MatchUnboxAny(out var arg, out var t) && t.Equals(type) && arg.MatchLdLoc(testedOperand)))
 				return false;
 
-			if (!unboxBlock.MatchIfAtEndOfBlock(out nextCondition, out var trueInst, out var falseInst))
-				return false;
-
-			if (trueInst.MatchBranch(out trueBlock) && falseInst.MatchBranch(falseBlock))
-			{
-				return true;
-			}
-			else if (trueInst.MatchBranch(falseBlock) && falseInst.MatchBranch(out trueBlock))
-			{
-				inverseCondition = true;
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+			return true;
 		}
 	}
 }
