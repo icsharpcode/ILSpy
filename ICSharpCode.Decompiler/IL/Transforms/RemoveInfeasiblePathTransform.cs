@@ -60,10 +60,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!MatchBlock1(block, out var s, out int value, out var br))
 				return false;
-			if (!MatchBlock2(br.TargetBlock, s, value, out var targetBlock))
+			if (!MatchBlock2(br.TargetBlock, s, value, out var exitInst))
 				return false;
 			context.Step("RemoveInfeasiblePath", br);
-			br.TargetBlock = targetBlock;
+			br.ReplaceWith(exitInst.Clone());
 			s.RemoveIfRedundant = true;
 			return true;
 		}
@@ -99,9 +99,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		//     if (logic.not(ldloc s)) br IL_0027
 		//     br IL_001d
 		// }
-		bool MatchBlock2(Block block, ILVariable s, int constantValue, [NotNullWhen(true)] out Block? targetBlock)
+		bool MatchBlock2(Block block, ILVariable s, int constantValue, [NotNullWhen(true)] out ILInstruction? exitInst)
 		{
-			targetBlock = null;
+			exitInst = null;
 			if (block.Instructions.Count != 2)
 				return false;
 			if (block.IncomingEdgeCount <= 1)
@@ -110,8 +110,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!load.MatchLdLoc(s))
 				return false;
-			ILInstruction target = constantValue != 0 ? trueInst : falseInst;
-			return target.MatchBranch(out targetBlock);
+			exitInst = constantValue != 0 ? trueInst : falseInst;
+			return exitInst is Branch or Leave { Value: Nop };
 		}
 	}
 }

@@ -589,11 +589,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				}
 			}
+			if (MatchInstruction.IsPatternMatch(inst.Condition, out _)
+				&& inst.TrueInst.MatchLdcI4(1) && inst.FalseInst.MatchLdcI4(0))
+			{
+				context.Step("match(x) ? true : false -> match(x)", inst);
+				inst.Condition.AddILRange(inst);
+				inst.ReplaceWith(inst.Condition);
+				return;
+			}
 		}
 
 		IfInstruction HandleConditionalOperator(IfInstruction inst)
 		{
-			// if (cond) stloc (A, V1) else stloc (A, V2) --> stloc (A, if (cond) V1 else V2)
+			// if (cond) stloc A(V1) else stloc A(V2) --> stloc A(if (cond) V1 else V2)
 			Block trueInst = inst.TrueInst as Block;
 			if (trueInst == null || trueInst.Instructions.Count != 1)
 				return inst;
