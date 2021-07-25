@@ -36,6 +36,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Issue1747();
 			CallAmbiguousOutParam();
 			CallWithInParam();
+			Issue2444.M2();
 		}
 
 		#region ConstructorTest
@@ -333,6 +334,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("int " + i);
 		}
 #endif
+		#endregion
+
+		#region #2444
+		public struct Issue2444
+		{
+			public class X { }
+			public class Y { }
+
+			public static implicit operator Issue2444(X x)
+			{
+				Console.WriteLine("#2444: op_Implicit(X)");
+				return new Issue2444();
+			}
+
+			public static implicit operator Issue2444(Y y)
+			{
+				Console.WriteLine("#2444: op_Implicit(Y)");
+				return new Issue2444();
+			}
+
+			public static void M1(Issue2444 z)
+			{
+				Console.WriteLine(string.Format("#2444: M1({0})", z));
+			}
+
+			public static void M2()
+			{
+				Console.WriteLine("#2444: before M1");
+				M1((X)null);
+				Console.WriteLine("#2444: after M1");
+			}
+		}
 		#endregion
 	}
 

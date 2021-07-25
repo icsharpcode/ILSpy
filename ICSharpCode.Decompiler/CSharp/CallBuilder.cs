@@ -1148,7 +1148,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var conversions = CSharpConversions.Get(expressionBuilder.compilation);
 			IType targetType = method.ReturnType;
 			var conv = conversions.ImplicitConversion(argument.Type, targetType);
-			if (!(conv.IsUserDefined && conv.Method.Equals(method)))
+			if (!(conv.IsUserDefined && conv.IsValid && conv.Method.Equals(method)))
 			{
 				// implicit conversion to targetType isn't directly possible, so first insert a cast to the argument type
 				argument = argument.ConvertTo(method.Parameters[0].Type, expressionBuilder);
