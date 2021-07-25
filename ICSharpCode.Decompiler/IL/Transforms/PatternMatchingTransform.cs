@@ -28,29 +28,55 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// call Use(..., comp.o(ldloc V != ldnull))
 		/// =>
 		/// call Use(..., match.type[T](V = testedOperand))
+		/// 
+		/// - or -
+		/// 
+		/// stloc S(isinst T(testedOperand))
+		/// stloc V(ldloc S)
+		/// call Use(..., comp.o(ldloc S != ldnull))
+		/// =>
+		/// call Use(..., match.type[T](V = testedOperand))
 		/// </summary>
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
 			if (!context.Settings.PatternMatching)
 				return;
-			if (pos + 1 >= block.Instructions.Count)
-				return;
+			int startPos = pos;
 			if (block.Instructions[pos] is not StLoc
 				{
-					Variable: var v,
+					Variable: var s,
 					Value: IsInst { Argument: var testedOperand, Type: var type }
 				})
 			{
 				return;
 			}
-			if (!v.IsSingleDefinition)
+			if (!s.IsSingleDefinition)
 				return;
-			if (v.Kind is not (VariableKind.Local or VariableKind.StackSlot))
+			if (s.Kind is not (VariableKind.Local or VariableKind.StackSlot))
 				return;
+			pos++;
+			ILVariable v;
+			if (block.Instructions.ElementAtOrDefault(pos) is StLoc stloc && stloc.Value.MatchLdLoc(s))
+			{
+				v = stloc.Variable;
+				pos++;
+				if (!v.IsSingleDefinition)
+					return;
+				if (v.Kind is not (VariableKind.Local or VariableKind.StackSlot))
+					return;
+				if (s.LoadCount != 2)
+					return;
+			}
+			else
+			{
+				v = s;
+			}
+
 			if (!v.Type.Equals(type))
 				return;
-
-			var result = ILInlining.FindLoadInNext(block.Instructions[pos + 1], v, testedOperand, InliningOptions.None);
+			if (pos >= block.Instructions.Count)
+				return;
+			var result = ILInlining.FindLoadInNext(block.Instructions[pos], s, testedOperand, InliningOptions.None);
 			if (result.Type != ILInlining.FindResultType.Found)
 				return;
 			if (result.LoadInst is not LdLoc)
@@ -83,7 +109,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				matchInstruction = Comp.LogicNot(matchInstruction);
 			}
 			target.ReplaceWith(matchInstruction.WithILRange(target));
-			block.Instructions.RemoveAt(pos);
+			block.Instructions.RemoveRange(startPos, pos - startPos);
 			v.Kind = VariableKind.PatternLocal;
 		}
 	}
