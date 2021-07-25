@@ -18,99 +18,165 @@
 
 #nullable enable
 
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
+
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-
-	class PatternMatchingTransform : IStatementTransform
+	class PatternMatchingTransform : IILTransform
 	{
-		/// <summary>
-		/// stloc V(isinst T(testedOperand))
-		/// call Use(..., comp.o(ldloc V != ldnull))
-		/// =>
-		/// call Use(..., match.type[T](V = testedOperand))
+
+		/// Block {
+		///		...
+		/// 	if (comp.o(isinst T(ldloc testedOperand) == ldnull)) br falseBlock
+		/// 	br unboxBlock
+		/// }
 		/// 
-		/// - or -
-		/// 
-		/// stloc S(isinst T(testedOperand))
-		/// stloc V(ldloc S)
-		/// call Use(..., comp.o(ldloc S != ldnull))
+		/// Block unboxBlock (incoming: 1) {
+		/// 	stloc V(unbox.any T(ldloc testedOperand))
+		/// 	if (nextCondition) br trueBlock
+		/// 	br falseBlock
+		/// }
 		/// =>
-		/// call Use(..., match.type[T](V = testedOperand))
-		/// </summary>
-		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
+		/// Block {
+		///		...
+		///		if (logic.and(match.type[T].notnull(V = testedOperand), nextCondition)) br trueBlock
+		///		br falseBlock
+		///	}
+		/// 
+		/// -or-
+		/// Block {
+		///		...
+		/// 	if (comp.o(isinst T(ldloc testedOperand) == ldnull)) br falseBlock
+		/// 	br unboxBlock
+		/// }
+		/// 
+		/// Block unboxBlock (incoming: 1) {
+		/// 	stloc V(unbox.any T(ldloc testedOperand))
+		/// 	...
+		/// }
+		/// =>
+		/// Block {
+		///		...
+		///		if (match.type[T].notnull(V = testedOperand)) br unboxBlock
+		///		br falseBlock
+		///	}
+		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
 			if (!context.Settings.PatternMatching)
 				return;
-			int startPos = pos;
-			if (block.Instructions[pos] is not StLoc
+			foreach (var container in function.Descendants.OfType<BlockContainer>())
+			{
+				foreach (var block in container.Blocks)
 				{
-					Variable: var s,
-					Value: IsInst { Argument: var testedOperand, Type: var type }
-				})
-			{
-				return;
+					if (!MatchIsInstBlock(block, out var type, out var testedOperand,
+						out var unboxBlock, out var falseBlock))
+					{
+						continue;
+					}
+					if (!MatchUnboxBlock(unboxBlock, type, testedOperand.Variable, falseBlock,
+						out var v, out var nextCondition, out var trueBlock, out var inverseNextCondition))
+					{
+						continue;
+					}
+					context.Step($"PatternMatching with {v.Name}", block);
+					if (inverseNextCondition)
+					{
+						nextCondition = Comp.LogicNot(nextCondition);
+					}
+					var ifInst = (IfInstruction)block.Instructions.SecondToLastOrDefault()!;
+					ILInstruction logicAnd = IfInstruction.LogicAnd(new MatchInstruction(v, testedOperand) {
+						CheckNotNull = true,
+						CheckType = true
+					}, nextCondition);
+					ifInst.Condition = logicAnd;
+					((Branch)ifInst.TrueInst).TargetBlock = trueBlock;
+					((Branch)block.Instructions.Last()).TargetBlock = falseBlock;
+					unboxBlock.Instructions.Clear();
+					v.Kind = VariableKind.PatternLocal;
+				}
+				container.Blocks.RemoveAll(b => b.Instructions.Count == 0);
 			}
-			if (!s.IsSingleDefinition)
-				return;
-			if (s.Kind is not (VariableKind.Local or VariableKind.StackSlot))
-				return;
-			pos++;
-			ILVariable v;
-			if (block.Instructions.ElementAtOrDefault(pos) is StLoc stloc && stloc.Value.MatchLdLoc(s))
+		}
+
+		///	...
+		/// if (comp.o(isinst T(ldloc testedOperand) == ldnull)) br falseBlock
+		/// br unboxBlock
+		private bool MatchIsInstBlock(Block block,
+			[NotNullWhen(true)] out IType? type,
+			[NotNullWhen(true)] out LdLoc? testedOperand,
+			[NotNullWhen(true)] out Block? unboxBlock,
+			[NotNullWhen(true)] out Block? falseBlock)
+		{
+			type = null;
+			testedOperand = null;
+			unboxBlock = null;
+			falseBlock = null;
+			if (!block.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
+				return false;
+			if (condition.MatchCompEqualsNull(out var arg))
 			{
-				v = stloc.Variable;
-				pos++;
-				if (!v.IsSingleDefinition)
-					return;
-				if (v.Kind is not (VariableKind.Local or VariableKind.StackSlot))
-					return;
-				if (s.LoadCount != 2)
-					return;
+				ExtensionMethods.Swap(ref trueInst, ref falseInst);
+			}
+			else if (condition.MatchCompNotEqualsNull(out arg))
+			{
+				// do nothing
 			}
 			else
 			{
-				v = s;
+				return false;
 			}
+			if (!arg.MatchIsInst(out arg, out type))
+				return false;
+			testedOperand = arg as LdLoc;
+			if (testedOperand == null)
+				return false;
+			return trueInst.MatchBranch(out unboxBlock) && falseInst.MatchBranch(out falseBlock)
+				&& unboxBlock.Parent == block.Parent && falseBlock.Parent == block.Parent;
+		}
 
-			if (!v.Type.Equals(type))
-				return;
-			if (pos >= block.Instructions.Count)
-				return;
-			var result = ILInlining.FindLoadInNext(block.Instructions[pos], s, testedOperand, InliningOptions.None);
-			if (result.Type != ILInlining.FindResultType.Found)
-				return;
-			if (result.LoadInst is not LdLoc)
-				return;
-			bool invertCondition;
-			if (result.LoadInst.Parent!.MatchCompNotEqualsNull(out _))
+		/// Block unboxBlock (incoming: 1) {
+		/// 	stloc V(unbox.any T(ldloc testedOperand))
+		/// 	if (nextCondition) br trueBlock
+		/// 	br falseBlock
+		/// }
+		private bool MatchUnboxBlock(Block unboxBlock, IType type, ILVariable testedOperand, Block falseBlock,
+			[NotNullWhen(true)] out ILVariable? v,
+			[NotNullWhen(true)] out ILInstruction? nextCondition,
+			[NotNullWhen(true)] out Block? trueBlock,
+			out bool inverseCondition)
+		{
+			v = null;
+			nextCondition = null;
+			trueBlock = null;
+			inverseCondition = false;
+			if (unboxBlock.IncomingEdgeCount != 1 || unboxBlock.Instructions.Count != 3)
+				return false;
+
+			if (!unboxBlock.Instructions[0].MatchStLoc(out v, out var value))
+				return false;
+			if (!(value.MatchUnboxAny(out var arg, out var t) && t.Equals(type) && arg.MatchLdLoc(testedOperand)))
+				return false;
+
+			if (!unboxBlock.MatchIfAtEndOfBlock(out nextCondition, out var trueInst, out var falseInst))
+				return false;
+
+			if (trueInst.MatchBranch(out trueBlock) && falseInst.MatchBranch(falseBlock))
 			{
-				invertCondition = false;
-
+				return true;
 			}
-			else if (result.LoadInst.Parent!.MatchCompEqualsNull(out _))
+			else if (trueInst.MatchBranch(falseBlock) && falseInst.MatchBranch(out trueBlock))
 			{
-				invertCondition = true;
+				inverseCondition = true;
+				return true;
 			}
 			else
 			{
-				return;
+				return false;
 			}
-
-			context.Step($"Type pattern matching {v.Name}", block.Instructions[pos]);
-			// call Use(..., match.type[T](V = testedOperand))
-
-			var target = result.LoadInst.Parent;
-			ILInstruction matchInstruction = new MatchInstruction(v, testedOperand) {
-				CheckNotNull = true,
-				CheckType = true
-			};
-			if (invertCondition)
-			{
-				matchInstruction = Comp.LogicNot(matchInstruction);
-			}
-			target.ReplaceWith(matchInstruction.WithILRange(target));
-			block.Instructions.RemoveRange(startPos, pos - startPos);
-			v.Kind = VariableKind.PatternLocal;
 		}
 	}
 }
