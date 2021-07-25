@@ -30,12 +30,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		/// Block {
 		///		...
+		///		[stloc temp(ldloc testedOperand)]
 		/// 	if (comp.o(isinst T(ldloc testedOperand) == ldnull)) br falseBlock
 		/// 	br unboxBlock
 		/// }
 		/// 
 		/// Block unboxBlock (incoming: 1) {
-		/// 	stloc V(unbox.any T(ldloc testedOperand))
+		/// 	stloc V(unbox.any T(ldloc temp))
 		/// 	...
 		/// }
 		/// =>
@@ -57,7 +58,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						continue;
 					}
-					if (!MatchUnboxBlock(unboxBlock, type, testedOperand.Variable, out var v))
+					StLoc? tempStore = block.Instructions.ElementAtOrDefault(block.Instructions.Count - 3) as StLoc;
+					if (tempStore == null || !tempStore.Value.MatchLdLoc(testedOperand.Variable))
+					{
+						tempStore = null;
+					}
+					if (!MatchUnboxBlock(unboxBlock, type, out var unboxOperand, out var v))
+					{
+						continue;
+					}
+					if (unboxOperand == testedOperand.Variable)
+					{
+						// do nothing
+					}
+					else if (unboxOperand == tempStore?.Variable)
+					{
+						if (!(tempStore.Variable.IsSingleDefinition && tempStore.Variable.LoadCount == 1))
+							continue;
+					}
+					else
 					{
 						continue;
 					}
@@ -70,6 +89,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					((Branch)ifInst.TrueInst).TargetBlock = unboxBlock;
 					((Branch)block.Instructions.Last()).TargetBlock = falseBlock;
 					unboxBlock.Instructions.RemoveAt(0);
+					if (unboxOperand == tempStore?.Variable)
+					{
+						block.Instructions.Remove(tempStore);
+					}
 					// HACK: condition detection uses StartILOffset of blocks to decide which branch of if-else
 					// should become the then-branch. Change the unboxBlock StartILOffset from an offset inside
 					// the pattern matching machinery to an offset belonging to an instruction in the then-block.
@@ -119,16 +142,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	stloc V(unbox.any T(ldloc testedOperand))
 		/// 	...
 		/// }
-		private bool MatchUnboxBlock(Block unboxBlock, IType type, ILVariable testedOperand,
+		private bool MatchUnboxBlock(Block unboxBlock, IType type, [NotNullWhen(true)] out ILVariable? testedOperand,
 			[NotNullWhen(true)] out ILVariable? v)
 		{
 			v = null;
+			testedOperand = null;
 			if (unboxBlock.IncomingEdgeCount != 1)
 				return false;
 
 			if (!unboxBlock.Instructions[0].MatchStLoc(out v, out var value))
 				return false;
-			if (!(value.MatchUnboxAny(out var arg, out var t) && t.Equals(type) && arg.MatchLdLoc(testedOperand)))
+			if (!(value.MatchUnboxAny(out var arg, out var t) && t.Equals(type) && arg.MatchLdLoc(out testedOperand)))
 				return false;
 
 			return true;
