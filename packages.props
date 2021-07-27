@@ -13,6 +13,7 @@
 		<RoslynVersion>3.11.0-1.final</RoslynVersion> <!-- Microsoft.CodeAnalysis.* -->
 		<MonoCecilVersion>0.11.4</MonoCecilVersion>
 		<AvalonEditVersion>6.1.1</AvalonEditVersion>
+		<WpfStylesToolboxVersion>2.6.1</WpfStylesToolboxVersion>
 		<NUnitVersion>3.13.2</NUnitVersion>
 		<NUnitAdapterVersion>4.0.0</NUnitAdapterVersion>
 		<MoqVersion>4.16.1</MoqVersion>

@@ -23,8 +23,10 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
+  <Import Project="..\packages.props" />
+
   <ItemGroup>
-    <PackageReference Include="TomsToolbox.Wpf.Styles" Version="2.6.0" />
+    <PackageReference Include="TomsToolbox.Wpf.Styles" Version="$(WpfStylesToolboxVersion)" />
   </ItemGroup>
 
 </Project>
