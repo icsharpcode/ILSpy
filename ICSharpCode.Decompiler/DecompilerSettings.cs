@@ -139,12 +139,14 @@ namespace ICSharpCode.Decompiler
 				recordClasses = false;
 				withExpressions = false;
 				usePrimaryConstructorSyntax = false;
+				covariantReturns = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension || recordClasses)
+			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension
+				|| recordClasses || withExpressions || usePrimaryConstructorSyntax || covariantReturns)
 				return CSharp.LanguageVersion.Preview;
 			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement
 				|| staticLocalFunctions || ranges || switchExpressions)
@@ -188,6 +190,24 @@ namespace ICSharpCode.Decompiler
 				if (nativeIntegers != value)
 				{
 					nativeIntegers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool covariantReturns = true;
+
+		/// <summary>
+		/// Decompile C# 9 covariant return types.
+		/// </summary>
+		[Category("C# 9.0 / VS 2019.8")]
+		[Description("DecompilerSettings.CovariantReturns")]
+		public bool CovariantReturns {
+			get { return covariantReturns; }
+			set {
+				if (covariantReturns != value)
+				{
+					covariantReturns = value;
 					OnPropertyChanged();
 				}
 			}

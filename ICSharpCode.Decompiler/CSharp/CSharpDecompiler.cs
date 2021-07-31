@@ -1451,7 +1451,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				SetNewModifier(methodDecl);
 			}
+			if (IsCovariantReturnOverride(method))
+			{
+				RemoveAttribute(methodDecl, KnownAttribute.PreserveBaseOverrides);
+				methodDecl.Modifiers &= ~(Modifiers.New | Modifiers.Virtual);
+				methodDecl.Modifiers |= Modifiers.Override;
+			}
 			return methodDecl;
+		}
+
+		private bool IsCovariantReturnOverride(IEntity entity)
+		{
+			if (!settings.CovariantReturns)
+				return false;
+			if (!entity.HasAttribute(KnownAttribute.PreserveBaseOverrides))
+				return false;
+			return true;
 		}
 
 		internal static bool IsWindowsFormsInitializeComponentMethod(IMethod method)
@@ -1766,7 +1781,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				var accessorHandle = (MethodDefinitionHandle)(property.Getter ?? property.Setter).MetadataToken;
 				var accessor = metadata.GetMethodDefinition(accessorHandle);
 				if (!accessorHandle.GetMethodImplementations(metadata).Any() && accessor.HasFlag(System.Reflection.MethodAttributes.Virtual) == accessor.HasFlag(System.Reflection.MethodAttributes.NewSlot))
+				{
 					SetNewModifier(propertyDecl);
+				}
+				if (IsCovariantReturnOverride(property.Getter))
+				{
+					RemoveAttribute(getter, KnownAttribute.PreserveBaseOverrides);
+					propertyDecl.Modifiers &= ~(Modifiers.New | Modifiers.Virtual);
+					propertyDecl.Modifiers |= Modifiers.Override;
+				}
 				return propertyDecl;
 			}
 			catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
