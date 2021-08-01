@@ -35,6 +35,8 @@ using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Options;
 
+using K4os.Compression.LZ4;
+
 #nullable enable
 
 namespace ICSharpCode.ILSpy
@@ -323,6 +325,15 @@ namespace ICSharpCode.ILSpy
 			{
 				loadAssemblyException = ex;
 			}
+			// Maybe its a compressed Xamarin/Mono assembly, see https://github.com/xamarin/xamarin-android/pull/4686
+			try
+			{
+				return LoadCompressedAssembly(fileName);
+			}
+			catch (InvalidDataException)
+			{
+				// Not a compressed module, try other options below
+			}
 			// If it's not a .NET module, maybe it's a single-file bundle
 			var bundle = LoadedPackage.FromBundle(fileName);
 			if (bundle != null)
@@ -363,6 +374,31 @@ namespace ICSharpCode.ILSpy
 				loadedAssemblies.Add(module, this);
 			}
 			return new LoadResult(module);
+		}
+
+		LoadResult LoadCompressedAssembly(string filename)
+		{
+			const uint CompressedDataMagic = 0x5A4C4158; // Magic used for Xamarin compressed module header ('XALZ', little-endian)
+			using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+			using (var fileReader = new BinaryReader(fileStream))
+			{
+				// Read compressed file header
+				var magic = fileReader.ReadUInt32();
+				if (magic != CompressedDataMagic)
+					throw new InvalidDataException($"Xamarin compressed module header magic {magic} does not match expected {CompressedDataMagic}");
+				var descIdx = fileReader.ReadUInt32();
+				var uncLen = fileReader.ReadUInt32();
+				// fileReader stream position is now at compressed module data
+				var src = fileReader.ReadBytes((int)uncLen); // compressed length must be smaller than uncompressed length
+				var dst = new byte[(int)uncLen];
+				// Decompress
+				LZ4Codec.Decode(src, 0, src.Length, dst, 0, dst.Length);
+				// Load module from decompressed data buffer
+				using (var modData = new MemoryStream(dst, writable: false))
+				{
+					return LoadAssembly(modData, PEStreamOptions.PrefetchEntireImage);
+				}
+			}
 		}
 
 		IDebugInfoProvider? LoadDebugInfo(PEFile module)

@@ -54,6 +54,7 @@
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
     <PackageReference Include="TomsToolbox.Wpf.Styles" Version="2.5.5" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
+    <PackageReference Include="K4os.Compression.LZ4" Version="1.2.6" />
   </ItemGroup>
 
   <ItemGroup>
