@@ -15,6 +15,12 @@
 		public string S = "abc";
 	}
 
+	public record Interface(int B) : IRecord;
+
+	public interface IRecord
+	{
+	}
+
 	public record Pair<A, B>
 	{
 		public A First { get; init; }
@@ -26,11 +32,13 @@
 	public record PrimaryCtor(int A, string B);
 	public record PrimaryCtorWithField(int A, string B)
 	{
-		public double C;
+		public double C = 1.0;
+		public string D = A + B;
 	}
 	public record PrimaryCtorWithProperty(int A, string B)
 	{
-		public double C { get; init; }
+		public double C { get; init; } = 1.0;
+		public string D { get; } = A + B;
 	}
 
 	public record Properties
@@ -47,6 +55,10 @@
 			B = 42;
 		}
 	}
+
+	public sealed record Sealed(string A);
+
+	public sealed record SealedDerived(int B) : Base(B.ToString());
 
 	public class WithExpressionTests
 	{

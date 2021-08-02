@@ -118,7 +118,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				&& currentCtor.Equals(record.PrimaryConstructor)
 				&& ci.ConstructorInitializerType == ConstructorInitializerType.Base)
 			{
-				if (constructorDeclaration.Parent is TypeDeclaration { BaseTypes: { Count: >= 1 } } typeDecl)
+				if (record.IsInheritedRecord &&
+					constructorDeclaration.Parent is TypeDeclaration { BaseTypes: { Count: >= 1 } } typeDecl)
 				{
 					var baseType = typeDecl.BaseTypes.First();
 					var newBaseType = new InvocationAstType();
