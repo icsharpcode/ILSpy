@@ -45,14 +45,14 @@
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
     <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="$(SystemCompilerServicesUnsafeVersion)" />
-    <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.50.1" />
+    <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.51.1" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="16.9.6-alpha" />
     <PackageReference Include="System.Composition" Version="$(SystemCompositionVersion)" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
     <PackageReference Include="OSVersionHelper" Version="1.1.24" />
-    <PackageReference Include="DataGridExtensions" Version="2.5.0" />
+    <PackageReference Include="DataGridExtensions" Version="2.5.6" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
-    <PackageReference Include="TomsToolbox.Wpf.Styles" Version="2.5.5" />
+    <PackageReference Include="TomsToolbox.Wpf.Styles" Version="$(WpfStylesToolboxVersion)" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
   </ItemGroup>
 
