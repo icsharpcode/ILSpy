@@ -50,7 +50,7 @@
     <PackageReference Include="System.Composition" Version="$(SystemCompositionVersion)" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
     <PackageReference Include="OSVersionHelper" Version="1.1.24" />
-    <PackageReference Include="DataGridExtensions" Version="2.5.5" />
+    <PackageReference Include="DataGridExtensions" Version="2.5.6" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
     <PackageReference Include="TomsToolbox.Wpf.Styles" Version="$(WpfStylesToolboxVersion)" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
