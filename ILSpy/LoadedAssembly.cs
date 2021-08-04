@@ -389,7 +389,7 @@ namespace ICSharpCode.ILSpy
 				var descIdx = fileReader.ReadUInt32();
 				var uncLen = fileReader.ReadUInt32();
 				// fileReader stream position is now at compressed module data
-				var src = fileReader.ReadBytes((int)uncLen); // compressed length must be smaller than uncompressed length
+				var src = fileReader.ReadBytes((int)fileStream.Length); // Ensure we read all of compressed data
 				var dst = new byte[(int)uncLen];
 				// Decompress
 				LZ4Codec.Decode(src, 0, src.Length, dst, 0, dst.Length);
