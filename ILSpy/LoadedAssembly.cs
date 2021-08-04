@@ -376,7 +376,7 @@ namespace ICSharpCode.ILSpy
 			return new LoadResult(module);
 		}
 
-		LoadResult LoadCompressedAssembly(string filename)
+		LoadResult LoadCompressedAssembly(string fileName)
 		{
 			const uint CompressedDataMagic = 0x5A4C4158; // Magic used for Xamarin compressed module header ('XALZ', little-endian)
 			using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
