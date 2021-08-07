@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -386,17 +387,28 @@ namespace ICSharpCode.ILSpy
 				var magic = fileReader.ReadUInt32();
 				if (magic != CompressedDataMagic)
 					throw new InvalidDataException($"Xamarin compressed module header magic {magic} does not match expected {CompressedDataMagic}");
-				var descIdx = fileReader.ReadUInt32();
-				var uncLen = fileReader.ReadUInt32();
-				// fileReader stream position is now at compressed module data
-				var src = fileReader.ReadBytes((int)fileStream.Length); // Ensure we read all of compressed data
-				var dst = new byte[(int)uncLen];
-				// Decompress
-				LZ4Codec.Decode(src, 0, src.Length, dst, 0, dst.Length);
-				// Load module from decompressed data buffer
-				using (var modData = new MemoryStream(dst, writable: false))
+				_ = fileReader.ReadUInt32(); // skip index into descriptor table, unused
+				int uncompressedLength = (int)fileReader.ReadUInt32();
+				int compressedLength = (int)fileStream.Length;  // Ensure we read all of compressed data
+				ArrayPool<byte> pool = ArrayPool<byte>.Shared;
+				var src = pool.Rent(compressedLength);
+				var dst = pool.Rent(uncompressedLength);
+				try
 				{
-					return LoadAssembly(modData, PEStreamOptions.PrefetchEntireImage);
+					// fileReader stream position is now at compressed module data
+					fileStream.Read(src, 0, compressedLength);
+					// Decompress
+					LZ4Codec.Decode(src, 0, compressedLength, dst, 0, uncompressedLength);
+					// Load module from decompressed data buffer
+					using (var uncompressedStream = new MemoryStream(dst, writable: false))
+					{
+						return LoadAssembly(uncompressedStream, PEStreamOptions.PrefetchEntireImage);
+					}
+				}
+				finally
+				{
+					pool.Return(dst);
+					pool.Return(src);
 				}
 			}
 		}
