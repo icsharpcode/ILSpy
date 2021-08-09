@@ -2,6 +2,13 @@
 {
 	public record Base(string A);
 
+	public record CopyCtor(string A)
+	{
+		protected CopyCtor(CopyCtor _)
+		{
+		}
+	}
+
 	public record Derived(int B) : Base(B.ToString());
 
 	public record Empty;

@@ -170,6 +170,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				var m = method.Specialize(subst);
 				if (IsPrimaryConstructor(m))
 					return method;
+				primaryCtorParameterToAutoProperty.Clear();
+				autoPropertyToPrimaryCtorParameter.Clear();
 			}
 
 			return null;
@@ -254,13 +256,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public bool MethodIsGenerated(IMethod method)
 		{
-			if (method.IsConstructor)
+			if (IsCopyConstructor(method))
 			{
-				if (method.Parameters.Count == 1
-					&& IsRecordType(method.Parameters[0].Type))
-				{
-					return IsGeneratedCopyConstructor(method);
-				}
+				return IsGeneratedCopyConstructor(method);
 			}
 
 			switch (method.Name)
@@ -331,6 +329,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
 			return primaryCtor != null
 				&& autoPropertyToPrimaryCtorParameter.ContainsKey((IProperty)property.Specialize(subst));
+		}
+
+		public bool IsCopyConstructor(IMethod method)
+		{
+			if (method == null)
+				return false;
+
+			Debug.Assert(method.DeclaringTypeDefinition == recordTypeDef);
+
+			return method.IsConstructor
+				&& method.Parameters.Count == 1
+				&& IsRecordType(method.Parameters[0].Type);
 		}
 
 		private bool IsGeneratedCopyConstructor(IMethod method)
