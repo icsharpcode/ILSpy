@@ -2,10 +2,7 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:local="clr-namespace:ICSharpCode.ILSpy.Controls">
 	
-	<Style x:Key="{x:Type local:SearchBox}" TargetType="{x:Type local:SearchBox}">
-		<Setter Property="Background" Value="White" />
-		<Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" />
-		<Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
+	<Style x:Key="{x:Type local:SearchBox}" TargetType="{x:Type local:SearchBox}" BasedOn="{StaticResource {x:Type TextBox}}">
 		<Setter Property="BorderThickness" Value="1" />
 		<Setter Property="SnapsToDevicePixels" Value="True" />
 		<Setter Property="FocusVisualStyle" Value="{x:Null}"/>

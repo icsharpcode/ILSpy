@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -90,7 +87,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var call = (CallInstruction)arg.Parent;
 			Debug.Assert(context.Function == call.Ancestors.OfType<ILFunction>().First());
-			var v = context.Function.RegisterVariable(VariableKind.NamedArgument, arg.ResultType);
+			var type = context.TypeSystem.FindType(arg.ResultType.ToKnownTypeCode());
+			var v = context.Function.RegisterVariable(VariableKind.NamedArgument, type);
 			context.Step($"Introduce named argument '{v.Name}'", arg);
 			if (!(call.Parent is Block namedArgBlock) || namedArgBlock.Kind != BlockKind.CallWithNamedArgs)
 			{

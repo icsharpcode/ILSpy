@@ -34,8 +34,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
-
-using OSVersionHelper;
+using ICSharpCode.ILSpy.Themes;
 
 namespace ICSharpCode.ILSpy
 {
@@ -62,9 +61,13 @@ namespace ICSharpCode.ILSpy
 				EnableHyperlinks = true
 			};
 			output.WriteLine(Resources.ILSpyVersion + RevisionClass.FullVersion);
-			if (WindowsVersionHelper.HasPackageIdentity)
+
+			string prodVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(Uri).Assembly.Location).ProductVersion;
+			output.WriteLine(Resources.NETFrameworkVersion + prodVersion);
+
+			if (StorePackageHelper.HasPackageIdentity)
 			{
-				output.WriteLine($"Package Name: {WindowsVersionHelper.GetPackageFamilyName()}");
+				output.WriteLine($"Package Name: {StorePackageHelper.GetPackageFamilyName()}");
 			}
 			else
 			{// if we're running in an MSIX, updates work differently
@@ -134,7 +137,7 @@ namespace ICSharpCode.ILSpy
 
 		static void AddUpdateCheckButton(StackPanel stackPanel, DecompilerTextView textView)
 		{
-			Button button = new Button();
+			Button button = ThemeManager.Current.CreateButton();
 			button.Content = Resources.CheckUpdates;
 			button.Cursor = Cursors.Arrow;
 			stackPanel.Children.Add(button);
@@ -186,7 +189,7 @@ namespace ICSharpCode.ILSpy
 					});
 				if (availableVersion.DownloadUrl != null)
 				{
-					Button button = new Button();
+					Button button = ThemeManager.Current.CreateButton();
 					button.Content = Resources.Download;
 					button.Cursor = Cursors.Arrow;
 					button.Click += delegate {
@@ -300,7 +303,7 @@ namespace ICSharpCode.ILSpy
 			UpdateSettings s = new UpdateSettings(spySettings);
 
 			// If we're in an MSIX package, updates work differently
-			if (s.AutomaticUpdateCheckEnabled && !WindowsVersionHelper.HasPackageIdentity)
+			if (s.AutomaticUpdateCheckEnabled && !StorePackageHelper.HasPackageIdentity)
 			{
 				// perform update check if we never did one before;
 				// or if the last check wasn't in the past 7 days

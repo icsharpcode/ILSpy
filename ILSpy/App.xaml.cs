@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -32,6 +33,9 @@ using System.Windows.Threading;
 using ICSharpCode.ILSpy.Options;
 
 using Microsoft.VisualStudio.Composition;
+
+using TomsToolbox.Wpf.Interactivity;
+using TomsToolbox.Wpf.Styles;
 
 namespace ICSharpCode.ILSpy
 {
@@ -67,6 +71,8 @@ namespace ICSharpCode.ILSpy
 			}
 			InitializeComponent();
 
+			Resources.RegisterDefaultStyles();
+
 			if (!System.Diagnostics.Debugger.IsAttached)
 			{
 				AppDomain.CurrentDomain.UnhandledException += ShowErrorBox;
@@ -81,8 +87,27 @@ namespace ICSharpCode.ILSpy
 			ILSpyTraceListener.Install();
 		}
 
+		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)
+		{
+#if !NET472
+			var rootPath = Path.GetDirectoryName(typeof(App).Assembly.Location);
+			var assemblyFileName = Path.Combine(rootPath, assemblyName.Name + ".dll");
+			if (!File.Exists(assemblyFileName))
+				return null;
+			return context.LoadFromAssemblyPath(assemblyFileName);
+#else
+			throw new NotImplementedException();
+#endif
+		}
+
 		private static async Task InitializeMef()
 		{
+#if !NET472
+			// Add custom logic for resolution of dependencies.
+			// This necessary because the AssemblyLoadContext.LoadFromAssemblyPath and related methods,
+			// do not automatically load dependencies.
+			AssemblyLoadContext.Default.Resolving += ResolvePluginDependencies;
+#endif
 			// Cannot show MessageBox here, because WPF would crash with a XamlParseException
 			// Remember and show exceptions in text output, once MainWindow is properly initialized
 			try
@@ -101,7 +126,11 @@ namespace ICSharpCode.ILSpy
 						var name = Path.GetFileNameWithoutExtension(plugin);
 						try
 						{
+#if NET472
 							var asm = Assembly.Load(name);
+#else
+							var asm = AssemblyLoadContext.Default.LoadFromAssemblyPath(plugin);
+#endif
 							var parts = await discovery.CreatePartsAsync(asm);
 							catalog = catalog.AddParts(parts);
 						}

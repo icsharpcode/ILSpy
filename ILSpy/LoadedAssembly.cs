@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -34,6 +35,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Options;
+
+using K4os.Compression.LZ4;
 
 #nullable enable
 
@@ -70,7 +73,7 @@ namespace ICSharpCode.ILSpy
 
 			public FileInfo File { get; }
 
-			public bool IsOK     => this is Successful || this is PackageFallback;
+			public bool IsOK => this is Successful || this is PackageFallback;
 			public bool IsFailed => this is Failed || this is FileNotFound;
 
 			/// <summary>The specified PE file was successfully loaded.</summary>
@@ -101,11 +104,11 @@ namespace ICSharpCode.ILSpy
 					: base(file: package.File)
 				{
 					this.PEFileLoadException = peFileLoadException ?? throw new ArgumentNullException(nameof(peFileLoadException));
-					this.Package             = package             ?? throw new ArgumentNullException(nameof(package));
+					this.Package = package ?? throw new ArgumentNullException(nameof(package));
 				}
 
-				public Exception     PEFileLoadException { get; }
-				public LoadedPackage Package             { get; }
+				public Exception PEFileLoadException { get; }
+				public LoadedPackage Package { get; }
 			}
 
 			/// <summary>The specified file could not be loaded as a PE file, nor could it be loaded as a package either.</summary>
@@ -114,11 +117,11 @@ namespace ICSharpCode.ILSpy
 				public Failed(FileInfo file, Exception peFileLoadException, Exception packageLoadException)
 					: base(file: file)
 				{
-					this.PEFileLoadException  = peFileLoadException  ?? throw new ArgumentNullException(nameof(peFileLoadException));
+					this.PEFileLoadException = peFileLoadException ?? throw new ArgumentNullException(nameof(peFileLoadException));
 					this.PackageLoadException = packageLoadException ?? throw new ArgumentNullException(nameof(packageLoadException));
 				}
 
-				public Exception PEFileLoadException  { get; }
+				public Exception PEFileLoadException { get; }
 				public Exception PackageLoadException { get; }
 			}
 		}
@@ -143,7 +146,7 @@ namespace ICSharpCode.ILSpy
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 		}
 
-		public LoadedAssembly(LoadedAssembly bundle, string fileName, Task<Stream?>? stream, IAssemblyResolver assemblyResolver = null)
+		public LoadedAssembly(LoadedAssembly bundle, string fileName, Task<Stream?>? stream, IAssemblyResolver? assemblyResolver = null)
 			: this(bundle.assemblyList, fileName, stream, assemblyResolver)
 		{
 			this.ParentBundle = bundle;
@@ -401,7 +404,15 @@ namespace ICSharpCode.ILSpy
 			{
 				loadAssemblyException = ex;
 			}
-
+			// Maybe its a compressed Xamarin/Mono assembly, see https://github.com/xamarin/xamarin-android/pull/4686
+			try
+			{
+				return LoadCompressedAssembly(fileName);
+			}
+			catch (InvalidDataException)
+			{
+				// Not a compressed module, try other options below
+			}
 			// If it's not a .NET module, maybe it's a single-file bundle
 			var bundle = LoadedPackage.FromBundle(this.fileName);
 			if (bundle != null)
@@ -444,6 +455,42 @@ namespace ICSharpCode.ILSpy
 			}
 
 			return new LoadResult.Successful(module);
+		}
+
+		LoadResult LoadCompressedAssembly(string fileName)
+		{
+			const uint CompressedDataMagic = 0x5A4C4158; // Magic used for Xamarin compressed module header ('XALZ', little-endian)
+			using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+			using (var fileReader = new BinaryReader(fileStream))
+			{
+				// Read compressed file header
+				var magic = fileReader.ReadUInt32();
+				if (magic != CompressedDataMagic)
+					throw new InvalidDataException($"Xamarin compressed module header magic {magic} does not match expected {CompressedDataMagic}");
+				_ = fileReader.ReadUInt32(); // skip index into descriptor table, unused
+				int uncompressedLength = (int)fileReader.ReadUInt32();
+				int compressedLength = (int)fileStream.Length;  // Ensure we read all of compressed data
+				ArrayPool<byte> pool = ArrayPool<byte>.Shared;
+				var src = pool.Rent(compressedLength);
+				var dst = pool.Rent(uncompressedLength);
+				try
+				{
+					// fileReader stream position is now at compressed module data
+					fileStream.Read(src, 0, compressedLength);
+					// Decompress
+					LZ4Codec.Decode(src, 0, compressedLength, dst, 0, uncompressedLength);
+					// Load module from decompressed data buffer
+					using (var uncompressedStream = new MemoryStream(dst, writable: false))
+					{
+						return LoadAssembly(uncompressedStream, PEStreamOptions.PrefetchEntireImage);
+					}
+				}
+				finally
+				{
+					pool.Return(dst);
+					pool.Return(src);
+				}
+			}
 		}
 
 		IDebugInfoProvider? LoadDebugInfo(PEFile module)
@@ -554,12 +601,12 @@ namespace ICSharpCode.ILSpy
 					return module;
 				}
 
-				string file = parent.GetUniversalResolver().FindAssemblyFile(reference);
+				string? file = parent.GetUniversalResolver().FindAssemblyFile(reference);
 
 				if (file != null)
 				{
 					// Load assembly from disk
-					LoadedAssembly asm;
+					LoadedAssembly? asm;
 					if (loadOnDemand)
 					{
 						asm = assemblyList.OpenAssembly(file, isAutoLoaded: true);
@@ -657,7 +704,7 @@ namespace ICSharpCode.ILSpy
 				if (File.Exists(file))
 				{
 					// Load module from disk
-					LoadedAssembly asm;
+					LoadedAssembly? asm;
 					if (loadOnDemand)
 					{
 						asm = assemblyList.OpenAssembly(file, isAutoLoaded: true);

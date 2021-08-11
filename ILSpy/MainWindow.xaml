@@ -7,10 +7,8 @@
 	xmlns:avalondock="https://github.com/Dirkster99/AvalonDock"
 	xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
 	xmlns:docking="clr-namespace:ICSharpCode.ILSpy.Docking"
-	xmlns:textview="clr-namespace:ICSharpCode.ILSpy.TextView"
 	xmlns:analyzers="clr-namespace:ICSharpCode.ILSpy.Analyzers"
 	xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
-	xmlns:viewmodels="clr-namespace:ICSharpCode.ILSpy.ViewModels"
 	Title="ILSpy"
 	MinWidth="250"
 	MinHeight="200"
@@ -18,6 +16,10 @@
 	TextOptions.TextFormattingMode="Display"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" d:DesignHeight="500" d:DesignWidth="500"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
+	xmlns:styles="urn:TomsToolbox.Wpf.Styles"
+	xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+	xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
+	d:DataContext="{d:DesignInstance local:MainWindowDataContext}"
 >
 	<Window.Resources>
 		<controls:BoolToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -29,7 +31,7 @@
 				ShowRoot="False"
 				AllowDropOrder="True"
 				AllowDrop="True"
-				BorderThickness="0,1,1,1" Visibility="Visible" />
+				BorderThickness="0" Visibility="Visible" />
 
 		<DataTemplate x:Key="AssemblyListPaneTemplate">
 			<ContentControl Content="{StaticResource AssemblyTreeView}" />
@@ -56,7 +58,15 @@
 		<DataTemplate x:Key="DefaultContentTemplate">
 			<ContentPresenter Content="{Binding Content}" />
 		</DataTemplate>
+
+		<styles:InvertGrayEffect x:Key="InvertGrayEffect" />
+
+		<controls:CultureSelectionConverter x:Key="cultureSelectionConverter" />
+
 	</Window.Resources>
+	<b:Interaction.Behaviors>
+		<themes:WindowStyleManagerBehavior />
+	</b:Interaction.Behaviors>
 
 	<Window.CommandBindings>
 		<CommandBinding
@@ -96,6 +106,12 @@
 				<MenuItem Header="{x:Static properties:Resources.Show_publiconlyTypesMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.FilterSettings.ApiVisPublicOnly}" />
 				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.FilterSettings.ApiVisPublicAndInternal}" />
 				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.FilterSettings.ApiVisAll}" />
+				<Separator/>
+				<MenuItem Header="{x:Static properties:Resources.Language}">
+					<MenuItem Header="{x:Static properties:Resources.UILanguage_System}" IsCheckable="True" IsChecked="{Binding SessionSettings.CurrentCulture, Converter={StaticResource cultureSelectionConverter}, ConverterParameter={x:Null}}" />
+					<MenuItem Header="English" IsCheckable="True" IsChecked="{Binding SessionSettings.CurrentCulture, Converter={StaticResource cultureSelectionConverter}, ConverterParameter=en-US}" />
+					<MenuItem Header="中文" IsCheckable="True" IsChecked="{Binding SessionSettings.CurrentCulture, Converter={StaticResource cultureSelectionConverter}, ConverterParameter=zh-Hans}" />
+				</MenuItem>
 			</MenuItem>
 			<MenuItem Header="{x:Static properties:Resources._Window}" />
 		</Menu>
@@ -114,6 +130,20 @@
 						</DataTrigger>
 					</Style.Triggers>
 				</Style>
+				<Style TargetType="{x:Type Image}" x:Key="DarkModeAwareImageStyle">
+					<Style.Triggers>
+						<DataTrigger
+							Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ButtonBase}, AncestorLevel=1}, Path=IsEnabled}"
+							Value="False">
+							<Setter Property="Opacity" Value="0.30" />
+						</DataTrigger>
+						<DataTrigger
+							Binding="{Binding SessionSettings.IsDarkMode}" 
+							Value="True">
+							<Setter Property="Effect" Value="{StaticResource InvertGrayEffect}" />
+						</DataTrigger>
+					</Style.Triggers>
+				</Style>
 			</ToolBar.Resources>
 			<!-- 'Navigation' toolbar category is inserted here -->
 			<Separator />
@@ -123,17 +153,17 @@
 			          ItemsSource="{Binding AssemblyListManager.AssemblyLists}" ToolTip="{x:Static properties:Resources.SelectAssemblyListDropdownTooltip}"
 			          SelectedItem="{Binding SessionSettings.ActiveAssemblyList}"/>
 			<Button Command="{x:Static local:ILSpyCommands.ManageAssemblyListsCommand}" ToolTip="{x:Static properties:Resources.ManageAssemblyLists}">
-				<Image Width="16" Height="16" Source="{controls:XamlResource Images/AssemblyList}" />
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/AssemblyList}" Style="{StaticResource DarkModeAwareImageStyle}"/>
 			</Button>
 			<Separator />
 			<CheckBox IsChecked="{Binding SessionSettings.FilterSettings.ApiVisPublicOnly}" ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
-				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPublicOnly}" />
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPublicOnly}" Style="{StaticResource DarkModeAwareImageStyle}"/>
 			</CheckBox>
 			<CheckBox IsChecked="{Binding SessionSettings.FilterSettings.ApiVisPublicAndInternal}" ToolTip="{x:Static properties:Resources.ShowInternalTypesMembers}">
-				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPrivateInternal}" />
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPrivateInternal}" Style="{StaticResource DarkModeAwareImageStyle}"/>
 			</CheckBox>
 			<CheckBox IsChecked="{Binding SessionSettings.FilterSettings.ApiVisAll}" ToolTip="{x:Static properties:Resources.ShowAllTypesAndMembers}">
-				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowAll}" />
+				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowAll}" Style="{StaticResource DarkModeAwareImageStyle}"/>
 			</CheckBox>
 			<Separator />
 			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100" MaxDropDownHeight="Auto"
@@ -145,6 +175,10 @@
 					  IsEnabled="{Binding ActiveTabPage.SupportsLanguageSwitching, Source={x:Static docking:DockWorkspace.Instance}}"
 			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
 			          SelectedItem="{Binding SessionSettings.FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
+			<Separator />
+			<CheckBox IsChecked="{Binding SessionSettings.IsDarkMode}" ToolTip="{x:Static properties:Resources.DarkMode}">
+				<Image Source="Images/DarkMode.png" Stretch="None" Style="{StaticResource DarkModeAwareImageStyle}"/>
+			</CheckBox>
 		</ToolBar>
 		<Border DockPanel.Dock="Top" BorderBrush="Black" BorderThickness="1" Name="updatePanel" Visibility="Collapsed">
 			<DockPanel KeyboardNavigation.TabNavigation="Contained">
@@ -196,6 +230,7 @@
 							<Setter Property="CanHide" Value="{Binding Model.IsCloseable}" />
 							<Setter Property="HideCommand" Value="{Binding Model.CloseCommand}" />
 							<Setter Property="CanClose" Value="{Binding Model.IsCloseable}" />
+							<Setter Property="CloseCommand" Value="{Binding Model.CloseCommand}" />
 						</Style>
 					</docking:PaneStyleSelector.ToolPaneStyle>
 					<docking:PaneStyleSelector.TabPageStyle>

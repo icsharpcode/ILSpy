@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.Util;
@@ -39,7 +38,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			this.context = context;
 
-			foreach (var loop in function.Descendants.OfType<BlockContainer>())
+			foreach (BlockContainer loop in function.Descendants.OfType<BlockContainer>())
 			{
 				if (loop.Kind != ContainerKind.Loop)
 					continue;

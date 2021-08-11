@@ -669,8 +669,8 @@ namespace ICSharpCode.TreeView
 
 			if (place == DropPlace.Inside)
 			{
-				previewNodeView.TextBackground = SystemColors.HighlightBrush;
-				previewNodeView.Foreground = SystemColors.HighlightTextBrush;
+				previewNodeView.SetResourceReference(SharpTreeNodeView.TextBackgroundProperty, SystemColors.HighlightBrushKey);
+				previewNodeView.SetResourceReference(SharpTreeNodeView.ForegroundProperty, SystemColors.HighlightTextBrushKey);
 			}
 			else
 			{

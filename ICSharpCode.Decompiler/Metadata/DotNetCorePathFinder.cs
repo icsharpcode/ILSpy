@@ -168,6 +168,10 @@ namespace ICSharpCode.Decompiler.Metadata
 					identifier = "NETStandard.Library";
 					identifierExt = "netstandard" + version.Major + "." + version.Minor;
 					break;
+				case TargetFrameworkIdentifier.NET:
+					identifier = "Microsoft.NETCore.App";
+					identifierExt = "net" + version.Major + "." + version.Minor;
+					break;
 				default:
 					throw new NotSupportedException();
 			}
@@ -286,9 +290,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					{
 						if ((new FileInfo(fileName).Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
 						{
-							var sb = new StringBuilder();
-							realpath(fileName, sb);
-							fileName = sb.ToString();
+							fileName = GetRealPath(fileName, Encoding.Default);
 							if (!File.Exists(fileName))
 								continue;
 						}
@@ -300,7 +302,33 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		[DllImport("libc")]
-		static extern void realpath(string path, StringBuilder resolvedPath);
+		static unsafe string GetRealPath(string path, Encoding encoding)
+		{
+			var bytes = encoding.GetBytes(path);
+			fixed (byte* input = bytes)
+			{
+
+				byte* output = GetRealPath(input, null);
+				if (output == null)
+				{
+					return null;
+				}
+				int len = 0;
+				for (byte* c = output; *c != 0; c++)
+				{
+					len++;
+				}
+				byte[] result = new byte[len];
+				Marshal.Copy((IntPtr)output, result, 0, result.Length);
+				Free(output);
+				return encoding.GetString(result);
+			}
+		}
+
+		[DllImport("libc", EntryPoint = "realpath")]
+		static extern unsafe byte* GetRealPath(byte* path, byte* resolvedPath);
+
+		[DllImport("libc", EntryPoint = "free")]
+		static extern unsafe void Free(void* ptr);
 	}
 }

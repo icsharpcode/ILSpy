@@ -663,6 +663,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			// virtual bool Equals(R? other) {
 			//    return other != null && EqualityContract == other.EqualityContract && EqualityComparer<int>.Default.Equals(A, other.A) && ...;
 			// }
+			// Starting with Roslyn 3.10, it's:
+			// virtual bool Equals(R? other) {
+			//    return this == other || other != null && EqualityContract == other.EqualityContract && EqualityComparer<int>.Default.Equals(A, other.A) && ...;
+			// }
 			Debug.Assert(method.Name == "Equals" && method.Parameters.Count == 1);
 			if (method.Parameters.Count != 1)
 				return false;
@@ -680,6 +684,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			var variables = body.Ancestors.OfType<ILFunction>().Single().Variables;
 			var other = variables.Single(v => v.Kind == VariableKind.Parameter && v.Index == 0);
 			Debug.Assert(IsRecordType(other.Type));
+			if (returnValue.MatchLogicOr(out var lhs, out var rhs))
+			{
+				// this == other || ...
+				if (!lhs.MatchCompEquals(out var compLeft, out var compRight))
+					return false;
+				if (!compLeft.MatchLdThis())
+					return false;
+				if (!compRight.MatchLdLoc(other))
+					return false;
+				returnValue = rhs;
+			}
 			var conditions = UnpackLogicAndChain(returnValue);
 			Debug.Assert(conditions.Count >= 1);
 			int pos = 0;
@@ -859,18 +874,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool Visit(ILInstruction inst)
 			{
 				if (inst is BinaryNumericInstruction
-				{
-					Operator: BinaryNumericOperator.Add,
-					CheckForOverflow: false,
-					Left: BinaryNumericInstruction
 					{
-						Operator: BinaryNumericOperator.Mul,
+						Operator: BinaryNumericOperator.Add,
 						CheckForOverflow: false,
-						Left: var left,
-						Right: LdcI4 { Value: -1521134295 }
-					},
-					Right: var right
-				})
+						Left: BinaryNumericInstruction
+						{
+							Operator: BinaryNumericOperator.Mul,
+							CheckForOverflow: false,
+							Left: var left,
+							Right: LdcI4 { Value: -1521134295 }
+						},
+						Right: var right
+					})
 				{
 					if (!Visit(left))
 						return false;
@@ -971,13 +986,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			target = null;
 			member = null;
 			if (inst is CallVirt
-			{
-				Method:
 				{
-					AccessorKind: System.Reflection.MethodSemanticsAttributes.Getter,
-					AccessorOwner: IProperty property
-				}
-			} call)
+					Method:
+					{
+						AccessorKind: System.Reflection.MethodSemanticsAttributes.Getter,
+						AccessorOwner: IProperty property
+					}
+				} call)
 			{
 				if (call.Arguments.Count != 1)
 					return false;

@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -269,6 +270,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		}
 
+		public class NonEnumerableArrayLike
+		{
+			private readonly int length;
+
+			public Item this[int index] {
+				get {
+					return null;
+				}
+			}
+
+			public int Length {
+				get {
+					return length;
+				}
+			}
+		}
+
 		private IEnumerable<string> alternatives;
 		private object someObject;
 
@@ -469,6 +487,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public void ForOverNonArray(NonEnumerableArrayLike array)
+		{
+			for (int i = 0; i < array.Length; i++)
+			{
+				Item item = array[i];
+				Console.WriteLine(item.ToString() + item.ToString());
+			}
+		}
+
 		public unsafe void ForEachOverArrayOfPointers(int*[] array)
 		{
 			foreach (int* value in array)
@@ -585,6 +612,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			for (int i = 0; i < array.Length; i++)
 			{
 				array[i].ToLower();
+			}
+		}
+
+		private static void AppendNamePart(string part, StringBuilder name)
+		{
+			foreach (char c in part)
+			{
+				if (c == '\\')
+				{
+					name.Append('\\');
+				}
+				name.Append(c);
 			}
 		}
 
@@ -969,6 +1008,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine(i);
 			}
 			Console.WriteLine("end");
+		}
+
+		public void ForEachInSwitch(int i, IEnumerable<string> args)
+		{
+			switch (i)
+			{
+
+				case 1:
+					Console.WriteLine("one");
+					break;
+				case 2:
+				{
+					foreach (string arg in args)
+					{
+						Console.WriteLine(arg);
+					}
+					break;
+				}
+				default:
+					throw new NotImplementedException();
+			}
 		}
 	}
 }

@@ -63,6 +63,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IType ReturnType { get; }
 
 		/// <summary>
+		/// Gets/Sets the declaring type (incl. type arguments, if any).
+		/// If this is not a specialized member, the value returned is equal to <see cref="IEntity.DeclaringTypeDefinition"/>.
+		/// </summary>
+		new IType DeclaringType { get; }
+
+		/// <summary>
 		/// Gets the interface members explicitly implemented by this member.
 		/// </summary>
 		/// <remarks>

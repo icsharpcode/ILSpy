@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2018 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2018 Daniel Grunwald
 // Based on the .NET Core ResourceReader; make available under the MIT license
 // by the .NET Foundation.
 // 
@@ -30,7 +31,7 @@ namespace ICSharpCode.Decompiler.Util
 	/// <summary>
 	/// .resources file.
 	/// </summary>
-	public class ResourcesFile : IEnumerable<KeyValuePair<string, object>>, IDisposable
+	public class ResourcesFile : IEnumerable<KeyValuePair<string, object?>>, IDisposable
 	{
 		sealed class MyBinaryReader : BinaryReader
 		{
@@ -87,7 +88,7 @@ namespace ICSharpCode.Decompiler.Util
 		readonly long fileStartPosition;
 		readonly long nameSectionPosition;
 		readonly long dataSectionPosition;
-		long[] startPositions;
+		long[]? startPositions;
 
 		/// <summary>
 		/// Creates a new ResourcesFile.
@@ -285,7 +286,7 @@ namespace ICSharpCode.Decompiler.Util
 			return true;
 		}
 
-		object LoadObject(int dataOffset)
+		object? LoadObject(int dataOffset)
 		{
 			try
 			{
@@ -318,7 +319,7 @@ namespace ICSharpCode.Decompiler.Util
 		// from that location.
 		// Anyone who calls LoadObject should make sure they take a lock so 
 		// no one can cause us to do a seek in here.
-		private object LoadObjectV1(int dataOffset)
+		private object? LoadObjectV1(int dataOffset)
 		{
 			Debug.Assert(System.Threading.Monitor.IsEntered(reader));
 			reader.Seek(dataSectionPosition + dataOffset, SeekOrigin.Begin);
@@ -372,7 +373,7 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
-		private object LoadObjectV2(int dataOffset)
+		private object? LoadObjectV2(int dataOffset)
 		{
 			Debug.Assert(System.Threading.Monitor.IsEntered(reader));
 			reader.Seek(dataSectionPosition + dataOffset, SeekOrigin.Begin);
@@ -464,19 +465,19 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
-		public object GetResourceValue(int index)
+		public object? GetResourceValue(int index)
 		{
 			GetResourceName(index, out int dataOffset);
 			return LoadObject(dataOffset);
 		}
 
-		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+		public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
 		{
 			for (int i = 0; i < numResources; i++)
 			{
 				string name = GetResourceName(i, out int dataOffset);
-				object val = LoadObject(dataOffset);
-				yield return new KeyValuePair<string, object>(name, val);
+				object? val = LoadObject(dataOffset);
+				yield return new KeyValuePair<string, object?>(name, val);
 			}
 		}
 
@@ -487,7 +488,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		long[] GetStartPositions()
 		{
-			long[] positions = LazyInit.VolatileRead(ref startPositions);
+			long[]? positions = LazyInit.VolatileRead(ref startPositions);
 			if (positions != null)
 				return positions;
 			lock (reader)
@@ -541,11 +542,11 @@ namespace ICSharpCode.Decompiler.Util
 
 	public class ResourceSerializedObject
 	{
-		public string TypeName { get; }
+		public string? TypeName { get; }
 		readonly ResourcesFile file;
 		readonly long position;
 
-		internal ResourceSerializedObject(string typeName, ResourcesFile file, long position)
+		internal ResourceSerializedObject(string? typeName, ResourcesFile file, long position)
 		{
 			this.TypeName = typeName;
 			this.file = file;

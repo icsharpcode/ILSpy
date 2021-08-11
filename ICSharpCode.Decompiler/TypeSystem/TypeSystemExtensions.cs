@@ -295,8 +295,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public static bool IsAnyPointer(this TypeKind typeKind)
 		{
-			return typeKind switch
-			{
+			return typeKind switch {
 				TypeKind.Pointer => true,
 				TypeKind.FunctionPointer => true,
 				_ => false

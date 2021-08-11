@@ -57,13 +57,15 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			foreach (var annotation in element.Annotations<BamlConnectionId>())
 			{
 				int index;
+				bool found = false;
 				if ((index = fieldAssignments.FindIndex(item => item.key.Contains(annotation.Id))) > -1)
 				{
 					var xName = ctx.GetKnownNamespace("Name", XamlContext.KnownNamespace_Xaml, element);
 					if (element.Attribute("Name") is null && element.Attribute(xName) is null)
 						element.Add(new XAttribute(xName, fieldAssignments[index].value.FieldName));
+					found = true;
 				}
-				else if ((index = eventMappings.FindIndex(item => item.key.Contains(annotation.Id))) > -1)
+				if ((index = eventMappings.FindIndex(item => item.key.Contains(annotation.Id))) > -1)
 				{
 					foreach (var entry in eventMappings[index].value)
 					{
@@ -80,8 +82,9 @@ namespace ILSpy.BamlDecompiler.Rewrite
 							element.Add(new XAttribute(xmlns + entry.EventName, entry.MethodName));
 						}
 					}
+					found = true;
 				}
-				else
+				if (!found)
 				{
 					element.Add(new XComment($"Unknown connection ID: {annotation.Id}"));
 				}
@@ -159,20 +162,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			{
 				foreach (var section in ilSwitch.Sections)
 				{
-					var field = FindField(section.Body);
-					if (!(field is null))
-					{
-						fieldAssignments.Add((section.Labels, field));
-					}
-					else
-					{
-						events.Clear();
-						FindEvents(section.Body, events);
-						if (events.Count > 0)
-						{
-							eventMappings.Add((section.Labels, events.ToArray()));
-						}
-					}
+					Add(section.Labels, section.Body);
 				}
 			}
 			else
@@ -189,20 +179,22 @@ namespace ILSpy.BamlDecompiler.Rewrite
 						? ifInst.FalseInst
 						: ifInst.TrueInst;
 
-					var field = FindField(inst);
-					if (!(field is null))
-					{
-						fieldAssignments.Add((new LongSet(id), field));
-					}
-					else
-					{
-						events.Clear();
-						FindEvents(inst, events);
-						if (events.Count > 0)
-						{
-							eventMappings.Add((new LongSet(id), events.ToArray()));
-						}
-					}
+					Add(new LongSet(id), inst);
+				}
+			}
+
+			void Add(LongSet ids, ILInstruction inst)
+			{
+				var field = FindField(inst);
+				if (!(field is null))
+				{
+					fieldAssignments.Add((ids, field));
+				}
+				events.Clear();
+				FindEvents(inst, events);
+				if (events.Count > 0)
+				{
+					eventMappings.Add((ids, events.ToArray()));
 				}
 			}
 		}

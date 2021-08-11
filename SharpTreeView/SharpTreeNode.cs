@@ -122,10 +122,6 @@ namespace ICSharpCode.TreeView
 			get { return null; }
 		}
 
-		public virtual Brush Foreground {
-			get { return SystemColors.WindowTextBrush; }
-		}
-
 		public virtual object Icon {
 			get { return null; }
 		}

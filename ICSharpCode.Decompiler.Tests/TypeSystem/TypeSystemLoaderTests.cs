@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.IsFalse(c.IsAbstract);
 			Assert.IsFalse(c.IsSealed);
 			Assert.IsFalse(c.IsStatic);
-			//Assert.IsFalse(c.IsShadowing);
+			Assert.IsFalse(c.HasAttribute(KnownAttribute.SpecialName));
 		}
 
 		[Test]
@@ -109,6 +109,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.AreEqual(0, method.GetAttributes().Count());
 			Assert.IsTrue(method.HasBody);
 			Assert.IsNull(method.AccessorOwner);
+			Assert.IsFalse(method.HasAttribute(KnownAttribute.SpecialName));
 		}
 
 		[Test]
@@ -127,6 +128,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.AreEqual(0, method.GetAttributes().Count());
 			Assert.IsTrue(method.HasBody);
 			Assert.IsNull(method.AccessorOwner);
+			Assert.IsFalse(method.HasAttribute(KnownAttribute.SpecialName));
 		}
 
 		[Test]
@@ -145,6 +147,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.AreEqual(1, method.GetAttributes().Count());
 			Assert.IsTrue(method.HasBody);
 			Assert.IsNull(method.AccessorOwner);
+			Assert.IsFalse(method.HasAttribute(KnownAttribute.SpecialName));
 		}
 
 		[Test]
@@ -403,6 +406,9 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.AreEqual(Accessibility.Public, p.Getter.Accessibility);
 			Assert.AreEqual(Accessibility.Private, p.Setter.Accessibility);
 			Assert.IsTrue(p.Getter.HasBody);
+			Assert.IsFalse(p.HasAttribute(KnownAttribute.SpecialName));
+			Assert.IsFalse(p.Getter.HasAttribute(KnownAttribute.SpecialName));
+			Assert.IsFalse(p.Setter.HasAttribute(KnownAttribute.SpecialName));
 		}
 
 		[Test]
@@ -1957,6 +1963,28 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			var multicastDelegate = compilation.FindType(KnownTypeCode.MulticastDelegate).GetDefinition();
 			Assert.AreEqual(TypeKind.Class, multicastDelegate);
 			Assert.IsFalse(multicastDelegate.IsSealed);
+		}
+
+		[Test]
+		public void HasSpecialName()
+		{
+			var nonCustomAttributes = compilation.FindType(typeof(NonCustomAttributes)).GetDefinition();
+
+			var method = nonCustomAttributes.GetMethods(m => m.Name == "SpecialNameMethod").Single();
+			var property = nonCustomAttributes.GetProperties(p => p.Name == "SpecialNameProperty").Single();
+			var @event = nonCustomAttributes.GetEvents(e => e.Name == "SpecialNameEvent").Single();
+			var field = nonCustomAttributes.GetFields(f => f.Name == "SpecialNameField").Single();
+
+			var @class = nonCustomAttributes.GetNestedTypes(t => t.Name == "SpecialNameClass").Single().GetDefinition();
+			var @struct = nonCustomAttributes.GetNestedTypes(t => t.Name == "SpecialNameStruct").Single().GetDefinition();
+
+			Assert.IsTrue(method.HasAttribute(KnownAttribute.SpecialName));
+			Assert.IsTrue(property.HasAttribute(KnownAttribute.SpecialName));
+			Assert.IsTrue(@event.HasAttribute(KnownAttribute.SpecialName));
+			Assert.IsTrue(field.HasAttribute(KnownAttribute.SpecialName));
+
+			Assert.IsTrue(@class.HasAttribute(KnownAttribute.SpecialName));
+			Assert.IsTrue(@struct.HasAttribute(KnownAttribute.SpecialName));
 		}
 	}
 }

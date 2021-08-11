@@ -21,9 +21,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 using ICSharpCode.Decompiler.IL.Patterns;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -60,13 +62,23 @@ namespace ICSharpCode.Decompiler.IL
 			this.OpCode = opCode;
 		}
 
-		protected void ValidateChild(ILInstruction inst)
+		protected void ValidateChild(ILInstruction? inst)
 		{
 			if (inst == null)
 				throw new ArgumentNullException(nameof(inst));
 			Debug.Assert(!this.IsDescendantOf(inst), "ILAst must form a tree");
 			// If a call to ReplaceWith() triggers the "ILAst must form a tree" assertion,
 			// make sure to read the remarks on the ReplaceWith() method.
+		}
+
+		internal static void DebugAssert([DoesNotReturnIf(false)] bool b)
+		{
+			Debug.Assert(b);
+		}
+
+		internal static void DebugAssert([DoesNotReturnIf(false)] bool b, string msg)
+		{
+			Debug.Assert(b, msg);
 		}
 
 		[Conditional("DEBUG")]
@@ -493,7 +505,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			internal ChildrenEnumerator(ILInstruction inst)
 			{
-				Debug.Assert(inst != null);
+				DebugAssert(inst != null);
 				this.inst = inst;
 				this.pos = -1;
 				this.end = inst!.GetChildCount();
@@ -899,9 +911,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// If extraction is not possible, the ILAst is left unmodified and the function returns null.
 		/// May return null if extraction is not possible.
 		/// </summary>
-		public ILVariable Extract()
+		public ILVariable Extract(ILTransformContext context)
 		{
-			return Transforms.ExtractionContext.Extract(this);
+			return Transforms.ExtractionContext.Extract(this, context);
 		}
 
 		/// <summary>
@@ -950,7 +962,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	public interface IInstructionWithMethodOperand
 	{
-		IMethod Method { get; }
+		IMethod? Method { get; }
 	}
 
 	public interface ILiftableInstruction

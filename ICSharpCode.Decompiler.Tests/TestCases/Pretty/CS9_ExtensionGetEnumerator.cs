@@ -16,7 +16,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void Test(NonGeneric c)
 		{
-			foreach (object? item in c)
+			foreach (object item in c)
 			{
 				Console.WriteLine(item);
 			}

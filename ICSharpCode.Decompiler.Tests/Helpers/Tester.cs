@@ -219,9 +219,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		static readonly RoslynToolset roslynToolset = new RoslynToolset();
 
-		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NETCoreApp,
-			new Version(3, 1), "Microsoft.NETCore.App")
-				.GetReferenceAssemblyPath(".NETCoreApp, Version = v3.1");
+		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NET,
+			new Version(5, 0), "Microsoft.NETCore.App")
+				.GetReferenceAssemblyPath(".NETCoreApp, Version = v5.0");
 
 		static readonly string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
 			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
@@ -257,7 +257,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		const string targetFrameworkAttributeSnippet = @"
 
-[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp, Version = v3.1"", FrameworkDisplayName = """")]
+[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp, Version = v5.0"", FrameworkDisplayName = """")]
 
 ";
 
@@ -355,8 +355,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				CompilerResults results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 
-				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch
-				{
+				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch {
 					0 => ("legacy", "5"),
 					CompilerOptions.UseRoslyn1_3_2 => ("1.3.2", "6"),
 					CompilerOptions.UseRoslyn2_10_0 => ("2.10.0", "latest"),
@@ -522,8 +521,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			if ((cscOptions & CompilerOptions.UseRoslynMask) != 0)
 			{
-				var langVersion = (cscOptions & CompilerOptions.UseRoslynMask) switch
-				{
+				var langVersion = (cscOptions & CompilerOptions.UseRoslynMask) switch {
 					CompilerOptions.UseRoslyn1_3_2 => CSharp.LanguageVersion.CSharp6,
 					CompilerOptions.UseRoslyn2_10_0 => CSharp.LanguageVersion.CSharp7_3,
 					_ => cscOptions.HasFlag(CompilerOptions.Preview) ? CSharp.LanguageVersion.Latest : CSharp.LanguageVersion.CSharp8_0,

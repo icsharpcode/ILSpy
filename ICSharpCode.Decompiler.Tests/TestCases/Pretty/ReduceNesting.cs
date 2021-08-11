@@ -199,7 +199,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						Console.WriteLine("case 1");
 						return;
 				}
-
 				if (B(1))
 				{
 					Console.WriteLine(1);

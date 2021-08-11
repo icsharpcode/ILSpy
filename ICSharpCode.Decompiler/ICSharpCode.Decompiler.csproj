@@ -19,26 +19,30 @@
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
     <NoWarn>1701;1702;1591;1573</NoWarn>
+
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
 
   <!-- HACK: Disable package generation on Unix due to tooling issues. -->
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <IncludeSymbolsInPackage>true</IncludeSymbolsInPackage>
     <NuspecFile>ICSharpCode.Decompiler.nuspec</NuspecFile>
     <NuspecProperties>Configuration=$(Configuration)</NuspecProperties>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <DebugType>portable</DebugType>
-    <DebugSymbols>true</DebugSymbols>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>$(DefineConstants);STEP</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <DebugType>portable</DebugType>
-    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -79,6 +83,7 @@
     <Compile Include="CSharp\Syntax\VariableDesignation.cs" />
     <Compile Include="Humanizer\Vocabularies.cs" />
     <Compile Include="Humanizer\Vocabulary.cs" />
+    <Compile Include="IL\ControlFlow\RemoveRedundantReturn.cs" />
     <Compile Include="IL\Transforms\DeconstructionTransform.cs" />
     <Compile Include="IL\Transforms\FixLoneIsInst.cs" />
     <Compile Include="IL\Instructions\DeconstructInstruction.cs" />
@@ -91,6 +96,7 @@
     <Compile Include="Documentation\XmlDocumentationElement.cs" />
     <Compile Include="IL\ControlFlow\AwaitInFinallyTransform.cs" />
     <Compile Include="IL\Transforms\IntroduceNativeIntTypeOnLocals.cs" />
+    <Compile Include="IL\Transforms\LdLocaDupInitObjTransform.cs" />
     <Compile Include="Metadata\ReferenceLoadInfo.cs" />
     <Compile Include="Semantics\OutVarResolveResult.cs" />
     <Compile Include="SingleFileBundle.cs" />

@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2017 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2017 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -31,7 +32,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo FunctionPointerSlot = new SlotInfo("FunctionPointer", canInlineInto: true);
 		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true, isCollection: true);
 
-		ILInstruction functionPointer;
+		ILInstruction functionPointer = null!;
 		public readonly InstructionCollection<ILInstruction> Arguments;
 		public bool IsInstance { get; }
 		public bool HasExplicitThis { get; }

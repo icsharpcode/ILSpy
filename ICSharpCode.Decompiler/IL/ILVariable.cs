@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2014 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -19,7 +20,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public string Name { get; set; }
+		public string? Name { get; set; }
 
 		public bool HasGeneratedName { get; set; }
 
@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// This property is set automatically when the variable is added to the <c>ILFunction.Variables</c> collection.
 		/// </remarks>
-		public ILFunction Function { get; internal set; }
+		public ILFunction? Function { get; internal set; }
 
 		/// <summary>
 		/// Gets the block container in which this variable is captured.
@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// This property returns null for variables that are not captured.
 		/// </remarks>
-		public BlockContainer CaptureScope { get; internal set; }
+		public BlockContainer? CaptureScope { get; internal set; }
 
 		/// <summary>
 		/// Gets the index of this variable within the <c>Function.Variables</c> collection.
@@ -309,7 +309,7 @@ namespace ICSharpCode.Decompiler.IL
 			return list.Count - 1;
 		}
 
-		void RemoveInstruction<T>(List<T> list, int index, T inst) where T : class, IInstructionWithVariableOperand
+		void RemoveInstruction<T>(List<T> list, int index, T? inst) where T : class, IInstructionWithVariableOperand
 		{
 			Debug.Assert(list[index] == inst);
 			int indexToMove = list.Count - 1;
@@ -370,7 +370,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// The field which was converted to a local variable.
 		/// Set when the variable is from a 'yield return' or 'async' state machine.
 		/// </summary>
-		public IField StateMachineField;
+		public IField? StateMachineField;
 
 		public ILVariable(VariableKind kind, IType type, int? index = null)
 		{
@@ -398,7 +398,7 @@ namespace ICSharpCode.Decompiler.IL
 			CheckInvariant();
 		}
 
-		public override string ToString()
+		public override string? ToString()
 		{
 			return Name;
 		}
@@ -472,7 +472,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (CaptureScope != null)
 			{
 				output.Write(" captured in ");
-				output.WriteLocalReference(CaptureScope.EntryPoint.Label, CaptureScope);
+				output.WriteLocalReference(CaptureScope.EntryPoint?.Label, CaptureScope);
 			}
 			if (StateMachineField != null)
 			{
@@ -528,7 +528,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public static readonly ILVariableEqualityComparer Instance = new ILVariableEqualityComparer();
 
-		public bool Equals(ILVariable x, ILVariable y)
+		public bool Equals(ILVariable? x, ILVariable? y)
 		{
 			if (x == y)
 				return true;

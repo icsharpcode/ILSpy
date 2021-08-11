@@ -106,6 +106,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		ILTransformContext context;
 		ITypeResolveContext decompilationContext;
 		readonly Dictionary<ILVariable, DisplayClass> displayClasses = new Dictionary<ILVariable, DisplayClass>();
+		readonly Dictionary<ILVariable, ILVariable> displayClassCopyMap = new Dictionary<ILVariable, ILVariable>();
 
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
@@ -127,6 +128,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		void ClearState()
 		{
 			displayClasses.Clear();
+			displayClassCopyMap.Clear();
 			this.decompilationContext = null;
 			this.context = null;
 		}
@@ -234,6 +236,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								return declaredVar.CanPropagate;
 						}
 						return false;
+					case StLoc stloc when stloc.Variable.IsSingleDefinition && stloc.Value == use:
+						displayClassCopyMap[stloc.Variable] = v;
+						return true;
 					default:
 						return false;
 				}
@@ -576,7 +581,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			VisitILFunction(function);
 			context.Step($"ResetHasInitialValueFlag", function);
-			foreach (var f in TreeTraversal.PostOrder(function, f => f.LocalFunctions))
+			foreach (var f in function.Descendants.OfType<ILFunction>())
 			{
 				RemoveDeadVariableInit.ResetHasInitialValueFlag(f, context);
 				f.CapturedVariables.RemoveWhere(v => v.IsDead);
@@ -652,8 +657,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					.FirstOrDefault(t => t.IsThis() && t.Type.GetDefinition() == decompilationContext.CurrentTypeDefinition);
 				if (thisVar == null)
 				{
-					thisVar = new ILVariable(VariableKind.Parameter, decompilationContext.CurrentTypeDefinition, -1) { Name = "this" };
+					thisVar = new ILVariable(VariableKind.Parameter, decompilationContext.CurrentTypeDefinition, -1) {
+						Name = "this", StateMachineField = thisField
+					};
 					function.Variables.Add(thisVar);
+				}
+				else if (thisVar.StateMachineField != null && displayClass.VariablesToDeclare.ContainsKey(thisVar.StateMachineField))
+				{
+					// "this" was already added previously, no need to add it twice.
+					return displayClass;
 				}
 				VariableToDeclare variableToDeclare = new VariableToDeclare(displayClass, thisField, thisVar);
 				displayClass.VariablesToDeclare.Add(thisField, variableToDeclare);
@@ -777,7 +789,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// in some cases (e.g. if inlining fails), there can be a reference to a display class in a stack slot,
 					// in that case it is necessary to resolve the reference and iff it can be propagated, replace all loads
 					// of the single-definition.
-					var referencedDisplayClass = ResolveVariableToPropagate(inst.Value);
+					if (!displayClassCopyMap.TryGetValue(inst.Variable, out var referencedDisplayClass))
+					{
+						referencedDisplayClass = ResolveVariableToPropagate(inst.Value);
+					}
 					if (referencedDisplayClass != null && displayClasses.TryGetValue(referencedDisplayClass, out _))
 					{
 						context.Step($"Propagate reference to {referencedDisplayClass.Name} in {inst.Variable}", inst);
@@ -807,6 +822,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return;
 					}
 				}
+				if (inst.Value is LdLoc ldLoc && ldLoc.Variable is { IsSingleDefinition: true, CaptureScope: null }
+					&& ldLoc.Variable.StoreInstructions.FirstOrDefault() is StLoc stloc
+					&& stloc.Parent is Block block)
+				{
+					ILInlining.InlineOneIfPossible(block, stloc.ChildIndex, InliningOptions.None, context);
+				}
 			}
 			base.VisitStObj(inst);
 			EarlyExpressionTransforms.StObjToStLoc(inst, context);
@@ -821,9 +842,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		private bool IsDisplayClassLoad(ILInstruction target, out ILVariable variable)
 		{
 			// We cannot use MatchLdLocRef here because local functions use ref parameters
-			if (target.MatchLdLoc(out variable) || target.MatchLdLoca(out variable))
-				return true;
-			return false;
+			if (!target.MatchLdLoc(out variable) && !target.MatchLdLoca(out variable))
+				return false;
+			if (displayClassCopyMap.TryGetValue(variable, out ILVariable other))
+				variable = other;
+			return true;
 		}
 
 		private bool IsDisplayClassFieldAccess(ILInstruction inst,
@@ -832,7 +855,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			displayClass = null;
 			displayClassVar = null;
 			field = null;
-			if (!(inst is LdFlda ldflda))
+			if (inst is not LdFlda ldflda)
 				return false;
 			field = ldflda.Field;
 			return IsDisplayClassLoad(ldflda.Target, out displayClassVar)

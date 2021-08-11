@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy
 			Zip,
 			Bundle,
 		}
-		
+
 		public FileInfo File { get; }
 
 		/// <summary>
@@ -200,7 +200,25 @@ namespace ICSharpCode.ILSpy
 			public override Stream TryOpenStream()
 			{
 				Debug.WriteLine("Open bundle member " + Name);
-				return new UnmanagedMemoryStream(view.SafeMemoryMappedViewHandle, entry.Offset, entry.Size);
+
+				if (entry.CompressedSize == 0)
+				{
+					return new UnmanagedMemoryStream(view.SafeMemoryMappedViewHandle, entry.Offset, entry.Size);
+				}
+				else
+				{
+					Stream compressedStream = new UnmanagedMemoryStream(view.SafeMemoryMappedViewHandle, entry.Offset, entry.CompressedSize);
+					using var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress);
+					Stream decompressedStream = new MemoryStream((int)entry.Size);
+					deflateStream.CopyTo(decompressedStream);
+					if (decompressedStream.Length != entry.Size)
+					{
+						throw new InvalidDataException($"Corrupted single-file entry '${entry.RelativePath}'. Declared decompressed size '${entry.Size}' is not the same as actual decompressed size '${decompressedStream.Length}'.");
+					}
+
+					decompressedStream.Seek(0, SeekOrigin.Begin);
+					return decompressedStream;
+				}
 			}
 		}
 	}

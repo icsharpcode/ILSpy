@@ -393,6 +393,10 @@ namespace ICSharpCode.ILSpy
 			}
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null)
 			{
+				if (!WholeProjectDecompiler.CanUseSdkStyleProjectFormat(module))
+				{
+					options.DecompilerSettings.UseSdkStyleProjectFormat = false;
+				}
 				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options);
 				return decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
 			}

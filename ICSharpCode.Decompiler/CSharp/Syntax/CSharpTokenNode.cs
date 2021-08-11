@@ -85,7 +85,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		int TokenLength {
 			get {
-				return TokenRole.TokenLengths[(int)(this.flags >> AstNodeFlagsUsedBits)];
+				uint tokenRoleIndex = (this.flags >> AstNodeFlagsUsedBits);
+				if (Role.GetByIndex(tokenRoleIndex) is TokenRole r)
+				{
+					return r.Length;
+				}
+				return 0;
 			}
 		}
 
@@ -99,12 +104,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			this.startLocation = location;
 			if (role != null)
-				this.flags |= role.TokenIndex << AstNodeFlagsUsedBits;
+				this.flags |= role.Index << AstNodeFlagsUsedBits;
 		}
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
-			return TokenRole.Tokens[(int)(this.flags >> AstNodeFlagsUsedBits)];
+			uint tokenRoleIndex = (this.flags >> AstNodeFlagsUsedBits);
+			if (Role.GetByIndex(tokenRoleIndex) is TokenRole r)
+			{
+				return r.Token;
+			}
+			return string.Empty;
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -129,4 +139,3 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 }
-

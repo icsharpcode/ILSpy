@@ -148,8 +148,27 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 	[Serializable]
 	public class NonCustomAttributes
 	{
+		[SpecialName]
+		public class SpecialNameClass
+		{
+		}
+
+		[SpecialName]
+		public struct SpecialNameStruct
+		{
+		}
+
 		[NonSerialized]
 		public readonly int NonSerializedField;
+
+		[SpecialName]
+		public readonly int SpecialNameField;
+
+		[SpecialName]
+		public event EventHandler SpecialNameEvent;
+
+		[SpecialName]
+		public int SpecialNameProperty { get; set; }
 
 		[DllImport("unmanaged.dll", CharSet = CharSet.Unicode)]
 		[return: MarshalAs(UnmanagedType.Bool)]
@@ -160,6 +179,11 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 
 		[PreserveSig]
 		public static void PreserveSigAsAttribute()
+		{
+		}
+
+		[SpecialName]
+		public static void SpecialNameMethod()
 		{
 		}
 	}

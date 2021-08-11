@@ -14,5 +14,24 @@ namespace System.Diagnostics.CodeAnalysis
 			ParameterName = parameterName;
 		}
 	}
+
+	[AttributeUsage(AttributeTargets.Parameter, Inherited = false)]
+	internal sealed class NotNullWhenAttribute : Attribute
+	{
+		public NotNullWhenAttribute(bool returnValue)
+		{
+			ReturnValue = returnValue;
+		}
+
+		public bool ReturnValue { get; }
+	}
+
+	[AttributeUsage(AttributeTargets.Parameter, Inherited = false)]
+	internal sealed class DoesNotReturnIfAttribute : Attribute
+	{
+		public DoesNotReturnIfAttribute(bool parameterValue) => ParameterValue = parameterValue;
+
+		public bool ParameterValue { get; }
+	}
 }
 #endif

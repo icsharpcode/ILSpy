@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				var function = block.Ancestors.OfType<ILFunction>().FirstOrDefault();
 				var inst = block.Instructions[pos];
-				if (IsInConstructorInitializer(function, inst))
+				if (IsInConstructorInitializer(function, inst) || PreferExpressionsOverStatements(function))
 					options |= InliningOptions.Aggressive;
 			}
 			if (!context.Settings.UseRefLocalsForAccurateOrderOfEvaluation)
@@ -79,6 +79,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				options |= InliningOptions.AllowChangingOrderOfEvaluationForExceptions;
 			}
 			return options;
+		}
+
+		static bool PreferExpressionsOverStatements(ILFunction function)
+		{
+			switch (function.Kind)
+			{
+				case ILFunctionKind.Delegate:
+					return function.Parameters.Any(p => CSharp.CSharpDecompiler.IsTransparentIdentifier(p.Name));
+				case ILFunctionKind.ExpressionTree:
+					return true;
+				default:
+					return false;
+			}
 		}
 
 		public static bool InlineAllInBlock(ILFunction function, Block block, ILTransformContext context)

@@ -8,7 +8,7 @@
 			 xmlns:srm="clr-namespace:System.Reflection;assembly=System.Reflection.Metadata"
 			 xmlns:dgx="urn:tom-englert.de/DataGridExtensions">
 
-	<Style x:Key="DataGridCellStyle" TargetType="{x:Type DataGridCell}">
+	<Style x:Key="DataGridCellStyle" TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource {x:Type DataGridCell}}">
 		<Setter Property="BorderThickness" Value="0" />
 		<Setter Property="Padding" Value="2" />
 		<Setter Property="VerticalContentAlignment" Value="Center" />

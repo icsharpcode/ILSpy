@@ -226,7 +226,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			public Item I;
 		}
 #endif
+
+		public interface IData
+		{
+			int Property { get; set; }
+		}
 		#endregion
+
+		private S s1;
+		private S s2;
 
 		#region Field initializer tests
 		private static V3f[] Issue1336_rg0 = new V3f[3] {
@@ -900,6 +908,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			});
 		}
 
+		public void InliningOfStFldTarget()
+		{
+			s1 = new S {
+				A = 24,
+				B = 42
+			};
+			s2 = new S {
+				A = 42,
+				B = 24
+			};
+		}
+
 		public static void NotAStructInitializer_ExplicitConstructor()
 		{
 			StructData structData = new StructData(0);
@@ -1036,6 +1056,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			}
 		}
 #endif
+
+		private TData GenericObjectInitializer<TData>() where TData : IData, new()
+		{
+			return new TData {
+				Property = 42
+			};
+		}
 		#endregion
 
 		#region Collection initializer

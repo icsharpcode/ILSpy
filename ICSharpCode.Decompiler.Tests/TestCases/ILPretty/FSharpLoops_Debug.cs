@@ -32,6 +32,7 @@ using Microsoft.FSharp.Core.CompilerServices;
 public static class Program
 {
 	[Serializable]
+	[SpecialName]
 	[CompilationMapping(SourceConstructFlags.Closure)]
 	internal sealed class disposable_00403 : IDisposable
 	{
@@ -47,6 +48,7 @@ public static class Program
 	}
 
 	[Serializable]
+	[SpecialName]
 	[CompilationMapping(SourceConstructFlags.Closure)]
 	internal sealed class getSeq_00405 : GeneratedSequenceBase<int>
 	{

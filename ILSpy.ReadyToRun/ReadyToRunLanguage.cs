@@ -104,6 +104,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			get { return ".asm"; }
 		}
 
+		public override void WriteCommentLine(ITextOutput output, string comment)
+		{
+			output.WriteLine("; " + comment);
+		}
+
 		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile module = assembly.GetPEFileAsync().GetAwaiter().GetResult();

@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-//using System.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		}
 
-		private void Use(IAsyncDisposable disposable)
+		private void Use(IAsyncDisposable asyncDisposable)
 		{
 
 		}
@@ -84,12 +84,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Use(disposable2);
 		}
 
-		//public async Task SimpleUsingVarAsync(IAsyncDisposable other)
-		//{
-		//	Console.WriteLine("before using");
-		//	await using IAsyncDisposable asyncDisposable = GetAsyncDisposable();
-		//	Console.WriteLine("inside using");
-		//	Use(asyncDisposable);
-		//}
+		public async Task SimpleUsingVarAsync()
+		{
+			Console.WriteLine("before using");
+			await using IAsyncDisposable asyncDisposable = GetAsyncDisposable();
+			Console.WriteLine("inside using");
+			Use(asyncDisposable);
+		}
 	}
 }

@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
@@ -32,6 +34,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Nearest function, used for registering the new locals that are created by extraction.
 		/// </summary>
 		readonly ILFunction Function;
+
+		readonly ILTransformContext context;
 
 		/// <summary>
 		/// Combined flags of all instructions being moved.
@@ -47,17 +51,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		readonly List<Func<ILInstruction>> MoveActions = new List<Func<ILInstruction>>();
 
-		ExtractionContext(ILFunction function)
+		ExtractionContext(ILFunction function, ILTransformContext context)
 		{
 			Debug.Assert(function != null);
 			this.Function = function;
+			this.context = context;
 		}
 
 		internal void RegisterMove(ILInstruction predecessor)
 		{
 			FlagsBeingMoved |= predecessor.Flags;
 			MoveActions.Add(delegate {
-				var v = Function.RegisterVariable(VariableKind.StackSlot, predecessor.ResultType);
+				var type = context.TypeSystem.FindType(predecessor.ResultType.ToKnownTypeCode());
+				var v = Function.RegisterVariable(VariableKind.StackSlot, type);
 				predecessor.ReplaceWith(new LdLoc(v));
 				return new StLoc(v, predecessor);
 			});
@@ -91,10 +97,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 
 		/// May return null if extraction is not possible.
 		/// </summary>
-		public static ILVariable Extract(ILInstruction instToExtract)
+		public static ILVariable Extract(ILInstruction instToExtract, ILTransformContext context)
 		{
 			var function = instToExtract.Ancestors.OfType<ILFunction>().First();
-			ExtractionContext ctx = new ExtractionContext(function);
+			ExtractionContext ctx = new ExtractionContext(function, context);
 			ctx.FlagsBeingMoved = instToExtract.Flags;
 			ILInstruction inst = instToExtract;
 			while (inst != null)
@@ -113,8 +119,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					// We've reached the target block, and extraction is possible all the way.
 					int insertIndex = inst.ChildIndex;
+					var type = context.TypeSystem.FindType(instToExtract.ResultType.ToKnownTypeCode());
 					// Move instToExtract itself:
-					var v = function.RegisterVariable(VariableKind.StackSlot, instToExtract.ResultType);
+					var v = function.RegisterVariable(VariableKind.StackSlot, type);
 					instToExtract.ReplaceWith(new LdLoc(v));
 					block.Instructions.Insert(insertIndex, new StLoc(v, instToExtract));
 					// Apply the other move actions:

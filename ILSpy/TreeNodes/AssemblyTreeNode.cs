@@ -85,11 +85,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get {
 				if (LoadedAssembly.IsLoaded)
 				{
-					if (LoadedAssembly.HasLoadError) return Images.AssemblyWarning;
-					var loadResult = LoadedAssembly.GetLoadResultAsync().Result;
+					if (LoadedAssembly.HasLoadError)
+						return Images.AssemblyWarning;
+					var loadResult = LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
 					if (loadResult is LoadedAssembly.LoadResult.PackageFallback package)
 					{
-						return package.Package.Kind == LoadedPackage.PackageKind.Zip ? Images.NuGet : Images.Library;
+						return package.Package.Kind switch {
+							LoadedPackage.PackageKind.Zip => Images.NuGet,
+							_ => Images.Library,
+						};
 					}
 					else if (loadResult is LoadedAssembly.LoadResult.Successful)
 					{
@@ -175,7 +179,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		protected override void LoadChildren()
 		{
 			LoadedAssembly.LoadResult loadResult = LoadedAssembly.GetLoadResultAsync().Result;
-			if (!loadResult.IsOK )
+			if (!loadResult.IsOK)
 			{
 				// if we crashed on loading, then we don't have any children
 				return;
@@ -550,7 +554,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (!loadedAssm.HasLoadError)
 				{
 					loadedAssm.IsAutoLoaded = false;
-					node.RaisePropertyChanged(nameof(node.Foreground));
+					node.RaisePropertyChanged(nameof(ILSpyTreeNode.IsAutoLoaded));
 				}
 			}
 			MainWindow.Instance.CurrentAssemblyList.RefreshSave();

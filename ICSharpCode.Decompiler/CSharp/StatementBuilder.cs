@@ -632,7 +632,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var enumeratorVar = inst.Variable;
 			// If there's another BlockContainer nested in this container and it only has one child block, unwrap it.
 			// If there's an extra leave inside the block, extract it into optionalReturnAfterLoop.
-			var loopContainer = UnwrapNestedContainerIfPossible(container, out var optionalReturnAfterLoop);
+			var loopContainer = UnwrapNestedContainerIfPossible(container, out var optionalLeaveAfterLoop);
 			// Detect whether we're dealing with a while loop with multiple embedded statements.
 			if (loopContainer.Kind != ContainerKind.While)
 				return null;
@@ -771,22 +771,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			// If there was an optional return statement, return it as well.
 			// If there were labels or any other statements in the whileLoopBlock, move them after the foreach
 			// loop.
-			if (optionalReturnAfterLoop != null || whileLoopBlock.Statements.Count > 1)
+			if (optionalLeaveAfterLoop != null || whileLoopBlock.Statements.Count > 1)
 			{
 				var block = new BlockStatement {
 					Statements = {
 						foreachStmt
 					}
 				};
-				if (optionalReturnAfterLoop != null)
+				if (optionalLeaveAfterLoop != null)
 				{
-					block.Statements.Add(optionalReturnAfterLoop.AcceptVisitor(this));
+					block.Statements.Add(optionalLeaveAfterLoop.AcceptVisitor(this));
 				}
 				if (whileLoopBlock.Statements.Count > 1)
 				{
 					block.Statements.AddRange(whileLoopBlock.Statements
 						.Skip(1)
-						.SkipWhile(s => s.Annotations.Any(a => a == optionalReturnAfterLoop))
+						.SkipWhile(s => s.Annotations.Any(a => a == optionalLeaveAfterLoop))
 						.Select(SyntaxExtensions.Detach));
 				}
 				return block;
@@ -860,10 +860,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// if the value has no side-effects.
 		/// Otherwise returns the unmodified container.
 		/// </summary>
-		/// <param name="optionalReturnInst">If the leave is a return and has no side-effects, we can move the return out of the using-block and put it after the loop, otherwise returns null.</param>
-		BlockContainer UnwrapNestedContainerIfPossible(BlockContainer container, out Leave optionalReturnInst)
+		/// <param name="optionalLeaveInst">If the leave is a return/break and has no side-effects, we can move the return out of the using-block and put it after the loop, otherwise returns null.</param>
+		BlockContainer UnwrapNestedContainerIfPossible(BlockContainer container, out Leave optionalLeaveInst)
 		{
-			optionalReturnInst = null;
+			optionalLeaveInst = null;
 			// Check block structure:
 			if (container.Blocks.Count != 1)
 				return container;
@@ -875,11 +875,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			// If the leave has no value, just unwrap the BlockContainer.
 			if (leave.MatchLeave(container))
 				return nestedContainer;
-			// If the leave is a return, we can move the return out of the using-block and put it after the loop
+			// If the leave is a return/break, we can move it out of the using-block and put it after the loop
 			// (but only if the value doesn't have side-effects)
-			if (leave.IsLeavingFunction && SemanticHelper.IsPure(leave.Value.Flags))
+			if (SemanticHelper.IsPure(leave.Value.Flags))
 			{
-				optionalReturnInst = leave;
+				optionalLeaveInst = leave;
 				return nestedContainer;
 			}
 			return container;

@@ -56,7 +56,7 @@
           <ButtonText>Open in ILSpy</ButtonText>
         </Strings>
       </Button>
-
+      
       <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenProjectOutputInILSpy" priority="0x0600" type="Button">
         <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyProjGroup" />
         <Icon guid="guidImages" id="bmpLogo" />
@@ -84,11 +84,6 @@
           <ButtonText>ILSpy</ButtonText>
         </Strings>
       </Button>
- 
     </Buttons>
-   
-  
   </Commands>
- 
-
 </CommandTable>

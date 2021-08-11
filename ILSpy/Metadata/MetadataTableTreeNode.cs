@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		internal void ScrollTo(Handle handle)
 		{
-			this.scrollTarget = MetadataTokens.GetRowNumber((EntityHandle)handle);
+			this.scrollTarget = module.Metadata.GetRowNumber((EntityHandle)handle);
 		}
 
 		protected void ScrollItemIntoView(DataGrid view, object item)

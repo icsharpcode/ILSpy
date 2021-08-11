@@ -4529,7 +4529,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return M()[name] -= 2u;
 		}
 
-		public uint CompoundAssignIndexerComplexIndex(string name)
+		public uint CompoundAssignIndexerComplexIndex()
 		{
 			return M()[ToString()] -= 2u;
 		}

@@ -258,8 +258,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		static bool IsMethodLike(SymbolKind kind)
 		{
-			return kind switch
-			{
+			return kind switch {
 				SymbolKind.Method => true,
 				SymbolKind.Operator => true,
 				SymbolKind.Constructor => true,

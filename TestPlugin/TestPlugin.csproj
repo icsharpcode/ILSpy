@@ -1,16 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="MSBuild.Sdk.Extras">
-
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>Test.Plugin</AssemblyName>
-
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
-
-    <EnableDefaultItems>False</EnableDefaultItems>
     <UseWpf>true</UseWpf>
-    <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
-    <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -25,37 +19,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-    <Reference Include="System.ComponentModel.Composition" />
-    <Reference Include="System.Xaml" />
-    <Reference Include="WindowsBase" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
     <ProjectReference Include="..\ILSpy\ILSpy.csproj" />
+    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="AboutPageAddition.cs" />
-    <Compile Include="ContextMenuCommand.cs" />
-    <Compile Include="CustomLanguage.cs" />
-    <Compile Include="CustomOptionPage.xaml.cs">
-      <DependentUpon>CustomOptionPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="MainMenuCommand.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Clear.png" />
     <None Include="Readme.txt" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Include="CustomOptionPage.xaml" />
   </ItemGroup>
 
 </Project>

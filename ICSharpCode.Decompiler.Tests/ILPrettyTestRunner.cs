@@ -201,6 +201,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Issue2443()
+		{
+			Run();
+		}
+
+		[Test]
 		public void Issue2260SwitchString()
 		{
 			Run();

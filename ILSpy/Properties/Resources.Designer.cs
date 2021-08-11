@@ -523,6 +523,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Could not use SDK-style project format, because no compatible target-framework moniker was found..
+        /// </summary>
+        public static string CouldNotUseSdkStyleProjectFormat {
+            get {
+                return ResourceManager.GetString("CouldNotUseSdkStyleProjectFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Create.
         /// </summary>
         public static string Create {
@@ -537,6 +546,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string CultureLabel {
             get {
                 return ResourceManager.GetString("CultureLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Dark Mode.
+        /// </summary>
+        public static string DarkMode {
+            get {
+                return ResourceManager.GetString("DarkMode", resourceCulture);
             }
         }
         
@@ -600,6 +618,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilationCompleteInF1Seconds {
             get {
                 return ResourceManager.GetString("DecompilationCompleteInF1Seconds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Decompilation was cancelled..
+        /// </summary>
+        public static string DecompilationWasCancelled {
+            get {
+                return ResourceManager.GetString("DecompilationWasCancelled", resourceCulture);
             }
         }
         
@@ -1515,6 +1542,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Extract package entry.
+        /// </summary>
+        public static string ExtractPackageEntry {
+            get {
+                return ResourceManager.GetString("ExtractPackageEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Folding.
         /// </summary>
         public static string Folding {
@@ -1587,7 +1623,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Hightlight current line.
+        ///   Looks up a localized string similar to Highlight current line.
         /// </summary>
         public static string HighlightCurrentLine {
             get {
@@ -1655,6 +1691,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string InsertUsingDeclarations {
             get {
                 return ResourceManager.GetString("InsertUsingDeclarations", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Language.
+        /// </summary>
+        public static string Language {
+            get {
+                return ResourceManager.GetString("Language", resourceCulture);
             }
         }
         
@@ -1768,6 +1813,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to .NET version .
+        /// </summary>
+        public static string NETFrameworkVersion {
+            get {
+                return ResourceManager.GetString("NETFrameworkVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to New list.
         /// </summary>
         public static string NewList {
@@ -1854,6 +1908,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string OpenListDialog__Open {
             get {
                 return ResourceManager.GetString("OpenListDialog__Open", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Operation was cancelled..
+        /// </summary>
+        public static string OperationWasCancelled {
+            get {
+                return ResourceManager.GetString("OperationWasCancelled", resourceCulture);
             }
         }
         
@@ -2202,6 +2265,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to You must restart ILSpy for the change to take effect..
+        /// </summary>
+        public static string SettingsChangeRestartRequired {
+            get {
+                return ResourceManager.GetString("SettingsChangeRestartRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Shell.
         /// </summary>
         public static string Shell {
@@ -2418,6 +2490,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Style the window title bar.
+        /// </summary>
+        public static string StyleTheWindowTitleBar {
+            get {
+                return ResourceManager.GetString("StyleTheWindowTitleBar", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tab size:.
         /// </summary>
         public static string TabSize {
@@ -2441,6 +2522,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string Type {
             get {
                 return ResourceManager.GetString("Type", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to System.
+        /// </summary>
+        public static string UILanguage_System {
+            get {
+                return ResourceManager.GetString("UILanguage_System", resourceCulture);
             }
         }
         

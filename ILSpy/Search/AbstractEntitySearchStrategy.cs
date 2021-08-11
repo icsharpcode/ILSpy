@@ -5,11 +5,12 @@ using System.Threading;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Search
 {
+	using ICSharpCode.Decompiler.TypeSystem;
+
 	abstract class AbstractEntitySearchStrategy : AbstractSearchStrategy
 	{
 		protected readonly Language language;
@@ -77,9 +78,9 @@ namespace ICSharpCode.ILSpy.Search
 				return 0;
 			}
 
-			// Constructors always have the same name in IL:
+			// Constructors and destructors always have the same name in IL:
 			// Use type name instead
-			if (text == ".cctor" || text == ".ctor")
+			if (member.SymbolKind == SymbolKind.Constructor || member.SymbolKind == SymbolKind.Destructor)
 			{
 				text = member.DeclaringType.Name;
 			}

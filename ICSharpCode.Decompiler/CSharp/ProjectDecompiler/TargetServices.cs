@@ -250,7 +250,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				{
 					resolvedReference = assemblyResolver.Resolve(reference);
 				}
-				catch (AssemblyResolutionException)
+				catch (ResolutionException)
 				{
 					resolvedReference = null;
 				}

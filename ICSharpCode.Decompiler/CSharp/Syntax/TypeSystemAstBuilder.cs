@@ -320,8 +320,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				else if (fpt.CallingConvention != System.Reflection.Metadata.SignatureCallingConvention.Default)
 				{
-					string callconvName = fpt.CallingConvention switch
-					{
+					string callconvName = fpt.CallingConvention switch {
 						System.Reflection.Metadata.SignatureCallingConvention.CDecl => "Cdecl",
 						System.Reflection.Metadata.SignatureCallingConvention.StdCall => "Stdcall",
 						System.Reflection.Metadata.SignatureCallingConvention.ThisCall => "Thiscall",
@@ -352,8 +351,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				for (int i = 0; i < fpt.ParameterTypes.Length; i++)
 				{
 					var paramDecl = new ParameterDeclaration();
-					paramDecl.ParameterModifier = fpt.ParameterReferenceKinds[i] switch
-					{
+					paramDecl.ParameterModifier = fpt.ParameterReferenceKinds[i] switch {
 						ReferenceKind.In => ParameterModifier.In,
 						ReferenceKind.Ref => ParameterModifier.Ref,
 						ReferenceKind.Out => ParameterModifier.Out,
@@ -985,7 +983,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				throw new ArgumentNullException(nameof(type));
 			if (constantValue == null)
 			{
-				if (type.IsReferenceType == true || type.IsKnownType(KnownTypeCode.NullableOfT))
+				if (type.IsReferenceType == true || type.IsKnownType(KnownTypeCode.NullableOfT) || type.Kind.IsAnyPointer())
 				{
 					var expr = new NullReferenceExpression();
 					if (AddResolveResultAnnotations)
@@ -1974,10 +1972,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			if (this.ShowAccessibility && accessor.Accessibility != ownerAccessibility)
 				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility);
-			if (accessor.HasReadonlyModifier())
+			if (this.ShowModifiers && accessor.HasReadonlyModifier())
 				decl.Modifiers |= Modifiers.Readonly;
-			TokenRole keywordRole = kind switch
-			{
+			TokenRole keywordRole = kind switch {
 				MethodSemanticsAttributes.Getter => PropertyDeclaration.GetKeywordRole,
 				MethodSemanticsAttributes.Setter => PropertyDeclaration.SetKeywordRole,
 				MethodSemanticsAttributes.Adder => CustomEventDeclaration.AddKeywordRole,
@@ -2038,13 +2035,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		static void MergeReadOnlyModifiers(EntityDeclaration decl, Accessor accessor1, Accessor accessor2)
 		{
-			if (accessor1.HasModifier(Modifiers.Readonly) && accessor2.HasModifier(Modifiers.Readonly))
+			if (accessor1.HasModifier(Modifiers.Readonly) && accessor2.IsNull)
+			{
+				accessor1.Modifiers &= ~Modifiers.Readonly;
+				decl.Modifiers |= Modifiers.Readonly;
+			}
+			else if (accessor1.HasModifier(Modifiers.Readonly) && accessor2.HasModifier(Modifiers.Readonly))
 			{
 				accessor1.Modifiers &= ~Modifiers.Readonly;
 				accessor2.Modifiers &= ~Modifiers.Readonly;
 				decl.Modifiers |= Modifiers.Readonly;
 			}
 		}
+
 		IndexerDeclaration ConvertIndexer(IProperty indexer)
 		{
 			IndexerDeclaration decl = new IndexerDeclaration();
