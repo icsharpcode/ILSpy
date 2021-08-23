@@ -25,14 +25,10 @@ namespace ICSharpCode.ILSpy.Search
 			if (terms.Length == 1 && terms[0].Length > 2)
 			{
 				string search = terms[0];
-				if (search.StartsWith("/", StringComparison.Ordinal) && search.Length > 4)
+				if (TryParseRegex(search, out regex))
 				{
-					var regexString = search.Substring(1, search.Length - 1);
 					fullNameSearch = search.Contains("\\.");
 					omitGenerics = !search.Contains("<");
-					if (regexString.EndsWith("/", StringComparison.Ordinal))
-						regexString = regexString.Substring(0, regexString.Length - 1);
-					regex = SafeNewRegex(regexString);
 				}
 				else
 				{
@@ -129,15 +125,35 @@ namespace ICSharpCode.ILSpy.Search
 			resultQueue.TryAdd(result);
 		}
 
-		Regex SafeNewRegex(string unsafePattern)
+		bool TryParseRegex(string input, out Regex pattern)
 		{
-			try
+			pattern = null;
+			if (!input.StartsWith("/", StringComparison.Ordinal))
 			{
-				return new Regex(unsafePattern, RegexOptions.Compiled);
+				return false;
 			}
-			catch (ArgumentException)
+			input = input.Substring(1);
+			if (input.EndsWith("/", StringComparison.Ordinal))
 			{
-				return null;
+				input = input.Remove(input.Length - 1);
+			}
+			if (string.IsNullOrWhiteSpace(input))
+			{
+				return false;
+			}
+			pattern = SafeNewRegex(input);
+			return pattern != null;
+
+			static Regex SafeNewRegex(string unsafePattern)
+			{
+				try
+				{
+					return new Regex(unsafePattern, RegexOptions.Compiled);
+				}
+				catch (ArgumentException)
+				{
+					return null;
+				}
 			}
 		}
 	}
