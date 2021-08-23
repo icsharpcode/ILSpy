@@ -2259,20 +2259,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			var declaringType = member.DeclaringType;
 			if (member.IsExplicitInterfaceImplementation)
 				return false;
-			if (declaringType != null && declaringType.Kind == TypeKind.Interface)
-			{
-				return member.Accessibility != Accessibility.Public;
-			}
 			switch (member.SymbolKind)
 			{
 				case SymbolKind.Constructor:
 					return !member.IsStatic;
 				case SymbolKind.Destructor:
 					return false;
-				case SymbolKind.Method:
-					return !((IMethod)member).IsLocalFunction;
 				default:
-					return true;
+					if (declaringType?.Kind == TypeKind.Interface)
+					{
+						return member.Accessibility != Accessibility.Public;
+					}
+					return member is not IMethod method || !method.IsLocalFunction;
 			}
 		}
 
