@@ -243,7 +243,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						{
 							// This could happen if the compiler is generating bogus variable info mapping record that covers 0 instructions
 							// See https://github.com/dotnet/runtime/issues/47202
-							Debug.Assert(false);
+							// Debug.Assert(false);
 							continue;
 						}
 						switch (varLoc.VariableLocation.VarLocType)
