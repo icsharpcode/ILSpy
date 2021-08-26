@@ -61,6 +61,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			set => methodBodyDisassembler.ShowMetadataTokensInBase10 = value;
 		}
 
+		public bool ShowRawRVAOffsetAndBytes {
+			get => methodBodyDisassembler.ShowRawRVAOffsetAndBytes;
+			set => methodBodyDisassembler.ShowRawRVAOffsetAndBytes = value;
+		}
+
 		public IDebugInfoProvider DebugInfo {
 			get => methodBodyDisassembler.DebugInfo;
 			set => methodBodyDisassembler.DebugInfo = value;

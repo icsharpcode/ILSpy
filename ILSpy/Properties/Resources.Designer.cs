@@ -2418,6 +2418,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Show raw offsets and bytes before each instruction.
+        /// </summary>
+        public static string ShowRawOffsetsAndBytesBeforeInstruction {
+            get {
+                return ResourceManager.GetString("ShowRawOffsetsAndBytesBeforeInstruction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Show state after this step.
         /// </summary>
         public static string ShowStateAfterThisStep {

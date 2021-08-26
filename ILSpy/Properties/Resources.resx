@@ -825,6 +825,9 @@ Do you want to continue?</value>
   <data name="ShowPublicOnlyTypesMembers" xml:space="preserve">
     <value>Show only public types and members</value>
   </data>
+  <data name="ShowRawOffsetsAndBytesBeforeInstruction" xml:space="preserve">
+    <value>Show raw offsets and bytes before each instruction</value>
+  </data>
   <data name="ShowStateAfterThisStep" xml:space="preserve">
     <value>Show state after this step</value>
   </data>

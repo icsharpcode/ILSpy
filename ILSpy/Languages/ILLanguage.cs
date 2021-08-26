@@ -61,6 +61,7 @@ namespace ICSharpCode.ILSpy
 				ShowSequencePoints = options.DecompilerSettings.ShowDebugInfo,
 				ShowMetadataTokens = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens,
 				ShowMetadataTokensInBase10 = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10,
+				ShowRawRVAOffsetAndBytes = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowRawOffsetsAndBytesBeforeInstruction,
 				ExpandMemberDefinitions = options.DecompilerSettings.ExpandMemberDefinitions
 			};
 		}

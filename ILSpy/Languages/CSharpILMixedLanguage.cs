@@ -56,6 +56,7 @@ namespace ICSharpCode.ILSpy
 				options.CancellationToken) {
 				ShowMetadataTokens = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens,
 				ShowMetadataTokensInBase10 = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10,
+				ShowRawRVAOffsetAndBytes = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowRawOffsetsAndBytesBeforeInstruction,
 				ExpandMemberDefinitions = options.DecompilerSettings.ExpandMemberDefinitions
 			};
 		}
@@ -109,7 +110,7 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 
-			protected override void WriteInstruction(ITextOutput output, MetadataReader metadata, MethodDefinitionHandle methodDefinition, ref BlobReader blob)
+			protected override void WriteInstruction(ITextOutput output, MetadataReader metadata, MethodDefinitionHandle methodHandle, ref BlobReader blob, int methodRva)
 			{
 				int index = sequencePoints.BinarySearch(blob.Offset, seq => seq.Offset);
 				if (index >= 0)
@@ -143,7 +144,7 @@ namespace ICSharpCode.ILSpy
 						highlightingOutput?.EndSpan();
 					}
 				}
-				base.WriteInstruction(output, metadata, methodDefinition, ref blob);
+				base.WriteInstruction(output, metadata, methodHandle, ref blob, methodRva);
 			}
 
 			HighlightingColor gray = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.DarkGray) };
