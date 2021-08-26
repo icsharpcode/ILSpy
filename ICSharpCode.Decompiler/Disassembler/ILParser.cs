@@ -107,5 +107,21 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			return opCode == ILOpCode.Ret || opCode == ILOpCode.Endfilter || opCode == ILOpCode.Endfinally;
 		}
+
+		public static int GetHeaderSize(BlobReader bodyBlockReader)
+		{
+			byte header = bodyBlockReader.ReadByte();
+			if ((header & 3) == 3)
+			{
+				// fat
+				ushort largeHeader = (ushort)((bodyBlockReader.ReadByte() << 8) | header);
+				return (byte)(largeHeader >> 12) * 4;
+			}
+			else
+			{
+				// tiny
+				return 1;
+			}
+		}
 	}
 }

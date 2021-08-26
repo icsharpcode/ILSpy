@@ -90,15 +90,18 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine("// Method begins at RVA 0x{0:x4}", methodDefinition.RelativeVirtualAddress);
 			if (methodDefinition.RelativeVirtualAddress == 0)
 			{
-				output.WriteLine("// Code size {0} (0x{0:x})", 0);
+				output.WriteLine("// Header size: {0}", 0);
+				output.WriteLine("// Code size: {0} (0x{0:x})", 0);
 				output.WriteLine(".maxstack {0}", 0);
 				output.WriteLine();
 				return;
 			}
 			MethodBodyBlock body;
+			BlobReader bodyBlockReader;
 			try
 			{
 				body = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
+				bodyBlockReader = module.Reader.GetSectionData(methodDefinition.RelativeVirtualAddress).GetReader();
 			}
 			catch (BadImageFormatException ex)
 			{
@@ -106,7 +109,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 				return;
 			}
 			var blob = body.GetILReader();
-			output.WriteLine("// Code size {0} (0x{0:x})", blob.Length);
+			int headerSize = ILParser.GetHeaderSize(bodyBlockReader);
+			output.WriteLine("// Header size: {0}", headerSize);
+			output.WriteLine("// Code size: {0} (0x{0:x})", blob.Length);
 			output.WriteLine(".maxstack {0}", body.MaxStack);
 
 			var entrypointHandle = MetadataTokens.MethodDefinitionHandle(module.Reader.PEHeaders.CorHeader.EntryPointTokenOrRelativeVirtualAddress);
