@@ -234,6 +234,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilationCompleteInF1Seconds" xml:space="preserve">
     <value>Decompilation complete in {0:F1} seconds.</value>
   </data>
+  <data name="DecompilationViewOptions" xml:space="preserve">
+    <value>Decompilation view options</value>
+  </data>
   <data name="DecompilationWasCancelled" xml:space="preserve">
     <value>Decompilation was cancelled.</value>
   </data>
@@ -866,6 +869,9 @@ Do you want to continue?</value>
   </data>
   <data name="ToggleFolding" xml:space="preserve">
     <value>Toggle All Folding</value>
+  </data>
+  <data name="TreeViewOptions" xml:space="preserve">
+    <value>Tree view options</value>
   </data>
   <data name="Type" xml:space="preserve">
     <value>Type</value>

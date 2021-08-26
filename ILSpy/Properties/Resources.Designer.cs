@@ -622,6 +622,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Decompilation view options.
+        /// </summary>
+        public static string DecompilationViewOptions {
+            get {
+                return ResourceManager.GetString("DecompilationViewOptions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Decompilation was cancelled..
         /// </summary>
         public static string DecompilationWasCancelled {
@@ -2513,6 +2522,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string ToggleFolding {
             get {
                 return ResourceManager.GetString("ToggleFolding", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tree view options.
+        /// </summary>
+        public static string TreeViewOptions {
+            get {
+                return ResourceManager.GetString("TreeViewOptions", resourceCulture);
             }
         }
         
