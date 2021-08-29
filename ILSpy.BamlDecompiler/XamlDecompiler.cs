@@ -20,11 +20,15 @@
 	THE SOFTWARE.
 */
 
-using System.Collections.Generic;
+using System;
+using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using System.Threading;
 using System.Xml.Linq;
 
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
 using ILSpy.BamlDecompiler.Baml;
@@ -32,7 +36,7 @@ using ILSpy.BamlDecompiler.Rewrite;
 
 namespace ILSpy.BamlDecompiler
 {
-	internal class XamlDecompiler
+	public class XamlDecompiler
 	{
 		static readonly IRewritePass[] rewritePasses = new IRewritePass[] {
 			new XClassRewritePass(),
@@ -42,9 +46,66 @@ namespace ILSpy.BamlDecompiler
 			new DocumentRewritePass(),
 		};
 
-		public XDocument Decompile(IDecompilerTypeSystem typeSystem, BamlDocument document, CancellationToken token, BamlDecompilerOptions bamlDecompilerOptions, List<string> assemblyReferences)
+		private BamlDecompilerTypeSystem typeSystem;
+		private BamlDecompilerSettings settings;
+		private MetadataModule module;
+
+		public BamlDecompilerSettings Settings {
+			get { return settings; }
+			set { settings = value; }
+		}
+
+		public CancellationToken CancellationToken { get; set; }
+
+		public XamlDecompiler(string fileName, BamlDecompilerSettings settings)
+			: this(CreateTypeSystemFromFile(fileName, settings), settings)
 		{
-			var ctx = XamlContext.Construct(typeSystem, document, token, bamlDecompilerOptions);
+		}
+
+		public XamlDecompiler(string fileName, IAssemblyResolver assemblyResolver, BamlDecompilerSettings settings)
+			: this(LoadPEFile(fileName, settings), assemblyResolver, settings)
+		{
+		}
+
+		public XamlDecompiler(PEFile module, IAssemblyResolver assemblyResolver, BamlDecompilerSettings settings)
+			: this(new BamlDecompilerTypeSystem(module, assemblyResolver), settings)
+		{
+		}
+
+		internal XamlDecompiler(BamlDecompilerTypeSystem typeSystem, BamlDecompilerSettings settings)
+		{
+			this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
+			this.settings = settings;
+			this.module = typeSystem.MainModule;
+			if (module.TypeSystemOptions.HasFlag(TypeSystemOptions.Uncached))
+				throw new ArgumentException("Cannot use an uncached type system in the decompiler.");
+		}
+
+		static PEFile LoadPEFile(string fileName, BamlDecompilerSettings settings)
+		{
+			return new PEFile(
+				fileName,
+				new FileStream(fileName, FileMode.Open, FileAccess.Read),
+				streamOptions: PEStreamOptions.PrefetchEntireImage,
+				metadataOptions: MetadataReaderOptions.None
+			);
+		}
+
+		static BamlDecompilerTypeSystem CreateTypeSystemFromFile(string fileName, BamlDecompilerSettings settings)
+		{
+			var file = LoadPEFile(fileName, settings);
+			var resolver = new UniversalAssemblyResolver(fileName, settings.ThrowOnAssemblyResolveErrors,
+				file.DetectTargetFrameworkId(), file.DetectRuntimePack(),
+				PEStreamOptions.PrefetchMetadata,
+				MetadataReaderOptions.None);
+			return new BamlDecompilerTypeSystem(file, resolver);
+		}
+
+		public BamlDecompilationResult Decompile(Stream stream)
+		{
+			var ct = CancellationToken;
+			var document = BamlReader.ReadDocument(stream, ct);
+			var ctx = XamlContext.Construct(typeSystem, document, ct, settings);
 
 			var handler = HandlerMap.LookupHandler(ctx.RootNode.Type);
 			var elem = handler.Translate(ctx, ctx.RootNode, null);
@@ -54,18 +115,12 @@ namespace ILSpy.BamlDecompiler
 
 			foreach (var pass in rewritePasses)
 			{
-				token.ThrowIfCancellationRequested();
+				ct.ThrowIfCancellationRequested();
 				pass.Run(ctx, xaml);
 			}
 
-			if (assemblyReferences != null)
-				assemblyReferences.AddRange(ctx.Baml.AssemblyIdMap.Select(a => a.Value.AssemblyFullName));
-
-			return xaml;
+			var assemblyReferences = ctx.Baml.AssemblyIdMap.Select(a => a.Value.AssemblyFullName);
+			return new BamlDecompilationResult(xaml, assemblyReferences);
 		}
-	}
-
-	public class BamlDecompilerOptions
-	{
 	}
 }

@@ -168,7 +168,11 @@ namespace ILSpy.BamlDecompiler.Tests
 				var res = module.Resources.First();
 				Stream bamlStream = LoadBaml(res, name + ".baml");
 				Assert.IsNotNull(bamlStream);
-				XDocument document = BamlResourceEntryNode.LoadIntoDocument(module, resolver, bamlStream, CancellationToken.None);
+
+				BamlDecompilerTypeSystem typeSystem = new BamlDecompilerTypeSystem(module, resolver);
+				var decompiler = new XamlDecompiler(typeSystem, new BamlDecompilerSettings());
+
+				XDocument document = decompiler.Decompile(bamlStream).Xaml;
 
 				XamlIsEqual(File.ReadAllText(sourcePath), document.ToString());
 			}

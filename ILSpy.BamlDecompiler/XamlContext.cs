@@ -48,7 +48,7 @@ namespace ILSpy.BamlDecompiler
 
 		public IDecompilerTypeSystem TypeSystem { get; }
 		public CancellationToken CancellationToken { get; private set; }
-		public BamlDecompilerOptions BamlDecompilerOptions { get; private set; }
+		public BamlDecompilerSettings Settings { get; private set; }
 
 		public BamlContext Baml { get; private set; }
 		public BamlNode RootNode { get; private set; }
@@ -56,11 +56,11 @@ namespace ILSpy.BamlDecompiler
 
 		public XmlnsDictionary XmlNs { get; }
 
-		public static XamlContext Construct(IDecompilerTypeSystem typeSystem, BamlDocument document, CancellationToken token, BamlDecompilerOptions bamlDecompilerOptions)
+		public static XamlContext Construct(IDecompilerTypeSystem typeSystem, BamlDocument document, CancellationToken token, BamlDecompilerSettings bamlDecompilerOptions)
 		{
 			var ctx = new XamlContext(typeSystem);
 			ctx.CancellationToken = token;
-			ctx.BamlDecompilerOptions = bamlDecompilerOptions ?? new BamlDecompilerOptions();
+			ctx.Settings = bamlDecompilerOptions ?? new BamlDecompilerSettings();
 
 			ctx.Baml = BamlContext.ConstructContext(typeSystem, document, token);
 			ctx.RootNode = BamlNode.Parse(document, token);
