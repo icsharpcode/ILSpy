@@ -594,9 +594,6 @@ Are you sure you want to continue?</value>
   <data name="InsertUsingDeclarations" xml:space="preserve">
     <value>Insert using declarations</value>
   </data>
-  <data name="Language" xml:space="preserve">
-    <value>Language</value>
-  </data>
   <data name="ListDeleteConfirmation" xml:space="preserve">
     <value>Are you sure that you want to delete the selected assembly list?</value>
   </data>
@@ -772,10 +769,10 @@ Do you want to continue?</value>
     <value>Select assemblies to open:</value>
   </data>
   <data name="SelectAssemblyListDropdownTooltip" xml:space="preserve">
-    <value>Select a list of assemblies</value>
+    <value>Select a list of assemblies (Alt+A)</value>
   </data>
   <data name="SelectLanguageDropdownTooltip" xml:space="preserve">
-    <value>Select language to decompile to</value>
+    <value>Select language to decompile to (Alt+L)</value>
   </data>
   <data name="SelectList" xml:space="preserve">
     <value>Select a list:</value>
@@ -784,7 +781,7 @@ Do you want to continue?</value>
     <value>Select PDB...</value>
   </data>
   <data name="SelectVersionDropdownTooltip" xml:space="preserve">
-    <value>Select version of language to output</value>
+    <value>Select version of language to output (Alt+E)</value>
   </data>
   <data name="SettingsChangeRestartRequired" xml:space="preserve">
     <value>You must restart ILSpy for the change to take effect.</value>
@@ -879,6 +876,9 @@ Do you want to continue?</value>
   <data name="Type" xml:space="preserve">
     <value>Type</value>
   </data>
+  <data name="UILanguage" xml:space="preserve">
+    <value>UI Language</value>
+  </data>
   <data name="UILanguage_System" xml:space="preserve">
     <value>System</value>
   </data>
@@ -941,6 +941,12 @@ Do you want to continue?</value>
   </data>
   <data name="_AddMainList" xml:space="preserve">
     <value>_Add To Main List</value>
+  </data>
+  <data name="_Analyzer" xml:space="preserve">
+    <value>Analy_zer</value>
+  </data>
+  <data name="_Assemblies" xml:space="preserve">
+    <value>_Assemblies</value>
   </data>
   <data name="_CheckUpdates" xml:space="preserve">
     <value>_Check for Updates</value>
