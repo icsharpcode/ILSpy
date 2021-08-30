@@ -73,7 +73,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets whether a node with the specified text is matched by the current search term.
 		/// </summary>
-		public bool SearchTermMatches(string text)
+		public virtual bool SearchTermMatches(string text)
 		{
 			if (string.IsNullOrEmpty(searchTerm))
 				return true;
