@@ -77,7 +77,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public IEnumerable<PEFile> GetAllModules()
 		{
 			return AssemblyList.GetAllAssemblies().GetAwaiter().GetResult()
-				.Select(asm => asm.GetPEFileOrNull());
+				.Select(asm => asm.GetPEFileOrNull())
+				.Where(x => x != null);
 		}
 
 		public IEnumerable<ITypeDefinition> GetTypesInScope(CancellationToken ct)
