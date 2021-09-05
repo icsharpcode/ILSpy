@@ -194,6 +194,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Use(F() && GetObject() is int num && num.GetHashCode() > 0 && num % 2 == 0);
 		}
 
+		public static void NotTypePatternVariableUsedOutsideTrueBranch(object x)
+		{
+			var text = x as string;
+			if (text != null && text.Length > 5)
+			{
+				Console.WriteLine("pattern matches");
+			}
+			if (text != null && text.Length > 10)
+			{
+				Console.WriteLine("other use!");
+			}
+		}
+
 		private bool F()
 		{
 			return true;
