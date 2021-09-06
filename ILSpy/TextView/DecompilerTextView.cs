@@ -1079,26 +1079,40 @@ namespace ICSharpCode.ILSpy.TextView
 					{
 						bool originalProjectFormatSetting = context.Options.DecompilerSettings.UseSdkStyleProjectFormat;
 						context.Options.EscapeInvalidIdentifiers = true;
-						Stopwatch stopwatch = new Stopwatch();
-						stopwatch.Start();
-						using (StreamWriter w = new StreamWriter(fileName))
-						{
-							try
-							{
-								DecompileNodes(context, new PlainTextOutput(w));
-							}
-							catch (OperationCanceledException)
-							{
-								w.WriteLine();
-								w.WriteLine(Properties.Resources.DecompilationWasCancelled);
-								throw;
-							}
-						}
-						stopwatch.Stop();
 						AvalonEditTextOutput output = new AvalonEditTextOutput {
 							EnableHyperlinks = true,
 							Title = string.Join(", ", context.TreeNodes.Select(n => n.Text))
 						};
+						Stopwatch stopwatch = new Stopwatch();
+						stopwatch.Start();
+						try
+						{
+							using (StreamWriter w = new StreamWriter(fileName))
+							{
+								try
+								{
+									DecompileNodes(context, new PlainTextOutput(w));
+								}
+								catch (OperationCanceledException)
+								{
+									w.WriteLine();
+									w.WriteLine(Properties.Resources.DecompilationWasCancelled);
+									throw;
+								}
+								catch (PathTooLongException pathTooLong) when (context.Options.SaveAsProjectDirectory != null)
+								{
+									output.WriteLine(Properties.Resources.ProjectExportPathTooLong, string.Join(", ", context.TreeNodes.Select(n => n.Text)));
+									output.WriteLine();
+									output.WriteLine(pathTooLong.ToString());
+									tcs.SetResult(output);
+									return;
+								}
+							}
+						}
+						finally
+						{
+							stopwatch.Stop();
+						}
 
 						output.WriteLine(Properties.Resources.DecompilationCompleteInF1Seconds, stopwatch.Elapsed.TotalSeconds);
 						if (context.Options.SaveAsProjectDirectory != null)
@@ -1106,9 +1120,13 @@ namespace ICSharpCode.ILSpy.TextView
 							output.WriteLine();
 							bool useSdkStyleProjectFormat = context.Options.DecompilerSettings.UseSdkStyleProjectFormat;
 							if (useSdkStyleProjectFormat)
+							{
 								output.WriteLine(Properties.Resources.ProjectExportFormatSDKHint);
+							}
 							else
+							{
 								output.WriteLine(Properties.Resources.ProjectExportFormatNonSDKHint);
+							}
 							output.WriteLine(Properties.Resources.ProjectExportFormatChangeSettingHint);
 							if (originalProjectFormatSetting != useSdkStyleProjectFormat)
 							{

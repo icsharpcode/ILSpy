@@ -36,6 +36,8 @@ using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
+using Microsoft.Win32;
+
 using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
@@ -126,7 +128,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		// per-run members
 		HashSet<string> directories = new HashSet<string>(Platform.FileNameComparer);
-
 		readonly IProjectFileWriter projectWriter;
 
 		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
@@ -252,7 +253,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		#region WriteResourceFilesInProject
 		protected virtual IEnumerable<(string itemType, string fileName)> WriteResourceFilesInProject(Metadata.PEFile module)
 		{
-			foreach (var r in module.Resources.Where(r => r.ResourceType == Metadata.ResourceType.Embedded))
+			foreach (var r in module.Resources.Where(r => r.ResourceType == ResourceType.Embedded))
 			{
 				Stream stream = r.TryOpenStream();
 				stream.Position = 0;
@@ -268,7 +269,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						{
 							foreach (var (name, value) in resourcesFile)
 							{
-								string fileName = Path.Combine(name.Split('/').Select(p => CleanUpFileName(p)).ToArray());
+								string fileName = CleanUpFileName(name)
+									.Replace('/', Path.DirectorySeparatorChar);
 								string dirName = Path.GetDirectoryName(fileName);
 								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
 								{
@@ -359,8 +361,15 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		string GetFileNameForResource(string fullName)
 		{
-			string[] splitName = fullName.Split('.');
-			string fileName = CleanUpFileName(fullName);
+			// Clean up the name first and ensure the length does not exceed the maximum length
+			// supported by the OS.
+			fullName = CleanUpDirectoryName(fullName);
+			// The purpose of the below algorithm is to "maximize" the directory name and "minimize" the file name.
+			// That is, a full name of the form "Namespace1.Namespace2{...}.NamespaceN.ResourceName" is split such that
+			// the directory part Namespace1\Namespace2\... reuses as many existing directories as
+			// possible, and only the remaining name parts are used as prefix for the filename.
+			string[] splitName = fullName.Split(Path.DirectorySeparatorChar);
+			string fileName = fullName;
 			string separator = Path.DirectorySeparatorChar.ToString();
 			for (int i = splitName.Length - 1; i > 0; i--)
 			{
@@ -368,7 +377,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				if (directories.Contains(ns))
 				{
 					string name = string.Join(".", splitName, i, splitName.Length - i);
-					fileName = Path.Combine(ns, CleanUpFileName(name));
+					fileName = Path.Combine(ns, name);
 					break;
 				}
 			}
@@ -526,10 +535,50 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		}
 		#endregion
 
+		static readonly Lazy<(bool longPathsEnabled, int maxPathLength, int maxSegmentLength)> longPathSupport =
+			new Lazy<(bool longPathsEnabled, int maxPathLength, int maxSegmentLength)>(GetLongPathSupport, isThreadSafe: true);
+
+		static (bool longPathsEnabled, int maxPathLength, int maxSegmentLength) GetLongPathSupport()
+		{
+			try
+			{
+				switch (Environment.OSVersion.Platform)
+				{
+					case PlatformID.MacOSX:
+					case PlatformID.Unix:
+						return (true, int.MaxValue, int.MaxValue);
+					case PlatformID.Win32NT:
+						const string key = @"SYSTEM\CurrentControlSet\Control\FileSystem";
+						var fileSystem = Registry.LocalMachine.OpenSubKey(key);
+						var value = (int?)fileSystem.GetValue("LongPathsEnabled");
+						if (value == 1)
+						{
+							return (true, int.MaxValue, 255);
+						}
+						return (false, 200, 30);
+					default:
+						return (false, 200, 30);
+				}
+			}
+			catch
+			{
+				return (false, 200, 30);
+			}
+		}
+
 		/// <summary>
 		/// Cleans up a node name for use as a file name.
 		/// </summary>
 		public static string CleanUpFileName(string text)
+		{
+			return CleanUpFileName(text, separateAtDots: false);
+		}
+
+		/// <summary>
+		/// Cleans up a node name for use as a file system name. If <paramref name="separateAtDots"/> is active,
+		/// dots are seen as segment separators. Each segment is limited to 255 characters.
+		/// </summary>
+		static string CleanUpFileName(string text, bool separateAtDots)
 		{
 			int pos = text.IndexOf(':');
 			if (pos > 0)
@@ -540,16 +589,38 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			text = text.Trim();
 			// Whitelist allowed characters, replace everything else:
 			StringBuilder b = new StringBuilder(text.Length);
+			int currentSegmentLength = 0;
+			var (supportsLongPaths, maxPathLength, maxSegmentLength) = longPathSupport.Value;
 			foreach (var c in text)
 			{
+				currentSegmentLength++;
 				if (char.IsLetterOrDigit(c) || c == '-' || c == '_')
-					b.Append(c);
+				{
+					// if the current segment exceeds 255 characters,
+					// skip until the end of the segment.
+					if (currentSegmentLength <= maxSegmentLength)
+						b.Append(c);
+				}
 				else if (c == '.' && b.Length > 0 && b[b.Length - 1] != '.')
-					b.Append('.'); // allow dot, but never two in a row
+				{
+					// if the current segment exceeds 255 characters,
+					// skip until the end of the segment.
+					if (separateAtDots || currentSegmentLength <= maxSegmentLength)
+						b.Append('.'); // allow dot, but never two in a row
+
+					// Reset length at end of segment.
+					if (separateAtDots)
+						currentSegmentLength = 0;
+				}
 				else
-					b.Append('-');
-				if (b.Length >= 200)
-					break; // limit to 200 chars
+				{
+					// if the current segment exceeds 255 characters,
+					// skip until the end of the segment.
+					if (currentSegmentLength <= maxSegmentLength)
+						b.Append('-');
+				}
+				if (b.Length >= maxPathLength && !supportsLongPaths)
+					break;  // limit to 200 chars, if long paths are not supported.
 			}
 			if (b.Length == 0)
 				b.Append('-');
@@ -567,7 +638,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		public static string CleanUpDirectoryName(string text)
 		{
-			return CleanUpFileName(text).Replace('.', Path.DirectorySeparatorChar);
+			return CleanUpFileName(text, separateAtDots: true).Replace('.', Path.DirectorySeparatorChar);
 		}
 
 		static bool IsReservedFileSystemName(string name)

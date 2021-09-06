@@ -2011,6 +2011,17 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to decompile the assemblies {0} because the namespace directory structure is nested too deep.
+        ///
+        ///If you are using Windows 10.0.14393 (Windows 10 version 1607) or later, you can enable &quot;Long path support&quot; by creating a REG_DWORD registry key named &quot;LongPathsEnabled&quot; with value 0x1 at &quot;HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem&quot; (see https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation for more information)..
+        /// </summary>
+        public static string ProjectExportPathTooLong {
+            get {
+                return ResourceManager.GetString("ProjectExportPathTooLong", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to for ex. property getter/setter access. To get optimal decompilation results, please manually add the missing references to the list of loaded assemblies..
         /// </summary>
         public static string PropertyManuallyMissingReferencesListLoadedAssemblies {

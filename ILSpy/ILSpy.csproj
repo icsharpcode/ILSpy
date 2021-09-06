@@ -13,6 +13,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
     <ApplicationIcon>Images\ILSpy-Large.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
