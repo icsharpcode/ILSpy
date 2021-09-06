@@ -691,6 +691,11 @@ Please disable all filters that might hide the item (i.e. activate "View &gt; Sh
   <data name="ProjectExportFormatSDKHint" xml:space="preserve">
     <value>A SDK-style project was generated. Learn more at https://docs.microsoft.com/en-us/nuget/resources/check-project-format.</value>
   </data>
+  <data name="ProjectExportPathTooLong" xml:space="preserve">
+    <value>Failed to decompile the assemblies {0} because the namespace directory structure is nested too deep.
+
+If you are using Windows 10.0.14393 (Windows 10 version 1607) or later, you can enable "Long path support" by creating a REG_DWORD registry key named "LongPathsEnabled" with value 0x1 at "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem" (see https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation for more information).</value>
+  </data>
   <data name="PropertyManuallyMissingReferencesListLoadedAssemblies" xml:space="preserve">
     <value>for ex. property getter/setter access. To get optimal decompilation results, please manually add the missing references to the list of loaded assemblies.</value>
   </data>

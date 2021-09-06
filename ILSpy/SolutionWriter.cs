@@ -229,6 +229,13 @@ namespace ICSharpCode.ILSpy
 				statusOutput.Add("-------------");
 				statusOutput.Add($"Failed to decompile the assembly '{loadedAssembly.FileName}':{Environment.NewLine}{e.Message}");
 			}
+			catch (PathTooLongException e)
+			{
+				statusOutput.Add("-------------");
+				statusOutput.Add(string.Format(Properties.Resources.ProjectExportPathTooLong, loadedAssembly.FileName)
+					+ Environment.NewLine + Environment.NewLine
+					+ e.ToString());
+			}
 			catch (Exception e) when (!(e is OperationCanceledException))
 			{
 				statusOutput.Add("-------------");
