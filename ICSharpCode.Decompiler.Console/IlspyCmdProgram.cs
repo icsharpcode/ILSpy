@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
+using System.IO.Compression;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
 using McMaster.Extensions.CommandLineUtils;
 using ICSharpCode.Decompiler.CSharp;
@@ -76,6 +78,9 @@ Remarks:
 		[Option("--no-dead-stores", "Remove dead stores.", CommandOptionType.NoValue)]
 		public bool RemoveDeadStores { get; }
 
+		[Option("-d|--dump-package", "Dump package assembiles into a folder. This requires the output directory option.", CommandOptionType.NoValue)]
+		public bool DumpPackageFlag { get; }
+
 		private int OnExecute(CommandLineApplication app)
 		{
 			TextWriter output = System.Console.Out;
@@ -116,6 +121,8 @@ Remarks:
 					               + "ICSharpCode.Decompiler: " +
 					               typeof(FullTypeName).Assembly.GetName().Version.ToString();
 					output.WriteLine(vInfo);
+				} else if (DumpPackageFlag) {
+					return DumpPackageAssemblies(InputAssemblyName, OutputDirectory, app);
 				} else {
 					if (outputDirectorySpecified) {
 						string outputName = Path.GetFileNameWithoutExtension(InputAssemblyName);
@@ -222,6 +229,47 @@ Remarks:
 			using (FileStream stream = new FileStream(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write)) {
 				var decompiler = GetDecompiler(assemblyFileName);
 				PortablePdbWriter.WritePdb(module, decompiler, GetSettings(module), stream);
+			}
+
+			return 0;
+		}
+
+		int DumpPackageAssemblies(string packageFileName, string outputDirectory, CommandLineApplication app)
+		{
+			using (var memoryMappedPackage = MemoryMappedFile.CreateFromFile(packageFileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read)) {
+				using (var packageView = memoryMappedPackage.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read)) {
+					if (!SingleFileBundle.IsBundle(packageView, out long bundleHeaderOffset)) {
+						app.Error.WriteLine($"Cannot dump assembiles for {packageFileName}, because it is not a single file bundle.");
+						return ProgramExitCodes.EX_DATAERR;
+					}
+
+					var manifest = SingleFileBundle.ReadManifest(packageView, bundleHeaderOffset);
+					foreach (var entry in manifest.Entries) {
+						Stream contents;
+
+						if (entry.CompressedSize == 0) {
+							contents = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.Size);
+						} else {
+							Stream compressedStream = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.CompressedSize);
+							Stream decompressedStream = new MemoryStream((int)entry.Size);
+							using (var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress)) {
+								deflateStream.CopyTo(decompressedStream);
+							}
+
+							if (decompressedStream.Length != entry.Size) {
+								app.Error.WriteLine($"Corrupted single-file entry '${entry.RelativePath}'. Declared decompressed size '${entry.Size}' is not the same as actual decompressed size '${decompressedStream.Length}'.");
+								return ProgramExitCodes.EX_DATAERR;
+							}
+
+							decompressedStream.Seek(0, SeekOrigin.Begin);
+							contents = decompressedStream;
+						}
+
+						using (var fileStream = File.Create(Path.Combine(outputDirectory, entry.RelativePath))) {
+							contents.CopyTo(fileStream);
+						}
+					}
+				}
 			}
 
 			return 0;
