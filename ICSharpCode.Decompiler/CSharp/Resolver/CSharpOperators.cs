@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public static CSharpOperators Get(ICompilation compilation)
 		{
 			CacheManager cache = compilation.CacheManager;
-			CSharpOperators operators = (CSharpOperators)cache.GetShared(typeof(CSharpOperators));
+			CSharpOperators? operators = (CSharpOperators?)cache.GetShared(typeof(CSharpOperators));
 			if (operators == null)
 			{
 				operators = (CSharpOperators)cache.GetOrAddShared(typeof(CSharpOperators), new CSharpOperators(compilation));
@@ -59,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			List<OperatorMethod> result = new List<OperatorMethod>(methods);
 			foreach (OperatorMethod method in methods)
 			{
-				OperatorMethod lifted = method.Lift(this);
+				OperatorMethod? lifted = method.Lift(this);
 				if (lifted != null)
 					result.Add(lifted);
 			}
@@ -111,20 +113,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return parameters; }
 			}
 
-			public IType ReturnType { get; internal set; }
+			public IType ReturnType { get; internal set; } = null!; // initialized by derived class ctor
 
 			public ICompilation Compilation {
 				get { return compilation; }
 			}
 
-			public virtual OperatorMethod Lift(CSharpOperators operators)
+			public virtual OperatorMethod? Lift(CSharpOperators operators)
 			{
 				return null;
 			}
 
 			public System.Reflection.Metadata.EntityHandle MetadataToken => default;
 
-			ITypeDefinition IEntity.DeclaringTypeDefinition {
+			ITypeDefinition? IEntity.DeclaringTypeDefinition {
 				get { return null; }
 			}
 
@@ -226,7 +228,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return b.ToString();
 			}
 
-			bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+			bool IMember.Equals(IMember? obj, TypeVisitor? typeNormalization)
 			{
 				return this == obj;
 			}
@@ -238,7 +240,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
 
-			public virtual object Invoke(CSharpResolver resolver, object input)
+			public virtual object? Invoke(CSharpResolver resolver, object? input)
 			{
 				throw new NotSupportedException();
 			}
@@ -265,7 +267,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return true; }
 			}
 
-			public override object Invoke(CSharpResolver resolver, object input)
+			public override object? Invoke(CSharpResolver resolver, object? input)
 			{
 				if (input == null)
 					return null;
@@ -296,11 +298,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		#region Unary operator definitions
 		// C# 4.0 spec: §7.7.1 Unary plus operator
-		OperatorMethod[] unaryPlusOperators;
+		OperatorMethod[]? unaryPlusOperators;
 
 		public OperatorMethod[] UnaryPlusOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref unaryPlusOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref unaryPlusOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -321,11 +323,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		// C# 4.0 spec: §7.7.2 Unary minus operator
-		OperatorMethod[] uncheckedUnaryMinusOperators;
+		OperatorMethod[]? uncheckedUnaryMinusOperators;
 
 		public OperatorMethod[] UncheckedUnaryMinusOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref uncheckedUnaryMinusOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref uncheckedUnaryMinusOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -343,11 +345,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		OperatorMethod[] checkedUnaryMinusOperators;
+		OperatorMethod[]? checkedUnaryMinusOperators;
 
 		public OperatorMethod[] CheckedUnaryMinusOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref checkedUnaryMinusOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref checkedUnaryMinusOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -366,11 +368,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		// C# 4.0 spec: §7.7.3 Logical negation operator
-		OperatorMethod[] logicalNegationOperators;
+		OperatorMethod[]? logicalNegationOperators;
 
 		public OperatorMethod[] LogicalNegationOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref logicalNegationOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref logicalNegationOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -385,11 +387,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		// C# 4.0 spec: §7.7.4 Bitwise complement operator
-		OperatorMethod[] bitwiseComplementOperators;
+		OperatorMethod[]? bitwiseComplementOperators;
 
 		public OperatorMethod[] BitwiseComplementOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref bitwiseComplementOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref bitwiseComplementOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -411,7 +413,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		internal class BinaryOperatorMethod : OperatorMethod
 		{
 			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
-			public virtual object Invoke(CSharpResolver resolver, object lhs, object rhs)
+			public virtual object? Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
 				throw new NotSupportedException();
 			}
@@ -444,7 +446,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return true; }
 			}
 
-			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
+			public override object? Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
 				if (lhs == null || rhs == null)
 					return null;
@@ -480,11 +482,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region Arithmetic operators
 		// C# 4.0 spec: §7.8.1 Multiplication operator
 
-		OperatorMethod[] multiplicationOperators;
+		OperatorMethod[]? multiplicationOperators;
 
 		public OperatorMethod[] MultiplicationOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref multiplicationOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref multiplicationOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -505,11 +507,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		// C# 4.0 spec: §7.8.2 Division operator
-		OperatorMethod[] divisionOperators;
+		OperatorMethod[]? divisionOperators;
 
 		public OperatorMethod[] DivisionOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref divisionOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref divisionOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -530,11 +532,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		// C# 4.0 spec: §7.8.3 Remainder operator
-		OperatorMethod[] remainderOperators;
+		OperatorMethod[]? remainderOperators;
 
 		public OperatorMethod[] RemainderOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref remainderOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref remainderOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -555,11 +557,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		// C# 4.0 spec: §7.8.3 Addition operator
-		OperatorMethod[] additionOperators;
+		OperatorMethod[]? additionOperators;
 
 		public OperatorMethod[] AdditionOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref additionOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref additionOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -600,18 +602,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return canEvaluateAtCompileTime; }
 			}
 
-			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
+			public override object? Invoke(CSharpResolver? resolver, object? lhs, object? rhs)
 			{
 				return string.Concat(lhs, rhs);
 			}
 		}
 
 		// C# 4.0 spec: §7.8.4 Subtraction operator
-		OperatorMethod[] subtractionOperators;
+		OperatorMethod[]? subtractionOperators;
 
 		public OperatorMethod[] SubtractionOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref subtractionOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref subtractionOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -632,11 +634,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		// C# 4.0 spec: §7.8.5 Shift operators
-		OperatorMethod[] shiftLeftOperators;
+		OperatorMethod[]? shiftLeftOperators;
 
 		public OperatorMethod[] ShiftLeftOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref shiftLeftOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref shiftLeftOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -653,11 +655,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		OperatorMethod[] shiftRightOperators;
+		OperatorMethod[]? shiftRightOperators;
 
 		public OperatorMethod[] ShiftRightOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref shiftRightOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref shiftRightOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -695,7 +697,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return Type != TypeCode.Object; }
 			}
 
-			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
+			public override object Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
 				if (lhs == null && rhs == null)
 					return !Negate; // ==: true; !=: false
@@ -719,7 +721,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return equal ^ Negate;
 			}
 
-			public override OperatorMethod Lift(CSharpOperators operators)
+			public override OperatorMethod? Lift(CSharpOperators operators)
 			{
 				if (Type == TypeCode.Object || Type == TypeCode.String)
 					return null;
@@ -746,7 +748,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return baseMethod.CanEvaluateAtCompileTime; }
 			}
 
-			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
+			public override object Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
 				return baseMethod.Invoke(resolver, lhs, rhs);
 			}
@@ -764,11 +766,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			TypeCode.Boolean
 		};
 
-		OperatorMethod[] valueEqualityOperators;
+		OperatorMethod[]? valueEqualityOperators;
 
 		public OperatorMethod[] ValueEqualityOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref valueEqualityOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref valueEqualityOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -782,11 +784,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		OperatorMethod[] valueInequalityOperators;
+		OperatorMethod[]? valueInequalityOperators;
 
 		public OperatorMethod[] ValueInequalityOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref valueInequalityOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref valueInequalityOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -800,11 +802,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		OperatorMethod[] referenceEqualityOperators;
+		OperatorMethod[]? referenceEqualityOperators;
 
 		public OperatorMethod[] ReferenceEqualityOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref referenceEqualityOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref referenceEqualityOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -819,11 +821,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		OperatorMethod[] referenceInequalityOperators;
+		OperatorMethod[]? referenceInequalityOperators;
 
 		public OperatorMethod[] ReferenceInequalityOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref referenceInequalityOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref referenceInequalityOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -857,7 +859,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return true; }
 			}
 
-			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
+			public override object? Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
 				if (lhs == null || rhs == null)
 					return null;
@@ -873,11 +875,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		OperatorMethod[] lessThanOperators;
+		OperatorMethod[]? lessThanOperators;
 
 		public OperatorMethod[] LessThanOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref lessThanOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref lessThanOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -897,11 +899,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		OperatorMethod[] lessThanOrEqualOperators;
+		OperatorMethod[]? lessThanOrEqualOperators;
 
 		public OperatorMethod[] LessThanOrEqualOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref lessThanOrEqualOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref lessThanOrEqualOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -921,11 +923,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		OperatorMethod[] greaterThanOperators;
+		OperatorMethod[]? greaterThanOperators;
 
 		public OperatorMethod[] GreaterThanOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref greaterThanOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref greaterThanOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -945,11 +947,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		OperatorMethod[] greaterThanOrEqualOperators;
+		OperatorMethod[]? greaterThanOrEqualOperators;
 
 		public OperatorMethod[] GreaterThanOrEqualOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref greaterThanOrEqualOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref greaterThanOrEqualOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -971,11 +973,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region Bitwise operators
-		OperatorMethod[] logicalAndOperators;
+		OperatorMethod[]? logicalAndOperators;
 
 		public OperatorMethod[] LogicalAndOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref logicalAndOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref logicalAndOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -990,11 +992,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 
-		OperatorMethod[] bitwiseAndOperators;
+		OperatorMethod[]? bitwiseAndOperators;
 
 		public OperatorMethod[] BitwiseAndOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref bitwiseAndOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref bitwiseAndOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -1013,11 +1015,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 
-		OperatorMethod[] logicalOrOperators;
+		OperatorMethod[]? logicalOrOperators;
 
 		public OperatorMethod[] LogicalOrOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref logicalOrOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref logicalOrOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -1031,11 +1033,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		OperatorMethod[] bitwiseOrOperators;
+		OperatorMethod[]? bitwiseOrOperators;
 
 		public OperatorMethod[] BitwiseOrOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref bitwiseOrOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref bitwiseOrOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -1057,11 +1059,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		// we produce "true | null" = "null" when it should be true. However, this is irrelevant
 		// because bool? cannot be a compile-time type.
 
-		OperatorMethod[] bitwiseXorOperators;
+		OperatorMethod[]? bitwiseXorOperators;
 
 		public OperatorMethod[] BitwiseXorOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref bitwiseXorOperators);
+				OperatorMethod[]? ops = LazyInit.VolatileRead(ref bitwiseXorOperators);
 				if (ops != null)
 				{
 					return ops;
@@ -1081,7 +1083,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region User-defined operators
-		public static IMethod LiftUserDefinedOperator(IMethod m)
+		public static IMethod? LiftUserDefinedOperator(IMethod m)
 		{
 			if (IsComparisonOperator(m))
 			{
@@ -1129,9 +1131,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public IReadOnlyList<IParameter> NonLiftedParameters => nonLiftedOperator.Parameters;
 			public IType NonLiftedReturnType => nonLiftedOperator.ReturnType;
 
-			public override bool Equals(object obj)
+			public override bool Equals(object? obj)
 			{
-				LiftedUserDefinedOperator op = obj as LiftedUserDefinedOperator;
+				LiftedUserDefinedOperator? op = obj as LiftedUserDefinedOperator;
 				return op != null && this.nonLiftedOperator.Equals(op.nonLiftedOperator);
 			}
 
