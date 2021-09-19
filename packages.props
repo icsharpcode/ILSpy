@@ -16,6 +16,7 @@
 		<WpfStylesToolboxVersion>2.6.1</WpfStylesToolboxVersion>
 		<NUnitVersion>3.13.2</NUnitVersion>
 		<NUnitAdapterVersion>4.0.0</NUnitAdapterVersion>
+		<MicrosoftNETTestSdkVersion>16.11.0</MicrosoftNETTestSdkVersion>
 		<MoqVersion>4.16.1</MoqVersion>
 		<DiffLibVersion>2017.7.26.1241</DiffLibVersion>
 		<DSRConverterXmlVersion>1.1.0-beta2-20115-01</DSRConverterXmlVersion>
