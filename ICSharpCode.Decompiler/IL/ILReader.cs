@@ -1170,7 +1170,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction Push(ILInstruction inst)
 		{
 			Debug.Assert(inst.ResultType != StackType.Void);
-			IType type = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+			IType type = compilation.FindType(inst.ResultType);
 			var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType);
 			v.HasGeneratedName = true;
 			currentStack = currentStack.Push(v);

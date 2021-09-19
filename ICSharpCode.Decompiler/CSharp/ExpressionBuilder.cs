@@ -1618,7 +1618,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			else
 			{
-				return compilation.FindType(stackType.ToKnownTypeCode(sign));
+				return compilation.FindType(stackType, sign);
 			}
 		}
 
@@ -1644,7 +1644,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					stackType = StackType.I8;
 				}
 			}
-			return compilation.FindType(stackType.ToKnownTypeCode(sign));
+			return compilation.FindType(stackType, sign);
 		}
 
 		/// <summary>
@@ -3568,7 +3568,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else if (!value.Type.Equals(SpecialType.NullType) && !fallback.Type.Equals(SpecialType.NullType) && !value.Type.Equals(fallback.Type))
 				{
-					targetType = compilation.FindType(inst.UnderlyingResultType.ToKnownTypeCode());
+					targetType = compilation.FindType(inst.UnderlyingResultType);
 				}
 				else
 				{
@@ -3731,7 +3731,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			else
 			{
-				resultType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+				resultType = compilation.FindType(inst.ResultType);
 			}
 
 			foreach (var section in inst.Sections)

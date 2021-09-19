@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -65,6 +66,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IType FindType(this ICompilation compilation, Type type)
 		{
 			return type.ToTypeReference().Resolve(new SimpleTypeResolveContext(compilation));
+		}
+
+		public static IType FindType(this ICompilation compilation, StackType stackType, Sign sign = Sign.None)
+		{
+			switch (stackType)
+			{
+				case StackType.Unknown:
+					return SpecialType.UnknownType;
+				case StackType.Ref:
+					return new ByReferenceType(SpecialType.UnknownType);
+				default:
+					return compilation.FindType(stackType.ToKnownTypeCode(sign));
+			}
 		}
 		#endregion
 
