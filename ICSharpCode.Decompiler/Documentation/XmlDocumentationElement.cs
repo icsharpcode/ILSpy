@@ -25,7 +25,6 @@ using System.Text;
 using System.Threading;
 using System.Xml.Linq;
 
-using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -37,11 +36,6 @@ namespace ICSharpCode.Decompiler.Documentation
 	/// </summary>
 	public class XmlDocumentationElement
 	{
-		static XmlDocumentationElement Create(string documentationComment, IEntity declaringEntity)
-		{
-			return new XmlDocumentationElement(XElement.Parse(documentationComment), declaringEntity, null);
-		}
-
 		readonly XElement? element;
 		readonly IEntity? declaringEntity;
 		readonly Func<string, IEntity?>? crefResolver;
