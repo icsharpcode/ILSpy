@@ -190,23 +190,24 @@ namespace ICSharpCode.Decompiler.Documentation
 				{
 					if (nestingLevel < 5 && childElement.Name == "inheritdoc")
 					{
-						string cref = childElement.Attribute("cref").Value;
+						string? cref = childElement.Attribute("cref")?.Value;
 						IEntity? inheritedFrom = null;
 						string? inheritedDocumentation = null;
 						if (cref != null && crefResolver != null)
 						{
 							inheritedFrom = crefResolver(cref);
 							if (inheritedFrom != null)
-								inheritedDocumentation = inheritedFrom.GetDocumentation();
+								inheritedDocumentation = "<doc>" + inheritedFrom.GetDocumentation() + "</doc>";
 						}
 						else
 						{
-							foreach (IMember baseMember in InheritanceHelper.GetBaseMembers((IMember)declaringEntity, includeImplementedInterfaces: true))
+							foreach (IMember baseMember in InheritanceHelper.GetBaseMembers((IMember?)declaringEntity, includeImplementedInterfaces: true))
 							{
 								inheritedDocumentation = baseMember.GetDocumentation();
 								if (inheritedDocumentation != null)
 								{
 									inheritedFrom = baseMember;
+									inheritedDocumentation = "<doc>" + inheritedDocumentation + "</doc>";
 									break;
 								}
 							}
@@ -214,10 +215,10 @@ namespace ICSharpCode.Decompiler.Documentation
 
 						if (inheritedDocumentation != null)
 						{
-							var doc = XDocument.Parse(inheritedDocumentation);
+							var doc = XDocument.Parse(inheritedDocumentation).Element("doc");
 
 							// XPath filter not yet implemented
-							if (childElement.Parent == null && childElement.Attribute("select").Value == null)
+							if (childElement.Parent?.Parent == null && childElement.Attribute("select")?.Value == null)
 							{
 								// Inheriting documentation at the root level
 								List<string> doNotInherit = new List<string>();
