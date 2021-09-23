@@ -936,7 +936,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			"System.Runtime.CompilerServices.MethodImplAttribute"
 		};
 
-		static readonly string[] attributeTypesToRemoveFromAutoProperties = new[] {
+		internal static readonly string[] attributeTypesToRemoveFromAutoProperties = new[] {
 			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
 			"System.Diagnostics.DebuggerBrowsableAttribute"
 		};

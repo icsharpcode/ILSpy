@@ -1,4 +1,6 @@
-﻿namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
+﻿using System;
+
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public record Base(string A);
 
@@ -37,6 +39,7 @@
 	public record PairWithPrimaryCtor<A, B>(A First, B Second);
 
 	public record PrimaryCtor(int A, string B);
+	public record PrimaryCtorWithAttribute([RecordTest("param")] [property: RecordTest("property")][field: RecordTest("field")] int a);
 	public record PrimaryCtorWithField(int A, string B)
 	{
 		public double C = 1.0;
@@ -60,6 +63,14 @@
 		public Properties()
 		{
 			B = 42;
+		}
+	}
+
+	[AttributeUsage(AttributeTargets.All)]
+	public class RecordTestAttribute : Attribute
+	{
+		public RecordTestAttribute(string name)
+		{
 		}
 	}
 

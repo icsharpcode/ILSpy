@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.IsStatic || !method.IsConstructor)
 					continue;
 				var m = method.Specialize(subst);
-				if (IsPrimaryConstructor(m))
+				if (IsPrimaryConstructor(m, method))
 					return method;
 				primaryCtorParameterToAutoProperty.Clear();
 				autoPropertyToPrimaryCtorParameter.Clear();
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			return null;
 
-			bool IsPrimaryConstructor(IMethod method)
+			bool IsPrimaryConstructor(IMethod method, IMethod unspecializedMethod)
 			{
 				Debug.Assert(method.IsConstructor);
 				var body = DecompileBody(method);
@@ -202,8 +202,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return false;
 					if (!backingFieldToAutoProperty.TryGetValue(field, out var property))
 						return false;
-					primaryCtorParameterToAutoProperty.Add(method.Parameters[i], property);
-					autoPropertyToPrimaryCtorParameter.Add(property, method.Parameters[i]);
+					primaryCtorParameterToAutoProperty.Add(unspecializedMethod.Parameters[i], property);
+					autoPropertyToPrimaryCtorParameter.Add(property, unspecializedMethod.Parameters[i]);
 				}
 
 				if (!isStruct)
@@ -329,6 +329,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
 			return primaryCtor != null
 				&& autoPropertyToPrimaryCtorParameter.ContainsKey((IProperty)property.Specialize(subst));
+		}
+
+		internal (IProperty prop, IField field) GetPropertyInfoByPrimaryConstructorParameter(IParameter parameter)
+		{
+			var prop = primaryCtorParameterToAutoProperty[parameter];
+			return (prop, autoPropertyToBackingField[prop]);
 		}
 
 		public bool IsCopyConstructor(IMethod method)
