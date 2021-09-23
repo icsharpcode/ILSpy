@@ -196,6 +196,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						return false;
 					if (!target.MatchLdThis())
 						return false;
+					if (method.Parameters[i].IsIn)
+					{
+						if (!valueInst.MatchLdObj(out valueInst, out _))
+							return false;
+					}
 					if (!valueInst.MatchLdLoc(out var value))
 						return false;
 					if (!(value.Kind == VariableKind.Parameter && value.Index == i))
@@ -984,7 +989,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (!deconstruct.IsOut)
 					return false;
 
-				if (!ctor.Type.Equals(((ByReferenceType)deconstruct.Type).ElementType))
+				IType ctorType = ctor.Type;
+				if (ctor.IsIn)
+					ctorType = ((ByReferenceType)ctorType).ElementType;
+				if (!ctorType.Equals(((ByReferenceType)deconstruct.Type).ElementType))
 					return false;
 
 				if (ctor.Name != deconstruct.Name)

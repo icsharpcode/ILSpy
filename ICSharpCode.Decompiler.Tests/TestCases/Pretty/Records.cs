@@ -45,6 +45,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public double C = 1.0;
 		public string D = A + B;
 	}
+	public record PrimaryCtorWithInParameter(in int A, in string B);
 	public record PrimaryCtorWithProperty(int A, string B)
 	{
 		public double C { get; init; } = 1.0;
