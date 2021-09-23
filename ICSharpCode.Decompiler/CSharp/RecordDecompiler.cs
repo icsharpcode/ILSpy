@@ -464,6 +464,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (builder.Type.ReflectionName != "System.Text.StringBuilder")
 				return false;
 			int pos = 0;
+			//Roslyn 4.0.0-3.final start to insert an call to RuntimeHelpers.EnsureSufficientExecutionStack()
+			if (!isStruct && !isInheritedRecord && body.Instructions[pos] is Call
+				{
+					Arguments: { Count: 0 },
+					Method: { Name: "EnsureSufficientExecutionStack", DeclaringType: { Namespace: "System.Runtime.CompilerServices", Name: "RuntimeHelpers" } }
+				})
+			{
+				pos++;
+			}
 			if (isInheritedRecord)
 			{
 				// Special case: inherited record adding no new members
@@ -661,21 +670,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			return toStringCall.Arguments[0].MatchLdLoc(stringBuilder);
 
-			bool MatchAppendCall(ILInstruction inst, out string val)
+			bool MatchAppendCallWithValue(ILInstruction inst, string val)
 			{
-				val = null;
 				if (!(inst is CallVirt { Method: { Name: "Append" } } call))
 					return false;
 				if (call.Arguments.Count != 2)
 					return false;
 				if (!call.Arguments[0].MatchLdLoc(stringBuilder))
 					return false;
-				return call.Arguments[1].MatchLdStr(out val);
-			}
-
-			bool MatchAppendCallWithValue(ILInstruction inst, string val)
-			{
-				return MatchAppendCall(inst, out string tmp) && tmp == val;
+				//Roslyn 4.0.0-3.final start to use char for 1 length string
+				if (call.Method.Parameters[0].Type.IsKnownType(KnownTypeCode.Char))
+				{
+					return val != null && val.Length == 1 && call.Arguments[1].MatchLdcI4(val[0]);
+				}
+				return call.Arguments[1].MatchLdStr(out string val1) && val1 == val;
 			}
 		}
 
