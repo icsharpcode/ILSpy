@@ -19,19 +19,13 @@
 #nullable enable
 
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Threading;
-using System.Xml.Linq;
 
-using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-
-using static ICSharpCode.Decompiler.TypeSystem.ReflectionHelper;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -110,11 +104,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				pos--;
 			}
-			if (condition.MatchCompEqualsNull(out var arg))
+			if (condition.MatchCompEqualsNull(out var loadInNullCheck))
 			{
 				ExtensionMethods.Swap(ref trueInst, ref falseInst);
 			}
-			else if (condition.MatchCompNotEqualsNull(out arg))
+			else if (condition.MatchCompNotEqualsNull(out loadInNullCheck))
 			{
 				// do nothing
 			}
@@ -122,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			if (!arg.MatchLdLoc(out var s))
+			if (!loadInNullCheck.MatchLdLoc(out var s))
 				return false;
 			if (!s.IsSingleDefinition)
 				return false;
@@ -139,8 +133,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// stloc v(ldloc s)
 				pos--;
 				if (!block.Instructions[pos].MatchStLoc(s, out value))
-					return false;
-				if (!v.IsSingleDefinition)
 					return false;
 				if (v.Kind is not (VariableKind.Local or VariableKind.StackSlot))
 					return false;
@@ -172,7 +164,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (!v.Type.Equals(type))
 				return false;
-			if (!CheckAllUsesDominatedBy(v, container, trueInst, storeToV, context, ref cfg))
+			if (!CheckAllUsesDominatedBy(v, container, trueInst, storeToV, loadInNullCheck, context, ref cfg))
 				return false;
 			context.Step($"Type pattern matching {v.Name}", block);
 			//	if (match.type[T].notnull(V = testedOperand)) br trueBlock
@@ -191,7 +183,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		private bool CheckAllUsesDominatedBy(ILVariable v, BlockContainer container, ILInstruction trueInst,
-			ILInstruction storeToV, ILTransformContext context, ref ControlFlowGraph? cfg)
+			ILInstruction storeToV, ILInstruction? loadInNullCheck, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
 			var targetBlock = trueInst as Block;
 			if (targetBlock == null && !trueInst.MatchBranch(out targetBlock))
@@ -203,12 +195,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			cfg ??= new ControlFlowGraph(container, context.CancellationToken);
 			var targetBlockNode = cfg.GetNode(targetBlock);
-			Debug.Assert(v.StoreInstructions.Count == 1);
 			var uses = v.LoadInstructions.Concat<ILInstruction>(v.AddressInstructions)
 				.Concat(v.StoreInstructions.Cast<ILInstruction>());
 			foreach (var use in uses)
 			{
-				if (use == storeToV)
+				if (use == storeToV || use == loadInNullCheck)
 					continue;
 				Block? found = null;
 				for (ILInstruction? current = use; current != null; current = current.Parent)
@@ -274,7 +265,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			if (!CheckAllUsesDominatedBy(v, container, unboxBlock, storeToV, context, ref cfg))
+			if (!CheckAllUsesDominatedBy(v, container, unboxBlock, storeToV, null, context, ref cfg))
 				return false;
 			context.Step($"PatternMatching with {v.Name}", block);
 			var ifInst = (IfInstruction)block.Instructions.SecondToLastOrDefault()!;

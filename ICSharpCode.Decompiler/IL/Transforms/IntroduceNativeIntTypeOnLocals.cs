@@ -36,6 +36,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				if (variable.Kind != VariableKind.Local &&
 					variable.Kind != VariableKind.StackSlot &&
+					variable.Kind != VariableKind.PatternLocal &&
 					variable.Kind != VariableKind.ForeachLocal &&
 					variable.Kind != VariableKind.UsingLocal)
 				{

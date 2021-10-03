@@ -101,6 +101,7 @@ namespace ICSharpCode.Decompiler.IL
 				case VariableKind.ExceptionLocal:
 				case VariableKind.ForeachLocal:
 				case VariableKind.UsingLocal:
+				case VariableKind.PatternLocal:
 				case VariableKind.PinnedLocal:
 				case VariableKind.PinnedRegionLocal:
 				case VariableKind.DisplayClassLocal:
@@ -173,6 +174,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				case VariableKind.Local:
 				case VariableKind.ForeachLocal:
+				case VariableKind.PatternLocal:
 				case VariableKind.PinnedLocal:
 				case VariableKind.PinnedRegionLocal:
 				case VariableKind.UsingLocal:
@@ -540,6 +542,8 @@ namespace ICSharpCode.Decompiler.IL
 			if (x == null || y == null)
 				return false;
 			if (x.Kind == VariableKind.StackSlot || y.Kind == VariableKind.StackSlot)
+				return false;
+			if (x.Kind == VariableKind.PatternLocal || y.Kind == VariableKind.PatternLocal)
 				return false;
 			if (!(x.Function == y.Function && x.Kind == y.Kind))
 				return false;
