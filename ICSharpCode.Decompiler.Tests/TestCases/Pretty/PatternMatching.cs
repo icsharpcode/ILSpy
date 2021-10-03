@@ -212,6 +212,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static void NotTypePatternBecauseVarIsNotDefAssignedInCaseOfFallthrough(object x)
+		{
+#if OPT
+			string obj = x as string;
+			if (obj == null)
+			{
+				Console.WriteLine("pattern doesn't match");
+			}
+			Console.WriteLine(obj == null);
+#else
+			string text = x as string;
+			if (text == null)
+			{
+				Console.WriteLine("pattern doesn't match");
+			}
+			Console.WriteLine(text == null);
+#endif
+		}
+
 		private bool F()
 		{
 			return true;

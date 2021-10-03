@@ -193,6 +193,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (targetBlock.Parent != container)
 				return false;
+			if (targetBlock.IncomingEdgeCount != 1)
+				return false;
 			cfg ??= new ControlFlowGraph(container, context.CancellationToken);
 			var targetBlockNode = cfg.GetNode(targetBlock);
 			var uses = v.LoadInstructions.Concat<ILInstruction>(v.AddressInstructions)

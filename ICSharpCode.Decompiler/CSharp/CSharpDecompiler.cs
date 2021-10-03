@@ -103,7 +103,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				new RemoveDeadVariableInit(),
 				new ControlFlowSimplification(), //split variables may enable new branch to leave inlining
 				new DynamicCallSiteTransform(),
-				new PatternMatchingTransform(),
 				new SwitchDetection(),
 				new SwitchOnStringTransform(),
 				new SwitchOnNullableTransform(),
@@ -121,6 +120,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				},
 				// re-run DetectExitPoints after loop detection
 				new DetectExitPoints(),
+				new PatternMatchingTransform(), // must run after LoopDetection and before ConditionDetection
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
 						new ConditionDetection(),
