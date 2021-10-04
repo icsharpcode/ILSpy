@@ -822,6 +822,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					spacePolicy = policy.SpaceAroundShiftOperator;
 					break;
 				case BinaryOperatorType.NullCoalescing:
+				case BinaryOperatorType.IsPattern:
 					spacePolicy = true;
 					break;
 				case BinaryOperatorType.Range:
@@ -831,7 +832,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					throw new NotSupportedException("Invalid value for BinaryOperatorType");
 			}
 			Space(spacePolicy);
-			WriteToken(BinaryOperatorExpression.GetOperatorRole(binaryOperatorExpression.Operator));
+			TokenRole tokenRole = BinaryOperatorExpression.GetOperatorRole(binaryOperatorExpression.Operator);
+			if (tokenRole == BinaryOperatorExpression.IsKeywordRole)
+			{
+				WriteKeyword(tokenRole);
+			}
+			else
+			{
+				WriteToken(tokenRole);
+			}
 			Space(spacePolicy);
 			binaryOperatorExpression.Right.AcceptVisitor(this);
 			EndNode(binaryOperatorExpression);
@@ -2788,7 +2797,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitSingleVariableDesignation(SingleVariableDesignation singleVariableDesignation)
 		{
 			StartNode(singleVariableDesignation);
-			writer.WriteIdentifier(singleVariableDesignation.IdentifierToken);
+			WriteIdentifier(singleVariableDesignation.IdentifierToken);
 			EndNode(singleVariableDesignation);
 		}
 

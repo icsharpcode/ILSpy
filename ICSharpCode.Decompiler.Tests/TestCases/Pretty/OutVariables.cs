@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	public class PatternMatching
+	public class OutVariables
 	{
 		public static void OutVarInShortCircuit(Dictionary<int, string> d)
 		{

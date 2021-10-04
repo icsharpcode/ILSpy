@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.IL
 					comp(deconstruct.result1(c) == 1),
 					match.type[D].deconstruct(d = deconstruct.result2(c)) {
 						comp(deconstruct.result1(d) == 2),
-						comp(deconstruct.result2(d) == 2),
+						comp(deconstruct.result2(d) == 3),
 					}
 				}
 		 */
@@ -126,10 +126,15 @@ namespace ICSharpCode.Decompiler.IL
 					testedOperand = m.testedOperand;
 					return true;
 				case Comp comp:
-					testedOperand = comp.Left;
-					return IsConstant(comp.Right);
-				case ILInstruction logicNot when logicNot.MatchLogicNot(out var operand):
-					return IsPatternMatch(operand, out testedOperand);
+					if (comp.MatchLogicNot(out var operand))
+					{
+						return IsPatternMatch(operand, out testedOperand);
+					}
+					else
+					{
+						testedOperand = comp.Left;
+						return IsConstant(comp.Right);
+					}
 				default:
 					testedOperand = null;
 					return false;
@@ -145,6 +150,7 @@ namespace ICSharpCode.Decompiler.IL
 				OpCode.LdcI4 => true,
 				OpCode.LdcI8 => true,
 				OpCode.LdNull => true,
+				OpCode.LdStr => true,
 				_ => false
 			};
 		}

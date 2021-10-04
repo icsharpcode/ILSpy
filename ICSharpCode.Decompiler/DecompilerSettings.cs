@@ -104,6 +104,7 @@ namespace ICSharpCode.Decompiler
 				discards = false;
 				localFunctions = false;
 				deconstruction = false;
+				patternMatching = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_2)
 			{
@@ -159,7 +160,7 @@ namespace ICSharpCode.Decompiler
 				return CSharp.LanguageVersion.CSharp7_2;
 			// C# 7.1 missing
 			if (outVariables || throwExpressions || tupleTypes || tupleConversions
-				|| discards || localFunctions)
+				|| discards || localFunctions || deconstruction || patternMatching)
 				return CSharp.LanguageVersion.CSharp7;
 			if (awaitInCatchFinally || useExpressionBodyForCalculatedGetterOnlyProperties || nullPropagation
 				|| stringInterpolation || dictionaryInitializers || extensionMethodsInCollectionInitializers
@@ -1461,6 +1462,24 @@ namespace ICSharpCode.Decompiler
 				if (deconstruction != value)
 				{
 					deconstruction = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool patternMatching = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 7.0 pattern matching should be detected.
+		/// </summary>
+		[Category("C# 7.0 / VS 2017")]
+		[Description("DecompilerSettings.PatternMatching")]
+		public bool PatternMatching {
+			get { return patternMatching; }
+			set {
+				if (patternMatching != value)
+				{
+					patternMatching = value;
 					OnPropertyChanged();
 				}
 			}

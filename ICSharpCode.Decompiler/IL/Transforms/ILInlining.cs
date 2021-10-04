@@ -589,8 +589,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				//case OpCode.BinaryNumericInstruction when parent.SlotInfo == SwitchInstruction.ValueSlot:
 				case OpCode.StringToInt when parent.SlotInfo == SwitchInstruction.ValueSlot:
 					return true;
-				case OpCode.MatchInstruction when ((MatchInstruction)parent).IsDeconstructTuple:
-					return true;
+				case OpCode.MatchInstruction:
+					var match = (MatchInstruction)parent;
+					if (match.IsDeconstructTuple
+						|| (match.CheckType && match.Variable.Type.IsReferenceType != true))
+					{
+						return true;
+					}
+					break;
 			}
 			// decide based on the top-level target instruction into which we are inlining:
 			switch (next.OpCode)

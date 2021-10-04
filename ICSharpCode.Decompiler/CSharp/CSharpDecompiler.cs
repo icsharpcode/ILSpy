@@ -89,6 +89,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SplitVariables(),
 				new ILInlining(),
 				new InlineReturnTransform(), // must run before DetectPinnedRegions
+				new RemoveInfeasiblePathTransform(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
 				new YieldReturnDecompiler(), // must run after inlining but before loop detection
 				new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
@@ -96,10 +97,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				new DetectExitPoints(),
 				new LdLocaDupInitObjTransform(),
 				new EarlyExpressionTransforms(),
+				new SplitVariables(), // split variables once again, because the stobj(ldloca V, ...) may open up new replacements
 				// RemoveDeadVariableInit must run after EarlyExpressionTransforms so that stobj(ldloca V, ...)
 				// is already collapsed into stloc(V, ...).
 				new RemoveDeadVariableInit(),
-				new SplitVariables(), // split variables once again, because the stobj(ldloca V, ...) may open up new replacements
 				new ControlFlowSimplification(), //split variables may enable new branch to leave inlining
 				new DynamicCallSiteTransform(),
 				new SwitchDetection(),
@@ -119,6 +120,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				},
 				// re-run DetectExitPoints after loop detection
 				new DetectExitPoints(),
+				new PatternMatchingTransform(), // must run after LoopDetection and before ConditionDetection
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
 						new ConditionDetection(),

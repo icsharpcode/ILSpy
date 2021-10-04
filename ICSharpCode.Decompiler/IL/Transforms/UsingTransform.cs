@@ -37,12 +37,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			for (int i = block.Instructions.Count - 1; i >= 0; i--)
 			{
-				if (!TransformUsing(block, i) && !TransformUsingVB(block, i) && !TransformAsyncUsing(block, i))
+				if (TransformUsing(block, i))
+				{
 					continue;
-				// This happens in some cases:
-				// Use correct index after transformation.
-				if (i >= block.Instructions.Count)
-					i = block.Instructions.Count;
+				}
+				if (TransformUsingVB(block, i))
+				{
+					continue;
+				}
+				if (TransformAsyncUsing(block, i))
+				{
+					continue;
+				}
 			}
 		}
 
@@ -74,9 +80,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool TransformUsing(Block block, int i)
 		{
-			if (i < 1)
+			if (i + 1 >= block.Instructions.Count)
 				return false;
-			if (!(block.Instructions[i] is TryFinally tryFinally) || !(block.Instructions[i - 1] is StLoc storeInst))
+			if (!(block.Instructions[i + 1] is TryFinally tryFinally) || !(block.Instructions[i] is StLoc storeInst))
 				return false;
 			if (!(storeInst.Value.MatchLdNull() || CheckResourceType(storeInst.Variable.Type)))
 				return false;
@@ -88,12 +94,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (storeInst.Variable.StoreInstructions.Count > 1)
 				return false;
-			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
+			if (!(tryFinally.FinallyBlock is BlockContainer container))
+				return false;
+			if (!MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
 				return false;
 			context.Step("UsingTransform", tryFinally);
 			storeInst.Variable.Kind = VariableKind.UsingLocal;
-			block.Instructions.RemoveAt(i);
-			block.Instructions[i - 1] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock) {
+			block.Instructions.RemoveAt(i + 1);
+			block.Instructions[i] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock) {
 				IsRefStruct = context.Settings.IntroduceRefModifiersOnStructs && storeInst.Variable.Type.Kind == TypeKind.Struct && storeInst.Variable.Type.IsByRefLike
 			}.WithILRange(storeInst);
 			return true;
@@ -127,6 +135,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool TransformUsingVB(Block block, int i)
 		{
+			if (i >= block.Instructions.Count)
+				return false;
 			if (!(block.Instructions[i] is TryFinally tryFinally))
 				return false;
 			if (!(tryFinally.TryBlock is BlockContainer tryContainer && tryContainer.EntryPoint.Instructions.FirstOrDefault() is StLoc storeInst))
@@ -175,41 +185,64 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchDisposeBlock(BlockContainer container, ILVariable objVar, bool usingNull, in string disposeMethodFullName = "System.IDisposable.Dispose", KnownTypeCode disposeTypeCode = KnownTypeCode.IDisposable)
+		///	finally BlockContainer {
+		///		Block IL_0012(incoming: 1) {
+		///			if (comp(ldloc obj != ldnull)) Block IL_001a  {
+		///				callvirt Dispose(obj)
+		///			}
+		///			leave IL_0012(nop)
+		///		}
+		/// }
+		bool MatchDisposeBlock(BlockContainer container, ILVariable objVar, bool usingNull,
+			in string disposeMethodFullName = "System.IDisposable.Dispose",
+			KnownTypeCode disposeTypeCode = KnownTypeCode.IDisposable)
 		{
 			var entryPoint = container.EntryPoint;
-			if (entryPoint.Instructions.Count < 2 || entryPoint.Instructions.Count > 3 || entryPoint.IncomingEdgeCount != 1)
+			if (entryPoint.IncomingEdgeCount != 1)
 				return false;
-			int leaveIndex = entryPoint.Instructions.Count == 2 ? 1 : 2;
-			int checkIndex = entryPoint.Instructions.Count == 2 ? 0 : 1;
-			int castIndex = entryPoint.Instructions.Count == 3 ? 0 : -1;
-			var checkInst = entryPoint.Instructions[checkIndex];
+			int pos = 0;
 			bool isReference = objVar.Type.IsReferenceType != false;
-			if (castIndex > -1)
+			// optional:
+			// stloc temp(isinst TDisposable(ldloc obj))
+			if (entryPoint.Instructions.ElementAtOrDefault(pos).MatchStLoc(out var tempVar, out var isinst))
 			{
-				if (!entryPoint.Instructions[castIndex].MatchStLoc(out var tempVar, out var isinst))
+				if (!isinst.MatchIsInst(out var load, out var disposableType) || !load.MatchLdLoc(objVar)
+					|| !disposableType.IsKnownType(disposeTypeCode))
+				{
 					return false;
-				if (!isinst.MatchIsInst(out var load, out var disposableType) || !load.MatchLdLoc(objVar) || !disposableType.IsKnownType(disposeTypeCode))
-					return false;
+				}
 				if (!tempVar.IsSingleDefinition)
 					return false;
 				isReference = true;
-				if (!MatchDisposeCheck(tempVar, checkInst, isReference, usingNull, out int numObjVarLoadsInCheck, disposeMethodFullName, disposeTypeCode))
-					return false;
-				if (tempVar.LoadCount != numObjVarLoadsInCheck)
-					return false;
+				pos++;
+				objVar = tempVar;
 			}
-			else
-			{
-				if (!MatchDisposeCheck(objVar, checkInst, isReference, usingNull, out _, disposeMethodFullName, disposeTypeCode))
-					return false;
-			}
-			if (!entryPoint.Instructions[leaveIndex].MatchLeave(container, out var returnValue) || !returnValue.MatchNop())
+			// if (comp(ldloc obj != ldnull)) Block IL_001a  {
+			//	callvirt Dispose(obj)
+			// }
+			var checkInst = entryPoint.Instructions.ElementAtOrDefault(pos);
+			if (checkInst == null)
 				return false;
-			return true;
+			if (!MatchDisposeCheck(objVar, checkInst, isReference, usingNull,
+				out int numObjVarLoadsInCheck, disposeMethodFullName, disposeTypeCode))
+			{
+				return false;
+			}
+			// make sure the (optional) temporary is used only in the dispose check
+			if (pos > 0 && objVar.LoadCount != numObjVarLoadsInCheck)
+				return false;
+			pos++;
+			// make sure, the finally ends in a leave(nop) instruction.
+			if (!entryPoint.Instructions.ElementAtOrDefault(pos).MatchLeave(container, out var returnValue))
+				return false;
+			if (!returnValue.MatchNop())
+				return false;
+			// leave is the last instruction
+			return (pos + 1) == entryPoint.Instructions.Count;
 		}
 
-		bool MatchDisposeCheck(ILVariable objVar, ILInstruction checkInst, bool isReference, bool usingNull, out int numObjVarLoadsInCheck, string disposeMethodFullName, KnownTypeCode disposeTypeCode)
+		bool MatchDisposeCheck(ILVariable objVar, ILInstruction checkInst, bool isReference, bool usingNull,
+			out int numObjVarLoadsInCheck, string disposeMethodFullName, KnownTypeCode disposeTypeCode)
 		{
 			numObjVarLoadsInCheck = 2;
 			ILInstruction disposeInvocation;
@@ -283,7 +316,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// reference types have a null check.
 					if (!checkInst.MatchIfInstruction(out var condition, out var disposeInst))
 						return false;
-					if (!condition.MatchCompNotEquals(out var left, out var right) || !left.MatchLdLoc(objVar) || !right.MatchLdNull())
+					if (!MatchNullCheckOrTypeCheck(condition, ref objVar, disposeTypeCode))
 						return false;
 					if (!(disposeInst is Block disposeBlock) || disposeBlock.Instructions.Count != 1)
 						return false;
@@ -348,6 +381,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		bool MatchNullCheckOrTypeCheck(ILInstruction condition, ref ILVariable objVar, KnownTypeCode disposeType)
+		{
+			if (condition.MatchCompNotEquals(out var left, out var right))
+			{
+				if (!left.MatchLdLoc(objVar) || !right.MatchLdNull())
+					return false;
+				return true;
+			}
+			if (condition is MatchInstruction
+				{
+					CheckNotNull: true,
+					CheckType: true,
+					TestedOperand: LdLoc { Variable: var v },
+					Variable: var newObjVar
+				})
+			{
+				if (v != objVar)
+					return false;
+				if (!newObjVar.Type.IsKnownType(disposeType))
+					return false;
+				objVar = newObjVar;
+				return true;
+			}
+			return false;
+		}
+
 		/// <summary>
 		/// stloc test(resourceExpression)
 		/// .try BlockContainer {
@@ -371,7 +430,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		private bool TransformAsyncUsing(Block block, int i)
 		{
-			if (i < 1 || !context.Settings.AsyncUsingAndForEachStatement)
+			if (!context.Settings.AsyncUsingAndForEachStatement)
+				return false;
+			if (i < 1 || i >= block.Instructions.Count)
 				return false;
 			if (!(block.Instructions[i] is TryFinally tryFinally) || !(block.Instructions[i - 1] is StLoc storeInst))
 				return false;

@@ -137,6 +137,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return false;
 		}
+
+		bool AnalyzeNegatedCondition(ILInstruction condition)
+		{
+			return condition.MatchLogicNot(out var arg) && AnalyzeCondition(arg);
+		}
 		#endregion
 
 		#region Main lifting logic
@@ -211,10 +216,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// => comp.lifted[C#](lhs, rhs)
 						return LiftCSharpComparison(comp, comp.Kind);
 					}
-					else if (trueInst.MatchLdcI4(0) && AnalyzeCondition(falseInst))
+					if (trueInst.MatchLdcI4(0) && AnalyzeCondition(falseInst))
 					{
 						// comp(lhs, rhs) ? false : (v1 != null && ... && vn != null)
 						return LiftCSharpComparison(comp, comp.Kind.Negate());
+					}
+					if (falseInst.MatchLdcI4(1) && AnalyzeNegatedCondition(trueInst))
+					{
+						// comp(lhs, rhs) ? !(v1 != null && ... && vn != null) : true
+						// => !comp.lifted[C#](lhs, rhs)
+						ILInstruction result = LiftCSharpComparison(comp, comp.Kind);
+						if (result == null)
+							return result;
+						return Comp.LogicNot(result);
+					}
+					if (trueInst.MatchLdcI4(1) && AnalyzeNegatedCondition(falseInst))
+					{
+						// comp(lhs, rhs) ? true : !(v1 != null && ... && vn != null)
+						ILInstruction result = LiftCSharpComparison(comp, comp.Kind.Negate());
+						if (result == null)
+							return result;
+						return Comp.LogicNot(result);
 					}
 				}
 			}
@@ -544,7 +566,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
-		Call LiftCSharpUserEqualityComparison(CompOrDecimal hasValueComp, ComparisonKind newComparisonKind, ILInstruction nestedIfInst)
+		ILInstruction LiftCSharpUserEqualityComparison(CompOrDecimal hasValueComp, ComparisonKind newComparisonKind, ILInstruction nestedIfInst)
 		{
 			// User-defined equality operator:
 			//   if (comp(call get_HasValue(ldloca nullable1) == call get_HasValue(ldloca nullable2)))
@@ -576,11 +598,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (!falseInst.MatchLdcI4(newComparisonKind == ComparisonKind.Equality ? 1 : 0))
 				return null;
+			bool trueInstNegated = false;
+			while (trueInst.MatchLogicNot(out var arg))
+			{
+				trueInstNegated = !trueInstNegated;
+				trueInst = arg;
+			}
 			if (!(trueInst is Call call))
 				return null;
 			if (!(call.Method.IsOperator && call.Arguments.Count == 2))
 				return null;
-			if (call.Method.Name != (newComparisonKind == ComparisonKind.Equality ? "op_Equality" : "op_Inequality"))
+			bool expectEqualityOperator = (newComparisonKind == ComparisonKind.Equality) ^ trueInstNegated;
+			if (call.Method.Name != (expectEqualityOperator ? "op_Equality" : "op_Inequality"))
 				return null;
 			var liftedOperator = CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(call.Method);
 			if (liftedOperator == null)
@@ -594,13 +623,66 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			)
 			{
 				context.Step("NullableLiftingTransform: C# user-defined (in)equality comparison", nestedIfInst);
-				return new Call(liftedOperator) {
+				ILInstruction replacement = new Call(liftedOperator) {
 					Arguments = { left, right },
 					ConstrainedTo = call.ConstrainedTo,
 					ILStackWasEmpty = call.ILStackWasEmpty,
 					IsTail = call.IsTail,
 				}.WithILRange(call);
+				if (trueInstNegated)
+				{
+					replacement = Comp.LogicNot(replacement);
+				}
+				return replacement;
 			}
+			return null;
+		}
+
+		ILInstruction LiftCSharpUserComparison(ILInstruction trueInst, ILInstruction falseInst)
+		{
+			// (v1 != null && ... && vn != null) ? trueInst : falseInst
+			bool trueInstNegated = false;
+			while (trueInst.MatchLogicNot(out var arg))
+			{
+				trueInstNegated = !trueInstNegated;
+				trueInst = arg;
+			}
+			if (trueInst is Call call && !call.IsLifted
+			  && CSharp.Resolver.CSharpOperators.IsComparisonOperator(call.Method)
+			  && falseInst.MatchLdcI4((call.Method.Name == "op_Inequality") ^ trueInstNegated ? 1 : 0))
+			{
+				// (v1 != null && ... && vn != null) ? call op_LessThan(lhs, rhs) : ldc.i4(0)
+				var liftedOperator = CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(call.Method);
+				if ((call.Method.Name == "op_Equality" || call.Method.Name == "op_Inequality") && nullableVars.Count != 1)
+				{
+					// Equality is special (returns true if both sides are null), only handle it
+					// in the normal code path if we're dealing with only a single nullable var
+					// (comparing nullable with non-nullable).
+					return null;
+				}
+				if (liftedOperator == null)
+				{
+					return null;
+				}
+				context.Step("Lift user-defined comparison operator", trueInst);
+				var (left, right, bits) = DoLiftBinary(call.Arguments[0], call.Arguments[1],
+					call.Method.Parameters[0].Type, call.Method.Parameters[1].Type);
+				if (left != null && right != null && bits.All(0, nullableVars.Count))
+				{
+					ILInstruction result = new Call(liftedOperator) {
+						Arguments = { left, right },
+						ConstrainedTo = call.ConstrainedTo,
+						ILStackWasEmpty = call.ILStackWasEmpty,
+						IsTail = call.IsTail
+					}.WithILRange(call);
+					if (trueInstNegated)
+					{
+						result = Comp.LogicNot(result);
+					}
+					return result;
+				}
+			}
+
 			return null;
 		}
 		#endregion
@@ -641,35 +723,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						UnderlyingResultType = NullableType.GetUnderlyingType(nullableVars[0].Type).GetStackType()
 					};
 				}
-				else if (trueInst is Call call && !call.IsLifted
-				  && CSharp.Resolver.CSharpOperators.IsComparisonOperator(call.Method)
-				  && falseInst.MatchLdcI4(call.Method.Name == "op_Inequality" ? 1 : 0))
-				{
-					// (v1 != null && ... && vn != null) ? call op_LessThan(lhs, rhs) : ldc.i4(0)
-					var liftedOperator = CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(call.Method);
-					if ((call.Method.Name == "op_Equality" || call.Method.Name == "op_Inequality") && nullableVars.Count != 1)
-					{
-						// Equality is special (returns true if both sides are null), only handle it
-						// in the normal code path if we're dealing with only a single nullable var
-						// (comparing nullable with non-nullable).
-						liftedOperator = null;
-					}
-					if (liftedOperator != null)
-					{
-						context.Step("Lift user-defined comparison operator", trueInst);
-						var (left, right, bits) = DoLiftBinary(call.Arguments[0], call.Arguments[1],
-							call.Method.Parameters[0].Type, call.Method.Parameters[1].Type);
-						if (left != null && right != null && bits.All(0, nullableVars.Count))
-						{
-							return new Call(liftedOperator) {
-								Arguments = { left, right },
-								ConstrainedTo = call.ConstrainedTo,
-								ILStackWasEmpty = call.ILStackWasEmpty,
-								IsTail = call.IsTail
-							}.WithILRange(call);
-						}
-					}
-				}
+				ILInstruction result = LiftCSharpUserComparison(trueInst, falseInst);
+				if (result != null)
+					return result;
 			}
 			ILInstruction lifted;
 			if (nullableVars.Count == 1 && MatchGetValueOrDefault(exprToLift, nullableVars[0]))

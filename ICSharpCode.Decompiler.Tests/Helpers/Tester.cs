@@ -308,6 +308,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				if (flags.HasFlag(CompilerOptions.UseRoslyn2_10_0)
 					|| flags.HasFlag(CompilerOptions.UseRoslynLatest))
 				{
+					preprocessorSymbols.Add("ROSLYN2");
 					preprocessorSymbols.Add("CS70");
 					preprocessorSymbols.Add("CS71");
 					preprocessorSymbols.Add("CS72");
@@ -315,6 +316,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				}
 				if (flags.HasFlag(CompilerOptions.UseRoslynLatest))
 				{
+					preprocessorSymbols.Add("ROSLYN3");
 					preprocessorSymbols.Add("CS73");
 					preprocessorSymbols.Add("CS80");
 					preprocessorSymbols.Add("VB16");

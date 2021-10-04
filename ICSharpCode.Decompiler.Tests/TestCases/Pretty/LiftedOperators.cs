@@ -367,7 +367,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				Console.WriteLine();
 			}
-#if ROSLYN
+#if ROSLYN2
 			// Roslyn 2.9 started invoking op_Equality even if the source code says 'a != b'
 			if (!(a == b))
 			{

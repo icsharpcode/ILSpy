@@ -143,6 +143,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						return PrecedenceLevel.ConditionalOr;
 					case BinaryOperatorType.NullCoalescing:
 						return PrecedenceLevel.NullCoalescing;
+					case BinaryOperatorType.IsPattern:
+						return PrecedenceLevel.RelationalAndTypeTesting;
 					default:
 						throw new NotSupportedException("Invalid value for BinaryOperatorType");
 				}
