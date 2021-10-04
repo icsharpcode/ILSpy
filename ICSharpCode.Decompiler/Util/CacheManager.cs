@@ -34,9 +34,9 @@ namespace ICSharpCode.Decompiler.Util
 		// There used to be a thread-local dictionary here, but I removed it as it was causing memory
 		// leaks in some use cases.
 
-		public object GetShared(object key)
+		public object? GetShared(object key)
 		{
-			object value;
+			object? value;
 			sharedDict.TryGetValue(key, out value);
 			return value;
 		}

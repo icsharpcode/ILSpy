@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var call = (CallInstruction)arg.Parent;
 			Debug.Assert(context.Function == call.Ancestors.OfType<ILFunction>().First());
-			var type = context.TypeSystem.FindType(arg.ResultType.ToKnownTypeCode());
+			var type = context.TypeSystem.FindType(arg.ResultType);
 			var v = context.Function.RegisterVariable(VariableKind.NamedArgument, type);
 			context.Step($"Introduce named argument '{v.Name}'", arg);
 			if (!(call.Parent is Block namedArgBlock) || namedArgBlock.Kind != BlockKind.CallWithNamedArgs)

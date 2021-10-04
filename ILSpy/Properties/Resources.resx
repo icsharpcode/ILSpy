@@ -234,6 +234,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilationCompleteInF1Seconds" xml:space="preserve">
     <value>Decompilation complete in {0:F1} seconds.</value>
   </data>
+  <data name="DecompilationViewOptions" xml:space="preserve">
+    <value>Decompilation view options</value>
+  </data>
   <data name="DecompilationWasCancelled" xml:space="preserve">
     <value>Decompilation was cancelled.</value>
   </data>
@@ -591,9 +594,6 @@ Are you sure you want to continue?</value>
   <data name="InsertUsingDeclarations" xml:space="preserve">
     <value>Insert using declarations</value>
   </data>
-  <data name="Language" xml:space="preserve">
-    <value>Language</value>
-  </data>
   <data name="ListDeleteConfirmation" xml:space="preserve">
     <value>Are you sure that you want to delete the selected assembly list?</value>
   </data>
@@ -691,6 +691,11 @@ Please disable all filters that might hide the item (i.e. activate "View &gt; Sh
   <data name="ProjectExportFormatSDKHint" xml:space="preserve">
     <value>A SDK-style project was generated. Learn more at https://docs.microsoft.com/en-us/nuget/resources/check-project-format.</value>
   </data>
+  <data name="ProjectExportPathTooLong" xml:space="preserve">
+    <value>Failed to decompile the assemblies {0} because the namespace directory structure is nested too deep.
+
+If you are using Windows 10.0.14393 (Windows 10 version 1607) or later, you can enable "Long path support" by creating a REG_DWORD registry key named "LongPathsEnabled" with value 0x1 at "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem" (see https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation for more information).</value>
+  </data>
   <data name="PropertyManuallyMissingReferencesListLoadedAssemblies" xml:space="preserve">
     <value>for ex. property getter/setter access. To get optimal decompilation results, please manually add the missing references to the list of loaded assemblies.</value>
   </data>
@@ -769,10 +774,10 @@ Do you want to continue?</value>
     <value>Select assemblies to open:</value>
   </data>
   <data name="SelectAssemblyListDropdownTooltip" xml:space="preserve">
-    <value>Select a list of assemblies</value>
+    <value>Select a list of assemblies (Alt+A)</value>
   </data>
   <data name="SelectLanguageDropdownTooltip" xml:space="preserve">
-    <value>Select language to decompile to</value>
+    <value>Select language to decompile to (Alt+L)</value>
   </data>
   <data name="SelectList" xml:space="preserve">
     <value>Select a list:</value>
@@ -781,7 +786,7 @@ Do you want to continue?</value>
     <value>Select PDB...</value>
   </data>
   <data name="SelectVersionDropdownTooltip" xml:space="preserve">
-    <value>Select version of language to output</value>
+    <value>Select version of language to output (Alt+E)</value>
   </data>
   <data name="SettingsChangeRestartRequired" xml:space="preserve">
     <value>You must restart ILSpy for the change to take effect.</value>
@@ -821,6 +826,9 @@ Do you want to continue?</value>
   </data>
   <data name="ShowPublicOnlyTypesMembers" xml:space="preserve">
     <value>Show only public types and members</value>
+  </data>
+  <data name="ShowRawOffsetsAndBytesBeforeInstruction" xml:space="preserve">
+    <value>Show raw offsets and bytes before each instruction</value>
   </data>
   <data name="ShowStateAfterThisStep" xml:space="preserve">
     <value>Show state after this step</value>
@@ -867,8 +875,14 @@ Do you want to continue?</value>
   <data name="ToggleFolding" xml:space="preserve">
     <value>Toggle All Folding</value>
   </data>
+  <data name="TreeViewOptions" xml:space="preserve">
+    <value>Tree view options</value>
+  </data>
   <data name="Type" xml:space="preserve">
     <value>Type</value>
+  </data>
+  <data name="UILanguage" xml:space="preserve">
+    <value>UI Language</value>
   </data>
   <data name="UILanguage_System" xml:space="preserve">
     <value>System</value>
@@ -932,6 +946,12 @@ Do you want to continue?</value>
   </data>
   <data name="_AddMainList" xml:space="preserve">
     <value>_Add To Main List</value>
+  </data>
+  <data name="_Analyzer" xml:space="preserve">
+    <value>Analy_zer</value>
+  </data>
+  <data name="_Assemblies" xml:space="preserve">
+    <value>_Assemblies</value>
   </data>
   <data name="_CheckUpdates" xml:space="preserve">
     <value>_Check for Updates</value>

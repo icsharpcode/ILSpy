@@ -342,11 +342,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				HandleException(badImage, "This file does not contain a managed assembly.");
 			}
-			catch (FileNotFoundException fileNotFound)
+			catch (FileNotFoundException fileNotFound) when (options.SaveAsProjectDirectory == null)
 			{
 				HandleException(fileNotFound, "The file was not found.");
 			}
-			catch (DirectoryNotFoundException dirNotFound)
+			catch (DirectoryNotFoundException dirNotFound) when (options.SaveAsProjectDirectory == null)
 			{
 				HandleException(dirNotFound, "The directory was not found.");
 			}

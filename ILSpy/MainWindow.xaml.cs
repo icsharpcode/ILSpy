@@ -371,6 +371,29 @@ namespace ICSharpCode.ILSpy
 		}
 		#endregion
 
+		protected override void OnKeyDown(KeyEventArgs e)
+		{
+			base.OnKeyDown(e);
+			if (!e.Handled && e.KeyboardDevice.Modifiers == ModifierKeys.Alt && e.Key == Key.System)
+			{
+				switch (e.SystemKey)
+				{
+					case Key.A:
+						assemblyListComboBox.Focus();
+						e.Handled = true;
+						break;
+					case Key.L:
+						languageComboBox.Focus();
+						e.Handled = true;
+						break;
+					case Key.E: // Alt+V was already taken by _View menu
+						languageVersionComboBox.Focus();
+						e.Handled = true;
+						break;
+				}
+			}
+		}
+
 		public AssemblyList CurrentAssemblyList {
 			get { return assemblyList; }
 		}
@@ -379,24 +402,8 @@ namespace ICSharpCode.ILSpy
 
 		List<LoadedAssembly> commandLineLoadedAssemblies = new List<LoadedAssembly>();
 
-		List<string> nugetPackagesToLoad = new List<string>();
-
 		bool HandleCommandLineArguments(CommandLineArguments args)
 		{
-			int i = 0;
-			while (i < args.AssembliesToLoad.Count)
-			{
-				var asm = args.AssembliesToLoad[i];
-				if (Path.GetExtension(asm) == ".nupkg")
-				{
-					nugetPackagesToLoad.Add(asm);
-					args.AssembliesToLoad.RemoveAt(i);
-				}
-				else
-				{
-					i++;
-				}
-			}
 			LoadAssemblies(args.AssembliesToLoad, commandLineLoadedAssemblies, focusNode: false);
 			if (args.Language != null)
 				sessionSettings.FilterSettings.Language = Languages.GetLanguage(args.Language);
@@ -409,13 +416,6 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ILSpySettings spySettings = null)
 		{
-			if (nugetPackagesToLoad.Count > 0)
-			{
-				var relevantPackages = nugetPackagesToLoad.ToArray();
-				nugetPackagesToLoad.Clear();
-				// Show the nuget package open dialog after the command line/window message was processed.
-				Dispatcher.BeginInvoke(new Action(() => LoadAssemblies(relevantPackages, commandLineLoadedAssemblies, focusNode: false)), DispatcherPriority.Normal);
-			}
 			var relevantAssemblies = commandLineLoadedAssemblies.ToList();
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
 			NavigateOnLaunch(args.NavigateTo, sessionSettings.ActiveTreeViewPath, spySettings, relevantAssemblies);

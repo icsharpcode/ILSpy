@@ -48,7 +48,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis" Version="2.4.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.4.0" />
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="2.4.0" />
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.0.1619-preview1">
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.0.4201-preview4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -165,6 +165,12 @@
     <None Include="ILSpyAddIn.vsct">
       <SubType>Designer</SubType>
     </None>
+    <None Include="ILSpyAddIn.en-US.vsct">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="ILSpyAddIn.zh-Hans.vsct">
+      <SubType>Designer</SubType>
+    </None>
     <Content Include="zh-Hans\extension.vsixlangpack">
       <IncludeInVSIX>true</IncludeInVSIX>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -203,6 +209,8 @@
 
   <PropertyGroup>
     <UseCodebase>true</UseCodebase>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
   </PropertyGroup>
 
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />

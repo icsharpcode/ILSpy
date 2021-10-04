@@ -286,6 +286,19 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		private bool showRawOffsetsAndBytesBeforeInstruction;
+
+		public bool ShowRawOffsetsAndBytesBeforeInstruction {
+			get { return showRawOffsetsAndBytesBeforeInstruction; }
+			set {
+				if (showRawOffsetsAndBytesBeforeInstruction != value)
+				{
+					showRawOffsetsAndBytesBeforeInstruction = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public void CopyValues(DisplaySettings s)
 		{
 			this.SelectedFont = s.selectedFont;
@@ -305,6 +318,7 @@ namespace ICSharpCode.ILSpy.Options
 			this.HighlightMatchingBraces = s.highlightMatchingBraces;
 			this.HighlightCurrentLine = s.highlightCurrentLine;
 			this.HideEmptyMetadataTables = s.hideEmptyMetadataTables;
+			this.ShowRawOffsetsAndBytesBeforeInstruction = s.showRawOffsetsAndBytesBeforeInstruction;
 			this.StyleWindowTitleBar = s.styleWindowTitleBar;
 		}
 	}

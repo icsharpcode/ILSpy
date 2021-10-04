@@ -75,5 +75,10 @@
   <ItemGroup>
     <ProjectReference Include="..\ILSpy\ILSpy.csproj" SkipGetTargetFrameworkProperties="true" />
   </ItemGroup>
+    <ItemGroup>
+      <Content Include="..\ILSpy\bin\$(Configuration)\net472\\**\*.*" Link="ILSpy\%(RecursiveDir)%(Filename)%(Extension)">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
 </Project>

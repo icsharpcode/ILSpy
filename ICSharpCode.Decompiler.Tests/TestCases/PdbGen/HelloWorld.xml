@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <symbols>
   <files>
-    <file id="1" name="ICSharpCode.Decompiler.Tests.TestCases.PdbGen\HelloWorld.cs" language="C#" checksumAlgorithm="SHA256"><![CDATA[using System;
+    <file id="1" name="ICSharpCode\Decompiler\Tests\TestCases\PdbGen\HelloWorld.cs" language="C#" checksumAlgorithm="SHA256"><![CDATA[using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.PdbGen
 {

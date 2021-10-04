@@ -79,6 +79,24 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Analy_zer.
+        /// </summary>
+        public static string _Analyzer {
+            get {
+                return ResourceManager.GetString("_Analyzer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Assemblies.
+        /// </summary>
+        public static string _Assemblies {
+            get {
+                return ResourceManager.GetString("_Assemblies", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to _Check for Updates.
         /// </summary>
         public static string _CheckUpdates {
@@ -618,6 +636,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilationCompleteInF1Seconds {
             get {
                 return ResourceManager.GetString("DecompilationCompleteInF1Seconds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Decompilation view options.
+        /// </summary>
+        public static string DecompilationViewOptions {
+            get {
+                return ResourceManager.GetString("DecompilationViewOptions", resourceCulture);
             }
         }
         
@@ -1695,15 +1722,6 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Language.
-        /// </summary>
-        public static string Language {
-            get {
-                return ResourceManager.GetString("Language", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Are you sure that you want to delete the selected assembly list?.
         /// </summary>
         public static string ListDeleteConfirmation {
@@ -1993,6 +2011,17 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to decompile the assemblies {0} because the namespace directory structure is nested too deep.
+        ///
+        ///If you are using Windows 10.0.14393 (Windows 10 version 1607) or later, you can enable &quot;Long path support&quot; by creating a REG_DWORD registry key named &quot;LongPathsEnabled&quot; with value 0x1 at &quot;HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem&quot; (see https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation for more information)..
+        /// </summary>
+        public static string ProjectExportPathTooLong {
+            get {
+                return ResourceManager.GetString("ProjectExportPathTooLong", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to for ex. property getter/setter access. To get optimal decompilation results, please manually add the missing references to the list of loaded assemblies..
         /// </summary>
         public static string PropertyManuallyMissingReferencesListLoadedAssemblies {
@@ -2220,7 +2249,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select a list of assemblies.
+        ///   Looks up a localized string similar to Select a list of assemblies (Alt+A).
         /// </summary>
         public static string SelectAssemblyListDropdownTooltip {
             get {
@@ -2229,7 +2258,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select language to decompile to.
+        ///   Looks up a localized string similar to Select language to decompile to (Alt+L).
         /// </summary>
         public static string SelectLanguageDropdownTooltip {
             get {
@@ -2256,7 +2285,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select version of language to output.
+        ///   Looks up a localized string similar to Select version of language to output (Alt+E).
         /// </summary>
         public static string SelectVersionDropdownTooltip {
             get {
@@ -2409,6 +2438,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Show raw offsets and bytes before each instruction.
+        /// </summary>
+        public static string ShowRawOffsetsAndBytesBeforeInstruction {
+            get {
+                return ResourceManager.GetString("ShowRawOffsetsAndBytesBeforeInstruction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Show state after this step.
         /// </summary>
         public static string ShowStateAfterThisStep {
@@ -2517,11 +2555,29 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Tree view options.
+        /// </summary>
+        public static string TreeViewOptions {
+            get {
+                return ResourceManager.GetString("TreeViewOptions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Type.
         /// </summary>
         public static string Type {
             get {
                 return ResourceManager.GetString("Type", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to UI Language.
+        /// </summary>
+        public static string UILanguage {
+            get {
+                return ResourceManager.GetString("UILanguage", resourceCulture);
             }
         }
         

@@ -52,6 +52,7 @@
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="$(DSRConverterXmlVersion)" />
     <PackageReference Include="NUnit3TestAdapter" Version="$(NUnitAdapterVersion)" />
     <PackageReference Include="NUnit" Version="$(NUnitVersion)" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
     <PackageReference Include="Microsoft.NETCore.ILAsm" Version="$(ILAsmVersion)" />
@@ -108,6 +109,7 @@
     <Compile Include="TestCases\Correctness\DynamicTests.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
     <Compile Include="TestCases\Pretty\PatternMatching.cs" />
+    <None Include="TestCases\Pretty\CovariantReturns.cs" />
     <Compile Include="TestCases\VBPretty\VBPropertiesTest.cs" />
     <None Include="TestCases\ILPretty\Issue2260SwitchString.cs" />
     <None Include="TestCases\Pretty\Records.cs" />

@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,7 +25,6 @@ using System.Text;
 using System.Threading;
 using System.Xml.Linq;
 
-using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -35,15 +36,10 @@ namespace ICSharpCode.Decompiler.Documentation
 	/// </summary>
 	public class XmlDocumentationElement
 	{
-		static XmlDocumentationElement Create(string documentationComment, IEntity declaringEntity)
-		{
-			return new XmlDocumentationElement(XElement.Parse(documentationComment), declaringEntity, null);
-		}
-
-		readonly XElement element;
-		readonly IEntity declaringEntity;
-		readonly Func<string, IEntity> crefResolver;
-		volatile string textContent;
+		readonly XElement? element;
+		readonly IEntity? declaringEntity;
+		readonly Func<string, IEntity?>? crefResolver;
+		volatile string? textContent;
 
 		/// <summary>
 		/// Inheritance level; used to prevent cyclic doc inheritance.
@@ -53,7 +49,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <summary>
 		/// Creates a new documentation element.
 		/// </summary>
-		public XmlDocumentationElement(XElement element, IEntity declaringEntity, Func<string, IEntity> crefResolver)
+		public XmlDocumentationElement(XElement element, IEntity? declaringEntity, Func<string, IEntity?>? crefResolver)
 		{
 			if (element == null)
 				throw new ArgumentNullException(nameof(element));
@@ -65,7 +61,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <summary>
 		/// Creates a new documentation element.
 		/// </summary>
-		public XmlDocumentationElement(string text, IEntity declaringEntity)
+		public XmlDocumentationElement(string text, IEntity? declaringEntity)
 		{
 			if (text == null)
 				throw new ArgumentNullException(nameof(text));
@@ -77,26 +73,26 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// Gets the entity on which this documentation was originally declared.
 		/// May return null.
 		/// </summary>
-		public IEntity DeclaringEntity {
+		public IEntity? DeclaringEntity {
 			get { return declaringEntity; }
 		}
 
-		IEntity referencedEntity;
+		IEntity? referencedEntity;
 		volatile bool referencedEntityInitialized;
 
 		/// <summary>
 		/// Gets the entity referenced by the 'cref' attribute.
 		/// May return null.
 		/// </summary>
-		public IEntity ReferencedEntity {
+		public IEntity? ReferencedEntity {
 			get {
 				if (!referencedEntityInitialized)
 				{
-					string cref = GetAttribute("cref");
+					string? cref = GetAttribute("cref");
 					try
 					{
 						if (!string.IsNullOrEmpty(cref) && crefResolver != null)
-							referencedEntity = crefResolver(cref);
+							referencedEntity = crefResolver(cref!);
 					}
 					catch
 					{
@@ -120,7 +116,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <summary>
 		/// Gets the attribute value.
 		/// </summary>
-		public string GetAttribute(string name)
+		public string? GetAttribute(string? name)
 		{
 			return element?.Attribute(name)?.Value;
 		}
@@ -148,7 +144,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			}
 		}
 
-		IList<XmlDocumentationElement> children;
+		IList<XmlDocumentationElement>? children;
 
 		/// <summary>
 		/// Gets the child elements.
@@ -159,7 +155,7 @@ namespace ICSharpCode.Decompiler.Documentation
 					return EmptyList<XmlDocumentationElement>.Instance;
 				return LazyInitializer.EnsureInitialized(
 					ref this.children,
-					() => CreateElements(element.Nodes(), declaringEntity, crefResolver, nestingLevel));
+					() => CreateElements(element.Nodes(), declaringEntity, crefResolver, nestingLevel))!;
 			}
 		}
 
@@ -168,7 +164,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			"remarks", "returns", "threadsafety", "value"
 		};
 
-		static List<XmlDocumentationElement> CreateElements(IEnumerable<XObject> childObjects, IEntity declaringEntity, Func<string, IEntity> crefResolver, int nestingLevel)
+		static List<XmlDocumentationElement> CreateElements(IEnumerable<XObject?> childObjects, IEntity? declaringEntity, Func<string, IEntity?>? crefResolver, int nestingLevel)
 		{
 			List<XmlDocumentationElement> list = new List<XmlDocumentationElement>();
 			foreach (var child in childObjects)
@@ -188,23 +184,24 @@ namespace ICSharpCode.Decompiler.Documentation
 				{
 					if (nestingLevel < 5 && childElement.Name == "inheritdoc")
 					{
-						string cref = childElement.Attribute("cref").Value;
-						IEntity inheritedFrom = null;
-						string inheritedDocumentation = null;
-						if (cref != null)
+						string? cref = childElement.Attribute("cref")?.Value;
+						IEntity? inheritedFrom = null;
+						string? inheritedDocumentation = null;
+						if (cref != null && crefResolver != null)
 						{
 							inheritedFrom = crefResolver(cref);
 							if (inheritedFrom != null)
-								inheritedDocumentation = inheritedFrom.GetDocumentation();
+								inheritedDocumentation = "<doc>" + inheritedFrom.GetDocumentation() + "</doc>";
 						}
 						else
 						{
-							foreach (IMember baseMember in InheritanceHelper.GetBaseMembers((IMember)declaringEntity, includeImplementedInterfaces: true))
+							foreach (IMember baseMember in InheritanceHelper.GetBaseMembers((IMember?)declaringEntity, includeImplementedInterfaces: true))
 							{
 								inheritedDocumentation = baseMember.GetDocumentation();
 								if (inheritedDocumentation != null)
 								{
 									inheritedFrom = baseMember;
+									inheritedDocumentation = "<doc>" + inheritedDocumentation + "</doc>";
 									break;
 								}
 							}
@@ -212,10 +209,10 @@ namespace ICSharpCode.Decompiler.Documentation
 
 						if (inheritedDocumentation != null)
 						{
-							var doc = XDocument.Parse(inheritedDocumentation);
+							var doc = XDocument.Parse(inheritedDocumentation).Element("doc");
 
 							// XPath filter not yet implemented
-							if (childElement.Parent == null && childElement.Attribute("select").Value == null)
+							if (childElement.Parent?.Parent == null && childElement.Attribute("select")?.Value == null)
 							{
 								// Inheriting documentation at the root level
 								List<string> doNotInherit = new List<string>();
@@ -225,7 +222,7 @@ namespace ICSharpCode.Decompiler.Documentation
 
 								var inheritedChildren = doc.Nodes().Where(
 									inheritedObject => {
-										XElement inheritedElement = inheritedObject as XElement;
+										XElement? inheritedElement = inheritedObject as XElement;
 										return !(inheritedElement != null && doNotInherit.Contains(inheritedElement.Name.LocalName));
 									});
 
@@ -244,14 +241,14 @@ namespace ICSharpCode.Decompiler.Documentation
 				if (string.IsNullOrWhiteSpace(list[0].textContent))
 					list.RemoveAt(0);
 				else
-					list[0].textContent = list[0].textContent.TrimStart();
+					list[0].textContent = list[0].textContent!.TrimStart();
 			}
 			if (list.Count > 0 && list[list.Count - 1].IsTextNode)
 			{
 				if (string.IsNullOrWhiteSpace(list[list.Count - 1].textContent))
 					list.RemoveAt(list.Count - 1);
 				else
-					list[list.Count - 1].textContent = list[list.Count - 1].textContent.TrimEnd();
+					list[list.Count - 1].textContent = list[list.Count - 1].textContent!.TrimEnd();
 			}
 			return list;
 		}

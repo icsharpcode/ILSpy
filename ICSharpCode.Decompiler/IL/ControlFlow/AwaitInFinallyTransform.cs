@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					{
 						identifierValueTargets.Add(value, otherBranch.TargetBlock);
 						block.Instructions.RemoveAt(statement.ChildIndex + 1);
-						statement.ReplaceWith(otherBranch);
+						statement.ReplaceWith(branchToTarget);
 					}
 					else
 					{

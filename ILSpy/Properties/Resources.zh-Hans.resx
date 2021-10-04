@@ -585,9 +585,6 @@
   <data name="InsertUsingDeclarations" xml:space="preserve">
     <value>插入使用声明</value>
   </data>
-  <data name="Language" xml:space="preserve">
-    <value>语言</value>
-  </data>
   <data name="ListDeleteConfirmation" xml:space="preserve">
     <value>是否删除选中的程序集列表？</value>
   </data>
@@ -857,6 +854,9 @@
   </data>
   <data name="Type" xml:space="preserve">
     <value>类型</value>
+  </data>
+  <data name="UILanguage" xml:space="preserve">
+    <value>语言</value>
   </data>
   <data name="UILanguage_System" xml:space="preserve">
     <value>系统</value>

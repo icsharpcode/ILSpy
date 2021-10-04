@@ -11,12 +11,7 @@
 		<local:FontSizeConverter x:Key="fontSizeConv" />
 	</UserControl.Resources>
 	<ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-		<Grid>
-			<Grid.RowDefinitions>
-				<RowDefinition Height="Auto"/>
-				<RowDefinition Height="Auto"/>
-				<RowDefinition/>
-			</Grid.RowDefinitions>
+		<StackPanel Orientation="Vertical">
 			<GroupBox Header="{x:Static properties:Resources.Font}">
 				<Grid>
 					<Grid.ColumnDefinitions>
@@ -64,7 +59,7 @@
 					</Border>
 				</Grid>
 			</GroupBox>
-			<GroupBox Header="{x:Static properties:Resources.Indentation}" Grid.Row="1">
+			<GroupBox Header="{x:Static properties:Resources.Indentation}">
 				<StackPanel Margin="3">
 					<CheckBox IsChecked="{Binding IndentationUseTabs}" Content="{x:Static properties:Resources.UseTabsInsteadOfSpaces}"></CheckBox>
 					<StackPanel Orientation="Horizontal">
@@ -77,23 +72,32 @@
 					</StackPanel>
 				</StackPanel>
 			</GroupBox>
-			<GroupBox Header="{x:Static properties:Resources.OtherOptions}" Grid.Row="2">
+			<GroupBox Header="{x:Static properties:Resources.DecompilationViewOptions}">
 				<StackPanel Margin="3">
 					<CheckBox IsChecked="{Binding ShowLineNumbers}" Content="{x:Static properties:Resources.ShowLineNumbers}"></CheckBox>
-					<CheckBox IsChecked="{Binding ShowMetadataTokens}" Content="{x:Static properties:Resources.ShowMetadataTokens}"></CheckBox>
-					<CheckBox IsChecked="{Binding ShowMetadataTokensInBase10}" Content="{x:Static properties:Resources.ShowMetadataTokensInBase10}"></CheckBox>
-					<CheckBox IsChecked="{Binding HideEmptyMetadataTables}" Content="{x:Static properties:Resources.HideEmptyMetadataTables}"></CheckBox>
-					<CheckBox IsChecked="{Binding ShowDebugInfo}" Content="{x:Static properties:Resources.ShowInfoFromDebugSymbolsAvailable}"></CheckBox>
 					<CheckBox IsChecked="{Binding EnableWordWrap}" Content="{x:Static properties:Resources.EnableWordWrap}"></CheckBox>
 					<CheckBox IsChecked="{Binding FoldBraces}" Content="{x:Static properties:Resources.EnableFoldingBlocksBraces}"></CheckBox>
 					<CheckBox IsChecked="{Binding HighlightMatchingBraces}" Content="{x:Static properties:Resources.HighlightMatchingBraces}"></CheckBox>
 					<CheckBox IsChecked="{Binding HighlightCurrentLine}" Content="{x:Static properties:Resources.HighlightCurrentLine}"></CheckBox>
-					<CheckBox IsChecked="{Binding SortResults}" Content="{x:Static properties:Resources.SortResultsFitness}"></CheckBox>
 					<CheckBox IsChecked="{Binding ExpandMemberDefinitions}" Content="{x:Static properties:Resources.ExpandMemberDefinitionsAfterDecompilation}"></CheckBox>
 					<CheckBox IsChecked="{Binding ExpandUsingDeclarations}" Content="{x:Static properties:Resources.ExpandUsingDeclarationsAfterDecompilation}"></CheckBox>
+					<CheckBox IsChecked="{Binding ShowDebugInfo}" Content="{x:Static properties:Resources.ShowInfoFromDebugSymbolsAvailable}"></CheckBox>
+					<CheckBox IsChecked="{Binding ShowRawOffsetsAndBytesBeforeInstruction}" Content="{x:Static properties:Resources.ShowRawOffsetsAndBytesBeforeInstruction}"></CheckBox>
+				</StackPanel>
+			</GroupBox>
+			<GroupBox Header="{x:Static properties:Resources.TreeViewOptions}">
+				<StackPanel Margin="3">
+					<CheckBox IsChecked="{Binding ShowMetadataTokens}" Content="{x:Static properties:Resources.ShowMetadataTokens}"></CheckBox>
+					<CheckBox IsChecked="{Binding ShowMetadataTokensInBase10}" Content="{x:Static properties:Resources.ShowMetadataTokensInBase10}"></CheckBox>
+					<CheckBox IsChecked="{Binding HideEmptyMetadataTables}" Content="{x:Static properties:Resources.HideEmptyMetadataTables}"></CheckBox>
+				</StackPanel>
+			</GroupBox>
+			<GroupBox Header="{x:Static properties:Resources.OtherOptions}">
+				<StackPanel Margin="3">
+					<CheckBox IsChecked="{Binding SortResults}" Content="{x:Static properties:Resources.SortResultsFitness}"></CheckBox>
 					<CheckBox IsChecked="{Binding StyleWindowTitleBar}" Content="{x:Static properties:Resources.StyleTheWindowTitleBar}"></CheckBox>
 				</StackPanel>
 			</GroupBox>
-		</Grid>
+		</StackPanel>
 	</ScrollViewer>
 </UserControl>

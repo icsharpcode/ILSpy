@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -34,6 +35,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Options;
+
+using K4os.Compression.LZ4;
 
 #nullable enable
 
@@ -323,6 +326,15 @@ namespace ICSharpCode.ILSpy
 			{
 				loadAssemblyException = ex;
 			}
+			// Maybe its a compressed Xamarin/Mono assembly, see https://github.com/xamarin/xamarin-android/pull/4686
+			try
+			{
+				return LoadCompressedAssembly(fileName);
+			}
+			catch (InvalidDataException)
+			{
+				// Not a compressed module, try other options below
+			}
 			// If it's not a .NET module, maybe it's a single-file bundle
 			var bundle = LoadedPackage.FromBundle(fileName);
 			if (bundle != null)
@@ -363,6 +375,42 @@ namespace ICSharpCode.ILSpy
 				loadedAssemblies.Add(module, this);
 			}
 			return new LoadResult(module);
+		}
+
+		LoadResult LoadCompressedAssembly(string fileName)
+		{
+			const uint CompressedDataMagic = 0x5A4C4158; // Magic used for Xamarin compressed module header ('XALZ', little-endian)
+			using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+			using (var fileReader = new BinaryReader(fileStream))
+			{
+				// Read compressed file header
+				var magic = fileReader.ReadUInt32();
+				if (magic != CompressedDataMagic)
+					throw new InvalidDataException($"Xamarin compressed module header magic {magic} does not match expected {CompressedDataMagic}");
+				_ = fileReader.ReadUInt32(); // skip index into descriptor table, unused
+				int uncompressedLength = (int)fileReader.ReadUInt32();
+				int compressedLength = (int)fileStream.Length;  // Ensure we read all of compressed data
+				ArrayPool<byte> pool = ArrayPool<byte>.Shared;
+				var src = pool.Rent(compressedLength);
+				var dst = pool.Rent(uncompressedLength);
+				try
+				{
+					// fileReader stream position is now at compressed module data
+					fileStream.Read(src, 0, compressedLength);
+					// Decompress
+					LZ4Codec.Decode(src, 0, compressedLength, dst, 0, uncompressedLength);
+					// Load module from decompressed data buffer
+					using (var uncompressedStream = new MemoryStream(dst, writable: false))
+					{
+						return LoadAssembly(uncompressedStream, PEStreamOptions.PrefetchEntireImage);
+					}
+				}
+				finally
+				{
+					pool.Return(dst);
+					pool.Return(src);
+				}
+			}
 		}
 
 		IDebugInfoProvider? LoadDebugInfo(PEFile module)

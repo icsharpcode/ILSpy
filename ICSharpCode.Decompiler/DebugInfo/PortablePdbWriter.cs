@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			string BuildFileNameFromTypeName(TypeDefinitionHandle handle)
 			{
 				var typeName = handle.GetFullTypeName(reader).TopLevelTypeName;
-				return Path.Combine(WholeProjectDecompiler.CleanUpFileName(typeName.Namespace), WholeProjectDecompiler.CleanUpFileName(typeName.Name) + ".cs");
+				return Path.Combine(WholeProjectDecompiler.CleanUpDirectoryName(typeName.Namespace), WholeProjectDecompiler.CleanUpFileName(typeName.Name) + ".cs");
 			}
 
 			foreach (var sourceFile in reader.GetTopLevelTypeDefinitions().GroupBy(BuildFileNameFromTypeName))

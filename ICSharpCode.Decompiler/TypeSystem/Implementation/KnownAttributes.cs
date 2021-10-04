@@ -102,11 +102,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		// C# 9 attributes:
 		NativeInteger,
+		PreserveBaseOverrides,
 	}
 
 	static class KnownAttributes
 	{
-		internal const int Count = (int)KnownAttribute.NativeInteger + 1;
+		internal const int Count = (int)KnownAttribute.PreserveBaseOverrides + 1;
 
 		static readonly TopLevelTypeName[] typeNames = new TopLevelTypeName[Count]{
 			default,
@@ -167,6 +168,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Security.Permissions", "PermissionSetAttribute"),
 			// C# 9 attributes:
 			new TopLevelTypeName("System.Runtime.CompilerServices", "NativeIntegerAttribute"),
+			new TopLevelTypeName("System.Runtime.CompilerServices", "PreserveBaseOverridesAttribute"),
 		};
 
 		public static ref readonly TopLevelTypeName GetTypeName(this KnownAttribute attr)
