@@ -111,6 +111,15 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void NoPropertiesAndEvents([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+				AutomaticEvents = false,
+				AutomaticProperties = false,
+			});
+		}
+
+		[Test]
 		public void AggressiveScalarReplacementOfAggregates([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
