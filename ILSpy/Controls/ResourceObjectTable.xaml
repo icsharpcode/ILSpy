@@ -17,7 +17,7 @@
 				<SolidColorBrush Color="#CCCC33" Opacity="0.15" />
 			</AlternationConverter>
 			<Style x:Key="alternatingWithBinding"
-				   TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+				   TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource {x:Type ListViewItem}}">
 				<Setter Property="Background"
 						Value="{Binding RelativeSource={RelativeSource Self},
 					 Path=(ItemsControl.AlternationIndex),
