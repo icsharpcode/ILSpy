@@ -18,6 +18,18 @@ namespace ICSharpCode.Decompiler.Instrumentation
 			WriteEvent(2, propertyName, elapsedMilliseconds);
 		}
 
+		[Event(3, Level = EventLevel.Informational)]
+		public void DoDecompileField(string fieldName, long elapsedMilliseconds)
+		{
+			WriteEvent(3, fieldName, elapsedMilliseconds);
+		}
+
+		[Event(4, Level = EventLevel.Informational)]
+		public void DoDecompileTypeDefinition(string typeDefName, long elapsedMilliseconds)
+		{
+			WriteEvent(4, typeDefName, elapsedMilliseconds);
+		}
+
 		public static DecompilerEventSource Log = new DecompilerEventSource();
 	}
 

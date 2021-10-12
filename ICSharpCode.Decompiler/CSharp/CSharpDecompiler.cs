@@ -1209,6 +1209,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(ITypeDefinition typeDef, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentTypeDefinition == typeDef);
+			var watch = System.Diagnostics.Stopwatch.StartNew();
 			try
 			{
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
@@ -1336,6 +1337,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
 			{
 				throw new DecompilerException(module, typeDef, innerException);
+			}
+			finally
+			{
+				watch.Stop();
+				Instrumentation.DecompilerEventSource.Log.DoDecompileTypeDefinition(typeDef.FullName, watch.ElapsedMilliseconds);
 			}
 		}
 
@@ -1660,6 +1666,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(IField field, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == field);
+			var watch = System.Diagnostics.Stopwatch.StartNew();
 			try
 			{
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
@@ -1721,6 +1728,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
 			{
 				throw new DecompilerException(module, field, innerException);
+			}
+			finally
+			{
+				watch.Stop();
+				Instrumentation.DecompilerEventSource.Log.DoDecompileField(field.FullName, watch.ElapsedMilliseconds);
 			}
 		}
 
@@ -1802,7 +1814,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			finally
 			{
 				watch.Stop();
-				Instrumentation.DecompilerEventSource.Log.DoDecompileProperty(property.Name, watch.ElapsedMilliseconds);
+				Instrumentation.DecompilerEventSource.Log.DoDecompileProperty(property.FullName, watch.ElapsedMilliseconds);
 			}
 		}
 
@@ -1848,7 +1860,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			finally
 			{
 				watch.Stop();
-				Instrumentation.DecompilerEventSource.Log.DoDecompileEvent(ev.Name, watch.ElapsedMilliseconds);
+				Instrumentation.DecompilerEventSource.Log.DoDecompileEvent(ev.FullName, watch.ElapsedMilliseconds);
 			}
 		}
 
