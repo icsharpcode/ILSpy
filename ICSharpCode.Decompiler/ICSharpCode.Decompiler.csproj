@@ -100,6 +100,7 @@
     <Compile Include="IL\Transforms\LdLocaDupInitObjTransform.cs" />
     <Compile Include="IL\Transforms\PatternMatchingTransform.cs" />
     <Compile Include="IL\Transforms\RemoveInfeasiblePathTransform.cs" />
+    <Compile Include="Instrumentation\DecompilerEventSource.cs" />
     <Compile Include="Metadata\ReferenceLoadInfo.cs" />
     <Compile Include="Semantics\OutVarResolveResult.cs" />
     <Compile Include="SingleFileBundle.cs" />

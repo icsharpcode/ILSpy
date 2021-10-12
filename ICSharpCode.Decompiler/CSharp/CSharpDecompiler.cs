@@ -1744,6 +1744,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(IProperty property, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == property);
+			var watch = System.Diagnostics.Stopwatch.StartNew();
 			try
 			{
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
@@ -1798,11 +1799,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				throw new DecompilerException(module, property, innerException);
 			}
+			finally
+			{
+				watch.Stop();
+				Instrumentation.DecompilerEventSource.Log.DoDecompileProperty(property.Name, watch.ElapsedMilliseconds);
+			}
 		}
 
 		EntityDeclaration DoDecompile(IEvent ev, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == ev);
+			var watch = System.Diagnostics.Stopwatch.StartNew();
 			try
 			{
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
@@ -1837,6 +1844,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
 			{
 				throw new DecompilerException(module, ev, innerException);
+			}
+			finally
+			{
+				watch.Stop();
+				Instrumentation.DecompilerEventSource.Log.DoDecompileEvent(ev.Name, watch.ElapsedMilliseconds);
 			}
 		}
 
