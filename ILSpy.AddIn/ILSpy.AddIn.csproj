@@ -31,16 +31,28 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(AppVeyor)' != ''">
-    <DeployExtension>False</DeployExtension>
-  </PropertyGroup>
-
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Design" />
   </ItemGroup>
 
   <Import Project="..\packages.props" />
+  
+  <!-- msbuild -p:TargetVsVersion=2019 ILSpy.sln -->
+  <PropertyGroup Condition="'$(TargetVsVersion)' == ''">
+    <None Include="source.extension.vsixmanifest.template" />
+    <None Include="source.extension.vsixmanifest">
+      <SubType>Designer</SubType>
+    </None>
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.0-previews-4-31709-430" />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetVsVersion)' == '2019'">
+    <None Include="source.extension2019.vsixmanifest.template" />
+    <None Include="source.extension2019.vsixmanifest">
+      <SubType>Designer</SubType>
+    </None>
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="15.0.1" />
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="15.0.1" />
@@ -155,12 +167,6 @@
     </Content>
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="source.extension.vsixmanifest.template" />
-    <None Include="source.extension.vsixmanifest">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
   <ItemGroup>
     <None Include="ILSpyAddIn.vsct">
       <SubType>Designer</SubType>
