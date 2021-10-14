@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Management.Automation;
 using System.Text;
+
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -20,17 +21,23 @@ namespace ICSharpCode.Decompiler.PowerShell
 
 		protected override void ProcessRecord()
 		{
-			try {
+			try
+			{
 				StringWriter output = new StringWriter();
-				if (TypeName == null) {
+				if (TypeName == null)
+				{
 					output.Write(Decompiler.DecompileWholeModuleAsString());
-				} else {
+				}
+				else
+				{
 					var name = new FullTypeName(TypeName);
 					output.Write(Decompiler.DecompileTypeAsString(name));
 				}
 
 				WriteObject(output.ToString());
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				WriteVerbose(e.ToString());
 				WriteError(new ErrorRecord(e, ErrorIds.DecompilationFailed, ErrorCategory.OperationStopped, null));
 			}

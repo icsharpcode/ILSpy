@@ -1,0 +1,11 @@
+{
+	"solution": {
+		"path": "ILSpy.sln",
+		"projects": [
+			"ICSharpCode.Decompiler.Console\\ICSharpCode.Decompiler.Console.csproj",
+			"ICSharpCode.Decompiler.PowerShell\\ICSharpCode.Decompiler.PowerShell.csproj",
+			"ICSharpCode.Decompiler.Tests\\ICSharpCode.Decompiler.Tests.csproj",
+			"ICSharpCode.Decompiler\\ICSharpCode.Decompiler.csproj"
+		]
+	}
+}

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Management.Automation;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.PowerShell
@@ -8,8 +9,8 @@ namespace ICSharpCode.Decompiler.PowerShell
 	[OutputType(typeof(string))]
 	public class GetDecompilerVersion : PSCmdlet
 	{
-	    protected override void ProcessRecord()
-	    {
+		protected override void ProcessRecord()
+		{
 			WriteObject(typeof(FullTypeName).Assembly.GetName().Version.ToString());
 		}
 	}

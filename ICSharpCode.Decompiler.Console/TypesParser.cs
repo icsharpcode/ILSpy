@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Console
@@ -11,9 +12,12 @@ namespace ICSharpCode.Decompiler.Console
 		{
 			var possibleValues = new Dictionary<string, TypeKind>(StringComparer.OrdinalIgnoreCase) { ["class"] = TypeKind.Class, ["struct"] = TypeKind.Struct, ["interface"] = TypeKind.Interface, ["enum"] = TypeKind.Enum, ["delegate"] = TypeKind.Delegate };
 			HashSet<TypeKind> kinds = new HashSet<TypeKind>();
-			if (values.Length == 1 && !possibleValues.Keys.Any(v => values[0].StartsWith(v, StringComparison.OrdinalIgnoreCase))) {
-				foreach (char ch in values[0]) {
-					switch (ch) {
+			if (values.Length == 1 && !possibleValues.Keys.Any(v => values[0].StartsWith(v, StringComparison.OrdinalIgnoreCase)))
+			{
+				foreach (char ch in values[0])
+				{
+					switch (ch)
+					{
 						case 'c':
 							kinds.Add(TypeKind.Class);
 							break;
@@ -31,8 +35,11 @@ namespace ICSharpCode.Decompiler.Console
 							break;
 					}
 				}
-			} else {
-				foreach (var value in values) {
+			}
+			else
+			{
+				foreach (var value in values)
+				{
 					string v = value;
 					while (v.Length > 0 && !possibleValues.ContainsKey(v))
 						v = v.Remove(v.Length - 1);

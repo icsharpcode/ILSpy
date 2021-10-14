@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Text;
+
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -23,16 +24,20 @@ namespace ICSharpCode.Decompiler.PowerShell
 		{
 			HashSet<TypeKind> kinds = TypesParser.ParseSelection(Types);
 
-			try {
+			try
+			{
 				List<ITypeDefinition> output = new List<ITypeDefinition>();
-				foreach (var type in Decompiler.TypeSystem.MainModule.TypeDefinitions) {
+				foreach (var type in Decompiler.TypeSystem.MainModule.TypeDefinitions)
+				{
 					if (!kinds.Contains(type.Kind))
 						continue;
 					output.Add(type);
 				}
 
 				WriteObject(output.ToArray());
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				WriteVerbose(e.ToString());
 				WriteError(new ErrorRecord(e, ErrorIds.DecompilationFailed, ErrorCategory.OperationStopped, null));
 			}

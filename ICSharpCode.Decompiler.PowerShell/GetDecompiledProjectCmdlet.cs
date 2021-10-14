@@ -4,6 +4,7 @@ using System.IO;
 using System.Management.Automation;
 using System.Threading;
 using System.Threading.Tasks;
+
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
@@ -29,7 +30,8 @@ namespace ICSharpCode.Decompiler.PowerShell
 
 		public void Report(DecompilationProgress value)
 		{
-			lock (syncObject) {
+			lock (syncObject)
+			{
 				completed++;
 				progress = new ProgressRecord(1, "Decompiling " + fileName, $"Completed {completed} of {value.TotalNumberOfFiles}: {value.Status}") {
 					PercentComplete = (int)(completed * 100.0 / value.TotalNumberOfFiles)
@@ -40,28 +42,35 @@ namespace ICSharpCode.Decompiler.PowerShell
 		protected override void ProcessRecord()
 		{
 			string path = GetUnresolvedProviderPathFromPSPath(LiteralPath);
-			if (!Directory.Exists(path)) {
+			if (!Directory.Exists(path))
+			{
 				WriteObject("Destination directory must exist prior to decompilation");
 				return;
 			}
 
-			try {
+			try
+			{
 				var task = Task.Run(() => DoDecompile(path));
 				int timeout = 100;
 
 				// Give the decompiler some time to spin up all threads
 				Thread.Sleep(timeout);
 
-				while (!task.IsCompleted) {
+				while (!task.IsCompleted)
+				{
 					ProgressRecord progress;
-					lock (syncObject) {
+					lock (syncObject)
+					{
 						progress = this.progress;
 						this.progress = null;
 					}
-					if (progress != null) {
+					if (progress != null)
+					{
 						timeout = 100;
 						WriteProgress(progress);
-					} else {
+					}
+					else
+					{
 						Thread.Sleep(timeout);
 						timeout = Math.Min(1000, timeout * 2);
 					}
@@ -70,7 +79,9 @@ namespace ICSharpCode.Decompiler.PowerShell
 				task.Wait();
 
 				WriteProgress(new ProgressRecord(1, "Decompiling " + fileName, "Decompilation finished") { RecordType = ProgressRecordType.Completed });
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				WriteVerbose(e.ToString());
 				WriteError(new ErrorRecord(e, ErrorIds.DecompilationFailed, ErrorCategory.OperationStopped, null));
 			}

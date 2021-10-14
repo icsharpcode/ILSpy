@@ -39,6 +39,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.Tests", "ILSpy.Tests\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.ReadyToRun", "ILSpy.ReadyToRun\ILSpy.ReadyToRun.csproj", "{0313F581-C63B-43BB-AA9B-07615DABD8A3}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.Console", "ICSharpCode.Decompiler.Console\ICSharpCode.Decompiler.Console.csproj", "{743B439A-E7AD-4A0A-BAB6-222E1EA83C6D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.PowerShell", "ICSharpCode.Decompiler.PowerShell\ICSharpCode.Decompiler.PowerShell.csproj", "{50060E0C-FA25-41F4-B72F-8490324EC9F0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -89,6 +93,14 @@ Global
 		{0313F581-C63B-43BB-AA9B-07615DABD8A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0313F581-C63B-43BB-AA9B-07615DABD8A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0313F581-C63B-43BB-AA9B-07615DABD8A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{743B439A-E7AD-4A0A-BAB6-222E1EA83C6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{743B439A-E7AD-4A0A-BAB6-222E1EA83C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{743B439A-E7AD-4A0A-BAB6-222E1EA83C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{743B439A-E7AD-4A0A-BAB6-222E1EA83C6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50060E0C-FA25-41F4-B72F-8490324EC9F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50060E0C-FA25-41F4-B72F-8490324EC9F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50060E0C-FA25-41F4-B72F-8490324EC9F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50060E0C-FA25-41F4-B72F-8490324EC9F0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

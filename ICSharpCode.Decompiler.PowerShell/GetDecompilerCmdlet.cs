@@ -4,6 +4,7 @@ using System.IO;
 using System.Management.Automation;
 using System.Reflection.PortableExecutable;
 using System.Text;
+
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.PdbProvider;
@@ -35,7 +36,8 @@ namespace ICSharpCode.Decompiler.PowerShell
 		{
 			string path = GetUnresolvedProviderPathFromPSPath(LiteralPath);
 
-			try {
+			try
+			{
 				var module = new PEFile(LiteralPath, new FileStream(LiteralPath, FileMode.Open, FileAccess.Read), PEStreamOptions.Default);
 				var debugInfo = DebugInfoUtils.FromFile(module, PDBFilePath);
 				var decompiler = new CSharpDecompiler(path, new DecompilerSettings(LanguageVersion) {
@@ -47,7 +49,9 @@ namespace ICSharpCode.Decompiler.PowerShell
 				});
 				decompiler.DebugInfoProvider = debugInfo;
 				WriteObject(decompiler);
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				WriteVerbose(e.ToString());
 				WriteError(new ErrorRecord(e, ErrorIds.AssemblyLoadFailed, ErrorCategory.OperationStopped, null));
 			}
