@@ -110,10 +110,7 @@
   <PropertyGroup>
     <VCBasePath>$(MSBuildToolsPath)\..\..\..\VC\</VCBasePath>
     <VCToolsVersionPropsFileNameDefault>Microsoft.VCToolsVersion.default.props</VCToolsVersionPropsFileNameDefault>
-    <!-- This is necessary as long as AppVeyor does not offer Visual Studio 2019 RC or later -->
-    <VCToolsVersionPropsFileNameVS2019Preview>Microsoft.VCToolsVersion.v142.default.props</VCToolsVersionPropsFileNameVS2019Preview>
     <VCToolsVersionPropsFile>$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameDefault)</VCToolsVersionPropsFile>
-    <VCToolsVersionPropsFile Condition="!Exists('$(VCToolsVersionPropsFile)')">$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameVS2019Preview)</VCToolsVersionPropsFile>
   </PropertyGroup>
 
   <Import Project="$(VCToolsVersionPropsFile)" Condition="Exists('$(VCToolsVersionPropsFile)')" />
