@@ -32,7 +32,7 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Build
-      run: dotnet build Frontends.sln --configuration Release
+      run: dotnet build ILSpy.XPlat.slnf --configuration Release
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1

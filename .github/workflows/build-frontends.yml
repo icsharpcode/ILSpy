@@ -1,4 +1,4 @@
-name: Build Frontends
+name: Build XPlat Frontends
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Install dependencies
-      run: dotnet restore Frontends.sln
+      run: dotnet restore ILSpy.XPlat.slnf
     - name: Build
-      run: dotnet build Frontends.sln --configuration Debug --no-restore
+      run: dotnet build ILSpy.XPlat.slnf --configuration Debug --no-restore
 

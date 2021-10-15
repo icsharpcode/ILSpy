@@ -57,6 +57,10 @@ How to build
     - NuGet package restore will automatically download further dependencies
     - Run project "ILSpy" for the ILSpy UI
     - Use the Visual Studio "Test Explorer" to see/run the tests
+    - If you are only interested in a specific subset of ILSpy, you can also use
+      - ILSpy.Wpf.slnf: for the ILSpy WPF frontend
+      - ILSpy.XPlat.slnf: for the cross-platform CLI or PowerShell cmdlets
+      - ILSpy.AddIn.slnf: for the Visual Studio plugin
 
 **Note:** Visual Studio 16.3 and later include a version of the .NET (Core) SDK that is managed by the Visual Studio installer - once you update, it may get upgraded too.
 Please note that ILSpy is only compatible with the .NET 5.0 SDK and Visual Studio will refuse to load some projects in the solution (and unit tests will fail). 
@@ -68,7 +72,7 @@ If this problem occurs, please manually install the .NET 5.0 SDK from [here](htt
 - Make sure [PowerShell](https://github.com/PowerShell/PowerShell) is installed (formerly known as PowerShell Core)
 - Clone the repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
-- Use `dotnet build Frontends.sln` to build the non-Windows flavors of ILSpy (.NET Core Global Tool and PowerShell Core).
+- Use `dotnet build ILSpy.XPlat.slnf` to build the non-Windows flavors of ILSpy (.NET Core Global Tool and PowerShell Core).
 
 How to contribute
 -----------------
