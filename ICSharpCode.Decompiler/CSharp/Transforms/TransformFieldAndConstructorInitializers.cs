@@ -118,7 +118,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				&& currentCtor.Equals(record.PrimaryConstructor)
 				&& ci.ConstructorInitializerType == ConstructorInitializerType.Base)
 			{
-				if (constructorDeclaration.Parent is TypeDeclaration { BaseTypes: { Count: >= 1 } } typeDecl)
+				if (record.IsInheritedRecord &&
+					constructorDeclaration.Parent is TypeDeclaration { BaseTypes: { Count: >= 1 } } typeDecl)
 				{
 					var baseType = typeDecl.BaseTypes.First();
 					var newBaseType = new InvocationAstType();
@@ -176,6 +177,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (!context.DecompileRun.RecordDecompilers.TryGetValue(ctorMethodDef.DeclaringTypeDefinition, out var record))
 					record = null;
 
+				//Filter out copy constructor of records
+				if (record != null)
+					instanceCtorsNotChainingWithThis = instanceCtorsNotChainingWithThis.Where(ctor => !record.IsCopyConstructor(ctor.GetSymbol() as IMethod)).ToArray();
+
 				// Recognize field or property initializers:
 				// Translate first statement in all ctors (if all ctors have the same statement) into an initializer.
 				bool allSame;
@@ -201,9 +206,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (initializer.Annotation<ILVariableResolveResult>()?.Variable.Kind == IL.VariableKind.Parameter)
 					{
 						// remove record ctor parameter assignments
-						if (IsPropertyDeclaredByPrimaryCtor(fieldOrPropertyOrEvent as IProperty, record))
-							initializer.Remove();
-						else
+						if (!IsPropertyDeclaredByPrimaryCtor(fieldOrPropertyOrEvent as IProperty, record))
 							break;
 					}
 					else

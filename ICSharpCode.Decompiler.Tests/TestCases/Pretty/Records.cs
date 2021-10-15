@@ -1,6 +1,15 @@
-﻿namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
+﻿using System;
+
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public record Base(string A);
+
+	public record CopyCtor(string A)
+	{
+		protected CopyCtor(CopyCtor _)
+		{
+		}
+	}
 
 	public record Derived(int B) : Base(B.ToString());
 
@@ -15,6 +24,12 @@
 		public string S = "abc";
 	}
 
+	public record Interface(int B) : IRecord;
+
+	public interface IRecord
+	{
+	}
+
 	public record Pair<A, B>
 	{
 		public A First { get; init; }
@@ -24,13 +39,17 @@
 	public record PairWithPrimaryCtor<A, B>(A First, B Second);
 
 	public record PrimaryCtor(int A, string B);
+	public record PrimaryCtorWithAttribute([RecordTest("param")] [property: RecordTest("property")][field: RecordTest("field")] int a);
 	public record PrimaryCtorWithField(int A, string B)
 	{
-		public double C;
+		public double C = 1.0;
+		public string D = A + B;
 	}
+	public record PrimaryCtorWithInParameter(in int A, in string B);
 	public record PrimaryCtorWithProperty(int A, string B)
 	{
-		public double C { get; init; }
+		public double C { get; init; } = 1.0;
+		public string D { get; } = A + B;
 	}
 
 	public record Properties
@@ -47,6 +66,18 @@
 			B = 42;
 		}
 	}
+
+	[AttributeUsage(AttributeTargets.All)]
+	public class RecordTestAttribute : Attribute
+	{
+		public RecordTestAttribute(string name)
+		{
+		}
+	}
+
+	public sealed record Sealed(string A);
+
+	public sealed record SealedDerived(int B) : Base(B.ToString());
 
 	public class WithExpressionTests
 	{

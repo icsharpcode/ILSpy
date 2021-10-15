@@ -37,6 +37,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly CancellationToken cancellationToken;
 		readonly List<IMember> orderedMembers;
 		readonly bool isInheritedRecord;
+		readonly bool isStruct;
+		readonly bool isSealed;
 		readonly IMethod primaryCtor;
 		readonly IType baseClass;
 		readonly Dictionary<IField, IProperty> backingFieldToAutoProperty = new Dictionary<IField, IProperty>();
@@ -51,7 +53,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 			this.baseClass = recordTypeDef.DirectBaseTypes.FirstOrDefault(b => b.Kind == TypeKind.Class);
-			this.isInheritedRecord = !baseClass.IsKnownType(KnownTypeCode.Object);
+			this.isStruct = baseClass.IsKnownType(KnownTypeCode.ValueType);
+			this.isInheritedRecord = !isStruct && !baseClass.IsKnownType(KnownTypeCode.Object);
+			this.isSealed = recordTypeDef.IsSealed;
 			DetectAutomaticProperties();
 			this.orderedMembers = DetectMemberOrder(recordTypeDef, backingFieldToAutoProperty);
 			this.primaryCtor = DetectPrimaryConstructor();
@@ -164,13 +168,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.IsStatic || !method.IsConstructor)
 					continue;
 				var m = method.Specialize(subst);
-				if (IsPrimaryConstructor(m))
+				if (IsPrimaryConstructor(m, method))
 					return method;
+				primaryCtorParameterToAutoProperty.Clear();
+				autoPropertyToPrimaryCtorParameter.Clear();
 			}
 
 			return null;
 
-			bool IsPrimaryConstructor(IMethod method)
+			bool IsPrimaryConstructor(IMethod method, IMethod unspecializedMethod)
 			{
 				Debug.Assert(method.IsConstructor);
 				var body = DecompileBody(method);
@@ -180,28 +186,37 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.Parameters.Count == 0)
 					return false;
 
-				if (body.Instructions.Count != method.Parameters.Count + 2)
+				var addonInst = isStruct ? 1 : 2;
+				if (body.Instructions.Count < method.Parameters.Count + addonInst)
 					return false;
 
-				for (int i = 0; i < body.Instructions.Count - 2; i++)
+				for (int i = 0; i < method.Parameters.Count; i++)
 				{
 					if (!body.Instructions[i].MatchStFld(out var target, out var field, out var valueInst))
 						return false;
 					if (!target.MatchLdThis())
 						return false;
+					if (method.Parameters[i].IsIn)
+					{
+						if (!valueInst.MatchLdObj(out valueInst, out _))
+							return false;
+					}
 					if (!valueInst.MatchLdLoc(out var value))
 						return false;
 					if (!(value.Kind == VariableKind.Parameter && value.Index == i))
 						return false;
 					if (!backingFieldToAutoProperty.TryGetValue(field, out var property))
 						return false;
-					primaryCtorParameterToAutoProperty.Add(method.Parameters[i], property);
-					autoPropertyToPrimaryCtorParameter.Add(property, method.Parameters[i]);
+					primaryCtorParameterToAutoProperty.Add(unspecializedMethod.Parameters[i], property);
+					autoPropertyToPrimaryCtorParameter.Add(property, unspecializedMethod.Parameters[i]);
 				}
 
-				var baseCtorCall = body.Instructions.SecondToLastOrDefault() as CallInstruction;
-				if (baseCtorCall == null)
-					return false;
+				if (!isStruct)
+				{
+					var baseCtorCall = body.Instructions.SecondToLastOrDefault() as CallInstruction;
+					if (baseCtorCall == null)
+						return false;
+				}
 
 				var returnInst = body.Instructions.LastOrDefault();
 				return returnInst != null && returnInst.MatchReturn(out var retVal) && retVal.MatchNop();
@@ -233,6 +248,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public IMethod PrimaryConstructor => primaryCtor;
 
+		public bool IsInheritedRecord => isInheritedRecord;
+
 		bool IsRecordType(IType type)
 		{
 			return type.GetDefinition() == recordTypeDef
@@ -244,13 +261,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public bool MethodIsGenerated(IMethod method)
 		{
-			if (method.IsConstructor)
+			if (IsCopyConstructor(method))
 			{
-				if (method.Parameters.Count == 1
-					&& IsRecordType(method.Parameters[0].Type))
-				{
-					return IsGeneratedCopyConstructor(method);
-				}
+				return IsGeneratedCopyConstructor(method);
 			}
 
 			switch (method.Name)
@@ -309,7 +322,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			switch (property.Name)
 			{
-				case "EqualityContract":
+				case "EqualityContract" when !isStruct:
 					return IsGeneratedEqualityContract(property);
 				default:
 					return IsPropertyDeclaredByPrimaryConstructor(property);
@@ -323,6 +336,24 @@ namespace ICSharpCode.Decompiler.CSharp
 				&& autoPropertyToPrimaryCtorParameter.ContainsKey((IProperty)property.Specialize(subst));
 		}
 
+		internal (IProperty prop, IField field) GetPropertyInfoByPrimaryConstructorParameter(IParameter parameter)
+		{
+			var prop = primaryCtorParameterToAutoProperty[parameter];
+			return (prop, autoPropertyToBackingField[prop]);
+		}
+
+		public bool IsCopyConstructor(IMethod method)
+		{
+			if (method == null)
+				return false;
+
+			Debug.Assert(method.DeclaringTypeDefinition == recordTypeDef);
+
+			return method.IsConstructor
+				&& method.Parameters.Count == 1
+				&& IsRecordType(method.Parameters[0].Type);
+		}
+
 		private bool IsGeneratedCopyConstructor(IMethod method)
 		{
 			/* 
@@ -333,7 +364,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(method.IsConstructor && method.Parameters.Count == 1);
 			if (method.GetAttributes().Any() || method.GetReturnTypeAttributes().Any())
 				return false;
-			if (method.Accessibility != Accessibility.Protected)
+			if (method.Accessibility != Accessibility.Protected && (!isSealed || method.Accessibility != Accessibility.Private))
 				return false;
 			if (orderedMembers == null)
 				return false;
@@ -393,10 +424,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			// protected virtual Type EqualityContract {
 			//    [CompilerGenerated] get => typeof(R);
 			// }
-			Debug.Assert(property.Name == "EqualityContract");
-			if (property.Accessibility != Accessibility.Protected)
+			Debug.Assert(!isStruct && property.Name == "EqualityContract");
+			if (property.Accessibility != Accessibility.Protected && (!isSealed || property.Accessibility != Accessibility.Private))
 				return false;
-			if (!(property.IsVirtual || property.IsOverride))
+			if (!(isSealed || property.IsVirtual || property.IsOverride))
 				return false;
 			if (property.IsSealed)
 				return false;
@@ -428,11 +459,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(method.Name == "PrintMembers");
 			if (method.Parameters.Count != 1)
 				return false;
-			if (!method.IsOverridable)
+			if (!isSealed && !method.IsOverridable)
 				return false;
 			if (method.GetAttributes().Any() || method.GetReturnTypeAttributes().Any())
 				return false;
-			if (method.Accessibility != Accessibility.Protected)
+			if (method.Accessibility != Accessibility.Protected && (!isSealed || method.Accessibility != Accessibility.Private))
 				return false;
 			if (orderedMembers == null)
 				return false;
@@ -444,6 +475,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (builder.Type.ReflectionName != "System.Text.StringBuilder")
 				return false;
 			int pos = 0;
+			//Roslyn 4.0.0-3.final start to insert an call to RuntimeHelpers.EnsureSufficientExecutionStack()
+			if (!isStruct && !isInheritedRecord && body.Instructions[pos] is Call
+				{
+					Arguments: { Count: 0 },
+					Method: { Name: "EnsureSufficientExecutionStack", DeclaringType: { Namespace: "System.Runtime.CompilerServices", Name: "RuntimeHelpers" } }
+				})
+			{
+				pos++;
+			}
 			if (isInheritedRecord)
 			{
 				// Special case: inherited record adding no new members
@@ -551,7 +591,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					return false; // static fields/properties are not printed
 				}
-				if (member.Name == "EqualityContract")
+				if (!isStruct && member.Name == "EqualityContract")
 				{
 					return false; // EqualityContract is never printed
 				}
@@ -617,7 +657,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			// if (callvirt PrintMembers(ldloc this, ldloc stringBuilder)) { trueInst }
 			if (!body.Instructions[3].MatchIfInstruction(out var condition, out var trueInst))
 				return true;
-			if (!(condition is CallVirt { Method: { Name: "PrintMembers" } } printMembersCall))
+			if (!((condition is CallInstruction { Method: { Name: "PrintMembers" } } printMembersCall) &&
+				(condition is CallVirt || (isSealed && condition is Call))))
 				return false;
 			if (printMembersCall.Arguments.Count != 2)
 				return false;
@@ -640,21 +681,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			return toStringCall.Arguments[0].MatchLdLoc(stringBuilder);
 
-			bool MatchAppendCall(ILInstruction inst, out string val)
+			bool MatchAppendCallWithValue(ILInstruction inst, string val)
 			{
-				val = null;
 				if (!(inst is CallVirt { Method: { Name: "Append" } } call))
 					return false;
 				if (call.Arguments.Count != 2)
 					return false;
 				if (!call.Arguments[0].MatchLdLoc(stringBuilder))
 					return false;
-				return call.Arguments[1].MatchLdStr(out val);
-			}
-
-			bool MatchAppendCallWithValue(ILInstruction inst, string val)
-			{
-				return MatchAppendCall(inst, out string tmp) && tmp == val;
+				//Roslyn 4.0.0-3.final start to use char for 1 length string
+				if (call.Method.Parameters[0].Type.IsKnownType(KnownTypeCode.Char))
+				{
+					return val != null && val.Length == 1 && call.Arguments[1].MatchLdcI4(val[0]);
+				}
+				return call.Arguments[1].MatchLdStr(out string val1) && val1 == val;
 			}
 		}
 
@@ -670,7 +710,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(method.Name == "Equals" && method.Parameters.Count == 1);
 			if (method.Parameters.Count != 1)
 				return false;
-			if (!method.IsOverridable)
+			if (!isSealed && !method.IsOverridable)
 				return false;
 			if (method.GetAttributes().Any() || method.GetReturnTypeAttributes().Any())
 				return false;
@@ -698,58 +738,61 @@ namespace ICSharpCode.Decompiler.CSharp
 			var conditions = UnpackLogicAndChain(returnValue);
 			Debug.Assert(conditions.Count >= 1);
 			int pos = 0;
-			if (isInheritedRecord)
+			if (!isStruct)
 			{
-				// call BaseClass::Equals(ldloc this, ldloc other)
-				if (pos >= conditions.Count)
-					return false;
-				if (!(conditions[pos] is Call { Method: { Name: "Equals" } } call))
-					return false;
-				if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(call.Method.DeclaringType, baseClass))
-					return false;
-				if (call.Arguments.Count != 2)
-					return false;
-				if (!call.Arguments[0].MatchLdThis())
-					return false;
-				if (!call.Arguments[1].MatchLdLoc(other))
-					return false;
-				pos++;
-			}
-			else
-			{
-				// comp.o(ldloc other != ldnull)
-				if (pos >= conditions.Count)
-					return false;
-				if (!conditions[pos].MatchCompNotEqualsNull(out var arg))
-					return false;
-				if (!arg.MatchLdLoc(other))
-					return false;
-				pos++;
-				// call op_Equality(callvirt get_EqualityContract(ldloc this), callvirt get_EqualityContract(ldloc other))
-				// Special-cased because Roslyn isn't using EqualityComparer<T> here.
-				if (pos >= conditions.Count)
-					return false;
-				if (!(conditions[pos] is Call { Method: { IsOperator: true, Name: "op_Equality" } } opEqualityCall))
-					return false;
-				if (!opEqualityCall.Method.DeclaringType.IsKnownType(KnownTypeCode.Type))
-					return false;
-				if (opEqualityCall.Arguments.Count != 2)
-					return false;
-				if (!MatchGetEqualityContract(opEqualityCall.Arguments[0], out var target1))
-					return false;
-				if (!MatchGetEqualityContract(opEqualityCall.Arguments[1], out var target2))
-					return false;
-				if (!target1.MatchLdThis())
-					return false;
-				if (!target2.MatchLdLoc(other))
-					return false;
-				pos++;
+				if (isInheritedRecord)
+				{
+					// call BaseClass::Equals(ldloc this, ldloc other)
+					if (pos >= conditions.Count)
+						return false;
+					if (!(conditions[pos] is Call { Method: { Name: "Equals" } } call))
+						return false;
+					if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(call.Method.DeclaringType, baseClass))
+						return false;
+					if (call.Arguments.Count != 2)
+						return false;
+					if (!call.Arguments[0].MatchLdThis())
+						return false;
+					if (!call.Arguments[1].MatchLdLoc(other))
+						return false;
+					pos++;
+				}
+				else
+				{
+					// comp.o(ldloc other != ldnull)
+					if (pos >= conditions.Count)
+						return false;
+					if (!conditions[pos].MatchCompNotEqualsNull(out var arg))
+						return false;
+					if (!arg.MatchLdLoc(other))
+						return false;
+					pos++;
+					// call op_Equality(callvirt get_EqualityContract(ldloc this), callvirt get_EqualityContract(ldloc other))
+					// Special-cased because Roslyn isn't using EqualityComparer<T> here.
+					if (pos >= conditions.Count)
+						return false;
+					if (!(conditions[pos] is Call { Method: { IsOperator: true, Name: "op_Equality" } } opEqualityCall))
+						return false;
+					if (!opEqualityCall.Method.DeclaringType.IsKnownType(KnownTypeCode.Type))
+						return false;
+					if (opEqualityCall.Arguments.Count != 2)
+						return false;
+					if (!MatchGetEqualityContract(opEqualityCall.Arguments[0], out var target1))
+						return false;
+					if (!MatchGetEqualityContract(opEqualityCall.Arguments[1], out var target2))
+						return false;
+					if (!target1.MatchLdThis())
+						return false;
+					if (!target2.MatchLdLoc(other))
+						return false;
+					pos++;
+				}
 			}
 			foreach (var member in orderedMembers)
 			{
 				if (!MemberConsideredForEquality(member))
 					continue;
-				if (member.Name == "EqualityContract")
+				if (!isStruct && member.Name == "EqualityContract")
 				{
 					continue; // already special-cased
 				}
@@ -771,7 +814,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return false;
 				if (!member1.Equals(member))
 					return false;
-				if (!target2.MatchLdLoc(other))
+				if (!(isStruct ? target2.MatchLdLoca(other) : target2.MatchLdLoc(other)))
 					return false;
 				if (!member2.Equals(member))
 					return false;
@@ -800,10 +843,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		private static bool MatchGetEqualityContract(ILInstruction inst, out ILInstruction target)
+		private bool MatchGetEqualityContract(ILInstruction inst, out ILInstruction target)
 		{
 			target = null;
-			if (!(inst is CallVirt { Method: { Name: "get_EqualityContract" } } call))
+			if (!(inst is CallInstruction { Method: { Name: "get_EqualityContract" } } call))
+				return false;
+			if (!(inst is CallVirt || (isSealed && inst is Call)))
 				return false;
 			if (call.Arguments.Count != 1)
 				return false;
@@ -830,7 +875,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (member is IProperty property)
 			{
-				if (property.Name == "EqualityContract")
+				if (!isStruct && property.Name == "EqualityContract")
 					return !isInheritedRecord;
 				return autoPropertyToBackingField.ContainsKey(property);
 			}
@@ -944,7 +989,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (!deconstruct.IsOut)
 					return false;
 
-				if (!ctor.Type.Equals(((ByReferenceType)deconstruct.Type).ElementType))
+				IType ctorType = ctor.Type;
+				if (ctor.IsIn)
+					ctorType = ((ByReferenceType)ctorType).ElementType;
+				if (!ctorType.Equals(((ByReferenceType)deconstruct.Type).ElementType))
 					return false;
 
 				if (ctor.Name != deconstruct.Name)
@@ -985,14 +1033,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			target = null;
 			member = null;
-			if (inst is CallVirt
+			if (inst is CallInstruction
 				{
 					Method:
 					{
 						AccessorKind: System.Reflection.MethodSemanticsAttributes.Getter,
 						AccessorOwner: IProperty property
 					}
-				} call)
+				} call && (call is CallVirt || (isSealed && call is Call)))
 			{
 				if (call.Arguments.Count != 1)
 					return false;

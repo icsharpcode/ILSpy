@@ -1227,7 +1227,31 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (recordDecompiler?.PrimaryConstructor != null)
 				{
 					foreach (var p in recordDecompiler.PrimaryConstructor.Parameters)
-						typeDecl.PrimaryConstructorParameters.Add(typeSystemAstBuilder.ConvertParameter(p));
+					{
+						ParameterDeclaration pd = typeSystemAstBuilder.ConvertParameter(p);
+						(IProperty prop, IField field) = recordDecompiler.GetPropertyInfoByPrimaryConstructorParameter(p);
+						Syntax.Attribute[] attributes = prop.GetAttributes().Select(attr => typeSystemAstBuilder.ConvertAttribute(attr)).ToArray();
+						if (attributes.Length > 0)
+						{
+							var section = new AttributeSection {
+								AttributeTarget = "property"
+							};
+							section.Attributes.AddRange(attributes);
+							pd.Attributes.Add(section);
+						}
+						attributes = field.GetAttributes()
+							.Where(a => !PatternStatementTransform.attributeTypesToRemoveFromAutoProperties.Contains(a.AttributeType.FullName))
+							.Select(attr => typeSystemAstBuilder.ConvertAttribute(attr)).ToArray();
+						if (attributes.Length > 0)
+						{
+							var section = new AttributeSection {
+								AttributeTarget = "field"
+							};
+							section.Attributes.AddRange(attributes);
+							pd.Attributes.Add(section);
+						}
+						typeDecl.PrimaryConstructorParameters.Add(pd);
+					}
 				}
 
 				foreach (var type in typeDef.NestedTypes)
