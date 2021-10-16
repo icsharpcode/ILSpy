@@ -77,51 +77,8 @@
     <Compile Include="..\ICSharpCode.Decompiler\Util\EmptyList.cs" Link="Decompiler\EmptyList.cs" />
     <Compile Include="..\ICSharpCode.Decompiler\Util\NullAttributes.cs" Link="NullAttributes.cs" />
     <Compile Include="..\ILSpy\NativeMethods.cs" Link="NativeMethods.cs" />
-    <Compile Include="Commands\AssemblyReferenceForILSpy.cs" />
-    <Compile Include="Commands\NuGetReferenceForILSpy.cs" />
-    <Compile Include="Commands\ProjectItemForILSpy.cs" />
-    <Compile Include="Commands\ProjectReferenceForILSpy.cs" />
-    <Compile Include="Commands\OpenCodeItemCommand.cs" />
-    <Compile Include="Commands\OpenILSpyCommand.cs" />
-    <Compile Include="Commands\OpenProjectOutputCommand.cs" />
-    <Compile Include="Commands\OpenReferenceCommand.cs" />
     <Compile Include="Decompiler\Dummy.cs" />
-    <Compile Include="Guids.cs" />
-    <Compile Include="ILSpyInstance.cs" />
-    <Compile Include="Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="ILSpyAddInPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PkgCmdID.cs" />
-    <Compile Include="SyntaxNodeExtensions.cs" />
-    <Compile Include="AssemblyFileFinder.cs" />
-    <Compile Include="Utils.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="VSPackage.en-US.resx">
-      <MergeWithCTO>true</MergeWithCTO>
-      <LogicalName>VSPackage.en-US.resources</LogicalName>
-      <DependentUpon>VSPackage.resx</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="VSPackage.resx">
-      <MergeWithCTO>true</MergeWithCTO>
-      <ManifestResourceName>VSPackage</ManifestResourceName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="VSPackage.zh-Hans.resx">
-      <MergeWithCTO>true</MergeWithCTO>
-      <LogicalName>VSPackage.zh-Hans.resources</LogicalName>
-      <DependentUpon>VSPackage.resx</DependentUpon>
-    </EmbeddedResource>
   </ItemGroup>
 
   <!--
@@ -153,34 +110,40 @@
       <IncludeInVSIX>true</IncludeInVSIX>
       <VSIXSubPath>\ILSpy\zh-Hans\</VSIXSubPath>
     </Content>
+    <Content Include="..\ILSpy.AddIn.SharedFiles\ILSpy-Large.ico" Link="ILSpy-Large.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="..\ILSpy.AddIn.SharedFiles\Resources\Images.png" Link="Resources\Images.png" />
+    <Content Include="..\ILSpy.AddIn.SharedFiles\Resources\Package.ico" Link="Resources\Package.ico" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\ILSpy.AddIn.SharedFiles\ILSpyAddIn.en-US.vsct" Link="ILSpyAddIn.en-US.vsct">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="..\ILSpy.AddIn.SharedFiles\ILSpyAddIn.vsct" Link="ILSpyAddIn.vsct">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="..\ILSpy.AddIn.SharedFiles\ILSpyAddIn.zh-Hans.vsct" Link="ILSpyAddIn.zh-Hans.vsct">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="source.extension.vsixmanifest.template" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ILSpyAddIn.vsct">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="ILSpyAddIn.en-US.vsct">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="ILSpyAddIn.zh-Hans.vsct">
-      <SubType>Designer</SubType>
-    </None>
     <Content Include="zh-Hans\extension.vsixlangpack">
       <IncludeInVSIX>true</IncludeInVSIX>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <VSCTCompile Include="ILSpyAddIn.en-US.vsct">
+    <VSCTCompile Include="..\ILSpy.AddIn.SharedFiles\ILSpyAddIn.en-US.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
       <SubType>Designer</SubType>
       <DependentUpon>ILSpyAddIn.vsct</DependentUpon>
     </VSCTCompile>
-    <VSCTCompile Include="ILSpyAddIn.zh-Hans.vsct">
+    <VSCTCompile Include="..\ILSpy.AddIn.SharedFiles\ILSpyAddIn.zh-Hans.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
       <SubType>Designer</SubType>
       <DependentUpon>ILSpyAddIn.vsct</DependentUpon>
@@ -192,19 +155,13 @@
 
   <ItemGroup>
     <None Include="Properties\launchSettings.json" />
-    <None Include="Resources\Images.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="ILSpy-Large.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
     <Content Include="..\doc\license.txt" Link="license.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\Package.ico" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -213,8 +170,20 @@
     <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
   </PropertyGroup>
 
+  <Import Project="..\ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems" Label="Shared" />
+
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
 
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')" />
+
+  <ItemGroup>
+    <Compile Update="C:\Andreas\projects\ILSpy\ILSpy.AddIn.Shared\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
 
 </Project>

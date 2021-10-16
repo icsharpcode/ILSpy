@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>acab1e5d-b3df-4092-aa72-692f8341e520</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>ILSpy.AddIn.Shared</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)AssemblyFileFinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\AssemblyReferenceForILSpy.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\NuGetReferenceForILSpy.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\OpenCodeItemCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\OpenILSpyCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\OpenProjectOutputCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\OpenReferenceCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\ProjectItemForILSpy.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\ProjectReferenceForILSpy.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GlobalSuppressions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Guids.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ILSpyAddInPackage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ILSpyInstance.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PkgCmdID.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resources.Designer.cs">
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)SyntaxNodeExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)Resources.resx">
+      <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <Generator>ResXFileCodeGenerator</Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)VSPackage.en-US.resx">
+      <DependentUpon>VSPackage.resx</DependentUpon>
+      <LogicalName>VSPackage.en-US.resources</LogicalName>
+      <MergeWithCTO>true</MergeWithCTO>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)VSPackage.resx">
+      <MergeWithCTO>true</MergeWithCTO>
+      <ManifestResourceName>VSPackage</ManifestResourceName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)VSPackage.zh-Hans.resx">
+      <DependentUpon>VSPackage.resx</DependentUpon>
+      <LogicalName>VSPackage.zh-Hans.resources</LogicalName>
+      <MergeWithCTO>true</MergeWithCTO>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>
