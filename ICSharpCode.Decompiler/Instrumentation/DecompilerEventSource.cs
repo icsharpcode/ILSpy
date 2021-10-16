@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics.Tracing;
+﻿using System.Diagnostics.Tracing;
 
 namespace ICSharpCode.Decompiler.Instrumentation
 {
@@ -28,6 +27,12 @@ namespace ICSharpCode.Decompiler.Instrumentation
 		public void DoDecompileTypeDefinition(string typeDefName, long elapsedMilliseconds)
 		{
 			WriteEvent(4, typeDefName, elapsedMilliseconds);
+		}
+
+		[Event(5, Level = EventLevel.Informational)]
+		public void DoDecompileMethod(string methodName, long elapsedMilliseconds)
+		{
+			WriteEvent(5, methodName, elapsedMilliseconds);
 		}
 
 		public static DecompilerEventSource Log = new DecompilerEventSource();

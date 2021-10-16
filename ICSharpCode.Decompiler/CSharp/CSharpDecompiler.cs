@@ -1429,43 +1429,52 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(IMethod method, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == method);
-			var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
-			var methodDecl = typeSystemAstBuilder.ConvertEntity(method);
-			int lastDot = method.Name.LastIndexOf('.');
-			if (method.IsExplicitInterfaceImplementation && lastDot >= 0)
+			var watch = System.Diagnostics.Stopwatch.StartNew();
+			try
 			{
-				methodDecl.Name = method.Name.Substring(lastDot + 1);
+				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
+				var methodDecl = typeSystemAstBuilder.ConvertEntity(method);
+				int lastDot = method.Name.LastIndexOf('.');
+				if (method.IsExplicitInterfaceImplementation && lastDot >= 0)
+				{
+					methodDecl.Name = method.Name.Substring(lastDot + 1);
+				}
+				FixParameterNames(methodDecl);
+				var methodDefinition = metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
+				if (!settings.LocalFunctions && LocalFunctionDecompiler.LocalFunctionNeedsAccessibilityChange(method.ParentModule.PEFile, (MethodDefinitionHandle)method.MetadataToken))
+				{
+					// if local functions are not active and we're dealing with a local function,
+					// reduce the visibility of the method to private,
+					// otherwise this leads to compile errors because the display classes have lesser accessibility.
+					// Note: removing and then adding the static modifier again is necessary to set the private modifier before all other modifiers.
+					methodDecl.Modifiers &= ~(Modifiers.Internal | Modifiers.Static);
+					methodDecl.Modifiers |= Modifiers.Private | (method.IsStatic ? Modifiers.Static : 0);
+				}
+				if (methodDefinition.HasBody())
+				{
+					DecompileBody(method, methodDecl, decompileRun, decompilationContext);
+				}
+				else if (!method.IsAbstract && method.DeclaringType.Kind != TypeKind.Interface)
+				{
+					methodDecl.Modifiers |= Modifiers.Extern;
+				}
+				if (method.SymbolKind == SymbolKind.Method && !method.IsExplicitInterfaceImplementation && methodDefinition.HasFlag(System.Reflection.MethodAttributes.Virtual) == methodDefinition.HasFlag(System.Reflection.MethodAttributes.NewSlot))
+				{
+					SetNewModifier(methodDecl);
+				}
+				if (IsCovariantReturnOverride(method))
+				{
+					RemoveAttribute(methodDecl, KnownAttribute.PreserveBaseOverrides);
+					methodDecl.Modifiers &= ~(Modifiers.New | Modifiers.Virtual);
+					methodDecl.Modifiers |= Modifiers.Override;
+				}
+				return methodDecl;
 			}
-			FixParameterNames(methodDecl);
-			var methodDefinition = metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
-			if (!settings.LocalFunctions && LocalFunctionDecompiler.LocalFunctionNeedsAccessibilityChange(method.ParentModule.PEFile, (MethodDefinitionHandle)method.MetadataToken))
+			finally
 			{
-				// if local functions are not active and we're dealing with a local function,
-				// reduce the visibility of the method to private,
-				// otherwise this leads to compile errors because the display classes have lesser accessibility.
-				// Note: removing and then adding the static modifier again is necessary to set the private modifier before all other modifiers.
-				methodDecl.Modifiers &= ~(Modifiers.Internal | Modifiers.Static);
-				methodDecl.Modifiers |= Modifiers.Private | (method.IsStatic ? Modifiers.Static : 0);
+				watch.Stop();
+				Instrumentation.DecompilerEventSource.Log.DoDecompileMethod(method.FullName, watch.ElapsedMilliseconds);
 			}
-			if (methodDefinition.HasBody())
-			{
-				DecompileBody(method, methodDecl, decompileRun, decompilationContext);
-			}
-			else if (!method.IsAbstract && method.DeclaringType.Kind != TypeKind.Interface)
-			{
-				methodDecl.Modifiers |= Modifiers.Extern;
-			}
-			if (method.SymbolKind == SymbolKind.Method && !method.IsExplicitInterfaceImplementation && methodDefinition.HasFlag(System.Reflection.MethodAttributes.Virtual) == methodDefinition.HasFlag(System.Reflection.MethodAttributes.NewSlot))
-			{
-				SetNewModifier(methodDecl);
-			}
-			if (IsCovariantReturnOverride(method))
-			{
-				RemoveAttribute(methodDecl, KnownAttribute.PreserveBaseOverrides);
-				methodDecl.Modifiers &= ~(Modifiers.New | Modifiers.Virtual);
-				methodDecl.Modifiers |= Modifiers.Override;
-			}
-			return methodDecl;
 		}
 
 		private bool IsCovariantReturnOverride(IEntity entity)
