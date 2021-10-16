@@ -49,6 +49,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					0 => ("legacy", "11"),
 					CompilerOptions.UseRoslyn1_3_2 => ("1.3.2", "14"),
 					CompilerOptions.UseRoslyn2_10_0 => ("2.10.0", "latest"),
+					CompilerOptions.UseRoslyn3_11_0 => ("3.11.0", "latest"),
 					_ => (RoslynLatestVersion, flags.HasFlag(CompilerOptions.Preview) ? "preview" : "latest")
 				};
 

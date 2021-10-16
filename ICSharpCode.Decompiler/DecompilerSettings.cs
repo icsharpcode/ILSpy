@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler
 				ranges = false;
 				switchExpressions = false;
 			}
-			if (languageVersion < CSharp.LanguageVersion.Preview)
+			if (languageVersion < CSharp.LanguageVersion.CSharp9_0)
 			{
 				nativeIntegers = false;
 				initAccessors = false;
@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler
 		{
 			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension
 				|| recordClasses || withExpressions || usePrimaryConstructorSyntax || covariantReturns)
-				return CSharp.LanguageVersion.Preview;
+				return CSharp.LanguageVersion.CSharp9_0;
 			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement
 				|| staticLocalFunctions || ranges || switchExpressions)
 				return CSharp.LanguageVersion.CSharp8_0;

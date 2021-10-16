@@ -1053,7 +1053,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 						A = 43
 					}
 				}
-			}
+			};
 		}
 #endif
 
