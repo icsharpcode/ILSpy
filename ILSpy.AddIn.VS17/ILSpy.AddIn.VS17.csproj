@@ -15,7 +15,7 @@
 
     <EnableDefaultItems>False</EnableDefaultItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>TRACE;VSADDIN</DefineConstants>
+    <DefineConstants>TRACE;VSADDIN;VS17</DefineConstants>
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>Key.snk</AssemblyOriginatorKeyFile>
@@ -43,12 +43,12 @@
   <Import Project="..\packages.props" />
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="15.0.1" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.0-previews-4-31709-430" />
     <!-- Intentionally using an old Roslyn version in the AddIn, so that we stay compatible with old VS versions. -->
     <PackageReference Include="Microsoft.CodeAnalysis" Version="2.4.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.4.0" />
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="2.4.0" />
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.0.4201-preview4">
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.0.5232">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -168,6 +168,7 @@
     <UseCodebase>true</UseCodebase>
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
     <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
+    <Product>ILSpy.AddIn for Visual Studio 2022</Product>
   </PropertyGroup>
 
   <Import Project="..\ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems" Label="Shared" />

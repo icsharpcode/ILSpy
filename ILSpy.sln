@@ -45,8 +45,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.Powe
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "ILSpy.AddIn.Shared", "ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.shproj", "{ACAB1E5D-B3DF-4092-AA72-692F8341E520}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.AddIn.VS17", "ILSpy.AddIn.VS17\ILSpy.AddIn.VS17.csproj", "{09A03980-D14A-4705-A38C-741AD7166DEE}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems*{09a03980-d14a-4705-a38c-741ad7166dee}*SharedItemsImports = 5
 		ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems*{9d7be6c0-b7b3-4a50-a54e-18a2d84a3384}*SharedItemsImports = 5
 		ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems*{acab1e5d-b3df-4092-aa72-692f8341e520}*SharedItemsImports = 13
 	EndGlobalSection
@@ -107,6 +110,10 @@ Global
 		{50060E0C-FA25-41F4-B72F-8490324EC9F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{50060E0C-FA25-41F4-B72F-8490324EC9F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{50060E0C-FA25-41F4-B72F-8490324EC9F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09A03980-D14A-4705-A38C-741AD7166DEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09A03980-D14A-4705-A38C-741AD7166DEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09A03980-D14A-4705-A38C-741AD7166DEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09A03980-D14A-4705-A38C-741AD7166DEE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
