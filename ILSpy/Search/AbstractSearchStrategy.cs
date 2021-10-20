@@ -27,9 +27,13 @@ namespace ICSharpCode.ILSpy.Search
 				string search = terms[0];
 				omitGenerics = !(search.Contains("<") || search.Contains("`"));
 				if (TryParseRegex(search, out regex))
+				{
 					fullNameSearch = search.Contains("\\.");
+				}
 				else
+				{
 					fullNameSearch = search.Contains(".");
+				}
 			}
 			searchTerm = terms;
 		}
