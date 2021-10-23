@@ -56,6 +56,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ILSpy\ILSpy.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="..\ICSharpCode.Decompiler\Metadata\AssemblyReferences.cs" Link="Decompiler\AssemblyReferences.cs" />
     <Compile Include="..\ICSharpCode.Decompiler\Metadata\DotNetCorePathFinder.cs" Link="Decompiler\DotNetCorePathFinder.cs" />
     <Compile Include="..\ICSharpCode.Decompiler\Metadata\LightJson\JsonArray.cs" Link="Decompiler\LightJson\JsonArray.cs" />
