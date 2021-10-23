@@ -2,7 +2,7 @@
 <PackageManifest Version="2.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
     <Identity Id="ebf12ca7-a1fd-4aee-a894-4a0c5682fc2f" Version="$INSERTVERSION$" Language="en-US" Publisher="ic#code" />
-    <DisplayName>ILSpy</DisplayName>
+    <DisplayName>ILSpy 2022</DisplayName>
     <Description xml:space="preserve">Integrates the ILSpy decompiler into Visual Studio.</Description>
     <MoreInfo>https://ilspy.net</MoreInfo>
     <License>license.txt</License>
