@@ -15,7 +15,7 @@
 
     <EnableDefaultItems>False</EnableDefaultItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>TRACE;VSADDIN;VS17</DefineConstants>
+    <DefineConstants>TRACE;VSADDIN;VS2022</DefineConstants>
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>Key.snk</AssemblyOriginatorKeyFile>

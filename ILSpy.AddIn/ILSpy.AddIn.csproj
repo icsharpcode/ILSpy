@@ -168,6 +168,7 @@
     <UseCodebase>true</UseCodebase>
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
     <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
+    <Product>ILSpy.AddIn for Visual Studio 2017/2019</Product>
   </PropertyGroup>
 
   <Import Project="..\ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.projitems" Label="Shared" />

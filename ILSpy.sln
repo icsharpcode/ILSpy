@@ -45,7 +45,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.Powe
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "ILSpy.AddIn.Shared", "ILSpy.AddIn.Shared\ILSpy.AddIn.Shared.shproj", "{ACAB1E5D-B3DF-4092-AA72-692F8341E520}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.AddIn.VS17", "ILSpy.AddIn.VS17\ILSpy.AddIn.VS17.csproj", "{09A03980-D14A-4705-A38C-741AD7166DEE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILSpy.AddIn.VS2022", "ILSpy.AddIn.VS2022\ILSpy.AddIn.VS2022.csproj", "{09A03980-D14A-4705-A38C-741AD7166DEE}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution

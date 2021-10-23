@@ -102,7 +102,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ILSpy VS Addin for VS 2022 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
-        path: ILSpy.AddIn.VS17\bin\${{ matrix.configuration }}\net472\*.vsix
+        path: ILSpy.AddIn.VS2022\bin\${{ matrix.configuration }}\net472\*.vsix
         if-no-files-found: error
 
     - name: Upload NuGet release build artifacts
