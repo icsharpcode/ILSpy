@@ -89,12 +89,20 @@ jobs:
         path: ${{ env.StagingDirectory }}\${{ matrix.channel }}\*.*
         if-no-files-found: error
 
-    - name: Upload VSIX release build artifacts
+    - name: Upload VSIX (VS 2019) release build artifacts
       if: matrix.channel == 'zip' && matrix.configuration == 'release'
       uses: actions/upload-artifact@v2
       with:
-        name: ILSpy VS Addin ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
-        path: ILSpy.Addin\bin\${{ matrix.configuration }}\net472\*.vsix
+        name: ILSpy VS Addin for VS 2017-2019 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
+        path: ILSpy.AddIn\bin\${{ matrix.configuration }}\net472\*.vsix
+        if-no-files-found: error
+
+    - name: Upload VSIX (VS 2022) release build artifacts
+      if: matrix.channel == 'zip' && matrix.configuration == 'release'
+      uses: actions/upload-artifact@v2
+      with:
+        name: ILSpy VS Addin for VS 2022 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
+        path: ILSpy.AddIn.VS2022\bin\${{ matrix.configuration }}\net472\*.vsix
         if-no-files-found: error
 
     - name: Upload NuGet release build artifacts

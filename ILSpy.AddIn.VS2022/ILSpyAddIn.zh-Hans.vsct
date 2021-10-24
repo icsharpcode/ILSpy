@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!--  This is the file that defines the actual layout and type of the commands.
+        It is divided in different sections (e.g. command definition, command
+        placement, ...), with each defining a specific set of properties.
+        See the comment before each section for more details about how to
+        use it. -->
+
+  <!--  The VSCT compiler (the tool that translates this file into the binary 
+        format that VisualStudio will consume) has the ability to run a preprocessor 
+        on the vsct file; this preprocessor is (usually) the C++ preprocessor, so 
+        it is possible to define includes and macros with the same syntax used 
+        in C++ files. Using this ability of the compiler here, we include some files 
+        defining some of the constants that we will use inside the file. -->
+
+  <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
+  <Extern href="stdidcmd.h"/>
+
+  <!--This header contains the command ids for the menus provided by the shell. -->
+  <Extern href="vsshlids.h"/>
+
+  <Include href="ILSpyAddIn.vsct" />
+
+
+  <!--The Commands section is where we the commands, menus and menu groups are defined.
+      This section uses a Guid to identify the package that provides the command defined inside it. -->
+  <Commands package="guidILSpyAddInPkg">
+    <!-- Inside this section we have different sub-sections: one for the menus, another  
+    for the menu groups, one for the buttons (the actual commands), one for the combos 
+    and the last one for the bitmaps used. Each element is identified by a command id that  
+    is a unique pair of guid and numeric identifier; the guid part of the identifier is usually  
+    called "command set" and is used to group different command inside a logically related  
+    group; your package should define its own command set in order to avoid collisions  
+    with command ids defined by other packages. -->
+
+
+    <!--Buttons section. -->
+    <!--This section defines the elements the user can interact with, like a menu command or a button 
+        or combo box in a toolbar. -->
+    <Buttons>
+      <!--To define a menu group you have to specify its ID, the parent menu and its display priority. 
+          The command is visible and enabled by default. If you need to change the visibility, status, etc, you can use
+          the CommandFlag node.
+          You can add more than one CommandFlag node e.g.:
+              <CommandFlag>DefaultInvisible</CommandFlag>
+              <CommandFlag>DynamicVisibility</CommandFlag>
+          If you do not want an image next to your command, remove the Icon node /> -->
+
+      <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenReferenceInILSpy" priority="0x0600" type="Button">
+        <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyRefGroup" />
+        <Icon guid="guidImages" id="bmpLogo" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>用 ILSpy 打开</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenProjectOutputInILSpy" priority="0x0600" type="Button">
+        <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyProjGroup" />
+        <Icon guid="guidImages" id="bmpLogo" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>用 ILSpy 打开输出</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenCodeItemInILSpy" priority="0x0600" type="Button">
+        <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyCodeItemGroup" />
+        <Icon guid="guidImages" id="bmpLogo" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>用 ILSpy 打开代码</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenILSpy" priority="0x0600" type="Button">
+        <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyGroup" />
+        <Icon guid="guidImages" id="bmpLogo" />
+        <Strings>
+          <ButtonText>ILSpy</ButtonText>
+        </Strings>
+      </Button>
+
+    </Buttons>
+
+  </Commands>
+
+</CommandTable>

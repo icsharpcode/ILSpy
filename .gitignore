@@ -11,8 +11,8 @@ _ReSharper*/
 *.ReSharper
 *.patch
 .vs/
-/ILSpy.AddIn/Packages/*
-/ILSpy.AddIn/source.extension.vsixmanifest
+/ILSpy.AddIn*/Packages/*
+/ILSpy.AddIn*/source.extension.vsixmanifest
 /ICSharpCode.Decompiler.Tests/TestCases/Disassembler/Pretty/*.dll
 /ICSharpCode.Decompiler.Tests/TestCases/Disassembler/Pretty/*.result.il
 /ICSharpCode.Decompiler.Tests/TestCases/Correctness/*.exe
