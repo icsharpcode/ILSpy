@@ -1,12 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="ebf12ca7-a1fd-4aee-a894-4a0c5682fc2f" Version="$INSERTVERSION$" Language="en-US" Publisher="ic#code" />
+    <Identity Id="ebf12ca7-a1fd-4aee-a894-4a0c5682fc2f" Version="$INSERTVERSION$" Language="en-US" Publisher="SharpDevelop Team" />
     <DisplayName>ILSpy 2022</DisplayName>
     <Description xml:space="preserve">Integrates the ILSpy decompiler into Visual Studio.</Description>
     <MoreInfo>https://ilspy.net</MoreInfo>
     <License>license.txt</License>
     <Icon>ILSpy-Large.ico</Icon>
+	<Tags>ILSpy;IL;decompile;decompiler;decompilation;C#;CSharp;.NET;Productivity;Open Source;Free</Tags>
+	<Preview>true</Preview>
   </Metadata>
   <Installation>
 	<InstallationTarget Id="Microsoft.VisualStudio.Community" Version ="[17.0, 18.0)">
