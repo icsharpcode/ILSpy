@@ -163,6 +163,34 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return typeSystemOptions;
 		}
 
+		public static Task<DecompilerTypeSystem> CreateAsync(PEFile mainModule, IAssemblyResolver assemblyResolver)
+		{
+			return CreateAsync(mainModule, assemblyResolver, TypeSystemOptions.Default);
+		}
+
+		public static Task<DecompilerTypeSystem> CreateAsync(PEFile mainModule, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
+		{
+			return CreateAsync(mainModule, assemblyResolver, GetOptions(settings ?? throw new ArgumentNullException(nameof(settings))));
+		}
+
+		public static async Task<DecompilerTypeSystem> CreateAsync(PEFile mainModule, IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
+		{
+			if (mainModule == null)
+				throw new ArgumentNullException(nameof(mainModule));
+			if (assemblyResolver == null)
+				throw new ArgumentNullException(nameof(assemblyResolver));
+			var ts = new DecompilerTypeSystem();
+			await ts.InitializeAsync(mainModule, assemblyResolver, typeSystemOptions)
+				.ConfigureAwait(false);
+			return ts;
+		}
+
+		private MetadataModule mainModule;
+
+		private DecompilerTypeSystem()
+		{
+		}
+
 		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver)
 			: this(mainModule, assemblyResolver, TypeSystemOptions.Default)
 		{
@@ -179,6 +207,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentNullException(nameof(mainModule));
 			if (assemblyResolver == null)
 				throw new ArgumentNullException(nameof(assemblyResolver));
+			InitializeAsync(mainModule, assemblyResolver, typeSystemOptions).GetAwaiter().GetResult();
+		}
+
+		private async Task InitializeAsync(PEFile mainModule, IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
+		{
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<PEFile>();
@@ -215,7 +248,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			while (assemblyReferenceQueue.Count > 0)
 			{
 				var asmRef = assemblyReferenceQueue.Dequeue();
-				var asm = asmRef.ResolveTask.GetAwaiter().GetResult();
+				var asm = await asmRef.ResolveTask.ConfigureAwait(false);
 				if (asm != null)
 				{
 					referencedAssemblies.Add(asm);
@@ -250,7 +283,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				Init(mainModuleWithOptions, referencedAssembliesWithOptions);
 			}
-			this.MainModule = (MetadataModule)base.MainModule;
+			this.mainModule = (MetadataModule)base.MainModule;
 
 			void AddToQueue(bool isAssembly, PEFile mainModule, object reference)
 			{
@@ -285,6 +318,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public new MetadataModule MainModule { get; }
+		public new MetadataModule MainModule => mainModule;
 	}
 }
