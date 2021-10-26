@@ -163,6 +163,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return typeSystemOptions;
 		}
 
+		public DecompilerTypeSystem()
+		{
+		}
+
 		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver)
 			: this(mainModule, assemblyResolver, TypeSystemOptions.Default)
 		{
@@ -174,6 +178,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
+		{
+		}
+
+		public async Task InitializeAsync(PEFile mainModule, IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
 		{
 			if (mainModule == null)
 				throw new ArgumentNullException(nameof(mainModule));
@@ -215,7 +223,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			while (assemblyReferenceQueue.Count > 0)
 			{
 				var asmRef = assemblyReferenceQueue.Dequeue();
-				var asm = asmRef.ResolveTask.GetAwaiter().GetResult();
+				var asm = await asmRef.ResolveTask;
 				if (asm != null)
 				{
 					referencedAssemblies.Add(asm);
@@ -285,6 +293,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public new MetadataModule MainModule { get; }
+		public new MetadataModule MainModule { get; private set; }
 	}
 }
