@@ -1,6 +1,7 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:styles="urn:TomsToolbox.Wpf.Styles">
+                    xmlns:styles="urn:TomsToolbox.Wpf.Styles"
+                    xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes">
 	<ResourceDictionary.MergedDictionaries>
 		<ResourceDictionary Source="/AvalonDock.Themes.VS2013;component/lighttheme.xaml" />
 	</ResourceDictionary.MergedDictionaries>
@@ -25,6 +26,9 @@
 	<Color x:Key="{x:Static SystemColors.InactiveCaptionColorKey}">#EEEEF2</Color>
 	<Color x:Key="{x:Static SystemColors.InactiveBorderColorKey}">#CCCEDB</Color>
 	<Color x:Key="{x:Static SystemColors.InactiveCaptionTextColorKey}">#808080</Color>
+
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.BracketHighlightBackgroundBrush}" Color="#160000FF" />
+	<Pen x:Key="{x:Static themes:ResourceKeys.BracketHighlightBorderPen}" Brush="#340000FF" Thickness="1" />
 
 	<SolidColorBrush x:Key="{x:Static SystemColors.ControlLightLightBrushKey}" Color="#FCFCFC" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.ControlLightBrushKey}" Color="#D8D8E0" />

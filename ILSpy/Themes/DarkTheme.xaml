@@ -29,6 +29,9 @@
 	<Color x:Key="{x:Static SystemColors.InactiveBorderColorKey}">#434346</Color>
 	<Color x:Key="{x:Static SystemColors.InactiveCaptionTextColorKey}">#808080</Color>
 
+	<SolidColorBrush x:Key="{x:Static themes:ResourceKeys.BracketHighlightBackgroundBrush}" Color="#443399FF" />
+	<Pen x:Key="{x:Static themes:ResourceKeys.BracketHighlightBorderPen}" Brush="#883399FF" Thickness="1" />
+
 	<SolidColorBrush x:Key="{x:Static SystemColors.ControlLightLightBrushKey}" Color="#333337" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.ControlLightBrushKey}" Color="#464646" />
 	<SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="#252526" />
