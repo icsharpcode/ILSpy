@@ -179,6 +179,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
 		{
+			this.InitializeAsync(mainModule, assemblyResolver, typeSystemOptions).GetAwaiter().GetResult();
 		}
 
 		public async Task InitializeAsync(PEFile mainModule, IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
