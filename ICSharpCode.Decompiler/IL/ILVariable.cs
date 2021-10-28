@@ -252,13 +252,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// <item>stloc</item>
 		/// <item>TryCatchHandler (assigning the exception variable)</item>
 		/// <item>PinnedRegion (assigning the pointer variable)</item>
-		/// <item>initial values (<see cref="HasInitialValue"/>)</item>
+		/// <item>initial values (<see cref="UsesInitialValue"/>)</item>
 		/// </list>
 		/// </summary>
 		/// <remarks>
 		/// This variable is automatically updated when adding/removing stores instructions from the ILAst.
 		/// </remarks>
-		public int StoreCount => (hasInitialValue ? 1 : 0) + StoreInstructions.Count;
+		public int StoreCount => (usesInitialValue ? 1 : 0) + StoreInstructions.Count;
 
 		readonly List<IStoreInstruction> storeInstructions = new List<IStoreInstruction>();
 
@@ -270,7 +270,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <item>stloc</item>
 		/// <item>TryCatchHandler (assigning the exception variable)</item>
 		/// <item>PinnedRegion (assigning the pointer variable)</item>
-		/// <item>initial values (<see cref="HasInitialValue"/>) -- however, there is no instruction for
+		/// <item>initial values (<see cref="UsesInitialValue"/>) -- however, there is no instruction for
 		///       the initial value, so it is not contained in the store list.</item>
 		/// </list>
 		/// </summary>
@@ -320,25 +320,84 @@ namespace ICSharpCode.Decompiler.IL
 			list.RemoveAt(indexToMove);
 		}
 
-		bool hasInitialValue;
+		bool initialValueIsInitialized;
 
 		/// <summary>
-		/// Gets/Sets whether the variable has an initial value.
+		/// Gets/Sets whether the variable's initial value is initialized.
 		/// This is always <c>true</c> for parameters (incl. <c>this</c>).
 		/// 
-		/// Normal variables have an initial value if the function uses ".locals init"
-		/// and that initialization is not a dead store.
+		/// Normal variables have an initial value if the function uses ".locals init".
 		/// </summary>
-		/// <remarks>
-		/// An initial value is counted as a store (adds 1 to StoreCount)
-		/// </remarks>
-		public bool HasInitialValue {
-			get { return hasInitialValue; }
+		public bool InitialValueIsInitialized {
+			get { return initialValueIsInitialized; }
 			set {
 				if (Kind == VariableKind.Parameter && !value)
-					throw new InvalidOperationException("Cannot remove HasInitialValue from parameters");
-				hasInitialValue = value;
+					throw new InvalidOperationException("Cannot remove InitialValueIsInitialized from parameters");
+				initialValueIsInitialized = value;
 			}
+		}
+
+		bool usesInitialValue;
+
+		/// <summary>
+		/// Gets/Sets whether the initial value of the variable is used.
+		/// This is always <c>true</c> for parameters (incl. <c>this</c>).
+		/// 
+		/// Normal variables use the initial value, if no explicit initialization is done.
+		/// </summary>
+		/// <remarks>
+		/// The following table shows the relationship between <see cref="InitialValueIsInitialized"/>
+		/// and <see cref="UsesInitialValue"/>.
+		/// <list type="table">
+		/// <listheader>
+		/// <term><see cref="InitialValueIsInitialized"/></term>
+		/// <term><see cref="UsesInitialValue"/></term>
+		/// <term>Meaning</term>
+		/// </listheader>
+		/// <item>
+		/// <term><see langword="true" /></term>
+		/// <term><see langword="true" /></term>
+		/// <term>This variable's initial value is zero-initialized (<c>.locals init</c>) and the initial value is used.
+		/// From C#'s point of view a the value <c>default(T)</c> is assigned at the site of declaration.</term>
+		/// </item>
+		/// <item>
+		/// <term><see langword="true" /></term>
+		/// <term><see langword="false" /></term>
+		/// <term>This variable's initial value is zero-initialized (<c>.locals init</c>) and the initial value is not used.
+		/// From C#'s point of view no implicit initialization occurs, because the code assigns a value
+		/// explicitly, before the variable is first read.</term>
+		/// </item>
+		/// <item>
+		/// <term><see langword="false" /></term>
+		/// <term><see langword="true" /></term>
+		/// <term>This variable's initial value is uninitialized (<c>.locals</c> without <c>init</c>) and the
+		/// initial value is used.
+		/// From C#'s point of view a call to <see cref="System.Runtime.CompilerServices.Unsafe.SkipInit{T}(out T)"/>
+		/// is generated after the declaration.</term>
+		/// </item>
+		/// <item>
+		/// <term><see langword="false" /></term>
+		/// <term><see langword="false" /></term>
+		/// <term>This variable's initial value is uninitialized (<c>.locals</c> without <c>init</c>) and the
+		/// initial value is not used.
+		/// From C#'s point of view no implicit initialization occurs, because the code assigns a value
+		/// explicitly, before the variable is first read.</term>
+		/// </item>
+		/// </list>
+		/// </remarks>
+		public bool UsesInitialValue {
+			get { return usesInitialValue; }
+			set {
+				if (Kind == VariableKind.Parameter && !value)
+					throw new InvalidOperationException("Cannot remove UsesInitialValue from parameters");
+				usesInitialValue = value;
+			}
+		}
+
+		[Obsolete("Use 'UsesInitialValue' instead.")]
+		public bool HasInitialValue {
+			get => UsesInitialValue;
+			set => UsesInitialValue = value;
 		}
 
 		/// <summary>
@@ -362,7 +421,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool IsDead {
 			get {
-				return StoreCount == (HasInitialValue ? 1 : 0)
+				return StoreInstructions.Count == 0
 					&& LoadCount == 0
 					&& AddressCount == 0;
 			}
@@ -388,7 +447,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.StackType = type.GetStackType();
 			this.Index = index;
 			if (kind == VariableKind.Parameter)
-				this.HasInitialValue = true;
+			{
+				this.InitialValueIsInitialized = true;
+				this.UsesInitialValue = true;
+			}
 			CheckInvariant();
 		}
 
@@ -401,7 +463,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.StackType = stackType;
 			this.Index = index;
 			if (kind == VariableKind.Parameter)
-				this.HasInitialValue = true;
+			{
+				this.InitialValueIsInitialized = true;
+				this.UsesInitialValue = true;
+			}
 			CheckInvariant();
 		}
 
@@ -472,9 +537,24 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write("Index={0}, ", Index);
 			}
 			output.Write("LoadCount={0}, AddressCount={1}, StoreCount={2})", LoadCount, AddressCount, StoreCount);
-			if (hasInitialValue && Kind != VariableKind.Parameter)
+			if (Kind != VariableKind.Parameter)
 			{
-				output.Write(" init");
+				if (initialValueIsInitialized)
+				{
+					output.Write(" init");
+				}
+				else
+				{
+					output.Write(" uninit");
+				}
+				if (usesInitialValue)
+				{
+					output.Write(" used");
+				}
+				else
+				{
+					output.Write(" unused");
+				}
 			}
 			if (CaptureScope != null)
 			{

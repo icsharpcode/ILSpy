@@ -2444,9 +2444,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				var body = statementBuilder.ConvertAsBlock(container);
 				var comment = new Comment(" Could not convert BlockContainer to single expression");
 				body.InsertChildAfter(null, comment, Roles.Comment);
-				// set ILVariable.HasInitialValue for any variables being used inside the container
+				// set ILVariable.UsesInitialValue for any variables being used inside the container
 				foreach (var stloc in container.Descendants.OfType<StLoc>())
-					stloc.Variable.HasInitialValue = true;
+					stloc.Variable.UsesInitialValue = true;
 				var ame = new AnonymousMethodExpression { Body = body };
 				var systemFuncType = compilation.FindType(typeof(Func<>));
 				var blockReturnType = InferReturnType(body);

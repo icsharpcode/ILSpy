@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public string Name => field.Name;
 
 			public bool CanPropagate { get; private set; }
-			public bool HasInitialValue { get; set; }
+			public bool UsesInitialValue { get; set; }
 
 			public HashSet<ILInstruction> Initializers { get; } = new HashSet<ILInstruction>();
 
@@ -80,7 +80,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (declaredVariable != null)
 					return declaredVariable;
 				declaredVariable = container.Variable.Function.RegisterVariable(VariableKind.Local, field.Type, field.Name);
-				declaredVariable.HasInitialValue = HasInitialValue;
+				declaredVariable.InitialValueIsInitialized = true;
+				declaredVariable.UsesInitialValue = UsesInitialValue;
 				declaredVariable.CaptureScope = container.CaptureScope;
 				return declaredVariable;
 			}
@@ -185,7 +186,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (displayClass.VariablesToDeclare.ContainsKey(f))
 						continue;
 					var variable = AddVariable(displayClass, null, f);
-					variable.HasInitialValue = true;
+					variable.UsesInitialValue = true;
 					displayClass.VariablesToDeclare[(IField)f.MemberDefinition] = variable;
 				}
 
@@ -304,7 +305,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					HandleInitBlock(stloc.Parent as Block, stloc.ChildIndex + 1, result, result.Variable);
 					break;
 				case TypeKind.Struct:
-					if (v.StoreCount != (v.HasInitialValue ? 1 : 0))
+					if (v.StoreInstructions.Count != 0)
 						return null;
 					Debug.Assert(v.StoreInstructions.Count == 0);
 					result = new DisplayClass(v, definition) { CaptureScope = v.CaptureScope };
@@ -509,8 +510,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				variable.Propagate(ResolveVariableToPropagate(statement.Value, field.Type));
 				variable.Initializers.Add(statement);
 			}
-			variable.HasInitialValue =
-				result.Type.IsReferenceType != false || result.Variable.HasInitialValue;
+			variable.UsesInitialValue =
+				result.Type.IsReferenceType != false || result.Variable.UsesInitialValue;
 			return variable;
 		}
 
@@ -583,7 +584,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			context.Step($"ResetHasInitialValueFlag", function);
 			foreach (var f in function.Descendants.OfType<ILFunction>())
 			{
-				RemoveDeadVariableInit.ResetHasInitialValueFlag(f, context);
+				RemoveDeadVariableInit.ResetUsesInitialValueFlag(f, context);
 				f.CapturedVariables.RemoveWhere(v => v.IsDead);
 			}
 		}
@@ -601,7 +602,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			closureType = variable.Type.GetDefinition();
-			if (context.Settings.LocalFunctions && closureType?.Kind == TypeKind.Struct && variable.HasInitialValue && IsPotentialClosure(context, closureType))
+			if (context.Settings.LocalFunctions && closureType?.Kind == TypeKind.Struct
+				&& variable.UsesInitialValue && IsPotentialClosure(context, closureType))
 			{
 				initializer = LocalFunctionDecompiler.GetStatement(variable.AddressInstructions.OrderBy(i => i.StartILOffset).First());
 				return true;
