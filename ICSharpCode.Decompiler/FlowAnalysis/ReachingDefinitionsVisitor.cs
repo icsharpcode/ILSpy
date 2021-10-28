@@ -296,14 +296,9 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				var stores = storesByVar[vi];
 				if (stores != null)
 				{
-					int expectedStoreCount = scope.Variables[vi].StoreCount;
-					if (!scope.Variables[vi].HasInitialValue)
-					{
-						// Extra store for the uninitialized state.
-						expectedStoreCount += 1;
-						// Note that for variables with HasInitialValue=true,
-						// this extra store is already accounted for in ILVariable.StoreCount.
-					}
+					int expectedStoreCount = scope.Variables[vi].StoreInstructions.Count;
+					// Extra store for the uninitialized state.
+					expectedStoreCount += 1;
 					Debug.Assert(stores.Count == expectedStoreCount);
 					stores.CopyTo(allStores, si);
 					// Add all stores except for the first (representing the uninitialized state)
