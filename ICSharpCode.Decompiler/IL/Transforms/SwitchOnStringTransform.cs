@@ -548,17 +548,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull()))
 				return false;
-			// The initial store can be omitted in some cases. If there is no initial store or the switch value variable is reused later,
-			// we do not inline the "switch value", but create an extra load later on.
-			if (i > 0 && instructions[i - 1].MatchStLoc(out var switchValueVar, out var switchValue))
+			// Extract switchValueVar
+			if (!left.MatchLdLoc(out var switchValueVar) || !switchValueVar.IsSingleDefinition)
+				return false;
+			// If the switchValueVar is a stack slot and there is an assignment involving it right before the
+			// switch-value null-check, we use the previously assigned variable as switchValueVar.
+			ILInstruction switchValue;
+			if (switchValueVar.Kind == VariableKind.StackSlot
+				&& instructions.ElementAtOrDefault(i - 1) is StLoc extraStore
+				&& extraStore.Value.MatchLdLoc(switchValueVar))
 			{
-				if (!(switchValueVar.IsSingleDefinition && ((SemanticHelper.IsPure(switchValue.Flags) && left.Match(switchValue).Success) || left.MatchLdLoc(switchValueVar))))
-					return false;
+				switchValueVar = extraStore.Variable;
+				switchValue = extraStore.Value;
 			}
 			else
 			{
-				if (!left.MatchLdLoc(out switchValueVar))
-					return false;
 				switchValue = null;
 			}
 			if (!switchValueVar.Type.IsKnownType(KnownTypeCode.String))
