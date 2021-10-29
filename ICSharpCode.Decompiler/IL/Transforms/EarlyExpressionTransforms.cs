@@ -109,7 +109,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& !inst.IsVolatile)
 			{
 				context.Step($"stobj(ldloca {v.Name}, ...) => stloc {v.Name}(...)", inst);
-				inst.ReplaceWith(new StLoc(v, inst.Value).WithILRange(inst));
+				ILInstruction replacement = new StLoc(v, inst.Value).WithILRange(inst);
+				if (v.StackType == StackType.Unknown && inst.Type.Kind != TypeKind.Unknown
+					&& inst.SlotInfo != Block.InstructionSlot)
+				{
+					replacement = new Conv(replacement, inst.Type.ToPrimitiveType(),
+						checkForOverflow: false, Sign.None);
+				}
+				inst.ReplaceWith(replacement);
 				return true;
 			}
 			return false;
@@ -130,7 +137,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& !inst.IsVolatile)
 			{
 				context.Step($"ldobj(ldloca {v.Name}) => ldloc {v.Name}", inst);
-				inst.ReplaceWith(new LdLoc(v).WithILRange(inst));
+				ILInstruction replacement = new LdLoc(v).WithILRange(inst);
+				if (v.StackType == StackType.Unknown && inst.Type.Kind != TypeKind.Unknown)
+				{
+					replacement = new Conv(replacement, inst.Type.ToPrimitiveType(),
+						checkForOverflow: false, Sign.None);
+				}
+				inst.ReplaceWith(replacement);
 				return true;
 			}
 			return false;
