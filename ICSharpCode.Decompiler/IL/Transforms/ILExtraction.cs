@@ -115,9 +115,52 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						newBlock.Instructions.Add(inst);
 					}
 				}
-				if (inst.Parent is Block block && block.Kind == BlockKind.ControlFlow)
+				if (inst.Parent is Block { Kind: BlockKind.ControlFlow } block)
 				{
-					// We've reached the target block, and extraction is possible all the way.
+					// We've reached a target block, and extraction is possible all the way.
+					// Check if the parent BlockContainer allows extraction:
+					if (block.Parent is BlockContainer container)
+					{
+						switch (container.Kind)
+						{
+							case ContainerKind.Normal:
+							case ContainerKind.Loop:
+								// extraction is always possible
+								break;
+							case ContainerKind.Switch:
+								// extraction is possible, unless in the entry-point (i.e., the switch head)
+								if (block == container.EntryPoint && inst.ChildIndex == 0)
+								{
+									// try to extract to the container's parent block, if it's a valid location
+									inst = container;
+									continue;
+								}
+								break;
+							case ContainerKind.While:
+								// extraction is possible, unless in the entry-point (i.e., the condition block)
+								if (block == container.EntryPoint)
+								{
+									return null;
+								}
+								break;
+							case ContainerKind.DoWhile:
+								// extraction is possible, unless in the last block (i.e., the condition block)
+								if (block == container.Blocks.Last())
+								{
+									return null;
+								}
+								break;
+							case ContainerKind.For:
+								// extraction is possible, unless in the first or last block
+								// (i.e., the condition block or increment block)
+								if (block == container.EntryPoint
+									|| block == container.Blocks.Last())
+								{
+									return null;
+								}
+								break;
+						}
+					}
 					int insertIndex = inst.ChildIndex;
 					var type = context.TypeSystem.FindType(instToExtract.ResultType);
 					// Move instToExtract itself:
