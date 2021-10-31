@@ -3,16 +3,15 @@
   <files>
     <file id="1" name="ICSharpCode\Decompiler\Tests\TestCases\PdbGen\HelloWorld.cs" language="C#" checksumAlgorithm="SHA256"><![CDATA[using System;
 
-namespace ICSharpCode.Decompiler.Tests.TestCases.PdbGen
+namespace ICSharpCode.Decompiler.Tests.TestCases.PdbGen;
+
+public class HelloWorld
 {
-	public class HelloWorld
+	public static void Main(string[] args)
 	{
-		public static void Main(string[] args)
-		{
-			Console.ReadKey();
-			Console.WriteLine("Hello World!");
-			Console.ReadKey();
-		}
+		Console.ReadKey();
+		Console.WriteLine("Hello World!");
+		Console.ReadKey();
 	}
 }
 ]]></file>

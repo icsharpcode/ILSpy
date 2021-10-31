@@ -42,6 +42,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		public bool IsFileScoped { get; set; }
+
 		public CSharpTokenNode NamespaceToken {
 			get { return GetChildByRole(Roles.NamespaceKeyword); }
 		}

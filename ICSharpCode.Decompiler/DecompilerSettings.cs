@@ -142,10 +142,16 @@ namespace ICSharpCode.Decompiler
 				usePrimaryConstructorSyntax = false;
 				covariantReturns = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp10_0)
+			{
+				fileScopedNamespaces = false;
+			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
+			if (fileScopedNamespaces)
+				return CSharp.LanguageVersion.CSharp10_0;
 			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension
 				|| recordClasses || withExpressions || usePrimaryConstructorSyntax || covariantReturns)
 				return CSharp.LanguageVersion.CSharp9_0;
@@ -318,6 +324,24 @@ namespace ICSharpCode.Decompiler
 				if (switchExpressions != value)
 				{
 					switchExpressions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool fileScopedNamespaces = true;
+
+		/// <summary>
+		/// Use C# 10 file-scoped namespaces.
+		/// </summary>
+		[Category("C# 10.0 / VS 2022")]
+		[Description("DecompilerSettings.FileScopedNamespaces")]
+		public bool FileScopedNamespaces {
+			get { return fileScopedNamespaces; }
+			set {
+				if (fileScopedNamespaces != value)
+				{
+					fileScopedNamespaces = value;
 					OnPropertyChanged();
 				}
 			}

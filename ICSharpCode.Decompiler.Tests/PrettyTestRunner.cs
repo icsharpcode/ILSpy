@@ -180,7 +180,8 @@ namespace ICSharpCode.Decompiler.Tests
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				NullPropagation = false,
 				// legacy csc generates a dead store in debug builds
-				RemoveDeadStores = (cscOptions == CompilerOptions.None)
+				RemoveDeadStores = (cscOptions == CompilerOptions.None),
+				FileScopedNamespaces = false,
 			});
 		}
 
@@ -191,6 +192,7 @@ namespace ICSharpCode.Decompiler.Tests
 				// legacy csc generates a dead store in debug builds
 				RemoveDeadStores = (cscOptions == CompilerOptions.None),
 				SwitchExpressions = false,
+				FileScopedNamespaces = false,
 			});
 		}
 
@@ -235,7 +237,10 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			RunForLibrary(
 				cscOptions: cscOptions,
-				decompilerSettings: new DecompilerSettings { UseEnhancedUsing = false }
+				decompilerSettings: new DecompilerSettings {
+					UseEnhancedUsing = false,
+					FileScopedNamespaces = false,
+				}
 			);
 		}
 
@@ -263,7 +268,8 @@ namespace ICSharpCode.Decompiler.Tests
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				// legacy csc generates a dead store in debug builds
 				RemoveDeadStores = (cscOptions == CompilerOptions.None),
-				UseExpressionBodyForCalculatedGetterOnlyProperties = false
+				UseExpressionBodyForCalculatedGetterOnlyProperties = false,
+				FileScopedNamespaces = false,
 			});
 		}
 
@@ -407,7 +413,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			RunForLibrary(
 				cscOptions: cscOptions,
-				decompilerSettings: new DecompilerSettings { UseEnhancedUsing = false }
+				decompilerSettings: new DecompilerSettings { UseEnhancedUsing = false, FileScopedNamespaces = false }
 			);
 		}
 
@@ -427,6 +433,12 @@ namespace ICSharpCode.Decompiler.Tests
 		public void NativeInts([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
+		}
+
+		[Test]
+		public void FileScopedNamespaces([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings());
 		}
 
 		[Test]

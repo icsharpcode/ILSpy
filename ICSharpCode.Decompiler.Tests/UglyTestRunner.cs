@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void NoArrayInitializers([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
 				ArrayInitializers = false
 			});
 		}
@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void NoDecimalConstants([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
 				DecimalConstants = false
 			});
 		}
@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void NoExtensionMethods([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp9_0) {
 				ExtensionMethods = false
 			});
 		}
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void NoForEachStatement([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
 				ForEachStatement = false,
 				UseEnhancedUsing = false,
 			});
@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void NoPropertiesAndEvents([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
 				AutomaticEvents = false,
 				AutomaticProperties = false,
 			});
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void AggressiveScalarReplacementOfAggregates([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp3) {
 				AggressiveScalarReplacementOfAggregates = true
 			});
 		}
