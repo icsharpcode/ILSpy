@@ -1,0 +1,20 @@
+<DrawingGroup xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+  <DrawingGroup.Transform>
+    <TranslateTransform X="0" Y="10.615" />
+  </DrawingGroup.Transform>
+  <DrawingGroup.Children>
+  <GeometryDrawing Geometry="F1 M16,16z M0,0z M16,16L0,16 0,0 16,0 16,16z">
+    <GeometryDrawing.Brush>
+      <SolidColorBrush Color="#FFF6F6F6" Opacity="0" />
+    </GeometryDrawing.Brush>
+  </GeometryDrawing>
+  <GeometryDrawing Brush="#FFF6F6F6" Geometry="F1 M16,16z M0,0z M16,5.833A5.84,5.84,0,0,1,10.167,11.666A5.688,5.688,0,0,1,7.254,10.866L2.56,15.559A1.494,1.494,0,0,1,0.439,15.561A1.501,1.501,0,0,1,0.439,13.44L5.133,8.745A5.69,5.69,0,0,1,4.333,5.834C4.333,2.617 6.95,0 10.167,0 13.384,0 16,2.617 16,5.833z" />
+  <GeometryDrawing Brush="#FFF0EFF1" Geometry="F1 M16,16z M0,0z M14,5.833A3.837,3.837,0,0,1,10.167,9.666C8.053,9.666 6.334,7.946 6.334,5.833 6.334,3.72 8.053,2 10.167,2A3.838,3.838,0,0,1,14,5.833z" />
+  <GeometryDrawing Brush="#FF424242" Geometry="F1 M16,16z M0,0z M10.167,1A4.84,4.84,0,0,0,5.333,5.833C5.333,6.985,5.755,8.03,6.43,8.861L1.146,14.146A0.5,0.5,0,0,0,1.854,14.854L7.138,9.569C7.97,10.245 9.015,10.667 10.167,10.667 12.832,10.667 15,8.499 15,5.834 15,3.169 12.832,1 10.167,1z M10.167,9.667C8.053,9.667 6.334,7.947 6.334,5.834 6.334,3.721 8.053,2 10.167,2 12.28,2 14,3.72 14,5.833 14,7.946 12.28,9.667 10.167,9.667z" />
+  <GeometryDrawing Brush="#FF424242">
+    <GeometryDrawing.Geometry>
+      <RectangleGeometry RadiusX="0" RadiusY="0" Rect="7.865,5.3462,4.6154,0.8846" />
+    </GeometryDrawing.Geometry>
+  </GeometryDrawing>
+  </DrawingGroup.Children>
+</DrawingGroup>

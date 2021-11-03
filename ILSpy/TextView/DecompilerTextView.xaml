@@ -2,9 +2,11 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
-             xmlns:ae="clr-namespace:ICSharpCode.AvalonEdit;assembly=ICSharpCode.AvalonEdit"
-             xmlns:folding="clr-namespace:ICSharpCode.AvalonEdit.Folding;assembly=ICSharpCode.AvalonEdit"
-             xmlns:styles="urn:TomsToolbox.Wpf.Styles">
+			 xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
+			 xmlns:local="clr-namespace:ICSharpCode.ILSpy.TextView"
+			 xmlns:ae="clr-namespace:ICSharpCode.AvalonEdit;assembly=ICSharpCode.AvalonEdit"
+			 xmlns:folding="clr-namespace:ICSharpCode.AvalonEdit.Folding;assembly=ICSharpCode.AvalonEdit"
+			 xmlns:styles="urn:TomsToolbox.Wpf.Styles">
 	<UserControl.Resources>
 		<BooleanToVisibilityConverter x:Key="boolToVisibility" />
 		<SolidColorBrush x:Key="waitAdornerBackgoundBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" Opacity=".75"/>
@@ -47,6 +49,33 @@
 							</Style.Triggers>
 						</Style>
 					</ae:TextEditor.Resources>
+					<ae:TextEditor.Template>
+						<ControlTemplate TargetType="{x:Type ae:TextEditor}">
+							<controls:ZoomScrollViewer
+								Focusable="False"
+								x:Name="PART_ScrollViewer"
+								MouseWheelZoom="True"
+								CanContentScroll="True"
+								VerticalScrollBarVisibility="Visible"
+								HorizontalScrollBarVisibility="Visible"
+								Content="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TextArea}"
+								VerticalContentAlignment="Top"
+								HorizontalContentAlignment="Left"
+								Background="{TemplateBinding Background}"
+								Padding="{TemplateBinding Padding}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}" 
+								TextOptions.TextFormattingMode="{Binding CurrentZoom, ElementName=PART_ScrollViewer, Converter={x:Static local:ZoomLevelToTextFormattingModeConverter.Instance}}" />
+							<ControlTemplate.Triggers>
+								<Trigger Property="WordWrap"
+									Value="True">
+									<Setter TargetName="PART_ScrollViewer"
+										Property="HorizontalScrollBarVisibility"
+										Value="Disabled" />
+								</Trigger>
+							</ControlTemplate.Triggers>
+						</ControlTemplate>
+					</ae:TextEditor.Template>
 				</ae:TextEditor>
 				<Border Name="waitAdorner" Background="{StaticResource waitAdornerBackgoundBrush}" Visibility="Collapsed">
 					<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">

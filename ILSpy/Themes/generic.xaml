@@ -4,6 +4,7 @@
 	xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes">
 	<ResourceDictionary.MergedDictionaries>
 		<ResourceDictionary Source="../Controls/SearchBoxStyle.xaml" />
+		<ResourceDictionary Source="../Controls/ZoomScrollViewer.xaml" />
 	</ResourceDictionary.MergedDictionaries>
 	
 	<!-- SortableGridViewColumn.
