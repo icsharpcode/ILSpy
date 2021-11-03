@@ -1857,16 +1857,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			var watch = System.Diagnostics.Stopwatch.StartNew();
 			try
 			{
+				bool adderHasBody = ev.CanAdd && ev.AddAccessor.HasBody;
+				bool removerHasBody = ev.CanRemove && ev.RemoveAccessor.HasBody;
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
-				typeSystemAstBuilder.UseCustomEvents = ev.DeclaringTypeDefinition.Kind != TypeKind.Interface;
+				typeSystemAstBuilder.UseCustomEvents = ev.DeclaringTypeDefinition.Kind != TypeKind.Interface
+					|| ev.IsExplicitInterfaceImplementation
+					|| adderHasBody
+					|| removerHasBody;
 				var eventDecl = typeSystemAstBuilder.ConvertEntity(ev);
 				int lastDot = ev.Name.LastIndexOf('.');
 				if (ev.IsExplicitInterfaceImplementation)
 				{
 					eventDecl.Name = ev.Name.Substring(lastDot + 1);
 				}
-				bool adderHasBody = ev.CanAdd && ev.AddAccessor.HasBody;
-				bool removerHasBody = ev.CanRemove && ev.RemoveAccessor.HasBody;
 				if (adderHasBody)
 				{
 					DecompileBody(ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompileRun, decompilationContext);
