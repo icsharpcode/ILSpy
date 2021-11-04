@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -87,11 +88,26 @@ namespace ICSharpCode.ILSpy.Metadata
 		public object Value { get; }
 		public string Meaning { get; }
 
-		public Entry(int offset, object value, int size, string member, string meaning)
+		public IList<BitEntry> RowDetails { get; }
+
+		public Entry(int offset, object value, int size, string member, string meaning, IList<BitEntry> rowDetails = null)
 		{
 			this.Member = member;
 			this.Offset = offset;
 			this.Size = size;
+			this.Value = value;
+			this.Meaning = meaning;
+			this.RowDetails = rowDetails;
+		}
+	}
+
+	class BitEntry
+	{
+		public bool Value { get; }
+		public string Meaning { get; }
+
+		public BitEntry(bool value, string meaning)
+		{
 			this.Value = value;
 			this.Meaning = meaning;
 		}

@@ -48,14 +48,21 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var dataGrid = Helpers.PrepareDataGrid(tabPage, this);
-			dataGrid.RowDetailsTemplateSelector = new DllCharacteristicsDataTemplateSelector();
-			dataGrid.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Visible;
+
+			dataGrid.RowDetailsTemplateSelector = new CharacteristicsDataTemplateSelector("DLL Characteristics");
+			dataGrid.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Collapsed;
+
+			dataGrid.Columns.Clear();
 			dataGrid.AutoGenerateColumns = false;
-			dataGrid.Columns.Add(new DataGridTextColumn { Header = "Member", Binding = new Binding("Member") { Mode = BindingMode.OneWay } });
-			dataGrid.Columns.Add(new DataGridTextColumn { Header = "Offset", Binding = new Binding("Offset") { StringFormat = "X8", Mode = BindingMode.OneWay } });
-			dataGrid.Columns.Add(new DataGridTextColumn { Header = "Size", Binding = new Binding("Size") { Mode = BindingMode.OneWay } });
-			dataGrid.Columns.Add(new DataGridTextColumn { Header = "Value", Binding = new Binding(".") { Converter = ByteWidthConverter.Instance, Mode = BindingMode.OneWay } });
-			dataGrid.Columns.Add(new DataGridTextColumn { Header = "Meaning", Binding = new Binding("Meaning") { Mode = BindingMode.OneWay } });
+			dataGrid.Columns.AddRange(
+				new[] {
+					new DataGridTextColumn { IsReadOnly = true, Header = "Member", Binding = new Binding("Member") },
+					new DataGridTextColumn { IsReadOnly = true, Header = "Offset", Binding = new Binding("Offset") { StringFormat = "X8" } },
+					new DataGridTextColumn { IsReadOnly = true, Header = "Size", Binding = new Binding("Size") },
+					new DataGridTextColumn { IsReadOnly = true, Header = "Value", Binding = new Binding(".") { Converter = ByteWidthConverter.Instance } },
+					new DataGridTextColumn { IsReadOnly = true, Header = "Meaning", Binding = new Binding("Meaning") }
+				}
+			);
 
 			var headers = module.Reader.PEHeaders;
 			var reader = module.Reader.GetEntireImage().GetReader(headers.PEHeaderStartOffset, 128);
@@ -63,6 +70,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			var isPE32Plus = (header.Magic == PEMagic.PE32Plus);
 
 			var entries = new List<Entry>();
+			ushort dllCharacteristics;
+			Entry characteristics;
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadUInt16(), 2, "Magic", header.Magic.ToString()));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadByte(), 1, "Major Linker Version", ""));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadByte(), 1, "Minor Linker Version", ""));
@@ -86,7 +95,24 @@ namespace ICSharpCode.ILSpy.Metadata
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadInt32(), 4, "Header Size", "Combined size of MS-DOS Header, PE Header, PE Optional Header and padding; shall be a multiple of the file alignment."));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadInt32(), 4, "File Checksum", ""));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadUInt16(), 2, "Subsystem", header.Subsystem.ToString()));
-			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadUInt16(), 2, "DLL Characteristics", header.DllCharacteristics.ToString()));
+			entries.Add(characteristics = new Entry(headers.PEHeaderStartOffset + reader.Offset, dllCharacteristics = reader.ReadUInt16(), 2, "DLL Characteristics", header.DllCharacteristics.ToString(), new[] {
+					new BitEntry((dllCharacteristics & 0x0001) != 0, "<0001> Process Init (Reserved)"),
+					new BitEntry((dllCharacteristics & 0x0002) != 0, "<0002> Process Term (Reserved)"),
+					new BitEntry((dllCharacteristics & 0x0004) != 0, "<0004> Thread Init (Reserved)"),
+					new BitEntry((dllCharacteristics & 0x0008) != 0, "<0008> Thread Term (Reserved)"),
+					new BitEntry((dllCharacteristics & 0x0010) != 0, "<0010> Unused"),
+					new BitEntry((dllCharacteristics & 0x0020) != 0, "<0020> Image can handle a high entropy 64-bit virtual address space (ASLR)"),
+					new BitEntry((dllCharacteristics & 0x0040) != 0, "<0040> DLL can be relocated at load time"),
+					new BitEntry((dllCharacteristics & 0x0080) != 0, "<0080> Code integrity checks are enforced"),
+					new BitEntry((dllCharacteristics & 0x0100) != 0, "<0100> Image is NX compatible"),
+					new BitEntry((dllCharacteristics & 0x0200) != 0, "<0200> Isolation aware, but do not isolate the image"),
+					new BitEntry((dllCharacteristics & 0x0400) != 0, "<0400> Does not use structured exception handling (SEH)"),
+					new BitEntry((dllCharacteristics & 0x0800) != 0, "<0800> Do not bind the image"),
+					new BitEntry((dllCharacteristics & 0x1000) != 0, "<1000> Image must execute in an AppContainer"),
+					new BitEntry((dllCharacteristics & 0x2000) != 0, "<2000> Driver is a WDM Driver"),
+					new BitEntry((dllCharacteristics & 0x4000) != 0, "<4000> Image supports Control Flow Guard"),
+					new BitEntry((dllCharacteristics & 0x8000) != 0, "<8000> Image is Terminal Server aware"),
+				}));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, isPE32Plus ? reader.ReadUInt64() : reader.ReadUInt32(), isPE32Plus ? 8 : 4, "Stack Reserve Size", ""));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, isPE32Plus ? reader.ReadUInt64() : reader.ReadUInt32(), isPE32Plus ? 8 : 4, "Stack Commit Size", ""));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, isPE32Plus ? reader.ReadUInt64() : reader.ReadUInt32(), isPE32Plus ? 8 : 4, "Heap Reserve Size", ""));
@@ -95,46 +121,10 @@ namespace ICSharpCode.ILSpy.Metadata
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadInt32(), 4, "Number of Data Directories", ""));
 
 			dataGrid.ItemsSource = entries;
+			dataGrid.SetDetailsVisibilityForItem(characteristics, Visibility.Visible);
 
 			tabPage.Content = dataGrid;
 			return true;
-		}
-
-		private class DllCharacteristicsDataTemplateSelector : DataTemplateSelector
-		{
-			public override DataTemplate SelectTemplate(object item, DependencyObject container)
-			{
-				if (((Entry)item).Member == "DLL Characteristics")
-					return MakeDataTemplate((ushort)((Entry)item).Value);
-				return new DataTemplate();
-			}
-
-			private DataTemplate MakeDataTemplate(ushort flags)
-			{
-				FrameworkElementFactory dataGridFactory = new FrameworkElementFactory(typeof(DataGrid));
-				dataGridFactory.SetValue(DataGrid.ItemsSourceProperty, new[] {
-					new { Value = (flags & 0x0001) != 0, Meaning = "<0001> Process Init (Reserved)" },
-					new { Value = (flags & 0x0002) != 0, Meaning = "<0002> Process Term (Reserved)" },
-					new { Value = (flags & 0x0004) != 0, Meaning = "<0004> Thread Init (Reserved)" },
-					new { Value = (flags & 0x0008) != 0, Meaning = "<0008> Thread Term (Reserved)" },
-					new { Value = (flags & 0x0010) != 0, Meaning = "<0010> Unused" },
-					new { Value = (flags & 0x0020) != 0, Meaning = "<0020> Image can handle a high entropy 64-bit virtual address space (ASLR)" },
-					new { Value = (flags & 0x0040) != 0, Meaning = "<0040> DLL can be relocated at load time" },
-					new { Value = (flags & 0x0080) != 0, Meaning = "<0080> Code integrity checks are enforced" },
-					new { Value = (flags & 0x0100) != 0, Meaning = "<0100> Image is NX compatible" },
-					new { Value = (flags & 0x0200) != 0, Meaning = "<0200> Isolation aware, but do not isolate the image" },
-					new { Value = (flags & 0x0400) != 0, Meaning = "<0400> Does not use structured exception handling (SEH)" },
-					new { Value = (flags & 0x0800) != 0, Meaning = "<0800> Do not bind the image" },
-					new { Value = (flags & 0x1000) != 0, Meaning = "<1000> Image must execute in an AppContainer" },
-					new { Value = (flags & 0x2000) != 0, Meaning = "<2000> Driver is a WDM Driver" },
-					new { Value = (flags & 0x4000) != 0, Meaning = "<4000> Image supports Control Flow Guard" },
-					new { Value = (flags & 0x8000) != 0, Meaning = "<8000> Image is Terminal Server aware" },
-				});
-				dataGridFactory.SetValue(DataGrid.GridLinesVisibilityProperty, DataGridGridLinesVisibility.None);
-				DataTemplate template = new DataTemplate();
-				template.VisualTree = dataGridFactory;
-				return template;
-			}
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

@@ -71,6 +71,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			DataGridFilter.GetFilter(view).Clear();
 			view.RowDetailsTemplateSelector = null;
 			view.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Collapsed;
+			view.EnableColumnVirtualization = true;
+			view.EnableRowVirtualization = true;
 			((MetaDataGrid)view).SelectedTreeNode = selectedNode;
 			if (!view.AutoGenerateColumns)
 				view.Columns.Clear();
@@ -91,9 +93,15 @@ namespace ICSharpCode.ILSpy.Metadata
 		internal static void View_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
 		{
 			var binding = new Binding(e.PropertyName) { Mode = BindingMode.OneWay };
-			e.Column = new DataGridTextColumn() {
-				Header = e.PropertyName,
-				Binding = binding
+			e.Column = e.PropertyType.FullName switch {
+				"System.Boolean" => new DataGridCheckBoxColumn() {
+					Header = e.PropertyName,
+					Binding = binding
+				},
+				_ => new DataGridTextColumn() {
+					Header = e.PropertyName,
+					Binding = binding
+				}
 			};
 			switch (e.PropertyName)
 			{
@@ -111,6 +119,10 @@ namespace ICSharpCode.ILSpy.Metadata
 					break;
 				case "RowDetails":
 					e.Cancel = true;
+					break;
+				case "Value" when e.PropertyDescriptor is PropertyDescriptor dp && dp.ComponentType == typeof(Entry):
+					binding.Path = new PropertyPath(".");
+					binding.Converter = ByteWidthConverter.Instance;
 					break;
 				default:
 					e.Cancel = e.PropertyName.Contains("Tooltip");
