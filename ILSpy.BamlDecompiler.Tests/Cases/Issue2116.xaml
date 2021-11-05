@@ -1,0 +1,15 @@
+﻿<UserControl x:Class="ILSpy.BamlDecompiler.Tests.Cases.Issue2116" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:ILSpy.BamlDecompiler.Tests.Cases" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
+	<FrameworkElement.Resources>
+		<ResourceDictionary>
+			<Style x:Key="TestStyle1" />
+			<Style x:Key="TestStyle2" BasedOn="{StaticResource TestStyle1}" />
+			<Style x:Key="TestStyle2" BasedOn="{StaticResource {x:Type local:Issue2116}}" />
+			<Style x:Key="TestStyle2" BasedOn="{StaticResource {x:Static local:Issue2116.StyleKey1}}" />
+		</ResourceDictionary>
+	</FrameworkElement.Resources>
+	<Grid>
+		<Grid Style="{StaticResource TestStyle1}" />
+		<Grid Style="{StaticResource {x:Type local:Issue2116}}" />
+		<Grid Style="{StaticResource {x:Static local:Issue2116.StyleKey1}}" />
+	</Grid>
+</UserControl>
