@@ -79,6 +79,14 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
+		static readonly CompilerOptions[] roslyn3OrNewerOptions =
+		{
+			CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
+		};
+
 		static readonly CompilerOptions[] roslynLatestOnlyOptions =
 		{
 			CompilerOptions.UseRoslynLatest,
@@ -440,7 +448,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void CS73_StackAllocInitializers([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
+		public void CS73_StackAllocInitializers([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
