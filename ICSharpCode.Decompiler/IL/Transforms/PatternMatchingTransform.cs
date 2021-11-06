@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				// stloc v(ldloc s)
 				pos--;
-				if (!block.Instructions[pos].MatchStLoc(s, out value))
+				if (pos < 0 || !block.Instructions[pos].MatchStLoc(s, out value))
 					return false;
 				if (v.Kind is not (VariableKind.Local or VariableKind.StackSlot))
 					return false;
