@@ -1110,6 +1110,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use pattern matching expressions.
+        /// </summary>
+        public static string DecompilerSettings_PatternMatching {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.PatternMatching", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Ranges.
         /// </summary>
         public static string DecompilerSettings_Ranges {
