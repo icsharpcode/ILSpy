@@ -219,6 +219,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(value2);
 		}
 
+		public void Issue2378(Tuple<object, object> tuple)
+		{
+			var (value, value2) = tuple;
+			Console.WriteLine(value2);
+			Console.WriteLine(value);
+		}
+
+		public void Issue2378_IntToLongConversion(Tuple<int, int> tuple)
+		{
+			int value;
+			long value2;
+			(value, value2) = tuple;
+			Console.WriteLine(value2);
+			Console.WriteLine(value);
+		}
+
 		public void LocalVariable_IntToLongConversion_Custom()
 		{
 			int value;
