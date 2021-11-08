@@ -141,6 +141,10 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void IndexRangeTest([ValueSource(nameof(dotnetCoreOnlyOptions))] CompilerOptions cscOptions)
 		{
+			if (cscOptions.HasFlag(CompilerOptions.UseRoslynLatest))
+			{
+				Assert.Ignore("See https://github.com/icsharpcode/ILSpy/issues/2540");
+			}
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
