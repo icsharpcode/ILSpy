@@ -340,6 +340,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			else if ((flags & CompilerOptions.UseMcsMask) != 0)
 			{
 				preprocessorSymbols.Add("MCS");
+				if (flags.HasFlag(CompilerOptions.UseMcs2_6_4))
+				{
+					preprocessorSymbols.Add("MCS2");
+				}
+				if (flags.HasFlag(CompilerOptions.UseMcs5_23))
+				{
+					preprocessorSymbols.Add("MCS5");
+				}
 			}
 			else
 			{

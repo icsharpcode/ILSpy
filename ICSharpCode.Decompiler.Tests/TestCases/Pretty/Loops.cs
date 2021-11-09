@@ -507,10 +507,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ForEachBreakWhenFound(string name, ref StringComparison output)
 		{
-#if MCS
+#if MCS2
 			foreach (int value in Enum.GetValues(typeof(StringComparison)))
 			{
 				if (((StringComparison)value).ToString() == name)
+				{
+					output = (StringComparison)value;
+					break;
+				}
+			}
+#elif MCS5
+			foreach (int value in Enum.GetValues(typeof(StringComparison)))
+			{
+				StringComparison stringComparison = (StringComparison)value;
+				if (stringComparison.ToString() == name)
 				{
 					output = (StringComparison)value;
 					break;
