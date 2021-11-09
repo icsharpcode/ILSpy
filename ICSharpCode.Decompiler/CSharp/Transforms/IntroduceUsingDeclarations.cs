@@ -163,7 +163,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					foreach (var v in function.Variables)
 					{
-						if (v.Kind != IL.VariableKind.Parameter)
+						if (v.Kind != IL.VariableKind.Parameter && v.Name != null)
 							resolver = resolver.AddVariable(new DefaultVariable(v.Type, v.Name));
 					}
 				}
