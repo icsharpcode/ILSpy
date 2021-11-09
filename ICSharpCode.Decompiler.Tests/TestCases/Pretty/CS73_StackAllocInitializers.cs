@@ -193,11 +193,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe string NegativeOffsets(int a, int b, int c)
 		{
 #if OPT
-			byte* intPtr = stackalloc byte[12];
-			*(int*)intPtr = 1;
-			*(int*)(intPtr - 4) = 2;
-			*(int*)(intPtr - 8) = 3;
-			int* ptr = (int*)intPtr;
+			byte* num = stackalloc byte[12];
+			*(int*)num = 1;
+			*(int*)(num - 4) = 2;
+			*(int*)(num - 8) = 3;
+			int* ptr = (int*)num;
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 #else

@@ -103,17 +103,17 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		[Ignore("Waiting for https://github.com/dotnet/roslyn/issues/45929")]
+		[Ignore("See https://github.com/icsharpcode/ILSpy/issues/2541 - Waiting for https://github.com/dotnet/roslyn/issues/45929")]
 		public void ExplicitConversions_With_NativeInts()
 		{
-			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe", LanguageVersion.Preview);
+			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe", LanguageVersion.CSharp9_0);
 		}
 
 		[Test]
-		[Ignore("Waiting for https://github.com/dotnet/roslyn/issues/45929")]
+		[Ignore("See https://github.com/icsharpcode/ILSpy/issues/2541 - Waiting for https://github.com/dotnet/roslyn/issues/45929")]
 		public void ExplicitConversions_32_With_NativeInts()
 		{
-			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe", LanguageVersion.Preview);
+			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe", LanguageVersion.CSharp9_0);
 		}
 
 		[Test]
@@ -123,10 +123,10 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		[Ignore("Waiting for https://github.com/dotnet/roslyn/issues/45929")]
+		[Ignore("See https://github.com/icsharpcode/ILSpy/issues/2541 - Waiting for https://github.com/dotnet/roslyn/issues/45929")]
 		public void Random_TestCase_1_With_NativeInts()
 		{
-			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", LanguageVersion.Preview);
+			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", LanguageVersion.CSharp9_0);
 		}
 
 		// Let's limit the roundtrip tests to C# 8.0 for now; because 9.0 is still in preview
