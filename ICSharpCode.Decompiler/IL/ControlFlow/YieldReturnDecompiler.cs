@@ -172,7 +172,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			newBody.SortBlocks(deleteUnreachableBlocks: true);
 			function.CheckInvariant(ILPhase.Normal);
 
-			if (!isCompiledWithMono)
+			if (isCompiledWithMono)
+			{
+				CleanSkipFinallyBodies(function);
+			}
+			else
 			{
 				DecompileFinallyBlocks();
 				ReconstructTryFinallyBlocks(function);
@@ -180,8 +184,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			context.Step("Translate fields to local accesses", function);
 			TranslateFieldsToLocalAccess(function, function, fieldToParameterMap, isCompiledWithMono);
-
-			CleanSkipFinallyBodies(function);
 
 			// On mono, we still need to remove traces of the state variable(s):
 			if (isCompiledWithMono)
@@ -1230,8 +1232,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				return; // only mono-compiled code uses skipFinallyBodies
 			}
-			context.StepStartGroup("CleanSkipFinallyBodies", function);
-			Block entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(function.Body as BlockContainer);
+			context.StepStartGroup("CleanFinallyBlocks", function);
 			if (skipFinallyBodies.StoreInstructions.Count != 0 || skipFinallyBodies.AddressCount != 0)
 			{
 				// misdetected another variable as doFinallyBodies?
@@ -1241,7 +1242,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			foreach (var tryFinally in function.Descendants.OfType<TryFinally>())
 			{
-				entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(tryFinally.FinallyBlock as BlockContainer);
+				if (!(tryFinally.FinallyBlock is BlockContainer container))
+					continue;
+				Block entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(container);
 				if (entryPoint?.Instructions[0] is IfInstruction ifInst)
 				{
 					if (ifInst.Condition.MatchLogicNot(out var logicNotArg) && logicNotArg.MatchLdLoc(skipFinallyBodies))
@@ -1250,10 +1253,41 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// condition will always be true now that we're using 'yield' instructions
 						entryPoint.Instructions[0] = ifInst.TrueInst;
 						entryPoint.Instructions.RemoveRange(1, entryPoint.Instructions.Count - 1);
+						// find new entryPoint after the old one was modified
+						entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(container);
 					}
+				}
+				if (entryPoint?.Instructions.Count == 2
+					&& IsCallToMonoFinallyMethod(entryPoint.Instructions[0] as Call, out var finallyMethod)
+					&& entryPoint.Instructions[1].MatchLeave((BlockContainer)tryFinally.FinallyBlock))
+				{
+					context.Step("Inline " + finallyMethod.FullName + " into finally", tryFinally);
+					var finallyFunction = CreateILAst((MethodDefinitionHandle)finallyMethod.MetadataToken, context);
+					tryFinally.FinallyBlock = finallyFunction.Body;
+					var variables = finallyFunction.Variables.ToArray();
+					finallyFunction.Variables.Clear();
+					function.Variables.AddRange(variables);
 				}
 			}
 			context.StepEndGroup(keepIfEmpty: true);
+
+			bool IsCallToMonoFinallyMethod(Call call, out IMethod finallyMethod)
+			{
+				finallyMethod = default;
+				if (call == null)
+					return false;
+				if (!(call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()))
+					return false;
+				if (!call.Method.Name.StartsWith("<>__Finally"))
+					return false;
+				ITypeDefinition declaringTypeDefinition = call.Method.DeclaringTypeDefinition;
+				if (declaringTypeDefinition.MetadataToken != this.enumeratorType)
+					return false;
+				if (declaringTypeDefinition.ParentModule.PEFile.Metadata != metadata)
+					return false;
+				finallyMethod = call.Method;
+				return !call.Method.MetadataToken.IsNil;
+			}
 		}
 	}
 }
