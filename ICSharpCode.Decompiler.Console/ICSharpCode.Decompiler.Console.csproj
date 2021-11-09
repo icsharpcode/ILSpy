@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net6.0</TargetFrameworks>
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsPackable>true</IsPackable>

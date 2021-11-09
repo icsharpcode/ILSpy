@@ -221,12 +221,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		static readonly RoslynToolset roslynToolset = new RoslynToolset();
 
 		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NET,
-			new Version(5, 0), "Microsoft.NETCore.App")
-				.GetReferenceAssemblyPath(".NETCoreApp, Version = v5.0");
+			new Version(6, 0), "Microsoft.NETCore.App")
+				.GetReferenceAssemblyPath(".NETCoreApp,Version=v6.0");
 
 		static readonly string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
 			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
-		static readonly string thisAsmPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
 
 		static readonly Lazy<IEnumerable<string>> defaultReferences = new Lazy<IEnumerable<string>>(delegate {
 			return new[]
@@ -258,7 +257,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		const string targetFrameworkAttributeSnippet = @"
 
-[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp, Version = v5.0"", FrameworkDisplayName = """")]
+[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp,Version=v6.0"", FrameworkDisplayName = """")]
 
 ";
 
