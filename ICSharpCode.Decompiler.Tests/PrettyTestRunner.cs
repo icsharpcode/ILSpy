@@ -127,8 +127,10 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
-			CompilerOptions.UseMcs,
-			CompilerOptions.Optimize | CompilerOptions.UseMcs
+			CompilerOptions.UseMcs2_6_4,
+			CompilerOptions.Optimize | CompilerOptions.UseMcs2_6_4,
+			CompilerOptions.UseMcs5_23,
+			CompilerOptions.Optimize | CompilerOptions.UseMcs5_23
 		};
 
 		[Test]

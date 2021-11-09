@@ -75,8 +75,10 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
-			CompilerOptions.UseMcs,
-			CompilerOptions.Optimize | CompilerOptions.UseMcs
+			CompilerOptions.UseMcs2_6_4,
+			CompilerOptions.Optimize | CompilerOptions.UseMcs2_6_4,
+			CompilerOptions.UseMcs5_23,
+			CompilerOptions.Optimize | CompilerOptions.UseMcs5_23
 		};
 
 		static readonly CompilerOptions[] roslynOnlyOptions =
@@ -286,7 +288,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void UnsafeCode([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
-			if (options.HasFlag(CompilerOptions.UseMcs))
+			if (options.HasFlag(CompilerOptions.UseMcs2_6_4))
 			{
 				Assert.Ignore("Decompiler bug with mono!");
 			}
@@ -314,7 +316,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void YieldReturn([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
-			if (options.HasFlag(CompilerOptions.UseMcs))
+			if ((options & CompilerOptions.UseMcsMask) != 0)
 			{
 				Assert.Ignore("Decompiler bug with mono!");
 			}
@@ -348,7 +350,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void MiniJSON([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
-			if (options.HasFlag(CompilerOptions.UseMcs))
+			if (options.HasFlag(CompilerOptions.UseMcs2_6_4))
 			{
 				Assert.Ignore("Decompiler bug with mono!");
 			}
@@ -366,12 +368,12 @@ namespace ICSharpCode.Decompiler.Tests
 				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options,
 					outputFileName: Path.Combine(TestCasePath, testOutputFileName));
 				string decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options));
-				if (options.HasFlag(CompilerOptions.UseMcs))
+				if ((options & CompilerOptions.UseMcsMask) != 0)
 				{
 					// For second pass, use roslyn instead of mcs.
 					// mcs has some compiler bugs that cause it to not accept ILSpy-generated code,
 					// for example when there's unreachable code due to other compiler bugs in the first mcs run.
-					options &= ~CompilerOptions.UseMcs;
+					options &= ~CompilerOptions.UseMcsMask;
 					options |= CompilerOptions.UseRoslynLatest;
 					// Also, add an .exe.config so that we consistently use the .NET 4.x runtime.
 					File.WriteAllText(outputFile.PathToAssembly + ".config", @"<?xml version=""1.0"" encoding=""utf-8""?>
