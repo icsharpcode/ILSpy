@@ -715,8 +715,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			foreach (var section in sectionsWithoutLabels)
 			{
-				if (!section.Body.Match(defaultSection.Body).Success)
-					return false;
 				defaultSection.Labels = defaultSection.Labels.UnionWith(section.Labels);
 				if (section.HasNullLabel)
 					defaultSection.HasNullLabel = true;
