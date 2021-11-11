@@ -670,9 +670,14 @@ namespace ICSharpCode.Decompiler.CSharp
 							sb.Clear();
 							kind = TokenKind.String;
 						}
+						else if (Peek() == '}')
+						{
+							sb.Append("}}");
+							Next();
+						}
 						else
 						{
-							sb.Append((char)next);
+							yield return (TokenKind.Error, null);
 						}
 						break;
 					case ':':
