@@ -204,6 +204,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				   select (x);
 		}
 
+#if CS60
+		private List<string> Issue2545(List<string> arglist)
+		{
+			return arglist?.OrderByDescending((string f) => f.Length).ThenBy((string f) => f.ToLower()).ToList();
+		}
+#endif
+
 		public static IEnumerable<char> Issue1310a(bool test)
 		{
 #if ROSLYN && OPT

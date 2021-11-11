@@ -361,7 +361,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 
 			if (mre.MemberName == "OrderBy" || mre.MemberName == "OrderByDescending")
-				return true;
+				return !IsNullConditional(mre.Target);
 			else if (mre.MemberName == "ThenBy" || mre.MemberName == "ThenByDescending")
 				return ValidateThenByChain(mre.Target as InvocationExpression, expectedParameterName);
 			else
