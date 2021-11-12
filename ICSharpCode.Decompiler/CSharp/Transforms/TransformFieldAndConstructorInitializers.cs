@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
@@ -304,26 +305,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					var metadata = context.TypeSystem.MainModule.PEFile.Metadata;
 					SRM.MethodDefinition ctorMethodDef = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)ctorMethod.MetadataToken);
 					SRM.TypeDefinition declaringType = metadata.GetTypeDefinition(ctorMethodDef.GetDeclaringType());
-					if (declaringType.HasFlag(System.Reflection.TypeAttributes.BeforeFieldInit))
+					bool declaringTypeIsBeforeFieldInit = declaringType.HasFlag(TypeAttributes.BeforeFieldInit);
+					while (true)
 					{
-						while (true)
+						ExpressionStatement es = staticCtor.Body.Statements.FirstOrDefault() as ExpressionStatement;
+						if (es == null)
+							break;
+						AssignmentExpression assignment = es.Expression as AssignmentExpression;
+						if (assignment == null || assignment.Operator != AssignmentOperatorType.Assign)
+							break;
+						IMember fieldOrProperty = (assignment.Left.GetSymbol() as IMember)?.MemberDefinition;
+						if (!(fieldOrProperty is IField || fieldOrProperty is IProperty) || !fieldOrProperty.IsStatic)
+							break;
+						var fieldOrPropertyDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty) as EntityDeclaration;
+						if (fieldOrPropertyDecl == null)
+							break;
+						if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(assignment.Right))
 						{
-							ExpressionStatement es = staticCtor.Body.Statements.FirstOrDefault() as ExpressionStatement;
-							if (es == null)
-								break;
-							AssignmentExpression assignment = es.Expression as AssignmentExpression;
-							if (assignment == null || assignment.Operator != AssignmentOperatorType.Assign)
-								break;
-							IMember fieldOrProperty = (assignment.Left.GetSymbol() as IMember)?.MemberDefinition;
-							if (!(fieldOrProperty is IField || fieldOrProperty is IProperty) || !fieldOrProperty.IsStatic)
-								break;
-							var fieldOrPropertyDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty) as EntityDeclaration;
-							if (fieldOrPropertyDecl == null)
-								break;
-							if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(assignment.Right))
-							{
-								fieldOrPropertyDecl.Modifiers |= Modifiers.Unsafe;
-							}
+							fieldOrPropertyDecl.Modifiers |= Modifiers.Unsafe;
+						}
+						// Only move fields that are constants, if the declaring type is not marked beforefieldinit.
+						if (declaringTypeIsBeforeFieldInit || fieldOrProperty is IField { IsConst: true })
+						{
 							if (fieldOrPropertyDecl is FieldDeclaration fd)
 								fd.Variables.Single().Initializer = assignment.Right.Detach();
 							else if (fieldOrPropertyDecl is PropertyDeclaration pd)
@@ -332,8 +335,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								break;
 							es.Remove();
 						}
-						if (staticCtor.Body.Statements.Count == 0)
-							staticCtor.Remove();
+						else
+						{
+							break;
+						}
+					}
+					if (declaringTypeIsBeforeFieldInit && staticCtor.Body.Statements.Count == 0)
+					{
+						staticCtor.Remove();
 					}
 				}
 			}

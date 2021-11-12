@@ -36,6 +36,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public class ClassWithConstant
+		{
+			// using decimal constants has the effect that there is a cctor
+			// generated containing the explicit initialization of this field.
+			// The type is marked beforefieldinit
+			private const decimal a = 1.0m;
+		}
+
+		public class ClassWithConstantAndStaticCtor
+		{
+			// The type is not marked beforefieldinit
+			private const decimal a = 1.0m;
+
+			static ClassWithConstantAndStaticCtor()
+			{
+
+			}
+		}
+
 		public struct SimpleStruct
 		{
 			public int Field1;
