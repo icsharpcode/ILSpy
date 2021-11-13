@@ -581,8 +581,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							br.TargetBlock.Instructions.RemoveAt(0);
 						}
 					}
-
-					body.Blocks.Add(innerBlock); // move block into body
+					// move block into body
+					if (sourceContainer.Blocks[i] == entryBlock)
+					{
+						// ensure entry point comes first
+						body.Blocks.Insert(0, innerBlock);
+					}
+					else
+					{
+						body.Blocks.Add(innerBlock);
+					}
 					if (!cloneBlocks)
 					{
 						sourceContainer.Blocks[i] = new Block(); // replace with dummy block
