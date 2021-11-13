@@ -143,6 +143,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							var newBlock = new Block();
 							newBlock.Instructions.Add(block.Instructions[j]);
 							newBlock.Instructions.Add(block.Instructions[j + 1]);
+							newBlock.AddILRange(newBlock.Instructions[0]);
 							Debug.Assert(block.Instructions.Count == j + 2);
 							block.Instructions.RemoveRange(j, 2);
 							block.Instructions.Insert(j, new Branch(newBlock));
