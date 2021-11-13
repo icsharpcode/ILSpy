@@ -372,7 +372,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <term><see langword="true" /></term>
 		/// <term>This variable's initial value is uninitialized (<c>.locals</c> without <c>init</c>) and the
 		/// initial value is used.
-		/// From C#'s point of view a call to <see cref="System.Runtime.CompilerServices.Unsafe.SkipInit{T}(out T)"/>
+		/// From C#'s point of view a call to <code>System.Runtime.CompilerServices.Unsafe.SkipInit(out T)</code>
 		/// is generated after the declaration.</term>
 		/// </item>
 		/// <item>
