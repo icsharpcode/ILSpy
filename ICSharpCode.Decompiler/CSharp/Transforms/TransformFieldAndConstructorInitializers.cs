@@ -16,10 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -328,11 +330,33 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						if (declaringTypeIsBeforeFieldInit || fieldOrProperty is IField { IsConst: true })
 						{
 							if (fieldOrPropertyDecl is FieldDeclaration fd)
-								fd.Variables.Single().Initializer = assignment.Right.Detach();
+							{
+								var v = fd.Variables.Single();
+								if (v.Initializer.IsNull)
+								{
+									v.Initializer = assignment.Right.Detach();
+								}
+								else
+								{
+									var constant = v.Initializer.GetResolveResult();
+									var expression = assignment.Right.GetResolveResult();
+									if (!(constant.IsCompileTimeConstant &&
+										TryEvaluateDecimalConstant(expression, out decimal value) &&
+										value.Equals(constant.ConstantValue)))
+									{
+										// decimal values do not match, abort transformation
+										break;
+									}
+								}
+							}
 							else if (fieldOrPropertyDecl is PropertyDeclaration pd)
+							{
 								pd.Initializer = assignment.Right.Detach();
+							}
 							else
+							{
 								break;
+							}
 							es.Remove();
 						}
 						else
@@ -345,6 +369,72 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						staticCtor.Remove();
 					}
 				}
+			}
+		}
+
+		/// <summary>
+		/// Evaluates a call to the decimal-ctor.
+		/// </summary>
+		private bool TryEvaluateDecimalConstant(Semantics.ResolveResult expression, out decimal value)
+		{
+			value = 0;
+			if (!expression.Type.IsKnownType(KnownTypeCode.Decimal))
+			{
+				return false;
+			}
+			switch (expression)
+			{
+				case CSharpInvocationResolveResult rr:
+					if (!(rr.GetSymbol() is IMethod { SymbolKind: SymbolKind.Constructor } ctor))
+						return false;
+					var args = rr.GetArgumentsForCall();
+					if (args.Count == 1)
+					{
+						switch (args[0].ConstantValue)
+						{
+							case double d:
+								value = new decimal(d);
+								return true;
+							case float f:
+								value = new decimal(f);
+								return true;
+							case long l:
+								value = new decimal(l);
+								return true;
+							case int i:
+								value = new decimal(i);
+								return true;
+							case ulong ul:
+								value = new decimal(ul);
+								return true;
+							case uint ui:
+								value = new decimal(ui);
+								return true;
+							case int[] bits when bits.Length == 4 && (bits[3] & 0x7F00FFFF) == 0 && (bits[3] & 0xFF000000) <= 0x1C000000:
+								value = new decimal(bits);
+								return true;
+							default:
+								return false;
+						}
+					}
+					else if (args.Count == 5 &&
+						args[0].ConstantValue is int lo &&
+						args[1].ConstantValue is int mid &&
+						args[2].ConstantValue is int hi &&
+						args[3].ConstantValue is bool isNegative &&
+						args[4].ConstantValue is byte scale)
+					{
+						value = new decimal(lo, mid, hi, isNegative, scale);
+						return true;
+					}
+					return false;
+				default:
+					if (expression.ConstantValue is decimal v)
+					{
+						value = v;
+						return true;
+					}
+					return false;
 			}
 		}
 	}
