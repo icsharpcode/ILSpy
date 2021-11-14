@@ -72,13 +72,16 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 			}
 
-			var thisAssemblyName = reader.GetAssemblyDefinition().GetAssemblyName();
-			switch (thisAssemblyName.Name)
+			if (reader.IsAssembly)
 			{
-				case "mscorlib":
-					return $".NETFramework,Version=v{thisAssemblyName.Version.ToString(2)}";
-				case "netstandard":
-					return $".NETStandard,Version=v{thisAssemblyName.Version.ToString(2)}";
+				var thisAssemblyName = reader.GetAssemblyDefinition().GetAssemblyName();
+				switch (thisAssemblyName.Name)
+				{
+					case "mscorlib":
+						return $".NETFramework,Version=v{thisAssemblyName.Version.ToString(2)}";
+					case "netstandard":
+						return $".NETStandard,Version=v{thisAssemblyName.Version.ToString(2)}";
+				}
 			}
 
 			foreach (var h in reader.AssemblyReferences)
