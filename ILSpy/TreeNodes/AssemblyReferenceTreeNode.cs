@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
@@ -48,8 +49,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool ShowExpander {
 			get {
+				// Special case for mscorlib: It likely doesn't have any children so call EnsureLazyChildren to
+				// remove the expander from the node.
 				if (r.Name == "mscorlib")
-					EnsureLazyChildren(); // likely doesn't have any children
+				{
+					// See https://github.com/icsharpcode/ILSpy/issues/2548: Adding assemblies to the tree view
+					// while the list of references is updated causes problems with WPF's ListView rendering.
+					// Moving the assembly resolving out of the "add assembly reference"-loop by using the
+					// dispatcher fixes the issue.
+					Dispatcher.CurrentDispatcher.BeginInvoke((Action)EnsureLazyChildren, DispatcherPriority.Normal);
+				}
 				return base.ShowExpander;
 			}
 		}
