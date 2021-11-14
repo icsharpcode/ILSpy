@@ -72,6 +72,15 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 			}
 
+			var thisAssemblyName = reader.GetAssemblyDefinition().GetAssemblyName();
+			switch (thisAssemblyName.Name)
+			{
+				case "mscorlib":
+					return $".NETFramework,Version=v{thisAssemblyName.Version.ToString(2)}";
+				case "netstandard":
+					return $".NETStandard,Version=v{thisAssemblyName.Version.ToString(2)}";
+			}
+
 			foreach (var h in reader.AssemblyReferences)
 			{
 				try
@@ -83,7 +92,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					switch (reader.GetString(r.Name))
 					{
 						case "netstandard":
-							version = r.Version.ToString(3);
+							version = r.Version.ToString(2);
 							return $".NETStandard,Version=v{version}";
 						case "System.Runtime":
 							// System.Runtime.dll uses the following scheme:
