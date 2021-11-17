@@ -200,7 +200,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		void LoadChildrenForPEFile(PEFile module)
 		{
-			typeSystem = LoadedAssembly.GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(new DecompilationOptions().DecompilerSettings));
+			typeSystem = LoadedAssembly.GetTypeSystemOrNull();
 			var assembly = (MetadataModule)typeSystem.MainModule;
 			this.Children.Add(new Metadata.MetadataTreeNode(module, this));
 			Decompiler.DebugInfo.IDebugInfoProvider debugInfo = LoadedAssembly.GetDebugInfoOrNull();

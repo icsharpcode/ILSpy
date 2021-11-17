@@ -824,7 +824,6 @@ namespace ICSharpCode.ILSpy
 
 		void filterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			RefreshTreeView();
 			RefreshTreeViewFilter();
 			if (e.PropertyName == "Language" || e.PropertyName == "LanguageVersion")
 			{
@@ -1173,11 +1172,6 @@ namespace ICSharpCode.ILSpy
 		}
 
 		void RefreshCommandExecuted(object sender, ExecutedRoutedEventArgs e)
-		{
-			RefreshTreeView();
-		}
-
-		void RefreshTreeView()
 		{
 			try
 			{
