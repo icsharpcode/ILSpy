@@ -10,10 +10,10 @@
 		<SystemCompilerServicesUnsafeVersion>5.0.0</SystemCompilerServicesUnsafeVersion>
 		<SystemCompositionVersion>5.0.1</SystemCompositionVersion>
 		<ILAsmVersion>5.0.0</ILAsmVersion> <!-- Microsoft.NETCore.ILAsm -->
-		<RoslynVersion>4.0.0-6.final</RoslynVersion> <!-- Microsoft.CodeAnalysis.* -->
+		<RoslynVersion>4.0.1</RoslynVersion> <!-- Microsoft.CodeAnalysis.* -->
 		<MonoCecilVersion>0.11.4</MonoCecilVersion>
 		<AvalonEditVersion>6.1.1</AvalonEditVersion>
-		<WpfStylesToolboxVersion>2.6.1</WpfStylesToolboxVersion>
+		<WpfStylesToolboxVersion>2.7.3</WpfStylesToolboxVersion>
 		<NUnitVersion>3.13.2</NUnitVersion>
 		<NUnitAdapterVersion>4.0.0</NUnitAdapterVersion>
 		<MicrosoftNETTestSdkVersion>16.11.0</MicrosoftNETTestSdkVersion>
