@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		Force32Bit = 0x4,
 		Library = 0x8,
 		UseRoslyn1_3_2 = 0x10,
-		UseMcs = 0x20,
+		UseMcs2_6_4 = 0x20,
 		ReferenceVisualBasic = 0x40,
 		ReferenceCore = 0x80,
 		GeneratePdb = 0x100,
@@ -63,6 +63,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		UseRoslyn2_10_0 = 0x400,
 		UseRoslyn3_11_0 = 0x800,
 		UseRoslynLatest = 0x1000,
+		UseMcs5_23 = 0x2000,
+		UseMcsMask = UseMcs2_6_4 | UseMcs5_23,
 		UseRoslynMask = UseRoslyn1_3_2 | UseRoslyn2_10_0 | UseRoslyn3_11_0 | UseRoslynLatest
 	}
 
@@ -335,9 +337,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					}
 				}
 			}
-			else if (flags.HasFlag(CompilerOptions.UseMcs))
+			else if ((flags & CompilerOptions.UseMcsMask) != 0)
 			{
 				preprocessorSymbols.Add("MCS");
+				if (flags.HasFlag(CompilerOptions.UseMcs2_6_4))
+				{
+					preprocessorSymbols.Add("MCS2");
+				}
+				if (flags.HasFlag(CompilerOptions.UseMcs5_23))
+				{
+					preprocessorSymbols.Add("MCS5");
+				}
 			}
 			else
 			{
@@ -361,7 +371,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			var preprocessorSymbols = GetPreprocessorSymbols(flags);
 
-			if (!flags.HasFlag(CompilerOptions.UseMcs))
+			if ((flags & CompilerOptions.UseMcsMask) == 0)
 			{
 				CompilerResults results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
@@ -476,7 +486,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					Assert.Ignore($"Compilation with mcs ignored: test directory '{testBasePath}' needs to be checked out separately." + Environment.NewLine +
 			  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{testBasePath}\"");
 				}
-				string mcsPath = Path.Combine(testBasePath, @"mcs\2.6.4\bin\gmcs.bat");
+				string mcsPath = (flags & CompilerOptions.UseMcsMask) switch {
+					CompilerOptions.UseMcs5_23 => Path.Combine(testBasePath, @"mcs\5.23\bin\mcs.bat"),
+					_ => Path.Combine(testBasePath, @"mcs\2.6.4\bin\gmcs.bat")
+				};
 				string otherOptions = " -unsafe -o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+ " : "- ");
 
 				if (flags.HasFlag(CompilerOptions.Library))
@@ -544,7 +557,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			else
 			{
 				var settings = new DecompilerSettings(CSharp.LanguageVersion.CSharp5);
-				if (cscOptions.HasFlag(CompilerOptions.UseMcs))
+				if ((cscOptions & CompilerOptions.UseMcsMask) != 0)
 				{
 					// we don't recompile with mcs but with roslyn, so we can use ref locals
 					settings.UseRefLocalsForAccurateOrderOfEvaluation = true;
@@ -609,8 +622,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				suffix += ".roslyn3";
 			if ((cscOptions & CompilerOptions.UseRoslynLatest) != 0)
 				suffix += ".roslyn";
-			if ((cscOptions & CompilerOptions.UseMcs) != 0)
-				suffix += ".mcs";
+			if ((cscOptions & CompilerOptions.UseMcs2_6_4) != 0)
+				suffix += ".mcs2";
+			if ((cscOptions & CompilerOptions.UseMcs5_23) != 0)
+				suffix += ".mcs5";
 			return suffix;
 		}
 

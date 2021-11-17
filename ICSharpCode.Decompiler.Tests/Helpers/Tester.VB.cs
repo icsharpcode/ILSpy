@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			var preprocessorSymbols = GetPreprocessorSymbols(flags).Select(symbol => new KeyValuePair<string, object>(symbol, 1)).ToList();
 
-			if (!flags.HasFlag(CompilerOptions.UseMcs))
+			if ((flags & CompilerOptions.UseMcsMask) == 0)
 			{
 				CompilerResults results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
