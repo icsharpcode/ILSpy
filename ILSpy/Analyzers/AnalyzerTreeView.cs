@@ -35,6 +35,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// </summary>
 	public class AnalyzerTreeView : SharpTreeView
 	{
+		FilterSettings filterSettings;
+
 		public AnalyzerTreeView()
 		{
 			this.ShowRoot = false;
@@ -42,7 +44,21 @@ namespace ICSharpCode.ILSpy.Analyzers
 			this.BorderThickness = new Thickness(0);
 			ContextMenuProvider.Add(this);
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
-			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
+			DockWorkspace.Instance.PropertyChanged += DockWorkspace_PropertyChanged;
+			filterSettings = MainWindow.Instance.SessionSettings.FilterSettings;
+			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
+		}
+
+		private void DockWorkspace_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			switch (e.PropertyName)
+			{
+				case nameof(DockWorkspace.Instance.ActiveTabPage):
+					filterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
+					filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
+					filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
+					break;
+			}
 		}
 
 		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)

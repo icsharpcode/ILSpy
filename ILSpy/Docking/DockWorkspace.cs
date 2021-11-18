@@ -94,8 +94,6 @@ namespace ICSharpCode.ILSpy.Docking
 				if (_activeTabPage != value)
 				{
 					_activeTabPage = value;
-					this.sessionSettings.FilterSettings.Language = value.Language;
-					this.sessionSettings.FilterSettings.LanguageVersion = value.LanguageVersion;
 					var state = value.GetState();
 					if (state != null)
 					{
@@ -173,23 +171,6 @@ namespace ICSharpCode.ILSpy.Docking
 		internal void LoadSettings(SessionSettings sessionSettings)
 		{
 			this.sessionSettings = sessionSettings;
-			sessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
-		}
-
-		private void FilterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == "Language")
-			{
-				ActiveTabPage.Language = sessionSettings.FilterSettings.Language;
-				if (sessionSettings.FilterSettings.Language.HasLanguageVersions)
-				{
-					sessionSettings.FilterSettings.LanguageVersion = ActiveTabPage.LanguageVersion;
-				}
-			}
-			else if (e.PropertyName == "LanguageVersion")
-			{
-				ActiveTabPage.LanguageVersion = sessionSettings.FilterSettings.LanguageVersion;
-			}
 		}
 
 		internal void CloseAllTabs()

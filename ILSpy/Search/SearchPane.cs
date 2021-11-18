@@ -50,6 +50,7 @@ namespace ICSharpCode.ILSpy
 		RunningSearch currentSearch;
 		bool runSearchOnNextShow;
 		IComparer<SearchResult> resultsComparer;
+		FilterSettings filterSettings;
 
 		public static readonly DependencyProperty ResultsProperty =
 			DependencyProperty.Register("Results", typeof(ObservableCollection<SearchResult>), typeof(SearchPane),
@@ -76,11 +77,25 @@ namespace ICSharpCode.ILSpy
 
 			ContextMenuProvider.Add(listBox);
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
-			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
+			DockWorkspace.Instance.PropertyChanged += DockWorkspace_PropertyChanged;
+			filterSettings = MainWindow.Instance.SessionSettings.FilterSettings;
+			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 			CompositionTarget.Rendering += UpdateResults;
 
 			// This starts empty search right away, so do at the end (we're still in ctor)
 			searchModeComboBox.SelectedIndex = (int)MainWindow.Instance.SessionSettings.SelectedSearchMode;
+		}
+
+		private void DockWorkspace_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		{
+			switch (e.PropertyName)
+			{
+				case nameof(DockWorkspace.Instance.ActiveTabPage):
+					filterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
+					filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
+					filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
+					break;
+			}
 		}
 
 		void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)

@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -34,6 +35,13 @@ namespace ICSharpCode.ILSpy
 	/// </remarks>
 	public class FilterSettings : INotifyPropertyChanged
 	{
+		/// <summary>
+		/// This dictionary is necessary to remember language versions across language changes. For example, 
+		/// the user first select C# 10, then switches to IL, then switches back to C#. After that we must be
+		/// able to restore the original selection (i.e., C# 10).
+		/// </summary>
+		private readonly Dictionary<Language, LanguageVersion> languageVersionHistory = new Dictionary<Language, LanguageVersion>();
+
 		public FilterSettings(XElement element)
 		{
 			this.ShowApiLevel = (ApiVisibility?)(int?)element.Element("ShowAPILevel") ?? ApiVisibility.PublicAndInternal;
@@ -146,8 +154,27 @@ namespace ICSharpCode.ILSpy
 			set {
 				if (language != value)
 				{
+					if (language != null && language.HasLanguageVersions)
+					{
+						languageVersionHistory[language] = languageVersion;
+					}
 					language = value;
 					OnPropertyChanged();
+					if (language.HasLanguageVersions)
+					{
+						if (languageVersionHistory.TryGetValue(value, out var version))
+						{
+							LanguageVersion = version;
+						}
+						else
+						{
+							LanguageVersion = Language.LanguageVersions.Last();
+						}
+					}
+					else
+					{
+						LanguageVersion = default;
+					}
 				}
 			}
 		}
@@ -167,6 +194,10 @@ namespace ICSharpCode.ILSpy
 				if (languageVersion != value)
 				{
 					languageVersion = value;
+					if (language.HasLanguageVersions)
+					{
+						languageVersionHistory[language] = languageVersion;
+					}
 					OnPropertyChanged();
 				}
 			}

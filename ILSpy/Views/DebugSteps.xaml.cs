@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -22,13 +23,16 @@ namespace ICSharpCode.ILSpy
 #if DEBUG
 		ILAstLanguage language;
 #endif
+		FilterSettings filterSettings;
 
 		public DebugSteps()
 		{
 			InitializeComponent();
 
 #if DEBUG
-			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
+			DockWorkspace.Instance.PropertyChanged += DockWorkspace_PropertyChanged;
+			this.filterSettings = MainWindow.Instance.SessionSettings.FilterSettings;
+			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged += SelectionChanged;
 			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;
 
@@ -39,6 +43,18 @@ namespace ICSharpCode.ILSpy
 				ILAstStepperUpdated(null, null);
 			}
 #endif
+		}
+
+		private void DockWorkspace_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		{
+			switch (e.PropertyName)
+			{
+				case nameof(DockWorkspace.Instance.ActiveTabPage):
+					filterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
+					filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
+					filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
+					break;
+			}
 		}
 
 		private void WritingOptions_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
