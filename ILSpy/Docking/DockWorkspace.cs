@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -50,9 +51,40 @@ namespace ICSharpCode.ILSpy.Docking
 		private DockWorkspace()
 		{
 			this.TabPages.CollectionChanged += Documents_CollectionChanged;
+			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
 		}
 
-		private void Documents_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		private void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)
+		{
+			if (e.OldItems == null)
+			{
+				return;
+			}
+			foreach (var tab in TabPages.ToArray())
+			{
+				var state = tab.GetState();
+				if (state == null || state.DecompiledNodes == null)
+				{
+					continue;
+				}
+				bool found = false;
+				foreach (var node in state.DecompiledNodes)
+				{
+					var assemblyNode = node.Ancestors().OfType<TreeNodes.AssemblyTreeNode>().LastOrDefault();
+					if (assemblyNode != null && !e.OldItems.Contains(assemblyNode.LoadedAssembly))
+					{
+						found = true;
+						break;
+					}
+				}
+				if (!found && TabPages.Count > 1)
+				{
+					TabPages.Remove(tab);
+				}
+			}
+		}
+
+		private void Documents_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			var collection = (PaneCollection<TabPageModel>)sender;
 			bool canClose = collection.Count > 1;
