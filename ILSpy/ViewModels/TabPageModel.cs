@@ -96,6 +96,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				textView = new DecompilerTextView();
 				tabPage.Content = textView;
 			}
+			tabPage.Title = Properties.Resources.Decompiling;
 			return action(textView);
 		}
 
@@ -106,6 +107,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				textView = new DecompilerTextView();
 				tabPage.Content = textView;
 			}
+			tabPage.Title = Properties.Resources.Decompiling;
 			return action(textView);
 		}
 
@@ -116,6 +118,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				textView = new DecompilerTextView();
 				tabPage.Content = textView;
 			}
+			tabPage.Title = Properties.Resources.Decompiling;
 			action(textView);
 		}
 	}
