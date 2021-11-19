@@ -46,12 +46,13 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		public static DockWorkspace Instance { get; } = new DockWorkspace();
+		public static DockWorkspace Instance { get; private set; }
 
-		private DockWorkspace()
+		internal DockWorkspace(MainWindow parent)
 		{
+			Instance = this;
 			this.TabPages.CollectionChanged += Documents_CollectionChanged;
-			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
+			parent.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
 		}
 
 		private void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)

@@ -109,7 +109,7 @@ namespace ICSharpCode.ILSpy
 			this.Icon = Images.ILSpyIcon;
 
 			this.DataContext = new MainWindowViewModel {
-				Workspace = DockWorkspace.Instance,
+				Workspace = new DockWorkspace(this),
 				SessionSettings = sessionSettings,
 				AssemblyListManager = AssemblyListManager
 			};
