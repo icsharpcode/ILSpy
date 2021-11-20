@@ -20,5 +20,6 @@ _ReSharper*/
 /ICSharpCode.Decompiler.Tests/TestCases/Correctness/*.exe.config
 /ICSharpCode.Decompiler/ICSharpCode.Decompiler.nuspec
 multitargeting.props
-ILSpy.MsiBuilder/wix/*.g.wxs
-ILSpy.MsiBuilder/output/
+ILSpy.Installer/wix/*.g.wxs
+ILSpy.Installer/output/
+ILSpy.Installer/AppPackage.cs

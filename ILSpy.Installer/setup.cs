@@ -3,9 +3,9 @@ using System.IO;
 
 using WixSharp;
 
-namespace ILSpy.MsiBuilder
+namespace ILSpy.Installer
 {
-	internal class MsiBuilder
+	internal class Builder
 	{
 		static public void Main()
 		{
@@ -20,12 +20,18 @@ namespace ILSpy.MsiBuilder
 								  new Files(@"ILSpy\bin\Release\net472\ILSpy.ReadyToRun.Plugin.resources.dll")));
 
 			project.GUID = new Guid("a12fdab1-731b-4a98-9749-d481ce8692ab");
-			project.Version = new Version("1.0.0.0");
+			project.Version = AppPackage.Version;
 			project.SourceBaseDir = Path.GetDirectoryName(Environment.CurrentDirectory);
 			project.InstallScope = InstallScope.perUser;
 			project.InstallPrivileges = InstallPrivileges.limited;
 
-			project.UI = WUI.WixUI_Minimal;
+			project.MajorUpgrade = new MajorUpgrade {
+				Schedule = UpgradeSchedule.afterInstallInitialize,
+				AllowSameVersionUpgrades = true,
+				DowngradeErrorMessage = "A newer release of ILSpy is already installed on this system. Please uninstall it first to continue."
+			};
+
+			project.UI = WUI.WixUI_ProgressOnly;
 
 			Compiler.BuildMsi(project, Path.Combine(Environment.CurrentDirectory, "output", "ILSpy.msi"));
 		}
