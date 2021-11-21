@@ -125,3 +125,11 @@ jobs:
         name: ILSpy ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ${{ env.StagingDirectory }}\ILSpy_binaries.zip
         if-no-files-found: error
+
+    - name: Upload installer artifact
+      if: matrix.channel == 'zip' && matrix.configuration == 'release'
+      uses: actions/upload-artifact@v2
+      with:
+        name: ILSpy Installer ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
+        path: ILSpy.Installer\wix\*.msi
+        if-no-files-found: error
