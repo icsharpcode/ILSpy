@@ -12,13 +12,20 @@ namespace ILSpy.Installer
 		{
 			Compiler.AutoGeneration.IgnoreWildCardEmptyDirectories = true;
 
+#if DEBUG
+			var buildConfiguration = "Debug";
+#else
+			var buildConfiguration = "Release;
+#endif
+			var buildOutputDir = $@"ILSpy\bin\{buildConfiguration}\net472";
+
 			var project = new Project("ILSpy",
 							  new InstallDir(@"%LocalAppData%\Programs\ILSpy",
-								  new DirFiles(@"ILSpy\bin\Release\net472\*.dll"),
-								  new DirFiles(@"ILSpy\bin\Release\net472\*.exe"),
-								  new DirFiles(@"ILSpy\bin\Release\net472\*.config"),
-								  new Files(@"ILSpy\bin\Release\net472\ILSpy.resources.dll"),
-								  new Files(@"ILSpy\bin\Release\net472\ILSpy.ReadyToRun.Plugin.resources.dll")));
+								  new DirFiles(Path.Combine(buildOutputDir, "*.dll")),
+								  new DirFiles(Path.Combine(buildOutputDir, "*.exe")),
+								  new DirFiles(Path.Combine(buildOutputDir, "*.config")),
+								  new Files(Path.Combine(buildOutputDir, "ILSpy.resources.dll")),
+								  new Files(Path.Combine(buildOutputDir, "ILSpy.ReadyToRun.Plugin.resources.dll"))));
 
 			project.GUID = new Guid("a12fdab1-731b-4a98-9749-d481ce8692ab");
 			project.Version = AppPackage.Version;
@@ -40,7 +47,7 @@ namespace ILSpy.Installer
 					new FileShortcut("ILSpy", @"%ProgramMenu%")
 				};
 
-			Compiler.BuildMsi(project, Path.Combine(Environment.CurrentDirectory, "output", "ILSpy.msi"));
+			Compiler.BuildMsi(project, Path.Combine(Environment.CurrentDirectory, "wix", $"ILSpy-{AppPackage.Version}.msi"));
 		}
 	}
 }

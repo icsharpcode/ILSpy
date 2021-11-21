@@ -1,6 +1,5 @@
 bin/
 obj/
-packages/
 AppPackages/
 BundleArtifacts/
 /ICSharpCode.Decompiler/Properties/AssemblyInfo.cs
@@ -20,6 +19,5 @@ _ReSharper*/
 /ICSharpCode.Decompiler.Tests/TestCases/Correctness/*.exe.config
 /ICSharpCode.Decompiler/ICSharpCode.Decompiler.nuspec
 multitargeting.props
-ILSpy.Installer/wix/*.g.wxs
-ILSpy.Installer/output/
+ILSpy.Installer/wix/
 ILSpy.Installer/AppPackage.cs
