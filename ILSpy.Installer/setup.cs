@@ -15,7 +15,7 @@ namespace ILSpy.Installer
 #if DEBUG
 			var buildConfiguration = "Debug";
 #else
-			var buildConfiguration = "Release;
+			var buildConfiguration = "Release";
 #endif
 			var buildOutputDir = $@"ILSpy\bin\{buildConfiguration}\net472";
 
