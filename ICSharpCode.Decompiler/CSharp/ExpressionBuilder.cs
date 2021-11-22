@@ -120,10 +120,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				else if (rr.Type.IsCSharpSmallIntegerType())
 				{
 					expr = new CastExpression(new PrimitiveType(KnownTypeReference.GetCSharpNameByTypeCode(rr.Type.GetDefinition().KnownTypeCode)), expr);
+					// Note: no unchecked annotation necessary, because the constant was folded to be in-range
 				}
 				else if (rr.Type.IsCSharpNativeIntegerType())
 				{
 					expr = new CastExpression(new PrimitiveType(rr.Type.Name), expr);
+					// Note: no unchecked annotation necessary, because the rr wouldn't be a constant if the value wasn't in-range on 32bit
 				}
 			}
 			var exprRR = expr.Annotation<ResolveResult>();

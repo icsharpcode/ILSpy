@@ -35,10 +35,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			/// true=checked, false=unchecked
 			/// </summary>
 			public bool IsChecked;
+
+			/// <summary>
+			/// Require an explicit unchecked block (can't rely on the project-level unchecked context)
+			/// </summary>
+			public bool IsExplicit;
 		}
 
 		public static readonly object CheckedAnnotation = new CheckedUncheckedAnnotation { IsChecked = true };
 		public static readonly object UncheckedAnnotation = new CheckedUncheckedAnnotation { IsChecked = false };
+		public static readonly object ExplicitUncheckedAnnotation = new CheckedUncheckedAnnotation { IsChecked = false, IsExplicit = true };
 		#endregion
 
 		/* 
@@ -114,7 +120,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			/// <summary>
 			/// Gets the new cost if an expression with this cost is wrapped in a checked/unchecked expression.
 			/// </summary>
-			/// <returns></returns>
 			internal Cost WrapInCheckedExpr()
 			{
 				if (Expressions == 0)
@@ -349,13 +354,27 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				CheckedUncheckedAnnotation annotation = expr.Annotation<CheckedUncheckedAnnotation>();
 				if (annotation != null)
 				{
-					// If the annotation requires this node to be in a specific context, add a huge cost to the other context
-					// That huge cost gives us the option to ignore a required checked/unchecked expression when there wouldn't be any
-					// solution otherwise. (e.g. "for (checked(M().x += 1); true; unchecked(M().x += 2)) {}")
-					if (annotation.IsChecked)
-						result.CostInUncheckedContext += new Cost(10000, 0);
+					if (annotation.IsExplicit)
+					{
+						// We don't yet support distinguishing CostInUncheckedContext vs. CostInExplicitUncheckedContext,
+						// so we always force an unchecked() expression here.
+						if (annotation.IsChecked)
+							throw new NotImplementedException("explicit checked"); // should not be needed
+						result.CostInCheckedContext = result.CostInUncheckedContext.WrapInCheckedExpr();
+						result.CostInUncheckedContext = result.CostInUncheckedContext.WrapInCheckedExpr();
+						result.NodesToInsertInUncheckedContext += new InsertedExpression(expr, annotation.IsChecked);
+						result.NodesToInsertInCheckedContext = result.NodesToInsertInUncheckedContext;
+					}
 					else
-						result.CostInCheckedContext += new Cost(10000, 0);
+					{
+						// If the annotation requires this node to be in a specific context, add a huge cost to the other context
+						// That huge cost gives us the option to ignore a required checked/unchecked expression when there wouldn't be any
+						// solution otherwise. (e.g. "for (checked(M().x += 1); true; unchecked(M().x += 2)) {}")
+						if (annotation.IsChecked)
+							result.CostInUncheckedContext += new Cost(10000, 0);
+						else
+							result.CostInCheckedContext += new Cost(10000, 0);
+					}
 				}
 				// Embed this node in an checked/unchecked expression:
 				if (expr.Parent is ExpressionStatement)

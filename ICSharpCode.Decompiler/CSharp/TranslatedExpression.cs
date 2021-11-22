@@ -569,7 +569,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool needsCheckAnnotation = targetUType.GetStackType().IsIntegerType();
 			if (needsCheckAnnotation)
 			{
-				castExpr.AddAnnotation(checkForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+				if (checkForOverflow)
+				{
+					castExpr.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
+				}
+				else if (ResolveResult.IsCompileTimeConstant && targetUType.IsCSharpNativeIntegerType())
+				{
+					// unchecked potentially-overflowing cast of constant to n(u)int:
+					// Placement in implicitly unchecked context is not good enough when applied to compile-time constant,
+					// the constant must be placed into an explicit unchecked block.
+					// (note that non-potentially-overflowing casts will be handled by constant folding and won't get here)
+					castExpr.AddAnnotation(AddCheckedBlocks.ExplicitUncheckedAnnotation);
+				}
+				else
+				{
+					castExpr.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
+				}
 			}
 			return castExpr.WithoutILInstruction().WithRR(rr);
 		}

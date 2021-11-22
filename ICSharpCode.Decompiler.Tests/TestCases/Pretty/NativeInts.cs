@@ -205,5 +205,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (nint)(0 - x);
 		}
+
+		public nint SignedNotFittingIn32Bits()
+		{
+			// Explicit `unchecked` is necessary when casting oversized constant to nint
+			return unchecked((nint)9123123123123L);
+		}
+
+		public nuint UnsignedNotFittingIn32Bits()
+		{
+			// Explicit `unchecked` is necessary when casting oversized constant to nuint
+			return unchecked((nuint)9123123123123uL);
+		}
 	}
 }
