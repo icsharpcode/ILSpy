@@ -552,8 +552,6 @@ namespace ICSharpCode.Decompiler.IL
 						ComputeStats(caseBlock, ref numStatements, ref maxDepth, currentDepth);
 					break;
 				case ILFunction func:
-					Debug.Assert(!isStatement);
-
 					int bodyStatements = 0;
 					int bodyMaxDepth = maxDepth;
 					ComputeStats(func.Body, ref bodyStatements, ref bodyMaxDepth, currentDepth);
