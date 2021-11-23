@@ -76,7 +76,8 @@ $templateFiles = (
 	@{Input="ICSharpCode.Decompiler/ICSharpCode.Decompiler.nuspec.template"; Output="ICSharpCode.Decompiler/ICSharpCode.Decompiler.nuspec"},
     @{Input="ILSpy/Properties/app.config.template"; Output = "ILSpy/app.config"},
     @{Input="ILSpy.AddIn/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn/source.extension.vsixmanifest"},
-    @{Input="ILSpy.AddIn.VS2022/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn.VS2022/source.extension.vsixmanifest"}
+    @{Input="ILSpy.AddIn.VS2022/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn.VS2022/source.extension.vsixmanifest"},
+    @{Input="ILSpy.Installer/AppPackage.cs.template"; Output = "ILSpy.Installer/AppPackage.cs"}
 );
 
 $appxmanifestFiles = (	
