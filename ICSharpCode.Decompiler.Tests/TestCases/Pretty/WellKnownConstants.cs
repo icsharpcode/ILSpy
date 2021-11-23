@@ -71,6 +71,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const double Double_One = 1.0;
 		public const float Float_Two = 2f;
 		public const double Double_Two = 2.0;
+		public const float Float_Sixth = 1f / 6f;
+		public const double Double_Sixth = 1.0 / 6.0;
+		public const float Float_Tenth = 0.1f;
+		public const double Double_Tenth = 0.1;
 
 		public const float Float_PI = (float)Math.PI;
 		public const float Float_HalfOfPI = (float)Math.PI / 2f;
