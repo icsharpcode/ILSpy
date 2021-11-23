@@ -191,9 +191,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 			if (manager.AssemblyLists.Count > 0)
 			{
 				SelectedAssemblyList = manager.AssemblyLists[Math.Max(0, index - 1)];
-				if (MainWindow.Instance.sessionSettings.ActiveAssemblyList == assemblyList)
+				if (MainWindow.Instance.SessionSettings.ActiveAssemblyList == assemblyList)
 				{
-					MainWindow.Instance.sessionSettings.ActiveAssemblyList = SelectedAssemblyList;
+					MainWindow.Instance.SessionSettings.ActiveAssemblyList = SelectedAssemblyList;
 				}
 			}
 		}
@@ -234,9 +234,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 				string assemblyList = SelectedAssemblyList;
 				SelectedAssemblyList = dlg.ListName;
 				manager.RenameList(assemblyList, dlg.ListName);
-				if (MainWindow.Instance.sessionSettings.ActiveAssemblyList == assemblyList)
+				if (MainWindow.Instance.SessionSettings.ActiveAssemblyList == assemblyList)
 				{
-					MainWindow.Instance.sessionSettings.ActiveAssemblyList = manager.AssemblyLists[manager.AssemblyLists.Count - 1];
+					MainWindow.Instance.SessionSettings.ActiveAssemblyList = manager.AssemblyLists[manager.AssemblyLists.Count - 1];
 				}
 			}
 		}
@@ -372,7 +372,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		private void ExecuteSelectAssemblyList()
 		{
-			MainWindow.Instance.sessionSettings.ActiveAssemblyList = SelectedAssemblyList;
+			MainWindow.Instance.SessionSettings.ActiveAssemblyList = SelectedAssemblyList;
 			this.parent.Close();
 		}
 	}

@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Reflection.Metadata;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
@@ -37,14 +38,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.FieldDefinition = field ?? throw new ArgumentNullException(nameof(field));
 		}
 
-		public override object Text => GetText(FieldDefinition, Language) + FieldDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(GetFieldDefinition(), Language) + FieldDefinition.MetadataToken.ToSuffixString();
+
+		private IField GetFieldDefinition()
+		{
+			return ((MetadataModule)FieldDefinition.ParentModule.PEFile
+				?.GetTypeSystemWithCurrentOptionsOrNull()
+				?.MainModule)?.GetDefinition((FieldDefinitionHandle)FieldDefinition.MetadataToken) ?? FieldDefinition;
+		}
 
 		public static object GetText(IField field, Language language)
 		{
 			return language.FieldToString(field, includeDeclaringTypeName: false, includeNamespace: false, includeNamespaceOfDeclaringTypeName: false);
 		}
 
-		public override object Icon => GetIcon(FieldDefinition);
+		public override object Icon => GetIcon(GetFieldDefinition());
 
 		public static ImageSource GetIcon(IField field)
 		{
@@ -77,7 +85,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool IsPublicAPI {
 			get {
-				switch (FieldDefinition.Accessibility)
+				switch (GetFieldDefinition().Accessibility)
 				{
 					case Accessibility.Public:
 					case Accessibility.Protected:

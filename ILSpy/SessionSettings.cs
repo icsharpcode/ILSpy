@@ -76,7 +76,7 @@ namespace ICSharpCode.ILSpy
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
-		public FilterSettings FilterSettings { get; private set; }
+		public FilterSettings FilterSettings { get; internal set; }
 		public SearchMode SelectedSearchMode { get; set; }
 
 		public bool IsDarkMode {

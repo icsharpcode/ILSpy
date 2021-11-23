@@ -19,7 +19,7 @@
 	xmlns:styles="urn:TomsToolbox.Wpf.Styles"
 	xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
 	xmlns:themes="clr-namespace:ICSharpCode.ILSpy.Themes"
-	d:DataContext="{d:DesignInstance local:MainWindowDataContext}"
+	d:DataContext="{d:DesignInstance local:MainWindowViewModel}"
 >
 	<Window.Resources>
 		<controls:BoolToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -103,9 +103,9 @@
 			<MenuItem Header="{x:Static properties:Resources._File}" />
 			<!-- contents of file menu are added using MEF -->
 			<MenuItem Header="{x:Static properties:Resources._View}">
-				<MenuItem Header="{x:Static properties:Resources.Show_publiconlyTypesMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.FilterSettings.ApiVisPublicOnly}" />
-				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.FilterSettings.ApiVisPublicAndInternal}" />
-				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding SessionSettings.FilterSettings.ApiVisAll}" />
+				<MenuItem Header="{x:Static properties:Resources.Show_publiconlyTypesMembers}" IsCheckable="True" IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisPublicOnly}" />
+				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True" IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisPublicAndInternal}" />
+				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisAll}" />
 				<Separator/>
 				<MenuItem Header="{x:Static properties:Resources.UILanguage}">
 					<MenuItem Header="{x:Static properties:Resources.UILanguage_System}" IsCheckable="True" IsChecked="{Binding SessionSettings.CurrentCulture, Converter={StaticResource cultureSelectionConverter}, ConverterParameter={x:Null}}" />
@@ -156,25 +156,25 @@
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/AssemblyList}" Style="{StaticResource DarkModeAwareImageStyle}"/>
 			</Button>
 			<Separator />
-			<CheckBox IsChecked="{Binding SessionSettings.FilterSettings.ApiVisPublicOnly}" ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
+			<CheckBox IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisPublicOnly}" ToolTip="{x:Static properties:Resources.ShowPublicOnlyTypesMembers}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPublicOnly}" Style="{StaticResource DarkModeAwareImageStyle}"/>
 			</CheckBox>
-			<CheckBox IsChecked="{Binding SessionSettings.FilterSettings.ApiVisPublicAndInternal}" ToolTip="{x:Static properties:Resources.ShowInternalTypesMembers}">
+			<CheckBox IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisPublicAndInternal}" ToolTip="{x:Static properties:Resources.ShowInternalTypesMembers}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowPrivateInternal}" Style="{StaticResource DarkModeAwareImageStyle}"/>
 			</CheckBox>
-			<CheckBox IsChecked="{Binding SessionSettings.FilterSettings.ApiVisAll}" ToolTip="{x:Static properties:Resources.ShowAllTypesAndMembers}">
+			<CheckBox IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisAll}" ToolTip="{x:Static properties:Resources.ShowAllTypesAndMembers}">
 				<Image Width="16" Height="16" Source="{controls:XamlResource Images/ShowAll}" Style="{StaticResource DarkModeAwareImageStyle}"/>
 			</CheckBox>
 			<Separator />
 			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100" MaxDropDownHeight="Auto"
-					  IsEnabled="{Binding ActiveTabPage.SupportsLanguageSwitching, Source={x:Static docking:DockWorkspace.Instance}}"
+					  IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
 			          ItemsSource="{x:Static local:Languages.AllLanguages}" ToolTip="{x:Static properties:Resources.SelectLanguageDropdownTooltip}"
-			          SelectedItem="{Binding SessionSettings.FilterSettings.Language}"/>
+			          SelectedItem="{Binding Workspace.ActiveTabPage.FilterSettings.Language}"/>
 			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" Width="120" MaxDropDownHeight="Auto" ToolTip="{x:Static properties:Resources.SelectVersionDropdownTooltip}"
 			          Visibility="{Binding SelectedItem.HasLanguageVersions, ElementName=languageComboBox, Converter={StaticResource BooleanToVisibilityConverter}}"
-					  IsEnabled="{Binding ActiveTabPage.SupportsLanguageSwitching, Source={x:Static docking:DockWorkspace.Instance}}"
+					  IsEnabled="{Binding Workspace.ActiveTabPage.SupportsLanguageSwitching}"
 			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
-			          SelectedItem="{Binding SessionSettings.FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
+			          SelectedItem="{Binding Workspace.ActiveTabPage.FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
 			<Separator />
 			<CheckBox IsChecked="{Binding SessionSettings.IsDarkMode}" ToolTip="{x:Static properties:Resources.DarkMode}">
 				<Image Source="Images/DarkMode.png" Stretch="None" Style="{StaticResource DarkModeAwareImageStyle}"/>

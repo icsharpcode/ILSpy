@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -45,14 +46,46 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		public static DockWorkspace Instance { get; } = new DockWorkspace();
+		public static DockWorkspace Instance { get; private set; }
 
-		private DockWorkspace()
+		internal DockWorkspace(MainWindow parent)
 		{
+			Instance = this;
 			this.TabPages.CollectionChanged += Documents_CollectionChanged;
+			parent.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
 		}
 
-		private void Documents_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		private void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)
+		{
+			if (e.OldItems == null)
+			{
+				return;
+			}
+			foreach (var tab in TabPages.ToArray())
+			{
+				var state = tab.GetState();
+				if (state == null || state.DecompiledNodes == null)
+				{
+					continue;
+				}
+				bool found = false;
+				foreach (var node in state.DecompiledNodes)
+				{
+					var assemblyNode = node.Ancestors().OfType<TreeNodes.AssemblyTreeNode>().LastOrDefault();
+					if (assemblyNode != null && !e.OldItems.Contains(assemblyNode.LoadedAssembly))
+					{
+						found = true;
+						break;
+					}
+				}
+				if (!found && TabPages.Count > 1)
+				{
+					TabPages.Remove(tab);
+				}
+			}
+		}
+
+		private void Documents_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			var collection = (PaneCollection<TabPageModel>)sender;
 			bool canClose = collection.Count > 1;
@@ -94,8 +127,6 @@ namespace ICSharpCode.ILSpy.Docking
 				if (_activeTabPage != value)
 				{
 					_activeTabPage = value;
-					this.sessionSettings.FilterSettings.Language = value.Language;
-					this.sessionSettings.FilterSettings.LanguageVersion = value.LanguageVersion;
 					var state = value.GetState();
 					if (state != null)
 					{
@@ -173,23 +204,6 @@ namespace ICSharpCode.ILSpy.Docking
 		internal void LoadSettings(SessionSettings sessionSettings)
 		{
 			this.sessionSettings = sessionSettings;
-			sessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
-		}
-
-		private void FilterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == "Language")
-			{
-				ActiveTabPage.Language = sessionSettings.FilterSettings.Language;
-				if (sessionSettings.FilterSettings.Language.HasLanguageVersions)
-				{
-					sessionSettings.FilterSettings.LanguageVersion = ActiveTabPage.LanguageVersion;
-				}
-			}
-			else if (e.PropertyName == "LanguageVersion")
-			{
-				ActiveTabPage.LanguageVersion = sessionSettings.FilterSettings.LanguageVersion;
-			}
 		}
 
 		internal void CloseAllTabs()

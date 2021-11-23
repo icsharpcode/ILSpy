@@ -41,12 +41,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public AssemblyTreeNode ParentAssemblyNode { get; }
 
-		public override object Text => this.Language.TypeToString(TypeDefinition, includeNamespace: false)
+		public override object Text => this.Language.TypeToString(GetTypeDefinition(), includeNamespace: false)
 			+ TypeDefinition.MetadataToken.ToSuffixString();
+
+		private ITypeDefinition GetTypeDefinition()
+		{
+			return ((MetadataModule)ParentAssemblyNode.LoadedAssembly
+				.GetPEFileOrNull()
+				?.GetTypeSystemWithCurrentOptionsOrNull()
+				?.MainModule).GetDefinition((SRM.TypeDefinitionHandle)TypeDefinition.MetadataToken);
+		}
 
 		public override bool IsPublicAPI {
 			get {
-				switch (TypeDefinition.Accessibility)
+				switch (GetTypeDefinition().Accessibility)
 				{
 					case Accessibility.Public:
 					case Accessibility.Protected:
@@ -120,7 +128,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.DecompileType(TypeDefinition, output, options);
+			language.DecompileType(GetTypeDefinition(), output, options);
 		}
 
 		public override object Icon => GetIcon(TypeDefinition);

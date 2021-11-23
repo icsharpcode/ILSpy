@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Reflection.Metadata;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
@@ -37,14 +38,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.MethodDefinition = method ?? throw new ArgumentNullException(nameof(method));
 		}
 
-		public override object Text => GetText(MethodDefinition, Language) + MethodDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(GetMethodDefinition(), Language) + MethodDefinition.MetadataToken.ToSuffixString();
+
+		private IMethod GetMethodDefinition()
+		{
+			return ((MetadataModule)MethodDefinition.ParentModule.PEFile
+				?.GetTypeSystemWithCurrentOptionsOrNull()
+				?.MainModule)?.GetDefinition((MethodDefinitionHandle)MethodDefinition.MetadataToken) ?? MethodDefinition;
+		}
 
 		public static object GetText(IMethod method, Language language)
 		{
 			return language.MethodToString(method, false, false, false);
 		}
 
-		public override object Icon => GetIcon(MethodDefinition);
+		public override object Icon => GetIcon(GetMethodDefinition());
 
 		public static ImageSource GetIcon(IMethod method)
 		{
@@ -102,7 +110,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool IsPublicAPI {
 			get {
-				switch (MethodDefinition.Accessibility)
+				switch (GetMethodDefinition().Accessibility)
 				{
 					case Accessibility.Public:
 					case Accessibility.Protected:

@@ -27,61 +27,36 @@ namespace ICSharpCode.ILSpy.ViewModels
 {
 	public class TabPageModel : PaneModel
 	{
-		private readonly Dictionary<Language, LanguageVersion> languageVersionHistory = new Dictionary<Language, LanguageVersion>();
-
 		public TabPageModel()
 		{
 			this.Title = Properties.Resources.NewTab;
 		}
 
-		private Language language;
-		public Language Language {
-			get => language;
+		private FilterSettings filterSettings;
+
+		public FilterSettings FilterSettings {
+			get => filterSettings;
 			set {
-				if (language != value)
+				if (filterSettings != value)
 				{
-					if (language != null && language.HasLanguageVersions)
-					{
-						languageVersionHistory[language] = languageVersion;
-					}
-					language = value;
-					RaisePropertyChanged(nameof(Language));
-					if (language.HasLanguageVersions)
-					{
-						if (languageVersionHistory.TryGetValue(value, out var version))
-						{
-							LanguageVersion = version;
-						}
-						else
-						{
-							LanguageVersion = Language.LanguageVersions.Last();
-						}
-					}
-					else
-					{
-						LanguageVersion = default;
-					}
+					filterSettings = value;
+					RaisePropertyChanged(nameof(FilterSettings));
 				}
 			}
 		}
 
-		private LanguageVersion languageVersion;
+		public Language Language {
+			get => filterSettings.Language;
+			set => filterSettings.Language = value;
+		}
+
 		public LanguageVersion LanguageVersion {
-			get => languageVersion;
-			set {
-				if (languageVersion != value)
-				{
-					languageVersion = value;
-					if (language.HasLanguageVersions)
-					{
-						languageVersionHistory[language] = languageVersion;
-					}
-					RaisePropertyChanged(nameof(LanguageVersion));
-				}
-			}
+			get => filterSettings.LanguageVersion;
+			set => filterSettings.LanguageVersion = value;
 		}
 
 		private bool supportsLanguageSwitching = true;
+
 		public bool SupportsLanguageSwitching {
 			get => supportsLanguageSwitching;
 			set {
@@ -94,6 +69,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		}
 
 		private object content;
+
 		public object Content {
 			get => content;
 			set {
@@ -120,6 +96,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				textView = new DecompilerTextView();
 				tabPage.Content = textView;
 			}
+			tabPage.Title = Properties.Resources.Decompiling;
 			return action(textView);
 		}
 
@@ -130,6 +107,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				textView = new DecompilerTextView();
 				tabPage.Content = textView;
 			}
+			tabPage.Title = Properties.Resources.Decompiling;
 			return action(textView);
 		}
 
@@ -140,6 +118,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 				textView = new DecompilerTextView();
 				tabPage.Content = textView;
 			}
+			tabPage.Title = Properties.Resources.Decompiling;
 			action(textView);
 		}
 	}

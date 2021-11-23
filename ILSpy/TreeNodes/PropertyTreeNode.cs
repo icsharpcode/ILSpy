@@ -17,14 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Metadata;
-
-using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -52,14 +48,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public IProperty PropertyDefinition { get; }
 
-		public override object Text => GetText(PropertyDefinition, Language) + PropertyDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(GetPropertyDefinition(), Language) + PropertyDefinition.MetadataToken.ToSuffixString();
+
+		private IProperty GetPropertyDefinition()
+		{
+			return ((MetadataModule)PropertyDefinition.ParentModule.PEFile
+				?.GetTypeSystemWithCurrentOptionsOrNull()
+				?.MainModule)?.GetDefinition((PropertyDefinitionHandle)PropertyDefinition.MetadataToken) ?? PropertyDefinition;
+		}
 
 		public static object GetText(IProperty property, Language language)
 		{
 			return language.PropertyToString(property, false, false, false);
 		}
 
-		public override object Icon => GetIcon(PropertyDefinition);
+		public override object Icon => GetIcon(GetPropertyDefinition());
 
 		public static ImageSource GetIcon(IProperty property)
 		{
@@ -84,7 +87,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool IsPublicAPI {
 			get {
-				switch (PropertyDefinition.Accessibility)
+				switch (GetPropertyDefinition().Accessibility)
 				{
 					case Accessibility.Public:
 					case Accessibility.ProtectedOrInternal:

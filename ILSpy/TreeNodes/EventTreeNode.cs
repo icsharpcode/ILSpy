@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Reflection.Metadata;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
@@ -45,14 +46,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public IEvent EventDefinition { get; }
 
-		public override object Text => GetText(EventDefinition, this.Language) + EventDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(GetEventDefinition(), this.Language) + EventDefinition.MetadataToken.ToSuffixString();
+
+		private IEvent GetEventDefinition()
+		{
+			return ((MetadataModule)EventDefinition.ParentModule.PEFile
+				?.GetTypeSystemWithCurrentOptionsOrNull()
+				?.MainModule)?.GetDefinition((EventDefinitionHandle)EventDefinition.MetadataToken) ?? EventDefinition;
+		}
 
 		public static object GetText(IEvent ev, Language language)
 		{
 			return language.EventToString(ev, false, false, false);
 		}
 
-		public override object Icon => GetIcon(EventDefinition);
+		public override object Icon => GetIcon(GetEventDefinition());
 
 		public static ImageSource GetIcon(IEvent @event)
 		{
@@ -76,7 +84,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool IsPublicAPI {
 			get {
-				switch (EventDefinition.Accessibility)
+				switch (GetEventDefinition().Accessibility)
 				{
 					case Accessibility.Public:
 					case Accessibility.ProtectedOrInternal:
