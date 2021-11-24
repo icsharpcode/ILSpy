@@ -108,6 +108,7 @@
     <Compile Include="TestCases\Correctness\DeconstructionTests.cs" />
     <Compile Include="TestCases\Correctness\DynamicTests.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
+    <Compile Include="TestCases\Pretty\Structs.cs" />
     <None Include="TestCases\Pretty\FileScopedNamespaces.cs" />
     <Compile Include="TestCases\Pretty\PatternMatching.cs" />
     <None Include="TestCases\Ugly\NoPropertiesAndEvents.Expected.cs" />
