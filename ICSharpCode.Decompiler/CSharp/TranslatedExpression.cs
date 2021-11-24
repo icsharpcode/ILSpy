@@ -544,7 +544,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return new CastExpression(expressionBuilder.ConvertType(targetType), new NullReferenceExpression())
 					.WithILInstruction(this.ILInstructions)
-					.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
+					.WithRR(new ConstantResolveResult(targetType, null));
 			}
 			if (allowImplicitConversion)
 			{

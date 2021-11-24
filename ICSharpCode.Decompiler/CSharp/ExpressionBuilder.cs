@@ -2712,26 +2712,32 @@ namespace ICSharpCode.Decompiler.CSharp
 			var pointer = Translate(inst.Target, typeHint: pointerTypeHint);
 			TranslatedExpression target;
 			TranslatedExpression value = default;
-			// Cast pointer type if necessary:
-			if (!TypeUtils.IsCompatiblePointerTypeForMemoryAccess(pointer.Type, inst.Type))
+			IType memoryType;
+			// Check if we need to cast to pointer type:
+			if (TypeUtils.IsCompatiblePointerTypeForMemoryAccess(pointer.Type, inst.Type))
 			{
+				// cast not necessary, we can use the existing type
+				memoryType = ((TypeWithElementType)pointer.Type).ElementType;
+			}
+			else
+			{
+				// We need to introduce a pointer cast
 				value = Translate(inst.Value, typeHint: inst.Type);
-				IType castTargetType;
 				if (TypeUtils.IsCompatibleTypeForMemoryAccess(value.Type, inst.Type))
 				{
-					castTargetType = value.Type;
+					memoryType = value.Type;
 				}
 				else
 				{
-					castTargetType = inst.Type;
+					memoryType = inst.Type;
 				}
 				if (pointer.Expression is DirectionExpression)
 				{
-					pointer = pointer.ConvertTo(new ByReferenceType(castTargetType), this);
+					pointer = pointer.ConvertTo(new ByReferenceType(memoryType), this);
 				}
 				else
 				{
-					pointer = pointer.ConvertTo(new PointerType(castTargetType), this);
+					pointer = pointer.ConvertTo(new PointerType(memoryType), this);
 				}
 			}
 
@@ -2751,7 +2757,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					target = new UnaryOperatorExpression(UnaryOperatorType.Dereference, pointer.Expression)
 						.WithoutILInstruction()
-						.WithRR(new ResolveResult(((TypeWithElementType)pointer.Type).ElementType));
+						.WithRR(new ResolveResult(memoryType));
 				}
 			}
 			if (value.Expression == null)
