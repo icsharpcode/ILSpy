@@ -471,7 +471,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMethod ResolveMethodReference(MemberReferenceHandle memberRefHandle, GenericContext context, IReadOnlyList<IType> methodTypeArguments = null, bool expandVarArgs = true)
 		{
 			var memberRef = metadata.GetMemberReference(memberRefHandle);
-			Debug.Assert(memberRef.GetKind() == MemberReferenceKind.Method);
+			if (memberRef.GetKind() != MemberReferenceKind.Method)
+			{
+				throw new BadImageFormatException($"Member reference must be method, but was: {memberRef.GetKind()}");
+			}
 			MethodSignature<IType> signature;
 			IReadOnlyList<IType> classTypeArguments = null;
 			IMethod method;
