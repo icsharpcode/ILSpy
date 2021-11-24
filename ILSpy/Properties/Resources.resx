@@ -345,6 +345,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.FSpecificOptions" xml:space="preserve">
     <value>F#-specific options</value>
   </data>
+  <data name="DecompilerSettings.FileScopedNamespaces" xml:space="preserve">
+    <value>Use file-scoped namespace declarations</value>
+  </data>
   <data name="DecompilerSettings.ForStatement" xml:space="preserve">
     <value>Transform to for, if possible</value>
   </data>

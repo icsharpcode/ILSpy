@@ -955,6 +955,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use file-scoped namespace declarations.
+        /// </summary>
+        public static string DecompilerSettings_FileScopedNamespaces {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.FileScopedNamespaces", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Transform to for, if possible.
         /// </summary>
         public static string DecompilerSettings_ForStatement {

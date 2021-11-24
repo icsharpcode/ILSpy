@@ -26,6 +26,7 @@ using System.Windows.Data;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Options
 {
@@ -157,7 +158,7 @@ namespace ICSharpCode.ILSpy.Options
 			Settings = typeof(Decompiler.DecompilerSettings).GetProperties()
 				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false)
 				.Select(p => new CSharpDecompilerSetting(p) { IsEnabled = (bool)p.GetValue(settings) })
-				.OrderBy(item => item.Category)
+				.OrderBy(item => item.Category, NaturalStringComparer.Instance)
 				.ThenBy(item => item.Description)
 				.ToArray();
 		}

@@ -113,13 +113,13 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void FSharpUsing_Debug()
 		{
-			Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false });
+			Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
 		public void FSharpUsing_Release()
 		{
-			Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false });
+			Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
@@ -137,13 +137,13 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void CS1xSwitch_Debug()
 		{
-			Run(settings: new DecompilerSettings { SwitchExpressions = false });
+			Run(settings: new DecompilerSettings { SwitchExpressions = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
 		public void CS1xSwitch_Release()
 		{
-			Run(settings: new DecompilerSettings { SwitchExpressions = false });
+			Run(settings: new DecompilerSettings { SwitchExpressions = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
@@ -240,14 +240,14 @@ namespace ICSharpCode.Decompiler.Tests
 		public void FSharpLoops_Debug()
 		{
 			CopyFSharpCoreDll();
-			Run(settings: new DecompilerSettings { RemoveDeadStores = true });
+			Run(settings: new DecompilerSettings { RemoveDeadStores = true, FileScopedNamespaces = false });
 		}
 
 		[Test]
 		public void FSharpLoops_Release()
 		{
 			CopyFSharpCoreDll();
-			Run(settings: new DecompilerSettings { RemoveDeadStores = true });
+			Run(settings: new DecompilerSettings { RemoveDeadStores = true, FileScopedNamespaces = false });
 		}
 
 		[Test]
@@ -259,6 +259,11 @@ namespace ICSharpCode.Decompiler.Tests
 		void Run([CallerMemberName] string testName = null, DecompilerSettings settings = null,
 			AssemblerOptions assemblerOptions = AssemblerOptions.Library)
 		{
+			if (settings == null)
+			{
+				// never use file-scoped namespaces, unless explicitly specified
+				settings = new DecompilerSettings { FileScopedNamespaces = false };
+			}
 			var ilFile = Path.Combine(TestCasePath, testName + ".il");
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 

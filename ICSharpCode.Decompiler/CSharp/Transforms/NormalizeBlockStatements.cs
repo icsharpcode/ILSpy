@@ -11,6 +11,31 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	class NormalizeBlockStatements : DepthFirstAstVisitor, IAstTransform
 	{
 		TransformContext context;
+		bool hasNamespace;
+		NamespaceDeclaration singleNamespaceDeclaration;
+
+		public override void VisitSyntaxTree(SyntaxTree syntaxTree)
+		{
+			singleNamespaceDeclaration = null;
+			hasNamespace = false;
+			base.VisitSyntaxTree(syntaxTree);
+			if (context.Settings.FileScopedNamespaces && singleNamespaceDeclaration != null)
+			{
+				singleNamespaceDeclaration.IsFileScoped = true;
+			}
+		}
+
+		public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
+		{
+			singleNamespaceDeclaration = null;
+			if (!hasNamespace)
+			{
+				hasNamespace = true;
+				singleNamespaceDeclaration = namespaceDeclaration;
+			}
+			base.VisitNamespaceDeclaration(namespaceDeclaration);
+
+		}
 
 		public override void VisitIfElseStatement(IfElseStatement ifElseStatement)
 		{
