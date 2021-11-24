@@ -340,6 +340,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				await Task.CompletedTask;
 			}
 		}
+
+		public async Task<object> Issue2436()
+		{
+			try
+			{
+				Console.WriteLine();
+			}
+			catch (Exception result)
+			{
+				return result;
+			}
+			finally
+			{
+				await Task.CompletedTask;
+			}
+			return new object();
+		}
 #endif
 
 		public static async Task<int> GetIntegerSumAsync(IEnumerable<int> items)
