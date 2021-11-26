@@ -1264,6 +1264,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						typeDecl.Members.Add(nestedType);
 					}
 				}
+
+				decompileRun.EnumValueDisplayMode = typeDef.Kind == TypeKind.Enum
+					? DetectBestEnumValueDisplayMode(typeDef, module.PEFile)
+					: null;
+
 				// With C# 9 records, the relative order of fields and properties matters:
 				IEnumerable<IMember> fieldsAndProperties = recordDecompiler?.FieldsAndProperties
 					?? typeDef.Fields.Concat<IMember>(typeDef.Properties);
@@ -1331,7 +1336,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				if (typeDecl.ClassType == ClassType.Enum)
 				{
-					switch (DetectBestEnumValueDisplayMode(typeDef, module.PEFile))
+					switch (decompileRun.EnumValueDisplayMode)
 					{
 						case EnumValueDisplayMode.FirstOnly:
 							foreach (var enumMember in typeDecl.Members.OfType<EnumMemberDeclaration>().Skip(1))
@@ -1350,11 +1355,13 @@ namespace ICSharpCode.Decompiler.CSharp
 							}
 							break;
 						case EnumValueDisplayMode.All:
+						case EnumValueDisplayMode.AllHex:
 							// nothing needs to be changed.
 							break;
 						default:
 							throw new ArgumentOutOfRangeException();
 					}
+					decompileRun.EnumValueDisplayMode = null;
 				}
 				return typeDecl;
 			}
@@ -1369,21 +1376,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		enum EnumValueDisplayMode
-		{
-			None,
-			All,
-			FirstOnly
-		}
-
 		EnumValueDisplayMode DetectBestEnumValueDisplayMode(ITypeDefinition typeDef, PEFile module)
 		{
-			if (settings.AlwaysShowEnumMemberValues)
-				return EnumValueDisplayMode.All;
 			if (typeDef.HasAttribute(KnownAttribute.Flags, inherit: false))
-				return EnumValueDisplayMode.All;
+				return EnumValueDisplayMode.AllHex;
 			bool first = true;
 			long firstValue = 0, previousValue = 0;
+			bool allPowersOfTwo = true;
+			bool allConsecutive = true;
 			foreach (var field in typeDef.Fields)
 			{
 				if (MemberIsHidden(module, field.MetadataToken, settings))
@@ -1392,17 +1392,35 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (constantValue == null)
 					continue;
 				long currentValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
+				allConsecutive = allConsecutive && (first || previousValue + 1 == currentValue);
+				// N & (N - 1) == 0, iff N is a power of 2, for all N != 0.
+				// We define that 0 is a power of 2 in the context of enum values.
+				allPowersOfTwo = allPowersOfTwo && unchecked(currentValue & (currentValue - 1)) == 0;
 				if (first)
 				{
 					firstValue = currentValue;
 					first = false;
 				}
-				else if (previousValue + 1 != currentValue)
+				else if (!allConsecutive && !allPowersOfTwo)
 				{
+					// We already know that the values are neither consecutive nor all powers of 2,
+					// so we can abort, and just display all values as-is.
 					return EnumValueDisplayMode.All;
 				}
 				previousValue = currentValue;
 			}
+			if (allPowersOfTwo && previousValue > 2)
+			{
+				// If all values are powers of 2, display all enum values, but use hex.
+				return EnumValueDisplayMode.AllHex;
+			}
+			if (settings.AlwaysShowEnumMemberValues)
+			{
+				// The user always wants to see all enum values, but we know hex is not necessary.
+				return EnumValueDisplayMode.All;
+			}
+			// We know that all values are consecutive, so if the first value is not 0
+			// display the first enum value only.
 			return firstValue == 0 ? EnumValueDisplayMode.None : EnumValueDisplayMode.FirstOnly;
 		}
 
@@ -1712,8 +1730,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
 						enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, constantValue);
 						if (enumDec.Initializer is PrimitiveExpression primitive
-							&& initValue >= 0 && (decompilationContext.CurrentTypeDefinition.HasAttribute(KnownAttribute.Flags)
-								|| (initValue > 9 && (unchecked(initValue & (initValue - 1)) == 0 || unchecked(initValue & (initValue + 1)) == 0))))
+							&& initValue >= 10 && decompileRun.EnumValueDisplayMode == EnumValueDisplayMode.AllHex)
 						{
 							primitive.Format = LiteralFormat.HexadecimalNumber;
 						}

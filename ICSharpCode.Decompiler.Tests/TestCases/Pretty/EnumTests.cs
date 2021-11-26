@@ -58,11 +58,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		[Flags]
 		public enum SimpleFlagsEnum
 		{
-			None = 0x0,
-			Item1 = 0x1,
-			Item2 = 0x2,
-			Item3 = 0x4,
-			All = 0x7
+			None = 0,
+			Item1 = 1,
+			Item2 = 2,
+			Item3 = 4,
+			All = 7
 		}
 
 		[Flags]

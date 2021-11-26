@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomAttributeSamples
 	[Flags]
 	public enum EnumWithFlagsAttribute
 	{
-		None = 0x0
+		None = 0
 	}
 
 	[AttributeUsage(AttributeTargets.All)]

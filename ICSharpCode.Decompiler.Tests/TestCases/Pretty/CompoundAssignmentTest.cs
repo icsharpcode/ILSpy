@@ -26,10 +26,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		[Flags]
 		private enum MyEnum
 		{
-			None = 0x0,
-			One = 0x1,
-			Two = 0x2,
-			Four = 0x4
+			None = 0,
+			One = 1,
+			Two = 2,
+			Four = 4
 		}
 
 		public enum ShortEnum : short
