@@ -89,6 +89,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class InvalidExpression : SimpleInstruction
 	{
+		public string Severity = "Error";
 		public string? Message;
 		public StackType ExpectedResultType = StackType.Unknown;
 
