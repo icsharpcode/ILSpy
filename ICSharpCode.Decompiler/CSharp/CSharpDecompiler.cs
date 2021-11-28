@@ -1432,42 +1432,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		};
 
-		MethodDeclaration GenerateConvHelper(string name, KnownTypeCode source, KnownTypeCode target, TypeSystemAstBuilder typeSystemAstBuilder,
-											 Expression intermediate32, Expression intermediate64)
-		{
-			MethodDeclaration method = new MethodDeclaration();
-			method.Name = name;
-			method.Modifiers = Modifiers.Private | Modifiers.Static;
-			method.Parameters.Add(new ParameterDeclaration(typeSystemAstBuilder.ConvertType(typeSystem.FindType(source)), "input"));
-			method.ReturnType = typeSystemAstBuilder.ConvertType(typeSystem.FindType(target));
-			method.Body = new BlockStatement {
-				new IfElseStatement {
-					Condition = new BinaryOperatorExpression {
-						Left = new MemberReferenceExpression(new TypeReferenceExpression(typeSystemAstBuilder.ConvertType(typeSystem.FindType(KnownTypeCode.IntPtr))), "Size"),
-						Operator = BinaryOperatorType.Equality,
-						Right = new PrimitiveExpression(4)
-					},
-					TrueStatement = new BlockStatement { // 32-bit
-						new ReturnStatement(
-							new CastExpression(
-								method.ReturnType.Clone(),
-								intermediate32
-							)
-						)
-					},
-					FalseStatement = new BlockStatement { // 64-bit
-						new ReturnStatement(
-							new CastExpression(
-								method.ReturnType.Clone(),
-								intermediate64
-							)
-						)
-					},
-				}
-			};
-			return method;
-		}
-
 		EntityDeclaration DoDecompile(IMethod method, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == method);
