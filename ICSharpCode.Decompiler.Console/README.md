@@ -26,12 +26,14 @@ Options:
   -t|--type <type-name>            The fully qualified name of the type to decompile.
   -il|--ilcode                     Show IL code.
   --il-sequence-points             Show IL with sequence points. Implies -il.
-  -genpdb                          Generate PDB.
-  -usepdb                          Use PDB.
+  -genpdb|--generate-pdb           Generate PDB.
+  -usepdb|--use-varnames-from-pdb  Use variable names from PDB.
   -l|--list <entity-type(s)>       Lists all entities of the specified type(s). Valid types: c(lass), i(nterface),
                                    s(truct), d(elegate), e(num)
-  -lv|--languageversion <version>  C# Language version: CSharp1, CSharp2, CSharp3, CSharp4, CSharp5, CSharp6, CSharp7_0,                                   CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, CSharp_10_0 or Latest
-  -r|--referencepath <path>        Path to a directory containing dependencies of the assembly that is being decompiled.  --no-dead-code                   Remove dead code.
+  -lv|--languageversion <version>  C# Language version: CSharp1, CSharp2, CSharp3, CSharp4, CSharp5, CSharp6, CSharp7_0,
+                                   CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, CSharp_10_0 or Latest
+  -r|--referencepath <path>        Path to a directory containing dependencies of the assembly that is being decompiled.
+  --no-dead-code                   Remove dead code.
   --no-dead-stores                 Remove dead stores.
   -d|--dump-package                Dump package assembiles into a folder. This requires the output directory option.
 

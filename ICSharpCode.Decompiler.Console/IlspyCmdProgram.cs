@@ -56,11 +56,11 @@ Remarks:
 		[Option("--il-sequence-points", "Show IL with sequence points. Implies -il.", CommandOptionType.NoValue)]
 		public bool ShowILSequencePointsFlag { get; }
 
-		[Option("-genpdb", "Generate PDB.", CommandOptionType.NoValue)]
+		[Option("-genpdb|--generate-pdb", "Generate PDB.", CommandOptionType.NoValue)]
 		public bool CreateDebugInfoFlag { get; }
 
 		[FileExistsOrNull]
-		[Option("-usepdb", "Use PDB.", CommandOptionType.SingleOrNoValue)]
+		[Option("-usepdb|--use-varnames-from-pdb", "Use variable names from PDB.", CommandOptionType.SingleOrNoValue)]
 		public (bool IsSet, string Value) InputPDBFile { get; }
 
 		[Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(nterface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue)]
