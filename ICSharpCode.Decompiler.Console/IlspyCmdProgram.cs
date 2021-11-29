@@ -67,7 +67,9 @@ Remarks:
 		[Option("-v|--version", "Show version of ICSharpCode.Decompiler used.", CommandOptionType.NoValue)]
 		public bool ShowVersion { get; }
 
-		[Option("-lv|--languageversion <version>", "C# Language version: CSharp1, CSharp2, CSharp3, CSharp4, CSharp5, CSharp6, CSharp7_0, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0 or Latest", CommandOptionType.SingleValue)]
+		[Option("-lv|--languageversion <version>", "C# Language version: CSharp1, CSharp2, CSharp3, " +
+			"CSharp4, CSharp5, CSharp6, CSharp7_0, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
+			"CSharp_10_0 or Latest", CommandOptionType.SingleValue)]
 		public LanguageVersion LanguageVersion { get; } = LanguageVersion.Latest;
 
 		[DirectoryExists]
