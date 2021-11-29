@@ -19,8 +19,19 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 6.0.x
+
     - name: Install dependencies
       run: dotnet restore ILSpy.XPlat.slnf
+
     - name: Build
       run: dotnet build ILSpy.XPlat.slnf --configuration Debug --no-restore
 
+    - name: Pack ilspycmd
+      run: dotnet pack ICSharpCode.Decompiler.Console/ICSharpCode.Decompiler.Console.csproj --configuration Release --no-restore
+
+    - name: Upload ilspycmd
+      uses: actions/upload-artifact@v2
+      with:
+        name: ilspycmd NuGet Package
+        path: ICSharpCode.Decompiler.Console/bin/Release/ilspycmd*.nupkg
+        if-no-files-found: error
