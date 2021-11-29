@@ -29,6 +29,8 @@ Remarks:
 ")]
 	[HelpOption("-h|--help")]
 	[ProjectOptionRequiresOutputDirectoryValidation]
+	[VersionOptionFromMember("-v|--version", Description = "Show version of ICSharpCode.Decompiler used.",
+		MemberName = nameof(DecompilerVersion))]
 	class ILSpyCmdProgram
 	{
 		public static int Main(string[] args) => CommandLineApplication.Execute<ILSpyCmdProgram>(args);
@@ -64,8 +66,10 @@ Remarks:
 		[Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(nterface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue)]
 		public string[] EntityTypes { get; } = new string[0];
 
-		[Option("-v|--version", "Show version of ICSharpCode.Decompiler used.", CommandOptionType.NoValue)]
-		public bool ShowVersion { get; }
+		public string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version.ToString() +
+				Environment.NewLine
+				+ "ICSharpCode.Decompiler: " +
+				typeof(FullTypeName).Assembly.GetName().Version.ToString();
 
 		[Option("-lv|--languageversion <version>", "C# Language version: CSharp1, CSharp2, CSharp3, " +
 			"CSharp4, CSharp5, CSharp6, CSharp7_0, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
@@ -132,14 +136,6 @@ Remarks:
 					}
 
 					return GeneratePdbForAssembly(InputAssemblyName, pdbFileName, app);
-				}
-				else if (ShowVersion)
-				{
-					string vInfo = "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version.ToString() +
-								   Environment.NewLine
-								   + "ICSharpCode.Decompiler: " +
-								   typeof(FullTypeName).Assembly.GetName().Version.ToString();
-					output.WriteLine(vInfo);
 				}
 				else if (DumpPackageFlag)
 				{
