@@ -23,10 +23,13 @@ jobs:
     - name: Install dependencies
       run: dotnet restore ILSpy.XPlat.slnf
 
-    - name: Build
+    - name: Build Debug
       run: dotnet build ILSpy.XPlat.slnf --configuration Debug --no-restore
 
-    - name: Pack ilspycmd
+    - name: Build Release ilspycmd
+      run: dotnet build ICSharpCode.Decompiler.Console/ICSharpCode.Decompiler.Console.csproj --configuration Release
+      
+    - name: Pack Release ilspycmd
       run: dotnet pack ICSharpCode.Decompiler.Console/ICSharpCode.Decompiler.Console.csproj --configuration Release --no-restore
 
     - name: Upload ilspycmd
