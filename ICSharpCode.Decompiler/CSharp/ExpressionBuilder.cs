@@ -4408,7 +4408,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitInvalidExpression(InvalidExpression inst, TranslationContext context)
 		{
-			string message = inst.Severity;
+			string message = "Error";
 			if (inst.StartILOffset != 0)
 			{
 				message += $" near IL_{inst.StartILOffset:x4}";
