@@ -385,7 +385,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				var usedLabels = new LongSet(dispatch.TargetILOffsets.Select(offset => LongInterval.Inclusive(offset, offset)));
 				switchInst.Sections.Add(new SwitchSection { Labels = usedLabels.Invert(), Body = new Branch(tryBody.EntryPoint) });
-				dispatchBlock.Instructions.Add(new Nop { Comment = "ILSpy has introduced the following switch to emulate a goto from catch-block to try-block" });
+				dispatchBlock.Instructions.Add(new InvalidExpression("ILSpy has introduced the following switch to emulate a goto from catch-block to try-block") { Severity = "Note" });
 				dispatchBlock.Instructions.Add(switchInst);
 
 				tryBody.Blocks.Insert(0, dispatchBlock);
