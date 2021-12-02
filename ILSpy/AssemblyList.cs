@@ -88,7 +88,10 @@ namespace ICSharpCode.ILSpy
 		{
 			lock (lockObj)
 			{
-				this.assemblies.AddRange(list.assemblies);
+				lock (list.lockObj)
+				{
+					this.assemblies.AddRange(list.assemblies);
+				}
 			}
 			this.dirty = false;
 		}
