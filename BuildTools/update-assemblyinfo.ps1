@@ -77,7 +77,8 @@ $templateFiles = (
     @{Input="ILSpy/Properties/app.config.template"; Output = "ILSpy/app.config"},
     @{Input="ILSpy.AddIn/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn/source.extension.vsixmanifest"},
     @{Input="ILSpy.AddIn.VS2022/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn.VS2022/source.extension.vsixmanifest"},
-    @{Input="ILSpy.Installer/AppPackage.cs.template"; Output = "ILSpy.Installer/AppPackage.cs"}
+    @{Input="ILSpy.Installer/AppPackage.cs.template"; Output = "ILSpy.Installer/AppPackage.cs"},
+	@{Input="ICSharpCode.Decompiler.Console/Directory.Build.props.template"; Output = "ICSharpCode.Decompiler.Console/Directory.Build.props"}
 );
 
 $appxmanifestFiles = (	

@@ -1,0 +1,8 @@
+<Project>
+ <PropertyGroup>
+   <Version>$INSERTVERSION$$INSERTVERSIONNAMEPOSTFIX$$INSERTBUILDCONFIG$</Version>
+   <AssemblyVersion>$INSERTVERSION$</AssemblyVersion>
+   <FileVersion>$INSERTVERSION$</FileVersion>
+   <Copyright>Copyright 2011-$INSERTYEAR$ AlphaSierraPapa</Copyright>
+ </PropertyGroup>
+</Project>
