@@ -269,7 +269,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						{
 							foreach (var (name, value) in resourcesFile)
 							{
-								string fileName = CleanUpFileName(name)
+								string fileName = SanitizeFileName(name)
 									.Replace('/', Path.DirectorySeparatorChar);
 								string dirName = Path.GetDirectoryName(fileName);
 								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
@@ -571,14 +571,25 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		public static string CleanUpFileName(string text)
 		{
-			return CleanUpFileName(text, separateAtDots: false);
+			return CleanUpName(text, separateAtDots: false, treatAsFileName: false);
+		}
+
+		/// <summary>
+		/// Removes invalid characters from file names and reduces their length,
+		/// but keeps file extensions intact.
+		/// </summary>
+		public static string SanitizeFileName(string fileName)
+		{
+			return CleanUpName(fileName, separateAtDots: false, treatAsFileName: true);
 		}
 
 		/// <summary>
 		/// Cleans up a node name for use as a file system name. If <paramref name="separateAtDots"/> is active,
-		/// dots are seen as segment separators. Each segment is limited to 255 characters.
+		/// dots are seen as segment separators. Each segment is limited to maxSegmentLength characters.
+		/// (see <see cref="GetLongPathSupport"/>) If <paramref name="treatAsFileName"/> is active,
+		/// we check for file a extension and try to preserve it, if it's valid.
 		/// </summary>
-		static string CleanUpFileName(string text, bool separateAtDots)
+		static string CleanUpName(string text, bool separateAtDots, bool treatAsFileName)
 		{
 			int pos = text.IndexOf(':');
 			if (pos > 0)
@@ -587,23 +598,49 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (pos > 0)
 				text = text.Substring(0, pos);
 			text = text.Trim();
-			// Whitelist allowed characters, replace everything else:
-			StringBuilder b = new StringBuilder(text.Length);
+			string extension = null;
 			int currentSegmentLength = 0;
 			var (supportsLongPaths, maxPathLength, maxSegmentLength) = longPathSupport.Value;
+			if (treatAsFileName)
+			{
+				// Check if input is a file name, i.e., has a valid extension
+				// If yes, preserve extension and append it at the end.
+				// But only, if the extension length does not exceed maxSegmentLength,
+				// if that's the case we just give up and treat the extension no different
+				// from the file name.
+				int lastDot = text.LastIndexOf('.');
+				if (lastDot >= 0 && text.Length - lastDot < maxSegmentLength)
+				{
+					string originalText = text;
+					extension = text.Substring(lastDot);
+					text = text.Remove(lastDot);
+					foreach (var c in extension)
+					{
+						if (!(char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == '.'))
+						{
+							// extension contains an invalid character, therefore cannot be a valid extension.
+							extension = null;
+							text = originalText;
+							break;
+						}
+					}
+				}
+			}
+			// Whitelist allowed characters, replace everything else:
+			StringBuilder b = new StringBuilder(text.Length + (extension?.Length ?? 0));
 			foreach (var c in text)
 			{
 				currentSegmentLength++;
 				if (char.IsLetterOrDigit(c) || c == '-' || c == '_')
 				{
-					// if the current segment exceeds 255 characters,
+					// if the current segment exceeds maxSegmentLength characters,
 					// skip until the end of the segment.
 					if (currentSegmentLength <= maxSegmentLength)
 						b.Append(c);
 				}
 				else if (c == '.' && b.Length > 0 && b[b.Length - 1] != '.')
 				{
-					// if the current segment exceeds 255 characters,
+					// if the current segment exceeds maxSegmentLength characters,
 					// skip until the end of the segment.
 					if (separateAtDots || currentSegmentLength <= maxSegmentLength)
 						b.Append('.'); // allow dot, but never two in a row
@@ -614,7 +651,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				}
 				else
 				{
-					// if the current segment exceeds 255 characters,
+					// if the current segment exceeds maxSegmentLength characters,
 					// skip until the end of the segment.
 					if (currentSegmentLength <= maxSegmentLength)
 						b.Append('-');
@@ -625,6 +662,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (b.Length == 0)
 				b.Append('-');
 			string name = b.ToString();
+			if (extension != null)
+				name += extension;
 			if (IsReservedFileSystemName(name))
 				return name + "_";
 			else if (name == ".")
@@ -638,7 +677,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		public static string CleanUpDirectoryName(string text)
 		{
-			return CleanUpFileName(text, separateAtDots: true).Replace('.', Path.DirectorySeparatorChar);
+			return CleanUpName(text, separateAtDots: true, treatAsFileName: false)
+				.Replace('.', Path.DirectorySeparatorChar);
 		}
 
 		static bool IsReservedFileSystemName(string name)

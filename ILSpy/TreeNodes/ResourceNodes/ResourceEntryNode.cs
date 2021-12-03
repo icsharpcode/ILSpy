@@ -20,8 +20,8 @@ using System;
 using System.IO;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TextView;
 
 using Microsoft.Win32;
 
@@ -80,7 +80,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool Save(ViewModels.TabPageModel tabPage)
 		{
 			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = Path.GetFileName(DecompilerTextView.CleanUpName(key));
+			dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(key));
 			if (dlg.ShowDialog() == true)
 			{
 				using var data = OpenStream();

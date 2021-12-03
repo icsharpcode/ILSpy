@@ -19,8 +19,8 @@
 using System.IO;
 using System.Linq;
 
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 
 using Microsoft.Win32;
@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy
 			if (assembly == null)
 				return;
 			OpenFileDialog dlg = new OpenFileDialog();
-			dlg.FileName = DecompilerTextView.CleanUpName(assembly.ShortName) + ".pdb";
+			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(assembly.ShortName) + ".pdb";
 			dlg.Filter = Resources.PortablePDBPdbAllFiles;
 			dlg.InitialDirectory = Path.GetDirectoryName(assembly.FileName);
 			if (dlg.ShowDialog() != true)

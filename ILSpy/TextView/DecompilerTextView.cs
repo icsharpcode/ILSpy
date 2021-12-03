@@ -1034,7 +1034,7 @@ namespace ICSharpCode.ILSpy.TextView
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.DefaultExt = language.FileExtension;
 			dlg.Filter = language.Name + "|*" + language.FileExtension + Properties.Resources.AllFiles;
-			dlg.FileName = CleanUpName(treeNodes.First().ToString()) + language.FileExtension;
+			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(treeNodes.First().ToString()) + language.FileExtension;
 			if (dlg.ShowDialog() == true)
 			{
 				SaveToDisk(new DecompilationContext(language, treeNodes.ToArray(), options), dlg.FileName);
@@ -1148,14 +1148,6 @@ namespace ICSharpCode.ILSpy.TextView
 				}));
 			thread.Start();
 			return tcs.Task;
-		}
-
-		/// <summary>
-		/// Cleans up a node name for use as a file name.
-		/// </summary>
-		internal static string CleanUpName(string text)
-		{
-			return WholeProjectDecompiler.CleanUpFileName(text);
 		}
 		#endregion
 
