@@ -2312,17 +2312,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						m |= Modifiers.Static;
 					}
 				}
-				else if (member.IsStatic)
-				{
-					m |= Modifiers.Static;
-				}
 				else
 				{
+					if (member.IsStatic)
+					{
+						m |= Modifiers.Static;
+					}
 					var declaringType = member.DeclaringType;
 					if (declaringType.Kind == TypeKind.Interface)
 					{
 						if (!member.IsVirtual && !member.IsAbstract && !member.IsOverride && member.Accessibility != Accessibility.Private && member is IMethod method2 && method2.HasBody)
 							m |= Modifiers.Sealed;
+						if (member.IsAbstract && member.IsStatic)
+							m |= Modifiers.Abstract;
 					}
 					else
 					{
@@ -2330,11 +2332,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 							m |= Modifiers.Abstract;
 						else if (member.IsVirtual && !member.IsOverride)
 							m |= Modifiers.Virtual;
+						if (member.IsSealed && !member.IsExplicitInterfaceImplementation)
+							m |= Modifiers.Sealed;
 					}
 					if (member.IsOverride && !member.IsExplicitInterfaceImplementation)
 						m |= Modifiers.Override;
-					if (member.IsSealed && !member.IsExplicitInterfaceImplementation)
-						m |= Modifiers.Sealed;
 					if (member is IMethod method && method.ThisIsRefReadOnly && method.DeclaringTypeDefinition?.IsReadOnly == false)
 						m |= Modifiers.Readonly;
 				}

@@ -1073,6 +1073,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				yield break; // cannot create forwarder for existing explicit interface impl
 			}
+			if (method.IsStatic)
+			{
+				yield break; // cannot create forwarder for static interface impl
+			}
 			var genericContext = new Decompiler.TypeSystem.GenericContext(method);
 			var methodHandle = (MethodDefinitionHandle)method.MetadataToken;
 			foreach (var h in methodHandle.GetMethodImplementations(metadata))
@@ -1464,7 +1468,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					methodDecl.Modifiers |= Modifiers.Extern;
 				}
-				if (method.SymbolKind == SymbolKind.Method && !method.IsExplicitInterfaceImplementation && methodDefinition.HasFlag(System.Reflection.MethodAttributes.Virtual) == methodDefinition.HasFlag(System.Reflection.MethodAttributes.NewSlot))
+				if (method.SymbolKind == SymbolKind.Method && !method.IsExplicitInterfaceImplementation
+					&& methodDefinition.HasFlag(System.Reflection.MethodAttributes.Virtual) == methodDefinition.HasFlag(System.Reflection.MethodAttributes.NewSlot))
 				{
 					SetNewModifier(methodDecl);
 				}
