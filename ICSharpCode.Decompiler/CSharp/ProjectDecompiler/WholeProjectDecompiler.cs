@@ -279,7 +279,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 								Stream entryStream = (Stream)value;
 								entryStream.Position = 0;
 								individualResources.AddRange(
-									WriteResourceToFile(fileName, (string)name, entryStream));
+									WriteResourceToFile(fileName, name, entryStream));
 							}
 							decodedIntoIndividualFiles = true;
 						}
@@ -576,7 +576,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		/// <summary>
 		/// Removes invalid characters from file names and reduces their length,
-		/// but keeps file extensions intact.
+		/// but keeps file extensions and path structure intact.
 		/// </summary>
 		public static string SanitizeFileName(string fileName)
 		{
@@ -648,6 +648,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					// Reset length at end of segment.
 					if (separateAtDots)
 						currentSegmentLength = 0;
+				}
+				else if (treatAsFileName && (c == '/' || c == '\\') && currentSegmentLength > 0)
+				{
+					// if we treat this as a file name, we've started a new segment
+					b.Append(c);
+					currentSegmentLength = 0;
 				}
 				else
 				{
