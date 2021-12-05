@@ -24,6 +24,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public interface IA
 		{
+#if CS80
+			static int Field;
+#endif
 			int Property1 { get; }
 			int Property2 { set; }
 			int Property3 { get; set; }
