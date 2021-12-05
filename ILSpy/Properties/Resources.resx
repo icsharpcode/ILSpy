@@ -755,6 +755,12 @@ Do you want to continue?</value>
   <data name="SaveCode" xml:space="preserve">
     <value>Save Code</value>
   </data>
+  <data name="ScopeSearchToThisAssembly" xml:space="preserve">
+    <value>Scope search to this assembly</value>
+  </data>
+  <data name="ScopeSearchToThisNamespace" xml:space="preserve">
+    <value>Scope search to this namespace</value>
+  </data>
   <data name="Search" xml:space="preserve">
     <value>Search...</value>
   </data>
