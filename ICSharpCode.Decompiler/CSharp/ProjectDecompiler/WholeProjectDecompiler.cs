@@ -214,7 +214,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					}
 					else
 					{
-						string dir = CleanUpDirectoryName(ns);
+						string dir = Settings.UseNestedDirectoriesForNamespaces ? CleanUpPath(ns) : CleanUpDirectoryName(ns);
 						if (directories.Add(dir))
 							Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
 						return Path.Combine(dir, file);
@@ -368,6 +368,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			// That is, a full name of the form "Namespace1.Namespace2{...}.NamespaceN.ResourceName" is split such that
 			// the directory part Namespace1\Namespace2\... reuses as many existing directories as
 			// possible, and only the remaining name parts are used as prefix for the filename.
+			// This is not affected by the UseNestedDirectoriesForNamespaces setting.
 			string[] splitName = fullName.Split(Path.DirectorySeparatorChar);
 			string fileName = string.Join(".", splitName);
 			string separator = Path.DirectorySeparatorChar.ToString();
@@ -682,6 +683,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// Cleans up a node name for use as a directory name.
 		/// </summary>
 		public static string CleanUpDirectoryName(string text)
+		{
+			return CleanUpName(text, separateAtDots: false, treatAsFileName: false);
+		}
+
+		public static string CleanUpPath(string text)
 		{
 			return CleanUpName(text, separateAtDots: true, treatAsFileName: false)
 				.Replace('.', Path.DirectorySeparatorChar);
