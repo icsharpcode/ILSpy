@@ -357,7 +357,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (tokens.Count > 0)
 				{
-					foreach (var (kind, index, text) in tokens)
+					foreach (var (kind, index, alignment, text) in tokens)
 					{
 						TranslatedExpression argument;
 						switch (kind)
@@ -373,7 +373,17 @@ namespace ICSharpCode.Decompiler.CSharp
 							case TokenKind.ArgumentWithFormat:
 								argument = arguments[index + 1];
 								UnpackSingleElementArray(ref argument);
-								content.Add(new Interpolation(argument, text));
+								content.Add(new Interpolation(argument, suffix: text));
+								break;
+							case TokenKind.ArgumentWithAlignment:
+								argument = arguments[index + 1];
+								UnpackSingleElementArray(ref argument);
+								content.Add(new Interpolation(argument, alignment));
+								break;
+							case TokenKind.ArgumentWithAlignmentAndFormat:
+								argument = arguments[index + 1];
+								UnpackSingleElementArray(ref argument);
+								content.Add(new Interpolation(argument, alignment, text));
 								break;
 						}
 					}
@@ -566,7 +576,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			);
 		}
 
-		private bool TryGetStringInterpolationTokens(ArgumentList argumentList, out string format, out List<(TokenKind, int, string)> tokens)
+		private bool TryGetStringInterpolationTokens(ArgumentList argumentList, out string format, out List<(TokenKind Kind, int Index, int Alignment, string Format)> tokens)
 		{
 			tokens = null;
 			format = null;
@@ -577,33 +587,56 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (!arguments.Skip(1).All(a => !a.Expression.DescendantsAndSelf.OfType<PrimitiveExpression>().Any(p => p.Value is string)))
 				return false;
-			tokens = new List<(TokenKind, int, string)>();
+			tokens = new List<(TokenKind Kind, int Index, int Alignment, string Format)>();
 			int i = 0;
 			format = (string)crr.ConstantValue;
 			foreach (var (kind, data) in TokenizeFormatString(format))
 			{
 				int index;
+				string[] arg;
 				switch (kind)
 				{
 					case TokenKind.Error:
 						return false;
 					case TokenKind.String:
-						tokens.Add((kind, -1, data));
+						tokens.Add((kind, -1, 0, data));
 						break;
 					case TokenKind.Argument:
 						if (!int.TryParse(data, out index) || index != i)
 							return false;
 						i++;
-						tokens.Add((kind, index, null));
+						tokens.Add((kind, index, 0, null));
 						break;
 					case TokenKind.ArgumentWithFormat:
-						string[] arg = data.Split(new[] { ':' }, 2);
+						arg = data.Split(new[] { ':' }, 2);
 						if (arg.Length != 2 || arg[1].Length == 0)
 							return false;
 						if (!int.TryParse(arg[0], out index) || index != i)
 							return false;
 						i++;
-						tokens.Add((kind, index, arg[1]));
+						tokens.Add((kind, index, 0, arg[1]));
+						break;
+					case TokenKind.ArgumentWithAlignment:
+						arg = data.Split(new[] { ',' }, 2);
+						if (arg.Length != 2 || arg[1].Length == 0)
+							return false;
+						if (!int.TryParse(arg[0], out index) || index != i)
+							return false;
+						if (!int.TryParse(arg[1], out int alignment))
+							return false;
+						i++;
+						tokens.Add((kind, index, alignment, null));
+						break;
+					case TokenKind.ArgumentWithAlignmentAndFormat:
+						arg = data.Split(new[] { ',', ':' }, 3);
+						if (arg.Length != 3 || arg[1].Length == 0 || arg[2].Length == 0)
+							return false;
+						if (!int.TryParse(arg[0], out index) || index != i)
+							return false;
+						if (!int.TryParse(arg[1], out alignment))
+							return false;
+						i++;
+						tokens.Add((kind, index, alignment, arg[2]));
 						break;
 					default:
 						return false;
@@ -617,7 +650,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			Error,
 			String,
 			Argument,
-			ArgumentWithFormat
+			ArgumentWithFormat,
+			ArgumentWithAlignment,
+			ArgumentWithAlignmentAndFormat,
 		}
 
 		private IEnumerable<(TokenKind, string)> TokenizeFormatString(string value)
@@ -685,7 +720,18 @@ namespace ICSharpCode.Decompiler.CSharp
 						{
 							kind = TokenKind.ArgumentWithFormat;
 						}
+						else if (kind == TokenKind.ArgumentWithAlignment)
+						{
+							kind = TokenKind.ArgumentWithAlignmentAndFormat;
+						}
 						sb.Append(':');
+						break;
+					case ',':
+						if (kind == TokenKind.Argument)
+						{
+							kind = TokenKind.ArgumentWithAlignment;
+						}
+						sb.Append(',');
 						break;
 					default:
 						sb.Append((char)next);

@@ -1168,6 +1168,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 			writer.WriteToken(Interpolation.LBrace, "{");
 			interpolation.Expression.AcceptVisitor(this);
+			if (interpolation.Alignment != 0)
+			{
+				writer.WriteToken(Roles.Comma, ",");
+				writer.WritePrimitiveValue(interpolation.Alignment);
+			}
 			if (interpolation.Suffix != null)
 			{
 				writer.WriteToken(Roles.Colon, ":");
