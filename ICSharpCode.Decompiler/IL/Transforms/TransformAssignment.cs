@@ -122,6 +122,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				local = inst.Variable;
 				localStore = null;
 				nextPos = pos + 1;
+
+				if (local.LoadCount == 1 && local.AddressCount == 0)
+				{
+					// inline assignment would produce a dead store in this case, which is ugly
+					// and causes problems with the deconstruction transform.
+					return false;
+				}
 			}
 			if (block.Instructions[nextPos] is StObj stobj)
 			{

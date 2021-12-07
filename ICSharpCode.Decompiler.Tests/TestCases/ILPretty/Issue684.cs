@@ -25,7 +25,8 @@ public static class Issue684
 				Console.WriteLine(num3);
 				for (; i <= num; i += num3)
 				{
-					int num4 = (array[i] = 1);
+					int num4 = 1;
+					array[i] = num4;
 				}
 				i = num3;
 				while (true)
