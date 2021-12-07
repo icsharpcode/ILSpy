@@ -547,7 +547,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				{
 					case PlatformID.MacOSX:
 					case PlatformID.Unix:
-						return (true, int.MaxValue, int.MaxValue);
+						return (true, int.MaxValue, 255);
 					case PlatformID.Win32NT:
 						const string key = @"SYSTEM\CurrentControlSet\Control\FileSystem";
 						var fileSystem = Registry.LocalMachine.OpenSubKey(key);
