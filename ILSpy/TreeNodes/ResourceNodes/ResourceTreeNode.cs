@@ -24,6 +24,7 @@ using System.Text;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Utils;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
@@ -91,7 +92,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					if (type == FileType.Xml)
 						ext = ".xml";
 					else
-						ext = Path.GetExtension(DecompilerTextView.CleanUpName(Resource.Name));
+						ext = Path.GetExtension(WholeProjectDecompiler.SanitizeFileName(Resource.Name));
 					tabPage.ShowTextView(textView => textView.ShowNode(output, this, HighlightingManager.Instance.GetDefinitionByExtension(ext)));
 					tabPage.SupportsLanguageSwitching = false;
 					return true;
@@ -106,7 +107,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (s == null)
 				return false;
 			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = DecompilerTextView.CleanUpName(Resource.Name);
+			dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(Resource.Name));
 			if (dlg.ShowDialog() == true)
 			{
 				s.Position = 0;

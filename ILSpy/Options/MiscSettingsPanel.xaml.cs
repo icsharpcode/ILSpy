@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			XElement e = settings["MiscSettings"];
 			var s = new MiscSettings();
-			s.AllowMultipleInstances = (bool?)e.Attribute("AllowMultipleInstances") ?? false;
+			s.AllowMultipleInstances = (bool?)e.Attribute(nameof(s.AllowMultipleInstances)) ?? false;
 			s.LoadPreviousAssemblies = (bool?)e.Attribute(nameof(s.LoadPreviousAssemblies)) ?? true;
 
 			return s;
@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy.Options
 			var s = (MiscSettings)this.DataContext;
 
 			var section = new XElement("MiscSettings");
-			section.SetAttributeValue("AllowMultipleInstances", s.AllowMultipleInstances);
+			section.SetAttributeValue(nameof(s.AllowMultipleInstances), s.AllowMultipleInstances);
 			section.SetAttributeValue(nameof(s.LoadPreviousAssemblies), s.LoadPreviousAssemblies);
 
 			XElement existingElement = root.Element("MiscSettings");

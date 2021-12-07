@@ -66,7 +66,10 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			string BuildFileNameFromTypeName(TypeDefinitionHandle handle)
 			{
 				var typeName = handle.GetFullTypeName(reader).TopLevelTypeName;
-				return Path.Combine(WholeProjectDecompiler.CleanUpDirectoryName(typeName.Namespace), WholeProjectDecompiler.CleanUpFileName(typeName.Name) + ".cs");
+				string ns = settings.UseNestedDirectoriesForNamespaces
+					? WholeProjectDecompiler.CleanUpPath(typeName.Namespace)
+					: WholeProjectDecompiler.CleanUpDirectoryName(typeName.Namespace);
+				return Path.Combine(ns, WholeProjectDecompiler.CleanUpFileName(typeName.Name) + ".cs");
 			}
 
 			foreach (var sourceFile in reader.GetTopLevelTypeDefinitions().GroupBy(BuildFileNameFromTypeName))

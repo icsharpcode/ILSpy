@@ -1128,6 +1128,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Project export.
+        /// </summary>
+        public static string DecompilerSettings_ProjectExport {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.ProjectExport", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Ranges.
         /// </summary>
         public static string DecompilerSettings_Ranges {
@@ -1313,6 +1322,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string DecompilerSettings_UseNamedArguments {
             get {
                 return ResourceManager.GetString("DecompilerSettings.UseNamedArguments", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use nested directories for namespaces.
+        /// </summary>
+        public static string DecompilerSettings_UseNestedDirectoriesForNamespaces {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UseNestedDirectoriesForNamespaces", resourceCulture);
             }
         }
         
@@ -2002,7 +2020,7 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You can change this by toggling the setting at Options &gt; Decompiler &gt; Other &gt; Use new SDK style format for generated project files (*.csproj)..
+        ///   Looks up a localized string similar to You can change this by toggling the setting at Options &gt; Decompiler &gt; Project export &gt; Use new SDK style format for generated project files (*.csproj)..
         /// </summary>
         public static string ProjectExportFormatChangeSettingHint {
             get {
@@ -2029,9 +2047,11 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Failed to decompile the assemblies {0} because the namespace directory structure is nested too deep.
+        ///   Looks up a localized string similar to Failed to decompile the assemblies {0} because the namespace names are too long or the directory structure is nested too deep.
         ///
-        ///If you are using Windows 10.0.14393 (Windows 10 version 1607) or later, you can enable &quot;Long path support&quot; by creating a REG_DWORD registry key named &quot;LongPathsEnabled&quot; with value 0x1 at &quot;HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem&quot; (see https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation for more information)..
+        ///If you are using Windows 10.0.14393 (Windows 10 version 1607) or later, you can enable &quot;Long path support&quot; by creating a REG_DWORD registry key named &quot;LongPathsEnabled&quot; with value 0x1 at &quot;HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem&quot; (see https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation for more information).
+        ///
+        ///If this does not [rest of string was truncated]&quot;;.
         /// </summary>
         public static string ProjectExportPathTooLong {
             get {

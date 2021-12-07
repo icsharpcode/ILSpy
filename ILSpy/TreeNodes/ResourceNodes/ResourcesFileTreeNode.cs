@@ -24,6 +24,7 @@ using System.IO;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Controls;
@@ -129,7 +130,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (s == null)
 				return false;
 			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = DecompilerTextView.CleanUpName(Resource.Name);
+			dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(Resource.Name));
 			dlg.Filter = Resources.ResourcesFileFilter;
 			if (dlg.ShowDialog() == true)
 			{

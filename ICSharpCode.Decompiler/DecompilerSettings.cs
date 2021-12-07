@@ -1777,7 +1777,7 @@ namespace ICSharpCode.Decompiler
 		/// Gets or sets a value indicating whether the new SDK style format
 		/// shall be used for the generated project files.
 		/// </summary>
-		[Category("DecompilerSettings.Other")]
+		[Category("DecompilerSettings.ProjectExport")]
 		[Description("DecompilerSettings.UseSdkStyleProjectFormat")]
 		public bool UseSdkStyleProjectFormat {
 			get { return useSdkStyleProjectFormat; }
@@ -1785,6 +1785,25 @@ namespace ICSharpCode.Decompiler
 				if (useSdkStyleProjectFormat != value)
 				{
 					useSdkStyleProjectFormat = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool useNestedDirectoriesForNamespaces;
+
+		/// <summary>
+		/// Gets/sets whether namespaces and namespace-like identifiers should be split at '.'
+		/// and each part should produce a new level of nesting in the output directory structure. 
+		/// </summary>
+		[Category("DecompilerSettings.ProjectExport")]
+		[Description("DecompilerSettings.UseNestedDirectoriesForNamespaces")]
+		public bool UseNestedDirectoriesForNamespaces {
+			get { return useNestedDirectoriesForNamespaces; }
+			set {
+				if (useNestedDirectoriesForNamespaces != value)
+				{
+					useNestedDirectoriesForNamespaces = value;
 					OnPropertyChanged();
 				}
 			}

@@ -23,6 +23,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -46,7 +47,7 @@ namespace ICSharpCode.ILSpy
 				return;
 			var assembly = selectedNodes[0].PackageEntry;
 			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = Path.GetFileName(DecompilerTextView.CleanUpName(assembly.Name));
+			dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(assembly.Name));
 			dlg.Filter = ".NET assemblies|*.dll;*.exe;*.winmd" + Resources.AllFiles;
 			dlg.InitialDirectory = Path.GetDirectoryName(bundleNode.LoadedAssembly.FileName);
 			if (dlg.ShowDialog() != true)
@@ -70,7 +71,7 @@ namespace ICSharpCode.ILSpy
 				{
 					foreach (var node in selectedNodes)
 					{
-						var fileName = Path.GetFileName(DecompilerTextView.CleanUpName(node.PackageEntry.Name));
+						var fileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(node.PackageEntry.Name));
 						SaveEntry(output, node.PackageEntry, Path.Combine(outputFolderOrFileName, fileName));
 					}
 				}

@@ -399,6 +399,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.PatternMatching" xml:space="preserve">
     <value>Use pattern matching expressions</value>
   </data>
+  <data name="DecompilerSettings.ProjectExport" xml:space="preserve">
+    <value>Project export</value>
+  </data>
   <data name="DecompilerSettings.Ranges" xml:space="preserve">
     <value>Ranges</value>
   </data>
@@ -461,6 +464,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DecompilerSettings.UseNamedArguments" xml:space="preserve">
     <value>Use named arguments</value>
+  </data>
+  <data name="DecompilerSettings.UseNestedDirectoriesForNamespaces" xml:space="preserve">
+    <value>Use nested directories for namespaces</value>
   </data>
   <data name="DecompilerSettings.UseNonTrailingNamedArguments" xml:space="preserve">
     <value>Use non-trailing named arguments</value>
@@ -689,7 +695,7 @@ Please disable all filters that might hide the item (i.e. activate "View &gt; Sh
     <value>Portable PDB|*.pdb|All files|*.*</value>
   </data>
   <data name="ProjectExportFormatChangeSettingHint" xml:space="preserve">
-    <value>You can change this by toggling the setting at Options &gt; Decompiler &gt; Other &gt; Use new SDK style format for generated project files (*.csproj).</value>
+    <value>You can change this by toggling the setting at Options &gt; Decompiler &gt; Project export &gt; Use new SDK style format for generated project files (*.csproj).</value>
   </data>
   <data name="ProjectExportFormatNonSDKHint" xml:space="preserve">
     <value>A Non-SDK project was generated. Learn more at https://docs.microsoft.com/en-us/nuget/resources/check-project-format.</value>
@@ -698,9 +704,11 @@ Please disable all filters that might hide the item (i.e. activate "View &gt; Sh
     <value>A SDK-style project was generated. Learn more at https://docs.microsoft.com/en-us/nuget/resources/check-project-format.</value>
   </data>
   <data name="ProjectExportPathTooLong" xml:space="preserve">
-    <value>Failed to decompile the assemblies {0} because the namespace directory structure is nested too deep.
+    <value>Failed to decompile the assemblies {0} because the namespace names are too long or the directory structure is nested too deep.
 
-If you are using Windows 10.0.14393 (Windows 10 version 1607) or later, you can enable "Long path support" by creating a REG_DWORD registry key named "LongPathsEnabled" with value 0x1 at "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem" (see https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation for more information).</value>
+If you are using Windows 10.0.14393 (Windows 10 version 1607) or later, you can enable "Long path support" by creating a REG_DWORD registry key named "LongPathsEnabled" with value 0x1 at "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem" (see https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation for more information).
+
+If this does not solve the problem and your system supports long paths, you can try to use a nested path structure. You can change this by toggling the setting at Options &gt; Decompiler &gt; Project export &gt; Use nested directories for namespaces. This helps because even on "long-path-aware" platforms, the length of a directory name is limited, on Windows/NTFS this is 255 characters.</value>
   </data>
   <data name="PropertyManuallyMissingReferencesListLoadedAssemblies" xml:space="preserve">
     <value>for ex. property getter/setter access. To get optimal decompilation results, please manually add the missing references to the list of loaded assemblies.</value>

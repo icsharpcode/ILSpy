@@ -6,9 +6,13 @@
 			 xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
 			 mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
-	<StackPanel Margin="10">
-		<CheckBox IsChecked="{Binding AllowMultipleInstances}" Content="{x:Static properties:Resources.AllowMultipleInstances}" />
-		<CheckBox IsChecked="{Binding LoadPreviousAssemblies}" Content="{x:Static properties:Resources.LoadAssembliesThatWereLoadedInTheLastInstance}"/>
-		<Button Command="{Binding AddRemoveShellIntegrationCommand}" Content="{Binding AddRemoveShellIntegrationText}" Margin="3" />
+	<StackPanel Orientation="Vertical">
+		<GroupBox Header="{x:Static properties:Resources.Misc}">
+			<StackPanel Margin="10">
+				<CheckBox IsChecked="{Binding AllowMultipleInstances}" Content="{x:Static properties:Resources.AllowMultipleInstances}" />
+				<CheckBox IsChecked="{Binding LoadPreviousAssemblies}" Content="{x:Static properties:Resources.LoadAssembliesThatWereLoadedInTheLastInstance}"/>
+				<Button Command="{Binding AddRemoveShellIntegrationCommand}" Content="{Binding AddRemoveShellIntegrationText}" Margin="3" />
+			</StackPanel>
+		</GroupBox>
 	</StackPanel>
 </UserControl>
