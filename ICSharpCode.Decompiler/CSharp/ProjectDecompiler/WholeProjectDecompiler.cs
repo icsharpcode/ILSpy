@@ -363,7 +363,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			// Clean up the name first and ensure the length does not exceed the maximum length
 			// supported by the OS.
-			fullName = CleanUpDirectoryName(fullName);
+			fullName = SanitizeFileName(fullName);
 			// The purpose of the below algorithm is to "maximize" the directory name and "minimize" the file name.
 			// That is, a full name of the form "Namespace1.Namespace2{...}.NamespaceN.ResourceName" is split such that
 			// the directory part Namespace1\Namespace2\... reuses as many existing directories as
