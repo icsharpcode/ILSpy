@@ -46,7 +46,7 @@ function gitVersion() {
     if (No-Git) {
         return 0;
     }
-    return [Int32]::Parse((git rev-list --count "$baseCommit..HEAD")) + $baseCommitRev;
+	return ((git rev-list --count "$baseCommit..HEAD") -as [Int32]) + $baseCommitRev;
 }
 
 function gitCommitHash() {
