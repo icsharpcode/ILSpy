@@ -1,41 +1,60 @@
-﻿using System;
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Windows.Media;
 
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Search
 {
+	struct SearchRequest
+	{
+		public SearchMode Mode;
+		public AssemblySearchKind AssemblySearchKind;
+		public MemberSearchKind MemberSearchKind;
+		public string[] Keywords;
+		public Regex RegEx;
+		public bool FullNameSearch;
+		public bool OmitGenerics;
+		public string InNamespace;
+		public string InAssembly;
+	}
+
 	abstract class AbstractSearchStrategy
 	{
 		protected readonly string[] searchTerm;
 		protected readonly Regex regex;
 		protected readonly bool fullNameSearch;
 		protected readonly bool omitGenerics;
+		protected readonly SearchRequest searchRequest;
 		private readonly IProducerConsumerCollection<SearchResult> resultQueue;
 
-		protected AbstractSearchStrategy(IProducerConsumerCollection<SearchResult> resultQueue, params string[] terms)
+		protected AbstractSearchStrategy(SearchRequest request, IProducerConsumerCollection<SearchResult> resultQueue)
 		{
 			this.resultQueue = resultQueue;
-
-			if (terms.Length == 1 && terms[0].Length > 2)
-			{
-				string search = terms[0];
-				omitGenerics = !(search.Contains("<") || search.Contains("`"));
-				if (TryParseRegex(search, out regex))
-				{
-					fullNameSearch = search.Contains("\\.");
-				}
-				else
-				{
-					fullNameSearch = search.Contains(".");
-				}
-			}
-			searchTerm = terms;
+			this.searchTerm = request.Keywords;
+			this.regex = request.RegEx;
+			this.searchRequest = request;
+			this.fullNameSearch = request.FullNameSearch;
+			this.omitGenerics = request.OmitGenerics;
 		}
 
 		public abstract void Search(PEFile module, CancellationToken cancellationToken);
@@ -122,38 +141,6 @@ namespace ICSharpCode.ILSpy.Search
 		protected void OnFoundResult(SearchResult result)
 		{
 			resultQueue.TryAdd(result);
-		}
-
-		bool TryParseRegex(string input, out Regex pattern)
-		{
-			pattern = null;
-			if (!input.StartsWith("/", StringComparison.Ordinal))
-			{
-				return false;
-			}
-			input = input.Substring(1);
-			if (input.EndsWith("/", StringComparison.Ordinal))
-			{
-				input = input.Remove(input.Length - 1);
-			}
-			if (string.IsNullOrWhiteSpace(input))
-			{
-				return false;
-			}
-			pattern = SafeNewRegex(input);
-			return pattern != null;
-
-			static Regex SafeNewRegex(string unsafePattern)
-			{
-				try
-				{
-					return new Regex(unsafePattern, RegexOptions.Compiled);
-				}
-				catch (ArgumentException)
-				{
-					return null;
-				}
-			}
 		}
 	}
 }

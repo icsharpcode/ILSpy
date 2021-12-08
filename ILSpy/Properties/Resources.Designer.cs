@@ -2215,6 +2215,24 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Scope search to this assembly.
+        /// </summary>
+        public static string ScopeSearchToThisAssembly {
+            get {
+                return ResourceManager.GetString("ScopeSearchToThisAssembly", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scope search to this namespace.
+        /// </summary>
+        public static string ScopeSearchToThisNamespace {
+            get {
+                return ResourceManager.GetString("ScopeSearchToThisNamespace", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Search....
         /// </summary>
         public static string Search {

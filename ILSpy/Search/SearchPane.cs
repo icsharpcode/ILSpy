@@ -24,6 +24,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -32,7 +33,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Search;
@@ -283,19 +283,170 @@ namespace ICSharpCode.ILSpy
 		{
 			readonly CancellationTokenSource cts = new CancellationTokenSource();
 			readonly IList<LoadedAssembly> assemblies;
-			readonly string[] searchTerm;
+			readonly SearchRequest searchRequest;
 			readonly SearchMode searchMode;
 			readonly Language language;
 			readonly ApiVisibility apiVisibility;
 			public readonly IProducerConsumerCollection<SearchResult> resultQueue = new ConcurrentQueue<SearchResult>();
 
-			public RunningSearch(IList<LoadedAssembly> assemblies, string searchTerm, SearchMode searchMode, Language language, ApiVisibility apiVisibility)
+			public RunningSearch(IList<LoadedAssembly> assemblies, string searchTerm, SearchMode searchMode,
+				Language language, ApiVisibility apiVisibility)
 			{
 				this.assemblies = assemblies;
-				this.searchTerm = NativeMethods.CommandLineToArgumentArray(searchTerm);
 				this.language = language;
 				this.searchMode = searchMode;
 				this.apiVisibility = apiVisibility;
+				this.searchRequest = Parse(searchTerm);
+			}
+
+			SearchRequest Parse(string input)
+			{
+				string[] parts = NativeMethods.CommandLineToArgumentArray(input);
+
+				SearchRequest request = new SearchRequest();
+				List<string> keywords = new List<string>();
+				Regex regex = null;
+				request.Mode = searchMode;
+
+				foreach (string part in parts)
+				{
+					// Parse: [prefix:|@]["]searchTerm["]
+					// Find quotes used for escaping
+					int prefixLength = part.IndexOfAny(new[] { '"', '/' });
+					if (prefixLength < 0)
+					{
+						// no quotes
+						prefixLength = part.Length;
+					}
+
+					// Find end of prefix
+					if (part.StartsWith("@", StringComparison.Ordinal))
+					{
+						prefixLength = 1;
+					}
+					else
+					{
+						prefixLength = part.IndexOf(':', 0, prefixLength);
+					}
+					string prefix;
+					if (prefixLength <= 0)
+					{
+						prefix = null;
+						prefixLength = -1;
+					}
+					else
+					{
+						prefix = part.Substring(0, prefixLength);
+					}
+
+					// unescape quotes
+					string searchTerm = part.Substring(prefixLength + 1).Trim();
+					if (searchTerm.Length > 0)
+					{
+						searchTerm = NativeMethods.CommandLineToArgumentArray(searchTerm)[0];
+					}
+
+					if (prefix == null || prefix.Length <= 2)
+					{
+						if (regex == null && searchTerm.StartsWith("/", StringComparison.Ordinal) && searchTerm.Length > 1)
+						{
+							int searchTermLength = searchTerm.Length - 1;
+							if (searchTerm.EndsWith("/", StringComparison.Ordinal))
+							{
+								searchTermLength--;
+							}
+
+							request.FullNameSearch |= searchTerm.Contains("\\.");
+
+							regex = CreateRegex(searchTerm.Substring(1, searchTermLength));
+						}
+						else
+						{
+							request.FullNameSearch |= searchTerm.Contains(".");
+							keywords.Add(searchTerm);
+						}
+						request.OmitGenerics |= !(searchTerm.Contains("<") || searchTerm.Contains("`"));
+					}
+
+					switch (prefix?.ToUpperInvariant())
+					{
+						case "@":
+							request.Mode = SearchMode.Token;
+							break;
+						case "INNAMESPACE":
+							request.InNamespace ??= searchTerm;
+							break;
+						case "INASSEMBLY":
+							request.InAssembly ??= searchTerm;
+							break;
+						case "A":
+							request.AssemblySearchKind = AssemblySearchKind.NameOrFileName;
+							request.Mode = SearchMode.Assembly;
+							break;
+						case "AF":
+							request.AssemblySearchKind = AssemblySearchKind.FilePath;
+							request.Mode = SearchMode.Assembly;
+							break;
+						case "AN":
+							request.AssemblySearchKind = AssemblySearchKind.FullName;
+							request.Mode = SearchMode.Assembly;
+							break;
+						case "N":
+							request.Mode = SearchMode.Namespace;
+							break;
+						case "TM":
+							request.Mode = SearchMode.Member;
+							request.MemberSearchKind = MemberSearchKind.All;
+							break;
+						case "T":
+							request.Mode = SearchMode.Member;
+							request.MemberSearchKind = MemberSearchKind.Type;
+							break;
+						case "M":
+							request.Mode = SearchMode.Member;
+							request.MemberSearchKind = MemberSearchKind.Member;
+							break;
+						case "MD":
+							request.Mode = SearchMode.Member;
+							request.MemberSearchKind = MemberSearchKind.Method;
+							break;
+						case "F":
+							request.Mode = SearchMode.Member;
+							request.MemberSearchKind = MemberSearchKind.Field;
+							break;
+						case "P":
+							request.Mode = SearchMode.Member;
+							request.MemberSearchKind = MemberSearchKind.Property;
+							break;
+						case "E":
+							request.Mode = SearchMode.Member;
+							request.MemberSearchKind = MemberSearchKind.Event;
+							break;
+						case "C":
+							request.Mode = SearchMode.Literal;
+							break;
+						case "R":
+							request.Mode = SearchMode.Resource;
+							break;
+					}
+				}
+
+				Regex CreateRegex(string s)
+				{
+					try
+					{
+						return new Regex(s, RegexOptions.Compiled);
+					}
+					catch (ArgumentException)
+					{
+						return null;
+					}
+				}
+
+				request.Keywords = keywords.ToArray();
+				request.RegEx = regex;
+
+				return request;
 			}
 
 			public void Cancel()
@@ -308,7 +459,9 @@ namespace ICSharpCode.ILSpy
 				try
 				{
 					await Task.Factory.StartNew(() => {
-						var searcher = GetSearchStrategy();
+						var searcher = GetSearchStrategy(searchRequest);
+						if (searcher == null)
+							return;
 						try
 						{
 							foreach (var loadedAssembly in assemblies)
@@ -332,79 +485,37 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 
-			AbstractSearchStrategy GetSearchStrategy()
+			AbstractSearchStrategy GetSearchStrategy(SearchRequest request)
 			{
-				if (searchTerm.Length == 1)
-				{
-					if (searchTerm[0].StartsWith("tm:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(3), resultQueue);
+				if (request.Keywords.Length == 0 && request.RegEx == null)
+					return null;
 
-					if (searchTerm[0].StartsWith("t:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Type);
-
-					if (searchTerm[0].StartsWith("m:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Member);
-
-					if (searchTerm[0].StartsWith("md:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(3), resultQueue, MemberSearchKind.Method);
-
-					if (searchTerm[0].StartsWith("f:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Field);
-
-					if (searchTerm[0].StartsWith("p:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Property);
-
-					if (searchTerm[0].StartsWith("e:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Event);
-
-					if (searchTerm[0].StartsWith("c:", StringComparison.Ordinal))
-						return new LiteralSearchStrategy(language, apiVisibility, resultQueue, searchTerm[0].Substring(2));
-
-					if (searchTerm[0].StartsWith("@", StringComparison.Ordinal))
-						return new MetadataTokenSearchStrategy(language, apiVisibility, resultQueue, searchTerm[0].Substring(1));
-
-					if (searchTerm[0].StartsWith("r:", StringComparison.Ordinal))
-						return new ResourceSearchStrategy(apiVisibility, resultQueue, searchTerm[0].Substring(2));
-
-					if (searchTerm[0].StartsWith("a:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(2), resultQueue, AssemblySearchKind.NameOrFileName);
-
-					if (searchTerm[0].StartsWith("af:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.FilePath);
-
-					if (searchTerm[0].StartsWith("an:", StringComparison.Ordinal))
-						return new AssemblySearchStrategy(searchTerm[0].Substring(3), resultQueue, AssemblySearchKind.FullName);
-
-					if (searchTerm[0].StartsWith("n:", StringComparison.Ordinal))
-						return new NamespaceSearchStrategy(searchTerm[0].Substring(2), resultQueue);
-				}
-
-				switch (searchMode)
+				switch (request.Mode)
 				{
 					case SearchMode.TypeAndMember:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue);
 					case SearchMode.Type:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Type);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Type);
 					case SearchMode.Member:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Member);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, request.MemberSearchKind);
 					case SearchMode.Literal:
-						return new LiteralSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
+						return new LiteralSearchStrategy(language, apiVisibility, request, resultQueue);
 					case SearchMode.Method:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Method);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Method);
 					case SearchMode.Field:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Field);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Field);
 					case SearchMode.Property:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Property);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Property);
 					case SearchMode.Event:
-						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Event);
+						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Event);
 					case SearchMode.Token:
-						return new MetadataTokenSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
+						return new MetadataTokenSearchStrategy(language, apiVisibility, request, resultQueue);
 					case SearchMode.Resource:
-						return new ResourceSearchStrategy(apiVisibility, resultQueue, searchTerm);
+						return new ResourceSearchStrategy(apiVisibility, request, resultQueue);
 					case SearchMode.Assembly:
-						return new AssemblySearchStrategy(resultQueue, searchTerm, AssemblySearchKind.NameOrFileName);
+						return new AssemblySearchStrategy(request, resultQueue, AssemblySearchKind.NameOrFileName);
 					case SearchMode.Namespace:
-						return new NamespaceSearchStrategy(resultQueue, searchTerm);
+						return new NamespaceSearchStrategy(request, resultQueue);
 				}
 
 				return null;
