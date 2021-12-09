@@ -10,7 +10,7 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <AssemblyName>ilspycmd</AssemblyName>
     <ToolCommandName>ilspycmd</ToolCommandName>
-    <Version>7.2.0.6702-preview2</Version>
+    <Version>7.2.0.6791-preview3</Version>
     <AssemblyVersion>7.2.0.0</AssemblyVersion>
     <FileVersion>7.2.0.0</FileVersion>
     <Description>Command-line decompiler using the ILSpy decompilation engine</Description>
