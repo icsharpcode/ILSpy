@@ -18,13 +18,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
-using System.Resources;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -345,11 +342,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int previousIndex = -1;
 			int conversionStLocIndex = 0;
 			int startPos = pos;
-			while (MatchAssignment(block.Instructions.ElementAtOrDefault(pos), out var targetType, out var valueInst, out var addAssignment))
+			HashSet<ILVariable> assignmentVariables = new HashSet<ILVariable>();
+			while (MatchAssignment(block.Instructions.ElementAtOrDefault(pos), assignmentVariables, out var targetType, out var valueInst, out var addAssignment))
 			{
 				int index = FindIndex(valueInst, out var tupleAccessAdjustment);
 				if (index <= previousIndex)
-					return false;
+					break;
 				AddMissingAssignmentsForConversions(index, ref delayedActions);
 				if (!(valueInst.MatchLdLoc(out var resultVariable)
 					&& conversions.TryGetValue(resultVariable, out var conversionInfo)))
@@ -377,30 +375,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				pos++;
 				previousIndex = index;
 			}
-			AddMissingAssignmentsForConversions(int.MaxValue, ref delayedActions);
 
-			if (deconstructionResults != null)
+			if (startPos != pos)
 			{
-				int i = previousIndex + 1;
-				while (i < deconstructionResults.Length)
-				{
-					var v = deconstructionResults[i];
-					// this should only happen in release mode, where usually the last deconstruction element
-					// is not stored to a temporary, if it is used directly (and only once!)
-					// after the deconstruction.
-					if (v?.LoadCount == 1)
-					{
-						delayedActions += (DeconstructInstruction deconstructInst) => {
-							var freshVar = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
-							deconstructInst.Assignments.Instructions.Add(new StLoc(freshVar, new LdLoc(v)));
-							v.LoadInstructions[0].Variable = freshVar;
-						};
-					}
-					i++;
-				}
-			}
+				AddMissingAssignmentsForConversions(int.MaxValue, ref delayedActions);
 
-			return startPos != pos;
+				return true;
+			}
+			else
+			{
+				return false;
+
+			}
 
 			void AddMissingAssignmentsForConversions(int index, ref Action<DeconstructInstruction> delayedActions)
 			{
@@ -425,7 +411,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool MatchAssignment(ILInstruction inst, out IType targetType, out ILInstruction valueInst, out Action<DeconstructInstruction> addAssignment)
+		bool MatchAssignment(ILInstruction inst, HashSet<ILVariable> assignmentVariables, out IType targetType, out ILInstruction valueInst, out Action<DeconstructInstruction> addAssignment)
 		{
 			targetType = null;
 			valueInst = null;
@@ -435,7 +421,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (inst.MatchStLoc(out var v, out var value)
 				&& value is Block block && block.MatchInlineAssignBlock(out var call, out valueInst))
 			{
-				if (!DeconstructInstruction.IsAssignment(call, context.TypeSystem, out targetType, out _))
+				if (!DeconstructInstruction.IsAssignment(call, assignmentVariables, context.TypeSystem, out targetType, out _))
 					return false;
 				if (!(v.IsSingleDefinition && v.LoadCount == 0))
 					return false;
@@ -446,12 +432,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				};
 				return true;
 			}
-			else if (DeconstructInstruction.IsAssignment(inst, context.TypeSystem, out targetType, out valueInst))
+			else if (DeconstructInstruction.IsAssignment(inst, assignmentVariables, context.TypeSystem, out targetType, out valueInst))
 			{
 				// OK - use the assignment as is
 				addAssignment = (DeconstructInstruction deconstructInst) => {
 					deconstructInst.Assignments.Instructions.Add(inst);
 				};
+				// Mark variable as assigned
+				if (inst is StLoc stloc)
+				{
+					assignmentVariables.Add(stloc.Variable);
+				}
 				return true;
 			}
 			else

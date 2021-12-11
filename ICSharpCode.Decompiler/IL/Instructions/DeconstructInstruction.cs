@@ -210,7 +210,7 @@ namespace ICSharpCode.Decompiler.IL
 			return input.MatchLdLoc(out inputVariable) || input.MatchLdLoca(out inputVariable);
 		}
 
-		internal static bool IsAssignment(ILInstruction inst, ICompilation typeSystem, out IType expectedType, out ILInstruction value)
+		internal static bool IsAssignment(ILInstruction inst, HashSet<ILVariable> assignedVariables, ICompilation typeSystem, out IType expectedType, out ILInstruction value)
 		{
 			expectedType = null;
 			value = null;
@@ -228,6 +228,12 @@ namespace ICSharpCode.Decompiler.IL
 						}
 						else if (arg.MatchLdLoc(out var v))
 						{
+							// Variables used as arguments of call-assignments must not be variables that are assigned to inside the deconstruction.
+							// Except for pattern locals, but these are definitely assigned in the assignment block.
+							if (v.Kind != VariableKind.PatternLocal && assignedVariables?.Contains(v) == true)
+							{
+								return false;
+							}
 						}
 						else
 						{
@@ -251,6 +257,12 @@ namespace ICSharpCode.Decompiler.IL
 					}
 					else if (target.MatchLdLoc(out var v))
 					{
+						// Variables used as arguments of call-assignments must not be variables that are assigned to inside the deconstruction.
+						// Except for pattern locals, but these are definitely assigned in the assignment block.
+						if (v.Kind != VariableKind.PatternLocal && assignedVariables?.Contains(v) == true)
+						{
+							return false;
+						}
 					}
 					else
 					{
@@ -292,9 +304,11 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			Debug.Assert(this.conversions.FinalInstruction is Nop);
 
+			HashSet<ILVariable> assignedVariables = new HashSet<ILVariable>(assignments.Instructions.OfType<StLoc>().Select(stloc => stloc.Variable));
+
 			foreach (var inst in assignments.Instructions)
 			{
-				if (!(IsAssignment(inst, typeSystem: null, out _, out var value) && value.MatchLdLoc(out var inputVariable)))
+				if (!(IsAssignment(inst, assignedVariables, null, out _, out var value) && value.MatchLdLoc(out var inputVariable)))
 					throw new InvalidOperationException("inst is not an assignment!");
 				Debug.Assert(patternVariables.Contains(inputVariable) || conversionVariables.Contains(inputVariable));
 			}
