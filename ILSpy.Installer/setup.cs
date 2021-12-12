@@ -35,6 +35,7 @@ namespace ILSpy.Installer
 			project.InstallScope = InstallScope.perUser;
 			project.InstallPrivileges = InstallPrivileges.limited;
 			project.ControlPanelInfo.ProductIcon = @"..\ILSpy\Images\ILSpy.ico";
+			project.ControlPanelInfo.Manufacturer = "ICSharpCode Team";
 			project.LocalizationFile = Path.Combine(Environment.CurrentDirectory, "winui.wxl");
 			project.Encoding = Encoding.UTF8;
 
