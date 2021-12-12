@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 using WixSharp;
+using WixSharp.Controls;
 
 namespace ILSpy.Installer
 {
@@ -33,6 +35,8 @@ namespace ILSpy.Installer
 			project.InstallScope = InstallScope.perUser;
 			project.InstallPrivileges = InstallPrivileges.limited;
 			project.ControlPanelInfo.ProductIcon = @"..\ILSpy\Images\ILSpy.ico";
+			project.LocalizationFile = Path.Combine(Environment.CurrentDirectory, "winui.wxl");
+			project.Encoding = Encoding.UTF8;
 
 			project.MajorUpgrade = new MajorUpgrade {
 				Schedule = UpgradeSchedule.afterInstallInitialize,
@@ -40,7 +44,13 @@ namespace ILSpy.Installer
 				DowngradeErrorMessage = "A newer release of ILSpy is already installed on this system. Please uninstall it first to continue."
 			};
 
-			project.UI = WUI.WixUI_ProgressOnly;
+			project.UI = WUI.WixUI_InstallDir;
+			project.CustomUI =
+				new DialogSequence()
+					.On(NativeDialogs.WelcomeDlg, Buttons.Next,
+						new ShowDialog(NativeDialogs.VerifyReadyDlg))
+					.On(NativeDialogs.VerifyReadyDlg, Buttons.Back,
+						new ShowDialog(NativeDialogs.WelcomeDlg));
 
 			project.ResolveWildCards().FindFile(f => f.Name.EndsWith("ILSpy.exe")).First()
 				.Shortcuts = new[] {
