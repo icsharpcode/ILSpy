@@ -162,8 +162,6 @@ Remarks:
 			{
 				output.Close();
 			}
-
-			return 0;
 		}
 
 		DecompilerSettings GetSettings(PEFile module)
