@@ -116,7 +116,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			};
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int MemberForwarded => MetadataTokens.GetToken(implMap.MemberForwarded);
+
+			public void OnMemberForwardedClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, implMap.MemberForwarded, protocol: "metadata"));
+			}
 
 			public string MemberForwardedTooltip {
 				get {
@@ -128,7 +134,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int ImportScope => MetadataTokens.GetToken(implMap.ImportScope);
+
+			public void OnImportScopeClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, implMap.ImportScope, protocol: "metadata"));
+			}
 
 			public string ImportScopeTooltip {
 				get {

@@ -87,7 +87,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableRowSize(TableIndex.MethodDef) * (RID - 1);
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int MethodDeclaration => MetadataTokens.GetToken(methodImpl.MethodDeclaration);
+
+			public void OnMethodDeclarationClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, methodImpl.MethodDeclaration, protocol: "metadata"));
+			}
 
 			public string MethodDeclarationTooltip {
 				get {
@@ -98,7 +104,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int MethodBody => MetadataTokens.GetToken(methodImpl.MethodBody);
+
+			public void OnMethodBodyClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, methodImpl.MethodBody, protocol: "metadata"));
+			}
 
 			public string MethodBodyTooltip {
 				get {
@@ -109,7 +121,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Type => MetadataTokens.GetToken(methodImpl.Type);
+
+			public void OnTypeClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, methodImpl.Type, protocol: "metadata"));
+			}
 
 			public string TypeTooltip {
 				get {

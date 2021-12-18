@@ -101,7 +101,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public int Offset { get; }
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Parent => MetadataTokens.GetToken(classLayout.Parent);
+
+			public void OnParentClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, classLayout.Parent, protocol: "metadata"));
+			}
 
 			public string ParentTooltip {
 				get {

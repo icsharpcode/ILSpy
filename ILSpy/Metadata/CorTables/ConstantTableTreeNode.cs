@@ -93,7 +93,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string TypeTooltip => constant.TypeCode.ToString();
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Parent => MetadataTokens.GetToken(constant.Parent);
+
+			public void OnParentClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, constant.Parent, protocol: "metadata"));
+			}
 
 			public string ParentTooltip {
 				get {

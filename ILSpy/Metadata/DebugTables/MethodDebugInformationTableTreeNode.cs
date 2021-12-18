@@ -66,7 +66,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 1)
+			if (scrollTargetEntry.RID > 0)
 			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
@@ -87,7 +87,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Document => MetadataTokens.GetToken(debugInfo.Document);
+
+			public void OnDocumentClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, debugInfo.Document, protocol: "metadata"));
+			}
 
 			public string DocumentTooltip {
 				get {
@@ -115,7 +121,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X")]
+			[LinkToTable]
 			public int LocalSignature => MetadataTokens.GetToken(debugInfo.LocalSignature);
+
+			public void OnLocalSignatureClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, debugInfo.LocalSignature, protocol: "metadata"));
+			}
 
 			public string LocalSignatureTooltip {
 				get {

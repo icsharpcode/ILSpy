@@ -68,7 +68,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 1)
+			if (scrollTargetEntry.RID > 0)
 			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
@@ -89,7 +89,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Parent => MetadataTokens.GetToken(localScope.Parent);
+
+			public void OnParentClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.Parent, protocol: "metadata"));
+			}
 
 			[StringFormat("X")]
 			public int Imports => MetadataTokens.GetHeapOffset(localScope.ImportsBlob);

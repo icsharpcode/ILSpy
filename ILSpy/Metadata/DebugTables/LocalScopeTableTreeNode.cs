@@ -68,7 +68,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 1)
+			if (scrollTargetEntry.RID > 0)
 			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
@@ -89,7 +89,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Method => MetadataTokens.GetToken(localScope.Method);
+
+			public void OnMethodClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.Method, protocol: "metadata"));
+			}
 
 			public string MethodTooltip {
 				get {
@@ -100,13 +106,31 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int ImportScope => MetadataTokens.GetToken(localScope.ImportScope);
 
-			[StringFormat("X8")]
-			public int VariableList => MetadataTokens.GetToken(localScope.GetLocalVariables().FirstOrDefault());
+			public void OnImportScopeClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.ImportScope, protocol: "metadata"));
+			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
+			public int VariableList => MetadataTokens.GetToken(localScope.GetLocalVariables().FirstOrDefault());
+
+			public void OnVariableListClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.GetLocalVariables().FirstOrDefault(), protocol: "metadata"));
+			}
+
+			[StringFormat("X8")]
+			[LinkToTable]
 			public int ConstantList => MetadataTokens.GetToken(localScope.GetLocalConstants().FirstOrDefault());
+
+			public void OnConstantListClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, localScope.GetLocalConstants().FirstOrDefault(), protocol: "metadata"));
+			}
 
 			public int StartOffset => localScope.StartOffset;
 

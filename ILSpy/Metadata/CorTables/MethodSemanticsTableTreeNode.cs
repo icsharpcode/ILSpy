@@ -96,7 +96,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string SemanticsTooltip => semantics.ToString();
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Method => MetadataTokens.GetToken(method);
+
+			public void OnMethodClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, method, protocol: "metadata"));
+			}
 
 			public string MethodTooltip {
 				get {
@@ -107,7 +113,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Association => MetadataTokens.GetToken(association);
+
+			public void OnAssociationClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, association, protocol: "metadata"));
+			}
 
 			public string AssociationTooltip {
 				get {

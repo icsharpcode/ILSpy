@@ -111,7 +111,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string TypeNamespace => metadata.GetString(type.Namespace);
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Implementation => MetadataTokens.GetToken(type.Implementation);
+
+			public void OnImplementationClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, type.Implementation, protocol: "metadata"));
+			}
 
 			public string ImplementationTooltip {
 				get {

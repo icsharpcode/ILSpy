@@ -89,7 +89,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableRowSize(TableIndex.DeclSecurity) * (RID - 1);
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Parent => MetadataTokens.GetToken(declSecAttr.Parent);
+
+			public void OnParentClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, declSecAttr.Parent, protocol: "metadata"));
+			}
 
 			public string ParentTooltip {
 				get {

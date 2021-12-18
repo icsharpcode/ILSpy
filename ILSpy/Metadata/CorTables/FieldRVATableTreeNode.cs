@@ -99,7 +99,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public int Offset { get; }
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Field => MetadataTokens.GetToken(fieldLayout.Field);
+
+			public void OnFieldClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, fieldLayout.Field, protocol: "metadata"));
+			}
 
 			public string FieldTooltip {
 				get {

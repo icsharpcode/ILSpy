@@ -98,7 +98,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(manifestResource.Name):X} \"{Name}\"";
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Implementation => MetadataTokens.GetToken(manifestResource.Implementation);
+
+			public void OnImplementationClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, manifestResource.Implementation, protocol: "metadata"));
+			}
 
 			public string ImplementationTooltip {
 				get {

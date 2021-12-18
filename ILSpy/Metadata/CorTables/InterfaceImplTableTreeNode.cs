@@ -99,7 +99,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public int Offset { get; }
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Class => MetadataTokens.GetToken(interfaceImpl.Class);
+
+			public void OnClassClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, interfaceImpl.Class, protocol: "metadata"));
+			}
 
 			public string ClassTooltip {
 				get {
@@ -111,7 +117,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Interface => MetadataTokens.GetToken(interfaceImpl.Interface);
+
+			public void OnInterfaceClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, interfaceImpl.Interface, protocol: "metadata"));
+			}
 
 			public string InterfaceTooltip {
 				get {

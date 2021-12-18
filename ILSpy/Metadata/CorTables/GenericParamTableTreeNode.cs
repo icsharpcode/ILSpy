@@ -97,7 +97,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			};
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Owner => MetadataTokens.GetToken(genericParam.Parent);
+
+			public void OnParentClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, genericParam.Parent, protocol: "metadata"));
+			}
 
 			public string OwnerTooltip {
 				get {

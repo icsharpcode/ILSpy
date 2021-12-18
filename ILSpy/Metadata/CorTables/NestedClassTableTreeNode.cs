@@ -99,7 +99,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public int Offset { get; }
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int NestedClass => MetadataTokens.GetToken(nestedClass.Nested);
+
+			public void OnNestedClassClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, nestedClass.Nested, protocol: "metadata"));
+			}
 
 			public string NestedClassTooltip {
 				get {
@@ -111,7 +117,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int EnclosingClass => MetadataTokens.GetToken(nestedClass.Enclosing);
+
+			public void OnEnclosingClassClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, nestedClass.Enclosing, protocol: "metadata"));
+			}
 
 			public string EnclosingClassTooltip {
 				get {

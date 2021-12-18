@@ -87,7 +87,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableRowSize(TableIndex.TypeRef) * (RID - 1);
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int ResolutionScope => MetadataTokens.GetToken(typeRef.ResolutionScope);
+
+			public void OnResolutionScopeClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, typeRef.ResolutionScope, protocol: "metadata"));
+			}
 
 			public string ResolutionScopeTooltip {
 				get {

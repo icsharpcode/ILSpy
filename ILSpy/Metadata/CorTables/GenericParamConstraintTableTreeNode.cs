@@ -87,7 +87,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableRowSize(TableIndex.GenericParamConstraint) * (RID - 1);
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Owner => MetadataTokens.GetToken(genericParamConstraint.Parameter);
+
+			public void OnOwnerClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, genericParamConstraint.Parameter, protocol: "metadata"));
+			}
 
 			string ownerTooltip;
 
@@ -106,7 +112,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Type => MetadataTokens.GetToken(genericParamConstraint.Type);
+
+			public void OnTypeClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, genericParamConstraint.Type, protocol: "metadata"));
+			}
 
 			public string TypeTooltip {
 				get {

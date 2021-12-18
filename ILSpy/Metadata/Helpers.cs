@@ -30,7 +30,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Navigation;
 
 using DataGridExtensions;
 
@@ -93,16 +95,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		internal static void View_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
 		{
 			var binding = new Binding(e.PropertyName) { Mode = BindingMode.OneWay };
-			e.Column = e.PropertyType.FullName switch {
-				"System.Boolean" => new DataGridCheckBoxColumn() {
-					Header = e.PropertyName,
-					Binding = binding
-				},
-				_ => new DataGridTextColumn() {
-					Header = e.PropertyName,
-					Binding = binding
-				}
-			};
+			e.Column = GetColumn();
 			switch (e.PropertyName)
 			{
 				case "RID":
@@ -135,6 +128,64 @@ namespace ICSharpCode.ILSpy.Metadata
 			if (!e.Cancel)
 			{
 				ApplyAttributes((PropertyDescriptor)e.PropertyDescriptor, binding, e.Column);
+			}
+
+			DataGridColumn GetColumn()
+			{
+				if (e.PropertyType == typeof(bool))
+				{
+					return new DataGridCheckBoxColumn() {
+						Header = e.PropertyName,
+						Binding = binding
+					};
+				}
+
+				var descriptor = (PropertyDescriptor)e.PropertyDescriptor;
+
+				if (descriptor.Attributes.OfType<LinkToTableAttribute>().Any())
+				{
+					return new DataGridTemplateColumn() {
+						Header = e.PropertyName,
+						CellTemplate = GetOrCreateLinkCellTemplate(e.PropertyName, descriptor, binding)
+					};
+				}
+
+				return new DataGridTextColumn() {
+					Header = e.PropertyName,
+					Binding = binding
+				};
+			}
+		}
+
+		static readonly Dictionary<string, DataTemplate> linkCellTemplates = new Dictionary<string, DataTemplate>();
+
+		private static DataTemplate GetOrCreateLinkCellTemplate(string name, PropertyDescriptor descriptor, Binding binding)
+		{
+			if (linkCellTemplates.TryGetValue(name, out var template))
+			{
+				return template;
+			}
+
+			var tb = new FrameworkElementFactory(typeof(TextBlock));
+			var hyper = new FrameworkElementFactory(typeof(Hyperlink));
+			tb.AppendChild(hyper);
+			hyper.AddHandler(Hyperlink.ClickEvent, new RoutedEventHandler(Hyperlink_Click));
+			var run = new FrameworkElementFactory(typeof(Run));
+			hyper.AppendChild(run);
+			run.SetBinding(Run.TextProperty, binding);
+
+			DataTemplate dataTemplate = new DataTemplate() { VisualTree = tb };
+			linkCellTemplates.Add(name, dataTemplate);
+			return dataTemplate;
+
+			void Hyperlink_Click(object sender, RoutedEventArgs e)
+			{
+				var hyperlink = (Hyperlink)sender;
+				var onClickMethod = descriptor.ComponentType.GetMethod("On" + name + "Click", BindingFlags.Instance | BindingFlags.Public);
+				if (onClickMethod != null)
+				{
+					onClickMethod.Invoke(hyperlink.DataContext, Array.Empty<object>());
+				}
 			}
 		}
 
@@ -251,6 +302,10 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			this.Format = format;
 		}
+	}
+
+	class LinkToTableAttribute : Attribute
+	{
 	}
 
 	[Flags]

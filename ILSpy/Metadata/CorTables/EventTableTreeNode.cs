@@ -104,7 +104,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			IEntity IMemberTreeNode.Member => ((MetadataModule)module.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule).GetDefinition(handle);
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Type => MetadataTokens.GetToken(eventDef.Type);
+
+			public void OnTypeClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, eventDef.Type, protocol: "metadata"));
+			}
 
 			public string TypeTooltip {
 				get {

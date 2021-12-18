@@ -88,7 +88,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableRowSize(TableIndex.CustomAttribute) * (RID - 1);
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Parent => MetadataTokens.GetToken(customAttr.Parent);
+
+			public void OnParentClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, customAttr.Parent, protocol: "metadata"));
+			}
 
 			public string ParentTooltip {
 				get {
@@ -100,7 +106,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Constructor => MetadataTokens.GetToken(customAttr.Constructor);
+
+			public void OnConstructorClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, customAttr.Constructor, protocol: "metadata"));
+			}
 
 			public string ConstructorTooltip {
 				get {

@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			tabPage.Content = view;
 
-			if (scrollTargetEntry.RID > 1)
+			if (scrollTargetEntry.RID > 0)
 			{
 				ScrollItemIntoView(view, scrollTargetEntry);
 			}
@@ -91,7 +91,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public object Offset => offset == null ? "n/a" : (object)offset;
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int MoveNextMethod => MetadataTokens.GetToken(moveNextMethod);
+
+			public void OnMoveNextMethodClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, moveNextMethod, protocol: "metadata"));
+			}
 
 			public string MoveNextMethodTooltip {
 				get {
@@ -103,7 +109,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int KickoffMethod => MetadataTokens.GetToken(kickoffMethod);
+
+			public void OnKickofMethodClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, kickoffMethod, protocol: "metadata"));
+			}
 
 			public string KickoffMethodTooltip {
 				get {

@@ -99,7 +99,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public int Offset { get; }
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Parent => MetadataTokens.GetToken(eventMap.Parent);
+
+			public void OnParentClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, eventMap.Parent, protocol: "metadata"));
+			}
 
 			public string ParentTooltip {
 				get {
@@ -111,7 +117,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int EventList => MetadataTokens.GetToken(eventMap.EventList);
+
+			public void OnEventListClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, eventMap.EventList, protocol: "metadata"));
+			}
 
 			public string EventListTooltip {
 				get {

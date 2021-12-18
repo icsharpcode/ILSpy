@@ -94,7 +94,11 @@ namespace ICSharpCode.ILSpy.Commands
 			if (hit == null)
 				return null;
 			var cell = hit.VisualHit.GetParent<DataGridCell>();
-			return (cell?.Content as TextBlock)?.Text;
+			if (cell == null)
+				return null;
+			return cell.DataContext.GetType()
+				.GetProperty(cell.Column.Header.ToString(), BindingFlags.Instance | BindingFlags.Public)
+				.GetValue(cell.DataContext).ToString();
 		}
 	}
 }

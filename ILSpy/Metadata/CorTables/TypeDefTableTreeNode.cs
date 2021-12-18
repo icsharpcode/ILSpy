@@ -114,7 +114,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string Namespace => metadata.GetString(typeDef.Namespace);
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int BaseType => MetadataTokens.GetToken(typeDef.BaseType);
+
+			public void OnBaseTypeClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, typeDef.BaseType, protocol: "metadata"));
+			}
 
 			public string BaseTypeTooltip {
 				get {
@@ -140,7 +146,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int FieldList => MetadataTokens.GetToken(typeDef.GetFields().FirstOrDefault());
+
+			public void OnFieldListClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, typeDef.GetFields().FirstOrDefault(), protocol: "metadata"));
+			}
 
 			public string FieldListTooltip {
 				get {
@@ -155,7 +167,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int MethodList => MetadataTokens.GetToken(typeDef.GetMethods().FirstOrDefault());
+
+			public void OnMethodListClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, typeDef.GetMethods().FirstOrDefault(), protocol: "metadata"));
+			}
 
 			public string MethodListTooltip {
 				get {

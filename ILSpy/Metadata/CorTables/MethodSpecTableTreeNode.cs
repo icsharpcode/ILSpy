@@ -88,7 +88,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableRowSize(TableIndex.MethodSpec) * (RID - 1);
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Method => MetadataTokens.GetToken(methodSpec.Method);
+
+			public void OnMethodClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, methodSpec.Method, protocol: "metadata"));
+			}
 
 			public string MethodTooltip {
 				get {

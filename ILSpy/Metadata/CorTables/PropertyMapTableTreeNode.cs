@@ -99,7 +99,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			public int Offset { get; }
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int Parent => MetadataTokens.GetToken(propertyMap.Parent);
+
+			public void OnParentClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, propertyMap.Parent, protocol: "metadata"));
+			}
 
 			public string ParentTooltip {
 				get {
@@ -111,7 +117,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 
 			[StringFormat("X8")]
+			[LinkToTable]
 			public int PropertyList => MetadataTokens.GetToken(propertyMap.PropertyList);
+
+			public void OnPropertyListClick()
+			{
+				MainWindow.Instance.JumpToReference(new EntityReference(module, propertyMap.PropertyList, protocol: "metadata"));
+			}
 
 			public string PropertyListTooltip {
 				get {
