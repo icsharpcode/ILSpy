@@ -43,6 +43,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if CS80
+		private class NestedContext1
+		{
+			public NestedContext1(object result)
+			{
+			}
+
+			public NestedContext1()
+				: this(UseNested(GetInt(), stackalloc int[2] {
+					GetInt(),
+					GetInt()
+				}))
+			{
+			}
+		}
+		
+		public static object UseNested(object a, Span<int> span)
+		{
+			return null;
+		}
+
+		public static int GetInt()
+		{
+			return 42;
+		}
+#endif
+
 		public unsafe string SimpleStackAllocStruct1()
 		{
 			StructWithSize5* ptr = stackalloc StructWithSize5[4] {
