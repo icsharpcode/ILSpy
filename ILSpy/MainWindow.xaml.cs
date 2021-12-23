@@ -1095,7 +1095,7 @@ namespace ICSharpCode.ILSpy
 		{
 			try
 			{
-				Process.Start(link);
+				Process.Start(new ProcessStartInfo { FileName = link, UseShellExecute = true });
 #pragma warning disable RECS0022 // A catch clause that catches System.Exception and has an empty body
 			}
 			catch (Exception)
