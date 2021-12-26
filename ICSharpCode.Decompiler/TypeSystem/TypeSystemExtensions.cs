@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 		#endregion
 
-		#region IsOpen / IsUnbound / IsKnownType
+		#region IsOpen / IsUnbound / IsUnmanagedType / IsKnownType
 		sealed class TypeClassificationVisitor : TypeVisitor
 		{
 			internal bool isOpen;
@@ -218,6 +218,89 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 			return (type is ITypeDefinition || type is UnknownType) && type.TypeParameterCount > 0;
+		}
+
+		/// <summary>
+		/// Gets whether the type is considered unmanaged.
+		/// </summary>
+		/// <remarks>
+		/// The C# 6.0 spec lists the following criteria: An unmanaged type is one of the following
+		/// * sbyte, byte, short, ushort, int, uint, long, ulong, char, float, double, decimal, or bool
+		/// * any enum type
+		/// * any pointer type
+		/// * any user-defined struct type that is not a constructed (= generic) type and contains fields of unmanaged types only.
+		/// 
+		/// C# 8.0 removes the restriction that constructed (= generic) types are not considered unmanaged types.
+		/// </remarks>
+		public static bool IsUnmanagedType(this IType type, bool allowGenerics)
+		{
+			HashSet<IType> types = null;
+			return IsUnmanagedTypeInternal(type);
+
+			bool IsUnmanagedTypeInternal(IType type)
+			{
+				if (type.Kind is TypeKind.Enum or TypeKind.Pointer or TypeKind.FunctionPointer)
+				{
+					return true;
+				}
+				if (type is ITypeParameter tp)
+				{
+					return tp.HasUnmanagedConstraint;
+				}
+				var def = type.GetDefinition();
+				if (def == null)
+				{
+					return false;
+				}
+				switch (def.KnownTypeCode)
+				{
+					case KnownTypeCode.Void:
+					case KnownTypeCode.Boolean:
+					case KnownTypeCode.Char:
+					case KnownTypeCode.SByte:
+					case KnownTypeCode.Byte:
+					case KnownTypeCode.Int16:
+					case KnownTypeCode.UInt16:
+					case KnownTypeCode.Int32:
+					case KnownTypeCode.UInt32:
+					case KnownTypeCode.Int64:
+					case KnownTypeCode.UInt64:
+					case KnownTypeCode.Decimal:
+					case KnownTypeCode.Single:
+					case KnownTypeCode.Double:
+					case KnownTypeCode.IntPtr:
+					case KnownTypeCode.UIntPtr:
+					case KnownTypeCode.TypedReference:
+						//case KnownTypeCode.ArgIterator:
+						//case KnownTypeCode.RuntimeArgumentHandle:
+						return true;
+				}
+				if (type.Kind == TypeKind.Struct)
+				{
+					if (!allowGenerics && def.TypeParameterCount > 0)
+					{
+						return false;
+					}
+					if (types == null)
+					{
+						types = new HashSet<IType>();
+					}
+					types.Add(type);
+					foreach (var f in type.GetFields())
+					{
+						if (types.Contains(f.Type))
+						{
+							return false;
+						}
+						if (!IsUnmanagedTypeInternal(f.Type))
+						{
+							return false;
+						}
+					}
+					return true;
+				}
+				return false;
+			}
 		}
 
 		/// <summary>
