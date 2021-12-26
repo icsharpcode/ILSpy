@@ -184,7 +184,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				var bundle = FindAssemblyNode(asm.ParentBundle);
 				if (bundle == null)
 					return null;
-				foreach (var node in TreeTraversal.PreOrder(bundle.Children, r => (r as PackageFolderTreeNode)?.Children).OfType<AssemblyTreeNode>())
+				bundle.EnsureLazyChildren();
+				foreach (var node in TreeTraversal.PreOrder(bundle.Children, ExpandAndGetChildren).OfType<AssemblyTreeNode>())
 				{
 					if (node.LoadedAssembly == asm)
 						return node;
@@ -199,6 +200,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				}
 			}
 			return null;
+
+			static SharpTreeNodeCollection ExpandAndGetChildren(SharpTreeNode node)
+			{
+				if (node is not PackageFolderTreeNode)
+					return null;
+				node.EnsureLazyChildren();
+				return node.Children;
+			}
 		}
 
 		/// <summary>
