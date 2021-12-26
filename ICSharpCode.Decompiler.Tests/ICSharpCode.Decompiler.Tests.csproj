@@ -43,8 +43,8 @@
 
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="$(DiffLibVersion)" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.2.2" />
-    <PackageReference Include="NuGet.Protocol" Version="5.7.0" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.4.1" />
+    <PackageReference Include="NuGet.Protocol" Version="6.0.0" />
     <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVersion)" />
     <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
