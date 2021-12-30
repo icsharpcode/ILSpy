@@ -1521,6 +1521,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					body = new BlockStatement();
 					body.AddChild(new Comment("Invalid MethodBodyBlock: " + ex.Message), Roles.Comment);
+					// insert explicit rbrace token to make the comment appear within the braces
+					body.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.RBrace), Roles.RBrace);
 					entityDecl.AddChild(body, Roles.Body);
 					return;
 				}
