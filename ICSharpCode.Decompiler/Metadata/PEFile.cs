@@ -72,8 +72,38 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		public bool IsAssembly => Metadata.IsAssembly;
-		public string Name => GetName();
-		public string FullName => IsAssembly ? Metadata.GetFullAssemblyName() : Name;
+
+		string? name;
+
+		public string Name {
+			get {
+				var value = LazyInit.VolatileRead(ref name);
+				if (value == null)
+				{
+					var metadata = Metadata;
+					value = metadata.IsAssembly
+						? metadata.GetString(metadata.GetAssemblyDefinition().Name)
+						: metadata.GetString(metadata.GetModuleDefinition().Name);
+					value = LazyInit.GetOrSet(ref name, value);
+				}
+				return value;
+			}
+		}
+
+		string? fullName;
+
+		public string FullName {
+			get {
+				var value = LazyInit.VolatileRead(ref fullName);
+				if (value == null)
+				{
+					var metadata = Metadata;
+					value = metadata.IsAssembly ? metadata.GetFullAssemblyName() : Name;
+					value = LazyInit.GetOrSet(ref fullName, value);
+				}
+				return value;
+			}
+		}
 
 		public TargetRuntime GetRuntime()
 		{
@@ -96,14 +126,6 @@ namespace ICSharpCode.Decompiler.Metadata
 				default:
 					return TargetRuntime.Unknown;
 			}
-		}
-
-		string GetName()
-		{
-			var metadata = Metadata;
-			if (metadata.IsAssembly)
-				return metadata.GetString(metadata.GetAssemblyDefinition().Name);
-			return metadata.GetString(metadata.GetModuleDefinition().Name);
 		}
 
 		public ImmutableArray<AssemblyReference> AssemblyReferences => Metadata.AssemblyReferences.Select(r => new AssemblyReference(this, r)).ToImmutableArray();

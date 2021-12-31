@@ -107,22 +107,41 @@ namespace ICSharpCode.ILSpy
 			this.ParentBundle = bundle;
 		}
 
+		string? targetFrameworkId;
+
 		/// <summary>
 		/// Returns a target framework identifier in the form '&lt;framework&gt;Version=v&lt;version&gt;'.
-		/// Returns an empty string if no TargetFrameworkAttribute was found or the file doesn't contain an assembly header, i.e., is only a module.
+		/// Returns an empty string if no TargetFrameworkAttribute was found
+		/// or the file doesn't contain an assembly header, i.e., is only a module.
 		/// 
 		/// Throws an exception if the file does not contain any .NET metadata (e.g. file of unknown format).
 		/// </summary>
 		public async Task<string> GetTargetFrameworkIdAsync()
 		{
-			var assembly = await GetPEFileAsync().ConfigureAwait(false);
-			return assembly.DetectTargetFrameworkId() ?? string.Empty;
+			var value = LazyInit.VolatileRead(ref targetFrameworkId);
+			if (value == null)
+			{
+				var assembly = await GetPEFileAsync().ConfigureAwait(false);
+				value = assembly.DetectTargetFrameworkId() ?? string.Empty;
+				value = LazyInit.GetOrSet(ref targetFrameworkId, value);
+			}
+
+			return value;
 		}
+
+		string? runtimePack;
 
 		public async Task<string> GetRuntimePackAsync()
 		{
-			var assembly = await GetPEFileAsync().ConfigureAwait(false);
-			return assembly.DetectRuntimePack() ?? string.Empty;
+			var value = LazyInit.VolatileRead(ref runtimePack);
+			if (value == null)
+			{
+				var assembly = await GetPEFileAsync().ConfigureAwait(false);
+				value = assembly.DetectRuntimePack() ?? string.Empty;
+				value = LazyInit.GetOrSet(ref runtimePack, value);
+			}
+
+			return value;
 		}
 
 		public ReferenceLoadInfo LoadedAssemblyReferencesInfo { get; } = new ReferenceLoadInfo();
@@ -588,10 +607,9 @@ namespace ICSharpCode.ILSpy
 						var reader = module.Metadata;
 						if (reader == null || !reader.IsAssembly)
 							continue;
-						var asmDef = reader.GetAssemblyDefinition();
-						string tfm = await loaded.GetTargetFrameworkIdAsync();
+						string tfm = await loaded.GetTargetFrameworkIdAsync().ConfigureAwait(false);
 						string key = tfm + ";"
-							+ (shortNames ? reader.GetString(asmDef.Name) : reader.GetFullAssemblyName());
+							+ (shortNames ? module.Name : module.FullName);
 						if (!result.ContainsKey(key))
 						{
 							result.Add(key, module);
