@@ -118,7 +118,6 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				var opCode = blob.DecodeOpCode();
 				switch (opCode.GetOperandType())
 				{
-					case OperandType.Field:
 					case OperandType.Method:
 					case OperandType.Sig:
 					case OperandType.Tok:
