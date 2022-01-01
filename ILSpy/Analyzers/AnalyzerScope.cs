@@ -131,11 +131,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 			toWalkFiles.Push(self);
 			checkedFiles.Add(self);
+			IList<LoadedAssembly> assemblies = AssemblyList.GetAllAssemblies().GetAwaiter().GetResult();
 
 			do
 			{
 				PEFile curFile = toWalkFiles.Pop();
-				foreach (var assembly in AssemblyList.GetAllAssemblies().GetAwaiter().GetResult())
+				foreach (var assembly in assemblies)
 				{
 					ct.ThrowIfCancellationRequested();
 					bool found = false;
