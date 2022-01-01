@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -37,18 +38,22 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	class ThreadingSupport
 	{
-		Task<List<SharpTreeNode>> loadChildrenTask;
+		readonly Stopwatch stopwatch = new Stopwatch();
 		CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+		Task<List<SharpTreeNode>> loadChildrenTask;
 
 		public bool IsRunning {
 			get { return loadChildrenTask != null && !loadChildrenTask.IsCompleted; }
 		}
+
+		public long EllapsedMilliseconds => stopwatch.ElapsedMilliseconds;
 
 		public void Cancel()
 		{
 			cancellationTokenSource.Cancel();
 			loadChildrenTask = null;
 			cancellationTokenSource = new CancellationTokenSource();
+			stopwatch.Reset();
 		}
 
 		/// <summary>
@@ -56,6 +61,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public void LoadChildren(SharpTreeNode node, Func<CancellationToken, IEnumerable<SharpTreeNode>> fetchChildren)
 		{
+			stopwatch.Restart();
 			node.Children.Add(new LoadingTreeNode());
 
 			CancellationToken ct = cancellationTokenSource.Token;
@@ -89,12 +95,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						delegate {
 							if (loadChildrenTask == thisTask)
 							{
+								stopwatch.Stop();
 								node.Children.RemoveAt(node.Children.Count - 1); // remove 'Loading...'
 								node.RaisePropertyChanged(nameof(node.Text));
-							}
-							if (continuation.Exception != null)
-							{ // observe exception even when task isn't current
-								if (loadChildrenTask == thisTask)
+
+								if (continuation.Exception != null)
 								{
 									foreach (Exception ex in continuation.Exception.InnerExceptions)
 									{
