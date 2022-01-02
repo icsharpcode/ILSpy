@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -43,7 +42,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		}
 
 		public override object Text => analyzerHeader
-			+ (Children.Count > 0 && !threading.IsRunning ? " (" + Children.Count + ") in " + threading.EllapsedMilliseconds + "ms" : "");
+			+ (Children.Count > 0 && !threading.IsRunning ? " (" + Children.Count + " in " + threading.EllapsedMilliseconds + "ms)" : "");
 
 		public override object Icon => Images.Search;
 
