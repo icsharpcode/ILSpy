@@ -232,6 +232,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				if (ns.Children.Count > 0)
 					this.Children.Add(ns);
+				ns.SetPublicAPI(ns.Children.OfType<ILSpyTreeNode>().Any(n => n.IsPublicAPI));
 			}
 		}
 

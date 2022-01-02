@@ -29,6 +29,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	public sealed class NamespaceTreeNode : ILSpyTreeNode
 	{
 		readonly string name;
+		bool isPublicAPI;
 
 		public string Name {
 			get { return name; }
@@ -47,6 +48,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Icon {
 			get { return Images.Namespace; }
+		}
+
+		public override bool IsPublicAPI => isPublicAPI;
+
+		internal void SetPublicAPI(bool value)
+		{
+			this.isPublicAPI = value;
 		}
 
 		public override FilterResult Filter(FilterSettings settings)
