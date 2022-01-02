@@ -183,14 +183,6 @@
                         </Border>
                     </Border>
                     <ControlTemplate.Triggers>
-						<DataTrigger Binding="{Binding IsAutoLoaded}" 
-						             Value="True">
-							<Setter Property="Foreground" Value="SteelBlue" />
-						</DataTrigger>
-	                    <DataTrigger Binding="{Binding IsPublicAPI}" 
-	                                 Value="False">
-							<Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
-						</DataTrigger>
 	                    <Trigger Property="IsSelected"
 	                             Value="True">
                             <Setter TargetName="nodeView"
