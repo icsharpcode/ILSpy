@@ -24,6 +24,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
@@ -34,7 +35,6 @@ using ICSharpCode.ILSpy.Options;
 
 using Microsoft.VisualStudio.Composition;
 
-using TomsToolbox.Wpf.Interactivity;
 using TomsToolbox.Wpf.Styles;
 
 namespace ICSharpCode.ILSpy
@@ -46,6 +46,7 @@ namespace ICSharpCode.ILSpy
 	{
 		internal static CommandLineArguments CommandLineArguments;
 		internal static readonly IList<ExceptionData> StartupExceptions = new List<ExceptionData>();
+		internal static Mutex SingleInstanceMutex;
 
 		public static ExportProvider ExportProvider { get; private set; }
 		public static IExportProviderFactory ExportProviderFactory { get; private set; }
@@ -60,12 +61,35 @@ namespace ICSharpCode.ILSpy
 		{
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
 			App.CommandLineArguments = new CommandLineArguments(cmdArgs);
-			if ((App.CommandLineArguments.SingleInstance ?? true) && !MiscSettingsPanel.CurrentMiscSettings.AllowMultipleInstances)
+			bool forceSingleInstance = (App.CommandLineArguments.SingleInstance ?? true)
+				&& !MiscSettingsPanel.CurrentMiscSettings.AllowMultipleInstances;
+			if (forceSingleInstance)
 			{
+				bool isFirst;
+				try
+				{
+					SingleInstanceMutex = new Mutex(initiallyOwned: true, @"Local\ILSpyInstance", out isFirst);
+				}
+				catch (WaitHandleCannotBeOpenedException)
+				{
+					isFirst = true;
+				}
+				if (!isFirst)
+				{
+					try
+					{
+						SingleInstanceMutex.WaitOne(10000);
+					}
+					catch (AbandonedMutexException)
+					{
+						// continue, there is no concurrent start happening.
+					}
+				}
 				cmdArgs = cmdArgs.Select(FullyQualifyPath);
 				string message = string.Join(Environment.NewLine, cmdArgs);
 				if (SendToPreviousInstance("ILSpy:\r\n" + message, !App.CommandLineArguments.NoActivate))
 				{
+					ReleaseSingleInstanceMutex();
 					Environment.Exit(0);
 				}
 			}
@@ -85,6 +109,20 @@ namespace ICSharpCode.ILSpy
 											  Hyperlink.RequestNavigateEvent,
 											  new RequestNavigateEventHandler(Window_RequestNavigate));
 			ILSpyTraceListener.Install();
+		}
+
+		internal static void ReleaseSingleInstanceMutex()
+		{
+			var mutex = SingleInstanceMutex;
+			SingleInstanceMutex = null;
+			if (mutex == null)
+			{
+				return;
+			}
+			using (mutex)
+			{
+				mutex.ReleaseMutex();
+			}
 		}
 
 		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)
