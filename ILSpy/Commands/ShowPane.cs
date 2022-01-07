@@ -4,32 +4,33 @@ using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Commands
 {
-	[ExportMainMenuCommand(Menu = nameof(Resources._Window), Header = nameof(Resources._Assemblies), MenuCategory = "pane", MenuOrder = 5000)]
-	class ShowAssemblies : SimpleCommand
+	class ToolPaneCommand : SimpleCommand
 	{
+		readonly string contentId;
+
+		public ToolPaneCommand(string contentId)
+		{
+			this.contentId = contentId;
+		}
+
 		public override void Execute(object parameter)
 		{
-			DockWorkspace.Instance.ShowToolPane(AssemblyListPaneModel.PaneContentId);
+			DockWorkspace.Instance.ShowToolPane(contentId);
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = nameof(Resources._Window), Header = nameof(Resources._Analyzer), MenuCategory = "pane", MenuOrder = 5000)]
-	class ShowAnalyzer : SimpleCommand
+	class TabPageCommand : SimpleCommand
 	{
-		public override void Execute(object parameter)
-		{
-			DockWorkspace.Instance.ShowToolPane(AnalyzerPaneModel.PaneContentId);
-		}
-	}
+		readonly TabPageModel model;
 
-#if DEBUG
-	[ExportMainMenuCommand(Menu = nameof(Resources._Window), Header = nameof(Resources._ShowDebugSteps), MenuCategory = "pane", MenuOrder = 5000)]
-	class ShowDebugSteps : SimpleCommand
-	{
+		public TabPageCommand(TabPageModel model)
+		{
+			this.model = model;
+		}
+
 		public override void Execute(object parameter)
 		{
-			DockWorkspace.Instance.ShowToolPane(DebugStepsPaneModel.PaneContentId);
+			DockWorkspace.Instance.ActiveTabPage = model;
 		}
 	}
-#endif
 }

@@ -43,6 +43,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Themes;
@@ -128,6 +129,7 @@ namespace ICSharpCode.ILSpy
 			filterSettings.PropertyChanged += filterSettings_PropertyChanged;
 			DockWorkspace.Instance.PropertyChanged += DockWorkspace_PropertyChanged;
 			InitMainMenu();
+			InitWindowMenu();
 			InitToolbar();
 			ContextMenuProvider.Add(AssemblyTreeView);
 
@@ -139,9 +141,19 @@ namespace ICSharpCode.ILSpy
 			switch (e.PropertyName)
 			{
 				case nameof(DockWorkspace.Instance.ActiveTabPage):
+					DockWorkspace dock = DockWorkspace.Instance;
 					filterSettings.PropertyChanged -= filterSettings_PropertyChanged;
-					filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
+					filterSettings = dock.ActiveTabPage.FilterSettings;
 					filterSettings.PropertyChanged += filterSettings_PropertyChanged;
+
+					var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => GetResourceString(m.Header as string) == Properties.Resources._Window);
+					foreach (MenuItem menuItem in windowMenuItem.Items.OfType<MenuItem>())
+					{
+						if (menuItem.IsCheckable && menuItem.Tag is TabPageModel)
+						{
+							menuItem.IsChecked = menuItem.Tag == dock.ActiveTabPage;
+						}
+					}
 					break;
 			}
 		}
@@ -231,7 +243,7 @@ namespace ICSharpCode.ILSpy
 			var mainMenuCommands = App.ExportProvider.GetExports<ICommand, IMainMenuCommandMetadata>("MainMenuCommand");
 			foreach (var topLevelMenu in mainMenuCommands.OrderBy(c => c.Metadata.MenuOrder).GroupBy(c => GetResourceString(c.Metadata.Menu)))
 			{
-				var topLevelMenuItem = mainMenu.Items.OfType<MenuItem>().FirstOrDefault(m => (GetResourceString(m.Header as string)) == topLevelMenu.Key);
+				var topLevelMenuItem = mainMenu.Items.OfType<MenuItem>().FirstOrDefault(m => GetResourceString(m.Header as string) == topLevelMenu.Key);
 				foreach (var category in topLevelMenu.GroupBy(c => GetResourceString(c.Metadata.MenuCategory)))
 				{
 					if (topLevelMenuItem == null)
@@ -294,6 +306,182 @@ namespace ICSharpCode.ILSpy
 				DockWorkspace.Instance.ToolPanes.Add(model);
 			}
 			DockManager.LayoutItemTemplateSelector = templateSelector;
+		}
+
+		private void InitWindowMenu()
+		{
+			var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => GetResourceString(m.Header as string) == Properties.Resources._Window);
+			Separator separatorBeforeTools, separatorBeforeDocuments;
+			windowMenuItem.Items.Add(separatorBeforeTools = new Separator());
+			windowMenuItem.Items.Add(separatorBeforeDocuments = new Separator());
+
+			var dock = DockWorkspace.Instance;
+			dock.ToolPanes.CollectionChanged += ToolsChanged;
+			dock.TabPages.CollectionChanged += TabsChanged;
+
+			ToolsChanged(dock.ToolPanes, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+			TabsChanged(dock.TabPages, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+
+			void ToolsChanged(object sender, NotifyCollectionChangedEventArgs e)
+			{
+				int endIndex = windowMenuItem.Items.IndexOf(separatorBeforeDocuments);
+				int startIndex = windowMenuItem.Items.IndexOf(separatorBeforeTools) + 1;
+				int insertionIndex;
+				switch (e.Action)
+				{
+					case NotifyCollectionChangedAction.Add:
+						insertionIndex = Math.Min(endIndex, startIndex + e.NewStartingIndex);
+						foreach (ToolPaneModel pane in e.NewItems)
+						{
+							MenuItem menuItem = CreateMenuItem(pane);
+							windowMenuItem.Items.Insert(insertionIndex, menuItem);
+							insertionIndex++;
+						}
+						break;
+					case NotifyCollectionChangedAction.Remove:
+						foreach (ToolPaneModel pane in e.OldItems)
+						{
+							for (int i = endIndex - 1; i >= startIndex; i--)
+							{
+								MenuItem item = (MenuItem)windowMenuItem.Items[i];
+								if (pane == item.Tag)
+								{
+									windowMenuItem.Items.RemoveAt(i);
+									item.Tag = null;
+									endIndex--;
+									break;
+								}
+							}
+						}
+						break;
+					case NotifyCollectionChangedAction.Replace:
+						break;
+					case NotifyCollectionChangedAction.Move:
+						break;
+					case NotifyCollectionChangedAction.Reset:
+						for (int i = endIndex - 1; i >= startIndex; i--)
+						{
+							MenuItem item = (MenuItem)windowMenuItem.Items[0];
+							item.Tag = null;
+							windowMenuItem.Items.RemoveAt(i);
+							endIndex--;
+						}
+						insertionIndex = endIndex;
+						foreach (ToolPaneModel pane in dock.ToolPanes)
+						{
+							MenuItem menuItem = CreateMenuItem(pane);
+							windowMenuItem.Items.Insert(insertionIndex, menuItem);
+							insertionIndex++;
+						}
+						break;
+				}
+
+				MenuItem CreateMenuItem(ToolPaneModel pane)
+				{
+					MenuItem menuItem = new MenuItem();
+					menuItem.Command = new ToolPaneCommand(pane.ContentId);
+					menuItem.Header = pane.Title;
+					menuItem.Tag = pane;
+					var shortcutKey = pane.ShortcutKey;
+					if (shortcutKey != null)
+					{
+						InputBindings.Add(new InputBinding(menuItem.Command, shortcutKey));
+						menuItem.InputGestureText = shortcutKey.GetDisplayStringForCulture(System.Globalization.CultureInfo.CurrentUICulture);
+					}
+					if (!string.IsNullOrEmpty(pane.Icon))
+					{
+						menuItem.Icon = new Image {
+							Width = 16,
+							Height = 16,
+							Source = Images.Load(pane, pane.Icon)
+						};
+					}
+
+					return menuItem;
+				}
+			}
+
+			void TabsChanged(object sender, NotifyCollectionChangedEventArgs e)
+			{
+				int endIndex = windowMenuItem.Items.Count;
+				int startIndex = windowMenuItem.Items.IndexOf(separatorBeforeDocuments) + 1;
+				int insertionIndex;
+				switch (e.Action)
+				{
+					case NotifyCollectionChangedAction.Add:
+						insertionIndex = Math.Min(endIndex, startIndex + e.NewStartingIndex);
+						foreach (TabPageModel pane in e.NewItems)
+						{
+							MenuItem menuItem = CreateMenuItem(pane);
+							pane.PropertyChanged += TabPageChanged;
+							windowMenuItem.Items.Insert(insertionIndex, menuItem);
+							insertionIndex++;
+						}
+						break;
+					case NotifyCollectionChangedAction.Remove:
+						foreach (TabPageModel pane in e.OldItems)
+						{
+							for (int i = endIndex - 1; i >= startIndex; i--)
+							{
+								MenuItem item = (MenuItem)windowMenuItem.Items[i];
+								if (pane == item.Tag)
+								{
+									windowMenuItem.Items.RemoveAt(i);
+									pane.PropertyChanged -= TabPageChanged;
+									item.Tag = null;
+									endIndex--;
+									break;
+								}
+							}
+						}
+						break;
+					case NotifyCollectionChangedAction.Replace:
+						break;
+					case NotifyCollectionChangedAction.Move:
+						break;
+					case NotifyCollectionChangedAction.Reset:
+						for (int i = endIndex - 1; i >= startIndex; i--)
+						{
+							MenuItem item = (MenuItem)windowMenuItem.Items[i];
+							windowMenuItem.Items.RemoveAt(i);
+							((TabPageModel)item.Tag).PropertyChanged -= TabPageChanged;
+							endIndex--;
+						}
+						insertionIndex = endIndex;
+						foreach (TabPageModel pane in dock.TabPages)
+						{
+							MenuItem menuItem = CreateMenuItem(pane);
+							pane.PropertyChanged += TabPageChanged;
+							windowMenuItem.Items.Insert(insertionIndex, menuItem);
+							insertionIndex++;
+						}
+						break;
+				}
+
+				MenuItem CreateMenuItem(TabPageModel pane)
+				{
+					MenuItem menuItem = new MenuItem();
+					menuItem.Command = new TabPageCommand(pane);
+					menuItem.Header = pane.Title.Length > 20 ? pane.Title.Substring(20) + "..." : pane.Title;
+					menuItem.Tag = pane;
+					menuItem.IsCheckable = true;
+
+					return menuItem;
+				}
+			}
+
+			static void TabPageChanged(object sender, PropertyChangedEventArgs e)
+			{
+				var windowMenuItem = Instance.mainMenu.Items.OfType<MenuItem>().First(m => GetResourceString(m.Header as string) == Properties.Resources._Window);
+				foreach (MenuItem menuItem in windowMenuItem.Items.OfType<MenuItem>())
+				{
+					if (menuItem.IsCheckable && menuItem.Tag == sender)
+					{
+						string title = ((TabPageModel)sender).Title;
+						menuItem.Header = title.Length > 20 ? title.Substring(0, 20) + "..." : title;
+					}
+				}
+			}
 		}
 
 		public void ShowInTopPane(string title, object content)

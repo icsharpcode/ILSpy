@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Windows;
+using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
@@ -29,6 +30,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			ContentId = PaneContentId;
 			Title = Properties.Resources.Analyze;
+			ShortcutKey = new KeyGesture(Key.R, ModifierKeys.Control);
 		}
 
 		public override DataTemplate Template => (DataTemplate)MainWindow.Instance.FindResource("AnalyzerPaneTemplate");

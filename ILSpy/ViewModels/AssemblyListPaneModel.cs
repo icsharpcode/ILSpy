@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Windows;
+using System.Windows.Input;
 
 using ICSharpCode.ILSpy.Properties;
 
@@ -32,6 +33,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			Title = Resources.Assemblies;
 			ContentId = PaneContentId;
 			IsCloseable = false;
+			ShortcutKey = new KeyGesture(Key.F6);
 		}
 
 		public override DataTemplate Template => (DataTemplate)MainWindow.Instance.FindResource("AssemblyListPaneTemplate");
