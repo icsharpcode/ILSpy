@@ -146,7 +146,7 @@ namespace ICSharpCode.ILSpy
 					filterSettings = dock.ActiveTabPage.FilterSettings;
 					filterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
-					var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => GetResourceString(m.Header as string) == Properties.Resources._Window);
+					var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => (string)m.Tag == Properties.Resources._Window);
 					foreach (MenuItem menuItem in windowMenuItem.Items.OfType<MenuItem>())
 					{
 						if (menuItem.IsCheckable && menuItem.Tag is TabPageModel)
@@ -241,18 +241,19 @@ namespace ICSharpCode.ILSpy
 		void InitMainMenu()
 		{
 			var mainMenuCommands = App.ExportProvider.GetExports<ICommand, IMainMenuCommandMetadata>("MainMenuCommand");
-			foreach (var topLevelMenu in mainMenuCommands.OrderBy(c => c.Metadata.MenuOrder).GroupBy(c => GetResourceString(c.Metadata.Menu)))
+			foreach (var topLevelMenu in mainMenuCommands.OrderBy(c => c.Metadata.MenuOrder).GroupBy(c => c.Metadata.Menu))
 			{
-				var topLevelMenuItem = mainMenu.Items.OfType<MenuItem>().FirstOrDefault(m => GetResourceString(m.Header as string) == topLevelMenu.Key);
-				foreach (var category in topLevelMenu.GroupBy(c => GetResourceString(c.Metadata.MenuCategory)))
+				var topLevelMenuItem = mainMenu.Items.OfType<MenuItem>().FirstOrDefault(m => (string)m.Tag == topLevelMenu.Key);
+				if (topLevelMenuItem == null)
 				{
-					if (topLevelMenuItem == null)
-					{
-						topLevelMenuItem = new MenuItem();
-						topLevelMenuItem.Header = GetResourceString(topLevelMenu.Key);
-						mainMenu.Items.Add(topLevelMenuItem);
-					}
-					else if (topLevelMenuItem.Items.Count > 0)
+					topLevelMenuItem = new MenuItem();
+					topLevelMenuItem.Header = GetResourceString(topLevelMenu.Key);
+					topLevelMenuItem.Tag = topLevelMenu.Key;
+					mainMenu.Items.Add(topLevelMenuItem);
+				}
+				foreach (var category in topLevelMenu.GroupBy(c => c.Metadata.MenuCategory))
+				{
+					if (topLevelMenuItem.Items.Count > 0)
 					{
 						topLevelMenuItem.Items.Add(new Separator());
 					}
@@ -260,8 +261,8 @@ namespace ICSharpCode.ILSpy
 					{
 						MenuItem menuItem = new MenuItem();
 						menuItem.Command = CommandWrapper.Unwrap(entry.Value);
-						if (!string.IsNullOrEmpty(GetResourceString(entry.Metadata.Header)))
-							menuItem.Header = GetResourceString(entry.Metadata.Header);
+						menuItem.Tag = entry.Metadata.Header;
+						menuItem.Header = GetResourceString(entry.Metadata.Header);
 						if (!string.IsNullOrEmpty(entry.Metadata.MenuIcon))
 						{
 							menuItem.Icon = new Image {
@@ -281,8 +282,16 @@ namespace ICSharpCode.ILSpy
 
 		internal static string GetResourceString(string key)
 		{
-			var str = !string.IsNullOrEmpty(key) ? Properties.Resources.ResourceManager.GetString(key) : null;
-			return string.IsNullOrEmpty(key) || string.IsNullOrEmpty(str) ? key : str;
+			if (string.IsNullOrEmpty(key))
+			{
+				return null;
+			}
+			string value = Properties.Resources.ResourceManager.GetString(key);
+			if (!string.IsNullOrEmpty(value))
+			{
+				return value;
+			}
+			return key;
 		}
 		#endregion
 
@@ -310,7 +319,7 @@ namespace ICSharpCode.ILSpy
 
 		private void InitWindowMenu()
 		{
-			var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => GetResourceString(m.Header as string) == Properties.Resources._Window);
+			var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => (string)m.Tag == Properties.Resources._Window);
 			Separator separatorBeforeTools, separatorBeforeDocuments;
 			windowMenuItem.Items.Add(separatorBeforeTools = new Separator());
 			windowMenuItem.Items.Add(separatorBeforeDocuments = new Separator());
@@ -472,7 +481,7 @@ namespace ICSharpCode.ILSpy
 
 			static void TabPageChanged(object sender, PropertyChangedEventArgs e)
 			{
-				var windowMenuItem = Instance.mainMenu.Items.OfType<MenuItem>().First(m => GetResourceString(m.Header as string) == Properties.Resources._Window);
+				var windowMenuItem = Instance.mainMenu.Items.OfType<MenuItem>().First(m => (string)m.Tag == nameof(Properties.Resources._Window));
 				foreach (MenuItem menuItem in windowMenuItem.Items.OfType<MenuItem>())
 				{
 					if (menuItem.IsCheckable && menuItem.Tag == sender)

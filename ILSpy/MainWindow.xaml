@@ -132,9 +132,9 @@
 	<DockPanel>
 		<!-- Main menu -->
 		<Menu DockPanel.Dock="Top" Name="mainMenu" Height="23" KeyboardNavigation.TabNavigation="None">
-			<MenuItem Header="{x:Static properties:Resources._File}" />
+			<MenuItem Header="{x:Static properties:Resources._File}" Tag="_File" />
 			<!-- contents of file menu are added using MEF -->
-			<MenuItem Header="{x:Static properties:Resources._View}">
+			<MenuItem Header="{x:Static properties:Resources._View}" Tag="_View">
 				<MenuItem Header="{x:Static properties:Resources.Show_publiconlyTypesMembers}" IsCheckable="True" IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisPublicOnly}" />
 				<MenuItem Header="{x:Static properties:Resources.Show_internalTypesMembers}" IsCheckable="True" IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisPublicAndInternal}" />
 				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding Workspace.ActiveTabPage.FilterSettings.ApiVisAll}" />
@@ -145,7 +145,7 @@
 					<MenuItem Header="中文" IsCheckable="True" IsChecked="{Binding SessionSettings.CurrentCulture, Converter={StaticResource cultureSelectionConverter}, ConverterParameter=zh-Hans}" />
 				</MenuItem>
 			</MenuItem>
-			<MenuItem Header="{x:Static properties:Resources._Window}" />
+			<MenuItem Header="{x:Static properties:Resources._Window}" Tag="_Window" />
 		</Menu>
 		<!-- ToolBar -->
 		<ToolBar
