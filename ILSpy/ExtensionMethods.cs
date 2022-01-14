@@ -112,20 +112,12 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		/*
-		public static bool IsCustomAttribute(this TypeDefinition type)
+		internal static void Deconstruct<TKey, TValue>(this KeyValuePair<TKey, TValue> pair, out TKey key, out TValue value)
 		{
-			while (type.FullName != "System.Object") {
-				var resolvedBaseType = type.BaseType.Resolve();
-				if (resolvedBaseType == null)
-					return false;
-				if (resolvedBaseType.FullName == "System.Attribute")
-					return true;
-				type = resolvedBaseType;
-			}
-			return false;
+			key = pair.Key;
+			value = pair.Value;
 		}
-		*/
+
 		public static string ToSuffixString(this System.Reflection.Metadata.EntityHandle handle)
 		{
 			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)

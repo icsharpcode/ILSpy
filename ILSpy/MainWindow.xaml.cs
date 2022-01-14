@@ -241,42 +241,78 @@ namespace ICSharpCode.ILSpy
 		void InitMainMenu()
 		{
 			var mainMenuCommands = App.ExportProvider.GetExports<ICommand, IMainMenuCommandMetadata>("MainMenuCommand");
-			foreach (var topLevelMenu in mainMenuCommands.OrderBy(c => c.Metadata.MenuOrder).GroupBy(c => c.Metadata.Menu))
+			// Start by constructing the individual flat menus
+			var parentMenuItems = new Dictionary<string, MenuItem>();
+			var menuGroups = mainMenuCommands.OrderBy(c => c.Metadata.MenuOrder).GroupBy(c => c.Metadata.ParentMenuID);
+			foreach (var menu in menuGroups)
 			{
-				var topLevelMenuItem = mainMenu.Items.OfType<MenuItem>().FirstOrDefault(m => (string)m.Tag == topLevelMenu.Key);
-				if (topLevelMenuItem == null)
+				// Get or add the target menu item and add all items grouped by menu category
+				var parentMenuItem = GetOrAddParentMenuItem(menu.Key, menu.Key);
+				foreach (var category in menu.GroupBy(c => c.Metadata.MenuCategory))
 				{
-					topLevelMenuItem = new MenuItem();
-					topLevelMenuItem.Header = GetResourceString(topLevelMenu.Key);
-					topLevelMenuItem.Tag = topLevelMenu.Key;
-					mainMenu.Items.Add(topLevelMenuItem);
-				}
-				foreach (var category in topLevelMenu.GroupBy(c => c.Metadata.MenuCategory))
-				{
-					if (topLevelMenuItem.Items.Count > 0)
+					if (parentMenuItem.Items.Count > 0)
 					{
-						topLevelMenuItem.Items.Add(new Separator());
+						parentMenuItem.Items.Add(new Separator() { Tag = category.Key });
 					}
 					foreach (var entry in category)
 					{
-						MenuItem menuItem = new MenuItem();
-						menuItem.Command = CommandWrapper.Unwrap(entry.Value);
-						menuItem.Tag = entry.Metadata.Header;
-						menuItem.Header = GetResourceString(entry.Metadata.Header);
-						if (!string.IsNullOrEmpty(entry.Metadata.MenuIcon))
+						if (menuGroups.Any(g => g.Key == entry.Metadata.MenuID))
 						{
-							menuItem.Icon = new Image {
-								Width = 16,
-								Height = 16,
-								Source = Images.Load(entry.Value, entry.Metadata.MenuIcon)
-							};
+							var menuItem = GetOrAddParentMenuItem(entry.Metadata.MenuID, entry.Metadata.Header);
+							// replace potential dummy text with real name
+							menuItem.Header = GetResourceString(entry.Metadata.Header);
+							parentMenuItem.Items.Add(menuItem);
 						}
+						else
+						{
+							MenuItem menuItem = new MenuItem();
+							menuItem.Command = CommandWrapper.Unwrap(entry.Value);
+							menuItem.Tag = entry.Metadata.MenuID;
+							menuItem.Header = GetResourceString(entry.Metadata.Header);
+							if (!string.IsNullOrEmpty(entry.Metadata.MenuIcon))
+							{
+								menuItem.Icon = new Image {
+									Width = 16,
+									Height = 16,
+									Source = Images.Load(entry.Value, entry.Metadata.MenuIcon)
+								};
+							}
 
-						menuItem.IsEnabled = entry.Metadata.IsEnabled;
-						menuItem.InputGestureText = entry.Metadata.InputGestureText;
-						topLevelMenuItem.Items.Add(menuItem);
+							menuItem.IsEnabled = entry.Metadata.IsEnabled;
+							menuItem.InputGestureText = entry.Metadata.InputGestureText;
+							parentMenuItem.Items.Add(menuItem);
+						}
 					}
 				}
+			}
+
+			foreach (var (key, item) in parentMenuItems)
+			{
+				if (item.Parent == null)
+				{
+					mainMenu.Items.Add(item);
+				}
+			}
+
+			MenuItem GetOrAddParentMenuItem(string menuID, string resourceKey)
+			{
+				if (!parentMenuItems.TryGetValue(menuID, out var parentMenuItem))
+				{
+					var topLevelMenuItem = mainMenu.Items.OfType<MenuItem>().FirstOrDefault(m => (string)m.Tag == menuID);
+					if (topLevelMenuItem == null)
+					{
+						parentMenuItem = new MenuItem();
+						parentMenuItem.Header = GetResourceString(resourceKey);
+						parentMenuItem.Tag = menuID;
+						parentMenuItems.Add(menuID, parentMenuItem);
+					}
+					else
+					{
+						parentMenuItems.Add(menuID, topLevelMenuItem);
+						parentMenuItem = topLevelMenuItem;
+					}
+				}
+				return parentMenuItem;
 			}
 		}
 
