@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -986,5 +986,49 @@
   </data>
   <data name="_Window" xml:space="preserve">
     <value>窗口(_W)</value>
+  </data>
+  <data name="DecompilationViewOptions" xml:space="preserve">
+    <value>反编译视图选项</value>
+  </data>
+  <data name="TreeViewOptions" xml:space="preserve">
+    <value>树视图选项</value>
+  </data>
+  <data name="StyleTheWindowTitleBar" xml:space="preserve">
+    <value>为窗口标题栏应用自定义样式</value>
+  </data>
+  <data name="DecompilerSettings.ProjectExport" xml:space="preserve">
+    <value>项目导出</value>
+  </data>
+  <data name="DecompilerSettings.UseNestedDirectoriesForNamespaces" xml:space="preserve">
+    <value>为命名空间使用嵌套目录</value>
+  </data>
+  <data name="DecompilerSettings.PatternMatching" xml:space="preserve">
+    <value>使用模式匹配表达式</value>
+  </data>
+  <data name="ShowRawOffsetsAndBytesBeforeInstruction" xml:space="preserve">
+    <value>在每条 IL 指令前显示原始偏移量和字节</value>
+  </data>
+  <data name="ScopeSearchToThisAssembly" xml:space="preserve">
+    <value>在此程序集中搜索</value>
+  </data>
+  <data name="ScopeSearchToThisNamespace" xml:space="preserve">
+    <value>在此命名空间中搜索</value>
+  </data>
+  <data name="DecompilerSettings.FileScopedNamespaces" xml:space="preserve">
+    <value>使用文件作用域命名空间表达式 (File-scoped namespace)</value>
+  </data>
+  <data name="OperationWasCancelled" xml:space="preserve">
+    <value>操作已取消</value>
+  </data>
+  <data name="DecompilationWasCancelled" xml:space="preserve">
+    <value>反编译已取消</value>
+  </data>
+  <data name="ProjectExportPathTooLong" xml:space="preserve">
+    <value>反编译程序集 {0} 失败，因为命名空间的名字过长或文件嵌套过深。
+如果你正在使用 Windows 10.0.14393 (Windows 10 version 1607) 或更新的版本，你可以通过在注册表 "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem" 中新建键值 “LongPathsEnabled”，并将其值设为 0x1，以启用 “长路径支持”
+如果你的系统已经支持长路径，但仍然出现这个问题。你可以尝试启用嵌套目录，你可以通过勾选 选项 &gt; 反编译器 &gt; 项目导出 &gt; 为命名空间使用嵌套目录 复选框启用这项设置。这应该可以解决问题，因为即便是在支持长路径的平台，一个文件夹的名称长度仍然是有限的，在 Windows/NTFS 上该限制为 255 字符。</value>
+  </data>
+  <data name="ExtractPackageEntry" xml:space="preserve">
+    <value>提取包条目</value>
   </data>
 </root>
