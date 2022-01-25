@@ -1541,6 +1541,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					localSettings.UsingDeclarations = false;
 					localSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls = true;
 					localSettings.NamedArguments = false;
+					localSettings.AlwaysQualifyMemberReferences = true;
 				}
 
 				var context = new ILTransformContext(function, typeSystem, DebugInfoProvider, localSettings) {
