@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				if (arrayLength.Length == 1)
 				{
-					if (HandleSimpleArrayInitializer(function, body, pos + 1, v, elementType, arrayLength, out var arrayValues, out var instructionsToRemove))
+					if (HandleSimpleArrayInitializer(function, body, pos + 1, v, arrayLength, out var arrayValues, out var instructionsToRemove))
 					{
 						context.Step("HandleSimpleArrayInitializer: single-dim", inst);
 						var block = new Block(BlockKind.ArrayInitializer);
@@ -172,7 +172,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					ILInlining.InlineIfPossible(body, pos, context);
 					return true;
 				}
-				if (HandleSimpleArrayInitializer(function, body, pos + 1, v, elementType, length, out var arrayValues, out var instructionsToRemove))
+				if (HandleSimpleArrayInitializer(function, body, pos + 1, v, length, out var arrayValues, out var instructionsToRemove))
 				{
 					context.Step("HandleSimpleArrayInitializer: multi-dim", inst);
 					var block = new Block(BlockKind.ArrayInitializer);
@@ -387,12 +387,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Handle simple case where RuntimeHelpers.InitializeArray is not used.
 		/// </summary>
-		internal static bool HandleSimpleArrayInitializer(ILFunction function, Block block, int pos, ILVariable store, IType elementType, int[] arrayLength, out (ILInstruction[] Indices, ILInstruction Value)[] values, out int instructionsToRemove)
+		internal static bool HandleSimpleArrayInitializer(ILFunction function, Block block, int pos, ILVariable store, int[] arrayLength, out (ILInstruction[] Indices, ILInstruction Value)[] values, out int instructionsToRemove)
 		{
 			instructionsToRemove = 0;
 			int elementCount = 0;
-			var length = arrayLength.Aggregate(1, (t, l) => t * l);
-			values = new (ILInstruction[] Indices, ILInstruction Value)[length];
+			int length = arrayLength.Aggregate(1, (t, l) => t * l);
+			// Cannot pre-allocate the result array, because we do not know yet,
+			// whether there is in fact an array initializer.
+			// To prevent excessive allocations, use min(|block|, arraySize) als initial capacity.
+			// This should prevent list-resizing as well as out-of-memory errors.
+			values = null;
+			var valuesList = new List<(ILInstruction[] Indices, ILInstruction Value)>(Math.Min(block.Instructions.Count, length));
 
 			int[] nextMinimumIndex = new int[arrayLength.Length];
 
@@ -443,7 +448,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return nextIndices;
 			}
 
-			int j = 0;
 			int i = pos;
 			int step;
 			while (i < block.Instructions.Count)
@@ -483,7 +487,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (indices.Count != arrayLength.Length)
 					break;
 				bool exact;
-				if (j >= values.Length)
+				if (length <= 0)
 					break;
 				do
 				{
@@ -492,16 +496,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (exact)
 					{
-						values[j] = (nextIndices, value);
+						valuesList.Add((nextIndices, value));
 						elementCount++;
 						instructionsToRemove += step;
 					}
 					else
 					{
-						values[j] = (nextIndices, null);
+						valuesList.Add((nextIndices, null));
 					}
-					j++;
-				} while (j < values.Length && !exact);
+				} while (valuesList.Count < length && !exact);
 				i += step;
 			}
 			if (i < block.Instructions.Count)
@@ -514,53 +517,59 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 				}
 			}
-			while (j < values.Length)
+			if (pos + instructionsToRemove >= block.Instructions.Count)
+				return false;
+
+			bool mustTransform = ILInlining.IsCatchWhenBlock(block) || ILInlining.IsInConstructorInitializer(function, block.Instructions[pos]);
+			// If there are not enough user-defined elements after scanning all instructions, we can abort the transform.
+			// This avoids unnecessary allocations and OOM crashes (in case of int.MaxValue).
+			if (elementCount < length / 3 - 5)
+			{
+				if (!mustTransform)
+					return false;
+				// .NET does not allow allocation of arrays >= 2 GB.
+				if (length >= int.MaxValue)
+					return false;
+			}
+
+			for (int j = valuesList.Count; j < length; j++)
 			{
 				var nextIndices = CalculateNextIndices(null, out _);
 				if (nextIndices == null)
 					return false;
-				values[j] = (nextIndices, null);
-				j++;
+				valuesList.Add((nextIndices, null));
 			}
-			if (pos + instructionsToRemove >= block.Instructions.Count)
-				return false;
-			return ShouldTransformToInitializer(function, block, pos, elementCount, length);
-		}
-
-		static bool ShouldTransformToInitializer(ILFunction function, Block block, int startPos, int elementCount, int length)
-		{
-			if (elementCount == 0)
-				return false;
-			if (elementCount >= length / 3 - 5)
-				return true;
-			if (ILInlining.IsCatchWhenBlock(block) || ILInlining.IsInConstructorInitializer(function, block.Instructions[startPos]))
-				return true;
-			return false;
+			values = valuesList.ToArray();
+			return true;
 		}
 
 		bool HandleJaggedArrayInitializer(Block block, int pos, ILVariable store, IType elementType, int length, out ILVariable finalStore, out ILInstruction[] values, out int instructionsToRemove)
 		{
 			instructionsToRemove = 0;
 			finalStore = null;
-			values = new ILInstruction[length];
+			// Cannot pre-allocate the result array, because we do not know yet,
+			// whether there is in fact an array initializer.
+			// To prevent excessive allocations, use min(|block|, arraySize) als initial capacity.
+			// This should prevent list-resizing as well as out-of-memory errors.
+			values = null;
+			var valuesList = new List<ILInstruction>(Math.Min(block.Instructions.Count, length));
 
-			ILInstruction initializer;
-			IType type;
 			for (int i = 0; i < length; i++)
 			{
 				// 1. Instruction: (optional) temporary copy of store
 				bool hasTemporaryCopy = block.Instructions[pos].MatchStLoc(out var temp, out var storeLoad) && storeLoad.MatchLdLoc(store);
+				ILInstruction initializer;
 				if (hasTemporaryCopy)
 				{
-					if (!MatchJaggedArrayStore(block, pos + 1, temp, i, out initializer, out type))
+					if (!MatchJaggedArrayStore(block, pos + 1, temp, i, out initializer, out _))
 						return false;
 				}
 				else
 				{
-					if (!MatchJaggedArrayStore(block, pos, store, i, out initializer, out type))
+					if (!MatchJaggedArrayStore(block, pos, store, i, out initializer, out _))
 						return false;
 				}
-				values[i] = initializer;
+				valuesList.Add(initializer);
 				int inc = hasTemporaryCopy ? 3 : 2;
 				pos += inc;
 				instructionsToRemove += inc;
@@ -569,10 +578,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Remove it and use its value instead.
 			if (block.Instructions[pos].MatchStLoc(out finalStore, out var array))
 			{
+				if (!array.MatchLdLoc(store))
+					return false;
 				instructionsToRemove++;
-				return array.MatchLdLoc(store);
 			}
-			finalStore = store;
+			else
+			{
+				finalStore = store;
+			}
+			values = valuesList.ToArray();
 			return true;
 		}
 

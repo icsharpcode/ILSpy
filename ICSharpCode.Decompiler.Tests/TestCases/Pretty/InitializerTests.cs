@@ -724,6 +724,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				{ null, "test", "hello", "world" }
 			};
 		}
+
+		private static void OutOfMemory()
+		{
+			byte[] array = new byte[int.MaxValue];
+			array[0] = 1;
+			Console.WriteLine(array.Length);
+		}
 		#endregion
 
 		#region Object initializers

@@ -356,7 +356,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						if (value is NewArr typeArgsNewArr && typeArgsNewArr.Type.IsKnownType(KnownTypeCode.Type) && typeArgsNewArr.Indices.Count == 1 && typeArgsNewArr.Indices[0].MatchLdcI4(out numberOfTypeArguments))
 						{
-							if (!TransformArrayInitializers.HandleSimpleArrayInitializer(context.Function, callSiteInitBlock, 3, variableOrTemporary, typeArgsNewArr.Type, new[] { numberOfTypeArguments }, out var typeArguments, out _))
+							if (!TransformArrayInitializers.HandleSimpleArrayInitializer(context.Function, callSiteInitBlock, 3, variableOrTemporary, new[] { numberOfTypeArguments }, out var typeArguments, out _))
 								return false;
 							int i = 0;
 							callSiteInfo.TypeArguments = new IType[numberOfTypeArguments];
@@ -535,7 +535,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!(value is NewArr newArr2 && newArr2.Type.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && newArr2.Indices.Count == 1 && newArr2.Indices[0].MatchLdcI4(out var numberOfArguments)))
 				return false;
-			if (!TransformArrayInitializers.HandleSimpleArrayInitializer(context.Function, callSiteInfo.InitBlock, instructionOffset, variable, newArr2.Type, new[] { numberOfArguments }, out var arguments, out _))
+			if (!TransformArrayInitializers.HandleSimpleArrayInitializer(context.Function, callSiteInfo.InitBlock, instructionOffset, variable, new[] { numberOfArguments }, out var arguments, out _))
 				return false;
 			int i = 0;
 			callSiteInfo.ArgumentInfos = new CSharpArgumentInfo[numberOfArguments];
