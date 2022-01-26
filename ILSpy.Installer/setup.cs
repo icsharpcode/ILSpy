@@ -22,7 +22,7 @@ namespace ILSpy.Installer
 			var buildOutputDir = $@"ILSpy\bin\{buildConfiguration}\net472";
 
 			var project = new Project("ILSpy",
-							  	  new InstallDir(@"Program Fies\ILSpy",
+							  	  new InstallDir(@"Program Files\ILSpy",
 								  new DirFiles(Path.Combine(buildOutputDir, "*.dll")),
 								  new DirFiles(Path.Combine(buildOutputDir, "*.exe")),
 								  new DirFiles(Path.Combine(buildOutputDir, "*.config")),
