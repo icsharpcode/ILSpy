@@ -519,6 +519,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (pos + instructionsToRemove >= block.Instructions.Count)
 				return false;
+			if (elementCount == 0)
+				return false;
 
 			bool mustTransform = ILInlining.IsCatchWhenBlock(block) || ILInlining.IsInConstructorInitializer(function, block.Instructions[pos]);
 			// If there are not enough user-defined elements after scanning all instructions, we can abort the transform.
