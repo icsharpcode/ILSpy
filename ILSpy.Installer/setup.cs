@@ -22,7 +22,7 @@ namespace ILSpy.Installer
 			var buildOutputDir = $@"ILSpy\bin\{buildConfiguration}\net472";
 
 			var project = new Project("ILSpy",
-							  new InstallDir(@"%LocalAppData%\Programs\ILSpy",
+							  	  new InstallDir(@"Program Fies\ILSpy",
 								  new DirFiles(Path.Combine(buildOutputDir, "*.dll")),
 								  new DirFiles(Path.Combine(buildOutputDir, "*.exe")),
 								  new DirFiles(Path.Combine(buildOutputDir, "*.config")),
@@ -32,8 +32,8 @@ namespace ILSpy.Installer
 			project.GUID = new Guid("a12fdab1-731b-4a98-9749-d481ce8692ab");
 			project.Version = AppPackage.Version;
 			project.SourceBaseDir = Path.GetDirectoryName(Environment.CurrentDirectory);
-			project.InstallScope = InstallScope.perUser;
-			project.InstallPrivileges = InstallPrivileges.limited;
+			project.InstallScope = InstallScope.perMachine;
+			project.InstallPrivileges = InstallPrivileges.elevated;
 			project.ControlPanelInfo.ProductIcon = @"..\ILSpy\Images\ILSpy.ico";
 			project.ControlPanelInfo.Manufacturer = "ICSharpCode Team";
 			project.LocalizationFile = Path.Combine(Environment.CurrentDirectory, "winui.wxl");
