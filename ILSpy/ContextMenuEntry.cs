@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Windows;
@@ -117,6 +118,8 @@ namespace ICSharpCode.ILSpy
 
 	public interface IContextMenuEntryMetadata
 	{
+		string MenuID { get; }
+		string ParentMenuID { get; }
 		string Icon { get; }
 		string Header { get; }
 		string Category { get; }
@@ -135,7 +138,23 @@ namespace ICSharpCode.ILSpy
 			// entries default to end of menu unless given specific order position
 			Order = double.MaxValue;
 		}
-
+		/// <summary>
+		/// Gets/Sets the ID of this menu item. Menu entries are not required to have an ID,
+		/// however, setting it allows to declare nested menu structures.
+		/// Plugin authors are advised to use GUIDs as identifiers to prevent conflicts.
+		/// <para/>
+		/// NOTE: Defining cycles (for example by accidentally setting <see cref="MenuID"/> equal to <see cref="ParentMenuID"/>)
+		/// will lead to a stack-overflow and crash of ILSpy at startup.
+		/// </summary>
+		public string MenuID { get; set; }
+		/// <summary>
+		/// Gets/Sets the parent of this menu item. All menu items sharing the same parent will be displayed as sub-menu items.
+		/// If this property is set to <see langword="null"/>, the menu item is displayed in the top-level menu.
+		/// <para/>
+		/// NOTE: Defining cycles (for example by accidentally setting <see cref="MenuID"/> equal to <see cref="ParentMenuID"/>)
+		/// will lead to a stack-overflow and crash of ILSpy at startup.
+		/// </summary>
+		public string ParentMenuID { get; set; }
 		public string Icon { get; set; }
 		public string Header { get; set; }
 		public string Category { get; set; }
@@ -267,41 +286,64 @@ namespace ICSharpCode.ILSpy
 		bool ShowContextMenu(TextViewContext context, out ContextMenu menu)
 		{
 			menu = new ContextMenu();
-			foreach (var category in entries.OrderBy(c => c.Metadata.Order).GroupBy(c => c.Metadata.Category))
+			var menuGroups = new Dictionary<string, Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[]>();
+			Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[] topLevelGroup = null;
+			foreach (var group in entries.OrderBy(c => c.Metadata.Order).GroupBy(c => c.Metadata.ParentMenuID))
 			{
-				bool needSeparatorForCategory = menu.Items.Count > 0;
-				foreach (var entryPair in category)
+				if (group.Key == null)
 				{
-					IContextMenuEntry entry = entryPair.Value;
-					if (entry.IsVisible(context))
+					topLevelGroup = group.ToArray();
+				}
+				else
+				{
+					menuGroups.Add(group.Key, group.ToArray());
+				}
+			}
+			BuildMenu(topLevelGroup ?? Array.Empty<Lazy<IContextMenuEntry, IContextMenuEntryMetadata>>(), menu.Items);
+			return menu.Items.Count > 0;
+
+			void BuildMenu(Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[] menuGroup, ItemCollection parent)
+			{
+				foreach (var category in menuGroup.GroupBy(c => c.Metadata.Category))
+				{
+					bool needSeparatorForCategory = parent.Count > 0;
+					foreach (var entryPair in category)
 					{
-						if (needSeparatorForCategory)
+						IContextMenuEntry entry = entryPair.Value;
+						if (entry.IsVisible(context))
 						{
-							menu.Items.Add(new Separator());
-							needSeparatorForCategory = false;
+							if (needSeparatorForCategory)
+							{
+								parent.Add(new Separator());
+								needSeparatorForCategory = false;
+							}
+							MenuItem menuItem = new MenuItem();
+							menuItem.Header = MainWindow.GetResourceString(entryPair.Metadata.Header);
+							menuItem.InputGestureText = entryPair.Metadata.InputGestureText;
+							if (!string.IsNullOrEmpty(entryPair.Metadata.Icon))
+							{
+								menuItem.Icon = new Image {
+									Width = 16,
+									Height = 16,
+									Source = Images.Load(entryPair.Value, entryPair.Metadata.Icon)
+								};
+							}
+							if (entryPair.Value.IsEnabled(context))
+							{
+								menuItem.Click += delegate { entry.Execute(context); };
+							}
+							else
+								menuItem.IsEnabled = false;
+							parent.Add(menuItem);
+
+							if (entryPair.Metadata.MenuID != null && menuGroups.TryGetValue(entryPair.Metadata.MenuID, out var group))
+							{
+								BuildMenu(group, menuItem.Items);
+							}
 						}
-						MenuItem menuItem = new MenuItem();
-						menuItem.Header = MainWindow.GetResourceString(entryPair.Metadata.Header);
-						menuItem.InputGestureText = entryPair.Metadata.InputGestureText;
-						if (!string.IsNullOrEmpty(entryPair.Metadata.Icon))
-						{
-							menuItem.Icon = new Image {
-								Width = 16,
-								Height = 16,
-								Source = Images.Load(entryPair.Value, entryPair.Metadata.Icon)
-							};
-						}
-						if (entryPair.Value.IsEnabled(context))
-						{
-							menuItem.Click += delegate { entry.Execute(context); };
-						}
-						else
-							menuItem.IsEnabled = false;
-						menu.Items.Add(menuItem);
 					}
 				}
 			}
-			return menu.Items.Count > 0;
 		}
 	}
 }
