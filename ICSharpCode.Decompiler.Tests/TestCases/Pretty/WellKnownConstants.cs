@@ -46,6 +46,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const long LongMaxValue = long.MaxValue;
 		public const long LongMinValue = long.MinValue;
 
+		public const double Double_One_Div_LongMaxValue = 1.0842021724855044E-19;
+		public const double Double_One_Div_LongMaxValue_NextDouble = 1.0842021724855047E-19;
+
 		public const float FloatZero = 0f;
 		public const float FloatMinusZero = -0f;
 		public const float FloatNaN = float.NaN;

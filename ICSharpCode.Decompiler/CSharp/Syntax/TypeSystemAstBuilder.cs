@@ -1593,8 +1593,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (v - ai == 0)
 					break;
 				v = 1 / (v - ai);
-				if (Math.Abs(v) > long.MaxValue)
-					break; // value cannot be stored in fraction without overflow
+				if (Math.Abs(v) >= long.MaxValue)
+				{
+					// values greater than long.MaxValue cannot be stored in fraction without overflow.
+					// Because the implicit conversion of long.MaxValue to double loses precision,
+					// it's possible that a value v that is strictly greater than long.MaxValue will
+					// nevertheless compare equal, so we use ">=" to compensate.
+					break;
+				}
 			}
 
 			if (m[1, 0] == 0)
