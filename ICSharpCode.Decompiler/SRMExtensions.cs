@@ -195,15 +195,133 @@ namespace ICSharpCode.Decompiler
 		public static bool IsKnownType(this EntityHandle handle, MetadataReader reader,
 			KnownTypeCode knownType)
 		{
-			return !handle.IsNil
-				&& GetFullTypeName(handle, reader) == KnownTypeReference.Get(knownType).TypeName;
+			return IsKnownType(handle, reader, KnownTypeReference.Get(knownType).TypeName);
 		}
 
 		internal static bool IsKnownType(this EntityHandle handle, MetadataReader reader,
 			KnownAttribute knownType)
 		{
-			return !handle.IsNil
-				&& GetFullTypeName(handle, reader) == knownType.GetTypeName();
+			return IsKnownType(handle, reader, knownType.GetTypeName());
+		}
+
+		private static bool IsKnownType(EntityHandle handle, MetadataReader reader, TopLevelTypeName knownType)
+		{
+			if (handle.IsNil)
+				return false;
+			StringHandle nameHandle, namespaceHandle;
+			switch (handle.Kind)
+			{
+				case HandleKind.TypeReference:
+					var tr = reader.GetTypeReference((TypeReferenceHandle)handle);
+					// ignore exported and nested types
+					if (tr.ResolutionScope.IsNil || tr.ResolutionScope.Kind == HandleKind.TypeReference)
+						return false;
+					nameHandle = tr.Name;
+					namespaceHandle = tr.Namespace;
+					break;
+				case HandleKind.TypeDefinition:
+					var td = reader.GetTypeDefinition((TypeDefinitionHandle)handle);
+					if (td.IsNested)
+						return false;
+					nameHandle = td.Name;
+					namespaceHandle = td.Namespace;
+					break;
+				case HandleKind.TypeSpecification:
+					var ts = reader.GetTypeSpecification((TypeSpecificationHandle)handle);
+					var blob = reader.GetBlobReader(ts.Signature);
+					return SignatureIsKnownType(reader, knownType, ref blob);
+				default:
+					return false;
+			}
+			if (knownType.TypeParameterCount == 0)
+			{
+				if (!reader.StringComparer.Equals(nameHandle, knownType.Name))
+					return false;
+			}
+			else
+			{
+				string name = reader.GetString(nameHandle);
+				name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name, out int typeParameterCount);
+				if (typeParameterCount != knownType.TypeParameterCount || name != knownType.Name)
+					return false;
+			}
+			if (namespaceHandle.IsNil)
+			{
+				return knownType.Namespace.Length == 0;
+			}
+			else
+			{
+				return reader.StringComparer.Equals(namespaceHandle, knownType.Namespace);
+			}
+		}
+
+		private static bool SignatureIsKnownType(MetadataReader reader, TopLevelTypeName knownType, ref BlobReader blob)
+		{
+			if (!blob.TryReadCompressedInteger(out int typeCode))
+				return false;
+			switch (typeCode)
+			{
+				case 0x1: // ELEMENT_TYPE_VOID
+					return knownType.IsKnownType(KnownTypeCode.Void);
+				case 0x2: // ELEMENT_TYPE_BOOLEAN 
+					return knownType.IsKnownType(KnownTypeCode.Boolean);
+				case 0x3: // ELEMENT_TYPE_CHAR 
+					return knownType.IsKnownType(KnownTypeCode.Char);
+				case 0x4: // ELEMENT_TYPE_I1 
+					return knownType.IsKnownType(KnownTypeCode.SByte);
+				case 0x5: // ELEMENT_TYPE_U1
+					return knownType.IsKnownType(KnownTypeCode.Byte);
+				case 0x6: // ELEMENT_TYPE_I2
+					return knownType.IsKnownType(KnownTypeCode.Int16);
+				case 0x7: // ELEMENT_TYPE_U2
+					return knownType.IsKnownType(KnownTypeCode.UInt16);
+				case 0x8: // ELEMENT_TYPE_I4
+					return knownType.IsKnownType(KnownTypeCode.Int32);
+				case 0x9: // ELEMENT_TYPE_U4
+					return knownType.IsKnownType(KnownTypeCode.UInt32);
+				case 0xA: // ELEMENT_TYPE_I8
+					return knownType.IsKnownType(KnownTypeCode.Int64);
+				case 0xB: // ELEMENT_TYPE_U8
+					return knownType.IsKnownType(KnownTypeCode.UInt64);
+				case 0xC: // ELEMENT_TYPE_R4
+					return knownType.IsKnownType(KnownTypeCode.Single);
+				case 0xD: // ELEMENT_TYPE_R8
+					return knownType.IsKnownType(KnownTypeCode.Double);
+				case 0xE: // ELEMENT_TYPE_STRING
+					return knownType.IsKnownType(KnownTypeCode.String);
+				case 0x16: // ELEMENT_TYPE_TYPEDBYREF
+					return knownType.IsKnownType(KnownTypeCode.TypedReference);
+				case 0x18: // ELEMENT_TYPE_I
+					return knownType.IsKnownType(KnownTypeCode.IntPtr);
+				case 0x19: // ELEMENT_TYPE_U
+					return knownType.IsKnownType(KnownTypeCode.UIntPtr);
+				case 0x1C: // ELEMENT_TYPE_OBJECT
+					return knownType.IsKnownType(KnownTypeCode.Object);
+				case 0xF: // ELEMENT_TYPE_PTR 
+				case 0x10: // ELEMENT_TYPE_BYREF 
+				case 0x45: // ELEMENT_TYPE_PINNED
+				case 0x1D: // ELEMENT_TYPE_SZARRAY
+				case 0x1B: // ELEMENT_TYPE_FNPTR 
+				case 0x14: // ELEMENT_TYPE_ARRAY 
+					return false;
+				case 0x1F: // ELEMENT_TYPE_CMOD_REQD 
+				case 0x20: // ELEMENT_TYPE_CMOD_OPT 
+						   // modifier
+					blob.ReadTypeHandle(); // skip modifier
+					return SignatureIsKnownType(reader, knownType, ref blob);
+				case 0x15: // ELEMENT_TYPE_GENERICINST 
+						   // generic type
+					return SignatureIsKnownType(reader, knownType, ref blob);
+				case 0x13: // ELEMENT_TYPE_VAR
+				case 0x1E: // ELEMENT_TYPE_MVAR 
+						   // index
+					return false;
+				case 0x11: // ELEMENT_TYPE_VALUETYPE
+				case 0x12: // ELEMENT_TYPE_CLASS
+					return IsKnownType(blob.ReadTypeHandle(), reader, knownType);
+				default:
+					return false;
+			}
 		}
 
 		public static FullTypeName GetFullTypeName(this TypeSpecificationHandle handle, MetadataReader reader)
