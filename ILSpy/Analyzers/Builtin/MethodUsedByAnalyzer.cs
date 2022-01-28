@@ -57,12 +57,13 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
 			{
 				var parentModule = (MetadataModule)type.ParentModule;
-				mapping = context.Language.GetCodeMappingInfo(parentModule.PEFile, type.MetadataToken);
+				mapping = null;
 				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
 				foreach (var method in methods)
 				{
 					if (IsUsedInMethod((IMethod)analyzedSymbol, method, context))
 					{
+						mapping ??= context.Language.GetCodeMappingInfo(parentModule.PEFile, type.MetadataToken);
 						var parent = mapping.GetParentMethod((MethodDefinitionHandle)method.MetadataToken);
 						yield return parentModule.GetDefinition(parent);
 					}
