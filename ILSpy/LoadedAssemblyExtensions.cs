@@ -31,6 +31,11 @@ namespace ICSharpCode.ILSpy
 			return GetLoadedAssembly(file).GetAssemblyResolver(loadOnDemand);
 		}
 
+		internal static IAssemblyResolver GetAssemblyResolver(this PEFile file, AssemblyListSnapshot snapshot, bool loadOnDemand = true)
+		{
+			return GetLoadedAssembly(file).GetAssemblyResolver(snapshot, loadOnDemand);
+		}
+
 		public static IDebugInfoProvider GetDebugInfoOrNull(this PEFile file)
 		{
 			return GetLoadedAssembly(file).GetDebugInfoOrNull();

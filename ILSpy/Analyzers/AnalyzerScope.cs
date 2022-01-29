@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			{
 				foreach (var module in GetModulesInScope(ct))
 				{
-					var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
+					var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver(assemblyListSnapshot, loadOnDemand: false));
 					foreach (var type in typeSystem.MainModule.TypeDefinitions)
 					{
 						yield return type;

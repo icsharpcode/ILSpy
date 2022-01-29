@@ -44,6 +44,10 @@ namespace ICSharpCode.ILSpy
 		public async Task<PEFile?> TryGetModuleAsync(IAssemblyReference reference, string tfm)
 		{
 			bool isWinRT = reference.IsWindowsRuntime;
+			if (tfm.StartsWith(".NETFramework,Version=v4.", StringComparison.Ordinal))
+			{
+				tfm = ".NETFramework,Version=v4";
+			}
 			string key = tfm + ";" + (isWinRT ? reference.Name : reference.FullName);
 			var lookup = LazyInit.VolatileRead(ref isWinRT ? ref asmLookupByShortName : ref asmLookupByFullName);
 			if (lookup == null)
@@ -70,6 +74,10 @@ namespace ICSharpCode.ILSpy
 					if (reader == null || !reader.IsAssembly)
 						continue;
 					string tfm = await loaded.GetTargetFrameworkIdAsync().ConfigureAwait(false);
+					if (tfm.StartsWith(".NETFramework,Version=v4.", StringComparison.Ordinal))
+					{
+						tfm = ".NETFramework,Version=v4";
+					}
 					string key = tfm + ";"
 						+ (shortNames ? module.Name : module.FullName);
 					if (!result.ContainsKey(key))

@@ -676,7 +676,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				{
 					var gac = Path.Combine(gac_paths[i], gacs[j]);
 					var file = GetAssemblyFile(reference, prefixes[i], gac);
-					if (Directory.Exists(gac) && File.Exists(file))
+					if (File.Exists(file))
 						return file;
 				}
 			}
