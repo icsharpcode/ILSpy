@@ -117,7 +117,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var mainModule = (MetadataModule)method.ParentModule;
 			var blob = methodBody.GetILReader();
 
-			var baseMethod = InheritanceHelper.GetBaseMember(analyzedMethod);
+			var baseMethod = (IMethod)InheritanceHelper.GetBaseMember(analyzedMethod);
 			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
 			while (blob.RemainingBytes > 0)
@@ -137,8 +137,13 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					return false; // unexpected end of blob
 				}
 				var member = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
-				if (member.IsNil || !member.Kind.IsMemberKind())
-					continue;
+				if (!AnalyzerHelpers.IsPossibleReferenceTo(member, mainModule.PEFile, analyzedMethod))
+				{
+					if (baseMethod == null || !AnalyzerHelpers.IsPossibleReferenceTo(member, mainModule.PEFile, baseMethod))
+					{
+						continue;
+					}
+				}
 
 				IMember m;
 				try
@@ -159,12 +164,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 						return true;
 					}
 				}
-				else
+				if (IsSameMember(analyzedMethod, m))
 				{
-					if (IsSameMember(analyzedMethod, m))
-					{
-						return true;
-					}
+					return true;
 				}
 			}
 
