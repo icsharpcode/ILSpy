@@ -19,6 +19,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -118,55 +119,20 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
+		internal AssemblyListSnapshot GetSnapshot()
+		{
+			lock (lockObj)
+			{
+				return new AssemblyListSnapshot(assemblies.ToImmutableArray());
+			}
+		}
+
 		/// <summary>
 		/// Gets all loaded assemblies recursively, including assemblies found in bundles or packages.
 		/// </summary>
-		public async Task<IList<LoadedAssembly>> GetAllAssemblies()
+		public Task<IList<LoadedAssembly>> GetAllAssemblies()
 		{
-			var assemblies = GetAssemblies();
-			var results = new List<LoadedAssembly>(assemblies.Length);
-
-			foreach (var asm in assemblies)
-			{
-				LoadedAssembly.LoadResult result;
-				try
-				{
-					result = await asm.GetLoadResultAsync();
-				}
-				catch
-				{
-					results.Add(asm);
-					continue;
-				}
-				if (result.Package != null)
-				{
-					AddDescendants(result.Package.RootFolder);
-				}
-				else if (result.PEFile != null)
-				{
-					results.Add(asm);
-				}
-			}
-
-			void AddDescendants(PackageFolder folder)
-			{
-				foreach (var subFolder in folder.Folders)
-				{
-					AddDescendants(subFolder);
-				}
-
-				foreach (var entry in folder.Entries)
-				{
-					if (!entry.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-						continue;
-					var asm = folder.ResolveFileName(entry.Name);
-					if (asm == null)
-						continue;
-					results.Add(asm);
-				}
-			}
-
-			return results;
+			return GetSnapshot().GetAllAssembliesAsync();
 		}
 
 		public int Count {

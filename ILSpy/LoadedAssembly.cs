@@ -470,11 +470,11 @@ namespace ICSharpCode.ILSpy
 
 			readonly IAssemblyResolver? providedAssemblyResolver;
 			readonly AssemblyList assemblyList;
-			readonly LoadedAssembly[] alreadyLoadedAssemblies;
+			readonly AssemblyListSnapshot alreadyLoadedAssemblies;
 			readonly Task<string> tfmTask;
 			readonly ReferenceLoadInfo referenceLoadInfo;
 
-			public MyAssemblyResolver(LoadedAssembly parent, bool loadOnDemand)
+			public MyAssemblyResolver(LoadedAssembly parent, AssemblyListSnapshot assemblyListSnapshot, bool loadOnDemand)
 			{
 				this.parent = parent;
 				this.loadOnDemand = loadOnDemand;
@@ -484,7 +484,7 @@ namespace ICSharpCode.ILSpy
 				// Note: we cache a copy of the assembly list in the constructor, so that the
 				// resolve calls only search-by-asm-name in the assemblies that were already loaded
 				// at the time of the GetResolver() call.
-				this.alreadyLoadedAssemblies = assemblyList.GetAssemblies();
+				this.alreadyLoadedAssemblies = assemblyListSnapshot;
 				// If we didn't do this, we'd also search in the assemblies that we just started to load
 				// in previous Resolve() calls; but we don't want to wait for those to be loaded.
 				this.tfmTask = parent.GetTargetFrameworkIdAsync();
@@ -495,9 +495,6 @@ namespace ICSharpCode.ILSpy
 			{
 				return ResolveAsync(reference).GetAwaiter().GetResult();
 			}
-
-			Dictionary<string, PEFile>? asmLookupByFullName;
-			Dictionary<string, PEFile>? asmLookupByShortName;
 
 			/// <summary>
 			/// 0) if we're inside a package, look for filename.dll in parent directories
@@ -524,17 +521,9 @@ namespace ICSharpCode.ILSpy
 
 				string tfm = await tfmTask.ConfigureAwait(false);
 
-				bool isWinRT = reference.IsWindowsRuntime;
-				string key = tfm + ";" + (isWinRT ? reference.Name : reference.FullName);
-
 				// 1) try to find exact match by tfm + full asm name in loaded assemblies
-				var lookup = LazyInit.VolatileRead(ref isWinRT ? ref asmLookupByShortName : ref asmLookupByFullName);
-				if (lookup == null)
-				{
-					lookup = await CreateLoadedAssemblyLookupAsync(shortNames: isWinRT).ConfigureAwait(false);
-					lookup = LazyInit.GetOrSet(ref isWinRT ? ref asmLookupByShortName : ref asmLookupByFullName, lookup);
-				}
-				if (lookup.TryGetValue(key, out module))
+				module = await alreadyLoadedAssemblies.TryGetModuleAsync(reference, tfm);
+				if (module != null)
 				{
 					referenceLoadInfo.AddMessageOnce(reference.FullName, MessageKind.Info, "Success - Found in Assembly List");
 					return module;
@@ -566,7 +555,7 @@ namespace ICSharpCode.ILSpy
 					// Assembly not found; try to find a similar-enough already-loaded assembly
 					var candidates = new List<(LoadedAssembly assembly, Version version)>();
 
-					foreach (LoadedAssembly loaded in alreadyLoadedAssemblies)
+					foreach (LoadedAssembly loaded in alreadyLoadedAssemblies.Assemblies)
 					{
 						module = await loaded.GetPEFileOrNullAsync().ConfigureAwait(false);
 						var reader = module?.Metadata;
@@ -592,35 +581,6 @@ namespace ICSharpCode.ILSpy
 					referenceLoadInfo.AddMessageOnce(reference.ToString(), MessageKind.Info, "Success - Found in Assembly List with different TFM or version: " + bestCandidate.fileName);
 					return await bestCandidate.GetPEFileOrNullAsync().ConfigureAwait(false);
 				}
-			}
-
-			private async Task<Dictionary<string, PEFile>> CreateLoadedAssemblyLookupAsync(bool shortNames)
-			{
-				var result = new Dictionary<string, PEFile>(StringComparer.OrdinalIgnoreCase);
-				foreach (LoadedAssembly loaded in alreadyLoadedAssemblies)
-				{
-					try
-					{
-						var module = await loaded.GetPEFileOrNullAsync().ConfigureAwait(false);
-						if (module == null)
-							continue;
-						var reader = module.Metadata;
-						if (reader == null || !reader.IsAssembly)
-							continue;
-						string tfm = await loaded.GetTargetFrameworkIdAsync().ConfigureAwait(false);
-						string key = tfm + ";"
-							+ (shortNames ? module.Name : module.FullName);
-						if (!result.ContainsKey(key))
-						{
-							result.Add(key, module);
-						}
-					}
-					catch (BadImageFormatException)
-					{
-						continue;
-					}
-				}
-				return result;
 			}
 
 			public PEFile? ResolveModule(PEFile mainModule, string moduleName)
@@ -659,7 +619,7 @@ namespace ICSharpCode.ILSpy
 				else
 				{
 					// Module does not exist on disk, look for one with a matching name in the assemblylist:
-					foreach (LoadedAssembly loaded in alreadyLoadedAssemblies)
+					foreach (LoadedAssembly loaded in alreadyLoadedAssemblies.Assemblies)
 					{
 						var module = await loaded.GetPEFileOrNullAsync().ConfigureAwait(false);
 						var reader = module?.Metadata;
@@ -679,7 +639,12 @@ namespace ICSharpCode.ILSpy
 
 		public IAssemblyResolver GetAssemblyResolver(bool loadOnDemand = true)
 		{
-			return new MyAssemblyResolver(this, loadOnDemand);
+			return new MyAssemblyResolver(this, AssemblyList.GetSnapshot(), loadOnDemand);
+		}
+
+		internal IAssemblyResolver GetAssemblyResolver(AssemblyListSnapshot snapshot, bool loadOnDemand = true)
+		{
+			return new MyAssemblyResolver(this, snapshot, loadOnDemand);
 		}
 
 		private UniversalAssemblyResolver GetUniversalResolver()

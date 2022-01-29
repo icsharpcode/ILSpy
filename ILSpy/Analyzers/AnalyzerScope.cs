@@ -32,6 +32,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 	public class AnalyzerScope
 	{
 		readonly ITypeDefinition typeScope;
+		readonly AssemblyListSnapshot assemblyListSnapshot;
 
 		/// <summary>
 		/// Returns whether this scope is local, i.e., AnalyzedSymbol is only reachable
@@ -40,6 +41,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public bool IsLocal { get; }
 
 		public AssemblyList AssemblyList { get; }
+
 		public ISymbol AnalyzedSymbol { get; }
 
 		public ITypeDefinition TypeScope => typeScope;
@@ -49,6 +51,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public AnalyzerScope(AssemblyList assemblyList, IEntity entity)
 		{
 			AssemblyList = assemblyList;
+			assemblyListSnapshot = assemblyList.GetSnapshot();
 			AnalyzedSymbol = entity;
 			if (entity is ITypeDefinition type)
 			{
@@ -76,7 +79,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public IEnumerable<PEFile> GetAllModules()
 		{
-			return AssemblyList.GetAllAssemblies().GetAwaiter().GetResult()
+			return assemblyListSnapshot.GetAllAssembliesAsync().GetAwaiter().GetResult()
 				.Select(asm => asm.GetPEFileOrNull())
 				.Where(x => x != null);
 		}
@@ -131,7 +134,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 			toWalkFiles.Push(self);
 			checkedFiles.Add(self);
-			IList<LoadedAssembly> assemblies = AssemblyList.GetAllAssemblies().GetAwaiter().GetResult();
+			IList<LoadedAssembly> assemblies = assemblyListSnapshot.GetAllAssembliesAsync().GetAwaiter().GetResult();
 
 			do
 			{
@@ -145,7 +148,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 						continue;
 					if (checkedFiles.Contains(module))
 						continue;
-					var resolver = assembly.GetAssemblyResolver(loadOnDemand: false);
+					var resolver = assembly.GetAssemblyResolver(assemblyListSnapshot, loadOnDemand: false);
 					foreach (var reference in module.AssemblyReferences)
 					{
 						if (resolver.Resolve(reference) == curFile)
@@ -184,7 +187,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 			if (friendAssemblies.Count > 0)
 			{
-				IEnumerable<LoadedAssembly> assemblies = AssemblyList.GetAllAssemblies()
+				IEnumerable<LoadedAssembly> assemblies = assemblyListSnapshot.GetAllAssembliesAsync()
 					.GetAwaiter().GetResult();
 
 				foreach (var assembly in assemblies)
@@ -208,7 +211,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 			foreach (var h in metadata.TypeReferences)
 			{
 				var typeRef = metadata.GetTypeReference(h);
-				if (metadata.StringComparer.Equals(typeRef.Name, typeScopeName) && metadata.StringComparer.Equals(typeRef.Namespace, typeScopeNamespace))
+				if (metadata.StringComparer.Equals(typeRef.Name, typeScopeName)
+					&& metadata.StringComparer.Equals(typeRef.Namespace, typeScopeNamespace))
 				{
 					hasRef = true;
 					break;
@@ -223,7 +227,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 			foreach (var h in metadata.ExportedTypes)
 			{
 				var exportedType = metadata.GetExportedType(h);
-				if (exportedType.IsForwarder && metadata.StringComparer.Equals(exportedType.Name, typeScopeName) && metadata.StringComparer.Equals(exportedType.Namespace, typeScopeNamespace))
+				if (exportedType.IsForwarder
+					&& metadata.StringComparer.Equals(exportedType.Name, typeScopeName)
+					&& metadata.StringComparer.Equals(exportedType.Namespace, typeScopeNamespace))
 				{
 					hasForward = true;
 					break;
