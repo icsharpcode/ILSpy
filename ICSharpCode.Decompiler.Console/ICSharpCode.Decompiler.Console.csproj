@@ -14,7 +14,7 @@
     <AssemblyVersion>7.2.0.0</AssemblyVersion>
     <FileVersion>7.2.0.0</FileVersion>
     <Description>Command-line decompiler using the ILSpy decompilation engine</Description>
-    <Copyright>Copyright 2011-2021 AlphaSierraPapa</Copyright>
+    <Copyright>Copyright 2011-2022 AlphaSierraPapa</Copyright>
     <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>ILSpyCmdNuGetPackageIcon.png</PackageIcon>

@@ -1,4 +1,4 @@
-Copyright 2011-2021 for the ILSpy team
+Copyright 2011-2022 for the ILSpy team
 by
 
   AlphaSierraPapa, Christoph Wille
