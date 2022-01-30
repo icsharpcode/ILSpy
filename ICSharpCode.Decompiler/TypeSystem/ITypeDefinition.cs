@@ -59,6 +59,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		FullTypeName FullTypeName { get; }
 
 		/// <summary>
+		/// Gets the short type name as stored in metadata.
+		/// That is, the short type name including the generic arity (`N) appended.
+		/// </summary>
+		/// <remarks>
+		/// "Int32" for int
+		/// "List`1" for List&lt;T&gt;
+		/// "List`1" for List&lt;string&gt;
+		/// </remarks>
+		string MetadataName { get; }
+
+		/// <summary>
 		/// Gets/Sets the declaring type (incl. type arguments, if any).
 		/// This property will return null for top-level types.
 		/// </summary>
