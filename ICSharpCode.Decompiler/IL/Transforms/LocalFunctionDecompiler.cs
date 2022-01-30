@@ -827,7 +827,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!IsLocalFunctionMethod(module, method, context))
 					continue;
 				var md = metadata.GetMethodDefinition(method);
-				if (md.DecodeSignature(new FindTypeDecoder(typeHandle), default).ParameterTypes.Any())
+				if (md.DecodeSignature(new FindTypeDecoder(typeHandle, module, 0), default).ParameterTypes.Any())
 					return true;
 			}
 
@@ -850,43 +850,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			callerName = match.Groups[1].Value;
 			functionName = match.Groups[2].Value;
 			return match.Success;
-		}
-
-		struct FindTypeDecoder : ISignatureTypeProvider<bool, Unit>
-		{
-			readonly TypeDefinitionHandle handle;
-
-			public FindTypeDecoder(TypeDefinitionHandle handle)
-			{
-				this.handle = handle;
-			}
-
-			public bool GetArrayType(bool elementType, ArrayShape shape) => elementType;
-			public bool GetByReferenceType(bool elementType) => elementType;
-			public bool GetFunctionPointerType(MethodSignature<bool> signature) => false;
-			public bool GetGenericInstantiation(bool genericType, ImmutableArray<bool> typeArguments) => genericType;
-			public bool GetGenericMethodParameter(Unit genericContext, int index) => false;
-			public bool GetGenericTypeParameter(Unit genericContext, int index) => false;
-			public bool GetModifiedType(bool modifier, bool unmodifiedType, bool isRequired) => unmodifiedType;
-			public bool GetPinnedType(bool elementType) => elementType;
-			public bool GetPointerType(bool elementType) => elementType;
-			public bool GetPrimitiveType(PrimitiveTypeCode typeCode) => false;
-			public bool GetSZArrayType(bool elementType) => false;
-
-			public bool GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
-			{
-				return this.handle == handle;
-			}
-
-			public bool GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
-			{
-				return false;
-			}
-
-			public bool GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
-			{
-				return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
-			}
 		}
 
 		class FindRefStructParameters : ISignatureTypeProvider<TypeDefinitionHandle, Unit>
