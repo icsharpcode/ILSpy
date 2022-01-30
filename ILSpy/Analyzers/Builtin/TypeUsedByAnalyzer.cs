@@ -38,10 +38,11 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
 			Debug.Assert(analyzedSymbol is ITypeDefinition);
-			var scope = context.GetScopeOf((ITypeDefinition)analyzedSymbol);
+			var analyzedType = (ITypeDefinition)analyzedSymbol;
+			var scope = context.GetScopeOf(analyzedType);
 			foreach (var type in scope.GetTypesInScope(context.CancellationToken))
 			{
-				foreach (var result in ScanType((ITypeDefinition)analyzedSymbol, type, context))
+				foreach (var result in ScanType(analyzedType, type, context))
 					yield return result;
 			}
 		}
@@ -226,26 +227,20 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				return;
 
 			var module = (MetadataModule)method.ParentModule;
+			var metadata = module.PEFile.Metadata;
 			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
+			var decoder = new FindTypeDecoder(module, visitor.TypeDefinition);
 
 			if (!methodBody.LocalSignature.IsNil)
 			{
-				ImmutableArray<IType> localSignature;
 				try
 				{
-					localSignature = module.DecodeLocalSignature(methodBody.LocalSignature, genericContext);
+					var ss = metadata.GetStandaloneSignature(methodBody.LocalSignature);
+					visitor.Found |= HandleStandaloneSignature(ss);
 				}
 				catch (BadImageFormatException)
 				{
 					// Issue #2197: ignore invalid local signatures
-					localSignature = ImmutableArray<IType>.Empty;
-				}
-				foreach (var type in localSignature)
-				{
-					type.AcceptVisitor(visitor);
-
-					if (visitor.Found)
-						return;
 				}
 			}
 
@@ -261,49 +256,110 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					case OperandType.Sig:
 					case OperandType.Tok:
 					case OperandType.Type:
-						var member = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
-						if (member.IsNil)
-							continue;
-						switch (member.Kind)
-						{
-							case HandleKind.TypeReference:
-							case HandleKind.TypeSpecification:
-							case HandleKind.TypeDefinition:
-								module.ResolveType(member, genericContext).AcceptVisitor(visitor);
-								if (visitor.Found)
-									return;
-								break;
-
-							case HandleKind.FieldDefinition:
-							case HandleKind.MethodDefinition:
-							case HandleKind.MemberReference:
-							case HandleKind.MethodSpecification:
-								VisitMember(visitor, module.ResolveEntity(member, genericContext) as IMember, context);
-
-								if (visitor.Found)
-									return;
-								break;
-
-							case HandleKind.StandaloneSignature:
-								var (_, fpt) = module.DecodeMethodSignature((StandaloneSignatureHandle)member, genericContext);
-								fpt.AcceptVisitor(visitor);
-
-								if (visitor.Found)
-									return;
-								break;
-
-							default:
-								break;
-						}
+						HandleMember(MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32()));
+						if (visitor.Found)
+							return;
 						break;
 					default:
 						blob.SkipOperand(opCode);
 						break;
 				}
 			}
+
+			void HandleMember(EntityHandle member)
+			{
+				if (member.IsNil)
+					return;
+				switch (member.Kind)
+				{
+					case HandleKind.TypeReference:
+					case HandleKind.TypeSpecification:
+					case HandleKind.TypeDefinition:
+						module.ResolveType(member, genericContext).AcceptVisitor(visitor);
+						break;
+
+					case HandleKind.FieldDefinition:
+						var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)member);
+						HandleMember(fd.GetDeclaringType());
+						visitor.Found |= fd.DecodeSignature(decoder, default);
+						break;
+
+					case HandleKind.MethodDefinition:
+						var md = metadata.GetMethodDefinition((MethodDefinitionHandle)member);
+						HandleMember(md.GetDeclaringType());
+						var msig = md.DecodeSignature(decoder, default);
+						visitor.Found |= msig.ReturnType;
+						foreach (var t in msig.ParameterTypes)
+						{
+							visitor.Found |= t;
+						}
+						break;
+
+					case HandleKind.MemberReference:
+						var mr = metadata.GetMemberReference((MemberReferenceHandle)member);
+						HandleMember(mr.Parent);
+						switch (mr.GetKind())
+						{
+							case MemberReferenceKind.Method:
+								msig = mr.DecodeMethodSignature(decoder, default);
+								visitor.Found |= msig.ReturnType;
+								foreach (var t in msig.ParameterTypes)
+								{
+									visitor.Found |= t;
+								}
+								break;
+							case MemberReferenceKind.Field:
+								visitor.Found |= mr.DecodeFieldSignature(decoder, default);
+								break;
+						}
+						break;
+
+					case HandleKind.MethodSpecification:
+						var ms = metadata.GetMethodSpecification((MethodSpecificationHandle)member);
+						HandleMember(ms.Method);
+						var mssig = ms.DecodeSignature(decoder, default);
+						foreach (var t in mssig)
+						{
+							visitor.Found |= t;
+						}
+						break;
+
+					case HandleKind.StandaloneSignature:
+						var ss = metadata.GetStandaloneSignature((StandaloneSignatureHandle)member);
+						visitor.Found |= HandleStandaloneSignature(ss);
+						break;
+				}
+			}
+
+			bool HandleStandaloneSignature(StandaloneSignature signature)
+			{
+				switch (signature.GetKind())
+				{
+					case StandaloneSignatureKind.Method:
+						var msig = signature.DecodeMethodSignature(decoder, default);
+						if (msig.ReturnType)
+							return true;
+						foreach (var t in msig.ParameterTypes)
+						{
+							if (t)
+								return true;
+						}
+						return false;
+					case StandaloneSignatureKind.LocalVariables:
+						var sig = signature.DecodeLocalSignature(decoder, default);
+						foreach (var t in sig)
+						{
+							if (t)
+								return true;
+						}
+						return false;
+					default:
+						return false;
+				}
+			}
 		}
 
-		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity;
+		public bool Show(ISymbol symbol) => symbol is ITypeDefinition;
 	}
 
 	class TypeDefinitionUsedVisitor : TypeVisitor
