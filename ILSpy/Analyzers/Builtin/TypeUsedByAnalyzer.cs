@@ -273,9 +273,15 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				switch (member.Kind)
 				{
 					case HandleKind.TypeReference:
+						visitor.Found |= decoder.GetTypeFromReference(metadata, (TypeReferenceHandle)member, 0);
+						break;
+
 					case HandleKind.TypeSpecification:
+						visitor.Found |= decoder.GetTypeFromSpecification(metadata, default, (TypeSpecificationHandle)member, 0);
+						break;
+
 					case HandleKind.TypeDefinition:
-						module.ResolveType(member, genericContext).AcceptVisitor(visitor);
+						visitor.Found |= decoder.GetTypeFromDefinition(metadata, (TypeDefinitionHandle)member, 0);
 						break;
 
 					case HandleKind.FieldDefinition:
