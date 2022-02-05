@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			if (entity is ITypeDefinition type)
 			{
 				typeScope = type;
-				effectiveAccessibility = DetermineEffectiveAccessibility(ref typeScope);
+				effectiveAccessibility = DetermineEffectiveAccessibility(ref typeScope, Accessibility.Public);
 			}
 			else
 			{
@@ -106,13 +106,15 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 		}
 
-		static Accessibility DetermineEffectiveAccessibility(ref ITypeDefinition typeScope, Accessibility memberAccessibility = Accessibility.Public)
+		static Accessibility DetermineEffectiveAccessibility(ref ITypeDefinition typeScope, Accessibility memberAccessibility)
 		{
 			Accessibility accessibility = memberAccessibility;
-			while (typeScope.DeclaringTypeDefinition != null && !accessibility.LessThanOrEqual(Accessibility.Private))
+			var ts = typeScope;
+			while (ts != null && !accessibility.LessThanOrEqual(Accessibility.Private))
 			{
-				accessibility = accessibility.Intersect(typeScope.Accessibility);
-				typeScope = typeScope.DeclaringTypeDefinition;
+				accessibility = accessibility.Intersect(ts.Accessibility);
+				typeScope = ts;
+				ts = ts.DeclaringTypeDefinition;
 			}
 			// Once we reach a private entity, we leave the loop with typeScope set to the class that
 			// contains the private entity = the scope that needs to be searched.
