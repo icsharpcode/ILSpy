@@ -84,6 +84,11 @@ namespace ICSharpCode.ILSpy.Analyzers
 				.Where(x => x != null);
 		}
 
+		public DecompilerTypeSystem ConstructTypeSystem(PEFile module)
+		{
+			return new DecompilerTypeSystem(module, module.GetAssemblyResolver(assemblyListSnapshot, loadOnDemand: false));
+		}
+
 		public IEnumerable<ITypeDefinition> GetTypesInScope(CancellationToken ct)
 		{
 			if (IsLocal)
@@ -97,7 +102,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			{
 				foreach (var module in GetModulesInScope(ct))
 				{
-					var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver(assemblyListSnapshot, loadOnDemand: false));
+					var typeSystem = ConstructTypeSystem(module);
 					foreach (var type in typeSystem.MainModule.TypeDefinitions)
 					{
 						yield return type;
