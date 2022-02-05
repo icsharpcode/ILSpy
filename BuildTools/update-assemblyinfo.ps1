@@ -46,14 +46,22 @@ function gitVersion() {
     if (No-Git) {
         return 0;
     }
-    return [Int32]::Parse((git rev-list --count "$baseCommit..HEAD")) + $baseCommitRev;
+    try {
+        return [Int32]::Parse((git rev-list --count "$baseCommit..HEAD")) + $baseCommitRev;
+    } catch {
+        return 0;
+    }
 }
 
 function gitCommitHash() {
     if (No-Git) {
         return "0000000000000000000000000000000000000000";
     }
-    return (git rev-list --max-count 1 HEAD);
+    try {
+        return (git rev-list --max-count 1 HEAD);
+    } catch {
+        return "0000000000000000000000000000000000000000";
+    }
 }
 
 function gitBranch() {
