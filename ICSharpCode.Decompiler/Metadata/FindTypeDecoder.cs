@@ -61,9 +61,16 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.namespaceName = type.Namespace;
 		}
 
+
+
 		public bool GetArrayType(bool elementType, ArrayShape shape) => elementType;
 		public bool GetByReferenceType(bool elementType) => elementType;
 		public bool GetFunctionPointerType(MethodSignature<bool> signature)
+		{
+			return AnyInMethodSignature(signature);
+		}
+
+		public static bool AnyInMethodSignature(MethodSignature<bool> signature)
 		{
 			if (signature.ReturnType)
 				return true;
@@ -128,6 +135,20 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
 		}
-	}
 
+		public bool GetTypeFromEntity(MetadataReader reader, EntityHandle handle, Unit genericContext = default, byte rawTypeKind = 0)
+		{
+			switch (handle.Kind)
+			{
+				case HandleKind.TypeReference:
+					return GetTypeFromReference(reader, (TypeReferenceHandle)handle, rawTypeKind);
+				case HandleKind.TypeDefinition:
+					return GetTypeFromDefinition(reader, (TypeDefinitionHandle)handle, rawTypeKind);
+				case HandleKind.TypeSpecification:
+					return GetTypeFromSpecification(reader, genericContext, (TypeSpecificationHandle)handle, rawTypeKind);
+				default:
+					return false;
+			}
+		}
+	}
 }

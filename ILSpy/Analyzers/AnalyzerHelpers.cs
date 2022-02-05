@@ -19,11 +19,10 @@
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
-	using ICSharpCode.Decompiler.TypeSystem;
-
 	internal static class AnalyzerHelpers
 	{
 		public static bool IsPossibleReferenceTo(EntityHandle member, PEFile module, IMethod analyzedMethod)
@@ -46,6 +45,34 @@ namespace ICSharpCode.ILSpy.Analyzers
 					return IsPossibleReferenceTo(ms.Method, module, analyzedMethod);
 				default:
 					return false;
+			}
+		}
+
+		public static ISymbol GetParentEntity(DecompilerTypeSystem ts, CustomAttribute customAttribute)
+		{
+			var metadata = ts.MainModule.PEFile.Metadata;
+			switch (customAttribute.Parent.Kind)
+			{
+				case HandleKind.MethodDefinition:
+					IMethod parent = (IMethod)ts.MainModule.ResolveEntity(customAttribute.Parent);
+					return parent?.AccessorOwner ?? parent;
+				case HandleKind.FieldDefinition:
+				case HandleKind.PropertyDefinition:
+				case HandleKind.EventDefinition:
+				case HandleKind.TypeDefinition:
+					return ts.MainModule.ResolveEntity(customAttribute.Parent);
+				case HandleKind.AssemblyDefinition:
+				case HandleKind.ModuleDefinition:
+					return ts.MainModule;
+				case HandleKind.GenericParameterConstraint:
+					var gpc = metadata.GetGenericParameterConstraint((GenericParameterConstraintHandle)customAttribute.Parent);
+					var gp = metadata.GetGenericParameter(gpc.Parameter);
+					return ts.MainModule.ResolveEntity(gp.Parent);
+				case HandleKind.GenericParameter:
+					gp = metadata.GetGenericParameter((GenericParameterHandle)customAttribute.Parent);
+					return ts.MainModule.ResolveEntity(gp.Parent);
+				default:
+					return null;
 			}
 		}
 	}
