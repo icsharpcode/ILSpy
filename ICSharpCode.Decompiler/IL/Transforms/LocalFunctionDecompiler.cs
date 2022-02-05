@@ -827,7 +827,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!IsLocalFunctionMethod(module, method, context))
 					continue;
 				var md = metadata.GetMethodDefinition(method);
-				if (md.DecodeSignature(new FindTypeDecoder(typeHandle, module, 0), default).ParameterTypes.Any())
+				if (md.DecodeSignature(new FindTypeDecoder(typeHandle, module), default).ParameterTypes.Any())
 					return true;
 			}
 

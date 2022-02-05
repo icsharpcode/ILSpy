@@ -36,14 +36,21 @@ namespace ICSharpCode.Decompiler.Metadata
 		readonly string? namespaceName;
 		readonly PrimitiveTypeCode primitiveType;
 
-		public FindTypeDecoder(TypeDefinitionHandle handle, PEFile declaringModule, PrimitiveTypeCode primitiveType)
+		/// <summary>
+		/// Constructs a FindTypeDecoder that finds uses of a specific type-definition handle.
+		/// This assumes that the module we are search in is the same as the module containing the type-definiton.
+		/// </summary>
+		internal FindTypeDecoder(TypeDefinitionHandle handle, PEFile declaringModule)
 		{
 			this.handle = handle;
 			this.declaringModule = declaringModule;
-			this.primitiveType = primitiveType;
+			this.primitiveType = 0;
 			this.currentModule = null;
 		}
 
+		/// <summary>
+		/// Constructs a FindTypeDecoder that can be used to find <paramref name="type"/> in signatures from <paramref name="currentModule"/>.
+		/// </summary>
 		public FindTypeDecoder(MetadataModule currentModule, ITypeDefinition type)
 		{
 			this.currentModule = currentModule;
