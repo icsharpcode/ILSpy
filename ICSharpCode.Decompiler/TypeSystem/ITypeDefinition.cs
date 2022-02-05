@@ -43,9 +43,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		/// <summary>
 		/// For enums: returns the underlying primitive type.
-		/// For all other types: returns <see cref="SpecialType.UnknownType"/>.
+		/// For all other types: returns <see langword="null"/>.
 		/// </summary>
-		IType EnumUnderlyingType { get; }
+		IType? EnumUnderlyingType { get; }
 
 		/// <summary>
 		/// For structs: returns whether this is a readonly struct.
