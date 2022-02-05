@@ -633,7 +633,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public static CodeMappingInfo GetCodeMappingInfo(PEFile module, EntityHandle member)
 		{
-			var declaringType = member.GetDeclaringType(module.Metadata);
+			var declaringType = (TypeDefinitionHandle)member.GetDeclaringType(module.Metadata);
 
 			if (declaringType.IsNil && member.Kind == HandleKind.TypeDefinition)
 			{
@@ -835,20 +835,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return (TypeDefinitionHandle)memberRef.Parent;
 					case HandleKind.TypeSpecification:
 						var ts = module.Metadata.GetTypeSpecification((TypeSpecificationHandle)memberRef.Parent);
-						if (ts.Signature.IsNil)
-							return default;
-						// Do a quick scan using BlobReader
-						var signature = module.Metadata.GetBlobReader(ts.Signature);
-						// When dealing with FSM implementations, we can safely assume that if it's a type spec,
-						// it must be a generic type instance.
-						if (signature.ReadByte() != (byte)SignatureTypeCode.GenericTypeInstance)
-							return default;
-						// Skip over the rawTypeKind: value type or class
-						var rawTypeKind = signature.ReadCompressedInteger();
-						if (rawTypeKind < 17 || rawTypeKind > 18)
-							return default;
 						// Only read the generic type, ignore the type arguments
-						var genericType = signature.ReadTypeHandle();
+						var genericType = ts.GetGenericType(module.Metadata);
 						// Again, we assume this is a type def, because we are only looking at nested types
 						if (genericType.Kind != HandleKind.TypeDefinition)
 							return default;
