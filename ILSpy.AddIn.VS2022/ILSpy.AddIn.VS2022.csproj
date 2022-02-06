@@ -2,7 +2,6 @@
 <Project>
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
-
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <RootNamespace>ICSharpCode.ILSpy.AddIn</RootNamespace>
@@ -55,12 +54,14 @@
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
   </ItemGroup>
 
+  <!--
   <ItemGroup>
     <ProjectReference Include="..\ILSpy\ILSpy.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <Private>false</Private>
     </ProjectReference>
   </ItemGroup>
+  -->
 
   <ItemGroup>
     <Compile Include="..\ICSharpCode.Decompiler\Metadata\AssemblyReferences.cs" Link="Decompiler\AssemblyReferences.cs" />

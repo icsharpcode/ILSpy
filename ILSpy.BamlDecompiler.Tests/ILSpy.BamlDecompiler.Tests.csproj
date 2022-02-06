@@ -6,17 +6,13 @@
 
     <EnableDefaultItems>false</EnableDefaultItems>
     <UseWpf>true</UseWpf>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
     <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
 
     <OutputType>Exe</OutputType>
     <StartupObject>ILSpy.BamlDecompiler.Tests.Stub</StartupObject>
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
-  </PropertyGroup>
-
-  <Import Project="..\multitargeting.props" Condition="Exists('..\multitargeting.props')" />
-  <PropertyGroup Condition="!Exists('..\multitargeting.props')">
-    <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

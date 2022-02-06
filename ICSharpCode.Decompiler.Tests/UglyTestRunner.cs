@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.Tests
 				finally
 				{
 					if (output != null)
-						output.TempFiles.Delete();
+						output.DeleteTempFiles();
 				}
 			}
 

@@ -2,15 +2,10 @@
 <Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
     <AssemblyName>ILSpy.BamlDecompiler.Plugin</AssemblyName>
-    <LangVersion>8.0</LangVersion>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <BaseAddress>6488064</BaseAddress>
     <UseWpf>true</UseWpf>
-  </PropertyGroup>
-  
-  <Import Project="..\multitargeting.props" Condition="Exists('..\multitargeting.props')" />
-  <PropertyGroup Condition="!Exists('..\multitargeting.props')">
-    <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

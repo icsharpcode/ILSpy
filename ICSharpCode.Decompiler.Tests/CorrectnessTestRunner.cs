@@ -393,9 +393,9 @@ namespace ICSharpCode.Decompiler.Tests
 			finally
 			{
 				if (outputFile != null)
-					outputFile.TempFiles.Delete();
+					outputFile.DeleteTempFiles();
 				if (decompiledOutputFile != null)
-					decompiledOutputFile.TempFiles.Delete();
+					decompiledOutputFile.DeleteTempFiles();
 			}
 		}
 
@@ -421,9 +421,9 @@ namespace ICSharpCode.Decompiler.Tests
 			finally
 			{
 				if (outputFile != null)
-					outputFile.TempFiles.Delete();
+					outputFile.DeleteTempFiles();
 				if (decompiledOutputFile != null)
-					decompiledOutputFile.TempFiles.Delete();
+					decompiledOutputFile.DeleteTempFiles();
 			}
 		}
 
@@ -446,7 +446,7 @@ namespace ICSharpCode.Decompiler.Tests
 			finally
 			{
 				if (decompiledOutputFile != null)
-					decompiledOutputFile.TempFiles.Delete();
+					decompiledOutputFile.DeleteTempFiles();
 			}
 		}
 	}

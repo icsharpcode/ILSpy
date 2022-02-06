@@ -372,7 +372,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			if ((flags & CompilerOptions.UseMcsMask) == 0)
 			{
-				CompilerResults results = new CompilerResults(new TempFileCollection());
+				CompilerResults results = new CompilerResults();
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 
 				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch {
@@ -477,7 +477,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 			else
 			{
-				CompilerResults results = new CompilerResults(new TempFileCollection());
+				CompilerResults results = new CompilerResults();
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 				string testBasePath = RoundtripAssembly.TestDir;
 				if (!Directory.Exists(testBasePath))
@@ -800,6 +800,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			Console.WriteLine("output: " + outputTask.Result);
 			Console.WriteLine("errors: " + errorTask.Result);
+		}
+	}
+
+	public class CompilerResults
+	{
+		public string PathToAssembly { get; set; }
+
+		public void DeleteTempFiles()
+		{
+
 		}
 	}
 }
