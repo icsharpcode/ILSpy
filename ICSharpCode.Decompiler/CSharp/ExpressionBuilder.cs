@@ -3305,18 +3305,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (valuePath.Indices?.Length > 0)
 			{
-				Expression index;
-				if (memberPath.Member is IProperty property)
-				{
-					index = new CallBuilder(this, typeSystem, settings)
-						.BuildDictionaryInitializerExpression(valuePath.OpCode, property.Setter, rr, GetIndices(valuePath.Indices, indexVariables).ToList());
-				}
-				else
-				{
-					index = new IndexerExpression(null, GetIndices(valuePath.Indices, indexVariables).Select(i => Translate(i).Expression));
-				}
+				Expression index = new IndexerExpression(null, GetIndices(valuePath.Indices, indexVariables).Select(i => Translate(i).Expression));
 				return new AssignmentExpression(index, value)
-					.WithRR(new MemberResolveResult(rr, memberPath.Member))
+					.WithRR(new MemberResolveResult(rr, valuePath.Member))
 					.WithoutILInstruction();
 			}
 			else
