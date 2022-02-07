@@ -54,7 +54,7 @@ jobs:
     - name: Execute unit tests
       run: dotnet test $env:Tests1 $env:Tests2 $env:Tests3
       env:
-        Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net6.0\ICSharpCode.Decompiler.Tests.exe
+        Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\ICSharpCode.Decompiler.Tests.exe
         Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net6.0-windows\ILSpy.Tests.exe
         Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\ILSpy.BamlDecompiler.Tests.exe
 
