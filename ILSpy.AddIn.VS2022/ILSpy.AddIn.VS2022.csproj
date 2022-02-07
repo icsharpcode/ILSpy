@@ -88,7 +88,7 @@
   (related to https://github.com/icsharpcode/ILSpy/issues/511)
   -->
   <PropertyGroup>
-    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\$(TargetFramework)\</ILSpyBuildPath>
+    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\net6.0-windows\</ILSpyBuildPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -100,7 +100,7 @@
   <!-- END WORKAROUND -->
 
   <ItemGroup>
-    <Content Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)ILSpy.exe.config">
+    <Content Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)ILSpy.dll.config">
       <IncludeInVSIX>true</IncludeInVSIX>
       <VSIXSubPath>\ILSpy</VSIXSubPath>
     </Content>
