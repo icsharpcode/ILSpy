@@ -88,11 +88,6 @@ $templateFiles = (
     @{Input="ILSpy.Installer/AppPackage.cs.template"; Output = "ILSpy.Installer/AppPackage.cs"}
 );
 
-$appxmanifestFiles = (	
-	@{Input="ILSpy.Package/Package.appxmanifest"; Output="ILSpy.Package/Package.appxmanifest"},
-	@{Input="ILSpy.Package/Package-CI.appxmanifest"; Output="ILSpy.Package/Package-CI.appxmanifest"}
-);
-
 [string]$mutexId = "ILSpyUpdateAssemblyInfo" + (Get-Location).ToString().GetHashCode();
 Write-Host $mutexId;
 [bool]$createdNew = $false;
@@ -164,31 +159,6 @@ try {
             $out | Out-File -Encoding utf8 $file.Output;
         }
     }
-
-	# Only update these on the Build Agent when ReleaseChannel is set
-	if($Env:ReleaseChannel -ne '' -and $Env:ReleaseChannel -ne $null) { 
-		foreach ($file in $appxmanifestFiles) {
-			[string]$in = (Get-Content $file.Input) -Join [System.Environment]::NewLine;
-
-			$out = $in.Replace('$INSERTVERSION$', $fullVersionNumber);
-			$out = $out.Replace('$INSERTMAJORVERSION$', $major);
-			$out = $out.Replace('$INSERTMINORVERSION$', $minor);
-			$out = $out.Replace('$INSERTREVISION$', $revision);
-			$out = $out.Replace('$INSERTCOMMITHASH$', $gitCommitHash);
-			$out = $out.Replace('$INSERTSHORTCOMMITHASH$', $gitCommitHash.Substring(0, 8));
-			$out = $out.Replace('$INSERTDATE$', [System.DateTime]::Now.ToString("MM/dd/yyyy"));
-			$out = $out.Replace('$INSERTYEAR$', [System.DateTime]::Now.Year.ToString());
-			$out = $out.Replace('$INSERTBRANCHNAME$', $branchName);
-			$out = $out.Replace('$INSERTBRANCHPOSTFIX$', $postfixBranchName);
-			$out = $out.Replace('$INSERTVERSIONNAME$', $versionName);
-			$out = $out.Replace('$INSERTVERSIONNAMEPOSTFIX$', $postfixVersionName);
-			$out = $out.Replace('$INSERTBUILDCONFIG$', $buildConfig);
-
-			if ((-not (Test-File $file.Output)) -or (((Get-Content $file.Output) -Join [System.Environment]::NewLine) -ne $out)) {
-				$out | Out-File -Encoding utf8 $file.Output;
-			}
-		}
-	}
 	
 } finally {
     $mutex.ReleaseMutex();
