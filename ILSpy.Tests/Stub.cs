@@ -22,10 +22,6 @@ namespace ICSharpCode.ILSpy.Tests
 {
 	public static class Stub
 	{
-		static void Main(string[] args)
-		{
-		}
-
 		static readonly object sync = new object();
 
 		internal static void SetupApplication()
