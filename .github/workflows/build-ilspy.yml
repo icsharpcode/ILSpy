@@ -38,6 +38,9 @@ jobs:
     - name: Install dotnet-format
       run: dotnet tool install dotnet-format --global --version 5.1.225507
 
+    - name: Setup VSTest
+      uses: Malcolmnixon/Setup-VSTest@v4
+
     - name: Get Version
       id: version
       shell: pwsh
@@ -51,10 +54,14 @@ jobs:
     - name: Build
       run: msbuild ILSpy.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
 
-    - name: Execute unit tests
-      run: dotnet test $env:Tests1 $env:Tests2 $env:Tests3
+    - name: Execute ICS.D unit tests (net6.0)
+      run: vstest.console $env:Tests1
       env:
-        Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\ICSharpCode.Decompiler.Tests.exe
+        Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net6.0\ICSharpCode.Decompiler.Tests.exe
+
+    - name: Execute unit tests (net6.0-windows)
+      run: vstest.console $env:Tests2 $env:Tests3
+      env:
         Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net6.0-windows\ILSpy.Tests.exe
         Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\ILSpy.BamlDecompiler.Tests.exe
 
