@@ -8,6 +8,7 @@
     <NeutralResourcesLanguage>en-US</NeutralResourcesLanguage>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <UseWpf>true</UseWpf>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
