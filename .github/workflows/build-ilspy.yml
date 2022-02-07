@@ -63,7 +63,6 @@ jobs:
     
     # TODO: Replace with dotnet publish & zip
     - name: Zip ILSpy Release
-      if: matrix.channel == 'zip'
       run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.dll .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.exe .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.config .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*\ILSpy.resources.dll .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*\ILSpy.ReadyToRun.Plugin.resources.dll
       
     # https://github.com/actions/upload-artifact
