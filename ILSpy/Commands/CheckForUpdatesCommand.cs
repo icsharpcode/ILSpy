@@ -26,11 +26,6 @@ namespace ICSharpCode.ILSpy
 	{
 		public override bool CanExecute(object parameter)
 		{
-			if (StorePackageHelper.HasPackageIdentity)
-			{
-				return false;
-			}
-
 			return base.CanExecute(parameter);
 		}
 

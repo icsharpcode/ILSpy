@@ -932,12 +932,6 @@ namespace ICSharpCode.ILSpy
 
 		public async Task ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings, bool forceCheck = false)
 		{
-			// Don't check for updates if we're in an MSIX since they work differently
-			if (StorePackageHelper.HasPackageIdentity)
-			{
-				return;
-			}
-
 			string downloadUrl;
 			if (forceCheck)
 			{
