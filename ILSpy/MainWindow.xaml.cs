@@ -146,7 +146,7 @@ namespace ICSharpCode.ILSpy
 					filterSettings = dock.ActiveTabPage.FilterSettings;
 					filterSettings.PropertyChanged += filterSettings_PropertyChanged;
 
-					var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => (string)m.Tag == Properties.Resources._Window);
+					var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => (string)m.Tag == nameof(Properties.Resources._Window));
 					foreach (MenuItem menuItem in windowMenuItem.Items.OfType<MenuItem>())
 					{
 						if (menuItem.IsCheckable && menuItem.Tag is TabPageModel)
@@ -355,7 +355,7 @@ namespace ICSharpCode.ILSpy
 
 		private void InitWindowMenu()
 		{
-			var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => (string)m.Tag == Properties.Resources._Window);
+			var windowMenuItem = mainMenu.Items.OfType<MenuItem>().First(m => (string)m.Tag == nameof(Properties.Resources._Window));
 			Separator separatorBeforeTools, separatorBeforeDocuments;
 			windowMenuItem.Items.Add(separatorBeforeTools = new Separator());
 			windowMenuItem.Items.Add(separatorBeforeDocuments = new Separator());
