@@ -8,7 +8,6 @@
     <License>license.txt</License>
     <Icon>ILSpy-Large.ico</Icon>
 	<Tags>ILSpy;IL;decompile;decompiler;decompilation;C#;CSharp;.NET;Productivity;Open Source;Free</Tags>
-	<Preview>true</Preview>
   </Metadata>
   <Installation>
 	<InstallationTarget Id="Microsoft.VisualStudio.Community" Version ="[17.0, 18.0)">
