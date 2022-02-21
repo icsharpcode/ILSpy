@@ -53,18 +53,18 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void SecurityDeclarations()
+		public async Task SecurityDeclarations()
 		{
-			Run();
+			await Run();
 		}
 
-		void Run([CallerMemberName] string testName = null)
+		async Task Run([CallerMemberName] string testName = null)
 		{
 			var ilExpectedFile = Path.Combine(TestCasePath, testName + ".il");
 			var ilResultFile = Path.Combine(TestCasePath, testName + ".result.il");
 
-			var executable = Tester.AssembleIL(ilExpectedFile, AssemblerOptions.Library);
-			var disassembled = Tester.Disassemble(executable, ilResultFile, AssemblerOptions.UseOwnDisassembler);
+			var executable = await Tester.AssembleIL(ilExpectedFile, AssemblerOptions.Library).ConfigureAwait(false);
+			var disassembled = await Tester.Disassemble(executable, ilResultFile, AssemblerOptions.UseOwnDisassembler).ConfigureAwait(false);
 
 			CodeAssert.FilesAreEqual(ilExpectedFile, ilResultFile);
 		}

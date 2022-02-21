@@ -42,7 +42,7 @@
 
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="$(DiffLibVersion)" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.4.1" />
+    <PackageReference Include="CliWrap" Version="3.4.1" />
     <PackageReference Include="NuGet.Protocol" Version="6.0.0" />
     <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVersion)" />
     <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
@@ -224,7 +224,7 @@
     <Compile Include="TestCases\Correctness\NullPropagation.cs" />
     <Compile Include="TestCases\ILPretty\Issue982.cs" />
     <Compile Include="TestCases\Pretty\CS72_PrivateProtected.cs" />
-    <Compile Include="TestCases\Pretty\CS6_StringInterpolation.cs" />
+    <Compile Include="TestCases\Pretty\StringInterpolation.cs" />
     <Compile Include="TestCases\Pretty\ExpressionTrees.cs" />
     <Compile Include="TestCases\Pretty\NullPropagation.cs" />
     <Compile Include="TestCases\Pretty\VariableNaming.cs" />

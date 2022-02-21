@@ -20,6 +20,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.Tests.Helpers;
 
@@ -73,42 +74,42 @@ namespace ICSharpCode.Decompiler.Tests
 		};
 
 		[Test, Ignore("Implement VB async/await")]
-		public void Async([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		public async Task Async([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
-			Run(options: options);
+			await Run(options: options);
 		}
 
 		[Test] // TODO: legacy VB compound assign
-		public void VBCompoundAssign([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions options)
+		public async Task VBCompoundAssign([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions options)
 		{
-			Run(options: options | CompilerOptions.Library);
+			await Run(options: options | CompilerOptions.Library);
 		}
 
 		[Test]
-		public void Select([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		public async Task Select([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
-			Run(options: options | CompilerOptions.Library);
+			await Run(options: options | CompilerOptions.Library);
 		}
 
 		[Test]
-		public void Issue1906([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		public async Task Issue1906([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
-			Run(options: options | CompilerOptions.Library);
+			await Run(options: options | CompilerOptions.Library);
 		}
 
 		[Test]
-		public void Issue2192([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		public async Task Issue2192([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
-			Run(options: options | CompilerOptions.Library);
+			await Run(options: options | CompilerOptions.Library);
 		}
 
 		[Test]
-		public void VBPropertiesTest([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		public async Task VBPropertiesTest([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
-			Run(options: options | CompilerOptions.Library);
+			await Run(options: options | CompilerOptions.Library);
 		}
 
-		void Run([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug, DecompilerSettings settings = null)
+		async Task Run([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug, DecompilerSettings settings = null)
 		{
 			var vbFile = Path.Combine(TestCasePath, testName + ".vb");
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
@@ -118,8 +119,8 @@ namespace ICSharpCode.Decompiler.Tests
 				exeFile = Path.ChangeExtension(exeFile, ".dll");
 			}
 
-			var executable = Tester.CompileVB(vbFile, options | CompilerOptions.ReferenceVisualBasic, exeFile);
-			var decompiled = Tester.DecompileCSharp(executable.PathToAssembly, settings);
+			var executable = await Tester.CompileVB(vbFile, options | CompilerOptions.ReferenceVisualBasic, exeFile).ConfigureAwait(false);
+			var decompiled = await Tester.DecompileCSharp(executable.PathToAssembly, settings).ConfigureAwait(false);
 
 			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(options).ToArray());
 		}

@@ -2,7 +2,7 @@
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	internal class CS6_StringInterpolation
+	internal class StringInterpolation
 	{
 		public static void Main(string[] args)
 		{

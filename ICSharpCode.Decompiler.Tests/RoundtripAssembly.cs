@@ -19,17 +19,17 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
+
+using CliWrap;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
-
-using Microsoft.Build.Locator;
 
 using NUnit.Framework;
 
@@ -42,23 +42,23 @@ namespace ICSharpCode.Decompiler.Tests
 		static readonly string nunit = Path.Combine(TestDir, "nunit", "nunit3-console.exe");
 
 		[Test]
-		public void Cecil_net45()
+		public async Task Cecil_net45()
 		{
-			RunWithTest("Mono.Cecil-net45", "Mono.Cecil.dll", "Mono.Cecil.Tests.dll");
+			await RunWithTest("Mono.Cecil-net45", "Mono.Cecil.dll", "Mono.Cecil.Tests.dll");
 		}
 
 		[Test]
-		public void NewtonsoftJson_net45()
+		public async Task NewtonsoftJson_net45()
 		{
-			RunWithTest("Newtonsoft.Json-net45", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
+			await RunWithTest("Newtonsoft.Json-net45", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
 		}
 
 		[Test]
-		public void NewtonsoftJson_pcl_debug()
+		public async Task NewtonsoftJson_pcl_debug()
 		{
 			try
 			{
-				RunWithTest("Newtonsoft.Json-pcl-debug", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll", useOldProjectFormat: true);
+				await RunWithTest("Newtonsoft.Json-pcl-debug", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll", useOldProjectFormat: true);
 			}
 			catch (CompilationFailedException)
 			{
@@ -67,89 +67,89 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void NRefactory_CSharp()
+		public async Task NRefactory_CSharp()
 		{
-			RunWithTest("NRefactory", "ICSharpCode.NRefactory.CSharp.dll", "ICSharpCode.NRefactory.Tests.dll");
+			await RunWithTest("NRefactory", "ICSharpCode.NRefactory.CSharp.dll", "ICSharpCode.NRefactory.Tests.dll");
 		}
 
 		[Test]
-		public void ICSharpCode_Decompiler()
+		public async Task ICSharpCode_Decompiler()
 		{
-			RunOnly("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll");
+			await RunOnly("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll");
 		}
 
 		[Test]
-		public void ImplicitConversions()
+		public async Task ImplicitConversions()
 		{
-			RunWithOutput("Random Tests\\TestCases", "ImplicitConversions.exe");
+			await RunWithOutput("Random Tests\\TestCases", "ImplicitConversions.exe");
 		}
 
 		[Test]
-		public void ImplicitConversions_32()
+		public async Task ImplicitConversions_32()
 		{
-			RunWithOutput("Random Tests\\TestCases", "ImplicitConversions_32.exe");
+			await RunWithOutput("Random Tests\\TestCases", "ImplicitConversions_32.exe");
 		}
 
 		[Test]
-		public void ExplicitConversions()
+		public async Task ExplicitConversions()
 		{
-			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe", LanguageVersion.CSharp8_0);
+			await RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe", LanguageVersion.CSharp8_0);
 		}
 
 		[Test]
-		public void ExplicitConversions_32()
+		public async Task ExplicitConversions_32()
 		{
-			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe", LanguageVersion.CSharp8_0);
+			await RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe", LanguageVersion.CSharp8_0);
 		}
 
 		[Test]
-		public void ExplicitConversions_With_NativeInts()
+		public async Task ExplicitConversions_With_NativeInts()
 		{
-			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe", LanguageVersion.CSharp9_0);
+			await RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe", LanguageVersion.CSharp9_0);
 		}
 
 		[Test]
-		public void ExplicitConversions_32_With_NativeInts()
+		public async Task ExplicitConversions_32_With_NativeInts()
 		{
-			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe", LanguageVersion.CSharp9_0);
+			await RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe", LanguageVersion.CSharp9_0);
 		}
 
 		[Test]
-		public void Random_TestCase_1()
+		public async Task Random_TestCase_1()
 		{
-			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", LanguageVersion.CSharp8_0);
+			await RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", LanguageVersion.CSharp8_0);
 		}
 
 		[Test]
 		[Ignore("See https://github.com/icsharpcode/ILSpy/issues/2541 - Waiting for https://github.com/dotnet/roslyn/issues/45929")]
-		public void Random_TestCase_1_With_NativeInts()
+		public async Task Random_TestCase_1_With_NativeInts()
 		{
-			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", LanguageVersion.CSharp9_0);
+			await RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", LanguageVersion.CSharp9_0);
 		}
 
 		// Let's limit the roundtrip tests to C# 8.0 for now; because 9.0 is still in preview
 		// and the generated project doesn't build as-is.
 		const LanguageVersion defaultLanguageVersion = LanguageVersion.CSharp8_0;
 
-		void RunWithTest(string dir, string fileToRoundtrip, string fileToTest, LanguageVersion languageVersion = defaultLanguageVersion, string keyFile = null, bool useOldProjectFormat = false)
+		async Task RunWithTest(string dir, string fileToRoundtrip, string fileToTest, LanguageVersion languageVersion = defaultLanguageVersion, string keyFile = null, bool useOldProjectFormat = false)
 		{
-			RunInternal(dir, fileToRoundtrip, outputDir => RunTest(outputDir, fileToTest), languageVersion, snkFilePath: keyFile, useOldProjectFormat: useOldProjectFormat);
+			await RunInternal(dir, fileToRoundtrip, outputDir => RunTest(outputDir, fileToTest).GetAwaiter().GetResult(), languageVersion, snkFilePath: keyFile, useOldProjectFormat: useOldProjectFormat);
 		}
 
-		void RunWithOutput(string dir, string fileToRoundtrip, LanguageVersion languageVersion = defaultLanguageVersion)
+		async Task RunWithOutput(string dir, string fileToRoundtrip, LanguageVersion languageVersion = defaultLanguageVersion)
 		{
 			string inputDir = Path.Combine(TestDir, dir);
-			RunInternal(dir, fileToRoundtrip,
-				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)),
+			await RunInternal(dir, fileToRoundtrip,
+				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)).GetAwaiter().GetResult(),
 				languageVersion);
 		}
 
-		void RunOnly(string dir, string fileToRoundtrip, LanguageVersion languageVersion = defaultLanguageVersion)
+		async Task RunOnly(string dir, string fileToRoundtrip, LanguageVersion languageVersion = defaultLanguageVersion)
 		{
-			RunInternal(dir, fileToRoundtrip, outputDir => { }, languageVersion);
+			await RunInternal(dir, fileToRoundtrip, outputDir => { }, languageVersion);
 		}
 
-		void RunInternal(string dir, string fileToRoundtrip, Action<string> testAction, LanguageVersion languageVersion, string snkFilePath = null, bool useOldProjectFormat = false)
+		async Task RunInternal(string dir, string fileToRoundtrip, Action<string> testAction, LanguageVersion languageVersion, string snkFilePath = null, bool useOldProjectFormat = false)
 		{
 			if (!Directory.Exists(TestDir))
 			{
@@ -214,7 +214,7 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 			Assert.IsNotNull(projectFile, $"Could not find {fileToRoundtrip}");
 
-			Compile(projectFile, outputDir);
+			await Compile(projectFile, outputDir);
 			testAction(outputDir);
 		}
 
@@ -244,73 +244,47 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 
-		static string FindMSBuild()
+		static async Task Compile(string projectFile, string outputDir)
 		{
-			string vsPath = MSBuildLocator.QueryVisualStudioInstances(new VisualStudioInstanceQueryOptions { DiscoveryTypes = DiscoveryType.VisualStudioSetup })
-										  .OrderByDescending(i => i.Version)
-										  .FirstOrDefault()
-										  ?.MSBuildPath;
-			if (vsPath == null)
-				throw new InvalidOperationException("Could not find MSBuild");
-			return Path.Combine(vsPath, "msbuild.exe");
-		}
+			Regex errorRegex = new Regex(@"^[\w\d.\\-]+\(\d+,\d+\):");
+			string suffix = $" [{projectFile}]";
 
-		static void Compile(string projectFile, string outputDir)
-		{
-			var info = new ProcessStartInfo(FindMSBuild());
-			info.Arguments = $"/nologo /v:minimal /restore /p:OutputPath=\"{outputDir}\" \"{projectFile}\"";
-			info.CreateNoWindow = true;
-			info.UseShellExecute = false;
-			info.RedirectStandardOutput = true;
-			// Don't let environment variables (e.g. set by AppVeyor) influence the build.
-			info.EnvironmentVariables.Remove("Configuration");
-			info.EnvironmentVariables.Remove("Platform");
-			Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
-			using (var p = Process.Start(info))
+			var command = Cli.Wrap(await Tester.FindMSBuild())
+				.WithArguments($"/nologo /v:minimal /restore /p:OutputPath=\"{outputDir}\" \"{projectFile}\"")
+				.WithValidation(CommandResultValidation.None)
+				.WithStandardOutputPipe(PipeTarget.ToDelegate(PrintLine));
+			Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
+			var result = await command.ExecuteAsync().ConfigureAwait(false);
+			if (result.ExitCode != 0)
+				throw new CompilationFailedException($"Compilation of {Path.GetFileName(projectFile)} failed");
+
+			void PrintLine(string line)
 			{
-				Regex errorRegex = new Regex(@"^[\w\d.\\-]+\(\d+,\d+\):");
-				string suffix = $" [{projectFile}]";
-				string line;
-				while ((line = p.StandardOutput.ReadLine()) != null)
+				if (line.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
 				{
-					if (line.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
-					{
-						line = line.Substring(0, line.Length - suffix.Length);
-					}
-					Match m = errorRegex.Match(line);
-					if (m.Success)
-					{
-						// Make path absolute so that it gets hyperlinked
-						line = Path.GetDirectoryName(projectFile) + Path.DirectorySeparatorChar + line;
-					}
-					Console.WriteLine(line);
+					line = line.Substring(0, line.Length - suffix.Length);
 				}
-				p.WaitForExit();
-				if (p.ExitCode != 0)
-					throw new CompilationFailedException($"Compilation of {Path.GetFileName(projectFile)} failed");
+				Match m = errorRegex.Match(line);
+				if (m.Success)
+				{
+					// Make path absolute so that it gets hyperlinked
+					line = Path.GetDirectoryName(projectFile) + Path.DirectorySeparatorChar + line;
+				}
+				Console.WriteLine(line);
 			}
 		}
 
-		static void RunTest(string outputDir, string fileToTest)
+		static async Task RunTest(string outputDir, string fileToTest)
 		{
-			var info = new ProcessStartInfo(nunit);
-			info.WorkingDirectory = outputDir;
-			info.Arguments = $"\"{fileToTest}\"";
-			info.CreateNoWindow = true;
-			info.UseShellExecute = false;
-			info.RedirectStandardOutput = true;
-			Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
-			using (var p = Process.Start(info))
-			{
-				string line;
-				while ((line = p.StandardOutput.ReadLine()) != null)
-				{
-					Console.WriteLine(line);
-				}
-				p.WaitForExit();
-				if (p.ExitCode != 0)
-					throw new TestRunFailedException($"Test execution of {Path.GetFileName(fileToTest)} failed");
-			}
+			var command = Cli.Wrap(nunit)
+				.WithWorkingDirectory(outputDir)
+				.WithArguments($"\"{fileToTest}\"")
+				.WithValidation(CommandResultValidation.None)
+				.WithStandardOutputPipe(PipeTarget.ToDelegate(Console.WriteLine));
+			Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
+			var result = await command.ExecuteAsync().ConfigureAwait(false);
+			if (result.ExitCode != 0)
+				throw new TestRunFailedException($"Test execution of {Path.GetFileName(fileToTest)} failed");
 		}
 
 		class TestProjectDecompiler : WholeProjectDecompiler

@@ -20,6 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+#if ROSLYN4
+using System.Runtime.CompilerServices;
+#endif
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
