@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				packageStream,
 				cache,
 				logger,
-				cancellationToken);
+				cancellationToken).ConfigureAwait(false);
 
 			using PackageArchiveReader packageReader = new PackageArchiveReader(packageStream);
 			NuspecReader nuspecReader = await packageReader.GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					fileStream.CopyToFile(targetPath);
 					return targetPath;
 				},
-				logger, cancellationToken);
+				logger, cancellationToken).ConfigureAwait(false);
 		}
 	}
 
@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			string path = Path.Combine(baseDir, version, "tools");
 			if (!Directory.Exists(path))
 			{
-				await FetchPackage("Microsoft.Net.Compilers", version, Path.Combine(baseDir, version));
+				await FetchPackage("Microsoft.Net.Compilers", version, Path.Combine(baseDir, version)).ConfigureAwait(false);
 			}
 
 			installedCompilers.Add(version, path);
@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			string path = Path.Combine(baseDir, "tools");
 			if (!Directory.Exists(path))
 			{
-				await FetchPackage("vswhere", "2.8.4", baseDir);
+				await FetchPackage("vswhere", "2.8.4", baseDir).ConfigureAwait(false);
 			}
 			vswherePath = Path.Combine(path, "vswhere.exe");
 		}

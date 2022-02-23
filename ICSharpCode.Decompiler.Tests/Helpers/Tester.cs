@@ -30,6 +30,7 @@ using System.Xml.Linq;
 using System.Xml.XPath;
 
 using CliWrap;
+using CliWrap.Buffered;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -106,12 +107,12 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		internal static async Task Initialize()
 		{
-			await roslynToolset.Fetch("1.3.2");
-			await roslynToolset.Fetch("2.10.0");
-			await roslynToolset.Fetch("3.11.0");
-			await roslynToolset.Fetch(roslynLatestVersion);
+			await roslynToolset.Fetch("1.3.2").ConfigureAwait(false);
+			await roslynToolset.Fetch("2.10.0").ConfigureAwait(false);
+			await roslynToolset.Fetch("3.11.0").ConfigureAwait(false);
+			await roslynToolset.Fetch(roslynLatestVersion).ConfigureAwait(false);
 
-			await vswhereToolset.Fetch();
+			await vswhereToolset.Fetch().ConfigureAwait(false);
 		}
 
 		public static async Task<string> AssembleIL(string sourceFileName, AssemblerOptions options = AssemblerOptions.UseDebug)
@@ -151,19 +152,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				otherOptions += "/debug ";
 			}
 
-			StringBuilder stderr = new();
-			StringBuilder stdout = new();
-
 			var command = Cli.Wrap(ilasmPath)
 				.WithArguments($"/nologo {otherOptions}/output=\"{outputFile}\" \"{sourceFileName}\"")
-				.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
-				.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
 				.WithValidation(CommandResultValidation.None);
 
-			var result = await command.ExecuteAsync().ConfigureAwait(false);
+			var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
 
-			Console.WriteLine("output: " + stdout);
-			Console.WriteLine("errors: " + stderr);
+			Console.WriteLine("output: " + result.StandardOutput);
+			Console.WriteLine("errors: " + result.StandardError);
 			Assert.AreEqual(0, result.ExitCode, "ilasm failed");
 
 			return outputFile;
@@ -197,19 +193,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			string ildasmPath = SdkUtility.GetSdkPath("ildasm.exe");
 
-			StringBuilder stderr = new();
-			StringBuilder stdout = new();
-
 			var command = Cli.Wrap(ildasmPath)
 				.WithArguments($"/nobar /utf8 /out=\"{outputFile}\" \"{sourceFileName}\"")
-				.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
-				.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
 				.WithValidation(CommandResultValidation.None);
 
-			var result = await command.ExecuteAsync().ConfigureAwait(false);
+			var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
 
-			Console.WriteLine("output: " + stdout);
-			Console.WriteLine("errors: " + stderr);
+			Console.WriteLine("output: " + result.StandardOutput);
+			Console.WriteLine("errors: " + result.StandardError);
 			Assert.AreEqual(0, result.ExitCode, "ildasm failed");
 
 			// Unlike the .imagebase directive (which is a fixed value when compiling with /deterministic),
@@ -448,20 +439,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					otherOptions += " \"-d:" + string.Join(";", preprocessorSymbols) + "\" ";
 				}
 
-				StringBuilder stderr = new();
-				StringBuilder stdout = new();
-
 				var command = Cli.Wrap(cscPath)
 					.WithArguments($"{otherOptions} -lib:{libPath} {string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
-					.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
-					.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
 					.WithValidation(CommandResultValidation.None);
 				Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
 
-				var result = await command.ExecuteAsync().ConfigureAwait(false);
+				var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
 
-				Console.WriteLine("output: " + stdout);
-				Console.WriteLine("errors: " + stderr);
+				Console.WriteLine("output: " + result.StandardOutput);
+				Console.WriteLine("errors: " + result.StandardError);
 				Assert.AreEqual(0, result.ExitCode, "csc failed");
 
 				return results;
@@ -509,20 +495,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					otherOptions += " \"-d:" + string.Join(";", preprocessorSymbols) + "\" ";
 				}
 
-				StringBuilder stderr = new();
-				StringBuilder stdout = new();
-
 				var command = Cli.Wrap(mcsPath)
 					.WithArguments($"{otherOptions}-out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
-					.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
-					.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
 					.WithValidation(CommandResultValidation.None);
 				Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
 
-				var result = await command.ExecuteAsync().ConfigureAwait(false);
+				var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
 
-				Console.WriteLine("output: " + stdout);
-				Console.WriteLine("errors: " + stderr);
+				Console.WriteLine("output: " + result.StandardOutput);
+				Console.WriteLine("errors: " + result.StandardError);
 				Assert.AreEqual(0, result.ExitCode, "mcs failed");
 
 				return results;
@@ -626,36 +607,26 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static async Task<(int ExitCode, string Output, string Error)> Run(string assemblyFileName)
 		{
-			StringBuilder stderr = new();
-			StringBuilder stdout = new();
-
 			var command = Cli.Wrap(assemblyFileName)
-				.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
-				.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
 				.WithValidation(CommandResultValidation.None);
 
-			var result = await command.ExecuteAsync().ConfigureAwait(false);
+			var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
 
-			return (result.ExitCode, stdout.ToString(), stderr.ToString());
+			return (result.ExitCode, result.StandardOutput, result.StandardError);
 		}
 
 		public static async Task<(int ExitCode, string Output, string Error)> RunWithTestRunner(string assemblyFileName, bool force32Bit)
 		{
-			StringBuilder stderr = new();
-			StringBuilder stdout = new();
-
 			string pathToRunner = force32Bit
 				? Path.Combine(TesterPath, "ICSharpCode.Decompiler.TestRunner32.exe")
 				: Path.Combine(TesterPath, "ICSharpCode.Decompiler.TestRunner.exe");
 			var command = Cli.Wrap(pathToRunner)
 				.WithArguments(assemblyFileName)
-				.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
-				.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
 				.WithValidation(CommandResultValidation.None);
 
-			var result = await command.ExecuteAsync().ConfigureAwait(false);
+			var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
 
-			return (result.ExitCode, stdout.ToString(), stderr.ToString());
+			return (result.ExitCode, result.StandardOutput, result.StandardError);
 		}
 		/*
 		public static int RunInContainer(string assemblyFileName, out string output, out string error)
@@ -851,34 +822,28 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			string snPath = SdkUtility.GetSdkPath("sn.exe");
 
-			StringBuilder stderr = new();
-			StringBuilder stdout = new();
-
 			var command = Cli.Wrap(snPath)
 				.WithArguments($"-R \"{assemblyPath}\" \"{keyFilePath}\"")
-				.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
-				.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
 				.WithValidation(CommandResultValidation.None);
 
-			var result = await command.ExecuteAsync().ConfigureAwait(false);
+			var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
 			Assert.AreEqual(0, result.ExitCode, "sn failed");
 
-			Console.WriteLine("output: " + stdout);
-			Console.WriteLine("errors: " + stderr);
+			Console.WriteLine("output: " + result.StandardOutput);
+			Console.WriteLine("errors: " + result.StandardError);
 		}
 
 		public static async Task<string> FindMSBuild()
 		{
 			string path = vswhereToolset.GetVsWhere();
-			StringBuilder stdout = new();
+
 			var result = await Cli.Wrap(path)
 				.WithArguments(@"-latest -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe")
-				.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
 				.WithValidation(CommandResultValidation.None)
-				.ExecuteAsync().ConfigureAwait(false);
+				.ExecuteBufferedAsync().ConfigureAwait(false);
 			if (result.ExitCode != 0)
 				throw new InvalidOperationException("Could not find MSBuild");
-			return stdout.ToString().TrimEnd();
+			return result.StandardOutput.TrimEnd();
 		}
 	}
 

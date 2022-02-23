@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[OneTimeSetUp]
 		public async Task RunBeforeAnyTests()
 		{
-			await Tester.Initialize();
+			await Tester.Initialize().ConfigureAwait(false);
 		}
 	}
 }

@@ -26,6 +26,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using CliWrap;
+using CliWrap.Buffered;
 
 using NUnit.Framework;
 
@@ -114,20 +115,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					otherOptions += " \"-d:" + string.Join(",", preprocessorSymbols.Select(kv => kv.Key + "=" + kv.Value)) + "\" ";
 				}
 
-				StringBuilder stderr = new();
-				StringBuilder stdout = new();
-
 				var command = Cli.Wrap(vbcPath)
 					.WithArguments($"{otherOptions}{string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
-					.WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderr))
-					.WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
 					.WithValidation(CommandResultValidation.None);
 				Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
 
-				var result = await command.ExecuteAsync().ConfigureAwait(false);
+				var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
 
-				Console.WriteLine("output: " + stdout);
-				Console.WriteLine("errors: " + stderr);
+				Console.WriteLine("output: " + result.StandardOutput);
+				Console.WriteLine("errors: " + result.StandardError);
 				Assert.AreEqual(0, result.ExitCode, "vbc failed");
 
 				return results;
