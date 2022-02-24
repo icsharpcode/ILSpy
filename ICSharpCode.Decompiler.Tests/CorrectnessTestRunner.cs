@@ -270,7 +270,8 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task StackTests()
 		{
-			await RunIL("StackTests.il");
+			// IL contains .corflags = 32BITREQUIRED
+			await RunIL("StackTests.il", asmOptions: AssemblerOptions.Force32Bit);
 		}
 
 		[Test]
