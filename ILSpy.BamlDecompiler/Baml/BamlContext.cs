@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
 using Metadata = ICSharpCode.Decompiler.Metadata;
@@ -97,9 +98,13 @@ namespace ILSpy.BamlDecompiler.Baml
 					var assemblyName = Metadata.AssemblyNameReference.Parse(assemblyRec.AssemblyFullName);
 
 					if (assemblyName.Name == TypeSystem.MainModule.AssemblyName)
+					{
 						assembly = (assemblyRec.AssemblyFullName, TypeSystem.MainModule);
+					}
 					else
-						assembly = (assemblyRec.AssemblyFullName, TypeSystem.ReferencedModules.FirstOrDefault(m => m.FullAssemblyName == assemblyName.FullName));
+					{
+						assembly = (assemblyRec.AssemblyFullName, FindMatchingReference(assemblyName));
+					}
 				}
 				else
 					assembly = (null, null);
@@ -107,6 +112,23 @@ namespace ILSpy.BamlDecompiler.Baml
 				assemblyMap[id] = assembly;
 			}
 			return assembly;
+		}
+
+		private IModule FindMatchingReference(AssemblyNameReference name)
+		{
+			IModule bestMatch = null;
+			foreach (var module in TypeSystem.ReferencedModules)
+			{
+				if (module.AssemblyName == name.Name)
+				{
+					// using highest version as criterion
+					if (bestMatch == null || bestMatch.AssemblyVersion <= module.AssemblyVersion)
+					{
+						bestMatch = module;
+					}
+				}
+			}
+			return bestMatch;
 		}
 	}
 }
