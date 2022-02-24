@@ -230,7 +230,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			new Version(6, 0), "Microsoft.NETCore.App")
 				.GetReferenceAssemblyPath(".NETCoreApp,Version=v6.0");
 
-		static readonly string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+		public static readonly string RefAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
 			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
 
 		static readonly string[] defaultReferences = new[] {
@@ -383,8 +383,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				}
 				else
 				{
-					libPath = "\"" + refAsmPath + "\",\"" + Path.Combine(refAsmPath, "Facades") + "\"";
-					references = defaultReferences.Select(r => "-r:\"" + Path.Combine(refAsmPath, r) + "\"");
+					libPath = "\"" + RefAsmPath + "\",\"" + Path.Combine(RefAsmPath, "Facades") + "\"";
+					references = defaultReferences.Select(r => "-r:\"" + Path.Combine(RefAsmPath, r) + "\"");
 				}
 				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
 				{
@@ -689,7 +689,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				string targetFramework = module.Reader.DetectTargetFrameworkId();
 				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
 					targetFramework, null, PEStreamOptions.PrefetchMetadata);
-				resolver.AddSearchDirectory(targetFramework.Contains(".NETFramework") ? refAsmPath : coreRefAsmPath);
+				resolver.AddSearchDirectory(targetFramework.Contains(".NETFramework") ? RefAsmPath : coreRefAsmPath);
 				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
 				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings);
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAttributes());
