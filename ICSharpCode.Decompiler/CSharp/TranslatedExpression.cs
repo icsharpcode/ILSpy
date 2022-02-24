@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder, bool checkForOverflow = false, bool allowImplicitConversion = false)
 		{
 			var type = this.Type;
-			if (type.Equals(targetType))
+			if (NormalizeTypeVisitor.IgnoreNullabilityAndTuples.EquivalentTypes(type, targetType))
 			{
 				// Make explicit conversion implicit, if possible
 				if (allowImplicitConversion)
@@ -225,7 +225,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 						case InvocationResolveResult invocation:
 						{
-							if (Expression is ObjectCreateExpression oce && oce.Arguments.Count == 1 && invocation.Type.IsKnownType(KnownTypeCode.NullableOfT))
+							if (Expression is ObjectCreateExpression oce && oce.Arguments.Count == 1
+								&& invocation.Type.IsKnownType(KnownTypeCode.NullableOfT))
 							{
 								return this.UnwrapChild(oce.Arguments.Single());
 							}
