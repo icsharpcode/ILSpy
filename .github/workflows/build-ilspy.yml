@@ -52,11 +52,21 @@ jobs:
       run: msbuild ILSpy.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
 
     - name: Execute unit tests
-      run: dotnet test $env:Tests1 $env:Tests2 $env:Tests3
+      run: dotnet test --logger "trx;LogFileName=${{ matrix.configuration }}-test-results.trx" $env:Tests1 $env:Tests2 $env:Tests3
       env:
-        Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\win-x64\ICSharpCode.Decompiler.Tests.dll      
+        Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\win-x64\ICSharpCode.Decompiler.Tests.dll
         Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net6.0-windows\ILSpy.Tests.dll
         Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\ILSpy.BamlDecompiler.Tests.dll
+
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: success() || failure()
+      with:
+        name: Unit Test Results (${{ matrix.configuration }})
+        path: '**/*.trx'
+        reporter: dotnet-trx
+        list-suites: 'all'
+        list-tests: 'failed'
 
     - name: Style - tab check
       run: python BuildTools\tidy.py
