@@ -4,9 +4,6 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
-    <PlatformTarget>x64</PlatformTarget>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <OutputPath>..\ICSharpCode.Decompiler.Tests\bin\$(Configuration)\$(TargetFramework)\win-x64\</OutputPath>
   </PropertyGroup>
 
 </Project>

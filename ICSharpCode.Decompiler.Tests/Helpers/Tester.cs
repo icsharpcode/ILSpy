@@ -90,6 +90,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static readonly string TesterPath;
 		public static readonly string TestCasePath;
 
+		static readonly string testRunnerBasePath;
 		static readonly string packagesPropsFile;
 		static readonly string roslynLatestVersion;
 		static readonly RoslynToolset roslynToolset;
@@ -99,6 +100,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			TesterPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
 			TestCasePath = Path.Combine(TesterPath, "../../../../TestCases");
+#if DEBUG
+			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Debug/net6.0-windows");
+#else
+			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net6.0-windows");
+#endif
 			packagesPropsFile = Path.Combine(TesterPath, "../../../../../packages.props");
 			roslynLatestVersion = XDocument.Load(packagesPropsFile).XPathSelectElement("//RoslynVersion").Value;
 			roslynToolset = new RoslynToolset();
@@ -113,6 +119,21 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			await roslynToolset.Fetch(roslynLatestVersion).ConfigureAwait(false);
 
 			await vswhereToolset.Fetch().ConfigureAwait(false);
+
+#if DEBUG
+			await BuildTestRunner("win-x86", "Debug").ConfigureAwait(false);
+			await BuildTestRunner("win-x64", "Debug").ConfigureAwait(false);
+#else
+			await BuildTestRunner("win-x86", "Release").ConfigureAwait(false);
+			await BuildTestRunner("win-x64", "Release").ConfigureAwait(false);
+#endif
+		}
+
+		static async Task BuildTestRunner(string runtime, string config)
+		{
+			await Cli.Wrap("dotnet.exe")
+				.WithArguments(new[] { "build", Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/ICSharpCode.Decompiler.TestRunner.csproj"), "-r", runtime, "-c", config, "--self-contained" })
+				.ExecuteAsync();
 		}
 
 		public static async Task<string> AssembleIL(string sourceFileName, AssemblerOptions options = AssemblerOptions.UseDebug)
@@ -617,10 +638,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static async Task<(int ExitCode, string Output, string Error)> RunWithTestRunner(string assemblyFileName, bool force32Bit)
 		{
-			string pathToRunner = force32Bit
-				? Path.Combine(TesterPath, "ICSharpCode.Decompiler.TestRunner32.exe")
-				: Path.Combine(TesterPath, "ICSharpCode.Decompiler.TestRunner.exe");
-			var command = Cli.Wrap(pathToRunner)
+			string testRunner = Path.Combine(testRunnerBasePath, force32Bit ? "win-x86" : "win-x64", "ICSharpCode.Decompiler.TestRunner.exe");
+			var command = Cli.Wrap(testRunner)
 				.WithArguments(assemblyFileName)
 				.WithValidation(CommandResultValidation.None);
 
@@ -628,57 +647,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			return (result.ExitCode, result.StandardOutput, result.StandardError);
 		}
-		/*
-		public static int RunInContainer(string assemblyFileName, out string output, out string error)
-		{
-			AssemblyLoadContext context = new("RunInContainer", isCollectible: true);
-			context.Resolving += ContextResolving;
-			var (oldOut, newOut) = WrapOut();
-			var (oldError, newError) = WrapError();
-			
-			int result;
 
-			try
-			{
-				var mainAssembly = context.LoadFromAssemblyPath(assemblyFileName);
-				var tmp = mainAssembly.EntryPoint!.Invoke(null, Array.Empty<object>());
-				result = tmp is int i ? i : 0;
-			}
-			finally
-			{
-				context.Unload();
-				context.Resolving -= ContextResolving;
-				Console.SetOut(oldOut);
-				Console.SetError(oldError);
-			}
-
-			output = newOut.ToString();
-			error = newError.ToString();
-
-			return result;
-
-			static Assembly ContextResolving(AssemblyLoadContext context, AssemblyName name)
-			{
-				return null;
-			}
-
-			static (TextWriter oldWriter, StringBuilder newOutput) WrapOut()
-			{
-				var oldWriter = Console.Out;
-				var newOutput = new StringBuilder();
-				Console.SetOut(new StringWriter(newOutput));
-				return (oldWriter, newOutput);
-			}
-
-			static (TextWriter oldWriter, StringBuilder newOutput) WrapError()
-			{
-				var oldWriter = Console.Error;
-				var newOutput = new StringBuilder();
-				Console.SetError(new StringWriter(newOutput));
-				return (oldWriter, newOutput);
-			}
-		}
-		*/
 		public static Task<string> DecompileCSharp(string assemblyFileName, DecompilerSettings settings = null)
 		{
 			if (settings == null)
