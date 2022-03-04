@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				var vbcPath = roslynToolset.GetVBCompiler(roslynVersion);
 
 				IEnumerable<string> references;
-				if ((flags & CompilerOptions.UseRoslynMask) != 0)
+				if ((flags & CompilerOptions.UseRoslynMask) != 0 && (flags & CompilerOptions.TargetNet40) == 0)
 				{
 					references = coreDefaultReferences.Select(r => "-r:\"" + r + "\"");
 				}

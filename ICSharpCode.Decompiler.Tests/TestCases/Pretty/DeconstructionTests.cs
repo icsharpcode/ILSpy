@@ -22,6 +22,15 @@ using System.Runtime.InteropServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	public static class DeconstructionExt
+	{
+		public static void Deconstruct<K, V>(this KeyValuePair<K, V> pair, out K key, out V value)
+		{
+			key = pair.Key;
+			value = pair.Value;
+		}
+	}
+
 	internal class DeconstructionTests
 	{
 		[StructLayout(LayoutKind.Sequential, Size = 1)]

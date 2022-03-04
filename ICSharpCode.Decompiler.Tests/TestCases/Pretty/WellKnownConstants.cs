@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const float Float_Tenth = 0.1f;
 		public const double Double_Tenth = 0.1;
 
-#if ROSLYN
+#if ROSLYN && !NET40
 		public const float Float_PI = MathF.PI;
 		public const float Float_HalfOfPI = MathF.PI / 2f;
 		public const float Float_QuarterOfPI = MathF.PI / 4f;

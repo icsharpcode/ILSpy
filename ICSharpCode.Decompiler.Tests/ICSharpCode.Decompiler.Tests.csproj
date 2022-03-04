@@ -11,7 +11,9 @@
 
     <NoWarn>1701;1702;1705,67,169,1058,728,1720,649,168,251,660,661,675</NoWarn>
 
-    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>False</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>False</GenerateAssemblyInformationalVersionAttribute>
     <EnableDefaultItems>false</EnableDefaultItems>
 
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
@@ -56,6 +58,7 @@
     <PackageReference Include="System.Memory" Version="4.5.4" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
     <PackageReference Include="Microsoft.NETCore.ILAsm" Version="$(ILAsmVersion)" />
+    <PackageReference Include="Microsoft.NETCore.ILDAsm" Version="$(ILDAsmVersion)" />
   </ItemGroup>
 
   <ItemGroup>

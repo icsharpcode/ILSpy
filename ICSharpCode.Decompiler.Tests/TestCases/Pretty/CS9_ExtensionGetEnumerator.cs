@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine(item);
 			}
 		}
-
+#if !NET40
 		public async void TestAsync(Generic<int> c)
 		{
 			await foreach (int item in c)
@@ -37,6 +37,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine(item);
 			}
 		}
+#endif
 	}
 
 	public static class CS9_ExtensionGetEnumerator_Ext
@@ -49,9 +50,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			throw null;
 		}
+#if !NET40
 		public static IAsyncEnumerator<T> GetAsyncEnumerator<T>(this CS9_ExtensionGetEnumerator.Generic<T> c)
 		{
 			throw null;
 		}
+#endif
 	}
 }

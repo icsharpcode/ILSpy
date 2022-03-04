@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public interface IA
 		{
-#if CS80
+#if CS80 && !NET40
 			static int Field;
 #endif
 			int Property1 { get; }
@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			event EventHandler MyEvent;
 			void Method();
 
-#if CS80
+#if CS80 && !NET40
 			static IA()
 			{
 
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public interface IA2 : IA
 		{
-#if CS80
+#if CS80 && !NET40
 			int IA.Property3 {
 				get {
 					return 0;

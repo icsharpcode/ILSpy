@@ -20,7 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-#if ROSLYN4
+#if ROSLYN4 && !NET40
+// This is needed because there are some nullability attributes on compiler-generated lambdas,
+// which are removed after IntroduceUsingDeclarations ran.
 using System.Runtime.CompilerServices;
 #endif
 

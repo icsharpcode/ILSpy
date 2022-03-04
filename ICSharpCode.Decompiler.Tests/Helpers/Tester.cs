@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.PortableExecutable;
@@ -59,7 +58,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		UseRoslyn1_3_2 = 0x10,
 		UseMcs2_6_4 = 0x20,
 		ReferenceVisualBasic = 0x40,
-		//ReferenceCore = 0x80,
+		TargetNet40 = 0x80,
 		GeneratePdb = 0x100,
 		Preview = 0x200,
 		UseRoslyn2_10_0 = 0x400,
@@ -212,10 +211,12 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				return outputFile;
 			}
 
-			string ildasmPath = SdkUtility.GetSdkPath("ildasm.exe");
+			string ildasmPath = Path.Combine(
+				Path.GetDirectoryName(typeof(Tester).Assembly.Location),
+				"ildasm.exe");
 
 			var command = Cli.Wrap(ildasmPath)
-				.WithArguments($"/nobar /utf8 /out=\"{outputFile}\" \"{sourceFileName}\"")
+				.WithArguments($"/utf8 /out=\"{outputFile}\" \"{sourceFileName}\"")
 				.WithValidation(CommandResultValidation.None);
 
 			var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
@@ -310,6 +311,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			{
 				preprocessorSymbols.Add("OPT");
 			}
+			if (flags.HasFlag(CompilerOptions.TargetNet40))
+			{
+				preprocessorSymbols.Add("NET40");
+			}
 			if ((flags & CompilerOptions.UseRoslynMask) != 0)
 			{
 				preprocessorSymbols.Add("NETCORE");
@@ -373,7 +378,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			{
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
 			}
-			if ((flags & CompilerOptions.UseRoslynMask) != 0)
+			bool targetNet40 = (flags & CompilerOptions.TargetNet40) != 0;
+			bool useRoslyn = (flags & CompilerOptions.UseRoslynMask) != 0;
+			if (useRoslyn && !targetNet40)
 			{
 				sourceFileNames.Add(targetFrameworkAttributeSnippetFile.Value);
 			}
@@ -397,7 +404,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 				string libPath;
 				IEnumerable<string> references;
-				if ((flags & CompilerOptions.UseRoslynMask) != 0)
+				if (useRoslyn && !targetNet40)
 				{
 					libPath = "\"" + coreRefAsmPath + "\"";
 					references = coreDefaultReferences.Select(r => "-r:\"" + Path.Combine(coreRefAsmPath, r) + "\"");
@@ -420,7 +427,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				if (roslynVersion != "legacy")
 				{
 					otherOptions += "/shared ";
-					if (Version.Parse(roslynVersion).Major > 2)
+					if (!targetNet40 && Version.Parse(roslynVersion).Major > 2)
 					{
 						if (flags.HasFlag(CompilerOptions.NullableEnable))
 							otherOptions += "/nullable+ ";
@@ -611,6 +618,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				suffix += ".32";
 			if ((cscOptions & CompilerOptions.UseDebug) != 0)
 				suffix += ".dbg";
+			if ((cscOptions & CompilerOptions.TargetNet40) != 0)
+				suffix += ".net40";
 			if ((cscOptions & CompilerOptions.UseRoslyn1_3_2) != 0)
 				suffix += ".roslyn1";
 			if ((cscOptions & CompilerOptions.UseRoslyn2_10_0) != 0)

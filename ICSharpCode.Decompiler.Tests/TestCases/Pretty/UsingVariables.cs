@@ -17,7 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+#if !NET40
 using System.Threading.Tasks;
+#endif
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -28,20 +30,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return null;
 		}
 
-		public IAsyncDisposable GetAsyncDisposable()
-		{
-			return null;
-		}
-
 		private void Use(IDisposable disposable)
 		{
 
+		}
+
+#if !NET40
+		public IAsyncDisposable GetAsyncDisposable()
+		{
+			return null;
 		}
 
 		private void Use(IAsyncDisposable asyncDisposable)
 		{
 
 		}
+#endif
 
 		public void SimpleUsingVar()
 		{
@@ -83,7 +87,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Use(disposable);
 			Use(disposable2);
 		}
-
+#if !NET40
 		public async Task SimpleUsingVarAsync()
 		{
 			Console.WriteLine("before using");
@@ -91,5 +95,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("inside using");
 			Use(asyncDisposable);
 		}
+#endif
 	}
 }

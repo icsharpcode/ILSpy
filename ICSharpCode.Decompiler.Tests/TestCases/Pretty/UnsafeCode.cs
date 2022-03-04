@@ -411,7 +411,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-#if CS73
+#if CS73 && !NET40
 		public unsafe void FixedSpan(Span<int> span)
 		{
 			fixed (int* ptr = span)
