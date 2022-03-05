@@ -1168,7 +1168,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 		#endregion
 
-		#region C# 7.3 pattern based fixed
+		#region C# 7.3 pattern based fixed (for value types)
+		// reference types are handled by DetectPinnedRegions.IsCustomRefPinPattern
 		static readonly Expression addressOfPinnableReference = new UnaryOperatorExpression {
 			Operator = UnaryOperatorType.AddressOf,
 			Expression = new InvocationExpression {
@@ -1186,7 +1187,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					var m = addressOfPinnableReference.Match(v.Initializer);
 					if (m.Success)
 					{
-						v.Initializer = m.Get<Expression>("target").Single().Detach();
+						Expression target = m.Get<Expression>("target").Single();
+						if (target.GetResolveResult().Type.IsReferenceType == false)
+						{
+							v.Initializer = target.Detach();
+						}
 					}
 				}
 			}
