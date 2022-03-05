@@ -56,7 +56,7 @@ jobs:
       env:
         Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\win-x64\ICSharpCode.Decompiler.Tests.dll
         Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net6.0-windows\ILSpy.Tests.dll
-        Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\ILSpy.BamlDecompiler.Tests.dll
+        Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\win-x64\ILSpy.BamlDecompiler.Tests.dll
 
     - name: Test Report
       uses: dorny/test-reporter@v1

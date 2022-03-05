@@ -266,7 +266,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						ParameterDeclaration p1 = lambda.Parameters.ElementAt(0);
 						ParameterDeclaration p2 = lambda.Parameters.ElementAt(1);
-						if (p1.Name == element1.Name && (p2.Name == element2.Name || mre.MemberName == "GroupJoin"))
+						if (ValidateParameter(p1) && ValidateParameter(p2)
+							&& p1.Name == element1.Name && (p2.Name == element2.Name || mre.MemberName == "GroupJoin"))
 						{
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(MakeFromClause(element1, source1.Detach()));
@@ -374,7 +375,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (expr is LambdaExpression lambda && lambda.Parameters.Count == 1 && lambda.Body is Expression)
 			{
 				ParameterDeclaration p = lambda.Parameters.Single();
-				if (p.ParameterModifier == ParameterModifier.None)
+				if (ValidateParameter(p))
 				{
 					parameter = p;
 					body = (Expression)lambda.Body;
@@ -384,6 +385,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			parameter = null;
 			body = null;
 			return false;
+		}
+
+		private static bool ValidateParameter(ParameterDeclaration p)
+		{
+			return p.ParameterModifier == ParameterModifier.None && p.Attributes.Count == 0;
 		}
 	}
 }
