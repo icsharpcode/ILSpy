@@ -419,13 +419,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				UsePointer(ptr);
 			}
 		}
+#endif
 
+#if CS73
 		//public unsafe void FixedCustomReferenceType(CustomPinnable mem)
 		//{
-		//	fixed (int* ptr = mem) {
+		//	fixed (int* ptr = mem)
+		//	{
 		//		UsePointer(ptr);
 		//	}
 		//}
+
+		public unsafe void FixedCustomReferenceTypeNoPointerUse(CustomPinnable mem)
+		{
+			fixed (int* ptr = mem)
+			{
+				Console.WriteLine("Hello World!");
+			}
+		}
+
+		public unsafe void FixedCustomReferenceTypeExplicitGetPinnableReference(CustomPinnable mem)
+		{
+			fixed (int* ptr = &mem.GetPinnableReference())
+			{
+				UsePointer(ptr);
+			}
+		}
 #endif
 
 		public unsafe string StackAlloc(int count)
