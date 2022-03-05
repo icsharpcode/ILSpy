@@ -29,14 +29,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			int MyMethod1();
 
 			int MyProperty1 { get; }
+			int MyOverload();
 
 			int MyMethod2();
 
 			int MyProperty2 { get; set; }
 
+			int MyOverload(int x);
+
 			event EventHandler MyEvent1;
 
 			int MyMethod3();
+
 		}
 	}
 }
