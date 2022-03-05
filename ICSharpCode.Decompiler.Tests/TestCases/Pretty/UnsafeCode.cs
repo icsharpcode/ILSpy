@@ -422,13 +422,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 
 #if CS73
-		//public unsafe void FixedCustomReferenceType(CustomPinnable mem)
-		//{
-		//	fixed (int* ptr = mem)
-		//	{
-		//		UsePointer(ptr);
-		//	}
-		//}
+		public unsafe void FixedCustomReferenceType(CustomPinnable mem)
+		{
+			fixed (int* ptr = mem)
+			{
+				UsePointer(ptr);
+			}
+		}
 
 		public unsafe void FixedCustomReferenceTypeNoPointerUse(CustomPinnable mem)
 		{

@@ -174,7 +174,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					((Branch)block.Instructions.Last()).TargetBlock = targetBlock;
 					modified = true;
 				}
-				else if (IsCustomRefPinPattern(block, out ILInstruction ldlocMem, out var callGPR, out v, out var stlocPtr, out targetBlock))
+				else if (IsCustomRefPinPattern(block, out ILInstruction ldlocMem, out var callGPR, out v, out var stlocPtr,
+					out targetBlock, out var nullBlock, out var notNullBlock))
 				{
 					context.Step("CustomRefPinPattern", block);
 					ILInstruction gpr;
@@ -197,6 +198,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						block.Instructions.Insert(block.Instructions.Count - 1, stlocPtr);
 					}
 					((Branch)block.Instructions.Last()).TargetBlock = targetBlock;
+					// clear out internal blocks that are now unreachable, so that
+					// targetBlock.IncomingEdgeCount is accurate at this point.
+					nullBlock?.Instructions.Clear();
+					notNullBlock.Instructions.Clear();
+					if (targetBlock.IncomingEdgeCount == 1 && targetBlock.Parent == block.Parent)
+					{
+						block.Instructions.RemoveLast();
+						block.Instructions.AddRange(targetBlock.Instructions);
+						targetBlock.Instructions.Clear();
+						if (stlocPtr != null)
+						{
+							ILInlining.InlineOneIfPossible(block, stlocPtr.ChildIndex, InliningOptions.None, context);
+						}
+					}
 					modified = true;
 				}
 			}
@@ -226,13 +241,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		//      stloc ptr(conv ref->u (ldloc V_1))
 		//      br targetBlock
 		private bool IsCustomRefPinPattern(Block block, out ILInstruction ldlocMem, out CallInstruction callGPR,
-			out ILVariable v, out StLoc ptrAssign, out Block targetBlock)
+			out ILVariable v, out StLoc ptrAssign, out Block targetBlock, out Block nullBlock, out Block notNullBlock)
 		{
 			ldlocMem = null;
 			callGPR = null;
 			v = null;
 			ptrAssign = null;
 			targetBlock = null;
+			nullBlock = null;
+			notNullBlock = null;
 			//      if (comp.o(ldloc mem != ldnull)) br on_not_null
 			//      br on_null
 			if (!block.MatchIfAtEndOfBlock(out var ifCondition, out var trueInst, out var falseInst))
@@ -250,9 +267,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			if (!SemanticHelper.IsPure(ldlocMem.Flags))
 				return false;
-			if (!trueInst.MatchBranch(out Block notNullBlock) || notNullBlock.Parent != block.Parent)
+			if (!trueInst.MatchBranch(out notNullBlock) || notNullBlock.Parent != block.Parent)
 				return false;
-			if (!falseInst.MatchBranch(out Block nullBlock) || nullBlock.Parent != block.Parent)
+			if (!falseInst.MatchBranch(out nullBlock) || nullBlock.Parent != block.Parent)
 				return false;
 
 			//  Block notNullBlock (incoming: 1) {
@@ -309,6 +326,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 				if (targetBlock != nullBlock)
 					return false;
+				// nullBlock must be set to null, so that
+				// we do not clear out targetBlock in the caller.
+				nullBlock = null;
 			}
 			return true;
 		}
