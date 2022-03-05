@@ -391,6 +391,12 @@ namespace ICSharpCode.Decompiler.Tests
 			await RunCS(options: options);
 		}
 
+		[Test]
+		public async Task ComInterop([ValueSource(nameof(noMonoOptions))] CompilerOptions options)
+		{
+			await RunCS(options: options);
+		}
+
 		async Task RunCS([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug)
 		{
 			if ((options & CompilerOptions.UseRoslynMask) != 0 && (options & CompilerOptions.TargetNet40) == 0)
