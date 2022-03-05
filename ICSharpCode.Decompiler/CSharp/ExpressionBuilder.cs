@@ -2581,6 +2581,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		private TranslatedExpression EnsureTargetNotNullable(TranslatedExpression expr, ILInstruction inst)
 		{
+			/*
+			// TODO Improve nullability support so that we do not sprinkle ! operators everywhere.
 			// inst is the instruction that got translated into expr.
 			if (expr.Type.Nullability == Nullability.Nullable)
 			{
@@ -2598,6 +2600,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new ResolveResult(expr.Type.ChangeNullability(Nullability.Oblivious)))
 					.WithoutILInstruction();
 			}
+			*/
 			return expr;
 		}
 

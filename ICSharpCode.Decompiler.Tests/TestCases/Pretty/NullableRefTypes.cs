@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int GetLength2(string[]? arr)
 		{
-			return field_nullable_string!.Length + arr!.Length;
+			return field_nullable_string.Length + arr.Length;
 		}
 
 		public int? GetLength3(string[]? arr)
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void CallByRef(ref string a, ref string? b)
 		{
 			ByRef(ref a).ToString();
-			ByRef(ref b)!.ToString();
+			ByRef(ref b).ToString();
 		}
 
 		public void Constraints<UC, C, CN, NN, S, SN, D, DN, NND>() where C : class where CN : class? where NN : notnull where S : struct where D : IDisposable where DN : IDisposable? where NND : notnull, IDisposable

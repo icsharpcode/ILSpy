@@ -552,10 +552,6 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					// Never use file-scoped namespaces
 					FileScopedNamespaces = false
 				};
-				if (!cscOptions.HasFlag(CompilerOptions.NullableEnable))
-				{
-					settings.NullableReferenceTypes = false;
-				}
 				return settings;
 			}
 			else
