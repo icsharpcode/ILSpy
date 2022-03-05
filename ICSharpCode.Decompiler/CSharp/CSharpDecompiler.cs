@@ -429,6 +429,47 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 		#endregion
 
+		#region NativeOrdering
+
+		/// <summary>
+		/// Determines whether a given type requires that its methods be ordered precisely as they were originally defined.
+		/// </summary>
+		/// <param name="typeDef">The type whose members may need native ordering.</param>
+		internal bool RequiresNativeOrdering(ITypeDefinition typeDef)
+		{
+			// The main scenario for requiring the native method ordering is COM interop, where the V-table is fixed by the ABI
+			return ComHelper.IsComImport(typeDef);
+		}
+
+		/// <summary>
+		/// Compare handles with the method definition ordering intact by using the underlying method's MetadataToken,
+		/// which is defined as the index into a given metadata table. This should equate to the original order that
+		/// methods and properties were defined by the author.
+		/// </summary>
+		/// <param name="typeDef">The type whose members to order using their method's MetadataToken</param>
+		/// <returns>A sequence of all members ordered by MetadataToken</returns>
+		internal IEnumerable<IMember> GetMembersWithNativeOrdering(ITypeDefinition typeDef)
+		{
+			EntityHandle GetOrderingHandle(IMember member)
+			{
+				// Note! Technically COM interfaces could define property getters and setters out of order or interleaved with other
+				// methods, but C# doesn't support this so we can't define it that way.
+
+				if (member is IMethod)
+					return member.MetadataToken;
+				else if (member is IProperty property)
+					return property.Getter?.MetadataToken ?? property.Setter?.MetadataToken ?? property.MetadataToken;
+				else if (member is IEvent @event)
+					return @event.AddAccessor?.MetadataToken ?? @event.RemoveAccessor?.MetadataToken ?? @event.InvokeAccessor?.MetadataToken ?? @event.MetadataToken;
+				else
+					return member.MetadataToken;
+			}
+
+			return typeDef.Fields.Concat<IMember>(typeDef.Properties).Concat(typeDef.Methods).Concat(typeDef.Events).OrderBy((member) => GetOrderingHandle(member), HandleComparer.Default);
+		}
+
+		#endregion
+
 		static PEFile LoadPEFile(string fileName, DecompilerSettings settings)
 		{
 			settings.LoadInMemory = true;
@@ -1264,48 +1305,61 @@ namespace ICSharpCode.Decompiler.CSharp
 				// With C# 9 records, the relative order of fields and properties matters:
 				IEnumerable<IMember> fieldsAndProperties = recordDecompiler?.FieldsAndProperties
 					?? typeDef.Fields.Concat<IMember>(typeDef.Properties);
-				foreach (var fieldOrProperty in fieldsAndProperties)
+
+				// For COM interop scenarios, the relative order of virtual functions/properties matters:
+				IEnumerable<IMember> allOrderedMembers = RequiresNativeOrdering(typeDef) ? GetMembersWithNativeOrdering(typeDef) :
+					fieldsAndProperties.Concat<IMember>(typeDef.Events).Concat<IMember>(typeDef.Methods);
+
+				foreach (var member in allOrderedMembers)
 				{
-					if (fieldOrProperty.MetadataToken.IsNil || MemberIsHidden(module.PEFile, fieldOrProperty.MetadataToken, settings))
+					if (member is IField || member is IProperty)
 					{
-						continue;
-					}
-					if (fieldOrProperty is IField field)
-					{
-						if (typeDef.Kind == TypeKind.Enum && !field.IsConst)
-							continue;
-						var memberDecl = DoDecompile(field, decompileRun, decompilationContext.WithCurrentMember(field));
-						typeDecl.Members.Add(memberDecl);
-					}
-					else if (fieldOrProperty is IProperty property)
-					{
-						if (recordDecompiler?.PropertyIsGenerated(property) == true)
+						var fieldOrProperty = member;
+						if (fieldOrProperty.MetadataToken.IsNil || MemberIsHidden(module.PEFile, fieldOrProperty.MetadataToken, settings))
 						{
 							continue;
 						}
-						var propDecl = DoDecompile(property, decompileRun, decompilationContext.WithCurrentMember(property));
-						typeDecl.Members.Add(propDecl);
+						if (fieldOrProperty is IField field)
+						{
+							if (typeDef.Kind == TypeKind.Enum && !field.IsConst)
+								continue;
+							var memberDecl = DoDecompile(field, decompileRun, decompilationContext.WithCurrentMember(field));
+							typeDecl.Members.Add(memberDecl);
+						}
+						else if (fieldOrProperty is IProperty property)
+						{
+							if (recordDecompiler?.PropertyIsGenerated(property) == true)
+							{
+								continue;
+							}
+							var propDecl = DoDecompile(property, decompileRun, decompilationContext.WithCurrentMember(property));
+							typeDecl.Members.Add(propDecl);
+						}
 					}
-				}
-				foreach (var @event in typeDef.Events)
-				{
-					if (!@event.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, @event.MetadataToken, settings))
+					else if (member is IMethod method)
 					{
-						var eventDecl = DoDecompile(@event, decompileRun, decompilationContext.WithCurrentMember(@event));
-						typeDecl.Members.Add(eventDecl);
+						if (recordDecompiler?.MethodIsGenerated(method) == true)
+						{
+							continue;
+						}
+						if (!method.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, method.MetadataToken, settings))
+						{
+							var memberDecl = DoDecompile(method, decompileRun, decompilationContext.WithCurrentMember(method));
+							typeDecl.Members.Add(memberDecl);
+							typeDecl.Members.AddRange(AddInterfaceImplHelpers(memberDecl, method, typeSystemAstBuilder));
+						}
 					}
-				}
-				foreach (var method in typeDef.Methods)
-				{
-					if (recordDecompiler?.MethodIsGenerated(method) == true)
+					else if (member is IEvent @event)
 					{
-						continue;
+						if (!@event.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, @event.MetadataToken, settings))
+						{
+							var eventDecl = DoDecompile(@event, decompileRun, decompilationContext.WithCurrentMember(@event));
+							typeDecl.Members.Add(eventDecl);
+						}
 					}
-					if (!method.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, method.MetadataToken, settings))
+					else
 					{
-						var memberDecl = DoDecompile(method, decompileRun, decompilationContext.WithCurrentMember(method));
-						typeDecl.Members.Add(memberDecl);
-						typeDecl.Members.AddRange(AddInterfaceImplHelpers(memberDecl, method, typeSystemAstBuilder));
+						throw new ArgumentOutOfRangeException("Unexpected member type");
 					}
 				}
 				if (typeDecl.Members.OfType<IndexerDeclaration>().Any(idx => idx.PrivateImplementationType.IsNull))
