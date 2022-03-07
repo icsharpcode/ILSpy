@@ -43,9 +43,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		/// <summary>
 		/// For enums: returns the underlying primitive type.
-		/// For all other types: returns <see cref="SpecialType.UnknownType"/>.
+		/// For all other types: returns <see langword="null"/>.
 		/// </summary>
-		IType EnumUnderlyingType { get; }
+		IType? EnumUnderlyingType { get; }
 
 		/// <summary>
 		/// For structs: returns whether this is a readonly struct.
@@ -57,6 +57,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the full name of this type.
 		/// </summary>
 		FullTypeName FullTypeName { get; }
+
+		/// <summary>
+		/// Gets the short type name as stored in metadata.
+		/// That is, the short type name including the generic arity (`N) appended.
+		/// </summary>
+		/// <remarks>
+		/// "Int32" for int
+		/// "List`1" for List&lt;T&gt;
+		/// "List`1" for List&lt;string&gt;
+		/// </remarks>
+		string MetadataName { get; }
 
 		/// <summary>
 		/// Gets/Sets the declaring type (incl. type arguments, if any).

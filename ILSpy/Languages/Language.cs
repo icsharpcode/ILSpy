@@ -541,7 +541,7 @@ namespace ICSharpCode.ILSpy
 
 		public virtual CodeMappingInfo GetCodeMappingInfo(PEFile module, SRM.EntityHandle member)
 		{
-			var declaringType = member.GetDeclaringType(module.Metadata);
+			var declaringType = (SRM.TypeDefinitionHandle)member.GetDeclaringType(module.Metadata);
 
 			if (declaringType.IsNil && member.Kind == SRM.HandleKind.TypeDefinition)
 			{

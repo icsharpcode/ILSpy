@@ -16,14 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Reflection.Metadata;
-using System.Runtime.InteropServices;
+using System.Threading;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -41,11 +40,11 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			// TODO: DeclSecurity attributes are not supported.
 			if (!IsBuiltinAttribute(attributeType, out var knownAttribute))
 			{
-				return HandleCustomAttribute(attributeType, scope);
+				return HandleCustomAttribute(attributeType, scope, context.CancellationToken).Distinct();
 			}
 			else
 			{
-				return HandleBuiltinAttribute(knownAttribute, scope).SelectMany(s => s);
+				return HandleBuiltinAttribute(knownAttribute, scope, context.CancellationToken).SelectMany(s => s);
 			}
 		}
 
@@ -74,7 +73,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		IEnumerable<IEnumerable<ISymbol>> HandleBuiltinAttribute(KnownAttribute attribute, AnalyzerScope scope)
+		IEnumerable<IEnumerable<ISymbol>> HandleBuiltinAttribute(KnownAttribute attribute, AnalyzerScope scope, CancellationToken ct)
 		{
 			IEnumerable<ISymbol> ScanTypes(DecompilerTypeSystem ts)
 			{
@@ -112,9 +111,10 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					.Select(m => m.AccessorOwner ?? m);
 			}
 
-			foreach (Decompiler.Metadata.PEFile module in scope.GetAllModules())
+			foreach (Decompiler.Metadata.PEFile module in scope.GetModulesInScope(ct))
 			{
-				var ts = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
+				var ts = scope.ConstructTypeSystem(module);
+				ct.ThrowIfCancellationRequested();
 
 				switch (attribute)
 				{
@@ -148,21 +148,21 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		IEnumerable<ISymbol> HandleCustomAttribute(ITypeDefinition attributeType, AnalyzerScope scope)
+		IEnumerable<ISymbol> HandleCustomAttribute(ITypeDefinition attributeType, AnalyzerScope scope, CancellationToken ct)
 		{
-			var genericContext = new GenericContext(); // type arguments do not matter for this analyzer.
+			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type arguments do not matter for this analyzer.
 
-			foreach (var module in scope.GetAllModules())
+			foreach (var module in scope.GetModulesInScope(ct))
 			{
-				var ts = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
+				var ts = scope.ConstructTypeSystem(module);
+				ct.ThrowIfCancellationRequested();
+				var decoder = new FindTypeDecoder(ts.MainModule, attributeType);
+
 				var referencedParameters = new HashSet<ParameterHandle>();
 				foreach (var h in module.Metadata.CustomAttributes)
 				{
 					var customAttribute = module.Metadata.GetCustomAttribute(h);
-					var attributeCtor = ts.MainModule.ResolveMethod(customAttribute.Constructor, genericContext);
-					if (attributeCtor.DeclaringTypeDefinition != null
-						&& attributeCtor.ParentModule.PEFile == attributeType.ParentModule.PEFile
-						&& attributeCtor.DeclaringTypeDefinition.MetadataToken == attributeType.MetadataToken)
+					if (IsCustomAttributeOfType(customAttribute.Constructor, module.Metadata, decoder))
 					{
 						if (customAttribute.Parent.Kind == HandleKind.Parameter)
 						{
@@ -170,7 +170,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 						}
 						else
 						{
-							var parent = GetParentEntity(ts, customAttribute);
+							var parent = AnalyzerHelpers.GetParentEntity(ts, customAttribute);
 							if (parent != null)
 								yield return parent;
 						}
@@ -201,30 +201,10 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		ISymbol GetParentEntity(DecompilerTypeSystem ts, CustomAttribute customAttribute)
+		internal static bool IsCustomAttributeOfType(EntityHandle customAttributeCtor, MetadataReader metadata, FindTypeDecoder decoder)
 		{
-			var metadata = ts.MainModule.PEFile.Metadata;
-			switch (customAttribute.Parent.Kind)
-			{
-				case HandleKind.MethodDefinition:
-				case HandleKind.FieldDefinition:
-				case HandleKind.PropertyDefinition:
-				case HandleKind.EventDefinition:
-				case HandleKind.TypeDefinition:
-					return ts.MainModule.ResolveEntity(customAttribute.Parent);
-				case HandleKind.AssemblyDefinition:
-				case HandleKind.ModuleDefinition:
-					return ts.MainModule;
-				case HandleKind.GenericParameterConstraint:
-					var gpc = metadata.GetGenericParameterConstraint((GenericParameterConstraintHandle)customAttribute.Parent);
-					var gp = metadata.GetGenericParameter(gpc.Parameter);
-					return ts.MainModule.ResolveEntity(gp.Parent);
-				case HandleKind.GenericParameter:
-					gp = metadata.GetGenericParameter((GenericParameterHandle)customAttribute.Parent);
-					return ts.MainModule.ResolveEntity(gp.Parent);
-				default:
-					return null;
-			}
+			var declaringAttributeType = customAttributeCtor.GetDeclaringType(metadata);
+			return decoder.GetTypeFromEntity(metadata, declaringAttributeType);
 		}
 
 		public bool Show(ISymbol symbol)

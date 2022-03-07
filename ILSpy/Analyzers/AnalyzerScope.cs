@@ -32,6 +32,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 	public class AnalyzerScope
 	{
 		readonly ITypeDefinition typeScope;
+		readonly AssemblyListSnapshot assemblyListSnapshot;
 
 		/// <summary>
 		/// Returns whether this scope is local, i.e., AnalyzedSymbol is only reachable
@@ -40,6 +41,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public bool IsLocal { get; }
 
 		public AssemblyList AssemblyList { get; }
+
 		public ISymbol AnalyzedSymbol { get; }
 
 		public ITypeDefinition TypeScope => typeScope;
@@ -49,11 +51,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public AnalyzerScope(AssemblyList assemblyList, IEntity entity)
 		{
 			AssemblyList = assemblyList;
+			assemblyListSnapshot = assemblyList.GetSnapshot();
 			AnalyzedSymbol = entity;
 			if (entity is ITypeDefinition type)
 			{
 				typeScope = type;
-				effectiveAccessibility = DetermineEffectiveAccessibility(ref typeScope);
+				effectiveAccessibility = DetermineEffectiveAccessibility(ref typeScope, Accessibility.Public);
 			}
 			else
 			{
@@ -76,9 +79,14 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public IEnumerable<PEFile> GetAllModules()
 		{
-			return AssemblyList.GetAllAssemblies().GetAwaiter().GetResult()
+			return assemblyListSnapshot.GetAllAssembliesAsync().GetAwaiter().GetResult()
 				.Select(asm => asm.GetPEFileOrNull())
 				.Where(x => x != null);
+		}
+
+		public DecompilerTypeSystem ConstructTypeSystem(PEFile module)
+		{
+			return new DecompilerTypeSystem(module, module.GetAssemblyResolver(assemblyListSnapshot, loadOnDemand: false));
 		}
 
 		public IEnumerable<ITypeDefinition> GetTypesInScope(CancellationToken ct)
@@ -94,7 +102,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			{
 				foreach (var module in GetModulesInScope(ct))
 				{
-					var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
+					var typeSystem = ConstructTypeSystem(module);
 					foreach (var type in typeSystem.MainModule.TypeDefinitions)
 					{
 						yield return type;
@@ -103,13 +111,15 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 		}
 
-		static Accessibility DetermineEffectiveAccessibility(ref ITypeDefinition typeScope, Accessibility memberAccessibility = Accessibility.Public)
+		static Accessibility DetermineEffectiveAccessibility(ref ITypeDefinition typeScope, Accessibility memberAccessibility)
 		{
 			Accessibility accessibility = memberAccessibility;
-			while (typeScope.DeclaringTypeDefinition != null && !accessibility.LessThanOrEqual(Accessibility.Private))
+			var ts = typeScope;
+			while (ts != null && !accessibility.LessThanOrEqual(Accessibility.Private))
 			{
-				accessibility = accessibility.Intersect(typeScope.Accessibility);
-				typeScope = typeScope.DeclaringTypeDefinition;
+				accessibility = accessibility.Intersect(ts.Accessibility);
+				typeScope = ts;
+				ts = ts.DeclaringTypeDefinition;
 			}
 			// Once we reach a private entity, we leave the loop with typeScope set to the class that
 			// contains the private entity = the scope that needs to be searched.
@@ -131,7 +141,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 			toWalkFiles.Push(self);
 			checkedFiles.Add(self);
-			IList<LoadedAssembly> assemblies = AssemblyList.GetAllAssemblies().GetAwaiter().GetResult();
+			IList<LoadedAssembly> assemblies = assemblyListSnapshot.GetAllAssembliesAsync().GetAwaiter().GetResult();
 
 			do
 			{
@@ -145,7 +155,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 						continue;
 					if (checkedFiles.Contains(module))
 						continue;
-					var resolver = assembly.GetAssemblyResolver(loadOnDemand: false);
+					var resolver = assembly.GetAssemblyResolver(assemblyListSnapshot, loadOnDemand: false);
 					foreach (var reference in module.AssemblyReferences)
 					{
 						if (resolver.Resolve(reference) == curFile)
@@ -184,7 +194,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 			if (friendAssemblies.Count > 0)
 			{
-				IEnumerable<LoadedAssembly> assemblies = AssemblyList.GetAllAssemblies()
+				IEnumerable<LoadedAssembly> assemblies = assemblyListSnapshot.GetAllAssembliesAsync()
 					.GetAwaiter().GetResult();
 
 				foreach (var assembly in assemblies)
@@ -208,7 +218,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 			foreach (var h in metadata.TypeReferences)
 			{
 				var typeRef = metadata.GetTypeReference(h);
-				if (metadata.StringComparer.Equals(typeRef.Name, typeScopeName) && metadata.StringComparer.Equals(typeRef.Namespace, typeScopeNamespace))
+				if (metadata.StringComparer.Equals(typeRef.Name, typeScopeName)
+					&& metadata.StringComparer.Equals(typeRef.Namespace, typeScopeNamespace))
 				{
 					hasRef = true;
 					break;
@@ -223,7 +234,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 			foreach (var h in metadata.ExportedTypes)
 			{
 				var exportedType = metadata.GetExportedType(h);
-				if (exportedType.IsForwarder && metadata.StringComparer.Equals(exportedType.Name, typeScopeName) && metadata.StringComparer.Equals(exportedType.Namespace, typeScopeNamespace))
+				if (exportedType.IsForwarder
+					&& metadata.StringComparer.Equals(exportedType.Name, typeScopeName)
+					&& metadata.StringComparer.Equals(exportedType.Namespace, typeScopeNamespace))
 				{
 					hasForward = true;
 					break;

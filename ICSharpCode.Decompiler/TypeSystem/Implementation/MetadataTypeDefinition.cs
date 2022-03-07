@@ -70,6 +70,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var td = metadata.GetTypeDefinition(handle);
 			this.attributes = td.Attributes;
 			this.fullTypeName = td.GetFullTypeName(metadata);
+			this.MetadataName = metadata.GetString(td.Name);
 			// Find DeclaringType + KnownTypeCode:
 			if (fullTypeName.IsNested)
 			{
@@ -349,7 +350,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public EntityHandle MetadataToken => handle;
-
+		public string MetadataName { get; }
 		public FullTypeName FullTypeName => fullTypeName;
 		public string Name => fullTypeName.Name;
 

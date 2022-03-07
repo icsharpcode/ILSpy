@@ -43,6 +43,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 		/// </summary>
 		public Language Language { get; internal set; }
 
+		/// <summary>
+		/// Allows the analyzer to control whether the tree nodes will be sorted.
+		/// Must be set within <see cref="IAnalyzer.Analyze(ISymbol, AnalyzerContext)"/>
+		/// before the results are enumerated.
+		/// </summary>
+		public bool SortResults { get; set; }
+
 		public MethodBodyBlock GetMethodBody(IMethod method)
 		{
 			if (!method.HasBody || method.MetadataToken.IsNil)

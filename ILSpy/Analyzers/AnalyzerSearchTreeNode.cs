@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -60,10 +61,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 					Language = Language,
 					AssemblyList = MainWindow.Instance.CurrentAssemblyList
 				};
-				foreach (var result in analyzer.Analyze(symbol, context))
+				var results = analyzer.Analyze(symbol, context).Select(SymbolTreeNodeFactory);
+				if (context.SortResults)
 				{
-					yield return SymbolTreeNodeFactory(result);
+					results = results.OrderBy(tn => tn.Text?.ToString(), NaturalStringComparer.Instance);
 				}
+				return results;
 			}
 			else
 			{

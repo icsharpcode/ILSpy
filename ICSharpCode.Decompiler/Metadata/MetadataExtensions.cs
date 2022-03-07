@@ -94,25 +94,39 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static string GetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader)
 		{
-			string publicKey = "null";
-			if (!reference.PublicKeyOrToken.IsNil)
+			StringBuilder builder = new StringBuilder();
+			builder.Append(reader.GetString(reference.Name));
+			builder.Append(", Version=");
+			builder.Append(reference.Version);
+			builder.Append(", Culture=");
+			if (reference.Culture.IsNil)
 			{
-				if ((reference.Flags & AssemblyFlags.PublicKey) != 0)
-				{
-					publicKey = CalculatePublicKeyToken(reference.PublicKeyOrToken, reader);
-				}
-				else
-				{
-					publicKey = reader.GetBlobBytes(reference.PublicKeyOrToken).ToHexString(8);
-				}
+				builder.Append("neutral");
 			}
-			string properties = "";
+			else
+			{
+				builder.Append(reader.GetString(reference.Culture));
+			}
+
+			if (reference.PublicKeyOrToken.IsNil)
+			{
+				builder.Append(", PublicKeyToken=null");
+			}
+			else if ((reference.Flags & AssemblyFlags.PublicKey) != 0)
+			{
+				builder.Append(", PublicKeyToken=");
+				builder.Append(CalculatePublicKeyToken(reference.PublicKeyOrToken, reader));
+			}
+			else
+			{
+				builder.Append(", PublicKeyToken=");
+				builder.AppendHexString(reader.GetBlobReader(reference.PublicKeyOrToken));
+			}
 			if ((reference.Flags & AssemblyFlags.Retargetable) != 0)
-				properties = ", Retargetable=true";
-			return $"{reader.GetString(reference.Name)}, " +
-				$"Version={reference.Version}, " +
-				$"Culture={(reference.Culture.IsNil ? "neutral" : reader.GetString(reference.Culture))}, " +
-				$"PublicKeyToken={publicKey}{properties}";
+			{
+				builder.Append(", Retargetable=true");
+			}
+			return builder.ToString();
 		}
 
 		public static bool TryGetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader, out string assemblyName)
@@ -138,6 +152,14 @@ namespace ICSharpCode.Decompiler.Metadata
 			foreach (var b in bytes)
 				sb.AppendFormat("{0:x2}", b);
 			return sb.ToString();
+		}
+
+		public static void AppendHexString(this StringBuilder builder, BlobReader reader)
+		{
+			for (int i = 0; i < reader.Length; i++)
+			{
+				builder.AppendFormat("{0:x2}", reader.ReadByte());
+			}
 		}
 
 		public static string ToHexString(this BlobReader reader)
