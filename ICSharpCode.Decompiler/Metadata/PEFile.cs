@@ -128,7 +128,20 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public ImmutableArray<AssemblyReference> AssemblyReferences => Metadata.AssemblyReferences.Select(r => new AssemblyReference(this, r)).ToImmutableArray();
+		ImmutableArray<AssemblyReference> assemblyReferences;
+
+		public ImmutableArray<AssemblyReference> AssemblyReferences {
+			get {
+				var value = assemblyReferences;
+				if (value.IsDefault)
+				{
+					value = Metadata.AssemblyReferences.Select(r => new AssemblyReference(this, r)).ToImmutableArray();
+					assemblyReferences = value;
+				}
+				return value;
+			}
+		}
+
 		public ImmutableArray<Resource> Resources => GetResources().ToImmutableArray();
 
 		IEnumerable<Resource> GetResources()
