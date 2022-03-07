@@ -689,16 +689,10 @@ namespace ICSharpCode.Decompiler.Metadata
 			var gac_folder = new StringBuilder()
 				.Append(prefix)
 				.Append(reference.Version);
-			if (reference.PublicKeyToken != null)
-			{
-				gac_folder.Append("__");
-				for (int i = 0; i < reference.PublicKeyToken.Length; i++)
-					gac_folder.Append(reference.PublicKeyToken[i].ToString("x2"));
-			}
-			return Path.Combine(
-				Path.Combine(
-					Path.Combine(gac, reference.Name), gac_folder.ToString()),
-				reference.Name + ".dll");
+			gac_folder.Append("__");
+			for (int i = 0; i < reference.PublicKeyToken!.Length; i++)
+				gac_folder.Append(reference.PublicKeyToken[i].ToString("x2"));
+			return Path.Combine(gac, reference.Name, gac_folder.ToString(), reference.Name + ".dll");
 		}
 
 		/// <summary>
