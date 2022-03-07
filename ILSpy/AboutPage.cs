@@ -201,6 +201,7 @@ namespace ICSharpCode.ILSpy
 		{
 			var client = new HttpClient(new HttpClientHandler() {
 				UseProxy = true,
+				UseDefaultCredentials = true,
 			});
 			string data = await client.GetStringAsync(UpdateUrl);
 
