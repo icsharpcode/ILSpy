@@ -20,7 +20,7 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
@@ -199,12 +199,10 @@ namespace ICSharpCode.ILSpy
 
 		static async Task<AvailableVersionInfo> GetLatestVersionAsync()
 		{
-			WebClient wc = new WebClient();
-			IWebProxy systemWebProxy = WebRequest.GetSystemWebProxy();
-			systemWebProxy.Credentials = CredentialCache.DefaultCredentials;
-			wc.Proxy = systemWebProxy;
-
-			string data = await wc.DownloadStringTaskAsync(UpdateUrl);
+			var client = new HttpClient(new HttpClientHandler() {
+				UseProxy = true,
+			});
+			string data = await client.GetStringAsync(UpdateUrl);
 
 			XDocument doc = XDocument.Load(new StringReader(data));
 			var bands = doc.Root.Elements("band");
