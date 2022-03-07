@@ -218,7 +218,7 @@ namespace ICSharpCode.ILSpy
 			return LazyInitializer.EnsureInitialized(ref this.typeSystem, () => {
 				var module = GetPEFileOrNull();
 				if (module == null)
-					return null;
+					return null!;
 				return new SimpleCompilation(
 					module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
 					MinimalCorlib.Instance);
@@ -580,42 +580,44 @@ namespace ICSharpCode.ILSpy
 						return module;
 				}
 
-
-				string file = Path.Combine(Path.GetDirectoryName(mainModule.FileName), moduleName);
-				if (File.Exists(file))
+				string? directory = Path.GetDirectoryName(mainModule.FileName);
+				if (directory != null)
 				{
-					// Load module from disk
-					LoadedAssembly? asm;
-					if (loadOnDemand)
+					string file = Path.Combine(directory, moduleName);
+					if (File.Exists(file))
 					{
-						asm = assemblyList.OpenAssembly(file, isAutoLoaded: true);
-					}
-					else
-					{
-						asm = assemblyList.FindAssembly(file);
-					}
-					if (asm != null)
-					{
-						return await asm.GetPEFileOrNullAsync().ConfigureAwait(false);
-					}
-				}
-				else
-				{
-					// Module does not exist on disk, look for one with a matching name in the assemblylist:
-					foreach (LoadedAssembly loaded in alreadyLoadedAssemblies.Assemblies)
-					{
-						var module = await loaded.GetPEFileOrNullAsync().ConfigureAwait(false);
-						var reader = module?.Metadata;
-						if (reader == null || reader.IsAssembly)
-							continue;
-						var moduleDef = reader.GetModuleDefinition();
-						if (moduleName.Equals(reader.GetString(moduleDef.Name), StringComparison.OrdinalIgnoreCase))
+						// Load module from disk
+						LoadedAssembly? asm;
+						if (loadOnDemand)
 						{
-							referenceLoadInfo.AddMessageOnce(moduleName, MessageKind.Info, "Success - Found in Assembly List");
-							return module;
+							asm = assemblyList.OpenAssembly(file, isAutoLoaded: true);
+						}
+						else
+						{
+							asm = assemblyList.FindAssembly(file);
+						}
+						if (asm != null)
+						{
+							return await asm.GetPEFileOrNullAsync().ConfigureAwait(false);
 						}
 					}
 				}
+
+				// Module does not exist on disk, look for one with a matching name in the assemblylist:
+				foreach (LoadedAssembly loaded in alreadyLoadedAssemblies.Assemblies)
+				{
+					var module = await loaded.GetPEFileOrNullAsync().ConfigureAwait(false);
+					var reader = module?.Metadata;
+					if (reader == null || reader.IsAssembly)
+						continue;
+					var moduleDef = reader.GetModuleDefinition();
+					if (moduleName.Equals(reader.GetString(moduleDef.Name), StringComparison.OrdinalIgnoreCase))
+					{
+						referenceLoadInfo.AddMessageOnce(moduleName, MessageKind.Info, "Success - Found in Assembly List");
+						return module;
+					}
+				}
+
 				return null;
 			}
 		}

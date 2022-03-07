@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy
 				lookup = await CreateLoadedAssemblyLookupAsync(shortNames: isWinRT).ConfigureAwait(false);
 				lookup = LazyInit.GetOrSet(ref isWinRT ? ref asmLookupByShortName : ref asmLookupByFullName, lookup);
 			}
-			if (lookup.TryGetValue(key, out PEFile module))
+			if (lookup.TryGetValue(key, out PEFile? module))
 				return module;
 			return null;
 		}

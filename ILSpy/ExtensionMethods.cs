@@ -16,12 +16,17 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Options;
 
 namespace ICSharpCode.ILSpy
@@ -38,7 +43,7 @@ namespace ICSharpCode.ILSpy
 					list.Add(item);
 		}
 
-		public static T PeekOrDefault<T>(this Stack<T> stack)
+		public static T? PeekOrDefault<T>(this Stack<T> stack)
 		{
 			if (stack.Count == 0)
 				return default(T);
@@ -117,6 +122,11 @@ namespace ICSharpCode.ILSpy
 			key = pair.Key;
 			value = pair.Value;
 		}
+
+		internal static IEnumerable<T> EmptyIfNull<T>(this IEnumerable<T>? inst) => inst ?? Enumerable.Empty<T>();
+		internal static IEnumerable EmptyIfNull(this IEnumerable? inst) => inst ?? Enumerable.Empty<object>();
+		internal static IList<T> EmptyIfNull<T>(this IList<T>? inst) => inst ?? EmptyList<T>.Instance;
+		internal static IList EmptyIfNull(this IList? inst) => inst ?? Array.Empty<object>();
 
 		public static string ToSuffixString(this System.Reflection.Metadata.EntityHandle handle)
 		{
@@ -218,7 +228,7 @@ namespace ICSharpCode.ILSpy
 		}
 		#endregion
 
-		public static T FindVisualChild<T>(this DependencyObject depObj) where T : DependencyObject
+		public static T? FindVisualChild<T>(this DependencyObject? depObj) where T : DependencyObject
 		{
 			if (depObj != null)
 			{
@@ -230,7 +240,7 @@ namespace ICSharpCode.ILSpy
 						return (T)child;
 					}
 
-					T childItem = FindVisualChild<T>(child);
+					T? childItem = FindVisualChild<T>(child);
 					if (childItem != null)
 						return childItem;
 				}
@@ -238,7 +248,7 @@ namespace ICSharpCode.ILSpy
 			return null;
 		}
 
-		public static T GetParent<T>(this DependencyObject depObj) where T : DependencyObject
+		public static T? GetParent<T>(this DependencyObject? depObj) where T : DependencyObject
 		{
 			if (depObj == null)
 				return null;

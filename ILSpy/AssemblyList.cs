@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpy
 		/// Loads an assembly list from XML.
 		/// </summary>
 		public AssemblyList(XElement listElement)
-			: this((string)listElement.Attribute("name"))
+			: this((string?)listElement.Attribute("name") ?? AssemblyListManager.DefaultListName)
 		{
 			foreach (var asm in listElement.Elements("Assembly"))
 			{
@@ -184,7 +184,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		void Assemblies_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		void Assemblies_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			Debug.Assert(Monitor.IsEntered(lockObj));
 			if (CollectionChangeHasEffectOnSave(e))
@@ -199,9 +199,9 @@ namespace ICSharpCode.ILSpy
 			switch (e.Action)
 			{
 				case NotifyCollectionChangedAction.Add:
-					return e.NewItems.Cast<LoadedAssembly>().Any(asm => !asm.IsAutoLoaded);
+					return e.NewItems.EmptyIfNull().Cast<LoadedAssembly>().Any(asm => !asm.IsAutoLoaded);
 				case NotifyCollectionChangedAction.Remove:
-					return e.OldItems.Cast<LoadedAssembly>().Any(asm => !asm.IsAutoLoaded);
+					return e.OldItems.EmptyIfNull().Cast<LoadedAssembly>().Any(asm => !asm.IsAutoLoaded);
 				default:
 					return true;
 			}
@@ -283,7 +283,7 @@ namespace ICSharpCode.ILSpy
 		{
 			bool isUIThread = App.Current.Dispatcher.Thread == Thread.CurrentThread;
 
-			LoadedAssembly asm;
+			LoadedAssembly? asm;
 			lock (lockObj)
 			{
 				if (byFilename.TryGetValue(file, out asm))
@@ -319,7 +319,7 @@ namespace ICSharpCode.ILSpy
 			file = Path.GetFullPath(file);
 			lock (lockObj)
 			{
-				if (!byFilename.TryGetValue(file, out LoadedAssembly target))
+				if (!byFilename.TryGetValue(file, out LoadedAssembly? target))
 					return null;
 				int index = this.assemblies.IndexOf(target);
 				if (index < 0)
