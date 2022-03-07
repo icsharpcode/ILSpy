@@ -89,6 +89,9 @@ Remarks:
 		[Option("-d|--dump-package", "Dump package assembiles into a folder. This requires the output directory option.", CommandOptionType.NoValue)]
 		public bool DumpPackageFlag { get; }
 
+		[Option("--nested-directories", "Use nested directories for namespaces.", CommandOptionType.NoValue)]
+		public bool NestedDirectories { get; }
+
 		private int OnExecute(CommandLineApplication app)
 		{
 			TextWriter output = System.Console.Out;
@@ -171,6 +174,7 @@ Remarks:
 				RemoveDeadCode = RemoveDeadCode,
 				RemoveDeadStores = RemoveDeadStores,
 				UseSdkStyleProjectFormat = WholeProjectDecompiler.CanUseSdkStyleProjectFormat(module),
+				UseNestedDirectoriesForNamespaces = NestedDirectories,
 			};
 		}
 
