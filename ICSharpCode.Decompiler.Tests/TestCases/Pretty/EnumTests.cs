@@ -28,6 +28,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Item2
 		}
 
+		public enum OutOfOrderMembers
+		{
+			Item1 = 1,
+			Item0 = 0
+		}
+
 		public enum LongBasedEnum : long
 		{
 			Item1,

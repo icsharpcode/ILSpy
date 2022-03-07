@@ -1393,7 +1393,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					firstValue = currentValue;
 					first = false;
 				}
-				else if (!allConsecutive && !allPowersOfTwo)
+				else if (currentValue < previousValue)
+				{
+					// If the values are out of order, we fallback to displaying all values.
+					return EnumValueDisplayMode.All;
+				}
+				else if ((!allConsecutive && !allPowersOfTwo))
 				{
 					// We already know that the values are neither consecutive nor all powers of 2,
 					// so we can abort, and just display all values as-is.
