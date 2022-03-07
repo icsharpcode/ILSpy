@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>net6.0-windows</TargetFramework>
     <AssemblyName>Test.Plugin</AssemblyName>
-    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <UseWpf>true</UseWpf>
   </PropertyGroup>
 
