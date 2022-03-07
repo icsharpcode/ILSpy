@@ -42,7 +42,7 @@
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
     <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="$(SystemCompilerServicesUnsafeVersion)" />
-    <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.60.1" />
+    <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.70.1" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="16.9.20" />
     <PackageReference Include="System.Composition" Version="$(SystemCompositionVersion)" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
