@@ -147,6 +147,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		internal static (TargetFrameworkIdentifier, Version) ParseTargetFramework(string targetFramework)
 		{
+			if (string.IsNullOrEmpty(targetFramework))
+				return (TargetFrameworkIdentifier.NETFramework, ZeroVersion);
 			string[] tokens = targetFramework.Split(',');
 			TargetFrameworkIdentifier identifier;
 

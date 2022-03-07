@@ -2,7 +2,6 @@
 <Project>
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
-
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <RootNamespace>ICSharpCode.ILSpy.AddIn</RootNamespace>
@@ -55,12 +54,14 @@
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
   </ItemGroup>
 
+  <!--
   <ItemGroup>
     <ProjectReference Include="..\ILSpy\ILSpy.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <Private>false</Private>
     </ProjectReference>
   </ItemGroup>
+  -->
 
   <ItemGroup>
     <Compile Include="..\ICSharpCode.Decompiler\Metadata\AssemblyReferences.cs" Link="Decompiler\AssemblyReferences.cs" />
@@ -87,7 +88,7 @@
   (related to https://github.com/icsharpcode/ILSpy/issues/511)
   -->
   <PropertyGroup>
-    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\$(TargetFramework)\</ILSpyBuildPath>
+    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\net6.0-windows\</ILSpyBuildPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -99,7 +100,7 @@
   <!-- END WORKAROUND -->
 
   <ItemGroup>
-    <Content Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)ILSpy.exe.config">
+    <Content Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)ILSpy.dll.config">
       <IncludeInVSIX>true</IncludeInVSIX>
       <VSIXSubPath>\ILSpy</VSIXSubPath>
     </Content>

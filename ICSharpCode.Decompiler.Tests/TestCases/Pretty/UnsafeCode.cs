@@ -411,7 +411,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-#if CS73
+#if CS73 && !NET40
 		public unsafe void FixedSpan(Span<int> span)
 		{
 			fixed (int* ptr = span)
@@ -419,13 +419,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				UsePointer(ptr);
 			}
 		}
+#endif
 
-		//public unsafe void FixedCustomReferenceType(CustomPinnable mem)
-		//{
-		//	fixed (int* ptr = mem) {
-		//		UsePointer(ptr);
-		//	}
-		//}
+#if CS73
+		public unsafe void FixedCustomReferenceType(CustomPinnable mem)
+		{
+			fixed (int* ptr = mem)
+			{
+				UsePointer(ptr);
+			}
+		}
+
+		public unsafe void FixedCustomReferenceTypeNoPointerUse(CustomPinnable mem)
+		{
+			fixed (int* ptr = mem)
+			{
+				Console.WriteLine("Hello World!");
+			}
+		}
+
+		public unsafe void FixedCustomReferenceTypeExplicitGetPinnableReference(CustomPinnable mem)
+		{
+			fixed (int* ptr = &mem.GetPinnableReference())
+			{
+				UsePointer(ptr);
+			}
+		}
 #endif
 
 		public unsafe string StackAlloc(int count)

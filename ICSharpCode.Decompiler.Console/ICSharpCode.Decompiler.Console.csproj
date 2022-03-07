@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp3.1;net6.0</TargetFrameworks>
+    <TargetFramework>net6.0</TargetFramework>
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsPackable>true</IsPackable>
@@ -10,9 +10,9 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <AssemblyName>ilspycmd</AssemblyName>
     <ToolCommandName>ilspycmd</ToolCommandName>
-    <Version>7.2.0.6791-preview3</Version>
-    <AssemblyVersion>7.2.0.0</AssemblyVersion>
-    <FileVersion>7.2.0.0</FileVersion>
+    <Version>8.0.0.0-alpha1</Version>
+    <AssemblyVersion>8.0.0.0</AssemblyVersion>
+    <FileVersion>8.0.0.0</FileVersion>
     <Description>Command-line decompiler using the ILSpy decompilation engine</Description>
     <Copyright>Copyright 2011-2022 AlphaSierraPapa</Copyright>
     <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>

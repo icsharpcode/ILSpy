@@ -45,6 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public ICompilation Compilation { get; }
 		CorlibTypeDefinition[] typeDefinitions;
 		readonly CorlibNamespace rootNamespace;
+		readonly Version asmVersion = new Version(0, 0, 0, 0);
 
 		private MinimalCorlib(ICompilation compilation, IEnumerable<KnownTypeReference> types)
 		{
@@ -56,6 +57,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IModule.IsMainModule => Compilation.MainModule == this;
 
 		string IModule.AssemblyName => "corlib";
+		Version IModule.AssemblyVersion => asmVersion;
 		string IModule.FullAssemblyName => "corlib";
 		string ISymbol.Name => "corlib";
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Module;

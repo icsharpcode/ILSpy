@@ -21,3 +21,4 @@ _ReSharper*/
 multitargeting.props
 ILSpy.Installer/wix/
 ILSpy.Installer/AppPackage.cs
+/VERSION

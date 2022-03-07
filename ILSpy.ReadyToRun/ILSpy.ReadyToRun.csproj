@@ -1,17 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>ILSpy.ReadyToRun.Plugin</AssemblyName>
-    <LangVersion>8.0</LangVersion>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <NeutralResourcesLanguage>en-US</NeutralResourcesLanguage>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <UseWpf>true</UseWpf>
-  </PropertyGroup>
-  
-  <Import Project="..\multitargeting.props" Condition="Exists('..\multitargeting.props')" />
-  <PropertyGroup Condition="!Exists('..\multitargeting.props')">
-    <TargetFramework>net472</TargetFramework>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

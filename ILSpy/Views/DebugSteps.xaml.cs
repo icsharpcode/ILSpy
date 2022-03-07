@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy
 
 #if DEBUG
 			DockWorkspace.Instance.PropertyChanged += DockWorkspace_PropertyChanged;
-			this.filterSettings = MainWindow.Instance.SessionSettings.FilterSettings;
+			filterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings;
 			filterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged += SelectionChanged;
 			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;

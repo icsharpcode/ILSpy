@@ -83,6 +83,45 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const float Float_Tenth = 0.1f;
 		public const double Double_Tenth = 0.1;
 
+#if ROSLYN && !NET40
+		public const float Float_PI = MathF.PI;
+		public const float Float_HalfOfPI = MathF.PI / 2f;
+		public const float Float_QuarterOfPI = MathF.PI / 4f;
+		public const float Float_PITimes2 = MathF.PI * 2f;
+		public const float Float_3QuartersOfPI = MathF.PI * 3f / 4f;
+		public const float Float_PIDiv360 = MathF.PI / 360f;
+		public const float Float_PIDiv16 = MathF.PI / 16f;
+		public const float Float_PIDiv32 = MathF.PI / 32f;
+		public const float Float_PIInverseFraction = 1f / MathF.PI;
+		public const float Float_PIInverseFraction2 = 2f / MathF.PI;
+		public const float Float_PIInverseFraction5 = 5f / MathF.PI;
+		public const float Float_PITimes90 = MathF.PI * 90f;
+		public const float Float_PITimes180 = MathF.PI * 180f;
+		public const float Float_LooksLikePI = 3.1415925f;
+		public const float Float_LooksLikePI2 = 3.14159f;
+		public const float Float_LooksLikePI3 = 3.141f;
+		public const float Float_BeforePI = 3.1415925f;
+		public const float Float_AfterPI = 3.141593f;
+		public const float Float_Negated_PI = -MathF.PI;
+		public const float Float_Negated_HalfOfPI = -MathF.PI / 2f;
+		public const float Float_Negated_QuarterOfPI = -MathF.PI / 4f;
+		public const float Float_Negated_PITimes2 = MathF.PI * -2f;
+		public const float Float_Negated_3QuartersOfPI = MathF.PI * -3f / 4f;
+		public const float Float_Negated_PIDiv360 = -MathF.PI / 360f;
+		public const float Float_Negated_PIDiv16 = -MathF.PI / 16f;
+		public const float Float_Negated_PIDiv32 = -MathF.PI / 32f;
+		public const float Float_Negated_PIInverseFraction = -1f / MathF.PI;
+		public const float Float_Negated_PIInverseFraction2 = -2f / MathF.PI;
+		public const float Float_Negated_PIInverseFraction5 = -5f / MathF.PI;
+		public const float Float_Negated_PITimes90 = MathF.PI * -90f;
+		public const float Float_Negated_PITimes180 = MathF.PI * -180f;
+		public const float Float_Negated_LooksLikePI = -3.141f;
+		public const float Float_Negated_BeforePI = -3.1415925f;
+		public const float Float_Negated_AfterPI = -3.141593f;
+
+		public const float Float_E = MathF.E;
+		public const float Float_Negated_E = -MathF.E;
+#else
 		public const float Float_PI = (float)Math.PI;
 		public const float Float_HalfOfPI = (float)Math.PI / 2f;
 		public const float Float_QuarterOfPI = (float)Math.PI / 4f;
@@ -120,6 +159,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public const float Float_E = (float)Math.E;
 		public const float Float_Negated_E = -(float)Math.E;
+#endif
 
 		public const double Double_PI = Math.PI;
 		public const double Double_HalfOfPI = Math.PI / 2.0;

@@ -376,7 +376,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			{ 1, 1, 1 }
 		};
 
-#if CS73
+#if CS73 && !NET40
 		public static ReadOnlySpan<byte> StaticData1 => new byte[1] { 0 };
 
 		public static ReadOnlySpan<byte> StaticData3 => new byte[3] { 1, 2, 3 };

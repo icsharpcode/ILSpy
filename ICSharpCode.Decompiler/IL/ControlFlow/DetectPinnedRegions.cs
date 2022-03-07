@@ -174,7 +174,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					((Branch)block.Instructions.Last()).TargetBlock = targetBlock;
 					modified = true;
 				}
-				else if (IsCustomRefPinPattern(block, out ILInstruction ldlocMem, out var callGPR, out v, out var stlocPtr, out targetBlock))
+				else if (IsCustomRefPinPattern(block, out ILInstruction ldlocMem, out var callGPR, out v, out var stlocPtr,
+					out targetBlock, out var nullBlock, out var notNullBlock))
 				{
 					context.Step("CustomRefPinPattern", block);
 					ILInstruction gpr;
@@ -192,8 +193,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 					block.Instructions[block.Instructions.Count - 2] = new StLoc(v, gpr)
 						.WithILRange(block.Instructions[block.Instructions.Count - 2]);
-					block.Instructions.Insert(block.Instructions.Count - 1, stlocPtr);
+					if (stlocPtr != null)
+					{
+						block.Instructions.Insert(block.Instructions.Count - 1, stlocPtr);
+					}
 					((Branch)block.Instructions.Last()).TargetBlock = targetBlock;
+					// clear out internal blocks that are now unreachable, so that
+					// targetBlock.IncomingEdgeCount is accurate at this point.
+					nullBlock?.Instructions.Clear();
+					notNullBlock.Instructions.Clear();
+					if (targetBlock.IncomingEdgeCount == 1 && targetBlock.Parent == block.Parent)
+					{
+						block.Instructions.RemoveLast();
+						block.Instructions.AddRange(targetBlock.Instructions);
+						targetBlock.Instructions.Clear();
+						if (stlocPtr != null)
+						{
+							ILInlining.InlineOneIfPossible(block, stlocPtr.ChildIndex, InliningOptions.None, context);
+						}
+					}
 					modified = true;
 				}
 			}
@@ -223,39 +241,35 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		//      stloc ptr(conv ref->u (ldloc V_1))
 		//      br targetBlock
 		private bool IsCustomRefPinPattern(Block block, out ILInstruction ldlocMem, out CallInstruction callGPR,
-			out ILVariable v, out StLoc ptrAssign, out Block targetBlock)
+			out ILVariable v, out StLoc ptrAssign, out Block targetBlock, out Block nullBlock, out Block notNullBlock)
 		{
 			ldlocMem = null;
 			callGPR = null;
 			v = null;
 			ptrAssign = null;
 			targetBlock = null;
+			nullBlock = null;
+			notNullBlock = null;
 			//      if (comp.o(ldloc mem != ldnull)) br on_not_null
 			//      br on_null
 			if (!block.MatchIfAtEndOfBlock(out var ifCondition, out var trueInst, out var falseInst))
 				return false;
 			if (!ifCondition.MatchCompNotEqualsNull(out ldlocMem))
-				return false;
+			{
+				if (ifCondition.MatchCompEqualsNull(out ldlocMem))
+				{
+					(trueInst, falseInst) = (falseInst, trueInst);
+				}
+				else
+				{
+					return false;
+				}
+			}
 			if (!SemanticHelper.IsPure(ldlocMem.Flags))
 				return false;
-			if (!trueInst.MatchBranch(out Block notNullBlock) || notNullBlock.Parent != block.Parent)
+			if (!trueInst.MatchBranch(out notNullBlock) || notNullBlock.Parent != block.Parent)
 				return false;
-			if (!falseInst.MatchBranch(out Block nullBlock) || nullBlock.Parent != block.Parent)
-				return false;
-
-			//  Block nullBlock (incoming: 1) {
-			//      stloc ptr(conv i4->u <zero extend>(ldc.i4 0))
-			//      br targetBlock
-			//  }
-			if (nullBlock.IncomingEdgeCount != 1)
-				return false;
-			if (nullBlock.Instructions.Count != 2)
-				return false;
-			if (!nullBlock.Instructions[0].MatchStLoc(out var ptr, out var nullPointerInst))
-				return false;
-			if (!nullPointerInst.MatchLdcI(0))
-				return false;
-			if (!nullBlock.Instructions[1].MatchBranch(out targetBlock))
+			if (!falseInst.MatchBranch(out nullBlock) || nullBlock.Parent != block.Parent)
 				return false;
 
 			//  Block notNullBlock (incoming: 1) {
@@ -265,7 +279,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			//  }
 			if (notNullBlock.IncomingEdgeCount != 1)
 				return false;
-			if (notNullBlock.Instructions.Count != 3)
+			if (notNullBlock.Instructions.Count < 2)
 				return false;
 			// stloc V_1(call GetPinnableReference(ldloc mem))
 			if (!notNullBlock.Instructions[0].MatchStLoc(out v, out var value))
@@ -281,13 +295,41 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			// stloc ptr(conv ref->u (ldloc V_1))
 			ptrAssign = notNullBlock.Instructions[1] as StLoc;
-			if (ptrAssign == null || ptrAssign.Variable != ptr)
-				return false;
-			if (!ptrAssign.Value.UnwrapConv(ConversionKind.StopGCTracking).MatchLdLoc(v))
-				return false;
-			// br targetBlock
-			if (!notNullBlock.Instructions[2].MatchBranch(targetBlock))
-				return false;
+			if (ptrAssign != null)
+			{
+				if (!ptrAssign.Value.UnwrapConv(ConversionKind.StopGCTracking).MatchLdLoc(v))
+					return false;
+				// br targetBlock
+				if (!notNullBlock.Instructions[2].MatchBranch(out targetBlock))
+					return false;
+
+				//  Block nullBlock (incoming: 1) {
+				//      stloc ptr(conv i4->u <zero extend>(ldc.i4 0))
+				//      br targetBlock
+				//  }
+				if (nullBlock.IncomingEdgeCount != 1)
+					return false;
+				if (nullBlock.Instructions.Count != 2)
+					return false;
+				if (!nullBlock.Instructions[0].MatchStLoc(ptrAssign.Variable, out var nullPointerInst))
+					return false;
+				if (!nullPointerInst.MatchLdcI(0))
+					return false;
+				if (!nullBlock.Instructions[1].MatchBranch(targetBlock))
+					return false;
+			}
+			else
+			{
+				// br targetBlock
+				if (!notNullBlock.Instructions[1].MatchBranch(out targetBlock))
+					return false;
+
+				if (targetBlock != nullBlock)
+					return false;
+				// nullBlock must be set to null, so that
+				// we do not clear out targetBlock in the caller.
+				nullBlock = null;
+			}
 			return true;
 		}
 

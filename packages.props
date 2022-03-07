@@ -9,14 +9,19 @@
 		<SystemReflectionMetadataVersion>5.0.0</SystemReflectionMetadataVersion>
 		<SystemCompilerServicesUnsafeVersion>5.0.0</SystemCompilerServicesUnsafeVersion>
 		<SystemCompositionVersion>5.0.1</SystemCompositionVersion>
-		<ILAsmVersion>5.0.0</ILAsmVersion> <!-- Microsoft.NETCore.ILAsm -->
-		<RoslynVersion>4.0.1</RoslynVersion> <!-- Microsoft.CodeAnalysis.* -->
+		<!-- Microsoft.NETCore.ILAsm -->
+		<ILAsmVersion>6.0.0</ILAsmVersion>
+		<!-- Microsoft.NETCore.ILDAsm -->
+		<ILDAsmVersion>6.0.0</ILDAsmVersion>
+		<!-- Microsoft.CodeAnalysis.* -->
+		<RoslynVersion>4.0.1</RoslynVersion>
 		<MonoCecilVersion>0.11.4</MonoCecilVersion>
 		<AvalonEditVersion>6.1.3.50</AvalonEditVersion>
 		<WpfStylesToolboxVersion>2.7.4</WpfStylesToolboxVersion>
 		<NUnitVersion>3.13.2</NUnitVersion>
-		<NUnitAdapterVersion>4.1.0</NUnitAdapterVersion>
-		<MicrosoftNETTestSdkVersion>16.11.0</MicrosoftNETTestSdkVersion>
+		<NUnitAdapterVersion>4.2.1</NUnitAdapterVersion>
+		<CoverletCollectorVersion>3.1.2</CoverletCollectorVersion>
+		<MicrosoftNETTestSdkVersion>17.0.0</MicrosoftNETTestSdkVersion>
 		<MoqVersion>4.16.1</MoqVersion>
 		<DiffLibVersion>2017.7.26.1241</DiffLibVersion>
 		<DSRConverterXmlVersion>1.1.0-beta2-20115-01</DSRConverterXmlVersion>

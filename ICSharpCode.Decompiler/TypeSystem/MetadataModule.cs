@@ -66,6 +66,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				try
 				{
 					this.AssemblyName = metadata.GetString(asmdef.Name);
+					this.AssemblyVersion = asmdef.Version;
 					this.FullAssemblyName = metadata.GetFullAssemblyName();
 				}
 				catch (BadImageFormatException)
@@ -117,6 +118,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public bool IsMainModule => this == Compilation.MainModule;
 
 		public string AssemblyName { get; }
+		public Version AssemblyVersion { get; }
 		public string FullAssemblyName { get; }
 		string ISymbol.Name => AssemblyName;
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Module;

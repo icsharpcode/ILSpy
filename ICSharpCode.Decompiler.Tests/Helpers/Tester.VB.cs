@@ -21,8 +21,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+
+using CliWrap;
+using CliWrap.Buffered;
 
 using NUnit.Framework;
 
@@ -30,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 {
 	partial class Tester
 	{
-		public static CompilerResults CompileVB(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
+		public static async Task<CompilerResults> CompileVB(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };
 			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)"""))
@@ -42,7 +46,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			if ((flags & CompilerOptions.UseMcsMask) == 0)
 			{
-				CompilerResults results = new CompilerResults(new TempFileCollection());
+				CompilerResults results = new CompilerResults();
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 
 				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch {
@@ -50,37 +54,23 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					CompilerOptions.UseRoslyn1_3_2 => ("1.3.2", "14"),
 					CompilerOptions.UseRoslyn2_10_0 => ("2.10.0", "latest"),
 					CompilerOptions.UseRoslyn3_11_0 => ("3.11.0", "latest"),
-					_ => (RoslynLatestVersion, flags.HasFlag(CompilerOptions.Preview) ? "preview" : "latest")
+					_ => (roslynLatestVersion, flags.HasFlag(CompilerOptions.Preview) ? "preview" : "latest")
 				};
 
 				var vbcPath = roslynToolset.GetVBCompiler(roslynVersion);
 
 				IEnumerable<string> references;
-				if ((flags & CompilerOptions.UseRoslynMask) != 0)
+				if ((flags & CompilerOptions.UseRoslynMask) != 0 && (flags & CompilerOptions.TargetNet40) == 0)
 				{
-					if (flags.HasFlag(CompilerOptions.ReferenceCore))
-					{
-						references = coreDefaultReferences.Value.Select(r => "-r:\"" + r + "\"");
-					}
-					else
-					{
-						references = roslynDefaultReferences.Value.Select(r => "-r:\"" + r + "\"");
-					}
+					references = coreDefaultReferences.Select(r => "-r:\"" + r + "\"");
 				}
 				else
 				{
-					references = defaultReferences.Value.Select(r => "-r:\"" + r + "\"");
+					references = defaultReferences.Select(r => "-r:\"" + r + "\"");
 				}
 				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
 				{
-					if ((flags & CompilerOptions.UseRoslynMask) != 0)
-					{
-						references = references.Concat(visualBasic.Value.Select(r => "-r:\"" + r + "\""));
-					}
-					else
-					{
-						references = references.Concat(new[] { "-r:\"Microsoft.VisualBasic.dll\"" });
-					}
+					references = references.Concat(new[] { "-r:\"Microsoft.VisualBasic.dll\"" });
 				}
 				string otherOptions = $"-noconfig " +
 					"-optioninfer+ -optionexplicit+ " +
@@ -125,25 +115,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					otherOptions += " \"-d:" + string.Join(",", preprocessorSymbols.Select(kv => kv.Key + "=" + kv.Value)) + "\" ";
 				}
 
-				ProcessStartInfo info = new ProcessStartInfo(vbcPath);
-				info.Arguments = $"{otherOptions}{string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}";
-				info.RedirectStandardError = true;
-				info.RedirectStandardOutput = true;
-				info.UseShellExecute = false;
+				var command = Cli.Wrap(vbcPath)
+					.WithArguments($"{otherOptions}{string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
+					.WithValidation(CommandResultValidation.None);
+				Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
 
-				Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
+				var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
 
-				Process process = Process.Start(info);
+				Console.WriteLine("output: " + result.StandardOutput);
+				Console.WriteLine("errors: " + result.StandardError);
+				Assert.AreEqual(0, result.ExitCode, "vbc failed");
 
-				var outputTask = process.StandardOutput.ReadToEndAsync();
-				var errorTask = process.StandardError.ReadToEndAsync();
-
-				Task.WaitAll(outputTask, errorTask);
-				process.WaitForExit();
-
-				Console.WriteLine("output: " + outputTask.Result);
-				Console.WriteLine("errors: " + errorTask.Result);
-				Assert.AreEqual(0, process.ExitCode, "vbc failed");
 				return results;
 			}
 			else

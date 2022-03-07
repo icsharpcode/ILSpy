@@ -20,6 +20,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.Tests.Helpers;
 
@@ -51,212 +52,212 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test, Ignore("Need to decide how to represent virtual methods without 'newslot' flag")]
-		public void Issue379()
+		public async Task Issue379()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue646()
+		public async Task Issue646()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue684()
+		public async Task Issue684()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue959()
+		public async Task Issue959()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue982()
+		public async Task Issue982()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue1038()
+		public async Task Issue1038()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue1047()
+		public async Task Issue1047()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue1389()
+		public async Task Issue1389()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue1918()
+		public async Task Issue1918()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue1922()
+		public async Task Issue1922()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void FSharpUsing_Debug()
+		public async Task FSharpUsing_Debug()
 		{
-			Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
+			await Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
-		public void FSharpUsing_Release()
+		public async Task FSharpUsing_Release()
 		{
-			Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
+			await Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
-		public void DirectCallToExplicitInterfaceImpl()
+		public async Task DirectCallToExplicitInterfaceImpl()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void EvalOrder()
+		public async Task EvalOrder()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void CS1xSwitch_Debug()
+		public async Task CS1xSwitch_Debug()
 		{
-			Run(settings: new DecompilerSettings { SwitchExpressions = false, FileScopedNamespaces = false });
+			await Run(settings: new DecompilerSettings { SwitchExpressions = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
-		public void CS1xSwitch_Release()
+		public async Task CS1xSwitch_Release()
 		{
-			Run(settings: new DecompilerSettings { SwitchExpressions = false, FileScopedNamespaces = false });
+			await Run(settings: new DecompilerSettings { SwitchExpressions = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
-		public void UnknownTypes()
+		public async Task UnknownTypes()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue1145()
+		public async Task Issue1145()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue1157()
+		public async Task Issue1157()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue1256()
+		public async Task Issue1256()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue1323()
+		public async Task Issue1323()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue1325()
+		public async Task Issue1325()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue1681()
+		public async Task Issue1681()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue1454()
+		public async Task Issue1454()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue2104()
+		public async Task Issue2104()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue2443()
+		public async Task Issue2443()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Issue2260SwitchString()
+		public async Task Issue2260SwitchString()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void ConstantBlobs()
+		public async Task ConstantBlobs()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void SequenceOfNestedIfs()
+		public async Task SequenceOfNestedIfs()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void Unsafe()
+		public async Task Unsafe()
 		{
-			Run(assemblerOptions: AssemblerOptions.Library | AssemblerOptions.UseLegacyAssembler);
+			await Run(assemblerOptions: AssemblerOptions.Library | AssemblerOptions.UseLegacyAssembler);
 		}
 
 		[Test]
-		public void CallIndirect()
+		public async Task CallIndirect()
 		{
-			Run();
+			await Run();
 		}
 
 		[Test]
-		public void FSharpLoops_Debug()
+		public async Task FSharpLoops_Debug()
 		{
 			CopyFSharpCoreDll();
-			Run(settings: new DecompilerSettings { RemoveDeadStores = true, FileScopedNamespaces = false });
+			await Run(settings: new DecompilerSettings { RemoveDeadStores = true, FileScopedNamespaces = false });
 		}
 
 		[Test]
-		public void FSharpLoops_Release()
+		public async Task FSharpLoops_Release()
 		{
 			CopyFSharpCoreDll();
-			Run(settings: new DecompilerSettings { RemoveDeadStores = true, FileScopedNamespaces = false });
+			await Run(settings: new DecompilerSettings { RemoveDeadStores = true, FileScopedNamespaces = false });
 		}
 
 		[Test]
-		public void WeirdEnums()
+		public async Task WeirdEnums()
 		{
-			Run();
+			await Run();
 		}
 
-		void Run([CallerMemberName] string testName = null, DecompilerSettings settings = null,
+		async Task Run([CallerMemberName] string testName = null, DecompilerSettings settings = null,
 			AssemblerOptions assemblerOptions = AssemblerOptions.Library)
 		{
 			if (settings == null)
@@ -267,8 +268,8 @@ namespace ICSharpCode.Decompiler.Tests
 			var ilFile = Path.Combine(TestCasePath, testName + ".il");
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 
-			var executable = Tester.AssembleIL(ilFile, assemblerOptions);
-			var decompiled = Tester.DecompileCSharp(executable, settings);
+			var executable = await Tester.AssembleIL(ilFile, assemblerOptions).ConfigureAwait(false);
+			var decompiled = await Tester.DecompileCSharp(executable, settings).ConfigureAwait(false);
 
 			CodeAssert.FilesAreEqual(csFile, decompiled);
 		}

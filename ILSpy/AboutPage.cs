@@ -65,39 +65,32 @@ namespace ICSharpCode.ILSpy
 			string prodVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(Uri).Assembly.Location).ProductVersion;
 			output.WriteLine(Resources.NETFrameworkVersion + prodVersion);
 
-			if (StorePackageHelper.HasPackageIdentity)
-			{
-				output.WriteLine($"Package Name: {StorePackageHelper.GetPackageFamilyName()}");
-			}
-			else
-			{// if we're running in an MSIX, updates work differently
-				output.AddUIElement(
-				delegate {
-					StackPanel stackPanel = new StackPanel();
-					stackPanel.HorizontalAlignment = HorizontalAlignment.Center;
-					stackPanel.Orientation = Orientation.Horizontal;
-					if (latestAvailableVersion == null)
-					{
-						AddUpdateCheckButton(stackPanel, textView);
-					}
-					else
-					{
-						// we already retrieved the latest version sometime earlier
-						ShowAvailableVersion(latestAvailableVersion, stackPanel);
-					}
-					CheckBox checkBox = new CheckBox();
-					checkBox.Margin = new Thickness(4);
-					checkBox.Content = Resources.AutomaticallyCheckUpdatesEveryWeek;
-					UpdateSettings settings = new UpdateSettings(ILSpySettings.Load());
-					checkBox.SetBinding(CheckBox.IsCheckedProperty, new Binding("AutomaticUpdateCheckEnabled") { Source = settings });
-					return new StackPanel {
-						Margin = new Thickness(0, 4, 0, 0),
-						Cursor = Cursors.Arrow,
-						Children = { stackPanel, checkBox }
-					};
-				});
-				output.WriteLine();
-			}
+			output.AddUIElement(
+			delegate {
+				StackPanel stackPanel = new StackPanel();
+				stackPanel.HorizontalAlignment = HorizontalAlignment.Center;
+				stackPanel.Orientation = Orientation.Horizontal;
+				if (latestAvailableVersion == null)
+				{
+					AddUpdateCheckButton(stackPanel, textView);
+				}
+				else
+				{
+					// we already retrieved the latest version sometime earlier
+					ShowAvailableVersion(latestAvailableVersion, stackPanel);
+				}
+				CheckBox checkBox = new CheckBox();
+				checkBox.Margin = new Thickness(4);
+				checkBox.Content = Resources.AutomaticallyCheckUpdatesEveryWeek;
+				UpdateSettings settings = new UpdateSettings(ILSpySettings.Load());
+				checkBox.SetBinding(CheckBox.IsCheckedProperty, new Binding("AutomaticUpdateCheckEnabled") { Source = settings });
+				return new StackPanel {
+					Margin = new Thickness(0, 4, 0, 0),
+					Cursor = Cursors.Arrow,
+					Children = { stackPanel, checkBox }
+				};
+			});
+			output.WriteLine();
 
 			foreach (var plugin in App.ExportProvider.GetExportedValues<IAboutPageAddition>())
 				plugin.Write(output);
@@ -303,7 +296,7 @@ namespace ICSharpCode.ILSpy
 			UpdateSettings s = new UpdateSettings(spySettings);
 
 			// If we're in an MSIX package, updates work differently
-			if (s.AutomaticUpdateCheckEnabled && !StorePackageHelper.HasPackageIdentity)
+			if (s.AutomaticUpdateCheckEnabled)
 			{
 				// perform update check if we never did one before;
 				// or if the last check wasn't in the past 7 days

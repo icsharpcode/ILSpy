@@ -1,16 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <UseWpf>true</UseWpf>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <SignAssembly>True</SignAssembly>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  
-  <Import Project="..\multitargeting.props" Condition="Exists('..\multitargeting.props')" />
-  <PropertyGroup Condition="!Exists('..\multitargeting.props')">
-    <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

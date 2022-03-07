@@ -1,9 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <LangVersion>9.0</LangVersion>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
     <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
@@ -17,11 +18,6 @@
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  
-  <Import Project="..\multitargeting.props" Condition="Exists('..\multitargeting.props')" />
-  <PropertyGroup Condition="!Exists('..\multitargeting.props')">
-    <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -50,7 +46,6 @@
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="16.9.20" />
     <PackageReference Include="System.Composition" Version="$(SystemCompositionVersion)" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
-    <PackageReference Include="OSVersionHelper" Version="1.1.24" />
     <PackageReference Include="DataGridExtensions" Version="2.5.13" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
     <PackageReference Include="TomsToolbox.Wpf.Styles" Version="$(WpfStylesToolboxVersion)" />

@@ -377,6 +377,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				case OpCode.NullableUnwrap:
 					return ((NullableUnwrap)inst.Parent).RefInput;
+				case OpCode.MatchInstruction:
+					method = ((MatchInstruction)inst.Parent).Method;
+					return true;
 				default:
 					return false;
 			}

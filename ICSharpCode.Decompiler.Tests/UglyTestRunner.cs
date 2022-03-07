@@ -21,6 +21,7 @@ using System.CodeDom.Compiler;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.Tests.Helpers;
 
@@ -59,6 +60,8 @@ namespace ICSharpCode.Decompiler.Tests
 
 		static readonly CompilerOptions[] roslynOnlyOptions =
 		{
+			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -67,72 +70,74 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
+			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
 		[Test]
-		public void NoArrayInitializers([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		public async Task NoArrayInitializers([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
 				ArrayInitializers = false
 			});
 		}
 
 		[Test]
-		public void NoDecimalConstants([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		public async Task NoDecimalConstants([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
 				DecimalConstants = false
 			});
 		}
 
 		[Test]
-		public void NoExtensionMethods([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		public async Task NoExtensionMethods([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp9_0) {
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp9_0) {
 				ExtensionMethods = false
 			});
 		}
 
 		[Test]
-		public void NoForEachStatement([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		public async Task NoForEachStatement([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
 				ForEachStatement = false,
 				UseEnhancedUsing = false,
 			});
 		}
 
 		[Test]
-		public void NoLocalFunctions([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		public async Task NoLocalFunctions([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1));
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1));
 		}
 
 		[Test]
-		public void NoPropertiesAndEvents([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		public async Task NoPropertiesAndEvents([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
 				AutomaticEvents = false,
 				AutomaticProperties = false,
 			});
 		}
 
 		[Test]
-		public void AggressiveScalarReplacementOfAggregates([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		public async Task AggressiveScalarReplacementOfAggregates([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp3) {
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp3) {
 				AggressiveScalarReplacementOfAggregates = true
 			});
 		}
 
-		void RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		async Task RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
-			Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, decompilerSettings);
+			await Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, decompilerSettings);
 		}
 
-		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		async Task Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".il";
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
@@ -144,18 +149,18 @@ namespace ICSharpCode.Decompiler.Tests
 				CompilerResults output = null;
 				try
 				{
-					output = Tester.CompileCSharp(csFile, cscOptions);
-					Tester.Disassemble(output.PathToAssembly, ilFile, asmOptions);
+					output = await Tester.CompileCSharp(csFile, cscOptions).ConfigureAwait(false);
+					await Tester.Disassemble(output.PathToAssembly, ilFile, asmOptions).ConfigureAwait(false);
 				}
 				finally
 				{
 					if (output != null)
-						output.TempFiles.Delete();
+						output.DeleteTempFiles();
 				}
 			}
 
-			var executable = Tester.AssembleIL(ilFile, asmOptions);
-			var decompiled = Tester.DecompileCSharp(executable, decompilerSettings);
+			var executable = await Tester.AssembleIL(ilFile, asmOptions).ConfigureAwait(false);
+			var decompiled = await Tester.DecompileCSharp(executable, decompilerSettings).ConfigureAwait(false);
 
 			CodeAssert.FilesAreEqual(expectedFile, decompiled, Tester.GetPreprocessorSymbols(cscOptions).ToArray());
 		}

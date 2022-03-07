@@ -275,7 +275,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var previous = path.SkipLast(1).LastOrDefault();
 			if (!(element.Member is IProperty p))
 				return true;
-			return !p.IsIndexer || (previous.Member?.ReturnType.Equals(element.Member.DeclaringType) == true);
+			return !p.IsIndexer || NormalizeTypeVisitor.IgnoreNullabilityAndTuples.EquivalentTypes(previous.Member?.ReturnType, element.Member.DeclaringType);
 		}
 	}
 

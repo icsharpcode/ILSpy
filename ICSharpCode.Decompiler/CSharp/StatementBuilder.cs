@@ -962,8 +962,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return RequiredGetCurrentTransformation.NoForeach;
 			}
 			if (loopBody.Instructions[0] is DeconstructInstruction deconstruction
-				&& singleGetter == deconstruction.Pattern.TestedOperand
-				&& CanBeDeconstructedInForeach(deconstruction, usingContainer, loopContainer))
+				&& CanBeDeconstructedInForeach(deconstruction, singleGetter, usingContainer, loopContainer))
 			{
 				return RequiredGetCurrentTransformation.Deconstruction;
 			}
@@ -992,13 +991,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			return RequiredGetCurrentTransformation.IntroduceNewVariable;
 		}
 
-		bool CanBeDeconstructedInForeach(DeconstructInstruction deconstruction, BlockContainer usingContainer, BlockContainer loopContainer)
+		bool CanBeDeconstructedInForeach(DeconstructInstruction deconstruction, ILInstruction singleGetter, BlockContainer usingContainer, BlockContainer loopContainer)
 		{
+			ILInstruction testedOperand = deconstruction.Pattern.TestedOperand;
+			if (testedOperand != singleGetter)
+			{
+				if (!(testedOperand is AddressOf addressOf && addressOf.Value == singleGetter))
+					return false;
+			}
 			if (deconstruction.Init.Count > 0)
 				return false;
 			if (deconstruction.Conversions.Instructions.Count > 0)
 				return false;
-			var operandType = deconstruction.Pattern.TestedOperand.InferType(this.typeSystem);
+			var operandType = singleGetter.InferType(this.typeSystem);
 			var expectedType = deconstruction.Pattern.Variable.Type;
 			if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(operandType, expectedType))
 				return false;
