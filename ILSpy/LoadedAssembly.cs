@@ -522,7 +522,7 @@ namespace ICSharpCode.ILSpy
 				string tfm = await tfmTask.ConfigureAwait(false);
 
 				// 1) try to find exact match by tfm + full asm name in loaded assemblies
-				module = await alreadyLoadedAssemblies.TryGetModuleAsync(reference, tfm);
+				module = await alreadyLoadedAssemblies.TryGetModuleAsync(reference, tfm).ConfigureAwait(false);
 				if (module != null)
 				{
 					referenceLoadInfo.AddMessageOnce(reference.FullName, MessageKind.Info, "Success - Found in Assembly List");
@@ -545,7 +545,7 @@ namespace ICSharpCode.ILSpy
 					}
 					if (asm != null)
 					{
-						referenceLoadInfo.AddMessage(reference.ToString(), MessageKind.Info, "Success - Loading from: " + file);
+						referenceLoadInfo.AddMessage(reference.FullName, MessageKind.Info, "Success - Loading from: " + file);
 						return await asm.GetPEFileOrNullAsync().ConfigureAwait(false);
 					}
 					return null;
@@ -553,33 +553,16 @@ namespace ICSharpCode.ILSpy
 				else
 				{
 					// Assembly not found; try to find a similar-enough already-loaded assembly
-					var candidates = new List<(LoadedAssembly assembly, Version version)>();
-
-					foreach (LoadedAssembly loaded in alreadyLoadedAssemblies.Assemblies)
+					module = await alreadyLoadedAssemblies.TryGetSimilarModuleAsync(reference).ConfigureAwait(false);
+					if (module == null)
 					{
-						module = await loaded.GetPEFileOrNullAsync().ConfigureAwait(false);
-						var reader = module?.Metadata;
-						if (reader == null || !reader.IsAssembly)
-							continue;
-						var asmDef = reader.GetAssemblyDefinition();
-						var asmDefName = reader.GetString(asmDef.Name);
-						if (reference.Name.Equals(asmDefName, StringComparison.OrdinalIgnoreCase))
-						{
-							candidates.Add((loaded, asmDef.Version));
-						}
+						referenceLoadInfo.AddMessageOnce(reference.FullName, MessageKind.Error, "Could not find reference: " + reference.FullName);
 					}
-
-					if (candidates.Count == 0)
+					else
 					{
-						referenceLoadInfo.AddMessageOnce(reference.ToString(), MessageKind.Error, "Could not find reference: " + reference);
-						return null;
+						referenceLoadInfo.AddMessageOnce(reference.FullName, MessageKind.Info, "Success - Found in Assembly List with different TFM or version: " + module.FileName);
 					}
-
-					candidates.SortBy(c => c.version);
-
-					var bestCandidate = candidates.FirstOrDefault(c => c.version >= reference.Version).assembly ?? candidates.Last().assembly;
-					referenceLoadInfo.AddMessageOnce(reference.ToString(), MessageKind.Info, "Success - Found in Assembly List with different TFM or version: " + bestCandidate.fileName);
-					return await bestCandidate.GetPEFileOrNullAsync().ConfigureAwait(false);
+					return module;
 				}
 			}
 

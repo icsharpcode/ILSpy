@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.Metadata;
@@ -33,7 +34,7 @@ namespace ICSharpCode.ILSpy
 		readonly ImmutableArray<LoadedAssembly> assemblies;
 		Dictionary<string, PEFile>? asmLookupByFullName;
 		Dictionary<string, PEFile>? asmLookupByShortName;
-
+		Dictionary<string, List<(PEFile module, Version version)>>? asmLookupByShortNameGrouped;
 		public ImmutableArray<LoadedAssembly> Assemblies => assemblies;
 
 		public AssemblyListSnapshot(ImmutableArray<LoadedAssembly> assemblies)
@@ -58,6 +59,20 @@ namespace ICSharpCode.ILSpy
 			if (lookup.TryGetValue(key, out PEFile module))
 				return module;
 			return null;
+		}
+
+		public async Task<PEFile?> TryGetSimilarModuleAsync(IAssemblyReference reference)
+		{
+			var lookup = LazyInit.VolatileRead(ref asmLookupByShortNameGrouped);
+			if (lookup == null)
+			{
+				lookup = await CreateLoadedAssemblyShortNameGroupLookupAsync().ConfigureAwait(false);
+				lookup = LazyInit.GetOrSet(ref asmLookupByShortNameGrouped, lookup);
+			}
+
+			if (!lookup.TryGetValue(reference.Name, out var candidates))
+				return null;
+			return candidates.FirstOrDefault(c => c.version >= reference.Version).module ?? candidates.Last().module;
 		}
 
 		private async Task<Dictionary<string, PEFile>> CreateLoadedAssemblyLookupAsync(bool shortNames)
@@ -90,6 +105,44 @@ namespace ICSharpCode.ILSpy
 					continue;
 				}
 			}
+			return result;
+		}
+
+		private async Task<Dictionary<string, List<(PEFile module, Version version)>>> CreateLoadedAssemblyShortNameGroupLookupAsync()
+		{
+			var result = new Dictionary<string, List<(PEFile module, Version version)>>(StringComparer.OrdinalIgnoreCase);
+
+			foreach (LoadedAssembly loaded in assemblies)
+			{
+				try
+				{
+					var module = await loaded.GetPEFileOrNullAsync().ConfigureAwait(false);
+					var reader = module?.Metadata;
+					if (reader == null || !reader.IsAssembly)
+						continue;
+					var asmDef = reader.GetAssemblyDefinition();
+					var asmDefName = reader.GetString(asmDef.Name);
+
+					var line = (module!, version: asmDef.Version);
+
+					if (!result.TryGetValue(asmDefName, out var existing))
+					{
+						existing = new List<(PEFile module, Version version)>();
+						result.Add(asmDefName, existing);
+						existing.Add(line);
+						continue;
+					}
+
+					int index = existing.BinarySearch(line.version, l => l.version);
+					index = index < 0 ? ~index : index + 1;
+					existing.Insert(index, line);
+				}
+				catch (BadImageFormatException)
+				{
+					continue;
+				}
+			}
+
 			return result;
 		}
 
