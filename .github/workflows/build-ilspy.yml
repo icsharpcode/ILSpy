@@ -59,7 +59,7 @@ jobs:
         Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\win-x64\ILSpy.BamlDecompiler.Tests.dll
 
     - name: Test Report
-      uses: dorny/test-reporter@v1
+      uses: phoenix-actions/test-reporting@v6
       if: success() || failure()
       with:
         name: Unit Test Results (${{ matrix.configuration }})
