@@ -1,0 +1,23 @@
+name: 'Test Report'
+on:
+  workflow_run:
+    workflows: ['Build ILSpy']
+    types:
+      - completed
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        Configuration: [ Debug, Release ]
+
+    steps:
+    - name: Test Report
+      uses: phoenix-actions/test-reporting@v6
+      with:
+        artifact: test-results-${{ matrix.configuration }}
+        name: Unit Test Results (${{ matrix.configuration }})
+        path: '**/*.trx'
+        reporter: dotnet-trx
+        list-suites: 'all'
+        list-tests: 'failed'

@@ -58,15 +58,12 @@ jobs:
         Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net6.0-windows\ILSpy.Tests.dll
         Tests3: ILSpy.BamlDecompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\win-x64\ILSpy.BamlDecompiler.Tests.dll
 
-    - name: Test Report
-      uses: phoenix-actions/test-reporting@v6
+    - name: Upload Test Report
+      uses: actions/upload-artifact@v2
       if: success() || failure()
       with:
-        name: Unit Test Results (${{ matrix.configuration }})
+        name: test-results-${{ matrix.configuration }}
         path: '**/*.trx'
-        reporter: dotnet-trx
-        list-suites: 'all'
-        list-tests: 'failed'
 
     - name: Style - tab check
       run: python BuildTools\tidy.py
