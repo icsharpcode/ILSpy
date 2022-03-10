@@ -62,7 +62,7 @@ jobs:
       uses: actions/upload-artifact@v2
       if: success() || failure()
       with:
-        name: test-results-(${{ matrix.configuration }})
+        name: test-results-${{ matrix.configuration }}
         path: '**/*.trx'
 
     - name: Style - tab check
