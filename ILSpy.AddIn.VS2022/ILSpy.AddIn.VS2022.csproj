@@ -100,7 +100,7 @@
   <!-- END WORKAROUND -->
 
   <ItemGroup>
-    <Content Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)ILSpy.dll.config">
+    <Content Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)*.json">
       <IncludeInVSIX>true</IncludeInVSIX>
       <VSIXSubPath>\ILSpy</VSIXSubPath>
     </Content>
