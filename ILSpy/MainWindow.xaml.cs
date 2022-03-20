@@ -1010,13 +1010,13 @@ namespace ICSharpCode.ILSpy
 
 			if (assemblyList.ListName == AssemblyListManager.DefaultListName)
 #if DEBUG
-				this.Title = $"ILSpy {RevisionClass.FullVersion}";
+				this.Title = $"ILSpy {DecompilerVersionInfo.FullVersion}";
 #else
 				this.Title = "ILSpy";
 #endif
 			else
 #if DEBUG
-				this.Title = $"ILSpy {RevisionClass.FullVersion} - " + assemblyList.ListName;
+				this.Title = $"ILSpy {DecompilerVersionInfo.FullVersion} - " + assemblyList.ListName;
 #else
 				this.Title = "ILSpy - " + assemblyList.ListName;
 #endif

@@ -17,7 +17,7 @@ using System.Runtime.Versioning;
 [assembly: AssemblyDescription(".NET assembly inspector and decompiler")]
 [assembly: AssemblyCompany("ic#code")]
 [assembly: AssemblyProduct("ILSpy")]
-[assembly: AssemblyCopyright("Copyright 2011-$INSERTYEAR$ AlphaSierraPapa for the SharpDevelop Team")]
+[assembly: AssemblyCopyright("Copyright 2011-2022 AlphaSierraPapa for the SharpDevelop Team")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -25,8 +25,8 @@ using System.Runtime.Versioning;
 // If you need to expose a type to COM, use [ComVisible(true)] on that type.
 [assembly: ComVisible(false)]
 
-[assembly: AssemblyVersion(RevisionClass.Major + "." + RevisionClass.Minor + "." + RevisionClass.Build + "." + RevisionClass.Revision)]
-[assembly: AssemblyInformationalVersion(RevisionClass.FullVersion + "-$INSERTSHORTCOMMITHASH$")]
+[assembly: AssemblyVersion(DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision)]
+[assembly: AssemblyInformationalVersion(DecompilerVersionInfo.FullVersionWithShortCommitHash)]
 [assembly: NeutralResourcesLanguage("en-US")]
 
 [assembly: SupportedOSPlatform("Windows7.0")]
@@ -37,14 +37,3 @@ using System.Runtime.Versioning;
 
 [assembly: SuppressMessage("Microsoft.Usage", "CA2243:AttributeStringLiteralsShouldParseCorrectly",
 	Justification = "AssemblyInformationalVersion does not need to be a parsable version")]
-
-internal static class RevisionClass
-{
-	public const string Major = "8";
-	public const string Minor = "0";
-	public const string Build = "0";
-	public const string Revision = "$INSERTREVISION$";
-	public const string VersionName = "alpha1";
-
-	public const string FullVersion = Major + "." + Minor + "." + Build + ".$INSERTREVISION$$INSERTBRANCHPOSTFIX$$INSERTVERSIONNAMEPOSTFIX$";
-}

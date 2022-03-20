@@ -6,7 +6,7 @@ $baseCommitRev = 1;
 # make sure this matches artifacts-only branches list in appveyor.yml!
 $masterBranches = '^(master|release/.+)$';
 
-$globalAssemblyInfoTemplateFile = "ILSpy/Properties/AssemblyInfo.template.cs";
+$decompilerVersionInfoTemplateFile = "ICSharpCode.Decompiler/Properties/DecompilerVersionInfo.template.cs";
 
 function Test-File([string]$filename) {
     return [System.IO.File]::Exists((Join-Path (Get-Location) $filename));
@@ -79,8 +79,7 @@ function gitBranch() {
 }
 
 $templateFiles = (
-	@{Input=$globalAssemblyInfoTemplateFile; Output="ILSpy/Properties/AssemblyInfo.cs"},
-	@{Input="ICSharpCode.Decompiler/Properties/AssemblyInfo.template.cs"; Output="ICSharpCode.Decompiler/Properties/AssemblyInfo.cs"},
+    @{Input=$decompilerVersionInfoTemplateFile; Output="ICSharpCode.Decompiler/Properties/DecompilerVersionInfo.cs"},
     @{Input="ILSpy/Properties/app.config.template"; Output = "ILSpy/app.config"},
     @{Input="ILSpy.AddIn/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn/source.extension.vsixmanifest"},
     @{Input="ILSpy.AddIn.VS2022/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn.VS2022/source.extension.vsixmanifest"},
@@ -106,7 +105,7 @@ try {
     }
 
     $versionParts = @{};
-    Get-Content $globalAssemblyInfoTemplateFile | where { $_ -match 'string (\w+) = "?(\w+)"?;' } | foreach { $versionParts.Add($Matches[1], $Matches[2]) }
+    Get-Content $decompilerVersionInfoTemplateFile | where { $_ -match 'string (\w+) = "?(\w+)"?;' } | foreach { $versionParts.Add($Matches[1], $Matches[2]) }
 
     $major = $versionParts.Major;
     $minor = $versionParts.Minor;

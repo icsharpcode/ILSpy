@@ -114,6 +114,8 @@
     <Compile Include="Instrumentation\DecompilerEventSource.cs" />
     <Compile Include="Metadata\FindTypeDecoder.cs" />
     <Compile Include="Metadata\ReferenceLoadInfo.cs" />
+    <Compile Include="Properties\DecompilerVersionInfo.cs" />
+    <None Include="Properties\DecompilerVersionInfo.template.cs" />
     <Compile Include="Semantics\OutVarResolveResult.cs" />
     <Compile Include="SingleFileBundle.cs" />
     <Compile Include="Solution\ProjectId.cs" />
@@ -651,7 +653,6 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Instructions.cs</LastGenOutput>
     </None>
-    <None Include="Properties\AssemblyInfo.template.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -692,7 +693,7 @@
   </Target>
 
   <Target Name="CleanUpdateAssemblyInfo" BeforeTargets="BeforeClean">
-    <Delete Files="@(UpdateAssemblyInfoStamp)" />
+    <Delete Files="@(UpdateAssemblyInfoStamp);..\VERSION" />
   </Target>
 
 </Project>

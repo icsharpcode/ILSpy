@@ -118,7 +118,7 @@ namespace ICSharpCode.ILSpy
 				{
 					doc = new XDocument(new XElement("ILSpy"));
 				}
-				doc.Root.SetAttributeValue("version", RevisionClass.Major + "." + RevisionClass.Minor + "." + RevisionClass.Build + "." + RevisionClass.Revision);
+				doc.Root.SetAttributeValue("version", DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision);
 				action(doc.Root);
 				doc.Save(config, SaveOptions.None);
 			}

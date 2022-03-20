@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy
 				Title = Resources.About,
 				EnableHyperlinks = true
 			};
-			output.WriteLine(Resources.ILSpyVersion + RevisionClass.FullVersion);
+			output.WriteLine(Resources.ILSpyVersion + DecompilerVersionInfo.FullVersion);
 
 			string prodVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(Uri).Assembly.Location).ProductVersion;
 			output.WriteLine(Resources.NETFrameworkVersion + prodVersion);
@@ -154,7 +154,7 @@ namespace ICSharpCode.ILSpy
 			};
 		}
 
-		static readonly Version currentVersion = new Version(RevisionClass.Major + "." + RevisionClass.Minor + "." + RevisionClass.Build + "." + RevisionClass.Revision);
+		static readonly Version currentVersion = new Version(DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision);
 
 		static void ShowAvailableVersion(AvailableVersionInfo availableVersion, StackPanel stackPanel)
 		{
