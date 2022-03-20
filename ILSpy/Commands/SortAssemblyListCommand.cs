@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpyX;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy

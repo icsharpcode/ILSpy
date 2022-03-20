@@ -20,10 +20,14 @@ using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Windows;
 using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Options;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -176,6 +180,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				foreach (ILSpyTreeNode node in this.Children.OfType<ILSpyTreeNode>())
 					ApplyFilterToChild(node);
 			}
+		}
+
+		protected string GetSuffixString(IMember member) => GetSuffixString(member.MetadataToken);
+
+		protected string GetSuffixString(EntityHandle handle)
+		{
+			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
+				return string.Empty;
+
+			int token = MetadataTokens.GetToken(handle);
+			if (DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10)
+				return " @" + token;
+			return " @" + token.ToString("x8");
 		}
 
 		public virtual bool IsPublicAPI {

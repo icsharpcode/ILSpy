@@ -23,6 +23,7 @@ using System.IO;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpyX;
 
 namespace ILSpy.BamlDecompiler
 {

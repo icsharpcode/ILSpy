@@ -5,7 +5,7 @@ using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpyX
 {
 	public static class LoadedAssemblyExtensions
 	{
@@ -36,19 +36,14 @@ namespace ICSharpCode.ILSpy
 			return GetLoadedAssembly(file).GetAssemblyResolver(snapshot, loadOnDemand);
 		}
 
-		public static IDebugInfoProvider GetDebugInfoOrNull(this PEFile file)
+		public static IDebugInfoProvider? GetDebugInfoOrNull(this PEFile file)
 		{
 			return GetLoadedAssembly(file).GetDebugInfoOrNull();
 		}
 
-		public static ICompilation GetTypeSystemOrNull(this PEFile file)
+		public static ICompilation? GetTypeSystemOrNull(this PEFile file)
 		{
 			return GetLoadedAssembly(file).GetTypeSystemOrNull();
-		}
-
-		public static ICompilation GetTypeSystemWithCurrentOptionsOrNull(this PEFile file)
-		{
-			return GetLoadedAssembly(file).GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(new DecompilationOptions().DecompilerSettings));
 		}
 
 		public static LoadedAssembly GetLoadedAssembly(this PEFile file)

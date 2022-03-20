@@ -21,6 +21,7 @@ using System.Linq;
 using System.Threading;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -43,7 +44,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool ShowExpander => !type.IsSealed && base.ShowExpander;
 
 		public override object Text {
-			get { return Language.TypeToString(type, includeNamespace: true) + type.MetadataToken.ToSuffixString(); }
+			get { return Language.TypeToString(type, includeNamespace: true) + GetSuffixString(type.MetadataToken); }
 		}
 
 		public override object Icon => TypeTreeNode.GetIcon(type);

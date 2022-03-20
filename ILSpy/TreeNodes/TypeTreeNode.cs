@@ -18,7 +18,6 @@
 
 using System;
 using System.Linq;
-using System.Reflection;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
@@ -28,6 +27,7 @@ using SRM = System.Reflection.Metadata;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	using ICSharpCode.Decompiler.TypeSystem;
+
 	public sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		public TypeTreeNode(ITypeDefinition typeDefinition, AssemblyTreeNode parentAssemblyNode)
@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public AssemblyTreeNode ParentAssemblyNode { get; }
 
 		public override object Text => this.Language.TypeToString(GetTypeDefinition(), includeNamespace: false)
-			+ TypeDefinition.MetadataToken.ToSuffixString();
+			+ GetSuffixString(TypeDefinition.MetadataToken);
 
 		private ITypeDefinition GetTypeDefinition()
 		{

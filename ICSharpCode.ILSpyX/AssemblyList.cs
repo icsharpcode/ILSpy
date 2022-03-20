@@ -27,21 +27,24 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Threading;
 using System.Xml.Linq;
 
-namespace ICSharpCode.ILSpy
+using ICSharpCode.ILSpyX.Extensions;
+
+namespace ICSharpCode.ILSpyX
 {
 	/// <summary>
 	/// A list of assemblies.
 	/// </summary>
 	public sealed class AssemblyList
 	{
+		readonly Thread ownerThread;
+		readonly SynchronizationContext? synchronizationContext;
+		readonly AssemblyListManager manager;
 		readonly string listName;
 
 		/// <summary>Dirty flag, used to mark modifications so that the list is saved later</summary>
 		bool dirty;
-
 		readonly object lockObj = new object();
 
 		/// <summary>
@@ -62,17 +65,27 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		readonly Dictionary<string, LoadedAssembly> byFilename = new Dictionary<string, LoadedAssembly>(StringComparer.OrdinalIgnoreCase);
 
-		public AssemblyList(string listName)
+		/// <summary>
+		/// Exists for testing only.
+		/// </summary>
+		internal AssemblyList()
 		{
+		}
+
+		internal AssemblyList(AssemblyListManager manager, string listName)
+		{
+			this.manager = manager ?? throw new ArgumentNullException(nameof(manager));
 			this.listName = listName;
+			ownerThread = Thread.CurrentThread;
+			synchronizationContext = SynchronizationContext.Current;
 			assemblies.CollectionChanged += Assemblies_CollectionChanged;
 		}
 
 		/// <summary>
 		/// Loads an assembly list from XML.
 		/// </summary>
-		public AssemblyList(XElement listElement)
-			: this((string?)listElement.Attribute("name") ?? AssemblyListManager.DefaultListName)
+		internal AssemblyList(AssemblyListManager manager, XElement listElement)
+			: this(manager, (string?)listElement.Attribute("name") ?? AssemblyListManager.DefaultListName)
 		{
 			foreach (var asm in listElement.Elements("Assembly"))
 			{
@@ -85,7 +98,7 @@ namespace ICSharpCode.ILSpy
 		/// Creates a copy of an assembly list.
 		/// </summary>
 		public AssemblyList(AssemblyList list, string newName)
-			: this(newName)
+			: this(list.manager, newName)
 		{
 			lock (lockObj)
 			{
@@ -99,14 +112,17 @@ namespace ICSharpCode.ILSpy
 
 		public event NotifyCollectionChangedEventHandler CollectionChanged {
 			add {
-				App.Current.Dispatcher.VerifyAccess();
+				VerifyAccess();
 				this.assemblies.CollectionChanged += value;
 			}
 			remove {
-				App.Current.Dispatcher.VerifyAccess();
+				VerifyAccess();
 				this.assemblies.CollectionChanged -= value;
 			}
 		}
+
+		public bool ApplyWinRTProjections { get; set; }
+		public bool UseDebugSymbols { get; set; }
 
 		/// <summary>
 		/// Gets the loaded assemblies. This method is thread-safe.
@@ -165,7 +181,7 @@ namespace ICSharpCode.ILSpy
 
 		internal void Move(LoadedAssembly[] assembliesToMove, int index)
 		{
-			App.Current.Dispatcher.VerifyAccess();
+			VerifyAccess();
 			lock (lockObj)
 			{
 				foreach (LoadedAssembly asm in assembliesToMove)
@@ -214,16 +230,14 @@ namespace ICSharpCode.ILSpy
 			if (!dirty)
 			{
 				dirty = true;
-				App.Current.Dispatcher.BeginInvoke(
-					DispatcherPriority.Background,
-					new Action(
-						delegate {
-							if (dirty)
-							{
-								dirty = false;
-								AssemblyListManager.SaveList(this);
-							}
-						})
+				BeginInvoke(
+					delegate {
+						if (dirty)
+						{
+							dirty = false;
+							this.manager.SaveList(this);
+						}
+					}
 				);
 			}
 		}
@@ -260,7 +274,7 @@ namespace ICSharpCode.ILSpy
 		{
 			file = Path.GetFullPath(file);
 			return OpenAssembly(file, () => {
-				var newAsm = new LoadedAssembly(this, file);
+				var newAsm = new LoadedAssembly(this, file, applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols);
 				newAsm.IsAutoLoaded = isAutoLoaded;
 				return newAsm;
 			});
@@ -273,7 +287,8 @@ namespace ICSharpCode.ILSpy
 		{
 			file = Path.GetFullPath(file);
 			return OpenAssembly(file, () => {
-				var newAsm = new LoadedAssembly(this, file, stream: Task.FromResult(stream));
+				var newAsm = new LoadedAssembly(this, file, stream: Task.FromResult(stream),
+					applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols);
 				newAsm.IsAutoLoaded = isAutoLoaded;
 				return newAsm;
 			});
@@ -281,8 +296,7 @@ namespace ICSharpCode.ILSpy
 
 		LoadedAssembly OpenAssembly(string file, Func<LoadedAssembly> load)
 		{
-			bool isUIThread = App.Current.Dispatcher.Thread == Thread.CurrentThread;
-
+			bool isUIThread = ownerThread == Thread.CurrentThread;
 			LoadedAssembly? asm;
 			lock (lockObj)
 			{
@@ -299,12 +313,12 @@ namespace ICSharpCode.ILSpy
 			}
 			if (!isUIThread)
 			{
-				App.Current.Dispatcher.BeginInvoke((Action)delegate () {
+				BeginInvoke(delegate () {
 					lock (lockObj)
 					{
 						assemblies.Add(asm);
 					}
-				}, DispatcherPriority.Normal);
+				});
 			}
 			return asm;
 		}
@@ -315,7 +329,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public LoadedAssembly? HotReplaceAssembly(string file, Stream stream)
 		{
-			App.Current.Dispatcher.VerifyAccess();
+			VerifyAccess();
 			file = Path.GetFullPath(file);
 			lock (lockObj)
 			{
@@ -325,7 +339,8 @@ namespace ICSharpCode.ILSpy
 				if (index < 0)
 					return null;
 
-				var newAsm = new LoadedAssembly(this, file, stream: Task.FromResult<Stream?>(stream));
+				var newAsm = new LoadedAssembly(this, file, stream: Task.FromResult<Stream?>(stream),
+					applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols);
 				newAsm.IsAutoLoaded = target.IsAutoLoaded;
 
 				Debug.Assert(newAsm.FileName == file);
@@ -337,7 +352,7 @@ namespace ICSharpCode.ILSpy
 
 		public LoadedAssembly? ReloadAssembly(string file)
 		{
-			App.Current.Dispatcher.VerifyAccess();
+			VerifyAccess();
 			file = Path.GetFullPath(file);
 
 			var target = this.assemblies.FirstOrDefault(asm => file.Equals(asm.FileName, StringComparison.OrdinalIgnoreCase));
@@ -349,11 +364,12 @@ namespace ICSharpCode.ILSpy
 
 		public LoadedAssembly? ReloadAssembly(LoadedAssembly target)
 		{
-			App.Current.Dispatcher.VerifyAccess();
+			VerifyAccess();
 			var index = this.assemblies.IndexOf(target);
 			if (index < 0)
 				return null;
-			var newAsm = new LoadedAssembly(this, target.FileName, pdbFileName: target.PdbFileName);
+			var newAsm = new LoadedAssembly(this, target.FileName, pdbFileName: target.PdbFileName,
+				applyWinRTProjections: ApplyWinRTProjections, useDebugSymbols: UseDebugSymbols);
 			newAsm.IsAutoLoaded = target.IsAutoLoaded;
 			lock (lockObj)
 			{
@@ -365,27 +381,12 @@ namespace ICSharpCode.ILSpy
 
 		public void Unload(LoadedAssembly assembly)
 		{
-			App.Current.Dispatcher.VerifyAccess();
+			VerifyAccess();
 			lock (lockObj)
 			{
 				assemblies.Remove(assembly);
 				byFilename.Remove(assembly.FileName);
 			}
-			RequestGC();
-		}
-
-		static bool gcRequested;
-
-		static void RequestGC()
-		{
-			if (gcRequested)
-				return;
-			gcRequested = true;
-			App.Current.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new Action(
-				delegate {
-					gcRequested = false;
-					GC.Collect();
-				}));
 		}
 
 		public void Sort(IComparer<LoadedAssembly> comparer)
@@ -395,7 +396,7 @@ namespace ICSharpCode.ILSpy
 
 		public void Sort(int index, int count, IComparer<LoadedAssembly> comparer)
 		{
-			App.Current.Dispatcher.VerifyAccess();
+			VerifyAccess();
 			lock (lockObj)
 			{
 				List<LoadedAssembly> list = new List<LoadedAssembly>(assemblies);
@@ -403,6 +404,24 @@ namespace ICSharpCode.ILSpy
 				assemblies.Clear();
 				assemblies.AddRange(list);
 			}
+		}
+
+		private void BeginInvoke(Action action)
+		{
+			if (synchronizationContext == null)
+			{
+				action();
+			}
+			else
+			{
+				synchronizationContext.Post(new SendOrPostCallback(_ => action()), null);
+			}
+		}
+
+		private void VerifyAccess()
+		{
+			if (this.ownerThread != Thread.CurrentThread)
+				throw new InvalidOperationException("This method must always be called on the thread that owns the assembly list: " + ownerThread.ManagedThreadId + " " + ownerThread.Name);
 		}
 	}
 }

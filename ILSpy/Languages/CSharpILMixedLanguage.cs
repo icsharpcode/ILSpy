@@ -36,6 +36,8 @@ using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Extensions;
 
 namespace ICSharpCode.ILSpy
 {

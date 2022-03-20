@@ -18,10 +18,8 @@
 
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
@@ -30,17 +28,16 @@ using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.PdbProvider;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpyX.PdbProvider;
 
 using K4os.Compression.LZ4;
 
 #nullable enable
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpyX
 {
 	/// <summary>
 	/// Represents a file loaded into ILSpy.
@@ -86,23 +83,31 @@ namespace ICSharpCode.ILSpy
 		readonly string fileName;
 		readonly string shortName;
 		readonly IAssemblyResolver? providedAssemblyResolver;
+		readonly bool applyWinRTProjections;
+		readonly bool useDebugSymbols;
 
 		public LoadedAssembly? ParentBundle { get; }
 
 		public LoadedAssembly(AssemblyList assemblyList, string fileName,
-			Task<Stream?>? stream = null, IAssemblyResolver? assemblyResolver = null, string? pdbFileName = null)
+			Task<Stream?>? stream = null, IAssemblyResolver? assemblyResolver = null, string? pdbFileName = null,
+			bool applyWinRTProjections = false, bool useDebugSymbols = false)
 		{
 			this.assemblyList = assemblyList ?? throw new ArgumentNullException(nameof(assemblyList));
 			this.fileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
 			this.PdbFileName = pdbFileName;
 			this.providedAssemblyResolver = assemblyResolver;
+			this.applyWinRTProjections = applyWinRTProjections;
+			this.useDebugSymbols = useDebugSymbols;
 
 			this.loadingTask = Task.Run(() => LoadAsync(stream)); // requires that this.fileName is set
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 		}
 
-		public LoadedAssembly(LoadedAssembly bundle, string fileName, Task<Stream?>? stream, IAssemblyResolver? assemblyResolver = null)
-			: this(bundle.assemblyList, fileName, stream, assemblyResolver)
+		public LoadedAssembly(LoadedAssembly bundle, string fileName, Task<Stream?>? stream,
+			IAssemblyResolver? assemblyResolver = null,
+			bool applyWinRTProjections = false, bool useDebugSymbols = false)
+			: this(bundle.assemblyList, fileName, stream, assemblyResolver, null,
+				  applyWinRTProjections, useDebugSymbols)
 		{
 			this.ParentBundle = bundle;
 		}
@@ -326,7 +331,7 @@ namespace ICSharpCode.ILSpy
 					stream = memoryStream;
 				}
 				var streamOptions = stream is MemoryStream ? PEStreamOptions.PrefetchEntireImage : PEStreamOptions.Default;
-				return LoadAssembly(stream, streamOptions);
+				return LoadAssembly(stream, streamOptions, applyWinRTProjections);
 			}
 			// Read the module from disk
 			Exception loadAssemblyException;
@@ -334,7 +339,7 @@ namespace ICSharpCode.ILSpy
 			{
 				using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
 				{
-					return LoadAssembly(fileStream, PEStreamOptions.PrefetchEntireImage);
+					return LoadAssembly(fileStream, PEStreamOptions.PrefetchEntireImage, applyWinRTProjections);
 				}
 			}
 			catch (PEFileNotSupportedException ex)
@@ -374,17 +379,11 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		LoadResult LoadAssembly(Stream stream, PEStreamOptions streamOptions)
+		LoadResult LoadAssembly(Stream stream, PEStreamOptions streamOptions, bool applyWinRTProjections)
 		{
-			MetadataReaderOptions options;
-			if (DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections)
-			{
-				options = MetadataReaderOptions.ApplyWindowsRuntimeProjections;
-			}
-			else
-			{
-				options = MetadataReaderOptions.None;
-			}
+			MetadataReaderOptions options = applyWinRTProjections
+				? MetadataReaderOptions.ApplyWindowsRuntimeProjections
+				: MetadataReaderOptions.None;
 
 			PEFile module = new PEFile(fileName, stream, streamOptions, metadataOptions: options);
 
@@ -421,7 +420,7 @@ namespace ICSharpCode.ILSpy
 					// Load module from decompressed data buffer
 					using (var uncompressedStream = new MemoryStream(dst, writable: false))
 					{
-						return LoadAssembly(uncompressedStream, PEStreamOptions.PrefetchEntireImage);
+						return LoadAssembly(uncompressedStream, PEStreamOptions.PrefetchEntireImage, applyWinRTProjections);
 					}
 				}
 				finally
@@ -434,11 +433,11 @@ namespace ICSharpCode.ILSpy
 
 		IDebugInfoProvider? LoadDebugInfo(PEFile module)
 		{
-			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols)
+			if (useDebugSymbols)
 			{
 				try
 				{
-					return DebugInfoUtils.FromFile(module, PdbFileName)
+					return (PdbFileName != null ? DebugInfoUtils.FromFile(module, PdbFileName) : null)
 						?? DebugInfoUtils.LoadSymbols(module);
 				}
 				catch (IOException)
@@ -467,6 +466,7 @@ namespace ICSharpCode.ILSpy
 		{
 			readonly LoadedAssembly parent;
 			readonly bool loadOnDemand;
+			readonly bool applyWinRTProjections;
 
 			readonly IAssemblyResolver? providedAssemblyResolver;
 			readonly AssemblyList assemblyList;
@@ -474,10 +474,12 @@ namespace ICSharpCode.ILSpy
 			readonly Task<string> tfmTask;
 			readonly ReferenceLoadInfo referenceLoadInfo;
 
-			public MyAssemblyResolver(LoadedAssembly parent, AssemblyListSnapshot assemblyListSnapshot, bool loadOnDemand)
+			public MyAssemblyResolver(LoadedAssembly parent, AssemblyListSnapshot assemblyListSnapshot,
+				bool loadOnDemand, bool applyWinRTProjections)
 			{
 				this.parent = parent;
 				this.loadOnDemand = loadOnDemand;
+				this.applyWinRTProjections = applyWinRTProjections;
 
 				this.providedAssemblyResolver = parent.providedAssemblyResolver;
 				this.assemblyList = parent.assemblyList;
@@ -529,7 +531,7 @@ namespace ICSharpCode.ILSpy
 					return module;
 				}
 
-				string? file = parent.GetUniversalResolver().FindAssemblyFile(reference);
+				string? file = parent.GetUniversalResolver(applyWinRTProjections).FindAssemblyFile(reference);
 
 				if (file != null)
 				{
@@ -622,23 +624,24 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public IAssemblyResolver GetAssemblyResolver(bool loadOnDemand = true)
+		public IAssemblyResolver GetAssemblyResolver(bool loadOnDemand = true, bool applyWinRTProjections = false)
 		{
-			return new MyAssemblyResolver(this, AssemblyList.GetSnapshot(), loadOnDemand);
+			return new MyAssemblyResolver(this, AssemblyList.GetSnapshot(), loadOnDemand, applyWinRTProjections);
 		}
 
-		internal IAssemblyResolver GetAssemblyResolver(AssemblyListSnapshot snapshot, bool loadOnDemand = true)
+		internal IAssemblyResolver GetAssemblyResolver(AssemblyListSnapshot snapshot,
+			bool loadOnDemand = true, bool applyWinRTProjections = false)
 		{
-			return new MyAssemblyResolver(this, snapshot, loadOnDemand);
+			return new MyAssemblyResolver(this, snapshot, loadOnDemand, applyWinRTProjections);
 		}
 
-		private UniversalAssemblyResolver GetUniversalResolver()
+		private UniversalAssemblyResolver GetUniversalResolver(bool applyWinRTProjections)
 		{
 			return LazyInitializer.EnsureInitialized(ref this.universalResolver, () => {
 				var targetFramework = this.GetTargetFrameworkIdAsync().Result;
 				var runtimePack = this.GetRuntimePackAsync().Result;
 
-				var readerOptions = DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections
+				var readerOptions = applyWinRTProjections
 					? MetadataReaderOptions.ApplyWindowsRuntimeProjections
 					: MetadataReaderOptions.None;
 
@@ -649,9 +652,9 @@ namespace ICSharpCode.ILSpy
 			})!;
 		}
 
-		public AssemblyReferenceClassifier GetAssemblyReferenceClassifier()
+		public AssemblyReferenceClassifier GetAssemblyReferenceClassifier(bool applyWinRTProjections)
 		{
-			return GetUniversalResolver();
+			return GetUniversalResolver(applyWinRTProjections);
 		}
 
 		/// <summary>

@@ -22,12 +22,14 @@ using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 
+using ICSharpCode.ILSpyX;
+
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>
 	/// Manages IL Spy settings.
 	/// </summary>
-	public class ILSpySettings
+	public class ILSpySettings : ISettingsProvider
 	{
 		readonly XElement root;
 
@@ -124,6 +126,11 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
+		void ISettingsProvider.Update(Action<XElement> action)
+		{
+			Update(action);
+		}
+
 		static string GetConfigFile()
 		{
 			if (App.CommandLineArguments.ConfigFile != null)
@@ -132,6 +139,11 @@ namespace ICSharpCode.ILSpy
 			if (File.Exists(localPath))
 				return localPath;
 			return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ICSharpCode\\ILSpy.xml");
+		}
+
+		ISettingsProvider ISettingsProvider.Load()
+		{
+			return Load();
 		}
 
 		const string ConfigFileMutex = "01A91708-49D1-410D-B8EB-4DE2662B3971";

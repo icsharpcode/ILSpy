@@ -29,6 +29,7 @@ using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpyX;
 
 using SRM = System.Reflection.Metadata;
 

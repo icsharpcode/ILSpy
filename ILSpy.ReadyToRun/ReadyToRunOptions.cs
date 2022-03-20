@@ -18,6 +18,8 @@
 
 using System.Xml.Linq;
 
+using ICSharpCode.ILSpyX;
+
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
 	internal class ReadyToRunOptions

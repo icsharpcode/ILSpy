@@ -18,6 +18,8 @@
 
 using System.IO;
 
+using ICSharpCode.ILSpyX;
+
 namespace ICSharpCode.ILSpy
 {
 	public interface IResourceFileHandler

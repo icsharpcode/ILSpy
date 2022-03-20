@@ -19,9 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\ICSharpCode.Decompiler.PdbProvider.Cecil\MonoCecilDebugInfoProvider.cs" Link="MonoCecilDebugInfoProvider.cs" />
-    <Compile Include="..\ILSpy\DebugInfo\PortableDebugInfoProvider.cs" Link="PortableDebugInfoProvider.cs" />
-    <Compile Include="..\ILSpy\DebugInfo\DebugInfoUtils.cs" Link="DebugInfoUtils.cs" />
+    <Compile Include="..\ICSharpCode.ILSpyX\PdbProvider\MonoCecilDebugInfoProvider.cs" Link="MonoCecilDebugInfoProvider.cs" />
+    <Compile Include="..\ICSharpCode.ILSpyX\PdbProvider\PortableDebugInfoProvider.cs" Link="PortableDebugInfoProvider.cs" />
+    <Compile Include="..\ICSharpCode.ILSpyX\PdbProvider\DebugInfoUtils.cs" Link="DebugInfoUtils.cs" />
   </ItemGroup>
 
 </Project>

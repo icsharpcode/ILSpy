@@ -23,17 +23,18 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.Analyzers.Builtin;
+using ICSharpCode.ILSpyX;
 
 using NUnit.Framework;
 
 namespace ICSharpCode.ILSpy.Tests.Analyzers
 {
 	[TestFixture, Parallelizable(ParallelScope.All)]
-	[Ignore("Only one test case can be executed, the test setup is really hacky and the whole ILSpy UI should be refactored and made mockable/testable, remove singletons, dependencies on Application.Current.Dispatcher, etc.")]
 	public class TypeUsedByAnalyzerTests
 	{
 		AssemblyList assemblyList;
@@ -44,11 +45,9 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 		[OneTimeSetUp]
 		public void Setup()
 		{
-			Stub.SetupApplication();
-			Options.DecompilerSettingsPanel.TestSetup(new Decompiler.DecompilerSettings());
-			assemblyList = new AssemblyList("Test");
+			assemblyList = new AssemblyList();
 			testAssembly = assemblyList.OpenAssembly(typeof(MethodUsesAnalyzerTests).Assembly.Location);
-			testAssemblyTypeSystem = new SimpleCompilation(testAssembly.GetPEFileOrNull(), assemblyList.OpenAssembly(typeof(void).Assembly.Location).GetPEFileOrNull());
+			testAssemblyTypeSystem = new DecompilerTypeSystem(testAssembly.GetPEFileOrNull(), testAssembly.GetAssemblyResolver());
 			language = new CSharpLanguage();
 		}
 

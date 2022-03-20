@@ -26,8 +26,9 @@ using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpyX.Extensions;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpyX
 {
 	class AssemblyListSnapshot
 	{

@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public IEvent EventDefinition { get; }
 
-		public override object Text => GetText(GetEventDefinition(), this.Language) + EventDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(GetEventDefinition(), this.Language) + GetSuffixString(EventDefinition);
 
 		private IEvent GetEventDefinition()
 		{

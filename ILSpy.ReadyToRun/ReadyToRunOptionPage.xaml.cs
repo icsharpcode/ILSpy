@@ -22,7 +22,6 @@ using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Options;
 
-using ILSpy.ReadyToRun;
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
 	[ExportOptionPage(Title = nameof(global::ILSpy.ReadyToRun.Properties.Resources.ReadyToRun), Order = 40)]

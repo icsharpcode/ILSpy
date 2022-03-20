@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		public override object Text {
-			get { return moduleName + ((EntityHandle)handle).ToSuffixString(); }
+			get { return moduleName + GetSuffixString(handle); }
 		}
 
 		public override object Icon => Images.Library;

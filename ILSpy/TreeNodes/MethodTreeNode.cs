@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.MethodDefinition = method ?? throw new ArgumentNullException(nameof(method));
 		}
 
-		public override object Text => GetText(GetMethodDefinition(), Language) + MethodDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(GetMethodDefinition(), Language) + GetSuffixString(MethodDefinition);
 
 		private IMethod GetMethodDefinition()
 		{

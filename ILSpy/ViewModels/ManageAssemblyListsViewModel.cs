@@ -27,15 +27,12 @@ using System.Windows.Input;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
 	public class ManageAssemblyListsViewModel : ViewModelBase
 	{
-		public const string DotNet4List = ".NET 4 (WPF)";
-		public const string DotNet35List = ".NET 3.5";
-		public const string ASPDotNetMVC3List = "ASP.NET (MVC3)";
-
 		private readonly AssemblyListManager manager;
 		private readonly Window parent;
 
@@ -57,9 +54,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		IEnumerable<PreconfiguredAssemblyList> ResolvePreconfiguredAssemblyLists()
 		{
-			yield return new PreconfiguredAssemblyList(DotNet4List);
-			yield return new PreconfiguredAssemblyList(DotNet35List);
-			yield return new PreconfiguredAssemblyList(ASPDotNetMVC3List);
+			yield return new PreconfiguredAssemblyList(AssemblyListManager.DotNet4List);
+			yield return new PreconfiguredAssemblyList(AssemblyListManager.DotNet35List);
+			yield return new PreconfiguredAssemblyList(AssemblyListManager.ASPDotNetMVC3List);
 
 			var basePath = DotNetCorePathFinder.FindDotNetExeDirectory();
 			if (basePath == null)
@@ -140,7 +137,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			};
 			if (dlg.ShowDialog() == true)
 			{
-				manager.CreateList(new AssemblyList(dlg.ListName));
+				manager.CreateList(dlg.ListName);
 			}
 		}
 
@@ -241,104 +238,6 @@ namespace ICSharpCode.ILSpy.ViewModels
 			}
 		}
 
-		internal static AssemblyList CreateDefaultList(string name, string path = null, string newName = null)
-		{
-			var list = new AssemblyList(newName ?? name);
-			switch (name)
-			{
-				case DotNet4List:
-					AddToListFromGAC("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Data.DataSetExtensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Xaml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("Microsoft.CSharp, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-					AddToListFromGAC("PresentationCore, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("PresentationFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("WindowsBase, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					break;
-				case DotNet35List:
-					AddToListFromGAC("mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Core, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Data, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Data.DataSetExtensions, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Xml.Linq, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("PresentationCore, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("PresentationFramework, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("WindowsBase, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					break;
-				case ASPDotNetMVC3List:
-					AddToListFromGAC("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.ComponentModel.DataAnnotations, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Configuration, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-					AddToListFromGAC("System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Data.DataSetExtensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Data.Entity, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-					AddToListFromGAC("System.EnterpriseServices, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-					AddToListFromGAC("System.Web, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-					AddToListFromGAC("System.Web.Abstractions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.ApplicationServices, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.DynamicData, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.Entity, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.Mvc, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.Routing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.Services, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-					AddToListFromGAC("System.Web.WebPages, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.Helpers, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("Microsoft.CSharp, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-					break;
-				case object _ when path != null:
-					foreach (var file in Directory.GetFiles(path, "*.dll"))
-					{
-						var dllname = Path.GetFileName(file);
-						if (DoIncludeFile(dllname))
-							AddToListFromDirectory(file);
-					}
-					break;
-			}
-			return list;
-
-			void AddToListFromGAC(string fullName)
-			{
-				AssemblyNameReference reference = AssemblyNameReference.Parse(fullName);
-				string file = UniversalAssemblyResolver.GetAssemblyInGac(reference);
-				if (file != null)
-					list.OpenAssembly(file);
-			}
-
-			void AddToListFromDirectory(string file)
-			{
-				if (File.Exists(file))
-					list.OpenAssembly(file);
-			}
-
-			bool DoIncludeFile(string fileName)
-			{
-				if (fileName == "Microsoft.DiaSymReader.Native.amd64.dll")
-					return false;
-				if (fileName.EndsWith("_cor3.dll", StringComparison.OrdinalIgnoreCase))
-					return false;
-				if (char.IsUpper(fileName[0]))
-					return true;
-				if (fileName == "netstandard.dll")
-					return true;
-				if (fileName == "mscorlib.dll")
-					return true;
-				return false;
-			}
-		}
-
 		private void ExecuteCreatePreconfiguredAssemblyList(PreconfiguredAssemblyList config)
 		{
 			CreateListDialog dlg = new CreateListDialog(Resources.AddPreconfiguredList);
@@ -357,10 +256,10 @@ namespace ICSharpCode.ILSpy.ViewModels
 			};
 			if (dlg.ShowDialog() == true)
 			{
-				var list = CreateDefaultList(config.Name, config.Path, dlg.ListName);
+				var list = manager.CreateDefaultList(config.Name, config.Path, dlg.ListName);
 				if (list.Count > 0)
 				{
-					manager.CreateList(list);
+					manager.AddListIfNotExists(list);
 				}
 			}
 		}

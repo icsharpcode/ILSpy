@@ -23,7 +23,7 @@ using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.DebugInfo;
 
-namespace ICSharpCode.Decompiler.PdbProvider
+namespace ICSharpCode.ILSpyX.PdbProvider
 {
 	class PortableDebugInfoProvider : IDebugInfoProvider
 	{
@@ -80,11 +80,11 @@ namespace ICSharpCode.Decompiler.PdbProvider
 
 		public string SourceFileName => pdbFileName ?? moduleFileName;
 
-		public IList<DebugInfo.SequencePoint> GetSequencePoints(MethodDefinitionHandle method)
+		public IList<Decompiler.DebugInfo.SequencePoint> GetSequencePoints(MethodDefinitionHandle method)
 		{
 			var metadata = GetMetadataReader();
 			var debugInfo = metadata.GetMethodDebugInformation(method);
-			var sequencePoints = new List<DebugInfo.SequencePoint>();
+			var sequencePoints = new List<Decompiler.DebugInfo.SequencePoint>();
 			if (metadata == null)
 				return sequencePoints;
 

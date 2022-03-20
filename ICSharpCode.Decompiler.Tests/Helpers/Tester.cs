@@ -37,6 +37,7 @@ using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX.PdbProvider;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -672,7 +673,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 				var pdbFileName = Path.ChangeExtension(assemblyFileName, ".pdb");
 				if (File.Exists(pdbFileName))
-					decompiler.DebugInfoProvider = PdbProvider.DebugInfoUtils.FromFile(module, pdbFileName);
+					decompiler.DebugInfoProvider = DebugInfoUtils.FromFile(module, pdbFileName);
 				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile(sortTypes: true);
 
 				StringWriter output = new StringWriter();

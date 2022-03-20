@@ -22,6 +22,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 
+using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;

@@ -2,9 +2,9 @@
   "solution": {
     "path": "ILSpy.sln",
     "projects": [
-      "ICSharpCode.Decompiler.PdbProvider.Cecil\\ICSharpCode.Decompiler.PdbProvider.Cecil.csproj",
       "ICSharpCode.Decompiler.Tests\\ICSharpCode.Decompiler.Tests.csproj",
       "ICSharpCode.Decompiler\\ICSharpCode.Decompiler.csproj",
+      "ICSharpCode.ILSpyX\\ICSharpCode.ILSpyX.csproj",
       "ILSpy.AddIn.Shared\\ILSpy.AddIn.Shared.shproj",
       "ILSpy.AddIn.VS2022\\ILSpy.AddIn.VS2022.csproj",
       "ILSpy.AddIn\\ILSpy.AddIn.csproj",

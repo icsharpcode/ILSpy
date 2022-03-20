@@ -8,6 +8,7 @@ using System.Windows;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.Analyzers.Builtin;
+using ICSharpCode.ILSpyX;
 
 using NUnit.Framework;
 
@@ -25,9 +26,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 		[OneTimeSetUp]
 		public void Setup()
 		{
-			Stub.SetupApplication();
-			Options.DecompilerSettingsPanel.TestSetup(new Decompiler.DecompilerSettings());
-			assemblyList = new AssemblyList("Test");
+			assemblyList = new AssemblyList();
 			testAssembly = assemblyList.OpenAssembly(typeof(MethodUsesAnalyzerTests).Assembly.Location);
 			assemblyList.OpenAssembly(typeof(void).Assembly.Location);
 			testAssemblyTypeSystem = testAssembly.GetTypeSystemOrNull();

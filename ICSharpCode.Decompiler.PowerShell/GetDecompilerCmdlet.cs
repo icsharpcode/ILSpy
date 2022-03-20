@@ -7,7 +7,7 @@ using System.Text;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.PdbProvider;
+using ICSharpCode.ILSpyX.PdbProvider;
 
 namespace ICSharpCode.Decompiler.PowerShell
 {

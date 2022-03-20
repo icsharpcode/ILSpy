@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.FieldDefinition = field ?? throw new ArgumentNullException(nameof(field));
 		}
 
-		public override object Text => GetText(GetFieldDefinition(), Language) + FieldDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(GetFieldDefinition(), Language) + GetSuffixString(FieldDefinition);
 
 		private IField GetFieldDefinition()
 		{

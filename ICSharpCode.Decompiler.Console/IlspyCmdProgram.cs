@@ -14,8 +14,8 @@ using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.PdbProvider;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX.PdbProvider;
 
 using McMaster.Extensions.CommandLineUtils;
 // ReSharper disable All

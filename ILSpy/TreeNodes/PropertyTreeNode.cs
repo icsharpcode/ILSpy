@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public IProperty PropertyDefinition { get; }
 
-		public override object Text => GetText(GetPropertyDefinition(), Language) + PropertyDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(GetPropertyDefinition(), Language) + GetSuffixString(PropertyDefinition);
 
 		private IProperty GetPropertyDefinition()
 		{

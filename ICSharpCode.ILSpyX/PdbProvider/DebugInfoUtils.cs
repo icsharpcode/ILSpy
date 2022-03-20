@@ -26,9 +26,9 @@ using System.Runtime.InteropServices;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.Decompiler.PdbProvider
+namespace ICSharpCode.ILSpyX.PdbProvider
 {
-	static class DebugInfoUtils
+	public static class DebugInfoUtils
 	{
 		public static IDebugInfoProvider LoadSymbols(PEFile module)
 		{

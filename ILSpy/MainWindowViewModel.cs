@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using ICSharpCode.ILSpy.Docking;
-using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
 {
