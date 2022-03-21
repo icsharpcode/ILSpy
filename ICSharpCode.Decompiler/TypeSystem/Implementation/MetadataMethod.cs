@@ -233,11 +233,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 							returnTypeAttributes = par.GetCustomAttributes();
 						}
 					}
-					else if (par.SequenceNumber > 0 && i < signature.RequiredParameterCount)
+					else if (i < par.SequenceNumber && par.SequenceNumber <= signature.RequiredParameterCount)
 					{
 						// "Successive rows of the Param table that are owned by the same method shall be
 						// ordered by increasing Sequence value - although gaps in the sequence are allowed"
-						Debug.Assert(i < par.SequenceNumber);
+						Debug.Assert(par.SequenceNumber <= signature.ParameterTypes.Length);
+						Debug.Assert(par.SequenceNumber <= parameters.Length);
 						// Fill gaps in the sequence with non-metadata parameters:
 						while (i < par.SequenceNumber - 1)
 						{
