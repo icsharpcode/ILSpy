@@ -317,7 +317,9 @@ namespace ICSharpCode.ILSpyX
 					asm = new LoadedAssembly(
 						package.LoadedAssembly, entry.Name,
 						assemblyResolver: this,
-						stream: Task.Run(entry.TryOpenStream)
+						stream: Task.Run(entry.TryOpenStream),
+						applyWinRTProjections: package.LoadedAssembly.AssemblyList.ApplyWinRTProjections,
+						useDebugSymbols: package.LoadedAssembly.AssemblyList.UseDebugSymbols
 					);
 				}
 				else
