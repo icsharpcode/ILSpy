@@ -2,6 +2,7 @@
   "solution": {
     "path": "ILSpy.sln",
     "projects": [
+      "ICSharpCode.Decompiler.TestRunner\\ICSharpCode.Decompiler.TestRunner.csproj",
       "ICSharpCode.Decompiler.Tests\\ICSharpCode.Decompiler.Tests.csproj",
       "ICSharpCode.Decompiler\\ICSharpCode.Decompiler.csproj",
       "ICSharpCode.ILSpyX\\ICSharpCode.ILSpyX.csproj",
