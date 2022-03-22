@@ -181,7 +181,7 @@ Remarks:
 		CSharpDecompiler GetDecompiler(string assemblyFileName)
 		{
 			var module = new PEFile(assemblyFileName);
-			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Reader.DetectTargetFrameworkId());
+			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
 			foreach (var path in ReferencePaths)
 			{
 				resolver.AddSearchDirectory(path);
@@ -219,7 +219,7 @@ Remarks:
 		int DecompileAsProject(string assemblyFileName, string outputDirectory)
 		{
 			var module = new PEFile(assemblyFileName);
-			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Reader.DetectTargetFrameworkId());
+			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
 			foreach (var path in ReferencePaths)
 			{
 				resolver.AddSearchDirectory(path);
