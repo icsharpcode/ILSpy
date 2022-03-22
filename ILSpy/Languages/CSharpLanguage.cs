@@ -451,6 +451,10 @@ namespace ICSharpCode.ILSpy
 				{
 					output.WriteLine("// This assembly was compiled using the /deterministic option.");
 				}
+				if (module.Metadata.MetadataKind != MetadataKind.Ecma335)
+				{
+					output.WriteLine("// This assembly was loaded with Windows Runtime projections applied.");
+				}
 				if (metadata.IsAssembly)
 				{
 					var asm = metadata.GetAssemblyDefinition();
