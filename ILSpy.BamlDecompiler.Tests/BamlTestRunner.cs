@@ -168,7 +168,7 @@ namespace ILSpy.BamlDecompiler.Tests
 			using (var fileStream = new FileStream(asmPath, FileMode.Open, FileAccess.Read))
 			{
 				var module = new PEFile(asmPath, fileStream);
-				var resolver = new UniversalAssemblyResolver(asmPath, false, module.Reader.DetectTargetFrameworkId());
+				var resolver = new UniversalAssemblyResolver(asmPath, false, module.Metadata.DetectTargetFrameworkId());
 				resolver.RemoveSearchDirectory(".");
 				resolver.AddSearchDirectory(Path.GetDirectoryName(asmPath));
 				var res = module.Resources.First();

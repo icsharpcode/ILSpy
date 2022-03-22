@@ -42,25 +42,24 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static string DetectTargetFrameworkId(this PEFile assembly)
 		{
-			return DetectTargetFrameworkId(assembly.Reader, assembly.FileName);
+			return DetectTargetFrameworkId(assembly.Metadata, assembly.FileName);
 		}
 
-		public static string DetectTargetFrameworkId(this PEReader assembly, string assemblyPath = null)
+		public static string DetectTargetFrameworkId(this MetadataReader metadata, string assemblyPath = null)
 		{
-			if (assembly == null)
-				throw new ArgumentNullException(nameof(assembly));
+			if (metadata == null)
+				throw new ArgumentNullException(nameof(metadata));
 
 			const string TargetFrameworkAttributeName = "System.Runtime.Versioning.TargetFrameworkAttribute";
-			var reader = assembly.GetMetadataReader();
 
-			foreach (var h in reader.GetCustomAttributes(Handle.AssemblyDefinition))
+			foreach (var h in metadata.GetCustomAttributes(Handle.AssemblyDefinition))
 			{
 				try
 				{
-					var attribute = reader.GetCustomAttribute(h);
-					if (attribute.GetAttributeType(reader).GetFullTypeName(reader).ToString() != TargetFrameworkAttributeName)
+					var attribute = metadata.GetCustomAttribute(h);
+					if (attribute.GetAttributeType(metadata).GetFullTypeName(metadata).ToString() != TargetFrameworkAttributeName)
 						continue;
-					var blobReader = reader.GetBlobReader(attribute.Value);
+					var blobReader = metadata.GetBlobReader(attribute.Value);
 					if (blobReader.ReadUInt16() == 0x0001)
 					{
 						return blobReader.ReadSerializedString()?.Replace(" ", "");
@@ -72,9 +71,9 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 			}
 
-			if (reader.IsAssembly)
+			if (metadata.IsAssembly)
 			{
-				var thisAssemblyName = reader.GetAssemblyDefinition().GetAssemblyName();
+				var thisAssemblyName = metadata.GetAssemblyDefinition().GetAssemblyName();
 				switch (thisAssemblyName.Name)
 				{
 					case "mscorlib":
@@ -84,15 +83,15 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 			}
 
-			foreach (var h in reader.AssemblyReferences)
+			foreach (var h in metadata.AssemblyReferences)
 			{
 				try
 				{
-					var r = reader.GetAssemblyReference(h);
+					var r = metadata.GetAssemblyReference(h);
 					if (r.PublicKeyOrToken.IsNil)
 						continue;
 					string version;
-					switch (reader.GetString(r.Name))
+					switch (metadata.GetString(r.Name))
 					{
 						case "netstandard":
 							version = r.Version.ToString(2);
@@ -148,7 +147,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					var type = pathMatch.Groups["type"].Value;
 					version = pathMatch.Groups["version"].Value;
 					if (string.IsNullOrEmpty(version))
-						version = reader.MetadataVersion;
+						version = metadata.MetadataVersion;
 					if (string.IsNullOrEmpty(version))
 						version = "4.0";
 					version = version.TrimStart('v');
@@ -168,7 +167,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 				else
 				{
-					version = reader.MetadataVersion;
+					version = metadata.MetadataVersion;
 					if (string.IsNullOrEmpty(version))
 						version = "4.0";
 					version = version.TrimStart('v');

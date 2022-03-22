@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.Tests
 					using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read))
 					{
 						PEFile module = new PEFile(file, fileStream, PEStreamOptions.PrefetchEntireImage);
-						var resolver = new TestAssemblyResolver(file, inputDir, module.Reader.DetectTargetFrameworkId());
+						var resolver = new TestAssemblyResolver(file, inputDir, module.Metadata.DetectTargetFrameworkId());
 						resolver.AddSearchDirectory(inputDir);
 						resolver.RemoveSearchDirectory(".");
 

@@ -661,7 +661,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			using (var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read))
 			{
 				var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
-				string targetFramework = module.Reader.DetectTargetFrameworkId();
+				string targetFramework = module.Metadata.DetectTargetFrameworkId();
 				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
 					targetFramework, null, PEStreamOptions.PrefetchMetadata);
 				resolver.AddSearchDirectory(targetFramework.Contains(".NETFramework") ? RefAsmPath : coreRefAsmPath);
