@@ -105,7 +105,10 @@ namespace ICSharpCode.ILSpy
 			var spySettings = ILSpySettings.Load();
 			this.spySettingsForMainWindow_Loaded = spySettings;
 			this.sessionSettings = new SessionSettings(spySettings);
-			this.AssemblyListManager = new AssemblyListManager(spySettings);
+			this.AssemblyListManager = new AssemblyListManager(spySettings) {
+				ApplyWinRTProjections = Options.DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections,
+				UseDebugSymbols = Options.DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols
+			};
 
 			// Make sure Images are initialized on the UI thread.
 			this.Icon = Images.ILSpyIcon;

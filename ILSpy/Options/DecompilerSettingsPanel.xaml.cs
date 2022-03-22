@@ -82,6 +82,8 @@ namespace ICSharpCode.ILSpy.Options
 				root.Add(section);
 
 			currentDecompilerSettings = newSettings;
+			MainWindow.Instance.AssemblyListManager.ApplyWinRTProjections = newSettings.ApplyWindowsRuntimeProjections;
+			MainWindow.Instance.AssemblyListManager.UseDebugSymbols = newSettings.UseDebugSymbols;
 		}
 
 		private void OnGroupChecked(object sender, RoutedEventArgs e)

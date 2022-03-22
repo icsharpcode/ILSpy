@@ -76,6 +76,8 @@ namespace ICSharpCode.ILSpyX
 		{
 			this.manager = manager ?? throw new ArgumentNullException(nameof(manager));
 			this.listName = listName;
+			this.ApplyWinRTProjections = manager.ApplyWinRTProjections;
+			this.UseDebugSymbols = manager.UseDebugSymbols;
 			ownerThread = Thread.CurrentThread;
 			synchronizationContext = SynchronizationContext.Current;
 			assemblies.CollectionChanged += Assemblies_CollectionChanged;

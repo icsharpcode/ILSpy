@@ -84,36 +84,24 @@ namespace ICSharpCode.ILSpyX
 				{
 					if ((string)list.Attribute("name") == listName)
 					{
-						return new AssemblyList(this, list) {
-							UseDebugSymbols = UseDebugSymbols,
-							ApplyWinRTProjections = ApplyWinRTProjections
-						};
+						return new AssemblyList(this, list);
 					}
 				}
 			}
-			return new AssemblyList(this, listName ?? DefaultListName) {
-				UseDebugSymbols = UseDebugSymbols,
-				ApplyWinRTProjections = ApplyWinRTProjections
-			};
+			return new AssemblyList(this, listName ?? DefaultListName);
 		}
 
 		public bool CloneList(string selectedAssemblyList, string newListName)
 		{
 			var list = DoLoadList(selectedAssemblyList);
-			var newList = new AssemblyList(list, newListName) {
-				UseDebugSymbols = UseDebugSymbols,
-				ApplyWinRTProjections = ApplyWinRTProjections
-			};
+			var newList = new AssemblyList(list, newListName);
 			return AddListIfNotExists(newList);
 		}
 
 		public bool RenameList(string selectedAssemblyList, string newListName)
 		{
 			var list = DoLoadList(selectedAssemblyList);
-			var newList = new AssemblyList(list, newListName) {
-				UseDebugSymbols = UseDebugSymbols,
-				ApplyWinRTProjections = ApplyWinRTProjections
-			};
+			var newList = new AssemblyList(list, newListName);
 			return DeleteList(selectedAssemblyList) && AddListIfNotExists(newList);
 		}
 
