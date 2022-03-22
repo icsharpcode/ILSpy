@@ -44,7 +44,15 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
-			view.ItemsSource = new[] { new AssemblyEntry(module) };
+			if (module.IsAssembly)
+			{
+				view.ItemsSource = new[] { new AssemblyEntry(module) };
+			}
+			else
+			{
+				view.ItemsSource = Array.Empty<AssemblyEntry>();
+			}
+
 			tabPage.Content = view;
 			return true;
 		}
