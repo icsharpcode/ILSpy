@@ -9,7 +9,7 @@
 
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
-    <NoWarn>1701;1702;1705,67,169,1058,728,1720,649,168,251,660,661,675</NoWarn>
+    <NoWarn>1701;1702;1705,67,169,1058,728,1720,649,168,251,660,661,675;1998;162</NoWarn>
 
     <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>False</GenerateAssemblyFileVersionAttribute>
@@ -141,8 +141,8 @@
     <Compile Include="TestCases\VBPretty\Select.cs" />
     <None Include="TestCases\ILPretty\WeirdEnums.cs" />
     <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
-    <None Include="TestCases\Pretty\AsyncStreams.cs" />
-    <None Include="TestCases\Pretty\AsyncUsing.cs" />
+    <Compile Include="TestCases\Pretty\AsyncStreams.cs" />
+    <Compile Include="TestCases\Pretty\AsyncUsing.cs" />
     <Compile Include="TestCases\Pretty\OutVariables.cs" />
     <Compile Include="TestCases\Pretty\CustomTaskType.cs" />
     <None Include="TestCases\Ugly\NoForEachStatement.Expected.cs" />
