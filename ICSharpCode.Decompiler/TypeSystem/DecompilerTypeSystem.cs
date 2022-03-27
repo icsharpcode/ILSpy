@@ -260,19 +260,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				{
 					referencedAssemblies.Add(asm);
 					var metadata = asm.Metadata;
-					foreach (var h in metadata.ExportedTypes)
+					foreach (var h in metadata.AssemblyReferences)
 					{
-						var exportedType = metadata.GetExportedType(h);
-						switch (exportedType.Implementation.Kind)
-						{
-							case SRM.HandleKind.AssemblyReference:
-								AddToQueue(true, asm, new AssemblyReference(asm, (SRM.AssemblyReferenceHandle)exportedType.Implementation));
-								break;
-							case SRM.HandleKind.AssemblyFile:
-								var file = metadata.GetAssemblyFile((SRM.AssemblyFileHandle)exportedType.Implementation);
-								AddToQueue(false, asm, metadata.GetString(file.Name));
-								break;
-						}
+						AddToQueue(true, asm, new AssemblyReference(asm, h));
+					}
+
+					foreach (var f in metadata.AssemblyFiles)
+					{
+						AddToQueue(false, asm, metadata.GetString(metadata.GetAssemblyFile(f).Name));
 					}
 				}
 				if (assemblyReferenceQueue.Count == 0)
