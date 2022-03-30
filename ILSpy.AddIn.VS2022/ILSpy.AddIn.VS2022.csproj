@@ -18,6 +18,10 @@
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>Key.snk</AssemblyOriginatorKeyFile>
+    <NoWarn>
+      MSB3277;<!-- this is due to Visual Studio package references weirdness, see https://github.com/dotnet/roslyn/discussions/49787 -->
+      VSSDK1009
+    </NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
