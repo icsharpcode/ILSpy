@@ -34,10 +34,6 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(AppVeyor)' != ''">
-    <DeployExtension>False</DeployExtension>
-  </PropertyGroup>
-
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Design" />
