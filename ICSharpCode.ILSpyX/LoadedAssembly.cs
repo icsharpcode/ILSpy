@@ -668,14 +668,5 @@ namespace ICSharpCode.ILSpyX
 		}
 
 		UniversalAssemblyResolver? universalResolver;
-
-		/// <summary>
-		/// Wait until the assembly is loaded.
-		/// Throws an AggregateException when loading the assembly fails.
-		/// </summary>
-		public void WaitUntilLoaded()
-		{
-			loadingTask.Wait();
-		}
 	}
 }
