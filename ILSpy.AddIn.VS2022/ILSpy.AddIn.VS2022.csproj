@@ -41,7 +41,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.0.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" />
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="4.0.1" />
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.2.2141">
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.1.4054">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
