@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpyX
 		{
 			if (file == null)
 				throw new ArgumentNullException(nameof(file));
-			LoadedAssembly loadedAssembly;
+			LoadedAssembly? loadedAssembly;
 			lock (LoadedAssembly.loadedAssemblies)
 			{
 				if (!LoadedAssembly.loadedAssemblies.TryGetValue(file, out loadedAssembly))

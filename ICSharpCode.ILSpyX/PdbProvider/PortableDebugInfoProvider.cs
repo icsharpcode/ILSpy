@@ -18,28 +18,32 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.DebugInfo;
+using ICSharpCode.Decompiler.Util;
+
+#nullable enable
 
 namespace ICSharpCode.ILSpyX.PdbProvider
 {
 	class PortableDebugInfoProvider : IDebugInfoProvider
 	{
-		string pdbFileName;
+		string? pdbFileName;
 		string moduleFileName;
 		readonly MetadataReaderProvider provider;
 		bool hasError;
 
 		internal bool IsEmbedded => pdbFileName == null;
 
-		public PortableDebugInfoProvider(string pdbFileName, MetadataReaderProvider provider,
-			string moduleFileName)
+		public PortableDebugInfoProvider(string moduleFileName, MetadataReaderProvider provider,
+			string? pdbFileName = null)
 		{
-			this.pdbFileName = pdbFileName;
-			this.moduleFileName = moduleFileName;
+			this.moduleFileName = moduleFileName ?? throw new ArgumentNullException(nameof(moduleFileName));
 			this.provider = provider ?? throw new ArgumentNullException(nameof(provider));
+			this.pdbFileName = pdbFileName;
 		}
 
 		public string Description {
@@ -59,7 +63,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			}
 		}
 
-		internal MetadataReader GetMetadataReader()
+		internal MetadataReader? GetMetadataReader()
 		{
 			try
 			{
@@ -83,10 +87,10 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 		public IList<Decompiler.DebugInfo.SequencePoint> GetSequencePoints(MethodDefinitionHandle method)
 		{
 			var metadata = GetMetadataReader();
+			if (metadata == null)
+				return EmptyList<Decompiler.DebugInfo.SequencePoint>.Instance;
 			var debugInfo = metadata.GetMethodDebugInformation(method);
 			var sequencePoints = new List<Decompiler.DebugInfo.SequencePoint>();
-			if (metadata == null)
-				return sequencePoints;
 
 			foreach (var point in debugInfo.GetSequencePoints())
 			{
@@ -135,7 +139,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			return variables;
 		}
 
-		public bool TryGetName(MethodDefinitionHandle method, int index, out string name)
+		public bool TryGetName(MethodDefinitionHandle method, int index, [NotNullWhen(true)] out string? name)
 		{
 			var metadata = GetMetadataReader();
 			name = null;

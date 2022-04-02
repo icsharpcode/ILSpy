@@ -17,8 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
@@ -26,24 +26,26 @@ using System.Runtime.InteropServices;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 
+#nullable enable
+
 namespace ICSharpCode.ILSpyX.PdbProvider
 {
 	public static class DebugInfoUtils
 	{
-		public static IDebugInfoProvider LoadSymbols(PEFile module)
+		public static IDebugInfoProvider? LoadSymbols(PEFile module)
 		{
 			try
 			{
 				// try to open portable pdb file/embedded pdb info:
 				if (TryOpenPortablePdb(module, out var provider, out var pdbFileName))
 				{
-					return new PortableDebugInfoProvider(pdbFileName, provider, module.FileName);
+					return new PortableDebugInfoProvider(module.FileName, provider, pdbFileName);
 				}
 				else
 				{
 					// search for pdb in same directory as dll
 					pdbFileName = Path.Combine(
-						Path.GetDirectoryName(module.FileName),
+						Path.GetDirectoryName(module.FileName)!,
 						Path.GetFileNameWithoutExtension(module.FileName) + ".pdb"
 					);
 					if (File.Exists(pdbFileName))
@@ -59,12 +61,12 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			return null;
 		}
 
-		public static IDebugInfoProvider FromFile(PEFile module, string pdbFileName)
+		public static IDebugInfoProvider? FromFile(PEFile module, string pdbFileName)
 		{
 			if (string.IsNullOrEmpty(pdbFileName))
 				return null;
 
-			Stream stream = OpenStream(pdbFileName);
+			Stream? stream = OpenStream(pdbFileName);
 			if (stream == null)
 				return null;
 
@@ -78,7 +80,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			{
 				stream.Position = 0;
 				var provider = MetadataReaderProvider.FromPortablePdbStream(stream);
-				return new PortableDebugInfoProvider(pdbFileName, provider, module.FileName);
+				return new PortableDebugInfoProvider(module.FileName, provider, pdbFileName);
 			}
 		}
 
@@ -86,7 +88,8 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 		static readonly byte[] buffer = new byte[LegacyPDBPrefix.Length];
 
 		static bool TryOpenPortablePdb(PEFile module,
-			out MetadataReaderProvider provider, out string pdbFileName)
+			[NotNullWhen(true)] out MetadataReaderProvider? provider,
+			[NotNullWhen(true)] out string? pdbFileName)
 		{
 			provider = null;
 			pdbFileName = null;
@@ -100,12 +103,12 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				}
 				if (entry.Type == DebugDirectoryEntryType.CodeView)
 				{
-					string pdbDirectory = Path.GetDirectoryName(module.FileName);
+					string pdbDirectory = Path.GetDirectoryName(module.FileName)!;
 					pdbFileName = Path.Combine(
 						pdbDirectory, Path.GetFileNameWithoutExtension(module.FileName) + ".pdb");
-					if (File.Exists(pdbFileName))
+					Stream? stream = OpenStream(pdbFileName);
+					if (stream != null)
 					{
-						Stream stream = OpenStream(pdbFileName);
 						if (stream.Read(buffer, 0, buffer.Length) == LegacyPDBPrefix.Length
 							&& System.Text.Encoding.ASCII.GetString(buffer) == LegacyPDBPrefix)
 						{
@@ -120,7 +123,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			return false;
 		}
 
-		static Stream OpenStream(string fileName)
+		static Stream? OpenStream(string fileName)
 		{
 			if (!File.Exists(fileName))
 				return null;

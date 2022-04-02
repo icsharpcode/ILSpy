@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
@@ -31,13 +32,15 @@ using Mono.Cecil.Pdb;
 
 using SRM = System.Reflection.Metadata;
 
+#nullable enable
+
 namespace ICSharpCode.ILSpyX.PdbProvider
 {
 	public class MonoCecilDebugInfoProvider : IDebugInfoProvider
 	{
 		readonly Dictionary<SRM.MethodDefinitionHandle, (IList<SequencePoint> SequencePoints, IList<Variable> Variables)> debugInfo;
 
-		public unsafe MonoCecilDebugInfoProvider(PEFile module, string pdbFileName, string description = null)
+		public unsafe MonoCecilDebugInfoProvider(PEFile module, string pdbFileName, string? description = null)
 		{
 			if (module == null)
 			{
@@ -49,8 +52,8 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				throw new ArgumentException("This provider needs access to the full image!");
 			}
 
+			this.SourceFileName = pdbFileName ?? throw new ArgumentNullException(nameof(pdbFileName));
 			this.Description = description ?? $"Loaded from PDB file: {pdbFileName}";
-			this.SourceFileName = pdbFileName;
 
 			var image = module.Reader.GetEntireImage();
 			this.debugInfo = new Dictionary<SRM.MethodDefinitionHandle, (IList<SequencePoint> SequencePoints, IList<Variable> Variables)>();
@@ -120,7 +123,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			return info.Variables;
 		}
 
-		public bool TryGetName(SRM.MethodDefinitionHandle handle, int index, out string name)
+		public bool TryGetName(SRM.MethodDefinitionHandle handle, int index, [NotNullWhen(true)] out string? name)
 		{
 			name = null;
 			if (!debugInfo.TryGetValue(handle, out var info))

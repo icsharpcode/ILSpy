@@ -23,6 +23,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -70,6 +71,9 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		internal AssemblyList()
 		{
+			ownerThread = Thread.CurrentThread;
+			manager = null!;
+			listName = "Testing Only";
 		}
 
 		internal AssemblyList(AssemblyListManager manager, string listName)

@@ -53,7 +53,11 @@ namespace ICSharpCode.ILSpyX
 			XElement doc = this.settingsProvider["AssemblyLists"];
 			foreach (var list in doc.Elements("List"))
 			{
-				AssemblyLists.Add((string)list.Attribute("name"));
+				var name = (string?)list.Attribute("name");
+				if (name != null)
+				{
+					AssemblyLists.Add(name);
+				}
 			}
 		}
 
@@ -82,7 +86,7 @@ namespace ICSharpCode.ILSpyX
 			{
 				foreach (var list in doc.Elements("List"))
 				{
-					if ((string)list.Attribute("name") == listName)
+					if ((string?)list.Attribute("name") == listName)
 					{
 						return new AssemblyList(this, list);
 					}
@@ -114,13 +118,13 @@ namespace ICSharpCode.ILSpyX
 		{
 			this.settingsProvider.Update(
 				delegate (XElement root) {
-					XElement doc = root.Element("AssemblyLists");
+					XElement? doc = root.Element("AssemblyLists");
 					if (doc == null)
 					{
 						doc = new XElement("AssemblyLists");
 						root.Add(doc);
 					}
-					XElement listElement = doc.Elements("List").FirstOrDefault(e => (string)e.Attribute("name") == list.ListName);
+					XElement? listElement = doc.Elements("List").FirstOrDefault(e => (string?)e.Attribute("name") == list.ListName);
 					if (listElement != null)
 						listElement.ReplaceWith(list.SaveAsXml());
 					else
@@ -145,12 +149,12 @@ namespace ICSharpCode.ILSpyX
 			{
 				this.settingsProvider.Update(
 					delegate (XElement root) {
-						XElement doc = root.Element("AssemblyLists");
+						XElement? doc = root.Element("AssemblyLists");
 						if (doc == null)
 						{
 							return;
 						}
-						XElement listElement = doc.Elements("List").FirstOrDefault(e => (string)e.Attribute("name") == Name);
+						XElement? listElement = doc.Elements("List").FirstOrDefault(e => (string?)e.Attribute("name") == Name);
 						if (listElement != null)
 							listElement.Remove();
 					});
@@ -164,7 +168,7 @@ namespace ICSharpCode.ILSpyX
 			AssemblyLists.Clear();
 			this.settingsProvider.Update(
 				delegate (XElement root) {
-					XElement doc = root.Element("AssemblyLists");
+					XElement? doc = root.Element("AssemblyLists");
 					if (doc == null)
 					{
 						return;

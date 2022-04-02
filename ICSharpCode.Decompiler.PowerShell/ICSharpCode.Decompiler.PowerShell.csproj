@@ -5,6 +5,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <RootNamespace>ICSharpCode.Decompiler.PowerShell</RootNamespace>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 
   <Import Project="..\packages.props" />
