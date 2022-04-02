@@ -2,9 +2,9 @@ name: Build XPlat Frontends
 
 on:
   push:
-    branches: [ master ]
+    branches: '**'
   pull_request:
-    branches: [ master ]
+    branches: [ master, release/** ]
 
 jobs:
   build:
