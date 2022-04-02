@@ -74,7 +74,6 @@
     <EmbeddedResource Include="TextView\Asm-Mode-Dark.xshd" />
     <EmbeddedResource Include="TextView\XML-Mode-Dark.xshd" />
     <None Remove="Properties\launchSettings.json" />
-    <None Remove="Properties\app.config.template" />
   </ItemGroup>
 
   <ItemGroup>
