@@ -8,11 +8,13 @@
     <IsPackable>true</IsPackable>
     <PackAsTool>true</PackAsTool>
     <InvariantGlobalization>true</InvariantGlobalization>
+    
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>False</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>False</GenerateAssemblyInformationalVersionAttribute>
     <AssemblyName>ilspycmd</AssemblyName>
     <ToolCommandName>ilspycmd</ToolCommandName>
-    <Version>8.0.0.0-alpha1</Version>
-    <AssemblyVersion>8.0.0.0</AssemblyVersion>
-    <FileVersion>8.0.0.0</FileVersion>
     <Description>Command-line decompiler using the ILSpy decompilation engine</Description>
     <Copyright>Copyright 2011-2022 AlphaSierraPapa</Copyright>
     <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
@@ -48,5 +50,11 @@
     <PackageReference Include="System.Text.Encoding.Extensions" Version="4.3.0" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
   </ItemGroup>
+
+  <Target Name="ILSpyUpdateAssemblyInfo" BeforeTargets="BeforeBuild">
+    <ReadLinesFromFile ContinueOnError="true" File="..\VERSION">
+      <Output TaskParameter="Lines" PropertyName="PackageVersion" />
+    </ReadLinesFromFile>
+  </Target>
 
 </Project>
