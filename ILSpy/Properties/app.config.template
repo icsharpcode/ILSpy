@@ -22,6 +22,10 @@
 				<bindingRedirect oldVersion="1.0.0.0-99.9.9.9" newVersion="$INSERTVERSION$"/>
 			</dependentAssembly>
 			<dependentAssembly>
+				<assemblyIdentity name="ICSharpCode.ILSpyX" publicKeyToken="d4bfe873e7598c49" culture="neutral"/>
+				<bindingRedirect oldVersion="1.0.0.0-99.9.9.9" newVersion="$INSERTVERSION$"/>
+			</dependentAssembly>
+			<dependentAssembly>
 				<assemblyIdentity name="ILSpy" publicKeyToken="d4bfe873e7598c49" culture="neutral"/>
 				<bindingRedirect oldVersion="1.0.0.0-99.9.9.9" newVersion="$INSERTVERSION$"/>
 			</dependentAssembly>
