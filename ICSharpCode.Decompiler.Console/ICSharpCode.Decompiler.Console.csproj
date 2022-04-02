@@ -16,12 +16,13 @@
     <AssemblyName>ilspycmd</AssemblyName>
     <ToolCommandName>ilspycmd</ToolCommandName>
     <Description>Command-line decompiler using the ILSpy decompilation engine</Description>
-    <Copyright>Copyright 2011-2022 AlphaSierraPapa</Copyright>
+    <PackageVersion>8.0.0.0-noversion</PackageVersion>
+    <Copyright>Copyright 2011-$([System.DateTime]::Now.Year) AlphaSierraPapa</Copyright>
     <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>ILSpyCmdNuGetPackageIcon.png</PackageIcon>
     <RepositoryUrl>https://github.com/icsharpcode/ILSpy/</RepositoryUrl>
-    <Company />
+    <Company>ic#code</Company>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>ILSpy Team</Authors>
   </PropertyGroup>

@@ -5,7 +5,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
 
     <PackageId>ICSharpCode.Decompiler</PackageId>
-    <PackageVersion>8.0.0.0-alpha1</PackageVersion>
+    <PackageVersion>8.0.0.0-noversion</PackageVersion>
     <Title>ILSpy Decompiler Engine</Title>
     <Authors>ILSpy Contributors</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
