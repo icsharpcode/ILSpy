@@ -2,7 +2,6 @@ bin/
 obj/
 AppPackages/
 BundleArtifacts/
-/ILSpy/app.config
 *.user
 /Resharper-ILSpy-Style.xml
 _ReSharper*/
@@ -15,9 +14,7 @@ _ReSharper*/
 /ICSharpCode.Decompiler.Tests/TestCases/Disassembler/Pretty/*.result.il
 /ICSharpCode.Decompiler.Tests/TestCases/Correctness/*.exe
 /ICSharpCode.Decompiler.Tests/TestCases/Correctness/*.exe.config
-/ICSharpCode.Decompiler/ICSharpCode.Decompiler.nuspec
 multitargeting.props
 ILSpy.Installer/wix/
-ILSpy.Installer/AppPackage.cs
 /VERSION
 /ICSharpCode.Decompiler/Properties/DecompilerVersionInfo.cs

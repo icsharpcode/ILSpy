@@ -44,7 +44,7 @@ jobs:
       run: msbuild ILSpy.sln /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
 
     - name: Build
-      run: msbuild ILSpy.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform
+      run: msbuild ILSpy.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /m
 
     - name: Execute unit tests
       run: dotnet test --logger "trx;LogFileName=${{ matrix.configuration }}-test-results.trx" $env:Tests1 $env:Tests2 $env:Tests3

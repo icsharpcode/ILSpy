@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -24,17 +23,30 @@ jobs:
       run: dotnet restore ILSpy.XPlat.slnf
 
     - name: Build Debug
-      run: dotnet build ILSpy.XPlat.slnf --configuration Debug --no-restore
+      run: dotnet msbuild ILSpy.XPlat.slnf -p:Configuration=Debug -bl:Debug.binlog
 
-    - name: Build Release ilspycmd
-      run: dotnet build ICSharpCode.Decompiler.Console/ICSharpCode.Decompiler.Console.csproj --configuration Release
-      
-    - name: Pack Release ilspycmd
-      run: dotnet pack ICSharpCode.Decompiler.Console/ICSharpCode.Decompiler.Console.csproj --configuration Release --no-restore
+    - name: Build Release
+      run: dotnet msbuild ILSpy.XPlat.slnf -p:Configuration=Release -bl:Release.binlog
+
+    - name: list files
+      if: always()
+      run: ls -la
+
+    - name: print VERSION
+      if: always()
+      run: cat VERSION
 
     - name: Upload ilspycmd
       uses: actions/upload-artifact@v2
       with:
         name: ilspycmd NuGet Package
         path: ICSharpCode.Decompiler.Console/bin/Release/ilspycmd*.nupkg
+        if-no-files-found: error
+
+    - name: Upload binlog
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: binlog
+        path: '**/*.binlog'
         if-no-files-found: error

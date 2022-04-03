@@ -48,14 +48,20 @@
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
   </ItemGroup>
 
-  <!--
   <ItemGroup>
     <ProjectReference Include="..\ILSpy\ILSpy.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <Private>false</Private>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\ILSpy.ReadyToRun\ILSpy.ReadyToRun.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\ILSpy.BamlDecompiler\ILSpy.BamlDecompiler.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
     </ProjectReference>
   </ItemGroup>
-  -->
 
   <ItemGroup>
     <Compile Include="..\ICSharpCode.Decompiler\Metadata\AssemblyReferences.cs" Link="Decompiler\AssemblyReferences.cs" />
@@ -94,7 +100,7 @@
   <!-- END WORKAROUND -->
 
   <ItemGroup>
-    <Content Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)ILSpy.dll.config;$(ILSpyBuildPath)*.json">
+    <Content Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)*.json">
       <IncludeInVSIX>true</IncludeInVSIX>
       <VSIXSubPath>\ILSpy</VSIXSubPath>
     </Content>

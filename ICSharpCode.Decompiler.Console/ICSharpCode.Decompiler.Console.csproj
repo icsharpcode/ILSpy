@@ -52,7 +52,7 @@
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
   </ItemGroup>
 
-  <Target Name="ILSpyUpdateAssemblyInfo" BeforeTargets="BeforeBuild">
+  <Target Name="ILSpyUpdateAssemblyInfo" AfterTargets="ResolveProjectReferences">
     <ReadLinesFromFile ContinueOnError="true" File="..\VERSION">
       <Output TaskParameter="Lines" PropertyName="PackageVersion" />
     </ReadLinesFromFile>
