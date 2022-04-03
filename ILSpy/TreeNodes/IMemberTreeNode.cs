@@ -15,6 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+#nullable enable
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -31,6 +32,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// Returns the entity that is represented by this tree node.
 		/// May return null, if the member cannot be resolved.
 		/// </summary>
-		IEntity Member { get; }
+		IEntity? Member { get; }
 	}
 }
