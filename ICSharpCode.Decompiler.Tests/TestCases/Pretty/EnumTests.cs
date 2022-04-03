@@ -34,6 +34,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Item0 = 0
 		}
 
+		public enum EnumSkippedItemTest
+		{
+			Item0 = 0,
+			Item2 = 2
+		}
+
+		public enum EnumDuplicateItemTest
+		{
+			Item0 = 0,
+			Item1 = 1,
+			Item2A = 2,
+			Item2B = 2
+		}
+
 		public enum LongBasedEnum : long
 		{
 			Item1,
