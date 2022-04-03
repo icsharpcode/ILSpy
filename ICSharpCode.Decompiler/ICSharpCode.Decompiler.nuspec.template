@@ -17,6 +17,7 @@
 		<tags>C# Decompiler ILSpy</tags>
 		<dependencies>
 			<group targetFramework=".NETStandard2.0">
+				<dependency id="Microsoft.Win32.Registry" version="5.0.0" />
 				<dependency id="System.Collections.Immutable" version="5.0.0" />
 				<dependency id="System.Reflection.Metadata" version="5.0.0" />
 			</group>
