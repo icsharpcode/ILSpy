@@ -88,34 +88,25 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
 
-  <!--
-  BEGIN WORKAROUND:
-  Nuget packages do not get added to the vsix automatically.
-  (related to https://github.com/icsharpcode/ILSpy/issues/511)
-  -->
   <PropertyGroup>
     <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\net6.0-windows\</ILSpyBuildPath>
   </PropertyGroup>
+
+  <Target Name="IncludeILSpyDistributionInVSIXSubFolder" AfterTargets="ResolveProjectReferences">
+    <ItemGroup>
+      <VSIXSourceItem Include="$(ILSpyBuildPath)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPath)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll;">
+        <VSIXSubPath>\ILSpy\zh-Hans\</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)*.json">
+        <VSIXSubPath>\ILSpy</VSIXSubPath>
+      </VSIXSourceItem>
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <Content Include="$(OutputPath)Mono.Cecil.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
       <VSIXSubPath>\</VSIXSubPath>
-    </Content>
-  </ItemGroup>
-  <!-- END WORKAROUND -->
-
-  <ItemGroup>
-    <Content Include="$(ILSpyBuildPath)*.dll;$(ILSpyBuildPath)ILSpy.exe;$(ILSpyBuildPath)*.json">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <VSIXSubPath>\ILSpy</VSIXSubPath>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="$(ILSpyBuildPath)zh-Hans\ILSpy.resources.dll;$(ILSpyBuildPath)zh-Hans\ILSpy.ReadyToRun.Plugin.resources.dll;">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <VSIXSubPath>\ILSpy\zh-Hans\</VSIXSubPath>
     </Content>
     <Content Include="ILSpy-Large.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
