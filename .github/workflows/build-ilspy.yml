@@ -137,3 +137,11 @@ jobs:
         name: ILSpy Installer ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ILSpy.Installer\wix\*.msi
         if-no-files-found: error
+
+    - name: Upload ilspycmd release build artifacts
+      if: matrix.configuration == 'release'
+      uses: actions/upload-artifact@v2
+      with:
+        name: ilspycmd dotnet tool (${{ matrix.configuration }})
+        path: ICSharpCode.Decompiler.Console\bin\Release\ilspycmd*.nupkg
+        if-no-files-found: error
