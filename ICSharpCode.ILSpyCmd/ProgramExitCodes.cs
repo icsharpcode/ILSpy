@@ -1,6 +1,6 @@
 ﻿// ReSharper disable InconsistentNaming
 
-namespace ICSharpCode.Decompiler.Console
+namespace ICSharpCode.ILSpyCmd
 {
 	public class ProgramExitCodes
 	{

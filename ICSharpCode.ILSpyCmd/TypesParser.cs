@@ -4,7 +4,7 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.Decompiler.Console
+namespace ICSharpCode.ILSpyCmd
 {
 	public static class TypesParser
 	{

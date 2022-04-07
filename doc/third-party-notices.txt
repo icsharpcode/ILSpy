@@ -105,7 +105,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-License Notice for CommandLineUtils (part of ICSharpCode.Decompiler.Console)
+License Notice for CommandLineUtils (part of ICSharpCode.ILSpyCmd)
 ---------------------------
 
 https://github.com/natemcmaster/CommandLineUtils/blob/master/LICENSE.txt

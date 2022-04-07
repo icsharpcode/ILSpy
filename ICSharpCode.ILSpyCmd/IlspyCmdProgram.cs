@@ -9,6 +9,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Threading;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.DebugInfo;
@@ -20,7 +21,7 @@ using ICSharpCode.ILSpyX.PdbProvider;
 using McMaster.Extensions.CommandLineUtils;
 // ReSharper disable All
 
-namespace ICSharpCode.Decompiler.Console
+namespace ICSharpCode.ILSpyCmd
 {
 	[Command(Name = "ilspycmd", Description = "dotnet tool for decompiling .NET assemblies and generating portable PDBs",
 		ExtendedHelpText = @"

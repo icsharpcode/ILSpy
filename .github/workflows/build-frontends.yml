@@ -40,7 +40,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ilspycmd NuGet Package
-        path: ICSharpCode.Decompiler.Console/bin/Release/ilspycmd*.nupkg
+        path: ICSharpCode.ILSpyCmd/bin/Release/ilspycmd*.nupkg
         if-no-files-found: error
 
     - name: Upload binlog

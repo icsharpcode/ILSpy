@@ -17,7 +17,7 @@ Aside from the WPF UI ILSpy (downloadable via Releases, see also [plugins](https
 * Our Visual Studio Code Extension [repository](https://github.com/icsharpcode/ilspy-vscode) | [marketplace](https://marketplace.visualstudio.com/items?itemName=icsharpcode.ilspy-vscode)
 * Our Linux/Mac/Windows ILSpy UI based on [Avalonia](http://www.avaloniaui.net/) - check out https://github.com/icsharpcode/AvaloniaILSpy
 * Our [ICSharpCode.Decompiler](https://www.nuget.org/packages/ICSharpCode.Decompiler/) NuGet for your own projects
-* Our dotnet tool for Linux/Mac/Windows - check out [ICSharpCode.Decompiler.Console](ICSharpCode.Decompiler.Console) in this repository
+* Our dotnet tool for Linux/Mac/Windows - check out [ILSpyCmd](ICSharpCode.ILSpyCmd) in this repository
 * Our Linux/Mac/Windows [PowerShell cmdlets](ICSharpCode.Decompiler.PowerShell) in this repository
 
 Features

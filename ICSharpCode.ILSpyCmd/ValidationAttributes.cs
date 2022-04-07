@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 
-namespace ICSharpCode.Decompiler.Console
+namespace ICSharpCode.ILSpyCmd
 {
 	[AttributeUsage(AttributeTargets.Class)]
 	public sealed class ProjectOptionRequiresOutputDirectoryValidationAttribute : ValidationAttribute
