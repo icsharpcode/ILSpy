@@ -273,6 +273,19 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		bool useNestedNamespaceNodes = true;
+
+		public bool UseNestedNamespaceNodes {
+			get { return useNestedNamespaceNodes; }
+			set {
+				if (useNestedNamespaceNodes != value)
+				{
+					useNestedNamespaceNodes = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		private bool styleWindowTitleBar;
 
 		public bool StyleWindowTitleBar {
@@ -318,6 +331,7 @@ namespace ICSharpCode.ILSpy.Options
 			this.HighlightMatchingBraces = s.highlightMatchingBraces;
 			this.HighlightCurrentLine = s.highlightCurrentLine;
 			this.HideEmptyMetadataTables = s.hideEmptyMetadataTables;
+			this.UseNestedNamespaceNodes = s.useNestedNamespaceNodes;
 			this.ShowRawOffsetsAndBytesBeforeInstruction = s.showRawOffsetsAndBytesBeforeInstruction;
 			this.StyleWindowTitleBar = s.styleWindowTitleBar;
 		}

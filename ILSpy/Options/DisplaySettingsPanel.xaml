@@ -90,6 +90,7 @@
 					<CheckBox IsChecked="{Binding ShowMetadataTokens}" Content="{x:Static properties:Resources.ShowMetadataTokens}"></CheckBox>
 					<CheckBox IsChecked="{Binding ShowMetadataTokensInBase10}" Content="{x:Static properties:Resources.ShowMetadataTokensInBase10}"></CheckBox>
 					<CheckBox IsChecked="{Binding HideEmptyMetadataTables}" Content="{x:Static properties:Resources.HideEmptyMetadataTables}"></CheckBox>
+					<CheckBox IsChecked="{Binding UseNestedNamespaceNodes}" Content="{x:Static properties:Resources.UseNestedNamespaceNodes}"></CheckBox>
 				</StackPanel>
 			</GroupBox>
 			<GroupBox Header="{x:Static properties:Resources.OtherOptions}">

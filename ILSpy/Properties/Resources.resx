@@ -916,6 +916,9 @@ Do you want to continue?</value>
   <data name="UseLogicOperationSugar" xml:space="preserve">
     <value>UseLogicOperationSugar</value>
   </data>
+  <data name="UseNestedNamespaceNodes" xml:space="preserve">
+    <value>Use nested namespace structure</value>
+  </data>
   <data name="UseTabsInsteadOfSpaces" xml:space="preserve">
     <value>Use tabs instead of spaces</value>
   </data>

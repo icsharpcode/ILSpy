@@ -123,6 +123,7 @@ namespace ICSharpCode.ILSpy.Options
 			s.HighlightMatchingBraces = (bool?)e.Attribute("HighlightMatchingBraces") ?? true;
 			s.HighlightCurrentLine = (bool?)e.Attribute("HighlightCurrentLine") ?? false;
 			s.HideEmptyMetadataTables = (bool?)e.Attribute("HideEmptyMetadataTables") ?? true;
+			s.UseNestedNamespaceNodes = (bool?)e.Attribute("UseNestedNamespaceNodes") ?? false;
 			s.ShowRawOffsetsAndBytesBeforeInstruction = (bool?)e.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false;
 			s.StyleWindowTitleBar = (bool?)e.Attribute("StyleWindowTitleBar") ?? false;
 
@@ -151,6 +152,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("HighlightMatchingBraces", s.HighlightMatchingBraces);
 			section.SetAttributeValue("HighlightCurrentLine", s.HighlightCurrentLine);
 			section.SetAttributeValue("HideEmptyMetadataTables", s.HideEmptyMetadataTables);
+			section.SetAttributeValue("UseNestedNamespaceNodes", s.UseNestedNamespaceNodes);
 			section.SetAttributeValue("ShowRawOffsetsAndBytesBeforeInstruction", s.ShowRawOffsetsAndBytesBeforeInstruction);
 			section.SetAttributeValue("StyleWindowTitleBar", s.StyleWindowTitleBar);
 

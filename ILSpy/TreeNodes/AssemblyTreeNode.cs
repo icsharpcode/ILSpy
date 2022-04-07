@@ -29,6 +29,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
@@ -218,24 +219,61 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				ns.Children.Clear();
 			}
+			namespaces.Clear();
+			bool useNestedStructure = DisplaySettingsPanel.CurrentDisplaySettings.UseNestedNamespaceNodes;
 			foreach (var type in assembly.TopLevelTypeDefinitions.OrderBy(t => t.ReflectionName, NaturalStringComparer.Instance))
 			{
-				var escapedNamespace = Language.EscapeName(type.Namespace);
-				if (!namespaces.TryGetValue(type.Namespace, out NamespaceTreeNode ns))
-				{
-					ns = new NamespaceTreeNode(escapedNamespace);
-					namespaces.Add(type.Namespace, ns);
-				}
+				var ns = GetOrCreateNamespaceTreeNode(type.Namespace);
 				TypeTreeNode node = new TypeTreeNode(type, this);
 				typeDict[(TypeDefinitionHandle)type.MetadataToken] = node;
 				ns.Children.Add(node);
 			}
-			foreach (NamespaceTreeNode ns in namespaces.Values.OrderBy(n => n.Name, NaturalStringComparer.Instance))
+			foreach (NamespaceTreeNode ns in namespaces.Values
+				.Where(ns => ns.Children.Count > 0 && ns.Parent == null)
+				.OrderBy(n => n.Name, NaturalStringComparer.Instance))
 			{
-				if (ns.Children.Count > 0)
-					this.Children.Add(ns);
-				ns.SetPublicAPI(ns.Children.OfType<ILSpyTreeNode>().Any(n => n.IsPublicAPI));
+				this.Children.Add(ns);
+				SetPublicAPI(ns);
 			}
+
+			NamespaceTreeNode GetOrCreateNamespaceTreeNode(string @namespace)
+			{
+				if (!namespaces.TryGetValue(@namespace, out NamespaceTreeNode ns))
+				{
+					if (useNestedStructure)
+					{
+						int decimalIndex = @namespace.LastIndexOf('.');
+						if (decimalIndex < 0)
+						{
+							var escapedNamespace = Language.EscapeName(@namespace);
+							ns = new NamespaceTreeNode(escapedNamespace);
+						}
+						else
+						{
+							var parentNamespaceTreeNode = GetOrCreateNamespaceTreeNode(@namespace.Substring(0, decimalIndex));
+							var escapedInnerNamespace = Language.EscapeName(@namespace.Substring(decimalIndex + 1));
+							ns = new NamespaceTreeNode(escapedInnerNamespace);
+							parentNamespaceTreeNode.Children.Add(ns);
+						}
+					}
+					else
+					{
+						var escapedNamespace = Language.EscapeName(@namespace);
+						ns = new NamespaceTreeNode(escapedNamespace);
+					}
+					namespaces.Add(@namespace, ns);
+				}
+				return ns;
+			}
+		}
+
+		private static void SetPublicAPI(NamespaceTreeNode ns)
+		{
+			foreach (NamespaceTreeNode innerNamespace in ns.Children.OfType<NamespaceTreeNode>())
+			{
+				SetPublicAPI(innerNamespace);
+			}
+			ns.SetPublicAPI(ns.Children.OfType<ILSpyTreeNode>().Any(n => n.IsPublicAPI));
 		}
 
 		/// <summary>
