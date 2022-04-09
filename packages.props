@@ -5,9 +5,9 @@
 	Note: when updating these, ensure to also adjust the binding redirects in app.config.template appropriately.
 	-->
 	<PropertyGroup>
-		<SystemCollectionsImmutableVersion>5.0.0</SystemCollectionsImmutableVersion>
-		<SystemReflectionMetadataVersion>5.0.0</SystemReflectionMetadataVersion>
-		<SystemCompilerServicesUnsafeVersion>5.0.0</SystemCompilerServicesUnsafeVersion>
+		<SystemCollectionsImmutableVersion>6.0.0</SystemCollectionsImmutableVersion>
+		<SystemReflectionMetadataVersion>6.0.0</SystemReflectionMetadataVersion>
+		<SystemCompilerServicesUnsafeVersion>6.0.0</SystemCompilerServicesUnsafeVersion>
 		<SystemCompositionVersion>5.0.1</SystemCompositionVersion>
 		<!-- Microsoft.NETCore.ILAsm -->
 		<ILAsmVersion>6.0.0</ILAsmVersion>
