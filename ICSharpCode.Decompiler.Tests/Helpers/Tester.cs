@@ -348,7 +348,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					preprocessorSymbols.Add("CS100");
 					if (flags.HasFlag(CompilerOptions.Preview))
 					{
-
+						preprocessorSymbols.Add("CS110");
 					}
 				}
 			}

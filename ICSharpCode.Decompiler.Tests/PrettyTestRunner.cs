@@ -616,6 +616,11 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task CustomAttributes([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
+			if (cscOptions.HasFlag(CompilerOptions.UseRoslynLatest))
+			{
+				// Test C# 11 generic attributes
+				cscOptions |= CompilerOptions.Preview;
+			}
 			await RunForLibrary(cscOptions: cscOptions);
 		}
 
