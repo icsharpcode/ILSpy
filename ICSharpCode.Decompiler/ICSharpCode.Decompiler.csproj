@@ -685,7 +685,7 @@
     <Exec ContinueOnError="true" WorkingDirectory=".." Command="$(GitRevParse)" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="CommitHash" />
     </Exec>
-    <Exec WorkingDirectory=".." Command="$(UpdateAssemblyInfo)" Timeout="60000" Condition="'$(CommitHash)'!='$(LastCommitHash)'" />
+    <Exec WorkingDirectory=".." Command="$(UpdateAssemblyInfo)" Timeout="60000" Condition="'$(CommitHash)'!='$(LastCommitHash)'" LogStandardErrorAsError="true" ContinueOnError="false" />
     <WriteLinesToFile Lines="$(CommitHash)" File="@(UpdateAssemblyInfoStamp)" Overwrite="true" Condition="'$(CommitHash)'!='$(LastCommitHash)'" />
     <ReadLinesFromFile ContinueOnError="true" File="..\VERSION">
       <Output TaskParameter="Lines" PropertyName="PackageVersion" />

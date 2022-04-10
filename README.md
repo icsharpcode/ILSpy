@@ -45,6 +45,7 @@ How to build
 
 #### Windows:
 
+- Make sure PowerShell (at least version) 5.0 is installed.
 - Clone the ILSpy repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Install Visual Studio (documented version: 17.1). You can install the necessary components in one of 3 ways:

@@ -1,4 +1,9 @@
-﻿$ErrorActionPreference = "Stop"
+﻿if (-not ($PSVersionTable.PSCompatibleVersions -contains "5.0")) {
+    Write-Error "This script requires at least powershell version 5.0!";
+    return 255;
+}
+
+$ErrorActionPreference = "Stop"
 
 $baseCommit = "d779383cb85003d6dabeb976f0845631e07bf463";
 $baseCommitRev = 1;
@@ -98,7 +103,7 @@ try {
     }
 
     if (-not (Test-File "ILSpy.sln")) {
-        Write-Host "Working directory must be the ILSpy repo root!";
+        Write-Error "Working directory must be the ILSpy repo root!";
         return 2;
     }
 
