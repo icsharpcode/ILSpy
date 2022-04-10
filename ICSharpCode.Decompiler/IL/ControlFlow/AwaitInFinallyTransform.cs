@@ -128,6 +128,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				StateRangeAnalysis sra = new StateRangeAnalysis(StateRangeAnalysisMode.AwaitInFinally, null, stateVariable);
 				sra.AssignStateRanges(noThrowBlock, Util.LongSet.Universe);
 				var mapping = sra.GetBlockStateSetMapping((BlockContainer)noThrowBlock.Parent);
+				var mappingForLeave = sra.GetBlockStateSetMappingForLeave();
 
 				context.StepStartGroup("Inline finally block with await", tryCatch.Handlers[0]);
 				var cfg = new ControlFlowGraph(container, context.CancellationToken);
@@ -160,6 +161,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						{
 							context.Step($"branch to finally with state {value} => branch to state target " + targetBlock.Label, branch);
 							branch.TargetBlock = targetBlock;
+						}
+						else if (mappingForLeave.TryGetValue(value, out BlockContainer targetContainer))
+						{
+							context.Step($"branch to finally with state {value} => leave to state target " + targetContainer, branch);
+							branch.ReplaceWith(new Leave(targetContainer).WithILRange(branch));
 						}
 						else
 						{
