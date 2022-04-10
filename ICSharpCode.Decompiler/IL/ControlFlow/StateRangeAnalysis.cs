@@ -279,9 +279,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 		}
+
 		public LongDict<BlockContainer> GetBlockStateSetMappingForLeave()
 		{
-			return LongDict.Create(rangesForLeave.Select(kv => (kv.Value, kv.Key)));
+			Debug.Assert(mode == StateRangeAnalysisMode.AwaitInFinally);
+			return LongDict.Create(rangesForLeave!.Select(kv => (kv.Value, kv.Key)));
 		}
 	}
 }
