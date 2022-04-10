@@ -16,9 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -33,7 +36,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	{
 		IteratorMoveNext,
 		IteratorDispose,
-		AsyncMoveNext
+		AsyncMoveNext,
+		AwaitInFinally
 	}
 
 	/// <summary>
@@ -53,16 +57,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	{
 		public CancellationToken CancellationToken;
 		readonly StateRangeAnalysisMode mode;
-		readonly IField stateField;
+		readonly IField? stateField;
 		readonly SymbolicEvaluationContext evalContext;
 
 		readonly Dictionary<Block, LongSet> ranges = new Dictionary<Block, LongSet>();
-		readonly internal Dictionary<IMethod, LongSet> finallyMethodToStateRange; // used only for IteratorDispose
+		readonly internal Dictionary<IMethod, LongSet>? finallyMethodToStateRange; // used only for IteratorDispose
 
-		internal ILVariable doFinallyBodies;
-		internal ILVariable skipFinallyBodies;
+		internal ILVariable? doFinallyBodies;
+		internal ILVariable? skipFinallyBodies;
 
-		public StateRangeAnalysis(StateRangeAnalysisMode mode, IField stateField, ILVariable cachedStateVar = null)
+		public StateRangeAnalysis(StateRangeAnalysisMode mode, IField? stateField, ILVariable? cachedStateVar = null)
 		{
 			this.mode = mode;
 			this.stateField = stateField;
@@ -195,7 +199,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// Call to finally method.
 					// Usually these are in finally blocks, but sometimes (e.g. foreach over array),
 					// the C# compiler puts the call to a finally method outside the try-finally block.
-					finallyMethodToStateRange.Add((IMethod)call.Method.MemberDefinition, stateRange);
+					finallyMethodToStateRange!.Add((IMethod)call.Method.MemberDefinition, stateRange);
 					return LongSet.Empty; // return Empty since we executed user code (the finally method)
 				case StObj stobj when mode == StateRangeAnalysisMode.IteratorMoveNext:
 				{
