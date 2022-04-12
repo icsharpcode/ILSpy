@@ -178,6 +178,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					return default(SyntaxTrivia); // delete
 				}
+				if (trivia.IsKind(SyntaxKind.PragmaWarningDirectiveTrivia))
+				{
+					return default(SyntaxTrivia); // delete
+				}
 				return base.VisitTrivia(trivia);
 			}
 		}
