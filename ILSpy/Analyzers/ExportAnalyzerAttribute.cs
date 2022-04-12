@@ -16,32 +16,20 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
-
-using ICSharpCode.Decompiler.TypeSystem;
+using System;
+using System.ComponentModel.Composition;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
-	/// <summary>
-	/// Base interface for all analyzers. You can register an analyzer for any <see cref="ISymbol"/> by implementing
-	/// this interface and adding an <see cref="ExportAnalyzerAttribute"/>.
-	/// </summary>
-	public interface IAnalyzer
+	[MetadataAttribute]
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+	public class ExportAnalyzerAttribute : ExportAttribute, IAnalyzerMetadata
 	{
-		/// <summary>
-		/// Returns true, if the analyzer should be shown for a symbol, otherwise false.
-		/// </summary>
-		bool Show(ISymbol symbol);
+		public ExportAnalyzerAttribute() : base("Analyzer", typeof(IAnalyzer))
+		{ }
 
-		/// <summary>
-		/// Returns all symbols found by this analyzer.
-		/// </summary>
-		IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context);
-	}
+		public string Header { get; set; }
 
-	public interface IAnalyzerMetadata
-	{
-		string Header { get; }
-		int Order { get; }
+		public int Order { get; set; }
 	}
 }
