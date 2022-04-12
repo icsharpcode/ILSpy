@@ -100,7 +100,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string MethodTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					((EntityHandle)localScope.Method).WriteTo(module, output, Decompiler.Metadata.GenericContext.Empty);
+					((EntityHandle)localScope.Method).WriteTo(module, output, default);
 					return output.ToString();
 				}
 			}

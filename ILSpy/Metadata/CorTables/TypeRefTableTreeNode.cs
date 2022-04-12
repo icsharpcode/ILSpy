@@ -114,7 +114,7 @@ namespace ICSharpCode.ILSpy.Metadata
 							output.Write(asmRef.ToString());
 							break;
 						default:
-							typeRef.ResolutionScope.WriteTo(module, output, GenericContext.Empty);
+							typeRef.ResolutionScope.WriteTo(module, output, default);
 							break;
 					}
 					return output.ToString();

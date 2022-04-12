@@ -433,7 +433,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 									output.WriteReference(currentFile, methodDefToken, $"({MetadataTokens.GetToken(methodDefToken):X8}) ", "metadata");
 								}
 							}
-							methodDefToken.WriteTo(currentFile, output, Decompiler.Metadata.GenericContext.Empty);
+							methodDefToken.WriteTo(currentFile, output, default);
 							break;
 						case MethodRefEntrySignature methodRefSignature:
 							var methodRefToken = MetadataTokens.EntityHandle(unchecked((int)methodRefSignature.MethodRefToken));
@@ -448,7 +448,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 									output.WriteReference(currentFile, methodRefToken, $"({MetadataTokens.GetToken(methodRefToken):X8}) ", "metadata");
 								}
 							}
-							methodRefToken.WriteTo(currentFile, output, Decompiler.Metadata.GenericContext.Empty);
+							methodRefToken.WriteTo(currentFile, output, default);
 							break;
 						default:
 							output.WriteLine(reader.ImportSignatures[importCellAddress].ToString(new SignatureFormattingOptions()));

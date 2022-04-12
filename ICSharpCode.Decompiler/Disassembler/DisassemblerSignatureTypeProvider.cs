@@ -25,7 +25,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
-	public class DisassemblerSignatureTypeProvider : ISignatureTypeProvider<Action<ILNameSyntax>, GenericContext>
+	public class DisassemblerSignatureTypeProvider : ISignatureTypeProvider<Action<ILNameSyntax>, MetadataGenericContext>
 	{
 		readonly PEFile module;
 		readonly MetadataReader metadata;
@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			};
 		}
 
-		public Action<ILNameSyntax> GetGenericMethodParameter(GenericContext genericContext, int index)
+		public Action<ILNameSyntax> GetGenericMethodParameter(MetadataGenericContext genericContext, int index)
 		{
 			return syntax => {
 				output.Write("!!");
@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			};
 		}
 
-		public Action<ILNameSyntax> GetGenericTypeParameter(GenericContext genericContext, int index)
+		public Action<ILNameSyntax> GetGenericTypeParameter(MetadataGenericContext genericContext, int index)
 		{
 			return syntax => {
 				output.Write("!");
@@ -240,7 +240,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					default:
 						throw new BadImageFormatException($"Unexpected rawTypeKind: {rawTypeKind} (0x{rawTypeKind:x})");
 				}
-				((EntityHandle)handle).WriteTo(module, output, GenericContext.Empty);
+				((EntityHandle)handle).WriteTo(module, output, default);
 			};
 		}
 
@@ -260,11 +260,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 					default:
 						throw new BadImageFormatException($"Unexpected rawTypeKind: {rawTypeKind} (0x{rawTypeKind:x})");
 				}
-				((EntityHandle)handle).WriteTo(module, output, GenericContext.Empty);
+				((EntityHandle)handle).WriteTo(module, output, default);
 			};
 		}
 
-		public Action<ILNameSyntax> GetTypeFromSpecification(MetadataReader reader, GenericContext genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
+		public Action<ILNameSyntax> GetTypeFromSpecification(MetadataReader reader, MetadataGenericContext genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
 		{
 			return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
 		}

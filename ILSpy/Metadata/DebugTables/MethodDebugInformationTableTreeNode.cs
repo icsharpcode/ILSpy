@@ -134,7 +134,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					if (debugInfo.LocalSignature.IsNil)
 						return null;
 					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), metadata);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), metadata);
 					StandaloneSignature localSignature = module.Metadata.GetStandaloneSignature(debugInfo.LocalSignature);
 					var signatureDecoder = new DisassemblerSignatureTypeProvider(module, output);
 					int index = 0;

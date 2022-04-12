@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string ParentTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)propertyMap.Parent).WriteTo(module, output, context);
 					return output.ToString();
 				}
@@ -128,7 +128,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string PropertyListTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)propertyMap.PropertyList).WriteTo(module, output, context);
 					return output.ToString();
 				}

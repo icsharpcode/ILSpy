@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		// cache info
 		PEFile module;
 		MetadataReader metadata;
-		GenericContext genericContext;
+		MetadataGenericContext genericContext;
 		DisassemblerSignatureTypeProvider signatureDecoder;
 
 		public MethodBodyDisassembler(ITextOutput output, CancellationToken cancellationToken)
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			metadata = module.Metadata;
-			genericContext = new GenericContext(handle, module);
+			genericContext = new MetadataGenericContext(handle, module);
 			signatureDecoder = new DisassemblerSignatureTypeProvider(module, output);
 			var methodDefinition = metadata.GetMethodDefinition(handle);
 
@@ -198,7 +198,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			this.module = module;
 			metadata = module.Metadata;
-			genericContext = new GenericContext(handle, module);
+			genericContext = new MetadataGenericContext(handle, module);
 			signatureDecoder = new DisassemblerSignatureTypeProvider(module, output);
 			var handlers = body.ExceptionRegions;
 			if (!handlers.IsEmpty)

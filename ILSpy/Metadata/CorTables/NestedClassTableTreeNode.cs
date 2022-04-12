@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string NestedClassTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
+					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)nestedClass.Nested).WriteTo(module, output, context);
 					return output.ToString();
 				}
@@ -128,7 +128,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string EnclosingClassTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
+					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)nestedClass.Enclosing).WriteTo(module, output, context);
 					return output.ToString();
 				}

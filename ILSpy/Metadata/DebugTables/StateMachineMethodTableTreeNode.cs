@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string MoveNextMethodTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)moveNextMethod).WriteTo(module, output, context);
 					return output.ToString();
 				}
@@ -120,7 +120,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string KickoffMethodTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)kickoffMethod).WriteTo(module, output, context);
 					return output.ToString();
 				}

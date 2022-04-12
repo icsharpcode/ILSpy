@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string MethodDeclarationTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					methodImpl.MethodDeclaration.WriteTo(module, output, Decompiler.Metadata.GenericContext.Empty);
+					methodImpl.MethodDeclaration.WriteTo(module, output, default);
 					return output.ToString();
 				}
 			}
@@ -115,7 +115,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string MethodBodyTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					methodImpl.MethodBody.WriteTo(module, output, Decompiler.Metadata.GenericContext.Empty);
+					methodImpl.MethodBody.WriteTo(module, output, default);
 					return output.ToString();
 				}
 			}
@@ -132,7 +132,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string TypeTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					((EntityHandle)methodImpl.Type).WriteTo(module, output, Decompiler.Metadata.GenericContext.Empty);
+					((EntityHandle)methodImpl.Type).WriteTo(module, output, default);
 					return output.ToString();
 				}
 			}

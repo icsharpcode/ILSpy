@@ -111,7 +111,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					if (manifestResource.Implementation.IsNil)
 						return null;
 					ITextOutput output = new PlainTextOutput();
-					var context = new GenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					manifestResource.Implementation.WriteTo(module, output, context);
 					return output.ToString();
 				}

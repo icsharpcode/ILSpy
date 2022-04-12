@@ -31,6 +31,15 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
+	public enum TargetRuntime
+	{
+		Unknown,
+		Net_1_0,
+		Net_1_1,
+		Net_2_0,
+		Net_4_0
+	}
+
 	public enum TargetFrameworkIdentifier
 	{
 		NETFramework,

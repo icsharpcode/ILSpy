@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string SignatureTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.GenericContext(default(TypeDefinitionHandle), module);
+					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)handle).WriteTo(module, output, context);
 					return output.ToString();
 				}

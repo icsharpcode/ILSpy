@@ -120,6 +120,8 @@
     <Compile Include="IL\Transforms\RemoveInfeasiblePathTransform.cs" />
     <Compile Include="Instrumentation\DecompilerEventSource.cs" />
     <Compile Include="Metadata\FindTypeDecoder.cs" />
+    <Compile Include="Metadata\FullTypeNameSignatureDecoder.cs" />
+    <Compile Include="Metadata\MetadataGenericContext.cs" />
     <Compile Include="Metadata\ReferenceLoadInfo.cs" />
     <Compile Include="Properties\DecompilerVersionInfo.cs" />
     <None Include="Properties\DecompilerVersionInfo.template.cs" />
@@ -353,7 +355,7 @@
     <Compile Include="IL\ControlFlow\AwaitInCatchTransform.cs" />
     <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
     <Compile Include="Metadata\CustomAttributeDecoder.cs" />
-    <Compile Include="Metadata\Dom.cs" />
+    <Compile Include="Metadata\Resource.cs" />
     <Compile Include="Metadata\DotNetCorePathFinder.cs" />
     <Compile Include="Metadata\DotNetCorePathFinderExtensions.cs" />
     <Compile Include="Metadata\LightJson\JsonArray.cs" />

@@ -115,7 +115,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string TypeTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					eventDef.Type.WriteTo(module, output, Decompiler.Metadata.GenericContext.Empty);
+					eventDef.Type.WriteTo(module, output, default);
 					return output.ToString();
 				}
 			}
