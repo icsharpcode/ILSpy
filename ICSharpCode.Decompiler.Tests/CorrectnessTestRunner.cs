@@ -72,6 +72,20 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
+		static readonly CompilerOptions[] net40OnlyOptions =
+		{
+			CompilerOptions.None,
+			CompilerOptions.Optimize,
+			CompilerOptions.UseRoslyn1_3_2 | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn1_3_2 | CompilerOptions.TargetNet40,
+			CompilerOptions.UseRoslyn2_10_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.TargetNet40,
+			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40
+		};
+
 		static readonly CompilerOptions[] defaultOptions =
 		{
 			CompilerOptions.None,
@@ -392,7 +406,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public async Task ComInterop([ValueSource(nameof(noMonoOptions))] CompilerOptions options)
+		public async Task ComInterop([ValueSource(nameof(net40OnlyOptions))] CompilerOptions options)
 		{
 			await RunCS(options: options);
 		}
