@@ -249,6 +249,10 @@ namespace ICSharpCode.Decompiler.Metadata
 			get => minimalCorlibTypeProvider;
 		}
 
+		/// <summary>
+		/// Converts <see cref="KnownTypeCode"/> to <see cref="PrimitiveTypeCode"/>.
+		/// Returns 0 for known types that are not primitive types (such as <see cref="Span{T}"/>).
+		/// </summary>
 		public static PrimitiveTypeCode ToPrimitiveTypeCode(this KnownTypeCode typeCode)
 		{
 			switch (typeCode)
@@ -290,7 +294,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				case KnownTypeCode.UIntPtr:
 					return PrimitiveTypeCode.UIntPtr;
 				default:
-					throw new ArgumentOutOfRangeException();
+					return 0;
 			}
 		}
 
