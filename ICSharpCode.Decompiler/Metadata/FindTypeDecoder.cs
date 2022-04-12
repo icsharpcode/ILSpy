@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		public FindTypeDecoder(MetadataModule currentModule, ITypeDefinition type)
 		{
 			this.currentModule = currentModule;
-			this.declaringModule = type.ParentModule.PEFile ?? throw new InvalidOperationException("Cannot use MetadataModule without PEFile as context.");
+			this.declaringModule = type.ParentModule?.PEFile ?? throw new InvalidOperationException("Cannot use MetadataModule without PEFile as context.");
 			this.handle = (TypeDefinitionHandle)type.MetadataToken;
 			this.primitiveType = type.KnownTypeCode == KnownTypeCode.None ? 0 : type.KnownTypeCode.ToPrimitiveTypeCode();
 			this.typeName = type.MetadataName;
@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (td == null)
 				return false;
 
-			return td.MetadataToken == this.handle && td.ParentModule.PEFile == declaringModule;
+			return td.MetadataToken == this.handle && td.ParentModule?.PEFile == declaringModule;
 		}
 
 		public bool GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
