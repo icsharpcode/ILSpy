@@ -15,7 +15,7 @@ namespace ICSharpCode.Decompiler.Util
 		}
 
 #if !NETCORE
-		public static IEnumerable<(A, B)> Zip<A, B>(this IEnumerable<A>? input1, IEnumerable<B>? input2)
+		public static IEnumerable<(A, B)> Zip<A, B>(this IEnumerable<A> input1, IEnumerable<B> input2)
 		{
 			return input1.Zip(input2, (a, b) => (a, b));
 		}
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.Util
 		}
 
 #if !NETCORE
-		public static HashSet<T> ToHashSet<T>(this IEnumerable<T>? input)
+		public static HashSet<T> ToHashSet<T>(this IEnumerable<T> input)
 		{
 			return new HashSet<T>(input);
 		}
@@ -354,7 +354,7 @@ namespace ICSharpCode.Decompiler.Util
 			list.RemoveAt(list.Count - 1);
 		}
 
-		public static T? OnlyOrDefault<T>(this IEnumerable<T>? source, Func<T, bool>? predicate) => OnlyOrDefault(source.Where(predicate));
+		public static T? OnlyOrDefault<T>(this IEnumerable<T> source, Func<T, bool> predicate) => OnlyOrDefault(source.Where(predicate));
 
 		public static T? OnlyOrDefault<T>(this IEnumerable<T> source)
 		{
@@ -373,14 +373,14 @@ namespace ICSharpCode.Decompiler.Util
 
 		#region Aliases/shortcuts for Enumerable extension methods
 		public static bool Any<T>(this ICollection<T> list) => list.Count > 0;
-		public static bool Any<T>(this T[]? array, Predicate<T>? match) => Array.Exists(array, match);
-		public static bool Any<T>(this List<T> list, Predicate<T>? match) => list.Exists(match);
+		public static bool Any<T>(this T[] array, Predicate<T> match) => Array.Exists(array, match);
+		public static bool Any<T>(this List<T> list, Predicate<T> match) => list.Exists(match);
 
-		public static bool All<T>(this T[]? array, Predicate<T>? match) => Array.TrueForAll(array, match);
-		public static bool All<T>(this List<T> list, Predicate<T>? match) => list.TrueForAll(match);
+		public static bool All<T>(this T[] array, Predicate<T> match) => Array.TrueForAll(array, match);
+		public static bool All<T>(this List<T> list, Predicate<T> match) => list.TrueForAll(match);
 
-		public static T FirstOrDefault<T>(this T[]? array, Predicate<T>? predicate) => Array.Find(array, predicate);
-		public static T FirstOrDefault<T>(this List<T> list, Predicate<T>? predicate) => list.Find(predicate);
+		public static T? FirstOrDefault<T>(this T[] array, Predicate<T> predicate) => Array.Find(array, predicate);
+		public static T? FirstOrDefault<T>(this List<T> list, Predicate<T> predicate) => list.Find(predicate);
 
 		public static T Last<T>(this IList<T> list) => list[list.Count - 1];
 		#endregion

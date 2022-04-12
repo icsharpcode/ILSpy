@@ -107,7 +107,7 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	internal abstract class AbstractLexer
+	internal abstract class AbstractLexer : IDisposable
 	{
 		LATextReader reader;
 		int col = 1;

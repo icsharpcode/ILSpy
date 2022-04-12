@@ -217,7 +217,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public PEFile? ResolveModule(PEFile mainModule, string moduleName)
 		{
-			string baseDirectory = Path.GetDirectoryName(mainModule.FileName);
+			string? baseDirectory = Path.GetDirectoryName(mainModule.FileName);
+			if (baseDirectory == null)
+				return null;
 			string moduleFileName = Path.Combine(baseDirectory, moduleName);
 			return CreatePEFileFromFileName(moduleFileName, ex => new ResolutionException(mainModule.FileName, moduleName, moduleFileName, ex));
 		}
@@ -381,7 +383,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		string FindClosestVersionDirectory(string? basePath, Version? version)
+		string FindClosestVersionDirectory(string basePath, Version? version)
 		{
 			string? path = null;
 			foreach (var folder in new DirectoryInfo(basePath).GetDirectories().Select(d => DotNetCorePathFinder.ConvertToVersion(d.Name))
@@ -402,7 +404,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (assembly != null)
 				return assembly;
 
-			var framework_dir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName);
+			var framework_dir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!;
 			var framework_dirs = decompilerRuntime == DecompilerRuntime.Mono
 				? new[] { framework_dir, Path.Combine(framework_dir, "Facades") }
 				: new[] { framework_dir };
@@ -444,6 +446,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			foreach (var directory in directories)
 			{
+				if (directory == null)
+					continue;
 				string? file = SearchDirectory(name, directory);
 				if (file != null)
 					return file;
@@ -457,7 +461,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return IsZeroOrAllOnes(reference.Version) || reference.IsRetargetable;
 		}
 
-		string? SearchDirectory(IAssemblyReference name, string? directory)
+		string? SearchDirectory(IAssemblyReference name, string directory)
 		{
 			var extensions = name.IsWindowsRuntime ? new[] { ".winmd", ".dll" } : new[] { ".dll", ".exe" };
 			foreach (var extension in extensions)
@@ -581,7 +585,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		string? GetMonoMscorlibBasePath(Version version)
 		{
-			var path = Directory.GetParent(typeof(object).Module.FullyQualifiedName).Parent.FullName;
+			var path = Directory.GetParent(typeof(object).Module.FullyQualifiedName)!.Parent!.FullName;
 			if (version.Major == 1)
 				path = Path.Combine(path, "1.0");
 			else if (version.Major == 2)
@@ -646,7 +650,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			return Path.Combine(
 				Directory.GetParent(
-					Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)).FullName,
+					Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!)!.FullName,
 				"gac");
 		}
 
@@ -693,7 +697,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		static string GetAssemblyFile(IAssemblyReference reference, string? prefix, string? gac)
+		static string GetAssemblyFile(IAssemblyReference reference, string prefix, string gac)
 		{
 			var gac_folder = new StringBuilder()
 				.Append(prefix)
@@ -719,8 +723,8 @@ namespace ICSharpCode.Decompiler.Metadata
 						continue;
 					foreach (var item in new DirectoryInfo(rootPath).EnumerateFiles("*.dll", SearchOption.AllDirectories))
 					{
-						string[] name = Path.GetDirectoryName(item.FullName).Substring(rootPath.Length + 1).Split(new[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
-						if (name.Length != 2)
+						string[]? name = Path.GetDirectoryName(item.FullName)?.Substring(rootPath.Length + 1).Split(new[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
+						if (name?.Length != 2)
 							continue;
 						var match = Regex.Match(name[1], $"(v4.0_)?(?<version>[^_]+)_(?<culture>[^_]+)?_(?<publicKey>[^_]+)");
 						if (!match.Success)

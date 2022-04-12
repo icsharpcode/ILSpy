@@ -480,7 +480,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			catch (Exception ex) when (ex.Data.IsFixedSize)
 			{
 				Console.WriteLine(ex.ToString());
+#pragma warning disable CA2200 // Rethrow to preserve stack details
 				throw ex;
+#pragma warning restore CA2200 // Rethrow to preserve stack details
 			}
 		}
 
@@ -493,7 +495,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			catch (Exception ex) when (ex is InternalBufferOverflowException)
 			{
 				Console.WriteLine(ex.ToString());
+#pragma warning disable CA2200 // Rethrow to preserve stack details
 				throw ex;
+#pragma warning restore CA2200 // Rethrow to preserve stack details
 			}
 		}
 #endif

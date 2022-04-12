@@ -65,7 +65,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		public FindTypeInAttributeDecoder(MetadataModule currentModule, ITypeDefinition type)
 		{
 			this.currentModule = currentModule;
-			this.declaringModule = type.ParentModule.PEFile ?? throw new InvalidOperationException("Cannot use MetadataModule without PEFile as context.");
+			this.declaringModule = type.ParentModule?.PEFile ?? throw new InvalidOperationException("Cannot use MetadataModule without PEFile as context.");
 			this.handle = (TypeDefinitionHandle)type.MetadataToken;
 			this.primitiveType = type.KnownTypeCode == KnownTypeCode.None ? 0 : type.KnownTypeCode.ToPrimitiveTypeCode();
 		}
@@ -138,7 +138,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			{
 				result = TokenSearchResult.SystemType;
 			}
-			if (td.MetadataToken == this.handle && td.ParentModule.PEFile == declaringModule)
+			if (td.MetadataToken == this.handle && td.ParentModule?.PEFile == declaringModule)
 			{
 				result |= TokenSearchResult.Found;
 			}

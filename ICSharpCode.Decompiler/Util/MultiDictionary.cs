@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.Util
 	/// <summary>
 	/// A dictionary that allows multiple pairs with the same key.
 	/// </summary>
-	public class MultiDictionary<TKey, TValue> : ILookup<TKey, TValue>
+	public class MultiDictionary<TKey, TValue> : ILookup<TKey, TValue> where TKey : notnull
 	{
 		readonly Dictionary<TKey, List<TValue>> dict;
 
@@ -41,8 +41,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Add(TKey key, TValue value)
 		{
-			List<TValue> valueList;
-			if (!dict.TryGetValue(key, out valueList))
+			if (!dict.TryGetValue(key, out List<TValue>? valueList))
 			{
 				valueList = new List<TValue>();
 				dict.Add(key, valueList);
@@ -52,8 +51,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public bool Remove(TKey key, TValue value)
 		{
-			List<TValue> valueList;
-			if (dict.TryGetValue(key, out valueList))
+			if (dict.TryGetValue(key, out List<TValue>? valueList))
 			{
 				if (valueList.Remove(value))
 				{
