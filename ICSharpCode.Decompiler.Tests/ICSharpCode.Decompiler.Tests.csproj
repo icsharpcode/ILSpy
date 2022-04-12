@@ -106,6 +106,7 @@
     <Compile Include="Output\InsertParenthesesVisitorTests.cs" />
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
     <Compile Include="TestAssemblyResolver.cs" />
+    <None Include="TestCases\Correctness\ComInterop.cs" />
     <Compile Include="TestCases\Correctness\DeconstructionTests.cs" />
     <Compile Include="TestCases\Correctness\DynamicTests.cs" />
     <Compile Include="TestCases\Correctness\StringConcat.cs" />
