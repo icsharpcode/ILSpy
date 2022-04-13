@@ -1570,58 +1570,76 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		ExpressionWithResolveResult BuildDelegateReference(IMethod method, IMethod invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg)
 		{
-			TranslatedExpression target;
-			IType targetType;
-			bool requireTarget;
-			ResolveResult result = null;
-			string methodName = method.Name;
-			// There are three possible adjustments, we can make, to solve conflicts:
-			// 1. add target (represented as bit 0)
-			// 2. add type arguments (represented as bit 1)
-			// 3. cast target (represented as bit 2)
-			int step;
-			ILFunction localFunction = null;
+			ExpressionBuilder expressionBuilder = this.expressionBuilder;
+			ExpressionWithResolveResult targetExpression;
+			(TranslatedExpression target, bool addTypeArguments, string methodName, ResolveResult result) = DisambiguateDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg);
+			if (target.Expression != null)
+			{
+				var mre = new MemberReferenceExpression(target, methodName);
+				if (addTypeArguments)
+				{
+					mre.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
+				}
+				targetExpression = mre.WithRR(result);
+			}
+			else
+			{
+				var ide = new IdentifierExpression(methodName);
+				if (addTypeArguments)
+				{
+					ide.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
+				}
+				targetExpression = ide.WithRR(result);
+			}
+			return targetExpression;
+
+		}
+
+		(TranslatedExpression target, bool addTypeArguments, string methodName, ResolveResult result) DisambiguateDelegateReference(IMethod method, IMethod invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg)
+		{
 			if (method.IsLocalFunction)
 			{
-				localFunction = expressionBuilder.ResolveLocalFunction(method);
+				ILFunction localFunction = expressionBuilder.ResolveLocalFunction(method);
 				Debug.Assert(localFunction != null);
+				return (default, addTypeArguments: true, localFunction.Name, ToMethodGroup(method, localFunction));
 			}
-			if (localFunction != null)
+			if (method.IsExtensionMethod && method.Parameters.Count - 1 == invokeMethod?.Parameters.Count)
 			{
-				step = 2;
-				requireTarget = false;
-				result = ToMethodGroup(method, localFunction);
-				target = default;
-				targetType = default;
-				methodName = localFunction.Name;
-			}
-			else if (method.IsExtensionMethod && invokeMethod != null && method.Parameters.Count - 1 == invokeMethod.Parameters.Count)
-			{
-				step = 5;
-				targetType = method.Parameters[0].Type;
+				IType targetType = method.Parameters[0].Type;
 				if (targetType.Kind == TypeKind.ByReference && thisArg is Box thisArgBox)
 				{
 					targetType = ((ByReferenceType)targetType).ElementType;
 					thisArg = thisArgBox.Argument;
 				}
-				target = expressionBuilder.Translate(thisArg, targetType);
-				// TODO : check if cast is necessary
+				TranslatedExpression target = expressionBuilder.Translate(thisArg, targetType);
+				bool targetCasted = false;
+				bool addTypeArguments = false;
+				// Initial inputs for IsUnambiguousMethodReference:
+				ResolveResult targetResolveResult = target.ResolveResult;
+				IReadOnlyList<IType> typeArguments = EmptyList<IType>.Instance;
+				// Find somewhat minimal solution:
+				ResolveResult result;
+				targetCasted = true;
 				target = target.ConvertTo(targetType, expressionBuilder);
-				requireTarget = true;
+				targetResolveResult = target.ResolveResult;
+				addTypeArguments = true;
+				typeArguments = method.TypeArguments;
 				result = new MethodGroupResolveResult(
-					target.ResolveResult, method.Name,
-					new MethodListWithDeclaringType[] {
-						new MethodListWithDeclaringType(
-							null,
-							new[] { method }
-						)
-					},
-					method.TypeArguments
-				);
+					targetResolveResult, method.Name,
+						new[] {
+							new MethodListWithDeclaringType(
+								null,
+								new[] { method }
+							)
+						},
+						typeArguments
+					);
+				return (target, addTypeArguments, method.Name, result);
 			}
 			else
 			{
-				targetType = method.DeclaringType;
+				// Prepare call target
+				IType targetType = method.DeclaringType;
 				if (targetType.IsReferenceType == false && thisArg is Box thisArgBox)
 				{
 					// Normal struct instance method calls (which TranslateTarget is meant for) expect a 'ref T',
@@ -1635,70 +1653,56 @@ namespace ICSharpCode.Decompiler.CSharp
 						thisArg = new AddressOf(thisArgBox.Argument, thisArgBox.Type);
 					}
 				}
-				target = expressionBuilder.TranslateTarget(thisArg,
+				TranslatedExpression target = expressionBuilder.TranslateTarget(thisArg,
 					nonVirtualInvocation: expectedTargetDetails.CallOpCode == OpCode.Call,
 					memberStatic: method.IsStatic,
 					memberDeclaringType: method.DeclaringType);
-				requireTarget = expressionBuilder.HidesVariableWithName(method.Name)
+				// check if target is required
+				bool requireTarget = expressionBuilder.HidesVariableWithName(method.Name)
 					|| (method.IsStatic ? !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression));
-				step = requireTarget ? 1 : 0;
-				var savedTarget = target;
-				for (; step < 7; step++)
+				// Try to find minimal expression
+				// If target is required, include it from the start
+				bool targetAdded = requireTarget;
+				TranslatedExpression currentTarget = targetAdded ? target : default;
+				// Remember other decisions:
+				bool targetCasted = false;
+				bool addTypeArguments = false;
+				// Initial inputs for IsUnambiguousMethodReference:
+				ResolveResult targetResolveResult = targetAdded ? target.ResolveResult : null;
+				IReadOnlyList<IType> typeArguments = EmptyList<IType>.Instance;
+				// Find somewhat minimal solution:
+				ResolveResult result;
+				while (!IsUnambiguousMethodReference(expectedTargetDetails, method, targetResolveResult, typeArguments, out result))
 				{
-					ResolveResult targetResolveResult;
-					//TODO: why there is an check for IsLocalFunction here, it should be unreachable in old code
-					if (localFunction == null && (step & 1) != 0)
+					if (!addTypeArguments)
 					{
-						targetResolveResult = savedTarget.ResolveResult;
-						target = savedTarget;
-					}
-					else
-					{
-						targetResolveResult = null;
-					}
-					IReadOnlyList<IType> typeArguments;
-					if ((step & 2) != 0)
-					{
+						// try adding type arguments
+						addTypeArguments = true;
 						typeArguments = method.TypeArguments;
+						continue;
 					}
-					else
+					if (!targetAdded)
 					{
-						typeArguments = EmptyList<IType>.Instance;
-					}
-					if (targetResolveResult != null && targetType != null && (step & 4) != 0)
-					{
-						target = target.ConvertTo(targetType, expressionBuilder);
+						// try adding target
+						targetAdded = true;
+						currentTarget = target;
 						targetResolveResult = target.ResolveResult;
+						continue;
 					}
-					bool success = IsUnambiguousMethodReference(expectedTargetDetails, method, targetResolveResult, typeArguments, out var newResult);
-					if (newResult is MethodGroupResolveResult || result == null)
-						result = newResult;
-					if (success)
-						break;
+					if (!targetCasted)
+					{
+						// try casting target
+						targetCasted = true;
+						currentTarget = currentTarget.ConvertTo(targetType, expressionBuilder);
+						targetResolveResult = currentTarget.ResolveResult;
+						continue;
+					}
+					break;
 				}
+				return (currentTarget, addTypeArguments, method.Name, result);
 			}
-			requireTarget = localFunction == null && (step & 1) != 0;
-			ExpressionWithResolveResult targetExpression;
-			Debug.Assert(result != null);
-			if (requireTarget)
-			{
-				Debug.Assert(target.Expression != null);
-				var mre = new MemberReferenceExpression(target, methodName);
-				if ((step & 2) != 0)
-					mre.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
-				targetExpression = mre.WithRR(result);
-			}
-			else
-			{
-				var ide = new IdentifierExpression(methodName);
-				if ((step & 2) != 0)
-				{
-					ide.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
-				}
-				targetExpression = ide.WithRR(result);
-			}
-			return targetExpression;
 		}
+
 
 		TranslatedExpression HandleDelegateConstruction(IType delegateType, IMethod method, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg, ILInstruction inst)
 		{

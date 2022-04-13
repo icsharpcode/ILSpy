@@ -160,7 +160,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-
 		public interface IM3
 		{
 			void M3();
@@ -176,6 +175,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			public virtual void M3()
 			{
+			}
+
+			public static void StaticMethod()
+			{
+
 			}
 		}
 
@@ -246,6 +250,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				};
 			}
 		}
+
+		private delegate void GenericDelegate<T>();
 
 		public static Func<string, string, bool> test0 = (string a, string b) => string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b);
 		public static Func<string, string, bool> test1 = (string a, string b) => string.IsNullOrEmpty(a) || !string.IsNullOrEmpty(b);
@@ -456,6 +462,64 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (T _) => _;
 		}
+
+		private static void Use(Action a)
+		{
+
+		}
+
+		private static void Use2(Func<Func<int, int>, IEnumerable<int>> a)
+		{
+
+		}
+		private static void Use2<T>(GenericDelegate<T> a)
+		{
+		}
+
+		private static void Use3<T>(Func<Func<T, T>> a)
+		{
+		}
+
+		public static void SimpleDelegateReference()
+		{
+			Use(SimpleDelegateReference);
+#if !MCS2
+			Use3(Identity<int>);
+#endif
+		}
+
+		public static void DelegateReferenceWithStaticTarget()
+		{
+			Use(NameConflict);
+			Use(BaseClass.StaticMethod);
+		}
+
+		public static void ExtensionDelegateReference(IEnumerable<int> ints)
+		{
+			Use2((Func<Func<int, int>, IEnumerable<int>>)ints.Select<int, int>);
+		}
+
+#if CS70
+		public static void LocalFunctionDelegateReference()
+		{
+			Use(LocalFunction);
+			Use2<int>(LocalFunction1<int>);
+#if CS80
+			static void LocalFunction()
+#else
+			void LocalFunction()
+#endif
+			{
+			}
+#if CS80
+			static void LocalFunction1<T>()
+#else
+			void LocalFunction1<T>()
+#endif
+			{
+			}
+		}
+#endif
 
 #if CS90
 		public static Func<int, int, int, int> LambdaParameterDiscard()

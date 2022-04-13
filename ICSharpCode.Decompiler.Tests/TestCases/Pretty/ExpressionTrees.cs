@@ -467,7 +467,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void MethodGroupAsExtensionMethod()
 		{
-			ToCode(X(), (Expression<Func<Func<bool>>>)(() => ((IEnumerable<int>)new int[4] { 2000, 2004, 2008, 2012 }).Any));
+			ToCode(X(), (Expression<Func<Func<bool>>>)(() => ((IEnumerable<int>)new int[4] { 2000, 2004, 2008, 2012 }).Any<int>));
 		}
 
 		public void MethodGroupConstant()
