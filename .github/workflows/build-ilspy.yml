@@ -70,8 +70,15 @@ jobs:
         list-suites: 'all'
         list-tests: 'failed'
 
-    - name: Style - tab check
+    - name: Format check
       run: python BuildTools\tidy.py
+      
+    - name: Verify package contents
+      if: matrix.configuration == 'debug'
+      shell: pwsh
+      run: |
+        .\BuildTools\create-filelists.ps1
+        git diff --exit-code
     
     - name: Zip ILSpy (framework-dependent)
       run: 7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.dll .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.exe .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.config .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*.json .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*\ILSpy.resources.dll .\ILSpy\bin\${{ matrix.configuration }}\net6.0-windows\*\ILSpy.ReadyToRun.Plugin.resources.dll

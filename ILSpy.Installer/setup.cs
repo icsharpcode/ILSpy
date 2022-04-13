@@ -26,6 +26,7 @@ namespace ILSpy.Installer
 								  new DirFiles(Path.Combine(buildOutputDir, "*.dll")),
 								  new DirFiles(Path.Combine(buildOutputDir, "*.exe")),
 								  new DirFiles(Path.Combine(buildOutputDir, "*.config")),
+								  new DirFiles(Path.Combine(buildOutputDir, "*.json")),
 								  new Files(Path.Combine(buildOutputDir, "ILSpy.resources.dll")),
 								  new Files(Path.Combine(buildOutputDir, "ILSpy.ReadyToRun.Plugin.resources.dll"))));
 
