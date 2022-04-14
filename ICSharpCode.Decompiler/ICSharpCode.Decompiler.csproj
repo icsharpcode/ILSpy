@@ -33,6 +33,7 @@
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
     <NoWarn>1701;1702;1591;1573</NoWarn>
 
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -42,12 +43,6 @@
   <ItemGroup>
     <None Include="PackageReadme.md" Pack="true" PackagePath="\" />
   </ItemGroup>
-
-  <!-- HACK: Disable package generation on Unix due to tooling issues. -->
-  <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <NuspecProperties>Configuration=$(Configuration)</NuspecProperties>
-  </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
