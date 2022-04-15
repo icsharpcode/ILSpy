@@ -15,11 +15,11 @@ using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.PdbProvider;
 
 using McMaster.Extensions.CommandLineUtils;
-// ReSharper disable All
 
 namespace ICSharpCode.ILSpyCmd
 {
@@ -36,12 +36,11 @@ Remarks:
 	{
 		public static int Main(string[] args) => CommandLineApplication.Execute<ILSpyCmdProgram>(args);
 
-		[FileExists]
+		[FilesExist]
 		[Required]
-		[Argument(0, "Assembly file name", "The assembly that is being decompiled. This argument is mandatory.")]
-		public string InputAssemblyName { get; }
+		[Argument(0, "Assembly file name(s)", "The list of assemblies that is being decompiled. This argument is mandatory.")]
+		public string[] InputAssemblyNames { get; }
 
-		[DirectoryExists]
 		[Option("-o|--outputdir <directory>", "The output directory, if omitted decompiler output is written to standard out.", CommandOptionType.SingleValue)]
 		public string OutputDirectory { get; }
 
@@ -98,63 +97,41 @@ Remarks:
 			TextWriter output = System.Console.Out;
 			bool outputDirectorySpecified = !string.IsNullOrEmpty(OutputDirectory);
 
+			if (outputDirectorySpecified)
+			{
+				Directory.CreateDirectory(OutputDirectory);
+			}
+
 			try
 			{
 				if (CreateCompilableProjectFlag)
 				{
-					return DecompileAsProject(InputAssemblyName, OutputDirectory);
-				}
-				else if (EntityTypes.Any())
-				{
-					var values = EntityTypes.SelectMany(v => v.Split(',', ';')).ToArray();
-					HashSet<TypeKind> kinds = TypesParser.ParseSelection(values);
-					if (outputDirectorySpecified)
+					if (InputAssemblyNames.Length == 1)
 					{
-						string outputName = Path.GetFileNameWithoutExtension(InputAssemblyName);
-						output = File.CreateText(Path.Combine(OutputDirectory, outputName) + ".list.txt");
+						string projectFileName = Path.Combine(Environment.CurrentDirectory, OutputDirectory, Path.GetFileNameWithoutExtension(InputAssemblyNames[0]) + ".csproj");
+						DecompileAsProject(InputAssemblyNames[0], projectFileName);
+						return 0;
 					}
-
-					return ListContent(InputAssemblyName, output, kinds);
-				}
-				else if (ShowILCodeFlag || ShowILSequencePointsFlag)
-				{
-					if (outputDirectorySpecified)
+					var projects = new List<ProjectItem>();
+					foreach (var file in InputAssemblyNames)
 					{
-						string outputName = Path.GetFileNameWithoutExtension(InputAssemblyName);
-						output = File.CreateText(Path.Combine(OutputDirectory, outputName) + ".il");
+						string projectFileName = Path.Combine(Environment.CurrentDirectory, OutputDirectory, Path.GetFileNameWithoutExtension(file), Path.GetFileNameWithoutExtension(file) + ".csproj");
+						Directory.CreateDirectory(Path.GetDirectoryName(projectFileName));
+						ProjectId projectId = DecompileAsProject(file, projectFileName);
+						projects.Add(new ProjectItem(projectFileName, projectId.PlatformName, projectId.Guid, projectId.TypeGuid));
 					}
-
-					return ShowIL(InputAssemblyName, output);
-				}
-				else if (CreateDebugInfoFlag)
-				{
-					string pdbFileName = null;
-					if (outputDirectorySpecified)
-					{
-						string outputName = Path.GetFileNameWithoutExtension(InputAssemblyName);
-						pdbFileName = Path.Combine(OutputDirectory, outputName) + ".pdb";
-					}
-					else
-					{
-						pdbFileName = Path.ChangeExtension(InputAssemblyName, ".pdb");
-					}
-
-					return GeneratePdbForAssembly(InputAssemblyName, pdbFileName, app);
-				}
-				else if (DumpPackageFlag)
-				{
-					return DumpPackageAssemblies(InputAssemblyName, OutputDirectory, app);
+					SolutionCreator.WriteSolutionFile(Path.Combine(Environment.CurrentDirectory, OutputDirectory, Path.GetFileNameWithoutExtension(OutputDirectory) + ".sln"), projects);
+					return 0;
 				}
 				else
 				{
-					if (outputDirectorySpecified)
+					foreach (var file in InputAssemblyNames)
 					{
-						string outputName = Path.GetFileNameWithoutExtension(InputAssemblyName);
-						output = File.CreateText(Path.Combine(OutputDirectory,
-							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
+						int result = PerformPerFileAction(file);
+						if (result != 0)
+							return result;
 					}
-
-					return Decompile(InputAssemblyName, output, TypeName);
+					return 0;
 				}
 			}
 			catch (Exception ex)
@@ -165,6 +142,62 @@ Remarks:
 			finally
 			{
 				output.Close();
+			}
+
+			int PerformPerFileAction(string fileName)
+			{
+				if (EntityTypes.Any())
+				{
+					var values = EntityTypes.SelectMany(v => v.Split(',', ';')).ToArray();
+					HashSet<TypeKind> kinds = TypesParser.ParseSelection(values);
+					if (outputDirectorySpecified)
+					{
+						string outputName = Path.GetFileNameWithoutExtension(fileName);
+						output = File.CreateText(Path.Combine(OutputDirectory, outputName) + ".list.txt");
+					}
+
+					return ListContent(fileName, output, kinds);
+				}
+				else if (ShowILCodeFlag || ShowILSequencePointsFlag)
+				{
+					if (outputDirectorySpecified)
+					{
+						string outputName = Path.GetFileNameWithoutExtension(fileName);
+						output = File.CreateText(Path.Combine(OutputDirectory, outputName) + ".il");
+					}
+
+					return ShowIL(fileName, output);
+				}
+				else if (CreateDebugInfoFlag)
+				{
+					string pdbFileName = null;
+					if (outputDirectorySpecified)
+					{
+						string outputName = Path.GetFileNameWithoutExtension(fileName);
+						pdbFileName = Path.Combine(OutputDirectory, outputName) + ".pdb";
+					}
+					else
+					{
+						pdbFileName = Path.ChangeExtension(fileName, ".pdb");
+					}
+
+					return GeneratePdbForAssembly(fileName, pdbFileName, app);
+				}
+				else if (DumpPackageFlag)
+				{
+					return DumpPackageAssemblies(fileName, OutputDirectory, app);
+				}
+				else
+				{
+					if (outputDirectorySpecified)
+					{
+						string outputName = Path.GetFileNameWithoutExtension(fileName);
+						output = File.CreateText(Path.Combine(OutputDirectory,
+							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
+					}
+
+					return Decompile(fileName, output, TypeName);
+				}
 			}
 		}
 
@@ -217,7 +250,7 @@ Remarks:
 			return 0;
 		}
 
-		int DecompileAsProject(string assemblyFileName, string outputDirectory)
+		ProjectId DecompileAsProject(string assemblyFileName, string projectFileName)
 		{
 			var module = new PEFile(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
@@ -226,8 +259,8 @@ Remarks:
 				resolver.AddSearchDirectory(path);
 			}
 			var decompiler = new WholeProjectDecompiler(GetSettings(module), resolver, resolver, TryLoadPDB(module));
-			decompiler.DecompileProject(module, outputDirectory);
-			return 0;
+			using (var projectFileWriter = new StreamWriter(File.OpenWrite(projectFileName)))
+				return decompiler.DecompileProject(module, Path.GetDirectoryName(projectFileName), projectFileWriter);
 		}
 
 		int Decompile(string assemblyFileName, TextWriter output, string typeName = null)
