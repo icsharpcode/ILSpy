@@ -14,7 +14,7 @@
 		<!-- Microsoft.NETCore.ILDAsm -->
 		<ILDAsmVersion>6.0.0</ILDAsmVersion>
 		<!-- Microsoft.CodeAnalysis.* -->
-		<RoslynVersion>4.0.1</RoslynVersion>
+		<RoslynVersion>4.1.0</RoslynVersion>
 		<MonoCecilVersion>0.11.4</MonoCecilVersion>
 		<AvalonEditVersion>6.1.3.50</AvalonEditVersion>
 		<WpfStylesToolboxVersion>2.7.4</WpfStylesToolboxVersion>
