@@ -146,10 +146,16 @@ namespace ICSharpCode.Decompiler
 			{
 				fileScopedNamespaces = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp11_0)
+			{
+				parameterNullCheck = false;
+			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
+			if (parameterNullCheck)
+				return CSharp.LanguageVersion.CSharp11_0;
 			if (fileScopedNamespaces)
 				return CSharp.LanguageVersion.CSharp10_0;
 			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension
@@ -342,6 +348,24 @@ namespace ICSharpCode.Decompiler
 				if (fileScopedNamespaces != value)
 				{
 					fileScopedNamespaces = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool parameterNullCheck = true;
+
+		/// <summary>
+		/// Use C# 11 parameter null-checking.
+		/// </summary>
+		[Category("C# 11.0 / VS 2022.1")]
+		[Description("DecompilerSettings.ParameterNullCheck")]
+		public bool ParameterNullCheck {
+			get { return parameterNullCheck; }
+			set {
+				if (parameterNullCheck != value)
+				{
+					parameterNullCheck = value;
 					OnPropertyChanged();
 				}
 			}

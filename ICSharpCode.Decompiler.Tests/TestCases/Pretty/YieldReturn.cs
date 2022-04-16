@@ -428,6 +428,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("normal exit");
 		}
 
+#if CS110
+		public IEnumerable<object> YieldBangBang(object x!!)
+		{
+			yield return x;
+		}
+#endif
+
 		internal IEnumerable<int> ForLoopWithYieldReturn(int end, int evil)
 		{
 			// This loop needs to pick the implicit "yield break;" as exit point

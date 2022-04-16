@@ -68,6 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole Colon = new TokenRole(":");
 		public static readonly TokenRole DoubleColon = new TokenRole("::");
 		public static readonly TokenRole Arrow = new TokenRole("=>");
+		public static readonly TokenRole DoubleExclamation = new TokenRole("!!");
 		public static readonly Role<Comment> Comment = new Role<Comment>("Comment", null);
 		public static readonly Role<PreProcessorDirective> PreProcessorDirective = new Role<PreProcessorDirective>("PreProcessorDirective", null);
 
