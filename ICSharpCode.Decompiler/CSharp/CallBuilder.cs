@@ -1612,29 +1612,40 @@ namespace ICSharpCode.Decompiler.CSharp
 					thisArg = thisArgBox.Argument;
 				}
 				TranslatedExpression target = expressionBuilder.Translate(thisArg, targetType);
+				var currentTarget = target;
 				bool targetCasted = false;
 				bool addTypeArguments = false;
 				// Initial inputs for IsUnambiguousMethodReference:
 				ResolveResult targetResolveResult = target.ResolveResult;
 				IReadOnlyList<IType> typeArguments = EmptyList<IType>.Instance;
+				if (thisArg.MatchLdNull())
+				{
+					targetCasted = true;
+					currentTarget = currentTarget.ConvertTo(targetType, expressionBuilder);
+					targetResolveResult = currentTarget.ResolveResult;
+				}
 				// Find somewhat minimal solution:
 				ResolveResult result;
-				targetCasted = true;
-				target = target.ConvertTo(targetType, expressionBuilder);
-				targetResolveResult = target.ResolveResult;
-				addTypeArguments = true;
-				typeArguments = method.TypeArguments;
-				result = new MethodGroupResolveResult(
-					targetResolveResult, method.Name,
-						new[] {
-							new MethodListWithDeclaringType(
-								null,
-								new[] { method }
-							)
-						},
-						typeArguments
-					);
-				return (target, addTypeArguments, method.Name, result);
+				while (!IsUnambiguousMethodReference(expectedTargetDetails, method, targetResolveResult, typeArguments, true, out result))
+				{
+					if (!targetCasted)
+					{
+						// try casting target
+						targetCasted = true;
+						currentTarget = currentTarget.ConvertTo(targetType, expressionBuilder);
+						targetResolveResult = currentTarget.ResolveResult;
+						continue;
+					}
+					if (!addTypeArguments)
+					{
+						// try adding type arguments
+						addTypeArguments = true;
+						typeArguments = method.TypeArguments;
+						continue;
+					}
+					break;
+				}
+				return (currentTarget, addTypeArguments, method.Name, result);
 			}
 			else
 			{
@@ -1672,7 +1683,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				IReadOnlyList<IType> typeArguments = EmptyList<IType>.Instance;
 				// Find somewhat minimal solution:
 				ResolveResult result;
-				while (!IsUnambiguousMethodReference(expectedTargetDetails, method, targetResolveResult, typeArguments, out result))
+				while (!IsUnambiguousMethodReference(expectedTargetDetails, method, targetResolveResult, typeArguments, false, out result))
 				{
 					if (!addTypeArguments)
 					{
@@ -1717,30 +1728,47 @@ namespace ICSharpCode.Decompiler.CSharp
 			return oce;
 		}
 
-		bool IsUnambiguousMethodReference(ExpectedTargetDetails expectedTargetDetails, IMethod method, ResolveResult target, IReadOnlyList<IType> typeArguments, out ResolveResult result)
+		bool IsUnambiguousMethodReference(ExpectedTargetDetails expectedTargetDetails, IMethod method, ResolveResult target, IReadOnlyList<IType> typeArguments, bool isExtensionMethodReference, out ResolveResult result)
 		{
 			Log.WriteLine("IsUnambiguousMethodReference: Performing overload resolution for " + method);
 
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
-			var or = new OverloadResolution(resolver.Compilation,
-				arguments: method.Parameters.SelectReadOnlyArray(p => new TypeResolveResult(p.Type)), // there are no arguments, use parameter types
-				argumentNames: null, // argument names are not possible
-				typeArguments.ToArray(),
-				conversions: expressionBuilder.resolver.conversions
-			);
-			if (target == null)
+			OverloadResolution or;
+
+			if (isExtensionMethodReference)
 			{
-				result = resolver.ResolveSimpleName(method.Name, typeArguments, isInvocationTarget: false);
-				if (!(result is MethodGroupResolveResult mgrr))
+				var resolver = this.resolver.WithCurrentUsingScope(this.expressionBuilder.statementBuilder.decompileRun.UsingScope.Resolve(this.resolver.Compilation));
+				result = resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
+				if (result == null)
 					return false;
-				or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
+				or = ((MethodGroupResolveResult)result).PerformOverloadResolution(resolver.CurrentTypeResolveContext.Compilation,
+					method.Parameters.SelectReadOnlyArray(p => new TypeResolveResult(p.Type)),
+					argumentNames: null, allowExtensionMethods: true);
+				if (or == null || or.IsAmbiguous)
+					return false;
 			}
 			else
 			{
-				result = lookup.Lookup(target, method.Name, typeArguments, isInvocation: false);
-				if (!(result is MethodGroupResolveResult mgrr))
-					return false;
-				or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
+				or = new OverloadResolution(resolver.Compilation,
+					arguments: method.Parameters.SelectReadOnlyArray(p => new TypeResolveResult(p.Type)), // there are no arguments, use parameter types
+					argumentNames: null, // argument names are not possible
+					typeArguments.ToArray(),
+					conversions: expressionBuilder.resolver.conversions
+				);
+				if (target == null)
+				{
+					result = resolver.ResolveSimpleName(method.Name, typeArguments, isInvocationTarget: false);
+					if (!(result is MethodGroupResolveResult mgrr))
+						return false;
+					or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
+				}
+				else
+				{
+					result = lookup.Lookup(target, method.Name, typeArguments, isInvocation: false);
+					if (!(result is MethodGroupResolveResult mgrr))
+						return false;
+					or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
+				}
 			}
 
 			var foundMethod = or.GetBestCandidateWithSubstitutedTypeArguments();

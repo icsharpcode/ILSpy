@@ -496,7 +496,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ExtensionDelegateReference(IEnumerable<int> ints)
 		{
-			Use2((Func<Func<int, int>, IEnumerable<int>>)ints.Select<int, int>);
+			Use2(ints.Select<int, int>);
 		}
 
 #if CS70

@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </remarks>
 	sealed class ExpressionBuilder : ILVisitor<TranslationContext, TranslatedExpression>
 	{
-		readonly StatementBuilder statementBuilder;
+		internal readonly StatementBuilder statementBuilder;
 		readonly IDecompilerTypeSystem typeSystem;
 		internal readonly ITypeResolveContext decompilationContext;
 		internal readonly ILFunction currentFunction;
