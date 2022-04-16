@@ -1119,6 +1119,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use parameter null checking.
+        /// </summary>
+        public static string DecompilerSettings_ParameterNullCheck {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.ParameterNullCheck", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use pattern matching expressions.
         /// </summary>
         public static string DecompilerSettings_PatternMatching {
