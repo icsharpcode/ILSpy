@@ -233,10 +233,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (IsOverride && (getter == null || setter == null))
 			{
+				// Overrides may change the accessibility of property accessors, hence calculating the accessibility from
+				// the accessors is not sufficient. We need to "copy" accessibility from the baseMember.
 				foreach (var baseMember in InheritanceHelper.GetBaseMembers(this, includeImplementedInterfaces: false))
 				{
 					if (!baseMember.IsOverride)
-						return baseMember.Accessibility;
+					{
+						// See https://github.com/icsharpcode/ILSpy/issues/2653
+						// "protected internal" (ProtectedOrInternal) accessibility is "reduced"
+						// to "protected" accessibility across assembly boundaries.
+						if (baseMember.Accessibility == Accessibility.ProtectedOrInternal
+							&& this.ParentModule?.PEFile != baseMember.ParentModule?.PEFile)
+						{
+							return Accessibility.Protected;
+						}
+						else
+						{
+							return baseMember.Accessibility;
+						}
+					}
 				}
 			}
 			return AccessibilityExtensions.Union(
