@@ -311,12 +311,20 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return callChainLength;
 		}
 
-		protected virtual bool InsertNewLineWhenInMethodCallChain(MemberReferenceExpression expr)
+		int ShouldInsertNewLineWhenInMethodCallChain(MemberReferenceExpression expr)
 		{
 			int callChainLength = GetCallChainLengthLimited(expr);
 			if (callChainLength < 3)
-				return false;
+				return 0;
 			if (expr.GetParent(n => n is Statement || n is LambdaExpression || n is InterpolatedStringContent) is InterpolatedStringContent)
+				return 0;
+			return callChainLength;
+		}
+
+		protected virtual bool InsertNewLineWhenInMethodCallChain(MemberReferenceExpression expr)
+		{
+			int callChainLength = ShouldInsertNewLineWhenInMethodCallChain(expr);
+			if (callChainLength == 0)
 				return false;
 			if (callChainLength == 3)
 				writer.Indent();
@@ -980,7 +988,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				if (invocationExpression.Target is MemberReferenceExpression mre)
 				{
-					if (GetCallChainLengthLimited(mre) >= 3)
+					if (ShouldInsertNewLineWhenInMethodCallChain(mre) >= 3)
 						writer.Unindent();
 				}
 			}
