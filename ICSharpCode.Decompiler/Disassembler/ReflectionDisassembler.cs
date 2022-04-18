@@ -1682,7 +1682,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			output.Write(typeDefinition.GetDeclaringType().IsNil ? typeDefinition.GetFullTypeName(module.Metadata).ToILNameString() : DisassemblerHelpers.Escape(module.Metadata.GetString(typeDefinition.Name)));
 			WriteTypeParameters(output, module, genericContext, typeDefinition.GetGenericParameters());
-			output.MarkFoldStart(defaultCollapsed: !ExpandMemberDefinitions && isInType);
+			output.MarkFoldStart(defaultCollapsed: !ExpandMemberDefinitions && isInType, isDefinition: isInType);
 			output.WriteLine();
 
 			EntityHandle baseType = typeDefinition.GetBaseTypeOrNil();
@@ -1796,7 +1796,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void OpenBlock(bool defaultCollapsed)
 		{
-			output.MarkFoldStart(defaultCollapsed: !ExpandMemberDefinitions && defaultCollapsed);
+			output.MarkFoldStart(defaultCollapsed: !ExpandMemberDefinitions && defaultCollapsed, isDefinition: true);
 			output.WriteLine();
 			output.WriteLine("{");
 			output.Indent();

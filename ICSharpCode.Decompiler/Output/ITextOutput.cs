@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler
 		void WriteReference(IMember member, string text, bool isDefinition = false);
 		void WriteLocalReference(string text, object reference, bool isDefinition = false);
 
-		void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false);
+		void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false);
 		void MarkFoldEnd();
 	}
 

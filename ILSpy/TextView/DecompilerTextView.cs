@@ -81,6 +81,7 @@ namespace ICSharpCode.ILSpy.TextView
 		ILSpyTreeNode[]? decompiledNodes;
 		Uri? currentAddress;
 		string? currentTitle;
+		bool expandMemberDefinitions;
 
 		DefinitionLookup? definitionLookup;
 		TextSegmentCollection<ReferenceSegment>? references;
@@ -728,7 +729,7 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				if (state != null)
 				{
-					state.RestoreFoldings(textOutput.Foldings);
+					state.RestoreFoldings(textOutput.Foldings, DisplaySettingsPanel.CurrentDisplaySettings.ExpandMemberDefinitions);
 					textEditor.ScrollToVerticalOffset(state.VerticalOffset);
 					textEditor.ScrollToHorizontalOffset(state.HorizontalOffset);
 				}
@@ -752,6 +753,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			currentAddress = textOutput.Address;
 			currentTitle = textOutput.Title;
+			expandMemberDefinitions = DisplaySettingsPanel.CurrentDisplaySettings.ExpandMemberDefinitions;
 		}
 		#endregion
 
@@ -1189,6 +1191,7 @@ namespace ICSharpCode.ILSpy.TextView
 				state.SaveFoldingsState(foldingManager.AllFoldings);
 			state.VerticalOffset = textEditor.VerticalOffset;
 			state.HorizontalOffset = textEditor.HorizontalOffset;
+			state.ExpandMemberDefinitions = expandMemberDefinitions;
 			state.DecompiledNodes = decompiledNodes == null ? null : new HashSet<ILSpyTreeNode>(decompiledNodes);
 			state.ViewedUri = currentAddress;
 			return state;
@@ -1271,6 +1274,7 @@ namespace ICSharpCode.ILSpy.TextView
 	{
 		private List<(int StartOffset, int EndOffset)>? ExpandedFoldings;
 		private int FoldingsChecksum;
+		public bool ExpandMemberDefinitions;
 		public double VerticalOffset;
 		public double HorizontalOffset;
 
@@ -1283,7 +1287,7 @@ namespace ICSharpCode.ILSpy.TextView
 				.Aggregate((a, b) => a + b));
 		}
 
-		internal void RestoreFoldings(List<NewFolding> list)
+		internal void RestoreFoldings(List<NewFolding> list, bool expandMemberDefinitions)
 		{
 			if (ExpandedFoldings == null)
 				return;
@@ -1294,10 +1298,29 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				foreach (var folding in list)
 				{
-					folding.DefaultClosed = !ExpandedFoldings.Any(
+					bool wasExpanded = ExpandedFoldings.Any(
 						f => f.StartOffset == folding.StartOffset
 							&& f.EndOffset == folding.EndOffset
 					);
+					bool isExpanded = !folding.DefaultClosed;
+					// State of the folding was changed
+					if (wasExpanded != isExpanded)
+					{
+						// The "ExpandMemberDefinitions" setting was not changed
+						if (expandMemberDefinitions == ExpandMemberDefinitions)
+						{
+							// restore fold state
+							folding.DefaultClosed = !wasExpanded;
+						}
+						else
+						{
+							// only restore fold state if fold was not a definition
+							if (!folding.IsDefinition)
+							{
+								folding.DefaultClosed = !wasExpanded;
+							}
+						}
+					}
 				}
 			}
 		}

@@ -255,7 +255,7 @@ namespace ICSharpCode.Decompiler
 						braceLevelWithinType++;
 					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || settings.FoldBraces)
 					{
-						output.MarkFoldStart(defaultCollapsed: !settings.ExpandMemberDefinitions && braceLevelWithinType == 1);
+						output.MarkFoldStart(defaultCollapsed: !settings.ExpandMemberDefinitions && braceLevelWithinType == 1, isDefinition: braceLevelWithinType == 1);
 					}
 					output.Write("{");
 					break;
