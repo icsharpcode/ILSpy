@@ -233,8 +233,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (IsOverride && (getter == null || setter == null))
 			{
-				// Overrides may change the accessibility of property accessors, hence calculating the accessibility from
-				// the accessors is not sufficient. We need to "copy" accessibility from the baseMember.
+				// Overrides may override only one of the accessors, hence calculating the accessibility from
+				// the declared accessors is not sufficient. We need to "copy" accessibility from the baseMember.
 				foreach (var baseMember in InheritanceHelper.GetBaseMembers(this, includeImplementedInterfaces: false))
 				{
 					if (!baseMember.IsOverride)
