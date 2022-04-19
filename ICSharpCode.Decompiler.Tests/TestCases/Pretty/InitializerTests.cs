@@ -677,6 +677,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			X(Y(), array);
 		}
 
+		public int[] IndicesInWrongOrderConstantsFull()
+		{
+			int[] array = new int[3];
+			array[0] = 0;
+			array[2] = 1;
+			array[1] = 2;
+			return array;
+		}
+
 		public static byte[] ReverseInitializer(int i)
 		{
 			byte[] array = new byte[4];

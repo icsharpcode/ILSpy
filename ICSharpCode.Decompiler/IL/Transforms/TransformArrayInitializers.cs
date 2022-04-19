@@ -440,7 +440,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				for (int k = nextMinimumIndex.Length - 1; k >= 0; k--)
 				{
 					nextMinimumIndex[k]++;
-					if (nextMinimumIndex[k] < arrayLength[k])
+					if (nextMinimumIndex[k] < arrayLength[k] || k == 0)
 						break;
 					nextMinimumIndex[k] = 0;
 				}
