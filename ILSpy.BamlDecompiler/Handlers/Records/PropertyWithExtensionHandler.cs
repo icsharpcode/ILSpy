@@ -59,7 +59,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 				var value = ctx.ResolveProperty(record.ValueId);
 
 				value.DeclaringType.ResolveNamespace(parent.Xaml, ctx);
-				var xName = value.ToXName(ctx, parent.Xaml, false);
+				var xName = value.ToXName(ctx, parent.Xaml, true);
 
 				ext.Initializer = new object[] { ctx.ToString(parent.Xaml, xName) };
 			}
