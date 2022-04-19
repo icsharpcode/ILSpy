@@ -428,7 +428,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("normal exit");
 		}
 
-#if CS110
+#if CS110 && false
 		public IEnumerable<object> YieldBangBang(object x!!)
 		{
 			yield return x;

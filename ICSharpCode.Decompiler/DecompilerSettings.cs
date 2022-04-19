@@ -353,13 +353,14 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool parameterNullCheck = true;
+		bool parameterNullCheck = false;
 
 		/// <summary>
 		/// Use C# 11 parameter null-checking.
 		/// </summary>
 		[Category("C# 11.0 / VS 2022.1")]
 		[Description("DecompilerSettings.ParameterNullCheck")]
+		[Browsable(false)]
 		public bool ParameterNullCheck {
 			get { return parameterNullCheck; }
 			set {
