@@ -27,6 +27,20 @@ namespace ICSharpCode.ILSpyCmd
 		ExtendedHelpText = @"
 Remarks:
   -o is valid with every option and required when using -p.
+
+Examples:
+    Decompile assembly to console out.
+        ilspycmd sample.dll
+
+    Decompile assembly to destination directory (single C# file).
+        ilspycmd -o c:\decompiled sample.dll
+
+    Decompile assembly to destination directory, create a project file, one source file per type.
+        ilspycmd -p -o c:\decompiled sample.dll
+
+    Decompile assembly to destination directory, create a project file, one source file per type, 
+    into nicely nested directories.
+        ilspycmd --nested-directories -p -o c:\decompiled sample.dll
 ")]
 	[HelpOption("-h|--help")]
 	[ProjectOptionRequiresOutputDirectoryValidation]

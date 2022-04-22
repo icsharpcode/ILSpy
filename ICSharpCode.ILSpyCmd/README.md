@@ -1,22 +1,23 @@
-# ilspycmd
+# ilspycmd .NET 6.0 Tool 
+
+To install:
 
 ```
 dotnet tool install ilspycmd -g
 ```
 
-.NET Core 3.1 and .NET 6.0 Tool 
+Help output (`ilspycmd ---help`):
 
 ```
-ilspycmd -h
-ilspycmd: 7.2.0.0
-ICSharpCode.Decompiler: 7.2.0.6768
+ilspycmd: 8.0.0.7007
+ICSharpCode.Decompiler: 8.0.0.7007
 
 dotnet tool for decompiling .NET assemblies and generating portable PDBs
 
-Usage: ilspycmd [options] <Assembly file name>
+Usage: ilspycmd [options] <Assembly file name(s)>
 
 Arguments:
-  Assembly file name               The assembly that is being decompiled. This argument is mandatory.
+  Assembly file name(s)            The list of assemblies that is being decompiled. This argument is mandatory.
 
 Options:
   -v|--version                     Show version information.
@@ -36,7 +37,22 @@ Options:
   --no-dead-code                   Remove dead code.
   --no-dead-stores                 Remove dead stores.
   -d|--dump-package                Dump package assembiles into a folder. This requires the output directory option.
+  --nested-directories             Use nested directories for namespaces.
 
 Remarks:
   -o is valid with every option and required when using -p.
+
+Examples:
+    Decompile assembly to console out.
+        ilspycmd sample.dll
+
+    Decompile assembly to destination directory (single C# file).
+        ilspycmd -o c:\decompiled sample.dll
+
+    Decompile assembly to destination directory, create a project file, one source file per type.
+        ilspycmd -p -o c:\decompiled sample.dll
+
+    Decompile assembly to destination directory, create a project file, one source file per type,
+    into nicely nested directories.
+        ilspycmd --nested-directories -p -o c:\decompiled sample.dll
 ```

@@ -8,7 +8,7 @@
     <IsPackable>true</IsPackable>
     <PackAsTool>true</PackAsTool>
     <InvariantGlobalization>true</InvariantGlobalization>
-    
+
     <NeutralLanguage>en-US</NeutralLanguage>
     <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>False</GenerateAssemblyFileVersionAttribute>
@@ -16,6 +16,7 @@
     <AssemblyName>ilspycmd</AssemblyName>
     <ToolCommandName>ilspycmd</ToolCommandName>
     <Description>Command-line decompiler using the ILSpy decompilation engine</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageVersion>8.0.0.0-noversion</PackageVersion>
     <Copyright>Copyright 2011-$([System.DateTime]::Now.Year) AlphaSierraPapa</Copyright>
     <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
@@ -26,6 +27,10 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>ILSpy Team</Authors>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
