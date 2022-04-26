@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				case SymbolKind.Property:
 					var member = (IMember)symbol;
 					var type = member.DeclaringTypeDefinition;
-					return !member.IsStatic && (type.Kind == TypeKind.Class || type.Kind == TypeKind.Struct);
+					return !member.IsStatic && type is not null && (type.Kind == TypeKind.Class || type.Kind == TypeKind.Struct);
 
 				default:
 					return false;
