@@ -16,62 +16,47 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
+#nullable enable
+
+using System.Reflection.PortableExecutable;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class DebugMetadataTreeNode : ILSpyTreeNode
+	sealed class DebugDirectoryEntryTreeNode : ILSpyTreeNode
 	{
-		private PEFile module;
-		private MetadataReader provider;
-		private bool isEmbedded;
-
-		public DebugMetadataTreeNode(PEFile module, bool isEmbedded, MetadataReader provider)
+		readonly PEFile module;
+		readonly PEReader reader;
+		readonly DebugDirectoryEntry entry;
+		public DebugDirectoryEntryTreeNode(PEFile module, DebugDirectoryEntry entry)
 		{
 			this.module = module;
-			this.provider = provider;
-			this.isEmbedded = isEmbedded;
-			this.Text = "Debug Metadata (" + (isEmbedded ? "Embedded" : "From portable PDB") + ")";
-			this.LazyLoading = true;
+			this.reader = module.Reader;
+			this.entry = entry;
 		}
 
-		public override object Text { get; }
+		override public object Text => $"{entry.Type}";
 
-		public override object Icon => Images.Library;
-
-		public override bool View(TabPageModel tabPage)
-		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			return false;
-		}
+		public override object Icon => Images.Literal;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, "Debug Metadata");
-		}
-
-		protected override void LoadChildren()
-		{
-			this.Children.Add(new DebugMetadataTablesTreeNode(module, this.isEmbedded, this.provider));
-			this.Children.Add(new StringHeapTreeNode(module, this.provider));
-			this.Children.Add(new UserStringHeapTreeNode(module, this.provider));
-			this.Children.Add(new GuidHeapTreeNode(module, this.provider));
-			this.Children.Add(new BlobHeapTreeNode(module, this.provider));
-		}
-
-		public MetadataTableTreeNode FindNodeByHandleKind(HandleKind kind)
-		{
-			return this.Children.OfType<MetadataTableTreeNode>().SingleOrDefault(x => x.Kind == kind);
+			language.WriteCommentLine(output, Text.ToString());
+			if (entry.DataSize > 0)
+			{
+				language.WriteCommentLine(output, $"Raw Data ({entry.DataSize}):");
+				int dataOffset = module.Reader.IsLoadedImage ? entry.DataRelativeVirtualAddress : entry.DataPointer;
+				var data = module.Reader.GetEntireImage().GetContent(dataOffset, entry.DataSize);
+				language.WriteCommentLine(output, data.ToHexString(data.Length));
+			}
+			else
+			{
+				language.WriteCommentLine(output, $"(no data)");
+			} 
 		}
 	}
 }
