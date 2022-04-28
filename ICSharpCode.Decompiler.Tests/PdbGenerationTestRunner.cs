@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.Tests
 		public void CustomPdbId()
 		{
 			// Generate a PDB for an assembly using a randomly-generated ID, then validate that the PDB uses the specified ID
-			(string peFileName, string pdbFileName) = CompileTestCase(nameof(HelloWorld));
+			(string peFileName, string pdbFileName) = CompileTestCase(nameof(CustomPdbId));
 
 			var moduleDefinition = new PEFile(peFileName);
 			var resolver = new UniversalAssemblyResolver(peFileName, false, moduleDefinition.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
