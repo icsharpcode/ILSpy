@@ -1442,11 +1442,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				foreach (var node in entityDecl.Descendants)
 				{
 					var rr = node.GetResolveResult();
-					if (rr is MemberResolveResult mrr && mrr.Member.DeclaringTypeDefinition == typeDef)
+					if (rr is MemberResolveResult mrr
+						&& mrr.Member.DeclaringTypeDefinition == typeDef
+						&& !(mrr.Member is IMethod { IsLocalFunction: true }))
 					{
 						workList.Enqueue(mrr.Member);
 					}
-					else if (rr is TypeResolveResult trr && trr.Type.GetDefinition()?.DeclaringTypeDefinition == typeDef)
+					else if (rr is TypeResolveResult trr
+						&& trr.Type.GetDefinition()?.DeclaringTypeDefinition == typeDef)
 					{
 						workList.Enqueue(trr.Type.GetDefinition());
 					}
