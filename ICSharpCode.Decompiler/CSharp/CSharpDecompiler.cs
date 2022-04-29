@@ -1244,7 +1244,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(decompilationContext.CurrentTypeDefinition == typeDef);
 			var watch = System.Diagnostics.Stopwatch.StartNew();
-			MultiDictionary<IEntity, EntityDeclaration> entityMap = new();
+			var entityMap = new MultiDictionary<IEntity, EntityDeclaration>();
+			var workList = new Queue<IEntity>();
 			TypeSystemAstBuilder typeSystemAstBuilder;
 			try
 			{
@@ -1305,11 +1306,29 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				var allOrderedEntities = typeDef.NestedTypes.Concat<IEntity>(allOrderedMembers);
 
-				foreach (var member in allOrderedEntities)
+				// Decompile members that are not compiler-generated.
+				foreach (var entity in allOrderedEntities)
 				{
-					DoDecompileMember(member, recordDecompiler);
+					if (entity.MetadataToken.IsNil || MemberIsHidden(module.PEFile, entity.MetadataToken, settings))
+					{
+						continue;
+					}
+					DoDecompileMember(entity, recordDecompiler);
 				}
 
+				// Decompile compiler-generated members that are still needed.
+				while (workList.Count > 0)
+				{
+					var entity = workList.Dequeue();
+					if (entityMap.Contains(entity) || entity.MetadataToken.IsNil)
+					{
+						// Member is already decompiled.
+						continue;
+					}
+					DoDecompileMember(entity, recordDecompiler);
+				}
+
+				// Add all decompiled members to syntax tree in the correct order.
 				foreach (var member in allOrderedEntities)
 				{
 					typeDecl.Members.AddRange(entityMap[member]);
@@ -1377,10 +1396,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			void DoDecompileMember(IEntity entity, RecordDecompiler recordDecompiler)
 			{
 				EntityDeclaration entityDecl;
-				if (entity.MetadataToken.IsNil || MemberIsHidden(module.PEFile, entity.MetadataToken, settings))
-				{
-					return;
-				}
 				switch (entity)
 				{
 					case IField field:
@@ -1416,12 +1431,25 @@ namespace ICSharpCode.Decompiler.CSharp
 						entityMap.Add(@event, entityDecl);
 						break;
 					case ITypeDefinition type:
-						var nestedType = DoDecompile(type, decompileRun, decompilationContext.WithCurrentTypeDefinition(type));
-						SetNewModifier(nestedType);
-						entityMap.Add(type, nestedType);
+						entityDecl = DoDecompile(type, decompileRun, decompilationContext.WithCurrentTypeDefinition(type));
+						SetNewModifier(entityDecl);
+						entityMap.Add(type, entityDecl);
 						break;
 					default:
 						throw new ArgumentOutOfRangeException("Unexpected member type");
+				}
+
+				foreach (var node in entityDecl.Descendants)
+				{
+					var rr = node.GetResolveResult();
+					if (rr is MemberResolveResult mrr && mrr.Member.DeclaringTypeDefinition == typeDef)
+					{
+						workList.Enqueue(mrr.Member);
+					}
+					else if (rr is TypeResolveResult trr && trr.Type.GetDefinition()?.DeclaringTypeDefinition == typeDef)
+					{
+						workList.Enqueue(trr.Type.GetDefinition());
+					}
 				}
 			}
 		}
