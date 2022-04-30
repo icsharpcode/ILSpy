@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.Util
 			get { return this[key]; }
 		}
 
-		bool ILookup<TKey, TValue>.Contains(TKey key)
+		public bool Contains(TKey key)
 		{
 			return dict.ContainsKey(key);
 		}

@@ -1244,9 +1244,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(decompilationContext.CurrentTypeDefinition == typeDef);
 			var watch = System.Diagnostics.Stopwatch.StartNew();
+			var entityMap = new MultiDictionary<IEntity, EntityDeclaration>();
+			var workList = new Queue<IEntity>();
+			TypeSystemAstBuilder typeSystemAstBuilder;
 			try
 			{
-				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
+				typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				var entityDecl = typeSystemAstBuilder.ConvertEntity(typeDef);
 				var typeDecl = entityDecl as TypeDeclaration;
 				if (typeDecl == null)
@@ -1289,16 +1292,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 
-				foreach (var type in typeDef.NestedTypes)
-				{
-					if (!type.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, type.MetadataToken, settings))
-					{
-						var nestedType = DoDecompile(type, decompileRun, decompilationContext.WithCurrentTypeDefinition(type));
-						SetNewModifier(nestedType);
-						typeDecl.Members.Add(nestedType);
-					}
-				}
-
 				decompileRun.EnumValueDisplayMode = typeDef.Kind == TypeKind.Enum
 					? DetectBestEnumValueDisplayMode(typeDef, module.PEFile)
 					: null;
@@ -1309,60 +1302,38 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				// For COM interop scenarios, the relative order of virtual functions/properties matters:
 				IEnumerable<IMember> allOrderedMembers = RequiresNativeOrdering(typeDef) ? GetMembersWithNativeOrdering(typeDef) :
-					fieldsAndProperties.Concat<IMember>(typeDef.Events).Concat<IMember>(typeDef.Methods);
+					fieldsAndProperties.Concat(typeDef.Events).Concat(typeDef.Methods);
 
-				foreach (var member in allOrderedMembers)
+				var allOrderedEntities = typeDef.NestedTypes.Concat<IEntity>(allOrderedMembers);
+
+				// Decompile members that are not compiler-generated.
+				foreach (var entity in allOrderedEntities)
 				{
-					if (member is IField || member is IProperty)
+					if (entity.MetadataToken.IsNil || MemberIsHidden(module.PEFile, entity.MetadataToken, settings))
 					{
-						var fieldOrProperty = member;
-						if (fieldOrProperty.MetadataToken.IsNil || MemberIsHidden(module.PEFile, fieldOrProperty.MetadataToken, settings))
-						{
-							continue;
-						}
-						if (fieldOrProperty is IField field)
-						{
-							if (typeDef.Kind == TypeKind.Enum && !field.IsConst)
-								continue;
-							var memberDecl = DoDecompile(field, decompileRun, decompilationContext.WithCurrentMember(field));
-							typeDecl.Members.Add(memberDecl);
-						}
-						else if (fieldOrProperty is IProperty property)
-						{
-							if (recordDecompiler?.PropertyIsGenerated(property) == true)
-							{
-								continue;
-							}
-							var propDecl = DoDecompile(property, decompileRun, decompilationContext.WithCurrentMember(property));
-							typeDecl.Members.Add(propDecl);
-						}
+						continue;
 					}
-					else if (member is IMethod method)
-					{
-						if (recordDecompiler?.MethodIsGenerated(method) == true)
-						{
-							continue;
-						}
-						if (!method.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, method.MetadataToken, settings))
-						{
-							var memberDecl = DoDecompile(method, decompileRun, decompilationContext.WithCurrentMember(method));
-							typeDecl.Members.Add(memberDecl);
-							typeDecl.Members.AddRange(AddInterfaceImplHelpers(memberDecl, method, typeSystemAstBuilder));
-						}
-					}
-					else if (member is IEvent @event)
-					{
-						if (!@event.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, @event.MetadataToken, settings))
-						{
-							var eventDecl = DoDecompile(@event, decompileRun, decompilationContext.WithCurrentMember(@event));
-							typeDecl.Members.Add(eventDecl);
-						}
-					}
-					else
-					{
-						throw new ArgumentOutOfRangeException("Unexpected member type");
-					}
+					DoDecompileMember(entity, recordDecompiler);
 				}
+
+				// Decompile compiler-generated members that are still needed.
+				while (workList.Count > 0)
+				{
+					var entity = workList.Dequeue();
+					if (entityMap.Contains(entity) || entity.MetadataToken.IsNil)
+					{
+						// Member is already decompiled.
+						continue;
+					}
+					DoDecompileMember(entity, recordDecompiler);
+				}
+
+				// Add all decompiled members to syntax tree in the correct order.
+				foreach (var member in allOrderedEntities)
+				{
+					typeDecl.Members.AddRange(entityMap[member]);
+				}
+
 				if (typeDecl.Members.OfType<IndexerDeclaration>().Any(idx => idx.PrivateImplementationType.IsNull))
 				{
 					// Remove the [DefaultMember] attribute if the class contains indexers
@@ -1420,6 +1391,69 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				watch.Stop();
 				Instrumentation.DecompilerEventSource.Log.DoDecompileTypeDefinition(typeDef.FullName, watch.ElapsedMilliseconds);
+			}
+
+			void DoDecompileMember(IEntity entity, RecordDecompiler recordDecompiler)
+			{
+				EntityDeclaration entityDecl;
+				switch (entity)
+				{
+					case IField field:
+						if (typeDef.Kind == TypeKind.Enum && !field.IsConst)
+						{
+							return;
+						}
+						entityDecl = DoDecompile(field, decompileRun, decompilationContext.WithCurrentMember(field));
+						entityMap.Add(field, entityDecl);
+						break;
+					case IProperty property:
+						if (recordDecompiler?.PropertyIsGenerated(property) == true)
+						{
+							return;
+						}
+						entityDecl = DoDecompile(property, decompileRun, decompilationContext.WithCurrentMember(property));
+						entityMap.Add(property, entityDecl);
+						break;
+					case IMethod method:
+						if (recordDecompiler?.MethodIsGenerated(method) == true)
+						{
+							return;
+						}
+						entityDecl = DoDecompile(method, decompileRun, decompilationContext.WithCurrentMember(method));
+						entityMap.Add(method, entityDecl);
+						foreach (var helper in AddInterfaceImplHelpers(entityDecl, method, typeSystemAstBuilder))
+						{
+							entityMap.Add(method, helper);
+						}
+						break;
+					case IEvent @event:
+						entityDecl = DoDecompile(@event, decompileRun, decompilationContext.WithCurrentMember(@event));
+						entityMap.Add(@event, entityDecl);
+						break;
+					case ITypeDefinition type:
+						entityDecl = DoDecompile(type, decompileRun, decompilationContext.WithCurrentTypeDefinition(type));
+						SetNewModifier(entityDecl);
+						entityMap.Add(type, entityDecl);
+						break;
+					default:
+						throw new ArgumentOutOfRangeException("Unexpected member type");
+				}
+
+				foreach (var node in entityDecl.Descendants)
+				{
+					var rr = node.GetResolveResult();
+					if (rr is MemberResolveResult mrr
+						&& mrr.Member.DeclaringTypeDefinition == typeDef
+						&& !(mrr.Member is IMethod { IsLocalFunction: true }))
+					{
+						workList.Enqueue(mrr.Member);
+					}
+					else if (rr is TypeResolveResult trr
+						&& trr.Type.GetDefinition()?.DeclaringTypeDefinition == typeDef)
+					{
+						workList.Enqueue(trr.Type.GetDefinition());
+					}
+				}
 			}
 		}
 

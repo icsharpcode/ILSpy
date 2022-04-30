@@ -48,6 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		SpecialName,
 		DebuggerHidden,
 		DebuggerStepThrough,
+		DebuggerBrowsable,
 
 		// Assembly attributes:
 		AssemblyVersion,
@@ -124,6 +125,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(SpecialNameAttribute)),
 			new TopLevelTypeName("System.Diagnostics", nameof(DebuggerHiddenAttribute)),
 			new TopLevelTypeName("System.Diagnostics", nameof(DebuggerStepThroughAttribute)),
+			new TopLevelTypeName("System.Diagnostics", nameof(DebuggerBrowsableAttribute)),
 			// Assembly attributes:
 			new TopLevelTypeName("System.Reflection", nameof(AssemblyVersionAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(InternalsVisibleToAttribute)),

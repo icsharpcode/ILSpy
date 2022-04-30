@@ -640,17 +640,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				propertyDeclaration.Modifiers &= ~Modifiers.Readonly;
 				propertyDeclaration.Getter.Modifiers &= ~Modifiers.Readonly;
 
-				// Add C# 7.3 attributes on backing field:
-				var attributes = field.GetAttributes()
-					.Where(a => !attributeTypesToRemoveFromAutoProperties.Contains(a.AttributeType.FullName))
-					.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
-				if (attributes.Length > 0)
+				var fieldDecl = propertyDeclaration.Parent?.Children.OfType<FieldDeclaration>()
+					.FirstOrDefault(fd => field.Equals(fd.GetSymbol()));
+				if (fieldDecl != null)
 				{
-					var section = new AttributeSection {
-						AttributeTarget = "field"
-					};
-					section.Attributes.AddRange(attributes);
-					propertyDeclaration.Attributes.Add(section);
+					fieldDecl.Remove();
+					// Add C# 7.3 attributes on backing field:
+					CSharpDecompiler.RemoveAttribute(fieldDecl, KnownAttribute.CompilerGenerated);
+					CSharpDecompiler.RemoveAttribute(fieldDecl, KnownAttribute.DebuggerBrowsable);
+					foreach (var section in fieldDecl.Attributes)
+					{
+						section.AttributeTarget = "field";
+						propertyDeclaration.Attributes.Add(section.Detach());
+					}
 				}
 			}
 			// Since the property instance is not changed, we can continue in the visitor as usual, so return null
@@ -1010,23 +1012,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			ed.Variables.Add(new VariableInitializer(ev.Name));
 			ed.CopyAnnotationsFrom(ev);
 
-			if (ev.GetSymbol() is IEvent eventDef)
+			var fieldDecl = ev.Parent?.Children.OfType<FieldDeclaration>()
+				.FirstOrDefault(fd => fd.Variables.Single().Name == ev.Name);
+			if (fieldDecl != null)
 			{
-				IField field = eventDef.DeclaringType.GetFields(f => f.Name == ev.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
-				if (field != null)
+				fieldDecl.Remove();
+				CSharpDecompiler.RemoveAttribute(fieldDecl, KnownAttribute.CompilerGenerated);
+				CSharpDecompiler.RemoveAttribute(fieldDecl, KnownAttribute.DebuggerBrowsable);
+				foreach (var section in fieldDecl.Attributes)
 				{
-					ed.AddAnnotation(field);
-					var attributes = field.GetAttributes()
-							.Where(a => !attributeTypesToRemoveFromAutoEvents.Contains(a.AttributeType.FullName))
-							.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
-					if (attributes.Length > 0)
-					{
-						var section = new AttributeSection {
-							AttributeTarget = "field"
-						};
-						section.Attributes.AddRange(attributes);
-						ed.Attributes.Add(section);
-					}
+					section.AttributeTarget = "field";
+					ed.Attributes.Add(section.Detach());
 				}
 			}
 
