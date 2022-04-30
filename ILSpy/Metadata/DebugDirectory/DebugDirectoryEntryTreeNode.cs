@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			else
 			{
 				language.WriteCommentLine(output, $"(no data)");
-			} 
+			}
 		}
 	}
 }
