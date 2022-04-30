@@ -16,62 +16,60 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
+#nullable enable
+
+using System.Reflection.PortableExecutable;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class DebugMetadataTreeNode : ILSpyTreeNode
+	sealed class CodeViewTreeNode : ILSpyTreeNode
 	{
-		private PEFile module;
-		private MetadataReader provider;
-		private bool isEmbedded;
-
-		public DebugMetadataTreeNode(PEFile module, bool isEmbedded, MetadataReader provider)
+		readonly CodeViewDebugDirectoryData entry;
+		public CodeViewTreeNode(CodeViewDebugDirectoryData entry)
 		{
-			this.module = module;
-			this.provider = provider;
-			this.isEmbedded = isEmbedded;
-			this.Text = "Debug Metadata (" + (isEmbedded ? "Embedded" : "From portable PDB") + ")";
-			this.LazyLoading = true;
+			this.entry = entry;
 		}
 
-		public override object Text { get; }
+		override public object Text => nameof(DebugDirectoryEntryType.CodeView);
 
-		public override object Icon => Images.Library;
+		public override object ToolTip => "Associated PDB file description.";
+
+		public override object Icon => Images.Literal;
 
 		public override bool View(TabPageModel tabPage)
 		{
 			tabPage.Title = Text.ToString();
 			tabPage.SupportsLanguageSwitching = false;
 
-			return false;
+			var dataGrid = Helpers.PrepareDataGrid(tabPage, this);
+
+			dataGrid.ItemsSource = new[] { entry };
+
+			tabPage.Content = dataGrid;
+
+			return true;
+		}
+
+		sealed class PdbChecksumDebugDirectoryDataEntry
+		{
+			readonly CodeViewDebugDirectoryData entry;
+			public PdbChecksumDebugDirectoryDataEntry(CodeViewDebugDirectoryData entry)
+			{
+				this.entry = entry;
+			}
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, "Debug Metadata");
-		}
-
-		protected override void LoadChildren()
-		{
-			this.Children.Add(new DebugMetadataTablesTreeNode(module, this.isEmbedded, this.provider));
-			this.Children.Add(new StringHeapTreeNode(module, this.provider));
-			this.Children.Add(new UserStringHeapTreeNode(module, this.provider));
-			this.Children.Add(new GuidHeapTreeNode(module, this.provider));
-			this.Children.Add(new BlobHeapTreeNode(module, this.provider));
-		}
-
-		public MetadataTableTreeNode FindNodeByHandleKind(HandleKind kind)
-		{
-			return this.Children.OfType<MetadataTableTreeNode>().SingleOrDefault(x => x.Kind == kind);
+			language.WriteCommentLine(output, Text.ToString());
+			language.WriteCommentLine(output, $"GUID: {entry.Guid}");
+			language.WriteCommentLine(output, $"Age: {entry.Age}");
+			language.WriteCommentLine(output, $"Path: {entry.Path}");
 		}
 	}
 }
