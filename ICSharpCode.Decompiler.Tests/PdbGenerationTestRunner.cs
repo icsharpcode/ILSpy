@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -46,18 +47,38 @@ namespace ICSharpCode.Decompiler.Tests
 			TestGeneratePdb();
 		}
 
+		[Test]
+		public void CustomPdbId()
+		{
+			// Generate a PDB for an assembly using a randomly-generated ID, then validate that the PDB uses the specified ID
+			(string peFileName, string pdbFileName) = CompileTestCase(nameof(CustomPdbId));
+
+			var moduleDefinition = new PEFile(peFileName);
+			var resolver = new UniversalAssemblyResolver(peFileName, false, moduleDefinition.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
+			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new DecompilerSettings());
+			var expectedPdbId = new BlobContentId(Guid.NewGuid(), (uint)Random.Shared.Next());
+
+			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(CustomPdbId) + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
+			{
+				pdbStream.SetLength(0);
+				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, noLogo: true, pdbId: expectedPdbId);
+
+				pdbStream.Position = 0;
+				var metadataReader = MetadataReaderProvider.FromPortablePdbStream(pdbStream).GetMetadataReader();
+				var generatedPdbId = new BlobContentId(metadataReader.DebugMetadataHeader.Id);
+
+				Assert.AreEqual(expectedPdbId.Guid, generatedPdbId.Guid);
+				Assert.AreEqual(expectedPdbId.Stamp, generatedPdbId.Stamp);
+			}
+		}
+
 		private void TestGeneratePdb([CallerMemberName] string testName = null)
 		{
 			const PdbToXmlOptions options = PdbToXmlOptions.IncludeEmbeddedSources | PdbToXmlOptions.ThrowOnError | PdbToXmlOptions.IncludeTokens | PdbToXmlOptions.ResolveTokens | PdbToXmlOptions.IncludeMethodSpans;
 
 			string xmlFile = Path.Combine(TestCasePath, testName + ".xml");
-			string xmlContent = File.ReadAllText(xmlFile);
-			XDocument document = XDocument.Parse(xmlContent);
-			var files = document.Descendants("file").ToDictionary(f => f.Attribute("name").Value, f => f.Value);
-			Tester.CompileCSharpWithPdb(Path.Combine(TestCasePath, testName + ".expected"), files);
+			(string peFileName, string pdbFileName) = CompileTestCase(testName);
 
-			string peFileName = Path.Combine(TestCasePath, testName + ".expected.dll");
-			string pdbFileName = Path.Combine(TestCasePath, testName + ".expected.pdb");
 			var moduleDefinition = new PEFile(peFileName);
 			var resolver = new UniversalAssemblyResolver(peFileName, false, moduleDefinition.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
 			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new DecompilerSettings());
@@ -85,6 +106,20 @@ namespace ICSharpCode.Decompiler.Tests
 			string generatedFileName = Path.ChangeExtension(xmlFile, ".generated.xml");
 			ProcessXmlFile(generatedFileName);
 			Assert.AreEqual(Normalize(expectedFileName), Normalize(generatedFileName));
+		}
+
+		private (string peFileName, string pdbFileName) CompileTestCase(string testName)
+		{
+			string xmlFile = Path.Combine(TestCasePath, testName + ".xml");
+			string xmlContent = File.ReadAllText(xmlFile);
+			XDocument document = XDocument.Parse(xmlContent);
+			var files = document.Descendants("file").ToDictionary(f => f.Attribute("name").Value, f => f.Value);
+			Tester.CompileCSharpWithPdb(Path.Combine(TestCasePath, testName + ".expected"), files);
+
+			string peFileName = Path.Combine(TestCasePath, testName + ".expected.dll");
+			string pdbFileName = Path.Combine(TestCasePath, testName + ".expected.pdb");
+
+			return (peFileName, pdbFileName);
 		}
 
 		private void ProcessXmlFile(string fileName)

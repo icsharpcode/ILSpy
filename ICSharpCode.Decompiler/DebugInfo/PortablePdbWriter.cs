@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			return file.Reader.ReadDebugDirectory().Any(entry => entry.Type == DebugDirectoryEntryType.CodeView);
 		}
 
-		public static void WritePdb(PEFile file, CSharpDecompiler decompiler, DecompilerSettings settings, Stream targetStream, bool noLogo = false)
+		public static void WritePdb(PEFile file, CSharpDecompiler decompiler, DecompilerSettings settings, Stream targetStream, bool noLogo = false, BlobContentId? pdbId = null)
 		{
 			MetadataBuilder metadata = new MetadataBuilder();
 			MetadataReader reader = file.Metadata;
@@ -195,10 +195,14 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				metadata.AddCustomDebugInformation(row.Parent, row.Guid, row.Blob);
 			}
 
-			var debugDir = file.Reader.ReadDebugDirectory().FirstOrDefault(dir => dir.Type == DebugDirectoryEntryType.CodeView);
-			var portable = file.Reader.ReadCodeViewDebugDirectoryData(debugDir);
-			var contentId = new BlobContentId(portable.Guid, debugDir.Stamp);
-			PortablePdbBuilder serializer = new PortablePdbBuilder(metadata, GetRowCounts(reader), entrypointHandle, blobs => contentId);
+			if (pdbId == null)
+			{
+				var debugDir = file.Reader.ReadDebugDirectory().FirstOrDefault(dir => dir.Type == DebugDirectoryEntryType.CodeView);
+				var portable = file.Reader.ReadCodeViewDebugDirectoryData(debugDir);
+				pdbId = new BlobContentId(portable.Guid, debugDir.Stamp);
+			}
+
+			PortablePdbBuilder serializer = new PortablePdbBuilder(metadata, GetRowCounts(reader), entrypointHandle, blobs => pdbId.Value);
 			BlobBuilder blobBuilder = new BlobBuilder();
 			serializer.Serialize(blobBuilder);
 			blobBuilder.WriteContentTo(targetStream);
