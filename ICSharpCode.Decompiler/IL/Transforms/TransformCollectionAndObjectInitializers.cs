@@ -105,6 +105,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					initInst = ci.Arguments.Single();
 					break;
 				default:
+					var typeDef = v.Type.GetDefinition();
+					if (context.Settings.WithExpressions && typeDef?.IsReferenceType == false && typeDef.IsRecord)
+					{
+						instType = v.Type;
+						blockKind = BlockKind.WithInitializer;
+						break;
+					}
 					return false;
 			}
 			int initializerItemsCount = 0;

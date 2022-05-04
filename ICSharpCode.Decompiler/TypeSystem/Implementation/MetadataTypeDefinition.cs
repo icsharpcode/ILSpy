@@ -758,13 +758,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		private bool ComputeIsRecord()
 		{
-			if (Kind != TypeKind.Class)
+			if (Kind != TypeKind.Class && Kind != TypeKind.Struct)
 				return false;
 			var metadata = module.metadata;
 			var typeDef = metadata.GetTypeDefinition(handle);
 			bool opEquality = false;
 			bool opInequality = false;
-			bool clone = false;
+			bool clone = Kind == TypeKind.Struct;
 			foreach (var methodHandle in typeDef.GetMethods())
 			{
 				var method = metadata.GetMethodDefinition(methodHandle);

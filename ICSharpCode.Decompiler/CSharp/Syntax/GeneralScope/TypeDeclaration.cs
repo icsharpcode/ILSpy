@@ -35,9 +35,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Interface,
 		Enum,
 		/// <summary>
-		/// C# 9 'record'
+		/// C# 9 'record class'
 		/// </summary>
 		RecordClass,
+		/// <summary>
+		/// C# 10 'record struct'
+		/// </summary>
+		RecordStruct,
 	}
 
 	/// <summary>
@@ -62,6 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					case ClassType.Class:
 						return GetChildByRole(Roles.ClassKeyword);
 					case ClassType.Struct:
+					case ClassType.RecordStruct:
 						return GetChildByRole(Roles.StructKeyword);
 					case ClassType.Interface:
 						return GetChildByRole(Roles.InterfaceKeyword);
