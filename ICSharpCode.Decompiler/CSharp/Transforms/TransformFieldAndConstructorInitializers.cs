@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// Recognize field or property initializers:
 				// Translate first statement in all ctors (if all ctors have the same statement) into an initializer.
 				bool allSame;
-				bool isPrimaryCtor = declaringTypeDefinition.IsReferenceType == true && declaringTypeDefinition.IsRecord;
+				bool isStructPrimaryCtor = false;
 				do
 				{
 					Match m = fieldInitializerPattern.Match(instanceCtorsNotChainingWithThis[0].Body.FirstOrDefault());
@@ -214,12 +214,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						// remove record ctor parameter assignments
 						if (!IsPropertyDeclaredByPrimaryCtor(fieldOrPropertyOrEvent as IProperty, record))
 							break;
-						isPrimaryCtor = true;
+						isStructPrimaryCtor = true;
 					}
 					else
 					{
 						// cannot transform if member is not found
-						if (fieldOrPropertyOrEventDecl == null || !isPrimaryCtor)
+						if (fieldOrPropertyOrEventDecl == null)
+							break;
+						// or if this is a struct record, but not the primary ctor
+						if (declaringTypeDefinition.IsRecord && declaringTypeDefinition.IsReferenceType == false && !isStructPrimaryCtor)
 							break;
 					}
 
