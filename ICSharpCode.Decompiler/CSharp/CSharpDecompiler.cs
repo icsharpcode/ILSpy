@@ -1107,6 +1107,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				yield break; // cannot create forwarder for static interface impl
 			}
+			if (memberDecl.HasModifier(Modifiers.Extern))
+			{
+				yield break; // cannot create forwarder for extern method
+			}
 			var genericContext = new Decompiler.TypeSystem.GenericContext(method);
 			var methodHandle = (MethodDefinitionHandle)method.MetadataToken;
 			foreach (var h in methodHandle.GetMethodImplementations(metadata))
