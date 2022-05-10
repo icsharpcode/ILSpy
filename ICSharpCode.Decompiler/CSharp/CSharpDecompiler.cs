@@ -289,6 +289,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					var methodSemantics = module.MethodSemanticsLookup.GetSemantics(methodHandle).Item2;
 					if (methodSemantics != 0 && methodSemantics != System.Reflection.MethodSemanticsAttributes.Other)
 						return true;
+					name = metadata.GetString(method.Name);
+					if (name == ".ctor" && method.RelativeVirtualAddress == 0 && metadata.GetTypeDefinition(method.GetDeclaringType()).Attributes.HasFlag(System.Reflection.TypeAttributes.Import))
+						return true;
 					if (settings.LocalFunctions && LocalFunctionDecompiler.IsLocalFunctionMethod(module, methodHandle))
 						return true;
 					if (settings.AnonymousMethods && methodHandle.HasGeneratedName(metadata) && methodHandle.IsCompilerGenerated(metadata))
@@ -1567,14 +1570,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					SetNewModifier(methodDecl);
 				}
-				else if (!method.IsVirtual && method.IsOverride && InheritanceHelper.GetBaseMember(method) == null)
-				{
-					methodDecl.Modifiers &= ~Modifiers.Override;
-					if (!method.DeclaringTypeDefinition.IsSealed)
-					{
-						methodDecl.Modifiers |= Modifiers.Virtual;
-					}
-				}
+				//else if (!method.IsVirtual && method.IsOverride && InheritanceHelper.GetBaseMember(method) == null)
+				//{
+				//	methodDecl.Modifiers &= ~Modifiers.Override;
+				//	if (!method.DeclaringTypeDefinition.IsSealed)
+				//	{
+				//		methodDecl.Modifiers |= Modifiers.Virtual;
+				//	}
+				//}
 				if (IsCovariantReturnOverride(method))
 				{
 					RemoveAttribute(methodDecl, KnownAttribute.PreserveBaseOverrides);
