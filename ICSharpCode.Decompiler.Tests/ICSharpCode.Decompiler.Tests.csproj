@@ -54,6 +54,8 @@
     <PackageReference Include="NUnit3TestAdapter" Version="$(NUnitAdapterVersion)" />
     <PackageReference Include="coverlet.collector" Version="$(CoverletCollectorVersion)" />
     <PackageReference Include="NUnit" Version="$(NUnitVersion)" />
+    <!-- used for xml test result files -->
+    <PackageReference Include="JunitXml.TestLogger" Version="$(JUnitXmlTestLoggerVersion)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
@@ -106,6 +108,7 @@
     <Compile Include="Output\InsertParenthesesVisitorTests.cs" />
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
     <Compile Include="TestAssemblyResolver.cs" />
+    <None Include="TestCases\Pretty\MetadataAttributes.cs" />
     <None Include="TestCases\Correctness\ComInterop.cs" />
     <Compile Include="TestCases\Correctness\DeconstructionTests.cs" />
     <Compile Include="TestCases\Correctness\DynamicTests.cs" />
