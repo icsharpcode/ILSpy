@@ -203,7 +203,12 @@ namespace ICSharpCode.Decompiler.Metadata
 		public PEFile? Resolve(IAssemblyReference name)
 		{
 			var file = FindAssemblyFile(name);
-			return CreatePEFileFromFileName(file, ex => new ResolutionException(name, file, ex));
+			if (file != null)
+			{
+				return CreatePEFileFromFileName(file, ex => new ResolutionException(name, file, ex));
+			}
+
+			return null;
 		}
 
 		public PEFile? ResolveModule(PEFile mainModule, string moduleName)
@@ -258,32 +263,40 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public string? FindAssemblyFile(IAssemblyReference name)
 		{
-			if (name.IsWindowsRuntime)
+			try
 			{
-				return FindWindowsMetadataFile(name);
-			}
+				if (name.IsWindowsRuntime)
+				{
+					return FindWindowsMetadataFile(name);
+				}
 
-			string? file;
-			switch (targetFrameworkIdentifier)
+				string? file;
+				switch (targetFrameworkIdentifier)
+				{
+					case TargetFrameworkIdentifier.NET:
+					case TargetFrameworkIdentifier.NETCoreApp:
+					case TargetFrameworkIdentifier.NETStandard:
+						if (IsZeroOrAllOnes(targetFrameworkVersion))
+							goto default;
+						file = dotNetCorePathFinder.Value.TryResolveDotNetCore(name);
+						if (file != null)
+							return file;
+						goto default;
+					case TargetFrameworkIdentifier.Silverlight:
+						if (IsZeroOrAllOnes(targetFrameworkVersion))
+							goto default;
+						file = ResolveSilverlight(name, targetFrameworkVersion);
+						if (file != null)
+							return file;
+						goto default;
+					default:
+						return ResolveInternal(name);
+				}
+			}
+			catch (Exception ex)
 			{
-				case TargetFrameworkIdentifier.NET:
-				case TargetFrameworkIdentifier.NETCoreApp:
-				case TargetFrameworkIdentifier.NETStandard:
-					if (IsZeroOrAllOnes(targetFrameworkVersion))
-						goto default;
-					file = dotNetCorePathFinder.Value.TryResolveDotNetCore(name);
-					if (file != null)
-						return file;
-					goto default;
-				case TargetFrameworkIdentifier.Silverlight:
-					if (IsZeroOrAllOnes(targetFrameworkVersion))
-						goto default;
-					file = ResolveSilverlight(name, targetFrameworkVersion);
-					if (file != null)
-						return file;
-					goto default;
-				default:
-					return ResolveInternal(name);
+				Console.WriteLine("caught exception: " + ex.Message + ex.StackTrace);
+				return null;
 			}
 		}
 
