@@ -1567,6 +1567,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					SetNewModifier(methodDecl);
 				}
+				else if (!method.IsVirtual && method.IsOverride && InheritanceHelper.GetBaseMember(method) == null)
+				{
+					methodDecl.Modifiers &= ~Modifiers.Override;
+					if (!method.DeclaringTypeDefinition.IsSealed)
+					{
+						methodDecl.Modifiers |= Modifiers.Virtual;
+					}
+				}
 				if (IsCovariantReturnOverride(method))
 				{
 					RemoveAttribute(methodDecl, KnownAttribute.PreserveBaseOverrides);
