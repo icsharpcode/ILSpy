@@ -318,7 +318,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 			if ((flags & CompilerOptions.UseRoslynMask) != 0)
 			{
-				preprocessorSymbols.Add("NETCORE");
+				if (!flags.HasFlag(CompilerOptions.TargetNet40))
+				{
+					preprocessorSymbols.Add("NETCORE");
+				}
 				preprocessorSymbols.Add("ROSLYN");
 				preprocessorSymbols.Add("CS60");
 				preprocessorSymbols.Add("VB11");
