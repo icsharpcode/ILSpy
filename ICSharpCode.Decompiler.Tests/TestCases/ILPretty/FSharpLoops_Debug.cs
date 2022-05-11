@@ -92,7 +92,7 @@ public static class Program
 			pc = 2;
 		}
 
-		public override bool get_CheckClose()
+		public bool get_CheckClose()
 		{
 			switch (pc)
 			{
@@ -106,7 +106,7 @@ public static class Program
 
 		[DebuggerNonUserCode]
 		[CompilerGenerated]
-		public override int get_LastGenerated()
+		public int get_LastGenerated()
 		{
 			return current;
 		}

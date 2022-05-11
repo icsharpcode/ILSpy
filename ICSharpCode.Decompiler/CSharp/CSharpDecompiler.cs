@@ -1570,14 +1570,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					SetNewModifier(methodDecl);
 				}
-				//else if (!method.IsVirtual && method.IsOverride && InheritanceHelper.GetBaseMember(method) == null)
-				//{
-				//	methodDecl.Modifiers &= ~Modifiers.Override;
-				//	if (!method.DeclaringTypeDefinition.IsSealed)
-				//	{
-				//		methodDecl.Modifiers |= Modifiers.Virtual;
-				//	}
-				//}
+				else if (!method.IsStatic && !method.IsExplicitInterfaceImplementation
+					&& !method.IsVirtual && method.IsOverride
+					&& InheritanceHelper.GetBaseMember(method) == null && IsTypeHierarchyKnown(method.DeclaringType))
+				{
+					methodDecl.Modifiers &= ~Modifiers.Override;
+					if (!method.DeclaringTypeDefinition.IsSealed)
+					{
+						methodDecl.Modifiers |= Modifiers.Virtual;
+					}
+				}
 				if (IsCovariantReturnOverride(method))
 				{
 					RemoveAttribute(methodDecl, KnownAttribute.PreserveBaseOverrides);
@@ -1585,6 +1587,21 @@ namespace ICSharpCode.Decompiler.CSharp
 					methodDecl.Modifiers |= Modifiers.Override;
 				}
 				return methodDecl;
+
+				bool IsTypeHierarchyKnown(IType type)
+				{
+					var definition = type.GetDefinition();
+					if (definition == null)
+					{
+						return false;
+					}
+
+					if (decompileRun.TypeHierarchyIsKnown.TryGetValue(definition, out var value))
+						return value;
+					value = method.DeclaringType.GetNonInterfaceBaseTypes().All(t => t.Kind != TypeKind.Unknown);
+					decompileRun.TypeHierarchyIsKnown.Add(definition, value);
+					return value;
+				}
 			}
 			finally
 			{

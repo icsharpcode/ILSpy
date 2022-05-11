@@ -12,11 +12,11 @@ public class SequenceOfNestedIfs
 {
 	public bool _clear;
 	public Material _material;
-	public override bool CheckShader()
+	public virtual bool CheckShader()
 	{
 		return false;
 	}
-	public override void CreateMaterials()
+	public virtual void CreateMaterials()
 	{
 		if (!_clear)
 		{
