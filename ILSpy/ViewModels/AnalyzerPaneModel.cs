@@ -31,6 +31,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			ContentId = PaneContentId;
 			Title = Properties.Resources.Analyze;
 			ShortcutKey = new KeyGesture(Key.R, ModifierKeys.Control);
+			AssociatedCommand = ILSpyCommands.Analyze;
 		}
 
 		public override DataTemplate Template => (DataTemplate)MainWindow.Instance.FindResource("AnalyzerPaneTemplate");
