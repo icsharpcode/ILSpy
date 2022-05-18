@@ -1045,4 +1045,7 @@ Do you want to continue?</value>
   <data name="_Window" xml:space="preserve">
     <value>_Window</value>
   </data>
+  <data name="_JumpToEntryPoint" xml:space="preserve">
+    <value>_Jump to Entry Point</value>
+  </data>
 </root>

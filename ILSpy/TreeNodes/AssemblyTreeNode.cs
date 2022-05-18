@@ -687,4 +687,35 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
+	[ExportContextMenuEntry(Header = nameof(Resources._JumpToEntryPoint))]
+	sealed class JumpToEntryPoint : IContextMenuEntry
+	{
+		public bool IsVisible(TextViewContext context)
+		{
+			return GetEntryPoint() != null;
+		}
+
+		public bool IsEnabled(TextViewContext context) 
+		{
+			return true;
+		}
+
+		public void Execute(TextViewContext context)
+		{
+			MethodDefinition entryPoint = GetEntryPoint();
+			if (entryPoint != null)
+			{
+				MainWindow.Instance.JumpToReference(entryPoint);
+			}
+		}
+
+		public MethodDefinition GetEntryPoint(TextViewContext context)
+		{
+			if (context.SelectedTreeNodes == null || context.SelectedTreeNodes.Length != 1)
+				return null;
+
+			AssemblyTreeNode asmNode = context.SelectedTreeNodes[0] as AssemblyTreeNode;
+			return asmNode?.LoadedAssembly?.AssemblyDefinition?.EntryPoint;
+		}
+	}
 }
