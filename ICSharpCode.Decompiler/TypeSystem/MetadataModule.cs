@@ -626,7 +626,110 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				parameters.Add(new DefaultParameter(type, ""));
 			}
 			m.Parameters = parameters;
+
+			GuessFakeMethodAccessor(declaringType, name, signature, m, parameters);
+
 			return m;
+		}
+
+		private void GuessFakeMethodAccessor(IType declaringType, string name, MethodSignature<IType> signature, FakeMethod m, List<IParameter> parameters)
+		{
+			if (signature.GenericParameterCount > 0)
+				return;
+
+			var guessedGetter = name.StartsWith("get_", StringComparison.Ordinal);
+			var guessedSetter = name.StartsWith("set_", StringComparison.Ordinal);
+			if (guessedGetter || guessedSetter)
+			{
+				var propertyName = name.Substring(4);
+
+				var fakeProperty = new FakeProperty(Compilation) {
+					Name = propertyName,
+					DeclaringType = declaringType,
+					IsStatic = m.IsStatic,
+				};
+
+				if (guessedGetter)
+				{
+					if (signature.ReturnType.Kind == TypeKind.Void)
+						return;
+
+					m.AccessorKind = MethodSemanticsAttributes.Getter;
+					m.AccessorOwner = fakeProperty;
+					fakeProperty.Getter = m;
+					fakeProperty.ReturnType = signature.ReturnType;
+					fakeProperty.IsIndexer = parameters.Count > 0;
+					fakeProperty.Parameters = parameters;
+					return;
+				}
+
+				if (guessedSetter)
+				{
+					if (parameters.Count < 1 || signature.ReturnType.Kind != TypeKind.Void)
+						return;
+
+					m.AccessorKind = MethodSemanticsAttributes.Setter;
+					m.AccessorOwner = fakeProperty;
+					fakeProperty.Getter = m;
+					fakeProperty.ReturnType = parameters.Last().Type;
+					fakeProperty.IsIndexer = parameters.Count > 1;
+					fakeProperty.Parameters = parameters.SkipLast(1).ToArray();
+					return;
+				}
+			}
+
+			const string addPrefix = "add_";
+			const string removePrefix = "remove_";
+			const string raisePrefix = "raise_";
+			var guessedAdd = name.StartsWith(addPrefix, StringComparison.Ordinal);
+			var guessedRemove = name.StartsWith(removePrefix, StringComparison.Ordinal);
+			var guessedRaise = name.StartsWith(raisePrefix, StringComparison.Ordinal);
+			if (guessedAdd || guessedRemove || guessedRaise)
+			{
+				var fakeEvent = new FakeEvent(Compilation) {
+					DeclaringType = declaringType,
+					IsStatic = m.IsStatic,
+				};
+
+				if (guessedAdd)
+				{
+					if (parameters.Count != 1)
+						return;
+
+					m.AccessorKind = MethodSemanticsAttributes.Adder;
+					m.AccessorOwner = fakeEvent;
+
+					fakeEvent.Name = name.Substring(addPrefix.Length);
+					fakeEvent.AddAccessor = m;
+					fakeEvent.ReturnType = parameters.Single().Type;
+
+					return;
+				}
+
+				if (guessedRemove)
+				{
+					if (parameters.Count != 1)
+						return;
+
+					m.AccessorKind = MethodSemanticsAttributes.Remover;
+					m.AccessorOwner = fakeEvent;
+
+					fakeEvent.Name = name.Substring(removePrefix.Length);
+					fakeEvent.RemoveAccessor = m;
+					fakeEvent.ReturnType = parameters.Single().Type;
+
+					return;
+				}
+
+				if (guessedRaise)
+				{
+					fakeEvent.Name = name.Substring(raisePrefix.Length);
+					fakeEvent.InvokeAccessor = m;
+					m.AccessorKind = MethodSemanticsAttributes.Raiser;
+					m.AccessorOwner = fakeEvent;
+					return;
+				}
+			}
 		}
 		#endregion
 

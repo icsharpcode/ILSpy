@@ -73,6 +73,8 @@
     <None Include="TestCases\Correctness\StackTests.il" />
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
+    <None Include="TestCases\ILPretty\GuessAccessors.cs" />
+    <None Include="TestCases\ILPretty\GuessAccessors.il" />
     <None Include="TestCases\ILPretty\Issue2260SwitchString.il" />
     <None Include="TestCases\ILPretty\UnknownTypes.cs" />
     <None Include="TestCases\ILPretty\UnknownTypes.il" />
