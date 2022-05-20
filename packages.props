@@ -20,6 +20,7 @@
 		<WpfStylesToolboxVersion>2.7.4</WpfStylesToolboxVersion>
 		<NUnitVersion>3.13.3</NUnitVersion>
 		<NUnitAdapterVersion>4.2.1</NUnitAdapterVersion>
+		<JUnitXmlTestLoggerVersion>3.0.110</JUnitXmlTestLoggerVersion>
 		<CoverletCollectorVersion>3.1.2</CoverletCollectorVersion>
 		<MicrosoftNETTestSdkVersion>17.0.0</MicrosoftNETTestSdkVersion>
 		<MoqVersion>4.16.1</MoqVersion>

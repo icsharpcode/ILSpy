@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpy
 
 		public AnalyzerTreeView AnalyzerTreeView {
 			get {
-				return FindResource("AnalyzerTreeView") as AnalyzerTreeView;
+				return !IsLoaded ? null : FindResource("AnalyzerTreeView") as AnalyzerTreeView;
 			}
 		}
 
@@ -428,7 +428,7 @@ namespace ICSharpCode.ILSpy
 				MenuItem CreateMenuItem(ToolPaneModel pane)
 				{
 					MenuItem menuItem = new MenuItem();
-					menuItem.Command = new ToolPaneCommand(pane.ContentId);
+					menuItem.Command = pane.AssociatedCommand ?? new ToolPaneCommand(pane.ContentId);
 					menuItem.Header = pane.Title;
 					menuItem.Tag = pane;
 					var shortcutKey = pane.ShortcutKey;

@@ -52,6 +52,8 @@
     <PackageReference Include="NUnit3TestAdapter" Version="$(NUnitAdapterVersion)" />
     <PackageReference Include="coverlet.collector" Version="$(CoverletCollectorVersion)" />
     <PackageReference Include="NUnit" Version="$(NUnitVersion)" />
+    <!-- used for xml test result files -->
+    <PackageReference Include="JunitXml.TestLogger" Version="$(JUnitXmlTestLoggerVersion)" />
     <PackageReference Include="Moq" Version="$(MoqVersion)" />
   </ItemGroup>
 

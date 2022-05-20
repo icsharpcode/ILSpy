@@ -73,13 +73,13 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			if (metadata.IsAssembly)
 			{
-				var thisAssemblyName = metadata.GetAssemblyDefinition().GetAssemblyName();
-				switch (thisAssemblyName.Name)
+				AssemblyDefinition assemblyDefinition = metadata.GetAssemblyDefinition();
+				switch (metadata.GetString(assemblyDefinition.Name))
 				{
 					case "mscorlib":
-						return $".NETFramework,Version=v{thisAssemblyName.Version.ToString(2)}";
+						return $".NETFramework,Version=v{assemblyDefinition.Version.ToString(2)}";
 					case "netstandard":
-						return $".NETStandard,Version=v{thisAssemblyName.Version.ToString(2)}";
+						return $".NETStandard,Version=v{assemblyDefinition.Version.ToString(2)}";
 				}
 			}
 

@@ -19,6 +19,8 @@ namespace ICSharpCode.Decompiler
 		public IDocumentationProvider DocumentationProvider { get; set; }
 		public Dictionary<ITypeDefinition, RecordDecompiler> RecordDecompilers { get; } = new Dictionary<ITypeDefinition, RecordDecompiler>();
 
+		public Dictionary<ITypeDefinition, bool> TypeHierarchyIsKnown { get; } = new();
+
 		Lazy<CSharp.TypeSystem.UsingScope> usingScope =>
 			new Lazy<CSharp.TypeSystem.UsingScope>(() => CreateUsingScope(Namespaces));
 

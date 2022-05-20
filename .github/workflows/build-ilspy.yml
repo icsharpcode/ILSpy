@@ -47,7 +47,7 @@ jobs:
       run: msbuild ILSpy.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=$env:BuildPlatform /m
 
     - name: Execute unit tests
-      run: dotnet test --logger "trx;LogFileName=${{ matrix.configuration }}-test-results.trx" $env:Tests1 $env:Tests2 $env:Tests3
+      run: dotnet test --logger "junit;LogFileName=${{ matrix.configuration }}.xml" --results-directory test-results $env:Tests1 $env:Tests2 $env:Tests3
       env:
         Tests1: ICSharpCode.Decompiler.Tests\bin\${{ matrix.configuration }}\net6.0-windows\win-x64\ICSharpCode.Decompiler.Tests.dll
         Tests2: ILSpy.Tests\bin\${{ matrix.configuration }}\net6.0-windows\ILSpy.Tests.dll
@@ -58,17 +58,13 @@ jobs:
       if: success() || failure()
       with:
         name: test-results-${{ matrix.configuration }}
-        path: '**/*.trx'
+        path: 'test-results/${{ matrix.configuration }}.xml'
 
     - name: Create Test Report
-      uses: phoenix-actions/test-reporting@v6
-      if: github.event_name != 'pull_request' && (success() || failure())
+      uses: test-summary/action@v1
+      if: always()
       with:
-        name: Unit Test Results (${{ matrix.configuration }})
-        path: '**/*.trx'
-        reporter: dotnet-trx
-        list-suites: 'all'
-        list-tests: 'failed'
+        paths: "test-results/${{ matrix.configuration }}.xml"
 
     - name: Format check
       run: python BuildTools\tidy.py
