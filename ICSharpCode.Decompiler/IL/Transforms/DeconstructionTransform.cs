@@ -480,7 +480,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return conv == null || conv.Kind == ConversionKind.Nop;
 			}
-			if (c.IsNumericConversion)
+			if (c.IsNumericConversion && conv != null)
 			{
 				switch (conv.Kind)
 				{
