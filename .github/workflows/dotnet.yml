@@ -1,0 +1,34 @@
+name: Generate BOM
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      run: git config --global core.autocrlf true
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Install CycloneDX
+      run: dotnet tool install --global CycloneDX
+      
+    - name: Analyze
+      run: dotnet CycloneDX ILSpy/ILSpy.csproj --out sbom --recursive --exclude-dev --exclude-test-projects
+
+    - name: Upload BOM
+      uses: actions/upload-artifact@v2
+      with:
+        name: ILSpyBOM.xml
+        path: sbom/bom.xml
+        if-no-files-found: error
