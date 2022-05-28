@@ -25,19 +25,20 @@ using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpyX.Abstractions;
 
 using static System.Reflection.Metadata.PEReaderExtensions;
 
 using ILOpCode = System.Reflection.Metadata.ILOpCode;
 
-namespace ICSharpCode.ILSpy.Search
+namespace ICSharpCode.ILSpyX.Search
 {
 	class LiteralSearchStrategy : AbstractEntitySearchStrategy
 	{
 		readonly TypeCode searchTermLiteralType;
 		readonly object searchTermLiteralValue;
 
-		public LiteralSearchStrategy(Language language, ApiVisibility apiVisibility, SearchRequest request,
+		public LiteralSearchStrategy(ILanguage language, ApiVisibility apiVisibility, SearchRequest request,
 			IProducerConsumerCollection<SearchResult> resultQueue)
 			: base(language, apiVisibility, request, resultQueue)
 		{
@@ -78,7 +79,7 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			var metadata = module.Metadata;
-			var typeSystem = module.GetTypeSystemWithCurrentOptionsOrNull();
+			var typeSystem = module.GetTypeSystemWithDecompilerSettingsOrNull(searchRequest.DecompilerSettings);
 			if (typeSystem == null)
 				return;
 
@@ -114,7 +115,7 @@ namespace ICSharpCode.ILSpy.Search
 			}
 		}
 
-		bool IsLiteralMatch(MetadataReader metadata, object val)
+		bool IsLiteralMatch(MetadataReader metadata, object? val)
 		{
 			if (val == null)
 				return false;

@@ -1,4 +1,4 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2022 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,16 +16,29 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpyX.Abstractions;
+using System.Collections.Generic;
 
-namespace ICSharpCode.ILSpy.TreeNodes
+using ICSharpCode.Decompiler.Metadata;
+
+namespace ICSharpCode.ILSpyX.Abstractions
 {
-	/// <summary>
-	/// This interface allows plugins to create custom nodes for resources.
-	/// </summary>
-	public interface IResourceNodeFactory
+	public interface ITreeNode
 	{
-		ITreeNode CreateNode(Resource resource);
+		object Text { get; }
+		object Icon { get; }
+		IEnumerable<ITreeNode> Children { get; }
+
+		void EnsureLazyChildren();
+	}
+
+	public interface IResourcesFileTreeNode : ITreeNode
+	{
+		Resource Resource { get; }
+	}
+
+	public interface ITreeNodeFactory
+	{
+		ITreeNode CreateResourcesList(PEFile module);
+		ITreeNode Create(Resource resource);
 	}
 }

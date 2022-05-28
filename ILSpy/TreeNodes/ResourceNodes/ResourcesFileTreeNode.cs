@@ -31,6 +31,7 @@ using ICSharpCode.ILSpy.Controls;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX.Abstractions;
 
 using Microsoft.Win32;
 
@@ -39,7 +40,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	[Export(typeof(IResourceNodeFactory))]
 	sealed class ResourcesFileTreeNodeFactory : IResourceNodeFactory
 	{
-		public ILSpyTreeNode CreateNode(Resource resource)
+		public ITreeNode CreateNode(Resource resource)
 		{
 			if (resource.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
 			{
@@ -54,7 +55,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	sealed class ResourcesFileTreeNode : ResourceTreeNode
+	sealed class ResourcesFileTreeNode : ResourceTreeNode, IResourcesFileTreeNode
 	{
 		readonly ICollection<KeyValuePair<string, string>> stringTableEntries = new ObservableCollection<KeyValuePair<string, string>>();
 		readonly ICollection<SerializedObjectRepresentation> otherEntries = new ObservableCollection<SerializedObjectRepresentation>();

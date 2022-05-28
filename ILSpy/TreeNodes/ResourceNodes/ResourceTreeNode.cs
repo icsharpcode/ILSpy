@@ -29,6 +29,8 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Abstractions;
 
 using Microsoft.Win32;
 
@@ -38,7 +40,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// This is the default resource entry tree node, which is used if no specific
 	/// <see cref="IResourceNodeFactory"/> exists for the given resource type. 
 	/// </summary>
-	public class ResourceTreeNode : ILSpyTreeNode
+	public class ResourceTreeNode : ILSpyTreeNode, IResourcesFileTreeNode
 	{
 		public ResourceTreeNode(Resource r)
 		{

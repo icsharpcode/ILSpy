@@ -4,6 +4,7 @@
 	x:ClassModifier="public"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:tv="clr-namespace:ICSharpCode.TreeView;assembly=ICSharpCode.TreeView"
 	xmlns:local="clr-namespace:ICSharpCode.ILSpy"
+	xmlns:search="clr-namespace:ICSharpCode.ILSpy.Search"
 	xmlns:avalondock="https://github.com/Dirkster99/AvalonDock"
 	xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
 	xmlns:docking="clr-namespace:ICSharpCode.ILSpy.Docking"
@@ -75,7 +76,7 @@
 			<ContentControl Content="{StaticResource DebugSteps}" />
 		</DataTemplate>
 
-		<local:SearchPane x:Key="SearchPane" />
+		<search:SearchPane x:Key="SearchPane" />
 
 		<DataTemplate x:Key="SearchPaneTemplate">
 			<ContentControl Content="{StaticResource SearchPane}" />

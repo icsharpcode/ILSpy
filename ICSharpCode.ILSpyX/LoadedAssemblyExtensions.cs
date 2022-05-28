@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -44,6 +45,11 @@ namespace ICSharpCode.ILSpyX
 		public static ICompilation? GetTypeSystemOrNull(this PEFile file)
 		{
 			return GetLoadedAssembly(file).GetTypeSystemOrNull();
+		}
+
+		public static ICompilation? GetTypeSystemWithDecompilerSettingsOrNull(this PEFile file, DecompilerSettings settings)
+		{
+			return GetLoadedAssembly(file).GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(settings));
 		}
 
 		public static LoadedAssembly GetLoadedAssembly(this PEFile file)

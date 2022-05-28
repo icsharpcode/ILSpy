@@ -22,7 +22,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpyX.Search
 {
 	class LATextReader : TextReader
 	{
@@ -76,8 +76,7 @@ namespace ICSharpCode.ILSpy
 		OctalNumber,
 		StringLiteral,
 		VerbatimStringLiteral,
-		CharLiteral,
-		DateTimeLiteral
+		CharLiteral
 	}
 
 	class Literal

@@ -21,14 +21,15 @@ using System.Threading;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX.Abstractions;
 
-namespace ICSharpCode.ILSpy.Search
+namespace ICSharpCode.ILSpyX.Search
 {
 	class MemberSearchStrategy : AbstractEntitySearchStrategy
 	{
 		readonly MemberSearchKind searchKind;
 
-		public MemberSearchStrategy(Language language, ApiVisibility apiVisibility, SearchRequest searchRequest,
+		public MemberSearchStrategy(ILanguage language, ApiVisibility apiVisibility, SearchRequest searchRequest,
 			IProducerConsumerCollection<SearchResult> resultQueue, MemberSearchKind searchKind = MemberSearchKind.All)
 			: base(language, apiVisibility, searchRequest, resultQueue)
 		{
@@ -39,7 +40,7 @@ namespace ICSharpCode.ILSpy.Search
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			var metadata = module.Metadata;
-			var typeSystem = module.GetTypeSystemWithCurrentOptionsOrNull();
+			var typeSystem = module.GetTypeSystemWithDecompilerSettingsOrNull(searchRequest.DecompilerSettings);
 			if (typeSystem == null)
 				return;
 

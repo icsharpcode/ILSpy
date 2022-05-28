@@ -18,40 +18,38 @@
 
 using System;
 using System.Collections.Generic;
-using System.Windows.Media;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Search;
-using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpyX.Abstractions;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpyX.Search
 {
+	public interface ISearchResultFactory
+	{
+		MemberSearchResult Create(IEntity entity);
+		ResourceSearchResult Create(PEFile module, Resource resource, ITreeNode node, ITreeNode parent);
+		AssemblySearchResult Create(PEFile module);
+		NamespaceSearchResult Create(PEFile module, INamespace @namespace);
+	}
+
 	public class SearchResult
 	{
 		public static readonly IComparer<SearchResult> ComparerByName = new SearchResultNameComparer();
 		public static readonly IComparer<SearchResult> ComparerByFitness = new SearchResultFitnessComparer();
 
-		public virtual object Reference {
-			get {
-				return null;
-			}
-		}
+		public virtual object? Reference => null;
 
 		public float Fitness { get; set; }
 
 		public string Name { get; set; }
 		public string Location { get; set; }
 		public string Assembly { get; set; }
-		public object ToolTip { get; set; }
-		public virtual ImageSource Image { get; set; }
-		public virtual ImageSource LocationImage { get; set; }
+		public object? ToolTip { get; set; }
+		public object Image { get; set; }
+		public object LocationImage { get; set; }
 
-		public ImageSource AssemblyImage {
-			get {
-				return Images.Assembly;
-			}
-		}
+		public object AssemblyImage { get; set; }
 
 		public override string ToString()
 		{
@@ -60,7 +58,7 @@ namespace ICSharpCode.ILSpy
 
 		class SearchResultNameComparer : IComparer<SearchResult>
 		{
-			public int Compare(SearchResult x, SearchResult y)
+			public int Compare(SearchResult? x, SearchResult? y)
 			{
 				return StringComparer.Ordinal.Compare(x?.Name ?? "", y?.Name ?? "");
 			}
@@ -68,7 +66,7 @@ namespace ICSharpCode.ILSpy
 
 		class SearchResultFitnessComparer : IComparer<SearchResult>
 		{
-			public int Compare(SearchResult x, SearchResult y)
+			public int Compare(SearchResult? x, SearchResult? y)
 			{
 				//elements with higher Fitness come first
 				return Comparer<float>.Default.Compare(y?.Fitness ?? 0, x?.Fitness ?? 0);
@@ -80,26 +78,6 @@ namespace ICSharpCode.ILSpy
 	{
 		public IEntity Member { get; set; }
 		public override object Reference => Member;
-
-		public override ImageSource Image {
-			get {
-				if (base.Image == null)
-				{
-					base.Image = AbstractEntitySearchStrategy.GetIcon(Member);
-				}
-				return base.Image;
-			}
-		}
-
-		public override ImageSource LocationImage {
-			get {
-				if (base.LocationImage == null)
-				{
-					base.LocationImage = Member.DeclaringTypeDefinition != null ? TypeTreeNode.GetIcon(Member.DeclaringTypeDefinition) : Images.Namespace;
-				}
-				return base.LocationImage;
-			}
-		}
 	}
 
 	public class ResourceSearchResult : SearchResult
@@ -112,17 +90,11 @@ namespace ICSharpCode.ILSpy
 	{
 		public PEFile Module { get; set; }
 		public override object Reference => Module;
-
-		public override ImageSource Image => Images.Assembly;
-		public override ImageSource LocationImage => Images.Library;
 	}
 
 	public class NamespaceSearchResult : SearchResult
 	{
 		public INamespace Namespace { get; set; }
 		public override object Reference => Namespace;
-
-		public override ImageSource Image => Images.Namespace;
-		public override ImageSource LocationImage => Images.Assembly;
 	}
 }
