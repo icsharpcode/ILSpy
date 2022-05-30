@@ -21,12 +21,33 @@ using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using System.Threading;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpyX.Abstractions;
 
-namespace ICSharpCode.ILSpy.Search
+namespace ICSharpCode.ILSpyX.Search
 {
+	public enum SearchMode
+	{
+		TypeAndMember,
+		Type,
+		Member,
+		Method,
+		Field,
+		Property,
+		Event,
+		Literal,
+		Token,
+		Resource,
+		Assembly,
+		Namespace
+	}
+
 	struct SearchRequest
 	{
+		public DecompilerSettings DecompilerSettings;
+		public ITreeNodeFactory TreeNodeFactory;
+		public ISearchResultFactory SearchResultFactory;
 		public SearchMode Mode;
 		public AssemblySearchKind AssemblySearchKind;
 		public MemberSearchKind MemberSearchKind;

@@ -1,4 +1,4 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2022 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,15 +17,20 @@
 // DEALINGS IN THE SOFTWARE.
 
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpyX.Abstractions;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.TreeNodes
+namespace ICSharpCode.ILSpyX.Abstractions
 {
-	/// <summary>
-	/// This interface allows plugins to create custom nodes for resources.
-	/// </summary>
-	public interface IResourceNodeFactory
+	public interface ILanguage
 	{
-		ITreeNode CreateNode(Resource resource);
+		bool ShowMember(IEntity member);
+		string GetEntityName(PEFile module, System.Reflection.Metadata.EntityHandle handle, bool fullName, bool omitGenerics);
+		string GetTooltip(IEntity entity);
+
+		string TypeToString(IType type, bool includeNamespace);
+		string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName);
+		string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName);
+		string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName);
+		string EventToString(IEvent @event, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName);
 	}
 }

@@ -28,6 +28,7 @@ using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Themes;
+using ICSharpCode.ILSpyX.Search;
 
 namespace ICSharpCode.ILSpy
 {

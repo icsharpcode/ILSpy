@@ -22,7 +22,7 @@ using System.Threading;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Search
+namespace ICSharpCode.ILSpyX.Search
 {
 	class AssemblySearchStrategy : AbstractSearchStrategy
 	{
@@ -92,15 +92,7 @@ namespace ICSharpCode.ILSpy.Search
 
 		void OnFoundResult(PEFile module)
 		{
-			var result = new AssemblySearchResult {
-				Module = module,
-				Fitness = 1.0f / module.Name.Length,
-				Name = module.Name,
-				Location = module.FileName,
-				Assembly = module.FullName,
-				ToolTip = module.FileName,
-			};
-			OnFoundResult(result);
+			OnFoundResult(searchRequest.SearchResultFactory.Create(module));
 		}
 	}
 

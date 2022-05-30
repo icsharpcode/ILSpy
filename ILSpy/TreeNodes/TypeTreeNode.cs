@@ -27,6 +27,7 @@ using SRM = System.Reflection.Metadata;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	using ICSharpCode.Decompiler.TypeSystem;
+	using ICSharpCode.ILSpyX;
 
 	public sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{

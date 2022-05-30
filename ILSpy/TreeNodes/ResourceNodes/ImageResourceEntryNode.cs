@@ -26,6 +26,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX.Abstractions;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -34,7 +35,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		static readonly string[] imageFileExtensions = { ".png", ".gif", ".bmp", ".jpg" };
 
-		public ILSpyTreeNode CreateNode(Resource resource)
+		public ITreeNode CreateNode(Resource resource)
 		{
 			string key = resource.Name;
 			foreach (string fileExt in imageFileExtensions)

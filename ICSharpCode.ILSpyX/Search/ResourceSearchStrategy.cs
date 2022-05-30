@@ -19,22 +19,22 @@ using System;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Threading;
-using System.Windows.Media;
 
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.TreeView;
+using ICSharpCode.ILSpyX.Abstractions;
 
-namespace ICSharpCode.ILSpy.Search
+namespace ICSharpCode.ILSpyX.Search
 {
 	class ResourceSearchStrategy : AbstractSearchStrategy
 	{
 		protected readonly bool searchInside;
 		protected readonly ApiVisibility apiVisibility;
+		protected readonly ITreeNodeFactory treeNodeFactory;
 
 		public ResourceSearchStrategy(ApiVisibility apiVisibility, SearchRequest request, IProducerConsumerCollection<SearchResult> resultQueue)
 			: base(request, resultQueue)
 		{
+			this.treeNodeFactory = request.TreeNodeFactory;
 			this.apiVisibility = apiVisibility;
 			this.searchInside = true;
 		}
@@ -53,24 +53,24 @@ namespace ICSharpCode.ILSpy.Search
 		public override void Search(PEFile module, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			var resourcesNode = new ResourceListTreeNode(module);
+			var resourcesNode = treeNodeFactory.CreateResourcesList(module);
 
 			foreach (Resource resource in module.Resources)
-				Search(module, resource, resourcesNode, ResourceTreeNode.Create(resource), cancellationToken);
+				Search(module, resource, resourcesNode, treeNodeFactory.Create(resource), cancellationToken);
 		}
 
-		void Search(PEFile module, Resource resource, SharpTreeNode parent, SharpTreeNode node, CancellationToken cancellationToken)
+		void Search(PEFile module, Resource resource, ITreeNode parent, ITreeNode node, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
-			if (node is ResourceTreeNode treeNode)
+			if (node is IResourcesFileTreeNode treeNode)
 			{
 				if (!CheckVisibility(treeNode.Resource))
 					return;
 				resource = treeNode.Resource;
 			}
 
-			if (node.Text != null && IsMatch((string)node.Text))
+			if (node.Text is string s && IsMatch(s))
 				OnFoundResult(module, resource, node, parent);
 
 			if (!searchInside)
@@ -81,20 +81,9 @@ namespace ICSharpCode.ILSpy.Search
 				Search(module, resource, node, child, cancellationToken);
 		}
 
-		void OnFoundResult(PEFile module, Resource resource, SharpTreeNode node, SharpTreeNode parent)
+		void OnFoundResult(PEFile module, Resource resource, ITreeNode node, ITreeNode parent)
 		{
-			var name = (string)node.Text;
-			var result = new ResourceSearchResult {
-				Resource = resource,
-				Fitness = 1.0f / name.Length,
-				Image = (ImageSource)node.Icon,
-				Name = name,
-				LocationImage = (ImageSource)parent.Icon,
-				Location = (string)parent.Text,
-				Assembly = module.FullName,
-				ToolTip = module.FileName,
-			};
-			OnFoundResult(result);
+			OnFoundResult(searchRequest.SearchResultFactory.Create(module, resource, node, parent));
 		}
 	}
 }

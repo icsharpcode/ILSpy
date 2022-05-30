@@ -23,6 +23,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
+using ICSharpCode.ILSpyX;
+
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>
@@ -219,12 +221,5 @@ namespace ICSharpCode.ILSpy
 			f.PropertyChanged = null;
 			return f;
 		}
-	}
-
-	public enum ApiVisibility
-	{
-		PublicOnly,
-		PublicAndInternal,
-		All
 	}
 }
