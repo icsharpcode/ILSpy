@@ -758,21 +758,40 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		private bool ComputeIsRecord()
 		{
-			if (Kind != TypeKind.Class)
+			if (Kind != TypeKind.Class && Kind != TypeKind.Struct)
 				return false;
+			bool isStruct = Kind == TypeKind.Struct;
+
 			var metadata = module.metadata;
 			var typeDef = metadata.GetTypeDefinition(handle);
+
+			bool getEqualityContract = isStruct;
+			bool toString = false;
+			bool printMembers = false;
+			bool getHashCode = false;
+			bool equals = false;
 			bool opEquality = false;
 			bool opInequality = false;
-			bool clone = false;
+			bool clone = isStruct;
 			foreach (var methodHandle in typeDef.GetMethods())
 			{
 				var method = metadata.GetMethodDefinition(methodHandle);
+				if (metadata.StringComparer.Equals(method.Name, "Clone"))
+				{
+					// error CS8859: Members named 'Clone' are disallowed in records.
+					return false;
+				}
+
+				getEqualityContract |= metadata.StringComparer.Equals(method.Name, "get_EqualityContract");
+				toString |= metadata.StringComparer.Equals(method.Name, "ToString");
+				printMembers |= metadata.StringComparer.Equals(method.Name, "PrintMembers");
+				getHashCode |= metadata.StringComparer.Equals(method.Name, "GetHashCode");
+				equals |= metadata.StringComparer.Equals(method.Name, "Equals");
 				opEquality |= metadata.StringComparer.Equals(method.Name, "op_Equality");
 				opInequality |= metadata.StringComparer.Equals(method.Name, "op_Inequality");
 				clone |= metadata.StringComparer.Equals(method.Name, "<Clone>$");
 			}
-			return opEquality & opInequality & clone;
+			return getEqualityContract & toString & printMembers & getHashCode & equals & opEquality & opInequality & clone;
 		}
 		#endregion
 	}

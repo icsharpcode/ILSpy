@@ -231,8 +231,10 @@ namespace ICSharpCode.ILSpy
 				case "class":
 				case "interface":
 				case "delegate":
-				case "record":
 					color = referenceTypeKeywordsColor;
+					break;
+				case "record":
+					color = role == Roles.RecordKeyword ? referenceTypeKeywordsColor : valueTypeKeywordsColor;
 					break;
 				case "select":
 				case "group":

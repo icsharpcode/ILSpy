@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Nullability NullableContext { get; }
 
 		/// <summary>
-		/// Gets whether the type has the necessary members to be considered a C# 9 record type.
+		/// Gets whether the type has the necessary members to be considered a C# 9 record or C# 10 record struct type.
 		/// </summary>
 		bool IsRecord { get; }
 	}

@@ -505,6 +505,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			typeSystemAstBuilder.UseNullableSpecifierForValueTypes = settings.LiftNullables;
 			typeSystemAstBuilder.SupportInitAccessors = settings.InitAccessors;
 			typeSystemAstBuilder.SupportRecordClasses = settings.RecordClasses;
+			typeSystemAstBuilder.SupportRecordStructs = settings.RecordStructs;
 			return typeSystemAstBuilder;
 		}
 
@@ -1264,7 +1265,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					// e.g. DelegateDeclaration
 					return entityDecl;
 				}
-				bool isRecord = settings.RecordClasses && typeDef.IsRecord;
+				bool isRecord = typeDef.Kind switch {
+					TypeKind.Class => settings.RecordClasses && typeDef.IsRecord,
+					TypeKind.Struct => settings.RecordStructs && typeDef.IsRecord,
+					_ => false,
+				};
 				RecordDecompiler recordDecompiler = isRecord ? new RecordDecompiler(typeSystem, typeDef, settings, CancellationToken) : null;
 				if (recordDecompiler != null)
 					decompileRun.RecordDecompilers.Add(typeDef, recordDecompiler);
@@ -1311,7 +1316,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				IEnumerable<IMember> allOrderedMembers = RequiresNativeOrdering(typeDef) ? GetMembersWithNativeOrdering(typeDef) :
 					fieldsAndProperties.Concat(typeDef.Events).Concat(typeDef.Methods);
 
-				var allOrderedEntities = typeDef.NestedTypes.Concat<IEntity>(allOrderedMembers);
+				var allOrderedEntities = typeDef.NestedTypes.Concat<IEntity>(allOrderedMembers).ToArray();
 
 				// Decompile members that are not compiler-generated.
 				foreach (var entity in allOrderedEntities)

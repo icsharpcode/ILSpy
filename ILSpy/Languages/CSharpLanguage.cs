@@ -735,6 +735,10 @@ namespace ICSharpCode.ILSpy
 			{
 				flags |= ConversionFlags.SupportRecordClasses;
 			}
+			if (settings.RecordStructs)
+			{
+				flags |= ConversionFlags.SupportRecordStructs;
+			}
 			if (settings.InitAccessors)
 			{
 				flags |= ConversionFlags.SupportInitAccessors;

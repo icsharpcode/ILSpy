@@ -1579,6 +1579,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					WriteKeyword(Roles.RecordKeyword);
 					braceStyle = policy.ClassBraceStyle;
 					break;
+				case ClassType.RecordStruct:
+					WriteKeyword(Roles.RecordStructKeyword);
+					WriteKeyword(Roles.StructKeyword);
+					braceStyle = policy.StructBraceStyle;
+					break;
 				default:
 					WriteKeyword(Roles.ClassKeyword);
 					braceStyle = policy.ClassBraceStyle;
@@ -1602,7 +1607,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				constraint.AcceptVisitor(this);
 			}
-			if (typeDeclaration.ClassType == ClassType.RecordClass && typeDeclaration.Members.Count == 0)
+			if (typeDeclaration.ClassType is (ClassType.RecordClass or ClassType.RecordStruct) && typeDeclaration.Members.Count == 0)
 			{
 				Semicolon();
 			}

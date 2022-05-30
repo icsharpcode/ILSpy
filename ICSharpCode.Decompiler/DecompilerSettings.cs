@@ -145,6 +145,7 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp10_0)
 			{
 				fileScopedNamespaces = false;
+				recordStructs = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp11_0)
 			{
@@ -156,7 +157,7 @@ namespace ICSharpCode.Decompiler
 		{
 			if (parameterNullCheck)
 				return CSharp.LanguageVersion.CSharp11_0;
-			if (fileScopedNamespaces)
+			if (fileScopedNamespaces || recordStructs)
 				return CSharp.LanguageVersion.CSharp10_0;
 			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension
 				|| recordClasses || withExpressions || usePrimaryConstructorSyntax || covariantReturns)
@@ -257,6 +258,24 @@ namespace ICSharpCode.Decompiler
 				if (recordClasses != value)
 				{
 					recordClasses = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool recordStructs = true;
+
+		/// <summary>
+		/// Use C# 10 <c>record</c> structs.
+		/// </summary>
+		[Category("C# 10.0 / VS 2022")]
+		[Description("DecompilerSettings.RecordStructs")]
+		public bool RecordStructs {
+			get { return recordStructs; }
+			set {
+				if (recordStructs != value)
+				{
+					recordStructs = value;
 					OnPropertyChanged();
 				}
 			}

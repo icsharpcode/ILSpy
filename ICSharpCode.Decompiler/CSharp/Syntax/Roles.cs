@@ -89,6 +89,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole StructKeyword = new TokenRole("struct");
 		public static readonly TokenRole ClassKeyword = new TokenRole("class");
 		public static readonly TokenRole RecordKeyword = new TokenRole("record");
+		public static readonly TokenRole RecordStructKeyword = new TokenRole("record");
 
 	}
 }

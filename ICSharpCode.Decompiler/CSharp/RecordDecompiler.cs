@@ -721,6 +721,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (!body.Instructions[0].MatchReturn(out var returnValue))
 				return false;
+			// special case for empty record struct; always returns true;
+			if (returnValue.MatchLdcI4(1))
+				return true;
 			var variables = body.Ancestors.OfType<ILFunction>().Single().Variables;
 			var other = variables.Single(v => v.Kind == VariableKind.Parameter && v.Index == 0);
 			Debug.Assert(IsRecordType(other.Type));
@@ -908,6 +911,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (!body.Instructions[0].MatchReturn(out var returnValue))
 				return false;
+			// special case for empty record struct; always returns false;
+			if (returnValue.MatchLdcI4(0))
+				return true;
 			var hashedMembers = new List<IMember>();
 			bool foundBaseClassHash = false;
 			if (!Visit(returnValue))
