@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 				if (frameworkVersion != null)
 				{
-					versionNumber = int.Parse(frameworkVersion.Substring(VersionToken.Length + 1).Replace(".", ""));
+					versionNumber = int.Parse(frameworkVersion.Substring(VersionToken.Length).Replace("v", "").Replace(".", ""));
 					if (versionNumber < 100)
 						versionNumber *= 10;
 				}
