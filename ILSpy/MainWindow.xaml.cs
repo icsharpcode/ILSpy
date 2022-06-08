@@ -1430,6 +1430,20 @@ namespace ICSharpCode.ILSpy
 		#endregion
 
 		#region Decompile (TreeView_SelectionChanged)
+		bool delayDecompilationRequestDueToContextMenu;
+
+		protected override void OnContextMenuClosing(ContextMenuEventArgs e)
+		{
+			base.OnContextMenuClosing(e);
+
+			if (delayDecompilationRequestDueToContextMenu)
+			{
+				delayDecompilationRequestDueToContextMenu = false;
+				var state = DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState;
+				DecompileSelectedNodes(state);
+			}
+		}
+
 		void TreeView_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
 			DecompilerTextViewState state = null;
@@ -1437,7 +1451,9 @@ namespace ICSharpCode.ILSpy
 			{
 				state = DockWorkspace.Instance.ActiveTabPage.GetState() as DecompilerTextViewState;
 			}
-			if (!changingActiveTab)
+
+			this.delayDecompilationRequestDueToContextMenu = Mouse.RightButton == MouseButtonState.Pressed;
+			if (!changingActiveTab && !delayDecompilationRequestDueToContextMenu)
 			{
 				DecompileSelectedNodes(state);
 			}
