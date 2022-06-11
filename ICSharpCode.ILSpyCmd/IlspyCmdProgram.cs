@@ -134,7 +134,13 @@ Examples:
 						ProjectId projectId = DecompileAsProject(file, projectFileName);
 						projects.Add(new ProjectItem(projectFileName, projectId.PlatformName, projectId.Guid, projectId.TypeGuid));
 					}
-					SolutionCreator.WriteSolutionFile(Path.Combine(Environment.CurrentDirectory, OutputDirectory, Path.GetFileNameWithoutExtension(OutputDirectory) + ".sln"), projects);
+
+					var fullOutputPath = Path.Combine(Environment.CurrentDirectory, OutputDirectory);
+					fullOutputPath = new DirectoryInfo(fullOutputPath).FullName;
+
+					var solutionName = Path.GetFileNameWithoutExtension(fullOutputPath);
+
+					SolutionCreator.WriteSolutionFile(Path.Combine(fullOutputPath, solutionName + ".sln"), projects);
 					return 0;
 				}
 				else
