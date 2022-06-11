@@ -554,16 +554,16 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						var value = (int?)fileSystem.GetValue("LongPathsEnabled");
 						if (value == 1)
 						{
-							return (true, int.MaxValue, 255);
+							return (true, int.MaxValue, 32767);
 						}
-						return (false, 200, 30);
+						return (false, 200, 260);
 					default:
-						return (false, 200, 30);
+						return (false, 200, 255);
 				}
 			}
 			catch
 			{
-				return (false, 200, 30);
+				return (false, 200, 255);
 			}
 		}
 
