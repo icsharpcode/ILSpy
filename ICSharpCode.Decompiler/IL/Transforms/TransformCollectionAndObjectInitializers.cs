@@ -335,7 +335,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							var property = method.AccessorOwner as IProperty;
 							if (!CanBeUsedInInitializer(property, resolveContext, kind, path))
 								goto default;
-							var isGetter = method.Equals(property?.Getter);
+							var isGetter = method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter;
 							var indices = call.Arguments.Skip(1).Take(call.Arguments.Count - (isGetter ? 1 : 2)).ToArray();
 							if (indices.Length > 0 && settings?.DictionaryInitializers == false)
 								goto default;
