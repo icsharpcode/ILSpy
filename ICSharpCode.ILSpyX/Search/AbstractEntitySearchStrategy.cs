@@ -24,7 +24,7 @@ namespace ICSharpCode.ILSpyX.Search
 	using ICSharpCode.Decompiler.TypeSystem;
 	using ICSharpCode.ILSpyX.Abstractions;
 
-	abstract class AbstractEntitySearchStrategy : AbstractSearchStrategy
+	public abstract class AbstractEntitySearchStrategy : AbstractSearchStrategy
 	{
 		protected readonly ILanguage language;
 		protected readonly ApiVisibility apiVisibility;

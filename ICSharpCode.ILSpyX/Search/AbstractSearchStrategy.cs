@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpyX.Search
 		Namespace
 	}
 
-	struct SearchRequest
+	public struct SearchRequest
 	{
 		public DecompilerSettings DecompilerSettings;
 		public ITreeNodeFactory TreeNodeFactory;
@@ -59,7 +59,7 @@ namespace ICSharpCode.ILSpyX.Search
 		public string InAssembly;
 	}
 
-	abstract class AbstractSearchStrategy
+	public abstract class AbstractSearchStrategy
 	{
 		protected readonly string[] searchTerm;
 		protected readonly Regex regex;

@@ -28,7 +28,7 @@ using ICSharpCode.ILSpyX.Abstractions;
 
 namespace ICSharpCode.ILSpyX.Search
 {
-	class MetadataTokenSearchStrategy : AbstractEntitySearchStrategy
+	public class MetadataTokenSearchStrategy : AbstractEntitySearchStrategy
 	{
 		readonly EntityHandle searchTermToken;
 

@@ -26,7 +26,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpyX.Search
 {
-	class NamespaceSearchStrategy : AbstractSearchStrategy
+	public class NamespaceSearchStrategy : AbstractSearchStrategy
 	{
 		public NamespaceSearchStrategy(SearchRequest request, IProducerConsumerCollection<SearchResult> resultQueue)
 			: base(request, resultQueue)

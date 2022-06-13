@@ -24,7 +24,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpyX.Search
 {
-	class AssemblySearchStrategy : AbstractSearchStrategy
+	public class AssemblySearchStrategy : AbstractSearchStrategy
 	{
 		readonly AssemblySearchKind searchKind;
 
@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpyX.Search
 		}
 	}
 
-	enum AssemblySearchKind
+	public enum AssemblySearchKind
 	{
 		NameOrFileName,
 		Name,
