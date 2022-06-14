@@ -14,11 +14,44 @@
     <GenerateAssemblyInformationalVersionAttribute>False</GenerateAssemblyInformationalVersionAttribute>
   </PropertyGroup>
   
+  <PropertyGroup>
+    <PackageId>ICSharpCode.ILSpyX</PackageId>
+    <PackageVersion>8.0.0.0-noversion</PackageVersion>
+    <Title>ILSpyX Platform</Title>
+    <Authors>ILSpy Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
+    <Description>Core cross-platform library used by ILSpy.</Description>
+    <PackageReadmeFile>PackageReadme.md</PackageReadmeFile>
+    <Company>ic#code</Company>
+    <Product>ILSpyX</Product>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/icsharpcode/ILSpy.git</RepositoryUrl>
+    <PackageIconUrl>../ICSharpCode.Decompiler/DecompilerNuGetPackageIcon.png</PackageIconUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright 2022-$([System.DateTime]::Now.Year) AlphaSierraPapa</Copyright>
+    <PackageTags>C# Decompiler ILSpy</PackageTags>
+	
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <None Include="PackageReadme.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  
   <Import Project="..\packages.props" />
   
   <ItemGroup>
     <Compile Remove="Properties\AssemblyInfo.template.cs" />
   </ItemGroup>
+  
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
@@ -29,6 +62,10 @@
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
     <PackageReference Include="K4os.Compression.LZ4" Version="1.2.16" />
     <PackageReference Include="System.Buffers" Version="4.5.1" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
