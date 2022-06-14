@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
-			using (var writer = new StreamWriter(projectFileName))
+			using (var writer = MakeStreamWriter(projectFileName))
 			{
 				DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
 			}
@@ -145,14 +145,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				throw new InvalidOperationException("Must set TargetDirectory");
 			}
-			TargetDirectory = targetDirectory;
+			TargetDirectory = new DirectoryInfo(targetDirectory).FullName;
 			directories.Clear();
 			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
 			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
 			files.AddRange(WriteMiscellaneousFilesInProject(moduleDefinition));
 			if (StrongNameKeyFile != null)
 			{
-				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)), overwrite: true);
+				CopyFile(StrongNameKeyFile, Path.Combine(TargetDirectory, Path.GetFileName(StrongNameKeyFile)), overwrite: true);
 			}
 
 			projectWriter.Write(projectFileWriter, this, files, moduleDefinition);
@@ -191,9 +191,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			const string prop = "Properties";
 			if (directories.Add(prop))
-				Directory.CreateDirectory(Path.Combine(TargetDirectory, prop));
+				CreateDir(Path.Combine(TargetDirectory, prop));
 			string assemblyInfo = Path.Combine(prop, "AssemblyInfo.cs");
-			using (StreamWriter w = new StreamWriter(Path.Combine(TargetDirectory, assemblyInfo)))
+			using (StreamWriter w = MakeStreamWriter(Path.Combine(TargetDirectory, assemblyInfo)))
 			{
 				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
 			}
@@ -216,7 +216,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					{
 						string dir = Settings.UseNestedDirectoriesForNamespaces ? CleanUpPath(ns) : CleanUpDirectoryName(ns);
 						if (directories.Add(dir))
-							Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
+							CreateDir(Path.Combine(TargetDirectory, dir));
 						return Path.Combine(dir, file);
 					}
 				}, StringComparer.OrdinalIgnoreCase).ToList();
@@ -230,7 +230,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					CancellationToken = cancellationToken
 				},
 				delegate (IGrouping<string, TypeDefinitionHandle> file) {
-					using (StreamWriter w = new StreamWriter(Path.Combine(TargetDirectory, file.Key)))
+					using (StreamWriter w = MakeStreamWriter(Path.Combine(TargetDirectory, file.Key)))
 					{
 						try
 						{
@@ -274,7 +274,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 								string dirName = Path.GetDirectoryName(fileName);
 								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
 								{
-									Directory.CreateDirectory(Path.Combine(TargetDirectory, dirName));
+									CreateDir(Path.Combine(TargetDirectory, dirName));
 								}
 								Stream entryStream = (Stream)value;
 								entryStream.Position = 0;
@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				else
 				{
 					string fileName = GetFileNameForResource(r.Name);
-					using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
+					using (FileStream fs = MakeFileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
 					{
 						stream.Position = 0;
 						stream.CopyTo(fs);
@@ -333,7 +333,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				string resx = Path.ChangeExtension(fileName, ".resx");
 				try
 				{
-					using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, resx), FileMode.Create, FileAccess.Write))
+					using (FileStream fs = MakeFileStream(Path.Combine(TargetDirectory, resx), FileMode.Create, FileAccess.Write))
 					using (ResXResourceWriter writer = new ResXResourceWriter(fs))
 					{
 						foreach (var entry in new ResourcesFile(entryStream))
@@ -352,7 +352,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					// if the .resources can't be decoded, just save them as-is
 				}
 			}
-			using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
+			using (FileStream fs = MakeFileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
 			{
 				entryStream.CopyTo(fs);
 			}
@@ -396,21 +396,21 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			byte[] appIcon = CreateApplicationIcon(resources);
 			if (appIcon != null)
 			{
-				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.ico"), appIcon);
+				WriteBytesTo(Path.Combine(TargetDirectory, "app.ico"), appIcon);
 				yield return ("ApplicationIcon", "app.ico");
 			}
 
 			byte[] appManifest = CreateApplicationManifest(resources);
 			if (appManifest != null && !IsDefaultApplicationManifest(appManifest))
 			{
-				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.manifest"), appManifest);
+				WriteBytesTo(Path.Combine(TargetDirectory, "app.manifest"), appManifest);
 				yield return ("ApplicationManifest", "app.manifest");
 			}
 
 			var appConfig = module.FileName + ".config";
 			if (File.Exists(appConfig))
 			{
-				File.Copy(appConfig, Path.Combine(TargetDirectory, "app.config"), overwrite: true);
+				CopyFile(appConfig, Path.Combine(TargetDirectory, "app.config"), overwrite: true);
 				yield return ("ApplicationConfig", Path.GetFileName(appConfig));
 			}
 		}
@@ -554,16 +554,26 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						var value = (int?)fileSystem.GetValue("LongPathsEnabled");
 						if (value == 1)
 						{
-							return (true, int.MaxValue, 255);
+							// There are conflicting information on the max length for Microfost File Systems:
+							// 32,760: https://docs.microsoft.com/en-us/windows/win32/fileio/filesystem-functionality-comparison?redirectedfrom=MSDN#limits
+							// 32,767 (says value is approximate): https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=cmd
+							return (true, 32760, 255);
 						}
-						return (false, 200, 30);
+
+						// This was what actually worked in a Windows 10 OSBuild 19043.1526, NTFS partition, no Long Paths support enabled.
+						// Notice longer file name/paths could be created, but most applications won't be able to read them.
+						// On the same system, a file with 256 characters (in C:\) could be read. In any subdirectory, 258 was the absolute
+						// path limit, so 255 ends up a reasonable safe value across systems.
+						return (false, 258, 255);
 					default:
-						return (false, 200, 30);
+						// For the default, let's use the minimum across the different platforms
+						return (false, 258, 255);
 				}
 			}
 			catch
 			{
-				return (false, 200, 30);
+				// For the default, let's use the minimum across the different platforms
+				return (false, 258, 255);
 			}
 		}
 
@@ -729,6 +739,90 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			return TargetServices.DetectTargetFramework(module).Moniker != null;
 		}
+
+		#region Full path length checking helpers
+
+		static bool UnderWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
+
+		private DirectoryInfo CreateDir(string path) => Directory.CreateDirectory(ValidatePath(path, true));
+
+		private void CopyFile(string source, string destination, bool overwrite) => File.Copy(source, ValidatePath(destination), overwrite);
+
+		private FileStream MakeFileStream(string path, FileMode mode, FileAccess access) => new FileStream(ValidatePath(path), mode, access);
+
+		private StreamWriter MakeStreamWriter(string path) => new StreamWriter(ValidatePath(path));
+
+		/// <summary>
+		/// Validates whether a path is valid for a given file system
+		/// </summary>
+		/// <param name="path">Absolute path to validate.</param>
+		private string ValidatePath(string path, bool directory = false)
+		{
+			var (supportsLongPaths, maxPathLength, maxSegmentLength) = longPathSupport.Value;
+			if (!Path.IsPathRooted(path))
+				throw new Exception("Non-root path passed to ValidatePath().");
+
+			var onWin = Environment.OSVersion.Platform == PlatformID.Win32NT;
+
+			string dotnetPath;
+			try
+			{
+				// FileSystemInfo siblings shall throw an exception in most cases where the path is not valid.
+				if (directory)
+				{
+					if (UnderWindows)
+					{
+						// If OS is Windows, the maximum path should be deduced by 12 characters to ensure
+						// 8.3 file-extensions would fit the created directory.
+						// https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=cmd
+						dotnetPath = new FileInfo(Path.Combine(path, "filename.ext")).DirectoryName;
+
+					}
+					else
+					{
+						dotnetPath = new DirectoryInfo(path).FullName;
+					}
+				}
+				else
+				{
+					dotnetPath = new FileInfo(path).FullName;
+				}
+			}
+			catch (Exception ex)
+			{
+				if (path.Length > maxPathLength)
+				{
+					throw new PathTooLongException("Path too long. Max: " + maxPathLength + " - Length: " + path.Length + Environment.NewLine +
+						"Path: " + path, ex);
+				}
+				throw new Exception("Invalid path: " + path, ex);
+			}
+
+			if (!dotnetPath.StartsWith(TargetDirectory))
+				throw new Exception("Path resolved outside of output directory: " + path + Environment.NewLine +
+					"Resolved to: " + dotnetPath + Environment.NewLine +
+					"Output directory: " + TargetDirectory);
+
+			if (dotnetPath.Length > maxPathLength)
+			{
+				if (onWin && !supportsLongPaths)
+				{
+					throw new PathTooLongException("Path is too long. Files could be created, but they won't be accessible by most applications." + Environment.NewLine +
+						"Path: " + dotnetPath + Environment.NewLine +
+						"Length: " + dotnetPath.Length + " - Maximum allowed: " + maxPathLength);
+				}
+				else
+					throw new PathTooLongException("Path is too long (" + dotnetPath.Length + " characters). ILSpy is configured not to allow paths with more than " +
+						maxPathLength + " characters on this system." + Environment.NewLine +
+						"Path: " + dotnetPath);
+			}
+
+			return dotnetPath;
+		}
+
+		void WriteBytesTo(string path, byte[] sequence) => File.WriteAllBytes(ValidatePath(Path.Combine(TargetDirectory, "app.ico")), sequence);
+
+		#endregion Path checking helpers
 	}
 
 	public readonly struct DecompilationProgress
