@@ -416,7 +416,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				case OpCode.LdLoc:
 				case OpCode.StLoc:
-					if (((IInstructionWithVariableOperand)inst).Variable.IsRefReadOnly)
+					ILVariable v = ((IInstructionWithVariableOperand)inst).Variable;
+					if (v.IsRefReadOnly
+						|| v.Kind == VariableKind.ForeachLocal
+						|| v.Kind == VariableKind.UsingLocal)
 					{
 						return ExpressionClassification.ReadonlyLValue;
 					}
