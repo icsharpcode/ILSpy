@@ -275,7 +275,6 @@
     <Compile Include="CSharp\Resolver\AliasNamespaceResolveResult.cs" />
     <Compile Include="CSharp\Resolver\AliasTypeResolveResult.cs" />
     <Compile Include="CSharp\Resolver\AwaitResolveResult.cs" />
-    <Compile Include="CSharp\Resolver\CastResolveResult.cs" />
     <Compile Include="CSharp\Resolver\CSharpConversions.cs" />
     <Compile Include="CSharp\Resolver\CSharpInvocationResolveResult.cs" />
     <Compile Include="CSharp\Resolver\CSharpOperators.cs" />

@@ -29,6 +29,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -3776,9 +3777,19 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitAddressOf(AddressOf inst, TranslationContext context)
 		{
-			// HACK: this is only correct if the argument is an R-value; otherwise we're missing the copy to the temporary
+			var classification = ILInlining.ClassifyExpression(inst.Value);
 			var value = Translate(inst.Value, inst.Type);
 			value = value.ConvertTo(inst.Type, this);
+			// ILAst AddressOf copies the value to a temporary, but when invoking a method in C#
+			// on a mutable lvalue, we would end up modifying the original lvalue, not just the copy.
+			// We solve this by introducing a "redundant" cast. Casts are classified as rvalue
+			// and ensure that the C# compiler will also create a copy.
+			if (classification == ExpressionClassification.MutableLValue && value.Expression is not CastExpression)
+			{
+				value = new CastExpression(ConvertType(inst.Type), value.Expression)
+					.WithoutILInstruction()
+					.WithRR(new ConversionResolveResult(inst.Type, value.ResolveResult, Conversion.IdentityConversion));
+			}
 			return new DirectionExpression(FieldDirection.Ref, value)
 				.WithILInstruction(inst)
 				.WithRR(new ByReferenceResolveResult(value.ResolveResult, ReferenceKind.Ref));
