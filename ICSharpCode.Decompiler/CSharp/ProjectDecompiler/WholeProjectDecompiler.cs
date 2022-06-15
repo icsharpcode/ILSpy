@@ -132,20 +132,36 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
+			var targetDirectoryInfo = new DirectoryInfo(targetDirectory);
+
+			if (TargetDirectory != targetDirectoryInfo.FullName)
+			{
+				TargetDirectory = targetDirectoryInfo.FullName;
+			}
+
+			string projectFileName = Path.Combine(TargetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
+
 			using (var writer = MakeStreamWriter(projectFileName))
 			{
-				DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
+				DecompileProject(moduleDefinition, targetDirectoryInfo, writer, cancellationToken);
 			}
 		}
 
-		public ProjectId DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
+		public ProjectId DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken)) =>
+			DecompileProject(moduleDefinition, new DirectoryInfo(targetDirectory), projectFileWriter, cancellationToken);
+
+		public ProjectId DecompileProject(PEFile moduleDefinition, DirectoryInfo targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			if (string.IsNullOrEmpty(targetDirectory))
+			if (targetDirectory == null)
 			{
 				throw new InvalidOperationException("Must set TargetDirectory");
 			}
-			TargetDirectory = new DirectoryInfo(targetDirectory).FullName;
+
+			if (TargetDirectory != targetDirectory.FullName)
+			{
+				TargetDirectory = targetDirectory.FullName;
+			}
+
 			directories.Clear();
 			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
 			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
