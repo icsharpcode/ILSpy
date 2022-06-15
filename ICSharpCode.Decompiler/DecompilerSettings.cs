@@ -395,7 +395,7 @@ namespace ICSharpCode.Decompiler
 		bool parameterNullCheck = false;
 
 		/// <summary>
-		/// Use C# 11 parameter null-checking.
+		/// Use C# 11 preview parameter null-checking (<code>string param!!</code>).
 		/// </summary>
 		[Category("C# 11.0 / VS 2022.1")]
 		[Description("DecompilerSettings.ParameterNullCheck")]
@@ -1081,8 +1081,11 @@ namespace ICSharpCode.Decompiler
 		bool useRefLocalsForAccurateOrderOfEvaluation = true;
 
 		/// <summary>
-		/// Gets/Sets whether to use C# 6.0 Extension Add methods in collection initializers.
-		/// Only has an effect if ObjectOrCollectionInitializers is enabled.
+		/// Gets/Sets whether to use local ref variables in cases where this is necessary
+		/// for re-compilation with a modern C# compiler to reproduce the same behavior
+		/// as the original assembly produced with an old C# compiler that used an incorrect
+		/// order of evaluation.
+		/// See https://github.com/icsharpcode/ILSpy/issues/2050
 		/// </summary>
 		[Category("C# 6.0 / VS 2015")]
 		[Description("DecompilerSettings.UseRefLocalsForAccurateOrderOfEvaluation")]
