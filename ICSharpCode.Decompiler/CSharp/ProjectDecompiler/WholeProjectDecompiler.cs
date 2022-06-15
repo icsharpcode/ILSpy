@@ -758,7 +758,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		#region Full path length checking helpers
 
-		static bool UnderWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
+		static readonly bool UnderWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
 
 		private DirectoryInfo CreateDir(string path) => Directory.CreateDirectory(ValidatePath(path, true));
 
@@ -777,8 +777,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			var (supportsLongPaths, maxPathLength, maxSegmentLength) = longPathSupport.Value;
 			if (!Path.IsPathRooted(path))
 				throw new Exception("Non-root path passed to ValidatePath().");
-
-			var onWin = Environment.OSVersion.Platform == PlatformID.Win32NT;
 
 			string dotnetPath;
 			try
@@ -821,7 +819,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			if (dotnetPath.Length > maxPathLength)
 			{
-				if (onWin && !supportsLongPaths)
+				if (UnderWindows && !supportsLongPaths)
 				{
 					throw new PathTooLongException("Path is too long. Files could be created, but they won't be accessible by most applications." + Environment.NewLine +
 						"Path: " + dotnetPath + Environment.NewLine +
