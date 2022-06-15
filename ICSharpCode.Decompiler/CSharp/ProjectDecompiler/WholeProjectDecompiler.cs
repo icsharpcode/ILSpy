@@ -47,6 +47,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 	/// </summary>
 	public class WholeProjectDecompiler : IProjectInfoProvider
 	{
+		const int maxSegmentLength = 255;
+
 		#region Settings
 		/// <summary>
 		/// Gets the setting this instance uses for decompiling.
@@ -536,37 +538,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		}
 		#endregion
 
-		static readonly Lazy<(bool longPathsEnabled, int maxPathLength, int maxSegmentLength)> longPathSupport =
-			new Lazy<(bool longPathsEnabled, int maxPathLength, int maxSegmentLength)>(GetLongPathSupport, isThreadSafe: true);
-
-		static (bool longPathsEnabled, int maxPathLength, int maxSegmentLength) GetLongPathSupport()
-		{
-			try
-			{
-				switch (Environment.OSVersion.Platform)
-				{
-					case PlatformID.MacOSX:
-					case PlatformID.Unix:
-						return (true, int.MaxValue, 255);
-					case PlatformID.Win32NT:
-						const string key = @"SYSTEM\CurrentControlSet\Control\FileSystem";
-						var fileSystem = Registry.LocalMachine.OpenSubKey(key);
-						var value = (int?)fileSystem.GetValue("LongPathsEnabled");
-						if (value == 1)
-						{
-							return (true, int.MaxValue, 255);
-						}
-						return (false, 200, 30);
-					default:
-						return (false, 200, 30);
-				}
-			}
-			catch
-			{
-				return (false, 200, 30);
-			}
-		}
-
 		/// <summary>
 		/// Cleans up a node name for use as a file name.
 		/// </summary>
@@ -601,7 +572,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			text = text.Trim();
 			string extension = null;
 			int currentSegmentLength = 0;
-			var (supportsLongPaths, maxPathLength, maxSegmentLength) = longPathSupport.Value;
 			if (treatAsFileName)
 			{
 				// Check if input is a file name, i.e., has a valid extension
@@ -663,8 +633,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					if (currentSegmentLength <= maxSegmentLength)
 						b.Append('-');
 				}
-				if (b.Length >= maxPathLength && !supportsLongPaths)
-					break;  // limit to 200 chars, if long paths are not supported.
 			}
 			if (b.Length == 0)
 				b.Append('-');
