@@ -109,11 +109,11 @@ Examples:
 		private int OnExecute(CommandLineApplication app)
 		{
 			TextWriter output = System.Console.Out;
-			bool outputDirectorySpecified = !string.IsNullOrEmpty(OutputDirectory);
+			string outputDirectory = ResolveOutputDirectory(OutputDirectory);
 
-			if (outputDirectorySpecified)
+			if (outputDirectory != null)
 			{
-				Directory.CreateDirectory(OutputDirectory);
+				Directory.CreateDirectory(outputDirectory);
 			}
 
 			try
@@ -122,19 +122,19 @@ Examples:
 				{
 					if (InputAssemblyNames.Length == 1)
 					{
-						string projectFileName = Path.Combine(Environment.CurrentDirectory, OutputDirectory, Path.GetFileNameWithoutExtension(InputAssemblyNames[0]) + ".csproj");
+						string projectFileName = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(InputAssemblyNames[0]) + ".csproj");
 						DecompileAsProject(InputAssemblyNames[0], projectFileName);
 						return 0;
 					}
 					var projects = new List<ProjectItem>();
 					foreach (var file in InputAssemblyNames)
 					{
-						string projectFileName = Path.Combine(Environment.CurrentDirectory, OutputDirectory, Path.GetFileNameWithoutExtension(file), Path.GetFileNameWithoutExtension(file) + ".csproj");
+						string projectFileName = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(file), Path.GetFileNameWithoutExtension(file) + ".csproj");
 						Directory.CreateDirectory(Path.GetDirectoryName(projectFileName));
 						ProjectId projectId = DecompileAsProject(file, projectFileName);
 						projects.Add(new ProjectItem(projectFileName, projectId.PlatformName, projectId.Guid, projectId.TypeGuid));
 					}
-					SolutionCreator.WriteSolutionFile(Path.Combine(Environment.CurrentDirectory, OutputDirectory, Path.GetFileNameWithoutExtension(OutputDirectory) + ".sln"), projects);
+					SolutionCreator.WriteSolutionFile(Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(outputDirectory) + ".sln"), projects);
 					return 0;
 				}
 				else
@@ -164,20 +164,20 @@ Examples:
 				{
 					var values = EntityTypes.SelectMany(v => v.Split(',', ';')).ToArray();
 					HashSet<TypeKind> kinds = TypesParser.ParseSelection(values);
-					if (outputDirectorySpecified)
+					if (outputDirectory != null)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
-						output = File.CreateText(Path.Combine(OutputDirectory, outputName) + ".list.txt");
+						output = File.CreateText(Path.Combine(outputDirectory, outputName) + ".list.txt");
 					}
 
 					return ListContent(fileName, output, kinds);
 				}
 				else if (ShowILCodeFlag || ShowILSequencePointsFlag)
 				{
-					if (outputDirectorySpecified)
+					if (outputDirectory != null)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
-						output = File.CreateText(Path.Combine(OutputDirectory, outputName) + ".il");
+						output = File.CreateText(Path.Combine(outputDirectory, outputName) + ".il");
 					}
 
 					return ShowIL(fileName, output);
@@ -185,10 +185,10 @@ Examples:
 				else if (CreateDebugInfoFlag)
 				{
 					string pdbFileName = null;
-					if (outputDirectorySpecified)
+					if (outputDirectory != null)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
-						pdbFileName = Path.Combine(OutputDirectory, outputName) + ".pdb";
+						pdbFileName = Path.Combine(outputDirectory, outputName) + ".pdb";
 					}
 					else
 					{
@@ -199,20 +199,30 @@ Examples:
 				}
 				else if (DumpPackageFlag)
 				{
-					return DumpPackageAssemblies(fileName, OutputDirectory, app);
+					return DumpPackageAssemblies(fileName, outputDirectory, app);
 				}
 				else
 				{
-					if (outputDirectorySpecified)
+					if (outputDirectory != null)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
-						output = File.CreateText(Path.Combine(OutputDirectory,
+						output = File.CreateText(Path.Combine(outputDirectory,
 							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
 					}
 
 					return Decompile(fileName, output, TypeName);
 				}
 			}
+		}
+
+		private static string ResolveOutputDirectory(string outputDirectory)
+		{
+			// path is not set
+			if (string.IsNullOrWhiteSpace(outputDirectory))
+				return null;
+			// resolve relative path, backreferences ('.' and '..') and other
+			// platform-specific path elements, like '~'.
+			return Path.GetFullPath(outputDirectory);
 		}
 
 		DecompilerSettings GetSettings(PEFile module)
