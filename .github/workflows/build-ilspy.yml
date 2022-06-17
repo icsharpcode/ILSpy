@@ -105,7 +105,7 @@ jobs:
         path: ILSpy.AddIn.VS2022\bin\${{ matrix.configuration }}\net472\*.vsix
         if-no-files-found: error
 
-    - name: Upload NuGet release build artifacts
+    - name: Upload Decompiler NuGet release build artifacts
       if: matrix.configuration == 'release'
       uses: actions/upload-artifact@v2
       with:
@@ -113,10 +113,23 @@ jobs:
         path: ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg
         if-no-files-found: error
 
-    - name: Publish NuGet
+    - name: Publish Decompiler NuGet
       if: github.ref == 'refs/heads/master' && matrix.configuration == 'release'
       run: |
         dotnet nuget push "ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}
+
+    - name: Upload ILSpyX NuGet release build artifacts
+      if: matrix.configuration == 'release'
+      uses: actions/upload-artifact@v2
+      with:
+        name: ICSharpCode.ILSpyX NuGet Package (${{ matrix.configuration }})
+        path: ICSharpCode.ILSpyX\bin\Release\ICSharpCode.ILSpyX*.nupkg
+        if-no-files-found: error
+
+    - name: Publish ILSpyX NuGet
+      if: github.ref == 'refs/heads/master' && matrix.configuration == 'release'
+      run: |
+        dotnet nuget push "ICSharpCode.ILSpyX\bin\Release\ICSharpCode.ILSpyX*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}
       
     - name: Upload zip binaries build artifacts
       uses: actions/upload-artifact@v2
