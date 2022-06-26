@@ -31,8 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class LambdaExpression : Expression
 	{
-		public readonly static TokenRole AsyncModifierRole = new TokenRole("async");
-		public static readonly Role<AstNode> BodyRole = new Role<AstNode>("Body", AstNode.Null);
+		public readonly static TokenRole AsyncModifierRole = new("async");
+		public static readonly Role<AstNode> BodyRole = new("Body", AstNode.Null);
 
 		bool isAsync;
 

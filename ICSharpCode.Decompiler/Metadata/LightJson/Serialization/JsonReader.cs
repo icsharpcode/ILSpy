@@ -19,7 +19,7 @@ namespace LightJson.Serialization
 
 		private JsonReader(TextReader reader)
 		{
-			this.scanner = new TextScanner(reader);
+			this.scanner = new(reader);
 		}
 
 		/// <summary>
@@ -322,7 +322,7 @@ namespace LightJson.Serialization
 
 		private JsonObject ReadObject()
 		{
-			return this.ReadObject(new JsonObject());
+			return this.ReadObject(new());
 		}
 
 		private JsonObject ReadObject(JsonObject jsonObject)
@@ -397,7 +397,7 @@ namespace LightJson.Serialization
 
 		private JsonArray ReadArray()
 		{
-			return this.ReadArray(new JsonArray());
+			return this.ReadArray(new());
 		}
 
 		private JsonArray ReadArray(JsonArray jsonArray)

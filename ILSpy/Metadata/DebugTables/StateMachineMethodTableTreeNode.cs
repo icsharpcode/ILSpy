@@ -58,7 +58,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			for (int rid = 1; rid <= length; rid++)
 			{
-				StateMachineMethodEntry entry = new StateMachineMethodEntry(module, ref reader, isEmbedded, rid);
+				StateMachineMethodEntry entry = new(module, ref reader, isEmbedded, rid);
 				if (scrollTarget == rid)
 				{
 					scrollTargetEntry = entry;

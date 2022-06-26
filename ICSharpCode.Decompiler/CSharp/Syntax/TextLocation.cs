@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Represents no text location (0, 0).
 		/// </summary>
-		public static readonly TextLocation Empty = new TextLocation(0, 0);
+		public static readonly TextLocation Empty = new(0, 0);
 
 		/// <summary>
 		/// Constant of the minimum line.

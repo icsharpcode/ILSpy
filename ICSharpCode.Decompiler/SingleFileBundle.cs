@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler
 			byte* end = data + (size - bundleSignature.Length);
 			for (byte* ptr = data; ptr < end; ptr++)
 			{
-				if (*ptr == 0x8b && bundleSignature.SequenceEqual(new ReadOnlySpan<byte>(ptr, bundleSignature.Length)))
+				if (*ptr == 0x8b && bundleSignature.SequenceEqual(new(ptr, bundleSignature.Length)))
 				{
 					bundleHeaderOffset = Unsafe.ReadUnaligned<long>(ptr - sizeof(long));
 					if (bundleHeaderOffset > 0 && bundleHeaderOffset < size)
@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler
 		static UnmanagedMemoryStream AsStream(MemoryMappedViewAccessor view)
 		{
 			long size = checked((long)view.SafeMemoryMappedViewHandle.ByteLength);
-			return new UnmanagedMemoryStream(view.SafeMemoryMappedViewHandle, 0, size);
+			return new(view.SafeMemoryMappedViewHandle, 0, size);
 		}
 
 		/// <summary>

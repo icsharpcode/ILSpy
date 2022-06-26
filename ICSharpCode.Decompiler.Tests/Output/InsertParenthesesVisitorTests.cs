@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		{
 			expr = expr.Clone();
 			expr.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
-			StringWriter w = new StringWriter();
+			StringWriter w = new();
 			w.NewLine = " ";
 			expr.AcceptVisitor(new CSharpOutputVisitor(new TextWriterTokenWriter(w) { IndentationString = "" }, policy));
 			return w.ToString();
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		{
 			expr = expr.Clone();
 			expr.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = false });
-			StringWriter w = new StringWriter();
+			StringWriter w = new();
 			w.NewLine = " ";
 			expr.AcceptVisitor(new CSharpOutputVisitor(new TextWriterTokenWriter(w) { IndentationString = "" }, policy));
 			return w.ToString();
@@ -309,7 +309,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[Test]
 		public void SumOfQueries()
 		{
-			QueryExpression query = new QueryExpression {
+			QueryExpression query = new() {
 				Clauses = {
 					new QueryFromClause {
 						Identifier = "a",
@@ -474,7 +474,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 				Target = new ArrayCreateExpression {
 					Type = new PrimitiveType("int"),
 					Arguments = { new PrimitiveExpression(1) },
-					Initializer = new ArrayInitializerExpression {
+					Initializer = new() {
 						Elements = { new PrimitiveExpression(42) }
 					}
 				},

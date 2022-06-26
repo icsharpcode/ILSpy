@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.PEFile = peFile;
 			this.metadata = peFile.Metadata;
 			this.options = options;
-			this.TypeProvider = new TypeProvider(this);
+			this.TypeProvider = new(this);
 
 			// assembly metadata
 			if (metadata.IsAssembly)
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var customAttrs = metadata.GetModuleDefinition().GetCustomAttributes();
 			this.NullableContext = customAttrs.GetNullableContext(metadata) ?? Nullability.Oblivious;
 			this.minAccessibilityForNRT = FindMinimumAccessibilityForNRT(metadata, customAttrs);
-			this.rootNamespace = new MetadataNamespace(this, null, string.Empty, metadata.GetNamespaceDefinitionRoot());
+			this.rootNamespace = new(this, null, string.Empty, metadata.GetNamespaceDefinitionRoot());
 
 			if (!options.HasFlag(TypeSystemOptions.Uncached))
 			{
@@ -229,7 +229,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var typeDef = LazyInit.VolatileRead(ref typeDefs[row]);
 			if (typeDef != null)
 				return typeDef;
-			typeDef = new MetadataTypeDefinition(this, handle);
+			typeDef = new(this, handle);
 			return LazyInit.GetOrSet(ref typeDefs[row], typeDef);
 		}
 
@@ -245,7 +245,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var field = LazyInit.VolatileRead(ref fieldDefs[row]);
 			if (field != null)
 				return field;
-			field = new MetadataField(this, handle);
+			field = new(this, handle);
 			return LazyInit.GetOrSet(ref fieldDefs[row], field);
 		}
 
@@ -262,7 +262,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var method = LazyInit.VolatileRead(ref methodDefs[row]);
 			if (method != null)
 				return method;
-			method = new MetadataMethod(this, handle);
+			method = new(this, handle);
 			return LazyInit.GetOrSet(ref methodDefs[row], method);
 		}
 
@@ -279,7 +279,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var property = LazyInit.VolatileRead(ref propertyDefs[row]);
 			if (property != null)
 				return property;
-			property = new MetadataProperty(this, handle);
+			property = new(this, handle);
 			return LazyInit.GetOrSet(ref propertyDefs[row], property);
 		}
 
@@ -296,7 +296,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var ev = LazyInit.VolatileRead(ref eventDefs[row]);
 			if (ev != null)
 				return ev;
-			ev = new MetadataEvent(this, handle);
+			ev = new(this, handle);
 			return LazyInit.GetOrSet(ref eventDefs[row], ev);
 		}
 
@@ -454,7 +454,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				// generic instance of a methoddef (=generic method in non-generic class in current assembly)
 				method = ResolveMethodDefinition((MethodDefinitionHandle)methodSpec.Method, expandVarArgs);
-				method = method.Specialize(new TypeParameterSubstitution(null, methodTypeArgs));
+				method = method.Specialize(new(null, methodTypeArgs));
 			}
 			else
 			{
@@ -497,7 +497,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				// We'll have to search the member directly on declaringTypeDefinition.
 				string name = metadata.GetString(memberRef.Name);
 				signature = memberRef.DecodeMethodSignature(TypeProvider,
-					new GenericContext(declaringTypeDefinition?.TypeParameters));
+					new(declaringTypeDefinition?.TypeParameters));
 				if (declaringTypeDefinition != null)
 				{
 					// Find the set of overloads to search:
@@ -552,7 +552,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			if (classTypeArguments != null || methodTypeArguments != null)
 			{
-				method = method.Specialize(new TypeParameterSubstitution(classTypeArguments, methodTypeArguments));
+				method = method.Specialize(new(classTypeArguments, methodTypeArguments));
 			}
 			if (expandVarArgs && signature.Header.CallingConvention == SignatureCallingConvention.VarArgs)
 			{
@@ -561,7 +561,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return method;
 		}
 
-		static readonly NormalizeTypeVisitor normalizeTypeVisitor = new NormalizeTypeVisitor {
+		static readonly NormalizeTypeVisitor normalizeTypeVisitor = new() {
 			ReplaceClassTypeParametersWithDummy = true,
 			ReplaceMethodTypeParametersWithDummy = true,
 		};
@@ -608,7 +608,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					typeParameters.Add(new DefaultTypeParameter(m, i));
 				}
 				m.TypeParameters = typeParameters;
-				substitution = new TypeParameterSubstitution(declaringType.TypeArguments, typeParameters);
+				substitution = new(declaringType.TypeArguments, typeParameters);
 			}
 			else if (declaringType.TypeArguments.Count > 0)
 			{
@@ -790,7 +790,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			string name = metadata.GetString(memberRef.Name);
 			// field signature is for the definition, not the generic instance
 			var signature = memberRef.DecodeFieldSignature(TypeProvider,
-				new GenericContext(declaringTypeDefinition?.TypeParameters));
+				new(declaringTypeDefinition?.TypeParameters));
 			// 'f' in the predicate is also the definition, even if declaringType is a ParameterizedType
 			var field = declaringType.GetFields(f => f.Name == name && CompareTypes(f.ReturnType, signature),
 				GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();

@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				FieldMarshalEntry entry = new FieldMarshalEntry(module, ptr, metadataOffset, rid);
+				FieldMarshalEntry entry = new(module, ptr, metadataOffset, rid);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -129,7 +129,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.Offset = metadataOffset + rowOffset;
 				int hasFieldMarshalRefSize = metadata.ComputeCodedTokenSize(32768, TableMask.Field | TableMask.Param);
 				int blobHeapSize = metadata.GetHeapSize(HeapIndex.Blob) < ushort.MaxValue ? 2 : 4;
-				this.fieldMarshal = new FieldMarshal(ptr + rowOffset, blobHeapSize, hasFieldMarshalRefSize);
+				this.fieldMarshal = new(ptr + rowOffset, blobHeapSize, hasFieldMarshalRefSize);
 			}
 		}
 

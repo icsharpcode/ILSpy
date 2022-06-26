@@ -352,7 +352,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					var arrayCreation = (ArrayCreateExpression)argumentList.Arguments[1].Expression;
 					var arrayCreationRR = (ArrayCreateResolveResult)argumentList.Arguments[1].ResolveResult;
 					var element = arrayCreation.Initializer.Elements.First().Detach();
-					argument = new TranslatedExpression(element, arrayCreationRR.InitializerElements.First());
+					argument = new(element, arrayCreationRR.InitializerElements.First());
 				}
 
 				if (tokens.Count > 0)
@@ -486,7 +486,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// At this point, we assume that 'method' fulfills all the conditions mentioned above. We just need to make
 			// sure that the correct method is called by resolving any ambiguities by inserting casts, if necessary.
 
-			ExpectedTargetDetails expectedTargetDetails = new ExpectedTargetDetails { CallOpCode = callOpCode };
+			ExpectedTargetDetails expectedTargetDetails = new() { CallOpCode = callOpCode };
 			var unused = new IdentifierExpression("initializedObject").WithRR(target).WithoutILInstruction();
 			var args = callArguments.ToList();
 			if (method.IsExtensionMethod)
@@ -529,7 +529,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public ExpressionWithResolveResult BuildDictionaryInitializerExpression(OpCode callOpCode, IMethod method,
 			InitializedObjectResolveResult target, IReadOnlyList<ILInstruction> indices, ILInstruction value = null)
 		{
-			ExpectedTargetDetails expectedTargetDetails = new ExpectedTargetDetails { CallOpCode = callOpCode };
+			ExpectedTargetDetails expectedTargetDetails = new() { CallOpCode = callOpCode };
 
 			var callArguments = new List<ILInstruction>();
 			callArguments.Add(new LdNull());
@@ -548,7 +548,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (value != null)
 				return assignment;
 
-			return new ExpressionWithResolveResult(((AssignmentExpression)assignment).Left.Detach());
+			return new(((AssignmentExpression)assignment).Left.Detach());
 		}
 
 		private static bool IsInterpolatedStringCreation(IMethod method, ArgumentList argumentList)
@@ -577,7 +577,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (!arguments.Skip(1).All(a => !a.Expression.DescendantsAndSelf.OfType<PrimitiveExpression>().Any(p => p.Value is string)))
 				return false;
-			tokens = new List<(TokenKind, int, string)>();
+			tokens = new();
 			int i = 0;
 			format = (string)crr.ConstantValue;
 			foreach (var (kind, data) in TokenizeFormatString(format))
@@ -640,7 +640,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			int next;
 			TokenKind kind = TokenKind.String;
-			StringBuilder sb = new StringBuilder();
+			StringBuilder sb = new();
 
 			while ((next = Next()) > -1)
 			{
@@ -704,7 +704,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		private ArgumentList BuildArgumentList(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method,
 			int firstParamIndex, IReadOnlyList<ILInstruction> callArguments, IReadOnlyList<int> argumentToParameterMap)
 		{
-			ArgumentList list = new ArgumentList();
+			ArgumentList list = new();
 
 			// Translate arguments to the expected parameter types
 			var arguments = new List<TranslatedExpression>(method.Parameters.Count);
@@ -712,7 +712,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(callArguments.Count == firstParamIndex + method.Parameters.Count);
 			var expectedParameters = new List<IParameter>(method.Parameters.Count); // parameters, but in argument order
 			bool isExpandedForm = false;
-			BitSet isPrimitiveValue = new BitSet(method.Parameters.Count);
+			BitSet isPrimitiveValue = new(method.Parameters.Count);
 
 			// Optional arguments:
 			// This value has the following values:
@@ -827,7 +827,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						expandedParameters.Add(new DefaultParameter(elementType, parameter.Name + j));
 						if (j < arrayElements.Length)
-							expandedArguments.Add(new TranslatedExpression(arrayElements[j]));
+							expandedArguments.Add(new(arrayElements[j]));
 						else
 							expandedArguments.Add(expressionBuilder.GetDefaultValueExpression(elementType).WithoutILInstruction());
 					}
@@ -1512,7 +1512,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				var argumentList = BuildArgumentList(expectedTargetDetails, null, inst.Method,
 					0, inst.Arguments, null);
-				return HandleConstructorCall(new ExpectedTargetDetails { CallOpCode = OpCode.NewObj }, null, inst.Method, argumentList).WithILInstruction(inst);
+				return HandleConstructorCall(new() { CallOpCode = OpCode.NewObj }, null, inst.Method, argumentList).WithILInstruction(inst);
 			}
 		}
 
@@ -1558,12 +1558,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal TranslatedExpression Build(LdVirtDelegate inst)
 		{
-			return HandleDelegateConstruction(inst.Type, inst.Method, new ExpectedTargetDetails { CallOpCode = OpCode.CallVirt }, inst.Argument, inst);
+			return HandleDelegateConstruction(inst.Type, inst.Method, new() { CallOpCode = OpCode.CallVirt }, inst.Argument, inst);
 		}
 
 		internal ExpressionWithResolveResult BuildMethodReference(IMethod method, bool isVirtual)
 		{
-			var expr = BuildDelegateReference(method, invokeMethod: null, new ExpectedTargetDetails { CallOpCode = isVirtual ? OpCode.CallVirt : OpCode.Call }, thisArg: null);
+			var expr = BuildDelegateReference(method, invokeMethod: null, new() { CallOpCode = isVirtual ? OpCode.CallVirt : OpCode.Call }, thisArg: null);
 			expr.Expression.RemoveAnnotations<ResolveResult>();
 			return expr.Expression.WithRR(new MemberResolveResult(null, method));
 		}
@@ -1749,7 +1749,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			else
 			{
-				or = new OverloadResolution(resolver.Compilation,
+				or = new(resolver.Compilation,
 					arguments: method.Parameters.SelectReadOnlyArray(p => new TypeResolveResult(p.Type)), // there are no arguments, use parameter types
 					argumentNames: null, // argument names are not possible
 					typeArguments.ToArray(),
@@ -1779,7 +1779,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		static MethodGroupResolveResult ToMethodGroup(IMethod method, ILFunction localFunction)
 		{
-			return new MethodGroupResolveResult(
+			return new(
 				null,
 				localFunction.Name,
 				new[] {

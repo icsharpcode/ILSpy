@@ -137,8 +137,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void SimplifyBranchChains(ILFunction function, ILTransformContext context)
 		{
-			List<(BlockContainer, Block)> blocksToAdd = new List<(BlockContainer, Block)>();
-			HashSet<Block> visitedBlocks = new HashSet<Block>();
+			List<(BlockContainer, Block)> blocksToAdd = new();
+			HashSet<Block> visitedBlocks = new();
 			foreach (var branch in function.Descendants.OfType<Branch>())
 			{
 				// Resolve chained branches to the final target:

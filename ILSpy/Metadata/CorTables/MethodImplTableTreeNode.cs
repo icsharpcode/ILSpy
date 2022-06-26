@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			for (int row = 1; row <= module.Metadata.GetTableRowCount(TableIndex.MethodImpl); row++)
 			{
-				MethodImplEntry entry = new MethodImplEntry(module, MetadataTokens.MethodImplementationHandle(row));
+				MethodImplEntry entry = new(module, MetadataTokens.MethodImplementationHandle(row));
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;

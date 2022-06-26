@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					&& orr.Operands.FirstOrDefault()?.Type.Kind == TypeKind.Pointer)
 				{
 					// transform "*(ptr + int)" to "ptr[int]"
-					IndexerExpression indexer = new IndexerExpression();
+					IndexerExpression indexer = new();
 					indexer.Target = bop.Left.Detach();
 					indexer.Arguments.Add(bop.Right.Detach());
 					indexer.CopyAnnotationsFrom(unaryOperatorExpression);
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			UnaryOperatorExpression uoe = memberReferenceExpression.Target as UnaryOperatorExpression;
 			if (uoe != null && uoe.Operator == UnaryOperatorType.Dereference)
 			{
-				PointerReferenceExpression pre = new PointerReferenceExpression();
+				PointerReferenceExpression pre = new();
 				pre.Target = uoe.Expression.Detach();
 				pre.MemberName = memberReferenceExpression.MemberName;
 				memberReferenceExpression.TypeArguments.MoveTo(pre.TypeArguments);

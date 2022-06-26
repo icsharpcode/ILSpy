@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public T New<T>() where T : new()
 		{
-			return new T();
+			return new();
 		}
 
 		public T NotNew<T>()

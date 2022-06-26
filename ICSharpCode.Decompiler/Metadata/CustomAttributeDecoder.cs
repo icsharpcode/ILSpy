@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				ArgumentTypeInfo info = DecodeNamedArgumentType(ref valueReader);
 				string name = valueReader.ReadSerializedString();
 				CustomAttributeTypedArgument<TType> argument = DecodeArgument(ref valueReader, info);
-				arguments.Add(new CustomAttributeNamedArgument<TType>(name, kind, argument.Type, argument.Value));
+				arguments.Add(new(name, kind, argument.Type, argument.Value));
 			}
 
 			return arguments.MoveToImmutable();
@@ -193,10 +193,10 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			if (_provideBoxingTypeInfo && outer.TypeCode == SerializationTypeCode.TaggedObject)
 			{
-				return new CustomAttributeTypedArgument<TType>(outer.Type, new CustomAttributeTypedArgument<TType>(info.Type, value));
+				return new(outer.Type, new CustomAttributeTypedArgument<TType>(info.Type, value));
 			}
 
-			return new CustomAttributeTypedArgument<TType>(info.Type, value);
+			return new(info.Type, value);
 		}
 
 		private ImmutableArray<CustomAttributeTypedArgument<TType>>? DecodeArrayArgument(ref BlobReader blobReader, ArgumentTypeInfo info)

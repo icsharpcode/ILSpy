@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			try
 			{
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				AvalonEditTextOutput output = new();
 				using var data = OpenStream();
 				if (data == null)
 					return false;

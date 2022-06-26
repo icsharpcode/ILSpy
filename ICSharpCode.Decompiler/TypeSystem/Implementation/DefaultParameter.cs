@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public static string ToString(IParameter parameter)
 		{
-			StringBuilder b = new StringBuilder();
+			StringBuilder b = new();
 			if (parameter.IsRef)
 				b.Append("ref ");
 			if (parameter.IsOut)

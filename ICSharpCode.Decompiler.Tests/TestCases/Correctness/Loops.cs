@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			NonGenericForeachWithReturnFallbackTest(new object[] { "a", 42, "b", 43 });
 			NonGenericForeachWithReturn(new object[] { "a", 42, "b", 43 });
 			ForeachWithReturn(new[] { 42, 43, 44, 45 });
-			ForeachWithRefUsage(new List<int> { 1, 2, 3, 4, 5 });
+			ForeachWithRefUsage(new() { 1, 2, 3, 4, 5 });
 			Console.WriteLine(FirstOrDefault(new List<int> { 1, 2, 3, 4, 5 }));
 			Console.WriteLine(NoForeachDueToMultipleCurrentAccess(new List<int> { 1, 2, 3, 4, 5 }));
 			Console.WriteLine(NoForeachCallWithSideEffect(new CustomClassEnumeratorWithIDisposable<int>()));

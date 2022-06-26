@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			// The TS prefers 'null' over empty lists in substitutions, and we need our substitution
 			// to compare equal to the ones created by the TS.
-			return new TypeParameterSubstitution(
+			return new(
 				classTypeArguments: ClassTypeParameters?.Count > 0 ? ClassTypeParameters : null,
 				methodTypeArguments: MethodTypeParameters?.Count > 0 ? MethodTypeParameters : null
 			);

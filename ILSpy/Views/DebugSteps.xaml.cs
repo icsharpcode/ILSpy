@@ -14,7 +14,7 @@ namespace ICSharpCode.ILSpy
 {
 	public partial class DebugSteps : UserControl
 	{
-		static readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {
+		static readonly ILAstWritingOptions writingOptions = new() {
 			UseFieldSugar = true,
 			UseLogicOperationSugar = true
 		};

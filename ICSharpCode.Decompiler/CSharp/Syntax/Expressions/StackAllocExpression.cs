@@ -32,8 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class StackAllocExpression : Expression
 	{
-		public readonly static TokenRole StackallocKeywordRole = new TokenRole("stackalloc");
-		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", ArrayInitializerExpression.Null);
+		public readonly static TokenRole StackallocKeywordRole = new("stackalloc");
+		public readonly static Role<ArrayInitializerExpression> InitializerRole = new("Initializer", ArrayInitializerExpression.Null);
 
 		public CSharpTokenNode StackAllocToken {
 			get { return GetChildByRole(StackallocKeywordRole); }

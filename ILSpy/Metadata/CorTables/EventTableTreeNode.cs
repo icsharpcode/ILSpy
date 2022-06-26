@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.EventDefinitions)
 			{
-				EventDefEntry entry = new EventDefEntry(module, row);
+				EventDefEntry entry = new(module, row);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;

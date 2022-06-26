@@ -398,7 +398,7 @@ namespace ICSharpCode.Decompiler
 				{
 					ns = "";
 				}
-				return new FullTypeName(new TopLevelTypeName(ns, name, typeParameterCount));
+				return new(new TopLevelTypeName(ns, name, typeParameterCount));
 			}
 			else
 			{
@@ -421,7 +421,7 @@ namespace ICSharpCode.Decompiler
 			if ((declaringTypeHandle = td.GetDeclaringType()).IsNil)
 			{
 				string @namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
-				return new FullTypeName(new TopLevelTypeName(@namespace, name, typeParameterCount));
+				return new(new TopLevelTypeName(@namespace, name, typeParameterCount));
 			}
 			else
 			{
@@ -699,7 +699,7 @@ namespace ICSharpCode.Decompiler
 			public int GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle,
 				byte rawTypeKind)
 			{
-				var typeDef = module?.ResolveType(handle, new GenericContext()).GetDefinition();
+				var typeDef = module?.ResolveType(handle, new()).GetDefinition();
 				if (typeDef == null || typeDef.MetadataToken.IsNil)
 					return 0;
 				reader = typeDef.ParentModule.PEFile.Metadata;

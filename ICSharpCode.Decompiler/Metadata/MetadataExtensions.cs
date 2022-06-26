@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static string GetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader)
 		{
-			StringBuilder builder = new StringBuilder();
+			StringBuilder builder = new();
 			builder.Append(reader.GetString(reference.Name));
 			builder.Append(", Version=");
 			builder.Append(reference.Version);
@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (bytes == null)
 				throw new ArgumentNullException(nameof(bytes));
 
-			StringBuilder sb = new StringBuilder(estimatedLength * 2);
+			StringBuilder sb = new(estimatedLength * 2);
 			foreach (var b in bytes)
 				sb.AppendFormat("{0:x2}", b);
 			return sb.ToString();
@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static string ToHexString(this BlobReader reader)
 		{
-			StringBuilder sb = new StringBuilder(reader.Length * 3);
+			StringBuilder sb = new(reader.Length * 3);
 			for (int i = 0; i < reader.Length; i++)
 			{
 				if (i == 0)
@@ -235,7 +235,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		internal static readonly TypeProvider minimalCorlibTypeProvider =
-			new TypeProvider(new SimpleCompilation(MinimalCorlib.Instance));
+			new(new SimpleCompilation(MinimalCorlib.Instance));
 
 		/// <summary>
 		/// An attribute type provider that can be used to decode attribute signatures

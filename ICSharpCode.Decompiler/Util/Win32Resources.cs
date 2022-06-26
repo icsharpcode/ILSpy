@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.Util
 			if (rva == 0)
 				return null;
 			byte* pRoot = pe.GetSectionData(rva).Pointer;
-			return new Win32ResourceDirectory(pe, pRoot, 0, new Win32ResourceName("Root"));
+			return new(pe, pRoot, 0, new("Root"));
 		}
 
 		public static Win32ResourceDirectory? Find(this Win32ResourceDirectory root, Win32ResourceName type)
@@ -109,18 +109,18 @@ namespace ICSharpCode.Decompiler.Util
 			for (int i = 0; i < total; i++)
 			{
 				var pEntry = pEntries + i;
-				name = new Win32ResourceName(pRoot, pEntry);
+				name = new(pRoot, pEntry);
 				if ((pEntry->OffsetToData & 0x80000000) == 0)
-					Datas.Add(new Win32ResourceData(pe, pRoot, (int)pEntry->OffsetToData, name));
+					Datas.Add(new(pe, pRoot, (int)pEntry->OffsetToData, name));
 				else
-					Directories.Add(new Win32ResourceDirectory(pe, pRoot, (int)(pEntry->OffsetToData & 0x7FFFFFFF), name));
+					Directories.Add(new(pe, pRoot, (int)(pEntry->OffsetToData & 0x7FFFFFFF), name));
 			}
 		}
 
 		static unsafe string ReadString(byte* pRoot, int offset)
 		{
 			var pString = (IMAGE_RESOURCE_DIRECTORY_STRING*)(pRoot + offset);
-			return new string(pString->NameString, 0, pString->Length);
+			return new(pString->NameString, 0, pString->Length);
 		}
 
 		public Win32ResourceDirectory? FindDirectory(Win32ResourceName name)
@@ -223,7 +223,7 @@ namespace ICSharpCode.Decompiler.Util
 			static string ReadString(byte* pRoot, int offset)
 			{
 				var pString = (IMAGE_RESOURCE_DIRECTORY_STRING*)(pRoot + offset);
-				return new string(pString->NameString, 0, pString->Length);
+				return new(pString->NameString, 0, pString->Length);
 			}
 		}
 

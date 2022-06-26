@@ -343,13 +343,13 @@ namespace ICSharpCode.Decompiler.IL
 				else
 				{
 					// join overlapping ranges
-					return new Interval(newRange.Start, Math.Max(newRange.End, oldRange.End));
+					return new(newRange.Start, Math.Max(newRange.End, oldRange.End));
 				}
 			}
 			else if (newRange.Start <= oldRange.End)
 			{
 				// join overlapping ranges
-				return new Interval(oldRange.Start, Math.Max(newRange.End, oldRange.End));
+				return new(oldRange.Start, Math.Max(newRange.End, oldRange.End));
 			}
 			return oldRange;
 		}
@@ -390,7 +390,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override string ToString()
 		{
 			var output = new PlainTextOutput();
-			WriteTo(output, new ILAstWritingOptions());
+			WriteTo(output, new());
 			if (!ILRange.IsEmpty)
 			{
 				output.Write(" at IL_" + ILRange.Start.ToString("x4"));
@@ -422,7 +422,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public ChildrenCollection Children {
 			get {
-				return new ChildrenCollection(this);
+				return new(this);
 			}
 		}
 
@@ -453,7 +453,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			public ChildrenEnumerator GetEnumerator()
 			{
-				return new ChildrenEnumerator(inst);
+				return new(inst);
 			}
 
 			IEnumerator<ILInstruction> IEnumerable<ILInstruction>.GetEnumerator()
@@ -594,8 +594,8 @@ namespace ICSharpCode.Decompiler.IL
 				// but that makes it difficult to reason about the behavior in the cases
 				// where Parent/ChildIndex is not accurate (stale positions), especially
 				// if the ILAst is modified during enumeration.
-				Stack<ChildrenEnumerator> stack = new Stack<ChildrenEnumerator>();
-				ChildrenEnumerator enumerator = new ChildrenEnumerator(this);
+				Stack<ChildrenEnumerator> stack = new();
+				ChildrenEnumerator enumerator = new(this);
 				try
 				{
 					while (true)
@@ -604,7 +604,7 @@ namespace ICSharpCode.Decompiler.IL
 						{
 							var element = enumerator.Current;
 							stack.Push(enumerator);
-							enumerator = new ChildrenEnumerator(element);
+							enumerator = new(element);
 						}
 						enumerator.Dispose();
 						if (stack.Count > 0)
@@ -861,7 +861,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </returns>
 		public Match Match(ILInstruction node)
 		{
-			Match match = new Match();
+			Match match = new();
 			match.Success = PerformMatch(node, ref match);
 			return match;
 		}

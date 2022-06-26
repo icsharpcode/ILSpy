@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class IsExpression : Expression
 	{
-		public readonly static TokenRole IsKeywordRole = new TokenRole("is");
+		public readonly static TokenRole IsKeywordRole = new("is");
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }

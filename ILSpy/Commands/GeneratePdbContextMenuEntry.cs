@@ -70,10 +70,10 @@ namespace ICSharpCode.ILSpy
 			dlg.InitialDirectory = Path.GetDirectoryName(assembly.FileName);
 			if (dlg.ShowDialog() != true)
 				return;
-			DecompilationOptions options = new DecompilationOptions();
+			DecompilationOptions options = new();
 			string fileName = dlg.FileName;
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				AvalonEditTextOutput output = new();
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				using (FileStream stream = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write))
 				{

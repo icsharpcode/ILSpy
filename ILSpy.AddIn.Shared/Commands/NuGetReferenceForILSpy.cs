@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				var properties = Utils.GetProperties(projectItem.Properties, "Type", "ExtenderCATID");
 				if (((properties[0] as string) == "Package") || ((properties[1] as string) == PrjBrowseObjectCATID.prjCATIDCSharpReferenceBrowseObject))
 				{
-					return new NuGetReferenceForILSpy(projectItem);
+					return new(projectItem);
 				}
 			}
 
@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			var properties = Utils.GetProperties(projectItem.Properties, "Name", "Version", "Path");
 			if (properties[0] != null && properties[1] != null && properties[2] != null)
 			{
-				return new ILSpyParameters(new[] { $"{properties[2]}\\{properties[0]}.{properties[1]}.nupkg" });
+				return new(new[] { $"{properties[2]}\\{properties[0]}.{properties[1]}.nupkg" });
 			}
 
 			return null;

@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	{
 		readonly protected TokenWriter writer;
 		readonly protected CSharpFormattingOptions policy;
-		readonly protected Stack<AstNode> containerStack = new Stack<AstNode>();
+		readonly protected Stack<AstNode> containerStack = new();
 
 		public CSharpOutputVisitor(TextWriter textWriter, CSharpFormattingOptions formattingPolicy)
 		{
@@ -406,7 +406,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		#endregion
 
 		#region IsKeyword Test
-		static readonly HashSet<string> unconditionalKeywords = new HashSet<string> {
+		static readonly HashSet<string> unconditionalKeywords = new() {
 			"abstract", "as", "base", "bool", "break", "byte", "case", "catch",
 			"char", "checked", "class", "const", "continue", "decimal", "default", "delegate",
 			"do", "double", "else", "enum", "event", "explicit", "extern", "false",
@@ -418,7 +418,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			"true", "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort",
 			"using", "virtual", "void", "volatile", "while"
 		};
-		static readonly HashSet<string> queryKeywords = new HashSet<string> {
+		static readonly HashSet<string> queryKeywords = new() {
 			"from", "where", "join", "on", "equals", "into", "let", "orderby",
 			"ascending", "descending", "select", "group", "by"
 		};

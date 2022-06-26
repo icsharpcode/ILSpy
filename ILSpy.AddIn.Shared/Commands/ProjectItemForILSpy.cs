@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			if (roslynProject == null)
 				return null;
 
-			return new ProjectItemForILSpy(project, roslynProject, item);
+			return new(project, roslynProject, item);
 		}
 
 		/// <summary>
@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			return new ILSpyParameters(new[] { Utils.GetProjectOutputAssembly(project, roslynProject) });
+			return new(new[] { Utils.GetProjectOutputAssembly(project, roslynProject) });
 		}
 	}
 }

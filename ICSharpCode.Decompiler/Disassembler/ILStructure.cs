@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// <summary>
 		/// The list of child structures.
 		/// </summary>
-		public readonly List<ILStructure> Children = new List<ILStructure>();
+		public readonly List<ILStructure> Children = new();
 
 		public ILStructure(PEFile module, MethodDefinitionHandle handle, MetadataGenericContext genericContext, MethodBodyBlock body)
 			: this(module, handle, genericContext, ILStructureType.Root, 0, body.GetILReader().Length)
@@ -96,10 +96,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{
 				ExceptionRegion eh = body.ExceptionRegions[i];
 				if (!body.ExceptionRegions.Take(i).Any(oldEh => oldEh.TryOffset == eh.TryOffset && oldEh.TryLength == eh.TryLength))
-					AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Try, eh.TryOffset, eh.TryOffset + eh.TryLength, eh));
+					AddNestedStructure(new(module, handle, genericContext, ILStructureType.Try, eh.TryOffset, eh.TryOffset + eh.TryLength, eh));
 				if (eh.Kind == ExceptionRegionKind.Filter)
-					AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Filter, eh.FilterOffset, eh.HandlerOffset, eh));
-				AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Handler, eh.HandlerOffset, eh.HandlerOffset + eh.HandlerLength, eh));
+					AddNestedStructure(new(module, handle, genericContext, ILStructureType.Filter, eh.FilterOffset, eh.HandlerOffset, eh));
+				AddNestedStructure(new(module, handle, genericContext, ILStructureType.Handler, eh.HandlerOffset, eh.HandlerOffset + eh.HandlerLength, eh));
 			}
 			// Very simple loop detection: look for backward branches
 			(var allBranches, var isAfterUnconditionalBranch) = FindAllBranches(body.GetILReader());
@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					}
 					if (!multipleEntryPoints)
 					{
-						AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Loop, loopStart, loopEnd, entryPoint));
+						AddNestedStructure(new(module, handle, genericContext, ILStructureType.Loop, loopStart, loopEnd, entryPoint));
 					}
 				}
 			}
@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			public Branch(int start, int end, int target)
 			{
-				this.Source = new Interval(start, end);
+				this.Source = new(start, end);
 				this.Target = target;
 			}
 
@@ -244,13 +244,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 					case OperandType.ShortBrTarget:
 						target = ILParser.DecodeBranchTarget(ref body, thisOpCode);
 						endOffset = body.Offset;
-						result.Add(new Branch(offset, endOffset, target));
+						result.Add(new(offset, endOffset, target));
 						bitset[endOffset] = IsUnconditionalBranch(thisOpCode);
 						break;
 					case OperandType.Switch:
 						var targets = ILParser.DecodeSwitchTargets(ref body);
 						foreach (int t in targets)
-							result.Add(new Branch(offset, body.Offset, t));
+							result.Add(new(offset, body.Offset, t));
 						break;
 					default:
 						ILParser.SkipOperand(ref body, thisOpCode);

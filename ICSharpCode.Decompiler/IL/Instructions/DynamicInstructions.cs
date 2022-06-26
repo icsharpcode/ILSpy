@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.IL
 			Name = name;
 			TypeArguments = typeArguments ?? Empty<IType>.Array;
 			ArgumentInfo = argumentInfo;
-			Arguments = new InstructionCollection<ILInstruction>(this, 0);
+			Arguments = new(this, 0);
 			Arguments.AddRange(arguments);
 		}
 
@@ -298,7 +298,7 @@ namespace ICSharpCode.Decompiler.IL
 			: base(OpCode.DynamicGetIndexInstruction, binderFlags, context)
 		{
 			ArgumentInfo = argumentInfo;
-			Arguments = new InstructionCollection<ILInstruction>(this, 0);
+			Arguments = new(this, 0);
 			Arguments.AddRange(arguments);
 		}
 
@@ -330,7 +330,7 @@ namespace ICSharpCode.Decompiler.IL
 			: base(OpCode.DynamicSetIndexInstruction, binderFlags, context)
 		{
 			ArgumentInfo = argumentInfo;
-			Arguments = new InstructionCollection<ILInstruction>(this, 0);
+			Arguments = new(this, 0);
 			Arguments.AddRange(arguments);
 		}
 
@@ -364,7 +364,7 @@ namespace ICSharpCode.Decompiler.IL
 			: base(OpCode.DynamicInvokeConstructorInstruction, binderFlags, context)
 		{
 			ArgumentInfo = argumentInfo;
-			Arguments = new InstructionCollection<ILInstruction>(this, 0);
+			Arguments = new(this, 0);
 			Arguments.AddRange(arguments);
 			this.resultType = type;
 		}
@@ -538,7 +538,7 @@ namespace ICSharpCode.Decompiler.IL
 			: base(OpCode.DynamicInvokeInstruction, binderFlags, context)
 		{
 			ArgumentInfo = argumentInfo;
-			Arguments = new InstructionCollection<ILInstruction>(this, 0);
+			Arguments = new(this, 0);
 			Arguments.AddRange(arguments);
 		}
 

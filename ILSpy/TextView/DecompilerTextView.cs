@@ -99,8 +99,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 			this.referenceElementGenerator = new ReferenceElementGenerator(this.IsLink);
 			textEditor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
-			this.uiElementGenerator = new UIElementGenerator();
-			this.bracketHighlightRenderer = new BracketHighlightRenderer(textEditor.TextArea.TextView);
+			this.uiElementGenerator = new();
+			this.bracketHighlightRenderer = new(textEditor.TextArea.TextView);
 			textEditor.TextArea.TextView.ElementGenerators.Add(uiElementGenerator);
 			textEditor.Options.RequireControlModifierForHyperlinkClick = false;
 			textEditor.TextArea.TextView.MouseHover += TextViewMouseHover;
@@ -118,7 +118,7 @@ namespace ICSharpCode.ILSpy.TextView
 			RemoveEditCommand(EditingCommands.TabForward);
 			RemoveEditCommand(EditingCommands.TabBackward);
 
-			textMarkerService = new TextMarkerService(textEditor.TextArea.TextView);
+			textMarkerService = new(textEditor.TextArea.TextView);
 			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
 			textEditor.ShowLineNumbers = true;
@@ -388,7 +388,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (segment.Reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo code)
 			{
 				XmlDocumentationProvider docProvider = XmlDocLoader.MscorlibDocumentation;
-				DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), MainWindow.Instance.CurrentLanguage.SyntaxHighlighting);
+				DocumentationUIBuilder renderer = new(new CSharpAmbience(), MainWindow.Instance.CurrentLanguage.SyntaxHighlighting);
 				renderer.AddSignatureBlock($"{code.Name} (0x{code.Code:x})");
 				if (docProvider != null)
 				{
@@ -439,7 +439,7 @@ namespace ICSharpCode.ILSpy.TextView
 		static FlowDocument? CreateTooltipForEntity(IEntity resolved)
 		{
 			Language currentLanguage = MainWindow.Instance.CurrentLanguage;
-			DocumentationUIBuilder renderer = new DocumentationUIBuilder(new CSharpAmbience(), currentLanguage.SyntaxHighlighting);
+			DocumentationUIBuilder renderer = new(new CSharpAmbience(), currentLanguage.SyntaxHighlighting);
 			RichText richText = currentLanguage.GetRichTextTooltip(resolved);
 			renderer.AddSignatureBlock(richText.Text, richText.ToRichTextModel());
 			try
@@ -607,7 +607,7 @@ namespace ICSharpCode.ILSpy.TextView
 						}
 						if (task.IsCanceled)
 						{
-							AvalonEditTextOutput output = new AvalonEditTextOutput();
+							AvalonEditTextOutput output = new();
 							output.WriteLine("The operation was canceled.");
 							ShowOutput(output);
 						}
@@ -786,7 +786,7 @@ namespace ICSharpCode.ILSpy.TextView
 			bool isDecompilationScheduled = this.nextDecompilationRun != null;
 			if (this.nextDecompilationRun != null)
 				this.nextDecompilationRun.TaskCompletionSource.TrySetCanceled();
-			this.nextDecompilationRun = new DecompilationContext(language, treeNodes.ToArray(), options);
+			this.nextDecompilationRun = new(language, treeNodes.ToArray(), options);
 			var task = this.nextDecompilationRun.TaskCompletionSource.Task;
 			if (!isDecompilationScheduled)
 			{
@@ -833,7 +833,7 @@ namespace ICSharpCode.ILSpy.TextView
 			.Catch<Exception>(exception => {
 				textEditor.SyntaxHighlighting = null;
 				Debug.WriteLine("Decompiler crashed: " + exception.ToString());
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				AvalonEditTextOutput output = new();
 				if (exception is OutputLengthExceededException)
 				{
 					WriteOutputLengthExceededMessage(output, context, outputLengthLimit == DefaultOutputLengthLimit);
@@ -863,7 +863,7 @@ namespace ICSharpCode.ILSpy.TextView
 				delegate {
 					try
 					{
-						AvalonEditTextOutput textOutput = new AvalonEditTextOutput();
+						AvalonEditTextOutput textOutput = new();
 						textOutput.LengthLimit = outputLengthLimit;
 						DecompileNodes(context, textOutput);
 						textOutput.PrepareDocument();
@@ -1045,13 +1045,13 @@ namespace ICSharpCode.ILSpy.TextView
 			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(treeNodes.First().ToString()) + language.FileExtension;
 			if (dlg.ShowDialog() == true)
 			{
-				SaveToDisk(new DecompilationContext(language, treeNodes.ToArray(), options), dlg.FileName);
+				SaveToDisk(new(language, treeNodes.ToArray(), options), dlg.FileName);
 			}
 		}
 
 		public void SaveToDisk(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options, string fileName)
 		{
-			SaveToDisk(new DecompilationContext(language, treeNodes.ToArray(), options), fileName);
+			SaveToDisk(new(language, treeNodes.ToArray(), options), fileName);
 		}
 
 		/// <summary>
@@ -1071,7 +1071,7 @@ namespace ICSharpCode.ILSpy.TextView
 					Debug.WriteLine("Decompiler crashed: " + ex.ToString());
 					// Unpack aggregate exceptions as long as there's only a single exception:
 					// (assembly load errors might produce nested aggregate exceptions)
-					AvalonEditTextOutput output = new AvalonEditTextOutput();
+					AvalonEditTextOutput output = new();
 					output.WriteLine(ex.ToString());
 					ShowOutput(output);
 				}).HandleExceptions();
@@ -1086,7 +1086,7 @@ namespace ICSharpCode.ILSpy.TextView
 					{
 						bool originalProjectFormatSetting = context.Options.DecompilerSettings.UseSdkStyleProjectFormat;
 						context.Options.EscapeInvalidIdentifiers = true;
-						AvalonEditTextOutput output = new AvalonEditTextOutput {
+						AvalonEditTextOutput output = new() {
 							EnableHyperlinks = true,
 							Title = string.Join(", ", context.TreeNodes.Select(n => n.Text))
 						};

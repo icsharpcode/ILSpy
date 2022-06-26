@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.Util
 		public ResourcesFile(Stream stream, bool leaveOpen = true)
 		{
 			fileStartPosition = stream.Position;
-			reader = new MyBinaryReader(stream, leaveOpen);
+			reader = new(stream, leaveOpen);
 
 			const string ResourcesHeaderCorrupted = "Resources header corrupted.";
 
@@ -477,7 +477,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				string name = GetResourceName(i, out int dataOffset);
 				object? val = LoadObject(dataOffset);
-				yield return new KeyValuePair<string, object?>(name, val);
+				yield return new(name, val);
 			}
 		}
 

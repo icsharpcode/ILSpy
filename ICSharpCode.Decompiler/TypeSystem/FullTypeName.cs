@@ -90,20 +90,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (pos < 0)
 			{
 				// top-level type
-				this.topLevelType = new TopLevelTypeName(reflectionName);
+				this.topLevelType = new(reflectionName);
 				this.nestedTypes = null;
 			}
 			else
 			{
 				// nested type
 				string[] parts = reflectionName.Split('+');
-				this.topLevelType = new TopLevelTypeName(parts[0]);
+				this.topLevelType = new(parts[0]);
 				this.nestedTypes = new NestedTypeName[parts.Length - 1];
 				for (int i = 0; i < nestedTypes.Length; i++)
 				{
 					int tpc;
 					string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(parts[i + 1], out tpc);
-					nestedTypes[i] = new NestedTypeName(name, tpc);
+					nestedTypes[i] = new(name, tpc);
 				}
 			}
 		}
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get {
 				if (nestedTypes == null)
 					return topLevelType.ReflectionName;
-				StringBuilder b = new StringBuilder(topLevelType.ReflectionName);
+				StringBuilder b = new(topLevelType.ReflectionName);
 				foreach (NestedTypeName nt in nestedTypes)
 				{
 					b.Append('+');
@@ -215,7 +215,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return topLevelType;
 			NestedTypeName[] outerNestedTypeNames = new NestedTypeName[nestedTypes.Length - 1];
 			Array.Copy(nestedTypes, 0, outerNestedTypeNames, 0, outerNestedTypeNames.Length);
-			return new FullTypeName(topLevelType, outerNestedTypeNames);
+			return new(topLevelType, outerNestedTypeNames);
 		}
 
 		/// <summary>
@@ -228,16 +228,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentNullException(nameof(name));
 			var newNestedType = new NestedTypeName(name, additionalTypeParameterCount);
 			if (nestedTypes == null)
-				return new FullTypeName(topLevelType, new[] { newNestedType });
+				return new(topLevelType, new[] { newNestedType });
 			NestedTypeName[] newNestedTypeNames = new NestedTypeName[nestedTypes.Length + 1];
 			nestedTypes.CopyTo(newNestedTypeNames, 0);
 			newNestedTypeNames[newNestedTypeNames.Length - 1] = newNestedType;
-			return new FullTypeName(topLevelType, newNestedTypeNames);
+			return new(topLevelType, newNestedTypeNames);
 		}
 
 		public static implicit operator FullTypeName(TopLevelTypeName topLevelTypeName)
 		{
-			return new FullTypeName(topLevelTypeName);
+			return new(topLevelTypeName);
 		}
 
 		public override string ToString()
@@ -276,8 +276,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public sealed class FullTypeNameComparer : IEqualityComparer<FullTypeName>
 	{
-		public static readonly FullTypeNameComparer Ordinal = new FullTypeNameComparer(StringComparer.Ordinal);
-		public static readonly FullTypeNameComparer OrdinalIgnoreCase = new FullTypeNameComparer(StringComparer.OrdinalIgnoreCase);
+		public static readonly FullTypeNameComparer Ordinal = new(StringComparer.Ordinal);
+		public static readonly FullTypeNameComparer OrdinalIgnoreCase = new(StringComparer.OrdinalIgnoreCase);
 
 		public readonly StringComparer NameComparer;
 

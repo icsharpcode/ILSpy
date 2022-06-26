@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		static bool CanModifyInstructions(ILVariable returnVar, Block leaveBlock, out List<(BlockContainer, Block, Branch)> instructionsToModify)
 		{
-			instructionsToModify = new List<(BlockContainer, Block, Branch)>();
+			instructionsToModify = new();
 			foreach (var inst in returnVar.StoreInstructions)
 			{
 				if (!(inst is StLoc store))

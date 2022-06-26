@@ -259,7 +259,7 @@ namespace ICSharpCode.ILSpy.Search
 				MainWindow mainWindow = MainWindow.Instance;
 
 				searchProgressBar.IsIndeterminate = true;
-				startedSearch = new RunningSearch(await mainWindow.CurrentAssemblyList.GetAllAssemblies(), searchTerm,
+				startedSearch = new(await mainWindow.CurrentAssemblyList.GetAllAssemblies(), searchTerm,
 					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage,
 					mainWindow.SessionSettings.FilterSettings.ShowApiLevel);
 				currentSearch = startedSearch;
@@ -305,7 +305,7 @@ namespace ICSharpCode.ILSpy.Search
 			{
 				string[] parts = NativeMethods.CommandLineToArgumentArray(input);
 
-				SearchRequest request = new SearchRequest();
+				SearchRequest request = new();
 				List<string> keywords = new List<string>();
 				Regex regex = null;
 				request.Mode = searchMode;

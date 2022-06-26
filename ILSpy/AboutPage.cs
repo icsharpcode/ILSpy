@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy
 
 		public static void Display(DecompilerTextView textView)
 		{
-			AvalonEditTextOutput output = new AvalonEditTextOutput() {
+			AvalonEditTextOutput output = new() {
 				Title = Resources.About,
 				EnableHyperlinks = true
 			};
@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy
 				CheckBox checkBox = new CheckBox();
 				checkBox.Margin = new Thickness(4);
 				checkBox.Content = Resources.AutomaticallyCheckUpdatesEveryWeek;
-				UpdateSettings settings = new UpdateSettings(ILSpySettings.Load());
+				UpdateSettings settings = new(ILSpySettings.Load());
 				checkBox.SetBinding(CheckBox.IsCheckedProperty, new Binding("AutomaticUpdateCheckEnabled") { Source = settings });
 				return new StackPanel {
 					Margin = new Thickness(0, 4, 0, 0),
@@ -147,7 +147,7 @@ namespace ICSharpCode.ILSpy
 				}
 				catch (Exception ex)
 				{
-					AvalonEditTextOutput exceptionOutput = new AvalonEditTextOutput();
+					AvalonEditTextOutput exceptionOutput = new();
 					exceptionOutput.WriteLine(ex.ToString());
 					textView.ShowText(exceptionOutput);
 				}
@@ -213,7 +213,7 @@ namespace ICSharpCode.ILSpy
 			if (!(url.StartsWith("http://", StringComparison.Ordinal) || url.StartsWith("https://", StringComparison.Ordinal)))
 				url = null; // don't accept non-urls
 
-			latestAvailableVersion = new AvailableVersionInfo { Version = version, DownloadUrl = url };
+			latestAvailableVersion = new() { Version = version, DownloadUrl = url };
 			return latestAvailableVersion;
 		}
 
@@ -292,7 +292,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public static async Task<string> CheckForUpdatesIfEnabledAsync(ILSpySettings spySettings)
 		{
-			UpdateSettings s = new UpdateSettings(spySettings);
+			UpdateSettings s = new(spySettings);
 
 			// If we're in an MSIX package, updates work differently
 			if (s.AutomaticUpdateCheckEnabled)
@@ -318,7 +318,7 @@ namespace ICSharpCode.ILSpy
 
 		public static Task<string> CheckForUpdatesAsync(ILSpySettings spySettings)
 		{
-			UpdateSettings s = new UpdateSettings(spySettings);
+			UpdateSettings s = new(spySettings);
 			return CheckForUpdateInternal(s);
 		}
 

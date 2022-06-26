@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	public class SlotInfo
 	{
-		public static SlotInfo None = new SlotInfo("<no slot>");
+		public static SlotInfo None = new("<no slot>");
 
 		/// <summary>
 		/// Gets the name of the slot.

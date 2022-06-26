@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public bool CanPropagate { get; private set; }
 			public bool UsesInitialValue { get; set; }
 
-			public HashSet<ILInstruction> Initializers { get; } = new HashSet<ILInstruction>();
+			public HashSet<ILInstruction> Initializers { get; } = new();
 
 			public VariableToDeclare(DisplayClass container, IField field, ILVariable declaredVariable = null)
 			{
@@ -100,14 +100,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				Variable = variable;
 				Type = type;
-				VariablesToDeclare = new Dictionary<IField, VariableToDeclare>();
+				VariablesToDeclare = new();
 			}
 		}
 
 		ILTransformContext context;
 		ITypeResolveContext decompilationContext;
-		readonly Dictionary<ILVariable, DisplayClass> displayClasses = new Dictionary<ILVariable, DisplayClass>();
-		readonly Dictionary<ILVariable, ILVariable> displayClassCopyMap = new Dictionary<ILVariable, ILVariable>();
+		readonly Dictionary<ILVariable, DisplayClass> displayClasses = new();
+		readonly Dictionary<ILVariable, ILVariable> displayClassCopyMap = new();
 
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
@@ -291,7 +291,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 					if (stloc.Value is NewObj newObj && ValidateConstructor(newObj.Method))
 					{
-						result = new DisplayClass(v, definition) {
+						result = new(v, definition) {
 							CaptureScope = v.CaptureScope,
 							Initializer = stloc
 						};
@@ -307,7 +307,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (v.StoreInstructions.Count != 0)
 						return null;
 					Debug.Assert(v.StoreInstructions.Count == 0);
-					result = new DisplayClass(v, definition) { CaptureScope = v.CaptureScope };
+					result = new(v, definition) { CaptureScope = v.CaptureScope };
 					HandleInitBlock(FindDisplayStructInitBlock(v), 0, result, result.Variable);
 					break;
 				default:
@@ -478,7 +478,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var baseCtorHandle = MetadataTokenHelpers.EntityHandleOrNil(reader.ReadInt32());
 				if (baseCtorHandle.IsNil)
 					return false;
-				var objectCtor = module.ResolveMethod(baseCtorHandle, new TypeSystem.GenericContext());
+				var objectCtor = module.ResolveMethod(baseCtorHandle, new());
 				if (!objectCtor.DeclaringType.IsKnownType(KnownTypeCode.Object))
 					return false;
 				if (!objectCtor.IsConstructor || objectCtor.Parameters.Count != 0)
@@ -503,7 +503,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		VariableToDeclare AddVariable(DisplayClass result, StObj statement, IField field)
 		{
-			VariableToDeclare variable = new VariableToDeclare(result, field);
+			VariableToDeclare variable = new(result, field);
 			if (statement != null)
 			{
 				variable.Propagate(ResolveVariableToPropagate(statement.Value, field.Type));
@@ -649,7 +649,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (stateMachineVariable.StateMachineField == null || displayClass.VariablesToDeclare.ContainsKey(stateMachineVariable.StateMachineField))
 					continue;
-				VariableToDeclare variableToDeclare = new VariableToDeclare(displayClass, stateMachineVariable.StateMachineField, stateMachineVariable);
+				VariableToDeclare variableToDeclare = new(displayClass, stateMachineVariable.StateMachineField, stateMachineVariable);
 				displayClass.VariablesToDeclare.Add(stateMachineVariable.StateMachineField, variableToDeclare);
 			}
 			if (!function.Method.IsStatic && FindThisField(out var thisField))
@@ -658,7 +658,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					.FirstOrDefault(t => t.IsThis() && t.Type.GetDefinition() == decompilationContext.CurrentTypeDefinition);
 				if (thisVar == null)
 				{
-					thisVar = new ILVariable(VariableKind.Parameter, decompilationContext.CurrentTypeDefinition, -1) {
+					thisVar = new(VariableKind.Parameter, decompilationContext.CurrentTypeDefinition, -1) {
 						Name = "this", StateMachineField = thisField
 					};
 					function.Variables.Add(thisVar);
@@ -668,7 +668,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// "this" was already added previously, no need to add it twice.
 					return displayClass;
 				}
-				VariableToDeclare variableToDeclare = new VariableToDeclare(displayClass, thisField, thisVar);
+				VariableToDeclare variableToDeclare = new(displayClass, thisField, thisVar);
 				displayClass.VariablesToDeclare.Add(thisField, variableToDeclare);
 			}
 			return displayClass;
@@ -725,7 +725,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		readonly Stack<ILFunction> currentFunctions = new Stack<ILFunction>();
+		readonly Stack<ILFunction> currentFunctions = new();
 
 		protected internal override void VisitILFunction(ILFunction function)
 		{

@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			get {
 				if (instance == null)
 				{
-					instance = new MetadataTableViews();
+					instance = new();
 				}
 				return instance;
 			}

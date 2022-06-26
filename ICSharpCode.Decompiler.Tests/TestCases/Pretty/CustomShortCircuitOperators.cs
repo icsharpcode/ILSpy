@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomShortCircuitOperat
 
 		public static C GetC(int a)
 		{
-			return new C();
+			return new();
 		}
 
 		public static C LogicAnd()
@@ -72,8 +72,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomShortCircuitOperat
 
 		private static void Main()
 		{
-			C c = new C();
-			C c2 = new C();
+			C c = new();
+			C c2 = new();
 			C c3 = c && c2;
 			C c4 = c || c2;
 			Console.WriteLine(c3.ToString());
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomShortCircuitOperat
 
 		private static void Test3()
 		{
-			C c = new C();
+			C c = new();
 			if (c)
 			{
 				Console.WriteLine(c.ToString());
@@ -145,22 +145,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomShortCircuitOperat
 
 		public static S operator &(S x, S y)
 		{
-			return new S(x.val & y.val);
+			return new(x.val & y.val);
 		}
 
 		public static S operator |(S x, S y)
 		{
-			return new S(x.val | y.val);
+			return new(x.val | y.val);
 		}
 
 		public static S operator !(S x)
 		{
-			return new S(!x.val);
+			return new(!x.val);
 		}
 
 		public static S Get(int i)
 		{
-			return new S(i > 0);
+			return new(i > 0);
 		}
 
 		public static S LogicAnd()

@@ -491,18 +491,18 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public const int SOe = sizeof(MyEnum);
 
 
-		public const byte CNewb = new byte();
-		public const sbyte CNewsb = new sbyte();
-		public const char CNewc = new char();
-		public const short CNews = new short();
-		public const ushort CNewus = new ushort();
-		public const int CNewi = new int();
-		public const uint CNewui = new uint();
-		public const long CNewl = new long();
-		public const ulong CNewul = new ulong();
-		public const double CNewd = new double();
-		public const float CNewf = new float();
-		public const decimal CNewm = new decimal();
+		public const byte CNewb = new();
+		public const sbyte CNewsb = new();
+		public const char CNewc = new();
+		public const short CNews = new();
+		public const ushort CNewus = new();
+		public const int CNewi = new();
+		public const uint CNewui = new();
+		public const long CNewl = new();
+		public const ulong CNewul = new();
+		public const double CNewd = new();
+		public const float CNewf = new();
+		public const decimal CNewm = new();
 	}
 
 	public interface IExplicitImplementationTests

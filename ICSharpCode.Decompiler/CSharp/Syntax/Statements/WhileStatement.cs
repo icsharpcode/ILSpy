@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class WhileStatement : Statement
 	{
-		public static readonly TokenRole WhileKeywordRole = new TokenRole("while");
+		public static readonly TokenRole WhileKeywordRole = new("while");
 
 		public CSharpTokenNode WhileToken {
 			get { return GetChildByRole(WhileKeywordRole); }

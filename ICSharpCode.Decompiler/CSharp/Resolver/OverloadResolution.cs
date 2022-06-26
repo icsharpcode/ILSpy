@@ -229,7 +229,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (member == null)
 				throw new ArgumentNullException(nameof(member));
 
-			Candidate c = new Candidate(member, false);
+			Candidate c = new(member, false);
 			c.AddError(additionalErrors);
 			if (CalculateCandidate(c))
 			{
@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (this.AllowExpandingParams && member.Parameters.Count > 0
 				&& member.Parameters[member.Parameters.Count - 1].IsParams)
 			{
-				Candidate expandedCandidate = new Candidate(member, true);
+				Candidate expandedCandidate = new(member, true);
 				expandedCandidate.AddError(additionalErrors);
 				// consider expanded form only if it isn't obviously wrong
 				if (CalculateCandidate(expandedCandidate))
@@ -469,7 +469,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			else
 			{
-				TypeInference ti = new TypeInference(compilation, conversions);
+				TypeInference ti = new(compilation, conversions);
 				IType[] parameterTypes = candidate.ArgumentToParameterMap
 					.SelectReadOnlyArray(parameterIndex => parameterIndex >= 0 ? candidate.ParameterTypes[parameterIndex] : SpecialType.UnknownType);
 				bool success;
@@ -1056,7 +1056,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			// Do not compose the substitutions, but merge them.
 			// This is required for InvocationTests.SubstituteClassAndMethodTypeParametersAtOnce
-			return new TypeParameterSubstitution(candidate.Member.Substitution.ClassTypeArguments, candidate.InferredTypes);
+			return new(candidate.Member.Substitution.ClassTypeArguments, candidate.InferredTypes);
 		}
 
 		/// <summary>
@@ -1078,7 +1078,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (member == null)
 				throw new InvalidOperationException();
 
-			return new CSharpInvocationResolveResult(
+			return new(
 				this.IsExtensionMethodInvocation ? new TypeResolveResult(member.DeclaringType ?? SpecialType.UnknownType) : targetResolveResult,
 				member,
 				GetArgumentsWithConversions(targetResolveResult, member),

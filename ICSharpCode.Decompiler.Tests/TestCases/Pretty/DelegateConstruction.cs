@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static List<Action<int>> AnonymousMethodStoreWithinLoop()
 		{
-			List<Action<int>> list = new List<Action<int>>();
+			List<Action<int>> list = new();
 			for (int i = 0; i < 10; i++)
 			{
 				int counter;
@@ -329,7 +329,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static List<Action<int>> AnonymousMethodStoreOutsideLoop()
 		{
-			List<Action<int>> list = new List<Action<int>>();
+			List<Action<int>> list = new();
 			int counter;
 			for (int i = 0; i < 10; i++)
 			{
@@ -354,7 +354,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			// l is local in anonymous method,
 			// k is local in main method
 			// Ensure that the decompiler doesn't introduce name conflicts
-			List<Action<int>> list = new List<Action<int>>();
+			List<Action<int>> list = new();
 			for (int k = 0; k < 10; k++)
 			{
 				int i;
@@ -372,7 +372,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void NameConflict2(int j)
 		{
-			List<Action<int>> list = new List<Action<int>>();
+			List<Action<int>> list = new();
 			for (int k = 0; k < 10; k++)
 			{
 				list.Add(delegate (int i) {

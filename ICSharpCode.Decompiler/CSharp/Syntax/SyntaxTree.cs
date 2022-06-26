@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class SyntaxTree : AstNode
 	{
-		public static readonly Role<AstNode> MemberRole = new Role<AstNode>("Member", AstNode.Null);
+		public static readonly Role<AstNode> MemberRole = new("Member", AstNode.Null);
 
 		public override NodeType NodeType {
 			get {
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </returns>
 		public IEnumerable<EntityDeclaration> GetTypes(bool includeInnerTypes = false)
 		{
-			Stack<AstNode> nodeStack = new Stack<AstNode>();
+			Stack<AstNode> nodeStack = new();
 			nodeStack.Push(this);
 			while (nodeStack.Count > 0)
 			{

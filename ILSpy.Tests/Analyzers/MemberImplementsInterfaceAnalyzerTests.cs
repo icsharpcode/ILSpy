@@ -145,7 +145,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 			var analyzer = new MemberImplementsInterfaceAnalyzer();
 
 			// Act
-			var results = analyzer.Analyze(symbol, new AnalyzerContext());
+			var results = analyzer.Analyze(symbol, new());
 
 			// Assert
 			Assert.IsNotNull(results);

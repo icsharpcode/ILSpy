@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				foreach (var container in function.Descendants.OfType<BlockContainer>().ToList())
 				{
 					context.CancellationToken.ThrowIfCancellationRequested();
-					blockContext.ControlFlowGraph = new ControlFlowGraph(container, context.CancellationToken);
+					blockContext.ControlFlowGraph = new(container, context.CancellationToken);
 					VisitBlock(blockContext.ControlFlowGraph.GetNode(container.EntryPoint), blockContext);
 				}
 			}

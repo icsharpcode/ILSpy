@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		const string FalseString = "False";
 		const string AnyCpuString = "AnyCPU";
 
-		static readonly HashSet<string> ImplicitReferences = new HashSet<string> {
+		static readonly HashSet<string> ImplicitReferences = new() {
 			"mscorlib",
 			"netstandard",
 			"PresentationFramework",
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			IEnumerable<(string itemType, string fileName)> files,
 			PEFile module)
 		{
-			using (XmlTextWriter xmlWriter = new XmlTextWriter(target))
+			using (XmlTextWriter xmlWriter = new(target))
 			{
 				xmlWriter.Formatting = Formatting.Indented;
 				Write(xmlWriter, project, files, module);

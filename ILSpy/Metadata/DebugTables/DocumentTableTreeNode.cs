@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.Documents)
 			{
-				DocumentEntry entry = new DocumentEntry(metadata, isEmbedded, row);
+				DocumentEntry entry = new(metadata, isEmbedded, row);
 				if (entry.RID == scrollTarget)
 				{
 					scrollTargetEntry = entry;

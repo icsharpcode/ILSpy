@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int AccessNamed8 => Named8.h;
 		public int AccessPartiallyNamed => PartiallyNamed.a + PartiallyNamed.Item3;
 
-		public ValueTuple<int> NewTuple1 => new ValueTuple<int>(1);
+		public ValueTuple<int> NewTuple1 => new(1);
 		public (int a, int b) NewTuple2 => (1, 2);
 		public object BoxedTuple10 => (1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 

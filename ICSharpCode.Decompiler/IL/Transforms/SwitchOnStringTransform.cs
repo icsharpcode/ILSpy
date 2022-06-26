@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			BlockContainer body = (BlockContainer)function.Body;
 			var hashtableInitializers = ScanHashtableInitializerBlocks(body.EntryPoint);
 
-			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
+			HashSet<BlockContainer> changedContainers = new();
 
 			foreach (var block in function.Descendants.OfType<Block>())
 			{
@@ -213,7 +213,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var values = new List<(string, ILInstruction)>();
 			var uniqueValues = new HashSet<string>();
 			int numberOfUniqueMatchesWithCurrentVariable = 0;
-			HashSet<Block> caseBlocks = new HashSet<Block>();
+			HashSet<Block> caseBlocks = new();
 			caseBlocks.Add((Block)instructions[i].Parent);
 
 			bool AddSwitchSection(string value, ILInstruction inst)
@@ -327,8 +327,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				switchValue = new LdLoc(switchValueVar);
 			}
 			int offset = firstBlock == null ? 1 : 0;
-			var sections = new List<SwitchSection>(values.Skip(offset).SelectWithIndex((index, s) => new SwitchSection { Labels = new LongSet(index), Body = s.Item2 is Block b ? new Branch(b) : s.Item2.Clone() }));
-			sections.Add(new SwitchSection { Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(), Body = currentCaseBlock != null ? (ILInstruction)new Branch(currentCaseBlock) : new Leave((BlockContainer)nextCaseBlock) });
+			var sections = new List<SwitchSection>(values.Skip(offset).SelectWithIndex((index, s) => new SwitchSection { Labels = new(index), Body = s.Item2 is Block b ? new Branch(b) : s.Item2.Clone() }));
+			sections.Add(new() { Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(), Body = currentCaseBlock != null ? (ILInstruction)new Branch(currentCaseBlock) : new Leave((BlockContainer)nextCaseBlock) });
 			var stringToInt = new StringToInt(switchValue, values.Skip(offset).Select(item => item.Item1).ToArray());
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
@@ -443,8 +443,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				values.Add((null, new Branch(defaultOrNullBlock)));
 			}
 
-			var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = b.Item2 }));
-			sections.Add(new SwitchSection { Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(), Body = new Branch(currentCaseBlock) });
+			var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new(index), Body = b.Item2 }));
+			sections.Add(new() { Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(), Body = new Branch(currentCaseBlock) });
 			var stringToInt = new StringToInt(switchValue, values.SelectArray(item => item.Item1));
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
@@ -644,7 +644,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!right.MatchLdcI4(0))
 						return false;
-					sections.Add(new SwitchSection() { Body = ifInst.TrueInst, Labels = new LongSet(0) }.WithILRange(ifInst));
+					sections.Add(new SwitchSection() { Body = ifInst.TrueInst, Labels = new(0) }.WithILRange(ifInst));
 					sections.Add(new SwitchSection() { Body = switchBlock.Instructions[1], Labels = new LongSet(0).Invert() }.WithILRange(switchBlock.Instructions[1]));
 					break;
 			}
@@ -697,7 +697,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Pick the section with the most labels as default section.
 			// And collect all sections that have no value mapped to them.
 			SwitchSection defaultSection = sections.First();
-			List<SwitchSection> sectionsWithoutLabels = new List<SwitchSection>();
+			List<SwitchSection> sectionsWithoutLabels = new();
 			foreach (var section in sections)
 			{
 				if (section == defaultSection)
@@ -737,7 +737,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				possibleConflicts[0].Labels = possibleConflicts[0].Labels.ExceptWith(label);
 			}
 			stringValues.Add((null, (int)label.Values.First()));
-			sections.Add(new SwitchSection() { Labels = label, Body = new Branch(nullValueCaseBlock) });
+			sections.Add(new() { Labels = label, Body = new Branch(nullValueCaseBlock) });
 			return true;
 		}
 
@@ -781,7 +781,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!newObj.Arguments[0].MatchLdcI4(out valuesLength))
 					return false;
 			}
-			values = new List<(string, int)>(valuesLength);
+			values = new(valuesLength);
 			int i = 0;
 			while (MatchAddCall(dictionaryType, block.Instructions[i + 1], dictVar, out var index, out var value))
 			{
@@ -1130,11 +1130,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					values[idx] = value;
 					var body = bodyInstruction is Block b ? new Branch(b) : bodyInstruction;
-					sections[idx] = new SwitchSection { Labels = new LongSet(idx), Body = body };
+					sections[idx] = new() { Labels = new(idx), Body = body };
 				}
 				var newSwitch = new SwitchInstruction(new StringToInt(switchValueInst, values));
 				newSwitch.Sections.AddRange(sections);
-				newSwitch.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = defaultSection.Body });
+				newSwitch.Sections.Add(new() { Labels = defaultLabel, Body = defaultSection.Body });
 				instructions[offset].ReplaceWith(newSwitch);
 				return newSwitch;
 			}

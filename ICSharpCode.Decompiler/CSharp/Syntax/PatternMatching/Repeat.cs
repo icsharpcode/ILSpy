@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			Debug.Assert(pos == null || pos.Role == role);
 			int matchCount = 0;
 			if (this.MinCount <= 0)
-				backtrackingStack.Push(new PossibleMatch(pos, match.CheckPoint()));
+				backtrackingStack.Push(new(pos, match.CheckPoint()));
 			while (matchCount < this.MaxCount && pos != null && childNode.DoMatch(pos, match))
 			{
 				matchCount++;
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 					pos = pos.NextSibling;
 				} while (pos != null && pos.Role != role);
 				if (matchCount >= this.MinCount)
-					backtrackingStack.Push(new PossibleMatch(pos, match.CheckPoint()));
+					backtrackingStack.Push(new(pos, match.CheckPoint()));
 			}
 			return false; // never do a normal (single-element) match; always make the caller look at the results on the back-tracking stack.
 		}

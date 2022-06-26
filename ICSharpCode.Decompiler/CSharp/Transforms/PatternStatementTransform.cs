@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public sealed class PatternStatementTransform : ContextTrackingVisitor<AstNode>, IAstTransform
 	{
-		readonly DeclareVariables declareVariables = new DeclareVariables();
+		readonly DeclareVariables declareVariables = new();
 		TransformContext context;
 
 		public void Run(AstNode rootNode, TransformContext context)
@@ -152,7 +152,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			));
 
 		#region for
-		static readonly WhileStatement forPattern = new WhileStatement {
+		static readonly WhileStatement forPattern = new() {
 			Condition = new BinaryOperatorExpression {
 				Left = new NamedNode("ident", new IdentifierExpression(Pattern.AnyString)),
 				Operator = BinaryOperatorType.Any,
@@ -206,10 +206,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (loop.DescendantNodes(DescendIntoStatement).OfType<Statement>().Any(s => s is ContinueStatement))
 				return null;
 			node.Remove();
-			BlockStatement newBody = new BlockStatement();
+			BlockStatement newBody = new();
 			foreach (Statement stmt in m3.Get<Statement>("statement"))
 				newBody.Add(stmt.Detach());
-			forStatement = new ForStatement();
+			forStatement = new();
 			forStatement.CopyAnnotationsFrom(loop);
 			forStatement.Initializers.Add(node);
 			forStatement.Condition = loop.Condition.Detach();
@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		#region foreach
 
-		static readonly ForStatement forOnArrayPattern = new ForStatement {
+		static readonly ForStatement forOnArrayPattern = new() {
 			Initializers = {
 				new ExpressionStatement(
 				new AssignmentExpression(
@@ -374,7 +374,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return foreachStmt;
 		}
 
-		static readonly ForStatement forOnArrayMultiDimPattern = new ForStatement {
+		static readonly ForStatement forOnArrayMultiDimPattern = new() {
 			Initializers = { },
 			Condition = new BinaryOperatorExpression(
 				new NamedNode("indexVariable", new IdentifierExpression(Pattern.AnyString)),
@@ -408,7 +408,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// $variable = $collection.GetLowerBound($index);
 		/// </summary>
-		static readonly ExpressionStatement variableAssignLowerBoundPattern = new ExpressionStatement(
+		static readonly ExpressionStatement variableAssignLowerBoundPattern = new(
 			new AssignmentExpression(
 				new NamedNode("variable", new IdentifierExpression(Pattern.AnyString)),
 				new InvocationExpression(
@@ -422,7 +422,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// $variable = $collection[$index1, $index2, ...];
 		/// </summary>
-		static readonly ExpressionStatement foreachVariableOnMultArrayAssignPattern = new ExpressionStatement(
+		static readonly ExpressionStatement foreachVariableOnMultArrayAssignPattern = new(
 			new AssignmentExpression(
 				new NamedNode("variable", new IdentifierExpression(Pattern.AnyString)),
 				new IndexerExpression(
@@ -484,7 +484,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Statement stmt = expressionStatement;
 			IL.ILVariable collection = null;
 			IL.ILVariable[] upperBounds = null;
-			List<Statement> statementsToDelete = new List<Statement>();
+			List<Statement> statementsToDelete = new();
 			int i = 0;
 			// first we look for all the upper bound initializations
 			do
@@ -548,25 +548,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region Automatic Properties
-		static readonly PropertyDeclaration automaticPropertyPattern = new PropertyDeclaration {
+		static readonly PropertyDeclaration automaticPropertyPattern = new() {
 			Attributes = { new Repeat(new AnyNode()) },
 			Modifiers = Modifiers.Any,
 			ReturnType = new AnyNode(),
 			PrivateImplementationType = new OptionalNode(new AnyNode()),
 			Name = Pattern.AnyString,
-			Getter = new Accessor {
+			Getter = new() {
 				Attributes = { new Repeat(new AnyNode()) },
 				Modifiers = Modifiers.Any,
-				Body = new BlockStatement {
+				Body = new() {
 					new ReturnStatement {
 						Expression = new AnyNode("fieldReference")
 					}
 				}
 			},
-			Setter = new Accessor {
+			Setter = new() {
 				Attributes = { new Repeat(new AnyNode()) },
 				Modifiers = Modifiers.Any,
-				Body = new BlockStatement {
+				Body = new() {
 					new AssignmentExpression {
 						Left = new Backreference("fieldReference"),
 						Right = new IdentifierExpression("value")
@@ -575,16 +575,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		static readonly PropertyDeclaration automaticReadonlyPropertyPattern = new PropertyDeclaration {
+		static readonly PropertyDeclaration automaticReadonlyPropertyPattern = new() {
 			Attributes = { new Repeat(new AnyNode()) },
 			Modifiers = Modifiers.Any,
 			ReturnType = new AnyNode(),
 			PrivateImplementationType = new OptionalNode(new AnyNode()),
 			Name = Pattern.AnyString,
-			Getter = new Accessor {
+			Getter = new() {
 				Attributes = { new Repeat(new AnyNode()) },
 				Modifiers = Modifiers.Any,
-				Body = new BlockStatement {
+				Body = new() {
 					new ReturnStatement {
 						Expression = new AnyNode("fieldReference")
 					}
@@ -723,7 +723,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </list>
 		/// </summary>
 		static readonly System.Text.RegularExpressions.Regex automaticPropertyBackingFieldNameRegex
-			= new System.Text.RegularExpressions.Regex(@"^(<(?<name>.+)>k__BackingField|_(?<name>.+))$");
+			= new(@"^(<(?<name>.+)>k__BackingField|_(?<name>.+))$");
 
 		static bool NameCouldBeBackingFieldOfAutomaticProperty(string name, out string propertyName)
 		{
@@ -782,9 +782,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		static readonly Accessor automaticEventPatternV2 = new Accessor {
+		static readonly Accessor automaticEventPatternV2 = new() {
 			Attributes = { new Repeat(new AnyNode()) },
-			Body = new BlockStatement {
+			Body = new() {
 				new AssignmentExpression {
 					Left = new NamedNode("field", fieldReferencePattern),
 					Operator = AssignmentOperatorType.Assign,
@@ -796,9 +796,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		static readonly Accessor automaticEventPatternV4 = new Accessor {
+		static readonly Accessor automaticEventPatternV4 = new() {
 			Attributes = { new Repeat(new AnyNode()) },
-			Body = new BlockStatement {
+			Body = new() {
 				new AssignmentExpression {
 					Left = new NamedNode("var1", new IdentifierExpression(Pattern.AnyString)),
 					Operator = AssignmentOperatorType.Assign,
@@ -832,9 +832,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		static readonly Accessor automaticEventPatternV4AggressivelyInlined = new Accessor {
+		static readonly Accessor automaticEventPatternV4AggressivelyInlined = new() {
 			Attributes = { new Repeat(new AnyNode()) },
-			Body = new BlockStatement {
+			Body = new() {
 				new AssignmentExpression {
 					Left = new NamedNode("var1", new IdentifierExpression(Pattern.AnyString)),
 					Operator = AssignmentOperatorType.Assign,
@@ -863,9 +863,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		static readonly Accessor automaticEventPatternV4MCS = new Accessor {
+		static readonly Accessor automaticEventPatternV4MCS = new() {
 			Attributes = { new Repeat(new AnyNode()) },
-			Body = new BlockStatement {
+			Body = new() {
 				new AssignmentExpression {
 					Left = new NamedNode("var1", new IdentifierExpression(Pattern.AnyString)),
 					Operator = AssignmentOperatorType.Assign,
@@ -1000,7 +1000,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return null;
 			}
 			RemoveCompilerGeneratedAttribute(ev.AddAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);
-			EventDeclaration ed = new EventDeclaration();
+			EventDeclaration ed = new();
 			ev.Attributes.MoveTo(ed.Attributes);
 			foreach (var attr in ev.AddAccessor.Attributes)
 			{
@@ -1009,7 +1009,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			ed.ReturnType = ev.ReturnType.Detach();
 			ed.Modifiers = ev.Modifiers;
-			ed.Variables.Add(new VariableInitializer(ev.Name));
+			ed.Variables.Add(new(ev.Name));
 			ed.CopyAnnotationsFrom(ev);
 
 			var fieldDecl = ev.Parent?.Children.OfType<FieldDeclaration>()
@@ -1032,16 +1032,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region Destructor
-		static readonly BlockStatement destructorBodyPattern = new BlockStatement {
+		static readonly BlockStatement destructorBodyPattern = new() {
 			new TryCatchStatement {
 				TryBlock = new AnyNode("body"),
-				FinallyBlock = new BlockStatement {
+				FinallyBlock = new() {
 					new InvocationExpression(new MemberReferenceExpression(new BaseReferenceExpression(), "Finalize"))
 				}
 			}
 		};
 
-		static readonly MethodDeclaration destructorPattern = new MethodDeclaration {
+		static readonly MethodDeclaration destructorPattern = new() {
 			Attributes = { new Repeat(new AnyNode()) },
 			Modifiers = Modifiers.Any,
 			ReturnType = new PrimitiveType("void"),
@@ -1054,7 +1054,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Match m = destructorPattern.Match(methodDef);
 			if (m.Success)
 			{
-				DestructorDeclaration dd = new DestructorDeclaration();
+				DestructorDeclaration dd = new();
 				methodDef.Attributes.MoveTo(dd.Attributes);
 				dd.CopyAnnotationsFrom(methodDef);
 				dd.Modifiers = methodDef.Modifiers & ~(Modifiers.Protected | Modifiers.Override);
@@ -1079,8 +1079,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region Try-Catch-Finally
-		static readonly TryCatchStatement tryCatchFinallyPattern = new TryCatchStatement {
-			TryBlock = new BlockStatement {
+		static readonly TryCatchStatement tryCatchFinallyPattern = new() {
+			TryBlock = new() {
 				new TryCatchStatement {
 					TryBlock = new AnyNode(),
 					CatchClauses = { new Repeat(new AnyNode()) }
@@ -1107,7 +1107,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region Simplify cascading if-else-if statements
-		static readonly IfElseStatement cascadingIfElsePattern = new IfElseStatement {
+		static readonly IfElseStatement cascadingIfElsePattern = new() {
 			Condition = new AnyNode(),
 			TrueStatement = new AnyNode(),
 			FalseStatement = new BlockStatement {

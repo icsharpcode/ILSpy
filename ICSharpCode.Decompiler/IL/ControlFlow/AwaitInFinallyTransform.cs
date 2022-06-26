@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (!context.Settings.AwaitInCatchFinally)
 				return;
-			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
+			HashSet<BlockContainer> changedContainers = new();
 
 			// analyze all try-catch statements in the function
 			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray())
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (!ValidateStateVariable(stateVariable, initOfStateVariable, tryCatch, entryPointOfFinally))
 					continue;
 
-				StateRangeAnalysis sra = new StateRangeAnalysis(StateRangeAnalysisMode.AwaitInFinally, null, stateVariable);
+				StateRangeAnalysis sra = new(StateRangeAnalysisMode.AwaitInFinally, null, stateVariable);
 				sra.AssignStateRanges(noThrowBlock, Util.LongSet.Universe);
 				var mapping = sra.GetBlockStateSetMapping((BlockContainer)noThrowBlock.Parent);
 				var mappingForLeave = sra.GetBlockStateSetMappingForLeave();

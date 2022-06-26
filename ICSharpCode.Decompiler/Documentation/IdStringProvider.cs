@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		public static string GetIdString(this IEntity entity)
 		{
-			StringBuilder b = new StringBuilder();
+			StringBuilder b = new();
 			switch (entity.SymbolKind)
 			{
 				case SymbolKind.TypeDefinition:
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
-			StringBuilder b = new StringBuilder();
+			StringBuilder b = new();
 			AppendTypeName(b, type, false);
 			return b.ToString();
 		}
@@ -325,7 +325,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			else
 			{
 				// not a type parameter reference: read the actual type name
-				List<ITypeReference> typeArguments = new List<ITypeReference>();
+				List<ITypeReference> typeArguments = new();
 				string typeNameWithoutSuffix = ReadTypeName(typeName, ref pos, true, out int typeParameterCount, typeArguments);
 				result = new GetPotentiallyNestedClassTypeReference(typeNameWithoutSuffix, typeParameterCount);
 				while (pos < typeName.Length && typeName[pos] == '.')

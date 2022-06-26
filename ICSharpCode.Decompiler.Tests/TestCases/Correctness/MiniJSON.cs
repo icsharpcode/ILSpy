@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			Parser(string jsonString)
 			{
-				json = new StringReader(jsonString);
+				json = new(jsonString);
 			}
 
 			public static object Parse(string jsonString)
@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			Dictionary<string, object> ParseObject()
 			{
-				Dictionary<string, object> table = new Dictionary<string, object>();
+				Dictionary<string, object> table = new();
 
 				// ditch opening brace
 				json.Read();
@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			List<object> ParseArray()
 			{
-				List<object> array = new List<object>();
+				List<object> array = new();
 
 				// ditch opening bracket
 				json.Read();
@@ -220,7 +220,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			string ParseString()
 			{
-				StringBuilder s = new StringBuilder();
+				StringBuilder s = new();
 				char c;
 
 				// ditch opening quote
@@ -282,7 +282,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 											return null;
 									}
 
-									s.Append((char)Convert.ToInt32(new string(hex), 16));
+									s.Append((char)Convert.ToInt32(new(hex), 16));
 									break;
 							}
 							break;
@@ -338,7 +338,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			string NextWord {
 				get {
-					StringBuilder word = new StringBuilder();
+					StringBuilder word = new();
 
 					while (!IsWordBreak(PeekChar))
 					{
@@ -427,7 +427,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			Serializer()
 			{
-				builder = new StringBuilder();
+				builder = new();
 			}
 
 			public static string Serialize(object obj)
@@ -467,7 +467,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				}
 				else if (value is char)
 				{
-					SerializeString(new string((char)value, 1));
+					SerializeString(new((char)value, 1));
 				}
 				else
 				{

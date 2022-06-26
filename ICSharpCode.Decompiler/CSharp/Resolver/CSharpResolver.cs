@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				throw new ArgumentNullException(nameof(compilation));
 			this.compilation = compilation;
 			this.conversions = CSharpConversions.Get(compilation);
-			this.context = new CSharpTypeResolveContext(compilation.MainModule);
+			this.context = new(compilation.MainModule);
 		}
 
 		public CSharpResolver(CSharpTypeResolveContext context)
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			this.conversions = CSharpConversions.Get(compilation);
 			this.context = context;
 			if (context.CurrentTypeDefinition != null)
-				currentTypeDefinitionCache = new TypeDefinitionCache(context.CurrentTypeDefinition);
+				currentTypeDefinitionCache = new(context.CurrentTypeDefinition);
 		}
 
 		private CSharpResolver(ICompilation compilation, CSharpConversions conversions, CSharpTypeResolveContext context, bool checkForOverflow, bool isWithinLambdaExpression, TypeDefinitionCache currentTypeDefinitionCache, ImmutableStack<IVariable> localVariableStack, ObjectInitializerContext objectInitializerStack)
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		CSharpResolver WithContext(CSharpTypeResolveContext newContext)
 		{
-			return new CSharpResolver(compilation, conversions, newContext, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, objectInitializerStack);
+			return new(compilation, conversions, newContext, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, objectInitializerStack);
 		}
 
 		/// <summary>
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (checkForOverflow == this.checkForOverflow)
 				return this;
-			return new CSharpResolver(compilation, conversions, context, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, objectInitializerStack);
+			return new(compilation, conversions, context, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, objectInitializerStack);
 		}
 
 		/// <summary>
@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public CSharpResolver WithIsWithinLambdaExpression(bool isWithinLambdaExpression)
 		{
-			return new CSharpResolver(compilation, conversions, context, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, objectInitializerStack);
+			return new(compilation, conversions, context, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, objectInitializerStack);
 		}
 
 		/// <summary>
@@ -195,11 +195,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			TypeDefinitionCache newTypeDefinitionCache;
 			if (typeDefinition != null)
-				newTypeDefinitionCache = new TypeDefinitionCache(typeDefinition);
+				newTypeDefinitionCache = new(typeDefinition);
 			else
 				newTypeDefinitionCache = null;
 
-			return new CSharpResolver(compilation, conversions, context.WithCurrentTypeDefinition(typeDefinition),
+			return new(compilation, conversions, context.WithCurrentTypeDefinition(typeDefinition),
 									  checkForOverflow, isWithinLambdaExpression, newTypeDefinitionCache, localVariableStack, objectInitializerStack);
 		}
 
@@ -211,9 +211,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		sealed class TypeDefinitionCache
 		{
 			public readonly ITypeDefinition TypeDefinition;
-			public readonly Dictionary<string, ResolveResult> SimpleNameLookupCacheExpression = new Dictionary<string, ResolveResult>();
-			public readonly Dictionary<string, ResolveResult> SimpleNameLookupCacheInvocationTarget = new Dictionary<string, ResolveResult>();
-			public readonly Dictionary<string, ResolveResult> SimpleTypeLookupCache = new Dictionary<string, ResolveResult>();
+			public readonly Dictionary<string, ResolveResult> SimpleNameLookupCacheExpression = new();
+			public readonly Dictionary<string, ResolveResult> SimpleNameLookupCacheInvocationTarget = new();
+			public readonly Dictionary<string, ResolveResult> SimpleTypeLookupCache = new();
 
 			public TypeDefinitionCache(ITypeDefinition typeDefinition)
 			{
@@ -232,7 +232,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		CSharpResolver WithLocalVariableStack(ImmutableStack<IVariable> stack)
 		{
-			return new CSharpResolver(compilation, conversions, context, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, stack, objectInitializerStack);
+			return new(compilation, conversions, context, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, stack, objectInitializerStack);
 		}
 
 		/// <summary>
@@ -306,7 +306,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		CSharpResolver WithObjectInitializerStack(ObjectInitializerContext stack)
 		{
-			return new CSharpResolver(compilation, conversions, context, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, stack);
+			return new(compilation, conversions, context, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, stack);
 		}
 
 		/// <summary>
@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (initializedObject == null)
 				throw new ArgumentNullException(nameof(initializedObject));
-			return WithObjectInitializerStack(new ObjectInitializerContext(initializedObject, objectInitializerStack));
+			return WithObjectInitializerStack(new(initializedObject, objectInitializerStack));
 		}
 
 		public CSharpResolver PopObjectInitializer()
@@ -559,7 +559,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		OperatorResolveResult UnaryOperatorResolveResult(IType resultType, UnaryOperatorType op, ResolveResult expression, bool isLifted = false)
 		{
-			return new OperatorResolveResult(
+			return new(
 				resultType, UnaryOperatorExpression.GetLinqNodeType(op, this.CheckForOverflow),
 				null, isLifted, new[] { expression });
 		}
@@ -668,7 +668,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			// the operator is overloadable:
 			OverloadResolution userDefinedOperatorOR = CreateOverloadResolution(new[] { lhs, rhs });
-			HashSet<IParameterizedMember> userOperatorCandidates = new HashSet<IParameterizedMember>();
+			HashSet<IParameterizedMember> userOperatorCandidates = new();
 			userOperatorCandidates.UnionWith(GetUserDefinedOperatorCandidates(lhsType, overloadableOperatorName));
 			userOperatorCandidates.UnionWith(GetUserDefinedOperatorCandidates(rhsType, overloadableOperatorName));
 			foreach (var candidate in userOperatorCandidates)
@@ -998,7 +998,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		CSharpOperators.BinaryOperatorMethod PointerArithmeticOperator(IType resultType, IType inputType1, IType inputType2)
 		{
-			return new CSharpOperators.BinaryOperatorMethod(compilation) {
+			return new(compilation) {
 				ReturnType = resultType,
 				parameters = {
 					new DefaultParameter(inputType1, string.Empty),
@@ -1907,7 +1907,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			ITypeDefinition currentTypeDefinition = this.CurrentTypeDefinition;
 			bool isInEnumMemberInitializer = this.CurrentMember != null && this.CurrentMember.SymbolKind == SymbolKind.Field
 				&& currentTypeDefinition != null && currentTypeDefinition.Kind == TypeKind.Enum;
-			return new MemberLookup(currentTypeDefinition, this.Compilation.MainModule, isInEnumMemberInitializer);
+			return new(currentTypeDefinition, this.Compilation.MainModule, isInEnumMemberInitializer);
 		}
 
 		/// <summary>
@@ -1921,7 +1921,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// for accessibility purposes.
 				// This avoids a stack overflow when referencing a protected class nested inside the base class
 				// of a parent class. (NameLookupTests.InnerClassInheritingFromProtectedBaseInnerClassShouldNotCauseStackOverflow)
-				return new MemberLookup(this.CurrentTypeDefinition.DeclaringTypeDefinition, this.Compilation.MainModule, false);
+				return new(this.CurrentTypeDefinition.DeclaringTypeDefinition, this.Compilation.MainModule, false);
 			}
 			else
 			{
@@ -1976,7 +1976,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						collectionType = expression.Type;
 						getEnumeratorInvocation = or.CreateResolveResult(expression);
 						enumeratorType = getEnumeratorInvocation.Type;
-						currentRR = memberLookup.Lookup(new ResolveResult(enumeratorType), "Current", EmptyList<IType>.Instance, false);
+						currentRR = memberLookup.Lookup(new(enumeratorType), "Current", EmptyList<IType>.Instance, false);
 						elementType = currentRR.Type;
 					}
 					else
@@ -1990,7 +1990,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 			IMethod moveNextMethod = null;
-			var moveNextMethodGroup = memberLookup.Lookup(new ResolveResult(enumeratorType), "MoveNext", EmptyList<IType>.Instance, false) as MethodGroupResolveResult;
+			var moveNextMethodGroup = memberLookup.Lookup(new(enumeratorType), "MoveNext", EmptyList<IType>.Instance, false) as MethodGroupResolveResult;
 			if (moveNextMethodGroup != null)
 			{
 				var or = moveNextMethodGroup.PerformOverloadResolution(
@@ -2000,13 +2000,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 
 			if (currentRR == null)
-				currentRR = memberLookup.Lookup(new ResolveResult(enumeratorType), "Current", EmptyList<IType>.Instance, false);
+				currentRR = memberLookup.Lookup(new(enumeratorType), "Current", EmptyList<IType>.Instance, false);
 			IProperty currentProperty = null;
 			if (currentRR is MemberResolveResult)
 				currentProperty = ((MemberResolveResult)currentRR).Member as IProperty;
 
 			var voidType = compilation.FindType(KnownTypeCode.Void);
-			return new ForEachResolveResult(getEnumeratorInvocation, collectionType, enumeratorType, elementType,
+			return new(getEnumeratorInvocation, collectionType, enumeratorType, elementType,
 											currentProperty, moveNextMethod, voidType);
 		}
 
@@ -2093,10 +2093,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public List<List<IMethod>> GetExtensionMethods(IType targetType, string name = null, IReadOnlyList<IType> typeArguments = null, bool substituteInferredTypes = false)
 		{
 			var lookup = CreateMemberLookup();
-			List<List<IMethod>> extensionMethodGroups = new List<List<IMethod>>();
+			List<List<IMethod>> extensionMethodGroups = new();
 			foreach (var inputGroup in GetAllExtensionMethods(lookup))
 			{
-				List<IMethod> outputGroup = new List<IMethod>();
+				List<IMethod> outputGroup = new();
 				foreach (var method in inputGroup)
 				{
 					if (name != null && method.Name != name)
@@ -2108,7 +2108,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					{
 						if (method.TypeParameters.Count != typeArguments.Count)
 							continue;
-						var sm = method.Specialize(new TypeParameterSubstitution(null, typeArguments));
+						var sm = method.Specialize(new(null, typeArguments));
 						if (IsEligibleExtensionMethod(compilation, conversions, targetType, sm, false, out inferredTypes))
 							outputGroup.Add(sm);
 					}
@@ -2118,7 +2118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						{
 							if (substituteInferredTypes && inferredTypes != null)
 							{
-								outputGroup.Add(method.Specialize(new TypeParameterSubstitution(null, inferredTypes)));
+								outputGroup.Add(method.Specialize(new(null, inferredTypes)));
 							}
 							else
 							{
@@ -2174,8 +2174,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (useTypeInference && method.TypeParameters.Count > 0)
 			{
 				// We need to infer type arguments from targetType:
-				TypeInference ti = new TypeInference(compilation, conversions);
-				ResolveResult[] arguments = { new ResolveResult(targetType) };
+				TypeInference ti = new(compilation, conversions);
+				ResolveResult[] arguments = { new(targetType) };
 				IType[] parameterTypes = { thisParameterType };
 				var inferredTypes = ti.InferTypeArguments(method.TypeParameters, arguments, parameterTypes, out _);
 				var substitution = new TypeParameterSubstitution(null, inferredTypes);
@@ -2216,7 +2216,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				return extensionMethodGroups;
 			}
-			extensionMethodGroups = new List<List<IMethod>>();
+			extensionMethodGroups = new();
 			List<IMethod> m;
 			for (ResolvedUsingScope scope = currentUsingScope; scope != null; scope = scope.Parent)
 			{
@@ -2300,7 +2300,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						foreach (var m in applicableMethods)
 						{
 							if (l.Count == 0 || l[l.Count - 1].DeclaringType != m.DeclaringType)
-								l.Add(new MethodListWithDeclaringType(m.DeclaringType));
+								l.Add(new(m.DeclaringType));
 							l[l.Count - 1].Add(m.Method);
 						}
 						return new DynamicInvocationResolveResult(new MethodGroupResolveResult(actualTarget, mgrr.MethodName, l, mgrr.TypeArguments), DynamicInvocationType.Invocation, AddArgumentNamesIfNecessary(arguments, argumentNames));
@@ -2368,7 +2368,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		List<IParameter> CreateParameters(ResolveResult[] arguments, string[] argumentNames)
 		{
-			List<IParameter> list = new List<IParameter>();
+			List<IParameter> list = new();
 			if (argumentNames == null)
 			{
 				argumentNames = new string[arguments.Length];
@@ -2827,7 +2827,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (value == null)
 			{
-				return new ResolveResult(SpecialType.NullType);
+				return new(SpecialType.NullType);
 			}
 			else
 			{
@@ -2942,7 +2942,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				throw new ArgumentException("sizeArguments.Length must not be 0");
 			if (elementType == null)
 			{
-				TypeInference typeInference = new TypeInference(compilation, conversions);
+				TypeInference typeInference = new(compilation, conversions);
 				elementType = typeInference.GetBestCommonType(initializerElements, out _);
 			}
 			IType arrayType = new ArrayType(compilation, elementType, dimensions);
@@ -2956,7 +2956,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					initializerElements[i] = Convert(initializerElements[i], elementType);
 				}
 			}
-			return new ArrayCreateResolveResult(arrayType, sizeArguments, initializerElements);
+			return new(arrayType, sizeArguments, initializerElements);
 		}
 		#endregion
 

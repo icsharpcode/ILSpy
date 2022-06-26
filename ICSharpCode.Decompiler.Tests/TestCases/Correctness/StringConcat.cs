@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void TestStructMutation()
 		{
 			Console.WriteLine("TestStructMutation:");
-			S s = new S(0);
+			S s = new(0);
 			Console.WriteLine(Space() + s);
 			Console.WriteLine(Space() + s.ToString());
 			Console.WriteLine(s);

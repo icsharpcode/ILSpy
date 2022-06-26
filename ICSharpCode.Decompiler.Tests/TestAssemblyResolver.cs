@@ -10,7 +10,7 @@ namespace ICSharpCode.Decompiler.Tests
 {
 	sealed class TestAssemblyResolver : UniversalAssemblyResolver
 	{
-		readonly HashSet<string> localAssemblies = new HashSet<string>();
+		readonly HashSet<string> localAssemblies = new();
 
 		public TestAssemblyResolver(string mainAssemblyFileName, string baseDir, string targetFramework)
 			: base(mainAssemblyFileName, false, targetFramework, null, PEStreamOptions.PrefetchMetadata, MetadataReaderOptions.ApplyWindowsRuntimeProjections)

@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			ILInstruction instruction)
 		{
 			expression.AddAnnotation(instruction);
-			return new ExpressionWithILInstruction(expression);
+			return new(expression);
 		}
 
 		internal static ExpressionWithILInstruction WithILInstruction(this Expression expression,
@@ -61,19 +61,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			foreach (var inst in instructions)
 				expression.AddAnnotation(inst);
-			return new ExpressionWithILInstruction(expression);
+			return new(expression);
 		}
 
 		internal static ExpressionWithILInstruction WithoutILInstruction(this Expression expression)
 		{
-			return new ExpressionWithILInstruction(expression);
+			return new(expression);
 		}
 
 		internal static TranslatedStatement WithILInstruction(this Statement statement,
 			ILInstruction instruction)
 		{
 			statement.AddAnnotation(instruction);
-			return new TranslatedStatement(statement);
+			return new(statement);
 		}
 
 		internal static TranslatedStatement WithILInstruction(this Statement statement,
@@ -81,19 +81,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			foreach (var inst in instructions)
 				statement.AddAnnotation(inst);
-			return new TranslatedStatement(statement);
+			return new(statement);
 		}
 
 		internal static TranslatedStatement WithoutILInstruction(this Statement statement)
 		{
-			return new TranslatedStatement(statement);
+			return new(statement);
 		}
 
 		internal static TranslatedExpression WithILInstruction(this ExpressionWithResolveResult expression,
 			ILInstruction instruction)
 		{
 			expression.Expression.AddAnnotation(instruction);
-			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
+			return new(expression.Expression, expression.ResolveResult);
 		}
 
 		internal static TranslatedExpression WithILInstruction(this ExpressionWithResolveResult expression,
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			foreach (var inst in instructions)
 				expression.Expression.AddAnnotation(inst);
-			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
+			return new(expression.Expression, expression.ResolveResult);
 		}
 
 		internal static TranslatedExpression WithILInstruction(this TranslatedExpression expression,
@@ -113,21 +113,21 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal static TranslatedExpression WithoutILInstruction(this ExpressionWithResolveResult expression)
 		{
-			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
+			return new(expression.Expression, expression.ResolveResult);
 		}
 
 		internal static ExpressionWithResolveResult WithRR(this Expression expression,
 			ResolveResult resolveResult)
 		{
 			expression.AddAnnotation(resolveResult);
-			return new ExpressionWithResolveResult(expression, resolveResult);
+			return new(expression, resolveResult);
 		}
 
 		internal static TranslatedExpression WithRR(this ExpressionWithILInstruction expression,
 			ResolveResult resolveResult)
 		{
 			expression.Expression.AddAnnotation(resolveResult);
-			return new TranslatedExpression(expression, resolveResult);
+			return new(expression, resolveResult);
 		}
 
 		/// <summary>
@@ -351,6 +351,6 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	public class UseImplicitlyTypedOutAnnotation
 	{
-		public static readonly UseImplicitlyTypedOutAnnotation Instance = new UseImplicitlyTypedOutAnnotation();
+		public static readonly UseImplicitlyTypedOutAnnotation Instance = new();
 	}
 }

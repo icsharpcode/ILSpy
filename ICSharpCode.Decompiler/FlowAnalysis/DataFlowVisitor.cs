@@ -333,12 +333,12 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <remarks>
 		/// Only used for blocks in block containers; not for inline blocks.
 		/// </remarks>
-		readonly Dictionary<Block, State> stateOnBranch = new Dictionary<Block, State>();
+		readonly Dictionary<Block, State> stateOnBranch = new();
 
 		/// <summary>
 		/// Holds the state at the block container end-point. (=state for incoming 'leave' instructions)
 		/// </summary>
-		readonly Dictionary<BlockContainer, State> stateOnLeave = new Dictionary<BlockContainer, State>();
+		readonly Dictionary<BlockContainer, State> stateOnLeave = new();
 
 		/// <summary>
 		/// Gets the state object that holds the state for incoming branches to the block.
@@ -366,12 +366,12 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// For each block container, stores the set of blocks (via Block.ChildIndex)
 		/// that had their incoming state changed and were not processed yet.
 		/// </summary>
-		readonly Dictionary<BlockContainer, SortedSet<int>> workLists = new Dictionary<BlockContainer, SortedSet<int>>();
+		readonly Dictionary<BlockContainer, SortedSet<int>> workLists = new();
 
 		protected internal override void VisitBlockContainer(BlockContainer container)
 		{
 			DebugStartPoint(container);
-			SortedSet<int> worklist = new SortedSet<int>();
+			SortedSet<int> worklist = new();
 			// register work list so that branches within this container can add to it
 			workLists.Add(container, worklist);
 			var stateOnEntry = GetBlockInputState(container.EntryPoint);
@@ -410,7 +410,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			workLists.Remove(container);
 		}
 
-		readonly List<(IBranchOrLeaveInstruction, State)> branchesTriggeringFinally = new List<(IBranchOrLeaveInstruction, State)>();
+		readonly List<(IBranchOrLeaveInstruction, State)> branchesTriggeringFinally = new();
 
 		protected internal override void VisitBranch(Branch inst)
 		{
@@ -495,7 +495,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <summary>
 		/// Stores the stateOnException per try instruction.
 		/// </summary>
-		readonly Dictionary<TryInstruction, State> stateOnException = new Dictionary<TryInstruction, State>();
+		readonly Dictionary<TryInstruction, State> stateOnException = new();
 
 		/// <summary>
 		/// Visits the TryBlock.

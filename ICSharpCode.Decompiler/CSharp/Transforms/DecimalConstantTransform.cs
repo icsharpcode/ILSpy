@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class DecimalConstantTransform : DepthFirstAstVisitor, IAstTransform
 	{
-		static readonly PrimitiveType decimalType = new PrimitiveType("decimal");
+		static readonly PrimitiveType decimalType = new("decimal");
 
 		public override void VisitFieldDeclaration(FieldDeclaration fieldDeclaration)
 		{

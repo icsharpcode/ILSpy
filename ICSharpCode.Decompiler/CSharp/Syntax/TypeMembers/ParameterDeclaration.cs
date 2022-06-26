@@ -40,11 +40,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class ParameterDeclaration : AstNode
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
-		public static readonly TokenRole RefModifierRole = new TokenRole("ref");
-		public static readonly TokenRole OutModifierRole = new TokenRole("out");
-		public static readonly TokenRole ParamsModifierRole = new TokenRole("params");
-		public static readonly TokenRole ThisModifierRole = new TokenRole("this");
-		public static readonly TokenRole InModifierRole = new TokenRole("in");
+		public static readonly TokenRole RefModifierRole = new("ref");
+		public static readonly TokenRole OutModifierRole = new("out");
+		public static readonly TokenRole ParamsModifierRole = new("params");
+		public static readonly TokenRole ThisModifierRole = new("this");
+		public static readonly TokenRole InModifierRole = new("in");
 
 		#region PatternPlaceholder
 		public static implicit operator ParameterDeclaration?(PatternMatching.Pattern pattern)

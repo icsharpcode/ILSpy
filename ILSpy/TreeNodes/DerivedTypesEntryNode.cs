@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.list = list;
 			this.type = type;
 			this.LazyLoading = true;
-			threading = new ThreadingSupport();
+			threading = new();
 		}
 
 		public override bool ShowExpander => !type.IsSealed && base.ShowExpander;

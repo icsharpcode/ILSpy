@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// with a load of a fresh temporary variable; and returns the the store to the temporary variable,
 		/// which will be inserted at block-level.
 		/// </summary>
-		readonly List<Func<ILInstruction>> MoveActions = new List<Func<ILInstruction>>();
+		readonly List<Func<ILInstruction>> MoveActions = new();
 
 		ExtractionContext(ILFunction function, ILTransformContext context)
 		{
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public static ILVariable Extract(ILInstruction instToExtract, ILTransformContext context)
 		{
 			var function = instToExtract.Ancestors.OfType<ILFunction>().First();
-			ExtractionContext ctx = new ExtractionContext(function, context);
+			ExtractionContext ctx = new(function, context);
 			ctx.FlagsBeingMoved = instToExtract.Flags;
 			ILInstruction inst = instToExtract;
 			while (inst != null)
@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// this context doesn't support extraction, but maybe we can create a block here?
 					if (ifInst.ResultType == StackType.Void)
 					{
-						Block newBlock = new Block();
+						Block newBlock = new();
 						inst.ReplaceWith(newBlock);
 						newBlock.Instructions.Add(inst);
 					}

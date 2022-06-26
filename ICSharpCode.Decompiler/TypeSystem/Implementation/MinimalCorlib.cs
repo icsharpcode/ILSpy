@@ -45,13 +45,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public ICompilation Compilation { get; }
 		CorlibTypeDefinition[] typeDefinitions;
 		readonly CorlibNamespace rootNamespace;
-		readonly Version asmVersion = new Version(0, 0, 0, 0);
+		readonly Version asmVersion = new(0, 0, 0, 0);
 
 		private MinimalCorlib(ICompilation compilation, IEnumerable<KnownTypeReference> types)
 		{
 			this.Compilation = compilation;
 			this.typeDefinitions = types.Select(ktr => new CorlibTypeDefinition(this, ktr.KnownTypeCode)).ToArray();
-			this.rootNamespace = new CorlibNamespace(this, null, string.Empty, string.Empty);
+			this.rootNamespace = new(this, null, string.Empty, string.Empty);
 		}
 
 		bool IModule.IsMainModule => Compilation.MainModule == this;
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		sealed class CorlibNamespace : INamespace
 		{
 			readonly MinimalCorlib corlib;
-			internal List<INamespace> childNamespaces = new List<INamespace>();
+			internal List<INamespace> childNamespaces = new();
 			public INamespace ParentNamespace { get; }
 			public string FullName { get; }
 			public string Name { get; }

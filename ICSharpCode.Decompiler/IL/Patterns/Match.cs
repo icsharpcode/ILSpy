@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 	/// </remarks>
 	public struct Match
 	{
-		static readonly List<KeyValuePair<CaptureGroup, ILInstruction>> emptyResults = new List<KeyValuePair<CaptureGroup, ILInstruction>>();
+		static readonly List<KeyValuePair<CaptureGroup, ILInstruction>> emptyResults = new();
 
 		List<KeyValuePair<CaptureGroup, ILInstruction>>? results;
 
@@ -75,8 +75,8 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		internal void Add(CaptureGroup g, ILInstruction n)
 		{
 			if (results == null)
-				results = new List<KeyValuePair<CaptureGroup, ILInstruction>>();
-			results.Add(new KeyValuePair<CaptureGroup, ILInstruction>(g, n));
+				results = new();
+			results.Add(new(g, n));
 		}
 
 		internal int CheckPoint()

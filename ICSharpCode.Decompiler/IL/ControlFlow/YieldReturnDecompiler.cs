@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		/// <summary>Maps the fields of the compiler-generated class to the original parameters.</summary>
 		/// <remarks>Set in MatchEnumeratorCreationPattern() and ResolveIEnumerableIEnumeratorFieldMapping()</remarks>
-		readonly Dictionary<IField, ILVariable> fieldToParameterMap = new Dictionary<IField, ILVariable>();
+		readonly Dictionary<IField, ILVariable> fieldToParameterMap = new();
 
 		/// <summary>This dictionary stores the information extracted from the Dispose() method:
 		/// for each "Finally Method", it stores the set of states for which the method is being called.</summary>
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Temporary stores for 'yield break'.
 		/// </summary>
-		readonly List<StLoc> returnStores = new List<StLoc>();
+		readonly List<StLoc> returnStores = new();
 
 		/// <summary>
 		/// Local bool variable in MoveNext() that signifies whether to skip finally bodies.
@@ -454,7 +454,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				throw new SymbolicAnalysisFailedException($"Method {methodDef.Name} has no body");
 
 			GenericContext genericContext = context.Function.GenericContext;
-			genericContext = new GenericContext(
+			genericContext = new(
 				classTypeParameters: (genericContext.ClassTypeParameters ?? EmptyList<ITypeParameter>.Instance)
 						.Concat(genericContext.MethodTypeParameters ?? EmptyList<ITypeParameter>.Instance).ToArray(),
 				methodTypeParameters: null);
@@ -462,7 +462,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var il = context.CreateILReader()
 				.ReadIL(method, body, genericContext, ILFunctionKind.TopLevelFunction, context.CancellationToken);
 			il.RunTransforms(CSharpDecompiler.EarlyILTransforms(true),
-				new ILTransformContext(il, context.TypeSystem, context.DebugInfo, context.Settings) {
+				new(il, context.TypeSystem, context.DebugInfo, context.Settings) {
 					CancellationToken = context.CancellationToken,
 					DecompileRun = context.DecompileRun
 				});
@@ -832,7 +832,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// This causes the method to start directly at the first user code,
 			// and the whole compiler-generated state-dispatching logic becomes unreachable code
 			// and gets deleted.
-			newBody.Blocks.Insert(0, new Block {
+			newBody.Blocks.Insert(0, new() {
 				Instructions = { MakeGoTo(0) }
 			});
 			return newBody;
@@ -1040,14 +1040,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				if (inst is LdObj ldobj && ldobj.Target is LdLoca ldloca && ldloca.Variable.StateMachineField != null)
 				{
-					LdLoc ldloc = new LdLoc(ldloca.Variable);
+					LdLoc ldloc = new(ldloca.Variable);
 					ldloc.AddILRange(ldobj);
 					ldloc.AddILRange(ldloca);
 					inst.ReplaceWith(ldloc);
 				}
 				else if (inst is StObj stobj && stobj.Target is LdLoca ldloca2 && ldloca2.Variable.StateMachineField != null)
 				{
-					StLoc stloc = new StLoc(ldloca2.Variable, stobj.Value);
+					StLoc stloc = new(ldloca2.Variable, stobj.Value);
 					stloc.AddILRange(stobj);
 					stloc.AddILRange(ldloca2);
 					inst.ReplaceWith(stloc);

@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return ev;
 			}
 			if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
-				substitution = new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
+				substitution = new(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
 			return new SpecializedEvent(ev, substitution);
 		}
 

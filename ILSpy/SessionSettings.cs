@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy
 			if (filterSettings == null)
 				filterSettings = new XElement("FilterSettings");
 
-			this.FilterSettings = new FilterSettings(filterSettings);
+			this.FilterSettings = new(filterSettings);
 
 			this.ActiveAssemblyList = (string)doc.Element("ActiveAssemblyList");
 
@@ -67,7 +67,7 @@ namespace ICSharpCode.ILSpy
 			string currentCulture = (string)doc.Element(nameof(CurrentCulture));
 			this.CurrentCulture = string.IsNullOrEmpty(currentCulture) ? null : currentCulture;
 
-			this.DockLayout = new DockLayoutSettings(doc.Element("DockLayout"));
+			this.DockLayout = new(doc.Element("DockLayout"));
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;

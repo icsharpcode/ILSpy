@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy.TextView
 		public static void DisplayCaretHighlightAnimation(TextArea textArea)
 		{
 			AdornerLayer layer = AdornerLayer.GetAdornerLayer(textArea.TextView);
-			CaretHighlightAdorner adorner = new CaretHighlightAdorner(textArea);
+			CaretHighlightAdorner adorner = new(textArea);
 			layer.Add(adorner);
 
 			DispatcherTimer timer = new DispatcherTimer();

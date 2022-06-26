@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class AnonymousTypeCreateExpression : Expression
 	{
-		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
+		public readonly static TokenRole NewKeywordRole = new("new");
 
 		public CSharpTokenNode NewToken {
 			get { return GetChildByRole(NewKeywordRole); }

@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ErrorExpression(string error)
 		{
-			AddChild(new Comment(error, CommentType.MultiLine), Roles.Comment);
+			AddChild(new(error, CommentType.MultiLine), Roles.Comment);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

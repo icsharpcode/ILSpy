@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!context.Settings.LiftNullables)
 				return;
 
-			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
+			HashSet<BlockContainer> changedContainers = new();
 
 			foreach (var block in function.Descendants.OfType<Block>())
 			{
@@ -123,10 +123,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static SwitchInstruction BuildLiftedSwitch(Block nullCaseBlock, SwitchInstruction switchInst, ILInstruction switchValue)
 		{
-			SwitchInstruction newSwitch = new SwitchInstruction(switchValue);
+			SwitchInstruction newSwitch = new(switchValue);
 			newSwitch.IsLifted = true;
 			newSwitch.Sections.AddRange(switchInst.Sections);
-			newSwitch.Sections.Add(new SwitchSection { Body = new Branch(nullCaseBlock), HasNullLabel = true });
+			newSwitch.Sections.Add(new() { Body = new Branch(nullCaseBlock), HasNullLabel = true });
 			return newSwitch;
 		}
 

@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				InterfaceImplEntry entry = new InterfaceImplEntry(module, ptr, metadataOffset, rid);
+				InterfaceImplEntry entry = new(module, ptr, metadataOffset, rid);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -142,7 +142,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.InterfaceImpl)
 					+ metadata.GetTableRowSize(TableIndex.InterfaceImpl) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
-				this.interfaceImpl = new InterfaceImpl(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4, metadata.ComputeCodedTokenSize(16384, TableMask.TypeDef | TableMask.TypeRef | TableMask.TypeSpec));
+				this.interfaceImpl = new(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4, metadata.ComputeCodedTokenSize(16384, TableMask.TypeDef | TableMask.TypeRef | TableMask.TypeSpec));
 			}
 		}
 

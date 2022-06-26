@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[OneTimeSetUp]
 		public void FixtureSetUp()
 		{
-			ambience = new CSharpAmbience();
+			ambience = new();
 
 			compilation = new SimpleCompilation(TypeSystemLoaderTests.TestAssembly,
 				TypeSystemLoaderTests.Mscorlib.WithOptions(TypeSystemOptions.Default));

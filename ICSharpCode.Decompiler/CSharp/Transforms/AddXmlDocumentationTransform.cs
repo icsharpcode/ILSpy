@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					string doc = provider.GetDocumentation(entity);
 					if (doc != null)
 					{
-						InsertXmlDocumentation(entityDecl, new StringReader(doc));
+						InsertXmlDocumentation(entityDecl, new(doc));
 					}
 				}
 			}
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				string[] msg = (" Exception while reading XmlDoc: " + ex).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 				var insertionPoint = rootNode.FirstChild;
 				for (int i = 0; i < msg.Length; i++)
-					rootNode.InsertChildBefore(insertionPoint, new Comment(msg[i], CommentType.Documentation), Roles.Comment);
+					rootNode.InsertChildBefore(insertionPoint, new(msg[i], CommentType.Documentation), Roles.Comment);
 			}
 		}
 
@@ -84,14 +84,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					while (skippedWhitespaceLines > 0)
 					{
-						Comment emptyLine = new Comment(string.Empty, CommentType.Documentation);
+						Comment emptyLine = new(string.Empty, CommentType.Documentation);
 						emptyLine.AddAnnotation(node.GetResolveResult());
 						node.Parent.InsertChildBefore(node, emptyLine, Roles.Comment);
 						skippedWhitespaceLines--;
 					}
 					if (line.StartsWith(indentation, StringComparison.Ordinal))
 						line = line.Substring(indentation.Length);
-					Comment comment = new Comment(" " + line, CommentType.Documentation);
+					Comment comment = new(" " + line, CommentType.Documentation);
 					comment.AddAnnotation(node.GetResolveResult());
 					node.Parent.InsertChildBefore(node, comment, Roles.Comment);
 				}

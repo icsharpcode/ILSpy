@@ -177,8 +177,8 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private static readonly TypeIconCache typeIconCache = new TypeIconCache();
-		private static readonly MemberIconCache memberIconCache = new MemberIconCache();
+		private static readonly TypeIconCache typeIconCache = new();
+		private static readonly MemberIconCache memberIconCache = new();
 
 		public static ImageSource GetIcon(TypeIcon icon, AccessOverlayIcon overlay, bool isStatic = false)
 		{

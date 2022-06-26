@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		readonly CSharpTypeResolveContext parentContext;
 		readonly UsingScope usingScope;
 
-		internal readonly ConcurrentDictionary<string, ResolveResult> ResolveCache = new ConcurrentDictionary<string, ResolveResult>();
+		internal readonly ConcurrentDictionary<string, ResolveResult> ResolveCache = new();
 		internal List<List<IMethod>> AllExtensionMethods;
 
 		public ResolvedUsingScope(CSharpTypeResolveContext context, UsingScope usingScope)
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				else
 				{
 					result = new List<INamespace>();
-					CSharpResolver resolver = new CSharpResolver(parentContext.WithUsingScope(this));
+					CSharpResolver resolver = new(parentContext.WithUsingScope(this));
 					foreach (var u in usingScope.Usings)
 					{
 						INamespace ns = u.ResolveNamespace(resolver);
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				}
 				else
 				{
-					CSharpResolver resolver = new CSharpResolver(parentContext.WithUsingScope(this));
+					CSharpResolver resolver = new(parentContext.WithUsingScope(this));
 					result = new KeyValuePair<string, ResolveResult>[usingScope.UsingAliases.Count];
 					for (int i = 0; i < result.Count; i++)
 					{
@@ -145,7 +145,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 						{
 							rr = new AliasNamespaceResolveResult(usingScope.UsingAliases[i].Key, (NamespaceResolveResult)rr);
 						}
-						result[i] = new KeyValuePair<string, ResolveResult>(
+						result[i] = new(
 							usingScope.UsingAliases[i].Key,
 							rr
 						);

@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 					if (loop == null)
 					{
-						loop = new List<ControlFlowNode>();
+						loop = new();
 						loop.Add(h);
 						// Mark loop header as visited so that the pre-order traversal
 						// stops at the loop header.
@@ -300,7 +300,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Special control flow node (not part of any graph) that signifies that we want to construct a loop
 		/// without any exit point.
 		/// </summary>
-		static readonly ControlFlowNode NoExitPoint = new ControlFlowNode();
+		static readonly ControlFlowNode NoExitPoint = new();
 
 		/// <summary>
 		/// Finds a suitable single exit point for the specified loop.
@@ -538,11 +538,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ControlFlowNode[] rev = new ControlFlowNode[cfg.Length + 1];
 			for (int i = 0; i < cfg.Length; i++)
 			{
-				rev[i] = new ControlFlowNode { UserIndex = i, UserData = cfg[i].UserData };
+				rev[i] = new() { UserIndex = i, UserData = cfg[i].UserData };
 			}
 			ControlFlowNode nodeTreatedAsExitNode = null;
 			bool multipleNodesTreatedAsExitNodes = false;
-			ControlFlowNode exitNode = new ControlFlowNode { UserIndex = -1 };
+			ControlFlowNode exitNode = new() { UserIndex = -1 };
 			rev[cfg.Length] = exitNode;
 			for (int i = 0; i < cfg.Length; i++)
 			{
@@ -639,7 +639,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!candidate.Visited)
 			{
 				// This node not yet part of the loop, but might be added
-				List<ControlFlowNode> additionalNodes = new List<ControlFlowNode>();
+				List<ControlFlowNode> additionalNodes = new();
 				// Find additionalNodes nodes and mark them as visited.
 				candidate.TraversePreOrder(n => n.Predecessors, additionalNodes.Add);
 				// This means Visited now represents the candidate extended loop.
@@ -690,8 +690,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Block oldEntryPoint = (Block)loop[0].UserData;
 			Block exitTargetBlock = (Block)exitPoint?.UserData;
 
-			BlockContainer loopContainer = new BlockContainer(ContainerKind.Loop);
-			Block newEntryPoint = new Block();
+			BlockContainer loopContainer = new(ContainerKind.Loop);
+			Block newEntryPoint = new();
 			loopContainer.Blocks.Add(newEntryPoint);
 			// Move contents of oldEntryPoint to newEntryPoint
 			// (we can't move the block itself because it might be the target of branch instructions outside the loop)
@@ -754,7 +754,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Debug.Assert(!TreeTraversal.PreOrder(h, n => n.DominatorTreeChildren).Any(n => n.Visited));
 
 			isSwitch = true;
-			loopContext = new SwitchDetection.LoopContext(context.ControlFlowGraph, h);
+			loopContext = new(context.ControlFlowGraph, h);
 
 			var nodesInSwitch = new List<ControlFlowNode>();
 			nodesInSwitch.Add(h);
@@ -785,8 +785,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				Debug.Assert(h.Dominates(node), "The switch body must be dominated by the switch head");
 			}
 
-			BlockContainer switchContainer = new BlockContainer(ContainerKind.Switch);
-			Block newEntryPoint = new Block();
+			BlockContainer switchContainer = new(ContainerKind.Switch);
+			Block newEntryPoint = new();
 			newEntryPoint.AddILRange(switchInst);
 			switchContainer.Blocks.Add(newEntryPoint);
 			newEntryPoint.Instructions.Add(switchInst);

@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class ConstructorDeclaration : EntityDeclaration
 	{
-		public static readonly Role<ConstructorInitializer> InitializerRole = new Role<ConstructorInitializer>("Initializer", ConstructorInitializer.Null);
+		public static readonly Role<ConstructorInitializer> InitializerRole = new("Initializer", ConstructorInitializer.Null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Constructor; }
@@ -94,8 +94,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class ConstructorInitializer : AstNode
 	{
-		public static readonly TokenRole BaseKeywordRole = new TokenRole("base");
-		public static readonly TokenRole ThisKeywordRole = new TokenRole("this");
+		public static readonly TokenRole BaseKeywordRole = new("base");
+		public static readonly TokenRole ThisKeywordRole = new("this");
 
 		public static readonly new ConstructorInitializer Null = new NullConstructorInitializer();
 		class NullConstructorInitializer : ConstructorInitializer

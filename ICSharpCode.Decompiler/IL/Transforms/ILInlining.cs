@@ -668,25 +668,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				this.CallArgument = callArg;
 			}
 
-			public static readonly FindResult Stop = new FindResult(FindResultType.Stop, null, null);
-			public static readonly FindResult Continue = new FindResult(FindResultType.Continue, null, null);
+			public static readonly FindResult Stop = new(FindResultType.Stop, null, null);
+			public static readonly FindResult Continue = new(FindResultType.Continue, null, null);
 
 			public static FindResult Found(ILInstruction loadInst)
 			{
 				Debug.Assert(loadInst.OpCode == OpCode.LdLoc || loadInst.OpCode == OpCode.LdLoca);
-				return new FindResult(FindResultType.Found, loadInst, null);
+				return new(FindResultType.Found, loadInst, null);
 			}
 
 			public static FindResult NamedArgument(ILInstruction loadInst, ILInstruction callArg)
 			{
 				Debug.Assert(loadInst.OpCode == OpCode.LdLoc || loadInst.OpCode == OpCode.LdLoca);
 				Debug.Assert(callArg.Parent is CallInstruction);
-				return new FindResult(FindResultType.NamedArgument, loadInst, callArg);
+				return new(FindResultType.NamedArgument, loadInst, callArg);
 			}
 
 			public static FindResult Deconstruction(DeconstructInstruction deconstruction)
 			{
-				return new FindResult(FindResultType.Deconstruction, deconstruction, null);
+				return new(FindResultType.Deconstruction, deconstruction, null);
 			}
 		}
 

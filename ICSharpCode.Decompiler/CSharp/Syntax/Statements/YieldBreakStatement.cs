@@ -32,8 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class YieldBreakStatement : Statement
 	{
-		public static readonly TokenRole YieldKeywordRole = new TokenRole("yield");
-		public static readonly TokenRole BreakKeywordRole = new TokenRole("break");
+		public static readonly TokenRole YieldKeywordRole = new("yield");
+		public static readonly TokenRole BreakKeywordRole = new("break");
 
 		public CSharpTokenNode YieldToken {
 			get { return GetChildByRole(YieldKeywordRole); }

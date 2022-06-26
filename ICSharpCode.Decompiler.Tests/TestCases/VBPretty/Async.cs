@@ -26,7 +26,7 @@ namespace EquivalentCSharpConsoleApp
 		{
 			Console.WriteLine("HandleFile enter");
 			int count = 0;
-			using (StreamReader reader = new StreamReader(file))
+			using (StreamReader reader = new(file))
 			{
 				string value = await reader.ReadToEndAsync();
 				count += value.Length;

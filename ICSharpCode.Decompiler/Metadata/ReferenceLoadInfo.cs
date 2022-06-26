@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.Metadata
 {
 	public class ReferenceLoadInfo
 	{
-		readonly Dictionary<string, UnresolvedAssemblyNameReference> loadedAssemblyReferences = new Dictionary<string, UnresolvedAssemblyNameReference>();
+		readonly Dictionary<string, UnresolvedAssemblyNameReference> loadedAssemblyReferences = new();
 
 		public void AddMessage(string fullName, MessageKind kind, string message)
 		{
@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				if (!loadedAssemblyReferences.TryGetValue(fullName, out var referenceInfo))
 				{
-					referenceInfo = new UnresolvedAssemblyNameReference(fullName);
+					referenceInfo = new(fullName);
 					loadedAssemblyReferences.Add(fullName, referenceInfo);
 				}
 				referenceInfo.Messages.Add((kind, message));
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				if (!loadedAssemblyReferences.TryGetValue(fullName, out var referenceInfo))
 				{
-					referenceInfo = new UnresolvedAssemblyNameReference(fullName);
+					referenceInfo = new(fullName);
 					loadedAssemblyReferences.Add(fullName, referenceInfo);
 					referenceInfo.Messages.Add((kind, message));
 				}

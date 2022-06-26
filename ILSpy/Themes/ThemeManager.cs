@@ -10,7 +10,7 @@ namespace ICSharpCode.ILSpy.Themes
 		private readonly ResourceDictionary _themeDictionaryContainer = new ResourceDictionary();
 
 
-		public static readonly ThemeManager Current = new ThemeManager();
+		public static readonly ThemeManager Current = new();
 
 		private ThemeManager()
 		{

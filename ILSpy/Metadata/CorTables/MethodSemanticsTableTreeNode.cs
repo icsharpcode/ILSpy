@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.GetMethodSemantics())
 			{
-				MethodSemanticsEntry entry = new MethodSemanticsEntry(module, row.Handle, row.Semantics, row.Method, row.Association);
+				MethodSemanticsEntry entry = new(module, row.Handle, row.Semantics, row.Method, row.Association);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;

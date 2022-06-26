@@ -180,27 +180,27 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			base.VisitIndexerDeclaration(indexerDeclaration);
 		}
 
-		static readonly PropertyDeclaration CalculatedGetterOnlyPropertyPattern = new PropertyDeclaration() {
+		static readonly PropertyDeclaration CalculatedGetterOnlyPropertyPattern = new() {
 			Attributes = { new Repeat(new AnyNode()) },
 			Modifiers = Modifiers.Any,
 			Name = Pattern.AnyString,
 			PrivateImplementationType = new AnyNodeOrNull(),
 			ReturnType = new AnyNode(),
-			Getter = new Accessor() {
+			Getter = new() {
 				Modifiers = Modifiers.Any,
-				Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) }
+				Body = new() { new ReturnStatement(new AnyNode("expression")) }
 			}
 		};
 
-		static readonly IndexerDeclaration CalculatedGetterOnlyIndexerPattern = new IndexerDeclaration() {
+		static readonly IndexerDeclaration CalculatedGetterOnlyIndexerPattern = new() {
 			Attributes = { new Repeat(new AnyNode()) },
 			Modifiers = Modifiers.Any,
 			PrivateImplementationType = new AnyNodeOrNull(),
 			Parameters = { new Repeat(new AnyNode()) },
 			ReturnType = new AnyNode(),
-			Getter = new Accessor() {
+			Getter = new() {
 				Modifiers = Modifiers.Any,
-				Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) }
+				Body = new() { new ReturnStatement(new AnyNode("expression")) }
 			}
 		};
 

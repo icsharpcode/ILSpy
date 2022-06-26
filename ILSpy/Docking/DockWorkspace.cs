@@ -95,7 +95,7 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
-		public PaneCollection<TabPageModel> TabPages { get; } = new PaneCollection<TabPageModel>();
+		public PaneCollection<TabPageModel> TabPages { get; } = new();
 
 		public ObservableCollection<ToolPaneModel> ToolPanes { get; } = new ObservableCollection<ToolPaneModel>();
 

@@ -39,24 +39,24 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Gets the sections that were detected by the previous AnalyzeBlock() call.
 		/// </summary>
-		public readonly List<KeyValuePair<LongSet, ILInstruction>> Sections = new List<KeyValuePair<LongSet, ILInstruction>>();
+		public readonly List<KeyValuePair<LongSet, ILInstruction>> Sections = new();
 
 		/// <summary>
 		/// Used to de-duplicate sections with a branch instruction.
 		/// Invariant: (Sections[targetBlockToSectionIndex[branch.TargetBlock]].Instruction as Branch).TargetBlock == branch.TargetBlock
 		/// </summary>
-		readonly Dictionary<Block, int> targetBlockToSectionIndex = new Dictionary<Block, int>();
+		readonly Dictionary<Block, int> targetBlockToSectionIndex = new();
 
 		/// <summary>
 		/// Used to de-duplicate sections with a value-less leave instruction.
 		/// Invariant: (Sections[targetBlockToSectionIndex[leave.TargetContainer]].Instruction as Leave).TargetContainer == leave.TargetContainer
 		/// </summary>
-		readonly Dictionary<BlockContainer, int> targetContainerToSectionIndex = new Dictionary<BlockContainer, int>();
+		readonly Dictionary<BlockContainer, int> targetContainerToSectionIndex = new();
 
 		/// <summary>
 		/// Blocks that can be deleted if the tail of the initial block is replaced with a switch instruction.
 		/// </summary>
-		public readonly List<Block> InnerBlocks = new List<Block>();
+		public readonly List<Block> InnerBlocks = new();
 
 		public Block RootBlock { get; private set; }
 
@@ -241,7 +241,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				if (targetBlockToSectionIndex.TryGetValue(targetBlock, out int index))
 				{
-					Sections[index] = new KeyValuePair<LongSet, ILInstruction>(
+					Sections[index] = new(
 						Sections[index].Key.UnionWith(values),
 						inst
 					);
@@ -249,14 +249,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				else
 				{
 					targetBlockToSectionIndex.Add(targetBlock, Sections.Count);
-					Sections.Add(new KeyValuePair<LongSet, ILInstruction>(values, inst));
+					Sections.Add(new(values, inst));
 				}
 			}
 			else if (inst.MatchLeave(out BlockContainer targetContainer))
 			{
 				if (targetContainerToSectionIndex.TryGetValue(targetContainer, out int index))
 				{
-					Sections[index] = new KeyValuePair<LongSet, ILInstruction>(
+					Sections[index] = new(
 						Sections[index].Key.UnionWith(values),
 						inst
 					);
@@ -264,12 +264,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				else
 				{
 					targetContainerToSectionIndex.Add(targetContainer, Sections.Count);
-					Sections.Add(new KeyValuePair<LongSet, ILInstruction>(values, inst));
+					Sections.Add(new(values, inst));
 				}
 			}
 			else
 			{
-				Sections.Add(new KeyValuePair<LongSet, ILInstruction>(values, inst));
+				Sections.Add(new(values, inst));
 			}
 		}
 
@@ -336,7 +336,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			switch (kind)
 			{
 				case ComparisonKind.Equality:
-					return new LongSet(val);
+					return new(val);
 				case ComparisonKind.Inequality:
 					return new LongSet(val).Invert();
 				case ComparisonKind.LessThan:
@@ -356,7 +356,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (sign == Sign.Signed)
 			{
-				return new LongSet(LongInterval.Inclusive(val, long.MaxValue));
+				return new(LongInterval.Inclusive(val, long.MaxValue));
 			}
 			else
 			{
@@ -366,11 +366,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// The range val to ulong.MaxValue expressed with signed longs
 					// is not a single contiguous range, but two ranges:
 					return new LongSet(LongInterval.Inclusive(val, long.MaxValue))
-						.UnionWith(new LongSet(new LongInterval(long.MinValue, 0)));
+						.UnionWith(new(new LongInterval(long.MinValue, 0)));
 				}
 				else
 				{
-					return new LongSet(new LongInterval(val, 0));
+					return new(new LongInterval(val, 0));
 				}
 			}
 		}
@@ -379,21 +379,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (sign == Sign.Signed)
 			{
-				return new LongSet(LongInterval.Inclusive(long.MinValue, val));
+				return new(LongInterval.Inclusive(long.MinValue, val));
 			}
 			else
 			{
 				Debug.Assert(sign == Sign.Unsigned);
 				if (val >= 0)
 				{
-					return new LongSet(LongInterval.Inclusive(0, val));
+					return new(LongInterval.Inclusive(0, val));
 				}
 				else
 				{
 					// The range 0 to (ulong)val expressed with signed longs
 					// is not a single contiguous range, but two ranges:
 					return new LongSet(LongInterval.Inclusive(0, long.MaxValue))
-						.UnionWith(new LongSet(LongInterval.Inclusive(long.MinValue, val)));
+						.UnionWith(new(LongInterval.Inclusive(long.MinValue, val)));
 				}
 			}
 		}

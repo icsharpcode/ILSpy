@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class FixedStatement : Statement
 	{
-		public static readonly TokenRole FixedKeywordRole = new TokenRole("fixed");
+		public static readonly TokenRole FixedKeywordRole = new("fixed");
 
 		public CSharpTokenNode FixedToken {
 			get { return GetChildByRole(FixedKeywordRole); }

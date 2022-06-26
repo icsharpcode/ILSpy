@@ -32,11 +32,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class TryCatchStatement : Statement
 	{
-		public static readonly TokenRole TryKeywordRole = new TokenRole("try");
-		public static readonly Role<BlockStatement> TryBlockRole = new Role<BlockStatement>("TryBlock", BlockStatement.Null);
-		public static readonly Role<CatchClause> CatchClauseRole = new Role<CatchClause>("CatchClause", CatchClause.Null);
-		public static readonly TokenRole FinallyKeywordRole = new TokenRole("finally");
-		public static readonly Role<BlockStatement> FinallyBlockRole = new Role<BlockStatement>("FinallyBlock", BlockStatement.Null);
+		public static readonly TokenRole TryKeywordRole = new("try");
+		public static readonly Role<BlockStatement> TryBlockRole = new("TryBlock", BlockStatement.Null);
+		public static readonly Role<CatchClause> CatchClauseRole = new("CatchClause", CatchClause.Null);
+		public static readonly TokenRole FinallyKeywordRole = new("finally");
+		public static readonly Role<BlockStatement> FinallyBlockRole = new("FinallyBlock", BlockStatement.Null);
 
 		public CSharpTokenNode TryToken {
 			get { return GetChildByRole(TryKeywordRole); }
@@ -87,11 +87,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class CatchClause : AstNode
 	{
-		public static readonly TokenRole CatchKeywordRole = new TokenRole("catch");
-		public static readonly TokenRole WhenKeywordRole = new TokenRole("when");
+		public static readonly TokenRole CatchKeywordRole = new("catch");
+		public static readonly TokenRole WhenKeywordRole = new("when");
 		public static readonly Role<Expression> ConditionRole = Roles.Condition;
-		public static readonly TokenRole CondLPar = new TokenRole("(");
-		public static readonly TokenRole CondRPar = new TokenRole(")");
+		public static readonly TokenRole CondLPar = new("(");
+		public static readonly TokenRole CondRPar = new(")");
 
 		#region Null
 		public new static readonly CatchClause Null = new NullCatchClause();

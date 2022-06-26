@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy
 		public App()
 		{
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
-			App.CommandLineArguments = new CommandLineArguments(cmdArgs);
+			App.CommandLineArguments = new(cmdArgs);
 			bool forceSingleInstance = (App.CommandLineArguments.SingleInstance ?? true)
 				&& !MiscSettingsPanel.CurrentMiscSettings.AllowMultipleInstances;
 			if (forceSingleInstance)

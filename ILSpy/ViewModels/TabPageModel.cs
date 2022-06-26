@@ -93,7 +93,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			if (!(tabPage.Content is DecompilerTextView textView))
 			{
-				textView = new DecompilerTextView();
+				textView = new();
 				tabPage.Content = textView;
 			}
 			tabPage.Title = Properties.Resources.Decompiling;
@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			if (!(tabPage.Content is DecompilerTextView textView))
 			{
-				textView = new DecompilerTextView();
+				textView = new();
 				tabPage.Content = textView;
 			}
 			tabPage.Title = Properties.Resources.Decompiling;
@@ -115,7 +115,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			if (!(tabPage.Content is DecompilerTextView textView))
 			{
-				textView = new DecompilerTextView();
+				textView = new();
 				tabPage.Content = textView;
 			}
 			tabPage.Title = Properties.Resources.Decompiling;

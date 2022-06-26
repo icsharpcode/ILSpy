@@ -30,15 +30,15 @@ namespace ICSharpCode.Decompiler.Documentation
 	/// </summary>
 	public static class XmlDocLoader
 	{
-		static readonly Lazy<XmlDocumentationProvider> mscorlibDocumentation = new Lazy<XmlDocumentationProvider>(LoadMscorlibDocumentation);
-		static readonly ConditionalWeakTable<PEFile, XmlDocumentationProvider> cache = new ConditionalWeakTable<PEFile, XmlDocumentationProvider>();
+		static readonly Lazy<XmlDocumentationProvider> mscorlibDocumentation = new(LoadMscorlibDocumentation);
+		static readonly ConditionalWeakTable<PEFile, XmlDocumentationProvider> cache = new();
 
 		static XmlDocumentationProvider LoadMscorlibDocumentation()
 		{
 			string xmlDocFile = FindXmlDocumentation("mscorlib.dll", TargetRuntime.Net_4_0)
 				?? FindXmlDocumentation("mscorlib.dll", TargetRuntime.Net_2_0);
 			if (xmlDocFile != null)
-				return new XmlDocumentationProvider(xmlDocFile);
+				return new(xmlDocFile);
 			else
 				return null;
 		}
@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.Documentation
 					}
 					if (xmlDocFile != null)
 					{
-						xmlDoc = new XmlDocumentationProvider(xmlDocFile);
+						xmlDoc = new(xmlDocFile);
 						cache.Add(module, xmlDoc);
 					}
 					else

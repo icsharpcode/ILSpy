@@ -26,11 +26,11 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 		[OneTimeSetUp]
 		public void Setup()
 		{
-			assemblyList = new AssemblyList();
+			assemblyList = new();
 			testAssembly = assemblyList.OpenAssembly(typeof(MethodUsesAnalyzerTests).Assembly.Location);
 			assemblyList.OpenAssembly(typeof(void).Assembly.Location);
 			testAssemblyTypeSystem = testAssembly.GetTypeSystemOrNull();
-			language = new CSharpLanguage();
+			language = new();
 			typeDefinition = testAssemblyTypeSystem.FindType(typeof(TestCases.Main.MainAssembly)).GetDefinition();
 		}
 

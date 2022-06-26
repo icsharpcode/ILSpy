@@ -41,13 +41,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				TypeParameterReference result = LazyInit.VolatileRead(ref arr[index]);
 				if (result == null)
 				{
-					result = LazyInit.GetOrSet(ref arr[index], new TypeParameterReference(ownerType, index));
+					result = LazyInit.GetOrSet(ref arr[index], new(ownerType, index));
 				}
 				return result;
 			}
 			else
 			{
-				return new TypeParameterReference(ownerType, index);
+				return new(ownerType, index);
 			}
 		}
 

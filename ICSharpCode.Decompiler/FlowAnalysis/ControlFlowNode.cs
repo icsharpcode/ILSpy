@@ -73,12 +73,12 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <summary>
 		/// List of incoming control flow edges.
 		/// </summary>
-		public readonly List<ControlFlowNode> Predecessors = new List<ControlFlowNode>();
+		public readonly List<ControlFlowNode> Predecessors = new();
 
 		/// <summary>
 		/// List of outgoing control flow edges.
 		/// </summary>
-		public readonly List<ControlFlowNode> Successors = new List<ControlFlowNode>();
+		public readonly List<ControlFlowNode> Successors = new();
 
 		public void AddEdgeTo(ControlFlowNode target)
 		{

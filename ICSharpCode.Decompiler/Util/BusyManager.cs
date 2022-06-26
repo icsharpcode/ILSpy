@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Util
 														 Justification = "Should always be used with 'var'")]
 		public struct BusyLock : IDisposable
 		{
-			public static readonly BusyLock Failed = new BusyLock(null);
+			public static readonly BusyLock Failed = new(null);
 
 			readonly List<object?>? objectList;
 
@@ -63,14 +63,14 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			List<object?>? activeObjects = _activeObjects;
 			if (activeObjects == null)
-				activeObjects = _activeObjects = new List<object?>();
+				activeObjects = _activeObjects = new();
 			for (int i = 0; i < activeObjects.Count; i++)
 			{
 				if (activeObjects[i] == obj)
 					return BusyLock.Failed;
 			}
 			activeObjects.Add(obj);
-			return new BusyLock(activeObjects);
+			return new(activeObjects);
 		}
 	}
 }

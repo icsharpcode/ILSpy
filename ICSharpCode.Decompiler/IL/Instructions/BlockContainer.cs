@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	partial class BlockContainer : ILInstruction
 	{
-		public static readonly SlotInfo BlockSlot = new SlotInfo("Block", isCollection: true);
+		public static readonly SlotInfo BlockSlot = new("Block", isCollection: true);
 		public readonly InstructionCollection<Block> Blocks;
 
 		public ContainerKind Kind { get; set; }
@@ -82,13 +82,13 @@ namespace ICSharpCode.Decompiler.IL
 		public BlockContainer(ContainerKind kind = ContainerKind.Normal, StackType expectedResultType = StackType.Void) : base(OpCode.BlockContainer)
 		{
 			this.Kind = kind;
-			this.Blocks = new InstructionCollection<Block>(this, 0);
+			this.Blocks = new(this, 0);
 			this.ExpectedResultType = expectedResultType;
 		}
 
 		public override ILInstruction Clone()
 		{
-			BlockContainer clone = new BlockContainer();
+			BlockContainer clone = new();
 			clone.AddILRange(this);
 			clone.Blocks.AddRange(this.Blocks.Select(block => (Block)block.Clone()));
 			// Adjust branch instructions to point to the new container
@@ -277,8 +277,8 @@ namespace ICSharpCode.Decompiler.IL
 		public List<Block> TopologicalSort(bool deleteUnreachableBlocks = false)
 		{
 			// Visit blocks in post-order
-			BitSet visited = new BitSet(Blocks.Count);
-			List<Block> postOrder = new List<Block>();
+			BitSet visited = new(Blocks.Count);
+			List<Block> postOrder = new();
 			Visit(EntryPoint);
 			postOrder.Reverse();
 			if (!deleteUnreachableBlocks)

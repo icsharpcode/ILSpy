@@ -71,8 +71,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		};
 
 		readonly DotNetCorePackageInfo[] packages;
-		readonly List<string> searchPaths = new List<string>();
-		readonly List<string> packageBasePaths = new List<string>();
+		readonly List<string> searchPaths = new();
+		readonly List<string> packageBasePaths = new();
 		readonly Version targetFrameworkVersion;
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
 		readonly string preferredRuntimePack;
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				// .NET Standard 2.1 is implemented by .NET Core 3.0 or higher
 				if (targetFrameworkVersion.Major == 2 && targetFrameworkVersion.Minor == 1)
 				{
-					this.targetFrameworkVersion = new Version(3, 0, 0);
+					this.targetFrameworkVersion = new(3, 0, 0);
 				}
 			}
 		}
@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.Metadata
 						i++;
 					}
 				}
-				yield return new DotNetCorePackageInfo(library.Key, type, path, components);
+				yield return new(library.Key, type, path, components);
 			}
 		}
 
@@ -269,7 +269,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			try
 			{
-				return (new Version(RemoveTrailingVersionInfo()), name);
+				return (new(RemoveTrailingVersionInfo()), name);
 			}
 			catch (Exception ex)
 			{

@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.ManifestResources)
 			{
-				ManifestResourceEntry entry = new ManifestResourceEntry(module, row);
+				ManifestResourceEntry entry = new(module, row);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;

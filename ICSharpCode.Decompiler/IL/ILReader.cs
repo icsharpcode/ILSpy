@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public bool UseDebugSymbols { get; set; }
 		public DebugInfo.IDebugInfoProvider DebugInfo { get; set; }
-		public List<string> Warnings { get; } = new List<string>();
+		public List<string> Warnings { get; } = new();
 
 		// List of candidate locations for sequence points. Includes empty il stack locations, any nop instructions, and the instruction following
 		// a call instruction. 
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.module = module;
 			this.compilation = module.Compilation;
 			this.metadata = module.metadata;
-			this.SequencePointCandidates = new List<int>();
+			this.SequencePointCandidates = new();
 		}
 
 		GenericContext genericContext;
@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (genericContext.ClassTypeParameters == null && genericContext.MethodTypeParameters == null)
 			{
 				// no generic context specified: use the method's own type parameters
-				genericContext = new GenericContext(method);
+				genericContext = new(method);
 			}
 			else
 			{
@@ -113,8 +113,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.body = body;
 			this.reader = body.GetILReader();
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
-			this.unionFind = new UnionFind<ILVariable>();
-			this.stackMismatchPairs = new List<(ILVariable, ILVariable)>();
+			this.unionFind = new();
+			this.stackMismatchPairs = new();
 			this.methodReturnStackType = method.ReturnType.GetStackType();
 			InitParameterVariables();
 			localVariables = InitLocalVariables();
@@ -123,11 +123,11 @@ namespace ICSharpCode.Decompiler.IL
 				v.InitialValueIsInitialized = body.LocalVariablesInitialized;
 				v.UsesInitialValue = true;
 			}
-			this.mainContainer = new BlockContainer(expectedResultType: methodReturnStackType);
-			this.instructionBuilder = new List<ILInstruction>();
-			this.isBranchTarget = new BitArray(reader.Length);
-			this.stackByOffset = new Dictionary<int, ImmutableStack<ILVariable>>();
-			this.variableByExceptionHandler = new Dictionary<ExceptionRegion, ILVariable>();
+			this.mainContainer = new(expectedResultType: methodReturnStackType);
+			this.instructionBuilder = new();
+			this.isBranchTarget = new(reader.Length);
+			this.stackByOffset = new();
+			this.variableByExceptionHandler = new();
 		}
 
 		EntityHandle ReadAndDecodeMetadataToken()
@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				kind = VariableKind.Local;
 			}
-			ILVariable ilVar = new ILVariable(kind, type, index);
+			ILVariable ilVar = new(kind, type, index);
 			if (!UseDebugSymbols || DebugInfo == null || !DebugInfo.TryGetName((MethodDefinitionHandle)method.MetadataToken, index, out string name))
 			{
 				ilVar.Name = "V_" + index;
@@ -539,7 +539,7 @@ namespace ICSharpCode.Decompiler.IL
 				if (inst is StLoc stloc && stloc.IsStackAdjustment)
 				{
 					output.Write("          ");
-					inst.WriteTo(output, new ILAstWritingOptions());
+					inst.WriteTo(output, new());
 					output.WriteLine();
 					continue;
 				}
@@ -563,7 +563,7 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(' ');
 				output.WriteLocalReference("IL_" + inst.StartILOffset.ToString("x4"), inst.StartILOffset, isDefinition: true);
 				output.Write(": ");
-				inst.WriteTo(output, new ILAstWritingOptions());
+				inst.WriteTo(output, new());
 				output.WriteLine();
 			}
 			new Disassembler.MethodBodyDisassembler(output, cancellationToken) { DetectControlStructure = false }
@@ -1120,7 +1120,7 @@ namespace ICSharpCode.Decompiler.IL
 		class CollectStackVariablesVisitor : ILVisitor<ILInstruction>
 		{
 			readonly UnionFind<ILVariable> unionFind;
-			internal readonly HashSet<ILVariable> variables = new HashSet<ILVariable>();
+			internal readonly HashSet<ILVariable> variables = new();
 
 			public CollectStackVariablesVisitor(UnionFind<ILVariable> unionFind)
 			{
@@ -1799,7 +1799,7 @@ namespace ICSharpCode.Decompiler.IL
 			for (int i = 0; i < targets.Length; i++)
 			{
 				var section = new SwitchSection();
-				section.Labels = new LongSet(i);
+				section.Labels = new(i);
 				int target = targets[i];
 				if (!IsInvalidBranch(target))
 				{
@@ -1865,7 +1865,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			IMethod method = ReadAndDecodeMethodReference();
 			// Translate jmp into tail call:
-			Call call = new Call(method);
+			Call call = new(method);
 			call.IsTail = true;
 			call.ILStackWasEmpty = true;
 			if (!method.IsStatic)

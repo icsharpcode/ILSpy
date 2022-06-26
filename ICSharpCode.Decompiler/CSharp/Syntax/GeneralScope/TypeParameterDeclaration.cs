@@ -30,8 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class TypeParameterDeclaration : AstNode
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
-		public static readonly TokenRole OutVarianceKeywordRole = new TokenRole("out");
-		public static readonly TokenRole InVarianceKeywordRole = new TokenRole("in");
+		public static readonly TokenRole OutVarianceKeywordRole = new("out");
+		public static readonly TokenRole InVarianceKeywordRole = new("in");
 
 		public override NodeType NodeType {
 			get { return NodeType.Unknown; }

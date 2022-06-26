@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.CustomAttributes)
 			{
-				CustomAttributeEntry entry = new CustomAttributeEntry(module, row);
+				CustomAttributeEntry entry = new(module, row);
 				if (scrollTarget == MetadataTokens.GetRowNumber(row))
 				{
 					scrollTargetEntry = entry;

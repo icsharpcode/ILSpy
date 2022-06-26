@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.Instrumentation
 			WriteEvent(5, methodName, elapsedMilliseconds);
 		}
 
-		public static DecompilerEventSource Log = new DecompilerEventSource();
+		public static DecompilerEventSource Log = new();
 	}
 
 }

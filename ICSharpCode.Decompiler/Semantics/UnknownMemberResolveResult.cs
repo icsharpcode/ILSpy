@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.Semantics
 				throw new ArgumentNullException(nameof(targetType));
 			this.targetType = targetType;
 			this.memberName = memberName;
-			this.typeArguments = new ReadOnlyCollection<IType>(typeArguments.ToArray());
+			this.typeArguments = new(typeArguments.ToArray());
 		}
 
 		/// <summary>
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		public UnknownMethodResolveResult(IType targetType, string methodName, IEnumerable<IType> typeArguments, IEnumerable<IParameter> parameters)
 			: base(targetType, methodName, typeArguments)
 		{
-			this.parameters = new ReadOnlyCollection<IParameter>(parameters.ToArray());
+			this.parameters = new(parameters.ToArray());
 		}
 
 		public ReadOnlyCollection<IParameter> Parameters {

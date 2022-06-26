@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class LockStatement : Statement
 	{
-		public static readonly TokenRole LockKeywordRole = new TokenRole("lock");
+		public static readonly TokenRole LockKeywordRole = new("lock");
 
 		public CSharpTokenNode LockToken {
 			get { return GetChildByRole(LockKeywordRole); }

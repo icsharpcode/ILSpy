@@ -81,16 +81,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			public StatePerSequencePoint(AstNode primaryNode)
 			{
 				this.PrimaryNode = primaryNode;
-				this.Intervals = new List<Interval>();
+				this.Intervals = new();
 				this.Function = null;
 			}
 		}
 
-		readonly List<(ILFunction, DebugInfo.SequencePoint)> sequencePoints = new List<(ILFunction, DebugInfo.SequencePoint)>();
-		readonly HashSet<ILInstruction> mappedInstructions = new HashSet<ILInstruction>();
+		readonly List<(ILFunction, DebugInfo.SequencePoint)> sequencePoints = new();
+		readonly HashSet<ILInstruction> mappedInstructions = new();
 
 		// Stack holding information for outer statements.
-		readonly Stack<StatePerSequencePoint> outerStates = new Stack<StatePerSequencePoint>();
+		readonly Stack<StatePerSequencePoint> outerStates = new();
 
 		// Collects information for the current sequence point.
 		StatePerSequencePoint current;
@@ -136,8 +136,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					// statement of the function when the seqeunce point is adjusted
 					int intervalEnd = intervalStart + 1;
 
-					Interval interval = new Interval(intervalStart, intervalEnd);
-					List<Interval> intervals = new List<Interval>();
+					Interval interval = new(intervalStart, intervalEnd);
+					List<Interval> intervals = new();
 					intervals.Add(interval);
 					current.Intervals.AddRange(intervals);
 					current.Function = blockContainer.Ancestors.OfType<ILFunction>().FirstOrDefault();
@@ -387,7 +387,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		void StartSequencePoint(AstNode primaryNode)
 		{
 			outerStates.Push(current);
-			current = new StatePerSequencePoint(primaryNode);
+			current = new(primaryNode);
 		}
 
 		void EndSequencePoint(TextLocation startLocation, TextLocation endLocation)
@@ -399,7 +399,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// use LongSet to deduplicate and merge the intervals
 				var longSet = new LongSet(current.Intervals.Select(i => new LongInterval(i.Start, i.End)));
 				Debug.Assert(!longSet.IsEmpty);
-				sequencePoints.Add((current.Function, new DebugInfo.SequencePoint {
+				sequencePoints.Add((current.Function, new() {
 					Offset = (int)longSet.Intervals[0].Start,
 					EndOffset = (int)longSet.Intervals[0].End,
 					StartLine = startLocation.Line,
@@ -477,7 +477,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (!dict.TryGetValue(function, out var list))
 				{
-					dict.Add(function, list = new List<DebugInfo.SequencePoint>());
+					dict.Add(function, list = new());
 				}
 				list.Add(sequencePoint);
 			}
@@ -561,7 +561,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// Fill in any gaps with a hidden sequence point
 					if (currSequencePoint.EndOffset != nextSequencePoint.Offset)
 					{
-						SequencePoint newSP = new SequencePoint() { Offset = currSequencePoint.EndOffset, EndOffset = nextSequencePoint.Offset };
+						SequencePoint newSP = new() { Offset = currSequencePoint.EndOffset, EndOffset = nextSequencePoint.Offset };
 						newSP.SetHidden();
 						newList.Insert(++i, newSP);
 					}

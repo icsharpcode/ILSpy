@@ -14,11 +14,11 @@ namespace ICSharpCode.ILSpy.AddIn
 			UniversalAssemblyResolver assemblyResolver;
 			if (IsReferenceAssembly(assemblyDefinition, assemblyFile))
 			{
-				assemblyResolver = new UniversalAssemblyResolver(null, throwOnError: false, tfi);
+				assemblyResolver = new(null, throwOnError: false, tfi);
 			}
 			else
 			{
-				assemblyResolver = new UniversalAssemblyResolver(assemblyFile, throwOnError: false, tfi);
+				assemblyResolver = new(assemblyFile, throwOnError: false, tfi);
 			}
 
 			return assemblyResolver.FindAssemblyFile(AssemblyNameReference.Parse(assemblyDefinition.Name.FullName));

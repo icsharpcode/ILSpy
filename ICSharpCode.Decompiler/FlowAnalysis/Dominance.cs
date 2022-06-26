@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			foreach (ControlFlowNode node in nodes)
 			{
 				if (node.ImmediateDominator != null)
-					node.DominatorTreeChildren = new List<ControlFlowNode>();
+					node.DominatorTreeChildren = new();
 			}
 			entryPoint.ImmediateDominator = null;
 			foreach (ControlFlowNode node in nodes)
@@ -144,7 +144,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				Debug.Assert(cfg[i].UserIndex == i);
 			}
 #endif
-			BitSet nonEmpty = new BitSet(cfg.Length);
+			BitSet nonEmpty = new(cfg.Length);
 			foreach (var j in cfg)
 			{
 				// If j is a join-point (more than one incoming edge):

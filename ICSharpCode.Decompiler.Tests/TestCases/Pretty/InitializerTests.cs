@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		private class Data
 		{
-			public List<MyEnum2> FieldList = new List<MyEnum2>();
+			public List<MyEnum2> FieldList = new();
 			public MyEnum a { get; set; }
 			public MyEnum b { get; set; }
 			public List<MyEnum2> PropertyList { get; set; }
@@ -238,97 +238,97 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		#region Field initializer tests
 		private static V3f[] Issue1336_rg0 = new V3f[3] {
-			new V3f(1f, 1f, 1f),
-			new V3f(2f, 2f, 2f),
-			new V3f(3f, 3f, 3f)
+			new(1f, 1f, 1f),
+			new(2f, 2f, 2f),
+			new(3f, 3f, 3f)
 		};
 
 		private static V3f[,] Issue1336_rg1 = new V3f[3, 3] {
 			{
-				new V3f(1f, 1f, 1f),
-				new V3f(2f, 2f, 2f),
-				new V3f(3f, 3f, 3f)
+				new(1f, 1f, 1f),
+				new(2f, 2f, 2f),
+				new(3f, 3f, 3f)
 			},
 			{
-				new V3f(2f, 2f, 2f),
-				new V3f(3f, 3f, 3f),
-				new V3f(4f, 4f, 4f)
+				new(2f, 2f, 2f),
+				new(3f, 3f, 3f),
+				new(4f, 4f, 4f)
 			},
 			{
-				new V3f(3f, 3f, 3f),
-				new V3f(4f, 4f, 4f),
-				new V3f(5f, 5f, 5f)
+				new(3f, 3f, 3f),
+				new(4f, 4f, 4f),
+				new(5f, 5f, 5f)
 			}
 		};
 
 		private static V3f[][] Issue1336_rg1b = new V3f[3][] {
 			new V3f[3] {
-				new V3f(1f, 1f, 1f),
-				new V3f(2f, 2f, 2f),
-				new V3f(3f, 3f, 3f)
+				new(1f, 1f, 1f),
+				new(2f, 2f, 2f),
+				new(3f, 3f, 3f)
 			},
 			new V3f[3] {
-				new V3f(2f, 2f, 2f),
-				new V3f(3f, 3f, 3f),
-				new V3f(4f, 4f, 4f)
+				new(2f, 2f, 2f),
+				new(3f, 3f, 3f),
+				new(4f, 4f, 4f)
 			},
 			new V3f[3] {
-				new V3f(3f, 3f, 3f),
-				new V3f(4f, 4f, 4f),
-				new V3f(5f, 5f, 5f)
+				new(3f, 3f, 3f),
+				new(4f, 4f, 4f),
+				new(5f, 5f, 5f)
 			}
 		};
 
 		private static V3f[,][] Issue1336_rg1c = new V3f[3, 3][] {
 			{
 				new V3f[3] {
-					new V3f(1f, 1f, 1f),
-					new V3f(2f, 2f, 2f),
-					new V3f(3f, 3f, 3f)
+					new(1f, 1f, 1f),
+					new(2f, 2f, 2f),
+					new(3f, 3f, 3f)
 				},
 				new V3f[3] {
-					new V3f(2f, 2f, 2f),
-					new V3f(3f, 3f, 3f),
-					new V3f(4f, 4f, 4f)
+					new(2f, 2f, 2f),
+					new(3f, 3f, 3f),
+					new(4f, 4f, 4f)
 				},
 				new V3f[3] {
-					new V3f(3f, 3f, 3f),
-					new V3f(4f, 4f, 4f),
-					new V3f(5f, 5f, 5f)
+					new(3f, 3f, 3f),
+					new(4f, 4f, 4f),
+					new(5f, 5f, 5f)
 				}
 			},
 			{
 				new V3f[3] {
-					new V3f(1f, 1f, 1f),
-					new V3f(2f, 2f, 2f),
-					new V3f(3f, 3f, 3f)
+					new(1f, 1f, 1f),
+					new(2f, 2f, 2f),
+					new(3f, 3f, 3f)
 				},
 				new V3f[3] {
-					new V3f(2f, 2f, 2f),
-					new V3f(3f, 3f, 3f),
-					new V3f(4f, 4f, 4f)
+					new(2f, 2f, 2f),
+					new(3f, 3f, 3f),
+					new(4f, 4f, 4f)
 				},
 				new V3f[3] {
-					new V3f(3f, 3f, 3f),
-					new V3f(4f, 4f, 4f),
-					new V3f(5f, 5f, 5f)
+					new(3f, 3f, 3f),
+					new(4f, 4f, 4f),
+					new(5f, 5f, 5f)
 				}
 			},
 			{
 				new V3f[3] {
-					new V3f(1f, 1f, 1f),
-					new V3f(2f, 2f, 2f),
-					new V3f(3f, 3f, 3f)
+					new(1f, 1f, 1f),
+					new(2f, 2f, 2f),
+					new(3f, 3f, 3f)
 				},
 				new V3f[3] {
-					new V3f(2f, 2f, 2f),
-					new V3f(3f, 3f, 3f),
-					new V3f(4f, 4f, 4f)
+					new(2f, 2f, 2f),
+					new(3f, 3f, 3f),
+					new(4f, 4f, 4f)
 				},
 				new V3f[3] {
-					new V3f(3f, 3f, 3f),
-					new V3f(4f, 4f, 4f),
-					new V3f(5f, 5f, 5f)
+					new(3f, 3f, 3f),
+					new(4f, 4f, 4f),
+					new(5f, 5f, 5f)
 				}
 			}
 		};
@@ -336,36 +336,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		private static V3f[][,] Issue1336_rg1d = new V3f[2][,] {
 			new V3f[3, 3] {
 				{
-					new V3f(1f, 1f, 1f),
-					new V3f(2f, 2f, 2f),
-					new V3f(3f, 3f, 3f)
+					new(1f, 1f, 1f),
+					new(2f, 2f, 2f),
+					new(3f, 3f, 3f)
 				},
 				{
-					new V3f(2f, 2f, 2f),
-					new V3f(3f, 3f, 3f),
-					new V3f(4f, 4f, 4f)
+					new(2f, 2f, 2f),
+					new(3f, 3f, 3f),
+					new(4f, 4f, 4f)
 				},
 				{
-					new V3f(3f, 3f, 3f),
-					new V3f(4f, 4f, 4f),
-					new V3f(5f, 5f, 5f)
+					new(3f, 3f, 3f),
+					new(4f, 4f, 4f),
+					new(5f, 5f, 5f)
 				}
 			},
 			new V3f[3, 3] {
 				{
-					new V3f(1f, 1f, 1f),
-					new V3f(2f, 2f, 2f),
-					new V3f(3f, 3f, 3f)
+					new(1f, 1f, 1f),
+					new(2f, 2f, 2f),
+					new(3f, 3f, 3f)
 				},
 				{
-					new V3f(2f, 2f, 2f),
-					new V3f(3f, 3f, 3f),
-					new V3f(4f, 4f, 4f)
+					new(2f, 2f, 2f),
+					new(3f, 3f, 3f),
+					new(4f, 4f, 4f)
 				},
 				{
-					new V3f(3f, 3f, 3f),
-					new V3f(4f, 4f, 4f),
-					new V3f(5f, 5f, 5f)
+					new(3f, 3f, 3f),
+					new(4f, 4f, 4f),
+					new(5f, 5f, 5f)
 				}
 			}
 		};
@@ -745,24 +745,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		#region Object initializers
 		public C Test1()
 		{
-			C c = new C();
-			c.L = new List<S>();
-			c.L.Add(new S(1));
+			C c = new();
+			c.L = new();
+			c.L.Add(new(1));
 			return c;
 		}
 
 		public C Test1Alternative()
 		{
 			return TestCall(1, new C {
-				L = new List<S> {
-					new S(1)
+				L = new() {
+					new(1)
 				}
 			});
 		}
 
 		public C Test2()
 		{
-			C c = new C();
+			C c = new();
 			c.Z = 1;
 			c.Z = 2;
 			return c;
@@ -770,8 +770,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public C Test3()
 		{
-			C c = new C();
-			c.Y = new S(1);
+			C c = new();
+			c.Y = new(1);
 			c.Y.A = 2;
 			return c;
 		}
@@ -788,7 +788,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public C Test4()
 		{
-			C c = new C();
+			C c = new();
 			c.Y.A = 1;
 			c.Z = 2;
 			c.Y.B = 3;
@@ -804,14 +804,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static void NotAnObjectInitializer()
 		{
-			Data data = new Data();
+			Data data = new();
 			data.a = MyEnum.a;
 			X(Y(), data);
 		}
 
 		public static void NotAnObjectInitializerWithEvent()
 		{
-			Data data = new Data();
+			Data data = new();
 			data.TestEvent += delegate {
 				Console.WriteLine();
 			};
@@ -822,7 +822,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		{
 			X(Y(), new Data {
 				a = MyEnum.a,
-				FieldList = new List<MyEnum2> {
+				FieldList = new() {
 					MyEnum2.c,
 					MyEnum2.d
 				}
@@ -844,7 +844,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		{
 			X(Y(), new Data {
 				a = MyEnum.a,
-				PropertyList = new List<MyEnum2> {
+				PropertyList = new() {
 					MyEnum2.c,
 					MyEnum2.d
 				}
@@ -900,7 +900,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		public static void CollectionInitializerInsideObjectInitializers()
 		{
 			X(Y(), new Data {
-				MoreData = new Data {
+				MoreData = new() {
 					a = MyEnum.a,
 					b = MyEnum.b,
 					PropertyList = { MyEnum2.c }
@@ -926,11 +926,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public void InliningOfStFldTarget()
 		{
-			s1 = new S {
+			s1 = new() {
 				A = 24,
 				B = 42
 			};
-			s2 = new S {
+			s2 = new() {
 				A = 42,
 				B = 24
 			};
@@ -938,7 +938,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static void NotAStructInitializer_ExplicitConstructor()
 		{
-			StructData structData = new StructData(0);
+			StructData structData = new(0);
 			structData.Field = 1;
 			structData.Property = 2;
 			X(Y(), structData);
@@ -968,7 +968,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		public static void StructInitializerWithinObjectInitializer()
 		{
 			X(Y(), new Data {
-				NestedStruct = new StructData(2) {
+				NestedStruct = new(2) {
 					Field = 1,
 					Property = 2
 				}
@@ -981,8 +981,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 			TestCall(0, new Thread(Issue270_NestedInitialisers) {
 				Priority = ThreadPriority.BelowNormal,
-				CurrentCulture = new CultureInfo(0) {
-					DateTimeFormat = new DateTimeFormatInfo {
+				CurrentCulture = new(0) {
+					DateTimeFormat = new() {
 						ShortDatePattern = "ddmmyy"
 					},
 					NumberFormat = source.Where((NumberFormatInfo format) => format.CurrencySymbol == "$").First()
@@ -992,28 +992,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public OtherItem2 Issue1345()
 		{
-			OtherItem2 otherItem = new OtherItem2();
+			OtherItem2 otherItem = new();
 			otherItem.Data.Nullable = 3m;
 			return otherItem;
 		}
 
 		public OtherItem2 Issue1345b()
 		{
-			OtherItem2 otherItem = new OtherItem2();
+			OtherItem2 otherItem = new();
 			otherItem.Data2.Nullable = 3m;
 			return otherItem;
 		}
 #if CS60
 		public OtherItem2 Issue1345c()
 		{
-			OtherItem2 otherItem = new OtherItem2();
+			OtherItem2 otherItem = new();
 			otherItem.Data3.Nullable = 3m;
 			return otherItem;
 		}
 
 		private Data Issue1345_FalsePositive()
 		{
-			return new Data {
+			return new() {
 				ReadOnlyPropertyList = {
 					MyEnum2.c,
 					MyEnum2.d
@@ -1036,7 +1036,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		private void Issue1251_Test(List<Item> list, OtherItem otherItem)
 		{
-			list.Add(new Item {
+			list.Add(new() {
 				Text = "Text",
 				Value = otherItem.Value,
 				Value2 = otherItem.Value2,
@@ -1051,7 +1051,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		{
 			if (p == 1)
 			{
-				Data data = new Data();
+				Data data = new();
 				data.a = MyEnum.a;
 				data.TestEvent += Data_TestEvent;
 				return data;
@@ -1075,7 +1075,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		private TData GenericObjectInitializer<TData>() where TData : IData, new()
 		{
-			return new TData {
+			return new() {
 				Property = 42
 			};
 		}
@@ -1096,7 +1096,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static void NoCollectionInitializerBecauseOfTypeArguments()
 		{
-			CustomList<int> customList = new CustomList<int>();
+			CustomList<int> customList = new();
 			customList.Add<int>("int");
 			Console.WriteLine(customList);
 		}
@@ -1113,7 +1113,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static object RecursiveCollectionInitializer()
 		{
-			List<object> list = new List<object>();
+			List<object> list = new();
 			list.Add(list);
 			return list;
 		}
@@ -1143,7 +1143,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static void NotACollectionInitializer()
 		{
-			List<int> list = new List<int>();
+			List<int> list = new();
 			list.Add(1);
 			list.Add(2);
 			list.Add(3);
@@ -1169,7 +1169,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 					[GetInt()] = {
 						a = MyEnum.b,
 						FieldList = { MyEnum2.c },
-						[GetInt(), GetString()] = new Data(),
+						[GetInt(), GetString()] = new(),
 						[2] = null
 					}
 				}
@@ -1178,7 +1178,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		private List<List<int>> NestedListWithIndexInitializer(MyEnum myEnum)
 		{
-			return new List<List<int>> {
+			return new() {
 				[0] = { 1, 2, 3 },
 				[1] = { (int)myEnum }
 			};
@@ -1186,22 +1186,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		private void Issue1250_Test2(MyEnum value)
 		{
-			X(Y(), new C { [(int)value] = new S((int)value) });
+			X(Y(), new C { [(int)value] = new((int)value) });
 		}
 
 		private void Issue1250_Test3(int value)
 		{
-			X(Y(), new C { [value] = new S(value) });
+			X(Y(), new C { [value] = new(value) });
 		}
 
 		private void Issue1250_Test4(int value)
 		{
-			X(Y(), new C { [(object)value] = new S(value) });
+			X(Y(), new C { [(object)value] = new(value) });
 		}
 
 		public static List<KeyValuePair<string, string>> Issue1390(IEnumerable<string> tokens, bool alwaysAllowAdministrators, char wireDelimiter)
 		{
-			return new List<KeyValuePair<string, string>> {
+			return new() {
 			{
 				"tokens",
 					string.Join(wireDelimiter.ToString(), tokens),

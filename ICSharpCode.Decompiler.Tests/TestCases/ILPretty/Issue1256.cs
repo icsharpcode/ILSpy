@@ -7,7 +7,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 		public void Method(Enum e, object o, string s)
 		{
 			int num = (int)(object)e;
-			object obj = new object();
+			object obj = new();
 			int num2 = (int)obj;
 			long num3 = (long)o;
 			int num4 = (int)(object)s;

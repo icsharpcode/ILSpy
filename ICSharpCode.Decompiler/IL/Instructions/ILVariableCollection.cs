@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.IL
 	public class ILVariableCollection : ICollection<ILVariable>, IReadOnlyList<ILVariable>
 	{
 		readonly ILFunction scope;
-		readonly List<ILVariable> list = new List<ILVariable>();
+		readonly List<ILVariable> list = new();
 
 		internal ILVariableCollection(ILFunction scope)
 		{

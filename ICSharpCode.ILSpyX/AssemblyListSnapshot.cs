@@ -128,7 +128,7 @@ namespace ICSharpCode.ILSpyX
 
 					if (!result.TryGetValue(asmDefName, out var existing))
 					{
-						existing = new List<(PEFile module, Version version)>();
+						existing = new();
 						result.Add(asmDefName, existing);
 						existing.Add(line);
 						continue;

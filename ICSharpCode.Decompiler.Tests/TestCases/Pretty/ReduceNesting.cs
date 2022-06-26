@@ -482,7 +482,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						return;
 					}
 				} while (B(2));
-				throw new Exception();
+				throw new();
 			}
 		}
 

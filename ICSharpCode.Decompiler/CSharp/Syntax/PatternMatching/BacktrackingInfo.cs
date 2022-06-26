@@ -25,6 +25,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public class BacktrackingInfo
 	{
-		internal Stack<Pattern.PossibleMatch> backtrackingStack = new Stack<Pattern.PossibleMatch>();
+		internal Stack<Pattern.PossibleMatch> backtrackingStack = new();
 	}
 }

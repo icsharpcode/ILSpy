@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpyX
 		public bool ApplyWinRTProjections { get; set; }
 		public bool UseDebugSymbols { get; set; }
 
-		public ObservableCollection<string> AssemblyLists { get; } = new ObservableCollection<string>();
+		public ObservableCollection<string> AssemblyLists { get; } = new();
 
 		/// <summary>
 		/// Loads an assembly list from the ILSpySettings.
@@ -88,11 +88,11 @@ namespace ICSharpCode.ILSpyX
 				{
 					if ((string?)list.Attribute("name") == listName)
 					{
-						return new AssemblyList(this, list);
+						return new(this, list);
 					}
 				}
 			}
-			return new AssemblyList(this, listName ?? DefaultListName);
+			return new(this, listName ?? DefaultListName);
 		}
 
 		public bool CloneList(string selectedAssemblyList, string newListName)
@@ -121,7 +121,7 @@ namespace ICSharpCode.ILSpyX
 					XElement? doc = root.Element("AssemblyLists");
 					if (doc == null)
 					{
-						doc = new XElement("AssemblyLists");
+						doc = new("AssemblyLists");
 						root.Add(doc);
 					}
 					XElement? listElement = doc.Elements("List").FirstOrDefault(e => (string?)e.Attribute("name") == list.ListName);
@@ -212,7 +212,7 @@ namespace ICSharpCode.ILSpyX
 
 		public AssemblyList CreateList(string name)
 		{
-			return new AssemblyList(this, name);
+			return new(this, name);
 		}
 
 		public AssemblyList CreateDefaultList(string name, string? path = null, string? newName = null)

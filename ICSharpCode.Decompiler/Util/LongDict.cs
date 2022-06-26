@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.Util
 	{
 		public static LongDict<T> Create<T>(IEnumerable<(LongSet, T)> entries)
 		{
-			return new LongDict<T>(entries);
+			return new(entries);
 		}
 
 		internal static readonly KeyComparer<LongInterval, long> StartComparer = KeyComparer.Create((LongInterval i) => i.Start);
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public bool TryGetValue(long key, out T value)
 		{
-			int pos = Array.BinarySearch(this.keys, new LongInterval(key, key), LongDict.StartComparer);
+			int pos = Array.BinarySearch(this.keys, new(key, key), LongDict.StartComparer);
 			// If the element isn't found, BinarySearch returns the complement of "insertion position".
 			// We use this to find the previous element (if there wasn't any exact match).
 			if (pos < 0)
@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			for (int i = 0; i < this.keys.Length; ++i)
 			{
-				yield return new KeyValuePair<LongInterval, T>(this.keys[i], this.values[i]);
+				yield return new(this.keys[i], this.values[i]);
 			}
 		}
 

@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region class OperatorMethod
 		OperatorMethod[] Lift(params OperatorMethod[] methods)
 		{
-			List<OperatorMethod> result = new List<OperatorMethod>(methods);
+			List<OperatorMethod> result = new(methods);
 			foreach (OperatorMethod method in methods)
 			{
 				OperatorMethod? lifted = method.Lift(this);
@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		internal class OperatorMethod : IParameterizedMember
 		{
 			readonly ICompilation compilation;
-			internal readonly List<IParameter> parameters = new List<IParameter>();
+			internal readonly List<IParameter> parameters = new();
 
 			protected OperatorMethod(ICompilation compilation)
 			{
@@ -216,7 +216,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public override string ToString()
 			{
-				StringBuilder b = new StringBuilder();
+				StringBuilder b = new();
 				b.Append(ReturnType + " operator(");
 				for (int i = 0; i < parameters.Count; i++)
 				{

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ThrowStatement : Statement
 	{
-		public static readonly TokenRole ThrowKeywordRole = new TokenRole("throw");
+		public static readonly TokenRole ThrowKeywordRole = new("throw");
 
 		public CSharpTokenNode ThrowToken {
 			get { return GetChildByRole(ThrowKeywordRole); }

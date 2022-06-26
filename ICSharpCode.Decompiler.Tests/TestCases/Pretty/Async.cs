@@ -357,7 +357,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				await Task.CompletedTask;
 			}
-			return new object();
+			return new();
 		}
 #endif
 
@@ -407,9 +407,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async Task AsyncWithLocalVar()
 		{
-			object a = new object();
+			object a = new();
 #if CS70
-			(object, string) tuple = (new object(), "abc");
+			(object, string) tuple = (new(), "abc");
 #endif
 			await UseObj(a);
 			await UseObj(a);

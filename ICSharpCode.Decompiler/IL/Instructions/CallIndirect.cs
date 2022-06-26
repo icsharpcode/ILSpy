@@ -29,8 +29,8 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		// Note: while in IL the arguments come first and the function pointer last;
 		// in the ILAst we're handling it as in C#: the function pointer is evaluated first, the arguments later.
-		public static readonly SlotInfo FunctionPointerSlot = new SlotInfo("FunctionPointer", canInlineInto: true);
-		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true, isCollection: true);
+		public static readonly SlotInfo FunctionPointerSlot = new("FunctionPointer", canInlineInto: true);
+		public static readonly SlotInfo ArgumentSlot = new("Argument", canInlineInto: true, isCollection: true);
 
 		ILInstruction functionPointer = null!;
 		public readonly InstructionCollection<ILInstruction> Arguments;
@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.HasExplicitThis = hasExplicitThis;
 			this.FunctionPointerType = functionPointerType;
 			this.FunctionPointer = functionPointer;
-			this.Arguments = new InstructionCollection<ILInstruction>(this, 1);
+			this.Arguments = new(this, 1);
 			this.Arguments.AddRange(arguments);
 		}
 

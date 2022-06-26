@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UncheckedExpression : Expression
 	{
-		public readonly static TokenRole UncheckedKeywordRole = new TokenRole("unchecked");
+		public readonly static TokenRole UncheckedKeywordRole = new("unchecked");
 
 		public CSharpTokenNode UncheckedToken {
 			get { return GetChildByRole(UncheckedKeywordRole); }

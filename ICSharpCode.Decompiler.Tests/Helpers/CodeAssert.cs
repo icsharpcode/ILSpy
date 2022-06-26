@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		private static IList<string> NormalizeAndSplitCode(string input, IEnumerable<string> definedSymbols)
 		{
-			var syntaxTree = CSharpSyntaxTree.ParseText(input, new CSharpParseOptions(preprocessorSymbols: definedSymbols));
+			var syntaxTree = CSharpSyntaxTree.ParseText(input, new(preprocessorSymbols: definedSymbols));
 			var result = new DeleteDisabledTextRewriter().Visit(syntaxTree.GetRoot());
 			input = result.ToFullString();
 			return input.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);

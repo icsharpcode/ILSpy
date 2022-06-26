@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		#endregion
 
 		public WholeProjectDecompiler(IAssemblyResolver assemblyResolver)
-			: this(new DecompilerSettings(), assemblyResolver, assemblyReferenceClassifier: null, debugInfoProvider: null)
+			: this(new(), assemblyResolver, assemblyReferenceClassifier: null, debugInfoProvider: null)
 		{
 		}
 
@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		}
 
 		// per-run members
-		HashSet<string> directories = new HashSet<string>(Platform.FileNameComparer);
+		HashSet<string> directories = new(Platform.FileNameComparer);
 		readonly IProjectFileWriter projectWriter;
 
 		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
@@ -160,7 +160,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			projectWriter.Write(projectFileWriter, this, files, moduleDefinition);
 
 			string platformName = TargetServices.GetPlatformName(moduleDefinition);
-			return new ProjectId(platformName, ProjectGuid, ProjectTypeGuids.CSharpWindows);
+			return new(platformName, ProjectGuid, ProjectTypeGuids.CSharpWindows);
 		}
 
 		#region WriteCodeFilesInProject
@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (directories.Add(prop))
 				Directory.CreateDirectory(Path.Combine(TargetDirectory, prop));
 			string assemblyInfo = Path.Combine(prop, "AssemblyInfo.cs");
-			using (StreamWriter w = new StreamWriter(Path.Combine(TargetDirectory, assemblyInfo)))
+			using (StreamWriter w = new(Path.Combine(TargetDirectory, assemblyInfo)))
 			{
 				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
 			}
@@ -224,15 +224,15 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				}, StringComparer.OrdinalIgnoreCase).ToList();
 			int total = files.Count;
 			var progress = ProgressIndicator;
-			DecompilerTypeSystem ts = new DecompilerTypeSystem(module, AssemblyResolver, Settings);
+			DecompilerTypeSystem ts = new(module, AssemblyResolver, Settings);
 			Parallel.ForEach(
 				Partitioner.Create(files, loadBalance: true),
-				new ParallelOptions {
+				new() {
 					MaxDegreeOfParallelism = this.MaxDegreeOfParallelism,
 					CancellationToken = cancellationToken
 				},
 				delegate (IGrouping<string, TypeDefinitionHandle> file) {
-					using (StreamWriter w = new StreamWriter(Path.Combine(TargetDirectory, file.Key)))
+					using (StreamWriter w = new(Path.Combine(TargetDirectory, file.Key)))
 					{
 						try
 						{
@@ -246,7 +246,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 							throw new DecompilerException(module, $"Error decompiling for '{file.Key}'", innerException);
 						}
 					}
-					progress?.Report(new DecompilationProgress(total, file.Key));
+					progress?.Report(new(total, file.Key));
 				});
 			return files.Select(f => ("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
 		}
@@ -318,7 +318,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				else
 				{
 					string fileName = GetFileNameForResource(r.Name);
-					using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
+					using (FileStream fs = new(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
 					{
 						stream.Position = 0;
 						stream.CopyTo(fs);
@@ -335,8 +335,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				string resx = Path.ChangeExtension(fileName, ".resx");
 				try
 				{
-					using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, resx), FileMode.Create, FileAccess.Write))
-					using (ResXResourceWriter writer = new ResXResourceWriter(fs))
+					using (FileStream fs = new(Path.Combine(TargetDirectory, resx), FileMode.Create, FileAccess.Write))
+					using (ResXResourceWriter writer = new(fs))
 					{
 						foreach (var entry in new ResourcesFile(entryStream))
 						{
@@ -354,7 +354,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					// if the .resources can't be decoded, just save them as-is
 				}
 			}
-			using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
+			using (FileStream fs = new(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
 			{
 				entryStream.CopyTo(fs);
 			}
@@ -422,11 +422,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		unsafe static byte[] CreateApplicationIcon(Win32ResourceDirectory resources)
 		{
-			var iconGroup = resources.Find(new Win32ResourceName(RT_GROUP_ICON))?.FirstDirectory()?.FirstData()?.Data;
+			var iconGroup = resources.Find(new(RT_GROUP_ICON))?.FirstDirectory()?.FirstData()?.Data;
 			if (iconGroup == null)
 				return null;
 
-			var iconDir = resources.Find(new Win32ResourceName(RT_ICON));
+			var iconDir = resources.Find(new(RT_ICON));
 			if (iconDir == null)
 				return null;
 
@@ -457,7 +457,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 				for (int i = 0; i < iconCount; i++)
 				{
-					var icon = iconDir.FindDirectory(new Win32ResourceName(pIconGroup->idEntries[i].nID))?.FirstData()?.Data;
+					var icon = iconDir.FindDirectory(new(pIconGroup->idEntries[i].nID))?.FirstData()?.Data;
 					if (icon == null)
 						return null;
 					writer.Write(icon);
@@ -500,7 +500,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		unsafe static byte[] CreateApplicationManifest(Win32ResourceDirectory resources)
 		{
-			return resources.Find(new Win32ResourceName(RT_MANIFEST))?.FirstDirectory()?.FirstData()?.Data;
+			return resources.Find(new(RT_MANIFEST))?.FirstDirectory()?.FirstData()?.Data;
 		}
 
 		static bool IsDefaultApplicationManifest(byte[] appManifest)
@@ -598,7 +598,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				}
 			}
 			// Whitelist allowed characters, replace everything else:
-			StringBuilder b = new StringBuilder(text.Length + (extension?.Length ?? 0));
+			StringBuilder b = new(text.Length + (extension?.Length ?? 0));
 			foreach (var c in text)
 			{
 				currentSegmentLength++;

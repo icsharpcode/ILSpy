@@ -21,7 +21,7 @@ namespace ICSharpCode.Decompiler
 			if (bytes == null)
 				throw new ArgumentNullException(nameof(bytes));
 
-			StringBuilder sb = new StringBuilder(estimatedLength * 2);
+			StringBuilder sb = new(estimatedLength * 2);
 			foreach (var b in bytes)
 				sb.AppendFormat("{0:x2}", b);
 			return sb.ToString();

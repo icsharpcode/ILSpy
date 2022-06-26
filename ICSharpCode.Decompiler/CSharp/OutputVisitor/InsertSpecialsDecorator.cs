@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	class InsertSpecialsDecorator : DecoratingTokenWriter
 	{
-		readonly Stack<AstNode> positionStack = new Stack<AstNode>();
+		readonly Stack<AstNode> positionStack = new();
 		int visitorWroteNewLine = 0;
 
 		public InsertSpecialsDecorator(TokenWriter writer) : base(writer)

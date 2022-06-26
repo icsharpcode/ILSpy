@@ -65,9 +65,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// leave (elseValue)
 			// =>
 			// leave (if (cond) value else elseValue)
-			IfInstruction value = new IfInstruction(ifInst.Condition, leave.Value, leaveElse.Value);
+			IfInstruction value = new(ifInst.Condition, leave.Value, leaveElse.Value);
 			value.AddILRange(ifInst);
-			Leave combinedLeave = new Leave(leave.TargetContainer, value);
+			Leave combinedLeave = new(leave.TargetContainer, value);
 			combinedLeave.AddILRange(leaveElse);
 			combinedLeave.AddILRange(leave);
 			ifInst.ReplaceWith(combinedLeave);

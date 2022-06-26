@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				case Accessibility.ProtectedAndInternal:
 					return IsInternalAccessible(entity.ParentModule) && IsProtectedAccessible(allowProtectedAccess, entity);
 				default:
-					throw new Exception("Invalid value for Accessibility");
+					throw new("Invalid value for Accessibility");
 			}
 		}
 
@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			foreach (IType type in targetResolveResult.Type.GetNonInterfaceBaseTypes())
 			{
 
-				List<IEntity> entities = new List<IEntity>();
+				List<IEntity> entities = new();
 				entities.AddRange(type.GetMembers(options: GetMemberOptions.IgnoreInheritedMembers));
 				if (!targetIsTypeParameter)
 				{
@@ -195,9 +195,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				foreach (var entityGroup in entities.GroupBy(e => e.Name))
 				{
 
-					List<LookupGroup> lookupGroups = new List<LookupGroup>();
+					List<LookupGroup> lookupGroups = new();
 					if (!lookupGroupDict.TryGetValue(entityGroup.Key, out lookupGroups))
-						lookupGroupDict.Add(entityGroup.Key, lookupGroups = new List<LookupGroup>());
+						lookupGroupDict.Add(entityGroup.Key, lookupGroups = new());
 
 					List<IType> newNestedTypes = null;
 					List<IParameterizedMember> newMethods = null;
@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					AddMembers(type, entityGroup.OfType<IMember>(), allowProtectedAccess, lookupGroups, false, ref typeBaseTypes, ref newMethods, ref newNonMethod);
 
 					if (newNestedTypes != null || newMethods != null || newNonMethod != null)
-						lookupGroups.Add(new LookupGroup(type, newNestedTypes, newMethods, newNonMethod));
+						lookupGroups.Add(new(type, newNestedTypes, newMethods, newNonMethod));
 				}
 			}
 
@@ -305,7 +305,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return InnerTypeParameterCount(d) == typeArgumentCount && d.Name == name && IsAccessible(d, true);
 			};
 
-			List<LookupGroup> lookupGroups = new List<LookupGroup>();
+			List<LookupGroup> lookupGroups = new();
 			if (declaringType.Kind != TypeKind.TypeParameter)
 			{
 				foreach (IType type in declaringType.GetNonInterfaceBaseTypes())
@@ -325,7 +325,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					AddNestedTypes(type, nestedTypes, typeArgumentCount, lookupGroups, ref typeBaseTypes, ref newNestedTypes);
 
 					if (newNestedTypes != null)
-						lookupGroups.Add(new LookupGroup(type, newNestedTypes, null, null));
+						lookupGroups.Add(new(type, newNestedTypes, null, null));
 				}
 			}
 
@@ -378,7 +378,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					   entity.Name == name;
 			};
 
-			List<LookupGroup> lookupGroups = new List<LookupGroup>();
+			List<LookupGroup> lookupGroups = new();
 			// This loop will handle base types before derived types.
 			// The loop performs three jobs:
 			// 1) It marks entries in lookup groups from base classes as removed when those members
@@ -422,7 +422,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				AddMembers(type, members, allowProtectedAccess, lookupGroups, false, ref typeBaseTypes, ref newMethods, ref newNonMethod);
 
 				if (newNestedTypes != null || newMethods != null || newNonMethod != null)
-					lookupGroups.Add(new LookupGroup(type, newNestedTypes, newMethods, newNonMethod));
+					lookupGroups.Add(new(type, newNestedTypes, newMethods, newNonMethod));
 			}
 
 			// Remove interface members hidden by class members.
@@ -449,7 +449,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
 			Predicate<IProperty> filter = p => p.IsIndexer && !p.IsExplicitInterfaceImplementation;
 
-			List<LookupGroup> lookupGroups = new List<LookupGroup>();
+			List<LookupGroup> lookupGroups = new();
 			foreach (IType type in targetType.GetNonInterfaceBaseTypes())
 			{
 				List<IParameterizedMember> newMethods = null;
@@ -461,7 +461,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				AddMembers(type, members, allowProtectedAccess, lookupGroups, true, ref typeBaseTypes, ref newMethods, ref newNonMethod);
 
 				if (newMethods != null || newNonMethod != null)
-					lookupGroups.Add(new LookupGroup(type, null, newMethods, newNonMethod));
+					lookupGroups.Add(new(type, null, newMethods, newNonMethod));
 			}
 
 			// Remove interface members hidden by class members.
@@ -477,7 +477,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			MethodListWithDeclaringType[] methodLists = new MethodListWithDeclaringType[lookupGroups.Count];
 			for (int i = 0; i < methodLists.Length; i++)
 			{
-				methodLists[i] = new MethodListWithDeclaringType(lookupGroups[i].DeclaringType, lookupGroups[i].Methods);
+				methodLists[i] = new(lookupGroups[i].DeclaringType, lookupGroups[i].Methods);
 			}
 			return methodLists;
 		}
@@ -520,7 +520,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 				// Add the new nested type.
 				if (newNestedTypes == null)
-					newNestedTypes = new List<IType>();
+					newNestedTypes = new();
 				newNestedTypes.Add(nestedType);
 			}
 		}
@@ -626,7 +626,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					if (method != null)
 					{
 						if (newMethods == null)
-							newMethods = new List<IParameterizedMember>();
+							newMethods = new();
 						newMethods.Add(method);
 					}
 					else
@@ -713,7 +713,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// If there are methods, make a MethodGroupResolveResult.
 				// Note that a conflict between a member and a method (possible with multiple interface inheritance)
 				// is only a warning, not an error, and the C# compiler will prefer the method group.
-				List<MethodListWithDeclaringType> methodLists = new List<MethodListWithDeclaringType>();
+				List<MethodListWithDeclaringType> methodLists = new();
 				foreach (var lookupGroup in lookupGroups)
 				{
 					if (!lookupGroup.MethodsAreHidden && lookupGroup.Methods.Count > 0)

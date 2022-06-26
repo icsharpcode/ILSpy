@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 
 			try
 			{
-				List<ITypeDefinition> output = new List<ITypeDefinition>();
+				List<ITypeDefinition> output = new();
 				foreach (var type in Decompiler.TypeSystem.MainModule.TypeDefinitions)
 				{
 					if (!kinds.Contains(type.Kind))
@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 			catch (Exception e)
 			{
 				WriteVerbose(e.ToString());
-				WriteError(new ErrorRecord(e, ErrorIds.DecompilationFailed, ErrorCategory.OperationStopped, null));
+				WriteError(new(e, ErrorIds.DecompilationFailed, ErrorCategory.OperationStopped, null));
 			}
 		}
 	}

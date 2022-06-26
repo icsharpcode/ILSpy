@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.Util
 			int start = Math.Max(this.Start, other.Start);
 			int inclusiveEnd = Math.Min(this.InclusiveEnd, other.InclusiveEnd);
 			if (start <= inclusiveEnd)
-				return new Interval(start, unchecked(inclusiveEnd + 1));
+				return new(start, unchecked(inclusiveEnd + 1));
 			else
 				return default(Interval);
 		}
@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			if (!(start <= inclusiveEnd))
 				throw new ArgumentException();
-			return new LongInterval(start, unchecked(inclusiveEnd + 1));
+			return new(start, unchecked(inclusiveEnd + 1));
 		}
 
 		/// <summary>
@@ -234,7 +234,7 @@ namespace ICSharpCode.Decompiler.Util
 			long start = Math.Max(this.Start, other.Start);
 			long inclusiveEnd = Math.Min(this.InclusiveEnd, other.InclusiveEnd);
 			if (start <= inclusiveEnd)
-				return new LongInterval(start, unchecked(inclusiveEnd + 1));
+				return new(start, unchecked(inclusiveEnd + 1));
 			else
 				return default(LongInterval);
 		}

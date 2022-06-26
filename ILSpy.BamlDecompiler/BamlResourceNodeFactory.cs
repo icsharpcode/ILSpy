@@ -48,8 +48,8 @@ namespace ILSpy.BamlDecompiler
 
 		public string WriteResourceToFile(LoadedAssembly assembly, string fileName, Stream stream, DecompilationOptions options)
 		{
-			BamlDecompilerTypeSystem typeSystem = new BamlDecompilerTypeSystem(assembly.GetPEFileOrNull(), assembly.GetAssemblyResolver());
-			var decompiler = new XamlDecompiler(typeSystem, new BamlDecompilerSettings() {
+			BamlDecompilerTypeSystem typeSystem = new(assembly.GetPEFileOrNull(), assembly.GetAssemblyResolver());
+			var decompiler = new XamlDecompiler(typeSystem, new() {
 				ThrowOnAssemblyResolveErrors = options.DecompilerSettings.ThrowOnAssemblyResolveErrors
 			});
 			decompiler.CancellationToken = options.CancellationToken;

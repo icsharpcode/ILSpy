@@ -194,7 +194,7 @@ namespace ICSharpCode.ILSpy
 		public override RichText GetRichTextTooltip(IEntity entity)
 		{
 			var output = new AvalonEditTextOutput() { IgnoreNewLineAndIndent = true };
-			var disasm = CreateDisassembler(output, new DecompilationOptions());
+			var disasm = CreateDisassembler(output, new());
 			switch (entity.SymbolKind)
 			{
 				case SymbolKind.TypeDefinition:

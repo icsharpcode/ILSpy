@@ -41,20 +41,20 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 	{
 		static PEFile LoadAssembly(string filename)
 		{
-			return new PEFile(filename, new FileStream(filename, FileMode.Open, FileAccess.Read));
+			return new(filename, new FileStream(filename, FileMode.Open, FileAccess.Read));
 		}
 
-		static readonly Lazy<PEFile> mscorlib = new Lazy<PEFile>(
+		static readonly Lazy<PEFile> mscorlib = new(
 			delegate {
 				return LoadAssembly(Path.Combine(Helpers.Tester.RefAsmPath, "mscorlib.dll"));
 			});
 
-		static readonly Lazy<PEFile> systemCore = new Lazy<PEFile>(
+		static readonly Lazy<PEFile> systemCore = new(
 			delegate {
 				return LoadAssembly(Path.Combine(Helpers.Tester.RefAsmPath, "System.Core.dll"));
 			});
 
-		static readonly Lazy<PEFile> testAssembly = new Lazy<PEFile>(
+		static readonly Lazy<PEFile> testAssembly = new(
 			delegate {
 				return LoadAssembly(typeof(SimplePublicClass).Assembly.Location);
 			});
@@ -278,7 +278,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			var testClass = GetTypeDefinition(typeof(GenericClass<,>));
 			var methodDef = testClass.Methods.Single(me => me.Name == "GetIndex");
-			var m = methodDef.Specialize(new TypeParameterSubstitution(
+			var m = methodDef.Specialize(new(
 				new[] { compilation.FindType(KnownTypeCode.Int16), compilation.FindType(KnownTypeCode.Int32) },
 				null
 			));
@@ -303,18 +303,18 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			var methodDef = testClass.Methods.Single(me => me.Name == "GetIndex");
 
 			// GenericClass<B, A>.GetIndex<A>
-			var m1 = methodDef.Specialize(new TypeParameterSubstitution(
+			var m1 = methodDef.Specialize(new(
 				new[] { testClass.TypeParameters[1], testClass.TypeParameters[0] },
 				new[] { testClass.TypeParameters[0] }
 			));
 			// GenericClass<string, int>.GetIndex<int>
-			var m2 = m1.Specialize(new TypeParameterSubstitution(
+			var m2 = m1.Specialize(new(
 				new[] { compilation.FindType(KnownTypeCode.Int32), compilation.FindType(KnownTypeCode.String) },
 				null
 			));
 
 			// GenericClass<string, int>.GetIndex<int>
-			var m12 = methodDef.Specialize(new TypeParameterSubstitution(
+			var m12 = methodDef.Specialize(new(
 				new[] { compilation.FindType(KnownTypeCode.String), compilation.FindType(KnownTypeCode.Int32) },
 				new[] { compilation.FindType(KnownTypeCode.Int32) }
 			));
@@ -1540,18 +1540,18 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public unsafe void ConstantFieldsCreatedWithNew()
 		{
 			ITypeDefinition type = GetTypeDefinition(typeof(ConstantFieldTest));
-			AssertConstantField<byte>(type, "CNewb", new byte());
-			AssertConstantField<sbyte>(type, "CNewsb", new sbyte());
-			AssertConstantField<char>(type, "CNewc", new char());
-			AssertConstantField<short>(type, "CNews", new short());
-			AssertConstantField<ushort>(type, "CNewus", new ushort());
-			AssertConstantField<int>(type, "CNewi", new int());
-			AssertConstantField<uint>(type, "CNewui", new uint());
-			AssertConstantField<long>(type, "CNewl", new long());
-			AssertConstantField<ulong>(type, "CNewul", new ulong());
-			AssertConstantField<double>(type, "CNewd", new double());
-			AssertConstantField<float>(type, "CNewf", new float());
-			AssertConstantField<decimal>(type, "CNewm", new decimal());
+			AssertConstantField<byte>(type, "CNewb", new());
+			AssertConstantField<sbyte>(type, "CNewsb", new());
+			AssertConstantField<char>(type, "CNewc", new());
+			AssertConstantField<short>(type, "CNews", new());
+			AssertConstantField<ushort>(type, "CNewus", new());
+			AssertConstantField<int>(type, "CNewi", new());
+			AssertConstantField<uint>(type, "CNewui", new());
+			AssertConstantField<long>(type, "CNewl", new());
+			AssertConstantField<ulong>(type, "CNewul", new());
+			AssertConstantField<double>(type, "CNewd", new());
+			AssertConstantField<float>(type, "CNewf", new());
+			AssertConstantField<decimal>(type, "CNewm", new());
 		}
 
 

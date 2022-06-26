@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void VarArgs(int normalArg, __arglist)
 		{
-			ArgIterator argIterator = new ArgIterator(__arglist);
+			ArgIterator argIterator = new(__arglist);
 			Console.WriteLine("Called with {0} arguments", argIterator.GetRemainingCount());
 			int pos = 0;
 			while (argIterator.GetRemainingCount() > 0)

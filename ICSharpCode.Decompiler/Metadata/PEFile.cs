@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			var lookup = LazyInit.VolatileRead(ref typeLookup);
 			if (lookup == null)
 			{
-				lookup = new Dictionary<TopLevelTypeName, TypeDefinitionHandle>();
+				lookup = new();
 				foreach (var handle in Metadata.TypeDefinitions)
 				{
 					var td = Metadata.GetTypeDefinition(handle);
@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					var nsHandle = td.Namespace;
 					string ns = nsHandle.IsNil ? string.Empty : Metadata.GetString(nsHandle);
 					string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(Metadata.GetString(td.Name), out int typeParameterCount);
-					lookup[new TopLevelTypeName(ns, name, typeParameterCount)] = handle;
+					lookup[new(ns, name, typeParameterCount)] = handle;
 				}
 				lookup = LazyInit.GetOrSet(ref typeLookup, lookup);
 			}
@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			var lookup = LazyInit.VolatileRead(ref typeForwarderLookup);
 			if (lookup == null)
 			{
-				lookup = new Dictionary<FullTypeName, ExportedTypeHandle>();
+				lookup = new();
 				foreach (var handle in Metadata.ExportedTypes)
 				{
 					var td = Metadata.GetExportedType(handle);
@@ -221,7 +221,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				if (r != null)
 					return r;
 				else
-					return LazyInit.GetOrSet(ref methodSemanticsLookup, new MethodSemanticsLookup(Metadata));
+					return LazyInit.GetOrSet(ref methodSemanticsLookup, new(Metadata));
 			}
 		}
 

@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.Util
 			bool isRelative;
 			bool isAbsoluteUnixPath = false;
 
-			StringBuilder result = new StringBuilder();
+			StringBuilder result = new();
 			if (isWeb == false && IsUNCPath(fileName))
 			{
 				// UNC path
@@ -245,7 +245,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				return ".";
 			}
-			StringBuilder erg = new StringBuilder();
+			StringBuilder erg = new();
 			for (int i = indx; i < bPath.Length; ++i)
 			{
 				erg.Append("..");
@@ -280,7 +280,7 @@ namespace ICSharpCode.Decompiler.Util
 				index--;
 			}
 
-			StringBuilder result = new StringBuilder();
+			StringBuilder result = new();
 			result.Append(ellipsis);
 			// If there's 5 chars left, partially fit another part:
 			if (index > 1 && len + 5 <= max_chars)

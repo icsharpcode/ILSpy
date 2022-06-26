@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override TextLocation EndLocation {
 			get {
-				return new TextLocation(location.Line, location.Column + "null".Length);
+				return new(location.Line, location.Column + "null".Length);
 			}
 		}
 

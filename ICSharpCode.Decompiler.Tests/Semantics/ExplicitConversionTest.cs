@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			compilation = new SimpleCompilation(TypeSystemLoaderTests.TestAssembly,
 				TypeSystemLoaderTests.Mscorlib,
 				TypeSystemLoaderTests.SystemCore);
-			conversions = new CSharpConversions(compilation);
+			conversions = new(compilation);
 		}
 
 		Conversion ExplicitConversion(Type from, Type to)

@@ -24,8 +24,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class SwitchExpression : Expression
 	{
-		public static readonly TokenRole SwitchKeywordRole = new TokenRole("switch");
-		public static readonly Role<SwitchExpressionSection> SwitchSectionRole = new Role<SwitchExpressionSection>("SwitchSection", null);
+		public static readonly TokenRole SwitchKeywordRole = new("switch");
+		public static readonly Role<SwitchExpressionSection> SwitchSectionRole = new("SwitchSection", null);
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
@@ -75,8 +75,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class SwitchExpressionSection : AstNode
 	{
-		public static readonly Role<Expression> PatternRole = new Role<Expression>("Pattern", Expression.Null);
-		public static readonly Role<Expression> BodyRole = new Role<Expression>("Body", Expression.Null);
+		public static readonly Role<Expression> PatternRole = new("Pattern", Expression.Null);
+		public static readonly Role<Expression> BodyRole = new("Body", Expression.Null);
 
 		public Expression Pattern {
 			get { return GetChildByRole(PatternRole); }

@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		public void Test1()
 		{
-			DisplayClass displayClass = new DisplayClass {
+			DisplayClass displayClass = new() {
 				field1 = 42,
 				field2 = "Hello World!"
 			};
@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		public void Test2()
 		{
-			DisplayClass displayClass = new DisplayClass {
+			DisplayClass displayClass = new() {
 				field1 = 42,
 				field2 = "Hello World!"
 			};
@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		public void Test3()
 		{
-			DisplayClass displayClass = new DisplayClass {
+			DisplayClass displayClass = new() {
 				field1 = 42,
 				field2 = "Hello World!"
 			};
@@ -52,12 +52,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		public void Test4()
 		{
-			DisplayClass displayClass = new DisplayClass {
+			DisplayClass displayClass = new() {
 				thisField = this,
 				field1 = 42,
 				field2 = "Hello World!"
 			};
-			NestedDisplayClass nested = new NestedDisplayClass {
+			NestedDisplayClass nested = new() {
 				field1 = 4711,
 				field2 = "ILSpy"
 			};
@@ -74,12 +74,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		public void Test5()
 		{
-			DisplayClass displayClass = new DisplayClass {
+			DisplayClass displayClass = new() {
 				thisField = this,
 				field1 = 42,
 				field2 = "Hello World!"
 			};
-			NestedDisplayClass nested = new NestedDisplayClass {
+			NestedDisplayClass nested = new() {
 				field1 = 4711,
 				field2 = "ILSpy"
 			};
@@ -96,11 +96,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		public void Issue1898(int i)
 		{
-			DisplayClass displayClass = new DisplayClass {
+			DisplayClass displayClass = new() {
 				thisField = this,
 				field1 = i
 			};
-			NestedDisplayClass nested = new NestedDisplayClass();
+			NestedDisplayClass nested = new();
 			while (true)
 			{
 				switch (Rand())
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		public void Test6(int i)
 		{
-			DisplayClass displayClass = new DisplayClass {
+			DisplayClass displayClass = new() {
 				field1 = i,
 				field2 = "Hello World!"
 			};
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 		public void Test6b(int i)
 		{
 			int num = i;
-			DisplayClass displayClass = new DisplayClass {
+			DisplayClass displayClass = new() {
 				field1 = num,
 				field2 = "Hello World!"
 			};
@@ -152,7 +152,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		public void Test7(int i)
 		{
-			DisplayClass displayClass = new DisplayClass {
+			DisplayClass displayClass = new() {
 				field1 = i,
 				field2 = "Hello World!"
 			};
@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		public void Test8(int i)
 		{
-			DisplayClass displayClass = new DisplayClass {
+			DisplayClass displayClass = new() {
 				field1 = i,
 				field2 = "Hello World!"
 			};
@@ -172,7 +172,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 		public void Test8b(int i)
 		{
 			int num = i;
-			DisplayClass displayClass = new DisplayClass {
+			DisplayClass displayClass = new() {
 				field1 = num,
 				field2 = "Hello World!"
 			};

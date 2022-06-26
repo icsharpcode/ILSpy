@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpyX
 					return result;
 				var (dirname, basename) = SplitName(name);
 				PackageFolder parent = GetFolder(dirname);
-				result = new PackageFolder(this, parent, basename);
+				result = new(this, parent, basename);
 				parent.Folders.Add(result);
 				folders.Add(name, result);
 				return result;
@@ -101,7 +101,7 @@ namespace ICSharpCode.ILSpyX
 		{
 			Debug.WriteLine($"LoadedPackage.FromZipFile({file})");
 			using var archive = ZipFile.OpenRead(file);
-			return new LoadedPackage(PackageKind.Zip,
+			return new(PackageKind.Zip,
 				archive.Entries.Select(entry => new ZipFileEntry(file, entry)));
 		}
 
@@ -250,8 +250,8 @@ namespace ICSharpCode.ILSpyX
 			this.Name = name;
 		}
 
-		public List<PackageFolder> Folders { get; } = new List<PackageFolder>();
-		public List<PackageEntry> Entries { get; } = new List<PackageEntry>();
+		public List<PackageFolder> Folders { get; } = new();
+		public List<PackageEntry> Entries { get; } = new();
 
 		public PEFile? Resolve(IAssemblyReference reference)
 		{
@@ -301,7 +301,7 @@ namespace ICSharpCode.ILSpyX
 			return Task.FromResult<PEFile?>(null);
 		}
 
-		readonly Dictionary<string, LoadedAssembly?> assemblies = new Dictionary<string, LoadedAssembly?>(StringComparer.OrdinalIgnoreCase);
+		readonly Dictionary<string, LoadedAssembly?> assemblies = new(StringComparer.OrdinalIgnoreCase);
 
 		internal LoadedAssembly? ResolveFileName(string name)
 		{
@@ -314,7 +314,7 @@ namespace ICSharpCode.ILSpyX
 				var entry = Entries.FirstOrDefault(e => string.Equals(name, e.Name, StringComparison.OrdinalIgnoreCase));
 				if (entry != null)
 				{
-					asm = new LoadedAssembly(
+					asm = new(
 						package.LoadedAssembly, entry.Name,
 						assemblyResolver: this,
 						stream: Task.Run(entry.TryOpenStream),

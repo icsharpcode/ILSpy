@@ -66,7 +66,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			if (length < 0 || startOffset + length > textLength)
 				throw new ArgumentOutOfRangeException(nameof(length), length, "length must not be negative and startOffset+length must not be after the end of the document");
 
-			TextMarker m = new TextMarker(this, startOffset, length);
+			TextMarker m = new(this, startOffset, length);
 			markers.Add(m);
 			// no need to mark segment for redraw: the text marker is invisible until a property is set
 			return m;

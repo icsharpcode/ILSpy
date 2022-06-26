@@ -200,14 +200,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </remarks>
 		class GroupStores : ReachingDefinitionsVisitor
 		{
-			readonly UnionFind<IInstructionWithVariableOperand> unionFind = new UnionFind<IInstructionWithVariableOperand>();
+			readonly UnionFind<IInstructionWithVariableOperand> unionFind = new();
 
 			/// <summary>
 			/// For each uninitialized variable, one representative instruction that
 			/// potentially observes the unintialized value of the variable.
 			/// Used to merge together all such loads of the same uninitialized value.
 			/// </summary>
-			readonly Dictionary<ILVariable, IInstructionWithVariableOperand> uninitVariableUsage = new Dictionary<ILVariable, IInstructionWithVariableOperand>();
+			readonly Dictionary<ILVariable, IInstructionWithVariableOperand> uninitVariableUsage = new();
 
 			public GroupStores(ILFunction scope, CancellationToken cancellationToken) : base(scope, IsCandidateVariable, cancellationToken)
 			{
@@ -255,7 +255,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
-			readonly Dictionary<IInstructionWithVariableOperand, ILVariable> newVariables = new Dictionary<IInstructionWithVariableOperand, ILVariable>();
+			readonly Dictionary<IInstructionWithVariableOperand, ILVariable> newVariables = new();
 
 			/// <summary>
 			/// Gets the new variable for a LdLoc, StLoc or TryCatchHandler instruction.
@@ -266,7 +266,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILVariable v;
 				if (!newVariables.TryGetValue(representative, out v))
 				{
-					v = new ILVariable(inst.Variable.Kind, inst.Variable.Type, inst.Variable.StackType, inst.Variable.Index);
+					v = new(inst.Variable.Kind, inst.Variable.Type, inst.Variable.StackType, inst.Variable.Index);
 					v.Name = inst.Variable.Name;
 					v.HasGeneratedName = inst.Variable.HasGeneratedName;
 					v.StateMachineField = inst.Variable.StateMachineField;

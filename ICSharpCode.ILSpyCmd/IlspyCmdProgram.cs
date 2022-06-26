@@ -132,7 +132,7 @@ Examples:
 						string projectFileName = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(file), Path.GetFileNameWithoutExtension(file) + ".csproj");
 						Directory.CreateDirectory(Path.GetDirectoryName(projectFileName));
 						ProjectId projectId = DecompileAsProject(file, projectFileName);
-						projects.Add(new ProjectItem(projectFileName, projectId.PlatformName, projectId.Guid, projectId.TypeGuid));
+						projects.Add(new(projectFileName, projectId.PlatformName, projectId.Guid, projectId.TypeGuid));
 					}
 					SolutionCreator.WriteSolutionFile(Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(outputDirectory) + ".sln"), projects);
 					return 0;
@@ -227,7 +227,7 @@ Examples:
 
 		DecompilerSettings GetSettings(PEFile module)
 		{
-			return new DecompilerSettings(LanguageVersion) {
+			return new(LanguageVersion) {
 				ThrowOnAssemblyResolveErrors = false,
 				RemoveDeadCode = RemoveDeadCode,
 				RemoveDeadStores = RemoveDeadStores,
@@ -244,7 +244,7 @@ Examples:
 			{
 				resolver.AddSearchDirectory(path);
 			}
-			return new CSharpDecompiler(assemblyFileName, resolver, GetSettings(module)) {
+			return new(assemblyFileName, resolver, GetSettings(module)) {
 				DebugInfoProvider = TryLoadPDB(module)
 			};
 		}
@@ -316,7 +316,7 @@ Examples:
 				return ProgramExitCodes.EX_DATAERR;
 			}
 
-			using (FileStream stream = new FileStream(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write))
+			using (FileStream stream = new(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write))
 			{
 				var decompiler = GetDecompiler(assemblyFileName);
 				PortablePdbWriter.WritePdb(module, decompiler, GetSettings(module), stream);

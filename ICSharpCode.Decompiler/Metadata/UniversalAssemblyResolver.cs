@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		readonly MetadataReaderOptions metadataOptions;
 		readonly string? mainAssemblyFileName;
 		readonly string? baseDirectory;
-		readonly List<string?> directories = new List<string?>();
+		readonly List<string?> directories = new();
 		static readonly List<string> gac_paths = GetGacPaths();
 		static readonly DecompilerRuntime decompilerRuntime;
 
@@ -144,7 +144,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.targetFramework = targetFramework ?? string.Empty;
 			this.runtimePack = runtimePack ?? "Microsoft.NETCore.App";
 			(targetFrameworkIdentifier, targetFrameworkVersion) = ParseTargetFramework(this.targetFramework);
-			this.dotNetCorePathFinder = new Lazy<DotNetCorePathFinder>(InitDotNetCorePathFinder);
+			this.dotNetCorePathFinder = new(InitDotNetCorePathFinder);
 			if (mainAssemblyFileName != null)
 			{
 				this.baseDirectory = Path.GetDirectoryName(mainAssemblyFileName);
@@ -235,8 +235,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			try
 			{
-				FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-				return new PEFile(fileName, stream, streamOptions, metadataOptions);
+				FileStream stream = new(fileName, FileMode.Open, FileAccess.Read);
+				return new(fileName, stream, streamOptions, metadataOptions);
 			}
 			catch (BadImageFormatException ex)
 			{
@@ -302,9 +302,9 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			DotNetCorePathFinder dotNetCorePathFinder;
 			if (mainAssemblyFileName == null)
-				dotNetCorePathFinder = new DotNetCorePathFinder(targetFrameworkIdentifier, targetFrameworkVersion, runtimePack);
+				dotNetCorePathFinder = new(targetFrameworkIdentifier, targetFrameworkVersion, runtimePack);
 			else
-				dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, runtimePack, targetFrameworkIdentifier, targetFrameworkVersion);
+				dotNetCorePathFinder = new(mainAssemblyFileName, targetFramework, runtimePack, targetFrameworkIdentifier, targetFrameworkVersion);
 			foreach (var directory in directories)
 			{
 				dotNetCorePathFinder.AddSearchDirectory(directory);
@@ -488,7 +488,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				|| (version.Major == 65535 && version.Minor == 65535 && version.Build == 65535 && version.Revision == 65535);
 		}
 
-		internal static Version ZeroVersion = new Version(0, 0, 0, 0);
+		internal static Version ZeroVersion = new(0, 0, 0, 0);
 
 		string? GetCorlib(IAssemblyReference reference)
 		{

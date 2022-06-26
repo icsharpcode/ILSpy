@@ -81,8 +81,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		IField builderField;
 		IField stateField;
 		int initialState;
-		Dictionary<IField, ILVariable> fieldToParameterMap = new Dictionary<IField, ILVariable>();
-		Dictionary<ILVariable, ILVariable> cachedFieldToParameterMap = new Dictionary<ILVariable, ILVariable>();
+		Dictionary<IField, ILVariable> fieldToParameterMap = new();
+		Dictionary<ILVariable, ILVariable> cachedFieldToParameterMap = new();
 		IField disposeModeField; // 'disposeMode' field (IAsyncEnumerable/IAsyncEnumerator only)
 
 		// These fields are set by AnalyzeMoveNext():
@@ -99,14 +99,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		// These fields are set by AnalyzeStateMachine():
 		int smallestAwaiterVarIndex;
-		HashSet<Leave> moveNextLeaves = new HashSet<Leave>();
+		HashSet<Leave> moveNextLeaves = new();
 
 		// For each block containing an 'await', stores the awaiter variable, and the field storing the awaiter
 		// across the yield point.
-		Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)> awaitBlocks = new Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)>();
+		Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)> awaitBlocks = new();
 
 		int catchHandlerOffset;
-		List<AsyncDebugInfo.Await> awaitDebugInfos = new List<AsyncDebugInfo.Await>();
+		List<AsyncDebugInfo.Await> awaitDebugInfos = new();
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			AwaitInFinallyTransform.Run(function, context);
 
 			awaitDebugInfos.SortBy(row => row.YieldOffset);
-			function.AsyncDebugInfo = new AsyncDebugInfo(catchHandlerOffset, awaitDebugInfos.ToImmutableArray());
+			function.AsyncDebugInfo = new(catchHandlerOffset, awaitDebugInfos.ToImmutableArray());
 		}
 
 		private void CleanUpBodyOfMoveNext(ILFunction function)
@@ -1117,7 +1117,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							Block targetBlock = stateToBlockMap.GetOrDefault(state);
 							if (targetBlock != null)
 							{
-								awaitDebugInfos.Add(new AsyncDebugInfo.Await(yieldOffset, targetBlock.StartILOffset));
+								awaitDebugInfos.Add(new(yieldOffset, targetBlock.StartILOffset));
 								block.Instructions.Add(new Branch(targetBlock));
 							}
 							else
@@ -1163,7 +1163,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var entryPoint = stateToBlockMap.GetOrDefault(initialState);
 				if (entryPoint != null)
 				{
-					container.Blocks.Insert(0, new Block {
+					container.Blocks.Insert(0, new() {
 						Instructions = {
 							new Branch(entryPoint)
 						}
@@ -1534,7 +1534,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			block.Instructions.RemoveAt(block.Instructions.Count - 3); // remove getAwaiter call
 			block.Instructions.RemoveAt(block.Instructions.Count - 2); // remove if (isCompleted)
 			((Branch)block.Instructions.Last()).TargetBlock = completedBlock; // instead, directly jump to completed block
-			Await awaitInst = new Await(UnwrapConvUnknown(getAwaiterCall.Arguments.Single()));
+			Await awaitInst = new(UnwrapConvUnknown(getAwaiterCall.Arguments.Single()));
 			awaitInst.GetResultMethod = getResultCall.Method;
 			awaitInst.GetAwaiterMethod = getAwaiterCall.Method;
 			getResultCall.ReplaceWith(awaitInst);

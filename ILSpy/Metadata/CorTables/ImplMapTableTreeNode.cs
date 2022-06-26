@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				ImplMapEntry entry = new ImplMapEntry(module, ptr, metadataOffset, rid);
+				ImplMapEntry entry = new(module, ptr, metadataOffset, rid);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -166,7 +166,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				int moduleRefSize = metadata.GetTableRowCount(TableIndex.ModuleRef) < ushort.MaxValue ? 2 : 4;
 				int memberForwardedTagRefSize = metadata.ComputeCodedTokenSize(32768, TableMask.MethodDef | TableMask.Field);
 				int stringHandleSize = metadata.GetHeapSize(HeapIndex.String) < ushort.MaxValue ? 2 : 4;
-				this.implMap = new ImplMap(ptr + rowOffset, moduleRefSize, memberForwardedTagRefSize, stringHandleSize);
+				this.implMap = new(ptr + rowOffset, moduleRefSize, memberForwardedTagRefSize, stringHandleSize);
 			}
 		}
 

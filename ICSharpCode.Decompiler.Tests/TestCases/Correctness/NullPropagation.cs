@@ -18,7 +18,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("TestNotCoalescing:");
 			Console.WriteLine(NotCoalescing(null));
-			Console.WriteLine(NotCoalescing(new MyClass()));
+			Console.WriteLine(NotCoalescing(new()));
 		}
 
 		string NotCoalescing(MyClass c)

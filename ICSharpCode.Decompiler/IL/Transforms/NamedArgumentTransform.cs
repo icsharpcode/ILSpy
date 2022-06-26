@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(call.Parent is Block namedArgBlock) || namedArgBlock.Kind != BlockKind.CallWithNamedArgs)
 			{
 				// create namedArgBlock:
-				namedArgBlock = new Block(BlockKind.CallWithNamedArgs);
+				namedArgBlock = new(BlockKind.CallWithNamedArgs);
 				call.ReplaceWith(namedArgBlock);
 				namedArgBlock.FinalInstruction = call;
 				if (call.IsInstanceCall)

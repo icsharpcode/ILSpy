@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		readonly ILInstruction parentInstruction;
 		readonly int firstChildIndex;
-		readonly List<T> list = new List<T>();
+		readonly List<T> list = new();
 
 		public InstructionCollection(ILInstruction parentInstruction, int firstChildIndex)
 		{
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL
 		#region GetEnumerator
 		public Enumerator GetEnumerator()
 		{
-			return new Enumerator(this);
+			return new(this);
 		}
 
 		/// <summary>

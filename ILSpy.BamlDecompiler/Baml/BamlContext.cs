@@ -47,7 +47,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		BamlContext(IDecompilerTypeSystem typeSystem)
 		{
 			this.TypeSystem = typeSystem;
-			KnownThings = new KnownThings(typeSystem);
+			KnownThings = new(typeSystem);
 
 			AssemblyIdMap = new Dictionary<ushort, AssemblyInfoRecord>();
 			AttributeIdMap = new Dictionary<ushort, AttributeInfoRecord>();

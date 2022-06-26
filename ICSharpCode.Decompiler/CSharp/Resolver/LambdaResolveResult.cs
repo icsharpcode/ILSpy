@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			this.HasParameterList = hasParameterList;
 			this.IsAnonymousMethod = isAnonymousMethod;
 			this.IsImplicitlyTyped = isImplicitlyTyped;
-			this.Body = new ResolveResult(SpecialType.UnknownType);
+			this.Body = new(SpecialType.UnknownType);
 		}
 
 		public override bool HasParameterList { get; }
@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 	class LambdaConversion : Conversion
 	{
-		public static readonly LambdaConversion Instance = new LambdaConversion();
+		public static readonly LambdaConversion Instance = new();
 
 		public override bool IsAnonymousFunctionConversion => true;
 		public override bool IsImplicit => true;

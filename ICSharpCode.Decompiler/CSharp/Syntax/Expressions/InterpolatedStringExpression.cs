@@ -8,8 +8,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class InterpolatedStringExpression : Expression
 	{
-		public static readonly TokenRole OpenQuote = new TokenRole("$\"");
-		public static readonly TokenRole CloseQuote = new TokenRole("\"");
+		public static readonly TokenRole OpenQuote = new("$\"");
+		public static readonly TokenRole CloseQuote = new("\"");
 
 		public AstNodeCollection<InterpolatedStringContent> Content {
 			get { return GetChildrenByRole(InterpolatedStringContent.Role); }
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 
-		public new static readonly Role<InterpolatedStringContent> Role = new Role<InterpolatedStringContent>("InterpolatedStringContent", Syntax.InterpolatedStringContent.Null);
+		public new static readonly Role<InterpolatedStringContent> Role = new("InterpolatedStringContent", Syntax.InterpolatedStringContent.Null);
 
 		public override NodeType NodeType => NodeType.Unknown;
 	}
@@ -87,8 +87,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class Interpolation : InterpolatedStringContent
 	{
-		public static readonly TokenRole LBrace = new TokenRole("{");
-		public static readonly TokenRole RBrace = new TokenRole("}");
+		public static readonly TokenRole LBrace = new("{");
+		public static readonly TokenRole RBrace = new("}");
 
 		public CSharpTokenNode LBraceToken {
 			get { return GetChildByRole(LBrace); }

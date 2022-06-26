@@ -55,13 +55,13 @@ namespace ICSharpCode.Decompiler.Tests
 
 			var moduleDefinition = new PEFile(peFileName);
 			var resolver = new UniversalAssemblyResolver(peFileName, false, moduleDefinition.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
-			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new DecompilerSettings());
+			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new());
 			var expectedPdbId = new BlobContentId(Guid.NewGuid(), (uint)Random.Shared.Next());
 
 			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(CustomPdbId) + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
 			{
 				pdbStream.SetLength(0);
-				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, noLogo: true, pdbId: expectedPdbId);
+				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new(), pdbStream, noLogo: true, pdbId: expectedPdbId);
 
 				pdbStream.Position = 0;
 				var metadataReader = MetadataReaderProvider.FromPortablePdbStream(pdbStream).GetMetadataReader();
@@ -81,21 +81,21 @@ namespace ICSharpCode.Decompiler.Tests
 
 			var moduleDefinition = new PEFile(peFileName);
 			var resolver = new UniversalAssemblyResolver(peFileName, false, moduleDefinition.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
-			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new DecompilerSettings());
+			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new());
 			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, testName + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
 			{
 				pdbStream.SetLength(0);
-				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, noLogo: true);
+				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new(), pdbStream, noLogo: true);
 				pdbStream.Position = 0;
 				using (Stream peStream = File.OpenRead(peFileName))
 				using (Stream expectedPdbStream = File.OpenRead(pdbFileName))
 				{
-					using (StreamWriter writer = new StreamWriter(Path.ChangeExtension(pdbFileName, ".xml"), false, Encoding.UTF8))
+					using (StreamWriter writer = new(Path.ChangeExtension(pdbFileName, ".xml"), false, Encoding.UTF8))
 					{
 						PdbToXmlConverter.ToXml(writer, expectedPdbStream, peStream, options);
 					}
 					peStream.Position = 0;
-					using (StreamWriter writer = new StreamWriter(Path.ChangeExtension(xmlFile, ".generated.xml"), false, Encoding.UTF8))
+					using (StreamWriter writer = new(Path.ChangeExtension(xmlFile, ".generated.xml"), false, Encoding.UTF8))
 					{
 						PdbToXmlConverter.ToXml(writer, pdbStream, peStream, options);
 					}

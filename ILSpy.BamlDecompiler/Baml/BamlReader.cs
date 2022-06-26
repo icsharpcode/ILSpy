@@ -76,9 +76,9 @@ namespace ILSpy.BamlDecompiler.Baml
 			ret.Signature = ReadSignature(str);
 			if (ret.Signature != MSBAML_SIG)
 				throw new NotSupportedException();
-			ret.ReaderVersion = new BamlDocument.BamlVersion { Major = reader.ReadUInt16(), Minor = reader.ReadUInt16() };
-			ret.UpdaterVersion = new BamlDocument.BamlVersion { Major = reader.ReadUInt16(), Minor = reader.ReadUInt16() };
-			ret.WriterVersion = new BamlDocument.BamlVersion { Major = reader.ReadUInt16(), Minor = reader.ReadUInt16() };
+			ret.ReaderVersion = new() { Major = reader.ReadUInt16(), Minor = reader.ReadUInt16() };
+			ret.UpdaterVersion = new() { Major = reader.ReadUInt16(), Minor = reader.ReadUInt16() };
+			ret.WriterVersion = new() { Major = reader.ReadUInt16(), Minor = reader.ReadUInt16() };
 			if (ret.ReaderVersion.Major != 0 || ret.ReaderVersion.Minor != 0x60 ||
 				ret.UpdaterVersion.Major != 0 || ret.UpdaterVersion.Minor != 0x60 ||
 				ret.WriterVersion.Major != 0 || ret.WriterVersion.Minor != 0x60)

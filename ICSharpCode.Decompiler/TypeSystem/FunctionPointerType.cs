@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				parameterTypes.Add(paramType);
 				parameterReferenceKinds.Add(kind);
 			}
-			return new FunctionPointerType(
+			return new(
 				module, signature.Header.CallingConvention, customCallConvs.ToImmutable(),
 				returnType, returnIsRefReadOnly,
 				parameterTypes.MoveToImmutable(), parameterReferenceKinds.MoveToImmutable());

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UnsafeStatement : Statement
 	{
-		public static readonly TokenRole UnsafeKeywordRole = new TokenRole("unsafe");
+		public static readonly TokenRole UnsafeKeywordRole = new("unsafe");
 
 		public CSharpTokenNode UnsafeToken {
 			get { return GetChildByRole(UnsafeKeywordRole); }

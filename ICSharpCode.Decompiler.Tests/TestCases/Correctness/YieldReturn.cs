@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				new YieldReturnTest { fieldOnThis = 1 }.YieldReturnParametersEnumerator(2));
 			Print("YieldReturnInLoop", YieldReturnInLoop().GetEnumerator());
 			Print("YieldReturnWithTryFinally", YieldReturnWithTryFinally().GetEnumerator());
-			Print("YieldReturnInLock1", YieldReturnInLock1(new object()).GetEnumerator());
-			Print("YieldReturnInLock2", YieldReturnInLock2(new object()).GetEnumerator());
+			Print("YieldReturnInLock1", YieldReturnInLock1(new()).GetEnumerator());
+			Print("YieldReturnInLock2", YieldReturnInLock2(new()).GetEnumerator());
 			Print("YieldReturnWithNestedTryFinally(false)", YieldReturnWithNestedTryFinally(false).GetEnumerator());
 			Print("YieldReturnWithNestedTryFinally(true)", YieldReturnWithNestedTryFinally(true).GetEnumerator());
 			Print("YieldReturnWithTwoNonNestedFinallyBlocks", YieldReturnWithTwoNonNestedFinallyBlocks(SimpleYieldReturn()).GetEnumerator());
@@ -539,7 +539,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static IEnumerable<T> GenericYield<T>() where T : new()
 		{
-			T val = new T();
+			T val = new();
 			for (int i = 0; i < 3; i++)
 			{
 				yield return val;

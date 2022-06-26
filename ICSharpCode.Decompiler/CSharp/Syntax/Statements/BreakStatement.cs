@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class BreakStatement : Statement
 	{
-		public static readonly TokenRole BreakKeywordRole = new TokenRole("break");
+		public static readonly TokenRole BreakKeywordRole = new("break");
 
 		public CSharpTokenNode BreakToken {
 			get { return GetChildByRole(BreakKeywordRole); }

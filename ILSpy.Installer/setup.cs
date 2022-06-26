@@ -40,7 +40,7 @@ namespace ILSpy.Installer
 			project.LocalizationFile = Path.Combine(Environment.CurrentDirectory, "winui.wxl");
 			project.Encoding = Encoding.UTF8;
 
-			project.MajorUpgrade = new MajorUpgrade {
+			project.MajorUpgrade = new() {
 				Schedule = UpgradeSchedule.afterInstallInitialize,
 				AllowSameVersionUpgrades = true,
 				DowngradeErrorMessage = "A newer release of ILSpy is already installed on this system. Please uninstall it first to continue."

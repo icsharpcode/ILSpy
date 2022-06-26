@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			for (int row = 1; row <= metadata.GetTableRowCount(TableIndex.Constant); row++)
 			{
-				ConstantEntry entry = new ConstantEntry(module, MetadataTokens.ConstantHandle(row));
+				ConstantEntry entry = new(module, MetadataTokens.ConstantHandle(row));
 				if (scrollTarget == row)
 				{
 					scrollTargetEntry = entry;

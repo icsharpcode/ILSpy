@@ -179,7 +179,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 	sealed class IsNormalZoomConverter : IValueConverter
 	{
-		public static readonly IsNormalZoomConverter Instance = new IsNormalZoomConverter();
+		public static readonly IsNormalZoomConverter Instance = new();
 
 		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{

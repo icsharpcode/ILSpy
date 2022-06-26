@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				switch (parts[0].ToLowerInvariant())
 				{
 					case "version":
-						name.Version = new Version(parts[1]);
+						name.Version = new(parts[1]);
 						break;
 					case "culture":
 						name.Culture = parts[1] == "neutral" ? "" : parts[1];

@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						if (pt != null)
 							substitution = pt.GetSubstitution(methodTypeArguments);
 						else
-							substitution = new TypeParameterSubstitution(null, methodTypeArguments);
+							substitution = new(null, methodTypeArguments);
 					}
 					yield return new SpecializedMethod(m, substitution);
 				}

@@ -40,21 +40,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(GetFormat(), index = GetIndex());
 			Console.WriteLine(index);
 			InlineAssignmentTest value;
-			Console.WriteLine(GetFormat(), value = new InlineAssignmentTest());
+			Console.WriteLine(GetFormat(), value = new());
 			Console.WriteLine(value);
 		}
 
 		public void SimpleInlineWithFields()
 		{
 			Console.WriteLine(field1 = 5);
-			Console.WriteLine(field2 = new InlineAssignmentTest());
+			Console.WriteLine(field2 = new());
 		}
 
 		public void SimpleInlineWithFields2()
 		{
 			Console.WriteLine(field1 = 5);
 			Console.WriteLine(field1);
-			Console.WriteLine(field2 = new InlineAssignmentTest());
+			Console.WriteLine(field2 = new());
 			Console.WriteLine(field2);
 			UseShort(field4 = 6);
 			UseShort(field4 = -10000);

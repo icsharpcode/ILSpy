@@ -44,8 +44,8 @@ namespace ILSpy.BamlDecompiler
 		public readonly XElement Element;
 		public readonly string String;
 
-		public static implicit operator XamlNode(XElement value) => new XamlNode(value);
-		public static implicit operator XamlNode(string value) => new XamlNode(value);
+		public static implicit operator XamlNode(XElement value) => new(value);
+		public static implicit operator XamlNode(string value) => new(value);
 		public static implicit operator XElement(XamlNode node) => node.Element;
 		public static implicit operator string(XamlNode node) => node.String;
 	}

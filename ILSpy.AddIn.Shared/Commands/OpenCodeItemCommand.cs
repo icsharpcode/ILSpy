@@ -74,7 +74,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 			var ast = await roslynDocument.GetSyntaxRootAsync().ConfigureAwait(false);
 			var model = await roslynDocument.GetSemanticModelAsync().ConfigureAwait(false);
-			var node = ast.FindNode(new TextSpan(caretPosition.Position, 0), false, true);
+			var node = ast.FindNode(new(caretPosition.Position, 0), false, true);
 			if (node == null)
 			{
 				owner.ShowMessage(OLEMSGICON.OLEMSGICON_WARNING, "Can't show ILSpy for this code element!");
@@ -103,7 +103,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 			string assemblyName = roslynDocument.Project.AssemblyName;
 			string projectOutputPath = Utils.GetProjectOutputAssembly(project, roslynProject);
-			refsmap.Add(assemblyName, new DetectedReference(assemblyName, projectOutputPath, true));
+			refsmap.Add(assemblyName, new(assemblyName, projectOutputPath, true));
 
 			// Divide into valid and invalid (= not found) referenced assemblies
 			CheckAssemblies(refsmap, out var validRefs, out var invalidRefs);
@@ -140,16 +140,16 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				return;
 			}
 
-			OpenAssembliesInILSpy(new ILSpyParameters(validRefs.Select(r => r.AssemblyFile), "/navigateTo:" +
-				(symbol.OriginalDefinition ?? symbol).GetDocumentationCommentId()));
+			OpenAssembliesInILSpy(new(validRefs.Select(r => r.AssemblyFile), "/navigateTo:" +
+			                                                                 (symbol.OriginalDefinition ?? symbol).GetDocumentationCommentId()));
 		}
 
 		void CheckAssemblies(Dictionary<string, DetectedReference> inputReferenceList,
 			out List<DetectedReference> validRefs,
 			out List<DetectedReference> invalidRefs)
 		{
-			validRefs = new List<DetectedReference>();
-			invalidRefs = new List<DetectedReference>();
+			validRefs = new();
+			invalidRefs = new();
 
 			foreach (var reference in inputReferenceList.Select(r => r.Value))
 			{
@@ -210,7 +210,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			instance = new OpenCodeItemCommand(owner);
+			instance = new(owner);
 		}
 	}
 }

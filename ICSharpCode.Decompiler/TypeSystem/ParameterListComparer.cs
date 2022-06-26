@@ -34,9 +34,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </remarks>
 	public sealed class ParameterListComparer : IEqualityComparer<IReadOnlyList<IParameter>>
 	{
-		public static readonly ParameterListComparer Instance = new ParameterListComparer();
+		public static readonly ParameterListComparer Instance = new();
 
-		static readonly NormalizeTypeVisitor normalizationVisitor = new NormalizeTypeVisitor {
+		static readonly NormalizeTypeVisitor normalizationVisitor = new() {
 			ReplaceClassTypeParametersWithDummy = false,
 			ReplaceMethodTypeParametersWithDummy = true,
 			DynamicAndObject = true,
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public static ParameterListComparer WithOptions(bool includeModifiers = false)
 		{
-			return new ParameterListComparer() {
+			return new() {
 				includeModifiers = includeModifiers
 			};
 		}
@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets a signature comparer that uses an ordinal comparison for the member name.
 		/// </summary>
-		public static readonly SignatureComparer Ordinal = new SignatureComparer(StringComparer.Ordinal);
+		public static readonly SignatureComparer Ordinal = new(StringComparer.Ordinal);
 
 		public bool Equals(IMember x, IMember y)
 		{

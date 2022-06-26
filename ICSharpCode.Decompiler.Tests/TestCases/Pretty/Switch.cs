@@ -630,8 +630,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchOnStringInForLoop()
 		{
-			List<SetProperty> list = new List<SetProperty>();
-			List<SetProperty> list2 = new List<SetProperty>();
+			List<SetProperty> list = new();
+			List<SetProperty> list2 = new();
 			SetProperty[] properties = GetProperties();
 			for (int i = 0; i < properties.Length; i++)
 			{
@@ -1382,7 +1382,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				case 5:
 					return "unreachable";
 				default:
-					throw new Exception();
+					throw new();
 			}
 		}
 

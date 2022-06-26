@@ -26,7 +26,7 @@ namespace TestPlugin
 			// If the specified section does exist, the indexer will return a new empty element.
 			XElement e = settings[ns + "CustomOptions"];
 			// Now load the options from the XML document:
-			Options s = new Options();
+			Options s = new();
 			s.UselessOption1 = (bool?)e.Attribute("useless1") ?? s.UselessOption1;
 			s.UselessOption2 = (double?)e.Attribute("useless2") ?? s.UselessOption2;
 			this.DataContext = s;

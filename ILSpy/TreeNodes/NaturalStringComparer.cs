@@ -26,7 +26,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		[DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
 		static extern int StrCmpLogicalW(string psz1, string psz2);
 
-		public static readonly NaturalStringComparer Instance = new NaturalStringComparer();
+		public static readonly NaturalStringComparer Instance = new();
 
 		public int Compare(string x, string y)
 		{

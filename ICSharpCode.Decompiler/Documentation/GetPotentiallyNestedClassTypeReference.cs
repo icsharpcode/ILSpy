@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				{
 					if (asm == null)
 						continue;
-					ITypeDefinition typeDef = asm.GetTypeDefinition(new TopLevelTypeName(ns, name, topLevelTPC));
+					ITypeDefinition typeDef = asm.GetTypeDefinition(new(ns, name, topLevelTPC));
 					for (int j = i + 1; j < parts.Length && typeDef != null; j++)
 					{
 						int tpc = (j == parts.Length - 1 ? typeParameterCount : 0);

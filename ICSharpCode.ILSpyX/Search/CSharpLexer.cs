@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpyX.Search
 
 		public LATextReader(TextReader reader)
 		{
-			this.buffer = new List<int>();
+			this.buffer = new();
 			this.reader = reader;
 		}
 
@@ -116,10 +116,10 @@ namespace ICSharpCode.ILSpyX.Search
 		protected Literal curToken = null;
 		protected Literal peekToken = null;
 
-		protected StringBuilder sb = new StringBuilder();
+		protected StringBuilder sb = new();
 
 		// used for the original value of strings (with escape sequences).
-		protected StringBuilder originalValue = new StringBuilder();
+		protected StringBuilder originalValue = new();
 
 		protected int Line {
 			get {
@@ -133,7 +133,7 @@ namespace ICSharpCode.ILSpyX.Search
 		}
 
 		protected bool recordRead = false;
-		protected StringBuilder recordedText = new StringBuilder();
+		protected StringBuilder recordedText = new();
 
 		protected int ReaderRead()
 		{
@@ -173,7 +173,7 @@ namespace ICSharpCode.ILSpyX.Search
 
 		protected string ReaderPeekString(int length)
 		{
-			StringBuilder builder = new StringBuilder();
+			StringBuilder builder = new();
 
 			for (int i = 0; i < length; i++)
 			{
@@ -208,7 +208,7 @@ namespace ICSharpCode.ILSpyX.Search
 		/// </summary>
 		protected AbstractLexer(TextReader reader)
 		{
-			this.reader = new LATextReader(reader);
+			this.reader = new(reader);
 		}
 
 		#region System.IDisposable interface implementation
@@ -432,7 +432,7 @@ namespace ICSharpCode.ILSpyX.Search
 							{
 								bool canBeKeyword;
 								string s = ReadIdent(ch, out canBeKeyword);
-								return new Literal(null, null, LiteralFormat.None);
+								return new(null, null, LiteralFormat.None);
 							}
 							else
 							{
@@ -450,7 +450,7 @@ namespace ICSharpCode.ILSpyX.Search
 							int y = Line;
 							bool canBeKeyword;
 							string s = ReadIdent(ch, out canBeKeyword);
-							return new Literal(null, null, LiteralFormat.None);
+							return new(null, null, LiteralFormat.None);
 						}
 						else if (Char.IsDigit(ch))
 						{
@@ -466,7 +466,7 @@ namespace ICSharpCode.ILSpyX.Search
 				}
 			}
 
-			return new Literal(null, null, LiteralFormat.None);
+			return new(null, null, LiteralFormat.None);
 		}
 
 		// The C# compiler has a fixed size length therefore we'll use a fixed size char array for identifiers
@@ -540,7 +540,7 @@ namespace ICSharpCode.ILSpyX.Search
 					break;
 				}
 			}
-			return new String(identBuffer, 0, curPos);
+			return new(identBuffer, 0, curPos);
 		}
 
 		Literal ReadDigit(char ch, int x)
@@ -605,7 +605,7 @@ namespace ICSharpCode.ILSpyX.Search
 					peek = (char)ReaderPeek();
 					if (!Char.IsDigit(peek))
 					{
-						nextToken = new Literal(null, null, LiteralFormat.None);
+						nextToken = new(null, null, LiteralFormat.None);
 						peek = '.';
 					}
 					else
@@ -696,12 +696,12 @@ namespace ICSharpCode.ILSpyX.Search
 					float num;
 					if (float.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out num))
 					{
-						return new Literal(stringValue, num, LiteralFormat.DecimalNumber);
+						return new(stringValue, num, LiteralFormat.DecimalNumber);
 					}
 					else
 					{
 						Error(y, x, String.Format("Can't parse float {0}", digit));
-						return new Literal(stringValue, 0f, LiteralFormat.DecimalNumber);
+						return new(stringValue, 0f, LiteralFormat.DecimalNumber);
 					}
 				}
 				if (isdecimal)
@@ -709,12 +709,12 @@ namespace ICSharpCode.ILSpyX.Search
 					decimal num;
 					if (decimal.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out num))
 					{
-						return new Literal(stringValue, num, LiteralFormat.DecimalNumber);
+						return new(stringValue, num, LiteralFormat.DecimalNumber);
 					}
 					else
 					{
 						Error(y, x, String.Format("Can't parse decimal {0}", digit));
-						return new Literal(stringValue, 0m, LiteralFormat.DecimalNumber);
+						return new(stringValue, 0m, LiteralFormat.DecimalNumber);
 					}
 				}
 				if (isdouble)
@@ -722,12 +722,12 @@ namespace ICSharpCode.ILSpyX.Search
 					double num;
 					if (double.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out num))
 					{
-						return new Literal(stringValue, num, LiteralFormat.DecimalNumber);
+						return new(stringValue, num, LiteralFormat.DecimalNumber);
 					}
 					else
 					{
 						Error(y, x, String.Format("Can't parse double {0}", digit));
-						return new Literal(stringValue, 0d, LiteralFormat.DecimalNumber);
+						return new(stringValue, 0d, LiteralFormat.DecimalNumber);
 					}
 				}
 
@@ -738,7 +738,7 @@ namespace ICSharpCode.ILSpyX.Search
 					if (!ulong.TryParse(digit, NumberStyles.HexNumber, null, out result))
 					{
 						Error(y, x, String.Format("Can't parse hexadecimal constant {0}", digit));
-						return new Literal(stringValue.ToString(), 0, LiteralFormat.HexadecimalNumber);
+						return new(stringValue.ToString(), 0, LiteralFormat.HexadecimalNumber);
 					}
 				}
 				else
@@ -746,7 +746,7 @@ namespace ICSharpCode.ILSpyX.Search
 					if (!ulong.TryParse(digit, NumberStyles.Integer, null, out result))
 					{
 						Error(y, x, String.Format("Can't parse integral constant {0}", digit));
-						return new Literal(stringValue.ToString(), 0, LiteralFormat.DecimalNumber);
+						return new(stringValue.ToString(), 0, LiteralFormat.DecimalNumber);
 					}
 				}
 
@@ -774,12 +774,12 @@ namespace ICSharpCode.ILSpyX.Search
 						ulong num;
 						if (ulong.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out num))
 						{
-							token = new Literal(stringValue, num, literalFormat);
+							token = new(stringValue, num, literalFormat);
 						}
 						else
 						{
 							Error(y, x, String.Format("Can't parse unsigned long {0}", digit));
-							token = new Literal(stringValue, 0UL, literalFormat);
+							token = new(stringValue, 0UL, literalFormat);
 						}
 					}
 					else
@@ -787,12 +787,12 @@ namespace ICSharpCode.ILSpyX.Search
 						long num;
 						if (long.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out num))
 						{
-							token = new Literal(stringValue, num, literalFormat);
+							token = new(stringValue, num, literalFormat);
 						}
 						else
 						{
 							Error(y, x, String.Format("Can't parse long {0}", digit));
-							token = new Literal(stringValue, 0L, literalFormat);
+							token = new(stringValue, 0L, literalFormat);
 						}
 					}
 				}
@@ -803,12 +803,12 @@ namespace ICSharpCode.ILSpyX.Search
 						uint num;
 						if (uint.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out num))
 						{
-							token = new Literal(stringValue, num, literalFormat);
+							token = new(stringValue, num, literalFormat);
 						}
 						else
 						{
 							Error(y, x, String.Format("Can't parse unsigned int {0}", digit));
-							token = new Literal(stringValue, (uint)0, literalFormat);
+							token = new(stringValue, (uint)0, literalFormat);
 						}
 					}
 					else
@@ -816,12 +816,12 @@ namespace ICSharpCode.ILSpyX.Search
 						int num;
 						if (int.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out num))
 						{
-							token = new Literal(stringValue, num, literalFormat);
+							token = new(stringValue, num, literalFormat);
 						}
 						else
 						{
 							Error(y, x, String.Format("Can't parse int {0}", digit));
-							token = new Literal(stringValue, 0, literalFormat);
+							token = new(stringValue, 0, literalFormat);
 						}
 					}
 				}
@@ -883,7 +883,7 @@ namespace ICSharpCode.ILSpyX.Search
 				Error(y, x, "End of file reached inside string literal");
 			}
 
-			return new Literal(originalValue.ToString(), sb.ToString(), LiteralFormat.StringLiteral);
+			return new(originalValue.ToString(), sb.ToString(), LiteralFormat.StringLiteral);
 		}
 
 		Literal ReadVerbatimString()
@@ -924,7 +924,7 @@ namespace ICSharpCode.ILSpyX.Search
 				Error(Line, Col, "End of file reached inside verbatim string literal");
 			}
 
-			return new Literal(originalValue.ToString(), sb.ToString(), LiteralFormat.VerbatimStringLiteral);
+			return new(originalValue.ToString(), sb.ToString(), LiteralFormat.VerbatimStringLiteral);
 		}
 
 		readonly char[] escapeSequenceBuffer = new char[12];
@@ -1049,7 +1049,7 @@ namespace ICSharpCode.ILSpyX.Search
 					ch = '\0';
 					break;
 			}
-			return new String(escapeSequenceBuffer, 0, curPos);
+			return new(escapeSequenceBuffer, 0, curPos);
 		}
 
 		Literal ReadChar()
@@ -1081,7 +1081,7 @@ namespace ICSharpCode.ILSpyX.Search
 					Error(y, x, "Char not terminated");
 				}
 			}
-			return new Literal("'" + ch + escapeSequence + "'", chValue, LiteralFormat.CharLiteral);
+			return new("'" + ch + escapeSequence + "'", chValue, LiteralFormat.CharLiteral);
 		}
 
 		void Error(int y, int x, string message)

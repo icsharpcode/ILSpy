@@ -317,7 +317,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 					}
 				}
 			});
-			return new DebugInfoHelper {
+			return new() {
 				records = records
 			};
 		}

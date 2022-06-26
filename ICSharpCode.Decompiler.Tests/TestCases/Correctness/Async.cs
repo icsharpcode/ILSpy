@@ -154,7 +154,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			try
 			{
 				Console.WriteLine("Before throw");
-				throw new Exception();
+				throw new();
 			}
 			catch
 			{
@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			try
 			{
 				Console.WriteLine("Before throw");
-				throw new Exception();
+				throw new();
 			}
 			catch (OutOfMemoryException ex)
 			{
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			try
 			{
 				Console.WriteLine("Before throw");
-				throw new Exception();
+				throw new();
 			}
 			catch (OutOfMemoryException ex)
 			{
@@ -208,7 +208,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			try
 			{
 				Console.WriteLine("Before throw");
-				throw new Exception();
+				throw new();
 			}
 			finally
 			{

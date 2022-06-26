@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy
 				outputFolderOrFileName = Path.GetDirectoryName(outputFolderOrFileName);
 
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				AvalonEditTextOutput output = new();
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				stopwatch.Stop();
 

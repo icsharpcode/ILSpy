@@ -43,8 +43,8 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	partial class Block : ILInstruction
 	{
-		public static readonly SlotInfo InstructionSlot = new SlotInfo("Instruction", isCollection: true);
-		public static readonly SlotInfo FinalInstructionSlot = new SlotInfo("FinalInstruction");
+		public static readonly SlotInfo InstructionSlot = new("Instruction", isCollection: true);
+		public static readonly SlotInfo FinalInstructionSlot = new("FinalInstruction");
 
 		public readonly BlockKind Kind;
 		public readonly InstructionCollection<ILInstruction> Instructions;
@@ -90,13 +90,13 @@ namespace ICSharpCode.Decompiler.IL
 		public Block(BlockKind kind = BlockKind.ControlFlow) : base(OpCode.Block)
 		{
 			this.Kind = kind;
-			this.Instructions = new InstructionCollection<ILInstruction>(this, 0);
+			this.Instructions = new(this, 0);
 			this.FinalInstruction = new Nop();
 		}
 
 		public override ILInstruction Clone()
 		{
-			Block clone = new Block(Kind);
+			Block clone = new(Kind);
 			clone.AddILRange(this);
 			clone.Instructions.AddRange(this.Instructions.Select(inst => inst.Clone()));
 			clone.FinalInstruction = this.FinalInstruction.Clone();

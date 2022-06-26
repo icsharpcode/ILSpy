@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.Tests
 					Stopwatch w = Stopwatch.StartNew();
 					using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read))
 					{
-						PEFile module = new PEFile(file, fileStream, PEStreamOptions.PrefetchEntireImage);
+						PEFile module = new(file, fileStream, PEStreamOptions.PrefetchEntireImage);
 						var resolver = new TestAssemblyResolver(file, inputDir, module.Metadata.DetectTargetFrameworkId());
 						resolver.AddSearchDirectory(inputDir);
 						resolver.RemoveSearchDirectory(".");
@@ -246,7 +246,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 		static async Task Compile(string projectFile, string outputDir)
 		{
-			Regex errorRegex = new Regex(@"^[\w\d.\\-]+\(\d+,\d+\):");
+			Regex errorRegex = new(@"^[\w\d.\\-]+\(\d+,\d+\):");
 			string suffix = $" [{projectFile}]";
 
 			var command = Cli.Wrap(await Tester.FindMSBuild())

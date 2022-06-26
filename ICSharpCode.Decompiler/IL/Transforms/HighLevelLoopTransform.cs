@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (split)
 			{
 				// add a new block at the end and add a branch to the new block.
-				conditionBlock = new Block();
+				conditionBlock = new();
 				loop.Blocks.Add(conditionBlock);
 				originalBlock.Instructions.Add(new Branch(conditionBlock));
 			}
@@ -428,7 +428,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						break;
 					if (forCondition == null)
 					{
-						forCondition = new IfInstruction(condition, whileCondition.TrueInst, whileCondition.FalseInst);
+						forCondition = new(condition, whileCondition.TrueInst, whileCondition.FalseInst);
 					}
 					else
 					{
@@ -445,7 +445,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				for (int i = conditions.Count - 1; i >= numberOfConditions; i--)
 				{
 					IfInstruction inst;
-					whileLoopBody.Instructions.Insert(0, inst = new IfInstruction(Comp.LogicNot(conditions[i]), new Leave(loop)));
+					whileLoopBody.Instructions.Insert(0, inst = new(Comp.LogicNot(conditions[i]), new Leave(loop)));
 					ExpressionTransforms.RunOnSingleStatement(inst, context);
 				}
 				// create a new increment block and add it at the end:

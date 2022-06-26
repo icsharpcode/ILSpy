@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.LocalVariables)
 			{
-				LocalVariableEntry entry = new LocalVariableEntry(module, metadata, isEmbedded, row);
+				LocalVariableEntry entry = new(module, metadata, isEmbedded, row);
 				if (entry.RID == scrollTarget)
 				{
 					scrollTargetEntry = entry;

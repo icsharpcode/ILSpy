@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				// convert state integer to bool:
 				// if (state + c) = if (state + c != 0) = if (state != -c)
-				return new SymbolicValue(SymbolicValueType.StateInSet, new LongSet(unchecked(-Constant)).Invert());
+				return new(SymbolicValueType.StateInSet, new LongSet(unchecked(-Constant)).Invert());
 			}
 			return this;
 		}
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	class SymbolicEvaluationContext
 	{
 		readonly IField stateField;
-		readonly List<ILVariable> stateVariables = new List<ILVariable>();
+		readonly List<ILVariable> stateVariables = new();
 
 		public SymbolicEvaluationContext(IField stateField)
 		{
@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		public IEnumerable<ILVariable> StateVariables { get => stateVariables; }
 
-		static readonly SymbolicValue Failed = new SymbolicValue(SymbolicValueType.Unknown);
+		static readonly SymbolicValue Failed = new(SymbolicValueType.Unknown);
 
 		public SymbolicValue Eval(ILInstruction inst)
 		{
@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return Failed;
 				if (right.Type != SymbolicValueType.IntegerConstant)
 					return Failed;
-				return new SymbolicValue(left.Type, unchecked(left.Constant - right.Constant));
+				return new(left.Type, unchecked(left.Constant - right.Constant));
 			}
 			else if (inst.MatchLdFld(out var target, out var field))
 			{
@@ -134,20 +134,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return Failed;
 				if (field.MemberDefinition != stateField)
 					return Failed;
-				return new SymbolicValue(SymbolicValueType.State);
+				return new(SymbolicValueType.State);
 			}
 			else if (inst.MatchLdLoc(out var loadedVariable))
 			{
 				if (stateVariables.Contains(loadedVariable))
-					return new SymbolicValue(SymbolicValueType.State);
+					return new(SymbolicValueType.State);
 				else if (loadedVariable.Kind == VariableKind.Parameter && loadedVariable.Index < 0)
-					return new SymbolicValue(SymbolicValueType.This);
+					return new(SymbolicValueType.This);
 				else
 					return Failed;
 			}
 			else if (inst.MatchLdcI4(out var value))
 			{
-				return new SymbolicValue(SymbolicValueType.IntegerConstant, value);
+				return new(SymbolicValueType.IntegerConstant, value);
 			}
 			else if (inst is Comp comp)
 			{
@@ -160,19 +160,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// symbolic value is true iff trueSums.Contains(state + left.Constant)
 					LongSet trueStates = trueSums.AddOffset(unchecked(-left.Constant));
 					// symbolic value is true iff trueStates.Contains(state)
-					return new SymbolicValue(SymbolicValueType.StateInSet, trueStates);
+					return new(SymbolicValueType.StateInSet, trueStates);
 				}
 				else if (left.Type == SymbolicValueType.StateInSet && right.Type == SymbolicValueType.IntegerConstant)
 				{
 					if (comp.Kind == ComparisonKind.Equality && right.Constant == 0)
 					{
 						// comp((x in set) == 0) ==> x not in set
-						return new SymbolicValue(SymbolicValueType.StateInSet, left.ValueSet.Invert());
+						return new(SymbolicValueType.StateInSet, left.ValueSet.Invert());
 					}
 					else if (comp.Kind == ComparisonKind.Inequality && right.Constant != 0)
 					{
 						// comp((x in set) != 0) => x in set
-						return new SymbolicValue(SymbolicValueType.StateInSet, left.ValueSet);
+						return new(SymbolicValueType.StateInSet, left.ValueSet);
 					}
 					else
 					{

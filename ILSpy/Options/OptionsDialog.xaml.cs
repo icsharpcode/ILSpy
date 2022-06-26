@@ -126,7 +126,7 @@ namespace ICSharpCode.ILSpy.Options
 	{
 		public override void Execute(object parameter)
 		{
-			OptionsDialog dlg = new OptionsDialog();
+			OptionsDialog dlg = new();
 			dlg.Owner = MainWindow.Instance;
 			if (dlg.ShowDialog() == true)
 			{

@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			while (pos > 0)
 			{
 				pos -= (RestPosition - 1);
-				type = new ParameterizedType(
+				type = new(
 					FindValueTupleType(compilation, valueTupleAssembly, RestPosition),
 					elementTypes.Slice(pos, RestPosition - 1).Concat(new[] { type }));
 			}
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var elementTypes = GetTupleElementTypes(type);
 			if (elementTypes.Length > 0)
 			{
-				return new TupleType(
+				return new(
 					compilation,
 					elementTypes,
 					valueTupleAssembly: type.GetDefinition()?.ParentModule
@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				{
 					case TypeKind.Tuple:
 						if (output == null)
-							output = new List<IType>();
+							output = new();
 						output.AddRange(((TupleType)type).ElementTypes);
 						return true;
 					case TypeKind.Class:
@@ -190,7 +190,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						if (type.Namespace == "System" && type.Name == "ValueTuple")
 						{
 							if (output == null)
-								output = new List<IType>();
+								output = new();
 							int tpc = type.TypeParameterCount;
 							if (tpc > 0 && tpc < RestPosition)
 							{
@@ -247,7 +247,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder();
+			StringBuilder b = new();
 			b.Append('(');
 			for (int i = 0; i < ElementTypes.Length; i++)
 			{

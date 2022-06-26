@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			StringHandle handle = MetadataTokens.StringHandle(0);
 			do
 			{
-				StringHeapEntry entry = new StringHeapEntry(metadata, handle);
+				StringHeapEntry entry = new(metadata, handle);
 				list.Add(entry);
 				handle = metadata.GetNextHandle(handle);
 			} while (!handle.IsNil);

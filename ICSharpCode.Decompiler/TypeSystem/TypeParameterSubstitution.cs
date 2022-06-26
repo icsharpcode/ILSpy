@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// The identity function.
 		/// </summary>
-		public static readonly TypeParameterSubstitution Identity = new TypeParameterSubstitution(null, null);
+		public static readonly TypeParameterSubstitution Identity = new(null, null);
 
 		readonly IReadOnlyList<IType> classTypeArguments;
 		readonly IReadOnlyList<IType> methodTypeArguments;
@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// the identity function, and thus use the list from 'g'.
 			var classTypeArguments = f.classTypeArguments != null ? GetComposedTypeArguments(f.classTypeArguments, g) : g.classTypeArguments;
 			var methodTypeArguments = f.methodTypeArguments != null ? GetComposedTypeArguments(f.methodTypeArguments, g) : g.methodTypeArguments;
-			return new TypeParameterSubstitution(classTypeArguments, methodTypeArguments);
+			return new(classTypeArguments, methodTypeArguments);
 		}
 
 		static IReadOnlyList<IType> GetComposedTypeArguments(IReadOnlyList<IType> input, TypeParameterSubstitution substitution)
@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder();
+			StringBuilder b = new();
 			b.Append('[');
 			bool first = true;
 			if (classTypeArguments != null)

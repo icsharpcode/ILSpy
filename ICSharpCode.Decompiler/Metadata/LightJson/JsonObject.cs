@@ -199,7 +199,7 @@ namespace LightJson
 					var i = 0;
 					foreach (var property in this.jsonObject)
 					{
-						keys[i] = new KeyValuePair(property.Key, property.Value);
+						keys[i] = new(property.Key, property.Value);
 						i += 1;
 					}
 

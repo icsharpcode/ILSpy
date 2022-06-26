@@ -63,7 +63,7 @@ namespace ICSharpCode.ILSpy
 	partial class MainWindow : Window
 	{
 		bool refreshInProgress, changingActiveTab;
-		readonly NavigationHistory<NavigationState> history = new NavigationHistory<NavigationState>();
+		readonly NavigationHistory<NavigationState> history = new();
 		ILSpySettings spySettingsForMainWindow_Loaded;
 		SessionSettings sessionSettings;
 		FilterSettings filterSettings;
@@ -105,8 +105,8 @@ namespace ICSharpCode.ILSpy
 			instance = this;
 			var spySettings = ILSpySettings.Load();
 			this.spySettingsForMainWindow_Loaded = spySettings;
-			this.sessionSettings = new SessionSettings(spySettings);
-			this.AssemblyListManager = new AssemblyListManager(spySettings) {
+			this.sessionSettings = new(spySettings);
+			this.AssemblyListManager = new(spySettings) {
 				ApplyWinRTProjections = Options.DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections,
 				UseDebugSymbols = Options.DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols
 			};
@@ -115,7 +115,7 @@ namespace ICSharpCode.ILSpy
 			this.Icon = Images.ILSpyIcon;
 
 			this.DataContext = new MainWindowViewModel {
-				Workspace = new DockWorkspace(this),
+				Workspace = new(this),
 				SessionSettings = sessionSettings,
 				AssemblyListManager = AssemblyListManager
 			};
@@ -725,7 +725,7 @@ namespace ICSharpCode.ILSpy
 				}
 				if (!found && AssemblyTreeView.SelectedItem == initialSelection)
 				{
-					AvalonEditTextOutput output = new AvalonEditTextOutput();
+					AvalonEditTextOutput output = new();
 					output.Write(string.Format("Cannot find '{0}' in command line specified assemblies.", navigateTo));
 					DockWorkspace.Instance.ShowText(output);
 				}
@@ -842,7 +842,7 @@ namespace ICSharpCode.ILSpy
 
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
-			DockWorkspace.Instance.TabPages.Add(new TabPageModel() {
+			DockWorkspace.Instance.TabPages.Add(new() {
 				FilterSettings = filterSettings.Clone()
 			});
 			DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.First();
@@ -887,7 +887,7 @@ namespace ICSharpCode.ILSpy
 		{
 			HandleCommandLineArgumentsAfterShowList(App.CommandLineArguments, spySettings);
 
-			AvalonEditTextOutput output = new AvalonEditTextOutput();
+			AvalonEditTextOutput output = new();
 			if (FormatExceptions(App.StartupExceptions.ToArray(), output))
 				DockWorkspace.Instance.ShowText(output);
 		}
@@ -1008,7 +1008,7 @@ namespace ICSharpCode.ILSpy
 			this.assemblyList = assemblyList;
 			assemblyList.CollectionChanged += assemblyList_Assemblies_CollectionChanged;
 
-			assemblyListTreeNode = new AssemblyListTreeNode(assemblyList);
+			assemblyListTreeNode = new(assemblyList);
 			assemblyListTreeNode.FilterSettings = filterSettings.Clone();
 			assemblyListTreeNode.Select = x => SelectNode(x, inNewTabPage: false);
 			AssemblyTreeView.Root = assemblyListTreeNode;
@@ -1104,7 +1104,7 @@ namespace ICSharpCode.ILSpy
 					if (inNewTabPage)
 					{
 						DockWorkspace.Instance.TabPages.Add(
-							new TabPageModel() {
+							new() {
 								FilterSettings = filterSettings.Clone()
 							});
 						DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
@@ -1150,7 +1150,7 @@ namespace ICSharpCode.ILSpy
 			if (inNewTabPage)
 			{
 				DockWorkspace.Instance.TabPages.Add(
-					new TabPageModel() {
+					new() {
 						FilterSettings = filterSettings.Clone()
 					});
 				DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
@@ -1477,7 +1477,7 @@ namespace ICSharpCode.ILSpy
 				var tabPage = DockWorkspace.Instance.ActiveTabPage;
 				var currentState = tabPage.GetState();
 				if (currentState != null)
-					history.UpdateCurrent(new NavigationState(tabPage, currentState));
+					history.UpdateCurrent(new(tabPage, currentState));
 				history.Record(new NavigationState(tabPage, AssemblyTreeView.SelectedItems.OfType<SharpTreeNode>()));
 			}
 
@@ -1574,7 +1574,7 @@ namespace ICSharpCode.ILSpy
 			TabPageModel tabPage = DockWorkspace.Instance.ActiveTabPage;
 			var state = tabPage.GetState();
 			if (state != null)
-				history.UpdateCurrent(new NavigationState(tabPage, state));
+				history.UpdateCurrent(new(tabPage, state));
 			var newState = forward ? history.GoForward() : history.GoBack();
 
 			ignoreDecompilationRequests = true;
@@ -1598,7 +1598,7 @@ namespace ICSharpCode.ILSpy
 				if (inNewTabPage)
 				{
 					DockWorkspace.Instance.TabPages.Add(
-						new TabPageModel() {
+						new() {
 							FilterSettings = filterSettings.Clone()
 						});
 					DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
@@ -1611,7 +1611,7 @@ namespace ICSharpCode.ILSpy
 					e.Handled = true;
 					return;
 				}
-				AvalonEditTextOutput output = new AvalonEditTextOutput {
+				AvalonEditTextOutput output = new() {
 					Address = e.Uri,
 					Title = e.Uri.AbsolutePath,
 					EnableHyperlinks = true
@@ -1640,11 +1640,11 @@ namespace ICSharpCode.ILSpy
 				TabPageModel tabPage = DockWorkspace.Instance.ActiveTabPage;
 				var currentState = tabPage.GetState();
 				if (currentState != null)
-					history.UpdateCurrent(new NavigationState(tabPage, currentState));
+					history.UpdateCurrent(new(tabPage, currentState));
 				ignoreDecompilationRequests = true;
 				UnselectAll();
 				ignoreDecompilationRequests = false;
-				history.Record(new NavigationState(tabPage, new ViewState { ViewedUri = e.Uri }));
+				history.Record(new(tabPage, new ViewState { ViewedUri = e.Uri }));
 			}
 		}
 

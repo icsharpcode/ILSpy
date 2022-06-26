@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			int count = metadata.GetHeapSize(HeapIndex.Guid) >> 4;
 			for (int i = 1; i <= count; i++)
 			{
-				GuidHeapEntry entry = new GuidHeapEntry(metadata, MetadataTokens.GuidHandle(i));
+				GuidHeapEntry entry = new(metadata, MetadataTokens.GuidHandle(i));
 				list.Add(entry);
 			}
 		}

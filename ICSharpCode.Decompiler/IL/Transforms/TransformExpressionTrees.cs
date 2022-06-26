@@ -102,11 +102,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			this.context = context;
 			this.conversions = CSharpConversions.Get(context.TypeSystem);
-			this.resolver = new CSharpResolver(context.TypeSystem);
-			this.parameters = new Dictionary<ILVariable, (IType, string)>();
-			this.parameterMapping = new Dictionary<ILVariable, ILVariable>();
-			this.instructionsToRemove = new List<ILInstruction>();
-			this.lambdaStack = new Stack<ILFunction>();
+			this.resolver = new(context.TypeSystem);
+			this.parameters = new();
+			this.parameterMapping = new();
+			this.instructionsToRemove = new();
+			this.lambdaStack = new();
 			for (int i = pos; i < block.Instructions.Count; i++)
 			{
 				if (MatchParameterVariableAssignment(block.Instructions[i], out var v, out var type, out var name))
@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var convertedBody = bodyInstruction();
 				lambdaStack.Pop();
 				container.ExpectedResultType = convertedBody.ResultType;
-				container.Blocks.Add(new Block() { Instructions = { new Leave(container, convertedBody) } });
+				container.Blocks.Add(new() { Instructions = { new Leave(container, convertedBody) } });
 				// Replace all other usages of the parameter variable
 				foreach (var mapping in parameterMapping)
 				{
@@ -750,7 +750,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					method = CSharpOperators.LiftUserDefinedOperator((IMethod)method);
 				return (() => new Call((IMethod)method) { Arguments = { left(), right() } }, isLiftedToNull != 0 ? NullableType.Create(method.Compilation, method.ReturnType) : method.ReturnType);
 			}
-			var rr = resolver.ResolveBinaryOperator(kind.ToBinaryOperatorType(), new ResolveResult(leftType), new ResolveResult(rightType)) as OperatorResolveResult;
+			var rr = resolver.ResolveBinaryOperator(kind.ToBinaryOperatorType(), new(leftType), new(rightType)) as OperatorResolveResult;
 			if (rr != null && !rr.IsError && rr.UserDefinedOperatorMethod != null)
 			{
 				return (() => new Call(rr.UserDefinedOperatorMethod) { Arguments = { left(), right() } }, rr.UserDefinedOperatorMethod.ReturnType);
@@ -1084,7 +1084,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				return (null, SpecialType.UnknownType);
-			ArrayType arrayType = new ArrayType(context.BlockContext.TypeSystem, type);
+			ArrayType arrayType = new(context.BlockContext.TypeSystem, type);
 			if (arguments.Count == 0)
 				return (() => new NewArr(type, new LdcI4(0)), arrayType);
 			var convertedArguments = new Func<ILInstruction>[arguments.Count];
@@ -1102,7 +1102,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var block = (Block)invocation.Arguments[1];
 				var function = lambdaStack.Peek();
 				var variable = function.RegisterVariable(VariableKind.InitializerTarget, arrayType);
-				Block initializer = new Block(BlockKind.ArrayInitializer);
+				Block initializer = new(BlockKind.ArrayInitializer);
 				initializer.Instructions.Add(new StLoc(variable, new NewArr(type, new LdcI4(convertedArguments.Length))));
 				for (int i = 0; i < convertedArguments.Length; i++)
 				{

@@ -115,11 +115,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 			}
 			int initializerItemsCount = 0;
-			possibleIndexVariables = new Dictionary<ILVariable, (int Index, ILInstruction Value)>();
-			currentPath = new List<AccessPathElement>();
+			possibleIndexVariables = new();
+			currentPath = new();
 			isCollection = false;
-			pathStack = new Stack<HashSet<AccessPathElement>>();
-			pathStack.Push(new HashSet<AccessPathElement>());
+			pathStack = new();
+			pathStack.Push(new());
 			// Detect initializer type by scanning the following statements
 			// each must be a callvirt with ldloc v as first argument
 			// if the method is a setter we're dealing with an object initializer
@@ -252,7 +252,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				currentPath.Add(newElement);
 				if (isCollection || !pathStack.Peek().Add(newElement))
 					return false;
-				pathStack.Push(new HashSet<AccessPathElement>());
+				pathStack.Push(new());
 			}
 			switch (kind)
 			{
@@ -313,7 +313,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			CSharpTypeResolveContext resolveContext = null,
 			Dictionary<ILVariable, (int Index, ILInstruction Value)> possibleIndexVariables = null)
 		{
-			List<AccessPathElement> path = new List<AccessPathElement>();
+			List<AccessPathElement> path = new();
 			ILVariable target = null;
 			AccessPathKind kind = AccessPathKind.Invalid;
 			List<ILInstruction> values = null;
@@ -348,23 +348,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 										possibleIndexVariables[index.Variable] = (-1, info.Value);
 								}
 							}
-							path.Insert(0, new AccessPathElement(call.OpCode, method.AccessorOwner, indices));
+							path.Insert(0, new(call.OpCode, method.AccessorOwner, indices));
 						}
 						else
 						{
-							path.Insert(0, new AccessPathElement(call.OpCode, method));
+							path.Insert(0, new(call.OpCode, method));
 						}
 						if (values == null)
 						{
 							if (method.IsAccessor)
 							{
 								kind = AccessPathKind.Setter;
-								values = new List<ILInstruction> { call.Arguments.Last() };
+								values = new() { call.Arguments.Last() };
 							}
 							else
 							{
 								kind = AccessPathKind.Adder;
-								values = new List<ILInstruction>(call.Arguments.Skip(1));
+								values = new(call.Arguments.Skip(1));
 								if (values.Count == 0)
 									goto default;
 							}
@@ -374,7 +374,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						if (ldobj.Target is LdFlda ldflda && (kind != AccessPathKind.Setter || !ldflda.Field.IsReadOnly))
 						{
-							path.Insert(0, new AccessPathElement(ldobj.OpCode, ldflda.Field));
+							path.Insert(0, new(ldobj.OpCode, ldflda.Field));
 							instruction = ldflda.Target;
 							break;
 						}
@@ -384,11 +384,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						if (stobj.Target is LdFlda ldflda)
 						{
-							path.Insert(0, new AccessPathElement(stobj.OpCode, ldflda.Field));
+							path.Insert(0, new(stobj.OpCode, ldflda.Field));
 							instruction = ldflda.Target;
 							if (values == null)
 							{
-								values = new List<ILInstruction>(new[] { stobj.Value });
+								values = new(new[] { stobj.Value });
 								kind = AccessPathKind.Setter;
 							}
 							break;
@@ -404,7 +404,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						instruction = null;
 						break;
 					case LdFlda ldflda:
-						path.Insert(0, new AccessPathElement(ldflda.OpCode, ldflda.Field));
+						path.Insert(0, new(ldflda.OpCode, ldflda.Field));
 						instruction = ldflda.Target;
 						break;
 					default:
@@ -527,7 +527,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 	class ILInstructionMatchComparer : IEqualityComparer<ILInstruction>
 	{
-		public static readonly ILInstructionMatchComparer Instance = new ILInstructionMatchComparer();
+		public static readonly ILInstructionMatchComparer Instance = new();
 
 		public bool Equals(ILInstruction x, ILInstruction y)
 		{

@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		internal static void AddBaseTypes(SharpTreeNodeCollection children, PEFile module, ITypeDefinition typeDefinition)
 		{
 			TypeDefinitionHandle handle = (TypeDefinitionHandle)typeDefinition.MetadataToken;
-			DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver(),
+			DecompilerTypeSystem typeSystem = new(module, module.GetAssemblyResolver(),
 				TypeSystemOptions.Default | TypeSystemOptions.Uncached);
 			var t = typeSystem.MainModule.ResolveEntity(handle) as ITypeDefinition;
 			foreach (var td in t.GetAllBaseTypeDefinitions().Reverse().Skip(1))

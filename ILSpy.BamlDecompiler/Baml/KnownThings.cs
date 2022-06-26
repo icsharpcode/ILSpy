@@ -76,8 +76,8 @@ namespace ILSpy.BamlDecompiler.Baml
 			return module;
 		}
 
-		ITypeDefinition InitType(IModule assembly, string ns, string name) => assembly.GetTypeDefinition(new TopLevelTypeName(ns, name));
-		KnownMember InitMember(KnownTypes parent, string name, ITypeDefinition type) => new KnownMember(parent, types[parent], name, type);
+		ITypeDefinition InitType(IModule assembly, string ns, string name) => assembly.GetTypeDefinition(new(ns, name));
+		KnownMember InitMember(KnownTypes parent, string name, ITypeDefinition type) => new(parent, types[parent], name, type);
 	}
 
 	internal class KnownMember

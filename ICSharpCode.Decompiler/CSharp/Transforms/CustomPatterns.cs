@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public LdTokenPattern(string groupName)
 		{
-			this.childNode = new AnyNode(groupName);
+			this.childNode = new(groupName);
 		}
 
 		public override bool DoMatch(INode other, Match match)

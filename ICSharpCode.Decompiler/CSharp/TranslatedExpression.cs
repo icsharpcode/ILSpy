@@ -139,12 +139,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public static implicit operator ExpressionWithResolveResult(TranslatedExpression expression)
 		{
-			return new ExpressionWithResolveResult(expression.Expression, expression.ResolveResult);
+			return new(expression.Expression, expression.ResolveResult);
 		}
 
 		public static implicit operator ExpressionWithILInstruction(TranslatedExpression expression)
 		{
-			return new ExpressionWithILInstruction(expression.Expression);
+			return new(expression.Expression);
 		}
 
 		/// <summary>
@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				foreach (var inst in parent.Annotations.OfType<ILInstruction>())
 					descendant.AddAnnotation(inst);
 				if (parent == Expression)
-					return new TranslatedExpression(descendant.Detach());
+					return new(descendant.Detach());
 			}
 			throw new ArgumentException("descendant must be a descendant of the current node");
 		}
@@ -302,7 +302,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return new UnaryOperatorExpression(
 					UnaryOperatorType.NullConditional,
 					UnwrapChild(uoe.Expression).ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion)
-				).WithRR(new ResolveResult(targetType)).WithoutILInstruction();
+				).WithRR(new(targetType)).WithoutILInstruction();
 			}
 			IType utype = NullableType.GetUnderlyingType(type);
 			IType targetUType = NullableType.GetUnderlyingType(targetType);
@@ -314,7 +314,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					this.Expression,
 					LdcI4(compilation, 1).ConvertTo(targetType, expressionBuilder, checkForOverflow),
 					LdcI4(compilation, 0).ConvertTo(targetType, expressionBuilder, checkForOverflow)
-				).WithoutILInstruction().WithRR(new ResolveResult(targetType));
+				).WithoutILInstruction().WithRR(new(targetType));
 			}
 			if (targetType.IsKnownType(KnownTypeCode.Boolean))
 			{
@@ -449,7 +449,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				var pointerExpr = new UnaryOperatorExpression(UnaryOperatorType.AddressOf, arg)
 					.WithILInstruction(this.ILInstructions)
-					.WithRR(new ResolveResult(pointerType));
+					.WithRR(new(pointerType));
 				// perform remaining pointer cast, if necessary
 				return pointerExpr.ConvertTo(targetType, expressionBuilder);
 			}
@@ -494,7 +494,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					// Otherwise dereference the pointer:
 					expr = new UnaryOperatorExpression(UnaryOperatorType.Dereference, arg.Expression);
-					elementRR = new ResolveResult(elementType);
+					elementRR = new(elementType);
 					expr.AddAnnotation(elementRR);
 				}
 				// And then take a reference:

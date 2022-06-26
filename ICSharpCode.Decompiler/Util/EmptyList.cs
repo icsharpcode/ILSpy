@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.Util
 	[Serializable]
 	public sealed class EmptyList<T> : IList<T>, IEnumerator<T>, IReadOnlyList<T>
 	{
-		public static readonly EmptyList<T> Instance = new EmptyList<T>();
+		public static readonly EmptyList<T> Instance = new();
 
 		private EmptyList() { }
 

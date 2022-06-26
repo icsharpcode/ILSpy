@@ -110,8 +110,8 @@ namespace ICSharpCode.Decompiler
 			// Output stacktrace in custom format (very similar to Exception.StackTrace
 			// property on English systems).
 			// Include filenames where available, but no paths.
-			StackTrace stackTrace = new StackTrace(exception, true);
-			StringBuilder b = new StringBuilder();
+			StackTrace stackTrace = new(exception, true);
+			StringBuilder b = new();
 			for (int i = 0; i < stackTrace.FrameCount; i++)
 			{
 				StackFrame frame = stackTrace.GetFrame(i);

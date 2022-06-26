@@ -152,7 +152,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static S CallValueTypeCtor()
 		{
-			return new S(10);
+			return new(10);
 		}
 
 		public static S Copy1(S p)

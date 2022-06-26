@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public void Load(ILSpySettings settings)
 		{
-			Options s = new Options();
+			Options s = new();
 			s.DisassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(settings);
 			s.IsShowUnwindInfo = ReadyToRunOptions.GetIsShowUnwindInfo(settings);
 			s.IsShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(settings);

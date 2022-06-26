@@ -6,8 +6,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		private class ArgumentCheckingCtor
 		{
-			private int initializedFromCtor = CountSheep() ?? throw new Exception("No sheep?!");
-			private object cacheObj = TryGetObj() ?? throw new Exception("What?");
+			private int initializedFromCtor = CountSheep() ?? throw new("No sheep?!");
+			private object cacheObj = TryGetObj() ?? throw new("What?");
 
 			private object simpleObj;
 			private int? nullableInt;
@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 
 			public ArgumentCheckingCtor(DataObject obj)
-				: this(obj ?? throw new Exception(), GetIntOrNull(obj.NullableDataField?.NullableDataField.ToString() ?? throw new ArgumentNullException("input")))
+				: this(obj ?? throw new(), GetIntOrNull(obj.NullableDataField?.NullableDataField.ToString() ?? throw new ArgumentNullException("input")))
 			{
 
 			}
@@ -115,85 +115,85 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static int ReturnIntField()
 		{
-			return NullableIntField ?? throw new Exception();
+			return NullableIntField ?? throw new();
 		}
 		public static int ReturnIntProperty()
 		{
-			return NullableIntProperty ?? throw new Exception();
+			return NullableIntProperty ?? throw new();
 		}
 		public static object ReturnObjField()
 		{
-			return ObjectField ?? throw new Exception();
+			return ObjectField ?? throw new();
 		}
 		public static object ReturnObjProperty()
 		{
-			return ObjProperty ?? throw new Exception();
+			return ObjProperty ?? throw new();
 		}
 		public static int ReturnIntField(ThrowExpressions inst)
 		{
-			return inst.InstNullableIntField ?? throw new Exception();
+			return inst.InstNullableIntField ?? throw new();
 		}
 		public static int ReturnIntProperty(ThrowExpressions inst)
 		{
-			return inst.InstNullableIntProperty ?? throw new Exception();
+			return inst.InstNullableIntProperty ?? throw new();
 		}
 		public static object ReturnObjField(ThrowExpressions inst)
 		{
-			return inst.InstObjectField ?? throw new Exception();
+			return inst.InstObjectField ?? throw new();
 		}
 		public static object ReturnObjProperty(ThrowExpressions inst)
 		{
-			return inst.InstObjProperty ?? throw new Exception();
+			return inst.InstObjProperty ?? throw new();
 		}
 
 		public static void UseComplexNullableStruct(ThrowExpressions inst)
 		{
-			Use(inst.InstNullableIntField ?? throw new Exception());
-			Use((inst.NullableDataField ?? throw new Exception()).IntField);
-			Use(inst.NullableDataField?.NullableIntField ?? throw new Exception());
-			Use((inst.NullableDataProperty ?? throw new Exception()).IntField);
-			Use(inst.NullableDataProperty?.NullableIntField ?? throw new Exception());
-			Use((inst.NullableDataField ?? throw new Exception()).DataField.IntField);
-			Use(inst.NullableDataField?.DataField.NullableIntField ?? throw new Exception());
-			Use((inst.NullableDataProperty ?? throw new Exception()).DataField.IntField);
-			Use(inst.NullableDataProperty?.DataField.NullableIntField ?? throw new Exception());
-			Use((inst.NullableDataField ?? throw new Exception()).DataProperty.IntField);
-			Use(inst.NullableDataField?.DataProperty.NullableIntField ?? throw new Exception());
-			Use((inst.NullableDataProperty ?? throw new Exception()).DataProperty.IntField);
-			Use(inst.NullableDataProperty?.DataProperty.NullableIntField ?? throw new Exception());
-			Use(inst.NullableDataField?.NullableDataField?.IntField ?? throw new Exception());
-			Use(inst.NullableDataField?.NullableDataField?.NullableIntField ?? throw new Exception());
-			Use(inst.NullableDataProperty?.NullableDataField?.IntField ?? throw new Exception());
-			Use(inst.NullableDataProperty?.NullableDataField?.NullableIntField ?? throw new Exception());
-			Use(inst.NullableDataField?.NullableDataProperty?.IntField ?? throw new Exception());
-			Use(inst.NullableDataField?.NullableDataProperty?.NullableIntField ?? throw new Exception());
-			Use(inst.NullableDataProperty?.NullableDataProperty?.IntField ?? throw new Exception());
-			Use(inst.NullableDataProperty?.NullableDataProperty?.NullableIntField ?? throw new Exception());
+			Use(inst.InstNullableIntField ?? throw new());
+			Use((inst.NullableDataField ?? throw new()).IntField);
+			Use(inst.NullableDataField?.NullableIntField ?? throw new());
+			Use((inst.NullableDataProperty ?? throw new()).IntField);
+			Use(inst.NullableDataProperty?.NullableIntField ?? throw new());
+			Use((inst.NullableDataField ?? throw new()).DataField.IntField);
+			Use(inst.NullableDataField?.DataField.NullableIntField ?? throw new());
+			Use((inst.NullableDataProperty ?? throw new()).DataField.IntField);
+			Use(inst.NullableDataProperty?.DataField.NullableIntField ?? throw new());
+			Use((inst.NullableDataField ?? throw new()).DataProperty.IntField);
+			Use(inst.NullableDataField?.DataProperty.NullableIntField ?? throw new());
+			Use((inst.NullableDataProperty ?? throw new()).DataProperty.IntField);
+			Use(inst.NullableDataProperty?.DataProperty.NullableIntField ?? throw new());
+			Use(inst.NullableDataField?.NullableDataField?.IntField ?? throw new());
+			Use(inst.NullableDataField?.NullableDataField?.NullableIntField ?? throw new());
+			Use(inst.NullableDataProperty?.NullableDataField?.IntField ?? throw new());
+			Use(inst.NullableDataProperty?.NullableDataField?.NullableIntField ?? throw new());
+			Use(inst.NullableDataField?.NullableDataProperty?.IntField ?? throw new());
+			Use(inst.NullableDataField?.NullableDataProperty?.NullableIntField ?? throw new());
+			Use(inst.NullableDataProperty?.NullableDataProperty?.IntField ?? throw new());
+			Use(inst.NullableDataProperty?.NullableDataProperty?.NullableIntField ?? throw new());
 		}
 
 		public static void UseComplexNullableObject(DataObject inst)
 		{
-			Use(inst?.NullableIntField ?? throw new Exception());
-			Use(inst?.NullableDataField?.IntField ?? throw new Exception());
-			Use(inst?.NullableDataField?.NullableIntField ?? throw new Exception());
-			Use(inst?.NullableDataProperty?.IntField ?? throw new Exception());
-			Use(inst?.NullableDataProperty?.NullableIntField ?? throw new Exception());
-			Use(inst?.NullableDataField?.DataField.IntField ?? throw new Exception());
-			Use(inst?.NullableDataField?.DataField.NullableIntField ?? throw new Exception());
-			Use(inst?.NullableDataProperty?.DataField.IntField ?? throw new Exception());
-			Use(inst?.NullableDataProperty?.DataField.NullableIntField ?? throw new Exception());
-			Use(inst?.NullableDataField?.DataProperty.IntField ?? throw new Exception());
-			Use(inst?.NullableDataField?.DataProperty.NullableIntField ?? throw new Exception());
-			Use(inst?.NullableDataProperty?.DataProperty.IntField ?? throw new Exception());
-			Use(inst?.NullableDataProperty?.DataProperty.NullableIntField ?? throw new Exception());
-			Use(inst?.NullableDataField?.NullableDataField?.IntField ?? throw new Exception());
-			Use(inst?.NullableDataField?.NullableDataField?.NullableIntField ?? throw new Exception());
-			Use(inst?.NullableDataProperty?.NullableDataField?.IntField ?? throw new Exception());
-			Use(inst?.NullableDataProperty?.NullableDataField?.NullableIntField ?? throw new Exception());
-			Use(inst?.NullableDataField?.NullableDataProperty?.IntField ?? throw new Exception());
-			Use(inst?.NullableDataField?.NullableDataProperty?.NullableIntField ?? throw new Exception());
-			Use(inst?.NullableDataProperty?.NullableDataProperty?.IntField ?? throw new Exception());
-			Use(inst?.NullableDataProperty?.NullableDataProperty?.NullableIntField ?? throw new Exception());
+			Use(inst?.NullableIntField ?? throw new());
+			Use(inst?.NullableDataField?.IntField ?? throw new());
+			Use(inst?.NullableDataField?.NullableIntField ?? throw new());
+			Use(inst?.NullableDataProperty?.IntField ?? throw new());
+			Use(inst?.NullableDataProperty?.NullableIntField ?? throw new());
+			Use(inst?.NullableDataField?.DataField.IntField ?? throw new());
+			Use(inst?.NullableDataField?.DataField.NullableIntField ?? throw new());
+			Use(inst?.NullableDataProperty?.DataField.IntField ?? throw new());
+			Use(inst?.NullableDataProperty?.DataField.NullableIntField ?? throw new());
+			Use(inst?.NullableDataField?.DataProperty.IntField ?? throw new());
+			Use(inst?.NullableDataField?.DataProperty.NullableIntField ?? throw new());
+			Use(inst?.NullableDataProperty?.DataProperty.IntField ?? throw new());
+			Use(inst?.NullableDataProperty?.DataProperty.NullableIntField ?? throw new());
+			Use(inst?.NullableDataField?.NullableDataField?.IntField ?? throw new());
+			Use(inst?.NullableDataField?.NullableDataField?.NullableIntField ?? throw new());
+			Use(inst?.NullableDataProperty?.NullableDataField?.IntField ?? throw new());
+			Use(inst?.NullableDataProperty?.NullableDataField?.NullableIntField ?? throw new());
+			Use(inst?.NullableDataField?.NullableDataProperty?.IntField ?? throw new());
+			Use(inst?.NullableDataField?.NullableDataProperty?.NullableIntField ?? throw new());
+			Use(inst?.NullableDataProperty?.NullableDataProperty?.IntField ?? throw new());
+			Use(inst?.NullableDataProperty?.NullableDataProperty?.NullableIntField ?? throw new());
 		}
 
 		public static void Use<T>(T usage)

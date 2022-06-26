@@ -114,13 +114,13 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task FSharpUsing_Debug()
 		{
-			await Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
+			await Run(settings: new() { RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
 		public async Task FSharpUsing_Release()
 		{
-			await Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
+			await Run(settings: new() { RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
@@ -138,13 +138,13 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task CS1xSwitch_Debug()
 		{
-			await Run(settings: new DecompilerSettings { SwitchExpressions = false, FileScopedNamespaces = false });
+			await Run(settings: new() { SwitchExpressions = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
 		public async Task CS1xSwitch_Release()
 		{
-			await Run(settings: new DecompilerSettings { SwitchExpressions = false, FileScopedNamespaces = false });
+			await Run(settings: new() { SwitchExpressions = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
@@ -241,14 +241,14 @@ namespace ICSharpCode.Decompiler.Tests
 		public async Task FSharpLoops_Debug()
 		{
 			CopyFSharpCoreDll();
-			await Run(settings: new DecompilerSettings { RemoveDeadStores = true, FileScopedNamespaces = false });
+			await Run(settings: new() { RemoveDeadStores = true, FileScopedNamespaces = false });
 		}
 
 		[Test]
 		public async Task FSharpLoops_Release()
 		{
 			CopyFSharpCoreDll();
-			await Run(settings: new DecompilerSettings { RemoveDeadStores = true, FileScopedNamespaces = false });
+			await Run(settings: new() { RemoveDeadStores = true, FileScopedNamespaces = false });
 		}
 
 		[Test]
@@ -269,7 +269,7 @@ namespace ICSharpCode.Decompiler.Tests
 			if (settings == null)
 			{
 				// never use file-scoped namespaces, unless explicitly specified
-				settings = new DecompilerSettings { FileScopedNamespaces = false };
+				settings = new() { FileScopedNamespaces = false };
 			}
 			var ilFile = Path.Combine(TestCasePath, testName + ".il");
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
@@ -280,7 +280,7 @@ namespace ICSharpCode.Decompiler.Tests
 			CodeAssert.FilesAreEqual(csFile, decompiled);
 		}
 
-		static readonly object copyLock = new object();
+		static readonly object copyLock = new();
 
 		static void CopyFSharpCoreDll()
 		{

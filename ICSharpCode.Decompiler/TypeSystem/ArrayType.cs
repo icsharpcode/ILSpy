@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override IEnumerable<IType> DirectBaseTypes {
 			get {
-				List<IType> baseTypes = new List<IType>();
+				List<IType> baseTypes = new();
 				IType t = compilation.FindType(KnownTypeCode.Array);
 				if (t.Kind != TypeKind.Unknown)
 					baseTypes.Add(t);

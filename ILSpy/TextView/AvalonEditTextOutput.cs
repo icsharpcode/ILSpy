@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// <summary>List of all foldings that were written to the output</summary>
 		internal readonly List<NewFolding> Foldings = new List<NewFolding>();
 
-		internal readonly DefinitionLookup DefinitionLookup = new DefinitionLookup();
+		internal readonly DefinitionLookup DefinitionLookup = new();
 
 		internal bool EnableHyperlinks { get; set; }
 
@@ -142,7 +142,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public TextLocation Location {
 			get {
-				return new TextLocation(lineNumber, b.Length - lastLineStart + 1 + (needsIndent ? indent : 0));
+				return new(lineNumber, b.Length - lastLineStart + 1 + (needsIndent ? indent : 0));
 			}
 		}
 

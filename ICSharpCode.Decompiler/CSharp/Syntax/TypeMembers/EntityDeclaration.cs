@@ -25,9 +25,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public abstract class EntityDeclaration : AstNode
 	{
-		public static readonly Role<AttributeSection> AttributeRole = new Role<AttributeSection>("Attribute", null);
-		public static readonly Role<CSharpModifierToken> ModifierRole = new Role<CSharpModifierToken>("Modifier", null);
-		public static readonly Role<AstType> PrivateImplementationTypeRole = new Role<AstType>("PrivateImplementationType", AstType.Null);
+		public static readonly Role<AttributeSection> AttributeRole = new("Attribute", null);
+		public static readonly Role<CSharpModifierToken> ModifierRole = new("Modifier", null);
+		public static readonly Role<AstType> PrivateImplementationTypeRole = new("PrivateImplementationType", AstType.Null);
 
 		public override NodeType NodeType {
 			get { return NodeType.Member; }

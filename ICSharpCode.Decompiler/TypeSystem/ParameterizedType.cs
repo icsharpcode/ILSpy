@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public string ReflectionName {
 			get {
-				StringBuilder b = new StringBuilder(genericType.ReflectionName);
+				StringBuilder b = new(genericType.ReflectionName);
 				b.Append('[');
 				for (int i = 0; i < typeArguments.Length; i++)
 				{
@@ -145,7 +145,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder(genericType.ToString());
+			StringBuilder b = new(genericType.ToString());
 			b.Append('[');
 			for (int i = 0; i < typeArguments.Length; i++)
 			{
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public TypeParameterSubstitution GetSubstitution()
 		{
-			return new TypeParameterSubstitution(typeArguments, null);
+			return new(typeArguments, null);
 		}
 
 		/// <summary>
@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public TypeParameterSubstitution GetSubstitution(IReadOnlyList<IType> methodTypeArguments)
 		{
-			return new TypeParameterSubstitution(typeArguments, methodTypeArguments);
+			return new(typeArguments, methodTypeArguments);
 		}
 
 		public IEnumerable<IType> DirectBaseTypes {
@@ -408,7 +408,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder(genericType.ToString());
+			StringBuilder b = new(genericType.ToString());
 			b.Append('[');
 			for (int i = 0; i < typeArguments.Length; i++)
 			{

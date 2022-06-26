@@ -74,7 +74,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void LoadDefaults()
 		{
-			currentMiscSettings = new MiscSettings();
+			currentMiscSettings = new();
 			this.DataContext = currentMiscSettings;
 		}
 	}

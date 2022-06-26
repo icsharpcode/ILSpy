@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	public class SwitchDetection : IILTransform
 	{
-		private readonly SwitchAnalysis analysis = new SwitchAnalysis();
+		private readonly SwitchAnalysis analysis = new();
 
 		private ILTransformContext context;
 		private BlockContainer currentContainer;
@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var sw = new SwitchInstruction(switchValue);
 				foreach (var section in analysis.Sections)
 				{
-					sw.Sections.Add(new SwitchSection {
+					sw.Sections.Add(new() {
 						Labels = section.Key,
 						Body = section.Value
 					});
@@ -371,10 +371,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private (List<ControlFlowNode> flowNodes, List<ControlFlowNode> caseNodes) AnalyzeControlFlow()
 		{
 			if (controlFlowGraph == null)
-				controlFlowGraph = new ControlFlowGraph(currentContainer, context.CancellationToken);
+				controlFlowGraph = new(currentContainer, context.CancellationToken);
 
 			var switchHead = controlFlowGraph.GetNode(analysis.RootBlock);
-			loopContext = new LoopContext(controlFlowGraph, switchHead);
+			loopContext = new(controlFlowGraph, switchHead);
 
 			var flowNodes = new List<ControlFlowNode> { switchHead };
 			flowNodes.AddRange(analysis.InnerBlocks.Select(controlFlowGraph.GetNode));

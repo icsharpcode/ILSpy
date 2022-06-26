@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class WithInitializerExpression : Expression
 	{
-		public readonly static TokenRole WithKeywordRole = new TokenRole("with");
+		public readonly static TokenRole WithKeywordRole = new("with");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
 
 		public Expression Expression {

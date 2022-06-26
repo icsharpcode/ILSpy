@@ -53,8 +53,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (!context.Settings.AwaitInCatchFinally)
 				return;
-			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
-			HashSet<Block> removedBlocks = new HashSet<Block>();
+			HashSet<BlockContainer> changedContainers = new();
+			HashSet<Block> removedBlocks = new();
 
 			// analyze all try-catch statements in the function
 			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray())
@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// TODO : sanity check
 					if (result.NextBlockOrExitContainer is Block nextBlock && nextBlock.IncomingEdgeCount == 0)
 					{
-						List<Block> dependentBlocks = new List<Block>();
+						List<Block> dependentBlocks = new();
 						Block current = nextBlock;
 
 						do
@@ -225,7 +225,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		static bool AnalyzeHandlers(InstructionCollection<TryCatchHandler> handlers, out ILVariable catchHandlerIdentifier,
 			out List<CatchBlockInfo> transformableCatchBlocks)
 		{
-			transformableCatchBlocks = new List<CatchBlockInfo>();
+			transformableCatchBlocks = new();
 			catchHandlerIdentifier = null;
 			foreach (var handler in handlers)
 			{

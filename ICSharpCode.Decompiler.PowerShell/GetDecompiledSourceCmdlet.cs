@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 		{
 			try
 			{
-				StringWriter output = new StringWriter();
+				StringWriter output = new();
 				if (TypeName == null)
 				{
 					output.Write(Decompiler.DecompileWholeModuleAsString());
@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 			catch (Exception e)
 			{
 				WriteVerbose(e.ToString());
-				WriteError(new ErrorRecord(e, ErrorIds.DecompilationFailed, ErrorCategory.OperationStopped, null));
+				WriteError(new(e, ErrorIds.DecompilationFailed, ErrorCategory.OperationStopped, null));
 			}
 		}
 	}

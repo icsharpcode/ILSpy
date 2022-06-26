@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					Expression expr = invocation.Arguments.Single();
 					if (MatchSimpleLambda(expr, out ParameterDeclaration parameter, out Expression body))
 					{
-						QueryExpression query = new QueryExpression();
+						QueryExpression query = new();
 						query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
 						query.Clauses.Add(new QuerySelectClause { Expression = WrapExpressionInParenthesesIfNecessary(body.Detach(), parameter.Name) }.CopyAnnotationsFrom(expr));
 						return query;
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							&& MatchSimpleLambda(projectionLambda, out ParameterDeclaration parameter2, out Expression elementSelector)
 							&& parameter1.Name == parameter2.Name)
 						{
-							QueryExpression query = new QueryExpression();
+							QueryExpression query = new();
 							query.Clauses.Add(MakeFromClause(parameter1, mre.Target.Detach()));
 							var queryGroupClause = new QueryGroupClause {
 								Projection = elementSelector.Detach(),
@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						Expression lambda = invocation.Arguments.Single();
 						if (MatchSimpleLambda(lambda, out ParameterDeclaration parameter, out Expression keySelector))
 						{
-							QueryExpression query = new QueryExpression();
+							QueryExpression query = new();
 							query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
 							query.Clauses.Add(new QueryGroupClause { Projection = new IdentifierExpression(parameter.Name).CopyAnnotationsFrom(parameter), Key = keySelector.Detach() });
 							return query;
@@ -177,7 +177,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						ParameterDeclaration p2 = lambda.Parameters.ElementAt(1);
 						if (p1.Name == parameter.Name)
 						{
-							QueryExpression query = new QueryExpression();
+							QueryExpression query = new();
 							query.Clauses.Add(MakeFromClause(p1, mre.Target.Detach()));
 							query.Clauses.Add(MakeFromClause(p2, collectionSelector.Detach()).CopyAnnotationsFrom(fromExpressionLambda));
 							query.Clauses.Add(new QuerySelectClause { Expression = WrapExpressionInParenthesesIfNecessary(((Expression)lambda.Body).Detach(), parameter.Name) });
@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					Expression expr = invocation.Arguments.Single();
 					if (MatchSimpleLambda(expr, out ParameterDeclaration parameter, out Expression body))
 					{
-						QueryExpression query = new QueryExpression();
+						QueryExpression query = new();
 						query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
 						query.Clauses.Add(new QueryWhereClause { Condition = body.Detach() }.CopyAnnotationsFrom(expr));
 						return query;
@@ -216,7 +216,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						if (ValidateThenByChain(invocation, parameter.Name))
 						{
-							QueryOrderClause orderClause = new QueryOrderClause();
+							QueryOrderClause orderClause = new();
 							while (mre.MemberName == "ThenBy" || mre.MemberName == "ThenByDescending")
 							{
 								// insert new ordering at beginning
@@ -238,7 +238,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 									Direction = (mre.MemberName == "OrderBy" ? QueryOrderingDirection.None : QueryOrderingDirection.Descending)
 								}.CopyAnnotationsFrom(lambda));
 
-							QueryExpression query = new QueryExpression();
+							QueryExpression query = new();
 							query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
 							query.Clauses.Add(orderClause);
 							return query;
@@ -269,9 +269,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						if (ValidateParameter(p1) && ValidateParameter(p2)
 							&& p1.Name == element1.Name && (p2.Name == element2.Name || mre.MemberName == "GroupJoin"))
 						{
-							QueryExpression query = new QueryExpression();
+							QueryExpression query = new();
 							query.Clauses.Add(MakeFromClause(element1, source1.Detach()));
-							QueryJoinClause joinClause = new QueryJoinClause();
+							QueryJoinClause joinClause = new();
 							joinClause.JoinIdentifier = element2.Name;    // join elementName2
 							joinClause.JoinIdentifierToken.CopyAnnotationsFrom(element2);
 							joinClause.InExpression = source2.Detach();  // in source2
@@ -302,7 +302,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		QueryFromClause MakeFromClause(ParameterDeclaration parameter, Expression body)
 		{
-			QueryFromClause fromClause = new QueryFromClause {
+			QueryFromClause fromClause = new() {
 				Identifier = parameter.Name,
 				Expression = body
 			};

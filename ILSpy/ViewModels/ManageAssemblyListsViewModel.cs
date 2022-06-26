@@ -123,7 +123,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		private void ExecuteNew()
 		{
-			CreateListDialog dlg = new CreateListDialog(Resources.NewList);
+			CreateListDialog dlg = new(Resources.NewList);
 			dlg.Owner = parent;
 			dlg.Closing += (s, args) => {
 				if (dlg.DialogResult == true)
@@ -148,7 +148,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		private void ExecuteClone()
 		{
-			CreateListDialog dlg = new CreateListDialog(Resources.NewList);
+			CreateListDialog dlg = new(Resources.NewList);
 			dlg.Owner = parent;
 			dlg.Closing += (s, args) => {
 				if (dlg.DialogResult == true)
@@ -207,7 +207,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		private void ExecuteRename()
 		{
-			CreateListDialog dlg = new CreateListDialog(Resources.RenameList);
+			CreateListDialog dlg = new(Resources.RenameList);
 			dlg.Owner = parent;
 			dlg.ListName = selectedAssemblyList;
 			dlg.ListNameBox.SelectAll();
@@ -240,7 +240,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		private void ExecuteCreatePreconfiguredAssemblyList(PreconfiguredAssemblyList config)
 		{
-			CreateListDialog dlg = new CreateListDialog(Resources.AddPreconfiguredList);
+			CreateListDialog dlg = new(Resources.AddPreconfiguredList);
 			dlg.Owner = parent;
 			dlg.ListName = config.Name;
 			dlg.ListNameBox.SelectAll();

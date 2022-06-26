@@ -69,7 +69,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public AnalyzerScope GetScopeOf(IEntity entity)
 		{
-			return new AnalyzerScope(AssemblyList, entity);
+			return new(AssemblyList, entity);
 		}
 
 		readonly ConcurrentDictionary<PEFile, DecompilerTypeSystem> typeSystemCache = new ConcurrentDictionary<PEFile, DecompilerTypeSystem>();

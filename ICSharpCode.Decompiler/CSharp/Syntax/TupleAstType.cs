@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class TupleAstType : AstType
 	{
-		public static readonly Role<TupleTypeElement> ElementRole = new Role<TupleTypeElement>("Element", TupleTypeElement.Null);
+		public static readonly Role<TupleTypeElement> ElementRole = new("Element", TupleTypeElement.Null);
 
 		public AstNodeCollection<TupleTypeElement> Elements {
 			get { return GetChildrenByRole(ElementRole); }
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class TupleTypeElement : AstNode
 	{
 		#region Null
-		public new static readonly TupleTypeElement Null = new TupleTypeElement();
+		public new static readonly TupleTypeElement Null = new();
 
 		sealed class NullTupleTypeElement : TupleTypeElement
 		{

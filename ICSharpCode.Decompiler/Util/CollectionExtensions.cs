@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.Util
 #if !NETCORE
 		public static HashSet<T> ToHashSet<T>(this IEnumerable<T> input)
 		{
-			return new HashSet<T>(input);
+			return new(input);
 		}
 #endif
 
@@ -204,7 +204,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public static List<U> SelectList<T, U>(this ICollection<T> collection, Func<T, U> func)
 		{
-			List<U> result = new List<U>(collection.Count);
+			List<U> result = new(collection.Count);
 			foreach (var element in collection)
 			{
 				result.Add(func(element));

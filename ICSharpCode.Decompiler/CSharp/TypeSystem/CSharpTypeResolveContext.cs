@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		public CSharpTypeResolveContext WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
 		{
-			return new CSharpTypeResolveContext(module, currentUsingScope, typeDefinition, currentMember, methodTypeParameterNames);
+			return new(module, currentUsingScope, typeDefinition, currentMember, methodTypeParameterNames);
 		}
 
 		ITypeResolveContext ITypeResolveContext.WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		public CSharpTypeResolveContext WithCurrentMember(IMember member)
 		{
-			return new CSharpTypeResolveContext(module, currentUsingScope, currentTypeDefinition, member, methodTypeParameterNames);
+			return new(module, currentUsingScope, currentTypeDefinition, member, methodTypeParameterNames);
 		}
 
 		ITypeResolveContext ITypeResolveContext.WithCurrentMember(IMember member)
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		public CSharpTypeResolveContext WithUsingScope(ResolvedUsingScope usingScope)
 		{
-			return new CSharpTypeResolveContext(module, usingScope, currentTypeDefinition, currentMember, methodTypeParameterNames);
+			return new(module, usingScope, currentTypeDefinition, currentMember, methodTypeParameterNames);
 		}
 	}
 }

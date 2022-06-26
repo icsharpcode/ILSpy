@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					targetFrameworkProfile = frameworkProfile.Substring(ProfileToken.Length);
 			}
 
-			return new TargetFramework(targetFrameworkIdentifier, versionNumber, targetFrameworkProfile);
+			return new(targetFrameworkIdentifier, versionNumber, targetFrameworkProfile);
 		}
 
 		/// <summary>
@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static HashSet<string> dotNet30Assemblies = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+		static HashSet<string> dotNet30Assemblies = new(StringComparer.OrdinalIgnoreCase) {
 			"ComSvcConfig, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
 			"infocard, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 			"Microsoft.Transactions.Bridge, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
@@ -172,7 +172,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			"WsatConfig, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
 		};
 
-		static HashSet<string> dotNet35Assemblies = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+		static HashSet<string> dotNet35Assemblies = new(StringComparer.OrdinalIgnoreCase) {
 			"AddInProcess, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 			"AddInProcess32, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 			"AddInUtil, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
@@ -223,7 +223,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			var resolvedAssemblies = new HashSet<string>();
 			int version = 200;
 			GetFrameworkVersionNET20(module, assemblyResolver, resolvedAssemblies, ref version);
-			return new TargetFramework(targetFramework.Identifier, version, targetFramework.Profile);
+			return new(targetFramework.Identifier, version, targetFramework.Profile);
 		}
 
 		static void GetFrameworkVersionNET20(PEFile module, IAssemblyResolver assemblyResolver, HashSet<string> resolvedAssemblies, ref int version)

@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public string ReflectionName {
 			get {
-				StringBuilder b = new StringBuilder();
+				StringBuilder b = new();
 				if (!string.IsNullOrEmpty(namespaceName))
 				{
 					b.Append(namespaceName);
@@ -124,8 +124,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public sealed class TopLevelTypeNameComparer : IEqualityComparer<TopLevelTypeName>
 	{
-		public static readonly TopLevelTypeNameComparer Ordinal = new TopLevelTypeNameComparer(StringComparer.Ordinal);
-		public static readonly TopLevelTypeNameComparer OrdinalIgnoreCase = new TopLevelTypeNameComparer(StringComparer.OrdinalIgnoreCase);
+		public static readonly TopLevelTypeNameComparer Ordinal = new(StringComparer.Ordinal);
+		public static readonly TopLevelTypeNameComparer OrdinalIgnoreCase = new(StringComparer.OrdinalIgnoreCase);
 
 		public readonly StringComparer NameComparer;
 

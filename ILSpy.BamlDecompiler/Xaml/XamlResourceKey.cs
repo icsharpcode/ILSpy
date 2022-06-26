@@ -72,7 +72,7 @@ namespace ILSpy.BamlDecompiler.Xaml
 			Debug.WriteLine("Cannot find corresponding value element of key record @" + keyRecord.Position);
 		}
 
-		public static XamlResourceKey Create(BamlNode node) => new XamlResourceKey(node);
+		public static XamlResourceKey Create(BamlNode node) => new(node);
 
 		public BamlNode KeyNode { get; set; }
 		public BamlElement KeyElement { get; set; }

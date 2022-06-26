@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// </remarks>
 	public sealed class CSharpConversions
 	{
-		readonly ConcurrentDictionary<TypePair, Conversion> implicitConversionCache = new ConcurrentDictionary<TypePair, Conversion>();
+		readonly ConcurrentDictionary<TypePair, Conversion> implicitConversionCache = new();
 		readonly ICompilation compilation;
 
 		public CSharpConversions(ICompilation compilation)
@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (toType == null)
 				throw new ArgumentNullException(nameof(toType));
 
-			TypePair pair = new TypePair(fromType, toType);
+			TypePair pair = new(fromType, toType);
 			if (implicitConversionCache.TryGetValue(pair, out Conversion c))
 				return c;
 
@@ -1124,7 +1124,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			var operators = UnderlyingTypeForConversion(fromType).GetMethods(opFilter)
 				.Concat(UnderlyingTypeForConversion(toType).GetMethods(opFilter)).Distinct();
 			// Determine whether one of them is applicable:
-			List<OperatorInfo> result = new List<OperatorInfo>();
+			List<OperatorInfo> result = new();
 			foreach (IMethod op in operators)
 			{
 				IType sourceType = op.Parameters[0].Type;
@@ -1148,7 +1148,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// Try if the operator is applicable in lifted form:
 				if (isApplicable)
 				{
-					result.Add(new OperatorInfo(op, sourceType, targetType, false));
+					result.Add(new(op, sourceType, targetType, false));
 				}
 				if (NullableType.IsNonNullableValueType(sourceType))
 				{
@@ -1167,7 +1167,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 					if (isApplicable)
 					{
-						result.Add(new OperatorInfo(op, liftedSourceType, liftedTargetType, true));
+						result.Add(new(op, liftedSourceType, liftedTargetType, true));
 					}
 				}
 			}
@@ -1280,7 +1280,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 				else
 				{
-					args[i] = new ResolveResult(parameterType);
+					args[i] = new(parameterType);
 				}
 			}
 			var or = rr.PerformOverloadResolution(

@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler
 
 		public TextLocation Location {
 			get {
-				return new TextLocation(line, column + (needsIndent ? indent : 0));
+				return new(line, column + (needsIndent ? indent : 0));
 			}
 		}
 
@@ -160,7 +160,7 @@ namespace ICSharpCode.Decompiler
 		public TextOutputWithRollback(ITextOutput target)
 		{
 			this.target = target;
-			this.actions = new List<Action<ITextOutput>>();
+			this.actions = new();
 		}
 
 		string ITextOutput.IndentationString {

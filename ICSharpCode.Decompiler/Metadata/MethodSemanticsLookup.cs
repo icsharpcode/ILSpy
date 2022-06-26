@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				throw new NotSupportedException("SRM doesn't provide access to 'other' accessors");
 			}
-			entries = new List<Entry>(metadata.GetTableRowCount(TableIndex.MethodSemantics));
+			entries = new(metadata.GetTableRowCount(TableIndex.MethodSemantics));
 			foreach (var propHandle in metadata.PropertyDefinitions)
 			{
 				var prop = metadata.GetPropertyDefinition(propHandle);
@@ -87,13 +87,13 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				if ((semantics & filter) == 0 || method.IsNil)
 					return;
-				entries.Add(new Entry(semantics, method, association));
+				entries.Add(new(semantics, method, association));
 			}
 		}
 
 		public (EntityHandle, MethodSemanticsAttributes) GetSemantics(MethodDefinitionHandle method)
 		{
-			int pos = entries.BinarySearch(new Entry(0, method, default(EntityHandle)));
+			int pos = entries.BinarySearch(new(0, method, default(EntityHandle)));
 			if (pos >= 0)
 			{
 				return (entries[pos].Association, entries[pos].Semantics);

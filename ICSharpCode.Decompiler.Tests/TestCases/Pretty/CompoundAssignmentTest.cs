@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private int[] array1;
 		private StructContainer field1;
 		private MyEnum enumField;
-		private Dictionary<ushort, ushort> ushortDict = new Dictionary<ushort, ushort>();
+		private Dictionary<ushort, ushort> ushortDict = new();
 		private ShortEnum shortEnumField;
 		public static int StaticField;
 		public static short StaticShortField;
@@ -360,7 +360,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private MutableClass M()
 		{
-			return new MutableClass();
+			return new();
 		}
 
 		private int[,] Array()

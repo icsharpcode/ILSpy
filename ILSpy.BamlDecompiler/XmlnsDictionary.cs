@@ -60,7 +60,7 @@ namespace ILSpy.BamlDecompiler
 
 		public XmlnsScope CurrentScope { get; set; }
 
-		public void PushScope(BamlElement element) => CurrentScope = new XmlnsScope(CurrentScope, element);
+		public void PushScope(BamlElement element) => CurrentScope = new(CurrentScope, element);
 
 		public void PopScope() => CurrentScope = CurrentScope.PreviousScope;
 

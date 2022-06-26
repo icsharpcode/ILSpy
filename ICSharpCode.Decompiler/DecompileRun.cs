@@ -12,17 +12,16 @@ namespace ICSharpCode.Decompiler
 {
 	internal class DecompileRun
 	{
-		public HashSet<string> DefinedSymbols { get; } = new HashSet<string>();
-		public HashSet<string> Namespaces { get; } = new HashSet<string>();
+		public HashSet<string> DefinedSymbols { get; } = new();
+		public HashSet<string> Namespaces { get; } = new();
 		public CancellationToken CancellationToken { get; set; }
 		public DecompilerSettings Settings { get; }
 		public IDocumentationProvider DocumentationProvider { get; set; }
-		public Dictionary<ITypeDefinition, RecordDecompiler> RecordDecompilers { get; } = new Dictionary<ITypeDefinition, RecordDecompiler>();
+		public Dictionary<ITypeDefinition, RecordDecompiler> RecordDecompilers { get; } = new();
 
 		public Dictionary<ITypeDefinition, bool> TypeHierarchyIsKnown { get; } = new();
 
-		Lazy<CSharp.TypeSystem.UsingScope> usingScope =>
-			new Lazy<CSharp.TypeSystem.UsingScope>(() => CreateUsingScope(Namespaces));
+		Lazy<CSharp.TypeSystem.UsingScope> usingScope => new(() => CreateUsingScope(Namespaces));
 
 		public CSharp.TypeSystem.UsingScope UsingScope => usingScope.Value;
 

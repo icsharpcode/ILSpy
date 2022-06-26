@@ -547,7 +547,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Collect the blocks to be moved into the region:
 			BlockContainer sourceContainer = (BlockContainer)block.Parent;
 			int[] reachedEdgesPerBlock = new int[sourceContainer.Blocks.Count];
-			Queue<Block> workList = new Queue<Block>();
+			Queue<Block> workList = new();
 			Block entryBlock = ((Branch)block.Instructions.Last()).TargetBlock;
 			if (entryBlock.Parent != sourceContainer)
 			{
@@ -600,7 +600,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			context.Step("CreatePinnedRegion", block);
-			BlockContainer body = new BlockContainer();
+			BlockContainer body = new();
 			Block[] clonedBlocks = cloneBlocks ? new Block[sourceContainer.Blocks.Count] : null;
 			for (int i = 0; i < sourceContainer.Blocks.Count; i++)
 			{
@@ -636,7 +636,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 					if (!cloneBlocks)
 					{
-						sourceContainer.Blocks[i] = new Block(); // replace with dummy block
+						sourceContainer.Blocks[i] = new(); // replace with dummy block
 																 // we'll delete the dummy block later
 					}
 				}
@@ -671,7 +671,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				// Replace unreachable blocks in sourceContainer with dummy blocks:
 				bool[] isAlive = new bool[sourceContainer.Blocks.Count];
-				List<int> duplicatedBlockStartOffsets = new List<int>();
+				List<int> duplicatedBlockStartOffsets = new();
 				foreach (var remainingBlock in sourceContainer.TopologicalSort(deleteUnreachableBlocks: true))
 				{
 					isAlive[remainingBlock.ChildIndex] = true;
@@ -683,7 +683,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				for (int i = 0; i < isAlive.Length; i++)
 				{
 					if (!isAlive[i])
-						sourceContainer.Blocks[i] = new Block();
+						sourceContainer.Blocks[i] = new();
 				}
 				// we'll delete the dummy blocks later
 				Debug.Assert(duplicatedBlockStartOffsets.Count > 0);
@@ -729,7 +729,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// Remove the extra level of indirection.
 					elementType = ((PointerType)elementType).ElementType;
 				}
-				ILVariable newVar = new ILVariable(
+				ILVariable newVar = new(
 					VariableKind.PinnedRegionLocal,
 					new PointerType(elementType),
 					oldVar.Index);
@@ -789,7 +789,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return;
 			Debug.Assert(arrayToPointer.IsDescendantOf(pinnedRegion));
 			ILVariable oldVar = pinnedRegion.Variable;
-			ILVariable newVar = new ILVariable(
+			ILVariable newVar = new(
 				VariableKind.PinnedRegionLocal,
 				new PointerType(((ArrayType)oldVar.Type).ElementType),
 				oldVar.Index);
@@ -869,7 +869,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (pinnedRegion.Variable.AddressCount == 0 && pinnedRegion.Variable.LoadCount == 0)
 				{
 					var charPtr = new PointerType(context.TypeSystem.FindType(KnownTypeCode.Char));
-					newVar = new ILVariable(VariableKind.PinnedRegionLocal, charPtr, pinnedRegion.Variable.Index);
+					newVar = new(VariableKind.PinnedRegionLocal, charPtr, pinnedRegion.Variable.Index);
 					newVar.Name = pinnedRegion.Variable.Name;
 					newVar.HasGeneratedName = pinnedRegion.Variable.HasGeneratedName;
 					pinnedRegion.Variable.Function.Variables.Add(newVar);
@@ -927,7 +927,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			if (nativeVar.Kind == VariableKind.Local)
 			{
-				newVar = new ILVariable(VariableKind.PinnedRegionLocal, nativeVar.Type, nativeVar.Index);
+				newVar = new(VariableKind.PinnedRegionLocal, nativeVar.Type, nativeVar.Index);
 				newVar.Name = nativeVar.Name;
 				newVar.HasGeneratedName = nativeVar.HasGeneratedName;
 				nativeVar.Function.Variables.Add(newVar);

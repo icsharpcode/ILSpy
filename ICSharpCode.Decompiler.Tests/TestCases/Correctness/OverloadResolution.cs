@@ -345,13 +345,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public static implicit operator Issue2444(X x)
 			{
 				Console.WriteLine("#2444: op_Implicit(X)");
-				return new Issue2444();
+				return new();
 			}
 
 			public static implicit operator Issue2444(Y y)
 			{
 				Console.WriteLine("#2444: op_Implicit(Y)");
-				return new Issue2444();
+				return new();
 			}
 
 			public static void M1(Issue2444 z)
@@ -374,7 +374,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public object this[object key] {
 			get {
 				Console.WriteLine("IndexerTests.get_Item(object key)");
-				return new object();
+				return new();
 			}
 			set {
 				Console.WriteLine("IndexerTests.set_Item(object key, object value)");
@@ -384,7 +384,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public object this[int key] {
 			get {
 				Console.WriteLine("IndexerTests.get_Item(int key)");
-				return new object();
+				return new();
 			}
 			set {
 				Console.WriteLine("IndexerTests.set_Item(int key, object value)");

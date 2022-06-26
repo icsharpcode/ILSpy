@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	sealed class BaseTypeCollector : List<IType>
 	{
-		readonly Stack<IType> activeTypes = new Stack<IType>();
+		readonly Stack<IType> activeTypes = new();
 
 		/// <summary>
 		/// If this option is enabled, the list will not contain interfaces when retrieving the base types

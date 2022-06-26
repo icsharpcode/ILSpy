@@ -310,7 +310,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				var astType = new TupleAstType();
 				foreach (var (etype, ename) in tuple.ElementTypes.Zip(tuple.ElementNames))
 				{
-					astType.Elements.Add(new TupleTypeElement {
+					astType.Elements.Add(new() {
 						Type = ConvertType(etype),
 						Name = ename
 					});
@@ -383,7 +383,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (treatedAs != null)
 				{
 					var result = ConvertTypeHelper(treatedAs);
-					result.AddChild(new Comment(astType.ToString(), CommentType.MultiLine), Roles.Comment);
+					result.AddChild(new(astType.ToString(), CommentType.MultiLine), Roles.Comment);
 					return result;
 				}
 				else
@@ -518,7 +518,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				AddTypeArguments(shortResult, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
 				return shortResult;
 			}
-			MemberType result = new MemberType();
+			MemberType result = new();
 			if (genericType.DeclaringType != null)
 			{
 				// Handle nested types
@@ -669,7 +669,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					{
 						var @namespace = resolver.Compilation.RootNamespace.GetChildNamespace(namespaceName);
 						if (@namespace != null)
-							ns.AddAnnotation(nrr = new NamespaceResolveResult(@namespace));
+							ns.AddAnnotation(nrr = new(@namespace));
 					}
 					return ns;
 				}
@@ -689,7 +689,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					var newNamespace = parentNRR.Namespace.GetChildNamespace(localNamespace);
 					if (newNamespace != null)
 					{
-						ns.AddAnnotation(nrr = new NamespaceResolveResult(newNamespace));
+						ns.AddAnnotation(nrr = new(newNamespace));
 					}
 				}
 				return ns;
@@ -708,8 +708,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		static SimpleType MakeSimpleType(string name)
 		{
 			if (name == "_")
-				return new SimpleType("@_");
-			return new SimpleType(name);
+				return new("@_");
+			return new(name);
 		}
 
 		SimpleType MakeGlobal()
@@ -723,15 +723,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		static MemberType MakeMemberType(AstType target, string name)
 		{
 			if (name == "_")
-				return new MemberType(target, "@_");
-			return new MemberType(target, name);
+				return new(target, "@_");
+			return new(target, name);
 		}
 		#endregion
 
 		#region Convert Attribute
 		public Attribute ConvertAttribute(IAttribute attribute)
 		{
-			Attribute attr = new Attribute();
+			Attribute attr = new();
 			attr.Type = ConvertAttributeType(attribute.AttributeType);
 			switch (attr.Type)
 			{
@@ -757,10 +757,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			if (attribute.NamedArguments.Length > 0)
 			{
-				InitializedObjectResolveResult targetResult = new InitializedObjectResolveResult(attribute.AttributeType);
+				InitializedObjectResolveResult targetResult = new(attribute.AttributeType);
 				foreach (var namedArg in attribute.NamedArguments)
 				{
-					NamedExpression namedArgument = new NamedExpression(namedArg.Name, ConvertConstantValue(namedArg.Type, namedArg.Value));
+					NamedExpression namedArgument = new(namedArg.Name, ConvertConstantValue(namedArg.Type, namedArg.Value));
 					if (AddResolveResultAnnotations)
 					{
 						IMember member = CustomAttribute.MemberForNamedArgument(attribute.AttributeType, namedArg);
@@ -775,9 +775,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (attribute.HasDecodeErrors)
 			{
 				attr.HasArgumentList = true;
-				attr.AddChild(new Comment("Could not decode attribute arguments.", CommentType.MultiLine), Roles.Comment);
+				attr.AddChild(new("Could not decode attribute arguments.", CommentType.MultiLine), Roles.Comment);
 				// insert explicit rpar token to make the comment appear within the parentheses
-				attr.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.RPar), Roles.RPar);
+				attr.AddChild(new(TextLocation.Empty, Roles.RPar), Roles.RPar);
 			}
 			return attr;
 		}
@@ -922,7 +922,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			else if (rr is ArrayCreateResolveResult acrr)
 			{
-				ArrayCreateExpression ace = new ArrayCreateExpression();
+				ArrayCreateExpression ace = new();
 				ace.Type = ConvertType(acrr.Type);
 				if (ace.Type is ComposedType composedType)
 				{
@@ -938,7 +938,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				if (acrr.InitializerElements != null)
 				{
-					ArrayInitializerExpression initializer = new ArrayInitializerExpression();
+					ArrayInitializerExpression initializer = new();
 					initializer.Elements.AddRange(acrr.InitializerElements.Select(ConvertConstantValue));
 					ace.Initializer = initializer;
 				}
@@ -1022,7 +1022,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					if (!composedType.HasNullableSpecifier && composedType.PointerRank == 0)
 						expr.Type = composedType.BaseType;
 				}
-				expr.Initializer = new ArrayInitializerExpression(arr.Select(e => ConvertConstantValue(elementType, e.Type, e.Value)));
+				expr.Initializer = new(arr.Select(e => ConvertConstantValue(elementType, e.Type, e.Value)));
 				return expr;
 			}
 			else
@@ -1154,7 +1154,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return true;
 		}
 
-		Dictionary<object, (KnownTypeCode Type, string Member)> specialConstants = new Dictionary<object, (KnownTypeCode Type, string Member)>() {
+		Dictionary<object, (KnownTypeCode Type, string Member)> specialConstants = new() {
 			// byte:
 			{ byte.MaxValue, (KnownTypeCode.Byte, "MaxValue") },
 			// sbyte:
@@ -1632,7 +1632,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (parameter == null)
 				throw new ArgumentNullException(nameof(parameter));
-			ParameterDeclaration decl = new ParameterDeclaration();
+			ParameterDeclaration decl = new();
 			if (parameter.IsRef)
 			{
 				decl.ParameterModifier = ParameterModifier.Ref;
@@ -1888,7 +1888,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			ITypeDefinition d = invokeMethod.DeclaringTypeDefinition;
 
-			DelegateDeclaration decl = new DelegateDeclaration();
+			DelegateDeclaration decl = new();
 			decl.Modifiers = modifiers & ~Modifiers.Sealed;
 			if (ShowAttributes)
 			{
@@ -1935,7 +1935,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		FieldDeclaration ConvertField(IField field)
 		{
-			FieldDeclaration decl = new FieldDeclaration();
+			FieldDeclaration decl = new();
 			if (ShowModifiers)
 			{
 				Modifiers m = GetMemberModifiers(field);
@@ -1975,7 +1975,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					initializer = new ErrorExpression(ex.Message);
 				}
 			}
-			decl.Variables.Add(new VariableInitializer(field.Name, initializer));
+			decl.Variables.Add(new(field.Name, initializer));
 			return decl;
 		}
 
@@ -1983,7 +1983,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (GenerateBody)
 			{
-				return new BlockStatement {
+				return new() {
 					new ThrowStatement(new ObjectCreateExpression(ConvertType(new TopLevelTypeName("System", "NotImplementedException", 0))))
 				};
 			}
@@ -1997,7 +1997,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (accessor == null)
 				return Accessor.Null;
-			Accessor decl = new Accessor();
+			Accessor decl = new();
 			if (ShowAttributes)
 			{
 				decl.Attributes.AddRange(ConvertAttributes(accessor.GetAttributes()));
@@ -2024,11 +2024,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			if (keywordRole != null)
 			{
-				decl.AddChild(new CSharpTokenNode(TextLocation.Empty, keywordRole), keywordRole);
+				decl.AddChild(new(TextLocation.Empty, keywordRole), keywordRole);
 			}
 			if (accessor.IsInitOnly && keywordRole != PropertyDeclaration.InitKeywordRole)
 			{
-				decl.AddChild(new Comment("init", CommentType.MultiLine), Roles.Comment);
+				decl.AddChild(new("init", CommentType.MultiLine), Roles.Comment);
 			}
 			if (AddResolveResultAnnotations)
 			{
@@ -2040,14 +2040,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			else
 			{
-				decl.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.Semicolon), Roles.Semicolon);
+				decl.AddChild(new(TextLocation.Empty, Roles.Semicolon), Roles.Semicolon);
 			}
 			return decl;
 		}
 
 		PropertyDeclaration ConvertProperty(IProperty property)
 		{
-			PropertyDeclaration decl = new PropertyDeclaration();
+			PropertyDeclaration decl = new();
 			decl.Modifiers = GetMemberModifiers(property);
 			if (ShowAttributes)
 			{
@@ -2087,7 +2087,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		IndexerDeclaration ConvertIndexer(IProperty indexer)
 		{
-			IndexerDeclaration decl = new IndexerDeclaration();
+			IndexerDeclaration decl = new();
 			decl.Modifiers = GetMemberModifiers(indexer);
 			if (ShowAttributes)
 			{
@@ -2117,7 +2117,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (this.UseCustomEvents)
 			{
-				CustomEventDeclaration decl = new CustomEventDeclaration();
+				CustomEventDeclaration decl = new();
 				decl.Modifiers = GetMemberModifiers(ev);
 				if (ShowAttributes)
 				{
@@ -2137,7 +2137,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			else
 			{
-				EventDeclaration decl = new EventDeclaration();
+				EventDeclaration decl = new();
 				decl.Modifiers = GetMemberModifiers(ev);
 				if (ShowAttributes)
 				{
@@ -2148,14 +2148,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					decl.AddAnnotation(new MemberResolveResult(null, ev));
 				}
 				decl.ReturnType = ConvertType(ev.ReturnType);
-				decl.Variables.Add(new VariableInitializer(ev.Name));
+				decl.Variables.Add(new(ev.Name));
 				return decl;
 			}
 		}
 
 		MethodDeclaration ConvertMethod(IMethod method)
 		{
-			MethodDeclaration decl = new MethodDeclaration();
+			MethodDeclaration decl = new();
 			decl.Modifiers = GetMemberModifiers(method);
 			if (ShowAttributes)
 			{
@@ -2208,7 +2208,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (opType == null)
 				return ConvertMethod(op);
 
-			OperatorDeclaration decl = new OperatorDeclaration();
+			OperatorDeclaration decl = new();
 			decl.Modifiers = GetMemberModifiers(op);
 			decl.OperatorType = opType.Value;
 			decl.ReturnType = ConvertType(op.ReturnType);
@@ -2235,7 +2235,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		ConstructorDeclaration ConvertConstructor(IMethod ctor)
 		{
-			ConstructorDeclaration decl = new ConstructorDeclaration();
+			ConstructorDeclaration decl = new();
 			decl.Modifiers = GetMemberModifiers(ctor);
 			if (ShowAttributes)
 				decl.Attributes.AddRange(ConvertAttributes(ctor.GetAttributes()));
@@ -2255,7 +2255,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		DestructorDeclaration ConvertDestructor(IMethod dtor)
 		{
-			DestructorDeclaration decl = new DestructorDeclaration();
+			DestructorDeclaration decl = new();
 			if (ShowAttributes)
 				decl.Attributes.AddRange(ConvertAttributes(dtor.GetAttributes()));
 			if (dtor.DeclaringTypeDefinition != null)
@@ -2371,7 +2371,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#region Convert Type Parameter
 		internal TypeParameterDeclaration ConvertTypeParameter(ITypeParameter tp)
 		{
-			TypeParameterDeclaration decl = new TypeParameterDeclaration();
+			TypeParameterDeclaration decl = new();
 			decl.Variance = tp.Variance;
 			decl.Name = tp.Name;
 			if (ShowAttributes)
@@ -2385,7 +2385,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				return null;
 			}
-			Constraint c = new Constraint();
+			Constraint c = new();
 			c.TypeParameter = MakeSimpleType(tp.Name);
 			if (tp.HasReferenceTypeConstraint)
 			{
@@ -2447,7 +2447,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#region Convert Variable
 		public VariableDeclarationStatement ConvertVariable(IVariable v)
 		{
-			VariableDeclarationStatement decl = new VariableDeclarationStatement();
+			VariableDeclarationStatement decl = new();
 			decl.Modifiers = v.IsConst ? Modifiers.Const : Modifiers.None;
 			decl.Type = ConvertType(v.Type);
 			Expression initializer = null;
@@ -2462,14 +2462,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					initializer = new ErrorExpression(ex.Message);
 				}
 			}
-			decl.Variables.Add(new VariableInitializer(v.Name, initializer));
+			decl.Variables.Add(new(v.Name, initializer));
 			return decl;
 		}
 		#endregion
 
 		NamespaceDeclaration ConvertNamespaceDeclaration(INamespace ns)
 		{
-			return new NamespaceDeclaration(ns.FullName);
+			return new(ns.FullName);
 		}
 
 		AstType GetExplicitInterfaceType(IMember member)

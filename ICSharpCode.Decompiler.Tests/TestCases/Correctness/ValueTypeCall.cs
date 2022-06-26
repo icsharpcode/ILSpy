@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		public static void Main()
 		{
-			MutValueType m = new MutValueType();
+			MutValueType m = new();
 			RefParameter(ref m);
 			ValueParameter(m);
 			Field();
@@ -81,8 +81,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			m.Increment();
 		}
 
-		static readonly MutValueType ReadonlyField = new MutValueType { val = 100 };
-		static MutValueType MutableField = new MutValueType { val = 200 };
+		static readonly MutValueType ReadonlyField = new() { val = 100 };
+		static MutValueType MutableField = new() { val = 200 };
 
 		static void Field()
 		{
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void BoxToStringCalls()
 		{
 			Console.WriteLine("BoxToStringCalls:");
-			MutValueType m = new MutValueType { val = 400 };
+			MutValueType m = new() { val = 400 };
 			Console.WriteLine(m.ToString());
 			Console.WriteLine(((object)m).ToString());
 			Console.WriteLine(m.ToString());
@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			this.instanceField.val = 42;
 			Console.WriteLine(this.instanceField.val);
-			mutableInstanceFieldWithReadOnlyMember = new ValueTypeWithReadOnlyMember(45);
+			mutableInstanceFieldWithReadOnlyMember = new(45);
 			Console.WriteLine(this.mutableInstanceFieldWithReadOnlyMember.Member);
 		}
 
@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("Using with variable declared outside:");
 			MutValueType z;
-			using (z = new MutValueType())
+			using (z = new())
 			{
 				z.Increment();
 			}
@@ -179,15 +179,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void ForEach()
 		{
 			var list = new List<MutValueType> {
-				new MutValueType { val = 10 },
-				new MutValueType { val = 20 },
-				new MutValueType { val = 30 },
+				new() { val = 10 },
+				new() { val = 20 },
+				new() { val = 30 },
 			};
 			ForEach1(list);
 			var array = new MutValueType[] {
-				new MutValueType { val = 100 },
-				new MutValueType { val = 200 },
-				new MutValueType { val = 300 },
+				new() { val = 100 },
+				new() { val = 200 },
+				new() { val = 300 },
 			};
 			ForEachArray1(array);
 		}

@@ -394,7 +394,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static IEnumerable<T> GenericYield<T>() where T : new()
 		{
-			T val = new T();
+			T val = new();
 			for (int i = 0; i < 3; i++)
 			{
 				yield return val;

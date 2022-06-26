@@ -641,7 +641,7 @@ namespace ICSharpCode.ILSpy.AddIn
 				return ValueTuple.Create(initializeExpressionNode.OpenBraceToken, initializeExpressionNode.CloseBraceToken);
 			}
 
-			return new ValueTuple<SyntaxToken, SyntaxToken>();
+			return new();
 		}
 
 		public static SyntaxTokenList GetModifiers(this SyntaxNode member)

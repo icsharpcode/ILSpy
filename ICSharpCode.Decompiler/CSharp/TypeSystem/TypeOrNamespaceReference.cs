@@ -58,9 +58,9 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			var ctx = context as CSharpTypeResolveContext;
 			if (ctx == null)
 			{
-				ctx = new CSharpTypeResolveContext(context.CurrentModule ?? context.Compilation.MainModule, null, context.CurrentTypeDefinition, context.CurrentMember);
+				ctx = new(context.CurrentModule ?? context.Compilation.MainModule, null, context.CurrentTypeDefinition, context.CurrentMember);
 			}
-			return ResolveType(new CSharpResolver(ctx));
+			return ResolveType(new(ctx));
 
 			// A potential issue might be this scenario:
 

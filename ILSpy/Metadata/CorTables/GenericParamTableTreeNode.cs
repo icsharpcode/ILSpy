@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			for (int row = 1; row <= module.Metadata.GetTableRowCount(TableIndex.GenericParam); row++)
 			{
-				GenericParamEntry entry = new GenericParamEntry(module, MetadataTokens.GenericParameterHandle(row));
+				GenericParamEntry entry = new(module, MetadataTokens.GenericParameterHandle(row));
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;

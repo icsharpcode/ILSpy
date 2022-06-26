@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				FieldRVAEntry entry = new FieldRVAEntry(module, ptr, metadataOffset, rid);
+				FieldRVAEntry entry = new(module, ptr, metadataOffset, rid);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -128,7 +128,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					+ metadata.GetTableRowSize(TableIndex.FieldRva) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
 				int fieldDefSize = metadata.GetTableRowCount(TableIndex.Field) < ushort.MaxValue ? 2 : 4;
-				this.fieldLayout = new FieldRVA(ptr + rowOffset, fieldDefSize);
+				this.fieldLayout = new(ptr + rowOffset, fieldDefSize);
 			}
 		}
 

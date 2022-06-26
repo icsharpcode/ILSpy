@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		public static CSharpFormattingOptions CreateEmpty()
 		{
-			return new CSharpFormattingOptions();
+			return new();
 		}
 
 		/// <summary>
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		public static CSharpFormattingOptions CreateMono()
 		{
-			return new CSharpFormattingOptions {
+			return new() {
 				IndentNamespaceBody = true,
 				IndentClassBody = true,
 				IndentInterfaceBody = true,
@@ -214,7 +214,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		public static CSharpFormattingOptions CreateKRStyle()
 		{
-			return new CSharpFormattingOptions() {
+			return new() {
 				IndentNamespaceBody = true,
 				IndentClassBody = true,
 				IndentInterfaceBody = true,

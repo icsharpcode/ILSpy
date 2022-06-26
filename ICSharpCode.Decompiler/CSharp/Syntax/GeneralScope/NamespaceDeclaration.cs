@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class NamespaceDeclaration : AstNode
 	{
 		public static readonly Role<AstNode> MemberRole = SyntaxTree.MemberRole;
-		public static readonly Role<AstType> NamespaceNameRole = new Role<AstType>("NamespaceName", AstType.Null);
+		public static readonly Role<AstType> NamespaceNameRole = new("NamespaceName", AstType.Null);
 
 		public override NodeType NodeType {
 			get {

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class CheckedStatement : Statement
 	{
-		public static readonly TokenRole CheckedKeywordRole = new TokenRole("checked");
+		public static readonly TokenRole CheckedKeywordRole = new("checked");
 
 		public CSharpTokenNode CheckedToken {
 			get { return GetChildByRole(CheckedKeywordRole); }

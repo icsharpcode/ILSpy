@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class TypeOfExpression : Expression
 	{
-		public readonly static TokenRole TypeofKeywordRole = new TokenRole("typeof");
+		public readonly static TokenRole TypeofKeywordRole = new("typeof");
 
 		public CSharpTokenNode TypeOfToken {
 			get { return GetChildByRole(TypeofKeywordRole); }

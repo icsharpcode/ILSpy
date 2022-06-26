@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		TypeInference CreateNestedInstance()
 		{
-			TypeInference c = new TypeInference(compilation, conversions);
+			TypeInference c = new(compilation, conversions);
 			c.algorithm = algorithm;
 			c.nestingLevel = nestingLevel + 1;
 			return c;
@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						throw new ArgumentException("Type parameter has wrong index");
 					if (typeParameters[i].OwnerType != SymbolKind.Method)
 						throw new ArgumentException("Type parameter must be owned by a method");
-					this.typeParameters[i] = new TP(typeParameters[i]);
+					this.typeParameters[i] = new(typeParameters[i]);
 				}
 				this.parameterTypes = new IType[Math.Min(arguments.Count, parameterTypes.Count)];
 				this.arguments = new ResolveResult[this.parameterTypes.Length];
@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				if (i != typeParameters[i].Index)
 					throw new ArgumentException("Type parameter has wrong index");
-				this.typeParameters[i] = new TP(typeParameters[i]);
+				this.typeParameters[i] = new(typeParameters[i]);
 			}
 			foreach (IType b in lowerBounds)
 			{
@@ -215,8 +215,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		sealed class TP
 		{
-			public readonly HashSet<IType> LowerBounds = new HashSet<IType>();
-			public readonly HashSet<IType> UpperBounds = new HashSet<IType>();
+			public readonly HashSet<IType> LowerBounds = new();
+			public readonly HashSet<IType> UpperBounds = new();
 			public IType ExactBound;
 			public bool MultipleDifferentExactBounds;
 			public readonly ITypeParameter TypeParameter;
@@ -321,7 +321,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// C# 4.0 spec: §7.5.2.2 The second phase
 			Log.WriteLine("Phase Two");
 			// All unfixed type variables Xi which do not depend on any Xj are fixed.
-			List<TP> typeParametersToFix = new List<TP>();
+			List<TP> typeParametersToFix = new();
 			foreach (TP Xi in typeParameters)
 			{
 				if (Xi.IsFixed == false)
@@ -451,7 +451,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		bool AnyTypeContainsUnfixedParameter(IEnumerable<IType> types)
 		{
-			OccursInVisitor o = new OccursInVisitor(this);
+			OccursInVisitor o = new(this);
 			foreach (var type in types)
 			{
 				type.AcceptVisitor(o);
@@ -474,8 +474,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			dependencyMatrix = new bool[n, n];
 			for (int k = 0; k < arguments.Length; k++)
 			{
-				OccursInVisitor input = new OccursInVisitor(this);
-				OccursInVisitor output = new OccursInVisitor(this);
+				OccursInVisitor input = new(this);
+				OccursInVisitor output = new(this);
 				foreach (var type in InputTypes(arguments[k], parameterTypes[k]))
 				{
 					type.AcceptVisitor(input);
@@ -575,7 +575,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						}
 						else
 						{
-							args[i] = new ResolveResult(parameterType);
+							args[i] = new(parameterType);
 						}
 					}
 					var or = mgrr.PerformOverloadResolution(
@@ -606,7 +606,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				fixedTypes[i] = typeParameters[i].FixedTo ?? SpecialType.UnknownType;
 			}
-			return new TypeParameterSubstitution(classTypeArguments, fixedTypes);
+			return new(classTypeArguments, fixedTypes);
 		}
 		#endregion
 
@@ -1002,7 +1002,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			try
 			{
 				ITypeParameter tp = DummyTypeParameter.GetMethodTypeParameter(0);
-				this.typeParameters = new TP[1] { new TP(tp) };
+				this.typeParameters = new TP[1] { new(tp) };
 				foreach (ResolveResult r in expressions)
 				{
 					MakeOutputTypeInference(r, tp);

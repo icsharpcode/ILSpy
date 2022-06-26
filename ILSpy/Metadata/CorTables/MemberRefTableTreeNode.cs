@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.MemberReferences)
 			{
-				MemberRefEntry entry = new MemberRefEntry(module, row);
+				MemberRefEntry entry = new(module, row);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;

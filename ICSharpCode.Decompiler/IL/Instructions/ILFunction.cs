@@ -77,12 +77,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets the set of captured variables by this ILFunction.
 		/// </summary>
 		/// <remarks>This is populated by the <see cref="TransformDisplayClassUsage" /> step.</remarks>
-		public HashSet<ILVariable> CapturedVariables { get; } = new HashSet<ILVariable>();
+		public HashSet<ILVariable> CapturedVariables { get; } = new();
 
 		/// <summary>
 		/// List of warnings of ILReader.
 		/// </summary>
-		public List<string> Warnings { get; } = new List<string>();
+		public List<string> Warnings { get; } = new();
 
 		/// <summary>
 		/// Gets whether this function is a decompiled iterator (is using yield).
@@ -200,8 +200,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Body = body;
 			this.ReturnType = method.ReturnType;
 			this.Parameters = method.Parameters;
-			this.Variables = new ILVariableCollection(this);
-			this.LocalFunctions = new InstructionCollection<ILFunction>(this, 1);
+			this.Variables = new(this);
+			this.LocalFunctions = new(this, 1);
 			this.kind = kind;
 		}
 
@@ -214,8 +214,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Body = body;
 			this.ReturnType = returnType ?? throw new ArgumentNullException(nameof(returnType));
 			this.Parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
-			this.Variables = new ILVariableCollection(this);
-			this.LocalFunctions = new InstructionCollection<ILFunction>(this, 1);
+			this.Variables = new(this);
+			this.LocalFunctions = new(this, 1);
 			this.kind = kind;
 		}
 
@@ -345,13 +345,13 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var usedILRanges = new List<LongInterval>();
 			MarkUsedILRanges(body);
-			return new LongSet(new LongInterval(0, CodeSize)).ExceptWith(new LongSet(usedILRanges));
+			return new LongSet(new LongInterval(0, CodeSize)).ExceptWith(new(usedILRanges));
 
 			void MarkUsedILRanges(ILInstruction inst)
 			{
 				if (CSharp.SequencePointBuilder.HasUsableILRange(inst))
 				{
-					usedILRanges.Add(new LongInterval(inst.StartILOffset, inst.EndILOffset));
+					usedILRanges.Add(new(inst.StartILOffset, inst.EndILOffset));
 				}
 				if (!(inst is ILFunction))
 				{

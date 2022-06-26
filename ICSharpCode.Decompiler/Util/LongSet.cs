@@ -91,12 +91,12 @@ namespace ICSharpCode.Decompiler.Util
 		/// <summary>
 		/// The empty LongSet.
 		/// </summary>
-		public static readonly LongSet Empty = new LongSet(ImmutableArray.Create<LongInterval>());
+		public static readonly LongSet Empty = new(ImmutableArray.Create<LongInterval>());
 
 		/// <summary>
 		/// The LongSet that contains all possible long values.
 		/// </summary>
-		public static readonly LongSet Universe = new LongSet(LongInterval.Inclusive(long.MinValue, long.MaxValue));
+		public static readonly LongSet Universe = new(LongInterval.Inclusive(long.MinValue, long.MaxValue));
 
 		public bool IsEmpty {
 			get { return Intervals.IsEmpty; }
@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public LongSet IntersectWith(LongSet other)
 		{
-			return new LongSet(DoIntersectWith(other).ToImmutableArray());
+			return new(DoIntersectWith(other).ToImmutableArray());
 		}
 
 		/// <summary>
@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.Util
 					// flush existing interval:
 					if (!empty)
 					{
-						yield return new LongInterval(start, end);
+						yield return new(start, end);
 					}
 					else
 					{
@@ -211,14 +211,14 @@ namespace ICSharpCode.Decompiler.Util
 			}
 			if (!empty)
 			{
-				yield return new LongInterval(start, end);
+				yield return new(start, end);
 			}
 		}
 
 		public LongSet UnionWith(LongSet other)
 		{
 			var mergedIntervals = this.Intervals.Merge(other.Intervals, (a, b) => a.Start.CompareTo(b.Start));
-			return new LongSet(MergeOverlapping(mergedIntervals).ToImmutableArray());
+			return new(MergeOverlapping(mergedIntervals).ToImmutableArray());
 		}
 
 		/// <summary>
@@ -247,7 +247,7 @@ namespace ICSharpCode.Decompiler.Util
 				}
 			}
 			newIntervals.Sort((a, b) => a.Start.CompareTo(b.Start));
-			return new LongSet(MergeOverlapping(newIntervals).ToImmutableArray());
+			return new(MergeOverlapping(newIntervals).ToImmutableArray());
 		}
 
 		/// <summary>
@@ -268,22 +268,22 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				return Universe;
 			}
-			List<LongInterval> newIntervals = new List<LongInterval>(Intervals.Length + 1);
+			List<LongInterval> newIntervals = new(Intervals.Length + 1);
 			long prevEnd = long.MinValue; // previous exclusive end
 			foreach (var interval in Intervals)
 			{
 				if (interval.Start > prevEnd)
 				{
-					newIntervals.Add(new LongInterval(prevEnd, interval.Start));
+					newIntervals.Add(new(prevEnd, interval.Start));
 				}
 				prevEnd = interval.End;
 			}
 			// create a final interval up to long.MaxValue inclusive
 			if (prevEnd != long.MinValue)
 			{
-				newIntervals.Add(new LongInterval(prevEnd, long.MinValue));
+				newIntervals.Add(new(prevEnd, long.MinValue));
 			}
-			return new LongSet(newIntervals.ToImmutableArray());
+			return new(newIntervals.ToImmutableArray());
 		}
 
 		/// <summary>

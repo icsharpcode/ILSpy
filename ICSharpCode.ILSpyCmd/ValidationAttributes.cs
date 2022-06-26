@@ -20,7 +20,7 @@ namespace ICSharpCode.ILSpyCmd
 			{
 				if (obj.CreateCompilableProjectFlag && string.IsNullOrEmpty(obj.OutputDirectory))
 				{
-					return new ValidationResult("--project cannot be used unless --outputdir is also specified");
+					return new("--project cannot be used unless --outputdir is also specified");
 				}
 			}
 			return ValidationResult.Success;
@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpyCmd
 				return ValidationResult.Success;
 			}
 
-			return new ValidationResult($"File '{path}' does not exist!");
+			return new($"File '{path}' does not exist!");
 		}
 	}
 
@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpyCmd
 					return ValidationResult.Success;
 				}
 				default:
-					return new ValidationResult($"File '{value}' does not exist!");
+					return new($"File '{value}' does not exist!");
 			}
 
 			ValidationResult ValidatePath(string path)
@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpyCmd
 					}
 				}
 
-				return new ValidationResult($"File '{path}' does not exist!");
+				return new($"File '{path}' does not exist!");
 			}
 		}
 	}

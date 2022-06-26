@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.LocalScopes)
 			{
-				LocalScopeEntry entry = new LocalScopeEntry(module, metadata, isEmbedded, row);
+				LocalScopeEntry entry = new(module, metadata, isEmbedded, row);
 				if (entry.RID == scrollTarget)
 				{
 					scrollTargetEntry = entry;

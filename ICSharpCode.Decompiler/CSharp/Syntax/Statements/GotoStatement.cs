@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class GotoStatement : Statement
 	{
-		public static readonly TokenRole GotoKeywordRole = new TokenRole("goto");
+		public static readonly TokenRole GotoKeywordRole = new("goto");
 
 		public GotoStatement()
 		{
@@ -90,8 +90,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class GotoCaseStatement : Statement
 	{
-		public static readonly TokenRole GotoKeywordRole = new TokenRole("goto");
-		public static readonly TokenRole CaseKeywordRole = new TokenRole("case");
+		public static readonly TokenRole GotoKeywordRole = new("goto");
+		public static readonly TokenRole CaseKeywordRole = new("case");
 
 		public CSharpTokenNode GotoToken {
 			get { return GetChildByRole(GotoKeywordRole); }
@@ -140,8 +140,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class GotoDefaultStatement : Statement
 	{
-		public static readonly TokenRole GotoKeywordRole = new TokenRole("goto");
-		public static readonly TokenRole DefaultKeywordRole = new TokenRole("default");
+		public static readonly TokenRole GotoKeywordRole = new("goto");
+		public static readonly TokenRole DefaultKeywordRole = new("default");
 
 		public CSharpTokenNode GotoToken {
 			get { return GetChildByRole(GotoKeywordRole); }

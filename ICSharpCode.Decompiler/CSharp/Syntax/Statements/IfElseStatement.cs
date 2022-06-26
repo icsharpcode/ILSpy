@@ -32,11 +32,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class IfElseStatement : Statement
 	{
-		public readonly static TokenRole IfKeywordRole = new TokenRole("if");
+		public readonly static TokenRole IfKeywordRole = new("if");
 		public readonly static Role<Expression> ConditionRole = Roles.Condition;
-		public readonly static Role<Statement> TrueRole = new Role<Statement>("True", Statement.Null);
-		public readonly static TokenRole ElseKeywordRole = new TokenRole("else");
-		public readonly static Role<Statement> FalseRole = new Role<Statement>("False", Statement.Null);
+		public readonly static Role<Statement> TrueRole = new("True", Statement.Null);
+		public readonly static TokenRole ElseKeywordRole = new("else");
+		public readonly static Role<Statement> FalseRole = new("False", Statement.Null);
 
 		public CSharpTokenNode IfToken {
 			get { return GetChildByRole(IfKeywordRole); }

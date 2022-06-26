@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			public static MyClass operator +(MyClass a, MyClass b)
 			{
-				return new MyClass();
+				return new();
 			}
 		}
 
@@ -444,7 +444,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(X(), () => ((Type)null).IsLayoutSequential);
 			ToCode(X(), () => ((List<int>)null).Count);
 			ToCode(X(), () => ((Array)null).Clone() == null);
-			ToCode(X(), () => ((Type)null).IsInstanceOfType(new object()));
+			ToCode(X(), () => ((Type)null).IsInstanceOfType(new()));
 			ToCode(X(), () => ((List<int>)null).AsReadOnly());
 		}
 
@@ -474,7 +474,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			ToCode(X(), () => Array.TrueForAll(new int[4] { 2000, 2004, 2008, 2012 }, DateTime.IsLeapYear));
 
-			HashSet<int> set = new HashSet<int>();
+			HashSet<int> set = new();
 			ToCode(X(), () => new int[4] { 2000, 2004, 2008, 2012 }.All(set.Add));
 
 			Func<Func<object, object, bool>, bool> sink = (Func<object, object, bool> f) => f(null, null);
@@ -566,7 +566,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ObjectInitializers()
 		{
-			XmlReaderSettings s = new XmlReaderSettings {
+			XmlReaderSettings s = new() {
 				CloseInput = false,
 				CheckCharacters = false
 			};

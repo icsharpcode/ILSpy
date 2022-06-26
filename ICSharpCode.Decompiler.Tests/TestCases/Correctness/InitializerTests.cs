@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		private class Data
 		{
-			public List<InitializerTests.MyEnum2> FieldList = new List<InitializerTests.MyEnum2>();
+			public List<InitializerTests.MyEnum2> FieldList = new();
 			public InitializerTests.MyEnum a {
 				get;
 				set;
@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static object RecursiveCollectionInitializer()
 		{
-			List<object> list = new List<object>();
+			List<object> list = new();
 			list.Add(list);
 			return list;
 		}
@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NotACollectionInitializer()
 		{
-			List<int> list = new List<int>();
+			List<int> list = new();
 			list.Add(1);
 			list.Add(2);
 			list.Add(3);
@@ -190,7 +190,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NotAnObjectInitializer()
 		{
-			InitializerTests.Data data = new InitializerTests.Data();
+			InitializerTests.Data data = new();
 			data.a = InitializerTests.MyEnum.a;
 			InitializerTests.X(InitializerTests.Y(), data);
 		}
@@ -199,8 +199,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {
 				a = InitializerTests.MyEnum.a,
-				FieldList = new List<InitializerTests.MyEnum2>
-				{
+				FieldList = new() {
 					InitializerTests.MyEnum2.c,
 					InitializerTests.MyEnum2.d
 				}
@@ -223,8 +222,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {
 				a = InitializerTests.MyEnum.a,
-				PropertyList = new List<InitializerTests.MyEnum2>
-				{
+				PropertyList = new() {
 					InitializerTests.MyEnum2.c,
 					InitializerTests.MyEnum2.d
 				}
@@ -287,7 +285,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 					[GetInt()] = {
 						a = InitializerTests.MyEnum.b,
 						FieldList = { MyEnum2.c },
-						[GetInt(), GetString()] = new Data(),
+						[GetInt(), GetString()] = new(),
 						[2] = (Data)null
 					}
 				}
@@ -309,8 +307,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void CollectionInitializerInsideObjectInitializers()
 		{
-			InitializerTests.Data castPattern = new InitializerTests.Data {
-				MoreData = new InitializerTests.Data {
+			InitializerTests.Data castPattern = new() {
+				MoreData = new() {
 					a = InitializerTests.MyEnum.a,
 					b = InitializerTests.MyEnum.b,
 					PropertyList = { InitializerTests.MyEnum2.c }
@@ -320,7 +318,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NotAStructInitializer_DefaultConstructor()
 		{
-			InitializerTests.StructData data = new InitializerTests.StructData();
+			InitializerTests.StructData data = new();
 			data.Field = 1;
 			data.Property = 2;
 			InitializerTests.X(InitializerTests.Y(), data);
@@ -336,7 +334,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NotAStructInitializer_ExplicitConstructor()
 		{
-			InitializerTests.StructData data = new InitializerTests.StructData(0);
+			InitializerTests.StructData data = new(0);
 			data.Field = 1;
 			data.Property = 2;
 			InitializerTests.X(InitializerTests.Y(), data);
@@ -368,7 +366,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void StructInitializerWithinObjectInitializer()
 		{
 			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {
-				NestedStruct = new InitializerTests.StructData(2) {
+				NestedStruct = new(2) {
 					Field = 1,
 					Property = 2
 				}
@@ -379,10 +377,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			NumberFormatInfo[] numberFormats = null;
 
-			Thread t = new Thread(Bug270_NestedInitialisers) {
+			Thread t = new(Bug270_NestedInitialisers) {
 				Priority = ThreadPriority.BelowNormal,
-				CurrentCulture = new CultureInfo(0) {
-					DateTimeFormat = new DateTimeFormatInfo {
+				CurrentCulture = new(0) {
+					DateTimeFormat = new() {
 						ShortDatePattern = "ddmmyy"
 					},
 					NumberFormat = (from format in numberFormats where format.CurrencySymbol == "$" select format).First()
@@ -398,7 +396,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			{
 				public ServiceHost M()
 				{
-					return new ServiceHost(typeof(EWSService), null) {
+					return new(typeof(EWSService), null) {
 						Description = { Endpoints = { [0] = { Behaviors = { new EwsWebHttpBehavior() } } } }
 					};
 				}
@@ -443,7 +441,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			object Item(string s, Data d)
 			{
-				return new object();
+				return new();
 			}
 
 			void Test()
@@ -455,7 +453,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				for (int i = 0; i < 2; i++)
 				{
 					if (num < 10)
-						items.SetItem(num, Item(string.Empty, new Data { Obj = null }));
+						items.SetItem(num, Item(string.Empty, new() { Obj = null }));
 				}
 			}
 		}

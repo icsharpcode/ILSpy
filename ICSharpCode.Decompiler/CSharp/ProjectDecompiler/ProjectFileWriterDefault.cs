@@ -52,12 +52,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (targetFramework.Identifier == ".NETFramework" && targetFramework.VersionNumber == 200)
 				targetFramework = TargetServices.DetectTargetFrameworkNET20(module, project.AssemblyResolver, targetFramework);
 
-			List<Guid> typeGuids = new List<Guid>();
+			List<Guid> typeGuids = new();
 			if (targetFramework.IsPortableClassLibrary)
 				typeGuids.Add(ProjectTypeGuids.PortableLibrary);
 			typeGuids.Add(ProjectTypeGuids.CSharpWindows);
 
-			using (XmlTextWriter w = new XmlTextWriter(target))
+			using (XmlTextWriter w = new(target))
 			{
 				w.Formatting = Formatting.Indented;
 				w.WriteStartDocument();

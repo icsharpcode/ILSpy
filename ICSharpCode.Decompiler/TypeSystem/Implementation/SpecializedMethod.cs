@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (methodDefinition.DeclaringType.TypeParameterCount == 0)
 					return methodDefinition;
 				if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
-					substitution = new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
+					substitution = new(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
 			}
 			return new SpecializedMethod(methodDefinition, substitution);
 		}
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					// Add substitution that replaces the base method's type parameters with our specialized version
 					// but do this only if the type parameters on the baseMember have not already been substituted
 					substitutionWithoutSpecializedTypeParameters = this.Substitution;
-					AddSubstitution(new TypeParameterSubstitution(null, specializedTypeParameters));
+					AddSubstitution(new(null, specializedTypeParameters));
 				}
 			}
 			// Add the main substitution after the method type parameter specialization.
@@ -210,7 +210,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder("[");
+			StringBuilder b = new("[");
 			b.Append(GetType().Name);
 			b.Append(' ');
 			b.Append(this.DeclaringType.ReflectionName);

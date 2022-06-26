@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public AbstractToolset(string baseDir)
 		{
-			this.cache = new SourceCacheContext();
+			this.cache = new();
 			this.repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
 			this.resource = repository.GetResource<FindPackageByIdResource>();
 			this.baseDir = baseDir;
@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			ILogger logger = NullLogger.Instance;
 			CancellationToken cancellationToken = CancellationToken.None;
-			using MemoryStream packageStream = new MemoryStream();
+			using MemoryStream packageStream = new();
 
 			await resource.CopyNupkgToStreamAsync(
 				packageName,
@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				logger,
 				cancellationToken).ConfigureAwait(false);
 
-			using PackageArchiveReader packageReader = new PackageArchiveReader(packageStream);
+			using PackageArchiveReader packageReader = new(packageStream);
 			NuspecReader nuspecReader = await packageReader.GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
 
 			var files = await packageReader.GetFilesAsync(cancellationToken).ConfigureAwait(false);
@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 	class RoslynToolset : AbstractToolset
 	{
-		readonly Dictionary<string, string> installedCompilers = new Dictionary<string, string> {
+		readonly Dictionary<string, string> installedCompilers = new() {
 			{ "legacy", Environment.ExpandEnvironmentVariables(@"%WINDIR%\Microsoft.NET\Framework\v4.0.30319") }
 		};
 

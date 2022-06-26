@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public class Choice : Pattern, IEnumerable<INode>
 	{
-		readonly List<INode> alternatives = new List<INode>();
+		readonly List<INode> alternatives = new();
 
 		public void Add(string name, INode alternative)
 		{

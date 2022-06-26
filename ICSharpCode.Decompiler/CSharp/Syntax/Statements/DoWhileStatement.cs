@@ -32,8 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class DoWhileStatement : Statement
 	{
-		public static readonly TokenRole DoKeywordRole = new TokenRole("do");
-		public static readonly TokenRole WhileKeywordRole = new TokenRole("while");
+		public static readonly TokenRole DoKeywordRole = new("do");
+		public static readonly TokenRole WhileKeywordRole = new("while");
 
 		public CSharpTokenNode DoToken {
 			get { return GetChildByRole(DoKeywordRole); }

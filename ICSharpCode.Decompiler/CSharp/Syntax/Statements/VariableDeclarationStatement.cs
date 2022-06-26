@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public VariableDeclarationStatement(AstType type, string name, Expression initializer = null)
 		{
 			this.Type = type;
-			this.Variables.Add(new VariableInitializer(name, initializer));
+			this.Variables.Add(new(name, initializer));
 		}
 
 		public Modifiers Modifiers {

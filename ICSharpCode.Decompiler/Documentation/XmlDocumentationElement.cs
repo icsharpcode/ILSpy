@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			get {
 				if (textContent == null)
 				{
-					StringBuilder b = new StringBuilder();
+					StringBuilder b = new();
 					foreach (var child in this.Children)
 						b.Append(child.TextContent);
 					textContent = b.ToString();
@@ -166,7 +166,7 @@ namespace ICSharpCode.Decompiler.Documentation
 
 		static List<XmlDocumentationElement> CreateElements(IEnumerable<XObject?> childObjects, IEntity? declaringEntity, Func<string, IEntity?>? crefResolver, int nestingLevel)
 		{
-			List<XmlDocumentationElement> list = new List<XmlDocumentationElement>();
+			List<XmlDocumentationElement> list = new();
 			foreach (var child in childObjects)
 			{
 				var childText = child as XText;
@@ -174,11 +174,11 @@ namespace ICSharpCode.Decompiler.Documentation
 				var childElement = child as XElement;
 				if (childText != null)
 				{
-					list.Add(new XmlDocumentationElement(childText.Value, declaringEntity));
+					list.Add(new(childText.Value, declaringEntity));
 				}
 				else if (childTag != null)
 				{
-					list.Add(new XmlDocumentationElement(childTag.Value, declaringEntity));
+					list.Add(new(childTag.Value, declaringEntity));
 				}
 				else if (childElement != null)
 				{
@@ -215,7 +215,7 @@ namespace ICSharpCode.Decompiler.Documentation
 							if (doc != null && childElement.Parent?.Parent == null && childElement.Attribute("select")?.Value == null)
 							{
 								// Inheriting documentation at the root level
-								List<string> doNotInherit = new List<string>();
+								List<string> doNotInherit = new();
 								doNotInherit.Add("overloads");
 								doNotInherit.AddRange(childObjects.OfType<XElement>().Select(e => e.Name.LocalName).Intersect(
 									doNotInheritIfAlreadyPresent));
@@ -232,7 +232,7 @@ namespace ICSharpCode.Decompiler.Documentation
 					}
 					else
 					{
-						list.Add(new XmlDocumentationElement(childElement, declaringEntity, crefResolver) { nestingLevel = nestingLevel });
+						list.Add(new(childElement, declaringEntity, crefResolver) { nestingLevel = nestingLevel });
 					}
 				}
 			}

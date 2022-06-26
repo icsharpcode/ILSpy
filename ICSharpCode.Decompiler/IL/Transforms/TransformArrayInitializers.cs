@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 					while (blob.RemainingBytes > 0)
 					{
-						block.Instructions.Add(StElemPtr(tempStore, blob.Offset, new LdcI4(blob.ReadByte()), elementType));
+						block.Instructions.Add(StElemPtr(tempStore, blob.Offset, new(blob.ReadByte()), elementType));
 					}
 
 					block.FinalInstruction = new LdLoc(tempStore);

@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		readonly IField? stateField;
 		readonly SymbolicEvaluationContext evalContext;
 
-		readonly Dictionary<Block, LongSet> ranges = new Dictionary<Block, LongSet>();
+		readonly Dictionary<Block, LongSet> ranges = new();
 		readonly Dictionary<BlockContainer, LongSet>? rangesForLeave; // used only for AwaitInFinally
 		readonly internal Dictionary<IMethod, LongSet>? finallyMethodToStateRange; // used only for IteratorDispose
 
@@ -73,14 +73,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.stateField = stateField;
 			if (mode == StateRangeAnalysisMode.IteratorDispose)
 			{
-				finallyMethodToStateRange = new Dictionary<IMethod, LongSet>();
+				finallyMethodToStateRange = new();
 			}
 			if (mode == StateRangeAnalysisMode.AwaitInFinally)
 			{
-				rangesForLeave = new Dictionary<BlockContainer, LongSet>();
+				rangesForLeave = new();
 			}
 
-			evalContext = new SymbolicEvaluationContext(stateField);
+			evalContext = new(stateField);
 			if (cachedStateVar != null)
 				evalContext.AddStateVariable(cachedStateVar);
 		}
@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					SymbolicValue val = evalContext.Eval(switchInst.Value);
 					if (val.Type != SymbolicValueType.State)
 						goto default;
-					List<LongInterval> exitIntervals = new List<LongInterval>();
+					List<LongInterval> exitIntervals = new();
 					foreach (var section in switchInst.Sections)
 					{
 						// switch (state + Constant)
@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						exitIntervals.AddRange(result.Intervals);
 					}
 					// exitIntervals = union of exits of all sections
-					return new LongSet(exitIntervals);
+					return new(exitIntervals);
 				case IfInstruction ifInst:
 					val = evalContext.Eval(ifInst.Condition).AsBool();
 					if (val.Type != SymbolicValueType.StateInSet)

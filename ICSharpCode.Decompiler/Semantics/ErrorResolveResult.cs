@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// <summary>
 		/// Gets an ErrorResolveResult instance with <c>Type</c> = <c>SpecialType.UnknownType</c>.
 		/// </summary>
-		public static readonly ErrorResolveResult UnknownError = new ErrorResolveResult(SpecialType.UnknownType);
+		public static readonly ErrorResolveResult UnknownError = new(SpecialType.UnknownType);
 
 		public ErrorResolveResult(IType type) : base(type)
 		{

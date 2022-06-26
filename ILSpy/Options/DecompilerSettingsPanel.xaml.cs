@@ -137,7 +137,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void LoadDefaults()
 		{
-			currentDecompilerSettings = new Decompiler.DecompilerSettings();
+			currentDecompilerSettings = new();
 			this.DataContext = new DecompilerSettingsViewModel(currentDecompilerSettings);
 		}
 	}

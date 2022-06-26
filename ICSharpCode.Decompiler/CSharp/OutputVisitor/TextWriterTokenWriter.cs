@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public int Indentation { get; set; }
 
 		public TextLocation Location {
-			get { return new TextLocation(line, column + (needsIndent ? Indentation * IndentationString.Length : 0)); }
+			get { return new(line, column + (needsIndent ? Indentation * IndentationString.Length : 0)); }
 		}
 
 		public string IndentationString { get; set; }
@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public static string PrintPrimitiveValue(object value)
 		{
 			TextWriter writer = new StringWriter();
-			TextWriterTokenWriter tokenWriter = new TextWriterTokenWriter(writer);
+			TextWriterTokenWriter tokenWriter = new(writer);
 			tokenWriter.WritePrimitiveValue(value);
 			return writer.ToString();
 		}
@@ -378,7 +378,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			else if (value is IFormattable)
 			{
-				StringBuilder b = new StringBuilder();
+				StringBuilder b = new();
 				if (format == LiteralFormat.HexadecimalNumber)
 				{
 					b.Append("0x");
@@ -490,7 +490,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		public static string ConvertString(string str)
 		{
-			StringBuilder sb = new StringBuilder();
+			StringBuilder sb = new();
 			foreach (char ch in str)
 			{
 				string s = ch == '"' ? "\\\"" : ConvertChar(ch);
@@ -506,7 +506,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			if (string.IsNullOrEmpty(identifier))
 				return identifier;
-			StringBuilder sb = new StringBuilder();
+			StringBuilder sb = new();
 			for (int i = 0; i < identifier.Length; i++)
 			{
 				if (IsPrintableIdentifierChar(identifier, i))

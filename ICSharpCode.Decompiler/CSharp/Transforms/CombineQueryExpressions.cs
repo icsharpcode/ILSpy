@@ -34,10 +34,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!context.Settings.QueryExpressions)
 				return;
-			CombineQueries(rootNode, new Dictionary<string, object>());
+			CombineQueries(rootNode, new());
 		}
 
-		static readonly InvocationExpression castPattern = new InvocationExpression {
+		static readonly InvocationExpression castPattern = new() {
 			Target = new MemberReferenceExpression {
 				Target = new AnyNode("inExpr"),
 				MemberName = "Cast",
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					else
 					{
-						QueryContinuationClause continuation = new QueryContinuationClause();
+						QueryContinuationClause continuation = new();
 						continuation.PrecedingQuery = innerQuery.Detach();
 						continuation.Identifier = fromClause.Identifier;
 						continuation.CopyAnnotationsFrom(fromClause);
@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		static readonly QuerySelectClause selectTransparentIdentifierPattern = new QuerySelectClause {
+		static readonly QuerySelectClause selectTransparentIdentifierPattern = new() {
 			Expression = new AnonymousTypeCreateExpression {
 				Initializers = {
 					new Repeat(
@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			void AddQueryLetClause(string name, Expression expression)
 			{
-				QueryLetClause letClause = new QueryLetClause { Identifier = name, Expression = expression.Detach() };
+				QueryLetClause letClause = new() { Identifier = name, Expression = expression.Detach() };
 				var annotation = new LetIdentifierAnnotation();
 				letClause.AddAnnotation(annotation);
 				letClauses[name] = annotation;
@@ -171,7 +171,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				IdentifierExpression ident = mre.Target as IdentifierExpression;
 				if (ident != null && CSharpDecompiler.IsTransparentIdentifier(ident.Identifier))
 				{
-					IdentifierExpression newIdent = new IdentifierExpression(mre.MemberName);
+					IdentifierExpression newIdent = new(mre.MemberName);
 					mre.TypeArguments.MoveTo(newIdent.TypeArguments);
 					newIdent.CopyAnnotationsFrom(mre);
 					newIdent.RemoveAnnotations<Semantics.MemberResolveResult>(); // remove the reference to the property of the anonymous type

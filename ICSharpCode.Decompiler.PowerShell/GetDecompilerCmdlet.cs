@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 			{
 				var module = new PEFile(LiteralPath, new FileStream(LiteralPath, FileMode.Open, FileAccess.Read), PEStreamOptions.Default);
 				var debugInfo = DebugInfoUtils.FromFile(module, PDBFilePath);
-				var decompiler = new CSharpDecompiler(path, new DecompilerSettings(LanguageVersion) {
+				var decompiler = new CSharpDecompiler(path, new(LanguageVersion) {
 					ThrowOnAssemblyResolveErrors = false,
 					RemoveDeadCode = RemoveDeadCode,
 					RemoveDeadStores = RemoveDeadStores,
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 			catch (Exception e)
 			{
 				WriteVerbose(e.ToString());
-				WriteError(new ErrorRecord(e, ErrorIds.AssemblyLoadFailed, ErrorCategory.OperationStopped, null));
+				WriteError(new(e, ErrorIds.AssemblyLoadFailed, ErrorCategory.OperationStopped, null));
 			}
 		}
 	}

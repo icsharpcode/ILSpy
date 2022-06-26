@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		/// </summary>
 		public MemberTypeOrNamespaceReference AddSuffix(string suffix)
 		{
-			return new MemberTypeOrNamespaceReference(target, identifier + suffix, typeArguments, lookupMode);
+			return new(target, identifier + suffix, typeArguments, lookupMode);
 		}
 
 		public override ResolveResult Resolve(CSharpResolver resolver)

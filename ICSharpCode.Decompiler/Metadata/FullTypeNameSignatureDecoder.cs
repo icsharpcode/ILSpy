@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public FullTypeName GetTypeFromSerializedName(string name)
 		{
-			return new FullTypeName(name);
+			return new(name);
 		}
 
 		public FullTypeName GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind)

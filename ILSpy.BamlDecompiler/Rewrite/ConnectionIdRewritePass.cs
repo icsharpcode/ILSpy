@@ -34,10 +34,9 @@ namespace ILSpy.BamlDecompiler.Rewrite
 {
 	internal class ConnectionIdRewritePass : IRewritePass
 	{
-		static readonly TopLevelTypeName componentConnectorTypeName
-			= new TopLevelTypeName("System.Windows.Markup", "IComponentConnector");
-		static readonly TopLevelTypeName styleConnectorTypeName
-			= new TopLevelTypeName("System.Windows.Markup", "IStyleConnector");
+		static readonly TopLevelTypeName componentConnectorTypeName =
+			new("System.Windows.Markup", "IComponentConnector");
+		static readonly TopLevelTypeName styleConnectorTypeName = new("System.Windows.Markup", "IStyleConnector");
 
 		public void Run(XamlContext ctx, XDocument document)
 		{
@@ -224,7 +223,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				|| !(arg.MatchLdLoc(out var t) && t.Kind == VariableKind.Parameter && t.Index == 1))
 				return false;
 
-			field = new FieldAssignment { FieldName = fld.Name };
+			field = new() { FieldName = fld.Name };
 			return true;
 		}
 
@@ -306,7 +305,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				return false;
 			if (!MatchEventHandlerCreation(setHandlerCall.Arguments[1], out string handlerName))
 				return false;
-			@event = new EventRegistration { EventName = eventName, MethodName = handlerName };
+			@event = new() { EventName = eventName, MethodName = handlerName };
 			// callvirt Add(callvirt get_Setters(castclass System.Windows.Style(ldloc target)), ldloc v)
 			if (!(instr[pos + 3] is CallVirt addCall && addCall.Arguments.Count == 2))
 				return false;
@@ -342,7 +341,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				return false;
 			}
 
-			@event = new EventRegistration { EventName = eventName, MethodName = handlerName };
+			@event = new() { EventName = eventName, MethodName = handlerName };
 			return true;
 		}
 

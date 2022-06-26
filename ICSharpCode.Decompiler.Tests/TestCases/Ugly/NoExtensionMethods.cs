@@ -6,7 +6,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 	{
 		internal static Func<T> AsFunc<T>(this T value) where T : class
 		{
-			return new Func<T>(value.Return);
+			return new(value.Return);
 		}
 
 		private static T Return<T>(this T value)

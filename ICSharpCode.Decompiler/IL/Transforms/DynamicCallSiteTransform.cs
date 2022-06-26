@@ -44,8 +44,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			this.context = context;
 
-			Dictionary<IField, CallSiteInfo> callsites = new Dictionary<IField, CallSiteInfo>();
-			HashSet<BlockContainer> modifiedContainers = new HashSet<BlockContainer>();
+			Dictionary<IField, CallSiteInfo> callsites = new();
+			HashSet<BlockContainer> modifiedContainers = new();
 
 			foreach (var block in function.Descendants.OfType<Block>())
 			{
@@ -554,7 +554,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!createCall.Arguments[1].MatchLdStr(out string argumentName))
 					if (!createCall.Arguments[1].MatchLdNull())
 						return false;
-				callSiteInfo.ArgumentInfos[i] = new CSharpArgumentInfo { Flags = (CSharpArgumentInfoFlags)argumentInfoFlags, Name = argumentName, CompileTimeType = compileTimeTypes[i + 1] };
+				callSiteInfo.ArgumentInfos[i] = new() { Flags = (CSharpArgumentInfoFlags)argumentInfoFlags, Name = argumentName, CompileTimeType = compileTimeTypes[i + 1] };
 				i++;
 			}
 			return true;

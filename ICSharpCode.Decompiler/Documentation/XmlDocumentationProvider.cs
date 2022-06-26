@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.Documentation
 
 			internal void Add(string key, string value)
 			{
-				entries[pos++] = new KeyValuePair<string, string>(key, value);
+				entries[pos++] = new(key, value);
 				if (pos == entries.Length)
 					pos = 0;
 			}
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		}
 
 		[NonSerialized]
-		XmlDocumentationCache cache = new XmlDocumentationCache();
+		XmlDocumentationCache cache = new();
 
 		readonly string fileName;
 		readonly Encoding encoding;
@@ -134,9 +134,9 @@ namespace ICSharpCode.Decompiler.Documentation
 			if (fileName == null)
 				throw new ArgumentNullException(nameof(fileName));
 
-			using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
+			using (FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
 			{
-				using (XmlTextReader xmlReader = new XmlTextReader(fs))
+				using (XmlTextReader xmlReader = new(fs))
 				{
 					xmlReader.XmlResolver = null; // no DTD resolving
 					xmlReader.MoveToContent();
@@ -152,9 +152,9 @@ namespace ICSharpCode.Decompiler.Documentation
 						if (redirectionTarget != null)
 						{
 							Debug.WriteLine("XmlDoc " + fileName + " is redirecting to " + redirectionTarget);
-							using (FileStream redirectedFs = new FileStream(redirectionTarget, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
+							using (FileStream redirectedFs = new(redirectionTarget, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
 							{
-								using (XmlTextReader redirectedXmlReader = new XmlTextReader(redirectedFs))
+								using (XmlTextReader redirectedXmlReader = new(redirectedFs))
 								{
 									redirectedXmlReader.XmlResolver = null; // no DTD resolving
 									redirectedXmlReader.MoveToContent();
@@ -242,10 +242,10 @@ namespace ICSharpCode.Decompiler.Documentation
 		{
 			//lastWriteDate = File.GetLastWriteTimeUtc(fileName);
 			// Open up a second file stream for the line<->position mapping
-			using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
+			using (FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
 			{
-				LinePositionMapper linePosMapper = new LinePositionMapper(fs, encoding);
-				List<IndexEntry> indexList = new List<IndexEntry>();
+				LinePositionMapper linePosMapper = new(fs, encoding);
+				List<IndexEntry> indexList = new();
 				while (reader.Read())
 				{
 					if (reader.IsStartElement())
@@ -320,7 +320,7 @@ namespace ICSharpCode.Decompiler.Documentation
 							int pos = linePosMapper.GetPositionForLine(reader.LineNumber) + Math.Max(reader.LinePosition - 2, 0);
 							string memberAttr = reader.GetAttribute("name");
 							if (memberAttr != null)
-								indexList.Add(new IndexEntry(GetHashCode(memberAttr), pos));
+								indexList.Add(new(GetHashCode(memberAttr), pos));
 							reader.Skip();
 						}
 						break;
@@ -374,7 +374,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			int hashcode = GetHashCode(key);
 			var index = this.index; // read volatile field
 									// index is sorted, so we can use binary search
-			int m = Array.BinarySearch(index, new IndexEntry(hashcode, 0));
+			int m = Array.BinarySearch(index, new(hashcode, 0));
 			if (m < 0)
 				return null;
 			// correct hash code found.
@@ -420,9 +420,9 @@ namespace ICSharpCode.Decompiler.Documentation
 			try
 			{
 				// Reload the index
-				using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
+				using (FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
 				{
-					using (XmlTextReader xmlReader = new XmlTextReader(fs))
+					using (XmlTextReader xmlReader = new(fs))
 					{
 						xmlReader.XmlResolver = null; // no DTD resolving
 						xmlReader.MoveToContent();
@@ -448,11 +448,11 @@ namespace ICSharpCode.Decompiler.Documentation
 		#region Load / Read XML
 		string LoadDocumentation(string key, int positionInFile)
 		{
-			using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
+			using (FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
 			{
 				fs.Position = positionInFile;
 				var context = new XmlParserContext(null, null, null, XmlSpace.None) { Encoding = encoding };
-				using (XmlTextReader r = new XmlTextReader(fs, XmlNodeType.Element, context))
+				using (XmlTextReader r = new(fs, XmlNodeType.Element, context))
 				{
 					r.XmlResolver = null; // no DTD resolving
 					while (r.Read())
@@ -478,7 +478,7 @@ namespace ICSharpCode.Decompiler.Documentation
 
 		public virtual void OnDeserialization(object sender)
 		{
-			cache = new XmlDocumentationCache();
+			cache = new();
 		}
 	}
 }

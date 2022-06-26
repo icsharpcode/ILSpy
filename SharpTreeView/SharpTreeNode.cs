@@ -109,7 +109,7 @@ namespace ICSharpCode.TreeView
 		public SharpTreeNodeCollection Children {
 			get {
 				if (modelChildren == null)
-					modelChildren = new SharpTreeNodeCollection(this);
+					modelChildren = new(this);
 				return modelChildren;
 			}
 		}

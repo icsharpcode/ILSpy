@@ -24,9 +24,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ArrayCreateExpression : Expression
 	{
-		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
-		public readonly static Role<ArraySpecifier> AdditionalArraySpecifierRole = new Role<ArraySpecifier>("AdditionalArraySpecifier", null);
-		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", ArrayInitializerExpression.Null);
+		public readonly static TokenRole NewKeywordRole = new("new");
+		public readonly static Role<ArraySpecifier> AdditionalArraySpecifierRole = new("AdditionalArraySpecifier", null);
+		public readonly static Role<ArrayInitializerExpression> InitializerRole = new("Initializer", ArrayInitializerExpression.Null);
 
 		public CSharpTokenNode NewToken {
 			get { return GetChildByRole(NewKeywordRole); }

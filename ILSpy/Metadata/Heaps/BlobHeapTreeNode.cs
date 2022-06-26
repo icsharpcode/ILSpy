@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			BlobHandle handle = MetadataTokens.BlobHandle(0);
 			do
 			{
-				BlobHeapEntry entry = new BlobHeapEntry(metadata, handle);
+				BlobHeapEntry entry = new(metadata, handle);
 				list.Add(entry);
 				handle = metadata.GetNextHandle(handle);
 			} while (!handle.IsNil);

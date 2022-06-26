@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			else
 			{
-				result = new Dictionary<string, INamespace>(compilation.NameComparer);
+				result = new(compilation.NameComparer);
 				foreach (var g in namespaces.SelectMany(ns => ns.ChildNamespaces).GroupBy(ns => ns.Name, compilation.NameComparer))
 				{
 					result.Add(g.Key, new MergedNamespace(this, g.ToArray()));

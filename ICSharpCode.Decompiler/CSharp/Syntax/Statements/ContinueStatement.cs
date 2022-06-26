@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ContinueStatement : Statement
 	{
-		public static readonly TokenRole ContinueKeywordRole = new TokenRole("continue");
+		public static readonly TokenRole ContinueKeywordRole = new("continue");
 
 		public CSharpTokenNode ContinueToken {
 			get { return GetChildByRole(ContinueKeywordRole); }

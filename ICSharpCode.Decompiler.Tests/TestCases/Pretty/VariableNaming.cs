@@ -39,10 +39,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if !OPT
 		private void Issue1841()
 		{
-			C gen1 = new C();
-			C gen2 = new C();
-			C gen3 = new C();
-			C gen4 = new C();
+			C gen1 = new();
+			C gen2 = new();
+			C gen3 = new();
+			C gen4 = new();
 		}
 
 		private void Issue1881()
@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			MyEnum enumLocal2 = (MyEnum)0;
 			enumLocal2 = MyEnum.VALUE1;
 			object enumLocal3 = MyEnum.VALUE2;
-			object enumLocal4 = new object();
+			object enumLocal4 = new();
 			enumLocal4 = MyEnum.VALUE2;
 			ValueType enumLocal5 = MyEnum.VALUE1;
 			ValueType enumLocal6 = (MyEnum)0;

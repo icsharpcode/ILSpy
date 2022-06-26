@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SimpleCompilation : ICompilation
 	{
-		readonly CacheManager cacheManager = new CacheManager();
+		readonly CacheManager cacheManager = new();
 		IModule mainModule;
 		KnownTypeCache knownTypeCache;
 		IReadOnlyList<IModule> assemblies;
@@ -58,9 +58,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				throw new ArgumentNullException(nameof(assemblyReferences));
 			var context = new SimpleTypeResolveContext(this);
 			this.mainModule = mainAssembly.Resolve(context);
-			List<IModule> assemblies = new List<IModule>();
+			List<IModule> assemblies = new();
 			assemblies.Add(this.mainModule);
-			List<IModule> referencedAssemblies = new List<IModule>();
+			List<IModule> referencedAssemblies = new();
 			foreach (var asmRef in assemblyReferences)
 			{
 				IModule asm;
@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			this.assemblies = assemblies.AsReadOnly();
 			this.referencedAssemblies = referencedAssemblies.AsReadOnly();
-			this.knownTypeCache = new KnownTypeCache(this);
+			this.knownTypeCache = new(this);
 			this.initialized = true;
 		}
 

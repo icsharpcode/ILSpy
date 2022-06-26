@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler
 		readonly ITextOutput output;
 		readonly DecompilerSettings settings;
 		readonly IDecompilerTypeSystem typeSystem;
-		readonly Stack<AstNode> nodeStack = new Stack<AstNode>();
+		readonly Stack<AstNode> nodeStack = new();
 		int braceLevelWithinType = -1;
 		bool inDocumentationComment = false;
 		bool firstUsingDeclaration;

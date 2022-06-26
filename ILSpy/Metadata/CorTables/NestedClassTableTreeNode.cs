@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				NestedClassEntry entry = new NestedClassEntry(module, ptr, metadataOffset, rid);
+				NestedClassEntry entry = new(module, ptr, metadataOffset, rid);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -143,7 +143,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					+ metadata.GetTableRowSize(TableIndex.NestedClass) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
 				int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
-				this.nestedClass = new NestedClass(ptr + rowOffset, typeDefSize);
+				this.nestedClass = new(ptr + rowOffset, typeDefSize);
 			}
 		}
 

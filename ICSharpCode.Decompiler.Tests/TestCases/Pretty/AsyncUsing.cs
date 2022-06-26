@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static async void TestAsyncUsingClass()
 		{
-			await using (AsyncDisposableClass test = new AsyncDisposableClass())
+			await using (AsyncDisposableClass test = new())
 			{
 				Use(test);
 			}
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static async void TestAsyncUsingNullableStruct()
 		{
-			await using (AsyncDisposableStruct? asyncDisposableStruct = new AsyncDisposableStruct?(default(AsyncDisposableStruct)))
+			await using (AsyncDisposableStruct? asyncDisposableStruct = new(default(AsyncDisposableStruct)))
 			{
 				Use(asyncDisposableStruct);
 			}

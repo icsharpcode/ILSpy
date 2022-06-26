@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public int LoadCount => LoadInstructions.Count;
 
-		readonly List<LdLoc> loadInstructions = new List<LdLoc>();
+		readonly List<LdLoc> loadInstructions = new();
 
 		/// <summary>
 		/// List of ldloc instructions referencing this variable.
@@ -260,7 +260,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public int StoreCount => (usesInitialValue ? 1 : 0) + StoreInstructions.Count;
 
-		readonly List<IStoreInstruction> storeInstructions = new List<IStoreInstruction>();
+		readonly List<IStoreInstruction> storeInstructions = new();
 
 		/// <summary>
 		/// List of store instructions referencing this variable.
@@ -287,7 +287,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public int AddressCount => AddressInstructions.Count;
 
-		readonly List<LdLoca> addressInstructions = new List<LdLoca>();
+		readonly List<LdLoca> addressInstructions = new();
 
 		/// <summary>
 		/// List of ldloca instructions referencing this variable.
@@ -628,7 +628,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	public class ILVariableEqualityComparer : IEqualityComparer<ILVariable>
 	{
-		public static readonly ILVariableEqualityComparer Instance = new ILVariableEqualityComparer();
+		public static readonly ILVariableEqualityComparer Instance = new();
 
 		public bool Equals(ILVariable? x, ILVariable? y)
 		{

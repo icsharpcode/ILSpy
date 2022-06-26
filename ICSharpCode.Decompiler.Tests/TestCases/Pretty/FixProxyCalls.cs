@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 			};
 			if (test.Equals(1))
 			{
-				throw new Exception("roslyn optimizes is inlining the assignment which lets the test fail");
+				throw new("roslyn optimizes is inlining the assignment which lets the test fail");
 			}
 			action(test);
 		}
@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 			};
 			if (a.Equals(1))
 			{
-				throw new Exception("roslyn optimize is inlining the assignment which lets the test fail");
+				throw new("roslyn optimize is inlining the assignment which lets the test fail");
 			}
 			action();
 

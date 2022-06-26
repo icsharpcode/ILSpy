@@ -304,7 +304,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Argument = argument;
 		}
-		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
+		public static readonly SlotInfo ArgumentSlot = new("Argument", canInlineInto: true);
 		ILInstruction argument = null!;
 		public ILInstruction Argument {
 			get { return this.argument; }
@@ -383,7 +383,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Left = left;
 			this.Right = right;
 		}
-		public static readonly SlotInfo LeftSlot = new SlotInfo("Left", canInlineInto: true);
+		public static readonly SlotInfo LeftSlot = new("Left", canInlineInto: true);
 		ILInstruction left = null!;
 		public ILInstruction Left {
 			get { return this.left; }
@@ -392,7 +392,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.left, value, 0);
 			}
 		}
-		public static readonly SlotInfo RightSlot = new SlotInfo("Right", canInlineInto: true);
+		public static readonly SlotInfo RightSlot = new("Right", canInlineInto: true);
 		ILInstruction right = null!;
 		public ILInstruction Right {
 			get { return this.right; }
@@ -476,7 +476,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Instruction with a list of arguments.</summary>
 	public abstract partial class CallInstruction : ILInstruction
 	{
-		public static readonly SlotInfo ArgumentsSlot = new SlotInfo("Arguments", canInlineInto: true);
+		public static readonly SlotInfo ArgumentsSlot = new("Arguments", canInlineInto: true);
 		public InstructionCollection<ILInstruction> Arguments { get; private set; }
 		protected sealed override int GetChildCount()
 		{
@@ -510,7 +510,7 @@ namespace ICSharpCode.Decompiler.IL
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (CallInstruction)ShallowClone();
-			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
+			clone.Arguments = new(clone, 0);
 			clone.Arguments.AddRange(this.Arguments.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
@@ -541,7 +541,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Common instruction for compound assignments.</summary>
 	public abstract partial class CompoundAssignmentInstruction : ILInstruction
 	{
-		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
+		public static readonly SlotInfo TargetSlot = new("Target", canInlineInto: true);
 		ILInstruction target = null!;
 		public ILInstruction Target {
 			get { return this.target; }
@@ -550,7 +550,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		public static readonly SlotInfo ValueSlot = new("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
 			get { return this.value; }
@@ -756,7 +756,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>A container of IL blocks.</summary>
 	public sealed partial class ILFunction : ILInstruction
 	{
-		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
+		public static readonly SlotInfo BodySlot = new("Body");
 		ILInstruction body = null!;
 		public ILInstruction Body {
 			get { return this.body; }
@@ -765,7 +765,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.body, value, 0);
 			}
 		}
-		public static readonly SlotInfo LocalFunctionsSlot = new SlotInfo("LocalFunctions");
+		public static readonly SlotInfo LocalFunctionsSlot = new("LocalFunctions");
 		public InstructionCollection<ILFunction> LocalFunctions { get; private set; }
 		protected sealed override int GetChildCount()
 		{
@@ -807,7 +807,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = (ILFunction)ShallowClone();
 			clone.Body = this.body.Clone();
-			clone.LocalFunctions = new InstructionCollection<ILFunction>(clone, 1);
+			clone.LocalFunctions = new(clone, 1);
 			clone.LocalFunctions.AddRange(this.LocalFunctions.Select(arg => (ILFunction)arg.Clone()));
 			clone.CloneVariables();
 			return clone;
@@ -926,7 +926,7 @@ namespace ICSharpCode.Decompiler.IL
 			base.Disconnected();
 		}
 
-		public static readonly SlotInfo InitSlot = new SlotInfo("Init", canInlineInto: true);
+		public static readonly SlotInfo InitSlot = new("Init", canInlineInto: true);
 		ILInstruction init = null!;
 		public ILInstruction Init {
 			get { return this.init; }
@@ -935,7 +935,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.init, value, 0);
 			}
 		}
-		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
+		public static readonly SlotInfo BodySlot = new("Body");
 		ILInstruction body = null!;
 		public ILInstruction Body {
 			get { return this.body; }
@@ -1256,7 +1256,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Unconditional branch to end of block container. Return is represented using IsLeavingFunction and an (optional) return value. The block container evaluates to the value produced by the argument of the leave instruction.</summary>
 	public sealed partial class Leave : ILInstruction
 	{
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		public static readonly SlotInfo ValueSlot = new("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
 			get { return this.value; }
@@ -1331,7 +1331,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
 	public sealed partial class IfInstruction : ILInstruction
 	{
-		public static readonly SlotInfo ConditionSlot = new SlotInfo("Condition", canInlineInto: true);
+		public static readonly SlotInfo ConditionSlot = new("Condition", canInlineInto: true);
 		ILInstruction condition = null!;
 		public ILInstruction Condition {
 			get { return this.condition; }
@@ -1340,7 +1340,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.condition, value, 0);
 			}
 		}
-		public static readonly SlotInfo TrueInstSlot = new SlotInfo("TrueInst");
+		public static readonly SlotInfo TrueInstSlot = new("TrueInst");
 		ILInstruction trueInst = null!;
 		public ILInstruction TrueInst {
 			get { return this.trueInst; }
@@ -1349,7 +1349,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.trueInst, value, 1);
 			}
 		}
-		public static readonly SlotInfo FalseInstSlot = new SlotInfo("FalseInst");
+		public static readonly SlotInfo FalseInstSlot = new("FalseInst");
 		ILInstruction falseInst = null!;
 		public ILInstruction FalseInst {
 			get { return this.falseInst; }
@@ -1439,7 +1439,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Null coalescing operator expression. <c>if.notnull(valueInst, fallbackInst)</c></summary>
 	public sealed partial class NullCoalescingInstruction : ILInstruction
 	{
-		public static readonly SlotInfo ValueInstSlot = new SlotInfo("ValueInst", canInlineInto: true);
+		public static readonly SlotInfo ValueInstSlot = new("ValueInst", canInlineInto: true);
 		ILInstruction valueInst = null!;
 		public ILInstruction ValueInst {
 			get { return this.valueInst; }
@@ -1448,7 +1448,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.valueInst, value, 0);
 			}
 		}
-		public static readonly SlotInfo FallbackInstSlot = new SlotInfo("FallbackInst");
+		public static readonly SlotInfo FallbackInstSlot = new("FallbackInst");
 		ILInstruction fallbackInst = null!;
 		public ILInstruction FallbackInst {
 			get { return this.fallbackInst; }
@@ -1555,7 +1555,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Switch section within a switch statement</summary>
 	public sealed partial class SwitchSection : ILInstruction
 	{
-		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
+		public static readonly SlotInfo BodySlot = new("Body");
 		ILInstruction body = null!;
 		public ILInstruction Body {
 			get { return this.body; }
@@ -1661,7 +1661,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Body = body;
 			this.variable = variable ?? throw new ArgumentNullException(nameof(variable));
 		}
-		public static readonly SlotInfo FilterSlot = new SlotInfo("Filter");
+		public static readonly SlotInfo FilterSlot = new("Filter");
 		ILInstruction filter = null!;
 		public ILInstruction Filter {
 			get { return this.filter; }
@@ -1670,7 +1670,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.filter, value, 0);
 			}
 		}
-		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
+		public static readonly SlotInfo BodySlot = new("Body");
 		ILInstruction body = null!;
 		public ILInstruction Body {
 			get { return this.body; }
@@ -1839,7 +1839,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.OnExpression = onExpression;
 			this.Body = body;
 		}
-		public static readonly SlotInfo OnExpressionSlot = new SlotInfo("OnExpression", canInlineInto: true);
+		public static readonly SlotInfo OnExpressionSlot = new("OnExpression", canInlineInto: true);
 		ILInstruction onExpression = null!;
 		public ILInstruction OnExpression {
 			get { return this.onExpression; }
@@ -1848,7 +1848,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.onExpression, value, 0);
 			}
 		}
-		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
+		public static readonly SlotInfo BodySlot = new("Body");
 		ILInstruction body = null!;
 		public ILInstruction Body {
 			get { return this.body; }
@@ -1983,7 +1983,7 @@ namespace ICSharpCode.Decompiler.IL
 			base.Disconnected();
 		}
 
-		public static readonly SlotInfo ResourceExpressionSlot = new SlotInfo("ResourceExpression", canInlineInto: true);
+		public static readonly SlotInfo ResourceExpressionSlot = new("ResourceExpression", canInlineInto: true);
 		ILInstruction resourceExpression = null!;
 		public ILInstruction ResourceExpression {
 			get { return this.resourceExpression; }
@@ -1992,7 +1992,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.resourceExpression, value, 0);
 			}
 		}
-		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
+		public static readonly SlotInfo BodySlot = new("Body");
 		ILInstruction body = null!;
 		public ILInstruction Body {
 			get { return this.body; }
@@ -2481,7 +2481,7 @@ namespace ICSharpCode.Decompiler.IL
 			base.Disconnected();
 		}
 
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		public static readonly SlotInfo ValueSlot = new("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
 			get { return this.value; }
@@ -2580,7 +2580,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 			this.type = type;
 		}
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		public static readonly SlotInfo ValueSlot = new("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
 			get { return this.value; }
@@ -3392,7 +3392,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.SourceAddress = sourceAddress;
 			this.Size = size;
 		}
-		public static readonly SlotInfo DestAddressSlot = new SlotInfo("DestAddress", canInlineInto: true);
+		public static readonly SlotInfo DestAddressSlot = new("DestAddress", canInlineInto: true);
 		ILInstruction destAddress = null!;
 		public ILInstruction DestAddress {
 			get { return this.destAddress; }
@@ -3401,7 +3401,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.destAddress, value, 0);
 			}
 		}
-		public static readonly SlotInfo SourceAddressSlot = new SlotInfo("SourceAddress", canInlineInto: true);
+		public static readonly SlotInfo SourceAddressSlot = new("SourceAddress", canInlineInto: true);
 		ILInstruction sourceAddress = null!;
 		public ILInstruction SourceAddress {
 			get { return this.sourceAddress; }
@@ -3410,7 +3410,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.sourceAddress, value, 1);
 			}
 		}
-		public static readonly SlotInfo SizeSlot = new SlotInfo("Size", canInlineInto: true);
+		public static readonly SlotInfo SizeSlot = new("Size", canInlineInto: true);
 		ILInstruction size = null!;
 		public ILInstruction Size {
 			get { return this.size; }
@@ -3543,7 +3543,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 			this.Size = size;
 		}
-		public static readonly SlotInfo AddressSlot = new SlotInfo("Address", canInlineInto: true);
+		public static readonly SlotInfo AddressSlot = new("Address", canInlineInto: true);
 		ILInstruction address = null!;
 		public ILInstruction Address {
 			get { return this.address; }
@@ -3552,7 +3552,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.address, value, 0);
 			}
 		}
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		public static readonly SlotInfo ValueSlot = new("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
 			get { return this.value; }
@@ -3561,7 +3561,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.value, value, 1);
 			}
 		}
-		public static readonly SlotInfo SizeSlot = new SlotInfo("Size", canInlineInto: true);
+		public static readonly SlotInfo SizeSlot = new("Size", canInlineInto: true);
 		ILInstruction size = null!;
 		public ILInstruction Size {
 			get { return this.size; }
@@ -3693,7 +3693,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = target;
 			this.field = field;
 		}
-		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
+		public static readonly SlotInfo TargetSlot = new("Target", canInlineInto: true);
 		ILInstruction target = null!;
 		public ILInstruction Target {
 			get { return this.target; }
@@ -3936,7 +3936,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = target;
 			this.type = type;
 		}
-		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
+		public static readonly SlotInfo TargetSlot = new("Target", canInlineInto: true);
 		ILInstruction target = null!;
 		public ILInstruction Target {
 			get { return this.target; }
@@ -4056,7 +4056,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 			this.type = type;
 		}
-		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
+		public static readonly SlotInfo TargetSlot = new("Target", canInlineInto: true);
 		ILInstruction target = null!;
 		public ILInstruction Target {
 			get { return this.target; }
@@ -4065,7 +4065,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		public static readonly SlotInfo ValueSlot = new("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
 			get { return this.value; }
@@ -4378,7 +4378,7 @@ namespace ICSharpCode.Decompiler.IL
 		public NewArr(IType type, params ILInstruction[] indices) : base(OpCode.NewArr)
 		{
 			this.type = type;
-			this.Indices = new InstructionCollection<ILInstruction>(this, 0);
+			this.Indices = new(this, 0);
 			this.Indices.AddRange(indices);
 		}
 		IType type;
@@ -4387,7 +4387,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public static readonly SlotInfo IndicesSlot = new SlotInfo("Indices", canInlineInto: true);
+		public static readonly SlotInfo IndicesSlot = new("Indices", canInlineInto: true);
 		public InstructionCollection<ILInstruction> Indices { get; private set; }
 		protected sealed override int GetChildCount()
 		{
@@ -4421,7 +4421,7 @@ namespace ICSharpCode.Decompiler.IL
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (NewArr)ShallowClone();
-			clone.Indices = new InstructionCollection<ILInstruction>(clone, 0);
+			clone.Indices = new(clone, 0);
 			clone.Indices.AddRange(this.Indices.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
@@ -4635,7 +4635,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Returns the length of an array as 'native unsigned int'.</summary>
 	public sealed partial class LdLen : ILInstruction
 	{
-		public static readonly SlotInfo ArraySlot = new SlotInfo("Array", canInlineInto: true);
+		public static readonly SlotInfo ArraySlot = new("Array", canInlineInto: true);
 		ILInstruction array = null!;
 		public ILInstruction Array {
 			get { return this.array; }
@@ -4727,7 +4727,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.type = type;
 			this.Array = array;
-			this.Indices = new InstructionCollection<ILInstruction>(this, 1);
+			this.Indices = new(this, 1);
 			this.Indices.AddRange(indices);
 		}
 		IType type;
@@ -4736,7 +4736,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public static readonly SlotInfo ArraySlot = new SlotInfo("Array", canInlineInto: true);
+		public static readonly SlotInfo ArraySlot = new("Array", canInlineInto: true);
 		ILInstruction array = null!;
 		public ILInstruction Array {
 			get { return this.array; }
@@ -4745,7 +4745,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.array, value, 0);
 			}
 		}
-		public static readonly SlotInfo IndicesSlot = new SlotInfo("Indices", canInlineInto: true);
+		public static readonly SlotInfo IndicesSlot = new("Indices", canInlineInto: true);
 		public InstructionCollection<ILInstruction> Indices { get; private set; }
 		protected sealed override int GetChildCount()
 		{
@@ -4787,7 +4787,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = (LdElema)ShallowClone();
 			clone.Array = this.array.Clone();
-			clone.Indices = new InstructionCollection<ILInstruction>(clone, 1);
+			clone.Indices = new(clone, 1);
 			clone.Indices.AddRange(this.Indices.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
@@ -4859,7 +4859,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Argument = argument;
 			this.method = method;
 		}
-		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
+		public static readonly SlotInfo ArgumentSlot = new("Argument", canInlineInto: true);
 		ILInstruction argument = null!;
 		public ILInstruction Argument {
 			get { return this.argument; }
@@ -4964,7 +4964,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Maps a string value to an integer. This is used in switch(string).</summary>
 	public sealed partial class StringToInt : ILInstruction
 	{
-		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
+		public static readonly SlotInfo ArgumentSlot = new("Argument", canInlineInto: true);
 		ILInstruction argument = null!;
 		public ILInstruction Argument {
 			get { return this.argument; }
@@ -5103,7 +5103,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Returns the method operand.</summary>
 		public IMethod Method => method;
 		public override StackType ResultType { get { return StackType.O; } }
-		public static readonly SlotInfo LeftSlot = new SlotInfo("Left", canInlineInto: true);
+		public static readonly SlotInfo LeftSlot = new("Left", canInlineInto: true);
 		ILInstruction left = null!;
 		public ILInstruction Left {
 			get { return this.left; }
@@ -5112,7 +5112,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.left, value, 0);
 			}
 		}
-		public static readonly SlotInfo RightSlot = new SlotInfo("Right");
+		public static readonly SlotInfo RightSlot = new("Right");
 		ILInstruction right = null!;
 		public ILInstruction Right {
 			get { return this.right; }
@@ -5209,7 +5209,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>ILAst representation of a short-circuiting binary operator inside a dynamic expression.</summary>
 	public sealed partial class DynamicLogicOperatorInstruction : DynamicInstruction
 	{
-		public static readonly SlotInfo LeftSlot = new SlotInfo("Left", canInlineInto: true);
+		public static readonly SlotInfo LeftSlot = new("Left", canInlineInto: true);
 		ILInstruction left = null!;
 		public ILInstruction Left {
 			get { return this.left; }
@@ -5218,7 +5218,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.left, value, 0);
 			}
 		}
-		public static readonly SlotInfo RightSlot = new SlotInfo("Right");
+		public static readonly SlotInfo RightSlot = new("Right");
 		ILInstruction right = null!;
 		public ILInstruction Right {
 			get { return this.right; }
@@ -5300,7 +5300,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>ILAst representation of a binary operator inside a dynamic expression (maps to Binder.BinaryOperation).</summary>
 	public sealed partial class DynamicBinaryOperatorInstruction : DynamicInstruction
 	{
-		public static readonly SlotInfo LeftSlot = new SlotInfo("Left", canInlineInto: true);
+		public static readonly SlotInfo LeftSlot = new("Left", canInlineInto: true);
 		ILInstruction left = null!;
 		public ILInstruction Left {
 			get { return this.left; }
@@ -5309,7 +5309,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.left, value, 0);
 			}
 		}
-		public static readonly SlotInfo RightSlot = new SlotInfo("Right", canInlineInto: true);
+		public static readonly SlotInfo RightSlot = new("Right", canInlineInto: true);
 		ILInstruction right = null!;
 		public ILInstruction Right {
 			get { return this.right; }
@@ -5400,7 +5400,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>ILAst representation of a unary operator inside a dynamic expression (maps to Binder.UnaryOperation).</summary>
 	public sealed partial class DynamicUnaryOperatorInstruction : DynamicInstruction
 	{
-		public static readonly SlotInfo OperandSlot = new SlotInfo("Operand", canInlineInto: true);
+		public static readonly SlotInfo OperandSlot = new("Operand", canInlineInto: true);
 		ILInstruction operand = null!;
 		public ILInstruction Operand {
 			get { return this.operand; }
@@ -5489,7 +5489,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
+		public static readonly SlotInfo ArgumentSlot = new("Argument", canInlineInto: true);
 		ILInstruction argument = null!;
 		public ILInstruction Argument {
 			get { return this.argument; }
@@ -5577,7 +5577,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>ILAst representation of a property get method call inside a dynamic expression (maps to Binder.GetMember).</summary>
 	public sealed partial class DynamicGetMemberInstruction : DynamicInstruction
 	{
-		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
+		public static readonly SlotInfo TargetSlot = new("Target", canInlineInto: true);
 		ILInstruction target = null!;
 		public ILInstruction Target {
 			get { return this.target; }
@@ -5665,7 +5665,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>ILAst representation of a property set method call inside a dynamic expression (maps to Binder.SetMember).</summary>
 	public sealed partial class DynamicSetMemberInstruction : DynamicInstruction
 	{
-		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
+		public static readonly SlotInfo TargetSlot = new("Target", canInlineInto: true);
 		ILInstruction target = null!;
 		public ILInstruction Target {
 			get { return this.target; }
@@ -5674,7 +5674,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		public static readonly SlotInfo ValueSlot = new("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
 			get { return this.value; }
@@ -5770,7 +5770,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>ILAst representation of an indexer get method call inside a dynamic expression (maps to Binder.GetIndex).</summary>
 	public sealed partial class DynamicGetIndexInstruction : DynamicInstruction
 	{
-		public static readonly SlotInfo ArgumentsSlot = new SlotInfo("Arguments", canInlineInto: true);
+		public static readonly SlotInfo ArgumentsSlot = new("Arguments", canInlineInto: true);
 		public InstructionCollection<ILInstruction> Arguments { get; private set; }
 		protected sealed override int GetChildCount()
 		{
@@ -5804,7 +5804,7 @@ namespace ICSharpCode.Decompiler.IL
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (DynamicGetIndexInstruction)ShallowClone();
-			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
+			clone.Arguments = new(clone, 0);
 			clone.Arguments.AddRange(this.Arguments.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
@@ -5841,7 +5841,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>ILAst representation of an indexer set method call inside a dynamic expression (maps to Binder.SetIndex).</summary>
 	public sealed partial class DynamicSetIndexInstruction : DynamicInstruction
 	{
-		public static readonly SlotInfo ArgumentsSlot = new SlotInfo("Arguments", canInlineInto: true);
+		public static readonly SlotInfo ArgumentsSlot = new("Arguments", canInlineInto: true);
 		public InstructionCollection<ILInstruction> Arguments { get; private set; }
 		protected sealed override int GetChildCount()
 		{
@@ -5875,7 +5875,7 @@ namespace ICSharpCode.Decompiler.IL
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (DynamicSetIndexInstruction)ShallowClone();
-			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
+			clone.Arguments = new(clone, 0);
 			clone.Arguments.AddRange(this.Arguments.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
@@ -5912,7 +5912,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>ILAst representation of a method call inside a dynamic expression (maps to Binder.InvokeMember).</summary>
 	public sealed partial class DynamicInvokeMemberInstruction : DynamicInstruction
 	{
-		public static readonly SlotInfo ArgumentsSlot = new SlotInfo("Arguments", canInlineInto: true);
+		public static readonly SlotInfo ArgumentsSlot = new("Arguments", canInlineInto: true);
 		public InstructionCollection<ILInstruction> Arguments { get; private set; }
 		protected sealed override int GetChildCount()
 		{
@@ -5946,7 +5946,7 @@ namespace ICSharpCode.Decompiler.IL
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (DynamicInvokeMemberInstruction)ShallowClone();
-			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
+			clone.Arguments = new(clone, 0);
 			clone.Arguments.AddRange(this.Arguments.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
@@ -5983,7 +5983,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>ILAst representation of a constuctor invocation inside a dynamic expression (maps to Binder.InvokeConstructor).</summary>
 	public sealed partial class DynamicInvokeConstructorInstruction : DynamicInstruction
 	{
-		public static readonly SlotInfo ArgumentsSlot = new SlotInfo("Arguments", canInlineInto: true);
+		public static readonly SlotInfo ArgumentsSlot = new("Arguments", canInlineInto: true);
 		public InstructionCollection<ILInstruction> Arguments { get; private set; }
 		protected sealed override int GetChildCount()
 		{
@@ -6017,7 +6017,7 @@ namespace ICSharpCode.Decompiler.IL
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (DynamicInvokeConstructorInstruction)ShallowClone();
-			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
+			clone.Arguments = new(clone, 0);
 			clone.Arguments.AddRange(this.Arguments.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
@@ -6054,7 +6054,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>ILAst representation of a delegate invocation inside a dynamic expression (maps to Binder.Invoke).</summary>
 	public sealed partial class DynamicInvokeInstruction : DynamicInstruction
 	{
-		public static readonly SlotInfo ArgumentsSlot = new SlotInfo("Arguments", canInlineInto: true);
+		public static readonly SlotInfo ArgumentsSlot = new("Arguments", canInlineInto: true);
 		public InstructionCollection<ILInstruction> Arguments { get; private set; }
 		protected sealed override int GetChildCount()
 		{
@@ -6088,7 +6088,7 @@ namespace ICSharpCode.Decompiler.IL
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (DynamicInvokeInstruction)ShallowClone();
-			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
+			clone.Arguments = new(clone, 0);
 			clone.Arguments.AddRange(this.Arguments.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
@@ -6125,7 +6125,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>ILAst representation of a call to the Binder.IsEvent method inside a dynamic expression.</summary>
 	public sealed partial class DynamicIsEventInstruction : DynamicInstruction
 	{
-		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
+		public static readonly SlotInfo ArgumentSlot = new("Argument", canInlineInto: true);
 		ILInstruction argument = null!;
 		public ILInstruction Argument {
 			get { return this.argument; }
@@ -6218,7 +6218,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.variable = variable ?? throw new ArgumentNullException(nameof(variable));
 			this.method = method;
 			this.TestedOperand = testedOperand;
-			this.SubPatterns = new InstructionCollection<ILInstruction>(this, 1);
+			this.SubPatterns = new(this, 1);
 			this.SubPatterns.AddRange(subPatterns);
 		}
 		ILVariable variable;
@@ -6260,7 +6260,7 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsDeconstructTuple;
 		public bool CheckType;
 		public bool CheckNotNull;
-		public static readonly SlotInfo TestedOperandSlot = new SlotInfo("TestedOperand", canInlineInto: true);
+		public static readonly SlotInfo TestedOperandSlot = new("TestedOperand", canInlineInto: true);
 		ILInstruction testedOperand = null!;
 		public ILInstruction TestedOperand {
 			get { return this.testedOperand; }
@@ -6269,7 +6269,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.testedOperand, value, 0);
 			}
 		}
-		public static readonly SlotInfo SubPatternsSlot = new SlotInfo("SubPatterns");
+		public static readonly SlotInfo SubPatternsSlot = new("SubPatterns");
 		public InstructionCollection<ILInstruction> SubPatterns { get; private set; }
 		protected sealed override int GetChildCount()
 		{
@@ -6311,7 +6311,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = (MatchInstruction)ShallowClone();
 			clone.TestedOperand = this.testedOperand.Clone();
-			clone.SubPatterns = new InstructionCollection<ILInstruction>(clone, 1);
+			clone.SubPatterns = new(clone, 1);
 			clone.SubPatterns.AddRange(this.SubPatterns.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
@@ -6487,7 +6487,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Value = value;
 		}
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		public static readonly SlotInfo ValueSlot = new("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
 			get { return this.value; }
@@ -6583,7 +6583,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Value = value;
 		}
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		public static readonly SlotInfo ValueSlot = new("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
 			get { return this.value; }

@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	class InsertMissingTokensDecorator : DecoratingTokenWriter
 	{
-		readonly Stack<List<AstNode>> nodes = new Stack<List<AstNode>>();
+		readonly Stack<List<AstNode>> nodes = new();
 		List<AstNode> currentList;
 		readonly ILocatable locationProvider;
 
@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			: base(writer)
 		{
 			this.locationProvider = locationProvider;
-			currentList = new List<AstNode>();
+			currentList = new();
 		}
 
 		public override void StartNode(AstNode node)
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				currentList.Add(node);
 				nodes.Push(currentList);
-				currentList = new List<AstNode>();
+				currentList = new();
 			}
 			else if (node is Comment comment)
 			{
@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					errorExpression.Location = locationProvider.Location;
 					break;
 				default:
-					CSharpTokenNode t = new CSharpTokenNode(locationProvider.Location, (TokenRole)role);
+					CSharpTokenNode t = new(locationProvider.Location, (TokenRole)role);
 					t.Role = role;
 					currentList.Add(t);
 					break;
@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			TextLocation start = locationProvider.Location;
 			CSharpTokenNode t = null;
 			if (role is TokenRole)
-				t = new CSharpTokenNode(start, (TokenRole)role);
+				t = new(start, (TokenRole)role);
 			else if (role == EntityDeclaration.ModifierRole)
 				t = new CSharpModifierToken(start, CSharpModifierToken.GetModifierValue(keyword));
 			else if (keyword == "this")

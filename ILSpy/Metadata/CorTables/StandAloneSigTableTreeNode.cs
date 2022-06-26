@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			for (int row = 1; row <= module.Metadata.GetTableRowCount(TableIndex.StandAloneSig); row++)
 			{
-				StandAloneSigEntry entry = new StandAloneSigEntry(module, MetadataTokens.StandaloneSignatureHandle(row));
+				StandAloneSigEntry entry = new(module, MetadataTokens.StandaloneSignatureHandle(row));
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;

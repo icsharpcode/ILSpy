@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 {
 	class AnalyzerSearchTreeNode : AnalyzerTreeNode
 	{
-		private readonly ThreadingSupport threading = new ThreadingSupport();
+		private readonly ThreadingSupport threading = new();
 		readonly ISymbol symbol;
 		readonly IAnalyzer analyzer;
 		readonly string analyzerHeader;

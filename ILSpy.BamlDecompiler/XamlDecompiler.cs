@@ -98,7 +98,7 @@ namespace ILSpy.BamlDecompiler
 				file.DetectTargetFrameworkId(), file.DetectRuntimePack(),
 				PEStreamOptions.PrefetchMetadata,
 				MetadataReaderOptions.None);
-			return new BamlDecompilerTypeSystem(file, resolver);
+			return new(file, resolver);
 		}
 
 		public BamlDecompilationResult Decompile(Stream stream)
@@ -120,7 +120,7 @@ namespace ILSpy.BamlDecompiler
 			}
 
 			var assemblyReferences = ctx.Baml.AssemblyIdMap.Select(a => a.Value.AssemblyFullName);
-			return new BamlDecompilationResult(xaml, assemblyReferences);
+			return new(xaml, assemblyReferences);
 		}
 	}
 }

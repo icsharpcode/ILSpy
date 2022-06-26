@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		{
 			Assert.AreEqual(LongSet.Universe, LongSet.Universe.IntersectWith(LongSet.Universe));
 			Assert.AreEqual(LongSet.Empty, LongSet.Universe.IntersectWith(LongSet.Empty));
-			Assert.AreEqual(new LongSet(long.MaxValue), LongSet.Universe.IntersectWith(new LongSet(long.MaxValue)));
+			Assert.AreEqual(new LongSet(long.MaxValue), LongSet.Universe.IntersectWith(new(long.MaxValue)));
 			var longSet = new LongSet(new[] { new LongInterval(1, 5), new LongInterval(6, 7) }.ToImmutableArray());
 			Assert.AreEqual(longSet, longSet.IntersectWith(LongSet.Universe));
 		}
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		{
 			Assert.AreEqual(LongSet.Universe, LongSet.Universe.UnionWith(LongSet.Universe));
 			Assert.AreEqual(LongSet.Universe, LongSet.Universe.UnionWith(LongSet.Empty));
-			Assert.AreEqual(LongSet.Universe, LongSet.Universe.UnionWith(new LongSet(long.MaxValue)));
+			Assert.AreEqual(LongSet.Universe, LongSet.Universe.UnionWith(new(long.MaxValue)));
 			var longSet = new LongSet(new[] { new LongInterval(1, 5), new LongInterval(6, 7) }.ToImmutableArray());
 			Assert.AreEqual(LongSet.Universe, longSet.UnionWith(LongSet.Universe));
 		}
@@ -81,9 +81,9 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		public void UnionWith()
 		{
 			Assert.AreEqual(new LongSet(new LongInterval(0, 2)),
-				new LongSet(0).UnionWith(new LongSet(1)));
+				new LongSet(0).UnionWith(new(1)));
 
-			Assert.AreEqual(LongSet.Universe, new LongSet(0).Invert().UnionWith(new LongSet(0)));
+			Assert.AreEqual(LongSet.Universe, new LongSet(0).Invert().UnionWith(new(0)));
 		}
 
 		[Test]
@@ -92,8 +92,8 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			Assert.AreEqual(new LongSet(1), new LongSet(0).AddOffset(1));
 			Assert.AreEqual(new LongSet(long.MinValue), new LongSet(long.MaxValue).AddOffset(1));
 
-			TestAddTo(new LongSet(new LongInterval(-10, 10)), 5);
-			TestAddTo(new LongSet(new LongInterval(-10, 10)), long.MaxValue);
+			TestAddTo(new(new LongInterval(-10, 10)), 5);
+			TestAddTo(new(new LongInterval(-10, 10)), long.MaxValue);
 			Assert.AreEqual(new LongSet(10).Invert(), new LongSet(0).Invert().AddOffset(10));
 			Assert.AreEqual(new LongSet(20).Invert(), new LongSet(30).Invert().AddOffset(-10));
 		}

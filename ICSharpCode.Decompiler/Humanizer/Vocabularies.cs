@@ -12,7 +12,7 @@ namespace Humanizer.Inflections
 
 		static Vocabularies()
 		{
-			Instance = new Lazy<Vocabulary>(BuildDefault, LazyThreadSafetyMode.PublicationOnly);
+			Instance = new(BuildDefault, LazyThreadSafetyMode.PublicationOnly);
 		}
 
 		/// <summary>

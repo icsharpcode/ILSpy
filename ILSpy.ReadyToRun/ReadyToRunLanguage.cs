@@ -196,7 +196,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			{
 				if (!readyToRunReaders.TryGetValue(module, out result))
 				{
-					result = new ReadyToRunReaderCacheEntry();
+					result = new();
 					try
 					{
 						result.readyToRunReader = new ReadyToRunReader(new ReadyToRunAssemblyResolver(assembly), new StandaloneAssemblyMetadata(module.Reader), module.Reader, module.FileName);

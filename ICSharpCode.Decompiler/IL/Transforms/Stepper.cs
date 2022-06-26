@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public Stepper()
 		{
 			steps = new List<Node>();
-			groups = new Stack<Node>();
+			groups = new();
 		}
 
 		/// <summary>

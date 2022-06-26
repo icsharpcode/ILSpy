@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class ForeachStatement : Statement
 	{
 		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;
-		public static readonly TokenRole ForeachKeywordRole = new TokenRole("foreach");
-		public static readonly TokenRole InKeywordRole = new TokenRole("in");
+		public static readonly TokenRole ForeachKeywordRole = new("foreach");
+		public static readonly TokenRole InKeywordRole = new("in");
 
 		public CSharpTokenNode AwaitToken {
 			get { return GetChildByRole(AwaitRole); }

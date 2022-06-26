@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			/// </summary>
 			public State(int variableCount)
 			{
-				this.bits = new BitSet(variableCount);
+				this.bits = new(variableCount);
 				this.bits.Set(0, variableCount);
 			}
 
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 			public State Clone()
 			{
-				return new State(bits.Clone());
+				return new(bits.Clone());
 			}
 
 			public void ReplaceWith(State newContent)
@@ -122,17 +122,17 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		readonly ILFunction scope;
 		readonly BitSet variablesWithUninitializedUsage;
 
-		readonly Dictionary<IMethod, State> stateOfLocalFunctionUse = new Dictionary<IMethod, State>();
-		readonly HashSet<IMethod> localFunctionsNeedingAnalysis = new HashSet<IMethod>();
+		readonly Dictionary<IMethod, State> stateOfLocalFunctionUse = new();
+		readonly HashSet<IMethod> localFunctionsNeedingAnalysis = new();
 
 		public DefiniteAssignmentVisitor(ILFunction scope, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			this.cancellationToken = cancellationToken;
 			this.scope = scope;
-			this.variablesWithUninitializedUsage = new BitSet(scope.Variables.Count);
+			this.variablesWithUninitializedUsage = new(scope.Variables.Count);
 			base.flagsRequiringManualImpl |= InstructionFlags.MayReadLocals | InstructionFlags.MayWriteLocals;
-			Initialize(new State(scope.Variables.Count));
+			Initialize(new(scope.Variables.Count));
 		}
 
 		public bool IsPotentiallyUsedUninitialized(ILVariable v)

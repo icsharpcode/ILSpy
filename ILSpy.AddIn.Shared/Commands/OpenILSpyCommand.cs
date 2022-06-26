@@ -35,8 +35,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			this.owner = owner;
-			CommandID menuCommandID = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)id);
-			OleMenuCommand menuItem = new OleMenuCommand(OnExecute, menuCommandID);
+			CommandID menuCommandID = new(GuidList.guidILSpyAddInCmdSet, (int)id);
+			OleMenuCommand menuItem = new(OnExecute, menuCommandID);
 			menuItem.BeforeQueryStatus += OnBeforeQueryStatus;
 			owner.MenuService.AddCommand(menuItem);
 		}
@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				{
 					string assemblyName = assemblyDef.Name.Name;
 					string resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
-					dict.Add(assemblyName, new DetectedReference(assemblyName, resolvedAssemblyFile, false));
+					dict.Add(assemblyName, new(assemblyName, resolvedAssemblyFile, false));
 				}
 			}
 			foreach (var projectReference in parentProject.ProjectReferences)
@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 					if (project != null)
 					{
 						dict.Add(roslynProject.AssemblyName,
-							new DetectedReference(roslynProject.AssemblyName, Utils.GetProjectOutputAssembly(project, roslynProject), true));
+							new(roslynProject.AssemblyName, Utils.GetProjectOutputAssembly(project, roslynProject), true));
 					}
 				}
 			}
@@ -155,7 +155,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			instance = new OpenILSpyCommand(owner);
+			instance = new(owner);
 		}
 	}
 }

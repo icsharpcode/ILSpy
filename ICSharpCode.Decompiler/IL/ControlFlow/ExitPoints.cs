@@ -52,8 +52,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	public class DetectExitPoints : ILVisitor, IILTransform
 	{
-		static readonly Nop ExitNotYetDetermined = new Nop { Comment = "ExitNotYetDetermined" };
-		static readonly Nop NoExit = new Nop { Comment = "NoExit" };
+		static readonly Nop ExitNotYetDetermined = new() { Comment = "ExitNotYetDetermined" };
+		static readonly Nop NoExit = new() { Comment = "NoExit" };
 
 		/// <summary>
 		/// Gets the next instruction after <paramref name="inst"/> is executed.
@@ -142,8 +142,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 
 		CancellationToken cancellationToken;
-		readonly List<Block> blocksPotentiallyMadeUnreachable = new List<Block>();
-		readonly Stack<ContainerContext> containerStack = new Stack<ContainerContext>();
+		readonly List<Block> blocksPotentiallyMadeUnreachable = new();
+		readonly Stack<ContainerContext> containerStack = new();
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{

@@ -37,11 +37,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class ComposedType : AstType
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
-		public static readonly TokenRole RefRole = new TokenRole("ref");
-		public static readonly TokenRole ReadonlyRole = new TokenRole("readonly");
-		public static readonly TokenRole NullableRole = new TokenRole("?");
-		public static readonly TokenRole PointerRole = new TokenRole("*");
-		public static readonly Role<ArraySpecifier> ArraySpecifierRole = new Role<ArraySpecifier>("ArraySpecifier", null);
+		public static readonly TokenRole RefRole = new("ref");
+		public static readonly TokenRole ReadonlyRole = new("readonly");
+		public static readonly TokenRole NullableRole = new("?");
+		public static readonly TokenRole PointerRole = new("*");
+		public static readonly Role<ArraySpecifier> ArraySpecifierRole = new("ArraySpecifier", null);
 		public AstNodeCollection<AttributeSection> Attributes {
 			get { return base.GetChildrenByRole(AttributeRole); }
 		}
@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				while (d < value)
 				{
-					InsertChildBefore(GetChildByRole(PointerRole), new CSharpTokenNode(TextLocation.Empty, PointerRole), PointerRole);
+					InsertChildBefore(GetChildByRole(PointerRole), new(TextLocation.Empty, PointerRole), PointerRole);
 					d++;
 				}
 			}
@@ -158,7 +158,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
-			StringBuilder b = new StringBuilder();
+			StringBuilder b = new();
 			if (this.HasRefSpecifier)
 				b.Append("ref ");
 			if (this.HasReadOnlySpecifier)
@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override AstType MakeArrayType(int dimensions)
 		{
-			InsertChildBefore(this.ArraySpecifiers.FirstOrDefault(), new ArraySpecifier(dimensions), ArraySpecifierRole);
+			InsertChildBefore(this.ArraySpecifiers.FirstOrDefault(), new(dimensions), ArraySpecifierRole);
 			return this;
 		}
 
@@ -262,7 +262,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				while (d < value)
 				{
-					InsertChildBefore(GetChildByRole(Roles.Comma), new CSharpTokenNode(TextLocation.Empty, Roles.Comma), Roles.Comma);
+					InsertChildBefore(GetChildByRole(Roles.Comma), new(TextLocation.Empty, Roles.Comma), Roles.Comma);
 					d++;
 				}
 			}

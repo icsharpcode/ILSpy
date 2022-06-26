@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 				catch (EnumUnderlyingTypeResolveException)
 				{
-					value = new CustomAttributeValue<IType>(
+					value = new(
 						ImmutableArray<CustomAttributeTypedArgument<IType>>.Empty,
 						ImmutableArray<CustomAttributeNamedArgument<IType>>.Empty
 					);
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 				catch (BadImageFormatException)
 				{
-					value = new CustomAttributeValue<IType>(
+					value = new(
 						ImmutableArray<CustomAttributeTypedArgument<IType>>.Empty,
 						ImmutableArray<CustomAttributeNamedArgument<IType>>.Empty
 					);

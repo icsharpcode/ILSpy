@@ -71,38 +71,38 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class OperatorDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole OperatorKeywordRole = new TokenRole("operator");
+		public static readonly TokenRole OperatorKeywordRole = new("operator");
 
 		// Unary operators
-		public static readonly TokenRole LogicalNotRole = new TokenRole("!");
-		public static readonly TokenRole OnesComplementRole = new TokenRole("~");
-		public static readonly TokenRole IncrementRole = new TokenRole("++");
-		public static readonly TokenRole DecrementRole = new TokenRole("--");
-		public static readonly TokenRole TrueRole = new TokenRole("true");
-		public static readonly TokenRole FalseRole = new TokenRole("false");
+		public static readonly TokenRole LogicalNotRole = new("!");
+		public static readonly TokenRole OnesComplementRole = new("~");
+		public static readonly TokenRole IncrementRole = new("++");
+		public static readonly TokenRole DecrementRole = new("--");
+		public static readonly TokenRole TrueRole = new("true");
+		public static readonly TokenRole FalseRole = new("false");
 
 		// Unary and Binary operators
-		public static readonly TokenRole AdditionRole = new TokenRole("+");
-		public static readonly TokenRole SubtractionRole = new TokenRole("-");
+		public static readonly TokenRole AdditionRole = new("+");
+		public static readonly TokenRole SubtractionRole = new("-");
 
 		// Binary operators
-		public static readonly TokenRole MultiplyRole = new TokenRole("*");
-		public static readonly TokenRole DivisionRole = new TokenRole("/");
-		public static readonly TokenRole ModulusRole = new TokenRole("%");
-		public static readonly TokenRole BitwiseAndRole = new TokenRole("&");
-		public static readonly TokenRole BitwiseOrRole = new TokenRole("|");
-		public static readonly TokenRole ExclusiveOrRole = new TokenRole("^");
-		public static readonly TokenRole LeftShiftRole = new TokenRole("<<");
-		public static readonly TokenRole RightShiftRole = new TokenRole(">>");
-		public static readonly TokenRole EqualityRole = new TokenRole("==");
-		public static readonly TokenRole InequalityRole = new TokenRole("!=");
-		public static readonly TokenRole GreaterThanRole = new TokenRole(">");
-		public static readonly TokenRole LessThanRole = new TokenRole("<");
-		public static readonly TokenRole GreaterThanOrEqualRole = new TokenRole(">=");
-		public static readonly TokenRole LessThanOrEqualRole = new TokenRole("<=");
+		public static readonly TokenRole MultiplyRole = new("*");
+		public static readonly TokenRole DivisionRole = new("/");
+		public static readonly TokenRole ModulusRole = new("%");
+		public static readonly TokenRole BitwiseAndRole = new("&");
+		public static readonly TokenRole BitwiseOrRole = new("|");
+		public static readonly TokenRole ExclusiveOrRole = new("^");
+		public static readonly TokenRole LeftShiftRole = new("<<");
+		public static readonly TokenRole RightShiftRole = new(">>");
+		public static readonly TokenRole EqualityRole = new("==");
+		public static readonly TokenRole InequalityRole = new("!=");
+		public static readonly TokenRole GreaterThanRole = new(">");
+		public static readonly TokenRole LessThanRole = new("<");
+		public static readonly TokenRole GreaterThanOrEqualRole = new(">=");
+		public static readonly TokenRole LessThanOrEqualRole = new("<=");
 
-		public static readonly TokenRole ExplicitRole = new TokenRole("explicit");
-		public static readonly TokenRole ImplicitRole = new TokenRole("implicit");
+		public static readonly TokenRole ExplicitRole = new("explicit");
+		public static readonly TokenRole ImplicitRole = new("implicit");
 
 		static readonly string[][] names;
 

@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class DestructorDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole TildeRole = new TokenRole("~");
+		public static readonly TokenRole TildeRole = new("~");
 
 		public CSharpTokenNode TildeToken {
 			get { return GetChildByRole(TildeRole); }

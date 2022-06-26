@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		struct Cost
 		{
 			// highest possible cost so that the Blocks+Expressions addition doesn't overflow
-			public static readonly Cost Infinite = new Cost(0x3fffffff, 0x3fffffff);
+			public static readonly Cost Infinite = new(0x3fffffff, 0x3fffffff);
 
 			public readonly int Blocks;
 			public readonly int Expressions;
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public static Cost operator +(Cost a, Cost b)
 			{
-				return new Cost(a.Blocks + b.Blocks, a.Expressions + b.Expressions);
+				return new(a.Blocks + b.Blocks, a.Expressions + b.Expressions);
 			}
 
 			public override string ToString()
@@ -124,14 +124,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				if (Expressions == 0)
 				{
-					return new Cost(Blocks, 1);
+					return new(Blocks, 1);
 				}
 				else
 				{
 					// hack: penalize multiple layers of nested expressions
 					// This doesn't really fit into the original idea of minimizing the number of block+expressions;
 					// but tends to produce better-looking results due to less nesting.
-					return new Cost(Blocks, Expressions + 2);
+					return new(Blocks, Expressions + 2);
 				}
 			}
 		}
@@ -207,7 +207,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public override void Insert()
 			{
-				BlockStatement newBlock = new BlockStatement();
+				BlockStatement newBlock = new();
 				// Move all statements except for the first
 				Statement next;
 				for (Statement stmt = firstStatement.GetNextStatement(); stmt != lastStatement; stmt = next)
@@ -261,14 +261,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			// For a block, we are tracking 4 possibilities:
 			// a) context is checked, no unchecked block open
-			Cost costCheckedContext = new Cost(0, 0);
+			Cost costCheckedContext = new(0, 0);
 			InsertedNode nodesCheckedContext = null;
 			// b) context is checked, an unchecked block is open
 			Cost costCheckedContextUncheckedBlockOpen = Cost.Infinite;
 			InsertedNode nodesCheckedContextUncheckedBlockOpen = null;
 			Statement uncheckedBlockStart = null;
 			// c) context is unchecked, no checked block open
-			Cost costUncheckedContext = new Cost(0, 0);
+			Cost costUncheckedContext = new(0, 0);
 			InsertedNode nodesUncheckedContext = null;
 			// d) context is unchecked, a checked block is open
 			Cost costUncheckedContextCheckedBlockOpen = Cost.Infinite;
@@ -329,7 +329,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				statement = statement.GetNextStatement();
 			}
 
-			return new Result {
+			return new() {
 				CostInCheckedContext = costCheckedContext, NodesToInsertInCheckedContext = nodesCheckedContext,
 				CostInUncheckedContext = costUncheckedContext, NodesToInsertInUncheckedContext = nodesUncheckedContext
 			};
@@ -339,7 +339,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (node is BlockStatement)
 				return GetResultFromBlock((BlockStatement)node);
-			Result result = new Result();
+			Result result = new();
 			for (AstNode child = node.FirstChild; child != null; child = child.NextSibling)
 			{
 				Result childResult = GetResult(child);

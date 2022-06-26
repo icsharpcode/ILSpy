@@ -106,7 +106,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 					documentFileName = "";
 				}
 
-				sequencePoints.Add(new Decompiler.DebugInfo.SequencePoint() {
+				sequencePoints.Add(new() {
 					Offset = point.Offset,
 					StartLine = point.StartLine,
 					StartColumn = point.StartColumn,
@@ -132,7 +132,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				foreach (var v in scope.GetLocalVariables())
 				{
 					var var = metadata.GetLocalVariable(v);
-					variables.Add(new Variable(var.Index, metadata.GetString(var.Name)));
+					variables.Add(new(var.Index, metadata.GetString(var.Name)));
 				}
 			}
 

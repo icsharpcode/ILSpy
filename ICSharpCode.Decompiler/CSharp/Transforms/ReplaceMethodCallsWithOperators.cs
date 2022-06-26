@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class ReplaceMethodCallsWithOperators : DepthFirstAstVisitor, IAstTransform
 	{
-		static readonly MemberReferenceExpression typeHandleOnTypeOfPattern = new MemberReferenceExpression {
+		static readonly MemberReferenceExpression typeHandleOnTypeOfPattern = new() {
 			Target = new Choice {
 				new TypeOfExpression(new AnyNode()),
 				new UndocumentedExpression { UndocumentedExpressionType = UndocumentedExpressionType.RefType, Arguments = { new AnyNode() } }
@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						arg = RemoveRedundantToStringInConcat(arg, method, isLastArgument: i == arguments.Length - 1).Detach();
 					}
-					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Add, arg);
+					expr = new(expr, BinaryOperatorType.Add, arg);
 				}
 				expr.CopyAnnotationsFrom(invocationExpression);
 				invocationExpression.ReplaceWith(expr);

@@ -56,8 +56,8 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			this.Description = description ?? $"Loaded from PDB file: {pdbFileName}";
 
 			var image = module.Reader.GetEntireImage();
-			this.debugInfo = new Dictionary<SRM.MethodDefinitionHandle, (IList<SequencePoint> SequencePoints, IList<Variable> Variables)>();
-			using (UnmanagedMemoryStream stream = new UnmanagedMemoryStream(image.Pointer, image.Length))
+			this.debugInfo = new();
+			using (UnmanagedMemoryStream stream = new(image.Pointer, image.Length))
 			using (var moduleDef = ModuleDefinition.ReadModule(stream))
 			{
 				moduleDef.ReadSymbols(new PdbReaderProvider().GetSymbolReader(moduleDef, pdbFileName));
@@ -74,7 +74,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 						sequencePoints = new List<SequencePoint>(debugInfo.SequencePoints.Count);
 						foreach (var point in debugInfo.SequencePoints)
 						{
-							sequencePoints.Add(new SequencePoint {
+							sequencePoints.Add(new() {
 								Offset = point.Offset,
 								StartLine = point.StartLine,
 								StartColumn = point.StartColumn,
@@ -91,7 +91,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 							continue;
 						foreach (var v in scope.Variables)
 						{
-							variables.Add(new Variable(v.Index, v.Name));
+							variables.Add(new(v.Index, v.Name));
 						}
 					}
 					this.debugInfo.Add(method, (sequencePoints, variables));

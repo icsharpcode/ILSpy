@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Unlike the cfg array, this can be used to discover control flow nodes even after
 		/// blocks were moved/reordered by transforms.
 		/// </summary>
-		readonly Dictionary<Block, ControlFlowNode> dict = new Dictionary<Block, ControlFlowNode>();
+		readonly Dictionary<Block, ControlFlowNode> dict = new();
 
 		/// <summary>
 		/// nodeHasDirectExitOutOfContainer[i] == true iff cfg[i] directly contains a
@@ -65,11 +65,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			this.container = container;
 			this.cfg = new ControlFlowNode[container.Blocks.Count];
-			this.nodeHasDirectExitOutOfContainer = new BitSet(cfg.Length);
+			this.nodeHasDirectExitOutOfContainer = new(cfg.Length);
 			for (int i = 0; i < cfg.Length; i++)
 			{
 				Block block = container.Blocks[i];
-				cfg[i] = new ControlFlowNode { UserIndex = i, UserData = block };
+				cfg[i] = new() { UserIndex = i, UserData = block };
 				dict.Add(block, cfg[i]);
 			}
 

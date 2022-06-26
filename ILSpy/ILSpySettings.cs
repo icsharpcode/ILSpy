@@ -62,15 +62,15 @@ namespace ICSharpCode.ILSpy
 				try
 				{
 					XDocument doc = LoadWithoutCheckingCharacters(GetConfigFile());
-					return new ILSpySettings(doc.Root);
+					return new(doc.Root);
 				}
 				catch (IOException)
 				{
-					return new ILSpySettings();
+					return new();
 				}
 				catch (XmlException)
 				{
-					return new ILSpySettings();
+					return new();
 				}
 			}
 		}

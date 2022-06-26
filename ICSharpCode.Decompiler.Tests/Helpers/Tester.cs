@@ -107,8 +107,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 #endif
 			packagesPropsFile = Path.Combine(TesterPath, "../../../../../packages.props");
 			roslynLatestVersion = XDocument.Load(packagesPropsFile).XPathSelectElement("//RoslynVersion").Value;
-			roslynToolset = new RoslynToolset();
-			vswhereToolset = new VsWhereToolset();
+			roslynToolset = new();
+			vswhereToolset = new();
 		}
 
 		internal static async Task Initialize()
@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					var metadata = peFile.Metadata;
 					var output = new PlainTextOutput(writer);
-					ReflectionDisassembler rd = new ReflectionDisassembler(output, CancellationToken.None);
+					ReflectionDisassembler rd = new(output, CancellationToken.None);
 					rd.AssemblyResolver = new UniversalAssemblyResolver(sourceFileName, true, null);
 					rd.DetectControlStructure = false;
 					rd.WriteAssemblyReferences(metadata);
@@ -250,7 +250,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 
 		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NET,
-			new Version(6, 0), "Microsoft.NETCore.App")
+			new(6, 0), "Microsoft.NETCore.App")
 				.GetReferenceAssemblyPath(".NETCoreApp,Version=v6.0");
 
 		public static readonly string RefAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
@@ -292,7 +292,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 ";
 
-		static readonly Lazy<string> targetFrameworkAttributeSnippetFile = new Lazy<string>(GetTargetFrameworkAttributeSnippetFile);
+		static readonly Lazy<string> targetFrameworkAttributeSnippetFile = new(GetTargetFrameworkAttributeSnippetFile);
 
 		static string GetTargetFrameworkAttributeSnippetFile()
 		{
@@ -377,7 +377,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static async Task<CompilerResults> CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
-			List<string> sourceFileNames = new List<string> { sourceFileName };
+			List<string> sourceFileNames = new() { sourceFileName };
 			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)"""))
 			{
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
@@ -393,7 +393,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			if ((flags & CompilerOptions.UseMcsMask) == 0)
 			{
-				CompilerResults results = new CompilerResults();
+				CompilerResults results = new();
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 
 				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch {
@@ -486,7 +486,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 			else
 			{
-				CompilerResults results = new CompilerResults();
+				CompilerResults results = new();
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 				string testBasePath = RoundtripAssembly.TestDir;
 				if (!Directory.Exists(testBasePath))
@@ -574,8 +574,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			var parseOptions = new CSharpParseOptions(languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.Latest);
 
-			List<EmbeddedText> embeddedTexts = new List<EmbeddedText>();
-			List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
+			List<EmbeddedText> embeddedTexts = new();
+			List<SyntaxTree> syntaxTrees = new();
 
 			foreach (KeyValuePair<string, string> file in sourceFiles)
 			{
@@ -586,7 +586,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(assemblyName),
 				syntaxTrees, coreDefaultReferences.Select(r => MetadataReference.CreateFromFile(Path.Combine(coreRefAsmPath, r))),
-				new CSharpCompilationOptions(
+				new(
 					OutputKind.DynamicallyLinkedLibrary,
 					platform: Platform.AnyCpu,
 					optimizationLevel: OptimizationLevel.Release,
@@ -596,15 +596,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			using (FileStream peStream = File.Open(assemblyName + ".dll", FileMode.OpenOrCreate, FileAccess.ReadWrite))
 			using (FileStream pdbStream = File.Open(assemblyName + ".pdb", FileMode.OpenOrCreate, FileAccess.ReadWrite))
 			{
-				var emitResult = compilation.Emit(peStream, pdbStream, options: new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb, pdbFilePath: assemblyName + ".pdb"), embeddedTexts: embeddedTexts);
+				var emitResult = compilation.Emit(peStream, pdbStream, options: new(debugInformationFormat: DebugInformationFormat.PortablePdb, pdbFilePath: assemblyName + ".pdb"), embeddedTexts: embeddedTexts);
 				if (!emitResult.Success)
 				{
-					StringBuilder b = new StringBuilder("Compiler error:");
+					StringBuilder b = new("Compiler error:");
 					foreach (var diag in emitResult.Diagnostics)
 					{
 						b.AppendLine(diag.ToString());
 					}
-					throw new Exception(b.ToString());
+					throw new(b.ToString());
 				}
 			}
 		}
@@ -660,7 +660,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static Task<string> DecompileCSharp(string assemblyFileName, DecompilerSettings settings = null)
 		{
 			if (settings == null)
-				settings = new DecompilerSettings();
+				settings = new();
 			using (var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read))
 			{
 				var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
@@ -669,7 +669,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					targetFramework, null, PEStreamOptions.PrefetchMetadata);
 				resolver.AddSearchDirectory(targetFramework.Contains(".NETFramework") ? RefAsmPath : coreRefAsmPath);
 				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
-				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings);
+				CSharpDecompiler decompiler = new(typeSystem, settings);
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAttributes());
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 				decompiler.AstTransforms.Insert(0, new RemoveNamespaceMy());
@@ -679,7 +679,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					decompiler.DebugInfoProvider = DebugInfoUtils.FromFile(module, pdbFileName);
 				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile(sortTypes: true);
 
-				StringWriter output = new StringWriter();
+				StringWriter output = new();
 				CSharpFormattingOptions formattingPolicy = CreateFormattingPolicyForTests();
 				var visitor = new CSharpOutputVisitor(output, formattingPolicy);
 				syntaxTree.AcceptVisitor(visitor);
@@ -723,7 +723,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			if (output1 != output2 || error1 != error2)
 			{
-				StringBuilder b = new StringBuilder();
+				StringBuilder b = new();
 				b.AppendLine($"Test {testFileName} failed: output does not match.");
 				if (decompiledCodeFile != null)
 				{

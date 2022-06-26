@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void SimpleUsingExpressionStatementWithDeclaration()
 		{
-			using (MemoryStream memoryStream = new MemoryStream())
+			using (MemoryStream memoryStream = new())
 			{
 				memoryStream.WriteByte(42);
 				Console.WriteLine("using-body: " + memoryStream.Position);
@@ -88,10 +88,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void UsingStatementThatChangesTheVariable()
 		{
-			CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+			CancellationTokenSource cancellationTokenSource = new();
 			using (cancellationTokenSource)
 			{
-				cancellationTokenSource = new CancellationTokenSource();
+				cancellationTokenSource = new();
 			}
 			cancellationTokenSource.Cancel();
 		}
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void UsingStatementOnStructWithVariable()
 		{
-			using (UsingStruct usingStruct = new UsingStruct(2))
+			using (UsingStruct usingStruct = new(2))
 			{
 				Console.WriteLine("using-body: " + usingStruct);
 			}

@@ -210,7 +210,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					{
 						if (substituteInferredTypes && inferredTypes != null)
 						{
-							outputGroup.Add(method.Specialize(new TypeParameterSubstitution(null, inferredTypes)));
+							outputGroup.Add(method.Specialize(new(null, inferredTypes)));
 						}
 						else
 						{
@@ -240,7 +240,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			Log.WriteCollection("  Arguments: ", arguments);
 
 			var typeArgumentArray = this.TypeArguments.ToArray();
-			OverloadResolution or = new OverloadResolution(compilation, arguments, argumentNames, typeArgumentArray, conversions);
+			OverloadResolution or = new(compilation, arguments, argumentNames, typeArgumentArray, conversions);
 			or.AllowExpandingParams = allowExpandingParams;
 			or.AllowOptionalParameters = allowOptionalParameters;
 			or.CheckForOverflow = checkForOverflow;
@@ -258,7 +258,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					Log.WriteLine("No candidate is applicable, trying {0} extension methods groups...", extensionMethods.Count());
 					ResolveResult[] extArguments = new ResolveResult[arguments.Length + 1];
-					extArguments[0] = new ResolveResult(this.TargetType);
+					extArguments[0] = new(this.TargetType);
 					arguments.CopyTo(extArguments, 1);
 					string[] extArgumentNames = null;
 					if (argumentNames != null)

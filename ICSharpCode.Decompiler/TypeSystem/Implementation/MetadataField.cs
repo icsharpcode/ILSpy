@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			IType ty;
 			try
 			{
-				ty = fieldDef.DecodeSignature(module.TypeProvider, new GenericContext(DeclaringType?.TypeParameters));
+				ty = fieldDef.DecodeSignature(module.TypeProvider, new(DeclaringType?.TypeParameters));
 				if (ty is ModifiedType mod && mod.Modifier.Name == "IsVolatile" && mod.Modifier.Namespace == "System.Runtime.CompilerServices")
 				{
 					Volatile.Write(ref this.isVolatile, true);

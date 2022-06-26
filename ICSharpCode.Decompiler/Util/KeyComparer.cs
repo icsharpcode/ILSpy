@@ -26,12 +26,12 @@ namespace ICSharpCode.Decompiler.Util
 	{
 		public static KeyComparer<TElement, TKey> Create<TElement, TKey>(Func<TElement, TKey> keySelector)
 		{
-			return new KeyComparer<TElement, TKey>(keySelector, Comparer<TKey>.Default, EqualityComparer<TKey>.Default);
+			return new(keySelector, Comparer<TKey>.Default, EqualityComparer<TKey>.Default);
 		}
 
 		public static KeyComparer<TElement, TKey> Create<TElement, TKey>(Func<TElement, TKey> keySelector, IComparer<TKey> comparer, IEqualityComparer<TKey> equalityComparer)
 		{
-			return new KeyComparer<TElement, TKey>(keySelector, comparer, equalityComparer);
+			return new(keySelector, comparer, equalityComparer);
 		}
 
 		public static IComparer<TElement> Create<TElement, TKey>(Func<TElement, TKey> keySelector, IComparer<TKey> comparer)

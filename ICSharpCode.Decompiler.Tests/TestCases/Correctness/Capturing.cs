@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			for (int i = 0; i < 10; i++)
 				Console.WriteLine(i);
 			// i no longer declared
-			List<Action> actions = new List<Action>();
+			List<Action> actions = new();
 			int max = 5;
 			string line;
 			while (ReadLine(out line, ref max))
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void TestCase2()
 		{
 			Console.WriteLine("TestCase2");
-			List<Action> actions = new List<Action>();
+			List<Action> actions = new();
 			int max = 5;
 			string line;
 			while (ReadLine(out line, ref max))
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void TestCase3()
 		{
 			Console.WriteLine("TestCase3");
-			List<Action> actions = new List<Action>();
+			List<Action> actions = new();
 			int max = 5;
 			string line, capture;
 			while (ReadLine(out line, ref max))
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void TestCase4(string capture)
 		{
 			Console.WriteLine("TestCase4");
-			List<Action> actions = new List<Action>();
+			List<Action> actions = new();
 			actions.Add(() => Console.WriteLine(capture));
 			Console.WriteLine("----");
 			foreach (var action in actions)
@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			{
 				int innerCapture = 0;
 				Action a = (delegate {
-					List<object> list = new List<object>();
+					List<object> list = new();
 					Console.WriteLine("before inc: " + innerCapture);
 					++innerCapture;
 					Console.WriteLine("after inc: " + innerCapture);

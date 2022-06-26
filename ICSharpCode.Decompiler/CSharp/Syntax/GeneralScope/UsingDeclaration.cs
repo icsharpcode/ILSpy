@@ -34,8 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UsingDeclaration : AstNode
 	{
-		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
-		public static readonly Role<AstType> ImportRole = new Role<AstType>("Import", AstType.Null);
+		public static readonly TokenRole UsingKeywordRole = new("using");
+		public static readonly Role<AstType> ImportRole = new("Import", AstType.Null);
 
 		public override NodeType NodeType {
 			get {

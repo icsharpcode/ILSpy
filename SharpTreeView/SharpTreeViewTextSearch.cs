@@ -60,7 +60,7 @@ namespace ICSharpCode.TreeView
 			var textSearch = (SharpTreeViewTextSearch)sharpTreeView.GetValue(TextSearchInstanceProperty);
 			if (textSearch == null)
 			{
-				textSearch = new SharpTreeViewTextSearch(sharpTreeView);
+				textSearch = new(sharpTreeView);
 				sharpTreeView.SetValue(TextSearchInstancePropertyKey, textSearch);
 			}
 			return textSearch;

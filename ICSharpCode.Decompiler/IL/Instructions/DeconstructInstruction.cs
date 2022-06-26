@@ -27,15 +27,15 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class DeconstructInstruction
 	{
-		public static readonly SlotInfo InitSlot = new SlotInfo("Init", canInlineInto: true, isCollection: true);
-		public static readonly SlotInfo PatternSlot = new SlotInfo("Pattern", canInlineInto: true);
-		public static readonly SlotInfo ConversionsSlot = new SlotInfo("Conversions");
-		public static readonly SlotInfo AssignmentsSlot = new SlotInfo("Assignments");
+		public static readonly SlotInfo InitSlot = new("Init", canInlineInto: true, isCollection: true);
+		public static readonly SlotInfo PatternSlot = new("Pattern", canInlineInto: true);
+		public static readonly SlotInfo ConversionsSlot = new("Conversions");
+		public static readonly SlotInfo AssignmentsSlot = new("Assignments");
 
 		public DeconstructInstruction()
 			: base(OpCode.DeconstructInstruction)
 		{
-			this.Init = new InstructionCollection<StLoc>(this, 0);
+			this.Init = new(this, 0);
 		}
 
 		public readonly InstructionCollection<StLoc> Init;

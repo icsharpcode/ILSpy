@@ -187,7 +187,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		internal static IEnumerable<IAttribute> GetAttributes(IMember member)
 		{
-			HashSet<IMember> visitedMembers = new HashSet<IMember>();
+			HashSet<IMember> visitedMembers = new();
 			do
 			{
 				member = member.MemberDefinition; // it's sufficient to look at the definitions

@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public BitSet Clone()
 		{
-			return new BitSet((ulong[])words.Clone());
+			return new((ulong[])words.Clone());
 		}
 
 		public bool this[int index] {
@@ -276,7 +276,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder();
+			StringBuilder b = new();
 			b.Append('{');
 			for (int i = 0; i < words.Length * BitsPerWord; i++)
 			{

@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override string Name {
 			get {
-				StringBuilder b = new StringBuilder();
+				StringBuilder b = new();
 				foreach (var t in types)
 				{
 					if (b.Length > 0)
@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override string ReflectionName {
 			get {
-				StringBuilder b = new StringBuilder();
+				StringBuilder b = new();
 				foreach (var t in types)
 				{
 					if (b.Length > 0)

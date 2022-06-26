@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				lock (this)
 				{
-					AnnotationList copy = new AnnotationList(this.Count);
+					AnnotationList copy = new(this.Count);
 					for (int i = 0; i < this.Count; i++)
 					{
 						object obj = this[i];
@@ -145,7 +145,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (list == null)
 			{
 				// we need to transform the old annotation into a list
-				list = new AnnotationList(4);
+				list = new(4);
 				list.Add(oldAnnotation);
 				list.Add(annotation);
 				if (Interlocked.CompareExchange(ref this.annotations, list, oldAnnotation) != oldAnnotation)

@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				string resolvedPath = properties[1] as string;
 				if ((fusionName != null) || (resolvedPath != null))
 				{
-					return new ProjectReferenceForILSpy(projectItem, fusionName, resolvedPath);
+					return new(projectItem, fusionName, resolvedPath);
 				}
 			}
 
@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			{
 				if (projectReferences.TryGetValue(projectItem.Name, out DetectedReference path))
 				{
-					return new ILSpyParameters(new[] { path.AssemblyFile });
+					return new(new[] { path.AssemblyFile });
 				}
 			}
 
@@ -76,11 +76,11 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			if (resolvedPath != null)
 			{
-				return new ILSpyParameters(new[] { $"{resolvedPath}" });
+				return new(new[] { $"{resolvedPath}" });
 			}
 			else if (!string.IsNullOrWhiteSpace(fusionName))
 			{
-				return new ILSpyParameters(new string[] { UniversalAssemblyResolver.GetAssemblyInGac(Decompiler.Metadata.AssemblyNameReference.Parse(fusionName)) });
+				return new(new string[] { UniversalAssemblyResolver.GetAssemblyInGac(Decompiler.Metadata.AssemblyNameReference.Parse(fusionName)) });
 			}
 
 			return null;

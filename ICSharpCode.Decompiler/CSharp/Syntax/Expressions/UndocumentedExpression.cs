@@ -41,10 +41,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UndocumentedExpression : Expression
 	{
-		public readonly static TokenRole ArglistKeywordRole = new TokenRole("__arglist");
-		public readonly static TokenRole RefvalueKeywordRole = new TokenRole("__refvalue");
-		public readonly static TokenRole ReftypeKeywordRole = new TokenRole("__reftype");
-		public readonly static TokenRole MakerefKeywordRole = new TokenRole("__makeref");
+		public readonly static TokenRole ArglistKeywordRole = new("__arglist");
+		public readonly static TokenRole RefvalueKeywordRole = new("__refvalue");
+		public readonly static TokenRole ReftypeKeywordRole = new("__reftype");
+		public readonly static TokenRole MakerefKeywordRole = new("__makeref");
 
 		public UndocumentedExpressionType UndocumentedExpressionType {
 			get; set;

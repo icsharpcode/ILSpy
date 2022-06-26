@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	public class AssignVariableNames : IILTransform
 	{
-		static readonly Dictionary<string, string> typeNameToVariableNameDict = new Dictionary<string, string> {
+		static readonly Dictionary<string, string> typeNameToVariableNameDict = new() {
 			{ "System.Boolean", "flag" },
 			{ "System.Byte", "b" },
 			{ "System.SByte", "b" },
@@ -63,8 +63,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			this.context = context;
 
-			reservedVariableNames = new Dictionary<string, int>();
-			currentLowerCaseTypeOrMemberNames = new List<string>();
+			reservedVariableNames = new();
+			currentLowerCaseTypeOrMemberNames = new();
 			var currentLowerCaseMemberNames = CollectAllLowerCaseMemberNames(function.Method.DeclaringTypeDefinition);
 			foreach (var name in currentLowerCaseMemberNames)
 				currentLowerCaseTypeOrMemberNames.Add(name);
@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				currentLowerCaseTypeOrMemberNames.Add(name);
 				AddExistingName(reservedVariableNames, name);
 			}
-			localFunctionMapping = new Dictionary<MethodDefinitionHandle, string>();
+			localFunctionMapping = new();
 			loopCounters = CollectLoopCounters(function);
 			foreach (var f in function.Descendants.OfType<ILFunction>())
 			{
@@ -198,7 +198,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// remove unused variables before assigning names
 			function.Variables.RemoveDead();
 			int numDisplayClassLocals = 0;
-			Dictionary<int, string> assignedLocalSignatureIndices = new Dictionary<int, string>();
+			Dictionary<int, string> assignedLocalSignatureIndices = new();
 			foreach (var v in function.Variables.OrderBy(v => v.Name))
 			{
 				switch (v.Kind)

@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class BlockStatement : Statement, IEnumerable<Statement>
 	{
-		public static readonly Role<Statement> StatementRole = new Role<Statement>("Statement", Statement.Null);
+		public static readonly Role<Statement> StatementRole = new("Statement", Statement.Null);
 
 		#region Null
 		public static readonly new BlockStatement Null = new NullBlockStatement();

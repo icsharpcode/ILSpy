@@ -14,9 +14,9 @@ namespace Humanizer.Inflections
 		{
 		}
 
-		private readonly List<Rule> _plurals = new List<Rule>();
-		private readonly List<Rule> _singulars = new List<Rule>();
-		private readonly List<string> _uncountables = new List<string>();
+		private readonly List<Rule> _plurals = new();
+		private readonly List<Rule> _singulars = new();
+		private readonly List<string> _uncountables = new();
 
 		/// <summary>
 		/// Adds a word to the vocabulary which cannot easily be pluralized/singularized by RegEx, e.g. "person" and "people".
@@ -54,7 +54,7 @@ namespace Humanizer.Inflections
 		/// <param name="replacement">RegEx replacement  e.g. "$1"</param>
 		public void AddPlural(string rule, string replacement)
 		{
-			_plurals.Add(new Rule(rule, replacement));
+			_plurals.Add(new(rule, replacement));
 		}
 
 		/// <summary>
@@ -64,7 +64,7 @@ namespace Humanizer.Inflections
 		/// <param name="replacement">RegEx replacement  e.g. "$1ex"</param>
 		public void AddSingular(string rule, string replacement)
 		{
-			_singulars.Add(new Rule(rule, replacement));
+			_singulars.Add(new(rule, replacement));
 		}
 
 		/// <summary>
@@ -160,7 +160,7 @@ namespace Humanizer.Inflections
 
 			public Rule(string pattern, string replacement)
 			{
-				_regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+				_regex = new(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 				_replacement = replacement;
 			}
 

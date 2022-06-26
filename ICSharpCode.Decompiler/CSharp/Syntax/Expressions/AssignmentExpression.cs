@@ -39,17 +39,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static Role<Expression> LeftRole = BinaryOperatorExpression.LeftRole;
 		public readonly static Role<Expression> RightRole = BinaryOperatorExpression.RightRole;
 
-		public readonly static TokenRole AssignRole = new TokenRole("=");
-		public readonly static TokenRole AddRole = new TokenRole("+=");
-		public readonly static TokenRole SubtractRole = new TokenRole("-=");
-		public readonly static TokenRole MultiplyRole = new TokenRole("*=");
-		public readonly static TokenRole DivideRole = new TokenRole("/=");
-		public readonly static TokenRole ModulusRole = new TokenRole("%=");
-		public readonly static TokenRole ShiftLeftRole = new TokenRole("<<=");
-		public readonly static TokenRole ShiftRightRole = new TokenRole(">>=");
-		public readonly static TokenRole BitwiseAndRole = new TokenRole("&=");
-		public readonly static TokenRole BitwiseOrRole = new TokenRole("|=");
-		public readonly static TokenRole ExclusiveOrRole = new TokenRole("^=");
+		public readonly static TokenRole AssignRole = new("=");
+		public readonly static TokenRole AddRole = new("+=");
+		public readonly static TokenRole SubtractRole = new("-=");
+		public readonly static TokenRole MultiplyRole = new("*=");
+		public readonly static TokenRole DivideRole = new("/=");
+		public readonly static TokenRole ModulusRole = new("%=");
+		public readonly static TokenRole ShiftLeftRole = new("<<=");
+		public readonly static TokenRole ShiftRightRole = new(">>=");
+		public readonly static TokenRole BitwiseAndRole = new("&=");
+		public readonly static TokenRole BitwiseOrRole = new("|=");
+		public readonly static TokenRole ExclusiveOrRole = new("^=");
 
 		public AssignmentExpression()
 		{

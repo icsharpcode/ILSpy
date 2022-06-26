@@ -158,7 +158,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				buffer[read++] = (char)current;
 			}
 
-			return new string(buffer, 0, read);
+			return new(buffer, 0, read);
 		}
 
 		static byte[] ReadBytes(int length)
@@ -177,8 +177,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void Test()
 		{
 			Console.WriteLine("op_Implicit tests");
-			ExplicitUseOfImplicitConversion(new C1());
-			Console.WriteLine(ChainedImplicitConversions(new C2()).Name);
+			ExplicitUseOfImplicitConversion(new());
+			Console.WriteLine(ChainedImplicitConversions(new()).Name);
 		}
 
 		static void ExplicitUseOfImplicitConversion(C1 c)
@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		public static implicit operator C1(C2 c)
 		{
-			return new C1();
+			return new();
 		}
 	}
 }

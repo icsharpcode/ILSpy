@@ -77,8 +77,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			string currentNamespace;
 
-			public readonly HashSet<string> DeclaredNamespaces = new HashSet<string>() { string.Empty };
-			public readonly HashSet<string> ImportedNamespaces = new HashSet<string>();
+			public readonly HashSet<string> DeclaredNamespaces = new() { string.Empty };
+			public readonly HashSet<string> ImportedNamespaces = new();
 
 			public FindRequiredImports(TransformContext context)
 			{
@@ -138,19 +138,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				CSharpTypeResolveContext currentContext;
 				if (ignoreUsingScope)
 				{
-					currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule);
+					currentContext = new(context.TypeSystem.MainModule);
 				}
 				else
 				{
-					this.context = new Stack<CSharpTypeResolveContext>();
+					this.context = new();
 					if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace))
 					{
 						foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.'))
 						{
-							usingScope = new UsingScope(usingScope, ns);
+							usingScope = new(usingScope, ns);
 						}
 					}
-					currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.CurrentTypeDefinition);
+					currentContext = new(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.CurrentTypeDefinition);
 					this.context.Push(currentContext);
 				}
 				this.astBuilder = CreateAstBuilder(currentContext);
@@ -158,7 +158,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			TypeSystemAstBuilder CreateAstBuilder(CSharpTypeResolveContext context, IL.ILFunction function = null)
 			{
-				CSharpResolver resolver = new CSharpResolver(context);
+				CSharpResolver resolver = new(context);
 				if (function != null)
 				{
 					foreach (var v in function.Variables)
@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 				}
 
-				return new TypeSystemAstBuilder(resolver) {
+				return new(resolver) {
 					UseNullableSpecifierForValueTypes = settings.LiftNullables,
 					AddResolveResultAnnotations = true,
 					UseAliases = true
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
 				foreach (string ident in namespaceDeclaration.Identifiers)
 				{
-					usingScope = new UsingScope(usingScope, ident);
+					usingScope = new(usingScope, ident);
 				}
 				var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule, usingScope.Resolve(previousContext.Compilation));
 				context.Push(currentContext);
@@ -262,7 +262,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					CSharpTypeResolveContext currentContext;
 					if (CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(method))
 					{
-						currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule);
+						currentContext = new(previousContext.CurrentModule);
 					}
 					else
 					{

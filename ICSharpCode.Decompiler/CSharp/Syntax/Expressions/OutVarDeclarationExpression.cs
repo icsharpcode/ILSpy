@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public OutVarDeclarationExpression(AstType type, string name)
 		{
 			this.Type = type;
-			this.Variable = new VariableInitializer(name);
+			this.Variable = new(name);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

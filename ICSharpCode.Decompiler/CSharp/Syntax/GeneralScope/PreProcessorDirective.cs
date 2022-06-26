@@ -69,12 +69,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class PragmaWarningPreprocessorDirective : PreProcessorDirective
 	{
-		public static readonly Role<PrimitiveExpression> WarningRole = new Role<PrimitiveExpression>("Warning", null);
+		public static readonly Role<PrimitiveExpression> WarningRole = new("Warning", null);
 
-		public static readonly TokenRole PragmaKeywordRole = new TokenRole("#pragma");
-		public static readonly TokenRole WarningKeywordRole = new TokenRole("warning");
-		public static readonly TokenRole DisableKeywordRole = new TokenRole("disable");
-		public static readonly TokenRole RestoreKeywordRole = new TokenRole("restore");
+		public static readonly TokenRole PragmaKeywordRole = new("#pragma");
+		public static readonly TokenRole WarningKeywordRole = new("warning");
+		public static readonly TokenRole DisableKeywordRole = new("disable");
+		public static readonly TokenRole RestoreKeywordRole = new("restore");
 
 		public bool Disable {
 			get {

@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpyX
 
 		/// <summary>Dirty flag, used to mark modifications so that the list is saved later</summary>
 		bool dirty;
-		readonly object lockObj = new object();
+		readonly object lockObj = new();
 
 		/// <summary>
 		/// The assemblies in this list.
@@ -57,14 +57,14 @@ namespace ICSharpCode.ILSpyX
 		/// Technically read accesses need locking when done on non-GUI threads... but whenever possible, use the
 		/// thread-safe <see cref="GetAssemblies()"/> method.
 		/// </remarks>
-		readonly ObservableCollection<LoadedAssembly> assemblies = new ObservableCollection<LoadedAssembly>();
+		readonly ObservableCollection<LoadedAssembly> assemblies = new();
 
 		/// <summary>
 		/// Assembly lookup by filename.
 		/// Usually byFilename.Values == assemblies; but when an assembly is loaded by a background thread,
 		/// that assembly is added to byFilename immediately, and to assemblies only later on the main thread.
 		/// </summary>
-		readonly Dictionary<string, LoadedAssembly> byFilename = new Dictionary<string, LoadedAssembly>(StringComparer.OrdinalIgnoreCase);
+		readonly Dictionary<string, LoadedAssembly> byFilename = new(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
 		/// Exists for testing only.
@@ -145,7 +145,7 @@ namespace ICSharpCode.ILSpyX
 		{
 			lock (lockObj)
 			{
-				return new AssemblyListSnapshot(assemblies.ToImmutableArray());
+				return new(assemblies.ToImmutableArray());
 			}
 		}
 
@@ -171,7 +171,7 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		internal XElement SaveAsXml()
 		{
-			return new XElement(
+			return new(
 				"List",
 				new XAttribute("name", this.ListName),
 				assemblies.Where(asm => !asm.IsAutoLoaded).Select(asm => new XElement("Assembly", asm.FileName))
@@ -405,7 +405,7 @@ namespace ICSharpCode.ILSpyX
 			VerifyAccess();
 			lock (lockObj)
 			{
-				List<LoadedAssembly> list = new List<LoadedAssembly>(assemblies);
+				List<LoadedAssembly> list = new(assemblies);
 				list.Sort(index, Math.Min(count, list.Count - index), comparer);
 				assemblies.Clear();
 				assemblies.AddRange(list);
@@ -420,7 +420,7 @@ namespace ICSharpCode.ILSpyX
 			}
 			else
 			{
-				synchronizationContext.Post(new SendOrPostCallback(_ => action()), null);
+				synchronizationContext.Post(new(_ => action()), null);
 			}
 		}
 

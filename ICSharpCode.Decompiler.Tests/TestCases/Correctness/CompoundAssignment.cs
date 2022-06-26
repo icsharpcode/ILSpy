@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
-		IntPtr intPtrField = new IntPtr(IntPtr.Size == 8 ? long.MaxValue : int.MaxValue);
+		IntPtr intPtrField = new(IntPtr.Size == 8 ? long.MaxValue : int.MaxValue);
 
 		public IntPtr IntPtrProperty {
 			get {
@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static Dictionary<string, int> GetDict()
 		{
 			Console.WriteLine("In GetDict()");
-			return new Dictionary<string, int>() { { GetString(), 5 } };
+			return new() { { GetString(), 5 } };
 		}
 
 		static CompoundAssignment GetObject()

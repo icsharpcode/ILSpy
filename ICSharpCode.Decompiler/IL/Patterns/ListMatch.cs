@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		/// before it can be reused.</returns>
 		internal static bool DoMatch(IReadOnlyList<ILInstruction> patterns, IReadOnlyList<ILInstruction?> syntaxList, ref Match match)
 		{
-			ListMatch listMatch = new ListMatch(syntaxList);
+			ListMatch listMatch = new(syntaxList);
 			do
 			{
 				if (PerformMatchSequence(patterns, ref listMatch, ref match))
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 			{
 				this.CheckPoint = checkpoint;
 				this.SyntaxIndex = syntaxIndex;
-				this.stack = new Stack<int>();
+				this.stack = new();
 			}
 		}
 
@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		void AddSavePoint(SavePoint savepoint)
 		{
 			if (backtrackingStack == null)
-				backtrackingStack = new List<SavePoint>();
+				backtrackingStack = new();
 			backtrackingStack.Add(savepoint);
 		}
 

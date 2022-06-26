@@ -183,7 +183,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void LoadDefaults()
 		{
-			currentDisplaySettings = new DisplaySettings();
+			currentDisplaySettings = new();
 			this.DataContext = currentDisplaySettings;
 		}
 	}

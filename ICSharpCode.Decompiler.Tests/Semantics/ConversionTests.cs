@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			compilation = new SimpleCompilation(TypeSystemLoaderTests.TestAssembly,
 				TypeSystemLoaderTests.Mscorlib,
 				TypeSystemLoaderTests.SystemCore);
-			conversions = new CSharpConversions(compilation);
+			conversions = new(compilation);
 		}
 
 		Conversion ImplicitConversion(Type from, Type to)
@@ -525,7 +525,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		bool IntegerLiteralConversion(object value, Type to)
 		{
 			IType fromType = compilation.FindType(value.GetType());
-			ConstantResolveResult crr = new ConstantResolveResult(fromType, value);
+			ConstantResolveResult crr = new(fromType, value);
 			IType to2 = compilation.FindType(to);
 			return conversions.ImplicitConversion(crr, to2).IsValid;
 		}
@@ -611,7 +611,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		int BetterConversion(object value, Type t1, Type t2)
 		{
 			IType fromType = compilation.FindType(value.GetType());
-			ConstantResolveResult crr = new ConstantResolveResult(fromType, value);
+			ConstantResolveResult crr = new(fromType, value);
 			IType t1Type = compilation.FindType(t1);
 			IType t2Type = compilation.FindType(t2);
 			return conversions.BetterConversion(crr, t1Type, t2Type);

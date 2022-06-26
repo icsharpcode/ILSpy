@@ -59,7 +59,7 @@ namespace ICSharpCode.ILSpyX
 		/// Maps from PEFile (successfully loaded .NET module) back to the LoadedAssembly instance
 		/// that was used to load the module.
 		/// </summary>
-		internal static readonly ConditionalWeakTable<PEFile, LoadedAssembly> loadedAssemblies = new ConditionalWeakTable<PEFile, LoadedAssembly>();
+		internal static readonly ConditionalWeakTable<PEFile, LoadedAssembly> loadedAssemblies = new();
 
 		public sealed class LoadResult
 		{
@@ -149,7 +149,7 @@ namespace ICSharpCode.ILSpyX
 			return value;
 		}
 
-		public ReferenceLoadInfo LoadedAssemblyReferencesInfo { get; } = new ReferenceLoadInfo();
+		public ReferenceLoadInfo LoadedAssemblyReferencesInfo { get; } = new();
 
 		IDebugInfoProvider? debugInfoProvider;
 
@@ -230,7 +230,7 @@ namespace ICSharpCode.ILSpyX
 			});
 		}
 
-		readonly object typeSystemWithOptionsLockObj = new object();
+		readonly object typeSystemWithOptionsLockObj = new();
 		ICompilation? typeSystemWithOptions;
 		TypeSystemOptions? currentTypeSystemOptions;
 
@@ -364,14 +364,14 @@ namespace ICSharpCode.ILSpyX
 			if (bundle != null)
 			{
 				bundle.LoadedAssembly = this;
-				return new LoadResult(loadAssemblyException, bundle);
+				return new(loadAssemblyException, bundle);
 			}
 			// If it's not a .NET module, maybe it's a zip archive (e.g. .nupkg)
 			try
 			{
 				var zip = LoadedPackage.FromZipFile(fileName);
 				zip.LoadedAssembly = this;
-				return new LoadResult(loadAssemblyException, zip);
+				return new(loadAssemblyException, zip);
 			}
 			catch (InvalidDataException)
 			{
@@ -385,14 +385,14 @@ namespace ICSharpCode.ILSpyX
 				? MetadataReaderOptions.ApplyWindowsRuntimeProjections
 				: MetadataReaderOptions.None;
 
-			PEFile module = new PEFile(fileName, stream, streamOptions, metadataOptions: options);
+			PEFile module = new(fileName, stream, streamOptions, metadataOptions: options);
 
 			debugInfoProvider = LoadDebugInfo(module);
 			lock (loadedAssemblies)
 			{
 				loadedAssemblies.Add(module, this);
 			}
-			return new LoadResult(module);
+			return new(module);
 		}
 
 		LoadResult LoadCompressedAssembly(string fileName)
@@ -647,7 +647,7 @@ namespace ICSharpCode.ILSpyX
 
 				var rootedPath = Path.IsPathRooted(this.FileName) ? this.FileName : null;
 
-				return new UniversalAssemblyResolver(rootedPath, throwOnError: false, targetFramework,
+				return new(rootedPath, throwOnError: false, targetFramework,
 					runtimePack, PEStreamOptions.PrefetchEntireImage, readerOptions);
 			})!;
 		}

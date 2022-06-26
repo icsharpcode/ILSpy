@@ -45,10 +45,10 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 		[OneTimeSetUp]
 		public void Setup()
 		{
-			assemblyList = new AssemblyList();
+			assemblyList = new();
 			testAssembly = assemblyList.OpenAssembly(typeof(MethodUsesAnalyzerTests).Assembly.Location);
 			testAssemblyTypeSystem = new DecompilerTypeSystem(testAssembly.GetPEFileOrNull(), testAssembly.GetAssemblyResolver());
-			language = new CSharpLanguage();
+			language = new();
 		}
 
 		[Test]

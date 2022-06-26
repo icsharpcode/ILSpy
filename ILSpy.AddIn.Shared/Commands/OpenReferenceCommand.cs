@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			instance = new OpenReferenceCommand(owner);
+			instance = new(owner);
 		}
 	}
 

@@ -31,19 +31,19 @@ namespace ICSharpCode.Decompiler.Util
 
 		public MultiDictionary()
 		{
-			dict = new Dictionary<TKey, List<TValue>>();
+			dict = new();
 		}
 
 		public MultiDictionary(IEqualityComparer<TKey>? comparer)
 		{
-			dict = new Dictionary<TKey, List<TValue>>(comparer);
+			dict = new(comparer);
 		}
 
 		public void Add(TKey key, TValue value)
 		{
 			if (!dict.TryGetValue(key, out List<TValue>? valueList))
 			{
-				valueList = new List<TValue>();
+				valueList = new();
 				dict.Add(key, valueList);
 			}
 			valueList.Add(value);

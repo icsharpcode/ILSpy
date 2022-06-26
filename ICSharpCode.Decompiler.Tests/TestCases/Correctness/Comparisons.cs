@@ -48,10 +48,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Issue2398(0x100000000);
 
 			Console.WriteLine("OverloadedOperators:");
-			Console.WriteLine(IsNotNull(new OverloadedOperators()));
-			Console.WriteLine(IsNull(new OverloadedOperators()));
-			Console.WriteLine(NullIs(new OverloadedOperators()));
-			Console.WriteLine(NullIsNot(new OverloadedOperators()));
+			Console.WriteLine(IsNotNull(new()));
+			Console.WriteLine(IsNull(new()));
+			Console.WriteLine(NullIs(new()));
+			Console.WriteLine(NullIsNot(new()));
 			return 0;
 		}
 

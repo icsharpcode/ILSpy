@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.IL
 {
 	public abstract class TryInstruction : ILInstruction
 	{
-		public static readonly SlotInfo TryBlockSlot = new SlotInfo("TryBlock");
+		public static readonly SlotInfo TryBlockSlot = new("TryBlock");
 
 		protected TryInstruction(OpCode opCode, ILInstruction tryBlock) : base(opCode)
 		{
@@ -52,12 +52,12 @@ namespace ICSharpCode.Decompiler.IL
 	/// </remarks>
 	partial class TryCatch : TryInstruction
 	{
-		public static readonly SlotInfo HandlerSlot = new SlotInfo("Handler", isCollection: true);
+		public static readonly SlotInfo HandlerSlot = new("Handler", isCollection: true);
 		public readonly InstructionCollection<TryCatchHandler> Handlers;
 
 		public TryCatch(ILInstruction tryBlock) : base(OpCode.TryCatch, tryBlock)
 		{
-			this.Handlers = new InstructionCollection<TryCatchHandler>(this, 1);
+			this.Handlers = new(this, 1);
 		}
 
 		public override ILInstruction Clone()
@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class TryFinally
 	{
-		public static readonly SlotInfo FinallyBlockSlot = new SlotInfo("FinallyBlock");
+		public static readonly SlotInfo FinallyBlockSlot = new("FinallyBlock");
 
 		public TryFinally(ILInstruction tryBlock, ILInstruction finallyBlock) : base(OpCode.TryFinally, tryBlock)
 		{
@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class TryFault
 	{
-		public static readonly SlotInfo FaultBlockSlot = new SlotInfo("FaultBlock");
+		public static readonly SlotInfo FaultBlockSlot = new("FaultBlock");
 
 		public TryFault(ILInstruction tryBlock, ILInstruction faultBlock) : base(OpCode.TryFinally, tryBlock)
 		{

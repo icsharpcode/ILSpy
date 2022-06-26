@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (type != FileType.Binary)
 				{
 					s.Position = 0;
-					AvalonEditTextOutput output = new AvalonEditTextOutput();
+					AvalonEditTextOutput output = new();
 					output.Title = Resource.Name;
 					output.Write(FileReader.OpenStream(s, Encoding.UTF8).ReadToEnd());
 					string ext;

@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							return;
 						if (!(invocation.GetSymbol() is IMethod ctor && ctor.IsConstructor))
 							return;
-						ci = new ConstructorInitializer();
+						ci = new();
 						var target = mre.Target;
 						// Ignore casts, those might be added if references are missing.
 						if (target is CastExpression cast)
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					case AssignmentExpression assignment:
 						if (!(assignment.Right is ObjectCreateExpression oce && oce.GetSymbol() is IMethod ctor2 && ctor2.DeclaringTypeDefinition == currentCtor.DeclaringTypeDefinition))
 							return;
-						ci = new ConstructorInitializer();
+						ci = new();
 						if (assignment.Left is ThisReferenceExpression)
 							ci.ConstructorInitializerType = ConstructorInitializerType.This;
 						else
@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		static readonly ExpressionStatement fieldInitializerPattern = new ExpressionStatement {
+		static readonly ExpressionStatement fieldInitializerPattern = new() {
 			Expression = new AssignmentExpression {
 				Left = new Choice {
 					new NamedNode("fieldAccess", new MemberReferenceExpression {
@@ -284,11 +284,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				var ctor = instanceCtors[0];
 				// dynamically create a pattern of an empty ctor
-				ConstructorDeclaration emptyCtorPattern = new ConstructorDeclaration();
+				ConstructorDeclaration emptyCtorPattern = new();
 				emptyCtorPattern.Modifiers = contextTypeDefinition.IsAbstract ? Modifiers.Protected : Modifiers.Public;
 				if (ctor.HasModifier(Modifiers.Unsafe))
 					emptyCtorPattern.Modifiers |= Modifiers.Unsafe;
-				emptyCtorPattern.Body = new BlockStatement();
+				emptyCtorPattern.Body = new();
 
 				if (emptyCtorPattern.IsMatch(ctor))
 				{
@@ -400,25 +400,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						switch (args[0].ConstantValue)
 						{
 							case double d:
-								value = new decimal(d);
+								value = new(d);
 								return true;
 							case float f:
-								value = new decimal(f);
+								value = new(f);
 								return true;
 							case long l:
-								value = new decimal(l);
+								value = new(l);
 								return true;
 							case int i:
-								value = new decimal(i);
+								value = new(i);
 								return true;
 							case ulong ul:
-								value = new decimal(ul);
+								value = new(ul);
 								return true;
 							case uint ui:
-								value = new decimal(ui);
+								value = new(ui);
 								return true;
 							case int[] bits when bits.Length == 4 && (bits[3] & 0x7F00FFFF) == 0 && (bits[3] & 0xFF000000) <= 0x1C000000:
-								value = new decimal(bits);
+								value = new(bits);
 								return true;
 							default:
 								return false;
@@ -431,7 +431,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						args[3].ConstantValue is bool isNegative &&
 						args[4].ConstantValue is byte scale)
 					{
-						value = new decimal(lo, mid, hi, isNegative, scale);
+						value = new(lo, mid, hi, isNegative, scale);
 						return true;
 					}
 					return false;

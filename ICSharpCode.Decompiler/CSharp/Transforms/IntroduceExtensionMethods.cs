@@ -46,21 +46,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			rootNode.AcceptVisitor(this);
 		}
 
-		Stack<CSharpTypeResolveContext> resolveContextStack = new Stack<CSharpTypeResolveContext>();
+		Stack<CSharpTypeResolveContext> resolveContextStack = new();
 
 		void InitializeContext(UsingScope usingScope)
 		{
-			this.resolveContextStack = new Stack<CSharpTypeResolveContext>();
+			this.resolveContextStack = new();
 			if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace))
 			{
 				foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.'))
 				{
-					usingScope = new UsingScope(usingScope, ns);
+					usingScope = new(usingScope, ns);
 				}
 			}
 			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.CurrentTypeDefinition);
 			this.resolveContextStack.Push(currentContext);
-			this.resolver = new CSharpResolver(currentContext);
+			this.resolver = new(currentContext);
 		}
 
 		public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
@@ -69,18 +69,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
 			foreach (string ident in namespaceDeclaration.Identifiers)
 			{
-				usingScope = new UsingScope(usingScope, ident);
+				usingScope = new(usingScope, ident);
 			}
 			var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule, usingScope.Resolve(previousContext.Compilation));
 			resolveContextStack.Push(currentContext);
 			try
 			{
-				this.resolver = new CSharpResolver(currentContext);
+				this.resolver = new(currentContext);
 				base.VisitNamespaceDeclaration(namespaceDeclaration);
 			}
 			finally
 			{
-				this.resolver = new CSharpResolver(previousContext);
+				this.resolver = new(previousContext);
 				resolveContextStack.Pop();
 			}
 		}
@@ -92,12 +92,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			resolveContextStack.Push(currentContext);
 			try
 			{
-				this.resolver = new CSharpResolver(currentContext);
+				this.resolver = new(currentContext);
 				base.VisitTypeDeclaration(typeDeclaration);
 			}
 			finally
 			{
-				this.resolver = new CSharpResolver(previousContext);
+				this.resolver = new(previousContext);
 				resolveContextStack.Pop();
 			}
 		}
@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (invocationExpression.Target is IdentifierExpression identifierExpression)
 			{
 				identifierExpression.Detach();
-				memberRefExpr = new MemberReferenceExpression(firstArgument.Detach(), method.Name, identifierExpression.TypeArguments.Detach());
+				memberRefExpr = new(firstArgument.Detach(), method.Name, identifierExpression.TypeArguments.Detach());
 				invocationExpression.Target = memberRefExpr;
 			}
 			else
@@ -211,7 +211,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public static bool CanTransformToExtensionMethodCall(CSharpTypeResolveContext resolveContext,
 			InvocationExpression invocationExpression)
 		{
-			return CanTransformToExtensionMethodCall(new CSharpResolver(resolveContext),
+			return CanTransformToExtensionMethodCall(new(resolveContext),
 				invocationExpression, out _, out _, out _);
 		}
 

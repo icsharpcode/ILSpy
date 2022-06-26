@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy
 
 		public static string GetWindowText(IntPtr hWnd, int maxLength)
 		{
-			StringBuilder b = new StringBuilder(maxLength + 1);
+			StringBuilder b = new(maxLength + 1);
 			if (GetWindowText(hWnd, b, b.Capacity) != 0)
 				return b.ToString();
 			else
@@ -87,14 +87,14 @@ namespace ICSharpCode.ILSpy
 				string[] result = new string[numberOfArgs];
 				for (int i = 0; i < numberOfArgs; i++)
 				{
-					result[i] = new string(arr[i]);
+					result[i] = new(arr[i]);
 				}
 				return result;
 			}
 			finally
 			{
 				// Free memory obtained by CommandLineToArgW.
-				LocalFree(new IntPtr(arr));
+				LocalFree(new(arr));
 			}
 		}
 
@@ -113,7 +113,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (arguments == null)
 				return null;
-			StringBuilder b = new StringBuilder();
+			StringBuilder b = new();
 			for (int i = 0; i < arguments.Length; i++)
 			{
 				if (i > 0)

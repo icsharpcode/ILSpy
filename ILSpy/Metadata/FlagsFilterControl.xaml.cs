@@ -80,13 +80,13 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			if (e.RemovedItems?.OfType<Flag>().Any(f => f.Value == -1) == true)
 			{
-				Filter = new FlagsContentFilter(0);
+				Filter = new(0);
 				listBox.UnselectAll();
 				return;
 			}
 			if (e.AddedItems?.OfType<Flag>().Any(f => f.Value == -1) == true)
 			{
-				Filter = new FlagsContentFilter(-1);
+				Filter = new(-1);
 				listBox.SelectAll();
 				return;
 			}
@@ -101,7 +101,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				mask |= item.Value;
 			}
 
-			Filter = new FlagsContentFilter(mask);
+			Filter = new(mask);
 		}
 	}
 

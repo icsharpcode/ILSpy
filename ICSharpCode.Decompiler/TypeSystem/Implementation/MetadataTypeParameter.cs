@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			var gp = metadata.GetGenericParameter(handle);
 			Debug.Assert(gp.Index == index);
-			return new MetadataTypeParameter(module, owner, index, module.GetString(gp.Name), handle, gp.Attributes);
+			return new(module, owner, index, module.GetString(gp.Name), handle, gp.Attributes);
 		}
 
 		private MetadataTypeParameter(MetadataModule module, IEntity owner, int index, string name,
@@ -222,26 +222,26 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				var constraint = metadata.GetGenericParameterConstraint(constraintHandle);
 				var attrs = constraint.GetCustomAttributes();
-				var ty = module.ResolveType(constraint.Type, new GenericContext(Owner), attrs, nullableContext);
+				var ty = module.ResolveType(constraint.Type, new(Owner), attrs, nullableContext);
 				if (attrs.Count == 0)
 				{
-					result.Add(new TypeConstraint(ty));
+					result.Add(new(ty));
 				}
 				else
 				{
-					AttributeListBuilder b = new AttributeListBuilder(module);
+					AttributeListBuilder b = new(module);
 					b.Add(attrs, SymbolKind.Constraint);
-					result.Add(new TypeConstraint(ty, b.Build()));
+					result.Add(new(ty, b.Build()));
 				}
 				hasNonInterfaceConstraint |= (ty.Kind != TypeKind.Interface);
 			}
 			if (this.HasValueTypeConstraint)
 			{
-				result.Add(new TypeConstraint(Compilation.FindType(KnownTypeCode.ValueType)));
+				result.Add(new(Compilation.FindType(KnownTypeCode.ValueType)));
 			}
 			else if (!hasNonInterfaceConstraint)
 			{
-				result.Add(new TypeConstraint(Compilation.FindType(KnownTypeCode.Object)));
+				result.Add(new(Compilation.FindType(KnownTypeCode.Object)));
 			}
 			return result;
 		}

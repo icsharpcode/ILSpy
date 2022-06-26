@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			instance = new OpenProjectOutputCommand(owner);
+			instance = new(owner);
 		}
 	}
 }

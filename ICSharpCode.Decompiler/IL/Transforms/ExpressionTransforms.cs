@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				throw new ArgumentNullException(nameof(statement));
 			if (!(statement.Parent is Block parent))
 				throw new ArgumentException("ILInstruction must be a statement, i.e., direct child of a block.");
-			new ExpressionTransforms().Run(parent, statement.ChildIndex, new StatementTransformContext(new BlockTransformContext(context)));
+			new ExpressionTransforms().Run(parent, statement.ChildIndex, new(new(context)));
 		}
 
 		public void Run(Block block, int pos, StatementTransformContext context)
@@ -431,7 +431,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				int val;
 				if (args[0].MatchLdcI4(out val))
 				{
-					result = new LdcDecimal(val);
+					result = new(val);
 					return true;
 				}
 			}
@@ -442,7 +442,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					args[2].MatchLdcI4(out hi) && args[3].MatchLdcI4(out isNegative) &&
 					args[4].MatchLdcI4(out scale))
 				{
-					result = new LdcDecimal(new decimal(lo, mid, hi, isNegative != 0, (byte)scale));
+					result = new(new(lo, mid, hi, isNegative != 0, (byte)scale));
 					return true;
 				}
 			}

@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.GetMethodSpecifications())
 			{
-				MethodSpecEntry entry = new MethodSpecEntry(module, row);
+				MethodSpecEntry entry = new(module, row);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;

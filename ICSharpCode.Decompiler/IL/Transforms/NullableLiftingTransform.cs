@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (MatchHasValueCall(condition, out ILVariable v))
 			{
 				if (nullableVars == null)
-					nullableVars = new List<ILVariable>();
+					nullableVars = new();
 				nullableVars.Add(v);
 				return true;
 			}
@@ -509,7 +509,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return null;
 				if (!MatchHasValueCall(hasValueComp.Right, out ILVariable rightVar))
 					return null;
-				nullableVars = new List<ILVariable> { leftVar };
+				nullableVars = new() { leftVar };
 				var (left, leftBits) = DoLift(valueComp.Left);
 				nullableVars[0] = rightVar;
 				var (right, rightBits) = DoLift(valueComp.Right);
@@ -524,13 +524,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			else if (newComparisonKind == ComparisonKind.Equality && !hasValueTestNegated && MatchHasValueCall(hasValueTest, out ILVariable v))
 			{
 				// Comparing nullable with non-nullable -> we can fall back to the normal comparison code.
-				nullableVars = new List<ILVariable> { v };
+				nullableVars = new() { v };
 				return LiftCSharpComparison(valueComp, newComparisonKind);
 			}
 			else if (newComparisonKind == ComparisonKind.Inequality && hasValueTestNegated && MatchHasValueCall(hasValueTest, out v))
 			{
 				// Comparing nullable with non-nullable -> we can fall back to the normal comparison code.
-				nullableVars = new List<ILVariable> { v };
+				nullableVars = new() { v };
 				return LiftCSharpComparison(valueComp, newComparisonKind);
 			}
 			return null;
@@ -614,7 +614,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var liftedOperator = CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(call.Method);
 			if (liftedOperator == null)
 				return null;
-			nullableVars = new List<ILVariable> { nullable1 };
+			nullableVars = new() { nullable1 };
 			var (left, leftBits) = DoLift(call.Arguments[0]);
 			nullableVars[0] = nullable2;
 			var (right, rightBits) = DoLift(call.Arguments[1]);
@@ -807,7 +807,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (MatchGetValueOrDefault(inst, out ILVariable inputVar))
 			{
 				// n.GetValueOrDefault() lifted => n.
-				BitSet foundIndices = new BitSet(nullableVars.Count);
+				BitSet foundIndices = new(nullableVars.Count);
 				for (int i = 0; i < nullableVars.Count; i++)
 				{
 					if (nullableVars[i] == inputVar)
@@ -955,7 +955,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var ctor = nullable?.Methods.FirstOrDefault(m => m.IsConstructor && m.Parameters.Count == 1);
 			if (ctor != null)
 			{
-				ctor = ctor.Specialize(new TypeParameterSubstitution(new[] { underlyingType }, null));
+				ctor = ctor.Specialize(new(new[] { underlyingType }, null));
 				return new NewObj(ctor) { Arguments = { inst } };
 			}
 			else

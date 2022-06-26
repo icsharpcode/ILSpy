@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.AssemblyFiles)
 			{
-				FileEntry entry = new FileEntry(module, row);
+				FileEntry entry = new(module, row);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;

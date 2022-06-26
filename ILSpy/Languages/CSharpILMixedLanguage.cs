@@ -65,7 +65,7 @@ namespace ICSharpCode.ILSpy
 
 		static CSharpDecompiler CreateDecompiler(PEFile module, DecompilationOptions options)
 		{
-			CSharpDecompiler decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(), options.DecompilerSettings);
+			CSharpDecompiler decompiler = new(module, module.GetAssemblyResolver(), options.DecompilerSettings);
 			decompiler.CancellationToken = options.CancellationToken;
 			return decompiler;
 		}

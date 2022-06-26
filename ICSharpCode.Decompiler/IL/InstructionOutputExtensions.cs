@@ -138,7 +138,7 @@ namespace ICSharpCode.Decompiler.IL
 				case HandleKind.FieldDefinition:
 				{
 					var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)entity);
-					signature = fd.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new Metadata.MetadataGenericContext(fd.GetDeclaringType(), module));
+					signature = fd.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new(fd.GetDeclaringType(), module));
 					signature(ILNameSyntax.SignatureNoNamedTypeParameters);
 					output.Write(' ');
 					((EntityHandle)fd.GetDeclaringType()).WriteTo(module, output, default, ILNameSyntax.TypeName);
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.IL
 				case HandleKind.MethodDefinition:
 				{
 					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)entity);
-					methodSignature = md.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new Metadata.MetadataGenericContext((MethodDefinitionHandle)entity, module));
+					methodSignature = md.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new((MethodDefinitionHandle)entity, module));
 					methodSignature.Header.WriteTo(output);
 					methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 					output.Write(' ');
@@ -198,7 +198,7 @@ namespace ICSharpCode.Decompiler.IL
 									if (j > 0)
 										output.Write(", ");
 									var constraint = metadata.GetGenericParameterConstraint(constraints[j]);
-									constraint.Type.WriteTo(module, output, new Metadata.MetadataGenericContext((MethodDefinitionHandle)entity, module), ILNameSyntax.TypeName);
+									constraint.Type.WriteTo(module, output, new((MethodDefinitionHandle)entity, module), ILNameSyntax.TypeName);
 								}
 								output.Write(") ");
 							}

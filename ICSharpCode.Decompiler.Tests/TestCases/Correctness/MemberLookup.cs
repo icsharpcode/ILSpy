@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public static void Test()
 			{
 				var o = new Child1();
-				o.child = new Child1();
+				o.child = new();
 				o.TestMethod();
 
 				Console.WriteLine(((Base1)o).Property);

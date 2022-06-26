@@ -43,14 +43,14 @@ namespace ICSharpCode.Decompiler.Util
 
 		public UnionFind()
 		{
-			mapping = new Dictionary<T, Node>();
+			mapping = new();
 		}
 
 		Node GetNode(T element)
 		{
 			if (!mapping.TryGetValue(element, out Node? node))
 			{
-				node = new Node(element);
+				node = new(element);
 				node.parent = node;
 				mapping.Add(element, node);
 			}

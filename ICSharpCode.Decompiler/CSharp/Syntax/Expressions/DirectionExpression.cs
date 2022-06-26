@@ -40,9 +40,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class DirectionExpression : Expression
 	{
-		public readonly static TokenRole RefKeywordRole = new TokenRole("ref");
-		public readonly static TokenRole OutKeywordRole = new TokenRole("out");
-		public readonly static TokenRole InKeywordRole = new TokenRole("in");
+		public readonly static TokenRole RefKeywordRole = new("ref");
+		public readonly static TokenRole OutKeywordRole = new("out");
+		public readonly static TokenRole InKeywordRole = new("in");
 
 		public FieldDirection FieldDirection {
 			get;

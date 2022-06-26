@@ -49,8 +49,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			this.Module = module;
 			this.TypeDefinition = type;
-			this.parts = new Dictionary<MethodDefinitionHandle, List<MethodDefinitionHandle>>();
-			this.parents = new Dictionary<MethodDefinitionHandle, MethodDefinitionHandle>();
+			this.parts = new();
+			this.parents = new();
 		}
 
 		/// <summary>
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			parents.Add(part, parent);
 			if (!parts.TryGetValue(parent, out var list))
 			{
-				list = new List<MethodDefinitionHandle>();
+				list = new();
 				parts.Add(parent, list);
 			}
 			list.Add(part);

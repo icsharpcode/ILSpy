@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	{
 		public static async Task<CompilerResults> CompileVB(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
-			List<string> sourceFileNames = new List<string> { sourceFileName };
+			List<string> sourceFileNames = new() { sourceFileName };
 			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)"""))
 			{
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			if ((flags & CompilerOptions.UseMcsMask) == 0)
 			{
-				CompilerResults results = new CompilerResults();
+				CompilerResults results = new();
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 
 				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch {

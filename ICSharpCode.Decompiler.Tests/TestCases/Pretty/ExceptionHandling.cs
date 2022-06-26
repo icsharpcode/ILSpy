@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			int num = 0;
 			try
 			{
-				throw new Exception();
+				throw new();
 			}
 			catch (Exception) when (num == 0)
 			{
@@ -224,7 +224,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			CancellationTokenSource cancellationTokenSource = null;
 			try
 			{
-				cancellationTokenSource = new CancellationTokenSource();
+				cancellationTokenSource = new();
 			}
 			finally
 			{
@@ -242,7 +242,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			finally
 			{
-				throw new Exception();
+				throw new();
 			}
 		}
 

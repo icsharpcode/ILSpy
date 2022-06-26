@@ -73,11 +73,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		public static bool DoMatchCollection(Role role, INode firstPatternChild, INode firstOtherChild, Match match)
 		{
-			BacktrackingInfo backtrackingInfo = new BacktrackingInfo();
-			Stack<INode> patternStack = new Stack<INode>();
+			BacktrackingInfo backtrackingInfo = new();
+			Stack<INode> patternStack = new();
 			Stack<PossibleMatch> stack = backtrackingInfo.backtrackingStack;
 			patternStack.Push(firstPatternChild);
-			stack.Push(new PossibleMatch(firstOtherChild, match.CheckPoint()));
+			stack.Push(new(firstOtherChild, match.CheckPoint()));
 			while (stack.Count > 0)
 			{
 				INode cur1 = patternStack.Pop();

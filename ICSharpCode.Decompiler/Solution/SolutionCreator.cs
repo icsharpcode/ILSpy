@@ -194,8 +194,8 @@ namespace ICSharpCode.Decompiler.Solution
 
 		private static string GetRelativePath(string fromFilePath, string toFilePath)
 		{
-			Uri fromUri = new Uri(fromFilePath);
-			Uri toUri = new Uri(toFilePath);
+			Uri fromUri = new(fromFilePath);
+			Uri toUri = new(toFilePath);
 
 			if (fromUri.Scheme != toUri.Scheme)
 			{

@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (symbol == null)
 				throw new ArgumentNullException(nameof(symbol));
 
-			StringWriter writer = new StringWriter();
+			StringWriter writer = new();
 			ConvertSymbol(symbol, new TextWriterTokenWriter(writer), FormattingOptionsFactory.CreateEmpty());
 			return writer.ToString();
 		}
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 							writer.WriteKeyword(Roles.RecordKeyword, "record");
 							break;
 						default:
-							throw new Exception("Invalid value for ClassType");
+							throw new("Invalid value for ClassType");
 					}
 					writer.Space();
 				}
@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		TypeSystemAstBuilder CreateAstBuilder()
 		{
-			TypeSystemAstBuilder astBuilder = new TypeSystemAstBuilder();
+			TypeSystemAstBuilder astBuilder = new();
 			astBuilder.AddResolveResultAnnotations = true;
 			astBuilder.ShowTypeParametersForUnboundTypes = true;
 			astBuilder.ShowModifiers = (ConversionFlags & ConversionFlags.ShowModifiers) == ConversionFlags.ShowModifiers;

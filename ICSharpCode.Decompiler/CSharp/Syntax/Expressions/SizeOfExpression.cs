@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class SizeOfExpression : Expression
 	{
-		public readonly static TokenRole SizeofKeywordRole = new TokenRole("sizeof");
+		public readonly static TokenRole SizeofKeywordRole = new("sizeof");
 
 		public CSharpTokenNode SizeOfToken {
 			get { return GetChildByRole(SizeofKeywordRole); }

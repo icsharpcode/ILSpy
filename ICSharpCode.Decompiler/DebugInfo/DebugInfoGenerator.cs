@@ -43,14 +43,14 @@ namespace ICSharpCode.Decompiler.DebugInfo
 	/// </summary>
 	class DebugInfoGenerator : DepthFirstAstVisitor
 	{
-		static readonly KeyComparer<ILVariable, int> ILVariableKeyComparer = new KeyComparer<ILVariable, int>(l => l.Index.Value, Comparer<int>.Default, EqualityComparer<int>.Default);
+		static readonly KeyComparer<ILVariable, int> ILVariableKeyComparer = new(l => l.Index.Value, Comparer<int>.Default, EqualityComparer<int>.Default);
 
 		IDecompilerTypeSystem typeSystem;
-		readonly ImportScopeInfo globalImportScope = new ImportScopeInfo();
+		readonly ImportScopeInfo globalImportScope = new();
 		ImportScopeInfo currentImportScope;
-		List<ImportScopeInfo> importScopes = new List<ImportScopeInfo>();
-		internal List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length, HashSet<ILVariable> Locals)> LocalScopes { get; } = new List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length, HashSet<ILVariable> Locals)>();
-		List<ILFunction> functions = new List<ILFunction>();
+		List<ImportScopeInfo> importScopes = new();
+		internal List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length, HashSet<ILVariable> Locals)> LocalScopes { get; } = new();
+		List<ILFunction> functions = new();
 
 		/// <summary>
 		/// Gets all functions with bodies that were seen by the visitor so far.
@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
 		{
 			var parentImportScope = currentImportScope;
-			currentImportScope = new ImportScopeInfo(parentImportScope);
+			currentImportScope = new(parentImportScope);
 			importScopes.Add(currentImportScope);
 			base.VisitNamespaceDeclaration(namespaceDeclaration);
 			currentImportScope = parentImportScope;

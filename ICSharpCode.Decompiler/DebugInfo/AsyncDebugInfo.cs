@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 		public BlobBuilder BuildBlob(MethodDefinitionHandle moveNext)
 		{
-			BlobBuilder blob = new BlobBuilder();
+			BlobBuilder blob = new();
 			blob.WriteUInt32((uint)CatchHandlerOffset);
 			foreach (var await in Awaits)
 			{

@@ -20,7 +20,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class QueryExpression : Expression
 	{
-		public static readonly Role<QueryClause> ClauseRole = new Role<QueryClause>("Clause", null);
+		public static readonly Role<QueryClause> ClauseRole = new("Clause", null);
 
 		#region Null
 		public new static readonly QueryExpression Null = new NullQueryExpression();
@@ -108,8 +108,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class QueryContinuationClause : QueryClause
 	{
-		public static readonly Role<QueryExpression> PrecedingQueryRole = new Role<QueryExpression>("PrecedingQuery", QueryExpression.Null);
-		public static readonly TokenRole IntoKeywordRole = new TokenRole("into");
+		public static readonly Role<QueryExpression> PrecedingQueryRole = new("PrecedingQuery", QueryExpression.Null);
+		public static readonly TokenRole IntoKeywordRole = new("into");
 
 		public QueryExpression PrecedingQuery {
 			get { return GetChildByRole(PrecedingQueryRole); }
@@ -157,8 +157,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class QueryFromClause : QueryClause
 	{
-		public static readonly TokenRole FromKeywordRole = new TokenRole("from");
-		public static readonly TokenRole InKeywordRole = new TokenRole("in");
+		public static readonly TokenRole FromKeywordRole = new("from");
+		public static readonly TokenRole InKeywordRole = new("in");
 
 		public CSharpTokenNode FromKeyword {
 			get { return GetChildByRole(FromKeywordRole); }
@@ -216,7 +216,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class QueryLetClause : QueryClause
 	{
-		public readonly static TokenRole LetKeywordRole = new TokenRole("let");
+		public readonly static TokenRole LetKeywordRole = new("let");
 
 		public CSharpTokenNode LetKeyword {
 			get { return GetChildByRole(LetKeywordRole); }
@@ -269,7 +269,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class QueryWhereClause : QueryClause
 	{
-		public readonly static TokenRole WhereKeywordRole = new TokenRole("where");
+		public readonly static TokenRole WhereKeywordRole = new("where");
 
 		public CSharpTokenNode WhereKeyword {
 			get { return GetChildByRole(WhereKeywordRole); }
@@ -307,17 +307,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class QueryJoinClause : QueryClause
 	{
-		public static readonly TokenRole JoinKeywordRole = new TokenRole("join");
+		public static readonly TokenRole JoinKeywordRole = new("join");
 		public static readonly Role<AstType> TypeRole = Roles.Type;
 		public static readonly Role<Identifier> JoinIdentifierRole = Roles.Identifier;
-		public static readonly TokenRole InKeywordRole = new TokenRole("in");
+		public static readonly TokenRole InKeywordRole = new("in");
 		public static readonly Role<Expression> InExpressionRole = Roles.Expression;
-		public static readonly TokenRole OnKeywordRole = new TokenRole("on");
-		public static readonly Role<Expression> OnExpressionRole = new Role<Expression>("OnExpression", Expression.Null);
-		public static readonly TokenRole EqualsKeywordRole = new TokenRole("equals");
-		public static readonly Role<Expression> EqualsExpressionRole = new Role<Expression>("EqualsExpression", Expression.Null);
-		public static readonly TokenRole IntoKeywordRole = new TokenRole("into");
-		public static readonly Role<Identifier> IntoIdentifierRole = new Role<Identifier>("IntoIdentifier", Identifier.Null);
+		public static readonly TokenRole OnKeywordRole = new("on");
+		public static readonly Role<Expression> OnExpressionRole = new("OnExpression", Expression.Null);
+		public static readonly TokenRole EqualsKeywordRole = new("equals");
+		public static readonly Role<Expression> EqualsExpressionRole = new("EqualsExpression", Expression.Null);
+		public static readonly TokenRole IntoKeywordRole = new("into");
+		public static readonly Role<Identifier> IntoIdentifierRole = new("IntoIdentifier", Identifier.Null);
 
 		public bool IsGroupJoin {
 			get { return !string.IsNullOrEmpty(this.IntoIdentifier); }
@@ -417,8 +417,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class QueryOrderClause : QueryClause
 	{
-		public static readonly TokenRole OrderbyKeywordRole = new TokenRole("orderby");
-		public static readonly Role<QueryOrdering> OrderingRole = new Role<QueryOrdering>("Ordering", null);
+		public static readonly TokenRole OrderbyKeywordRole = new("orderby");
+		public static readonly Role<QueryOrdering> OrderingRole = new("Ordering", null);
 
 		public CSharpTokenNode OrderbyToken {
 			get { return GetChildByRole(OrderbyKeywordRole); }
@@ -452,8 +452,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class QueryOrdering : AstNode
 	{
-		public readonly static TokenRole AscendingKeywordRole = new TokenRole("ascending");
-		public readonly static TokenRole DescendingKeywordRole = new TokenRole("descending");
+		public readonly static TokenRole AscendingKeywordRole = new("ascending");
+		public readonly static TokenRole DescendingKeywordRole = new("descending");
 
 		public override NodeType NodeType {
 			get { return NodeType.Unknown; }
@@ -504,7 +504,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class QuerySelectClause : QueryClause
 	{
-		public readonly static TokenRole SelectKeywordRole = new TokenRole("select");
+		public readonly static TokenRole SelectKeywordRole = new("select");
 
 		public CSharpTokenNode SelectKeyword {
 			get { return GetChildByRole(SelectKeywordRole); }
@@ -539,10 +539,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class QueryGroupClause : QueryClause
 	{
-		public static readonly TokenRole GroupKeywordRole = new TokenRole("group");
-		public static readonly Role<Expression> ProjectionRole = new Role<Expression>("Projection", Expression.Null);
-		public static readonly TokenRole ByKeywordRole = new TokenRole("by");
-		public static readonly Role<Expression> KeyRole = new Role<Expression>("Key", Expression.Null);
+		public static readonly TokenRole GroupKeywordRole = new("group");
+		public static readonly Role<Expression> ProjectionRole = new("Projection", Expression.Null);
+		public static readonly TokenRole ByKeywordRole = new("by");
+		public static readonly Role<Expression> KeyRole = new("Key", Expression.Null);
 
 		public CSharpTokenNode GroupKeyword {
 			get { return GetChildByRole(GroupKeywordRole); }

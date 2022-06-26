@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.MethodDebugInformation)
 			{
-				MethodDebugInformationEntry entry = new MethodDebugInformationEntry(module, metadata, isEmbedded, row);
+				MethodDebugInformationEntry entry = new(module, metadata, isEmbedded, row);
 				if (entry.RID == scrollTarget)
 				{
 					scrollTargetEntry = entry;

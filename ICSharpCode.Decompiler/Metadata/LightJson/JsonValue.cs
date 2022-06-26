@@ -21,7 +21,7 @@ namespace LightJson
 		/// <summary>
 		/// Represents a null JsonValue.
 		/// </summary>
-		public static readonly JsonValue Null = new JsonValue(JsonValueType.Null, default(double), null);
+		public static readonly JsonValue Null = new(JsonValueType.Null, default(double), null);
 
 		private readonly JsonValueType type;
 		private readonly object reference;
@@ -484,7 +484,7 @@ namespace LightJson
 		/// <param name="value">The value to be converted.</param>
 		public static implicit operator JsonValue(bool? value)
 		{
-			return new JsonValue(value);
+			return new(value);
 		}
 
 		/// <summary>
@@ -493,7 +493,7 @@ namespace LightJson
 		/// <param name="value">The value to be converted.</param>
 		public static implicit operator JsonValue(double? value)
 		{
-			return new JsonValue(value);
+			return new(value);
 		}
 
 		/// <summary>
@@ -502,7 +502,7 @@ namespace LightJson
 		/// <param name="value">The value to be converted.</param>
 		public static implicit operator JsonValue(string value)
 		{
-			return new JsonValue(value);
+			return new(value);
 		}
 
 		/// <summary>
@@ -511,7 +511,7 @@ namespace LightJson
 		/// <param name="value">The value to be converted.</param>
 		public static implicit operator JsonValue(JsonObject value)
 		{
-			return new JsonValue(value);
+			return new(value);
 		}
 
 		/// <summary>
@@ -520,7 +520,7 @@ namespace LightJson
 		/// <param name="value">The value to be converted.</param>
 		public static implicit operator JsonValue(JsonArray value)
 		{
-			return new JsonValue(value);
+			return new(value);
 		}
 
 		/// <summary>
@@ -538,7 +538,7 @@ namespace LightJson
 				return JsonValue.Null;
 			}
 
-			return new JsonValue(value.Value.ToString("o"));
+			return new(value.Value.ToString("o"));
 		}
 
 		/// <summary>

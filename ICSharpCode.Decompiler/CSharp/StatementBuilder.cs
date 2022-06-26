@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			CancellationToken cancellationToken)
 		{
 			Debug.Assert(typeSystem != null && decompilationContext != null);
-			this.exprBuilder = new ExpressionBuilder(
+			this.exprBuilder = new(
 				this,
 				typeSystem,
 				decompilationContext,
@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					arg,
 					exprBuilder.ConvertType(inst.Type)
 				)
-				.WithRR(new ResolveResult(exprBuilder.compilation.FindType(KnownTypeCode.Boolean)))
+				.WithRR(new(exprBuilder.compilation.FindType(KnownTypeCode.Boolean)))
 				.WithILInstruction(inst)
 			)
 			.WithILInstruction(inst);
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var stmt = new EmptyStatement();
 			if (inst.Comment != null)
 			{
-				stmt.AddChild(new Comment(inst.Comment), Roles.Comment);
+				stmt.AddChild(new(inst.Comment), Roles.Comment);
 			}
 			return stmt.WithILInstruction(inst);
 		}
@@ -154,7 +154,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				Debug.Assert(type.IsKnownType(KnownTypeCode.String));
 				var keys = map.Where(entry => entry.Value == i).Select(entry => entry.Key);
 				foreach (var key in keys)
-					yield return new ConstantResolveResult(type, key);
+					yield return new(type, key);
 				yield break;
 			}
 			else if (type.Kind == TypeKind.Enum)
@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					value = i;
 				}
 			}
-			yield return new ConstantResolveResult(type, value);
+			yield return new(type, value);
 		}
 
 		protected internal override TranslatedStatement VisitSwitchInstruction(SwitchInstruction inst)
@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var oldBreakTarget = breakTarget;
 			breakTarget = switchContainer; // 'break' within a switch would only leave the switch
 			var oldCaseLabelMapping = caseLabelMapping;
-			caseLabelMapping = new Dictionary<Block, ConstantResolveResult>();
+			caseLabelMapping = new();
 
 			TranslatedExpression value;
 			IType type;
@@ -221,7 +221,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			IL.SwitchSection defaultSection = inst.GetDefaultSection();
 
 			var stmt = new SwitchStatement() { Expression = value };
-			Dictionary<IL.SwitchSection, Syntax.SwitchSection> translationDictionary = new Dictionary<IL.SwitchSection, Syntax.SwitchSection>();
+			Dictionary<IL.SwitchSection, Syntax.SwitchSection> translationDictionary = new();
 			// initialize C# switch sections.
 			foreach (var section in inst.Sections)
 			{
@@ -231,7 +231,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Create case labels:
 				if (section == defaultSection)
 				{
-					astSection.CaseLabels.Add(new CaseLabel());
+					astSection.CaseLabels.Add(new());
 					firstValueResolveResult = null;
 				}
 				else
@@ -239,8 +239,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					var values = section.Labels.Values.SelectMany(i => CreateTypedCaseLabel(i, type, strToInt?.Map)).ToArray();
 					if (section.HasNullLabel)
 					{
-						astSection.CaseLabels.Add(new CaseLabel(new NullReferenceExpression()));
-						firstValueResolveResult = new ConstantResolveResult(SpecialType.NullType, null);
+						astSection.CaseLabels.Add(new(new NullReferenceExpression()));
+						firstValueResolveResult = new(SpecialType.NullType, null);
 					}
 					else
 					{
@@ -368,7 +368,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>Target container that a 'break;' statement would break out of</summary>
 		BlockContainer breakTarget;
 		/// <summary>Dictionary from BlockContainer to label name for 'goto of_container';</summary>
-		readonly Dictionary<BlockContainer, string> endContainerLabels = new Dictionary<BlockContainer, string>();
+		readonly Dictionary<BlockContainer, string> endContainerLabels = new();
 
 		protected internal override TranslatedStatement VisitLeave(Leave inst)
 		{
@@ -430,7 +430,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var tryCatch = tryBlockConverted as TryCatchStatement;
 			if (tryCatch != null && tryCatch.FinallyBlock.IsNull)
 				return tryCatch; // extend existing try-catch
-			tryCatch = new TryCatchStatement();
+			tryCatch = new();
 			tryCatch.TryBlock = tryBlockConverted as BlockStatement ?? new BlockStatement { tryBlockConverted };
 			return tryCatch;
 		}
@@ -477,9 +477,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			var tryCatch = new TryCatchStatement();
 			tryCatch.TryBlock = ConvertAsBlock(inst.TryBlock);
 			var faultBlock = ConvertAsBlock(inst.FaultBlock);
-			faultBlock.InsertChildAfter(null, new Comment("try-fault"), Roles.Comment);
+			faultBlock.InsertChildAfter(null, new("try-fault"), Roles.Comment);
 			faultBlock.Add(new ThrowStatement());
-			tryCatch.CatchClauses.Add(new CatchClause { Body = faultBlock });
+			tryCatch.CatchClauses.Add(new() { Body = faultBlock });
 			return tryCatch.WithILInstruction(inst);
 		}
 
@@ -492,13 +492,13 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		#region foreach construction
-		static readonly InvocationExpression getEnumeratorPattern = new InvocationExpression(
+		static readonly InvocationExpression getEnumeratorPattern = new(
 			new Choice {
 				new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetEnumerator"),
 				new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetAsyncEnumerator")
 			}
 		);
-		static readonly InvocationExpression extensionGetEnumeratorPattern = new InvocationExpression(
+		static readonly InvocationExpression extensionGetEnumeratorPattern = new(
 			new Choice {
 				new MemberReferenceExpression(new AnyNode("type").ToExpression(), "GetEnumerator"),
 				new MemberReferenceExpression(new AnyNode("type").ToExpression(), "GetAsyncEnumerator")
@@ -550,7 +550,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(var).Expression, resource.Detach())),
 					new TryCatchStatement {
 						TryBlock = ConvertAsBlock(inst.Body),
-						FinallyBlock = new BlockStatement() {
+						FinallyBlock = new() {
 							new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(disposeVariable).Expression, new AsExpression(exprBuilder.ConvertVariable(var).Expression, exprBuilder.ConvertType(disposeType)))),
 							new IfElseStatement {
 								Condition = new BinaryOperatorExpression(exprBuilder.ConvertVariable(disposeVariable), BinaryOperatorType.InEquality, new NullReferenceExpression()),
@@ -1136,7 +1136,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					else
 					{
 						initExpr = new UnaryOperatorExpression(UnaryOperatorType.AddressOf, dirExpr.Expression.Detach())
-							.WithRR(new ResolveResult(inst.Variable.Type));
+							.WithRR(new(inst.Variable.Type));
 					}
 				}
 				if (initExpr.GetResolveResult()?.Type.Kind == TypeKind.Pointer
@@ -1157,7 +1157,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						typeArguments: new IType[] { brt.ElementType }
 					);
 					initExpr = new UnaryOperatorExpression(UnaryOperatorType.AddressOf, asRefCall)
-							.WithRR(new ResolveResult(inst.Variable.Type));
+							.WithRR(new(inst.Variable.Type));
 				}
 			}
 			fixedStmt.Variables.Add(new VariableInitializer(inst.Variable.Name, initExpr).WithILVariable(inst.Variable));
@@ -1186,7 +1186,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (block.Kind != BlockKind.ControlFlow)
 				return Default(block);
 			// Block without container
-			BlockStatement blockStatement = new BlockStatement();
+			BlockStatement blockStatement = new();
 			foreach (var inst in block.Instructions)
 			{
 				blockStatement.Add(Convert(inst));
@@ -1272,7 +1272,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					continueTarget = container.Blocks.Last();
 					if (!container.MatchConditionBlock(continueTarget, out condition, out _))
 						throw new NotSupportedException("Invalid condition block in do-while loop.");
-					blockStatement = ConvertBlockContainer(new BlockStatement(), container, container.Blocks.SkipLast(1), true);
+					blockStatement = ConvertBlockContainer(new(), container, container.Blocks.SkipLast(1), true);
 					if (container.EntryPoint.IncomingEdgeCount == 2)
 					{
 						// Remove the entry-point label, if there are only two jumps to the entry-point:
@@ -1330,7 +1330,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		BlockStatement ConvertBlockContainer(BlockContainer container, bool isLoop)
 		{
-			var blockStatement = ConvertBlockContainer(new BlockStatement(), container, container.Blocks, isLoop);
+			var blockStatement = ConvertBlockContainer(new(), container, container.Blocks, isLoop);
 			DeclareLocalFunctions(currentFunction, container, blockStatement);
 			return blockStatement;
 		}
@@ -1365,7 +1365,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					Comment prev = null;
 					foreach (string warning in function.Warnings)
 					{
-						method.Body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
+						method.Body.InsertChildAfter(prev, prev = new(warning), Roles.Comment);
 					}
 				}
 				else
@@ -1431,8 +1431,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			return blockStatement;
 		}
 
-		readonly Dictionary<Block, string> labels = new Dictionary<Block, string>();
-		readonly Dictionary<string, int> duplicateLabels = new Dictionary<string, int>();
+		readonly Dictionary<Block, string> labels = new();
+		readonly Dictionary<string, int> duplicateLabels = new();
 
 		string EnsureUniqueLabel(Block block)
 		{
@@ -1476,7 +1476,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					inst
 				)
 			);
-			stmt.InsertChildAfter(null, new Comment(" IL initblk instruction"), Roles.Comment);
+			stmt.InsertChildAfter(null, new(" IL initblk instruction"), Roles.Comment);
 			return stmt.WithILInstruction(inst);
 		}
 
@@ -1494,7 +1494,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					inst
 				)
 			);
-			stmt.InsertChildAfter(null, new Comment(" IL cpblk instruction"), Roles.Comment);
+			stmt.InsertChildAfter(null, new(" IL cpblk instruction"), Roles.Comment);
 			return stmt.WithILInstruction(inst);
 		}
 	}

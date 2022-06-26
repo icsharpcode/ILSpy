@@ -67,10 +67,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NoUsingDueToAssignment()
 		{
-			PrintOnDispose printOnDispose = new PrintOnDispose("Wrong");
+			PrintOnDispose printOnDispose = new("Wrong");
 			try
 			{
-				printOnDispose = new PrintOnDispose("Correct");
+				printOnDispose = new("Correct");
 			}
 			finally
 			{
@@ -80,10 +80,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NoUsingDueToAssignment2()
 		{
-			PrintOnDispose printOnDispose = new PrintOnDispose("NoUsing(): Wrong");
+			PrintOnDispose printOnDispose = new("NoUsing(): Wrong");
 			try
 			{
-				printOnDispose = new PrintOnDispose("NoUsing(): Correct");
+				printOnDispose = new("NoUsing(): Correct");
 			}
 			finally
 			{
@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NoUsingDueToByRefCall()
 		{
-			PrintOnDispose printOnDispose = new PrintOnDispose("NoUsingDueToByRefCall(): Wrong");
+			PrintOnDispose printOnDispose = new("NoUsingDueToByRefCall(): Wrong");
 			try
 			{
 				Console.WriteLine("NoUsingDueToByRefCall");
@@ -157,10 +157,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void VariableAlreadyUsedBefore()
 		{
-			System.IO.StringWriter obj = new System.IO.StringWriter();
+			System.IO.StringWriter obj = new();
 			obj.Write("VariableAlreadyUsedBefore - 1");
 			Console.WriteLine(obj);
-			obj = new System.IO.StringWriter();
+			obj = new();
 			try
 			{
 				obj.WriteLine("VariableAlreadyUsedBefore - 2");
@@ -177,7 +177,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void UsingObject()
 		{
-			object obj = new object();
+			object obj = new();
 			try
 			{
 				Console.WriteLine("UsingObject: {0}", obj);

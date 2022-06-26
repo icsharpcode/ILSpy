@@ -247,7 +247,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder("[");
+			StringBuilder b = new("[");
 			b.Append(GetType().Name);
 			b.Append(' ');
 			b.Append(this.DeclaringType.ToString());
@@ -309,7 +309,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder("[");
+			StringBuilder b = new("[");
 			b.Append(GetType().Name);
 			b.Append(' ');
 			b.Append(this.DeclaringType.ReflectionName);

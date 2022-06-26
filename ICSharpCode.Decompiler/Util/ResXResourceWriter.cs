@@ -108,7 +108,7 @@ namespace ICSharpCode.Decompiler.Util
 			if (textwriter == null)
 				textwriter = new StreamWriter(stream, Encoding.UTF8);
 
-			writer = new XmlTextWriter(textwriter);
+			writer = new(textwriter);
 			writer.Formatting = Formatting.Indented;
 			writer.WriteStartDocument();
 			writer.WriteStartElement("root");
@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.Util
 			b64 = Convert.ToBase64String(value, offset, length);
 
 			// Wild guess; two extra newlines, and one newline/tab pair for every 80 chars
-			sb = new StringBuilder(b64, b64.Length + ((b64.Length + 160) / 80) * 3);
+			sb = new(b64, b64.Length + ((b64.Length + 160) / 80) * 3);
 			pos = 0;
 			inc = 80 + Environment.NewLine.Length + 1;
 			ins = Environment.NewLine + "\t";
@@ -296,8 +296,8 @@ namespace ICSharpCode.Decompiler.Util
 				return;
 			}
 
-			MemoryStream ms = new MemoryStream();
-			BinaryFormatter fmt = new BinaryFormatter();
+			MemoryStream ms = new();
+			BinaryFormatter fmt = new();
 			try
 			{
 				fmt.Serialize(ms, value);
@@ -456,8 +456,8 @@ namespace ICSharpCode.Decompiler.Util
 				return;
 			}
 
-			MemoryStream ms = new MemoryStream();
-			BinaryFormatter fmt = new BinaryFormatter();
+			MemoryStream ms = new();
+			BinaryFormatter fmt = new();
 			try
 			{
 				fmt.Serialize(ms, value);

@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected CallInstruction(OpCode opCode, IMethod method) : base(opCode)
 		{
 			this.Method = method ?? throw new ArgumentNullException(nameof(method));
-			this.Arguments = new InstructionCollection<ILInstruction>(this, 0);
+			this.Arguments = new(this, 0);
 		}
 
 		/// <summary>

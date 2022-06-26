@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.ImportScopes)
 			{
-				ImportScopeEntry entry = new ImportScopeEntry(module, metadata, isEmbedded, row);
+				ImportScopeEntry entry = new(module, metadata, isEmbedded, row);
 				if (entry.RID == scrollTarget)
 				{
 					scrollTargetEntry = entry;

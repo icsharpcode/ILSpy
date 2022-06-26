@@ -508,7 +508,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				{
 					fixed (byte* ptr2 = Get<byte[]>())
 					{
-						return new ResultStruct(ptr, ptr2);
+						return new(ptr, ptr2);
 					}
 				}
 			}

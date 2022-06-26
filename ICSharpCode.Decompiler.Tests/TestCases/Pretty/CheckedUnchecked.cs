@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						return (short)num;
 					}
 					default:
-						throw new Exception();
+						throw new();
 				}
 			}
 		}

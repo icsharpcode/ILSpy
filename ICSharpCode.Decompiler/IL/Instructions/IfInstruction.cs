@@ -45,12 +45,12 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static IfInstruction LogicAnd(ILInstruction lhs, ILInstruction rhs)
 		{
-			return new IfInstruction(lhs, rhs, new LdcI4(0));
+			return new(lhs, rhs, new LdcI4(0));
 		}
 
 		public static IfInstruction LogicOr(ILInstruction lhs, ILInstruction? rhs)
 		{
-			return new IfInstruction(lhs, new LdcI4(1), rhs);
+			return new(lhs, new LdcI4(1), rhs);
 		}
 
 		internal override void CheckInvariant(ILPhase phase)

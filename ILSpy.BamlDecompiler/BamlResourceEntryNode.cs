@@ -44,7 +44,7 @@ namespace ILSpy.BamlDecompiler
 			tabPage.ShowTextView(textView => textView.RunWithCancellation(
 				token => Task.Factory.StartNew(
 					() => {
-						AvalonEditTextOutput output = new AvalonEditTextOutput();
+						AvalonEditTextOutput output = new();
 						try
 						{
 							LoadBaml(output, token);
@@ -65,8 +65,8 @@ namespace ILSpy.BamlDecompiler
 		{
 			var asm = this.Ancestors().OfType<AssemblyTreeNode>().First().LoadedAssembly;
 			using var data = OpenStream();
-			BamlDecompilerTypeSystem typeSystem = new BamlDecompilerTypeSystem(asm.GetPEFileOrNull(), asm.GetAssemblyResolver());
-			var decompiler = new XamlDecompiler(typeSystem, new BamlDecompilerSettings());
+			BamlDecompilerTypeSystem typeSystem = new(asm.GetPEFileOrNull(), asm.GetAssemblyResolver());
+			var decompiler = new XamlDecompiler(typeSystem, new());
 			decompiler.CancellationToken = cancellationToken;
 			var result = decompiler.Decompile(data);
 			output.Write(result.Xaml.ToString());

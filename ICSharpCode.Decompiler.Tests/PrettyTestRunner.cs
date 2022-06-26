@@ -241,7 +241,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task ExceptionHandling([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new() {
 				NullPropagation = false,
 				// legacy csc generates a dead store in debug builds
 				RemoveDeadStores = (cscOptions == CompilerOptions.None),
@@ -252,7 +252,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task Switch([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new() {
 				// legacy csc generates a dead store in debug builds
 				RemoveDeadStores = (cscOptions == CompilerOptions.None),
 				SwitchExpressions = false,
@@ -301,7 +301,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			await RunForLibrary(
 				cscOptions: cscOptions,
-				decompilerSettings: new DecompilerSettings {
+				decompilerSettings: new() {
 					UseEnhancedUsing = false,
 					FileScopedNamespaces = false,
 				}
@@ -329,7 +329,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task Loops([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new() {
 				// legacy csc generates a dead store in debug builds
 				RemoveDeadStores = (cscOptions == CompilerOptions.None),
 				UseExpressionBodyForCalculatedGetterOnlyProperties = false,
@@ -477,7 +477,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			await RunForLibrary(
 				cscOptions: cscOptions,
-				decompilerSettings: new DecompilerSettings { UseEnhancedUsing = false, FileScopedNamespaces = false }
+				decompilerSettings: new() { UseEnhancedUsing = false, FileScopedNamespaces = false }
 			);
 		}
 
@@ -502,7 +502,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task FileScopedNamespaces([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings());
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new());
 		}
 
 		[Test]
@@ -604,7 +604,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task Issue1080([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp6));
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new(CSharp.LanguageVersion.CSharp6));
 		}
 
 		[Test]

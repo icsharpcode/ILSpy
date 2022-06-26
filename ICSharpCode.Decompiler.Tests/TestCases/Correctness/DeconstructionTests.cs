@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		private DeconstructionSource<T, T2> GetSource<T, T2>()
 		{
 			Console.WriteLine("GetSource()");
-			return new DeconstructionSource<T, T2>();
+			return new();
 		}
 
 		private (T, T2) GetTuple<T, T2>()
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		private AssignmentTargets Get(int i)
 		{
 			Console.WriteLine($"Get({i})");
-			return new AssignmentTargets(i);
+			return new(i);
 		}
 
 		public void Test()
@@ -136,7 +136,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			NullReferenceException_RefLocalReferencesField_Deconstruction(out _);
 			NullReferenceException_RefLocalReferencesArrayElement_Deconstruction(out _, null);
 			DeconstructTupleSameVar(("a", "b"));
-			DeconstructTupleListForEachSameVar(new List<(string, string)> { ("a", "b") });
+			DeconstructTupleListForEachSameVar(new() { ("a", "b") });
 		}
 
 		public void Property_NoDeconstruction_SwappedAssignments()

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		ILTransformContext context;
 		ITypeResolveContext decompilationContext;
-		readonly Stack<MethodDefinitionHandle> activeMethods = new Stack<MethodDefinitionHandle>();
+		readonly Stack<MethodDefinitionHandle> activeMethods = new();
 
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{

@@ -53,18 +53,18 @@ namespace ICSharpCode.Decompiler.IL
 			this.compilation = compilation;
 		}
 
-		List<TryInstruction> tryInstructionList = new List<TryInstruction>();
-		readonly Dictionary<int, BlockContainer> handlerContainers = new Dictionary<int, BlockContainer>();
+		List<TryInstruction> tryInstructionList = new();
+		readonly Dictionary<int, BlockContainer> handlerContainers = new();
 
 		void CreateContainerStructure()
 		{
-			List<TryCatch> tryCatchList = new List<TryCatch>();
+			List<TryCatch> tryCatchList = new();
 			foreach (var eh in body.ExceptionRegions)
 			{
 				var tryRange = new Interval(eh.TryOffset, eh.TryOffset + eh.TryLength);
 				var handlerBlock = new BlockContainer();
 				handlerBlock.AddILRange(new Interval(eh.HandlerOffset, eh.HandlerOffset + eh.HandlerLength));
-				handlerBlock.Blocks.Add(new Block());
+				handlerBlock.Blocks.Add(new());
 				handlerContainers.Add(handlerBlock.StartILOffset, handlerBlock);
 
 				if (eh.Kind == ExceptionRegionKind.Fault || eh.Kind == ExceptionRegionKind.Finally)
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					var tryBlock = new BlockContainer();
 					tryBlock.AddILRange(tryRange);
-					tryCatch = new TryCatch(tryBlock);
+					tryCatch = new(tryBlock);
 					tryCatch.AddILRange(tryRange);
 					tryCatchList.Add(tryCatch);
 					tryInstructionList.Add(tryCatch);
@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					var filterBlock = new BlockContainer(expectedResultType: StackType.I4);
 					filterBlock.AddILRange(new Interval(eh.FilterOffset, eh.HandlerOffset));
-					filterBlock.Blocks.Add(new Block());
+					filterBlock.Blocks.Add(new());
 					handlerContainers.Add(filterBlock.StartILOffset, filterBlock);
 					filter = filterBlock;
 				}
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		BlockContainer currentContainer;
 		Block currentBlock;
-		readonly Stack<BlockContainer> containerStack = new Stack<BlockContainer>();
+		readonly Stack<BlockContainer> containerStack = new();
 
 		public void CreateBlocks(BlockContainer mainContainer, List<ILInstruction> instructions, BitArray incomingBranches, CancellationToken cancellationToken)
 		{
@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.IL
 			currentContainer = mainContainer;
 			if (instructions.Count == 0)
 			{
-				currentContainer.Blocks.Add(new Block {
+				currentContainer.Blocks.Add(new() {
 					Instructions = {
 						new InvalidBranch("Empty body found. Decompiled assembly might be a reference assembly.")
 					}
@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.IL
 					{
 						FinalizeCurrentBlock(start, fallthrough: false);
 						// Create the new block
-						currentBlock = new Block();
+						currentBlock = new();
 						currentContainer.Blocks.Add(currentBlock);
 					}
 					currentBlock.SetILRange(new Interval(start, start));
@@ -180,7 +180,7 @@ namespace ICSharpCode.Decompiler.IL
 					currentBlock.Instructions.Add(nextTry);
 					containerStack.Push(currentContainer);
 					currentContainer = (BlockContainer)nextTry.TryBlock;
-					currentBlock = new Block();
+					currentBlock = new();
 					currentContainer.Blocks.Add(currentBlock);
 					currentBlock.SetILRange(new Interval(start, start));
 
@@ -301,13 +301,13 @@ namespace ICSharpCode.Decompiler.IL
 			return null;
 		}
 
-		readonly Dictionary<TryCatch, OnErrorDispatch> onErrorDispatchers = new Dictionary<TryCatch, OnErrorDispatch>();
+		readonly Dictionary<TryCatch, OnErrorDispatch> onErrorDispatchers = new();
 
 		class OnErrorDispatch
 		{
 			public readonly ILVariable Variable;
-			public readonly HashSet<int> TargetILOffsets = new HashSet<int>();
-			public readonly List<Branch> Branches = new List<Branch>();
+			public readonly HashSet<int> TargetILOffsets = new();
+			public readonly List<Branch> Branches = new();
 
 			public OnErrorDispatch(ILVariable variable)
 			{
@@ -324,12 +324,12 @@ namespace ICSharpCode.Decompiler.IL
 				var int32 = compilation.FindType(KnownTypeCode.Int32);
 				var newDispatchVar = new ILVariable(VariableKind.Local, int32, StackType.I4);
 				newDispatchVar.Name = $"try{tryCatch.StartILOffset:x4}_dispatch";
-				dispatch = new OnErrorDispatch(newDispatchVar);
+				dispatch = new(newDispatchVar);
 				onErrorDispatchers.Add(tryCatch, dispatch);
 			}
 			dispatch.TargetILOffsets.Add(targetILOffset);
 
-			Block block = new Block();
+			Block block = new();
 			block.Instructions.Add(new StLoc(dispatch.Variable, new LdcI4(targetILOffset)));
 			var branch = new Branch(tryCatch.TryBlock.StartILOffset);
 			block.Instructions.Add(branch);
@@ -350,7 +350,7 @@ namespace ICSharpCode.Decompiler.IL
 				block.Instructions.Insert(tryCatch.ChildIndex, new StLoc(dispatch.Variable, new LdcI4(-1)));
 				// Split the block, so that we can introduce branches that jump directly into the try block
 				int splitAt = tryCatch.ChildIndex;
-				Block newBlock = new Block();
+				Block newBlock = new();
 				newBlock.AddILRange(tryCatch);
 				newBlock.Instructions.AddRange(block.Instructions.Skip(splitAt));
 				block.Instructions.RemoveRange(splitAt, block.Instructions.Count - splitAt);
@@ -364,7 +364,7 @@ namespace ICSharpCode.Decompiler.IL
 
 				// Inside the try-catch, create the dispatch switch
 				BlockContainer tryBody = (BlockContainer)tryCatch.TryBlock;
-				Block dispatchBlock = new Block();
+				Block dispatchBlock = new();
 				dispatchBlock.AddILRange(new Interval(tryCatch.StartILOffset, tryCatch.StartILOffset + 1));
 				var switchInst = new SwitchInstruction(new LdLoc(dispatch.Variable));
 				switchInst.AddILRange(new Interval(tryCatch.StartILOffset, tryCatch.StartILOffset + 1));
@@ -381,10 +381,10 @@ namespace ICSharpCode.Decompiler.IL
 					{
 						branchInst = new Branch(targetBlock);
 					}
-					switchInst.Sections.Add(new SwitchSection { Labels = new LongSet(offset), Body = branchInst });
+					switchInst.Sections.Add(new() { Labels = new(offset), Body = branchInst });
 				}
 				var usedLabels = new LongSet(dispatch.TargetILOffsets.Select(offset => LongInterval.Inclusive(offset, offset)));
-				switchInst.Sections.Add(new SwitchSection { Labels = usedLabels.Invert(), Body = new Branch(tryBody.EntryPoint) });
+				switchInst.Sections.Add(new() { Labels = usedLabels.Invert(), Body = new Branch(tryBody.EntryPoint) });
 				dispatchBlock.Instructions.Add(new InvalidExpression("ILSpy has introduced the following switch to emulate a goto from catch-block to try-block") { Severity = "Note" });
 				dispatchBlock.Instructions.Add(switchInst);
 

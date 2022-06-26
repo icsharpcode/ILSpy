@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public bool HasErrors => Messages.Any(m => m.Item1 == MessageKind.Error);
 
-		public List<(MessageKind, string)> Messages { get; } = new List<(MessageKind, string)>();
+		public List<(MessageKind, string)> Messages { get; } = new();
 
 		public UnresolvedAssemblyNameReference(string fullName)
 		{

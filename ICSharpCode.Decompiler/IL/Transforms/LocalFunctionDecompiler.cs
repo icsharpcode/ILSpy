@@ -299,7 +299,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 					if (!info.LocalFunctionArguments.TryGetValue(index, out var arguments))
 					{
-						arguments = new List<ILInstruction>();
+						arguments = new();
 						info.LocalFunctionArguments.Add(index, arguments);
 					}
 					arguments.Add(argument);
@@ -423,9 +423,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!localFunctions.TryGetValue((MethodDefinitionHandle)targetMethod.MetadataToken, out var info))
 				{
 					context.StepStartGroup($"Read local function '{targetMethod.Name}'", inst);
-					info = new LocalFunctionInfo() {
-						UseSites = new List<ILInstruction>() { inst },
-						LocalFunctionArguments = new Dictionary<int, List<ILInstruction>>(),
+					info = new() {
+						UseSites = new() { inst },
+						LocalFunctionArguments = new(),
 						Method = (IMethod)targetMethod.MemberDefinition,
 					};
 					var rootFunction = context.Function;
@@ -455,8 +455,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			bool hasBody = methodDefinition.HasBody();
 			if (!hasBody)
 			{
-				function = new ILFunction(targetMethod, 0,
-					new TypeSystem.GenericContext(genericContext?.ClassTypeParameters, genericContext?.MethodTypeParameters),
+				function = new(targetMethod, 0,
+					new(genericContext?.ClassTypeParameters, genericContext?.MethodTypeParameters),
 					new Nop(), ILFunctionKind.LocalFunction);
 			}
 			else
@@ -593,7 +593,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				parametersToRemove++;
 			}
-			return new LocalFunctionMethod(method, method.Name, CanBeStaticLocalFunction(), parametersToRemove, typeParametersToRemove);
+			return new(method, method.Name, CanBeStaticLocalFunction(), parametersToRemove, typeParametersToRemove);
 
 			bool CanBeStaticLocalFunction()
 			{
@@ -793,7 +793,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var metadata = module.Metadata;
 			var method = metadata.GetMethodDefinition(methodHandle);
 
-			FindRefStructParameters visitor = new FindRefStructParameters();
+			FindRefStructParameters visitor = new();
 			method.DecodeSignature(visitor, default);
 
 			foreach (var h in visitor.RefStructTypes)
@@ -838,7 +838,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Newer Roslyn versions use the format "&lt;callerName&gt;g__functionName|x_y"
 		/// Older versions use "&lt;callerName&gt;g__functionNamex_y"
 		/// </summary>
-		static readonly Regex functionNameRegex = new Regex(@"^<(.*)>g__([^\|]*)\|{0,1}\d+(_\d+)?$", RegexOptions.Compiled);
+		static readonly Regex functionNameRegex = new(@"^<(.*)>g__([^\|]*)\|{0,1}\d+(_\d+)?$", RegexOptions.Compiled);
 
 		internal static bool ParseLocalFunctionName(string name, out string callerName, out string functionName)
 		{
@@ -854,7 +854,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		class FindRefStructParameters : ISignatureTypeProvider<TypeDefinitionHandle, Unit>
 		{
-			public readonly List<TypeDefinitionHandle> RefStructTypes = new List<TypeDefinitionHandle>();
+			public readonly List<TypeDefinitionHandle> RefStructTypes = new();
 
 			public TypeDefinitionHandle GetArrayType(TypeDefinitionHandle elementType, ArrayShape shape) => default;
 			public TypeDefinitionHandle GetFunctionPointerType(MethodSignature<TypeDefinitionHandle> signature) => default;

@@ -12,7 +12,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// NormalizeTypeVisitor that does not normalize type parameters,
 		/// but performs type erasure (object->dynamic; tuple->underlying type).
 		/// </summary>
-		internal static readonly NormalizeTypeVisitor TypeErasure = new NormalizeTypeVisitor {
+		internal static readonly NormalizeTypeVisitor TypeErasure = new() {
 			ReplaceClassTypeParametersWithDummy = false,
 			ReplaceMethodTypeParametersWithDummy = false,
 			DynamicAndObject = true,
@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			RemoveNullability = true,
 		};
 
-		internal static readonly NormalizeTypeVisitor IgnoreNullabilityAndTuples = new NormalizeTypeVisitor {
+		internal static readonly NormalizeTypeVisitor IgnoreNullabilityAndTuples = new() {
 			ReplaceClassTypeParametersWithDummy = false,
 			ReplaceMethodTypeParametersWithDummy = false,
 			DynamicAndObject = false,

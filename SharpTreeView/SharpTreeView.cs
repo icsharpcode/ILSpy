@@ -163,7 +163,7 @@ namespace ICSharpCode.TreeView
 				{
 					Root.IsExpanded = true;
 				}
-				flattener = new TreeFlattener(Root, ShowRoot);
+				flattener = new(Root, ShowRoot);
 				flattener.CollectionChanged += flattener_CollectionChanged;
 				this.ItemsSource = flattener;
 			}
@@ -614,7 +614,7 @@ namespace ICSharpCode.TreeView
 				e.Effects = DragDropEffects.None;
 				if (node.CanDrop(e, index))
 				{
-					DropTarget target = new DropTarget() {
+					DropTarget target = new() {
 						Item = item,
 						Place = place,
 						Node = node,
@@ -678,7 +678,7 @@ namespace ICSharpCode.TreeView
 				{
 					var adornerLayer = AdornerLayer.GetAdornerLayer(this);
 					var adorner = new GeneralAdorner(this);
-					insertMarker = new InsertMarker();
+					insertMarker = new();
 					adorner.Child = insertMarker;
 					adornerLayer.Add(adorner);
 				}

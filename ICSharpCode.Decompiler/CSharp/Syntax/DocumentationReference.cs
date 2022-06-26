@@ -25,8 +25,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class DocumentationReference : AstNode
 	{
-		public static readonly Role<AstType> DeclaringTypeRole = new Role<AstType>("DeclaringType", AstType.Null);
-		public static readonly Role<AstType> ConversionOperatorReturnTypeRole = new Role<AstType>("ConversionOperatorReturnType", AstType.Null);
+		public static readonly Role<AstType> DeclaringTypeRole = new("DeclaringType", AstType.Null);
+		public static readonly Role<AstType> ConversionOperatorReturnTypeRole = new("ConversionOperatorReturnType", AstType.Null);
 
 		SymbolKind symbolKind;
 		OperatorType operatorType;

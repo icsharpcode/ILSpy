@@ -122,7 +122,7 @@ namespace ILSpy.BamlDecompiler.Baml
 				{
 					var prev = current;
 
-					current = new BamlBlockNode {
+					current = new() {
 						Header = document[i]
 					};
 

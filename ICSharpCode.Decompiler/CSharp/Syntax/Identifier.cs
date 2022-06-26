@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override TextLocation EndLocation {
 			get {
-				return new TextLocation(StartLocation.Line, StartLocation.Column + (Name ?? "").Length + (IsVerbatim ? 1 : 0));
+				return new(StartLocation.Line, StartLocation.Column + (Name ?? "").Length + (IsVerbatim ? 1 : 0));
 			}
 		}
 
@@ -134,9 +134,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (string.IsNullOrEmpty(name))
 				return Identifier.Null;
 			if (name[0] == '@')
-				return new Identifier(name.Substring(1), new TextLocation(location.Line, location.Column + 1)) { IsVerbatim = true };
+				return new(name.Substring(1), new(location.Line, location.Column + 1)) { IsVerbatim = true };
 			else
-				return new Identifier(name, location);
+				return new(name, location);
 		}
 
 		public static Identifier Create(string name, TextLocation location, bool isVerbatim)
@@ -145,8 +145,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return Identifier.Null;
 
 			if (isVerbatim)
-				return new Identifier(name, location) { IsVerbatim = true };
-			return new Identifier(name, location);
+				return new(name, location) { IsVerbatim = true };
+			return new(name, location);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

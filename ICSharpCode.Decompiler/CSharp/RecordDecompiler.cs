@@ -41,10 +41,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly bool isSealed;
 		readonly IMethod primaryCtor;
 		readonly IType baseClass;
-		readonly Dictionary<IField, IProperty> backingFieldToAutoProperty = new Dictionary<IField, IProperty>();
-		readonly Dictionary<IProperty, IField> autoPropertyToBackingField = new Dictionary<IProperty, IField>();
-		readonly Dictionary<IParameter, IProperty> primaryCtorParameterToAutoProperty = new Dictionary<IParameter, IProperty>();
-		readonly Dictionary<IProperty, IParameter> autoPropertyToPrimaryCtorParameter = new Dictionary<IProperty, IParameter>();
+		readonly Dictionary<IField, IProperty> backingFieldToAutoProperty = new();
+		readonly Dictionary<IProperty, IField> autoPropertyToBackingField = new();
+		readonly Dictionary<IParameter, IProperty> primaryCtorParameterToAutoProperty = new();
+		readonly Dictionary<IProperty, IParameter> autoPropertyToPrimaryCtorParameter = new();
 
 		public RecordDecompiler(IDecompilerTypeSystem dts, ITypeDefinition recordTypeDef, DecompilerSettings settings, CancellationToken cancellationToken)
 		{
@@ -1093,7 +1093,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Use CombineExitsTransform so that "return other != null && ...;" is a single statement even in release builds
 			transforms.Add(new CombineExitsTransform());
 			il.RunTransforms(transforms,
-				new ILTransformContext(il, typeSystem, debugInfo: null, settings) {
+				new(il, typeSystem, debugInfo: null, settings) {
 					CancellationToken = cancellationToken
 				});
 			if (il.Body is BlockContainer container)

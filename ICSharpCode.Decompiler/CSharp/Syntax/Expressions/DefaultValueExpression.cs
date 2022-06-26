@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class DefaultValueExpression : Expression
 	{
-		public readonly static TokenRole DefaultKeywordRole = new TokenRole("default");
+		public readonly static TokenRole DefaultKeywordRole = new("default");
 
 		public CSharpTokenNode DefaultToken {
 			get { return GetChildByRole(DefaultKeywordRole); }

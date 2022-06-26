@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	class DeconstructionTransform : IStatementTransform
 	{
 		StatementTransformContext context;
-		readonly Dictionary<ILVariable, int> deconstructionResultsLookup = new Dictionary<ILVariable, int>();
+		readonly Dictionary<ILVariable, int> deconstructionResultsLookup = new();
 		ILVariable[] deconstructionResults;
 		ILVariable tupleVariable;
 		TupleType tupleType;
@@ -205,7 +205,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (deconstructionResults[0] == null)
 				return false;
 			context.Step("Deconstruction", block.Instructions[startPos]);
-			DeconstructInstruction replacement = new DeconstructInstruction();
+			DeconstructInstruction replacement = new();
 			IType deconstructedType;
 			if (deconstructMethod == null)
 			{
@@ -224,7 +224,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			var rootTempVariable = context.Function.RegisterVariable(VariableKind.PatternLocal, deconstructedType);
-			replacement.Pattern = new MatchInstruction(rootTempVariable, deconstructMethod, rootTestedOperand) {
+			replacement.Pattern = new(rootTempVariable, deconstructMethod, rootTestedOperand) {
 				IsDeconstructCall = deconstructMethod != null,
 				IsDeconstructTuple = this.tupleType != null
 			};
@@ -250,12 +250,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				);
 				index++;
 			}
-			replacement.Conversions = new Block(BlockKind.DeconstructionConversions);
+			replacement.Conversions = new(BlockKind.DeconstructionConversions);
 			foreach (var convInst in conversionStLocs)
 			{
 				replacement.Conversions.Instructions.Add(convInst);
 			}
-			replacement.Assignments = new Block(BlockKind.DeconstructionAssignments);
+			replacement.Assignments = new(BlockKind.DeconstructionAssignments);
 			delayedActions?.Invoke(replacement);
 			block.Instructions[startPos] = replacement;
 			block.Instructions.RemoveRange(startPos + 1, pos - startPos - 1);
@@ -306,8 +306,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			out List<StLoc> conversionStLocs,
 			ref Action<DeconstructInstruction> delayedActions)
 		{
-			conversions = new Dictionary<ILVariable, ConversionInfo>();
-			conversionStLocs = new List<StLoc>();
+			conversions = new();
+			conversionStLocs = new();
 			int previousIndex = -1;
 			while (MatchConversion(
 				block.Instructions.ElementAtOrDefault(pos), out var inputInstruction,
@@ -337,7 +337,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(value is Conv conv))
 				return false;
-			info = new ConversionInfo {
+			info = new() {
 				inputType = conv.Argument.InferType(context.TypeSystem),
 				conv = conv
 			};
@@ -362,7 +362,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!(valueInst.MatchLdLoc(out var resultVariable)
 					&& conversions.TryGetValue(resultVariable, out var conversionInfo)))
 				{
-					conversionInfo = new ConversionInfo {
+					conversionInfo = new() {
 						inputType = valueInst.InferType(context.TypeSystem)
 					};
 				}

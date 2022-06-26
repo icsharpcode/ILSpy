@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			var commandLineArguments = parameters?.AssemblyFileNames?.Concat(parameters.Arguments);
 			string ilSpyExe = GetILSpyPath();
 			var process = new Process() {
-				StartInfo = new ProcessStartInfo() {
+				StartInfo = new() {
 					FileName = ilSpyExe,
 					UseShellExecute = false,
 					Arguments = "/navigateTo:none"

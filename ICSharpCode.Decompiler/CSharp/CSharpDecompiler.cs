@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		internal static List<IILTransform> EarlyILTransforms(bool aggressivelyDuplicateReturnBlocks = false)
 		{
-			return new List<IILTransform> {
+			return new() {
 				new ControlFlowSimplification {
 					aggressivelyDuplicateReturnBlocks = aggressivelyDuplicateReturnBlocks
 				},
@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public static List<IILTransform> GetILTransforms()
 		{
-			return new List<IILTransform> {
+			return new() {
 				new ControlFlowSimplification(),
 				// Run SplitVariables only after ControlFlowSimplification duplicates return blocks,
 				// so that the return variable is split and can be inlined.
@@ -177,7 +177,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public static List<IAstTransform> GetAstTransforms()
 		{
-			return new List<IAstTransform> {
+			return new() {
 				new PatternStatementTransform(),
 				new ReplaceMethodCallsWithOperators(), // must run before DeclareVariables.EnsureExpressionStatementsAreValid
 				new IntroduceUnsafeModifier(),
@@ -389,7 +389,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return metadata.GetString(field.Name).StartsWith("<>f__switch", StringComparison.Ordinal);
 		}
 
-		static readonly Regex automaticPropertyBackingFieldRegex = new Regex(@"^<(.*)>k__BackingField$",
+		static readonly Regex automaticPropertyBackingFieldRegex = new(@"^<(.*)>k__BackingField$",
 			RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
 		static bool IsAutomaticPropertyBackingField(FieldDefinition field, MetadataReader metadata, out string propertyName)
@@ -477,7 +477,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		static PEFile LoadPEFile(string fileName, DecompilerSettings settings)
 		{
 			settings.LoadInMemory = true;
-			return new PEFile(
+			return new(
 				fileName,
 				new FileStream(fileName, FileMode.Open, FileAccess.Read),
 				streamOptions: PEStreamOptions.PrefetchEntireImage,
@@ -493,7 +493,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				file.DetectTargetFrameworkId(), file.DetectRuntimePack(),
 				settings.LoadInMemory ? PEStreamOptions.PrefetchMetadata : PEStreamOptions.Default,
 				settings.ApplyWindowsRuntimeProjections ? MetadataReaderOptions.ApplyWindowsRuntimeProjections : MetadataReaderOptions.None);
-			return new DecompilerTypeSystem(file, resolver);
+			return new(file, resolver);
 		}
 
 		static TypeSystemAstBuilder CreateAstBuilder(DecompilerSettings settings)
@@ -538,7 +538,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		string SyntaxTreeToString(SyntaxTree syntaxTree)
 		{
-			StringWriter w = new StringWriter();
+			StringWriter w = new();
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
 			return w.ToString();
 		}
@@ -553,7 +553,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
 			};
-			syntaxTree = new SyntaxTree();
+			syntaxTree = new();
 			RequiredNamespaceCollector.CollectAttributeNamespaces(module, decompileRun.Namespaces);
 			DoDecompileModuleAndAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
@@ -642,7 +642,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
 			};
-			syntaxTree = new SyntaxTree();
+			syntaxTree = new();
 			RequiredNamespaceCollector.CollectNamespaces(module, decompileRun.Namespaces);
 			DoDecompileModuleAndAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
 			var typeDefs = metadata.GetTopLevelTypeDefinitions();
@@ -668,7 +668,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				CancellationToken = CancellationToken
 			};
 			RequiredNamespaceCollector.CollectNamespaces(function.Method, module, decompileRun.Namespaces);
-			return new ILTransformContext(function, typeSystem, DebugInfoProvider, settings) {
+			return new(function, typeSystem, DebugInfoProvider, settings) {
 				CancellationToken = CancellationToken,
 				DecompileRun = decompileRun
 			};
@@ -915,7 +915,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
 			};
-			syntaxTree = new SyntaxTree();
+			syntaxTree = new();
 
 			foreach (var type in types)
 			{
@@ -960,7 +960,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
 			};
-			syntaxTree = new SyntaxTree();
+			syntaxTree = new();
 			RequiredNamespaceCollector.CollectNamespaces(type.MetadataToken, module, decompileRun.Namespaces);
 			DoDecompileTypes(new[] { (TypeDefinitionHandle)type.MetadataToken }, decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
@@ -993,7 +993,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (definitions == null)
 				throw new ArgumentNullException(nameof(definitions));
-			syntaxTree = new SyntaxTree();
+			syntaxTree = new();
 			var decompileRun = new DecompileRun(settings) {
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
@@ -1070,7 +1070,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				first = false;
 			}
-			RunTransforms(syntaxTree, decompileRun, parentTypeDef != null ? new SimpleTypeResolveContext(parentTypeDef) : new SimpleTypeResolveContext(typeSystem.MainModule));
+			RunTransforms(syntaxTree, decompileRun, parentTypeDef != null ? new(parentTypeDef) : new SimpleTypeResolveContext(typeSystem.MainModule));
 			return syntaxTree;
 		}
 
@@ -1133,8 +1133,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				methodDecl.Constraints.AddRange(memberDecl.GetChildrenByRole(Roles.Constraint)
 												.Select(n => (Constraint)n.Clone()));
 
-				methodDecl.Body = new BlockStatement();
-				methodDecl.Body.AddChild(new Comment(
+				methodDecl.Body = new();
+				methodDecl.Body.AddChild(new(
 					"ILSpy generated this explicit interface implementation from .override directive in " + memberDecl.Name),
 										 Roles.Comment);
 				var forwardingCall = new InvocationExpression(new MemberReferenceExpression(new ThisReferenceExpression(), memberDecl.Name,
@@ -1380,7 +1380,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								enumMember.Initializer = null;
 								if (enumMember.GetSymbol() is IField f && f.GetConstantValue() == null)
 								{
-									typeDecl.InsertChildBefore(enumMember, new Comment(" error: enumerator has no value"), Roles.Comment);
+									typeDecl.InsertChildBefore(enumMember, new(" error: enumerator has no value"), Roles.Comment);
 								}
 							}
 							break;
@@ -1530,7 +1530,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return firstValue == 0 ? EnumValueDisplayMode.None : EnumValueDisplayMode.FirstOnly;
 		}
 
-		static readonly Syntax.Attribute obsoleteAttributePattern = new Syntax.Attribute() {
+		static readonly Syntax.Attribute obsoleteAttributePattern = new() {
 			Type = new TypePattern(typeof(ObsoleteAttribute)),
 			Arguments = {
 				new PrimitiveExpression("Types with embedded references are not supported in this version of your compiler."),
@@ -1646,10 +1646,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				catch (BadImageFormatException ex)
 				{
-					body = new BlockStatement();
-					body.AddChild(new Comment("Invalid MethodBodyBlock: " + ex.Message), Roles.Comment);
+					body = new();
+					body.AddChild(new("Invalid MethodBodyBlock: " + ex.Message), Roles.Comment);
 					// insert explicit rbrace token to make the comment appear within the braces
-					body.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.RBrace), Roles.RBrace);
+					body.AddChild(new(TextLocation.Empty, Roles.RBrace), Roles.RBrace);
 					entityDecl.AddChild(body, Roles.Body);
 					return;
 				}
@@ -1704,7 +1704,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					Comment prev = null;
 					foreach (string warning in function.Warnings)
 					{
-						body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
+						body.InsertChildAfter(prev, prev = new(warning), Roles.Comment);
 					}
 
 					entityDecl.AddChild(body, Roles.Body);
@@ -1817,7 +1817,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var symbolName = attr?.FixedArguments.FirstOrDefault().Value as string;
 				if (symbolName == null || !decompileRun.DefinedSymbols.Add(symbolName))
 					continue;
-				syntaxTree.InsertChildAfter(null, new PreProcessorDirective(PreProcessorDirectiveType.Define, symbolName), Roles.PreProcessorDirective);
+				syntaxTree.InsertChildAfter(null, new(PreProcessorDirectiveType.Define, symbolName), Roles.PreProcessorDirective);
 			}
 		}
 
@@ -1856,7 +1856,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					fieldDecl.Attributes.MoveTo(fixedFieldDecl.Attributes);
 					fixedFieldDecl.Modifiers = fieldDecl.Modifiers;
 					fixedFieldDecl.ReturnType = typeSystemAstBuilder.ConvertType(elementType);
-					fixedFieldDecl.Variables.Add(new FixedVariableInitializer(field.Name, new PrimitiveExpression(elementCount)));
+					fixedFieldDecl.Variables.Add(new(field.Name, new PrimitiveExpression(elementCount)));
 					fixedFieldDecl.Variables.Single().CopyAnnotationsFrom(((FieldDeclaration)fieldDecl).Variables.Single());
 					fixedFieldDecl.CopyAnnotationsFrom(fieldDecl);
 					RemoveAttribute(fixedFieldDecl, KnownAttribute.FixedBuffer);
@@ -1878,7 +1878,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						message = ex.Message;
 					}
-					((FieldDeclaration)fieldDecl).Variables.Single().AddChild(new Comment(message, CommentType.MultiLine), Roles.Comment);
+					((FieldDeclaration)fieldDecl).Variables.Single().AddChild(new(message, CommentType.MultiLine), Roles.Comment);
 				}
 				return fieldDecl;
 			}
@@ -2032,7 +2032,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public Dictionary<ILFunction, List<DebugInfo.SequencePoint>> CreateSequencePoints(SyntaxTree syntaxTree)
 		{
-			SequencePointBuilder spb = new SequencePointBuilder();
+			SequencePointBuilder spb = new();
 			syntaxTree.AcceptVisitor(spb);
 			return spb.GetSequencePoints();
 		}

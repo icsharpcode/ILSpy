@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ReturnStatement : Statement
 	{
-		public static readonly TokenRole ReturnKeywordRole = new TokenRole("return");
+		public static readonly TokenRole ReturnKeywordRole = new("return");
 
 		public CSharpTokenNode ReturnToken {
 			get { return GetChildByRole(ReturnKeywordRole); }

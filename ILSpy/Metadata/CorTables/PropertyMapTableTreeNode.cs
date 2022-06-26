@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				PropertyMapEntry entry = new PropertyMapEntry(module, ptr, metadataOffset, rid);
+				PropertyMapEntry entry = new(module, ptr, metadataOffset, rid);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -144,7 +144,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.Offset = metadataOffset + rowOffset;
 				int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
 				int propertyDefSize = metadata.GetTableRowCount(TableIndex.Property) < ushort.MaxValue ? 2 : 4;
-				this.propertyMap = new PropertyMap(ptr + rowOffset, typeDefSize, propertyDefSize);
+				this.propertyMap = new(ptr + rowOffset, typeDefSize, propertyDefSize);
 			}
 		}
 

@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		public ILSpyParameters GetILSpyParameters(Dictionary<string, DetectedReference> projectReferences)
 		{
 			if (projectReferences.TryGetValue(reference.Name, out var refentry))
-				return new ILSpyParameters(new[] { refentry.AssemblyFile });
+				return new(new[] { refentry.AssemblyFile });
 
 			return null;
 		}

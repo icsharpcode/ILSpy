@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var td = metadata.GetTypeDefinition(handle);
 				var context = new GenericContext(TypeParameters);
 				var interfaceImplCollection = td.GetInterfaceImplementations();
-				baseTypes = new List<IType>(1 + interfaceImplCollection.Count);
+				baseTypes = new(1 + interfaceImplCollection.Count);
 				IType baseType = null;
 				try
 				{
@@ -725,7 +725,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				var impl = metadata.GetMethodImplementation(implHandle);
 				if (impl.MethodBody == method)
-					yield return module.ResolveMethod(impl.MethodDeclaration, new GenericContext(this.TypeParameters));
+					yield return module.ResolveMethod(impl.MethodDeclaration, new(this.TypeParameters));
 			}
 		}
 

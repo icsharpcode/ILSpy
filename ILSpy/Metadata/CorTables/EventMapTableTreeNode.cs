@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			int metadataOffset = module.Reader.PEHeaders.MetadataStartOffset;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				EventMapEntry entry = new EventMapEntry(module, ptr, metadataOffset, rid);
+				EventMapEntry entry = new(module, ptr, metadataOffset, rid);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;
@@ -144,7 +144,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.Offset = metadataOffset + rowOffset;
 				int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
 				int eventDefSize = metadata.GetTableRowCount(TableIndex.Event) < ushort.MaxValue ? 2 : 4;
-				this.eventMap = new EventMap(ptr + rowOffset, typeDefSize, eventDefSize);
+				this.eventMap = new(ptr + rowOffset, typeDefSize, eventDefSize);
 			}
 		}
 

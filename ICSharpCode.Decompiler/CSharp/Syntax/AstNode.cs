@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public abstract class AstNode : AbstractAnnotatable, IFreezable, INode, ICloneable
 	{
 		// the Root role must be available when creating the null nodes, so we can't put it in the Roles class
-		internal static readonly Role<AstNode?> RootRole = new Role<AstNode?>("Root", null);
+		internal static readonly Role<AstNode?> RootRole = new("Root", null);
 
 		#region Null
 		public static readonly AstNode Null = new NullAstNode();
@@ -319,7 +319,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					yield break;
 			}
 
-			Stack<AstNode?> nextStack = new Stack<AstNode?>();
+			Stack<AstNode?> nextStack = new();
 			nextStack.Push(null);
 			AstNode? pos = firstChild;
 			while (pos != null)
@@ -365,7 +365,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstNodeCollection<T> GetChildrenByRole<T>(Role<T> role) where T : AstNode
 		{
-			return new AstNodeCollection<T>(this, role);
+			return new(this, role);
 		}
 
 		protected void SetChildByRole<T>(Role<T> role, T newChild) where T : AstNode
@@ -770,7 +770,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public AstNode? GetNodeAt(int line, int column, Predicate<AstNode>? pred = null)
 		{
-			return GetNodeAt(new TextLocation(line, column), pred);
+			return GetNodeAt(new(line, column), pred);
 		}
 
 		/// <summary>
@@ -809,7 +809,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public T? GetNodeAt<T>(int line, int column) where T : AstNode
 		{
-			return GetNodeAt<T>(new TextLocation(line, column));
+			return GetNodeAt<T>(new(line, column));
 		}
 
 		/// <summary>
@@ -851,7 +851,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public AstNode? GetAdjacentNodeAt(int line, int column, Predicate<AstNode>? pred = null)
 		{
-			return GetAdjacentNodeAt(new TextLocation(line, column), pred);
+			return GetAdjacentNodeAt(new(line, column), pred);
 		}
 
 		/// <summary>
@@ -890,7 +890,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public T? GetAdjacentNodeAt<T>(int line, int column) where T : AstNode
 		{
-			return GetAdjacentNodeAt<T>(new TextLocation(line, column));
+			return GetAdjacentNodeAt<T>(new(line, column));
 		}
 
 		/// <summary>
@@ -942,7 +942,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public IEnumerable<AstNode> GetNodesBetween(int startLine, int startColumn, int endLine, int endColumn)
 		{
-			return GetNodesBetween(new TextLocation(startLine, startColumn), new TextLocation(endLine, endColumn));
+			return GetNodesBetween(new(startLine, startColumn), new(endLine, endColumn));
 		}
 
 		/// <summary>
@@ -1007,7 +1007,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </returns>
 		public bool Contains(int line, int column)
 		{
-			return Contains(new TextLocation(line, column));
+			return Contains(new(line, column));
 		}
 
 		/// <summary>
@@ -1029,7 +1029,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </returns>
 		public bool IsInside(int line, int column)
 		{
-			return IsInside(new TextLocation(line, column));
+			return IsInside(new(line, column));
 		}
 
 		/// <summary>

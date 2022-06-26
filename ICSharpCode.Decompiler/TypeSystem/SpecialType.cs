@@ -31,43 +31,43 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the type representing resolve errors.
 		/// </summary>
-		public readonly static SpecialType UnknownType = new SpecialType(TypeKind.Unknown, "?", isReferenceType: null);
+		public readonly static SpecialType UnknownType = new(TypeKind.Unknown, "?", isReferenceType: null);
 
 		/// <summary>
 		/// The null type is used as type of the null literal. It is a reference type without any members; and it is a subtype of all reference types.
 		/// </summary>
-		public readonly static SpecialType NullType = new SpecialType(TypeKind.Null, "null", isReferenceType: true);
+		public readonly static SpecialType NullType = new(TypeKind.Null, "null", isReferenceType: true);
 
 		/// <summary>
 		/// Used for expressions without type, e.g. method groups or lambdas.
 		/// </summary>
-		public readonly static SpecialType NoType = new SpecialType(TypeKind.None, "?", isReferenceType: null);
+		public readonly static SpecialType NoType = new(TypeKind.None, "?", isReferenceType: null);
 
 		/// <summary>
 		/// Type representing the C# 'dynamic' type.
 		/// </summary>
-		public readonly static SpecialType Dynamic = new SpecialType(TypeKind.Dynamic, "dynamic", isReferenceType: true);
+		public readonly static SpecialType Dynamic = new(TypeKind.Dynamic, "dynamic", isReferenceType: true);
 
 		/// <summary>
 		/// Type representing the C# 9 'nint' type.
 		/// </summary>
-		public readonly static SpecialType NInt = new SpecialType(TypeKind.NInt, "nint", isReferenceType: false);
+		public readonly static SpecialType NInt = new(TypeKind.NInt, "nint", isReferenceType: false);
 
 		/// <summary>
 		/// Type representing the C# 9 'nuint' type.
 		/// </summary>
-		public readonly static SpecialType NUInt = new SpecialType(TypeKind.NUInt, "nuint", isReferenceType: false);
+		public readonly static SpecialType NUInt = new(TypeKind.NUInt, "nuint", isReferenceType: false);
 
 		/// <summary>
 		/// Type representing the result of the C# '__arglist()' expression.
 		/// </summary>
-		public readonly static SpecialType ArgList = new SpecialType(TypeKind.ArgList, "__arglist", isReferenceType: null);
+		public readonly static SpecialType ArgList = new(TypeKind.ArgList, "__arglist", isReferenceType: null);
 
 		/// <summary>
 		/// A type used for unbound type arguments in partially parameterized types.
 		/// </summary>
 		/// <see cref="IType.GetNestedTypes(Predicate{ITypeDefinition}, GetMemberOptions)"/>
-		public readonly static SpecialType UnboundTypeArgument = new SpecialType(TypeKind.UnboundTypeArgument, "", isReferenceType: null);
+		public readonly static SpecialType UnboundTypeArgument = new(TypeKind.UnboundTypeArgument, "", isReferenceType: null);
 
 		readonly TypeKind kind;
 		readonly string name;

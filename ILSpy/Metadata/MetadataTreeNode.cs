@@ -115,7 +115,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 	class ByteWidthConverter : IValueConverter
 	{
-		public static readonly ByteWidthConverter Instance = new ByteWidthConverter();
+		public static readonly ByteWidthConverter Instance = new();
 
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{

@@ -347,7 +347,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						if (reflectionTypeName[pos] != ']' && reflectionTypeName[pos] != ',')
 						{
 							// it's a generic type
-							List<ITypeReference> typeArguments = new List<ITypeReference>();
+							List<ITypeReference> typeArguments = new();
 							bool first = true;
 							while (first || pos < reflectionTypeName.Length && reflectionTypeName[pos] == ',')
 							{

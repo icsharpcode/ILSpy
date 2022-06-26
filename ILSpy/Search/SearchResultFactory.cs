@@ -99,7 +99,7 @@ namespace ICSharpCode.ILSpy.Search
 		public MemberSearchResult Create(IEntity entity)
 		{
 			var declaringType = entity.DeclaringTypeDefinition;
-			return new MemberSearchResult {
+			return new() {
 				Member = entity,
 				Fitness = CalculateFitness(entity),
 				Name = GetLanguageSpecificName(entity),
@@ -114,7 +114,7 @@ namespace ICSharpCode.ILSpy.Search
 
 		public ResourceSearchResult Create(PEFile module, Resource resource, ITreeNode node, ITreeNode parent)
 		{
-			return new ResourceSearchResult {
+			return new() {
 				Resource = resource,
 				Fitness = 1.0f / resource.Name.Length,
 				Image = node.Icon,
@@ -129,7 +129,7 @@ namespace ICSharpCode.ILSpy.Search
 
 		public AssemblySearchResult Create(PEFile module)
 		{
-			return new AssemblySearchResult {
+			return new() {
 				Module = module,
 				Fitness = 1.0f / module.Name.Length,
 				Name = module.Name,
@@ -145,7 +145,7 @@ namespace ICSharpCode.ILSpy.Search
 		public NamespaceSearchResult Create(PEFile module, INamespace ns)
 		{
 			var name = ns.FullName.Length == 0 ? "-" : ns.FullName;
-			return new NamespaceSearchResult {
+			return new() {
 				Namespace = ns,
 				Name = name,
 				Fitness = 1.0f / name.Length,

@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class PrimitiveExpression : Expression
 	{
-		public static readonly object AnyValue = new object();
+		public static readonly object AnyValue = new();
 
 		TextLocation startLocation;
 		TextLocation endLocation;
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					p++;
 				}
 			}
-			return new TextLocation(line, col);
+			return new(line, col);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

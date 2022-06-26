@@ -33,10 +33,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class IndexerDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole ThisKeywordRole = new TokenRole("this");
+		public static readonly TokenRole ThisKeywordRole = new("this");
 		public static readonly Role<Accessor> GetterRole = PropertyDeclaration.GetterRole;
 		public static readonly Role<Accessor> SetterRole = PropertyDeclaration.SetterRole;
-		public static readonly Role<Expression> ExpressionBodyRole = new Role<Expression>("ExpressionBody", Expression.Null);
+		public static readonly Role<Expression> ExpressionBodyRole = new("ExpressionBody", Expression.Null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Indexer; }

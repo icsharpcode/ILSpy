@@ -34,18 +34,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UnaryOperatorExpression : Expression
 	{
-		public readonly static TokenRole NotRole = new TokenRole("!");
-		public readonly static TokenRole BitNotRole = new TokenRole("~");
-		public readonly static TokenRole MinusRole = new TokenRole("-");
-		public readonly static TokenRole PlusRole = new TokenRole("+");
-		public readonly static TokenRole IncrementRole = new TokenRole("++");
-		public readonly static TokenRole DecrementRole = new TokenRole("--");
-		public readonly static TokenRole DereferenceRole = new TokenRole("*");
-		public readonly static TokenRole AddressOfRole = new TokenRole("&");
-		public readonly static TokenRole AwaitRole = new TokenRole("await");
-		public readonly static TokenRole NullConditionalRole = new TokenRole("?");
-		public readonly static TokenRole SuppressNullableWarningRole = new TokenRole("!");
-		public readonly static TokenRole IndexFromEndRole = new TokenRole("^");
+		public readonly static TokenRole NotRole = new("!");
+		public readonly static TokenRole BitNotRole = new("~");
+		public readonly static TokenRole MinusRole = new("-");
+		public readonly static TokenRole PlusRole = new("+");
+		public readonly static TokenRole IncrementRole = new("++");
+		public readonly static TokenRole DecrementRole = new("--");
+		public readonly static TokenRole DereferenceRole = new("*");
+		public readonly static TokenRole AddressOfRole = new("&");
+		public readonly static TokenRole AwaitRole = new("await");
+		public readonly static TokenRole NullConditionalRole = new("?");
+		public readonly static TokenRole SuppressNullableWarningRole = new("!");
+		public readonly static TokenRole IndexFromEndRole = new("^");
 
 		public UnaryOperatorExpression()
 		{

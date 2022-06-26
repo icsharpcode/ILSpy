@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	partial class SwitchInstruction
 	{
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
-		public static readonly SlotInfo SectionSlot = new SlotInfo("Section", isCollection: true);
+		public static readonly SlotInfo ValueSlot = new("Value", canInlineInto: true);
+		public static readonly SlotInfo SectionSlot = new("Section", isCollection: true);
 
 		/// <summary>
 		/// If the switch instruction is lifted, the value instruction produces a value of type <c>Nullable{T}</c> for some
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.IL
 			: base(OpCode.SwitchInstruction)
 		{
 			this.Value = value;
-			this.Sections = new InstructionCollection<SwitchSection>(this, 1);
+			this.Sections = new(this, 1);
 		}
 
 		ILInstruction value = null!;

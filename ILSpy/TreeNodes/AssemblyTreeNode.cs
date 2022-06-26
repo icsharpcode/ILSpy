@@ -224,7 +224,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (var type in assembly.TopLevelTypeDefinitions.OrderBy(t => t.ReflectionName, NaturalStringComparer.Instance))
 			{
 				var ns = GetOrCreateNamespaceTreeNode(type.Namespace);
-				TypeTreeNode node = new TypeTreeNode(type, this);
+				TypeTreeNode node = new(type, this);
 				typeDict[(TypeDefinitionHandle)type.MetadataToken] = node;
 				ns.Children.Add(node);
 			}
@@ -246,20 +246,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						if (decimalIndex < 0)
 						{
 							var escapedNamespace = Language.EscapeName(@namespace);
-							ns = new NamespaceTreeNode(escapedNamespace);
+							ns = new(escapedNamespace);
 						}
 						else
 						{
 							var parentNamespaceTreeNode = GetOrCreateNamespaceTreeNode(@namespace.Substring(0, decimalIndex));
 							var escapedInnerNamespace = Language.EscapeName(@namespace.Substring(decimalIndex + 1));
-							ns = new NamespaceTreeNode(escapedInnerNamespace);
+							ns = new(escapedInnerNamespace);
 							parentNamespaceTreeNode.Children.Add(ns);
 						}
 					}
 					else
 					{
 						var escapedNamespace = Language.EscapeName(@namespace);
-						ns = new NamespaceTreeNode(escapedNamespace);
+						ns = new(escapedNamespace);
 					}
 					namespaces.Add(@namespace, ns);
 				}
@@ -429,7 +429,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
 			if (dlg.ShowDialog() == true)
 			{
-				DecompilationOptions options = new DecompilationOptions();
+				DecompilationOptions options = new();
 				options.FullDecompilation = true;
 				if (dlg.FilterIndex == 1)
 				{

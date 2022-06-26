@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			UserStringHandle handle = MetadataTokens.UserStringHandle(0);
 			do
 			{
-				UserStringHeapEntry entry = new UserStringHeapEntry(metadata, handle);
+				UserStringHeapEntry entry = new(metadata, handle);
 				list.Add(entry);
 				handle = metadata.GetNextHandle(handle);
 			} while (!handle.IsNil);

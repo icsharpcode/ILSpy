@@ -65,13 +65,13 @@ namespace ILSpy.BamlDecompiler.Xaml
 			b4 = (b & 0x80) != 0;
 		}
 
-		static Point ReadPoint(BinaryReader reader) => new Point(reader.ReadXamlDouble(), reader.ReadXamlDouble());
+		static Point ReadPoint(BinaryReader reader) => new(reader.ReadXamlDouble(), reader.ReadXamlDouble());
 
 		static void ReadPointBoolBool(BinaryReader reader, byte b, out Point pt, out bool b1, out bool b2)
 		{
 			UnpackBools(b, out b1, out b2, out bool sx, out bool sy);
 
-			pt = new Point(reader.ReadXamlDouble(sx), reader.ReadXamlDouble(sy));
+			pt = new(reader.ReadXamlDouble(sx), reader.ReadXamlDouble(sy));
 		}
 
 		static IList<Point> ReadPointsBoolBool(BinaryReader reader, byte b, out bool b1, out bool b2)

@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy.Metadata
 	{
 		public static MultipleChoiceGroup CreateMultipleChoiceGroup(Type flagsType, string header = null, int mask = -1, int selectedValue = 0, bool includeAll = true)
 		{
-			MultipleChoiceGroup group = new MultipleChoiceGroup(GetFlags(flagsType, mask, selectedValue, includeAll ? "<All>" : null));
+			MultipleChoiceGroup group = new(GetFlags(flagsType, mask, selectedValue, includeAll ? "<All>" : null));
 			group.Header = header;
 			group.SelectedFlags = selectedValue;
 			return group;

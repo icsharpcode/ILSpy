@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 			public State Clone()
 			{
-				return new State(bits.Clone());
+				return new(bits.Clone());
 			}
 
 			public void ReplaceWith(State newContent)
@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// 
 		/// Does not contain <c>UninitializedVariable</c> (as that special instruction has multiple store indices, one per variable)
 		/// </summary>
-		readonly Dictionary<ILInstruction, int> storeIndexMap = new Dictionary<ILInstruction, int>();
+		readonly Dictionary<ILInstruction, int> storeIndexMap = new();
 
 		/// <summary>
 		/// For all variables <c>v</c>: <c>allStores[firstStoreIndexForVariable[v.IndexInScope]]</c> is the <c>UninitializedVariable</c> entry for <c>v</c>.
@@ -261,7 +261,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			if (scope == null)
 				throw new ArgumentNullException(nameof(scope));
-			BitSet activeVariables = new BitSet(scope.Variables.Count);
+			BitSet activeVariables = new(scope.Variables.Count);
 			for (int vi = 0; vi < scope.Variables.Count; vi++)
 			{
 				activeVariables[vi] = pred(scope.Variables[vi]);
@@ -326,7 +326,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			for (int vi = 0; vi < storesByVar.Length; vi++)
 			{
 				if (activeVariables[vi])
-					storesByVar[vi] = new List<ILInstruction> { null };
+					storesByVar[vi] = new() { null };
 			}
 			foreach (var inst in scope.Descendants)
 			{
@@ -348,7 +348,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </summary>
 		State CreateInitialState()
 		{
-			BitSet initialState = new BitSet(allStores.Length);
+			BitSet initialState = new(allStores.Length);
 			initialState.Set(ReachableBit);
 			for (int vi = 0; vi < scope.Variables.Count; vi++)
 			{
@@ -358,7 +358,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					initialState.Set(firstStoreIndexForVariable[vi]);
 				}
 			}
-			return new State(initialState);
+			return new(initialState);
 		}
 		#endregion
 

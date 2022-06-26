@@ -109,7 +109,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public ViewState GetState()
 		{
-			return new ViewState {
+			return new() {
 				DecompiledNodes = SelectedTreeNode == null
 					? null
 					: new HashSet<ILSpyTreeNode>(new[] { SelectedTreeNode })

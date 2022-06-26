@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
-			BaseTypeCollector collector = new BaseTypeCollector();
+			BaseTypeCollector collector = new();
 			collector.CollectBaseTypes(type);
 			return collector;
 		}
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
-			BaseTypeCollector collector = new BaseTypeCollector();
+			BaseTypeCollector collector = new();
 			collector.SkipImplementedInterfaces = true;
 			collector.CollectBaseTypes(type);
 			return collector;
@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
-			TypeClassificationVisitor v = new TypeClassificationVisitor();
+			TypeClassificationVisitor v = new();
 			type.AcceptVisitor(v);
 			return v.isOpen;
 		}
@@ -200,7 +200,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
-			TypeClassificationVisitor v = new TypeClassificationVisitor();
+			TypeClassificationVisitor v = new();
 			type.AcceptVisitor(v);
 			return v.typeParameterOwner;
 		}
@@ -283,7 +283,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					}
 					if (types == null)
 					{
-						types = new HashSet<IType>();
+						types = new();
 					}
 					types.Add(type);
 					foreach (var f in type.GetFields())
@@ -588,7 +588,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (module == null)
 				throw new ArgumentNullException("assembly");
-			return module.GetTypeDefinition(new TopLevelTypeName(namespaceName, name, typeParameterCount));
+			return module.GetTypeDefinition(new(namespaceName, name, typeParameterCount));
 		}
 		#endregion
 

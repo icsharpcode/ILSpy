@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.GetTypeSpecifications())
 			{
-				TypeSpecEntry entry = new TypeSpecEntry(module, row);
+				TypeSpecEntry entry = new(module, row);
 				if (scrollTarget.Equals(row))
 				{
 					scrollTargetEntry = entry;

@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.TypeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
 			this.Settings = settings ?? new DecompilerSettings();
 			this.DebugInfo = debugInfo;
-			Stepper = new Stepper();
+			Stepper = new();
 		}
 
 		public ILTransformContext(ILTransformContext context, ILFunction? function = null)
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		internal ILReader CreateILReader()
 		{
-			return new ILReader(TypeSystem.MainModule) {
+			return new(TypeSystem.MainModule) {
 				UseDebugSymbols = Settings.UseDebugSymbols,
 				DebugInfo = DebugInfo
 			};

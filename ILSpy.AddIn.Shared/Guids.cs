@@ -13,6 +13,6 @@ namespace ICSharpCode.ILSpy.AddIn
 #endif
 		public const string guidILSpyAddInCmdSetString = "85ddb8ca-a842-4b1c-ba1a-94141fdf19d0";
 
-		public static readonly Guid guidILSpyAddInCmdSet = new Guid(guidILSpyAddInCmdSetString);
+		public static readonly Guid guidILSpyAddInCmdSet = new(guidILSpyAddInCmdSetString);
 	};
 }

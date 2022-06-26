@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder("[");
+			StringBuilder b = new("[");
 			b.Append(this.SymbolKind);
 			if (this.DeclaringType != null)
 			{

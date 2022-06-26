@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public DecompilerTypeSystem ConstructTypeSystem(PEFile module)
 		{
-			return new DecompilerTypeSystem(module, module.GetAssemblyResolver(assemblyListSnapshot, loadOnDemand: false));
+			return new(module, module.GetAssemblyResolver(assemblyListSnapshot, loadOnDemand: false));
 		}
 
 		public IEnumerable<ITypeDefinition> GetTypesInScope(CancellationToken ct)

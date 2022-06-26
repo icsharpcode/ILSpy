@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			for (int rid = 1; rid <= length; rid++)
 			{
-				ClassLayoutEntry entry = new ClassLayoutEntry(module, ptr, metadataOffset, rid);
+				ClassLayoutEntry entry = new(module, ptr, metadataOffset, rid);
 				if (scrollTarget == rid)
 				{
 					scrollTargetEntry = entry;
@@ -132,7 +132,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				var rowOffset = metadata.GetTableMetadataOffset(TableIndex.ClassLayout)
 					+ metadata.GetTableRowSize(TableIndex.ClassLayout) * (row - 1);
 				this.Offset = metadataOffset + rowOffset;
-				this.classLayout = new ClassLayout(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4);
+				this.classLayout = new(ptr + rowOffset, metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4);
 			}
 		}
 

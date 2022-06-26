@@ -32,8 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class SwitchStatement : Statement
 	{
-		public static readonly TokenRole SwitchKeywordRole = new TokenRole("switch");
-		public static readonly Role<SwitchSection> SwitchSectionRole = new Role<SwitchSection>("SwitchSection", null);
+		public static readonly TokenRole SwitchKeywordRole = new("switch");
+		public static readonly Role<SwitchSection> SwitchSectionRole = new("SwitchSection", null);
 
 		public CSharpTokenNode SwitchToken {
 			get { return GetChildByRole(SwitchKeywordRole); }
@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 
-		public static readonly Role<CaseLabel> CaseLabelRole = new Role<CaseLabel>("CaseLabel", null);
+		public static readonly Role<CaseLabel> CaseLabelRole = new("CaseLabel", null);
 
 		public override NodeType NodeType {
 			get {
@@ -174,8 +174,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class CaseLabel : AstNode
 	{
-		public static readonly TokenRole CaseKeywordRole = new TokenRole("case");
-		public static readonly TokenRole DefaultKeywordRole = new TokenRole("default");
+		public static readonly TokenRole CaseKeywordRole = new("case");
+		public static readonly TokenRole DefaultKeywordRole = new("default");
 
 		public override NodeType NodeType {
 			get {

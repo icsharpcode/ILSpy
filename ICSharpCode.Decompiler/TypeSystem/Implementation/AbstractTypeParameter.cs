@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (HasValueTypeConstraint)
 				return this.Compilation.FindType(KnownTypeCode.ValueType);
 
-			List<IType> classTypeConstraints = new List<IType>();
+			List<IType> classTypeConstraints = new();
 			foreach (IType constraint in this.DirectBaseTypes)
 			{
 				if (constraint.Kind == TypeKind.Class)
@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IReadOnlyCollection<IType> CalculateEffectiveInterfaceSet()
 		{
-			HashSet<IType> result = new HashSet<IType>();
+			HashSet<IType> result = new();
 			foreach (IType constraint in this.DirectBaseTypes)
 			{
 				if (constraint.Kind == TypeKind.Interface)

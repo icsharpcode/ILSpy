@@ -42,14 +42,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			Debug.Assert(module != null);
 			this.module = module;
-			this.attributes = new List<IAttribute>();
+			this.attributes = new();
 		}
 
 		public AttributeListBuilder(MetadataModule module, int capacity)
 		{
 			Debug.Assert(module != null);
 			this.module = module;
-			this.attributes = new List<IAttribute>(capacity);
+			this.attributes = new(capacity);
 		}
 
 		public void Add(IAttribute attr)
@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				var attribute = metadata.GetCustomAttribute(handle);
 				// Attribute types shouldn't be generic (and certainly not open), so we don't need a generic context.
-				var ctor = module.ResolveMethod(attribute.Constructor, new GenericContext());
+				var ctor = module.ResolveMethod(attribute.Constructor, new());
 				var type = ctor.DeclaringType;
 				if (IgnoreAttribute(type, target))
 				{
@@ -389,7 +389,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public void AddFixedArg(IType type, object value)
 		{
-			fixedArgs.Add(new CustomAttributeTypedArgument<IType>(type, value));
+			fixedArgs.Add(new(type, value));
 		}
 
 		public void AddNamedArg(string name, KnownTypeCode type, object value)
@@ -409,7 +409,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				kind = CustomAttributeNamedArgumentKind.Field;
 			else
 				kind = CustomAttributeNamedArgumentKind.Property;
-			namedArgs.Add(new CustomAttributeNamedArgument<IType>(name, kind, type, value));
+			namedArgs.Add(new(name, kind, type, value));
 		}
 
 		public IAttribute Build()

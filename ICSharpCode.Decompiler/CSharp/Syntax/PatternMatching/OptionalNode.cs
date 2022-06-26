@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		public override bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
 		{
-			backtrackingInfo.backtrackingStack.Push(new PossibleMatch(pos, match.CheckPoint()));
+			backtrackingInfo.backtrackingStack.Push(new(pos, match.CheckPoint()));
 			return childNode.DoMatch(pos, match);
 		}
 

@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			for (int row = 1; row <= module.Metadata.GetTableRowCount(TableIndex.Param); row++)
 			{
-				ParamEntry entry = new ParamEntry(module, MetadataTokens.ParameterHandle(row));
+				ParamEntry entry = new(module, MetadataTokens.ParameterHandle(row));
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;

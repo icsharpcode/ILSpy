@@ -124,7 +124,7 @@ namespace ICSharpCode.ILSpy
 
 		CSharpDecompiler CreateDecompiler(PEFile module, DecompilationOptions options)
 		{
-			CSharpDecompiler decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(), options.DecompilerSettings);
+			CSharpDecompiler decompiler = new(module, module.GetAssemblyResolver(), options.DecompilerSettings);
 			decompiler.CancellationToken = options.CancellationToken;
 			decompiler.DebugInfoProvider = module.GetDebugInfoOrNull();
 			while (decompiler.AstTransforms.Count > transformCount)
@@ -426,7 +426,7 @@ namespace ICSharpCode.ILSpy
 				var entrypointHandle = MetadataTokenHelpers.EntityHandleOrNil(corHeader.EntryPointTokenOrRelativeVirtualAddress);
 				if (!entrypointHandle.IsNil && entrypointHandle.Kind == HandleKind.MethodDefinition)
 				{
-					var entrypoint = typeSystem.MainModule.ResolveMethod(entrypointHandle, new Decompiler.TypeSystem.GenericContext());
+					var entrypoint = typeSystem.MainModule.ResolveMethod(entrypointHandle, new());
 					if (entrypoint != null)
 					{
 						output.Write("// Entry point: ");
@@ -477,7 +477,7 @@ namespace ICSharpCode.ILSpy
 				}
 				output.WriteLine();
 
-				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings);
+				CSharpDecompiler decompiler = new(typeSystem, options.DecompilerSettings);
 				decompiler.CancellationToken = options.CancellationToken;
 				if (options.EscapeInvalidIdentifiers)
 				{
@@ -526,7 +526,7 @@ namespace ICSharpCode.ILSpy
 
 		static CSharpAmbience CreateAmbience()
 		{
-			CSharpAmbience ambience = new CSharpAmbience();
+			CSharpAmbience ambience = new();
 			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewTypeFlags, if this ever changes.
 			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList;
 			if (new DecompilationOptions().DecompilerSettings.LiftNullables)
@@ -758,7 +758,7 @@ namespace ICSharpCode.ILSpy
 			return CSharpDecompiler.GetCodeMappingInfo(module, member);
 		}
 
-		CSharpBracketSearcher bracketSearcher = new CSharpBracketSearcher();
+		CSharpBracketSearcher bracketSearcher = new();
 
 		public override IBracketSearcher BracketSearcher => bracketSearcher;
 	}

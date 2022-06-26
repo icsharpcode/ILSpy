@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.PropertyDefinitions)
 			{
-				PropertyDefEntry entry = new PropertyDefEntry(module, row);
+				PropertyDefEntry entry = new(module, row);
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;

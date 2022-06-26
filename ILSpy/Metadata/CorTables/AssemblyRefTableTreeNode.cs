@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.AssemblyReferences)
 			{
-				AssemblyRefEntry entry = new AssemblyRefEntry(module, row);
+				AssemblyRefEntry entry = new(module, row);
 				if (scrollTarget == MetadataTokens.GetRowNumber(row))
 				{
 					scrollTargetEntry = entry;

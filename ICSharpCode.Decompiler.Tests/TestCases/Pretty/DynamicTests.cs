@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void InvokeConstructor()
 		{
-			DynamicTests dynamicTests = new DynamicTests();
+			DynamicTests dynamicTests = new();
 			dynamic val = new DynamicTests();
 			val.Test(new UnauthorizedAccessException());
 			dynamic val2 = new DynamicTests(val);

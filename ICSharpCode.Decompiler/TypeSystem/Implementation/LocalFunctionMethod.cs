@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get {
 				if (typeParameters == null)
-					typeParameters = new List<ITypeParameter>(baseMethod.TypeParameters.Skip(NumberOfCompilerGeneratedTypeParameters));
+					typeParameters = new(baseMethod.TypeParameters.Skip(NumberOfCompilerGeneratedTypeParameters));
 				return typeParameters;
 			}
 		}
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IReadOnlyList<IType> TypeArguments {
 			get {
 				if (typeArguments == null)
-					typeArguments = new List<IType>(baseMethod.TypeArguments.Skip(NumberOfCompilerGeneratedTypeParameters));
+					typeArguments = new(baseMethod.TypeArguments.Skip(NumberOfCompilerGeneratedTypeParameters));
 				return typeArguments;
 			}
 		}
@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IReadOnlyList<IParameter> Parameters {
 			get {
 				if (parameters == null)
-					parameters = new List<IParameter>(baseMethod.Parameters.SkipLast(NumberOfCompilerGeneratedParameters));
+					parameters = new(baseMethod.Parameters.SkipLast(NumberOfCompilerGeneratedParameters));
 				return parameters;
 			}
 		}

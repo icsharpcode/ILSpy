@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			if (IsCustomTask(task, out var builderType))
 			{
-				builderTypeName = new FullTypeName(builderType.ReflectionName);
+				builderTypeName = new(builderType.ReflectionName);
 				return builderTypeName.TypeParameterCount == 0;
 			}
 			builderTypeName = default;
@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			if (IsCustomTask(task, out var builderType))
 			{
-				builderTypeName = new FullTypeName(builderType.ReflectionName);
+				builderTypeName = new(builderType.ReflectionName);
 				return builderTypeName.TypeParameterCount == 1;
 			}
 			builderTypeName = default;

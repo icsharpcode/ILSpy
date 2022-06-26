@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			/// <summary>Go up one level</summary>
 			internal InsertionPoint Up()
 			{
-				return new InsertionPoint {
+				return new() {
 					level = level - 1,
 					nextNode = nextNode.Parent
 				};
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		readonly Dictionary<ILVariable, VariableToDeclare> variableDict = new Dictionary<ILVariable, VariableToDeclare>();
+		readonly Dictionary<ILVariable, VariableToDeclare> variableDict = new();
 		TransformContext context;
 
 		public void Run(AstNode rootNode, TransformContext context)
@@ -266,7 +266,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region FindInsertionPoints
-		List<(InsertionPoint InsertionPoint, BlockContainer Scope)> scopeTracking = new List<(InsertionPoint, BlockContainer)>();
+		List<(InsertionPoint InsertionPoint, BlockContainer Scope)> scopeTracking = new();
 
 		/// <summary>
 		/// Finds insertion points for all variables used within `node`
@@ -284,7 +284,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (scope != null && (scope.EntryPoint.IncomingEdgeCount > 1 || scope.Parent is ILFunction))
 			{
 				// track loops and function bodies as scopes, for comparison with CaptureScope.
-				scopeTracking.Add((new InsertionPoint { level = nodeLevel, nextNode = node }, scope));
+				scopeTracking.Add((new() { level = nodeLevel, nextNode = node }, scope));
 			}
 			else
 			{
@@ -324,7 +324,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						}
 						else
 						{
-							newPoint = new InsertionPoint { level = nodeLevel, nextNode = identExpr };
+							newPoint = new() { level = nodeLevel, nextNode = identExpr };
 							if (variable.UsesInitialValue)
 							{
 								// Uninitialized variables are logically initialized at the beginning of the function
@@ -352,7 +352,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						}
 						else
 						{
-							v = new VariableToDeclare(variable, newPoint,
+							v = new(variable, newPoint,
 								identExpr, sourceOrder: variableDict.Count);
 							variableDict.Add(variable, v);
 						}
@@ -589,7 +589,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					if (v.ILVariable.Kind == VariableKind.PinnedLocal)
 					{
-						type.InsertChildAfter(null, new Comment("pinned", CommentType.MultiLine), Roles.Comment);
+						type.InsertChildAfter(null, new("pinned", CommentType.MultiLine), Roles.Comment);
 					}
 					var vds = new VariableDeclarationStatement(type, v.Name, assignment.Right.Detach());
 					var init = vds.Variables.Single();

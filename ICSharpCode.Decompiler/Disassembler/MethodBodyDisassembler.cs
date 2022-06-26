@@ -87,8 +87,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			metadata = module.Metadata;
-			genericContext = new MetadataGenericContext(handle, module);
-			signatureDecoder = new DisassemblerSignatureTypeProvider(module, output);
+			genericContext = new(handle, module);
+			signatureDecoder = new(module, output);
 			var methodDefinition = metadata.GetMethodDefinition(handle);
 
 			// start writing IL code
@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				blob.Reset();
 				HashSet<int> branchTargets = GetBranchTargets(blob);
 				blob.Reset();
-				WriteStructureBody(new ILStructure(module, handle, genericContext, body), branchTargets, ref blob, methodDefinition.RelativeVirtualAddress + headerSize);
+				WriteStructureBody(new(module, handle, genericContext, body), branchTargets, ref blob, methodDefinition.RelativeVirtualAddress + headerSize);
 			}
 			else
 			{
@@ -198,8 +198,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			this.module = module;
 			metadata = module.Metadata;
-			genericContext = new MetadataGenericContext(handle, module);
-			signatureDecoder = new DisassemblerSignatureTypeProvider(module, output);
+			genericContext = new(handle, module);
+			signatureDecoder = new(module, output);
 			var handlers = body.ExceptionRegions;
 			if (!handlers.IsEmpty)
 			{
@@ -214,7 +214,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		HashSet<int> GetBranchTargets(BlobReader blob)
 		{
-			HashSet<int> branchTargets = new HashSet<int>();
+			HashSet<int> branchTargets = new();
 			while (blob.RemainingBytes > 0)
 			{
 				var opCode = ILParser.DecodeOpCode(ref blob);

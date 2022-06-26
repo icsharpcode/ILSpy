@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 		[ValidateNotNullOrEmpty]
 		public string LiteralPath { get; set; }
 
-		readonly object syncObject = new object();
+		readonly object syncObject = new();
 		int completed;
 		string fileName;
 		ProgressRecord progress;
@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 			lock (syncObject)
 			{
 				completed++;
-				progress = new ProgressRecord(1, "Decompiling " + fileName, $"Completed {completed} of {value.TotalNumberOfFiles}: {value.Status}") {
+				progress = new(1, "Decompiling " + fileName, $"Completed {completed} of {value.TotalNumberOfFiles}: {value.Status}") {
 					PercentComplete = (int)(completed * 100.0 / value.TotalNumberOfFiles)
 				};
 			}
@@ -78,12 +78,12 @@ namespace ICSharpCode.Decompiler.PowerShell
 
 				task.Wait();
 
-				WriteProgress(new ProgressRecord(1, "Decompiling " + fileName, "Decompilation finished") { RecordType = ProgressRecordType.Completed });
+				WriteProgress(new(1, "Decompiling " + fileName, "Decompilation finished") { RecordType = ProgressRecordType.Completed });
 			}
 			catch (Exception e)
 			{
 				WriteVerbose(e.ToString());
-				WriteError(new ErrorRecord(e, ErrorIds.DecompilationFailed, ErrorCategory.OperationStopped, null));
+				WriteError(new(e, ErrorIds.DecompilationFailed, ErrorCategory.OperationStopped, null));
 			}
 		}
 
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 		{
 			PEFile module = Decompiler.TypeSystem.MainModule.PEFile;
 			var assemblyResolver = new UniversalAssemblyResolver(module.FileName, false, module.Metadata.DetectTargetFrameworkId());
-			WholeProjectDecompiler decompiler = new WholeProjectDecompiler(assemblyResolver);
+			WholeProjectDecompiler decompiler = new(assemblyResolver);
 			decompiler.ProgressIndicator = this;
 			fileName = module.FileName;
 			completed = 0;

@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class AnonymousMethodExpression : Expression
 	{
-		public readonly static TokenRole DelegateKeywordRole = new TokenRole("delegate");
+		public readonly static TokenRole DelegateKeywordRole = new("delegate");
 		public readonly static TokenRole AsyncModifierRole = LambdaExpression.AsyncModifierRole;
 
 		bool isAsync;
